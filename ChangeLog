@@ -1,3 +1,585 @@
+===================== 2017-04-05 Version 5.0.1 Released =====================
+
+===================== Changes Since Version 5.0.0 ===========================
+
+commit d8db52b76bd05b74e6cb4724883854183868eb5d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 5 15:23:42 2017 +0200
+
+    Makefile.defs: version set to 5.0.1
+
+commit b971ff4d5efd7debe43c6433056060c2b2f7824b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 5 13:05:39 2017 +0200
+
+    pkg/rpm: version set to 5.0.1 in spec files
+
+commit c5d5f5203dd66dd6e83644973f128ca2c1551c32
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Apr 5 10:59:43 2017 +0200
+
+    pkg/kamailio/deb: version set to 5.0.1
+
+commit deefd28f893bee96f91591dec9d3ec93c39cf3c1
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Apr 5 09:46:20 2017 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 2df615b6891d822d9e892513b13ff48a3be22faa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 5 09:36:17 2017 +0200
+
+    mtree: clarifications about db table parameter in docs
+    
+    (cherry picked from commit 1c1e51388aad6c5ba064c283d5e124367b30ad7e)
+
+commit 9748188734df2a49cc40d96d42641c87b5962603
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 5 09:34:07 2017 +0200
+
+    mtree: revert a0e4a9c18e and let db_table name not set by default
+    
+    - it breaks some runtime rpc commands, reported by GH #1057
+    - reset it also if set by mistake when mtree param is used
+    
+    (cherry picked from commit a4cdacd0b63245c48fcc6e0a20c9b665ef877090)
+
+commit 9f8d445458fb35a3f6f491c92ea40df92b0ec71f
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Apr 4 14:01:15 2017 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 0c2a5b7dc31751e6753a13f6956795e3ad15cf73
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 3 15:40:20 2017 +0200
+
+    pkg: create /var/run/kamailio with user permissions in centos 7 spec
+    
+    (cherry picked from commit 8f407a915785a2bd594567399cd52a305ccb274e)
+
+commit 30668abe2499d56d63efd4b860a154076e2150e7
+Author: Claudiu Boriga <paul.boriga@1and1.ro>
+Date:   Mon Apr 3 12:13:30 2017 +0300
+
+    topoh: add additional safety checks
+    
+    - verify that headers contain expected prefix (including mask ip)
+      before trying to unmask them; otherwise there may be issues when
+      kamailio receives messages that are not masked and topoh is enabled.
+    
+    (cherry picked from commit 055fca8dd2ca9c2ea683a2ea3748d6728d54e5a5)
+
+commit 16a54ceb0b5443aebe8d6e6a87838847343b7f54
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 3 14:25:18 2017 +0200
+
+    htable: handle blob/text columns when loading from database
+    
+    - reported by Patrick Ginhoux
+    
+    (cherry picked from commit 24e729698017b5d898a92cdf7acb024e44252b84)
+
+commit 1ed8f8aabe7e1e444f9fabd4728896d23a48f630
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 31 12:06:32 2017 +0200
+
+    kamctl: added srv command
+    
+    - shortcuts to RPC commands to print sockets, aliases and available RPC
+      commands
+    
+    (cherry picked from commit e271bb60d4cb0e3e2ec1ecca4ff2833885331732)
+
+commit b30edd2b19d7e30c1d2f9cef9303ae86bcd1c0f2
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Tue Mar 28 13:13:55 2017 +0100
+
+    dmq: attempt to re-initialize if node becomes detatched from cluster
+    
+    - issue reported by JosÃ© Seabra on sr-users mailing list
+    
+    (cherry picked from commit 666ebb63aecf2254b8efeae261452fc75c6d3aed)
+
+commit f4ef9ca5108cad5a8ee7549ec3434f1a03fd4115
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 27 12:36:01 2017 +0200
+
+    misc/examples: kemi - fixed cfgengine for javascript engine
+    (cherry picked from commit d01141e635e35c2f7b204e11b4a2587e5993d155)
+
+commit d3a67fec5eeca80f0feb46422ab3b5ef84016616
+Author: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+Date:   Fri Mar 17 17:21:54 2017 +0100
+
+    erlang: allow user to set ERLANG_xxxDIR
+    
+    If erl is not installed on the system or can not be used (for example
+    when cross-compiling), then erlang module will use the values set by the
+    user in ERLANG_INCDIR and ERLANG_LIBDIR instead of returning en error
+    
+    Signed-off-by: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+    (cherry picked from commit 0d83c02f6389bf0adf9cc8afd5e19e2d0e94cd1a)
+
+commit cecb51863e3b92577ea600089254ed4f30e9ce0d
+Author: Rick Barenthin <rb@terralink.de>
+Date:   Tue Mar 14 22:35:52 2017 +0100
+
+    utils/pdbt: FreeBSD fix, gcc is hardcoded, header is missing
+    
+    - use CC environment variable if set
+    - added missing sys/stat.h header
+    
+    (cherry picked from commit 32e1e5040d2ff5e13d5bd0373e7edd6cef56f172)
+
+commit ec2d2cd29400ec198377033a09edcc8843747190
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 9 12:45:58 2017 +0100
+
+    rabbitmq: added link to rabbitmq c lib
+    
+    - GH #903
+    
+    (cherry picked from commit 52e8634807b8c64a8ecd432a3c0e024185d3a447)
+
+commit 6be63b8e0141bb1fbb3c1ff3ba5001d6353c65b3
+Author: Lucian Balaceanu <lucian.balaceanu@1and1.ro>
+Date:   Thu Mar 16 16:23:42 2017 +0200
+
+    acc: Fix for no cdr after Kamailio 5.0 restart
+    
+    - created cdr_on_load() to be called on DLGCB_LOAD
+    
+    (cherry picked from commit b70382583ea2c7962f7268db3e672236fb35e521)
+
+commit bf86b73c9746ad46f7ad7bff2dc76c92ba6d6955
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Mon Apr 3 20:49:51 2017 +0200
+
+    core: parser - allow more chars in mime type
+    
+    (cherry picked from commit 5bb4eb4d6546e2d0a2d911b09797172a0a2a2b83)
+
+commit bec8ca379781bccb271591a270840f93b4d1af40
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Mon Apr 3 11:12:48 2017 -0400
+
+    db_oracle: avoid double free on connection error
+    
+    (cherry picked from commit 6d9e0202b1817aa19bfaf4502749d817d54f850a)
+
+commit b12ac4ea9efae41b83a2664ea4f25b1d59bc2032
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 31 12:56:52 2017 +0200
+
+    tls: do kerberos and zlib init checks only for libssl < 1.1.0
+    
+    - using string matching inside libssl compile flags is no longer
+      reliable
+    - reported by GH #1050
+    
+    (cherry picked from commit e59fa823b7b9513d3d1adb958d5e8ec055082d83)
+
+commit 26080154471b41198b1bd1df40fe5f1a0f461c8c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 28 15:59:03 2017 +0200
+
+    pv: proper evaluation of pv param for param.count transformation
+    
+    - reported by GH #1041
+    
+    (cherry picked from commit 964557553fd39fca1de35cf7d2f9e64134da7495)
+
+commit a032c4c630ea8eae8fc717bc8d2f5aec956e69e3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 28 15:37:59 2017 +0200
+
+    pv: fix for param.count transformation with pv parameter
+    
+    - reported by GH #1041
+    
+    (cherry picked from commit f151c26b49d483efbbb27acbb72950d79b8c563d)
+
+commit 3883a3174707bbaa3ce836faca035bae9c90c456
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 27 20:59:30 2017 +0200
+
+    core: safety check for retrying dns cache find
+    
+    (cherry picked from commit 9a56b88c1438e2d4f0c5b57c71bbe4e904b1a8e4)
+
+commit 97c6e811814e85b9845993a6b41994f70c57d2c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 21 12:28:47 2017 +0100
+
+    siptrace: avoid creating proxy structure twice in trace_send_duplicate()
+    
+    - can happen when dst parameter is given, resulting in mem leak
+    - related to GH #1040
+    
+    (cherry picked from commit 8cd0f0be8bda6a903eab8c0ef610cb00b8ba8359)
+
+commit 0ff6b710d0a5729778b3de1a15666e29d73aec56
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 21 02:39:00 2017 +0100
+
+    textops: safety check of allocated memory inside append_time_request_f()
+    
+    - reported by GH #1040
+    
+    (cherry picked from commit a51a32633429d761f8bc742386b6f6bcb6b38522)
+
+commit f81c128dd3bf11fc52af308f36dabc926cc8ad70
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 17 07:52:57 2017 +0100
+
+    jsonrpcs: safety check to see if xhttp transport was initialized
+    
+    - reported by GH #1030
+    
+    (cherry picked from commit 7ae5210a7b9fb2d9a61cef496e9abe0da9860bee)
+
+commit 76176130ee60ee819cd7850b7a7e433dc5c4f8cc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 16 10:58:14 2017 +0100
+
+    xhttp: use stateless reply for sending http response
+    
+    (cherry picked from commit a97701575863993f8a19f9dd611156b37ffca247)
+
+commit 74978801e2687dc43f4a017f1669360fd2c7f318
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 16 10:54:25 2017 +0100
+
+    jsonrpcs: extra debug messages when rpc response is sent
+    
+    (cherry picked from commit fa50c85a9e61dd6b91ce88f3f74c433af5d414e2)
+
+commit 72330a606ecca7dc0cf9bde0b6939ad67c0751d2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 16 10:53:51 2017 +0100
+
+    xhttp: more debug messages for sending the response
+    
+    (cherry picked from commit 0350885c076fa691de6106eb821ec5890572cee6)
+
+commit f5889fcc9e42cae01c58357a622d2270f994b8d7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 16 08:49:36 2017 +0100
+
+    Makefile.defs: override the ARCH for amd64 to x86_64
+    
+    (cherry picked from commit 1adf88e7211400b8d56a6dc7c463e60a2b697b80)
+
+commit ae2b828b49cd3aaa771a81b4c6b8893d9bad619f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 15 13:28:44 2017 +0100
+
+    Makefile.defs: explicit retarget of amd64 arch to x86_64
+    
+    - it is supposed to be done by the arch detection scripts, but it may
+      fail on various systems having a different output than expected
+    
+    (cherry picked from commit 2bea7f5a4b2d2ddba9d9a8f050b2ceeb79d2381c)
+
+commit f5e2f30fbef15d4310dd20828a70613971e67c28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 15 12:22:06 2017 +0100
+
+    Makefile.defs: enabled fast locks for amd64
+    
+    (cherry picked from commit e6a84b43e06f081e53bf60df137d4262f36c3c7a)
+
+commit 074f52de88f473945628f81740a87e5f6bc072ea
+Author: James Cloos <cloos@jhcloos.com>
+Date:   Mon Mar 6 11:40:13 2017 -0500
+
+    app_perl: Make sv2int_str() static
+    
+    - The function is only called from the xs file, and C11âs inline
+      semantics mean that gcc-5 and later miscompile this file when
+      no optimization is specified.
+    
+    Signed-off-by: James Cloos <cloos@jhcloos.com>
+    (cherry picked from commit 42d3b93f838d1c2eeb009894422fe016a6572520)
+
+commit 0c05eb15a65ee7974e7858f630d4a7a6a0a91f51
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Mar 13 19:16:26 2017 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 4011276557e3658f84885d03cf7db0277f60e590
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 13 19:05:15 2017 +0100
+
+    topos: fix for names of parameters
+    
+    (cherry picked from commit 4e9bea70b6701405925eb40c14e58b5b1383f827)
+
+commit 25726edd0d9c8bc4186b9cd2c472a0e9c72d712b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 13 17:47:25 2017 +0100
+
+    pv: attempt to print cfg line for string transformation errors
+    
+    - 0 is printed when not a transformation in config
+    - requested by GH #1019
+    
+    (cherry picked from commit 8ce23dda673441541de836e71af9101d8b7894ea)
+
+commit 943a5b2c12426b5b6d3839ae899411f4e1a42414
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 13 18:13:51 2017 +0100
+
+    dialog: more checks for dlg_set_timeout() params
+    
+    - related to GH #1011
+    
+    (cherry picked from commit 618888cc9497ae5c478c41d7b0efc27731b42b22)
+
+commit fb859b9388ddfa82e7c6cf098940d920fead055b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 13 18:13:05 2017 +0100
+
+    core: more safety checks for getting int values from cfg function params
+    
+    - related to GH #1011
+    
+    (cherry picked from commit 97b3ce7c8991774f42c013122704f32e2822ac58)
+
+commit 8c38fad2bf335df919eaed276ba03fa05dfebc7e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 13 15:16:23 2017 +0100
+
+    topos: removed unused ftag variable
+    
+    - code was moved to a function
+    
+    (cherry picked from commit a9d2cbc591f7e1da8743b3598576ef7753c5f32c)
+
+commit bde35f20f26993cdccf546aeb7f84568e9b6a6d6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 9 12:02:57 2017 +0100
+
+    websocket: split the addition of info structure for ws.dump rpc
+    
+    - related to GH #1022
+    
+    (cherry picked from commit 3d6f5770b456f2ec63d1c722fc7d3c518cb7c326)
+
+commit f714655a4e13f6b0d57d0a9a6a5b227f6edc753d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 9 11:17:35 2017 +0100
+
+    topos: reworked dialog update in order to refresh contact values
+    
+    - related to GH #1005
+    
+    (cherry picked from commit 639013a14d46790dd5605f58f683317eb6b9f3f4)
+
+commit 944961ecc9a83785e9fc9f86985ef42873f969b3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 8 12:31:26 2017 +0100
+
+    websocket: proper parameters for rpc response building of ws dump
+    
+    - reported by GH #1022
+    
+    (cherry picked from commit 679febf10e325ddbb90d6070b5599478fb858d75)
+
+commit 9e9fc9a322221dce58108c4430cbe0af41b31d02
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 7 23:24:56 2017 +0100
+
+    db_mongodb: re-init iterator for bson covert search failure
+    
+    (cherry picked from commit 6bd32088de1d7ae816643aea4a60c70911e46b5e)
+
+commit 9e0fd2ebada61e59a17d8558e1746192a3761f5d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 7 08:55:59 2017 +0100
+
+    db_mongodb: re-init iterator and search again if fails to find from crt position
+    
+    (cherry picked from commit 501c41dd35fb9f15fdf96f4f3778860395e37a84)
+
+commit e341821cacef7ef6c70e5e2c098cff644fca0ef5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 2 15:09:53 2017 +0100
+
+    topos: api functions to get dialog and branch expire values
+    
+    (cherry picked from commit 83a8c97798d9dbac7e67203e4a246b6013503c01)
+
+commit 3adcdf863de38518366a99ae15321204b0555457
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 1 23:41:12 2017 +0100
+
+    topos: proper detection of direction for requests within dialog
+    
+    - related to GH #1005
+    
+    (cherry picked from commit a43d8460f4caca20f42f0eb44ec4bd9e22cb1513)
+
+commit 9f9832c53c68da14eecfad75b518f9cb3980e04d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 1 10:05:55 2017 +0100
+
+    topos: unique id per dialog reused for both local contacts
+    
+    - relocated safety checks for storage update
+    
+    (cherry picked from commit 0aaeed773316d4763471e723cfdc8d1230dfd5c1)
+
+commit c628bbf9f08f0714f32f3fb0c3271bf6a42a477b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 23 07:52:38 2017 +0100
+
+    topos: export intermodule api to set storage functions
+    
+    (cherry picked from commit 9e6f94e0ed3845f5da0c548e04f549906f58456e)
+
+commit 274c7d27d340fbc7874d47323eb3b8b4cdae5569
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 22 07:36:36 2017 +0100
+
+    topos: group storage function in an api structure
+    
+    (cherry picked from commit d40635aa946d2d9e49227ab87cba4e045bcc5ebd)
+
+commit 40359c7318b0e61219e460160d2e26c0fef551c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 28 13:32:34 2017 +0100
+
+    topos: restrict storage value to db and redis
+    
+    (cherry picked from commit 58c1ab8fa03c992d201f226eab06d2fbe9999ee5)
+
+commit 3959d25e8f6f709d081cb47e67066de96d6b5153
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 28 12:51:03 2017 +0100
+
+    topos: new parameter storage
+    
+    - specify the storage type to be used
+    - default value is "db", to use database connectors
+    
+    (cherry picked from commit 4fa7a93fb60d8e8468b0f98272c1661d4913c463)
+
+commit 0d1f93bb5406ce74de50dee2ad71493b98e765c9
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Tue Feb 28 10:32:25 2017 +0100
+
+    dialog  Add missing ka_failed_limit parameter to README
+    
+    (cherry picked from commit 307ad0a3e1084a7a03c045dc563421829b46c3e2)
+
+commit fe22bef294f2d6bbb9ef20cf39691c5fbb391b1f
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Tue Feb 7 15:20:15 2017 +0100
+
+    manpage Add proper web address to the project (include https)
+    
+    (cherry picked from commit 1f3884ce4cd08c6b7b52c2dd15bb2a5ac1905a63)
+
+commit 1c7d33a9a9c169cdd55be00f30a5af1e5525c915
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 28 11:46:09 2017 +0100
+
+    Makefile: make tar updated to skip obsolete folder
+    
+    - paths updated to run with src folder
+    
+    (cherry picked from commit 7ecd9dfb37b3b4a9770265c7a846d3224be98d84)
+
+commit 28672ebc9dceb09221c720bdd052ac23f274580f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 13 14:43:16 2017 +0100
+
+    dialog: fix for rpc list dialogs release of the profile locks
+    
+    - reported by GH #1032
+    
+    (cherry picked from commit c986a820042764fd7025be0a0766991181a0b0ea)
+
+commit 05bd71e3c834ae5fa2991a814634b95cbd45a142
+Author: grumvalski <federico.cabiddu@gmail.com>
+Date:   Thu Mar 9 08:35:57 2017 +0100
+
+    pkg/kamailio/centos/7: added jansson package
+    
+    (cherry picked from commit ed956f980014ecb3d44fe1531b1655b2ad1ba2ac)
+
+commit 64d0737d4dd20461c9a4053077d8ced2a7f7aaa1
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Tue Mar 7 14:42:57 2017 +0100
+
+    core: initialize dns cache used memory
+    
+    (cherry picked from commit d3710d365272566656dede08463386a1effeef5e)
+
+commit c58952c4d744750a49f51c284f3069342c67409b
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue Mar 7 09:42:48 2017 -0500
+
+    db_oracle: fix NULL values binding
+    
+    (cherry picked from commit af18ebc1b580c8d236ed6d65ab9e8e8c528adbd2)
+
+commit 49bafac8c6f50a17e44ff3ef350b95d1a51efa8c
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Sun Mar 5 10:11:22 2017 +0100
+
+    http_async_client: fix memory leak in pkg memory in case of error
+    
+    (cherry picked from commit bd35608f1799f27c725815637c2c8e99b32d53a2)
+
+commit 6d602361521fbbc86aa1c43a986bce1422a591cf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 5 09:45:37 2017 +0100
+
+    ipops: proper return code for ip_is_in_subnet()
+    
+    - returning 0 stopos the config execution, do -1 instead
+    - reported by A Messina, GH #1018
+    
+    (cherry picked from commit 36973d12c579eba656203614d092ffd47661596e)
+
+commit a5aab2ad5dad7d4c7c06cfc4f99703ab59586505
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 2 22:16:25 2017 +0100
+
+    mtree: safety checks for range within the chars table
+    
+    (cherry picked from commit 980c861e39b1fb27de8d7c10390566e516e37fcc)
+
+commit 5f86f556af54849eff7643c0cac24144c3b0da81
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue Feb 28 19:06:05 2017 -0500
+
+    lcr: accept DB1_STR and DB1_STRING db types
+    
+    (cherry picked from commit 958b63b9fc500152b6671b90e9a813696a6aaadb)
+
+commit ba743dc62145d6d9e584e9f4ca150c8e334bdda2
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Mar 2 10:57:39 2017 -0500
+
+    htable: accept both DB1_STR and DB1_STRING from database
+    
+    (cherry picked from commit 5cdab87aa1093dd372fed624f0de33bd6c13e53a)
+
+commit 8ad3a15cb62d33afef6f12cef80eaac38794f14d
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Wed Mar 1 16:03:19 2017 -0500
+
+    htable: documentation fix for expires_column parameter
+    
+    (cherry picked from commit f07fc80df5f475606ac81c2885cbedbdb3dca438)
+
+
 ===================== 2017-02-27 Version 5.0.0 Released =====================
 
 ===================== Changes Since Version 4.4.0 ===========================
