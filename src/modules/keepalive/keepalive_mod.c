@@ -142,7 +142,7 @@ int ka_parse_flags( char* flag_str, int flag_len )
  * Function callback executer per module param "destination".
  * Is just a wrapper to ka_add_dest() api function
  */
-static int ka_mod_add_destination(modparam_t type, void *val) 
+static int ka_mod_add_destination(modparam_t type, void *val)
 {
 	if (ka_alloc_destinations_list() < 0)
 		return -1;
@@ -156,7 +156,7 @@ static int ka_mod_add_destination(modparam_t type, void *val)
 
 /*
  * Allocate global variable *ka_destination_list* if not already done
- * WHY:  when specifying static destinations as module param, ka_mod_add_destination() is 
+ * WHY:  when specifying static destinations as module param, ka_mod_add_destination() is
  *       executed BEFORE mod_init()
  */
 int ka_alloc_destinations_list()

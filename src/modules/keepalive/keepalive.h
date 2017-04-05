@@ -1,6 +1,6 @@
 /**
  * keepalive module - remote destinations probing
- * 
+ *
  * Copyright (C) 2017 Guillaume Bour <guillaume@bour.cc>
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -57,7 +57,6 @@ typedef struct _ka_dest
 	time_t last_checked,
 		   last_up,
 		   last_down;
-	//ds_attrs_t attrs;
 
 	void *user_attr;
 	ka_statechanged_f statechanged_clb;
@@ -66,7 +65,6 @@ typedef struct _ka_dest
 	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
 	unsigned short int port; 	/*!< Port of the URI */
 	unsigned short int proto; 	/*!< Protocol of the URI */
-	//int message_count;
 	struct _ka_dest *next;
 } ka_dest_t;
 

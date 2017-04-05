@@ -61,38 +61,41 @@ static const char *keepalive_rpc_list_doc[2] = {
 		"Return the content of dispatcher sets", 0};
 
 static void keepalive_rpc_list(rpc_t *rpc, void *ctx) {
+	void *foo, *bar, *baz;
+	void *sub;
+	ka_dest_t *dest;
+	char *_ctime;
+	char *_utime;
+	char *_dtime;
 	str text = str_init("foobar");
-	if (rpc->add(ctx, "Sd", &text, 42) < 0) 
-		LM_ERR("%s: error creating RPC struct\n", __FUNCTION__);
-	if (rpc->add(ctx, "Sd", &text, 42) < 0) 
-		LM_ERR("%s: error creating RPC struct\n", __FUNCTION__);
 
-	void *foo;
+	if (rpc->add(ctx, "Sd", &text, 42) < 0)
+		LM_ERR("failed creating RPC struct\n");
+	if (rpc->add(ctx, "Sd", &text, 42) < 0)
+		LM_ERR("failed creating RPC struct\n");
+
 	rpc->add(ctx, "{", &foo);
 	rpc->struct_add(foo, "Sd", "text", &text, "number", 42);
 
-	void *bar, *baz;
 	rpc->add(ctx, "{", &bar);
 	rpc->struct_add(bar, "[", "list", &baz);
 	rpc->struct_add(baz, "d", "nn", 17);
 	rpc->struct_add(baz, "d", "nn", 22);
-	
 
-	for(ka_dest_t *dest = ka_destinations_list->first; dest != NULL; dest = dest->next) {
-		void *sub;
+	for(dest = ka_destinations_list->first; dest != NULL; dest = dest->next) {
 		rpc->add(ctx, "{", &sub);
 
-		rpc->struct_add(sub, "SS", 
+		rpc->struct_add(sub, "SS",
 			"uri"  , &dest->uri,
 			"owner", &dest->owner);
 
-		char *_ctime = ctime(&dest->last_checked);
+		_ctime = ctime(&dest->last_checked);
 		_ctime[strlen(_ctime) - 1] = '\0';
 		rpc->struct_add(sub, "s", "last checked", _ctime);
-		char *_utime = ctime(&dest->last_up);
+		_utime = ctime(&dest->last_up);
 		_utime[strlen(_utime) - 1] = '\0';
 		rpc->struct_add(sub, "s", "last up", _utime);
-		char *_dtime = ctime(&dest->last_down);
+		_dtime = ctime(&dest->last_down);
 		_dtime[strlen(_dtime) - 1] = '\0';
 		rpc->struct_add(sub, "s", "last down", _dtime);
 	}

@@ -60,9 +60,12 @@ int bind_keepalive(keepalive_api_t* api)
  * Add a new destination in keepalive pool
  */
 int ka_add_dest(str uri, str owner, int flags, ka_statechanged_f callback, void *user_attr) {
+	struct sip_uri _uri;
+	ka_dest_t *dest;
+
 	LM_INFO("adding destination: %.*s\n", uri.len, uri.s);
 
-	ka_dest_t *dest = (ka_dest_t *) shm_malloc(sizeof(ka_dest_t));
+	dest = (ka_dest_t *) shm_malloc(sizeof(ka_dest_t));
 	if(dest == NULL) {
 		LM_ERR("no more memory.\n");
 		goto err;
@@ -79,7 +82,6 @@ int ka_add_dest(str uri, str owner, int flags, ka_statechanged_f callback, void 
 	}
 
 	// checking uri is valid
-	struct sip_uri _uri;
 	if (parse_uri(dest->uri.s, dest->uri.len, &_uri) != 0) {
 		LM_ERR("invalid uri <%.*s>\n", dest->uri.len, dest->uri.s);
 		goto err;
@@ -132,4 +134,3 @@ ka_state ka_destination_state(str destination) {
 
 	return ka_dest->state;
 }
-
