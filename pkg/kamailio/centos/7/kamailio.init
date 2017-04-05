@@ -6,7 +6,7 @@
 # description: Kamailio (OpenSER) - the Open Source SIP Server
 #
 # processname: kamailio
-# pidfile: /var/run/kamailio.pid
+# pidfile: /var/run/kamailio/kamailio.pid
 # config: /etc/kamailio/kamailio.cfg
 #
 ### BEGIN INIT INFO
@@ -69,7 +69,7 @@ start() {
 
 stop() {
 	echo -n $"Stopping $PROG: "
-	killproc $KAM
+	killproc -p $PID_FILE $KAM
 	RETVAL=$?
 	echo
 	[ $RETVAL = 0 ] && rm -f $LOCK_FILE $PID_FILE
