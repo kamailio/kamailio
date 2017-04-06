@@ -36,6 +36,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/pvar.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/kemi.h"
 #include "../../core/fmsg.h"
 
 #include "../../modules/tm/tm_load.h"
@@ -579,3 +580,72 @@ static int w_evapi_set_tag(sip_msg_t* msg, char* ptag, char* p2)
 		return -1;
 	return 1;
 }
+
+/**
+ *
+ */
+static int ki_evapi_relay(sip_msg_t *msg, str *sdata)
+{
+	return evapi_relay(sdata);
+}
+
+/**
+ *
+ */
+static int ki_evapi_relay_unicast(sip_msg_t *msg, str *sdata, str *stag)
+{
+	return evapi_relay_unicast(sdata, stag);
+}
+
+/**
+ *
+ */
+static int ki_evapi_relay_multicast(sip_msg_t *msg, str *sdata, str *stag)
+{
+	return evapi_relay_multicast(sdata, stag);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_evapi_exports[] = {
+	{ str_init("evapi"), str_init("relay"),
+		SR_KEMIP_INT, ki_evapi_relay,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("evapi"), str_init("relay_unicast"),
+		SR_KEMIP_INT, ki_evapi_relay_unicast,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("evapi"), str_init("relay_multicast"),
+		SR_KEMIP_INT, ki_evapi_relay_multicast,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("evapi"), str_init("close"),
+		SR_KEMIP_INT, evapi_cfg_close,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("evapi"), str_init("set_tag"),
+		SR_KEMIP_INT, evapi_set_tag,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_evapi_exports);
+	return 0;
+}
+
