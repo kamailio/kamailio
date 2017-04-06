@@ -668,6 +668,10 @@ int pv_parse_t_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "reply_type", 10)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "id_label_n", 10)==0)
+				sp->pvp.pvn.u.isname.name.n = 8;
+			else if(strncmp(in->s, "id_index_n", 10)==0)
+				sp->pvp.pvn.u.isname.name.n = 9;
 			else goto error;
 			break;
 		case 12:
@@ -709,7 +713,19 @@ int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
 	t = _tmx_tmb.t_gett();
 	if(t==NULL || t==T_UNDEFINED) {
 		/* no T */
-		return pv_get_null(msg, param, res);
+		if(param->pvn.u.isname.name.n==8 || param->pvn.u.isname.name.n==9) {
+			/* id_label_n or id_index_n - attempt to create transaction */
+			if(_tmx_tmb.t_newtran(msg)<0) {
+				LM_ERR("cannot create the transaction\n");
+				return pv_get_null(msg, param, res);
+			}
+			t = _tmx_tmb.t_gett();
+			if (t==NULL || t==T_UNDEFINED) {
+				return pv_get_null(msg, param, res);
+			}
+		} else {
+			return pv_get_null(msg, param, res);
+		}
 	}
 	switch(param->pvn.u.isname.name.n)
 	{
@@ -723,6 +739,10 @@ int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
 					return pv_get_uintval(msg, param, res, 1);
 			}
 			return pv_get_uintval(msg, param, res, 0);
+		case 8:
+			return pv_get_uintval(msg, param, res, t->label);
+		case 9:
+			return pv_get_uintval(msg, param, res, t->hash_index);
 		default:
 			return pv_get_uintval(msg, param, res, t->label);
 	}
