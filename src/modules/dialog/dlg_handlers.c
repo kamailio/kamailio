@@ -1226,12 +1226,14 @@ dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg)
  */
 void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 {
-	dlg_cell_t *dlg;
-	dlg_iuid_t *iuid;
+	dlg_cell_t *dlg = NULL;
+	dlg_cell_t *dlg0 = NULL;
+	dlg_iuid_t *iuid = NULL;
 	str val, callid, ftag, ttag;
-	int h_entry, h_id, new_state, old_state, unref, event, timeout, reset;
-	unsigned int dir;
-	int ret = 0;
+	int h_entry=0, h_id=0, new_state=0, old_state=0;
+	int unref=0, event=0, timeout=0, reset=0;
+	unsigned int dir=0;
+	int ret=0;
 
 	dlg = dlg_get_ctx_dialog();
 	if (dlg!=NULL) {
@@ -1321,8 +1323,10 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
     /* set current dialog - re-use ref increment from dlg_get() above */
     set_current_dialog( req, dlg);
-    _dlg_ctx.iuid.h_entry = dlg->h_entry;
-    _dlg_ctx.iuid.h_id = dlg->h_id;
+    h_entry = dlg->h_entry;
+    h_id = dlg->h_id;
+    _dlg_ctx.iuid.h_entry = h_entry;
+    _dlg_ctx.iuid.h_id = h_id;
 
 	if(dlg->iflags & DLG_IFLAG_CSEQ_DIFF) {
 		if(dlg_cseq_refresh(req, dlg, dir)<0) {
@@ -1363,6 +1367,15 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	CURR_DLG_STATUS = new_state;
 
 	dlg_run_event_route(dlg, req, old_state, new_state);
+
+	dlg0 = dlg_lookup(h_entry, h_id);
+	if (dlg0==0) {
+		LM_ALERT("after event route - dialog not found [%u:%u] (%d/%d) (%p)\n",
+				h_entry, h_id, old_state, new_state, dlg);
+		return;
+	} else {
+		dlg_release(dlg0);
+	}
 
 	/* delay deletion of dialog until transaction has died off in order
 	 * to absorb in-air messages */
