@@ -744,7 +744,7 @@ void kz_amqp_connection_close(kz_amqp_conn_ptr rmq) {
     if(rmq->heartbeat)
         kz_amqp_timer_destroy(&rmq->heartbeat);
 
-    kz_amqp_fire_connection_event("closed", rmq->server->connection->info.host);
+    kz_amqp_fire_connection_event("closed", rmq->server->connection->info.host, rmq->server->zone->zone);
 
     if (rmq->conn) {
 		LM_DBG("close connection:  %d rmq(%p)->conn(%p)\n", getpid(), (void *)rmq, rmq->conn);
@@ -2081,13 +2081,13 @@ void kz_amqp_send_consumer_event(char* payload, int nextConsumer)
 	kz_amqp_send_consumer_event_ex(payload, NULL, NULL, 0, 0, nextConsumer);
 }
 
-void kz_amqp_fire_connection_event(char *event, char* host)
+void kz_amqp_fire_connection_event(char *event, char* host, char* zone)
 {
 	char* payload = (char*)shm_malloc(512);
-	sprintf(payload, "{ \"%.*s\" : \"connection\", \"%.*s\" : \"%s\", \"host\" : \"%s\" }",
+	sprintf(payload, "{ \"%.*s\" : \"connection\", \"%.*s\" : \"%s\", \"host\" : \"%s\", \"zone\" : \"%s\" }",
 			dbk_consumer_event_key.len, dbk_consumer_event_key.s,
 			dbk_consumer_event_subkey.len, dbk_consumer_event_subkey.s,
-			event, host
+			event, host, zone
 			);
 	kz_amqp_send_consumer_event(payload, 1);
 }
@@ -2264,7 +2264,7 @@ int kz_amqp_connect(kz_amqp_conn_ptr rmq)
 	if(kz_amqp_connection_open(rmq) != 0)
 		goto error;
 
-	kz_amqp_fire_connection_event("open", rmq->server->connection->info.host);
+	kz_amqp_fire_connection_event("open", rmq->server->connection->info.host, rmq->server->zone->zone);
 	for(i=0,channel_res=0; i < dbk_channels && channel_res == 0; i++) {
 			/* start cleanup */
 			rmq->server->channels[i].state = KZ_AMQP_CHANNEL_CLOSED;
@@ -2698,7 +2698,7 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
    			sleep(3);
    			continue;
    		}
-    	kz_amqp_fire_connection_event("open", server_ptr->connection->info.host);
+    	kz_amqp_fire_connection_event("open", server_ptr->connection->info.host, server_ptr->zone->zone);
 
     	/* reset channels */
 
