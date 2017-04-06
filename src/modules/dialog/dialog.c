@@ -56,6 +56,7 @@
 #include "../../core/pvar.h"
 #include "../../core/mod_fix.h"
 #include "../../core/script_cb.h"
+#include "../../core/kemi.h"
 #include "../../core/fmsg.h"
 #include "../../core/hashes.h"
 #include "../../core/counters.h"
@@ -1425,6 +1426,30 @@ static int fixup_dlg_remote_profile(void** param, int param_no)
 		return fixup_spve_null(param, 1);
 	if(param_no==5)
 		return fixup_igp_null(param, 1);
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_dialog_exports[] = {
+	{ str_init("dialog"), str_init("dlg_manage"),
+		SR_KEMIP_INT, dlg_manage,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_dialog_exports);
 	return 0;
 }
 
