@@ -272,7 +272,7 @@ kz_amqp_zone_ptr kz_amqp_get_zones();
 kz_amqp_zone_ptr kz_amqp_get_zone(char* zone);
 kz_amqp_zone_ptr kz_amqp_add_zone(char* zone);
 
-void kz_amqp_fire_connection_event(char *event, char* host);
+void kz_amqp_fire_connection_event(char *event, char* host, char* zone);
 
 void kz_amqp_free_pipe_cmd(kz_amqp_cmd_ptr cmd);
 
