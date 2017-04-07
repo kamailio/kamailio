@@ -34,6 +34,9 @@
 #include "../error.h"
 #include "../core_stats.h"
 
+static char _sr_uri_empty_buf[2] = {0};
+static str _sr_uri_empty = { _sr_uri_empty_buf, 0 };
+
 /* buf= pointer to begining of uri (sip:x@foo.bar:5060;a=b?h=i)
  * len= len of uri
  * returns: fills uri & returns <0 on error or 0 if ok 
@@ -1191,8 +1194,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		case TELS_URI_T:
 			/* fix tel uris, move the number in uri and empty the host */
 			uri->user=uri->host;
-			uri->host.s="";
-			uri->host.len=0;
+			uri->host=_sr_uri_empty;
 			break;
 		/* urn: do nothing */
 		case URN_URI_T:
