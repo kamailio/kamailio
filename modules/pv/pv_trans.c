@@ -49,8 +49,8 @@
 #include "pv_trans.h"
 
 
-static char _empty_str[2] = {0};
-static str _tr_empty = { _empty_str, 0 };
+static char _tr_empty_buf[2] = {0};
+static str _tr_empty = { _tr_empty_buf, 0 };
 static str _tr_uri = {0, 0};
 static struct sip_uri _tr_parsed_uri;
 static param_t* _tr_uri_params = NULL;
