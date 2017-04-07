@@ -37,19 +37,14 @@
 #include "../../core/pvar.h"
 #include "../../core/usr_avp.h"
 
-# define json_foreach_key(obj,key) \
-	char *key;\
-	struct lh_entry *entry ## key; \
-	struct lh_entry *entry_next ## key = NULL; \
-	for(entry ## key = json_object_get_object(obj)->head; \
-		(entry ## key ? ( \
-			key = (char*)entry ## key->k, \
-			entry_next ## key = entry ## key->next, \
-			entry ## key) : 0); \
-		entry ## key = entry_next ## key)
 
 
 static str kz_pv_str_empty = {"", 0};
+
+enum json_type kz_json_get_type(struct json_object *jso)
+{
+  return json_object_get_type(jso);
+}
 
 char** str_split(char* a_str, const char a_delim)
 {
@@ -322,3 +317,4 @@ int kz_json_get_keys(struct sip_msg* msg, char* json, char* field, char* dst)
 
 	return 1;
 }
+
