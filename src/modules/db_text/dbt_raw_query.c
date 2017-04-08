@@ -63,10 +63,10 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 		return res;
 
 	len = fields_end_ptr - (_s->s + 6) + 1;
-	fields_ptr = pkg_malloc(len);
+	fields_ptr = pkg_malloc(len+1);
+	memset(fields_ptr, 0, len+1);
 	strncpy(fields_ptr, _s->s + 6, len);
-	fields_ptr[len] = '\0';
-	fields_ptr = dbt_trim(fields_ptr);
+	dbt_trim(fields_ptr);
 
 	order_start_ptr = strcasestr(_s->s, " order by ");
 	if(order_start_ptr != NULL) {
@@ -83,9 +83,9 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 		nc = dbt_build_where(where_ptr + 7, &_k, &_op, &_v);
 	}
 
-	table_ptr = pkg_malloc(len);
+	table_ptr = pkg_malloc(len+1);
+	memset(table_ptr, 0, len+1);
 	strncpy(table_ptr, fields_end_ptr + 6, len);
-	table_ptr[len] = '\0';
 	dbt_trim(table_ptr);
 
 	table.s = table_ptr;
@@ -232,9 +232,9 @@ int dbt_raw_query_update(db1_con_t* _h, str* _s, db1_res_t** _r)
 		return res;
 
 	len = fields_start_ptr - table_start_ptr;
-	table_ptr = pkg_malloc(len);
+	table_ptr = pkg_malloc(len+1);
+	memset(table_ptr, 0, len+1);
 	strncpy(table_ptr, table_start_ptr, len);
-	table_ptr[len] = '\0';
 	dbt_trim(table_ptr);
 	table.s = table_ptr;
 	table.len = strlen(table_ptr);
@@ -247,10 +247,10 @@ int dbt_raw_query_update(db1_con_t* _h, str* _s, db1_res_t** _r)
 	
 	fields_end_ptr = where_ptr;
 	len = fields_end_ptr - ( fields_start_ptr + 4) + 1;
-	fields_ptr = pkg_malloc(len);
+	fields_ptr = pkg_malloc(len+1);
+	memset(fields_ptr, 0, len+1);
 	strncpy(fields_ptr, fields_start_ptr + 4, len);
-	fields_ptr[len] = '\0';
-	fields_ptr = dbt_trim(fields_ptr);
+	dbt_trim(fields_ptr);
 
 	ncols = dbt_build_where(fields_ptr, &_c, &_op2, &_cv);
 	if(ncols <0) {
@@ -330,9 +330,9 @@ int dbt_raw_query_delete(db1_con_t* _h, str* _s, db1_res_t** _r)
 		nkeys = dbt_build_where(where_ptr + 7, &_k, &_op1, &_kv);
 	}
 
-	table_ptr = pkg_malloc(len);
+	table_ptr = pkg_malloc(len+1);
+	memset(table_ptr, 0, len+1);
 	strncpy(table_ptr, fields_end_ptr + 6, len);
-	table_ptr[len] = '\0';
 	dbt_trim(table_ptr);
 
 	table.s = table_ptr;
@@ -415,9 +415,9 @@ int dbt_raw_query_replace(db1_con_t* _h, str* _s, db1_res_t** _r)
 		return res;
 
 	len = fields_start_ptr - table_start_ptr;
-	table_ptr = pkg_malloc(len);
+	table_ptr = pkg_malloc(len+1);
+	memset(table_ptr, 0, len+1);
 	strncpy(table_ptr, table_start_ptr, len);
-	table_ptr[len] = '\0';
 	dbt_trim(table_ptr);
 	table.s = table_ptr;
 	table.len = strlen(table_ptr);
@@ -430,10 +430,10 @@ int dbt_raw_query_replace(db1_con_t* _h, str* _s, db1_res_t** _r)
 	
 	fields_end_ptr = where_ptr;
 	len = fields_end_ptr - ( fields_start_ptr + 4) + 1;
-	fields_ptr = pkg_malloc(len);
+	fields_ptr = pkg_malloc(len+1);
+	memset(fields_ptr, 0, len+1);
 	strncpy(fields_ptr, fields_start_ptr + 4, len);
-	fields_ptr[len] = '\0';
-	fields_ptr = dbt_trim(fields_ptr);
+	dbt_trim(fields_ptr);
 
 	ncols = dbt_build_where(fields_ptr, &_c, &_op2, &_cv);
 	if(ncols <0) {
@@ -465,6 +465,8 @@ int dbt_raw_query_replace(db1_con_t* _h, str* _s, db1_res_t** _r)
 	cols = nkeys + ncols;
 	_f = pkg_malloc(sizeof(db_key_t) * cols);
 	_v = pkg_malloc(sizeof(db_val_t) * cols);
+	memset(_f, 0, sizeof(db_key_t) * cols);
+	memset(_v, 0, sizeof(db_key_t) * cols);
 	for(n=0; n < nkeys; n++) {
 		_f[n] = _k[n];
 		_v[n] = _kv[n];
