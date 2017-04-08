@@ -336,7 +336,7 @@ int dbt_raw_query_delete(db1_con_t* _h, str* _s, db1_res_t** _r)
 	dbt_trim(table_ptr);
 
 	table.s = table_ptr;
-    table.len = strlen(table_ptr);
+	table.len = strlen(table_ptr);
 	LM_DBG("using table '%.*s'\n", table.len, table.s);
 
 	if(dbt_use_table(_h, &table) != 0) {
