@@ -47,7 +47,6 @@
 
 static int has_to_tag(struct sip_msg* msg)
 {
-
 	if (parse_to_header(msg) < 0) return 0;
 	return (get_to(msg)->tag_value.len > 0) ? 1 : 0;
 }
