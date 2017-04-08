@@ -1834,8 +1834,8 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 	}
 
 	if(routing == NULL) {
-		LM_ERR("invalid routing\n");
-		goto error;
+		LM_INFO("creating empty routing key : %s\n", payload_s.s);
+		routing = kz_amqp_routing_new("");
 	}
 
 	exchange = kz_amqp_exchange_from_json(&exchange_s, json_obj);
