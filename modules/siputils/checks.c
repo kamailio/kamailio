@@ -322,7 +322,7 @@ ok:
 
 /*
  * Converts URI, if it is tel URI, to SIP URI.  Returns 1, if
- * conversion succeeded or if no conversion was needed, i.e., URI was not
+ * conversion succeeded and 2 if no conversion was needed, i.e., URI was not
  * tel URI.  Returns -1, if conversion failed.  Takes SIP URI hostpart from
  * second parameter and (if needed) writes the result to third paramater.
  */
@@ -337,15 +337,17 @@ int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res)
 	/* get parameters */
 	if (get_str_fparam(&uri, _msg, (fparam_t*)_uri) < 0) {
 		LM_ERR("failed to get uri value\n");
+		return -1;
 	}
 	if (get_str_fparam(&hostpart, _msg, (fparam_t*)_hostpart) < 0) {
 		LM_ERR("failed to get hostpart value\n");
+		return -1;
 	}
 	res = (pv_spec_t *)_res;
 
 	/* check if anything needs to be done */
-	if (uri.len < 4) return 1;
-	if (strncasecmp(uri.s, "tel:", 4) != 0) return 1;
+	if (uri.len < 4) return 2;
+	if (strncasecmp(uri.s, "tel:", 4) != 0) return 2;
 
 	/* reserve memory for clean tel uri */
 	tel_uri.s = pkg_malloc(uri.len+1);

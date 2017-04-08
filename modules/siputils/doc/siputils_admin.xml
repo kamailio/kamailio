@@ -513,8 +513,8 @@ get_uri_param("nat", "$var(nat)");
 		Converts URI in first param (pseudo variable or string) to
 		SIP URI, if it is a tel URI.  If conversion was done,
 		writes resulting SIP URI to third param (pseudo variable).
-		Returns 1 if conversion succeeded or if no conversion
-		was needed.
+		Returns 1 if conversion succeeded, 2 if no conversion
+		was needed, and -1 in case of error.
 		</para>
 		<para>
 		The conversion follows the rules in RFC 3261 section 19.1.6:
