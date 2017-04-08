@@ -515,7 +515,8 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 		<title><varname>method_filtering</varname> (integer)</title>
 		<para>
 		Tells if the contact filtering based on supported methods should be
-		performed during lookup. It's enabled only if it has a non zero 
+		performed during lookup on initial requests without to-tag.
+        It's enabled only if it has a non zero 
 		value. Supported methods are listed in the <quote>Allow:</quote> 
 		header in the REGISTER message and stored in the location database.
 		</para>
@@ -1032,8 +1033,9 @@ save("location", "0x00", "sip:test@kamailio.org");
 		the message (depending on append_branches parameter value).
 		</para>
 		<para>
-		If the <varname>method_filtering</varname> option is enabled,
-		the <function>lookup</function> function
+		If the <varname>method_filtering</varname> option is enabled and
+        request is initial request without to-tag, the
+        <function>lookup</function> function 
 		will return only the contacts that support the method of the
 		processed request.
 		</para>

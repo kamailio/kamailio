@@ -45,9 +45,16 @@
 #include "lookup.h"
 #include "config.h"
 
-#define allowed_method(_msg, _c) \
-	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) )
+static int has_to_tag(struct sip_msg* msg)
+{
 
+	if (parse_to_header(msg) < 0) return 0;
+	return (get_to(msg)->tag_value.len > 0) ? 1 : 0;
+}
+
+#define allowed_method(_msg, _c) \
+	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) || \
+	  has_to_tag(_msg) )
 
 /**
  * compare two instances, by skipping '<' & '>'

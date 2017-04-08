@@ -556,9 +556,10 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 3.17. method_filtering (integer)
 
    Tells if the contact filtering based on supported methods should be
-   performed during lookup. It's enabled only if it has a non zero value.
-   Supported methods are listed in the “Allow:” header in the REGISTER
-   message and stored in the location database.
+   performed during lookup on initial requests without to-tag. It's
+   enabled only if it has a non zero value. Supported methods are listed
+   in the “Allow:” header in the REGISTER message and stored in the
+   location database.
 
    Default value is 0 (disabled).
 
@@ -846,9 +847,9 @@ save("location", "0x00", "sip:test@kamailio.org");
    value and optionally the rest will be appended to the message
    (depending on append_branches parameter value).
 
-   If the method_filtering option is enabled, the lookup function will
-   return only the contacts that support the method of the processed
-   request.
+   If the method_filtering option is enabled and request is initial
+   request without to-tag, the lookup function will return only the
+   contacts that support the method of the processed request.
 
    Meaning of the parameters is as follows:
      * domain - Name of table that should be used for the lookup.
