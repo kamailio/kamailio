@@ -735,8 +735,10 @@ int kz_amqp_add_connection(modparam_t type, void* val)
 
     if(newConn->info.vhost == NULL) {
     	newConn->info.vhost = KZ_URL_ROOT;
+#if AMQP_VERSION_MAJOR == 0 && AMQP_VERSION_MINOR < 6
     } else if(newConn->info.vhost[0] == '/' && strlen(newConn->info.vhost) == 1) { // bug in amqp_parse_url ?
     	newConn->info.vhost++;
+#endif
     }
 
 	kz_amqp_server_ptr server_ptr = (kz_amqp_server_ptr)shm_malloc(sizeof(kz_amqp_server));
