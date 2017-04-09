@@ -2868,8 +2868,16 @@ void kz_amqp_send_worker_event(kz_amqp_server_ptr server_ptr, amqp_envelope_t* e
     int idx = envelope->channel-1;
     int worker = 0;
     int _kz_server_id = server_ptr->id;
-
-    json_obj_ptr json_obj = kz_json_parse((char*)envelope->message.body.bytes);
+    int msg_size = envelope->message.body.len;
+    char *json_data = pkg_malloc(msg_size + 1);
+    if(!json_data) {
+    	LM_ERR("no more package memory available. needed %d\n", msg_size + 1);
+    	return;
+    }
+    memset(json_data, 0, msg_size + 1);
+    memcpy(json_data, (char*)envelope->message.body.bytes, msg_size);
+    json_obj_ptr json_obj = kz_json_parse(json_data);
+    pkg_free(json_data);
     if (json_obj == NULL) {
     	LM_ERR("error parsing json body\n");
     	return;
