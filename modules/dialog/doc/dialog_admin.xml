@@ -1663,13 +1663,12 @@ redlg_setflag("1");
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>side</emphasis> - where to send the BYE. It can be:
-				'caller', 'callee', or both.
+				'caller', 'callee', or 'all' (send to both sides).
 			</para>
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from BRANCH_ROUTE,
-			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>dlg_bye</function> usage</title>
