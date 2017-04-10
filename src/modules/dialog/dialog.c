@@ -1173,40 +1173,36 @@ static int w_dlg_set_timeout(struct sip_msg *msg, char *pto, char *phe, char *ph
 	return 1;
 }
 
-static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2)
+/**
+ *
+ */
+static int ki_dlg_set_property(sip_msg_t *msg, str *pval)
 {
 	dlg_ctx_t *dctx;
 	dlg_cell_t *d;
-	str val;
 
-	if(fixup_get_svalue(msg, (gparam_t*)prop, &val)!=0)
-	{
-		LM_ERR("no property value\n");
-		return -1;
-	}
-	if(val.len<=0)
-	{
+	if(pval->len<=0) {
 		LM_ERR("empty property value\n");
 		return -1;
 	}
 	if ( (dctx=dlg_get_dlg_ctx())==NULL )
 		return -1;
 
-	if(val.len==6 && strncmp(val.s, "ka-src", 6)==0) {
+	if(pval->len==6 && strncmp(pval->s, "ka-src", 6)==0) {
 		dctx->iflags |= DLG_IFLAG_KA_SRC;
 		d = dlg_get_by_iuid(&dctx->iuid);
 		if(d!=NULL) {
 			d->iflags |= DLG_IFLAG_KA_SRC;
 			dlg_release(d);
 		}
-	} else if(val.len==6 && strncmp(val.s, "ka-dst", 6)==0) {
+	} else if(pval->len==6 && strncmp(pval->s, "ka-dst", 6)==0) {
 		dctx->iflags |= DLG_IFLAG_KA_DST;
 		d = dlg_get_by_iuid(&dctx->iuid);
 		if(d!=NULL) {
 			d->iflags |= DLG_IFLAG_KA_DST;
 			dlg_release(d);
 		}
-	} else if(val.len==15 && strncmp(val.s, "timeout-noreset", 15)==0) {
+	} else if(pval->len==15 && strncmp(pval->s, "timeout-noreset", 15)==0) {
 		dctx->iflags |= DLG_IFLAG_TIMER_NORESET;
 		d = dlg_get_by_iuid(&dctx->iuid);
 		if(d!=NULL) {
@@ -1214,11 +1210,27 @@ static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2)
 			dlg_release(d);
 		}
 	} else {
-		LM_ERR("unknown property value [%.*s]\n", val.len, val.s);
+		LM_ERR("unknown property value [%.*s]\n", pval->len, pval->s);
 		return -1;
 	}
 
 	return 1;
+}
+
+/**
+ *
+ */
+static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2)
+{
+	str val;
+
+	if(fixup_get_svalue(msg, (gparam_t*)prop, &val)!=0)
+	{
+		LM_ERR("no property value\n");
+		return -1;
+	}
+
+	return ki_dlg_set_property(msg, &val);
 }
 
 static int w_dlg_set_timeout_by_profile3(struct sip_msg *msg, char *profile,
@@ -1432,11 +1444,112 @@ static int fixup_dlg_remote_profile(void** param, int param_no)
 /**
  *
  */
+static int ki_dlg_bye(sip_msg_t *msg, str *side)
+{
+	dlg_cell_t *dlg = NULL;
+
+	dlg = dlg_get_ctx_dialog();
+	if(dlg==NULL)
+		return -1;
+
+	if(side->len==6 && strncasecmp(side->s, "caller", 6)==0)
+	{
+		if(dlg_bye(dlg, NULL, DLG_CALLER_LEG)!=0)
+			goto error;
+		goto done;
+	} else if(side->len==6 && strncasecmp(side->s, "callee", 6)==0) {
+		if(dlg_bye(dlg, NULL, DLG_CALLEE_LEG)!=0)
+			goto error;
+		goto done;
+	} else {
+		if(dlg_bye_all(dlg, NULL)!=0)
+			goto error;
+		goto done;
+	}
+
+done:
+	dlg_release(dlg);
+	return 1;
+
+error:
+	dlg_release(dlg);
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_dlg_set_timeout_id(sip_msg_t *msg, int to, int he, int hi)
+{
+	dlg_cell_t *dlg = NULL;
+
+	dlg = dlg_lookup(he, hi);
+	if(dlg==NULL) {
+		LM_DBG("no dialog found\n");
+		return -1;
+	}
+
+	/* update_dlg_timeout() does dlg_release() */
+	if(update_dlg_timeout(dlg, to) != 0)
+		return -1;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_dlg_set_timeout(sip_msg_t *msg, int to)
+{
+	dlg_cell_t *dlg = NULL;
+
+	dlg = dlg_get_msg_dialog(msg);
+	if(dlg==NULL) {
+		LM_DBG("no dialog found\n");
+		return -1;
+	}
+
+	/* update_dlg_timeout() does dlg_release() */
+	if(update_dlg_timeout(dlg, to) != 0)
+		return -1;
+
+	return 1;
+
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_manage"),
 		SR_KEMIP_INT, dlg_manage,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_bye"),
+		SR_KEMIP_INT, ki_dlg_bye,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("is_known_dlg"),
+		SR_KEMIP_INT, is_known_dlg,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_set_timeout"),
+		SR_KEMIP_INT, ki_dlg_set_timeout,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_set_timeout_id"),
+		SR_KEMIP_INT, ki_dlg_set_timeout_id,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_set_property"),
+		SR_KEMIP_INT, ki_dlg_set_property,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
