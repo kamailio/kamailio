@@ -34,6 +34,7 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/shm_init.h"
+#include "../../core/kemi.h"
 
 #include "mqueue_api.h"
 #include "api.h"
@@ -323,5 +324,90 @@ static int mqueue_rpc_init(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int ki_mq_add(sip_msg_t* msg, str* mq, str* key, str* val)
+{
+	if(mq_item_add(mq, key, val)<0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_mq_fetch(sip_msg_t* msg, str* mq)
+{
+	int ret;
+	ret = mq_head_fetch(mq);
+	if(ret<0)
+		return ret;
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_mq_size(sip_msg_t *msg, str *mq)
+{
+	int ret;
+
+	ret = _mq_get_csize(mq);
+
+	if(ret < 0 && mq!=NULL)
+		LM_ERR("mqueue %.*s not found\n", mq->len, mq->s);
+
+	return ret;
+}
+
+/**
+ *
+ */
+static int ki_mq_pv_free(sip_msg_t* msg, str *mq)
+{
+	mq_pv_free(mq);
+	return 1;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_mqueue_exports[] = {
+	{ str_init("mqueue"), str_init("mq_add"),
+		SR_KEMIP_INT, ki_mq_add,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("mqueue"), str_init("mq_fetch"),
+		SR_KEMIP_INT, ki_mq_fetch,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("mqueue"), str_init("mq_size"),
+		SR_KEMIP_INT, ki_mq_size,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("mqueue"), str_init("mq_pv_free"),
+		SR_KEMIP_INT, ki_mq_pv_free,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_mqueue_exports);
 	return 0;
 }
