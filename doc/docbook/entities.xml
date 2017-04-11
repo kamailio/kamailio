@@ -11,16 +11,16 @@
 <!ENTITY kamailioconfig "kamailio.cfg">
 <!ENTITY kamailioconfdir "/usr/local/etc/kamailio">
 
-<!ENTITY kamwiki "http://www.kamailio.org/wiki/">
+<!ENTITY kamwiki "https://www.kamailio.org/wiki/">
 <!ENTITY kamwikilink "<ulink url='&kamwiki;'>&kamwiki;</ulink>">
 <!ENTITY kamcmd "kamcmd">
 
-<!ENTITY kamailiohome "http://www.kamailio.org/">
+<!ENTITY kamailiohome "https://www.kamailio.org/">
 <!ENTITY kamailiobugs "https://github.com/kamailio/kamailio/issues">
-<!ENTITY kamailiohelp "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users">
-<!ENTITY kamailiousers "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users">
-<!ENTITY kamailiodev "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev">
-<!ENTITY kamailiodbdocs "http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html">
+<!ENTITY kamailiohelp "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users">
+<!ENTITY kamailiousers "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users">
+<!ENTITY kamailiodev "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev">
+<!ENTITY kamailiodbdocs "https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html">
 
 <!ENTITY kamailiohomelink "<ulink url='&kamailiohome;'>&kamailiohome;</ulink>">
 <!ENTITY kamailiobugslink "<ulink url='&kamailiobugs;'>&kamailiobugs;</ulink>">
@@ -29,9 +29,9 @@
 <!ENTITY kamailiodevlink "<ulink url='&kamailiodev;'>&kamailiodev;</ulink>">
 <!ENTITY kamailiodbdocslink "<ulink url='&kamailiodbdocs;'>&kamailiodbdocs;</ulink>">
 
-<!ENTITY kamailiohelpmail "<email>sr-users@lists.sip-router.org</email>">
-<!ENTITY kamailiousersmail "<email>sr-users@lists.sip-router.org</email>">
-<!ENTITY kamailiodevmail "<email>sr-dev@lists.sip-router.org</email>">
+<!ENTITY kamailiohelpmail "<email>sr-users@lists.kamailio.org</email>">
+<!ENTITY kamailiousersmail "<email>sr-users@lists.kamailio.org</email>">
+<!ENTITY kamailiodevmail "<email>sr-dev@lists.kamailio.org</email>">
 
 <!ENTITY ctltool "kamctl">
 <!ENTITY ctltoolrc "kamctlrc">
@@ -51,10 +51,10 @@
 <!ENTITY sercmd "kamcmd">
 <!ENTITY ctlsocket "kamailio_ctl">
 
-<!ENTITY serhome "http://iptel.org/ser">
-<!ENTITY serbugs "http://sip-router.org/tracker">
-<!ENTITY serusers "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users">
-<!ENTITY serdev "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev">
+<!ENTITY serhome "https://www.kamailio.org">
+<!ENTITY serbugs "https://github.com/kamailio/kamailio/issues">
+<!ENTITY serusers "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users">
+<!ENTITY serdev "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev">
 
 <!ENTITY serhomelink "<ulink url='&serhome;'>&serhome;</ulink>">
 <!ENTITY serbugslink "<ulink url='&serbugs;'>&serbugs;</ulink>">
@@ -62,8 +62,8 @@
 <!ENTITY seruserslink "<ulink url='&serusers;'>&serusers;</ulink>">
 <!ENTITY serdevlink "<ulink url='&serdev;'>&serdev;</ulink>">
 
-<!ENTITY serusersmail "<email>sr-users@lists.sip-router.org</email>">
-<!ENTITY serdevmail "<email>sr-dev@lists.sip-router.org</email>">
+<!ENTITY serusersmail "<email>sr-users@lists.kamailio.org</email>">
+<!ENTITY serdevmail "<email>sr-dev@lists.kamailio.org</email>">
 
 <!ENTITY defaultdb "mysql://kamailio:kamailiorw@localhost/kamailio">
 <!ENTITY defaultrodb "mysql://kamailioro:kamailioro@localhost/kamailio">
@@ -85,21 +85,21 @@
 <!ENTITY nat "<acronym>NAT</acronym>">
 <!ENTITY ip "<acronym>IP</acronym>">
 <!ENTITY udp "<acronym>UDP</acronym>">
-<!ENTITY ietf "<ulink url='http://www.ietf.org'>IETF</ulink>">
+<!ENTITY ietf "<ulink url='https://www.ietf.org'>IETF</ulink>">
 <!ENTITY im "<acronym>IM</acronym>">
 <!ENTITY smtp "<acronym>SMTP</acronym>">
 <!ENTITY tls "<acronym>TLS</acronym>">
 <!ENTITY xmpp "<acronym>XMPP</acronym>">
-<!ENTITY gnu "<ulink url='http://www.gnu.org'>GNU</ulink>">
-<!ENTITY gpl "<ulink url='http://www.gnu.org/licenses/licenses.html#GPL'>GPL</ulink>">
-<!ENTITY openssl "<ulink url='http://www.openssl.org'>OpenSSL</ulink>">
+<!ENTITY gnu "<ulink url='https://www.gnu.org'>GNU</ulink>">
+<!ENTITY gpl "<ulink url='https://www.gnu.org/licenses/licenses.html#GPL'>GPL</ulink>">
+<!ENTITY openssl "<ulink url='https://www.openssl.org'>OpenSSL</ulink>">
 
 <!-- Often used RFCs -->
 
-<!ENTITY rfc3261 "<ulink url='http://www.ietf.org/rfc/rfc3261.txt'>RFC3261</ulink>">
-<!ENTITY rfc822 "<ulink url='http://www.ietf.org/rfc/rfc822.txt'>RFC822</ulink>">
-<!ENTITY rfc2543 "<ulink url='http://www.ietf.org/rfc/rfc2543.txt'>RFC2543</ulink>">
-<!ENTITY rfc5626 "<ulink url='http://www.ietf.org/rfc/rfc5626.txt'>RFC5626</ulink>">
+<!ENTITY rfc3261 "<ulink url='https://www.ietf.org/rfc/rfc3261.txt'>RFC3261</ulink>">
+<!ENTITY rfc822 "<ulink url='https://www.ietf.org/rfc/rfc822.txt'>RFC822</ulink>">
+<!ENTITY rfc2543 "<ulink url='https://www.ietf.org/rfc/rfc2543.txt'>RFC2543</ulink>">
+<!ENTITY rfc5626 "<ulink url='https://www.ietf.org/rfc/rfc5626.txt'>RFC5626</ulink>">
 
 <!-- Often used 3rd party libraries  -->
 <!ENTITY openssl "<ulink url='https://www.openssl.org'>OpenSSL</ulink>">
