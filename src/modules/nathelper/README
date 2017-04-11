@@ -60,6 +60,7 @@ Ovidiu Sas
               4.12. keepalive_timeout (int)
               4.13. udpping_from_path (int)
               4.14. append_sdp_oldmediaip (int)
+              4.15. filter_server_id (int)
 
         5. Functions
 
@@ -104,19 +105,20 @@ Ovidiu Sas
    1.12. Set keepalive_timeout parameter
    1.13. Set udpping_from_path parameter
    1.14. Set append_sdp_oldmediaip parameter
-   1.15. fix_nated_contact usage
-   1.16. fix_nated_sdp usage
-   1.17. add_rcv_paramer usage
-   1.18. fix_nated_register usage
-   1.19. nat_uac_test usage
-   1.20. is_rfc1918 usage
-   1.21. add_contact_alias usage
-   1.22. handle_ruri_alias usage
-   1.23. set_contact_alias usage
-   1.24. $rr_count usage
-   1.25. $rr_top_count usage
-   1.26. nathelper.enable_ping usage
-   1.27. @nathelper.rewrite_contact usage
+   1.15. Set filter_server_id parameter
+   1.16. fix_nated_contact usage
+   1.17. fix_nated_sdp usage
+   1.18. add_rcv_paramer usage
+   1.19. fix_nated_register usage
+   1.20. nat_uac_test usage
+   1.21. is_rfc1918 usage
+   1.22. add_contact_alias usage
+   1.23. handle_ruri_alias usage
+   1.24. set_contact_alias usage
+   1.25. $rr_count usage
+   1.26. $rr_top_count usage
+   1.27. nathelper.enable_ping usage
+   1.28. @nathelper.rewrite_contact usage
 
 Chapter 1. Admin Guide
 
@@ -145,6 +147,7 @@ Chapter 1. Admin Guide
         4.12. keepalive_timeout (int)
         4.13. udpping_from_path (int)
         4.14. append_sdp_oldmediaip (int)
+        4.15. filter_server_id (int)
 
    5. Functions
 
@@ -242,6 +245,7 @@ Chapter 1. Admin Guide
    4.12. keepalive_timeout (int)
    4.13. udpping_from_path (int)
    4.14. append_sdp_oldmediaip (int)
+   4.15. filter_server_id (int)
 
 4.1. force_socket (string)
 
@@ -444,6 +448,18 @@ modparam("nathelper", "udpping_from_path", 1)
 modparam("nathelper", "append_sdp_oldmediaip", 1)
 ...
 
+4.15. filter_server_id (int)
+
+   Filter contacts by “server_id” core parameter. Use this parameter to
+   limit pinging. When set to “1”, only proxy instances which send packets
+   are those where core server_id matches server_id saved in usrloc.
+   Default value is “0” (disabled).
+
+   Example 1.15. Set filter_server_id parameter
+...
+modparam("nathelper", "filter_server_id", 1)
+...
+
 5. Functions
 
    5.1. fix_nated_contact()
@@ -464,7 +480,7 @@ modparam("nathelper", "append_sdp_oldmediaip", 1)
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.15. fix_nated_contact usage
+   Example 1.16. fix_nated_contact usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
@@ -494,7 +510,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.16. fix_nated_sdp usage
+   Example 1.17. fix_nated_sdp usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
@@ -516,7 +532,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.17. add_rcv_paramer usage
+   Example 1.18. add_rcv_paramer usage
 ...
 add_rcv_param(); # add the parameter to the Contact header
 ....
@@ -536,7 +552,7 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.18. fix_nated_register usage
+   Example 1.19. fix_nated_register usage
 ...
 fix_nated_register();
 ...
@@ -570,7 +586,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.19. nat_uac_test usage
+   Example 1.20. nat_uac_test usage
 ...
 if(nat_uac_test("19")) {
     rtpproxy_manage("co");
@@ -584,7 +600,7 @@ if(nat_uac_test("19")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.20. is_rfc1918 usage
+   Example 1.21. is_rfc1918 usage
 ...
 if(is_rfc1918("$rd")) {
     # domain in r-uri is private address
@@ -601,7 +617,7 @@ if(is_rfc1918("$rd")) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and LOCAL_ROUTE.
 
-   Example 1.21. add_contact_alias usage
+   Example 1.22. add_contact_alias usage
 ...
     if (!is_present_hf("Record-Route")) {
         if (!add_contact_alias("$var(src_ip)", "$Rp", "tcp")) {
@@ -628,7 +644,7 @@ if(is_rfc1918("$rd")) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, and
    LOCAL_ROUTE.
 
-   Example 1.22. handle_ruri_alias usage
+   Example 1.23. handle_ruri_alias usage
 ...
     if ($du == "") {
         handle_ruri_alias();
@@ -657,7 +673,7 @@ if(is_rfc1918("$rd")) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and FAILURE_ROUTE.
 
-   Example 1.23. set_contact_alias usage
+   Example 1.24. set_contact_alias usage
 ...
     if (!is_present_hf("Record-Route")) {
         if (!set_contact_alias()) {
@@ -677,7 +693,7 @@ if(is_rfc1918("$rd")) {
 
    Number of Record Routes in received SIP request or reply.
 
-   Example 1.24. $rr_count usage
+   Example 1.25. $rr_count usage
 ...
     $avp(rr_count) = $rr_count;
 ...
@@ -689,7 +705,7 @@ if(is_rfc1918("$rd")) {
    value of $rr_top_count is 1. If there is no Record Route(s), value of
    $rr_top_count is 0.
 
-   Example 1.25. $rr_top_count usage
+   Example 1.26. $rr_top_count usage
 ...
     if ($rr_count == $avp(rr_count) + $rr_top_count) {
         route(ADD_CONTACT_ALIAS);
@@ -707,7 +723,7 @@ if(is_rfc1918("$rd")) {
 
    The function takes only one parameter - a number in decimal format.
 
-   Example 1.26. nathelper.enable_ping usage
+   Example 1.27. nathelper.enable_ping usage
 ...
 $ kamcmd nathelper.enable_ping 1
 ...
@@ -722,7 +738,7 @@ $ kamcmd nathelper.enable_ping 1
    counted from 1. Only IP:port is rewritten, remaining part are left
    unchanged. Full nameaddr is supported.
 
-   Example 1.27. @nathelper.rewrite_contact usage
+   Example 1.28. @nathelper.rewrite_contact usage
 ...
 $c = @nathelper.rewrite_contact[1];
 ...
