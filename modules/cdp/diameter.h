@@ -116,7 +116,6 @@
 	#define ST_MSG_CODE      0x13010000
 	#define MASK_MSG_CODE    0xffffff00
 #else
-	#error BIG endian detected!!
 	#define AS_MSG_CODE      0x00000112
 	#define AC_MSG_CODE      0x0000010f
 	#define CE_MSG_CODE      0x00000101
