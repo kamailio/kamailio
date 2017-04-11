@@ -781,7 +781,7 @@ failure_route[REMOTE_AUTH] {
      * $uac_req(key)
 
    Exported pseudo-variables are documented at
-   http://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wiki/.
 
 6. Event Routes
 

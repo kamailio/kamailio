@@ -10,7 +10,7 @@ Guillaume Bour
 
    <guillaume@bour.cc>
 
-   Copyright � 2017 Guillaume Bour
+   Copyright © 2017 Guillaume Bour
      __________________________________________________________________
 
    Table of Contents
@@ -109,11 +109,11 @@ modparam("keepalive", "destination", "sip.provider.com")
 
 2.4. Functions
 
-2.4.1. is_alive(destination)
+2.4.1.  is_alive(destination)
 
    Get destination status
 
-   Parameter "destination" is destination you want to check status
+   Parameter “destination” is destination you want to check status
 
    Return value: 1 if destination is up, 2 if destination is down, -1 on
    error.

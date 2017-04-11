@@ -237,7 +237,7 @@ kamcmd matrix.reload
    template. Database, table, and column names can be set with module
    parameters so they can be changed. You can also find the complete
    database documentation on the project webpage,
-   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
    Example 1.8. Example database content - matrix table
 ...

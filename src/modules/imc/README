@@ -391,4 +391,4 @@ kamcmd imc_list_members _room_
    by yourself you can use the imc-create.sql SQL script in the database
    directories in the kamailio/scripts folder as template. You can also
    find the complete database documentation on the project webpage,
-   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.

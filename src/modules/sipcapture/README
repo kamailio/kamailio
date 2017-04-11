@@ -55,17 +55,12 @@ Alexandr Dubovikov
               4.1. sip_capture([table])
               4.2. report_capture([table],[data])
 
-        5. Exported pseudo-variables
+        5. RPC Commands
 
-              5.1. $hep(src_ip)
-              5.2. $hep(dst_ip)
+              5.1. sipcapture.status param
 
-        6. RPC Commands
-
-              6.1. sipcapture.status param
-
-        7. Database setup
-        8. Limitations
+        6. Database setup
+        7. Limitations
 
    List of Examples
 
@@ -130,16 +125,12 @@ Chapter 1. Admin Guide
         4.1. sip_capture([table])
         4.2. report_capture([table],[data])
 
-   5. Exported pseudo-variables
-        5.1. $hep(src_ip)
-        5.2. $hep(dst_ip)
+   5. RPC Commands
 
-   6. RPC Commands
+        5.1. sipcapture.status param
 
-        6.1. sipcapture.status param
-
-   7. Database setup
-   8. Limitations
+   6. Database setup
+   7. Limitations
 
 1. Overview
 
@@ -514,26 +505,11 @@ report_capture("report_data");
 report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 ...
 
-5. Exported pseudo-variables
+5. RPC Commands
 
-   5.1. $hep(src_ip)
-   5.2. $hep(dst_ip)
+   5.1. sipcapture.status param
 
-   Exported pseudo-variables are listed in the next sections.
-
-5.1. $hep(src_ip)
-
-   Returns the current HEP's message original source IP address.
-
-5.2. $hep(dst_ip)
-
-   Returns the current HEP's message original destination IP address.
-
-6. RPC Commands
-
-   6.1. sipcapture.status param
-
-6.1.  sipcapture.status param
+5.1.  sipcapture.status param
 
    Name: sipcapture.status
 
@@ -551,7 +527,7 @@ kamcmd sipcapture.status off
 kamcmd sipcapture.status check
 ...
 
-7. Database setup
+6. Database setup
 
    Before running Kamailio with the sipcapture module, you have to setup
    the database tables where the module will store the data. For that, if
@@ -559,9 +535,9 @@ kamcmd sipcapture.status check
    install everything by yourself you can use the homer_databases.sql, SQL
    script in the sql folder of sipcapture module as template. You can also
    find the complete database documentation on the project webpage,
-   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-8. Limitations
+7. Limitations
 
      * 1. Only one capturing mode on RAW socket is supported: IPIP or
        monitoring/mirroring port. Don't activate both at the same time.

@@ -801,7 +801,7 @@ sht_iterator_end("i1");
      * $shtrecord(attribute)
 
    Exported pseudo-variables are documented at
-   http://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wiki/.
 
 6. RPC Commands
 

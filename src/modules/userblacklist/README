@@ -566,7 +566,7 @@ main] prefix
    with module parameters so they can be changed, but the name of the
    columns must be as they are in the SQL script. You can also find the
    complete database documentation on the project webpage,
-   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
    Example 1.26. Example database content - globalblacklist table
 ...

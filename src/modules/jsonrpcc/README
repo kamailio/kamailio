@@ -1,4 +1,4 @@
-jsonrpc-c (client) Module
+JSONRPCC (jsonrpc client) Module
 
 Matthew Williams
 
@@ -110,8 +110,8 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set servers parameter
 ...
-modparam("jsonrpc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:
-9999,1")
+modparam("jsonrpcc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server
+:9999,1")
 ...
 
 3.2. max_conn_attempts (int)
@@ -121,7 +121,7 @@ modparam("jsonrpc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:
 
    Example 1.2. Set max_conn_attempts parameter
 ...
-modparam("jsonrpc", "max_conn_attempts", 10)
+modparam("jsonrpcc", "max_conn_attempts", 10)
 ...
 
 4. Functions

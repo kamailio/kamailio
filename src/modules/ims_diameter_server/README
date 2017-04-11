@@ -4,7 +4,7 @@ Carsten Bock
 
    ng-voice GmbH
 
-   Copyright © 2016-2017 ng-voice GmbH
+   Copyright Â© 2016-2017 ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -161,7 +161,7 @@ Chapter 1. Admin Guide
    3.1. diameter_request([peer], appid, commandcode, message)
    3.2. diameter_request_async([peer], appid, commandcode, message)
 
-3.1. diameter_request([peer], appid, commandcode, message)
+3.1.  diameter_request([peer], appid, commandcode, message)
 
    This method will send a Diameter Request.
 
@@ -188,7 +188,7 @@ Chapter 1. Admin Guide
 diameter_request("16777216", "300", "{ some json }");
 ...
 
-3.2. diameter_request_async([peer], appid, commandcode, message)
+3.2.  diameter_request_async([peer], appid, commandcode, message)
 
    This method will send a Diameter Request asynchronously. The Reply to
    this request will be visible in the event-route "diameter:response".
@@ -206,7 +206,7 @@ diameter_request("16777216", "300", "{ some json }");
    4.3. $diameter_request
    4.4. $diameter_response
 
-4.1. $diameter_application
+4.1.  $diameter_application
 
    This PV provides the requested Diameter Application, for example:
      * 16777216 - Diameter Cx/Dx
@@ -214,18 +214,18 @@ diameter_request("16777216", "300", "{ some json }");
      * 4 - Diameter Ro (Online Charging)
      * ...
 
-4.2. $diameter_command
+4.2.  $diameter_command
 
    This PV provides the requested Diameter Command, for example:
      * 300 - Diameter Cx/Dx User-Assignment Request (UAR)
      * 301 - Diameter Cx/Dx Server-Assignment Request (SAR)
      * ...
 
-4.3. $diameter_request
+4.3.  $diameter_request
 
    This PV provides the Diameter Request as JSON.
 
-4.4. $diameter_response
+4.4.  $diameter_response
 
    The Response is read from the PVAR.
 
@@ -234,7 +234,7 @@ diameter_request("16777216", "300", "{ some json }");
    5.1. diameter:request
    5.2. diameter:response
 
-5.1. diameter:request
+5.1.  diameter:request
 
    This route is called for any incoming Diameter Request
 ...
@@ -248,7 +248,7 @@ and/$diameter_command", "application/json", "$diameter_request", "$var(response)
 }
 ...
 
-5.2. diameter:response
+5.2.  diameter:response
 
    This route is called for incoming Diameter replies, if the request was
    processed asynchronously.
