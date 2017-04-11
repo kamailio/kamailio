@@ -771,7 +771,7 @@ Name
 
    Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+   Take a look at https://www.kamailio.org/.
 
    2.11.
 
@@ -780,16 +780,16 @@ Name
    First at all check if your question was already answered on one of our
    mailing lists:
      * User Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
      * Developer Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
 
    E-mails regarding any stable Kamailio release should be sent to
-   <sr-users@lists.sip-router.org> and e-mails regarding development
-   versions should be sent to <sr-dev@lists.sip-router.org>.
+   <sr-users@lists.kamailio.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.kamailio.org>.
 
    If you want to keep the mail private, send it to
-   <sr-users@lists.sip-router.org>.
+   <sr-users@lists.kamailio.org>.
 
    2.12.
 

@@ -818,7 +818,7 @@ if (is_from_gw("3","1") {
    dr_gateways, dr_rules. The SQL syntax to create them can be found in
    drouting-create.sql script in kamctl db directories. You can also find
    the complete database documentation on the project webpage,
-   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
 Chapter 2. Developer Guide
 

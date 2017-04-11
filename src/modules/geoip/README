@@ -165,4 +165,4 @@ if(geoip_match("$si", "src"))
           + contc - continent code
 
    Exported pseudo-variables are documented at
-   http://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wiki/.

@@ -357,7 +357,7 @@ modparam("presence_xml", "force_dummy_presence", 1)
    syntax to create it can be found in presence-create.sql script in the
    database directories in the kamailio/scripts folder. You can also find
    the complete database documentation on the project webpage,
-   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
 Chapter 2. Developer Guide
 

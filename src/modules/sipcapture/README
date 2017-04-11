@@ -535,7 +535,7 @@ kamcmd sipcapture.status check
    install everything by yourself you can use the homer_databases.sql, SQL
    script in the sql folder of sipcapture module as template. You can also
    find the complete database documentation on the project webpage,
-   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
 7. Limitations
 
