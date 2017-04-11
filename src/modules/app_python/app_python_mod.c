@@ -95,18 +95,6 @@ struct module_exports exports = {
 /**
  *
  */
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	str ename = str_init("python");
-
-	sr_kemi_eng_register(&ename, sr_kemi_config_engine_python);
-
-	return 0;
-}
-
-/**
- *
- */
 static int mod_init(void)
 {
 	char *dname_src, *bname_src;
@@ -420,4 +408,78 @@ static void mod_destroy(void)
 	destroy_mod_Ranks();
 	destroy_mod_Logger();
 	destroy_mod_Router();
+}
+
+/**
+ *
+ */
+static int ki_app_python_exec(sip_msg_t *msg, str *method)
+{
+	if(method==NULL || method->s==NULL || method->len<=0) {
+		LM_ERR("invalid method name\n");
+		return -1;
+	}
+	if(method->s[method->len]!='\0') {
+		LM_ERR("invalid terminated method name\n");
+		return -1;
+	}
+	return apy_exec(msg, method->s, NULL, 1);
+}
+
+/**
+ *
+ */
+static int ki_app_python_exec_p1(sip_msg_t *msg, str *method, str *p1)
+{
+	if(method==NULL || method->s==NULL || method->len<=0) {
+		LM_ERR("invalid method name\n");
+		return -1;
+	}
+	if(method->s[method->len]!='\0') {
+		LM_ERR("invalid terminated method name\n");
+		return -1;
+	}
+	if(p1==NULL || p1->s==NULL || p1->len<0) {
+		LM_ERR("invalid p1 value\n");
+		return -1;
+	}
+	if(p1->s[p1->len]!='\0') {
+		LM_ERR("invalid terminated p1 value\n");
+		return -1;
+	}
+
+	return apy_exec(msg, method->s, p1->s, 1);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_app_python_exports[] = {
+	{ str_init("app_python"), str_init("exec"),
+		SR_KEMIP_INT, ki_app_python_exec,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("app_python"), str_init("exec_p1"),
+		SR_KEMIP_INT, ki_app_python_exec_p1,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	str ename = str_init("python");
+
+	sr_kemi_eng_register(&ename, sr_kemi_config_engine_python);
+	sr_kemi_modules_add(sr_kemi_app_python_exports);
+
+	return 0;
 }
