@@ -152,7 +152,7 @@ modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
 modparam("rtimer", "exec", "timer=ta;route=8")
 
 route[8] {
-    xlog("timer routine: time is %TF\n");
+    xlog("timer routine: time is $TF\n");
     # delete from my sql cache table entries older than 2H
     sql_query("delete from kamailio_cache where last_updated&lt;$TS-3600");
 }
