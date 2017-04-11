@@ -439,6 +439,28 @@ modparam("nathelper", "append_sdp_oldmediaip", 1)
 </programlisting>
 		</example>
 	</section>
+
+	<section id="nathelper.p.filter_server_id">
+		<title><varname>filter_server_id</varname> (int)</title>
+		<para>
+		Filter contacts by <quote>server_id</quote> core parameter.
+		Use this parameter to limit pinging. When set to <quote>1</quote>,
+		only proxy instances which send packets are those where core server_id
+		matches server_id saved in usrloc.
+		<emphasis>
+			Default value is <quote>0</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>filter_server_id</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "filter_server_id", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
