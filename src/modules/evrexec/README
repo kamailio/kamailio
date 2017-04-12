@@ -1,0 +1,106 @@
+EvRExec Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2017 http://www.asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. exec (str)
+
+   List of Examples
+
+   1.1. Set exec parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. exec (str)
+
+1. Overview
+
+   The module executes even route blocks once on dedicated processes. The
+   execution can be delayed for an interval of time.
+
+   The actions in the event route should be a loop or other tasks that run
+   forever.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. exec (str)
+
+3.1. exec (str)
+
+   The definition of an exec task. The value of the parameter must have
+   the following format:
+     * "name=_string_;wait=_number_;workers=_number_"
+
+   The parameter can be set multiple times to get more exec tasks in same
+   configuration file.
+     * name - name of the event route to be executed.
+     * workers - if set to 0 or 1 the task is executed in a dedicated
+       process. Any number > 1 will create more dedicated processes, each
+       of them executing the task.
+     * wait - timer interval in micro-seconds to wait inside the dedicated
+       process before executing the task.
+
+   Default value is NULL.
+
+   Example 1.1. Set exec parameter
+...
+modparam("evrexec", "exec", "name=evrexec:timer;wait=1000;workers=1;")
+...
+event_route[evrexec:timer] {
+  $var(x) = 0;
+  while(1) {
+    xlog("$$var(x) is $var(x)\n");
+    $var(x) = $var(x) + 1;
+    sleep("600");
+  }
+}
+...

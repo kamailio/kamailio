@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The module executes even route blocks once on dedicated processes. The
+		execution can be delayed for an interval of time.
+	</para>
+	<para>
+		The actions in the event route should be a loop or other tasks that
+		run forever.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>exec</varname> (str)</title>
+		<para>
+		The definition of an exec task. The value of the parameter must have the
+		following format:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+		"name=_string_;wait=_number_;workers=_number_"
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameter can be set multiple times to get more exec tasks in
+			same configuration file.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>name</emphasis> - name of the event route to be executed.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>workers</emphasis> - if set to 0 or 1 the task is executed
+			in a dedicated process. Any number > 1 will create more dedicated
+			processes, each of them executing the task.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>wait</emphasis> - timer interval in micro-seconds to wait
+			inside the dedicated process before executing the task.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>exec</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evrexec", "exec", "name=evrexec:timer;wait=1000;workers=1;")
+...
+event_route[evrexec:timer] {
+  $var(x) = 0;
+  while(1) {
+    xlog("$$var(x) is $var(x)\n");
+    $var(x) = $var(x) + 1;
+    sleep("600");
+  }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+</chapter>
+
