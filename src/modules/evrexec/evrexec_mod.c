@@ -32,6 +32,7 @@
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/parser/parse_param.h"
+#include "../../core/kemi.h"
 #include "../../core/fmsg.h"
 
 
@@ -52,7 +53,7 @@ static int mod_init(void);
 static int child_init(int);
 
 int evrexec_param(modparam_t type, void* val);
-void evrexec_process(evrexec_task_t *it);
+void evrexec_process(evrexec_task_t *it, int idx);
 
 
 static param_export_t params[]={
@@ -123,7 +124,7 @@ static int child_init(int rank)
 	while(it) {
 		for(i=0; i<it->workers; i++) {
 			snprintf(si_desc, MAX_PT_DESC, "EVREXEC child=%d exec=%.*s",
-			         i, it->ename.len, it->ename.s);
+					i, it->ename.len, it->ename.s);
 			pid=fork_process(PROC_RPC, si_desc, 1);
 			if (pid<0)
 				return -1; /* error */
@@ -133,7 +134,7 @@ static int child_init(int rank)
 				if (cfg_child_init())
 					return -1;
 
-				evrexec_process(it);
+				evrexec_process(it, i);
 			}
 		}
 		it = it->next;
@@ -145,15 +146,26 @@ static int child_init(int rank)
 /**
  *
  */
-void evrexec_process(evrexec_task_t *it)
+void evrexec_process(evrexec_task_t *it, int idx)
 {
 	sip_msg_t *fmsg;
+	sr_kemi_eng_t *keng = NULL;
+	str sidx = STR_NULL;
 
 	if(it!=NULL) {
 		fmsg = faked_msg_next();
 		set_route_type(LOCAL_ROUTE);
 		if(it->wait>0) sleep_us(it->wait);
-		run_top_route(event_rt.rlist[it->rtid], fmsg, 0);
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			run_top_route(event_rt.rlist[it->rtid], fmsg, 0);
+		} else {
+			sidx.s = int2str(idx, &sidx.len);
+			if(keng->froute(fmsg, EVENT_ROUTE,
+						&it->ename, &sidx)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
 	}
 	/* avoid exiting the process */
 	while(1) { sleep(3600); }
@@ -169,6 +181,7 @@ int evrexec_param(modparam_t type, void *val)
 	param_t *pit=NULL;
 	evrexec_task_t *it;
 	evrexec_task_t tmp;
+	sr_kemi_eng_t *keng = NULL;
 	str s;
 	char c;
 
@@ -211,15 +224,18 @@ int evrexec_param(modparam_t type, void *val)
 		free_params(params_list);
 		return -1;
 	}
-	/* get the route name */
-	c = s.s[s.len];
-	s.s[s.len] = '\0';
-	tmp.rtid = route_lookup(&event_rt, s.s);
-	s.s[s.len] = c;
-	if(tmp.rtid == -1) {
-		LM_ERR("event route not found: %.*s\n", s.len, s.s);
-		free_params(params_list);
-		return -1;
+	/* set '\0' at the end of route name */
+	tmp.ename.s[tmp.ename.len] = '\0';
+	keng = sr_kemi_eng_get();
+	if(keng==NULL) {
+		tmp.rtid = route_lookup(&event_rt, tmp.ename.s);
+		if(tmp.rtid == -1) {
+			LM_ERR("event route not found: %.*s\n", tmp.ename.len, tmp.ename.s);
+			free_params(params_list);
+			return -1;
+		}
+	} else {
+		tmp.rtid = -1;
 	}
 
 	it = (evrexec_task_t*)pkg_malloc(sizeof(evrexec_task_t));
