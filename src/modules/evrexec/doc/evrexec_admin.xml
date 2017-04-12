@@ -16,8 +16,9 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The module executes even route blocks once on dedicated processes. The
-		execution can be delayed for an interval of time.
+		The module executes event route blocks or KEMI functions on dedicated
+		processes at startup. The execution can be delayed for a specified
+		interval of time.
 	</para>
 	<para>
 		The actions in the event route should be a loop or other tasks that
@@ -77,6 +78,10 @@
 		<listitem>
 		<para>
 			<emphasis>name</emphasis> - name of the event route to be executed.
+			When used with a KEMI embedded laguage, this has to be the name
+			of a function from the KEMI script. The function must have a
+			string parameter, which will retrieve the index of the works in
+			string format.
 		</para>
 		</listitem>
 		<listitem>
