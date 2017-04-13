@@ -61,7 +61,7 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 /**
  *
  */
-int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
+int sd_lookup_owner(sip_msg_t* _msg, str* stable, str* sowner)
 {
 	str user_s, table_s, uri_s;
 	int nr_keys;
@@ -72,24 +72,21 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	db_key_t db_cols[1];
 	db1_res_t* db_res = NULL;
 
-	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
+	if(stable==NULL || stable->s==NULL || stable->len<=0)
 	{
 		LM_ERR("invalid table parameter");
 		return -1;
 	}
+	table_s = *stable;
 
 	/* init */
 	nr_keys = 0;
 	db_cols[0]=&new_uri_column;
 
-	if(_owner)
+	if(sowner!=NULL && sowner->s!=NULL && sowner->len>0)
 	{
+		uri_s = *sowner;
 		memset(&turi, 0, sizeof(struct sip_uri));
-		if(fixup_get_svalue(_msg, (gparam_p)_owner, &uri_s)!=0)
-		{
-			LM_ERR("invalid owner uri parameter");
-			return -1;
-		}
 		if(parse_uri(uri_s.s, uri_s.len, &turi)!=0)
 		{
 			LM_ERR("bad owner SIP address!\n");
@@ -236,3 +233,28 @@ err_server:
 	return -1;
 }
 
+/**
+ *
+ */
+int w_sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
+{
+	str table_s, uri_s;
+
+	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
+	{
+		LM_ERR("invalid table parameter");
+		return -1;
+	}
+
+	if(_owner)
+	{
+		if(fixup_get_svalue(_msg, (gparam_p)_owner, &uri_s)!=0)
+		{
+			LM_ERR("invalid owner uri parameter");
+			return -1;
+		}
+		return sd_lookup_owner(_msg, &table_s, &uri_s);
+	}
+
+	return sd_lookup_owner(_msg, &table_s, NULL);
+}
