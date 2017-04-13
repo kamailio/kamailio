@@ -81,7 +81,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	/* init */
 	nr_keys = 0;
 	db_cols[0]=&new_uri_column;
-	
+
 	if(_owner)
 	{
 		memset(&turi, 0, sizeof(struct sip_uri));
@@ -105,7 +105,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 			goto err_server;
 		}
 	}
-		
+
 	db_keys[nr_keys]=&user_column;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
@@ -121,7 +121,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 		db_vals[nr_keys].val.str_val.s = puri->host.s;
 		db_vals[nr_keys].val.str_val.len = puri->host.len;
 		nr_keys++;
-		
+
 		if (dstrip_s.s!=NULL && dstrip_s.len>0
 			&& dstrip_s.len<puri->host.len
 			&& strncasecmp(puri->host.s,dstrip_s.s,dstrip_s.len)==0)
@@ -180,21 +180,21 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 
 	user_s.s = useruri_buf+4;
 	switch(RES_ROWS(db_res)[0].values[0].type)
-	{ 
+	{
 		case DB1_STRING:
-			strcpy(user_s.s, 
+			strcpy(user_s.s,
 				(char*)RES_ROWS(db_res)[0].values[0].val.string_val);
 			user_s.len = strlen(user_s.s);
 		break;
 		case DB1_STR:
-			strncpy(user_s.s, 
+			strncpy(user_s.s,
 				(char*)RES_ROWS(db_res)[0].values[0].val.str_val.s,
 				RES_ROWS(db_res)[0].values[0].val.str_val.len);
 			user_s.len = RES_ROWS(db_res)[0].values[0].val.str_val.len;
 			user_s.s[user_s.len] = '\0';
 		break;
 		case DB1_BLOB:
-			strncpy(user_s.s, 
+			strncpy(user_s.s,
 				(char*)RES_ROWS(db_res)[0].values[0].val.blob_val.s,
 				RES_ROWS(db_res)[0].values[0].val.blob_val.len);
 			user_s.len = RES_ROWS(db_res)[0].values[0].val.blob_val.len;
@@ -207,7 +207,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 			}
 			goto err_server;
 	}
-	
+
 	/* check 'sip:' */
 	if(user_s.len<4 || strncmp(user_s.s, "sip:", 4))
 	{

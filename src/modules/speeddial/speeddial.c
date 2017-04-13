@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * 
+ *
  */
 
 
@@ -89,7 +89,7 @@ static param_export_t params[] = {
 
 /* Module interface */
 struct module_exports exports = {
-	"speeddial", 
+	"speeddial",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
@@ -128,7 +128,7 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
-    /* Find a database module */
+	/* Find a database module */
 	if (db_bind_mod(&db_url, &db_funcs))
 	{
 		LM_ERR("failed to bind database module\n");
