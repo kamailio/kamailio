@@ -1,6 +1,7 @@
 /*
  * ALIAS_DB Module
  *
+ * Copyright (C) 2017 Daniel-Constantin Mierla (asipto.com)
  * Copyright (C) 2004 Voice Sistem SRL
  *
  * This file is part of a module for Kamailio, a free SIP server.
@@ -34,6 +35,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/ut.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 
 #include "alookup.h"
 #include "api.h"
@@ -336,5 +338,86 @@ int bind_alias_db(struct alias_db_binds *pxb)
 	pxb->alias_db_lookup = alias_db_lookup;
 	pxb->alias_db_lookup_ex = alias_db_lookup_ex;
 	pxb->alias_db_find = alias_db_find;
+	return 0;
+}
+
+/**
+ *
+ */
+static int ki_alias_db_lookup(sip_msg_t* msg, str* stable)
+{
+	str table_s;
+	unsigned long flags;
+
+	flags = 0;
+	if(alias_db_use_domain) {
+		flags |= ALIAS_DOMAIN_FLAG;
+	}
+
+	return alias_db_lookup_ex(msg, *stable, flags);
+}
+
+/**
+ *
+ */
+static int ki_alias_db_lookup_ex(sip_msg_t* msg, str* stable, str* sflags)
+{
+	unsigned long flags;
+	int i;
+
+	flags = 0;
+	if(alias_db_use_domain) {
+		flags |= ALIAS_DOMAIN_FLAG;
+	}
+	for(i=0; i<sflags->len; i++) {
+		switch (sflags->s[i])
+		{
+			case 'd':
+			case 'D':
+				flags &= ~ALIAS_DOMAIN_FLAG;
+				break;
+			case 'r':
+			case 'R':
+				flags |= ALIAS_REVERSE_FLAG;
+				break;
+			case 'u':
+			case 'U':
+				flags |= ALIAS_DOMAIN_FLAG;
+				break;
+			default:
+				LM_ERR("unsupported flag '%c' - ignoring\n", sflags->s[i]);
+				break;
+		}
+	}
+
+	return alias_db_lookup_ex(msg, *stable, flags);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_alias_db_exports[] = {
+	{ str_init("alias_db"), str_init("lookup"),
+		SR_KEMIP_INT, ki_alias_db_lookup,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("alias_db"), str_init("lookup_ex"),
+		SR_KEMIP_INT, ki_alias_db_lookup_ex,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_alias_db_exports);
 	return 0;
 }
