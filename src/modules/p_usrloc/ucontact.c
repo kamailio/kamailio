@@ -819,10 +819,10 @@ int db_update_ucontact_ruid(ucontact_t* _c)
    vals2[n2].val.str_val = _c->c;
    n2++;
 
-   keys2[n2] = &callid_col;
-   vals2[n2].type = DB1_STR;
+   keys2[n2] = &expires_col;
+   vals2[n2].type = DB1_DATETIME;
    vals2[n2].nul = 0;
-   vals2[n2].val.str_val = _c->callid;
+   vals2[n2].val.time_val = _c->expires;
    n2++;
 
    keys2[n2] = &q_col;
