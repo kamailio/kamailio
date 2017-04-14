@@ -30,6 +30,14 @@
 #define DBK_DEFS_H_
 
 #define BLF_MAX_DIALOGS 8
+
+#define BLF_JSON_AMQP_RECEIVED	"AMQP-Received"
+#define BLF_JSON_AMQP_CONSUMER	"AMQP-Consumer"
+#define BLF_JSON_AMQP_PUBLISHED	"AMQP-Published"
+#define BLF_JSON_AMQP_SENT	    "AMQP-Sent"
+#define BLF_JSON_AMQP_PIPE_IN	"AMQP-Pipe-In"
+#define BLF_JSON_AMQP_PIPE_OUT	"AMQP-Pipe-Out"
+
 #define BLF_JSON_PRES		"Presentity"
 #define BLF_JSON_PRES_USER	"Presentity-User"
 #define BLF_JSON_PRES_REALM	"Presentity-Realm"
