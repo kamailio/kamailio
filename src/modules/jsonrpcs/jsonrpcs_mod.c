@@ -45,6 +45,7 @@
 #include "../../core/sip_msg_clone.h"
 #include "../../core/data_lump.h"
 #include "../../core/data_lump_rpl.h"
+#include "../../core/kemi.h"
 #include "../../modules/xhttp/api.h"
 
 #include "jsonrpcs_mod.h"
@@ -1443,5 +1444,37 @@ static int jsonrpc_pv_parse_jrpl_name(pv_spec_t *sp, str *in)
 		LM_ERR("unknown inner name [%.*s]\n", in->len, in->s);
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int ki_jsonrpcs_exec(sip_msg_t *msg, str *scmd)
+{
+	return jsonrpc_exec_ex(scmd, NULL);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_jsonrpcs_exports[] = {
+	{ str_init("jsonrpcs"), str_init("exec"),
+		SR_KEMIP_INT, ki_jsonrpcs_exec,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_jsonrpcs_exports);
 	return 0;
 }
