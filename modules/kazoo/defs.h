@@ -9,6 +9,14 @@
 #define DBK_DEFS_H_
 
 #define BLF_MAX_DIALOGS 8
+
+#define BLF_JSON_AMQP_RECEIVED	"AMQP-Received"
+#define BLF_JSON_AMQP_CONSUMER	"AMQP-Consumer"
+#define BLF_JSON_AMQP_PUBLISHED	"AMQP-Published"
+#define BLF_JSON_AMQP_SENT	    "AMQP-Sent"
+#define BLF_JSON_AMQP_PIPE_IN	"AMQP-Pipe-In"
+#define BLF_JSON_AMQP_PIPE_OUT	"AMQP-Pipe-Out"
+
 #define BLF_JSON_PRES		"Presentity"
 #define BLF_JSON_PRES_USER	"Presentity-User"
 #define BLF_JSON_PRES_REALM	"Presentity-Realm"
@@ -21,6 +29,10 @@
 #define BLF_JSON_TO_REALM	"To-Realm"
 #define BLF_JSON_TO_URI		"To-URI"
 #define BLF_JSON_CALLID    	"Call-ID"
+#define BLF_JSON_DIALOGID   "Dialog-ID"
+#define BLF_JSON_SENDER    	"Sender-URI"
+#define BLF_JSON_SWITCH_URI	"Switch-URI"
+#define BLF_JSON_ETAG    	"ETag"
 #define BLF_JSON_TOTAG     	"To-Tag"
 #define BLF_JSON_FROMTAG   	"From-Tag"
 #define BLF_JSON_STATE     	"State"
@@ -36,6 +48,7 @@
 #define BLF_JSON_TYPE           "Type"
 #define BLF_JSON_MSG_ID         "Msg-ID"
 #define BLF_JSON_DIRECTION      "Direction"
+#define BLF_JSON_BROKER_ZONE    "AMQP-Broker-Zone"
 
 #define BLF_JSON_CONTACT   	"Contact"
 #define BLF_JSON_EVENT_PKG      "Event-Package"

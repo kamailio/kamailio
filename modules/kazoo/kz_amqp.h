@@ -59,26 +59,23 @@ extern int dbk_consumer_workers;
 typedef struct kz_amqp_connection_t {
 	kz_amqp_connection_info info;
 	char* url;
-//    struct kz_amqp_connection_t* next;
 } kz_amqp_connection, *kz_amqp_connection_ptr;
 
-/*
-typedef struct {
-	kz_amqp_connection_ptr current;
-	kz_amqp_connection_ptr head;
-	kz_amqp_connection_ptr tail;
-} kz_amqp_connection_pool, *kz_amqp_connection_pool_ptr;
-*/
+typedef struct kz_amqp_timer_t {
+	struct event *ev;
+	struct itimerspec *timer;
+	int    fd;
+} kz_amqp_timer, *kz_amqp_timer_ptr;
+
 typedef struct kz_amqp_conn_t {
 	struct kz_amqp_server_t* server;
 	amqp_connection_state_t conn;
 	kz_amqp_connection_state state;
-	struct event *ev;
-	struct itimerspec *timer;
+	kz_amqp_timer_ptr reconnect;
+	kz_amqp_timer_ptr heartbeat;
 	amqp_socket_t *socket;
 	amqp_channel_t channel_count;
 	amqp_channel_t channel_counter;
-//    struct kz_amqp_conn_t* next;
 } kz_amqp_conn, *kz_amqp_conn_ptr;
 
 typedef struct {
@@ -111,10 +108,6 @@ typedef struct {
 	uint64_t delivery_tag;
 	amqp_channel_t channel;
 	struct timeval timeout;
-
-	/* timer */
-//	struct event *timer_ev;
-//	int timerfd;
 
 	/* async */
 	char *cb_route;
@@ -152,23 +145,58 @@ typedef struct {
 	char* event_key;
 	char* event_subkey;
 	str* message_id;
+	str* routing_key;
 	kz_amqp_cmd_ptr cmd;
 } kz_amqp_consumer_delivery, *kz_amqp_consumer_delivery_ptr;
 
 typedef struct {
-	amqp_bytes_t exchange;
-	amqp_bytes_t exchange_type;
-	amqp_bytes_t routing_key;
-	amqp_bytes_t queue;
-	amqp_bytes_t event_key;
-	amqp_bytes_t event_subkey;
+	amqp_bytes_t name;
+	amqp_bytes_t type;
+	amqp_boolean_t passive;
+	amqp_boolean_t durable;
+	amqp_boolean_t auto_delete;
+	amqp_boolean_t internal;
+} kz_amqp_exchange, *kz_amqp_exchange_ptr;
+
+typedef struct {
+	amqp_bytes_t name;
 	amqp_boolean_t passive;
 	amqp_boolean_t durable;
 	amqp_boolean_t exclusive;
 	amqp_boolean_t auto_delete;
+} kz_amqp_queue, *kz_amqp_queue_ptr;
+
+typedef struct kz_amqp_routings_t {
+	amqp_bytes_t routing;
+	struct kz_amqp_routings_t* next;
+} kz_amqp_routings, *kz_amqp_routings_ptr;
+
+typedef struct kz_amqp_exchange_binding_t {
+	kz_amqp_exchange_ptr from_exchange;
+	kz_amqp_routings_ptr routing;
+	struct kz_amqp_exchange_binding_t* next;
+} kz_amqp_exchange_binding, *kz_amqp_exchange_binding_ptr;
+
+typedef struct {
+//	amqp_bytes_t exchange;
+//	amqp_bytes_t exchange_type;
+	kz_amqp_exchange_ptr exchange;
+	kz_amqp_exchange_binding_ptr exchange_bindings;
+	kz_amqp_queue_ptr queue;
+	kz_amqp_routings_ptr queue_bindings;
+//	amqp_bytes_t routing_key;
+//	amqp_bytes_t queue;
+	amqp_bytes_t event_key;
+	amqp_bytes_t event_subkey;
+//	amqp_boolean_t passive;
+//	amqp_boolean_t durable;
+//	amqp_boolean_t exclusive;
+//	amqp_boolean_t auto_delete;
 	amqp_boolean_t no_ack;
 	amqp_boolean_t wait_for_consumer_ack;
 	amqp_boolean_t federate;
+    amqp_boolean_t consistent_worker;
+    str* consistent_worker_key;
 } kz_amqp_bind, *kz_amqp_bind_ptr;
 
 typedef struct {
@@ -257,9 +285,21 @@ kz_amqp_zone_ptr kz_amqp_get_zones();
 kz_amqp_zone_ptr kz_amqp_get_zone(char* zone);
 kz_amqp_zone_ptr kz_amqp_add_zone(char* zone);
 
-void kz_amqp_fire_connection_event(char *event, char* host);
+void kz_amqp_fire_connection_event(char *event, char* host, char* zone);
 
 void kz_amqp_free_pipe_cmd(kz_amqp_cmd_ptr cmd);
+
+void kz_amqp_timer_destroy(kz_amqp_timer_ptr* pTimer);
+int kz_amqp_timer_create(kz_amqp_timer_ptr* pTimer, int seconds, void (*callback)(int, short, void *), void *data);
+void kz_amqp_heartbeat_proc(int fd, short event, void *arg);
+
+void kz_amqp_queue_free(kz_amqp_queue_ptr exchange);
+void kz_amqp_exchange_free(kz_amqp_exchange_ptr exchange);
+void kz_amqp_exchange_bindings_free(kz_amqp_exchange_binding_ptr binding);
+void kz_amqp_routing_free(kz_amqp_routings_ptr routing);
+kz_amqp_queue_ptr kz_amqp_queue_new(str *name);
+kz_amqp_exchange_ptr kz_amqp_exchange_new(str *name, str* type);
+kz_amqp_routings_ptr kz_amqp_routing_new(char* routing);
 
 static inline int kz_amqp_error(char const *context, amqp_rpc_reply_t x)
 {
@@ -306,3 +346,4 @@ static inline int kz_amqp_error(char const *context, amqp_rpc_reply_t x)
 
 
 #endif /* KZ_AMQP_H_ */
+
