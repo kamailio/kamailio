@@ -88,6 +88,7 @@ int dbk_consumer_loop_count = 10;
 int dbk_consumer_ack_loop_count = 20;
 int dbk_include_entity = 1;
 int dbk_pua_mode = 1;
+db_locking_t kz_pua_lock_type = DB_LOCKING_WRITE;
 int dbk_use_hearbeats = 0;
 int dbk_single_consumer_on_reconnect = 1;
 int dbk_consume_messages_on_reconnect = 1;
@@ -197,6 +198,7 @@ static param_export_t params[] = {
     {"amqps_key", STR_PARAM, &kz_amqps_key.s},
     {"amqps_verify_peer", INT_PARAM, &kz_amqps_verify_peer},
     {"amqps_verify_hostname", INT_PARAM, &kz_amqps_verify_hostname},
+	{"pua_lock_type", INT_PARAM, &kz_pua_lock_type},
     {0, 0, 0}
 };
 
