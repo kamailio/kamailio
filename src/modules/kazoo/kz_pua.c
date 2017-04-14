@@ -43,6 +43,7 @@ extern db1_con_t *kz_pa_db;
 extern db_func_t kz_pa_dbf;
 extern str kz_presentity_table;
 
+extern db_locking_t kz_pua_lock_type;
 
 int kz_pua_update_presentity(str* event, str* realm, str* user, str* etag, str* sender, str* body, int expires, int reset)
 {
@@ -125,7 +126,7 @@ int kz_pua_update_presentity(str* event, str* realm, str* user, str* etag, str* 
 
 	if (kz_pa_dbf.start_transaction)
 	{
-		if (kz_pa_dbf.start_transaction(kz_pa_db, DB_LOCKING_WRITE) < 0)
+		if (kz_pa_dbf.start_transaction(kz_pa_db, kz_pua_lock_type) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
