@@ -1336,13 +1336,40 @@ static int fixup_dlg_bridge(void** param, int param_no)
 	return 0;
 }
 
-static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
+static int ki_dlg_get(sip_msg_t *msg, str *sc, str *sf, str *st)
 {
 	dlg_cell_t *dlg = NULL;
+	unsigned int dir = 0;
+
+	if(sc==NULL || sc->s==NULL || sc->len == 0) {
+		LM_ERR("invalid Call-ID parameter\n");
+		return -1;
+	}
+	if(sf==NULL || sf->s==NULL || sf->len == 0) {
+		LM_ERR("invalid From tag parameter\n");
+		return -1;
+	}
+	if(st==NULL || st->s==NULL || st->len == 0) {
+		LM_ERR("invalid To tag parameter\n");
+		return -1;
+	}
+
+	dlg = get_dlg(sc, sf, st, &dir);
+	if(dlg==NULL)
+		return -1;
+	/* set shorcut to dialog internal unique id */
+	_dlg_ctx.iuid.h_entry = dlg->h_entry;
+	_dlg_ctx.iuid.h_id = dlg->h_id;
+	_dlg_ctx.dir = dir;
+	dlg_release(dlg);
+	return 1;
+}
+
+static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
+{
 	str sc = {0,0};
 	str sf = {0,0};
 	str st = {0,0};
-	unsigned int dir = 0;
 
 	if(ci==0 || ft==0 || tt==0)
 	{
@@ -1355,21 +1382,13 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 		LM_ERR("unable to get Call-ID\n");
 		return -1;
 	}
-	if(sc.s==NULL || sc.len == 0)
-	{
-		LM_ERR("invalid Call-ID parameter\n");
-		return -1;
-	}
+
 	if(fixup_get_svalue(msg, (gparam_p)ft, &sf)!=0)
 	{
 		LM_ERR("unable to get From tag\n");
 		return -1;
 	}
-	if(sf.s==NULL || sf.len == 0)
-	{
-		LM_ERR("invalid From tag parameter\n");
-		return -1;
-	}
+
 	if(fixup_get_svalue(msg, (gparam_p)tt, &st)!=0)
 	{
 		LM_ERR("unable to get To Tag\n");
@@ -1381,15 +1400,7 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 		return -1;
 	}
 
-	dlg = get_dlg(&sc, &sf, &st, &dir);
-	if(dlg==NULL)
-		return -1;
-    /* set shorcut to dialog internal unique id */
-	_dlg_ctx.iuid.h_entry = dlg->h_entry;
-	_dlg_ctx.iuid.h_id = dlg->h_id;
-	_dlg_ctx.dir = dir;
-	dlg_release(dlg);
-	return 1;
+	return ki_dlg_get(msg, &sc, &sf, &st);
 }
 
 /**
@@ -1550,6 +1561,11 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_set_property"),
 		SR_KEMIP_INT, ki_dlg_set_property,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_get"),
+		SR_KEMIP_INT, ki_dlg_get,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
