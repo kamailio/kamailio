@@ -41,6 +41,7 @@
 #include "../../core/sip_msg_clone.h"
 #include "../../core/mod_fix.h"
 #include "../../core/pvar.h"
+#include "../../core/kemi.h"
 
 #include "api.h"
 #include "xhttp_trans.h"
@@ -168,10 +169,6 @@ static int mod_init(void)
 	return 0;
 }
 
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	return register_trans_mod(path, mod_trans);
-}
 
 /** 
  * 
@@ -515,6 +512,30 @@ int bind_xhttp(xhttp_api_t* api)
 	}
 	api->reply = xhttp_send_reply;
 	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_xhttp_exports[] = {
+	{ str_init("xhttp"), str_init("reply"),
+		SR_KEMIP_INT, xhttp_send_reply,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_xhttp_exports);
+	return register_trans_mod(path, mod_trans);
 }
 
 /** @} */
