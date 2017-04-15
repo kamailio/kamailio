@@ -65,7 +65,5 @@
         <name>domain_attrs_idx</name>
         <colref linkend="did"/>
         <colref linkend="name"/>
-        <colref linkend="value"/>
-        <unique/>
     </index>
 </table>
