@@ -458,6 +458,18 @@ static int w_ht_iterator_start(struct sip_msg* msg, char* iname, char* hname)
 	return 1;
 }
 
+static int ki_ht_iterator_start(sip_msg_t *msg, str *iname, str *hname)
+{
+	if(iname==NULL || iname->s==NULL || iname->len<=0
+			|| hname==NULL || hname->s==NULL || hname->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	if(ht_iterator_start(iname, hname)<0)
+		return -1;
+	return 1;
+}
+
 static int w_ht_iterator_next(struct sip_msg* msg, char* iname, char* foo)
 {
 	str siname;
@@ -472,6 +484,17 @@ static int w_ht_iterator_next(struct sip_msg* msg, char* iname, char* foo)
 	return 1;
 }
 
+static int ki_ht_iterator_next(sip_msg_t *msg, str *iname)
+{
+	if(iname==NULL || iname->s==NULL || iname->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	if(ht_iterator_next(iname)<0)
+		return -1;
+	return 1;
+}
+
 static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo)
 {
 	str siname;
@@ -482,6 +505,17 @@ static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo)
 		return -1;
 	}
 	if(ht_iterator_end(&siname)<0)
+		return -1;
+	return 1;
+}
+
+static int ki_ht_iterator_end(sip_msg_t *msg, str *iname)
+{
+	if(iname==NULL || iname->s==NULL || iname->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	if(ht_iterator_end(iname)<0)
 		return -1;
 	return 1;
 }
@@ -1135,6 +1169,21 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	},
 	{ str_init("htable"), str_init("sht_reset"),
 		SR_KEMIP_INT, ht_reset_by_name,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_iterator_start"),
+		SR_KEMIP_INT, ki_ht_iterator_start,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_iterator_next"),
+		SR_KEMIP_INT, ki_ht_iterator_next,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_iterator_end"),
+		SR_KEMIP_INT, ki_ht_iterator_end,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
