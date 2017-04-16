@@ -73,9 +73,13 @@ extern stat_var *ws_msrp_transmitted_frames;
 int ws_frame_receive(void *data);
 int ws_frame_transmit(void *data);
 void ws_keepalive(unsigned int ticks, void *param);
+
 int ws_close(sip_msg_t *msg);
-int ws_close2(sip_msg_t *msg, char *_status, char *_reason);
-int ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con);
+int w_ws_close0(sip_msg_t *msg, char *p1, char *p2);
+int ws_close2(sip_msg_t *msg, int status, str *reason);
+int w_ws_close2(sip_msg_t *msg, char *_status, char *_reason);
+int ws_close3(sip_msg_t *msg, int status, str *reason, int con);
+int w_ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con);
 
 void ws_rpc_close(rpc_t* rpc, void* ctx);
 void ws_rpc_ping(rpc_t* rpc, void* ctx);

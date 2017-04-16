@@ -446,6 +446,11 @@ end:
 	return 0;
 }
 
+int w_ws_handle_handshake(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ws_handle_handshake(msg);
+}
+
 void ws_rpc_disable(rpc_t* rpc, void* ctx)
 {
 	cfg_get(websocket, ws_cfg, enabled) = 0;

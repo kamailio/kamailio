@@ -36,6 +36,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/mod_fix.h"
 #include "../../core/parser/msg_parser.h"
+#include "../../core/kemi.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "ws_conn.h"
@@ -71,18 +72,18 @@ int ws_verbose_list = 0;
 
 static cmd_export_t cmds[] = {
 	/* ws_frame.c */
-	{ "ws_close", (cmd_function) ws_close,
+	{ "ws_close", (cmd_function)w_ws_close0,
 	  0, 0, 0,
 	  ANY_ROUTE },
-	{ "ws_close", (cmd_function) ws_close2,
+	{ "ws_close", (cmd_function)w_ws_close2,
 	  2, ws_close_fixup, 0,
 	  ANY_ROUTE },
-	{ "ws_close", (cmd_function) ws_close3,
+	{ "ws_close", (cmd_function)w_ws_close3,
 	  3, ws_close_fixup, 0,
 	  ANY_ROUTE },
 
 	/* ws_handshake.c */
-	{ "ws_handle_handshake", (cmd_function) ws_handle_handshake,
+	{ "ws_handle_handshake", (cmd_function)w_ws_handle_handshake,
 	  0, 0, 0,
 	  ANY_ROUTE },
 
@@ -392,5 +393,44 @@ static int ws_init_rpc(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_websocket_exports[] = {
+	{ str_init("websocket"), str_init("handle_handshake"),
+		SR_KEMIP_INT, ws_handle_handshake,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("websocket"), str_init("close"),
+		SR_KEMIP_INT, ws_close,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("websocket"), str_init("close_reason"),
+		SR_KEMIP_INT, ws_close2,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("websocket"), str_init("close_conid"),
+		SR_KEMIP_INT, ws_close3,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_websocket_exports);
 	return 0;
 }

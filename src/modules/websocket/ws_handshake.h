@@ -47,6 +47,7 @@ extern stat_var *ws_sip_successful_handshakes;
 extern stat_var *ws_msrp_successful_handshakes;
 
 int ws_handle_handshake(struct sip_msg *msg);
+int w_ws_handle_handshake(sip_msg_t *msg, char *p1, char *p2);
 
 void ws_rpc_disable(rpc_t* rpc, void* ctx);
 void ws_rpc_enable(rpc_t* rpc, void* ctx);
