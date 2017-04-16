@@ -257,7 +257,7 @@ enum hash_source source = hs_error;
 
 //unsigned int rr_idx = 0;
 
-struct hep_timehdr* heptime;
+struct hep_timeinfo* heptime;
 
 /*! \brief
  * Exported functions
@@ -1112,7 +1112,7 @@ static int child_init(int rank)
 	}
 
 
-	heptime = (struct hep_timehdr*)pkg_malloc(sizeof(struct hep_timehdr));
+	heptime = (struct hep_timeinfo*)pkg_malloc(sizeof(struct hep_timeinfo));
 	if(heptime==NULL) {
 		LM_ERR("no more pkg memory left\n");
 		return -1;
