@@ -38,6 +38,7 @@
 #include "../../core/parser/parse_hname2.h"
 #include "../../core/select.h"
 #include "../../core/select_buf.h"
+#include "../../core/kemi.h"
 
 
 #include "api.h"
@@ -142,7 +143,7 @@ static int mod_init(void)
 /**
  *
  */
-static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
+static int ki_msg_apply_changes(sip_msg_t *msg)
 {
 	struct dest_info dst;
 	str obuf;
@@ -228,6 +229,13 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 	return 1;
 }
 
+/**
+ *
+ */
+static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
+{
+	return ki_msg_apply_changes(msg);
+}
 
 /**
  *
@@ -245,18 +253,13 @@ static int change_reply_status_fixup(void **param, int param_no)
 /**
  *
  */
-static int change_reply_status_f(
-		struct sip_msg *msg, char *_code, char *_reason)
+static int ki_change_reply_status(sip_msg_t *msg, int code, str *reason)
 {
-	int code;
-	str reason;
 	struct lump *l;
 	char *ch;
 
-	if(get_int_fparam(&code, msg, (fparam_t *)_code)
-			|| get_str_fparam(&reason, msg, (fparam_t *)_reason)
-			|| (reason.len == 0)) {
-		LM_ERR("cannot get parameter\n");
+	if(reason==NULL || (reason->len<=0)) {
+		LM_ERR("invalid reason parameter\n");
 		return -1;
 	}
 
@@ -287,14 +290,14 @@ static int change_reply_status_f(
 		return -1;
 	}
 	/* clone the reason phrase, the lumps need to be pkg allocated */
-	ch = (char *)pkg_malloc(reason.len);
+	ch = (char *)pkg_malloc(reason->len);
 	if(!ch) {
 		LM_ERR("Not enough memory\n");
 		return -1;
 	}
-	memcpy(ch, reason.s, reason.len);
-	if(insert_new_lump_after(l, ch, reason.len, 0) == 0) {
-		LM_ERR("failed to add new lump: %.*s\n", reason.len, ch);
+	memcpy(ch, reason->s, reason->len);
+	if(insert_new_lump_after(l, ch, reason->len, 0) == 0) {
+		LM_ERR("failed to add new lump: %.*s\n", reason->len, ch);
 		pkg_free(ch);
 		return -1;
 	}
@@ -306,7 +309,27 @@ static int change_reply_status_f(
 /**
  *
  */
-static int w_remove_body_f(struct sip_msg *msg, char *p1, char *p2)
+static int change_reply_status_f(
+		struct sip_msg *msg, char *_code, char *_reason)
+{
+	int code;
+	str reason;
+	struct lump *l;
+	char *ch;
+
+	if(get_int_fparam(&code, msg, (fparam_t *)_code)
+			|| get_str_fparam(&reason, msg, (fparam_t *)_reason)) {
+		LM_ERR("cannot get parameters\n");
+		return -1;
+	}
+	return ki_change_reply_status(msg, code, &reason);
+}
+
+
+/**
+ *
+ */
+static int ki_remove_body(struct sip_msg *msg)
 {
 	str body = {0, 0};
 
@@ -332,19 +355,21 @@ static int w_remove_body_f(struct sip_msg *msg, char *p1, char *p2)
 /**
  *
  */
-static int w_keep_hf_f(struct sip_msg *msg, char *key, char *foo)
+static int w_remove_body_f(struct sip_msg *msg, char *p1, char *p2)
+{
+	return ki_remove_body(msg);
+}
+
+
+/**
+ *
+ */
+static int keep_hf_helper(sip_msg_t *msg, regex_t *re)
 {
 	struct hdr_field *hf;
-	regex_t *re;
 	regmatch_t pmatch;
 	char c;
 	struct lump *l;
-
-	if(key) {
-		re = (regex_t *)key;
-	} else {
-		re = NULL;
-	}
 
 	/* we need to be sure we have seen all HFs */
 	parse_headers(msg, HDR_EOH_F, 0);
@@ -395,10 +420,58 @@ static int w_keep_hf_f(struct sip_msg *msg, char *key, char *foo)
 	return -1;
 }
 
+
 /**
  *
  */
-static int w_fnmatch(str *val, str *match, str *flags)
+static int w_keep_hf_f(struct sip_msg *msg, char *key, char *foo)
+{
+	regex_t *re;
+
+	if(key) {
+		re = (regex_t *)key;
+	} else {
+		re = NULL;
+	}
+	return keep_hf_helper(msg, re);
+}
+
+
+/**
+ *
+ */
+static int ki_keep_hf(sip_msg_t *msg)
+{
+	return keep_hf_helper(msg, NULL);
+}
+
+
+/**
+ *
+ */
+static int ki_keep_hf_re(sip_msg_t *msg, str *sre)
+{
+	regex_t re;
+	int ret;
+
+	if(sre==NULL || sre->len<=0)
+		return keep_hf_helper(msg, NULL);
+
+	memset(&re, 0, sizeof(regex_t));
+	if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+	ret = keep_hf_helper(msg, &re);
+	regfree(&re);
+	return ret;
+}
+
+
+/**
+ *
+ */
+static int w_fnmatch_ex(str *val, str *match, str *flags)
 {
 	int i;
 	i = 0;
@@ -423,7 +496,7 @@ static int w_fnmatch2_f(sip_msg_t *msg, char *val, char *match)
 		LM_ERR("invalid parameters");
 		return -1;
 	}
-	if(w_fnmatch(&sval, &smatch, NULL) < 0)
+	if(w_fnmatch_ex(&sval, &smatch, NULL) < 0)
 		return -1;
 	return 1;
 }
@@ -442,9 +515,25 @@ static int w_fnmatch3_f(sip_msg_t *msg, char *val, char *match, char *flags)
 		LM_ERR("invalid parameters");
 		return -1;
 	}
-	if(w_fnmatch(&sval, &smatch, &sflags) < 0)
+	if(w_fnmatch_ex(&sval, &smatch, &sflags) < 0)
 		return -1;
 	return 1;
+}
+
+/**
+ *
+ */
+static int ki_fnmatch(sip_msg_t *msg, str *val, str *match)
+{
+	return w_fnmatch_ex(val, match, NULL);
+}
+
+/**
+ *
+ */
+static int ki_fnmatch_ex(sip_msg_t *msg, str *val, str *match, str *flags)
+{
+	return w_fnmatch_ex(val, match, flags);
 }
 
 /**
@@ -2021,3 +2110,57 @@ select_row_t sel_declaration[] = {
 
 		{NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_textopsx_exports[] = {
+	{ str_init("textopsx"), str_init("msg_apply_changes"),
+		SR_KEMIP_INT, ki_msg_apply_changes,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("change_reply_status"),
+		SR_KEMIP_INT, ki_change_reply_status,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("remove_body"),
+		SR_KEMIP_INT, ki_remove_body,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("keep_hf"),
+		SR_KEMIP_INT, ki_keep_hf,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("keep_hf_re"),
+		SR_KEMIP_INT, ki_keep_hf_re,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("fnmatch"),
+		SR_KEMIP_INT, ki_fnmatch,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("fnmatch_ex"),
+		SR_KEMIP_INT, ki_fnmatch_ex,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_textopsx_exports);
+	return 0;
+}
