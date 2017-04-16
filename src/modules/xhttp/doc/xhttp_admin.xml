@@ -10,13 +10,13 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides basic HTTP/1.0 server functionality inside 
+		This module provides basic HTTP/1.0 server functionality inside
 		&kamailio;. SIP and HTTP are very similar protocols, so, practically, the
 		SIP parser can easily handle HTTP requests just by adding a fake
 		Via header.
@@ -36,32 +36,32 @@
 	<title>Note on Latency</title>
 	<para>
 		Because HTTP requests in <emphasis>xhttp</emphasis> are handled
-		by the same, finite number of SIP worker processes that operate on 
-		SIP messages, the same general principles regarding script execution 
-		speed and throughput should be observed by the writer in 
+		by the same, finite number of SIP worker processes that operate on
+		SIP messages, the same general principles regarding script execution
+		speed and throughput should be observed by the writer in
 		<emphasis>event_route[xhttp:request]</emphasis> as in any other
-		part of the route script.  
+		part of the route script.
 	</para>
 	<para>
 		For example, if you initiate a database query in the HTTP request route
 		that takes a long time to return rows, the SIP worker process in which
-		the request is handled will be blocked for that time and unable to 
+		the request is handled will be blocked for that time and unable to
 		process other SIP messages.  In most typical installations, there are
-		only a few of these worker processes running.  
+		only a few of these worker processes running.
 	</para>
 	<para>
 		Therefore, it is highly inadvisable to execute particularly slow things in the
-		<emphasis>event_route[xhttp:request]</emphasis>, because the request is not 
-		handled in an asynchronous manner or otherwise peripherally to general 
-		SIP processing.  SIP worker threads will block, pending the outcome of the 
-		event route just like any other config script route.  
+		<emphasis>event_route[xhttp:request]</emphasis>, because the request is not
+		handled in an asynchronous manner or otherwise peripherally to general
+		SIP processing.  SIP worker threads will block, pending the outcome of the
+		event route just like any other config script route.
 	</para>
 	<para>
-		This is no more or less true for <emphasis>xhttp</emphasis> than it is for 
-		any other block of script in any other scenario, and does not warrant any 
-		extraordinary concern.  It nevertheless bears mention here because some 
-		processes with embedded HTTP servers have the request processing take place 
-		"outside" of the main synchronous event sequence, whether by creating 
+		This is no more or less true for <emphasis>xhttp</emphasis> than it is for
+		any other block of script in any other scenario, and does not warrant any
+		extraordinary concern.  It nevertheless bears mention here because some
+		processes with embedded HTTP servers have the request processing take place
+		"outside" of the main synchronous event sequence, whether by creating
 		separate threads or by some other asynchronous handling.  That is not the
 		case with <emphasis>xhttp</emphasis>.
 	</para>
@@ -114,7 +114,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="xhttp.p.url_skip">
 		<title><varname>url_skip</varname> (str)</title>
 		<para>
 			Regular expression to match the HTTP URL. If there is a match,
@@ -134,7 +134,7 @@ modparam("xhttp", "url_skip", "^/RPC2")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xhttp.p.url_match">
 		<title><varname>url_match</varname> (str)</title>
 		<para>
 			Regular expression to match the HTTP URL. If there is no match,
@@ -160,7 +160,7 @@ modparam("xhttp", "url_match", "^/sip/")
 
 	<section>
 	<title>Functions</title>
- 	<section>
+	<section id="xhttp.f.xhttp_reply">
 	    <title>
 		<function moreinfo="none">xhttp_reply(code, reason, ctype, body)</function>
 	    </title>
