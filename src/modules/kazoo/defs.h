@@ -52,6 +52,7 @@
 #define BLF_JSON_CALLID    	"Call-ID"
 #define BLF_JSON_DIALOGID   "Dialog-ID"
 #define BLF_JSON_SENDER    	"Sender-URI"
+#define BLF_JSON_SWITCH_URI	"Switch-URI"
 #define BLF_JSON_ETAG    	"ETag"
 #define BLF_JSON_TOTAG     	"To-Tag"
 #define BLF_JSON_FROMTAG   	"From-Tag"
