@@ -392,6 +392,10 @@ int kz_pua_publish_dialoginfo_to_presentity(struct json_object *json_obj)
 	json_extract_field(BLF_JSON_ETAG, etag);
 	json_extract_field(BLF_JSON_SENDER, sender);
 
+	if (sender.len == 0) {
+		json_extract_field(BLF_JSON_SWITCH_URI, sender);
+	}
+
 	struct json_object* ExpiresObj = kz_json_get_object(json_obj, BLF_JSON_EXPIRES);
 	if (ExpiresObj != NULL) {
 		expires = json_object_get_int(ExpiresObj);
