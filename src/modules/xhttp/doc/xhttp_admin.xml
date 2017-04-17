@@ -156,6 +156,33 @@ modparam("xhttp", "url_match", "^/sip/")
 </programlisting>
 		</example>
 	</section>
+	<section id="xhttp.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[xhttp:request] block.
+		</para>
+		<para>
+			The function has one string parameter with the value "xhttp:request".
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xhttp", "event_callback", "ksr_xhttp_event")
+...
+-- event callback function implemented in Lua
+function ksr_xhttp_event(evname)
+	KSR.info("===== xhttp module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
 	</section>
 
 	<section>
