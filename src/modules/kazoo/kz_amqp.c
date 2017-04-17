@@ -2256,7 +2256,7 @@ int kz_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param,	pv_value_t *
 
 int kz_amqp_consumer_fire_event(char *eventkey)
 {
-	struct sip_msg *fmsg;
+	sip_msg_t *fmsg;
 	struct run_act_ctx ctx;
 	int rtb, rt;
 
@@ -2268,9 +2268,7 @@ int kz_amqp_consumer_fire_event(char *eventkey)
 		return -2;
 	}
 	LM_DBG("executing event_route[%s] (%d)\n", eventkey, rt);
-	if(faked_msg_init()<0)
-		return -2;
-	fmsg = faked_msg_next();
+	fmsg = faked_msg_get_next();
 	rtb = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
