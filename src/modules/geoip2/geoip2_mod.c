@@ -28,6 +28,7 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/pvar.h"
+#include "../../core/kemi.h"
 #include "../../core/mod_fix.h"
 
 #include "geoip2_pv.h"
@@ -40,7 +41,7 @@ static int  mod_init(void);
 static void mod_destroy(void);
 
 static int w_geoip2_match(struct sip_msg* msg, char* str1, char* str2);
-static int geoip2_match(struct sip_msg *msg, gparam_t *target, gparam_t *pvname);
+static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass);
 
 static pv_export_t mod_pvs[] = {
 	{ {"gip2", sizeof("gip2")-1}, PVT_OTHER, pv_get_geoip2, 0,
@@ -76,7 +77,6 @@ struct module_exports exports = {
 };
 
 
-
 /**
  * init module function
  */
@@ -105,34 +105,49 @@ static void mod_destroy(void)
 	geoip2_destroy_pv();
 }
 
-static int w_geoip2_match(struct sip_msg* msg, char* str1, char* str2)
+static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass)
 {
-	return geoip2_match(msg, (gparam_t*)str1, (gparam_t*)str2);
+	geoip2_pv_reset(pvclass);
+
+	return geoip2_update_pv(tomatch, pvclass);
 }
 
-static int geoip2_match(struct sip_msg *msg, gparam_t *target, gparam_t *pvname)
+static int w_geoip2_match(sip_msg_t* msg, char* target, char* pvname)
 {
-	str tomatch;
-	str pvclass;
+	str tomatch = STR_NULL;
+	str pvclass = STR_NULL;
 
-	if(msg==NULL)
-	{
+	if(msg==NULL) {
 		LM_ERR("received null msg\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, target, &tomatch)<0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t*)target, &tomatch)<0) {
 		LM_ERR("cannot get the address\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, pvname, &pvclass)<0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t*)pvname, &pvclass)<0) {
 		LM_ERR("cannot get the pv class\n");
 		return -1;
 	}
-	geoip2_pv_reset(&pvclass);
 
-	return geoip2_update_pv(&tomatch, &pvclass);
+	return geoip2_match(msg, &tomatch, &pvclass);
 }
 
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_geoip2_exports[] = {
+    { str_init("geoip2"), str_init("match"),
+        SR_KEMIP_INT, geoip2_match,
+        { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
+    { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2) {
+    sr_kemi_modules_add(sr_kemi_geoip2_exports);
+    return 0;
+}
