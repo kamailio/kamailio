@@ -730,13 +730,13 @@ modparam("acc", "log_missed_flag", 3)
 		Log level at which accounting messages are issued to syslog.
 		</para>
 		<para>
-		Default value is L_NOTICE.
+		Default value is 1 (L_NOTICE).
 		</para>
 		<example>
 		<title>log_level example</title>
 		<programlisting format="linespecific">
 ...
-modparam("acc", "log_level", 2)   # Set log_level to 2
+modparam("acc", "log_level", 2)   # Set log_level to 2 (L_INFO)
 ...
 </programlisting>
 		</example>
