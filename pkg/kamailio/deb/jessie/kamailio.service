@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=forking
-Environment='CFGFILE=/etc/kamailio/kamailio.cfg'
+Environment='CFGFILE=/usr/local/etc/kamailio/kamailio.cfg'
 Environment='SHM_MEMORY=64'
 Environment='PKG_MEMORY=8'
 Environment='USER=kamailio'
@@ -14,7 +14,7 @@ EnvironmentFile=-/etc/default/kamailio.d/*
 # PIDFile requires a full absolute path
 PIDFile=/var/run/kamailio/kamailio.pid
 # ExecStart requires a full absolute path
-ExecStart=/usr/sbin/kamailio -P /var/run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP
+ExecStart=/usr/local/sbin/kamailio -P /var/run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP
 Restart=on-abort
 
 [Install]
