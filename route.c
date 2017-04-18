@@ -993,7 +993,7 @@ int fix_actions(struct action* a)
 				si=find_si(&ip, ((struct socket_id*)t->val[0].u.data)->port,
 								((struct socket_id*)t->val[0].u.data)->proto);
 				if (si==0){
-					LM_ERR("bad force_send_socket argument: %s:%d (ser doesn't listen on it)\n",
+					LM_ERR("bad force_send_socket argument: %s:%d (" NAME " doesn't listen on it)\n",
 						((struct socket_id*)t->val[0].u.data)->addr_lst->name,
 							((struct socket_id*)t->val[0].u.data)->port);
 					ret = E_BAD_ADDRESS;
