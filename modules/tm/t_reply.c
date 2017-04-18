@@ -1293,7 +1293,10 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			picked_branch = branch;
 			run_branch_failure_handlers( Trans, Trans->uac[branch].reply,
 									new_code, extra_flags);
-			Trans->uac[branch].reply = 0;
+			/* Don't do reset the reply if we are in a resume route, 
+			 *  we need to free it at the end of the continue processing */
+			if (!(Trans->flags&T_ASYNC_CONTINUE))
+				Trans->uac[branch].reply = 0;
 		}
 
 
@@ -1375,8 +1378,11 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 
 		/* now reset it; after the failure logic, the reply may
 		 * not be stored any more and we don't want to keep into
-		 * transaction some broken reference */
-		Trans->uac[branch].reply = 0;
+		 * transaction some broken reference. Don't do it if we                     
+		 * are in a resume route, we need to free it at the end 
+		 * of the continue processing */
+		if (!(Trans->flags&T_ASYNC_CONTINUE))
+			Trans->uac[branch].reply = 0;
 
 		/* look if the callback perhaps replied transaction; it also
 		   covers the case in which a transaction is replied localy
