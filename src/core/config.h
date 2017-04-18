@@ -35,8 +35,6 @@
 #ifndef config_h
 #define config_h
 
-#include "types.h"
-
 #define SIP_PORT  5060 /*!< default SIP port if none specified */
 #define SIPS_PORT 5061 /*!< default SIP port for TLS if none specified */
 

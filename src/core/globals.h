@@ -32,7 +32,6 @@
 #ifndef globals_h
 #define globals_h
 
-#include "types.h"
 #include "ip_addr.h"
 #include "str.h"
 #include "poll_types.h"
@@ -113,7 +112,6 @@ extern int dont_daemonize;
 extern int check_via;
 extern int phone2tel;
 extern int received_dns;
-/* extern int process_no; */
 extern int child_rank;
 extern int sip_warning;
 extern int server_signature;
@@ -144,12 +142,6 @@ extern int auto_bind_ipv6;
 extern int tos;
 extern int pmtu_discovery;
 
-/*
- * debug & log_stderr moved to dprint.h*/
-
-/* extern process_bm_t process_bit; */
-/* extern int *pids; -moved to pt.h */
-
 extern int cfg_errors;
 extern int cfg_warnings;
 extern unsigned int msg_no;
@@ -159,11 +151,6 @@ extern unsigned long pkg_mem_size;
 
 /* AVP configuration */
 extern char *avp_db_url;  /* db url used by user preferences (AVPs) */
-
-/* moved to pt.h
-extern int *pids;
-extern int process_no;
-*/
 
 extern int reply_to_via;
 
