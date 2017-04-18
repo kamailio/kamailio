@@ -3005,6 +3005,101 @@ static int ki_rtpengine_manage(sip_msg_t *msg, str *flags) {
     return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, ((flags && flags->len > 0) ? flags->s : NULL), 1);
 }
 
+static int ki_rtpengine_offer0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_offer_wrap, 0, 1);
+}
+
+static int ki_rtpengine_offer(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_offer_wrap, flags->s, 1);
+}
+
+static int ki_rtpengine_answer0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, NULL, 2);
+}
+
+static int ki_rtpengine_answer(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, flags->s, 2);
+}
+
+static int ki_rtpengine_delete0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, NULL, 1);
+}
+
+static int ki_rtpengine_delete(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, flags->s, 1);
+}
+
+static int ki_start_recording(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, NULL, 1);
+}
+
+static int ki_set_rtpengine_set(sip_msg_t *msg, int r1)
+{
+	rtpp_set_link_t rtpl1;
+	rtpp_set_link_t rtpl2;
+	int ret;
+
+	memset(&rtpl1, 0, sizeof(rtpp_set_link_t));
+	memset(&rtpl2, 0, sizeof(rtpp_set_link_t));
+
+	if((rtpl1.rset = select_rtpp_set((unsigned int)r1)) ==0){
+		LM_ERR("rtpp_proxy set %d not configured\n", r1);
+		return -1;
+	}
+
+	current_msg_id = 0;
+	active_rtpp_set = 0;
+	selected_rtpp_set_1 = 0;
+	selected_rtpp_set_2 = 0;
+
+	ret = set_rtpengine_set_n(msg, &rtpl1, &selected_rtpp_set_1);
+	if (ret < 0)
+		return ret;
+
+	return 1;
+}
+
+static int ki_set_rtpengine_set2(sip_msg_t *msg, int r1, int r2)
+{
+	rtpp_set_link_t rtpl1;
+	rtpp_set_link_t rtpl2;
+	int ret;
+
+	memset(&rtpl1, 0, sizeof(rtpp_set_link_t));
+	memset(&rtpl2, 0, sizeof(rtpp_set_link_t));
+
+	if((rtpl1.rset = select_rtpp_set((unsigned int)r1)) ==0){
+		LM_ERR("rtpp_proxy set %d not configured\n", r1);
+		return -1;
+	}
+	if((rtpl2.rset = select_rtpp_set((unsigned int)r2)) ==0){
+		LM_ERR("rtpp_proxy set %d not configured\n", r2);
+		return -1;
+	}
+
+	current_msg_id = 0;
+	active_rtpp_set = 0;
+	selected_rtpp_set_1 = 0;
+	selected_rtpp_set_2 = 0;
+
+	ret = set_rtpengine_set_n(msg, &rtpl1, &selected_rtpp_set_1);
+	if (ret < 0)
+		return ret;
+
+	ret = set_rtpengine_set_n(msg, &rtpl2, &selected_rtpp_set_2);
+	if (ret < 0)
+		return ret;
+
+	return 1;
+}
+
 /**
  *
  */
@@ -3017,6 +3112,51 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     { str_init("rtpengine"), str_init("rtpengine_manage"),
         SR_KEMIP_INT, ki_rtpengine_manage,
         { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("rtpengine_offer0"),
+        SR_KEMIP_INT, ki_rtpengine_offer0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("rtpengine_offer"),
+        SR_KEMIP_INT, ki_rtpengine_offer,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("rtpengine_answer0"),
+        SR_KEMIP_INT, ki_rtpengine_answer0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("rtpengine_answer"),
+        SR_KEMIP_INT, ki_rtpengine_answer,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("rtpengine_delete0"),
+        SR_KEMIP_INT, ki_rtpengine_delete0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("rtpengine_delete"),
+        SR_KEMIP_INT, ki_rtpengine_delete,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("start_recording"),
+        SR_KEMIP_INT, ki_start_recording,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("set_rtpengine_set"),
+        SR_KEMIP_INT, ki_set_rtpengine_set,
+        { SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("set_rtpengine_set2"),
+        SR_KEMIP_INT, ki_set_rtpengine_set2,
+        { SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
 
