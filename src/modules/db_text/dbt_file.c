@@ -317,7 +317,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 						dtval.val.int_val = 0;
 						dtval.type = dtp->colv[ccol]->type;
 
-						if(c==DBT_DELIM ||
+						if(c==_dbt_delim ||
 								(ccol==dtp->nrcols-1
 									&& (c==DBT_DELIM_R || c==EOF)))
 							dtval.nul = 1;
@@ -341,7 +341,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 							//LM_DBG("data[%d,%d]=%d\n", crow,
 							//	ccol, dtval.val.int_val);
 						}
-						if(c!=DBT_DELIM && c!=DBT_DELIM_R && c!=EOF)
+						if(c!=_dbt_delim && c!=DBT_DELIM_R && c!=EOF)
 							goto clean;
 						if(dbt_row_set_val(rowp,&dtval,dtp->colv[ccol]->type,
 									ccol))
@@ -356,7 +356,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 						dtval.val.double_val = 0.0;
 						dtval.type = DB1_DOUBLE;
 
-						if(c==DBT_DELIM ||
+						if(c==_dbt_delim ||
 								(ccol==dtp->nrcols-1
 									&& (c==DBT_DELIM_R || c==EOF)))
 							dtval.nul = 1;
@@ -392,7 +392,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 							//LM_DBG("data[%d,%d]=%10.2f\n",
 							//	crow, ccol, dtval.val.double_val);
 						}
-						if(c!=DBT_DELIM && c!=DBT_DELIM_R && c!=EOF)
+						if(c!=_dbt_delim && c!=DBT_DELIM_R && c!=EOF)
 							goto clean;
 						if(dbt_row_set_val(rowp,&dtval,DB1_DOUBLE,ccol))
 							goto clean;
@@ -408,7 +408,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 						dtval.type = dtp->colv[ccol]->type;
 
 						bp = 0;
-						if(c==DBT_DELIM ||
+						if(c==_dbt_delim ||
 							(ccol == dtp->nrcols-1
 								&& (c == DBT_DELIM_R || c==EOF))) {
 							/* If empty_string is enabled, we'll just return
@@ -421,7 +421,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 						} else
 						{
 							dtval.nul = 0;
-							while(c!=DBT_DELIM && c!=DBT_DELIM_R && c!=EOF)
+							while(c!=_dbt_delim && c!=DBT_DELIM_R && c!=EOF)
 							{
 								if(c=='\\')
 								{
@@ -440,13 +440,12 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 										case '\\':
 											c = '\\';
 										break;
-										case DBT_DELIM:
-											c = DBT_DELIM;
-										break;
 										case '0':
 											c = 0;
 										break;
 										default:
+											if (c==_dbt_delim)
+												break;
 											goto clean;
 									}
 								}
@@ -458,7 +457,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 							//LM_DBG("data[%d,%d]=%.*s\n",
 							///	crow, ccol, bp, buf);
 						}
-						if(c!=DBT_DELIM && c!=DBT_DELIM_R && c!=EOF)
+						if(c!=_dbt_delim && c!=DBT_DELIM_R && c!=EOF)
 							goto clean;
 						if(dbt_row_set_val(rowp,&dtval,dtp->colv[ccol]->type,
 									ccol))
@@ -467,7 +466,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 					default:
 						goto clean;
 				}
-				if(c==DBT_DELIM)
+				if(c==_dbt_delim)
 					c = fgetc(fin);
 				ccol++;
 			break; // state DBT_DATA_ST
@@ -588,13 +587,14 @@ int dbt_print_table_row_ex(dbt_table_p _dtp, dbt_row_p rowp, FILE *fout, int new
                                         case '\\':
                                                 fprintf(fout, "\\\\");
                                                 break;
-                                        case DBT_DELIM:
-                                                fprintf(fout, "\\%c", DBT_DELIM);
-                                                break;
                                         case '\0':
                                                 fprintf(fout, "\\0");
                                                 break;
                                         default:
+                                                if (*p==_dbt_delim) {
+                                                        fprintf(fout, "\\%c", _dbt_delim);
+                                                        break;
+                                                }
                                                 fprintf(fout, "%c", *p);
                                         }
                                         p++;
@@ -607,7 +607,7 @@ int dbt_print_table_row_ex(dbt_table_p _dtp, dbt_row_p rowp, FILE *fout, int new
                         return -1;
                 }
                 if(ccol<_dtp->nrcols-1)
-                        fprintf(fout, "%c",DBT_DELIM);
+                        fprintf(fout, "%c",_dbt_delim);
         }
         if(newline)
                 fprintf(fout, "%c", DBT_DELIM_R);
