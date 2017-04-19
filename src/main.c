@@ -471,10 +471,6 @@ int child_rank = 0;
 /* how much to wait for children to terminate, before taking extreme measures*/
 int ser_kill_timeout=DEFAULT_SER_KILL_TIMEOUT;
 
-/* process_bm_t process_bit = 0; */
-#ifdef ROUTE_SRV
-#endif
-
 /* cfg parsing */
 int cfg_errors=0;
 int cfg_warnings=0;
@@ -1364,7 +1360,6 @@ int main_loop(void)
 				if (pid==0){
 					/* child */
 					/* timer!*/
-					/* process_bit = 0; */
 					if (real_time&2)
 						set_rt_prio(rt_timer2_prio, rt_timer2_policy);
 
@@ -1383,7 +1378,6 @@ int main_loop(void)
 				if (pid==0){
 					/* child */
 					/* timer!*/
-					/* process_bit = 0; */
 					if (real_time&1)
 						set_rt_prio(rt_timer1_prio, rt_timer1_policy);
 					if (arm_timer()<0) goto error;
