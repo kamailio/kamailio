@@ -207,5 +207,25 @@ event_route[xhttp:request] {
 	    </example>
 	</section>
 	</section>
+
+    <section>
+    <title>Event Routes</title>
+    <section id="xhttp.evr.request">
+        <title>
+        <function moreinfo="none">xhttp:request</function>
+        </title>
+        <para>
+			The event route is executed when a new HTTP request is received.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[xhttp:request] {
+    xhttp_reply("200", "OK", "text/html",
+        "&lt;html&gt;&lt;body&gt;OK - [$si:$sp]&lt;/body&gt;&lt;/html&gt;");
+}
+...
+        </programlisting>
+	</section>
+	</section>
 </chapter>
 
