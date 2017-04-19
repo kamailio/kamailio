@@ -15,6 +15,7 @@ modules.lst
 *.so
 *.so.*
 *.o
+*.a
 # archives
 *.tar.gz
 *.deb
