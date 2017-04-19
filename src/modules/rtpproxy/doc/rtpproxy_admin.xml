@@ -801,6 +801,29 @@ rtpproxy_manage();
 	    These functions can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 	</para>
 	</section>
+	<section id="rtpproxy.f.rtpproxy_stop_stream2uas">
+	<title>
+	    <function>rtpproxy_stop_stream2uas()</function>
+	</title>
+	<para>
+		See function <function>rtpproxy_stop_stream2uac()</function>.
+	</para>
+	<example>
+	    <title><function>rtpproxy_stop_stream2uas</function> usage</title>
+	    <programlisting>
+...
+    if (is_method("INVITE")) {
+        rtpproxy_offer();
+        if (is_audio_on_hold()) {
+            rtpproxy_stream2uas("/var/rtpproxy/prompts/music_on_hold", "-1");
+        } else {
+            rtpproxy_stop_stream2uas();
+        };
+    };
+...
+	    </programlisting>
+	</example>
+	</section>
 	<section id="rtpproxy.f.start_recording">
 		<title>
 		<function moreinfo="none">start_recording()</function>
@@ -822,15 +845,6 @@ start_recording();
 		</programlisting>
 		</example>
 	</section>
-	<section id="rtpproxy.f.rtpproxy_stop_stream2uas">
-	<title>
-	    <function>rtpproxy_stop_stream2uas(prompt_name, count)</function>
-	</title>
-	<para>
-		See function <function>rtpproxy_stop_stream2uac(prompt_name, count)</function>.
-	</para>
-	</section>
-
 
 	</section>
 
