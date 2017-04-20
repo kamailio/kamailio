@@ -255,6 +255,93 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
 </programlisting>
 		</example>
 	</section>
+	<section id="ndb_redis.f.redis_pipe_cmd">
+		<title>
+		<function moreinfo="none">redis_pipe_cmd(srvname, command, ..., replyid)</function>
+		</title>
+		<para>
+			Add a command to be sent to REDIS server identified by srvname. 
+			All the commands will be stored in a buffer until a call to 
+			redis_execute is made. When calling redis_execute the stored commands 
+			are sent using the pipelining functionality of redis. The replies
+			will be stored in local containers identified by the replyid of each 
+			added command. All the parameters can be strings with pseudo-variables
+			that are evaluated at runtime.
+		</para>
+		<para>
+			This command is similar in syntax with redis_cmd, the only difference 
+			is that it does not send the command but instead appends it to a buffer.
+		</para>
+		<para>
+			See examples from redis_execute.
+		</para>
+		<para>
+			Note: Pipelining feature is incompatible with the clustering feature. 
+			If cluster parameter is set to 1, this function will log an error and do nothing.
+		</para>
+	</section>
+	<section id="ndb_redis.f.redis_execute">
+	<title>
+		<function moreinfo="none">redis_execute([srvname])</function>
+	</title>
+	<para>
+		Sends commands to REDIS server identified by srvname. Commands are added 
+		with redis_pipe_cmd function, and will be stored for an existing REDIS server.
+		When this function is called all the commands will be sent in a single message
+		to the REDIS server.
+
+	</para>
+	<para>
+		If this function is called without any parameters, it will iterate through all 
+		existing servers and send the existing pipelined commands for them.
+	</para>
+	<para>
+		When using redis_cmd together with redis_pipe_cmd it is recommended that a call to 
+		redis_execute is made before calling redis_cmd in case there are pipelined commands,
+		otherwise when calling redis_cmd, if pipelined messages exist, a call to redis_execute
+		is made automatically and a warning message is logged. 
+	</para>
+	<para>
+		Note: Pipelining feature is incompatible with the clustering feature. 
+		If cluster parameter is set to 1, this function will log an error and do nothing.
+	</para>
+	<example>
+		<title><function>redis_execute</function> usage</title>
+		<programlisting format="linespecific">
+...
+After several redis command calls:
+	redis_pipe_cmd("srvA", "SET foo bar", "r1");
+
+	redis_pipe_cmd("srvB", "SET ruri $ru", "r2");
+
+	redis_pipe_cmd("srvC", "GET foo", "r3");
+
+Send the data and retrieve the results:
+	redis_execute("srvA"); //send command to srvA and wait for reply. Store the reply in r1
+
+	redis_execute(); //send remaining commands (the set to srvB and get to srvC), wait for replies, and store the replies in r2 and r3
+
+Using both redis_cmd and redis_pipe_cmd:
+	redis_pipe_cmd("srvA", "SET foo bar", "r1");
+
+	redis_pipe_cmd("srvA", "SET ruri $ru", "r2");
+
+	redis_execute("srvA"); //send commands to srvA and wait for reply. Store replies in r1 and r2 
+
+	redis_cmd("srvA", "GET foo", "r3"); //send command, wait for reply and store it in r3
+
+
+	redis_pipe_cmd("srvA", "SET foo bar", "r1");
+
+	redis_pipe_cmd("srvA", "SET ruri $ru", "r2");
+
+	redis_cmd("srvA", "GET foo", "r3"); //first call redis execute (replies are stored in r1 and r2), log warning and execute redis_cmd
+
+	redis_execute("srvA"); //this does nothing as there are no more pipelined commands. The call is not necessary
+...
+		</programlisting>
+	</example>
+	</section>
 	<section id="ndb_redis.f.redis_free">
 	<title>
 		<function moreinfo="none">redis_free(replyid)</function>
