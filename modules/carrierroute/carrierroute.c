@@ -231,8 +231,8 @@ static int mod_init(void) {
 		}
 
 		if( !( fs.st_mode & S_IWOTH) &&
-			!((fs.st_mode & S_IWGRP) && (fs.st_gid == uid)) &&
-			!((fs.st_mode & S_IWUSR) && (fs.st_uid == gid))) {
+			!((fs.st_mode & S_IWGRP) && (fs.st_gid == gid)) &&
+			!((fs.st_mode & S_IWUSR) && (fs.st_uid == uid))) {
 				LM_ERR("config file %s not writable\n", config_file);
 				return -1;
 		}
