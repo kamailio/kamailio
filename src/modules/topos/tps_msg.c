@@ -1016,7 +1016,7 @@ int tps_response_sent(sip_msg_t *msg)
 	tps_remove_headers(msg, HDR_RECORDROUTE_T);
 	tps_remove_headers(msg, HDR_CONTACT_T);
 
-	if(direction==TPS_DIR_UPSTREAM) {
+	if(direction==TPS_DIR_DOWNSTREAM) {
 		tps_reinsert_contact(msg, &stsd, &stsd.as_contact);
 	} else {
 		tps_reinsert_contact(msg, &stsd, &stsd.bs_contact);
