@@ -207,7 +207,7 @@ static: $(objs)
 # (it's usefull to have it separated from clean for speeding up make proper)
 .PHONY: local-clean
 local-clean:
-	-@rm -f $(objs) $(NAME) $(objs:.o=.il) librpath.lst 2>/dev/null
+	-@rm -f $(objs) $(NAME) $(objs:.o=.il) *.a librpath.lst 2>/dev/null
 
 .PHONY: clean
 clean: local-clean
