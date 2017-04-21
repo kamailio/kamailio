@@ -269,7 +269,7 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 	if(db_res==NULL || RES_ROW_N(db_res)<=0 || RES_COL_N(db_res)<=0)
 	{
 		LM_DBG("no result after query\n");
-		con->dbf.free_result(con->dbh, db_res);
+		if (db_res) con->dbf.free_result(con->dbh, db_res);
 		return 2;
 	}
 	if(!res)
