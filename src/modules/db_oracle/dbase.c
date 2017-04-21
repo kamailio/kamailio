@@ -216,7 +216,7 @@ static int db_oracle_submit_query(const db1_con_t* _h, const str* _s)
 			(unsigned)hc);
 		return -1;
 	}
-	
+
 	if (!pqd->_rs) {
 		/*
 		 * This method is at ~25% faster as set OCI_COMMIT_ON_SUCCESS
@@ -373,8 +373,7 @@ int db_oracle_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 	int len;
 	const char *p;
 
-	if (!_h || !_s || !_s->s) {
-badparam:
+	if (!_h || !_r || !_s || !_s->s) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -387,7 +386,6 @@ badparam:
 	while (len && *p == ' ') ++p, --len;
 #define _S_DIFF(p, l, S) (l <= sizeof(S)-1 || strncasecmp(p, S, sizeof(S)-1))
 	if (!_S_DIFF(p, len, "select ")) {
-		if (!_r) goto badparam;
 		cb._rs = &reshp;
 	} else {
 		if (	_S_DIFF(p, len, "insert ")
@@ -398,10 +396,11 @@ badparam:
 			return -2;
 		}
 #undef _S_DIFF
-		if (_r) goto badparam;
 		cb._rs = NULL;
 	}
 
+	CON_ORA(_h)->pqdata = &cb;
+	CON_ORA(_h)->bindpos = 0;
 	len = db_do_raw_query(_h, _s, _r, db_oracle_submit_query, db_oracle_store_result);
 	CON_ORA(_h)->pqdata = NULL;	/* paranoid for next call */
 	return len;
@@ -488,7 +487,7 @@ int db_oracle_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 {
 	query_data_t cb;
 	int rc;
-	
+
 	if (!_h || !CON_TABLE(_h)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
