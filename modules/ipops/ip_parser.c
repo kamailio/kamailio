@@ -1,7 +1,3 @@
-/*
- * Warning: This file is auto generated from a ragel syntax (ip_parser.rl),
- * do not change it!
- */
 
 #line 1 "ip_parser.rl"
 #include "ip_parser.h"
@@ -16,11 +12,6 @@
 
 #line 14 "ip_parser.c"
 static const int ip_parser_start = 1;
-static const int ip_parser_first_final = 237;
-static const int ip_parser_error = 0;
-
-static const int ip_parser_en_main = 1;
-
 
 #line 45 "ip_parser.rl"
 
