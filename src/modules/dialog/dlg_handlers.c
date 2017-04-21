@@ -61,7 +61,7 @@ static str       rr_param;		/*!< record-route parameter for matching */
 static int       dlg_flag_mask=0;	/*!< flag for dialog tracking */
 static pv_spec_t *timeout_avp;		/*!< AVP for timeout setting */
 static int       default_timeout;	/*!< default dialog timeout */
-static int       seq_match_mode;	/*!< dlg_match mode */ 
+static int       seq_match_mode;	/*!< dlg_match mode */
 static int       shutdown_done = 0;	/*!< 1 when destroy_dlg_handlers was called */
 extern int       detect_spirals;
 extern int       dlg_timeout_noreset;
@@ -171,7 +171,7 @@ static inline int add_dlg_rr_param(struct sip_msg *req, unsigned int entry,
 /*!
  * \brief Parse SIP message and populate leg informations
  *
- * Parse SIP message and populate leg informations. 
+ * Parse SIP message and populate leg informations.
  * \param dlg the dialog to add cseq, contact & record_route
  * \param msg sip message
  * \param t transaction
@@ -813,7 +813,7 @@ static void unref_new_dialog(void *iuid)
  * \param t transaction
  * \param run_initial_cbs if set zero, initial callbacks are not executed
  * \return 0 on success, -1 on failure
- */ 
+ */
 int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 {
 	dlg_cell_t *dlg;
@@ -1191,7 +1191,7 @@ dlg_cell_t *dlg_lookup_msg_dialog(sip_msg_t *msg, unsigned int *dir)
 		}
 		return dlg;
 	}
-	
+
 	if (pre_match_parse(msg, &callid, &ftag, &ttag, 0)<0)
 		return NULL;
 	vdir = DLG_DIR_NONE;
@@ -1723,16 +1723,15 @@ void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate
 		}
 	}
 
-
-	if(msg==NULL)
-		fmsg = faked_msg_next();
-	else
-		fmsg = msg;
-
-	if (exec_pre_script_cb(fmsg, LOCAL_CB_TYPE)<=0)
-		return;
-
 	if(rt>=0 || dlg_event_callback.len>0) {
+		if(msg==NULL)
+			fmsg = faked_msg_next();
+		else
+			fmsg = msg;
+
+		if (exec_pre_script_cb(fmsg, LOCAL_CB_TYPE)<=0)
+			return;
+
 		dlg_ref(dlg, 1);
 		dlg_set_ctx_iuid(dlg);
 		LM_DBG("executing event_route %d on state %d\n", rt, nstate);
