@@ -49,6 +49,8 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/rand/kam_rand.h"
 
+#include "../keepalive/api.h"
+
 #include "dr_load.h"
 #include "prefix_tree.h"
 #include "routing.h"
@@ -71,6 +73,9 @@ static int use_domain = 1;
 static int sort_order = 0;
 int dr_fetch_rows = 1000;
 int dr_force_dns = 1;
+/* enable destinations keepalive (through keepalive module */
+int dr_enable_keepalive = 0;
+keepalive_api_t keepalive_api;
 
 /* DRG table columns */
 static str drg_user_col = str_init("username");
@@ -170,6 +175,7 @@ static param_export_t params[] = {
 	{"sort_order",      INT_PARAM, &sort_order      },
 	{"fetch_rows",      INT_PARAM, &dr_fetch_rows   },
 	{"force_dns",       INT_PARAM, &dr_force_dns    },
+	{"enable_keepalive",INT_PARAM, &dr_enable_keepalive},
 	{0, 0, 0}
 };
 
@@ -212,6 +218,25 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
    return 0;
 }
 
+
+void dr_keepalive_statechanged(str uri, ka_state state, void *user_attr) {
+
+	((pgw_t *)user_attr)->state = state;
+}
+
+static int dr_update_keepalive(pgw_t *addrs)
+{
+	pgw_t *cur;
+	str owner = str_init("drouting");
+
+	for(cur = addrs; cur != NULL; cur = cur->next) {
+		LM_DBG("uri: %.*s\n", cur->ip.len, cur->ip.s);
+		keepalive_api.add_destination(cur->ip, owner, 0, dr_keepalive_statechanged, cur);
+	}
+
+	return 0;
+}
+
 static inline int dr_reload_data( void )
 {
 	rt_data_t *new_data;
@@ -247,9 +272,12 @@ static inline int dr_reload_data( void )
 	if (old_data)
 		free_rt_data( old_data, 1 );
 
+	if (dr_enable_keepalive) {
+		dr_update_keepalive((*rdata)->pgw_l);
+	}
+
 	return 0;
 }
-
 
 
 static int dr_init(void)
@@ -359,6 +387,15 @@ static int dr_init(void)
 		LM_CRIT( "database modules does not "
 			"provide QUERY functions needed by DRounting module\n");
 		return -1;
+	}
+
+	if (dr_enable_keepalive) {
+		LM_DBG("keepalive enabled - try loading keepalive module API\n");
+
+		if(keepalive_load_api(&keepalive_api) < 0) {
+			LM_ERR("failed to load keepalive API\n");
+			goto error;
+		}
 	}
 
 	return 0;
@@ -663,6 +700,7 @@ static int do_routing(struct sip_msg* msg, dr_group_t *drg)
 	static int local_gwlist[DR_MAX_GWLIST];
 	int gwlist_size;
 	int ret;
+	pgw_t *dest;
 
 	ret = -1;
 
@@ -835,14 +873,29 @@ again:
 			/* next group starts from i */
 			j=i;
 		}
+
+	// sort order 0
 	} else {
-		for(i=0; i<gwlist_size; i++)
-			local_gwlist[i] = i;
-		t = i;
+		LM_DBG("sort order 0\n");
+
+		for(i=0,j=0; i<gwlist_size; i++) {
+			dest = rt_info->pgwl[i].pgw;
+
+			if (dest->state != KA_STATE_DOWN) {
+				local_gwlist[j++] = i;
+			}
+		}
+		t = j;
 	}
 
 	/* do some cleanup first */
 	destroy_avps( ruri_avp.type, ruri_avp.name, 1);
+
+	if (j == 0) {
+		LM_WARN("no destinations available\n");
+		ret = -1;
+		goto error2;
+	}
 
 	/* push gwlist into avps in reverse order */
 	for( j=t-1 ; j>=1 ; j-- ) {
