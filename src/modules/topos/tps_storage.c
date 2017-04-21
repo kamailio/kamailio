@@ -810,6 +810,7 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	int nr_keys;
 	int nr_cols;
 	int n;
+	int ret = 0;
 
 	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
 		return -1;
@@ -853,7 +854,8 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	if (RES_ROW_N(db_res) <= 0) {
 		LM_DBG("no stored record for <%.*s>\n",
 				md->x_vbranch1.len, ZSW(md->x_vbranch1.s));
-		return 1;
+		ret = 1;
+		goto done;
 	}
 
 	sd->cp = sd->cbuf;
@@ -874,10 +876,11 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_method); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_cseq); n++;
 
+done:
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
 		LM_ERR("failed to free result of query\n");
 
-	return 0;
+	return ret;
 
 error:
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
@@ -907,6 +910,7 @@ int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	int nr_keys;
 	int nr_cols;
 	int n;
+	int ret = 0;
 
 	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
 		return -1;
@@ -983,7 +987,8 @@ int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	if (RES_ROW_N(db_res) <= 0) {
 		LM_DBG("no stored record for <%.*s>\n",
 				md->a_uuid.len, ZSW(md->a_uuid.s));
-		return 1;
+		ret = 1;
+		goto done;
 	}
 
 	sd->cp = sd->cbuf;
@@ -1011,10 +1016,11 @@ int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_method); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_cseq); n++;
 
+done:
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
 		LM_ERR("failed to free result of query\n");
 
-	return 0;
+	return ret;
 
 error:
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
