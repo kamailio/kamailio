@@ -16,7 +16,7 @@ PIDFile=/run/kamailio/kamailio.pid
 # ExecStart requires a full absolute path
 ExecStart=/usr/sbin/kamailio -P /run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY
 ExecStopPost=/usr/bin/rm -f /run/kamailio/kamailio.pid
-Restart=on-abort
+Restart=on-failure
 User=kamailio
 Group=daemon
 ; For each TCP or TLS endpoint connection is requred file descriptor
