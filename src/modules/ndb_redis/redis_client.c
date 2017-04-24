@@ -388,6 +388,191 @@ err:
 	return -1;
 }
 
+/**
+ *
+ */
+int redisc_append_cmd(str *srv, str *res, str *cmd, ...)
+{
+	redisc_server_t *rsrv=NULL;
+	redisc_reply_t *rpl;
+	char c;
+	va_list ap;
+
+	va_start(ap, cmd);
+
+	if(srv==NULL || cmd==NULL || res==NULL)
+	{
+		LM_ERR("invalid parameters");
+		goto error_cmd;
+	}
+	if(srv->len==0 || res->len==0 || cmd->len==0)
+	{
+		LM_ERR("invalid parameters");
+		goto error_cmd;
+	}
+	rsrv = redisc_get_server(srv);
+	if(rsrv==NULL)
+	{
+		LM_ERR("no redis server found: %.*s\n", srv->len, srv->s);
+		goto error_cmd;
+	}
+	if(rsrv->ctxRedis==NULL)
+	{
+		LM_ERR("no redis context for server: %.*s\n", srv->len, srv->s);
+		goto error_cmd;
+	}
+	if (rsrv->pendingReplies >= MAXIMUM_PIPELINED_COMMANDS)
+	{
+		LM_ERR("Too many pipelined commands, maximum is %d\n",MAXIMUM_PIPELINED_COMMANDS);
+		goto error_cmd;
+	}
+	rpl = redisc_get_reply(res);
+	if(rpl==NULL)
+	{
+		LM_ERR("no redis reply id found: %.*s\n", res->len, res->s);
+		goto error_cmd;
+	}
+
+	c = cmd->s[cmd->len];
+	cmd->s[cmd->len] = '\0';
+	if (redisvAppendCommand(rsrv->ctxRedis,cmd->s,ap) != REDIS_OK)
+	{
+		LM_ERR("Invalid redis command : %s\n",cmd->s);
+		goto error_cmd;
+	}
+	rsrv->pipelinedReplies[rsrv->pendingReplies]=rpl;
+	rsrv->pendingReplies++;
+
+	cmd->s[cmd->len] = c;
+	va_end(ap);
+	return 0;
+
+error_cmd:
+	va_end(ap);
+	return -1;
+
+}
+
+
+/**
+ *
+ */
+int redisc_exec_pipelined_cmd(str *srv)
+{
+	redisc_server_t *rsrv=NULL;
+
+	if (srv == NULL)
+	{
+		LM_ERR("invalid parameters");
+		return -1;
+	}
+	if (srv->len == 0)
+	{
+		LM_ERR("invalid parameters");
+		return -1;
+	}
+	rsrv = redisc_get_server(srv);
+	if (rsrv == NULL)
+	{
+		LM_ERR("no redis server found: %.*s\n", srv->len, srv->s);
+		return -1;
+	}
+	if (rsrv->ctxRedis == NULL)
+	{
+		LM_ERR("no redis context for server: %.*s\n", srv->len, srv->s);
+		return -1;
+	}
+	return redisc_exec_pipelined(rsrv);
+}
+
+/**
+ *
+ */
+int redisc_exec_pipelined_cmd_all()
+{
+	redisc_server_t *rsrv=NULL;
+
+	rsrv=_redisc_srv_list;
+	while(rsrv!=NULL)
+	{
+		if ((rsrv->ctxRedis != NULL) && (rsrv->pendingReplies != 0))
+		{
+			redisc_exec_pipelined(rsrv);
+		}
+		rsrv=rsrv->next;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+int redisc_exec_pipelined(redisc_server_t *rsrv)
+{
+	redisc_reply_t *rpl;
+	int i;
+	LM_DBG("redis server: %.*s\n", rsrv->sname->len,rsrv->sname->s);
+	if (rsrv->pendingReplies == 0)
+	{
+		LM_ERR("call for redis_cmd without any pipelined commands\n");
+		return -1;
+	}
+
+	/* send the first command and wait for the replies */
+	rpl=rsrv->pipelinedReplies[0];
+
+	if(rpl->rplRedis!=NULL)
+	{
+		/* clean up previous redis reply */
+		freeReplyObject(rpl->rplRedis);
+		rpl->rplRedis = NULL;
+	}
+
+	redisGetReply(rsrv->ctxRedis, (void**) &rpl->rplRedis);
+	if (rpl->rplRedis == NULL)
+	{
+		/* null reply, reconnect and try again */
+		if (rsrv->ctxRedis->err)
+		{
+			LM_ERR("Redis error: %s\n", rsrv->ctxRedis->errstr);
+		}
+		if (redisc_reconnect_server(rsrv) == 0)
+		{
+			redisGetReply(rsrv->ctxRedis, (void**) &rpl->rplRedis);
+			if (rpl->rplRedis == NULL)
+			{
+				LM_ERR("Unable to read reply\n");
+				goto error_exec;
+			}
+		}
+		else
+		{
+			LM_ERR("unable to reconnect to redis server: %.*s\n", rsrv->sname->len,rsrv->sname->s);
+			goto error_exec;
+		}
+	}
+	LM_DBG("reply is [%s]",rpl->rplRedis->str);
+
+	/* replies are received just retrieve them */
+	for (i=1;i<rsrv->pendingReplies;i++)
+	{
+		rpl=rsrv->pipelinedReplies[i];
+		if (redisGetReplyFromReader(rsrv->ctxRedis, (void**) &rpl->rplRedis) != REDIS_OK)
+		{
+			LM_ERR("Unable to read reply\n");
+			goto error_exec;
+		}
+		LM_DBG("reply is [%s]",rpl->rplRedis->str);
+	}
+	rsrv->pendingReplies = 0;
+	return 0;
+
+error_exec:
+	rsrv->pendingReplies = 0;
+	return -1;
+}
+
 int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv) {
 	redisc_server_t *rsrv_new;
 	char buffername[100];
@@ -473,7 +658,13 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		goto error_exec;
 	}
 	LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
-
+  
+	if (rsrv->pendingReplies != 0)
+	{
+		LM_NOTICE("Calling redis_cmd with pipelined commands in the buffer. Automatically call redis_execute");
+		redisc_exec_pipelined(rsrv);
+	}
+  
 	rpl = redisc_get_reply(res);
 	if(rpl==NULL)
 	{

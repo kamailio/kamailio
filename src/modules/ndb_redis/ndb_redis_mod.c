@@ -57,7 +57,17 @@ static int w_redis_cmd5(struct sip_msg* msg, char* ssrv, char* scmd,
 		char *sargv1, char *sargv2, char* sres);
 static int w_redis_cmd6(struct sip_msg* msg, char* ssrv, char* scmd,
 		char *sargv1, char *sargv2, char *sargv3, char* sres);
+static int w_redis_pipe_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
+		char* sres);
+static int w_redis_pipe_cmd4(struct sip_msg* msg, char* ssrv, char* scmd,
+		char *sargv1, char* sres);
+static int w_redis_pipe_cmd5(struct sip_msg* msg, char* ssrv, char* scmd,
+		char *sargv1, char *sargv2, char* sres);
+static int w_redis_pipe_cmd6(struct sip_msg* msg, char* ssrv, char* scmd,
+		char *sargv1, char *sargv2, char *sargv3, char* sres);
 static int fixup_redis_cmd6(void** param, int param_no);
+static int w_redis_execute_noargs(struct sip_msg* msg);
+static int w_redis_execute(struct sip_msg* msg, char* ssrv);
 
 static int w_redis_free_reply(struct sip_msg* msg, char* res);
 
@@ -85,6 +95,18 @@ static cmd_export_t cmds[]={
 	{"redis_cmd", (cmd_function)w_redis_cmd5, 5, fixup_redis_cmd6,
 		0, ANY_ROUTE},
 	{"redis_cmd", (cmd_function)w_redis_cmd6, 6, fixup_redis_cmd6,
+		0, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd3, 3, fixup_redis_cmd6,
+		0, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd4, 4, fixup_redis_cmd6,
+		0, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd5, 5, fixup_redis_cmd6,
+		0, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd6, 6, fixup_redis_cmd6,
+		0, ANY_ROUTE},
+	{"redis_execute", (cmd_function)w_redis_execute, 1, fixup_redis_cmd6,
+		0, ANY_ROUTE},
+	{"redis_execute", (cmd_function)w_redis_execute_noargs, 0, 0,
 		0, ANY_ROUTE},
 	{"redis_free", (cmd_function)w_redis_free_reply, 1, fixup_spve_null,
 		0, ANY_ROUTE},
@@ -320,6 +342,239 @@ static int w_redis_cmd6(struct sip_msg* msg, char* ssrv, char* scmd,
 	arg1.s[arg1.len] = c1;
 	arg2.s[arg2.len] = c2;
 	arg3.s[arg3.len] = c3;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_redis_pipe_cmd3(struct sip_msg* msg, char* ssrv, char* scmd, char* sres)
+{
+	str s[3];
+
+	if (redis_cluster_param) 
+	{
+		LM_ERR("Pipelining is not supported if cluster parameter is enabled\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ssrv, &s[0])!=0)
+	{
+		LM_ERR("no redis server name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)scmd, &s[1])!=0)
+	{
+		LM_ERR("no redis command\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)sres, &s[2])!=0)
+	{
+		LM_ERR("no redis reply name\n");
+		return -1;
+	}
+
+	if(redisc_append_cmd(&s[0], &s[2], &s[1])<0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_redis_pipe_cmd4(struct sip_msg* msg, char* ssrv, char* scmd,
+		char *sargv1, char* sres)
+{
+	str s[3];
+	str arg1;
+	char c1;
+
+	if (redis_cluster_param) 
+	{
+		LM_ERR("Pipelining is not supported if cluster parameter is enabled\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ssrv, &s[0])!=0)
+	{
+		LM_ERR("no redis server name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)scmd, &s[1])!=0)
+	{
+		LM_ERR("no redis command\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)sargv1, &arg1)!=0)
+	{
+		LM_ERR("no argument 1\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)sres, &s[2])!=0)
+	{
+		LM_ERR("no redis reply name\n");
+		return -1;
+	}
+
+	c1 = arg1.s[arg1.len];
+	arg1.s[arg1.len] = '\0';
+	if(redisc_append_cmd(&s[0], &s[2], &s[1], arg1.s)<0) {
+		arg1.s[arg1.len] = c1;
+		return -1;
+	}
+	arg1.s[arg1.len] = c1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_redis_pipe_cmd5(struct sip_msg* msg, char* ssrv, char* scmd,
+		char *sargv1, char *sargv2, char* sres)
+{
+	str s[3];
+	str arg1, arg2;
+	char c1, c2;
+
+	if (redis_cluster_param) 
+	{
+		LM_ERR("Pipelining is not supported if cluster parameter is enabled\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ssrv, &s[0])!=0)
+	{
+		LM_ERR("no redis server name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)scmd, &s[1])!=0)
+	{
+		LM_ERR("no redis command\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)sargv1, &arg1)!=0)
+	{
+		LM_ERR("no argument 1\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)sargv2, &arg2)!=0)
+	{
+		LM_ERR("no argument 2\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)sres, &s[2])!=0)
+	{
+		LM_ERR("no redis reply name\n");
+		return -1;
+	}
+
+	c1 = arg1.s[arg1.len];
+	c2 = arg2.s[arg2.len];
+	arg1.s[arg1.len] = '\0';
+	arg2.s[arg2.len] = '\0';
+	if(redisc_append_cmd(&s[0], &s[2], &s[1], arg1.s, arg2.s)<0) {
+		arg1.s[arg1.len] = c1;
+		arg2.s[arg2.len] = c2;
+		return -1;
+	}
+	arg1.s[arg1.len] = c1;
+	arg2.s[arg2.len] = c2;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_redis_pipe_cmd6(struct sip_msg* msg, char* ssrv, char* scmd,
+		char *sargv1, char *sargv2, char *sargv3, char* sres)
+{
+	str s[3];
+	str arg1, arg2, arg3;
+	char c1, c2, c3;
+
+	if (redis_cluster_param) 
+	{
+		LM_ERR("Pipelining is not supported if cluster parameter is enabled\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ssrv, &s[0])!=0)
+	{
+		LM_ERR("no redis server name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)scmd, &s[1])!=0)
+	{
+		LM_ERR("no redis command\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)sargv1, &arg1)!=0)
+	{
+		LM_ERR("no argument 1\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)sargv2, &arg2)!=0)
+	{
+		LM_ERR("no argument 2\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)sargv3, &arg3)!=0)
+	{
+		LM_ERR("no argument 3\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)sres, &s[2])!=0)
+	{
+		LM_ERR("no redis reply name\n");
+		return -1;
+	}
+
+	c1 = arg1.s[arg1.len];
+	c2 = arg2.s[arg2.len];
+	c3 = arg3.s[arg3.len];
+	arg1.s[arg1.len] = '\0';
+	arg2.s[arg2.len] = '\0';
+	arg3.s[arg3.len] = '\0';
+	if(redisc_append_cmd(&s[0], &s[2], &s[1], arg1.s, arg2.s, arg3.s)<0) {
+		arg1.s[arg1.len] = c1;
+		arg2.s[arg2.len] = c2;
+		arg3.s[arg3.len] = c3;
+		return -1;
+	}
+	arg1.s[arg1.len] = c1;
+	arg2.s[arg2.len] = c2;
+	arg3.s[arg3.len] = c3;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_redis_execute_noargs(struct sip_msg* msg)
+{
+	if (redis_cluster_param) 
+	{
+		LM_ERR("Pipelining is not supported if cluster parameter is enabled\n");
+		return -1;
+	}
+	redisc_exec_pipelined_cmd_all();
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_redis_execute(struct sip_msg* msg, char* ssrv)
+{
+	str s;
+
+	if (redis_cluster_param) 
+	{
+		LM_ERR("Pipelining is not supported if cluster parameter is enabled\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ssrv, &s)!=0)
+	{
+		LM_ERR("no redis server name\n");
+		return -1;
+	}
+	redisc_exec_pipelined_cmd(&s);
 	return 1;
 }
 

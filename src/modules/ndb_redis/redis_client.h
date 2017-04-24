@@ -34,18 +34,11 @@
 #include "../../core/parser/parse_param.h"
 #include "../../core/mod_fix.h"
 
+#define MAXIMUM_PIPELINED_COMMANDS 1000
+
 int redisc_init(void);
 int redisc_destroy(void);
 int redisc_add_server(char *spec);
-int redisc_exec(str *srv, str *res, str *cmd, ...);
-
-typedef struct redisc_server {
-	str *sname;
-	unsigned int hname;
-	param_t *attrs;
-	redisContext *ctxRedis;
-	struct redisc_server *next;
-} redisc_server_t;
 
 typedef struct redisc_reply {
 	str rname;
@@ -53,6 +46,16 @@ typedef struct redisc_reply {
 	redisReply *rplRedis;
 	struct redisc_reply *next;
 } redisc_reply_t;
+
+typedef struct redisc_server {
+	str *sname;
+	unsigned int hname;
+	param_t *attrs;
+	redisContext *ctxRedis;
+	struct redisc_server *next;
+	redisc_reply_t *pipelinedReplies[MAXIMUM_PIPELINED_COMMANDS];
+	int pendingReplies;
+} redisc_server_t;
 
 typedef struct redisc_pv {
 	str rname;
@@ -68,6 +71,10 @@ int redisc_reconnect_server(redisc_server_t *rsrv);
 
 /* Command related functions */
 int redisc_exec(str *srv, str *res, str *cmd, ...);
+int redisc_append_cmd(str *srv, str *res, str *cmd, ...);
+int redisc_exec_pipelined_cmd(str *srv);
+int redisc_exec_pipelined_cmd_all();
+int redisc_exec_pipelined(redisc_server_t *rsrv);
 redisReply* redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv,
 		const size_t *argvlen);
 redisc_reply_t *redisc_get_reply(str *name);
