@@ -248,6 +248,7 @@ static int sqlang_isfunction(HSQUIRRELVM J, int idx)
 	}
 }
 
+#if 0
 static char* sqlang_safe_tostring(HSQUIRRELVM J, int idx)
 {
 	const SQChar *s = NULL;
@@ -260,6 +261,7 @@ static char* sqlang_safe_tostring(HSQUIRRELVM J, int idx)
 	}
 	return (s)?(char*)s:"Error on sqlang";
 }
+#endif
 
 static int sqlang_gettype(HSQUIRRELVM J, int idx)
 {
@@ -946,7 +948,6 @@ int app_sqlang_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 {
 	int n;
 	int ret;
-	str txt;
 	int top;
 	sip_msg_t *bmsg;
 	SQInteger rv;
