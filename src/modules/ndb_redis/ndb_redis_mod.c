@@ -61,7 +61,6 @@ static int fixup_redis_cmd6(void** param, int param_no);
 
 static int w_redis_free_reply(struct sip_msg* msg, char* res);
 
-static int mod_init(void);
 static void mod_destroy(void);
 static int  child_init(int rank);
 
@@ -114,7 +113,7 @@ struct module_exports exports = {
 	0,              /* exported MI functions */
 	mod_pvs,        /* exported pseudo-variables */
 	0,              /* extra processes */
-	mod_init,       /* module initialization function */
+	0,       	/* module initialization function */
 	0,              /* response function */
 	mod_destroy,    /* destroy function */
 	child_init      /* per child init function */
@@ -130,18 +129,6 @@ static int child_init(int rank)
 		return 0;
 
 	if(redisc_init()<0) {
-		LM_ERR("failed to initialize redis connections\n");
-		return -1;
-	}
-	return 0;
-}
-
-/**
- *
- */
-static int mod_init(void)
-{
-	if (init_list() < 0) {
 		LM_ERR("failed to initialize redis connections\n");
 		return -1;
 	}

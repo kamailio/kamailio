@@ -34,7 +34,6 @@
 #include "../../core/parser/parse_param.h"
 #include "../../core/mod_fix.h"
 
-int init_list(void);
 int redisc_init(void);
 int redisc_destroy(void);
 int redisc_add_server(char *spec);
@@ -46,7 +45,6 @@ typedef struct redisc_server {
 	param_t *attrs;
 	redisContext *ctxRedis;
 	struct redisc_server *next;
-	char * settings;
 } redisc_server_t;
 
 typedef struct redisc_reply {
