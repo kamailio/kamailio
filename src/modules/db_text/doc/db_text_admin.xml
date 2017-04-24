@@ -271,26 +271,6 @@ modparam("db_text", "db_mode", 1)
 			</example>
 		</section>
 		<section>
-			<title><varname>db_delim</varname> (string)</title>
-			<para>
-			Set the delimiter inside the db_text file.
-			</para>
-
-			<para>
-			<emphasis>
-				Default value is <quote>:</quote>.
-			</emphasis>
-			</para>
-			<example>
-			<title>Set <varname>db_mode</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("db_text", "db_delim", "|")
-...
-</programlisting>
-			</example>
-		</section>
-		<section>
 			<title><varname>emptystring</varname> (integer)</title>
 			<para>
 			db_text by default handles an empty string as a NULL value.

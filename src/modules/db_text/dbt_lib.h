@@ -41,6 +41,7 @@
 #define DBT_FL_SET		0
 #define DBT_FL_UNSET	1
 
+#define DBT_DELIM	':'
 #define DBT_DELIM_C	' '
 #define DBT_DELIM_R	'\n'
 
@@ -50,8 +51,6 @@
 extern int db_mode; /* Database usage mode: 0 = no cache, 1 = cache */
 extern int empty_string; /* If TRUE, an empty string is an empty string, otherwise NULL */
 extern int _db_text_read_buffer_size; /* size of the buffer to allocate when reading file */
-extern int _dbt_delim;
-extern str _dbt_delim_str; /* the delimiter inside db_text files */
 extern int _db_text_max_result_rows; /* max result rows */
 
 typedef db_val_t dbt_val_t, *dbt_val_p;
