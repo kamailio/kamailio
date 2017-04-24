@@ -656,7 +656,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	{
 		LM_ERR("no redis context for server: %.*s\n", srv->len, srv->s);
 		goto error_exec;
-  }
+	}
 	LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
   
 	if (rsrv->pendingReplies != 0)
