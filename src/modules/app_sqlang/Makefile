@@ -8,7 +8,7 @@ auto_gen=
 NAME=app_sqlang.so
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE -I./squirrel/include
-LIBS += -L. -lsquirrel -lsqstdlib
+LIBS += -L. -lsquirrel -lsqstdlib -lstdc++
 
 include ../../Makefile.modules
 
