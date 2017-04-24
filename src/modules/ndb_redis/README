@@ -50,7 +50,9 @@ Carsten Bock
         4. Functions
 
               4.1. redis_cmd(srvname, command, ..., replyid)
-              4.2. redis_free(replyid)
+              4.2. redis_pipe_cmd(srvname, command, ..., replyid)
+              4.3. redis_execute([srvname])
+              4.4. redis_free(replyid)
 
    List of Examples
 
@@ -60,7 +62,8 @@ Carsten Bock
    1.4. Set cmd_timeout parameter
    1.5. Set cluster parameter
    1.6. redis_cmd usage
-   1.7. redis_free usage
+   1.7. redis_execute usage
+   1.8. redis_free usage
 
 Chapter 1. Admin Guide
 
@@ -83,7 +86,9 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. redis_cmd(srvname, command, ..., replyid)
-        4.2. redis_free(replyid)
+        4.2. redis_pipe_cmd(srvname, command, ..., replyid)
+        4.3. redis_execute([srvname])
+        4.4. redis_free(replyid)
 
 1. Overview
 
@@ -209,7 +214,9 @@ modparam("ndb_redis", "cluster", 1)
 4. Functions
 
    4.1. redis_cmd(srvname, command, ..., replyid)
-   4.2. redis_free(replyid)
+   4.2. redis_pipe_cmd(srvname, command, ..., replyid)
+   4.3. redis_execute([srvname])
+   4.4. redis_free(replyid)
 
 4.1.  redis_cmd(srvname, command, ..., replyid)
 
@@ -266,7 +273,87 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
 }
 ...
 
-4.2.  redis_free(replyid)
+4.2.  redis_pipe_cmd(srvname, command, ..., replyid)
+
+   Add a command to be sent to REDIS server identified by srvname. All the
+   commands will be stored in a buffer until a call to redis_execute is
+   made. When calling redis_execute the stored commands are sent using the
+   pipelining functionality of redis. The replies will be stored in local
+   containers identified by the replyid of each added command. All the
+   parameters can be strings with pseudo-variables that are evaluated at
+   runtime.
+
+   This command is similar in syntax with redis_cmd, the only difference
+   is that it does not send the command but instead appends it to a
+   buffer.
+
+   See examples from redis_execute.
+
+   Note: Pipelining feature is incompatible with the clustering feature.
+   If cluster parameter is set to 1, this function will log an error and
+   do nothing.
+
+4.3.  redis_execute([srvname])
+
+   Sends commands to REDIS server identified by srvname. Commands are
+   added with redis_pipe_cmd function, and will be stored for an existing
+   REDIS server. When this function is called all the commands will be
+   sent in a single message to the REDIS server.
+
+   If this function is called without any parameters, it will iterate
+   through all existing servers and send the existing pipelined commands
+   for them.
+
+   When using redis_cmd together with redis_pipe_cmd it is recommended
+   that a call to redis_execute is made before calling redis_cmd in case
+   there are pipelined commands, otherwise when calling redis_cmd, if
+   pipelined messages exist, a call to redis_execute is made automatically
+   and a warning message is logged.
+
+   Note: Pipelining feature is incompatible with the clustering feature.
+   If cluster parameter is set to 1, this function will log an error and
+   do nothing.
+
+   Example 1.7. redis_execute usage
+...
+After several redis command calls:
+        redis_pipe_cmd("srvA", "SET foo bar", "r1");
+
+        redis_pipe_cmd("srvB", "SET ruri $ru", "r2");
+
+        redis_pipe_cmd("srvC", "GET foo", "r3");
+
+Send the data and retrieve the results:
+        redis_execute("srvA"); //send command to srvA and wait for reply. Store
+the reply in r1
+
+        redis_execute(); //send remaining commands (the set to srvB and get to s
+rvC), wait for replies, and store the replies in r2 and r3
+
+Using both redis_cmd and redis_pipe_cmd:
+        redis_pipe_cmd("srvA", "SET foo bar", "r1");
+
+        redis_pipe_cmd("srvA", "SET ruri $ru", "r2");
+
+        redis_execute("srvA"); //send commands to srvA and wait for reply. Store
+ replies in r1 and r2
+
+        redis_cmd("srvA", "GET foo", "r3"); //send command, wait for reply and s
+tore it in r3
+
+
+        redis_pipe_cmd("srvA", "SET foo bar", "r1");
+
+        redis_pipe_cmd("srvA", "SET ruri $ru", "r2");
+
+        redis_cmd("srvA", "GET foo", "r3"); //first call redis execute (replies
+are stored in r1 and r2), log warning and execute redis_cmd
+
+        redis_execute("srvA"); //this does nothing as there are no more pipeline
+d commands. The call is not necessary
+...
+
+4.4.  redis_free(replyid)
 
    Frees data in a previous reply from memory. After this function call,
    accessing to a freed replyid returns null value.
@@ -275,7 +362,7 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
    function. When ndb_redis module closes, all pending replies are freed
    automatically.
 
-   Example 1.7. redis_free usage
+   Example 1.8. redis_free usage
 ...
 After a redis command call:
         redis_cmd("srvN", "INCR cnt", "r");
