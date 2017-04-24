@@ -187,9 +187,21 @@ modparam("ndb_redis", "cmd_timeout", 500)
    If set to 1, the module will connect to servers indicated in the
    "MOVED" reply.
 
+   The module needs to know all existing REDIS-Nodes at startup. The nodes
+   are searched by the name "ip:port", e.g. if REDIS replies with "MOVED
+   127.0.0.1:4711", ndb_redis needs to know the databases
+   "127.0.0.1:4711".
+
    Default value is “0” (disabled).
 
    Example 1.5. Set cluster parameter
+...
+modparam("ndb_redis", "server", "name=127.0.0.1:26001;addr=127.0.0.1;port=26001"
+)
+modparam("ndb_redis", "server", "name=127.0.0.1:26004;addr=127.0.0.1;port=26004"
+)
+modparam("ndb_redis", "server", "name=127.0.0.1:26008;addr=127.0.0.1;port=26008"
+)
 ...
 modparam("ndb_redis", "cluster", 1)
 ...

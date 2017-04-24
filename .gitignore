@@ -16,6 +16,7 @@ modules.lst
 *.so
 *.so.*
 *.o
+*.a
 # archives
 *.tar.gz
 *.deb
@@ -23,6 +24,7 @@ modules.lst
 # tags
 tags
 TAGS
+.tags*
 # vi swaps
 .*.swp
 .*.swo

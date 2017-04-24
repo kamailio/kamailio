@@ -51,6 +51,7 @@ Anca-Maria Vamanu
               3.12. drg_grpid_col (str)
               3.13. fetch_rows (int)
               3.14. force_dns (int)
+              3.15. enable_keepalive (int)
 
         4. Functions
 
@@ -92,11 +93,12 @@ Anca-Maria Vamanu
    1.12. Set drg_grpid_col parameter
    1.13. Set fetch_rows parameter
    1.14. Set force_dns parameter
-   1.15. do_routing usage
-   1.16. use_next_gw usage
-   1.17. goes_to_gw usage
-   1.18. is_from_gw usage
+   1.15. Set enable_keepalive parameter
+   1.16. do_routing usage
+   1.17. use_next_gw usage
+   1.18. goes_to_gw usage
    1.19. is_from_gw usage
+   1.20. is_from_gw usage
 
 Chapter 1. Admin Guide
 
@@ -136,6 +138,7 @@ Chapter 1. Admin Guide
         3.12. drg_grpid_col (str)
         3.13. fetch_rows (int)
         3.14. force_dns (int)
+        3.15. enable_keepalive (int)
 
    4. Functions
 
@@ -500,6 +503,7 @@ Chapter 1. Admin Guide
    3.12. drg_grpid_col (str)
    3.13. fetch_rows (int)
    3.14. force_dns (int)
+   3.15. enable_keepalive (int)
 
 3.1. db_url(str)
 
@@ -690,6 +694,22 @@ modparam("drouting", "fetch_rows", 1500)
 modparam("drouting", "force_dns", 0)
 ...
 
+3.15. enable_keepalive (int)
+
+   Enable monitoring of GW/destinations using keepalive module.
+   Destinations found unavailable will not be used on do_routing() call.
+
+   NOTE: this option is only compatible with <em>sort_order</em> 0
+   currently. With sort_order value of 1 or 2, destinations status will
+   simply be ignored.
+
+   Default value is “0 (disabled)”.
+
+   Example 1.15. Set enable_keepalive parameter
+...
+modparam("drouting", "enable_keepalive", 1)
+...
+
 4. Functions
 
    4.1. do_routing("[groupID]")
@@ -710,7 +730,7 @@ modparam("drouting", "force_dns", 0)
    specification. If none specified, the function will automatically try
    to query the dr_group table to get this information.
 
-   Example 1.15. do_routing usage
+   Example 1.16. do_routing usage
 ...
 do_routing();
 ...
@@ -733,7 +753,7 @@ do_routing("$avp(i:10)");
    is no other alternative destinations are found or in case of internal
    processing error.
 
-   Example 1.16. use_next_gw usage
+   Example 1.17. use_next_gw usage
 ...
 if (use_next_gw()) {
         t_relay();
@@ -754,7 +774,7 @@ if (use_next_gw()) {
    The function can take one optional parameter:
      * type (optional) - GW/destination type to be checked
 
-   Example 1.17. goes_to_gw usage
+   Example 1.18. goes_to_gw usage
 ...
 if (goes_to_gw("1")) {
         sl_send_reply("403","Forbidden");
@@ -775,7 +795,7 @@ if (goes_to_gw("1")) {
      * flags - if message is a request and the GW has a STRIP defined,
        then apply it if GW is source.
 
-   Example 1.18. is_from_gw usage
+   Example 1.19. is_from_gw usage
 ...
 if (is_from_gw("1") {
 }
@@ -793,7 +813,7 @@ if (is_from_gw("1") {
      * flags (optional) - if message is a request and the GW has a STRIP
        defined, then apply it if GW is source.
 
-   Example 1.19. is_from_gw usage
+   Example 1.20. is_from_gw usage
 ...
 if (is_from_gw("3","1") {
 }

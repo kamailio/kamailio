@@ -41,6 +41,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
 #include "../../core/flags.h"
+#include "../../core/kemi.h"
 #include "acc.h"
 #include "acc_api.h"
 #include "acc_mod.h"
@@ -219,6 +220,45 @@ int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo)
 	return acc_log_request(rq);
 }
 
+static int acc_param_parse(str *s, acc_param_t *accp)
+{
+	if(s==NULL || s->s==NULL || s->len<=0 || accp==NULL) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	memset(accp, 0, sizeof(acc_param_t));
+	accp->reason.s = s->s;
+	accp->reason.len = s->len;
+	if (strchr(s->s, PV_MARKER)!=NULL) {
+		/* there is a cfg variable - not through kemi */
+		LM_ERR("cfg variable detected - not supported\n");
+		return -1;
+	} else {
+		if(acc_parse_code(s->s, accp)<0) {
+			LM_ERR("failed to parse: [%.*s] (expected [code text])\n",
+					s->len, s->s);
+			return -1;
+		}
+	}
+	return 0;
+}
+
+int ki_acc_log_request(sip_msg_t *rq, str *comment)
+{
+	acc_param_t accp;
+
+	if(acc_param_parse(comment, &accp)<0) {
+		LM_ERR("failed execution\n");
+		return -1;
+	}
+	if (acc_preparse_req(rq)<0)
+		return -1;
+
+	env_set_to(rq->to);
+	env_set_comment(&accp);
+	env_set_text(ACC_REQUEST, ACC_REQUEST_LEN);
+	return acc_log_request(rq);
+}
 
 #ifdef SQL_ACC
 int acc_db_set_table_name(struct sip_msg *msg, void *param, str *table)
@@ -268,6 +308,25 @@ int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 		return -1;
 	env_set_to( rq->to );
 	env_set_comment(param);
+	return acc_db_request(rq);
+}
+
+int ki_acc_db_request(sip_msg_t *rq, str *comment, str *dbtable)
+{
+	acc_param_t accp;
+
+	if(acc_param_parse(comment, &accp)<0) {
+		LM_ERR("failed execution\n");
+		return -1;
+	}
+	if (acc_preparse_req(rq)<0)
+		return -1;
+	if(acc_db_set_table_name(rq, NULL, dbtable)<0) {
+		LM_ERR("cannot set table name\n");
+		return -1;
+	}
+	env_set_to(rq->to);
+	env_set_comment(&accp);
 	return acc_db_request(rq);
 }
 #endif
@@ -626,4 +685,3 @@ static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )
 		acc_onreply_in( t, ps->req, ps->rpl, ps->code);
 	}
 }
-

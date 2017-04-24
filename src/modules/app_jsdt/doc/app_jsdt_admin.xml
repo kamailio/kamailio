@@ -201,14 +201,14 @@ if(!jsdt_runstring('KSR.dbg("Hello World from $fU\n")'))
 
     <section>
         <title>RPC Commands</title>
-        <section id="app_jsrt.r.reload">
+        <section id="app_jsdt.r.reload">
             <title>
-            <function moreinfo="none">app_jsrt.reload</function>
+            <function moreinfo="none">app_jsdt.reload</function>
             </title>
             <para>
             Marks the need to reload the js script.
             The actual reload is done by every working process when the next
-            call to jsrt_run() function or KEMI config is executed.
+            call to jsdt_run() function or KEMI config is executed.
             </para>
             <para>
             Name: <emphasis>app_jsdt.reload</emphasis>
@@ -219,7 +219,27 @@ if(!jsdt_runstring('KSR.dbg("Hello World from $fU\n")'))
             </para>
             <programlisting  format="linespecific">
 ...
-&kamcmd; app_jsrt.reload
+&kamcmd; app_jsdt.reload
+...
+            </programlisting>
+        </section>
+       <section id="app_jsdt.r.api_list">
+            <title>
+            <function moreinfo="none">app_jsdt.api_list</function>
+            </title>
+            <para>
+			List the functions available via Kemi framework.
+            </para>
+            <para>
+            Name: <emphasis>app_jsdt.api_list</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_jsdt.api_list
 ...
             </programlisting>
         </section>

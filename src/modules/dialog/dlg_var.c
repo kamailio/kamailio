@@ -48,6 +48,9 @@ int msg_id;
 int dlg_cfg_cb(sip_msg_t *msg, unsigned int flags, void *cbp)
 {
 	dlg_cell_t *dlg;
+	if(get_route_type()==LOCAL_ROUTE) {
+		return 1;
+	}
 	if(flags&POST_SCRIPT_CB) {
 		dlg = dlg_get_ctx_dialog();
 		if(dlg!=NULL) {
@@ -77,6 +80,10 @@ int dlg_cfg_cb(sip_msg_t *msg, unsigned int flags, void *cbp)
 
 int cb_dlg_cfg_reset(sip_msg_t *msg, unsigned int flags, void *cbp)
 {
+	if(get_route_type()==LOCAL_ROUTE) {
+		return 1;
+	}
+
 	memset(&_dlg_ctx, 0, sizeof(dlg_ctx_t));
 
 	return 1;
@@ -84,6 +91,9 @@ int cb_dlg_cfg_reset(sip_msg_t *msg, unsigned int flags, void *cbp)
 
 int cb_dlg_locals_reset(sip_msg_t *msg, unsigned int flags, void *cbp)
 {
+	if(get_route_type()==LOCAL_ROUTE) {
+		return 1;
+	}
 	LM_DBG("resetting the local dialog shortcuts on script callback: %u\n", flags);
 	cb_dlg_cfg_reset(msg, flags, cbp);
 	cb_profile_reset(msg, flags, cbp);
@@ -106,7 +116,7 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 	var->key.len = key->len;
 	var->key.s = (char*)shm_malloc(var->key.len+1);
 	if (var->key.s==NULL) {
-		shm_free(var);			
+		shm_free(var);
 		LM_ERR("no more shm mem\n");
 		return NULL;
 	}
@@ -116,8 +126,8 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 	var->value.len = val->len;
 	var->value.s = (char*)shm_malloc(var->value.len+1);
 	if (var->value.s==NULL) {
-		shm_free(var->key.s);			
-		shm_free(var);			
+		shm_free(var->key.s);
+		shm_free(var);
 		LM_ERR("no more shm mem\n");
 		return NULL;
 	}
@@ -160,10 +170,10 @@ int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val)
 	struct dlg_var * it;
 	struct dlg_var * it_prev;
 	struct dlg_var ** var_list;
-	
-	if (dlg) 
+
+	if (dlg)
 		var_list = &dlg->vars;
-	else 
+	else
 		var_list = &_dlg_var_table;
 
 	if ( val && (var=new_dlg_var(key, val))==NULL) {
@@ -188,7 +198,7 @@ int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val)
 				/* Take the previous vflags: */
 				var->vflags = it->vflags | DLG_FLAG_CHANGED;
 				if (it_prev) it_prev->next = var;
-				else *var_list = var;				  
+				else *var_list = var;
 			}
 
 			/* Free this var: */
@@ -216,7 +226,7 @@ str * get_dlg_variable_unsafe(struct dlg_cell *dlg, str *key)
 {
 	struct dlg_var *var, *var_list;
 
-	if (dlg) 
+	if (dlg)
 		var_list = dlg->vars;
 	else
 		var_list = _dlg_var_table;
@@ -385,7 +395,7 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 
 	/* Retrieve the dialog for current message */
 	dlg=dlg_get_msg_dialog( msg);
-	
+
 	if (dlg) {
 		/* Lock the dialog */
 		dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
@@ -816,24 +826,24 @@ int pv_parse_dlg_name(pv_spec_p sp, str *in)
 
 	switch(in->len)
 	{
-		case 3: 
+		case 3:
 			if(strncmp(in->s, "ref", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else goto error;
 		break;
-		case 4: 
+		case 4:
 			if(strncmp(in->s, "h_id", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
 		break;
-		case 5: 
+		case 5:
 			if(strncmp(in->s, "state", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "to_rs", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else goto error;
 		break;
-		case 6: 
+		case 6:
 			if(strncmp(in->s, "dflags", 6)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else if(strncmp(in->s, "sflags", 6)==0)
@@ -846,7 +856,7 @@ int pv_parse_dlg_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 8;
 			else goto error;
 		break;
-		case 7: 
+		case 7:
 			if(strncmp(in->s, "toroute", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 9;
 			else if(strncmp(in->s, "to_cseq", 7)==0)
@@ -857,7 +867,7 @@ int pv_parse_dlg_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 21;
 			else goto error;
 		break;
-		case 8: 
+		case 8:
 			if(strncmp(in->s, "from_uri", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 12;
 			else if(strncmp(in->s, "from_tag", 8)==0)
@@ -868,27 +878,27 @@ int pv_parse_dlg_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 15;
 			else goto error;
 		break;
-		case 9: 
+		case 9:
 			if(strncmp(in->s, "from_cseq", 9)==0)
 				sp->pvp.pvn.u.isname.name.n = 16;
 			else goto error;
 		break;
-		case 10: 
+		case 10:
 			if(strncmp(in->s, "to_contact", 10)==0)
 				sp->pvp.pvn.u.isname.name.n = 17;
 			else goto error;
 		break;
-		case 11: 
+		case 11:
 			if(strncmp(in->s, "to_bindaddr", 11)==0)
 				sp->pvp.pvn.u.isname.name.n = 18;
 			else goto error;
 		break;
-		case 12: 
+		case 12:
 			if(strncmp(in->s, "from_contact", 12)==0)
 				sp->pvp.pvn.u.isname.name.n = 19;
 			else goto error;
 		break;
-		case 13: 
+		case 13:
 			if(strncmp(in->s, "from_bindaddr", 13)==0)
 				sp->pvp.pvn.u.isname.name.n = 20;
 			else goto error;
@@ -930,6 +940,9 @@ dlg_ctx_t* dlg_get_dlg_ctx(void)
 
 int spiral_detect_reset(struct sip_msg *foo, unsigned int flags, void *bar)
 {
+	if(get_route_type()==LOCAL_ROUTE) {
+		return 1;
+	}
 	spiral_detected = -1;
 
 	return 0;

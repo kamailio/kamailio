@@ -440,7 +440,6 @@ int db_oracle_store_result(const db1_con_t* _h, db1_res_t** _r)
 	OCIStmt* hs;
 
 	if (!_h || !_r) {
-badparam:
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
@@ -448,15 +447,20 @@ badparam:
 	con = CON_ORA(_h);
 	{
 	    query_data_t *pcb = con->pqdata;
-	    
 
-	    if (!pcb || !pcb->_rs)
-		    goto badparam;
-		    
+	    if (!pcb) {
+			LM_ERR("invalid parameter\n");
+			return -1;
+		}
+		if (!pcb->_rs) {
+			LM_DBG("no result\n");
+			return 0;
+		}
+
 	    hs = *pcb->_rs;
 	    pcb->_rs = NULL; /* paranoid for next call */
-	}	    
-	
+	}
+
 	rc = -1;
 	if (_r)	*_r = NULL;	/* unification for all errors */
 

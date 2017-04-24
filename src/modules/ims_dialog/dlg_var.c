@@ -20,7 +20,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-		       
+
 #include "../../core/route.h"
 #include "../../core/pvapi.h"
 
@@ -40,7 +40,10 @@ int msg_id;
 
 int dlg_cfg_cb(struct sip_msg *foo, unsigned int flags, void *bar)
 {
-        memset(&_dlg_ctx, 0, sizeof(dlg_ctx_t));
+	if(get_route_type()==LOCAL_ROUTE) {
+		return 1;
+	}
+	memset(&_dlg_ctx, 0, sizeof(dlg_ctx_t));
 	return 1;
 }
 
@@ -60,7 +63,7 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 	var->key.len = key->len;
 	var->key.s = (char*)shm_malloc(var->key.len);
 	if (var->key.s==NULL) {
-		shm_free(var);			
+		shm_free(var);
 		LM_ERR("no more shm mem\n");
 		return NULL;
 	}
@@ -69,8 +72,8 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 	var->value.len = val->len;
 	var->value.s = (char*)shm_malloc(var->value.len);
 	if (var->value.s==NULL) {
-		shm_free(var->key.s);			
-		shm_free(var);			
+		shm_free(var->key.s);
+		shm_free(var);
 		LM_ERR("no more shm mem\n");
 		return NULL;
 	}
@@ -111,10 +114,10 @@ int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val)
 	struct dlg_var * it;
 	struct dlg_var * it_prev;
 	struct dlg_var ** var_list;
-	
-	if (dlg) 
+
+	if (dlg)
 		var_list = &dlg->vars;
-	else 
+	else
 		var_list = &var_table;
 
 	if ( val && (var=new_dlg_var(key, val))==NULL) {
@@ -139,7 +142,7 @@ int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val)
 				/* Take the previous vflags: */
 				var->vflags = it->vflags & DLG_FLAG_CHANGED;
 				if (it_prev) it_prev->next = var;
-				else *var_list = var;				  
+				else *var_list = var;
 			}
 
 			/* Free this var: */
@@ -167,7 +170,7 @@ str * get_dlg_variable_unsafe(struct dlg_cell *dlg, str *key)
 {
 	struct dlg_var *var, *var_list;
 
-	if (dlg) 
+	if (dlg)
 		var_list = dlg->vars;
 	else
 		var_list = var_table;
@@ -222,17 +225,17 @@ void print_lists(struct dlg_cell *dlg) {
 
 str * api_get_dlg_variable(str *callid, str *ftag, str *ttag, str *key) {
     struct dlg_cell *dlg;
-    
+
     unsigned int dir = DLG_DIR_NONE;
     dlg = get_dlg(callid, ftag, ttag, &dir); //increments ref count!
-    
+
     if (!dlg) {
         LM_ERR("Asked to tear down non existent dialog\n");
         return NULL;
     }
-    
+
     unref_dlg(dlg, 1);
-    
+
     return get_dlg_variable(dlg, key);
 }
 
@@ -256,20 +259,20 @@ str * get_dlg_variable(struct dlg_cell *dlg, str *key)
 
 int api_set_dlg_variable(str *callid, str *ftag, str *ttag, str *key, str *val) {
     struct dlg_cell *dlg;
-    
+
     unsigned int dir = DLG_DIR_NONE;
     dlg = get_dlg(callid, ftag, ttag, &dir); //increments ref count!
-    
+
     if (!dlg) {
         LM_ERR("Asked to tear down non existent dialog\n");
         return -1;
     }
-    
+
     unref_dlg(dlg, 1);
-     
+
     return set_dlg_variable(dlg, key, val);
-    
-   
+
+
 }
 
 int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
@@ -380,7 +383,7 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 
 	/* Retrieve the dialog for current message */
 	dlg=dlg_get_msg_dialog( msg);
-	
+
 	if (dlg) {
 		/* Lock the dialog */
 		dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
@@ -521,29 +524,29 @@ int pv_parse_dlg_ctx_name(pv_spec_p sp, str *in)
 
 	switch(in->len)
 	{
-		case 2: 
+		case 2:
 			if(strncmp(in->s, "on", 2)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else goto error;
 		break;
-		case 3: 
+		case 3:
 			if(strncmp(in->s, "set", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else if(strncmp(in->s, "dir", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 6;
 			else goto error;
 		break;
-		case 5: 
+		case 5:
 			if(strncmp(in->s, "flags", 6)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
 		break;
-		case 7: 
+		case 7:
 			if(strncmp(in->s, "timeout", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else goto error;
 		break;
-		case 11: 
+		case 11:
 			if(strncmp(in->s, "timeout_bye", 11)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else goto error;
@@ -691,24 +694,24 @@ int pv_parse_dlg_name(pv_spec_p sp, str *in)
 
 	switch(in->len)
 	{
-		case 3: 
+		case 3:
 			if(strncmp(in->s, "ref", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else goto error;
 		break;
-		case 4: 
+		case 4:
 			if(strncmp(in->s, "h_id", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
 		break;
-		case 5: 
+		case 5:
 			if(strncmp(in->s, "state", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "to_rs", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else goto error;
 		break;
-		case 6: 
+		case 6:
 			if(strncmp(in->s, "dflags", 6)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else if(strncmp(in->s, "sflags", 6)==0)
@@ -721,7 +724,7 @@ int pv_parse_dlg_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 8;
 			else goto error;
 		break;
-		case 7: 
+		case 7:
 			if(strncmp(in->s, "toroute", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 9;
 			else if(strncmp(in->s, "to_cseq", 7)==0)
@@ -732,7 +735,7 @@ int pv_parse_dlg_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 21;
 			else goto error;
 		break;
-		case 8: 
+		case 8:
 			if(strncmp(in->s, "from_uri", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 12;
 			else if(strncmp(in->s, "from_tag", 8)==0)
@@ -743,27 +746,27 @@ int pv_parse_dlg_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 15;
 			else goto error;
 		break;
-		case 9: 
+		case 9:
 			if(strncmp(in->s, "from_cseq", 9)==0)
 				sp->pvp.pvn.u.isname.name.n = 16;
 			else goto error;
 		break;
-		case 10: 
+		case 10:
 			if(strncmp(in->s, "to_contact", 10)==0)
 				sp->pvp.pvn.u.isname.name.n = 17;
 			else goto error;
 		break;
-		case 11: 
+		case 11:
 			if(strncmp(in->s, "to_bindaddr", 11)==0)
 				sp->pvp.pvn.u.isname.name.n = 18;
 			else goto error;
 		break;
-		case 12: 
+		case 12:
 			if(strncmp(in->s, "from_contact", 12)==0)
 				sp->pvp.pvn.u.isname.name.n = 19;
 			else goto error;
 		break;
-		case 13: 
+		case 13:
 			if(strncmp(in->s, "from_bindaddr", 20)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else goto error;

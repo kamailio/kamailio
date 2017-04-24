@@ -36,7 +36,6 @@
 
 #define MAXIMUM_PIPELINED_COMMANDS 1000
 
-int init_list(void);
 int redisc_init(void);
 int redisc_destroy(void);
 int redisc_add_server(char *spec);
@@ -54,7 +53,6 @@ typedef struct redisc_server {
 	param_t *attrs;
 	redisContext *ctxRedis;
 	struct redisc_server *next;
-	char * settings;
 	redisc_reply_t *pipelinedReplies[MAXIMUM_PIPELINED_COMMANDS];
 	int pendingReplies;
 } redisc_server_t;

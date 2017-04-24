@@ -18,15 +18,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 /*!
  * \file
- * \brief Kamailio core :: Script callbacks 
+ * \brief Kamailio core :: Script callbacks
  *
  * Script callbacks adds the ability to register callback
  * functions which are always called when script for request
@@ -79,18 +79,17 @@ int register_script_cb( cb_function f, unsigned int flags, void *param )
 
 	/* type checkings */
 	if ( (flags&((1<<SCRIPT_CB_NUM)-1))==0 ) {
-		LOG(L_BUG, "register_script_cb: callback flag not specified\n");
+		LM_BUG("callback flag not specified\n");
 		return -1;
 	}
 	if ( (flags&(~(PRE_SCRIPT_CB|POST_SCRIPT_CB))) >= 1<<SCRIPT_CB_NUM ) {
-		LOG(L_BUG, "register_script_cb: unsupported callback flags: %u\n",
+		LM_BUG("unsupported callback flags: %u\n",
 			flags);
 		return -1;
 	}
 	if ( (flags&(PRE_SCRIPT_CB|POST_SCRIPT_CB))==0 ||
 	(flags&PRE_SCRIPT_CB && flags&POST_SCRIPT_CB) ) {
-		LOG(L_BUG, "register_script_cb: callback POST or PRE type must "
-			"be exactly one\n");
+		LM_BUG("callback POST or PRE type must be exactly one\n");
 		return -1;
 	}
 
@@ -151,12 +150,11 @@ int exec_pre_script_cb( struct sip_msg *msg, enum script_cb_type type)
 	struct script_cb	*cb;
 	unsigned int	flags;
 
-#ifdef EXTRA_DEBUG
 	if (type > SCRIPT_CB_NUM) {
-		LOG(L_BUG, "Uknown callback type\n");
-		abort();
+		LM_BUG("unknown callback type %d\n", type);
+		return 0;
 	}
-#endif
+
 	flags = PRE_SCRIPT_CB | (1<<(type-1));
 	for (cb=pre_script_cb[type-1]; cb ; cb=cb->next ) {
 		/* stop on error */
@@ -174,12 +172,11 @@ int exec_post_script_cb( struct sip_msg *msg, enum script_cb_type type)
 	struct script_cb	*cb;
 	unsigned int	flags;
 
-#ifdef EXTRA_DEBUG
 	if (type > SCRIPT_CB_NUM) {
-		LOG(L_BUG, "exec_pre_script_cb: Uknown callback type\n");
-		abort();
+		LM_BUG("unknown callback type %d\n", type);
+		return 1;
 	}
-#endif
+
 	flags = POST_SCRIPT_CB | (1<<(type-1));
 	for (cb=post_script_cb[type-1]; cb ; cb=cb->next){
 		cb->cbf(msg, flags, cb->param);
