@@ -164,7 +164,7 @@ err2:
 
 	return -1;
 err:
-	if (unix_sock_path != NULL) {
+	if (sock != 0) {
 		LM_ERR("failed to connect to redis server [%.*s] (unix:%s db:%d)\n",
 				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db);
 	} else {
@@ -367,7 +367,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 	return 0;
 
 err2:
-	if (unix_sock_path != NULL) {
+	if (sock != 0) {
 		LM_ERR("error communicating with redis server [%.*s]"
 				" (unix:%s db:%d): %s\n",
 				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db,
@@ -378,7 +378,7 @@ err2:
 				rsrv->ctxRedis->errstr);
 	}
 err:
-	if (unix_sock_path != NULL) {
+	if (sock != 0) {
 		LM_ERR("failed to connect to redis server [%.*s] (unix:%s db:%d)\n",
 				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db);
 	} else {
