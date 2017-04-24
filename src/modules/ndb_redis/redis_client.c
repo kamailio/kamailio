@@ -492,7 +492,7 @@ int redisc_exec_pipelined_cmd_all()
 {
 	redisc_server_t *rsrv=NULL;
 
-	rsrv=*_redisc_srv_list;
+	rsrv=_redisc_srv_list;
 	while(rsrv!=NULL)
 	{
 		if ((rsrv->ctxRedis != NULL) && (rsrv->pendingReplies != 0))
