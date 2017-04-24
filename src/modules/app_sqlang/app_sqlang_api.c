@@ -1483,7 +1483,7 @@ SQInteger sqlang_open_KSR(HSQUIRRELVM J)
 					goto error;
 				}
 				_sr_crt_J_KSRMethods[i].nparamscheck = 0;
-				snprintf(malias, 256, "%s.%s", mname, _sr_crt_J_KSRMethods[i].name);
+				snprintf(malias, 256, "%s", _sr_crt_J_KSRMethods[i].name);
 				sqlang_register_global_func(J, _sr_crt_J_KSRMethods[i].f, malias);
 				n++;
 			}
