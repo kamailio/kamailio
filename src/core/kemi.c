@@ -778,6 +778,7 @@ static sr_kemi_module_t _sr_kemi_modules[SR_KEMI_MODULES_MAX_SIZE];
 int sr_kemi_modules_add(sr_kemi_t *klist)
 {
 	if(_sr_kemi_modules_size>=SR_KEMI_MODULES_MAX_SIZE) {
+		LM_ERR("exceeded max number of modules\n");
 		return -1;
 	}
 	if(_sr_kemi_modules_size==0) {
