@@ -23,7 +23,7 @@
 
 #ifndef DOMAIN_H
 #define DOMAIN_H
-		
+
 
 #include "../../core/parser/msg_parser.h"
 
@@ -31,13 +31,13 @@
 /*
  * Check if host in From uri is local
  */
-int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2);
+int is_from_local(struct sip_msg *_msg, char *_s1, char *_s2);
 
 
 /*
  * Check if host in Request URI is local
  */
-int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2);
+int is_uri_host_local(struct sip_msg *_msg, char *_s1, char *_s2);
 
 
 /*
@@ -49,19 +49,19 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2);
  * - avp name or alias - check the domain given by the value
  *                       pointed by the avp name/alias
  */
-int w_is_domain_local(struct sip_msg* _msg, char* _s1, char* _s2);
+int w_is_domain_local(struct sip_msg *_msg, char *_s1, char *_s2);
 
-int w_lookup_domain(struct sip_msg* _msg, char* _s1, char* _s2);
-int w_lookup_domain_no_prefix(struct sip_msg* _msg, char* _s1, char* _s2);
+int w_lookup_domain(struct sip_msg *_msg, char *_s1, char *_s2);
+int w_lookup_domain_no_prefix(struct sip_msg *_msg, char *_s1, char *_s2);
 
-int is_domain_local(str* domain);
+int is_domain_local(str *domain);
 
-int domain_check_self(str* host, unsigned short port, unsigned short proto);
+int domain_check_self(str *host, unsigned short port, unsigned short proto);
 
-int domain_db_bind(const str* db_url);
-int domain_db_init(const str* db_url);
+int domain_db_bind(const str *db_url);
+int domain_db_init(const str *db_url);
 void domain_db_close(void);
-int domain_db_ver(str* name, int version);
+int domain_db_ver(str *name, int version);
 
 int reload_tables(void);
 

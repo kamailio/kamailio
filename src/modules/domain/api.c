@@ -23,14 +23,14 @@
 #include "api.h"
 #include "domain.h"
 
-int bind_domain(domain_api_t* api)
+int bind_domain(domain_api_t *api)
 {
-    if (!api) {
-	LM_ERR("invalid parameter value\n");
-	return -1;
-    }
+	if(!api) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
 
-    api->is_domain_local = is_domain_local;
-    
-    return 0;
+	api->is_domain_local = is_domain_local;
+
+	return 0;
 }

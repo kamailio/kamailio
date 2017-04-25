@@ -25,14 +25,13 @@
 #include "../../core/str.h"
 #include "domain.h"
 
-typedef int (*is_domain_local_t)(str* _domain);
+typedef int (*is_domain_local_t)(str *_domain);
 
 typedef struct domain_api {
 	is_domain_local_t is_domain_local;
 } domain_api_t;
 
-typedef int (*bind_domain_t)(domain_api_t* api);
-extern int bind_domain(domain_api_t* api);
-
+typedef int (*bind_domain_t)(domain_api_t *api);
+extern int bind_domain(domain_api_t *api);
 
 #endif
