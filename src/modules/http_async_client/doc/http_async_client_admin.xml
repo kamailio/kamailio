@@ -308,11 +308,11 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
         <para>
 			Parameter <quote>route_name</quote> defines the route to be executed upon reception of HTTP reply, on error or on timeout. 
 			If a transaction exists before calling <emphasis>http_async_query()</emphasis>, it will be paused and resumed in this route, while the routing script execution will be stopped.
-			If executed in a transactionless context, or if <emphasis>http_async_suspend_transaction()</emphasis> or <emphasis>$http_req(suspend)</emphasis> are used to not suspend the transaction, the routing script execution will 
+			If executed in a transactionless context, or if <emphasis>$http_req(suspend)</emphasis> is used not to suspend the transaction, the routing script execution will 
 			continue and the query result will be available in <quote>route_name</quote>.
         </para>
         <para>
-            Return value: 0 (stop script execution) on success in transaction context, 1 (continue script execution) in transaction-less context (or if http_async_suspend_transaction(0) or $http_req(suspend) are used), -1 on error.
+            Return value: 0 (stop script execution) on success in transaction context, 1 (continue script execution) in transaction-less context (or if $http_req(suspend) is used), -1 on error.
         </para>
         <para>
 		    This function can be used from ANY_ROUTE.
@@ -369,7 +369,7 @@ xlog("L_INFO", "received reply for query $http_query_id\n");
 	<para><literal>key</literal> can be one of:</para>
 	<itemizedlist>
 		<listitem><para><emphasis>all</emphasis>: if set to <literal>$null</literal>, resets all the parameters to their default value (the ones defined in modparam)</para></listitem>
-		<listitem><para><emphasis>hdr</emphasis>: sets/modifies/removes a HTTP header (see <emphasis>http_append_header()</emphasis>). N.B.: setting this variable multiple times will add several headers to the query.</para></listitem>
+		<listitem><para><emphasis>hdr</emphasis>: sets/modifies/removes a HTTP header. N.B.: setting this variable multiple times will add several headers to the query.</para></listitem>
 		<listitem><para><emphasis>body</emphasis>: sets/modifies/removes the request body</para></listitem>
 		<listitem><para><emphasis>method</emphasis>: sets the HTTP method: either "GET", "POST", "PUT" or "DELETE" (these are the supported methods). (Note: if the method is not set, curl will use GET, or POST if a body is specified)</para></listitem>
 		<listitem><para><emphasis>timeout</emphasis>: sets the HTTP timeout</para></listitem>
