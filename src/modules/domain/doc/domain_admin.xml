@@ -247,17 +247,18 @@ if (is_uri_host_local()) {
 		</example>
 	</section>
 	<section id="domain.f.is_domain_local">
-		<title><function moreinfo="none">is_domain_local(pseudo_variable)</function></title>
+		<title><function moreinfo="none">is_domain_local(domain)</function></title>
 		<para>
 		This function checks if the domain contained in the
-		pseudo_variable is local.
+		parameter is local. The parameter can be a static string or contain
+		pseduo-variables.
 		</para>
 		<para>
 		This function is a generalized form of the is_from_local()
 		and is_uri_host_local() functions, being able to completely
 		replace them and also extends them by allowing the domain to
 		be taken from any of the above mentioned sources.
-                The following equivalences exist:
+        The following equivalences exist:
 		</para>
 		<itemizedlist>
 		<listitem><para>
@@ -277,33 +278,37 @@ if (is_uri_host_local()) {
 ...
 if (is_domain_local("$rd")) {
 	...
-};
+}
+if (is_domain_local("my.domain.com")) {
+	...
+}
 if (is_domain_local("$fd")) {
 	...
-};
+}
 if (is_domain_local("$avp(some_avp_alias)")) {
 	...
-};
+}
 if (is_domain_local("$avp(i:850)")) {
 	...
-};
+}
 if (is_domain_local("$avp(s:some_avp)")) {
 	...
-};
+}
 ...
 		</programlisting>
 		</example>
 	</section>
 	<section id="domain.f.lookup_domain">
-		<title><function moreinfo="none">lookup_domain(domain[, prefix])</function></title>
+		<title><function moreinfo="none">lookup_domain(domain [, prefix])</function></title>
 		<para>
-		This function checks if domain given in
-		domain argument (pseudo variable) is local and, if so,
-		adds attributes
-		associated with domain's id (did) to AVPs.  If prefix
-		argument (string) is given, names of attributes are prefixes by
-		it.  In addition to attributes given in domain_attrs
-		table, AVP did containing did of domain is added.
+		This function checks if domain given in domain argument is local and,
+		if so, adds attributes associated with domain's id (did) to AVPs.
+		If prefix argument (string) is given, names of attributes are prefixes
+		by it. In addition to attributes given in domain_attrs table, AVP
+		named did containing the did of domain is added.
+		</para>
+		<para>
+		Both parameters can contain pseudo-variables.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
