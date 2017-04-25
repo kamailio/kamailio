@@ -27,10 +27,10 @@
 #include <stdio.h>
 #include "domain_mod.h"
 
-int hash_table_install (struct domain_list **hash_table, str *did, str *domain);
-int hash_table_attr_install (struct domain_list **hash_table, str* did,
-			     str *name, short type, int_str *val);
-int hash_table_lookup (str *domain, str *did, struct attr_list **attrs);
-void hash_table_free (struct domain_list **hash_table);
+int hash_table_install(struct domain_list **hash_table, str *did, str *domain);
+int hash_table_attr_install(struct domain_list **hash_table, str *did,
+		str *name, short type, int_str *val);
+int hash_table_lookup(str *domain, str *did, struct attr_list **attrs);
+void hash_table_free(struct domain_list **hash_table);
 
 #endif

@@ -36,15 +36,16 @@
 #define DOM_HASH_SIZE 128
 
 /* flags for param source for is_domain_local() */
-#define PARAM_SOURCE_NONE  (0)
-#define PARAM_SOURCE_AVP   (1<<0)
-#define PARAM_SOURCE_RURI  (1<<1)
-#define PARAM_SOURCE_FROM  (1<<2)
+#define PARAM_SOURCE_NONE (0)
+#define PARAM_SOURCE_AVP (1 << 0)
+#define PARAM_SOURCE_RURI (1 << 1)
+#define PARAM_SOURCE_FROM (1 << 2)
 
 
 /*
  * Type definitions
  */
+/* clang-format off */
 struct domain_list {
     str domain;
     str did;
@@ -65,18 +66,19 @@ typedef struct param_source {
 	int avp_type;     /* If source is an avp, the avp type else 0 */
 	int_str avp_name; /* If source is an avp, the avp name else NULL */
 } param_source;
+/* clang-format on */
 
 /*
  * Module parameters variables
  */
 extern str d_db_url;
-extern str domain_table;	/* Domain table name */
-extern str domain_attrs_table;	/* Domain attributes table name */
-extern str did_col;   	        /* Domain id column name */
-extern str domain_col;   	/* Domain column name */
-extern str name_col;   	        /* Attribute name column name */
-extern str type_col;   	        /* Attribute type column name */
-extern str value_col;  	        /* Attribute value column name */
+extern str domain_table;	   /* Domain table name */
+extern str domain_attrs_table; /* Domain attributes table name */
+extern str did_col;			   /* Domain id column name */
+extern str domain_col;		   /* Domain column name */
+extern str name_col;		   /* Attribute name column name */
+extern str type_col;		   /* Attribute type column name */
+extern str value_col;		   /* Attribute value column name */
 
 /*
  * Other module variables
