@@ -38,13 +38,13 @@
 /*
  * Internal module variables
  */
-extern str suffix;           /* str version of domain_suffix */
-extern str param;            /* str version of tel_uri_params */
-extern str service;          /* default (empty) service */
+extern str suffix;  /* str version of domain_suffix */
+extern str param;   /* str version of tel_uri_params */
+extern str service; /* default (empty) service */
 
-extern str i_suffix;         /* suffix for infrastructure ENUM */
-extern str i_branchlabel;    /* the label branching off the infrastructure tree */
-extern str i_bl_alg;         /* how to know where to branch off */
+extern str i_suffix;	  /* suffix for infrastructure ENUM */
+extern str i_branchlabel; /* the label branching off the infrastructure tree */
+extern str i_bl_alg;	  /* how to know where to branch off */
 
 
 #endif /* ENUM_MOD_H */
