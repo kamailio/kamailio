@@ -791,10 +791,20 @@ int sr_kemi_modules_add(sr_kemi_t *klist)
 		_sr_kemi_modules[_sr_kemi_modules_size].kexp = _sr_kemi_hdr;
 		_sr_kemi_modules_size++;
 	}
-	LM_DBG("adding module: %.*s\n", klist[0].mname.len, klist[0].mname.s);
-	_sr_kemi_modules[_sr_kemi_modules_size].mname = klist[0].mname;
-	_sr_kemi_modules[_sr_kemi_modules_size].kexp = klist;
-	_sr_kemi_modules_size++;
+	if((_sr_kemi_modules_size>1)
+			&& (_sr_kemi_modules[_sr_kemi_modules_size-1].mname.len
+					==klist[0].mname.len)
+			&& (strncmp(_sr_kemi_modules[_sr_kemi_modules_size-1].mname.s,
+					klist[0].mname.s, klist[0].mname.len)==0)) {
+		/* handle re-open of the module */
+		LM_DBG("updating module: %.*s\n", klist[0].mname.len, klist[0].mname.s);
+		_sr_kemi_modules[_sr_kemi_modules_size-1].kexp = klist;
+	} else {
+		LM_DBG("adding module: %.*s\n", klist[0].mname.len, klist[0].mname.s);
+		_sr_kemi_modules[_sr_kemi_modules_size].mname = klist[0].mname;
+		_sr_kemi_modules[_sr_kemi_modules_size].kexp = klist;
+		_sr_kemi_modules_size++;
+	}
 	return 0;
 }
 
