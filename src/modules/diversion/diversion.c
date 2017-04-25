@@ -29,6 +29,8 @@
 #include "../../core/mem/mem.h"
 #include "../../core/data_lump.h"
 #include "../../core/mod_fix.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/kemi.h"
 
 
 MODULE_VERSION
@@ -46,16 +48,16 @@ MODULE_VERSION
 
 str suffix = {"", 0};
 
-int add_diversion(struct sip_msg* msg, char* r, char* u);
+int w_add_diversion(struct sip_msg* msg, char* r, char* u);
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"add_diversion",    (cmd_function)add_diversion,    1, fixup_spve_null,
+	{"add_diversion",    (cmd_function)w_add_diversion,    1, fixup_spve_null,
 		0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"add_diversion",    (cmd_function)add_diversion,    2, fixup_spve_spve,
+	{"add_diversion",    (cmd_function)w_add_diversion,    2, fixup_spve_spve,
 		0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -124,31 +126,18 @@ static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 }
 
 
-int add_diversion(struct sip_msg* msg, char* r, char* u)
+int add_diversion_uri(sip_msg_t* msg, str* reason, str* uri)
 {
 	str div_hf;
 	char *at;
-	str uri;
-	str reason;
 
-	if(fixup_get_svalue(msg, (gparam_t*)r, &reason)<0)
-	{
-		LM_ERR("cannot get the script\n");
+	if(reason==NULL || reason->s==NULL || uri==NULL || uri->s==NULL) {
+		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 
-
-	if(u==NULL) {
-		uri = msg->first_line.u.request.uri;
-	} else {
-		if(fixup_get_svalue(msg, (gparam_t*)u, &uri)<0)
-		{
-			LM_ERR("cannot get the uri parameter\n");
-			return -1;
-		}
-	}
-
-	div_hf.len = DIVERSION_PREFIX_LEN + uri.len + DIVERSION_SUFFIX_LEN + reason.len + CRLF_LEN;
+	div_hf.len = DIVERSION_PREFIX_LEN + uri->len + DIVERSION_SUFFIX_LEN
+					+ reason->len + CRLF_LEN;
 	div_hf.s = pkg_malloc(div_hf.len);
 	if (!div_hf.s) {
 		LM_ERR("no pkg memory left\n");
@@ -159,14 +148,14 @@ int add_diversion(struct sip_msg* msg, char* r, char* u)
 	memcpy(at, DIVERSION_PREFIX, DIVERSION_PREFIX_LEN);
 	at += DIVERSION_PREFIX_LEN;
 
-	memcpy(at, uri.s, uri.len);
-	at += uri.len;
+	memcpy(at, uri->s, uri->len);
+	at += uri->len;
 
 	memcpy(at, DIVERSION_SUFFIX, DIVERSION_SUFFIX_LEN);
 	at += DIVERSION_SUFFIX_LEN;
 
-	memcpy(at, reason.s, reason.len);
-	at += reason.len;
+	memcpy(at, reason->s, reason->len);
+	at += reason->len;
 
 	memcpy(at, CRLF, CRLF_LEN);
 
@@ -176,4 +165,74 @@ int add_diversion(struct sip_msg* msg, char* r, char* u)
 	}
 
 	return 1;
+}
+
+int add_diversion(struct sip_msg* msg, char* r, char* u)
+{
+	str div_hf;
+	char *at;
+	str uri;
+	str reason;
+
+	if(fixup_get_svalue(msg, (gparam_t*)r, &reason)<0) {
+		LM_ERR("cannot get the script\n");
+		return -1;
+	}
+
+	if(u==NULL) {
+		if(parse_sip_msg_uri(msg)<0) {
+			LM_ERR("failed to parse sip msg uri\n");
+			return -1;
+		}
+		uri = msg->first_line.u.request.uri;
+	} else {
+		if(fixup_get_svalue(msg, (gparam_t*)u, &uri)<0)
+		{
+			LM_ERR("cannot get the uri parameter\n");
+			return -1;
+		}
+	}
+	return add_diversion_uri(msg, &reason, &uri);
+}
+
+/**
+ *
+ */
+static int ki_add_diversion(sip_msg_t *msg, str *reason)
+{
+	if(parse_sip_msg_uri(msg)<0) {
+		LM_ERR("failed to parse sip msg uri\n");
+		return -1;
+	}
+
+	return add_diversion_uri(msg, reason, &msg->first_line.u.request.uri);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_diversion_exports[] = {
+	{ str_init("diversion"), str_init("add_diversion"),
+		SR_KEMIP_INT, ki_add_diversion,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("diversion"), str_init("add_diversion_uri"),
+		SR_KEMIP_INT, add_diversion_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_diversion_exports);
+	return 0;
 }
