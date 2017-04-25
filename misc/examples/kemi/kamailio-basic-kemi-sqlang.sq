@@ -60,7 +60,7 @@ function ksr_request_route()
 
 	// account only INVITEs
 	if (METHOD=="INVITE") {
-		KSR.setflag(FLAGS.FLT__ACC); // do accounting
+		KSR.setflag(FLAGS.FLT_ACC); // do accounting
 	}
 
 	// dispatch requests to foreign domains
@@ -172,8 +172,8 @@ function ksr_route_withindlg()
 	if (KSR.rr.loose_route()>0) {
 		ksr_route_dlguri();
 		if (METHOD=="BYE") {
-			KSR.setflag(FLAGS.FLT__ACC); // do accounting ...
-			KSR.setflag(FLAGS.FLT__ACCFAILED); // ... even if the transaction fails
+			KSR.setflag(FLAGS.FLT_ACC); // do accounting ...
+			KSR.setflag(FLAGS.FLT_ACCFAILED); // ... even if the transaction fails
 		} else if (METHOD=="ACK") {
 			// ACK is forwarded statelessy
 			ksr_route_natmanage();
@@ -204,7 +204,7 @@ function ksr_route_withindlg()
 function ksr_route_registrar()
 {
 	if (KSR.pv.get("$rm")!="REGISTER") { return; }
-	if (KSR.isflagset(FLAGS.FLT__NATS)) {
+	if (KSR.isflagset(FLAGS.FLT_NATS)) {
 		KSR.setbflag(FLB_NATB);
 		// do SIP NAT pinging
 		KSR.setbflag(FLB_NATSIPPING);
@@ -232,7 +232,7 @@ function ksr_route_location()
 
 	// when routing via usrloc, log the missed calls also
 	if (KSR.pv.get("$rm")=="INVITE") {
-		KSR.setflag(FLAGS.FLT__ACCMISSED);
+		KSR.setflag(FLAGS.FLT_ACCMISSED);
 	}
 
 	ksr_route_relay();
@@ -284,7 +284,7 @@ function ksr_route_natdetect()
 		} else if (KSR.siputils.is_first_hop()>0) {
 			KSR.nathelper.set_contact_alias();
 		}
-		KSR.setflag(FLAGS.FLT__NATS);
+		KSR.setflag(FLAGS.FLT_NATS);
 	}
 	return;
 }
@@ -299,7 +299,7 @@ function ksr_route_natmanage()
 			}
 		}
 	}
-	if (! (KSR.isflagset(FLAGS.FLT__NATS) || KSR.isbflagset(FLB_NATB))) {
+	if (! (KSR.isflagset(FLAGS.FLT_NATS) || KSR.isbflagset(FLB_NATB))) {
 		return;
 	}
 
