@@ -205,9 +205,9 @@ function ksr_route_registrar()
 {
 	if (KSR.pv.get("$rm")!="REGISTER") { return; }
 	if (KSR.isflagset(FLAGS.FLT_NATS)) {
-		KSR.setbflag(FLB_NATB);
+		KSR.setbflag(FLAGS.FLB_NATB);
 		// do SIP NAT pinging
-		KSR.setbflag(FLB_NATSIPPING);
+		KSR.setbflag(FLAGS.FLB_NATSIPPING);
 	}
 	if (KSR.registrar.save("location", 0)<0) {
 		KSR.sl.sl_reply_error();
@@ -295,11 +295,11 @@ function ksr_route_natmanage()
 	if (KSR.siputils.is_request()>0) {
 		if (KSR.siputils.has_totag()>0) {
 			if (KSR.rr.check_route_param("nat=yes")>0) {
-				KSR.setbflag(FLB_NATB);
+				KSR.setbflag(FLAGS.FLB_NATB);
 			}
 		}
 	}
-	if (! (KSR.isflagset(FLAGS.FLT_NATS) || KSR.isbflagset(FLB_NATB))) {
+	if (! (KSR.isflagset(FLAGS.FLT_NATS) || KSR.isbflagset(FLAGS.FLB_NATB))) {
 		return;
 	}
 
@@ -313,7 +313,7 @@ function ksr_route_natmanage()
 		}
 	}
 	if (KSR.siputils.is_reply()>0) {
-		if (KSR.isbflagset(FLB_NATB)) {
+		if (KSR.isbflagset(FLAGS.FLB_NATB)) {
 			KSR.nathelper.set_contact_alias();
 		}
 	}
