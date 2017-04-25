@@ -29,7 +29,7 @@
 #include "../../core/ut.h"
 #include "../../core/dset.h"
 #include "../../core/route.h"
-#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
 #include "../../core/str.h"
 
 static db1_con_t* db_handle=0;
@@ -157,28 +157,17 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2)
  */
 int w_is_domain_local(struct sip_msg* _msg, char* _sp, char* _s2)
 {
-    pv_spec_t *sp;
-    pv_value_t pv_val;
     struct attr_list *attrs;
     str did;
+	str sdomain;
 
-    sp = (pv_spec_t *)_sp;
-
-    if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_STR) {
-	    if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
-		LM_DBG("missing domain name\n");
+	if(fixup_get_svalue(_msg, (gparam_t*)_sp, &sdomain)<0) {
+		LM_ERR("cannot get domain paramter\n");
 		return -1;
-	    }
-	    return hash_table_lookup(&(pv_val.rs), &did, &attrs);
-	} else {
-	   LM_DBG("domain pseudo variable value is not string\n");
-	   return -1;
 	}
-    } else {
-	LM_DBG("cannot get domain pseudo variable value\n");
-	return -1;
-    }
+
+	return hash_table_lookup(&sdomain, &did, &attrs);
+
 }
 
 /*
@@ -186,86 +175,80 @@ int w_is_domain_local(struct sip_msg* _msg, char* _sp, char* _s2)
  */
 int w_lookup_domain(struct sip_msg* _msg, char* _sp, char* _prefix)
 {
-    pv_spec_t *sp;
-    pv_value_t pv_val;
+
     int_str name, val;
     struct attr_list *attrs;
     str *prefix, did;
     unsigned short flags;
+	str sdomain;
+	str sprefix;
 
-    sp = (pv_spec_t *)_sp;
-    prefix = (str *)_prefix;
-
-    if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_STR) {
-	    if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
-		LM_DBG("domain name pseudo variable is missing\n");
+	if(fixup_get_svalue(_msg, (gparam_t*)_sp, &sdomain)<0) {
+		LM_ERR("cannot get domain paramter\n");
 		return -1;
-	    }
-	    if (hash_table_lookup(&(pv_val.rs), &did, &attrs) == 1) {
-		while (attrs) {
-		    if (attrs->type == 2)
+	}
+	if(_prefix) {
+		if(fixup_get_svalue(_msg, (gparam_t*)_prefix, &sprefix)<0) {
+			LM_ERR("cannot get prefix paramter\n");
+			return -1;
+		}
+	}
+
+	if (hash_table_lookup(&sdomain, &did, &attrs) != 1) {
+		return -1;
+	}
+
+	while (attrs) {
+		if (attrs->type == 2)
 			flags = AVP_NAME_STR | AVP_VAL_STR;
-		    else
+		else
 			flags = AVP_NAME_STR;
-		    if (_prefix) {
-			name.s.len = prefix->len + attrs->name.len;
+		if (_prefix) {
+			name.s.len = sprefix.len + attrs->name.len;
 			name.s.s = pkg_malloc(name.s.len);
 			if (name.s.s == NULL) {
-			    ERR("no pkg memory for avp name\n");
-			    return -1;
+				ERR("no pkg memory for avp name\n");
+				return -1;
 			}
-			memcpy(name.s.s, prefix->s, prefix->len);
-			memcpy(name.s.s + prefix->len, attrs->name.s,
-			       attrs->name.len);
-		    } else {
+			memcpy(name.s.s, sprefix.s, sprefix.len);
+			memcpy(name.s.s + sprefix.len, attrs->name.s, attrs->name.len);
+		} else {
 			name.s = attrs->name;
-		    }
-		    if (add_avp(flags, name, attrs->val) < 0) {
+		}
+		if (add_avp(flags, name, attrs->val) < 0) {
 			LM_ERR("unable to add a new AVP '%.*s'\n",
-			       name.s.len, name.s.s);
+					name.s.len, name.s.s);
 			if (_prefix) pkg_free(name.s.s);
 			return -1;
-		    }
-		    LM_DBG("added AVP '%.*s'\n", name.s.len, name.s.s);
-		    if (prefix) pkg_free(name.s.s);
-		    attrs = attrs->next;
 		}
-		flags = AVP_NAME_STR | AVP_VAL_STR;
-		if (_prefix) {
-		    name.s.len = prefix->len + 3;
-		    name.s.s = pkg_malloc(name.s.len);
-		    if (name.s.s == NULL) {
+		LM_DBG("added AVP '%.*s'\n", name.s.len, name.s.s);
+		if (prefix) pkg_free(name.s.s);
+		attrs = attrs->next;
+	}
+	flags = AVP_NAME_STR | AVP_VAL_STR;
+	if (_prefix) {
+		name.s.len = sprefix.len + 3;
+		name.s.s = pkg_malloc(name.s.len);
+		if (name.s.s == NULL) {
 			ERR("no pkg memory for avp name\n");
 			return -1;
-		    }
-		    memcpy(name.s.s, prefix->s, prefix->len);
-		    memcpy(name.s.s + prefix->len, "did", 3);
-		} else {
-		    name.s.s = "did";
-		    name.s.len = 3;
 		}
-		val.s = did;
-		if (add_avp(flags, name, val) < 0) {
-		    LM_ERR("unable to add a new AVP '%.*s'\n",
-			   name.s.len, name.s.s);
-		    if (_prefix) pkg_free(name.s.s);
-		    return -1;
-		}		
-		LM_DBG("added AVP '%.*s'\n", name.s.len, name.s.s);
-		if (_prefix) pkg_free(name.s.s);
-		return 1;
-	    } else {
-		return -1;
-	    }
+		memcpy(name.s.s, sprefix.s, sprefix.len);
+		memcpy(name.s.s + sprefix.len, "did", 3);
 	} else {
-	   LM_DBG("domain name pseudo variable value is not string\n");
-	   return -1;
+		name.s.s = "did";
+		name.s.len = 3;
 	}
-    } else {
-	LM_DBG("cannot get domain name pseudo variable value\n");
-	return -1;
-    }
+	val.s = did;
+	if (add_avp(flags, name, val) < 0) {
+		LM_ERR("unable to add a new AVP '%.*s'\n",
+			name.s.len, name.s.s);
+		if (_prefix) pkg_free(name.s.s);
+		return -1;
+	}
+	LM_DBG("added AVP '%.*s'\n", name.s.len, name.s.s);
+	if (_prefix) pkg_free(name.s.s);
+	return 1;
 }
 
 /*
@@ -281,7 +264,7 @@ int domain_check_self(str* host, unsigned short port, unsigned short proto)
     struct attr_list *attrs;
     str did;
     if (hash_table_lookup(host, &did, &attrs) > 0)
-	return 1;
+		return 1;
     return 0;
 }
 
