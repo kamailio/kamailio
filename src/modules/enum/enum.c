@@ -429,6 +429,14 @@ int is_from_user_enum_0(struct sip_msg *_msg, char *_str1, char *_str2)
 	return is_from_user_enum_helper(_msg, &suffix, &service);
 }
 
+/**
+ *
+ */
+int ki_is_from_user_enum(sip_msg_t *msg)
+{
+	return is_from_user_enum_helper(msg, &suffix, &service);
+}
+
 /*
  * Call is_from_user_enum_2 with given suffix and default service.
  */
@@ -442,6 +450,14 @@ int is_from_user_enum_1(struct sip_msg *_msg, char *_suffix, char *_str2)
 	}
 
 	return is_from_user_enum_helper(_msg, &vsuffix, &service);
+}
+
+/**
+ *
+ */
+int ki_is_from_user_enum_suffix(sip_msg_t *msg, str *vsuffix)
+{
+	return is_from_user_enum_helper(msg, vsuffix, &service);
 }
 
 /*
@@ -463,6 +479,15 @@ int is_from_user_enum_2(struct sip_msg *_msg, char *_suffix, char *_service)
 	}
 
 	return is_from_user_enum_helper(_msg, &vsuffix, &vservice);
+}
+
+/**
+ *
+ */
+int ki_is_from_user_enum_suffix_service(sip_msg_t *msg, str *vsuffix,
+		str *vservice)
+{
+	return is_from_user_enum_helper(msg, vsuffix, vservice);
 }
 
 /* 
@@ -734,6 +759,13 @@ int enum_query_0(struct sip_msg *_msg, char *_str1, char *_str2)
 	return enum_query(_msg, &suffix, &service);
 }
 
+/**
+ *
+ */
+int ki_enum_query(sip_msg_t *msg)
+{
+	return enum_query(msg, &suffix, &service);
+}
 
 /*
  * Call enum_query_2 with given suffix and default service.
@@ -750,6 +782,13 @@ int enum_query_1(struct sip_msg *_msg, char *_suffix, char *_str2)
 	return enum_query(_msg, &vsuffix, &service);
 }
 
+/**
+ *
+ */
+int ki_enum_query_suffix(sip_msg_t *msg, str *vsuffix)
+{
+	return enum_query(msg, vsuffix, &service);
+}
 
 /*
  * Call enum_query_2 with given suffix and service.
@@ -772,6 +811,13 @@ int enum_query_2(struct sip_msg *_msg, char *_suffix, char *_service)
 	return enum_query(_msg, &vsuffix, &vservice);
 }
 
+/**
+ *
+ */
+int ki_enum_query_suffix_service(sip_msg_t *msg, str *vsuffix, str *vservice)
+{
+	return enum_query(msg, vsuffix, vservice);
+}
 
 /*
  * See documentation in README file.
@@ -982,6 +1028,14 @@ int i_enum_query_0(struct sip_msg *_msg, char *_suffix, char *_service)
 	return i_enum_query_helper(_msg, &i_suffix, &service);
 }
 
+/**
+ *
+ */
+int ki_i_enum_query(sip_msg_t *msg)
+{
+	return i_enum_query_helper(msg, &suffix, &service);
+}
+
 /*
  * Call enum_query_2 with given suffix and default service.
  */
@@ -995,6 +1049,14 @@ int i_enum_query_1(struct sip_msg *_msg, char *_suffix, char *_service)
 	}
 
 	return i_enum_query_helper(_msg, &vsuffix, &service);
+}
+
+/**
+ *
+ */
+int ki_i_enum_query_suffix(sip_msg_t *msg, str *vsuffix)
+{
+	return i_enum_query_helper(msg, vsuffix, &service);
 }
 
 int i_enum_query_2(struct sip_msg *_msg, char *_suffix, char *_service)
@@ -1013,6 +1075,14 @@ int i_enum_query_2(struct sip_msg *_msg, char *_suffix, char *_service)
 	}
 
 	return i_enum_query_helper(_msg, &vsuffix, &vservice);
+}
+
+/**
+ *
+ */
+int ki_i_enum_query_suffix_service(sip_msg_t *msg, str *vsuffix, str *vservice)
+{
+	return i_enum_query_helper(msg, vsuffix, vservice);
 }
 
 /******************* FQUERY *******************/
@@ -1167,6 +1237,14 @@ int enum_pv_query_1(sip_msg_t *_msg, char *_sp, char *_p2)
 	return enum_pv_query_helper(_msg, &ve164, &suffix, &service);
 }
 
+/**
+ *
+ */
+int ki_enum_pv_query(sip_msg_t *msg, str *ve164)
+{
+	return enum_pv_query_helper(msg, ve164, &suffix, &service);
+}
+
 /*
  * Call enum_pv_query_3 with pv and suffix args and default service.
  */
@@ -1185,6 +1263,14 @@ int enum_pv_query_2(sip_msg_t *_msg, char *_sp, char *_suffix)
 	}
 
 	return enum_pv_query_helper(_msg, &ve164, &vsuffix, &service);
+}
+
+/**
+ *
+ */
+int ki_enum_pv_query_suffix(sip_msg_t *msg, str *ve164, str *vsuffix)
+{
+	return enum_pv_query_helper(msg, ve164, vsuffix, &service);
 }
 
 /*
@@ -1211,4 +1297,13 @@ int enum_pv_query_3(sip_msg_t *_msg, char *_sp, char *_suffix, char *_service)
 	}
 
 	return enum_pv_query_helper(_msg, &ve164, &vsuffix, &vservice);
+}
+
+/**
+ *
+ */
+int ki_enum_pv_query_suffix_service(sip_msg_t *msg, str *ve164, str *vsuffix,
+		str *vservice)
+{
+	return enum_pv_query_helper(msg, ve164, vsuffix, vservice);
 }

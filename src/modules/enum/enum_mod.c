@@ -35,6 +35,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/error.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "enum.h"
 
 MODULE_VERSION
@@ -115,3 +116,82 @@ struct module_exports exports = {
 	0         /* per-child init function */
 };
 /* clang-format on */
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_enum_exports[] = {
+	{ str_init("enum"), str_init("enum_query"),
+		SR_KEMIP_INT, ki_enum_query,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_query_suffix"),
+		SR_KEMIP_INT, ki_enum_query_suffix,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_query_suffix_service"),
+		SR_KEMIP_INT, ki_enum_query_suffix_service,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_pv_query"),
+		SR_KEMIP_INT, ki_enum_pv_query,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_pv_query_suffix"),
+		SR_KEMIP_INT, ki_enum_pv_query_suffix,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_pv_query_suffix_service"),
+		SR_KEMIP_INT, ki_enum_pv_query_suffix_service,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("is_from_user_enum"),
+		SR_KEMIP_INT, ki_is_from_user_enum,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("is_from_user_enum_suffix"),
+		SR_KEMIP_INT, ki_is_from_user_enum_suffix,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("is_from_user_enum_suffix_service"),
+		SR_KEMIP_INT, ki_is_from_user_enum_suffix_service,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("i_enum_query"),
+		SR_KEMIP_INT, ki_i_enum_query,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_i_query_suffix"),
+		SR_KEMIP_INT, ki_i_enum_query_suffix,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("i_enum_query_suffix_service"),
+		SR_KEMIP_INT, ki_i_enum_query_suffix_service,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_enum_exports);
+	return 0;
+}
