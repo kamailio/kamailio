@@ -100,7 +100,7 @@ int is_domain_local(str *_host)
 /*
  * Check if host in From uri is local
  */
-int is_from_local(struct sip_msg *_msg, char *_s1, char *_s2)
+int ki_is_from_local(struct sip_msg *_msg)
 {
 	struct sip_uri *puri;
 	str did;
@@ -115,9 +115,17 @@ int is_from_local(struct sip_msg *_msg, char *_s1, char *_s2)
 }
 
 /*
+ * Wrapper: check if host in From uri is local
+ */
+int is_from_local(struct sip_msg *_msg, char *_s1, char *_s2)
+{
+	return ki_is_from_local(_msg);
+}
+
+/*
  * Check if host in Request URI is local
  */
-int is_uri_host_local(struct sip_msg *_msg, char *_s1, char *_s2)
+int ki_is_uri_host_local(struct sip_msg *_msg)
 {
 	str branch;
 	qvalue_t q;
@@ -149,14 +157,34 @@ int is_uri_host_local(struct sip_msg *_msg, char *_s1, char *_s2)
 	}
 }
 
+/*
+ * Check if host in Request URI is local
+ */
+int is_uri_host_local(struct sip_msg *_msg, char *_s1, char *_s2)
+{
+	return ki_is_uri_host_local(_msg);
+}
+
+/*
+ * Check if domain given as value of pseudo variable parameter is local.
+ */
+int ki_is_domain_local(struct sip_msg *_msg, str *sdomain)
+{
+	struct attr_list *attrs;
+	str did;
+
+	if(sdomain==NULL || sdomain->s==NULL) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	return hash_table_lookup(sdomain, &did, &attrs);
+}
 
 /*
  * Check if domain given as value of pseudo variable parameter is local.
  */
 int w_is_domain_local(struct sip_msg *_msg, char *_sp, char *_s2)
 {
-	struct attr_list *attrs;
-	str did;
 	str sdomain;
 
 	if(fixup_get_svalue(_msg, (gparam_t *)_sp, &sdomain) < 0) {
@@ -164,7 +192,88 @@ int w_is_domain_local(struct sip_msg *_msg, char *_sp, char *_s2)
 		return -1;
 	}
 
-	return hash_table_lookup(&sdomain, &did, &attrs);
+	return ki_is_domain_local(_msg, &sdomain);
+}
+
+/*
+ * Check if domain is local and, if it is, add attributes as AVPs
+ */
+int ki_lookup_domain_prefix(struct sip_msg *_msg, str *_sdomain, str *_sprefix)
+{
+	int_str name, val;
+	struct attr_list *attrs;
+	str *prefix, did;
+	unsigned short flags;
+
+	if(_sdomain==NULL || _sdomain->s==NULL) {
+		LM_ERR("invalid domain paramter\n");
+		return -1;	}
+
+	if(hash_table_lookup(_sdomain, &did, &attrs) != 1) {
+		return -1;
+	}
+
+	while(attrs) {
+		if(attrs->type == 2)
+			flags = AVP_NAME_STR | AVP_VAL_STR;
+		else
+			flags = AVP_NAME_STR;
+		if(_sprefix && _sprefix->s) {
+			name.s.len = _sprefix->len + attrs->name.len;
+			name.s.s = pkg_malloc(name.s.len);
+			if(name.s.s == NULL) {
+				ERR("no pkg memory for avp name\n");
+				return -1;
+			}
+			memcpy(name.s.s, _sprefix->s, _sprefix->len);
+			memcpy(name.s.s + _sprefix->len, attrs->name.s, attrs->name.len);
+		} else {
+			name.s = attrs->name;
+		}
+		if(add_avp(flags, name, attrs->val) < 0) {
+			LM_ERR("unable to add a new AVP '%.*s'\n", name.s.len, name.s.s);
+			if(_sprefix && _sprefix->s)
+				pkg_free(name.s.s);
+			return -1;
+		}
+		LM_DBG("added AVP '%.*s'\n", name.s.len, name.s.s);
+		if(_sprefix && _sprefix->s)
+			pkg_free(name.s.s);
+		attrs = attrs->next;
+	}
+	flags = AVP_NAME_STR | AVP_VAL_STR;
+	if(_sprefix && _sprefix->s) {
+		name.s.len = _sprefix->len + 3;
+		name.s.s = pkg_malloc(name.s.len);
+		if(name.s.s == NULL) {
+			ERR("no pkg memory for avp name\n");
+			return -1;
+		}
+		memcpy(name.s.s, _sprefix->s, _sprefix->len);
+		memcpy(name.s.s + _sprefix->len, "did", 3);
+	} else {
+		name.s.s = "did";
+		name.s.len = 3;
+	}
+	val.s = did;
+	if(add_avp(flags, name, val) < 0) {
+		LM_ERR("unable to add a new AVP '%.*s'\n", name.s.len, name.s.s);
+		if(_sprefix)
+			pkg_free(name.s.s);
+		return -1;
+	}
+	LM_DBG("added AVP '%.*s'\n", name.s.len, name.s.s);
+	if(_sprefix && _sprefix->s)
+		pkg_free(name.s.s);
+	return 1;
+}
+
+/*
+ * Check if domain is local and, if it is, add attributes as AVPs
+ */
+int ki_lookup_domain(struct sip_msg *_msg, str *_sdomain)
+{
+	return ki_lookup_domain_prefix(_msg, _sdomain, NULL);
 }
 
 /*
@@ -173,10 +282,6 @@ int w_is_domain_local(struct sip_msg *_msg, char *_sp, char *_s2)
 int w_lookup_domain(struct sip_msg *_msg, char *_sp, char *_prefix)
 {
 
-	int_str name, val;
-	struct attr_list *attrs;
-	str *prefix, did;
-	unsigned short flags;
 	str sdomain;
 	str sprefix;
 
@@ -191,63 +296,7 @@ int w_lookup_domain(struct sip_msg *_msg, char *_sp, char *_prefix)
 		}
 	}
 
-	if(hash_table_lookup(&sdomain, &did, &attrs) != 1) {
-		return -1;
-	}
-
-	while(attrs) {
-		if(attrs->type == 2)
-			flags = AVP_NAME_STR | AVP_VAL_STR;
-		else
-			flags = AVP_NAME_STR;
-		if(_prefix) {
-			name.s.len = sprefix.len + attrs->name.len;
-			name.s.s = pkg_malloc(name.s.len);
-			if(name.s.s == NULL) {
-				ERR("no pkg memory for avp name\n");
-				return -1;
-			}
-			memcpy(name.s.s, sprefix.s, sprefix.len);
-			memcpy(name.s.s + sprefix.len, attrs->name.s, attrs->name.len);
-		} else {
-			name.s = attrs->name;
-		}
-		if(add_avp(flags, name, attrs->val) < 0) {
-			LM_ERR("unable to add a new AVP '%.*s'\n", name.s.len, name.s.s);
-			if(_prefix)
-				pkg_free(name.s.s);
-			return -1;
-		}
-		LM_DBG("added AVP '%.*s'\n", name.s.len, name.s.s);
-		if(prefix)
-			pkg_free(name.s.s);
-		attrs = attrs->next;
-	}
-	flags = AVP_NAME_STR | AVP_VAL_STR;
-	if(_prefix) {
-		name.s.len = sprefix.len + 3;
-		name.s.s = pkg_malloc(name.s.len);
-		if(name.s.s == NULL) {
-			ERR("no pkg memory for avp name\n");
-			return -1;
-		}
-		memcpy(name.s.s, sprefix.s, sprefix.len);
-		memcpy(name.s.s + sprefix.len, "did", 3);
-	} else {
-		name.s.s = "did";
-		name.s.len = 3;
-	}
-	val.s = did;
-	if(add_avp(flags, name, val) < 0) {
-		LM_ERR("unable to add a new AVP '%.*s'\n", name.s.len, name.s.s);
-		if(_prefix)
-			pkg_free(name.s.s);
-		return -1;
-	}
-	LM_DBG("added AVP '%.*s'\n", name.s.len, name.s.s);
-	if(_prefix)
-		pkg_free(name.s.s);
-	return 1;
+	return ki_lookup_domain_prefix(_msg, &sdomain, (_prefix)?&sprefix:NULL);
 }
 
 /*

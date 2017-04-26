@@ -32,10 +32,11 @@
 #include "../../core/mod_fix.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/locking.h"
+#include "../../core/kemi.h"
 #include "domain.h"
 #include "hash.h"
 #include "api.h"
-#include "../../core/locking.h"
 
 /*
  * Module management function prototypes
@@ -325,7 +326,8 @@ static void domain_rpc_dump(rpc_t *rpc, void *ctx)
 
 rpc_export_t domain_rpc_list[] = {
 		{"domain.reload", domain_rpc_reload, domain_rpc_reload_doc, 0},
-		{"domain.dump", domain_rpc_dump, domain_rpc_dump_doc, 0}, {0, 0, 0, 0}};
+		{"domain.dump", domain_rpc_dump, domain_rpc_dump_doc, 0}, {0, 0, 0, 0}
+};
 
 static int domain_init_rpc(void)
 {
@@ -333,5 +335,49 @@ static int domain_init_rpc(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_domain_exports[] = {
+	{ str_init("domain"), str_init("is_from_local"),
+		SR_KEMIP_INT, ki_is_from_local,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("domain"), str_init("is_uri_host_local"),
+		SR_KEMIP_INT, ki_is_uri_host_local,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("domain"), str_init("is_domain_local"),
+		SR_KEMIP_INT, ki_is_domain_local,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("domain"), str_init("lookup_domain"),
+		SR_KEMIP_INT, ki_lookup_domain,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("domain"), str_init("lookup_domain_prefix"),
+		SR_KEMIP_INT, ki_lookup_domain_prefix,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_domain_exports);
 	return 0;
 }

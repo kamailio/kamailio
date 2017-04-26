@@ -32,13 +32,13 @@
  * Check if host in From uri is local
  */
 int is_from_local(struct sip_msg *_msg, char *_s1, char *_s2);
-
+int ki_is_from_local(struct sip_msg *_msg);
 
 /*
  * Check if host in Request URI is local
  */
 int is_uri_host_local(struct sip_msg *_msg, char *_s1, char *_s2);
-
+int ki_is_uri_host_local(struct sip_msg *_msg);
 
 /*
  * Check if domain given by parameter is local
@@ -50,9 +50,12 @@ int is_uri_host_local(struct sip_msg *_msg, char *_s1, char *_s2);
  *                       pointed by the avp name/alias
  */
 int w_is_domain_local(struct sip_msg *_msg, char *_s1, char *_s2);
+int ki_is_domain_local(struct sip_msg *_msg, str *_sdomain);
 
 int w_lookup_domain(struct sip_msg *_msg, char *_s1, char *_s2);
 int w_lookup_domain_no_prefix(struct sip_msg *_msg, char *_s1, char *_s2);
+int ki_lookup_domain(struct sip_msg *_msg, str *_sdomain);
+int ki_lookup_domain_prefix(struct sip_msg *_msg, str *_sdomain, str *_prefix);
 
 int is_domain_local(str *domain);
 
