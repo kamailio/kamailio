@@ -220,7 +220,7 @@ static sr_kemi_t sr_kemi_diversion_exports[] = {
 	},
 	{ str_init("diversion"), str_init("add_diversion_uri"),
 		SR_KEMIP_INT, add_diversion_uri,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
