@@ -582,7 +582,7 @@ static inline int match_downstream_dialog(dlg_cell_t *dlg, str *callid, str *fta
 /*!
  *
  */
-void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate);
+int dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate);
 
 
 int dlg_ka_add(dlg_cell_t *dlg);

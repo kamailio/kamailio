@@ -437,6 +437,10 @@ int profile_cleanup( struct sip_msg *msg, unsigned int flags, void *param )
 {
 	dlg_cell_t *dlg;
 
+	if(get_route_type()==LOCAL_ROUTE) {
+		return 1;
+	}
+
 	current_dlg_msg_id = 0;
 	current_dlg_msg_pid = 0;
 	dlg = dlg_get_ctx_dialog();
