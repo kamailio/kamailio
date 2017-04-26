@@ -52,7 +52,7 @@ int is_from_user_enum_2(struct sip_msg *_msg, char *_suffix, char *_service);
  * that is, make the ruri based on the from number
  * this is like source ip policy routing
  */
-int enum_pv_query_1(struct sip_msg *_msg, char *_sp);
+int enum_pv_query_1(struct sip_msg *_msg, char *_sp, char *_p2);
 int enum_pv_query_2(struct sip_msg *_msg, char *_sp, char *_suffix);
 int enum_pv_query_3(
 		struct sip_msg *_msg, char *_sp, char *_suffix, char *_service);
