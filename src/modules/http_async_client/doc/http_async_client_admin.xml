@@ -331,7 +331,7 @@ t_newtran();
 http_async_query("http://example.com/test.php?r_uri=$rU&amp;f_uri=$fU", "HTTP_REPLY");
 ...
 # POST
-$var(payload) = "{'r_uri':'$rU', 'f_uri':'$fU'}";
+$http_req(body) = "{'r_uri':'" + $rU + "', 'f_uri':'" + $fU + "'}";
 http_async_query("http://example.com/test.php", "HTTP_REPLY");
 ...
 route[HTTP_REPLY] {
