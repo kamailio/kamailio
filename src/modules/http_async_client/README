@@ -309,15 +309,13 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
    of HTTP reply, on error or on timeout. If a transaction exists before
    calling http_async_query(), it will be paused and resumed in this
    route, while the routing script execution will be stopped. If executed
-   in a transactionless context, or if http_async_suspend_transaction() or
-   $http_req(suspend) are used to not suspend the transaction, the routing
-   script execution will continue and the query result will be available
-   in “route_name”.
+   in a transactionless context, or if $http_req(suspend) is used not to
+   suspend the transaction, the routing script execution will continue and
+   the query result will be available in “route_name”.
 
    Return value: 0 (stop script execution) on success in transaction
    context, 1 (continue script execution) in transaction-less context (or
-   if http_async_suspend_transaction(0) or $http_req(suspend) are used),
-   -1 on error.
+   if $http_req(suspend) is used), -1 on error.
 
    This function can be used from ANY_ROUTE.
 
@@ -373,9 +371,8 @@ xlog("L_INFO", "received reply for query $http_query_id\n");
    key can be one of:
      * all: if set to $null, resets all the parameters to their default
        value (the ones defined in modparam)
-     * hdr: sets/modifies/removes a HTTP header (see
-       http_append_header()). N.B.: setting this variable multiple times
-       will add several headers to the query.
+     * hdr: sets/modifies/removes a HTTP header. N.B.: setting this
+       variable multiple times will add several headers to the query.
      * body: sets/modifies/removes the request body
      * method: sets the HTTP method: either "GET", "POST", "PUT" or
        "DELETE" (these are the supported methods). (Note: if the method is
