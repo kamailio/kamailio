@@ -180,14 +180,29 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		rpc->fault(ctx, 500, "Internal error adding reg_id");
 		return -1;
 	}
+    if(rpc->struct_add(vh, "d", "Server-Id", c->server_id)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error adding server_id");
+		return -1;
+	}
+    if(rpc->struct_add(vh, "d", "Tcpconn-Id", c->tcpconn_id)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error adding tcpconn_id");
+		return -1;
+	}
+    if(rpc->struct_add(vh, "d", "Keepalive", c->keepalive)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error adding keepalive");
+		return -1;
+	}
 	if(rpc->struct_add(vh, "d", "Last-Keepalive", (int)c->last_keepalive)<0)
 	{
-		rpc->fault(ctx, 500, "Internal error adding reg_id");
+		rpc->fault(ctx, 500, "Internal error adding last_keepalive");
 		return -1;
 	}
 	if(rpc->struct_add(vh, "d", "Last-Modified", (int)c->last_modified)<0)
 	{
-		rpc->fault(ctx, 500, "Internal error adding reg_id");
+		rpc->fault(ctx, 500, "Internal error adding last_modified");
 		return -1;
 	}
 	return 0;
