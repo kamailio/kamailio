@@ -45,6 +45,7 @@
 #include "../../core/hashes.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -85,7 +86,7 @@ str extra_hdrs = {NULL, 0};
 static int mod_init(void);
 static int child_init(int);
 
-static int imc_manager(struct sip_msg*, char *, char *);
+static int w_imc_manager(struct sip_msg*, char *, char *);
 
 static int imc_rpc_init(void);
 
@@ -98,7 +99,7 @@ struct tm_binds tmb;
 void inv_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 static cmd_export_t cmds[]={
-	{"imc_manager",  (cmd_function)imc_manager, 0, 0, 0, REQUEST_ROUTE},
+	{"imc_manager",  (cmd_function)w_imc_manager, 0, 0, 0, REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -449,7 +450,7 @@ static int child_init(int rank)
 }
 
 
-static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
+static int ki_imc_manager(struct sip_msg* msg)
 {
 	imc_cmd_t cmd;
 	str body;
@@ -616,6 +617,11 @@ done:
 
 error:
 	return ret;
+}
+
+static int w_imc_manager(struct sip_msg* msg, char *str1, char *str2)
+{
+	return ki_imc_manager(msg);
 }
 
 /**
@@ -818,5 +824,29 @@ static int imc_rpc_init(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_imc_exports[] = {
+	{ str_init("imc"), str_init("imc_manager"),
+		SR_KEMIP_INT, ki_imc_manager,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_imc_exports);
 	return 0;
 }
