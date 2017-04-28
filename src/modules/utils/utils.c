@@ -89,8 +89,8 @@ int utils_forward(struct sip_msg *msg, int id, int proto);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"xcap_auth_status", (cmd_function)xcap_auth_status, 2, fixup_pvar_pvar,
-		fixup_free_pvar_pvar, REQUEST_ROUTE},
+	{"xcap_auth_status", (cmd_function)w_xcap_auth_status, 2, fixup_spve_spve,
+		fixup_free_spve_spve, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
