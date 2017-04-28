@@ -49,6 +49,7 @@
 #include <netdb.h> /* gethostbyname */
 #include <fcntl.h>
 #include <time.h> /* time */
+#include <sys/time.h>
 
 #ifdef USE_READLINE
 #include <readline/readline.h>
