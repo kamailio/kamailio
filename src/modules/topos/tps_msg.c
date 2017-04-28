@@ -443,8 +443,15 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 				ptsd->a_rr.len++;
 			} else {
 				/* sip response - get b-side record route */
+				if(i==1) {
+					ptsd->b_rr.s = ptsd->cp;
+				}
+				if(i>1) {
+					*ptsd->cp = ',';
+					ptsd->cp++;
+					ptsd->b_rr.len++;
+				}
 				*ptsd->cp = '<';
-				ptsd->b_rr.s = ptsd->cp;
 				ptsd->cp++;
 				ptsd->b_rr.len++;
 				memcpy(ptsd->cp, rr->nameaddr.uri.s, rr->nameaddr.uri.len);
