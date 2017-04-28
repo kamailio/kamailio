@@ -311,10 +311,12 @@ void db_cluster_close(db1_con_t* _h)
 	LM_DBG("executing db cluster close command\n");
 	cls = (dbcl_cls_t*)_h->tail;
  	cls->ref--;
- 	if(cls->ref > 0)
-		return;
-	/* close connections */
-	dbcl_close_connections(cls);
+ 	if(cls->ref <= 0) {
+		/* close connections */
+		dbcl_close_connections(cls);
+	}
+	/* free _h - allocated for each db_cluster_init() */
+	pkg_free(_h);
 	return;
 }
 
