@@ -599,6 +599,12 @@ int redisc_exec_pipelined(redisc_server_t *rsrv)
 	for (i=1;i<rsrv->piped.pending_commands;i++)
 	{
 		rpl=rsrv->piped.replies[i];
+		if(rpl->rplRedis!=NULL)
+		{
+			/* clean up previous redis reply */
+			freeReplyObject(rpl->rplRedis);
+			rpl->rplRedis = NULL;
+		}
 		if (redisGetReplyFromReader(rsrv->ctxRedis, (void**) &rpl->rplRedis) != REDIS_OK)
 		{
 			LM_ERR("Unable to read reply\n");
