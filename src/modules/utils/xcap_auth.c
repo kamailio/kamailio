@@ -39,6 +39,7 @@
 #include "../../core/str.h"
 #include "../../core/dprint.h"
 #include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../modules/presence/subscribe.h"
 #include "../../modules/presence/utils_func.h"
@@ -445,11 +446,8 @@ error:
  * Checks from presence server xcap table if watcher is authorized
  * to subscribe event 'presence' of presentity.
  */
-int xcap_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
+int ki_xcap_auth_status(sip_msg_t* _msg, str* watcher_uri, str* presentity_uri)
 {
-	pv_spec_t *sp;
-	pv_value_t pv_val;
-	str watcher_uri, presentity_uri;
 	struct sip_uri uri;
 	str* rules_doc = NULL;
 	subs_t subs;
@@ -460,43 +458,7 @@ int xcap_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
 		return -1;
 	}
 
-	sp = (pv_spec_t *)_sp1;
-
-	if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-		if (pv_val.flags & PV_VAL_STR) {
-			watcher_uri = pv_val.rs;
-			if (watcher_uri.len == 0 || watcher_uri.s == NULL) {
-				LM_ERR("missing watcher uri\n");
-				return -1;
-			}
-		} else {
-			LM_ERR("watcher pseudo variable value is not string\n");
-			return -1;
-		}
-	} else {
-		LM_ERR("cannot get watcher pseudo variable value\n");
-		return -1;
-	}
-
-	sp = (pv_spec_t *)_sp2;
-
-	if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-		if (pv_val.flags & PV_VAL_STR) {
-			presentity_uri = pv_val.rs;
-			if (presentity_uri.len == 0 || presentity_uri.s == NULL) {
-				LM_DBG("missing presentity uri\n");
-				return -1;
-			}
-		} else {
-			LM_ERR("presentity pseudo variable value is not string\n");
-			return -1;
-		}
-	} else {
-		LM_ERR("cannot get presentity pseudo variable value\n");
-		return -1;
-	}
-
-	if (parse_uri(presentity_uri.s, presentity_uri.len, &uri) < 0) {
+	if (parse_uri(presentity_uri->s, presentity_uri->len, &uri) < 0) {
 		LM_ERR("failed to parse presentity uri\n");
 		return -1;
 	}
@@ -506,21 +468,22 @@ int xcap_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
 		return PENDING_STATUS;
 	}
 
-	if (parse_uri(watcher_uri.s, watcher_uri.len, &uri) < 0) {
+	if (parse_uri(watcher_uri->s, watcher_uri->len, &uri) < 0) {
 		LM_ERR("failed to parse watcher uri\n");
 		goto err;
 	}
 
 	subs.from_user = uri.user;
 	subs.from_domain = uri.host;
-	subs.pres_uri = presentity_uri;
+	subs.pres_uri = *presentity_uri;
 	subs.auth_rules_doc = rules_doc;
 	if (pres_watcher_allowed(&subs) < 0) {
 		LM_ERR("getting status from rules document\n");
 		goto err;
 	}
 	LM_DBG("auth status of watcher <%.*s> on presentity <%.*s> is %d\n",
-			watcher_uri.len, watcher_uri.s, presentity_uri.len, presentity_uri.s,
+			watcher_uri->len, watcher_uri->s,
+			presentity_uri->len, presentity_uri->s,
 			subs.status);
 	pkg_free(rules_doc->s);
 	pkg_free(rules_doc);
@@ -530,4 +493,20 @@ err:
 	pkg_free(rules_doc->s);
 	pkg_free(rules_doc);
 	return -1;
+}
+
+int w_xcap_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
+{
+	str watcher_uri, presentity_uri;
+
+	if(fixup_get_svalue(_msg, (gparam_t*)_sp1, &watcher_uri)<0) {
+		LM_ERR("cannot get the watcher uri\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_msg, (gparam_t*)_sp2, &presentity_uri)<0) {
+		LM_ERR("cannot get the presentity uri\n");
+		return -1;
+	}
+
+	return ki_xcap_auth_status(_msg, &watcher_uri, &presentity_uri);
 }
