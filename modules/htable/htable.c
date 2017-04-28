@@ -1168,12 +1168,14 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 
 	if (rpc->scan(c, "S", &htname) < 1)
 	{
+		ht_db_close_con();
 		rpc->fault(c, 500, "No htable name given");
 		return;
 	}
 	ht = ht_get_table(&htname);
 	if(ht==NULL)
 	{
+		ht_db_close_con();
 		rpc->fault(c, 500, "No such htable");
 		return;
 	}
