@@ -38,6 +38,7 @@ Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
 Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
+Conflicts:  kamailio-sqlang < %ver
 BuildRequires:  bison, flex, gcc, make, redhat-rpm-config
 
 %description
@@ -552,6 +553,14 @@ BuildRequires:  libuuid-devel
 %description    uuid
 UUID module for Kamailio.
 
+%package        sqlang
+Summary:        Squirrel Language (SQLang) for Kamailio
+Group:          System Environment/Daemons
+Requires:       squirrel-libs, kamailio = %version
+BuildRequires:  squirrel-devel gcc-c++
+
+%description    sqlang
+app_sqlang module for Kamailio.
 
 %prep
 %setup -n %{name}-%{ver}
@@ -767,6 +776,9 @@ fi
 %doc %{_docdir}/kamailio/modules/README.jsonrpcs
 %doc %{_docdir}/kamailio/modules/README.nosip
 %doc %{_docdir}/kamailio/modules/README.tsilo
+%doc %{_docdir}/kamailio/modules/README.call_obj
+%doc %{_docdir}/kamailio/modules/README.evrexec
+%doc %{_docdir}/kamailio/modules/README.keepalive
 
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
@@ -906,7 +918,9 @@ fi
 %{_libdir}/kamailio/modules/jsonrpcs.so
 %{_libdir}/kamailio/modules/nosip.so
 %{_libdir}/kamailio/modules/tsilo.so
-
+%{_libdir}/kamailio/modules/call_obj.so
+%{_libdir}/kamailio/modules/evrexec.so
+%{_libdir}/kamailio/modules/keepalive.so
 
 %{_sbindir}/kamailio
 %{_sbindir}/kamctl
@@ -1037,6 +1051,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_pcscf
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_scscf
 %doc %{_docdir}/kamailio/modules/README.ims_usrloc_pcscf
+%doc %{_docdir}/kamailio/modules/README.ims_diameter_server
 %doc %{_docdir}/kamailio/modules/README.log_custom
 %doc %{_docdir}/kamailio/modules/README.smsops
 %doc %{_docdir}/kamailio/modules/README.statsc
@@ -1056,6 +1071,7 @@ fi
 %{_libdir}/kamailio/modules/ims_registrar_scscf.so
 %{_libdir}/kamailio/modules/ims_usrloc_pcscf.so
 %{_libdir}/kamailio/modules/ims_usrloc_scscf.so
+%{_libdir}/kamailio/modules/ims_diameter_server.so
 %{_libdir}/kamailio/modules/log_custom.so
 %{_libdir}/kamailio/modules/smsops.so
 %{_libdir}/kamailio/modules/statsc.so
@@ -1230,7 +1246,9 @@ fi
 %files      redis
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.ndb_redis
+%doc %{_docdir}/kamailio/modules/README.topos_redis
 %{_libdir}/kamailio/modules/ndb_redis.so
+%{_libdir}/kamailio/modules/topos_redis.so
 
 
 %files      regex
@@ -1341,8 +1359,19 @@ fi
 %doc %{_docdir}/kamailio/modules/README.uuid
 %{_libdir}/kamailio/modules/uuid.so
 
+%files          sqlang
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.app_sqlang
+%{_libdir}/kamailio/modules/app_sqlang.so
 
 %changelog
+* Wed Apr 26 2017 Carsten Bock <carsten@ng-voice.co,>
+  - added ims_diameter_server module
+  - added topos_redis module
+  - added call_obj module
+  - added evrexec module
+  - added keepalive module
+  - added app_sqlang module
 * Thu Mar 09 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
   - Updated version to 5.1.0-dev1
 * Thu Mar 09 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
