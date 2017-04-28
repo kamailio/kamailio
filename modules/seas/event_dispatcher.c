@@ -25,7 +25,7 @@
 #include <string.h>/*strcmp,memset*/
 #include <errno.h>/*errno*/
 #include <unistd.h>/*close(),read(),pipe,fork,pid_t*/
-#include <sys/poll.h>/*poll*/
+#include <poll.h>/*poll*/
 #include <signal.h>/*signal*/
 #include <time.h>/*time*/
 #include <string.h>/*memcmp*/
