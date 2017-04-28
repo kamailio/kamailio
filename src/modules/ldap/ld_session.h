@@ -28,6 +28,7 @@
 #ifndef LD_SESSION_H
 #define LD_SESSION_H
 
+#include <sys/time.h>
 #include <ldap.h>
 
 #include "iniparser.h"
