@@ -63,7 +63,7 @@ static int tls_bio_mbuf_puts(BIO* b, const char* s);
 static long tls_bio_mbuf_ctrl(BIO* b, int cmd, long arg1, void* arg2);
 
 
-#if OPENSSL_VERSION_NUMBER < 0x010100000L
+#if OPENSSL_VERSION_NUMBER < 0x010100000L || defined(LIBRESSL_VERSION_NUMBER)
 static BIO_METHOD tls_mbuf_method = {
 	BIO_TYPE_TLS_MBUF,	/* type */
 	"sr_tls_mbuf",		/* name */
@@ -76,6 +76,27 @@ static BIO_METHOD tls_mbuf_method = {
 	tls_bio_mbuf_free,	/* destroy(free) function */
 	0					/* ctrl callback */
 };
+
+static void *CRYPTO_zalloc(size_t num, const char *file, int line)
+{
+	void *ret = CRYPTO_malloc(num, file, line);
+	if (ret != NULL)
+		memset(ret, 0, num);
+	return ret;
+}
+# define OPENSSL_zalloc(num) CRYPTO_zalloc(num, __FILE__, __LINE__)
+static void *BIO_get_data(BIO *b)
+{
+	return b->ptr;
+}
+static void BIO_set_data(BIO *b, void *ptr)
+{
+	b->ptr = ptr;
+}
+static void BIO_set_init(BIO *b, int init)
+{
+	b->init = init;
+}
 #else
 static BIO_METHOD *tls_mbuf_method = NULL;
 #endif
@@ -84,7 +105,7 @@ static BIO_METHOD *tls_mbuf_method = NULL;
 /** returns a custom tls_mbuf BIO. */
 BIO_METHOD* tls_BIO_mbuf(void)
 {
-#if OPENSSL_VERSION_NUMBER < 0x010100000L
+#if OPENSSL_VERSION_NUMBER < 0x010100000L || defined(LIBRESSL_VERSION_NUMBER)
 	return &tls_mbuf_method;
 #else
 	if(tls_mbuf_method != NULL) {
@@ -137,22 +158,14 @@ int tls_BIO_mbuf_set(BIO* b, struct tls_mbuf* rd, struct tls_mbuf* wr)
 	struct tls_bio_mbuf_data* d;
 
 	TLS_BIO_DBG("tls_BIO_mbuf_set called (%p => %p, %p)\n", b, rd, wr);
-#if OPENSSL_VERSION_NUMBER < 0x010100000L
-	d = b->ptr;
-#else
 	d = BIO_get_data(b);
-#endif
 	if (unlikely(d == 0)){
 		BUG("null BIO ptr data\n");
 		return 0;
 	}
 	d->rd = rd;
 	d->wr = wr;
-#if OPENSSL_VERSION_NUMBER < 0x010100000L
-	b->init = 1;
-#else
 	BIO_set_init(b, 1);
-#endif
 	return 1;
 }
 
@@ -167,25 +180,12 @@ static int tls_bio_mbuf_new(BIO* b)
 	struct tls_bio_mbuf_data* d;
 
 	TLS_BIO_DBG("tls_bio_mbuf_new called (%p)\n", b);
-#if OPENSSL_VERSION_NUMBER < 0x010100000L
-	b->init = 0; /* not initialized yet */
-	b->num = 0;
-	b->ptr = 0;
-	b->flags = 0;
-	d = OPENSSL_malloc(sizeof(*d));
-	if (unlikely(d == 0))
-		return 0;
-	d->rd = 0;
-	d->wr = 0;
-	b->ptr = d;
-#else
 	BIO_set_init(b, 0);
 	BIO_set_data(b, NULL);
 	d = OPENSSL_zalloc(sizeof(*d));
 	if (unlikely(d == 0))
 		return 0;
 	BIO_set_data(b, d);
-#endif
 	return 1;
 }
 
@@ -200,13 +200,6 @@ static int tls_bio_mbuf_free(BIO* b)
 	TLS_BIO_DBG("tls_bio_mbuf_free called (%p)\n", b);
 	if (unlikely( b == 0))
 			return 0;
-#if OPENSSL_VERSION_NUMBER < 0x010100000L
-	if (likely(b->ptr)){
-		OPENSSL_free(b->ptr);
-		b->ptr = 0;
-		b->init = 0;
-	}
-#else
 	do {
 		struct tls_bio_mbuf_data* d;
 		d = BIO_get_data(b);
@@ -216,7 +209,6 @@ static int tls_bio_mbuf_free(BIO* b)
 			BIO_set_init(b, 0);
 		}
 	} while(0);
-#endif
 	return 1;
 }
 
@@ -235,11 +227,7 @@ static int tls_bio_mbuf_read(BIO* b, char* dst, int dst_len)
 
 	ret = 0;
 	if (likely(dst)) {
-#if OPENSSL_VERSION_NUMBER < 0x010100000L
-		d = b->ptr;
-#else
 		d = BIO_get_data(b);
-#endif
 		BIO_clear_retry_flags(b);
 		if (unlikely(d == 0 || d->rd->buf == 0)) {
 			if (d == 0)
@@ -291,11 +279,7 @@ static int tls_bio_mbuf_write(BIO* b, const char* src, int src_len)
 	int ret;
 
 	ret = 0;
-#if OPENSSL_VERSION_NUMBER < 0x010100000L
-	d = b->ptr;
-#else
 	d = BIO_get_data(b);
-#endif
 	BIO_clear_retry_flags(b);
 	if (unlikely(d == 0 || d->wr->buf == 0)) {
 		if (d == 0)
