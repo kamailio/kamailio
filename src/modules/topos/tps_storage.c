@@ -1102,7 +1102,7 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 
 	if((mode & TPS_DBU_RPLATTRS) && msg->first_line.type==SIP_REPLY) {
 		if(sd->b_tag.len<=0
-				&& msg->first_line.u.reply.statuscode>=183
+				&& msg->first_line.u.reply.statuscode>=180
 				&& msg->first_line.u.reply.statuscode<300) {
 
 			if((sd->iflags&TPS_IFLAG_DLGON) == 0) {
@@ -1152,7 +1152,7 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	if(md->s_method_id != METHOD_INVITE) {
 		return 0;
 	}
-	if(msg->first_line.u.reply.statuscode<183
+	if(msg->first_line.u.reply.statuscode<180
 			|| msg->first_line.u.reply.statuscode>=300) {
 		return 0;
 	}
