@@ -994,14 +994,14 @@ if(method=="SUBSCRIBE")
 		<function moreinfo="none">pres_auth_status(watcher_uri, presentity_uri)</function>
 		</title>
 		<para>
-		The function checks if watcher is authorized to subscribe
-		event 'presence' of presentity.  Both watcher_uri and
-		presentity_uri are pseudo variables.  Function returns
-		ACTIVE_STATUS, if subscription is allowed and
-		PENDING_STATUS, TERMINATED_STATUS, or WAITING_STATUS
-		otherwise.  See presence/subscribe.h for the
-		corresponding integer codes.  In case of error, function
-		returns -1.
+		The function checks if watcher URI is authorized to subscribe
+		event 'presence' of presentity URI.  Both watcher_uri and
+		presentity_uri can be static strings or contain pseudo variables.
+		</para>
+		<para>The function returns ACTIVE_STATUS, if subscription is allowed,
+		and PENDING_STATUS, TERMINATED_STATUS, or WAITING_STATUS otherwise.
+		See presence/subscribe.h for the corresponding integer codes. In case
+		of error, function returns -1.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
