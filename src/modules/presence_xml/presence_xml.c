@@ -49,6 +49,7 @@
 #include "../xcap_client/xcap_functions.h"
 #include "../../modules/sl/sl.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "pidf.h"
 #include "add_events.h"
 #include "presence_xml.h"
@@ -69,8 +70,8 @@ static void free_xs_list(xcap_serv_t* xs_list, int mem_type);
 static int xcap_doc_updated(int doc_type, str xid, char* doc);
 
 static int fixup_presxml_check(void **param, int param_no);
-static int w_presxml_check_basic(struct sip_msg *msg, char *presentity_uri, char *status);
-static int w_presxml_check_activities(struct sip_msg *msg, char *presentity_uri, char *activities);
+static int w_presxml_check_basic(sip_msg_t *msg, char *presentity_uri, char *status);
+static int w_presxml_check_activities(sip_msg_t *msg, char *presentity_uri, char *activities);
 
 /** module variables ***/
 add_event_t pres_add_event;
@@ -460,9 +461,9 @@ static int xcap_doc_updated(int doc_type, str xid, char* doc)
 
 int bind_presence_xml(struct presence_xml_binds *pxb)
 {
-	if (pxb == NULL)
-	{
-		LM_WARN("bind_presence_xml: Cannot load presence_xml API into a NULL pointer\n");
+	if(pxb == NULL) {
+		LM_WARN("bind_presence_xml: Cannot load presence_xml API into a NULL "
+				"pointer\n");
 		return -1;
 	}
 
@@ -473,49 +474,89 @@ int bind_presence_xml(struct presence_xml_binds *pxb)
 
 static int fixup_presxml_check(void **param, int param_no)
 {
-        if(param_no==1)
-        {
-                return fixup_spve_null(param, 1);
-        } else if(param_no==2) {
-                return fixup_spve_null(param, 1);
-        }
-        return 0;
+	if(param_no == 1) {
+		return fixup_spve_null(param, 1);
+	} else if(param_no == 2) {
+		return fixup_spve_null(param, 1);
+	}
+	return 0;
 }
 
-static int w_presxml_check_basic(struct sip_msg *msg, char *presentity_uri, char *status)
+static int w_presxml_check_basic(sip_msg_t *msg, char *presentity_uri, char *status)
 {
-        str uri, basic;
+	str uri, basic;
 
-        if (fixup_get_svalue(msg, (gparam_p)presentity_uri, &uri) != 0)
-        {
-                LM_ERR("invalid presentity uri parameter\n");
-                return -1;
-        }
+	if(fixup_get_svalue(msg, (gparam_p)presentity_uri, &uri) != 0) {
+		LM_ERR("invalid presentity uri parameter\n");
+		return -1;
+	}
 
-        if (fixup_get_svalue(msg, (gparam_p)status, &basic) != 0)
-        {
-                LM_ERR("invalid status parameter\n");
-                return -1;
-        }
+	if(fixup_get_svalue(msg, (gparam_p)status, &basic) != 0) {
+		LM_ERR("invalid status parameter\n");
+		return -1;
+	}
 
 	return presxml_check_basic(msg, uri, basic);
 }
 
-static int w_presxml_check_activities(struct sip_msg *msg, char *presentity_uri, char *activity)
+static int ki_presxml_check_basic(sip_msg_t *msg, str *pres_uri, str *status)
 {
-        str uri, act;
+	if(pres_uri==NULL || status==NULL) {
+		return -1;
+	}
+	return presxml_check_basic(msg, *pres_uri, *status);
+}
 
-        if (fixup_get_svalue(msg, (gparam_p)presentity_uri, &uri) != 0)
-        {
-                LM_ERR("invalid presentity uri parameter\n");
-                return -1;
-        }
+static int w_presxml_check_activities(sip_msg_t *msg, char *presentity_uri, char *activity)
+{
+	str uri, act;
 
-        if (fixup_get_svalue(msg, (gparam_p)activity, &act) != 0)
-        {
-                LM_ERR("invalid activity parameter\n");
-                return -1;
-        }
+	if(fixup_get_svalue(msg, (gparam_p)presentity_uri, &uri) != 0) {
+		LM_ERR("invalid presentity uri parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)activity, &act) != 0) {
+		LM_ERR("invalid activity parameter\n");
+		return -1;
+	}
 
 	return presxml_check_activities(msg, uri, act);
+}
+
+static int ki_presxml_check_activities(sip_msg_t *msg, str *pres_uri, str *activity)
+{
+	if(pres_uri==NULL || activity==NULL) {
+		return -1;
+	}
+	return presxml_check_activities(msg, *pres_uri, *activity);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_presence_xml_exports[] = {
+	{ str_init("presence_xml"), str_init("pres_check_basic"),
+		SR_KEMIP_INT, ki_presxml_check_basic,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("presence_xml"), str_init("pres_check_activities"),
+		SR_KEMIP_INT, ki_presxml_check_activities,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_presence_xml_exports);
+	return 0;
 }
