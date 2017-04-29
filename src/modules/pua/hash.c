@@ -504,7 +504,7 @@ int is_dialog(ua_pres_t* dialog)
 
 }
 
-int update_contact(struct sip_msg* msg, char* str1, char* str2)
+int ki_pua_update_contact(struct sip_msg* msg)
 {
 	ua_pres_t* p, hentity;
 	str contact;
@@ -634,6 +634,11 @@ int update_contact(struct sip_msg* msg, char* str1, char* str2)
 error:
 	free_to_params(&TO);
 	return -1;
+}
+
+int w_pua_update_contact(struct sip_msg* msg, char* str1, char* str2)
+{
+	return ki_pua_update_contact(msg);
 }
 
 list_entry_t *get_subs_list(str *did)
