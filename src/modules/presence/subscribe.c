@@ -1019,24 +1019,39 @@ int handle_subscribe0(struct sip_msg* msg)
 			pfrom->parsed_uri.host);
 }
 
-int w_handle_subscribe(struct sip_msg* msg, char* watcher_uri)
+int w_handle_subscribe0(struct sip_msg* msg, char* p1, char *p2)
 {
-	str wuri;
+	return handle_subscribe0(msg);
+}
+
+int handle_subscribe_uri(struct sip_msg* msg, str* wuri)
+{
 	struct sip_uri parsed_wuri;
 
-	if (fixup_get_svalue(msg, (gparam_p)watcher_uri, &wuri) != 0)
-	{
-		LM_ERR("invalid uri parameter\n");
-		return -1;
-	}
-
-	if (parse_uri(wuri.s, wuri.len, &parsed_wuri) < 0)
+	if (parse_uri(wuri->s, wuri->len, &parsed_wuri) < 0)
 	{
 		LM_ERR("failed to parse watcher URI\n");
 		return -1;
 	}
 
 	return handle_subscribe(msg, parsed_wuri.user, parsed_wuri.host);
+}
+
+int w_handle_subscribe(struct sip_msg* msg, char* watcher_uri, char* p2)
+{
+	str wuri;
+
+	if (fixup_get_svalue(msg, (gparam_p)watcher_uri, &wuri) != 0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+	return handle_subscribe_uri(msg, &wuri);
+}
+
+int w_handle_subscribe1(struct sip_msg* msg, char* watcher_uri)
+{
+	return w_handle_subscribe(msg, watcher_uri, NULL);
 }
 
 int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)

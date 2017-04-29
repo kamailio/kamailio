@@ -38,6 +38,7 @@
 #include "../../core/lock_ops.h"
 #include "../../core/hashes.h"
 #include "../../core/strutils.h"
+#include "../../core/mod_fix.h"
 #include "../../lib/srdb1/db.h"
 #include "presence.h"
 #include "notify.h"
@@ -279,7 +280,7 @@ error:
  * PUBLISH request handling
  *
  */
-int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
+int ki_handle_publish_uri(struct sip_msg* msg, str* sender_uri)
 {
 	struct sip_uri puri;
 	str body;
@@ -450,11 +451,13 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		{
 			ERR_MEM(PKG_MEM_STR);
 		}
-		if(pv_printf(msg, (pv_elem_t*)sender_uri, buf, &buf_len)<0)
-		{
-			LM_ERR("cannot print the format\n");
+		if(sender_uri->len >= buf_len-1) {
+			LM_ERR("cannot use sender uri -- too long value\n");
 			goto error;
 		}
+		strncpy(buf, sender_uri->s, sender_uri->len);
+		buf_len = sender_uri->len;
+		buf[buf_len] = '\0';
 		if(parse_uri(buf, buf_len, &puri)!=0)
 		{
 			LM_ERR("bad sender SIP address!\n");
@@ -538,6 +541,28 @@ error:
 
 	return -1;
 
+}
+
+int ki_handle_publish(struct sip_msg* msg)
+{
+	return ki_handle_publish_uri(msg, NULL);
+}
+
+/**
+ * PUBLISH request handling
+ *
+ */
+int w_handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
+{
+	str suri;
+
+	if (sender_uri!=NULL
+			&& fixup_get_svalue(msg, (gparam_t*)sender_uri, &suri) != 0) {
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	return ki_handle_publish_uri(msg, (sender_uri)?&suri:NULL);
 }
 
 int update_hard_presentity(str *pres_uri, pres_ev_t *event, str *file_uri, str *filename)
