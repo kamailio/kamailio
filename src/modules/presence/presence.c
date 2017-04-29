@@ -180,7 +180,7 @@ static cmd_export_t cmds[]=
 	{"handle_subscribe",      (cmd_function)w_handle_subscribe,      1,
 		fixup_subscribe,0, REQUEST_ROUTE},
 	{"pres_auth_status",      (cmd_function)w_pres_auth_status,      2,
-		fixup_pvar_pvar, fixup_free_pvar_pvar, REQUEST_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
 	{"pres_refresh_watchers", (cmd_function)w_pres_refresh_watchers, 3,
 		fixup_refresh_watchers, 0, ANY_ROUTE},
 	{"pres_refresh_watchers", (cmd_function)w_pres_refresh_watchers5,5,
@@ -1403,51 +1403,32 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 	return 0;
 }
 
-static int w_pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
+static int w_pres_auth_status(struct sip_msg *_msg, char *_sp1, char *_sp2)
 {
-	pv_spec_t *sp;
-	pv_value_t pv_val;
 	str watcher_uri, presentity_uri;
 
-	sp = (pv_spec_t *)_sp1;
-
-	if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-		if (pv_val.flags & PV_VAL_STR) {
-			watcher_uri = pv_val.rs;
-			if (watcher_uri.len == 0 || watcher_uri.s == NULL) {
-				LM_ERR("missing watcher uri\n");
-				return -1;
-			}
-		} else {
-			LM_ERR("watcher pseudo variable value is not string\n");
-			return -1;
-		}
-	} else {
-		LM_ERR("cannot get watcher pseudo variable value\n");
+	if(fixup_get_svalue(_msg, (gparam_t *)_sp1, &watcher_uri) != 0) {
+		LM_ERR("invalid watcher uri parameter");
 		return -1;
 	}
 
-	sp = (pv_spec_t *)_sp2;
+	if(fixup_get_svalue(_msg, (gparam_t *)_sp2, &presentity_uri) != 0) {
+		LM_ERR("invalid presentity uri parameter");
+		return -1;
+	}
 
-	if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-		if (pv_val.flags & PV_VAL_STR) {
-			presentity_uri = pv_val.rs;
-			if (presentity_uri.len == 0 || presentity_uri.s == NULL) {
-				LM_DBG("missing presentity uri\n");
-				return -1;
-			}
-		} else {
-			LM_ERR("presentity pseudo variable value is not string\n");
-			return -1;
-		}
-	} else {
-		LM_ERR("cannot get presentity pseudo variable value\n");
+	if(watcher_uri.len == 0 || watcher_uri.s == NULL) {
+		LM_ERR("missing watcher uri\n");
+		return -1;
+	}
+
+	if(presentity_uri.len == 0 || presentity_uri.s == NULL) {
+		LM_DBG("missing presentity uri\n");
 		return -1;
 	}
 
 	return pres_auth_status(_msg, watcher_uri, presentity_uri);
 }
-
 
 int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri)
 {
