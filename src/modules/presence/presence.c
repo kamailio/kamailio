@@ -1433,6 +1433,15 @@ static int w_pres_auth_status(struct sip_msg *_msg, char *_sp1, char *_sp2)
 	return pres_auth_status(_msg, watcher_uri, presentity_uri);
 }
 
+int ki_pres_auth_status(sip_msg_t* msg, str* watcher_uri, str* presentity_uri)
+{
+	if(watcher_uri==NULL || presentity_uri==NULL) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	return pres_auth_status(msg, *watcher_uri, *presentity_uri);
+}
+
 int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri)
 {
 	str event;
@@ -1904,6 +1913,11 @@ static sr_kemi_t sr_kemi_presence_exports[] = {
 	},
 	{ str_init("presence"), str_init("pres_has_subscribers"),
 		SR_KEMIP_INT, ki_pres_has_subscribers,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("presence"), str_init("pres_auth_status"),
+		SR_KEMIP_INT, ki_pres_auth_status,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
