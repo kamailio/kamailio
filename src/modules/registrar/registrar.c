@@ -84,7 +84,7 @@ static int unreg_fixup(void** param, int param_no);
 static int fetchc_fixup(void** param, int param_no);
 static int registered_fixup(void** param, int param_no);
 /*! \brief Functions */
-static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
+static int w_add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
 int tcp_persistent_flag = -1;			/*!< if the TCP connection should be kept open */
 int method_filtering = 0;			/*!< if the looked up contacts should be filtered based on supported methods */
@@ -176,7 +176,7 @@ static cmd_export_t cmds[] = {
 			ANY_ROUTE },
 	{"registered",   (cmd_function)w_registered4, 4,  registered_fixup, 0,
 			ANY_ROUTE },
-	{"add_sock_hdr", (cmd_function)add_sock_hdr,  1,  fixup_str_null, 0,
+	{"add_sock_hdr", (cmd_function)w_add_sock_hdr,  1,  fixup_spve_null, 0,
 			REQUEST_ROUTE },
 	{"unregister",   (cmd_function)w_unregister,  2,  unreg_fixup, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
@@ -680,15 +680,17 @@ static void mod_destroy(void)
 #include "../../core/ip_addr.h"
 #include "../../core/ut.h"
 
-static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
+static int ki_add_sock_hdr(sip_msg_t* msg, str *hdr_name)
 {
 	struct socket_info* si;
 	struct lump* anchor;
-	str *hdr_name;
 	str hdr;
 	char *p;
 
-	hdr_name = (str*)name;
+	if(hdr_name==NULL || hdr_name->s==NULL || hdr_name->len<=0) {
+		LM_ERR("invalid header name parameter\n");
+		return -1;
+	}
 	si = msg->rcv.bind_address;
 
 	if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
@@ -735,6 +737,16 @@ error1:
 	pkg_free(hdr.s);
 error:
 	return -1;
+}
+
+static int w_add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
+{
+	str hdr_name;
+	if(fixup_get_svalue(msg, (gparam_t*)name, &hdr_name)<0) {
+		LM_ERR("cannot get the header name\n");
+		return -1;
+	}
+	return ki_add_sock_hdr(msg, &hdr_name);
 }
 
 void default_expires_stats_update(str* gname, str* name){
