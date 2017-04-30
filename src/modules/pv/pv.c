@@ -26,6 +26,7 @@
 #include "../../core/pvar.h"
 #include "../../core/lvalue.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 
@@ -581,16 +582,6 @@ static void mod_destroy(void)
 	destroy_shvars();
 }
 
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	if(tr_init_buffers()<0)
-	{
-		LM_ERR("failed to initialize transformations buffers\n");
-		return -1;
-	}
-	return register_trans_mod(path, mod_trans);
-}
-
 static int pv_isset(struct sip_msg* msg, char* pvid, char *foo)
 {
 	pv_spec_t *sp;
@@ -789,6 +780,36 @@ static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2)
 	return 1;
 }
 
+/**
+ *
+ */
+static int ki_sbranch_set_ruri(sip_msg_t *msg)
+{
+	if(sbranch_set_ruri(msg)<0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_sbranch_append(sip_msg_t *msg)
+{
+	if(sbranch_append(msg)<0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_sbranch_reset(sip_msg_t *msg)
+{
+	if(sbranch_reset()<0)
+		return -1;
+	return 1;
+}
+
 int pv_evalx_fixup(void** param, int param_no)
 {
 	pv_spec_t *spec=NULL;
@@ -889,4 +910,44 @@ static int pv_init_rpc(void)
 		return -1;
 	}
 	return 0;
+}
+
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_pvx_exports[] = {
+	{ str_init("pvx"), str_init("sbranch_set_ruri"),
+		SR_KEMIP_INT, ki_sbranch_set_ruri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("sbranch_append"),
+		SR_KEMIP_INT, ki_sbranch_append,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("sbranch_reset"),
+		SR_KEMIP_INT, ki_sbranch_reset,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_pvx_exports);
+	if(tr_init_buffers()<0)
+	{
+		LM_ERR("failed to initialize transformations buffers\n");
+		return -1;
+	}
+	return register_trans_mod(path, mod_trans);
 }
