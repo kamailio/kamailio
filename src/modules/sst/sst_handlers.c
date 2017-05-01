@@ -675,7 +675,7 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 			 * Too small. See if we need to send the 422 and are able
 			 * to send it.
 			 */
-			if (flag) {
+			if (flag && *flag) {
 				str msehdr;
 				sst_build_minse_hdr(sst_min_se, &msehdr);
 				LM_DBG("Sending 422: %.*s\n", msehdr.len, msehdr.s);
