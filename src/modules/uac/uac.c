@@ -588,6 +588,16 @@ static int w_uac_reg_lookup(struct sip_msg* msg, char* src, char* dst)
 	return uac_reg_lookup(msg, &sval, dpv, 0);
 }
 
+static int ki_uac_reg_lookup(sip_msg_t* msg, str* userid, str* sdst)
+{
+	pv_spec_t *dpv = NULL;
+	dpv = pv_cache_get(sdst);
+	if(dpv==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", sdst->len, sdst->s);
+		return -1;
+	}
+	return uac_reg_lookup(msg, userid, dpv, 0);
+}
 
 static int w_uac_reg_status(struct sip_msg* msg, char* src, char* p2)
 {
@@ -598,12 +608,13 @@ static int w_uac_reg_status(struct sip_msg* msg, char* src, char* p2)
 		return -1;
 	}
 
-	pv_spec_t *spv;
-	pv_value_t val;
-
 	return uac_reg_status(msg, &sval, 0);
 }
 
+static int ki_uac_reg_status(sip_msg_t *msg, str *sruuid)
+{
+	return uac_reg_status(msg, sruuid, 0);
+}
 
 static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* pmode)
 {
@@ -627,6 +638,15 @@ static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* pmode)
 	return uac_reg_request_to(msg, &sval, (unsigned int)imode);
 }
 
+static int ki_uac_reg_request_to(sip_msg_t *msg, str *userid, int imode)
+{
+	if (imode > 1) {
+		LM_ERR("invalid mode\n");
+		return -1;
+	}
+
+	return uac_reg_request_to(msg, userid, (unsigned int)imode);
+}
 
 int bind_uac(uac_api_t *uacb)
 {
@@ -687,6 +707,22 @@ static sr_kemi_t sr_kemi_uac_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("uac"), str_init("uac_reg_lookup"),
+		SR_KEMIP_INT, ki_uac_reg_lookup,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_reg_status"),
+		SR_KEMIP_INT, ki_uac_reg_status,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_reg_request_to"),
+		SR_KEMIP_INT, ki_uac_reg_request_to,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */
