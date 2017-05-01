@@ -924,7 +924,7 @@ static sr_kemi_t sr_kemi_registrar_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("registrar"), str_init("reg_freee_contacts"),
+	{ str_init("registrar"), str_init("reg_free_contacts"),
 		SR_KEMIP_INT, ki_reg_free_contacts,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
