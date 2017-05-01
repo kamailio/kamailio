@@ -91,13 +91,13 @@ pv_spec_t auth_password_spec;
 struct dlg_binds dlg_api;
 
 static int w_replace_from(struct sip_msg* msg, char* p1, char* p2);
-static int w_restore_from(struct sip_msg* msg);
+static int w_restore_from(struct sip_msg* msg, char* p1, char* p2);
 static int w_replace_to(struct sip_msg* msg, char* p1, char* p2);
-static int w_restore_to(struct sip_msg* msg);
+static int w_restore_to(struct sip_msg* msg, char* p1, char* p2);
 static int w_uac_auth(struct sip_msg* msg, char* str, char* str2);
-static int w_uac_reg_lookup(struct sip_msg* msg,  char* src, char* dst);
-static int w_uac_reg_status(struct sip_msg* msg,  char* src, char* dst);
-static int w_uac_reg_request_to(struct sip_msg* msg,  char* src, char* mode_s);
+static int w_uac_reg_lookup(struct sip_msg* msg, char* src, char* dst);
+static int w_uac_reg_status(struct sip_msg* msg, char* src, char* dst);
+static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s);
 static int fixup_replace_uri(void** param, int param_no);
 static int mod_init(void);
 static void mod_destroy(void);
@@ -114,15 +114,15 @@ static pv_export_t mod_pvs[] = {
 
 /* Exported functions */
 static cmd_export_t cmds[]={
-	{"uac_replace_from",  (cmd_function)w_replace_from,  2, fixup_replace_uri, 0,
+	{"uac_replace_from",  (cmd_function)w_replace_from,  2, fixup_spve_spve, 0,
 		REQUEST_ROUTE | BRANCH_ROUTE },
-	{"uac_replace_from",  (cmd_function)w_replace_from,  1, fixup_replace_uri, 0,
+	{"uac_replace_from",  (cmd_function)w_replace_from,  1, fixup_spve_spve, 0,
 		REQUEST_ROUTE | BRANCH_ROUTE },
 	{"uac_restore_from",  (cmd_function)w_restore_from,  0,		  0, 0,
 		REQUEST_ROUTE },
-	{"uac_replace_to",  (cmd_function)w_replace_to,  2, fixup_replace_uri, 0,
+	{"uac_replace_to",  (cmd_function)w_replace_to,  2, fixup_spve_spve, 0,
 		REQUEST_ROUTE | BRANCH_ROUTE },
-	{"uac_replace_to",  (cmd_function)w_replace_to,  1, fixup_replace_uri, 0,
+	{"uac_replace_to",  (cmd_function)w_replace_to,  1, fixup_spve_spve, 0,
 		REQUEST_ROUTE | BRANCH_ROUTE },
 	{"uac_restore_to",  (cmd_function)w_restore_to,  0, 0, 0, REQUEST_ROUTE },
 	{"uac_auth",	  (cmd_function)w_uac_auth,       0, 0, 0, FAILURE_ROUTE },
@@ -131,7 +131,8 @@ static cmd_export_t cmds[]={
 		fixup_free_pvar_pvar, ANY_ROUTE },
 	{"uac_reg_status",  (cmd_function)w_uac_reg_status,  1, fixup_pvar_pvar, 0,
 		ANY_ROUTE },
-	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2, fixup_pvar_uint, fixup_free_pvar_uint,
+	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2,
+		fixup_pvar_uint, fixup_free_pvar_uint,
 		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
 	{"bind_uac", (cmd_function)bind_uac,		  1,  0, 0, 0},
 	{0,0,0,0,0,0}
@@ -381,34 +382,9 @@ static void mod_destroy(void)
 }
 
 
-
-/************************** fixup functions ******************************/
-
-static int fixup_replace_uri(void** param, int param_no)
-{
-	pv_elem_t *model;
-	str s;
-
-	model=NULL;
-	s.s = (char*)(*param); s.len = strlen(s.s);
-	if(pv_parse_format(&s, &model)<0)
-	{
-		LM_ERR("wrong format[%s]!\n",(char*)(*param));
-		return E_UNSPEC;
-	}
-	if (model==NULL)
-	{
-		LM_ERR("empty parameter!\n");
-		return E_UNSPEC;
-	}
-	*param = (void*)model;
-
-	return 0;
-}
-
 /************************** wrapper functions ******************************/
 
-static int w_restore_from(struct sip_msg *msg)
+static int ki_restore_from(struct sip_msg *msg)
 {
 	/* safety checks - must be a request */
 	if (msg->first_line.type!=SIP_REQUEST) {
@@ -419,12 +395,40 @@ static int w_restore_from(struct sip_msg *msg)
 	return (restore_uri(msg,&rr_from_param,&restore_from_avp,1)==0)?1:-1;
 }
 
+static int w_restore_from(struct sip_msg *msg, char *p1, char *p2)
+{
+	return ki_restore_from(msg);
+}
+
+int ki_replace_from(sip_msg_t *msg, str *pdsp, str *puri)
+{
+	str *uri = NULL;
+	str *dsp = NULL;
+
+	dsp = pdsp;
+	uri = (puri && puri->len) ? puri : NULL;
+
+	if(parse_from_header(msg) < 0) {
+		LM_ERR("failed to find/parse FROM hdr\n");
+		return -1;
+	}
+
+	LM_DBG("dsp=%p (len=%d) , uri=%p (len=%d)\n", dsp, dsp ? dsp->len : 0, uri,
+			uri ? uri->len : 0);
+
+	return (replace_uri(msg, dsp, uri, msg->from, &rr_from_param,
+					&restore_from_avp, 1)==0)? 1 : -1;
+}
+
+static int ki_replace_from_uri(sip_msg_t* msg, str* puri)
+{
+	return ki_replace_from(msg, NULL, puri);
+}
 
 int w_replace_from(struct sip_msg* msg, char* p1, char* p2)
 {
 	str uri_s;
 	str dsp_s;
-	str *uri = NULL;
 	str *dsp = NULL;
 
 	if (p2==NULL) {
@@ -434,29 +438,20 @@ int w_replace_from(struct sip_msg* msg, char* p1, char* p2)
 	}
 
 	/* p1 display , p2 uri */
-
-	if ( p1!=NULL ) {
-		if(pv_printf_s( msg, (pv_elem_p)p1, &dsp_s)!=0) {
+	if(p1 != NULL) {
+		if(fixup_get_svalue(msg, (gparam_t *)p1, &dsp_s) < 0) {
+			LM_ERR("cannot get the display name value\n");
 			return -1;
 		}
 		dsp = &dsp_s;
 	}
 
 	/* compute the URI string; if empty string -> make it NULL */
-	if (pv_printf_s( msg, (pv_elem_p)p2, &uri_s)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t *)p2, &uri_s) < 0) {
+		LM_ERR("cannot get the uri value\n");
 		return -1;
 	}
-	uri = uri_s.len?&uri_s:NULL;
-
-	if (parse_from_header(msg)<0 ) {
-		LM_ERR("failed to find/parse FROM hdr\n");
-		return -1;
-	}
-
-	LM_DBG("dsp=%p (len=%d) , uri=%p (len=%d)\n",dsp,dsp?dsp->len:0,uri,uri?uri->len:0);
-
-	return (replace_uri(msg, dsp, uri, msg->from, &rr_from_param, &restore_from_avp, 1)==0)?1:-1;
-
+	return ki_replace_from(msg, dsp, &uri_s);
 }
 
 int replace_from_api(sip_msg_t *msg, str* pd, str* pu)
@@ -477,7 +472,7 @@ int replace_from_api(sip_msg_t *msg, str* pd, str* pu)
 	return replace_uri(msg, dsp, uri, msg->from, &rr_from_param, &restore_from_avp, 1);
 }
 
-static int w_restore_to(struct sip_msg *msg)
+static int ki_restore_to(struct sip_msg *msg)
 {
 	/* safety checks - must be a request */
 	if (msg->first_line.type!=SIP_REQUEST) {
@@ -488,12 +483,41 @@ static int w_restore_to(struct sip_msg *msg)
 	return (restore_uri(msg,&rr_to_param,&restore_to_avp,0)==0)?1:-1;
 }
 
+static int w_restore_to(struct sip_msg *msg, char *p1, char *p2)
+{
+	return ki_restore_to(msg);
+}
+
+static int ki_replace_to(sip_msg_t* msg, str* pdsp, str* puri)
+{
+	str *uri = NULL;
+	str *dsp = NULL;
+
+	dsp = pdsp;
+	uri = (puri && puri->len) ? puri : NULL;
+
+	/* parse TO hdr */
+	if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
+		LM_ERR("failed to parse TO hdr\n");
+		return -1;
+	}
+
+	LM_DBG("dsp=%p (len=%d) , uri=%p (len=%d)\n",
+			dsp, dsp?dsp->len:0, uri, uri?uri->len:0);
+
+	return (replace_uri(msg, dsp, uri, msg->to, &rr_to_param,
+				&restore_to_avp, 0)==0)?1:-1;
+}
+
+static int ki_replace_to_uri(sip_msg_t* msg, str* puri)
+{
+	return ki_replace_to(msg, NULL, puri);
+}
 
 static int w_replace_to(struct sip_msg* msg, char* p1, char* p2)
 {
 	str uri_s;
 	str dsp_s;
-	str *uri = NULL;
 	str *dsp = NULL;
 
 	if (p2==NULL) {
@@ -503,29 +527,22 @@ static int w_replace_to(struct sip_msg* msg, char* p1, char* p2)
 	}
 
 	/* p1 display , p2 uri */
-
-	if( p1!=NULL ) {
-		if(pv_printf_s( msg, (pv_elem_p)p1, &dsp_s)!=0)
+	if(p1 != NULL) {
+		if(fixup_get_svalue(msg, (gparam_t *)p1, &dsp_s) < 0) {
+			LM_ERR("cannot get the display name value\n");
 			return -1;
+		}
 		dsp = &dsp_s;
 	}
 
 	/* compute the URI string; if empty string -> make it NULL */
-	if (pv_printf_s( msg, (pv_elem_p)p2, &uri_s)!=0)
-		return -1;
-	uri = uri_s.len?&uri_s:NULL;
-
-	/* parse TO hdr */
-	if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
-		LM_ERR("failed to parse TO hdr\n");
+	if(fixup_get_svalue(msg, (gparam_t *)p2, &uri_s) < 0) {
+		LM_ERR("cannot get the uri value\n");
 		return -1;
 	}
-
-	LM_DBG("dsp=%p (len=%d) , uri=%p (len=%d)\n",dsp,dsp?dsp->len:0,uri,uri?uri->len:0);
-
-	return (replace_uri(msg, dsp, uri, msg->to, &rr_to_param, &restore_to_avp, 0)==0)?1:-1;
-
+	return ki_replace_to(msg, dsp, &uri_s);
 }
+
 
 int replace_to_api(sip_msg_t *msg, str* pd, str* pu)
 {
@@ -652,15 +669,44 @@ int bind_uac(uac_api_t *uacb)
 static sr_kemi_t sr_kemi_uac_exports[] = {
 	{ str_init("uac"), str_init("uac_auth"),
 		SR_KEMIP_INT, ki_uac_auth,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("uac"), str_init("uac_req_send"),
 		SR_KEMIP_INT, ki_uac_req_send,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_replace_from_uri"),
+		SR_KEMIP_INT, ki_replace_from_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_replace_from"),
+		SR_KEMIP_INT, ki_replace_from,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("uac"), str_init("uac_restore_from"),
+		SR_KEMIP_INT, ki_restore_from,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_replace_to_uri"),
+		SR_KEMIP_INT, ki_replace_to_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_replace_to"),
+		SR_KEMIP_INT, ki_replace_to,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_restore_to"),
+		SR_KEMIP_INT, ki_restore_to,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */
