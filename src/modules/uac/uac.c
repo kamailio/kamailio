@@ -47,6 +47,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/tm/t_hooks.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/cfg/cfg_struct.h"
@@ -550,6 +551,10 @@ static int w_uac_auth(struct sip_msg* msg, char* str, char* str2)
 	return (uac_auth(msg)==0)?1:-1;
 }
 
+static int ki_uac_auth(struct sip_msg* msg)
+{
+	return (uac_auth(msg)==0)?1:-1;
+}
 
 static int w_uac_reg_lookup(struct sip_msg* msg,  char* src, char* dst)
 {
@@ -637,5 +642,34 @@ int bind_uac(uac_api_t *uacb)
 	uacb->replace_from = replace_from_api;
 	uacb->replace_to = replace_to_api;
 	uacb->req_send = uac_req_send;
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_uac_exports[] = {
+	{ str_init("uac"), str_init("uac_auth"),
+		SR_KEMIP_INT, ki_uac_auth,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_req_send"),
+		SR_KEMIP_INT, ki_uac_req_send,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_uac_exports);
 	return 0;
 }
