@@ -127,12 +127,12 @@ static cmd_export_t cmds[]={
 	{"uac_restore_to",  (cmd_function)w_restore_to,  0, 0, 0, REQUEST_ROUTE },
 	{"uac_auth",	  (cmd_function)w_uac_auth,       0, 0, 0, FAILURE_ROUTE },
 	{"uac_req_send",  (cmd_function)w_uac_req_send,   0, 0, 0, ANY_ROUTE},
-	{"uac_reg_lookup",  (cmd_function)w_uac_reg_lookup,  2, fixup_pvar_pvar,
-		fixup_free_pvar_pvar, ANY_ROUTE },
-	{"uac_reg_status",  (cmd_function)w_uac_reg_status,  1, fixup_pvar_pvar, 0,
+	{"uac_reg_lookup",  (cmd_function)w_uac_reg_lookup,  2, fixup_spve_pvar,
+		fixup_free_spve_pvar, ANY_ROUTE },
+	{"uac_reg_status",  (cmd_function)w_uac_reg_status,  1, fixup_spve_null, 0,
 		ANY_ROUTE },
 	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2,
-		fixup_pvar_uint, fixup_free_pvar_uint,
+		fixup_spve_igp, fixup_free_spve_igp,
 		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
 	{"bind_uac", (cmd_function)bind_uac,		  1,  0, 0, 0},
 	{0,0,0,0,0,0}
@@ -573,78 +573,58 @@ static int ki_uac_auth(struct sip_msg* msg)
 	return (uac_auth(msg)==0)?1:-1;
 }
 
-static int w_uac_reg_lookup(struct sip_msg* msg,  char* src, char* dst)
+static int w_uac_reg_lookup(struct sip_msg* msg, char* src, char* dst)
 {
-	pv_spec_t *spv;
 	pv_spec_t *dpv;
-	pv_value_t val;
+	str sval;
 
-	spv = (pv_spec_t*)src;
+	if(fixup_get_svalue(msg, (gparam_t*)src, &sval)<0) {
+		LM_ERR("cannot get the uuid parameter\n");
+		return -1;
+	}
+
 	dpv = (pv_spec_t*)dst;
-	if(pv_get_spec_value(msg, spv, &val) != 0)
-	{
-		LM_ERR("cannot get src uri value\n");
-		return -1;
-	}
 
-	if (!(val.flags & PV_VAL_STR))
-	{
-		LM_ERR("src pv value is not string\n");
-		return -1;
-	}
-	return uac_reg_lookup(msg, &val.rs, dpv, 0);
+	return uac_reg_lookup(msg, &sval, dpv, 0);
 }
 
 
-static int w_uac_reg_status(struct sip_msg* msg,  char* src, char* dst)
+static int w_uac_reg_status(struct sip_msg* msg, char* src, char* p2)
 {
-	pv_spec_t *spv;
-	pv_value_t val;
+	str sval;
 
-	spv = (pv_spec_t*)src;
-	if(pv_get_spec_value(msg, spv, &val) != 0)
-	{
-		LM_ERR("cannot get src uri value\n");
+	if(fixup_get_svalue(msg, (gparam_t*)src, &sval)<0) {
+		LM_ERR("cannot get the uuid parameter\n");
 		return -1;
 	}
 
-	if (!(val.flags & PV_VAL_STR))
-	{
-	    LM_ERR("src pv value is not string\n");
-	    return -1;
-	}
-	return uac_reg_status(msg, &val.rs, 0);
+	pv_spec_t *spv;
+	pv_value_t val;
+
+	return uac_reg_status(msg, &sval, 0);
 }
 
 
-static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s)
+static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* pmode)
 {
-	pv_spec_t *spv;
-	pv_value_t val;
-	unsigned int mode;
+	str sval;
+	int imode;
 
-	mode = (unsigned int)(long)mode_s;
-
-	spv = (pv_spec_t*)src;
-	if(pv_get_spec_value(msg, spv, &val) != 0)
-	{
-		LM_ERR("cannot get src uri value\n");
+	if(fixup_get_svalue(msg, (gparam_t*)src, &sval)<0) {
+		LM_ERR("cannot get the uuid parameter\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)pmode, &imode)<0) {
+		LM_ERR("cannot get the mode parameter\n");
 		return -1;
 	}
 
-	if (!(val.flags & PV_VAL_STR))
-	{
-		LM_ERR("src pv value is not string\n");
-		return -1;
-	}
-
-	if (mode > 1)
-	{
+	if (imode > 1) {
 		LM_ERR("invalid mode\n");
 		return -1;
 	}
 
-	return uac_reg_request_to(msg, &val.rs, mode);
+	return uac_reg_request_to(msg, &sval, (unsigned int)imode);
 }
 
 
