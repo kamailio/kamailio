@@ -41,7 +41,9 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in);
 
 int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 		char* profile);
+int ki_reg_fetch_contacts(sip_msg_t* msg, str* dtable, str* uri, str* profile);
 int pv_free_contacts(struct sip_msg* msg, char* profile, char *s2);
+int ki_reg_free_contacts(sip_msg_t* msg, str* profile);
 
 void regpv_free_profiles(void);
 
