@@ -175,7 +175,7 @@ int w_add_diversion(struct sip_msg* msg, char* r, char* u)
 	str reason;
 
 	if(fixup_get_svalue(msg, (gparam_t*)r, &reason)<0) {
-		LM_ERR("cannot get the script\n");
+		LM_ERR("cannot get the reason parameter\n");
 		return -1;
 	}
 
