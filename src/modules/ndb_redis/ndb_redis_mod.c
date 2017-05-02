@@ -546,6 +546,7 @@ static int w_redis_pipe_cmd6(struct sip_msg* msg, char* ssrv, char* scmd,
 static int w_redis_execute(struct sip_msg* msg, char* ssrv)
 {
 	str s;
+	int rv;
 
 	if (redis_cluster_param) 
 	{
@@ -557,7 +558,9 @@ static int w_redis_execute(struct sip_msg* msg, char* ssrv)
 		LM_ERR("no redis server name\n");
 		return -1;
 	}
-	redisc_exec_pipelined_cmd(&s);
+	rv=redisc_exec_pipelined_cmd(&s);
+	if (rv)
+		return rv;
 	return 1;
 }
 
