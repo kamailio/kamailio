@@ -292,7 +292,7 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
 	</section>
 	<section id="ndb_redis.f.redis_execute">
 	<title>
-		<function moreinfo="none">redis_execute([srvname])</function>
+		<function moreinfo="none">redis_execute(srvname)</function>
 	</title>
 	<para>
 		Sends commands to REDIS server identified by srvname. Commands are added 
@@ -300,10 +300,6 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
 		When this function is called all the commands will be sent in a single message
 		to the REDIS server.
 
-	</para>
-	<para>
-		If this function is called without any parameters, it will iterate through all 
-		existing servers and send the existing pipelined commands for them.
 	</para>
 	<para>
 		When using redis_cmd together with redis_pipe_cmd it is recommended that a call to 
@@ -324,12 +320,12 @@ After several redis command calls:
 
 	redis_pipe_cmd("srvB", "SET ruri $ru", "r2");
 
-	redis_pipe_cmd("srvC", "GET foo", "r3");
+	redis_pipe_cmd("srvB", "GET foo", "r3");
 
 Send the data and retrieve the results:
 	redis_execute("srvA"); //send command to srvA and wait for reply. Store the reply in r1
 
-	redis_execute(); //send remaining commands (the set to srvB and get to srvC), wait for replies, and store the replies in r2 and r3
+	redis_execute("srvB"); //send command to srvA and wait for reply. Store the replies in r2 (for SET ruri $ru) and r3 (for GET foo)
 
 Using both redis_cmd and redis_pipe_cmd:
 	redis_pipe_cmd("srvA", "SET foo bar", "r1");

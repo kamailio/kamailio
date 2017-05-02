@@ -73,7 +73,6 @@ int redisc_reconnect_server(redisc_server_t *rsrv);
 int redisc_exec(str *srv, str *res, str *cmd, ...);
 int redisc_append_cmd(str *srv, str *res, str *cmd, ...);
 int redisc_exec_pipelined_cmd(str *srv);
-int redisc_exec_pipelined_cmd_all();
 int redisc_exec_pipelined(redisc_server_t *rsrv);
 redisReply* redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv,
 		const size_t *argvlen);

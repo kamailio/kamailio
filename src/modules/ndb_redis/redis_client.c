@@ -488,26 +488,6 @@ int redisc_exec_pipelined_cmd(str *srv)
 /**
  *
  */
-int redisc_exec_pipelined_cmd_all()
-{
-	redisc_server_t *rsrv=NULL;
-
-	rsrv=_redisc_srv_list;
-	while(rsrv!=NULL)
-	{
-		if ((rsrv->ctxRedis != NULL) && (rsrv->pendingReplies != 0))
-		{
-			redisc_exec_pipelined(rsrv);
-		}
-		rsrv=rsrv->next;
-	}
-
-	return 0;
-}
-
-/**
- *
- */
 int redisc_exec_pipelined(redisc_server_t *rsrv)
 {
 	redisc_reply_t *rpl;
