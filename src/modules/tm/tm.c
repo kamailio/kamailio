@@ -996,7 +996,6 @@ static int ki_t_lookup_request(struct sip_msg* msg)
 static int ki_t_lookup_cancel_flags(sip_msg_t* msg, int flags)
 {
 	struct cell *ret;
-	int i=0;
 	if (msg->REQ_METHOD==METHOD_CANCEL) {
 		ret = t_lookupOriginalT( msg );
 		LM_DBG("lookup_original: t_lookupOriginalT returned: %p\n", ret);
