@@ -98,7 +98,6 @@ static int w_uac_auth(struct sip_msg* msg, char* str, char* str2);
 static int w_uac_reg_lookup(struct sip_msg* msg, char* src, char* dst);
 static int w_uac_reg_status(struct sip_msg* msg, char* src, char* dst);
 static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s);
-static int fixup_replace_uri(void** param, int param_no);
 static int mod_init(void);
 static void mod_destroy(void);
 static int child_init(int rank);
