@@ -314,8 +314,6 @@ static int change_reply_status_f(
 {
 	int code;
 	str reason;
-	struct lump *l;
-	char *ch;
 
 	if(get_int_fparam(&code, msg, (fparam_t *)_code)
 			|| get_str_fparam(&reason, msg, (fparam_t *)_reason)) {
