@@ -77,6 +77,7 @@ static int add_contact(str aor, ucontact_info_t* ci)
 		// Search by ruid, if possible
 		res = dmq_ul.get_urecord_by_ruid(_d, dmq_ul.get_aorhash(&aor), &ci->ruid, &r, &c);
 		if (res == 0) {
+			dmq_ul.lock_udomain(_d, &aor);
 			LM_DBG("Found contact\n");
 			dmq_ul.update_ucontact(r, c, ci);
 			LM_DBG("Release record\n");
