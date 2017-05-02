@@ -336,6 +336,7 @@ DST_BLST_TCP_IMASK	dst_blacklist_tcp_imask
 DST_BLST_TLS_IMASK	dst_blacklist_tls_imask
 DST_BLST_SCTP_IMASK	dst_blacklist_sctp_imask
 
+IP_FREE_BIND		ip_free_bind|ip_freebind|ipfreebind
 
 PORT	port
 STAT	statistics
@@ -751,6 +752,7 @@ IMPORTFILE      "import_file"
 								return DST_BLST_TLS_IMASK; }
 <INITIAL>{DST_BLST_SCTP_IMASK}	{ count(); yylval.strval=yytext;
 								return DST_BLST_SCTP_IMASK; }
+<INITIAL>{IP_FREE_BIND}	{ count(); yylval.strval=yytext; return IP_FREE_BIND; }
 <INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }
 <INITIAL>{STAT}	{ count(); yylval.strval=yytext; return STAT; }
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }

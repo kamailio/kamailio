@@ -2762,6 +2762,17 @@ int tcp_init(struct socket_info* sock_info)
 			/* continue since this is not critical */
 		}
 	}
+
+#if defined(IP_FREEBIND)
+	/* allow bind to non local address.
+	 * useful when daemon started before network initialized */
+	if (_sr_ip_free_bind && setsockopt(sock_info->socket, IPPROTO_IP,
+				IP_FREEBIND, (void*)&optval, sizeof(optval)) ==-1) {
+		LM_WARN("setsockopt freebind failed: %s\n", strerror(errno));
+		/* continue since this is not critical */
+	}
+#endif
+
 #ifdef HAVE_TCP_DEFER_ACCEPT
 	/* linux only */
 	if ((optval=cfg_get(tcp, tcp_cfg, defer_accept))){
