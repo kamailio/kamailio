@@ -427,7 +427,6 @@ int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 	ucontact_t* c0;
 	regpv_profile_t *rpp;
 	str aor = {0, 0};
-	str u = {0, 0};
 	int res;
 	int olen;
 	int ilen;
