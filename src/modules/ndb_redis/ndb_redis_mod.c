@@ -66,7 +66,6 @@ static int w_redis_pipe_cmd5(struct sip_msg* msg, char* ssrv, char* scmd,
 static int w_redis_pipe_cmd6(struct sip_msg* msg, char* ssrv, char* scmd,
 		char *sargv1, char *sargv2, char *sargv3, char* sres);
 static int fixup_redis_cmd6(void** param, int param_no);
-static int w_redis_execute_noargs(struct sip_msg* msg);
 static int w_redis_execute(struct sip_msg* msg, char* ssrv);
 
 static int w_redis_free_reply(struct sip_msg* msg, char* res);
@@ -105,8 +104,6 @@ static cmd_export_t cmds[]={
 	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd6, 6, fixup_redis_cmd6,
 		0, ANY_ROUTE},
 	{"redis_execute", (cmd_function)w_redis_execute, 1, fixup_redis_cmd6,
-		0, ANY_ROUTE},
-	{"redis_execute", (cmd_function)w_redis_execute_noargs, 0, 0,
 		0, ANY_ROUTE},
 	{"redis_free", (cmd_function)w_redis_free_reply, 1, fixup_spve_null,
 		0, ANY_ROUTE},
@@ -540,20 +537,6 @@ static int w_redis_pipe_cmd6(struct sip_msg* msg, char* ssrv, char* scmd,
 	arg1.s[arg1.len] = c1;
 	arg2.s[arg2.len] = c2;
 	arg3.s[arg3.len] = c3;
-	return 1;
-}
-
-/**
- *
- */
-static int w_redis_execute_noargs(struct sip_msg* msg)
-{
-	if (redis_cluster_param) 
-	{
-		LM_ERR("Pipelining is not supported if cluster parameter is enabled\n");
-		return -1;
-	}
-	redisc_exec_pipelined_cmd_all();
 	return 1;
 }
 
