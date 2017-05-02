@@ -202,7 +202,7 @@ int ki_lookup_domain_prefix(struct sip_msg *_msg, str *_sdomain, str *_sprefix)
 {
 	int_str name, val;
 	struct attr_list *attrs;
-	str *prefix, did;
+	str did;
 	unsigned short flags;
 
 	if(_sdomain==NULL || _sdomain->s==NULL) {
