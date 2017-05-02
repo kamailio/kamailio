@@ -473,7 +473,7 @@ static int sctp_init_sock_opt_common(int s, int af)
 	/* allow bind to non local address.
 	 * useful when daemon started before network initialized */
 	optval = 1;
-	if (setsockopt(s, IPPROTO_IP, IP_FREEBIND,
+	if (_sr_ip_free_bind && setsockopt(s, IPPROTO_IP, IP_FREEBIND,
 				(void*)&optval, sizeof(optval)) ==-1) {
 		LM_WARN("setsockopt freebind failed: %s\n", strerror(errno));
 		/* continue since this is not critical */

@@ -201,6 +201,7 @@ extern int rt_timer1_policy; /* "fast" timer, SCHED_OTHER */
 extern int rt_timer2_policy; /* "slow" timer, SCHED_OTHER */
 
 extern int http_reply_parse;
+extern int _sr_ip_free_bind;
 
 #ifdef USE_DNS_CACHE
 extern int dns_cache_init; /* if 0, the DNS cache is not initialized at startup */
