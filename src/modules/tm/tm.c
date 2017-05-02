@@ -988,7 +988,12 @@ inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 	return (t_check_msg( msg , 0  )==1) ? 1 : -1;
 }
 
-inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
+static int ki_t_lookup_request(struct sip_msg* msg)
+{
+	return (t_check_msg( msg , 0  )==1) ? 1 : -1;
+}
+
+static int ki_t_lookup_cancel_flags(sip_msg_t* msg, int flags)
 {
 	struct cell *ret;
 	int i=0;
@@ -998,7 +1003,7 @@ inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 		if (ret != T_NULL_CELL) {
 			/* If the parameter is set to 1, overwrite the message flags of
 			 * the CANCEL with the flags of the INVITE */
-			if (str && (get_int_fparam(&i, msg, (fparam_t*)str)==0) && i)
+			if (flags)
 				msg->flags = ret->uas.request->flags;
 
 			/* The cell is reffed by t_lookupOriginalT, but T is not set.
@@ -1010,6 +1015,21 @@ inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 		LM_WARN("script error - t_lookup_cancel() called for non-CANCEL request\n");
 	}
 	return -1;
+}
+
+static int ki_t_lookup_cancel(sip_msg_t* msg)
+{
+	return ki_t_lookup_cancel_flags(msg, 0);
+}
+
+inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
+{
+	int i = 0;
+
+	if(str) {
+		get_int_fparam(&i, msg, (fparam_t*)str);
+	}
+	return ki_t_lookup_cancel_flags(msg, i);
 }
 
 inline static int str2proto(char *s, int len) {
@@ -1297,10 +1317,9 @@ inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 	return t_release(msg);
 }
 
-inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar)
+static int ki_t_retransmit_reply(struct sip_msg* p_msg)
 {
 	struct cell *t;
-
 
 	if (t_check( p_msg  , 0 )==-1)
 		return 1;
@@ -1315,6 +1334,10 @@ inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* 
 		return -1;
 }
 
+inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar)
+{
+	return ki_t_retransmit_reply(p_msg);
+}
 
 inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar )
 {
@@ -1688,10 +1711,37 @@ static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo)
 	return t_set_fr_all(msg, fr_inv, (char*)0);
 }
 
+static int ki_t_set_fr(struct sip_msg* msg, int fr_inv, int fr)
+{
+	return t_set_fr(msg, fr_inv, fr);
+}
+
+static int ki_t_set_fr_inv(struct sip_msg* msg, int fr_inv)
+{
+	return t_set_fr(msg, fr_inv, 0);
+}
+
 /* reset fr_timer and fr_inv_timer to the default values */
 static int w_t_reset_fr(struct sip_msg* msg, char* foo, char* bar)
 {
 	return t_reset_fr();
+}
+
+static int ki_t_reset_fr(struct sip_msg* msg)
+{
+	return t_reset_fr();
+}
+
+static int ki_t_set_retr(sip_msg_t* msg, int t1, int t2)
+{
+#ifdef TM_DIFF_RT_TIMEOUT
+	return t_set_retr(msg, t1, t2);
+#else
+	LM_ERR("support for changing retransmission intervals on "
+			"the fly not compiled in (re-compile tm with"
+			" -DTM_DIFF_RT_TIMEOUT)\n");
+	return -1;
+#endif
 }
 
 /* set retr. intervals per transaction; 0 means: use the default value */
@@ -1705,18 +1755,11 @@ static int w_t_set_retr(struct sip_msg* msg, char* p1, char* p2)
 	} else {
 		t2 = 0;
 	}
-#ifdef TM_DIFF_RT_TIMEOUT
-	return t_set_retr(msg, t1, t2);
-#else
-	LM_ERR("support for changing retransmission intervals on "
-			"the fly not compiled in (re-compile tm with"
-			" -DTM_DIFF_RT_TIMEOUT)\n");
-	return -1;
-#endif
+	return ki_t_set_retr(msg, t1, t2);
 }
 
 /* reset retr. t1 and t2 to the default values */
-int w_t_reset_retr(struct sip_msg* msg, char* foo, char* bar)
+int ki_t_reset_retr(sip_msg_t* msg)
 {
 #ifdef TM_DIFF_RT_TIMEOUT
 	return t_reset_retr();
@@ -1726,6 +1769,11 @@ int w_t_reset_retr(struct sip_msg* msg, char* foo, char* bar)
 			" -DTM_DIFF_RT_TIMEOUT)\n");
 	return -1;
 #endif
+}
+
+int w_t_reset_retr(struct sip_msg* msg, char* foo, char* bar)
+{
+	return ki_t_reset_retr(msg);
 }
 
 /* set maximum transaction lifetime for inv & noninv */
@@ -1742,12 +1790,21 @@ static int w_t_set_max_lifetime(struct sip_msg* msg, char* p1, char* p2)
 	return t_set_max_lifetime(msg, t1, t2);
 }
 
+static int ki_t_set_max_lifetime(sip_msg_t* msg, int t1, int t2)
+{
+	return t_set_max_lifetime(msg, t1, t2);
+}
+
 /* reset maximum invite/non-invite lifetime to the default value */
 int w_t_reset_max_lifetime(struct sip_msg* msg, char* foo, char* bar)
 {
 	return t_reset_max_lifetime();
 }
 
+int ki_t_reset_max_lifetime(sip_msg_t* msg)
+{
+	return t_reset_max_lifetime();
+}
 
 
 /**
@@ -1791,7 +1848,6 @@ int w_t_reset_max_lifetime(struct sip_msg* msg, char* foo, char* bar)
 	} \
 	return 1; \
 }
-
 
 
 /* set automatically sending 100 replies on/off for the current or
@@ -2325,6 +2381,15 @@ static int w_t_uac_send(sip_msg_t* msg, char* pmethod, char* pruri,
 	return 1;
 }
 
+static int ki_t_uac_send(sip_msg_t* msg, str* method, str* ruri,
+		str* nexthop, str* ssock, str *hdrs, str* body)
+{
+	if(t_uac_send(method, ruri, nexthop, ssock, hdrs, body)<0) {
+		return -1;
+	}
+	return 1;
+}
+
 /* rpc docs */
 
 static const char* rpc_cancel_doc[2] = {
@@ -2555,6 +2620,66 @@ static sr_kemi_t tm_kemi_exports[] = {
 		SR_KEMIP_INT, t_is_set,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_lookup_request"),
+		SR_KEMIP_INT, ki_t_lookup_request,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_lookup_cancel"),
+		SR_KEMIP_INT, ki_t_lookup_cancel,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_lookup_cancel_flags"),
+		SR_KEMIP_INT, ki_t_lookup_cancel_flags,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_retransmit_reply"),
+		SR_KEMIP_INT, ki_t_retransmit_reply,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_set_fr_inv"),
+		SR_KEMIP_INT, ki_t_set_fr_inv,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_set_fr"),
+		SR_KEMIP_INT, ki_t_set_fr,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_reset_fr"),
+		SR_KEMIP_INT, ki_t_reset_fr,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_set_max_lifetime"),
+		SR_KEMIP_INT, ki_t_set_max_lifetime,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_reset_max_lifetime"),
+		SR_KEMIP_INT, ki_t_reset_max_lifetime,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_set_retr"),
+		SR_KEMIP_INT, ki_t_set_retr,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_reset_retr"),
+		SR_KEMIP_INT, ki_t_reset_retr,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_uac_send"),
+		SR_KEMIP_INT, ki_t_uac_send,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
