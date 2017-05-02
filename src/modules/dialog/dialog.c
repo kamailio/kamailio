@@ -958,17 +958,11 @@ static int w_get_profile_size2(struct sip_msg *msg, char *profile, char *result)
 }
 
 
-static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
+static int ki_dlg_setflag(struct sip_msg *msg, int val)
 {
 	dlg_ctx_t *dctx;
 	dlg_cell_t *d;
-	int val;
 
-	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
-	{
-		LM_ERR("no flag value\n");
-		return -1;
-	}
 	if(val<0 || val>31)
 		return -1;
 	if ( (dctx=dlg_get_dlg_ctx())==NULL )
@@ -983,11 +977,8 @@ static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
 	return 1;
 }
 
-
-static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
+static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
 {
-	dlg_ctx_t *dctx;
-	dlg_cell_t *d;
 	int val;
 
 	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
@@ -995,6 +986,15 @@ static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 		LM_ERR("no flag value\n");
 		return -1;
 	}
+
+	return ki_dlg_setflag(msg, val);
+}
+
+static int ki_dlg_resetflag(struct sip_msg *msg, int val)
+{
+	dlg_ctx_t *dctx;
+	dlg_cell_t *d;
+
 	if(val<0 || val>31)
 		return -1;
 
@@ -1010,19 +1010,24 @@ static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 	return 1;
 }
 
-
-static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
+static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 {
-	dlg_ctx_t *dctx;
-	dlg_cell_t *d;
 	int val;
-	int ret;
 
 	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
 	{
 		LM_ERR("no flag value\n");
 		return -1;
 	}
+	return ki_dlg_resetflag(msg, val);
+}
+
+static int ki_dlg_isflagset(struct sip_msg *msg, int val)
+{
+	dlg_ctx_t *dctx;
+	dlg_cell_t *d;
+	int ret;
+
 	if(val<0 || val>31)
 		return -1;
 
@@ -1036,6 +1041,18 @@ static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
 		return ret;
 	}
 	return (dctx->flags&(1<<val))?1:-1;
+}
+
+static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
+{
+	int val;
+
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
+	{
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_dlg_isflagset(msg, val);
 }
 
 /**
@@ -1836,6 +1853,21 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("get_profile_size"),
 		SR_KEMIP_INT, ki_get_profile_size,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_setflag"),
+		SR_KEMIP_INT, ki_dlg_setflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_resetflag"),
+		SR_KEMIP_INT, ki_dlg_resetflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_isflagset"),
+		SR_KEMIP_INT, ki_dlg_isflagset,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
