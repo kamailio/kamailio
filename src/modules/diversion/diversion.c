@@ -169,8 +169,6 @@ int add_diversion_uri(sip_msg_t* msg, str* reason, str* uri)
 
 int w_add_diversion(struct sip_msg* msg, char* r, char* u)
 {
-	str div_hf;
-	char *at;
 	str uri;
 	str reason;
 
