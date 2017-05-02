@@ -2,7 +2,6 @@
 %define ver 4.4.5
 %define rel 1%{dist}
 %bcond_with dnssec
-%bcond_with kazoo
 
 
 
@@ -23,9 +22,7 @@ Conflicts:  kamailio-dialplan < %ver, kamailio-dnssec < %ver
 Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
-%if %{with kazoo}
 Conflicts:  kamailio-kazoo < %ver
-%endif
 Conflicts:  kamailio-memcached < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
@@ -210,7 +207,6 @@ BuildRequires:  json-c-devel, libevent-devel
 json string handling and RPC modules for Kamailio.
 
 
-%if %{with kazoo}
 %package    kazoo
 Summary:    Kazoo middle layer connector support for Kamailio
 Group:      System Environment/Daemons
@@ -219,7 +215,6 @@ BuildRequires:  libuuid-devel, librabbitmq-devel, json-c-devel, libevent-devel
 
 %description    kazoo
 Kazoo module for Kamailio.
-%endif
 
 
 %package    lcr
@@ -552,10 +547,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     kdnssec \
 %endif
     kgeoip kgzcompress kims kjson kjsonrpcs \
-%if %{with kazoo}
-    kkazoo \
-%endif
-    kldap klua kmemcached \
+    kkazoo kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp kuuid"
@@ -575,10 +567,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kdnssec \
 %endif
     kgeoip kgzcompress kims kjson kjsonrpcs \
-%if %{with kazoo}
-    kkazoo \
-%endif
-    kldap klua kmemcached \
+    kkazoo kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp kuuid"
@@ -1060,12 +1049,10 @@ fi
 %{_libdir}/kamailio/modules/jsonrpc-c.so
 
 
-%if %{with kazoo}
 %files      kazoo
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.kazoo
 %{_libdir}/kamailio/modules/kazoo.so
-%endif
 
 
 %files      lcr
