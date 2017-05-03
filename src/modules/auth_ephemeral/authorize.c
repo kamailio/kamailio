@@ -44,10 +44,11 @@
 static inline int get_pass(str *_username, str *_secret, str *_password)
 {
 	unsigned int hmac_len = SHA_DIGEST_LENGTH;
-	unsigned char hmac_sha1[hmac_len];
+	unsigned char hmac_sha1[512];
 
 	switch(autheph_sha_alg) {
 		case AUTHEPH_SHA1:
+			hmac_len = SHA_DIGEST_LENGTH;
 			if (HMAC(EVP_sha1(), _secret->s, _secret->len,
 					(unsigned char *) _username->s,
 					_username->len, hmac_sha1, &hmac_len) == NULL)
@@ -57,6 +58,17 @@ static inline int get_pass(str *_username, str *_secret, str *_password)
 			}
 			break;
 		case AUTHEPH_SHA256:
+			hmac_len = SHA256_DIGEST_LENGTH;
+			if (HMAC(EVP_sha256(), _secret->s, _secret->len,
+					(unsigned char *) _username->s,
+					_username->len, hmac_sha1, &hmac_len) == NULL)
+			{
+				LM_ERR("HMAC-SHA256 failed\n");
+				return -1;
+			}
+			break;
+		case AUTHEPH_SHA384:
+			hmac_len = SHA384_DIGEST_LENGTH;
 			if (HMAC(EVP_sha256(), _secret->s, _secret->len,
 					(unsigned char *) _username->s,
 					_username->len, hmac_sha1, &hmac_len) == NULL)
@@ -66,6 +78,7 @@ static inline int get_pass(str *_username, str *_secret, str *_password)
 			}
 			break;
 		case AUTHEPH_SHA512:
+			hmac_len = SHA512_DIGEST_LENGTH;
 			if (HMAC(EVP_sha512(), _secret->s, _secret->len,
 					(unsigned char *) _username->s,
 					_username->len, hmac_sha1, &hmac_len) == NULL)
@@ -80,10 +93,13 @@ static inline int get_pass(str *_username, str *_secret, str *_password)
 
 	}
 
+	LM_DBG("HMAC-Len (%i)\n", hmac_len);
+
+
 	_password->len = base64_enc(hmac_sha1, hmac_len,
 					(unsigned char *) _password->s,
 					base64_enc_len(hmac_len));
-	LM_DBG("calculated password: %.*s\n", _password->len, _password->s);
+	LM_DBG("calculated password: %.*s (%i)\n", _password->len, _password->s, _password->len);
 
 	return 0;
 }
@@ -91,7 +107,7 @@ static inline int get_pass(str *_username, str *_secret, str *_password)
 static inline int get_ha1(struct username *_username, str *_domain,
 				str *_secret, char *_ha1)
 {
-	char password[base64_enc_len(SHA_DIGEST_LENGTH)];
+	char password[base64_enc_len(SHA512_DIGEST_LENGTH)];
 	str spassword;
 
 	spassword.s = (char *) password;
@@ -114,10 +130,10 @@ static inline int do_auth(struct sip_msg *_m, struct hdr_field *_h, str *_realm,
 			str *_method, str *_secret)
 {
 	int ret;
-	char ha1[256];
+	char ha1[512];
 	auth_body_t *cred = (auth_body_t*) _h->parsed;
 
-	LM_DBG("secret: %.*s\n", _secret->len, _secret->s);
+	LM_DBG("secret: %.*s (%i)\n", _secret->len, _secret->s, _secret->len);
 
 	if (get_ha1(&cred->digest.username, _realm, _secret, ha1) < 0)
 	{
@@ -125,6 +141,8 @@ static inline int do_auth(struct sip_msg *_m, struct hdr_field *_h, str *_realm,
 		return AUTH_ERROR;
 	}
 
+	LM_DBG("HA1: %i\n", (int)strlen(ha1));
+	
 	ret = eph_auth_api.check_response(&cred->digest, _method, ha1);
 	if (ret == AUTHENTICATED)
 	{

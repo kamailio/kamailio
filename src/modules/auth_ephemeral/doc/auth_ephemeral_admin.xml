@@ -211,7 +211,10 @@ modparam("auth_ephemeral", "username_format", 0)
 			<para>1 - SHA256</para>
 		</listitem>
 		<listitem>
-			<para>2 - SHA512</para>
+			<para>2 - SHA384</para>
+		</listitem>
+		<listitem>
+			<para>3 - SHA512</para>
 		</listitem>
 		</itemizedlist>
 		</para>
