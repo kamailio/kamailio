@@ -69,6 +69,8 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
  */
 int sst_check_min(struct sip_msg *msg, char *str1, char *str2);
 
+int ki_sst_check_min(struct sip_msg *msg, int flag);
+
 /** \brief
  * The handlers initializer function
  */
