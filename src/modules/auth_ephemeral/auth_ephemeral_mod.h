@@ -50,7 +50,8 @@ extern autheph_username_format_t autheph_username_format;
 typedef enum {
 	AUTHEPH_SHA1	= 0,
 	AUTHEPH_SHA256	= 1,
-	AUTHEPH_SHA512	= 2,
+	AUTHEPH_SHA384	= 2,
+	AUTHEPH_SHA512	= 3,
 } autheph_sha_alg_t;
 extern autheph_sha_alg_t autheph_sha_alg;
 
