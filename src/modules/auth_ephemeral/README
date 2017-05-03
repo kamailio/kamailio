@@ -228,7 +228,8 @@ modparam("auth_ephemeral", "username_format", 0)
 
      * 0 - SHA1 (default, as per IETF/RFC)
      * 1 - SHA256
-     * 2 - SHA512
+     * 2 - SHA384
+     * 3 - SHA512
 
    Example 1.5. sha_algorithm parameter usage
 ...
