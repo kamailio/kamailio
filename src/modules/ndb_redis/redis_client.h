@@ -53,6 +53,12 @@ typedef struct redisc_piped_cmds {
 	int pending_commands;
 } redisc_piped_cmds_t;
 
+typedef struct redisc_srv_disable {
+	int disabled;
+	int consecutive_errors;
+	time_t restore_tick;
+} redisc_srv_disable_t;
+
 typedef struct redisc_server {
 	str *sname;
 	unsigned int hname;
@@ -60,6 +66,7 @@ typedef struct redisc_server {
 	redisContext *ctxRedis;
 	struct redisc_server *next;
 	redisc_piped_cmds_t piped;
+	redisc_srv_disable_t disable;
 } redisc_server_t;
 
 typedef struct redisc_pv {
@@ -86,4 +93,6 @@ redisReply* redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv,
 redisc_reply_t *redisc_get_reply(str *name);
 int redisc_free_reply(str *name);
 int redisc_check_auth(redisc_server_t *rsrv, char *pass);
+int redis_check_server(redisc_server_t *rsrv);
+int redis_count_err_and_disable(redisc_server_t *rsrv);
 #endif

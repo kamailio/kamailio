@@ -48,6 +48,8 @@ int init_without_redis = 0;
 int redis_connect_timeout_param = 1000;
 int redis_cmd_timeout_param = 1000;
 int redis_cluster_param = 0;
+int disable_time=0;
+int allowed_timeouts=-1;
 
 static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
 		char* sres);
@@ -120,6 +122,8 @@ static param_export_t params[]={
 	{"connect_timeout", INT_PARAM, &redis_connect_timeout_param},
 	{"cmd_timeout", INT_PARAM, &redis_cmd_timeout_param},
 	{"cluster", INT_PARAM, &redis_cluster_param},
+	{"disable_time", INT_PARAM, &disable_time},
+	{"allowed_timeouts", INT_PARAM, &allowed_timeouts},
 	{0, 0, 0}
 };
 

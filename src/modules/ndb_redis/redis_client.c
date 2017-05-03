@@ -49,6 +49,8 @@ extern int init_without_redis;
 extern int redis_connect_timeout_param;
 extern int redis_cmd_timeout_param;
 extern int redis_cluster_param;
+extern int disable_time;
+extern int allowed_timeouts;
 
 /* backwards compatibility with hiredis < 0.12 */
 #if (HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
@@ -547,7 +549,15 @@ int redisc_exec_pipelined(redisc_server_t *rsrv)
 {
 	redisc_reply_t *rpl;
 	int i;
+
 	LM_DBG("redis server: %.*s\n", rsrv->sname->len,rsrv->sname->s);
+
+	/* if server is disabled do nothing unless the disable time has passed */
+	if (redis_check_server(rsrv))
+	{
+		goto srv_disabled;
+	}
+
 	if (rsrv->piped.pending_commands == 0)
 	{
 		LM_WARN("call for redis_cmd without any pipelined commands\n");
@@ -584,12 +594,14 @@ int redisc_exec_pipelined(redisc_server_t *rsrv)
 			redisGetReply(rsrv->ctxRedis, (void**) &rpl->rplRedis);
 			if (rpl->rplRedis == NULL)
 			{
+				redis_count_err_and_disable(rsrv);
 				LM_ERR("Unable to read reply\n");
 				goto error_exec;
 			}
 		}
 		else
 		{
+			redis_count_err_and_disable(rsrv);
 			goto error_exec;
 		}
 	}
@@ -613,11 +625,16 @@ int redisc_exec_pipelined(redisc_server_t *rsrv)
 		LM_DBG("reply is [%s]",rpl->rplRedis->str);
 	}
 	redisc_free_pipelined_cmds(rsrv);
+	rsrv->disable.consecutive_errors = 0;
 	return 0;
 
 error_exec:
 	redisc_free_pipelined_cmds(rsrv);
 	return -1;
+
+srv_disabled:
+	redisc_free_pipelined_cmds(rsrv);
+	return -2;
 }
 
 int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv) {
@@ -711,6 +728,11 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		LM_NOTICE("Calling redis_cmd with pipelined commands in the buffer. Automatically call redis_execute");
 		redisc_exec_pipelined(rsrv);
 	}
+	/* if server is disabled do nothing unless the disable time has passed */
+	if (redis_check_server(rsrv))
+	{
+		goto srv_disabled;
+	}
   
 	rpl = redisc_get_reply(res);
 	if(rpl==NULL)
@@ -738,7 +760,15 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		if(redisc_reconnect_server(rsrv)==0)
 		{
 			rpl->rplRedis = redisvCommand(rsrv->ctxRedis, cmd->s, ap2);
-		} else {
+			if (rpl->rplRedis ==NULL)
+			{
+				redis_count_err_and_disable(rsrv);
+				goto error_exec;
+			}
+		}
+		else
+		{
+			redis_count_err_and_disable(rsrv);
 			LM_ERR("unable to reconnect to redis server: %.*s\n",
 					srv->len, srv->s);
 			cmd->s[cmd->len] = c;
@@ -781,6 +811,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		}
 	}
 	cmd->s[cmd->len] = c;
+	rsrv->disable.consecutive_errors = 0;
 	va_end(ap);
 	va_end(ap2);
 	va_end(ap3);
@@ -796,6 +827,13 @@ error_exec:
 	va_end(ap3);
 	va_end(ap4);
 	return -1;
+
+srv_disabled:
+	va_end(ap);
+	va_end(ap2);
+	va_end(ap3);
+	va_end(ap4);
+	return -2;
 
 }
 
@@ -983,3 +1021,40 @@ int redis_append_formatted_command(redisContext *c, const char *cmd, size_t len)
 	return REDIS_OK;
 }
 #endif
+
+int redis_check_server(redisc_server_t *rsrv)
+{
+
+	if (rsrv->disable.disabled)
+	{
+		if (get_ticks() > rsrv->disable.restore_tick)
+		{
+			LM_INFO("REDIS server %.*s re-enabled",rsrv->sname->len,rsrv->sname->s);
+			rsrv->disable.disabled = 0;
+			rsrv->disable.consecutive_errors = 0;
+		}
+		else
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int redis_count_err_and_disable(redisc_server_t *rsrv)
+{
+	if (allowed_timeouts < 0)
+	{
+		return 0;
+	}
+
+	rsrv->disable.consecutive_errors++;
+	if (rsrv->disable.consecutive_errors > allowed_timeouts)
+	{
+		rsrv->disable.disabled=1;
+		rsrv->disable.restore_tick=get_ticks() + disable_time;
+		LM_WARN("REDIS server %.*s disabled for %d seconds",rsrv->sname->len,rsrv->sname->s,disable_time);
+		return 1;
+	}
+	return 0;
+}
