@@ -39,6 +39,7 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../../core/counters.h"
 #include "../../core/mem/mem.h"
 #include "stats_funcs.h"
@@ -240,6 +241,18 @@ static int w_update_stat(struct sip_msg *msg, char *stat_p, char *long_p)
 	return 1;
 }
 
+static int ki_update_stat(sip_msg_t *msg, str *sname, int sval)
+{
+	stat_var *stat;
+
+	stat = get_stat(sname);
+	if(stat == 0) {
+		LM_ERR("variable <%.*s> not defined\n", sname->len, sname->s);
+		return -1;
+	}
+	update_stat(stat, (long)sval);
+	return 1;
+}
 
 static int w_reset_stat(struct sip_msg *msg, char* stat_p, char *foo)
 {
@@ -264,8 +277,47 @@ static int w_reset_stat(struct sip_msg *msg, char* stat_p, char *foo)
 		reset_stat( stat );
 	}
 
-
 	return 1;
 }
 
+static int ki_reset_stat(sip_msg_t *msg, str* sname)
+{
+	stat_var *stat;
 
+	stat = get_stat(sname);
+	if(stat == 0) {
+		LM_ERR("variable <%.*s> not defined\n", sname->len, sname->s);
+		return -1;
+	}
+	reset_stat( stat );
+	return 1;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_statistics_exports[] = {
+	{ str_init("statistics"), str_init("update_stat"),
+		SR_KEMIP_INT, ki_update_stat,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("statistics"), str_init("reset_stat"),
+		SR_KEMIP_INT, ki_reset_stat,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_statistics_exports);
+	return 0;
+}
