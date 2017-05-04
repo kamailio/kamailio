@@ -1848,8 +1848,17 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 		routing = kz_amqp_routing_new("");
 	}
 
-	exchange = kz_amqp_exchange_from_json(&exchange_s, json_obj);
-	queue = kz_amqp_queue_from_json(&queue_s, json_obj);
+	tmpObj = kz_json_get_object(json_obj, "exchange-def");
+	if(tmpObj == NULL) {
+		tmpObj = json_obj;
+	}
+	exchange = kz_amqp_exchange_from_json(&exchange_s, tmpObj);
+
+	tmpObj = kz_json_get_object(json_obj, "queue-def");
+	if(tmpObj == NULL) {
+		tmpObj = json_obj;
+	}
+	queue = kz_amqp_queue_from_json(&queue_s, tmpObj);
 
 	kz_amqp_bind_ptr bind = kz_amqp_bind_alloc(exchange, exchange_binding, queue, routing, event_key, event_subkey);
 	if(bind == NULL) {
