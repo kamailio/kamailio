@@ -857,6 +857,13 @@ rtpengine_offer();
             messages. Including the “To” tag in a “delete” messages allows
             you to be more selective about which dialogues within a call
             are being torn down.
+          + to-tag=... - use the specified string as “To” tag instead of
+            the actual “To” tag from the SIP message, and force inclusion
+            of the tag in the message as per above.
+          + from-tag=... - use the specified string as “From” tag instead
+            of the actual “From” tag from the SIP message.
+          + call-id=... - use the specified string as “Call-ID” instead of
+            the actual “Call-ID” from the SIP message.
           + rtcp-mux-demux - if rtcp-mux (RFC 5761) was offered, make the
             RTP proxy accept the offer, but not offer it to the recipient
             of this message.
