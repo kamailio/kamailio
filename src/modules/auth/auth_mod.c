@@ -444,32 +444,39 @@ int w_consume_credentials(struct sip_msg* msg, char* s1, char* s2)
 /**
  *
  */
+int ki_has_credentials(sip_msg_t *msg, str* srealm)
+{
+	hdr_field_t *hdr = NULL;
+	int ret;
+
+	ret = find_credentials(msg, srealm, HDR_PROXYAUTH_T, &hdr);
+	if(ret==0) {
+		LM_DBG("found www credentials with realm [%.*s]\n", srealm->len, srealm->s);
+		return 1;
+	}
+	ret = find_credentials(msg, srealm, HDR_AUTHORIZATION_T, &hdr);
+	if(ret==0) {
+		LM_DBG("found proxy credentials with realm [%.*s]\n", srealm->len, srealm->s);
+		return 1;
+	}
+
+	LM_DBG("no credentials with realm [%.*s]\n", srealm->len, srealm->s);
+	return -1;
+}
+
+/**
+ *
+ */
 int w_has_credentials(sip_msg_t *msg, char* realm, char* s2)
 {
 	str srealm  = {0, 0};
-	hdr_field_t *hdr = NULL;
-	int ret;
 
 	if (fixup_get_svalue(msg, (gparam_t*)realm, &srealm) < 0) {
 		LM_ERR("failed to get realm value\n");
 		return -1;
 	}
-
-	ret = find_credentials(msg, &srealm, HDR_PROXYAUTH_T, &hdr);
-	if(ret==0) {
-		LM_DBG("found www credentials with realm [%.*s]\n", srealm.len, srealm.s);
-		return 1;
-	}
-	ret = find_credentials(msg, &srealm, HDR_AUTHORIZATION_T, &hdr);
-	if(ret==0) {
-		LM_DBG("found proxy credentials with realm [%.*s]\n", srealm.len, srealm.s);
-		return 1;
-	}
-
-	LM_DBG("no credentials with realm [%.*s]\n", srealm.len, srealm.s);
-	return -1;
+	return ki_has_credentials(msg, &srealm);
 }
-
 /**
  * @brief do WWW-Digest authentication with password taken from cfg var
  */
@@ -1219,6 +1226,11 @@ static sr_kemi_t sr_kemi_auth_exports[] = {
 		SR_KEMIP_INT, pv_auth_check,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth"), str_init("has_credentials"),
+		SR_KEMIP_INT, ki_has_credentials,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
