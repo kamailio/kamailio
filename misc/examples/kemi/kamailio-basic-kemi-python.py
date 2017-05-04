@@ -66,7 +66,8 @@ class kamailio:
             return 1;
 
         # handle requests within SIP dialogs
-        self.ksr_route_withindlg(msg);
+        if self.ksr_route_withindlg(msg)==-255 :
+            return 1;
 
         # -- only initial requests (no To tag)
 
