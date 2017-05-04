@@ -90,7 +90,7 @@ int uac_init(void)
 	}
 
 	/* calculate the initial From tag */
-	src[0].s = "Long live SER server";
+	src[0].s = "Long live " NAME " server";
 	src[0].len = strlen(src[0].s);
 	src[1].s = si->address_str.s;
 	src[1].len = strlen(src[1].s);
