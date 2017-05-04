@@ -114,7 +114,7 @@ enum {
 #define	CPORT					"22222"
 
 struct ng_flags_parse {
-	int via, to, packetize, transport;
+	int via, to, packetize, transport, c_id, from;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux;
 };
 
@@ -1784,9 +1784,7 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 			case 6:
 				if (str_eq(&key, "to-tag")) {
 					ng_flags->to = 1;
-					if (val.s && val.len > 0)
-						bencode_dictionary_str_add_str(ng_flags->dict,&key,&val);
-					goto next;
+					goto generic;
 				}
 				break;
 
@@ -1794,6 +1792,11 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				if (str_eq(&key, "RTP/AVP")) {
 					ng_flags->transport = 0x100;
 					goto next;
+				}
+
+				if(str_eq(&key, "call-id")){
+					ng_flags->c_id = 1;
+					goto generic;
 				}
 				break;
 
@@ -1807,6 +1810,11 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				else
 					goto generic;
 				goto next;
+
+				if (str_eq(&key, "from-tag")) {
+					ng_flags->from = 1;
+					goto generic;
+				}
 				break;
 
 			case 9:
@@ -1969,14 +1977,10 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 				transports[ng_flags.transport & 0x003]);
 	if (ng_flags.rtcp_mux && ng_flags.rtcp_mux->child)
 		bencode_dictionary_add(ng_flags.dict, "rtcp-mux", ng_flags.rtcp_mux);
-
-        temp.s = NULL;
-        if (!bencode_dictionary_get_str(ng_flags.dict, "call-id", &temp))
-                bencode_dictionary_add_str(ng_flags.dict, "call-id", &callid);
-	else if (temp.s) {
-		LM_NOTICE("using call-id from command flags: %.*s\n",temp.len,temp.s);
-	}
 	
+	if(ng_flags.c_id)
+        	bencode_dictionary_add_str(ng_flags.dict, "call-id", &callid);
+
 	if (ng_flags.via) {
 		if (ng_flags.via == 1 || ng_flags.via == 2)
 			ret = get_via_branch(msg, ng_flags.via, &viabranch);
@@ -2003,11 +2007,10 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
                 || (msg->first_line.type == SIP_REPLY && op == OP_DELETE)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_ANSWER))
 	{
-		if (!bencode_dictionary_get_str(ng_flags.dict, "from-tag", &temp_fromtag))
+		if (ng_flags.from)
 			bencode_dictionary_add_str(ng_flags.dict, "from-tag", &from_tag);
-		if (ng_flags.to )
-			if (!bencode_dictionary_get_str(ng_flags.dict,"to-tag",&temp_totag) && to_tag.s && to_tag.len)
-				bencode_dictionary_add_str(ng_flags.dict, "to-tag", &to_tag);
+		if (ng_flags.to && to_tag.s && to_tag.len)
+			bencode_dictionary_add_str(ng_flags.dict, "to-tag", &to_tag);
 
 	}
 	else {
