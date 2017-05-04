@@ -918,6 +918,21 @@ rtpengine_offer();
 				dialogues within a call are being torn down.
 				</para></listitem>
 				<listitem><para>
+				<emphasis>to-tag=...</emphasis> - use the specified string as <quote>To</quote>
+				tag instead of the actual <quote>To</quote> tag from the &sip; message, and
+				force inclusion of the tag in the message as per above.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>from-tag=...</emphasis> - use the specified string as
+				<quote>From</quote> tag instead of the actual <quote>From</quote>
+				tag from the &sip; message.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>call-id=...</emphasis> - use the specified string as
+				<quote>Call-ID</quote> instead of the actual <quote>Call-ID</quote>
+				from the &sip; message.
+				</para></listitem>
+				<listitem><para>
 				<emphasis>rtcp-mux-demux</emphasis> - if rtcp-mux (RFC 5761) was
 				offered, make the &rtp; proxy accept the offer, but not offer it to the
 				recipient of this message.

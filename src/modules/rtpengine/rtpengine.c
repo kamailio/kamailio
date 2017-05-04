@@ -116,6 +116,7 @@ enum {
 struct ng_flags_parse {
 	int via, to, packetize, transport;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux;
+	str call_id, from_tag, to_tag;
 };
 
 static const char *command_strings[] = {
@@ -1783,16 +1784,25 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 
 			case 6:
 				if (str_eq(&key, "to-tag")) {
+					if (val.s)
+						ng_flags->to_tag = val;
 					ng_flags->to = 1;
 					goto next;
 				}
 				break;
 
 			case 7:
-				if (str_eq(&key, "RTP/AVP")) {
+				if (str_eq(&key, "RTP/AVP"))
 					ng_flags->transport = 0x100;
-					goto next;
+				else if (str_eq(&key, "call-id")) {
+					err = "missing value";
+					if (!val.s)
+						goto error;
+					ng_flags->call_id = val;
 				}
+				else
+					goto generic;
+				goto next;
 				break;
 
 			case 8:
@@ -1802,6 +1812,12 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 					ng_flags->transport = 0x102;
 				else if (str_eq(&key, "RTP/SAVP"))
 					ng_flags->transport = 0x101;
+				else if (str_eq(&key, "from-tag")) {
+					err = "missing value";
+					if (!val.s)
+						goto error;
+					ng_flags->from_tag = val;
+				}
 				else
 					goto generic;
 				goto next;
@@ -1892,7 +1908,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 {
 	struct ng_flags_parse ng_flags;
 	bencode_item_t *item, *resp;
-	str callid = STR_NULL, from_tag = STR_NULL, to_tag = STR_NULL, viabranch = STR_NULL;
+	str viabranch = STR_NULL;
 	str body = STR_NULL, error = STR_NULL;
 	int ret, queried_nodes = 0;
 	struct rtpp_node *node;
@@ -1903,15 +1919,15 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 
 	memset(&ng_flags, 0, sizeof(ng_flags));
 
-	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
+	if (get_callid(msg, &ng_flags.call_id) == -1 || ng_flags.call_id.len == 0) {
 		LM_ERR("can't get Call-Id field\n");
 		return NULL;
 	}
-	if (get_to_tag(msg, &to_tag) == -1) {
+	if (get_to_tag(msg, &ng_flags.to_tag) == -1) {
 		LM_ERR("can't get To tag\n");
 		return NULL;
 	}
-	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
+	if (get_from_tag(msg, &ng_flags.from_tag) == -1 || ng_flags.from_tag.len == 0) {
 		LM_ERR("can't get From tag\n");
 		return NULL;
 	}
@@ -1967,7 +1983,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	if (ng_flags.rtcp_mux && ng_flags.rtcp_mux->child)
 		bencode_dictionary_add(ng_flags.dict, "rtcp-mux", ng_flags.rtcp_mux);
 
-	bencode_dictionary_add_str(ng_flags.dict, "call-id", &callid);
+	bencode_dictionary_add_str(ng_flags.dict, "call-id", &ng_flags.call_id);
 
 	if (ng_flags.via) {
 		if (ng_flags.via == 1 || ng_flags.via == 2)
@@ -1992,19 +2008,20 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
 
 	if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
+		|| (msg->first_line.type == SIP_REPLY && op == OP_DELETE)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_ANSWER))
 	{
-		bencode_dictionary_add_str(ng_flags.dict, "from-tag", &from_tag);
-		if (ng_flags.to && to_tag.s && to_tag.len)
-			bencode_dictionary_add_str(ng_flags.dict, "to-tag", &to_tag);
+		bencode_dictionary_add_str(ng_flags.dict, "from-tag", &ng_flags.from_tag);
+		if (ng_flags.to && ng_flags.to_tag.s && ng_flags.to_tag.len)
+			bencode_dictionary_add_str(ng_flags.dict, "to-tag", &ng_flags.to_tag);
 	}
 	else {
-		if (!to_tag.s || !to_tag.len) {
+		if (!ng_flags.to_tag.s || !ng_flags.to_tag.len) {
 			LM_ERR("No to-tag present\n");
 			goto error;
 		}
-		bencode_dictionary_add_str(ng_flags.dict, "from-tag", &to_tag);
-		bencode_dictionary_add_str(ng_flags.dict, "to-tag", &from_tag);
+		bencode_dictionary_add_str(ng_flags.dict, "from-tag", &ng_flags.to_tag);
+		bencode_dictionary_add_str(ng_flags.dict, "to-tag", &ng_flags.from_tag);
 	}
 
 	bencode_dictionary_add_string(ng_flags.dict, "command", command_strings[op]);
@@ -2026,7 +2043,7 @@ select_node:
 			goto error;
 		}
 
-		node = select_rtpp_node(callid, viabranch, 1, queried_nodes_ptr, queried_nodes, op);
+		node = select_rtpp_node(ng_flags.call_id, viabranch, 1, queried_nodes_ptr, queried_nodes, op);
 		if (!node) {
 			LM_ERR("no available proxies\n");
 			goto error;
@@ -2068,21 +2085,22 @@ select_node:
 	}
 
 	/* add hastable entry with the node => */
-	if (!rtpengine_hash_table_lookup(callid, viabranch, op)) {
+	if (!rtpengine_hash_table_lookup(ng_flags.call_id, viabranch, op)) {
 		// build the entry
 		struct rtpengine_hash_entry *entry = shm_malloc(sizeof(struct rtpengine_hash_entry));
 		if (!entry) {
 			LM_ERR("rtpengine hash table fail to create entry for calllen=%d callid=%.*s viabranch=%.*s\n",
-				callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+				ng_flags.call_id.len, ng_flags.call_id.len, ng_flags.call_id.s,
+				viabranch.len, viabranch.s);
 			goto skip_hash_table_insert;
 		}
 		memset(entry, 0, sizeof(struct rtpengine_hash_entry));
 
 		// fill the entry
-		if (callid.s && callid.len > 0) {
-			if (shm_str_dup(&entry->callid, &callid) < 0) {
+		if (ng_flags.call_id.s && ng_flags.call_id.len > 0) {
+			if (shm_str_dup(&entry->callid, &ng_flags.call_id) < 0) {
 				LM_ERR("rtpengine hash table fail to duplicate calllen=%d callid=%.*s\n",
-					callid.len, callid.len, callid.s);
+					ng_flags.call_id.len, ng_flags.call_id.len, ng_flags.call_id.s);
 				rtpengine_hash_table_free_entry(entry);
 				goto skip_hash_table_insert;
 			}
@@ -2090,7 +2108,7 @@ select_node:
 		if (viabranch.s && viabranch.len > 0) {
 			if (shm_str_dup(&entry->viabranch, &viabranch) < 0) {
 				LM_ERR("rtpengine hash table fail to duplicate calllen=%d viabranch=%.*s\n",
-					callid.len, viabranch.len, viabranch.s);
+					ng_flags.call_id.len, viabranch.len, viabranch.s);
 				rtpengine_hash_table_free_entry(entry);
 				goto skip_hash_table_insert;
 			}
@@ -2100,14 +2118,16 @@ select_node:
 		entry->tout = get_ticks() + hash_table_tout;
 
 		// insert the key<->entry from the hashtable
-		if (!rtpengine_hash_table_insert(callid, viabranch, entry)) {
+		if (!rtpengine_hash_table_insert(ng_flags.call_id, viabranch, entry)) {
 			LM_ERR("rtpengine hash table fail to insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
-				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+				node->rn_url.len, node->rn_url.s, ng_flags.call_id.len,
+				ng_flags.call_id.len, ng_flags.call_id.s, viabranch.len, viabranch.s);
 			rtpengine_hash_table_free_entry(entry);
 			goto skip_hash_table_insert;
 		} else {
 			LM_DBG("rtpengine hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
-				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+				node->rn_url.len, node->rn_url.s, ng_flags.call_id.len,
+				ng_flags.call_id.len, ng_flags.call_id.s, viabranch.len, viabranch.s);
 		}
 	}
 
@@ -2117,12 +2137,14 @@ skip_hash_table_insert:
 
 	if (op == OP_DELETE) {
 		/* Delete the key<->value from the hashtable */
-		if (!rtpengine_hash_table_remove(callid, viabranch, op)) {
+		if (!rtpengine_hash_table_remove(ng_flags.call_id, viabranch, op)) {
 			LM_ERR("rtpengine hash table failed to remove entry for callen=%d callid=%.*s viabranch=%.*s\n",
-				callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+				ng_flags.call_id.len, ng_flags.call_id.len, ng_flags.call_id.s,
+				viabranch.len, viabranch.s);
 		} else {
 			LM_DBG("rtpengine hash table remove entry for callen=%d callid=%.*s viabranch=%.*s\n",
-				callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+				ng_flags.call_id.len, ng_flags.call_id.len, ng_flags.call_id.s,
+				viabranch.len, viabranch.s);
 		}
 	}
 
