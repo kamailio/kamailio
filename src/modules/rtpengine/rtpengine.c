@@ -114,7 +114,7 @@ enum {
 #define	CPORT					"22222"
 
 struct ng_flags_parse {
-	int via, to, packetize, transport;
+	int via, to, packetize, transport, c_id, from;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux;
 };
 
@@ -1784,7 +1784,7 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 			case 6:
 				if (str_eq(&key, "to-tag")) {
 					ng_flags->to = 1;
-					goto next;
+					goto generic;
 				}
 				break;
 
@@ -1792,6 +1792,11 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				if (str_eq(&key, "RTP/AVP")) {
 					ng_flags->transport = 0x100;
 					goto next;
+				}
+
+				if(str_eq(&key, "call-id")){
+					ng_flags->c_id = 1;
+					goto generic;
 				}
 				break;
 
@@ -1805,6 +1810,11 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				else
 					goto generic;
 				goto next;
+
+				if (str_eq(&key, "from-tag")) {
+					ng_flags->from = 1;
+					goto generic;
+				}
 				break;
 
 			case 9:
@@ -1893,6 +1903,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	struct ng_flags_parse ng_flags;
 	bencode_item_t *item, *resp;
 	str callid = STR_NULL, from_tag = STR_NULL, to_tag = STR_NULL, viabranch = STR_NULL;
+        str temp = STR_NULL, temp_fromtag = STR_NULL, temp_totag = STR_NULL;
 	str body = STR_NULL, error = STR_NULL;
 	int ret, queried_nodes = 0;
 	struct rtpp_node *node;
@@ -1966,8 +1977,9 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 				transports[ng_flags.transport & 0x003]);
 	if (ng_flags.rtcp_mux && ng_flags.rtcp_mux->child)
 		bencode_dictionary_add(ng_flags.dict, "rtcp-mux", ng_flags.rtcp_mux);
-
-	bencode_dictionary_add_str(ng_flags.dict, "call-id", &callid);
+	
+	if(ng_flags.c_id)
+        	bencode_dictionary_add_str(ng_flags.dict, "call-id", &callid);
 
 	if (ng_flags.via) {
 		if (ng_flags.via == 1 || ng_flags.via == 2)
@@ -1992,11 +2004,14 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
 
 	if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
+                || (msg->first_line.type == SIP_REPLY && op == OP_DELETE)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_ANSWER))
 	{
-		bencode_dictionary_add_str(ng_flags.dict, "from-tag", &from_tag);
+		if (ng_flags.from)
+			bencode_dictionary_add_str(ng_flags.dict, "from-tag", &from_tag);
 		if (ng_flags.to && to_tag.s && to_tag.len)
 			bencode_dictionary_add_str(ng_flags.dict, "to-tag", &to_tag);
+
 	}
 	else {
 		if (!to_tag.s || !to_tag.len) {
@@ -2026,7 +2041,11 @@ select_node:
 			goto error;
 		}
 
-		node = select_rtpp_node(callid, viabranch, 1, queried_nodes_ptr, queried_nodes, op);
+		if (temp.s)
+			node = select_rtpp_node(temp, viabranch, 1, queried_nodes_ptr, queried_nodes, op);
+		else
+			node = select_rtpp_node(callid, viabranch, 1, queried_nodes_ptr, queried_nodes, op);
+
 		if (!node) {
 			LM_ERR("no available proxies\n");
 			goto error;
