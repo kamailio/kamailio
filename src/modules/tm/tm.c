@@ -2680,6 +2680,21 @@ static sr_kemi_t tm_kemi_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
 	},
+	{ str_init("tm"), str_init("t_load_contacts"),
+		SR_KEMIP_INT, ki_t_load_contacts,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_next_contacts"),
+		SR_KEMIP_INT, ki_t_next_contacts,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_next_contact_flow"),
+		SR_KEMIP_INT, ki_t_next_contact_flow,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };

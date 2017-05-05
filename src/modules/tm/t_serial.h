@@ -25,6 +25,9 @@
  *
  */
 
+#ifndef _T_SERIAL_H_
+#define _T_SERIAL_H_
+
 extern int fr_inv_timer_next;
 
 int t_load_contacts(struct sip_msg* msg, char* key, char* value);
@@ -32,3 +35,11 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value);
 int t_next_contacts(struct sip_msg* msg, char* key, char* value);
 
 int t_next_contact_flow(struct sip_msg* msg, char* key, char* value);
+
+int ki_t_load_contacts(struct sip_msg* msg);
+
+int ki_t_next_contacts(struct sip_msg* msg);
+
+int ki_t_next_contact_flow(struct sip_msg* msg);
+
+#endif

@@ -172,7 +172,7 @@ void add_contacts_avp(str *uri, str *dst_uri, str *path, str *sock_str,
  * contact is the last one in its priority class.  Finally, removes
  * all branches from destination set.
  */
-int t_load_contacts(struct sip_msg* msg, char* key, char* value)
+int ki_t_load_contacts(struct sip_msg* msg)
 {
 	branch_t *branch;
 	str *ruri, sock_str;
@@ -357,6 +357,11 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 	return 1;
 }
 
+int t_load_contacts(struct sip_msg* msg, char* key, char* value)
+{
+	return ki_t_load_contacts(msg);
+}
+
 void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 		unsigned int flags, str *instance, str *ruid,
 		str *location_ua, sr_xavp_t *ulattrs_xavp)
@@ -431,7 +436,7 @@ void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
  * Returns 1, if contacts_avp was not empty and a destination set was
  * successfully added.  Returns -2, if contacts_avp was empty and thus
  * there was nothing to do. Returns -1 in case of an error. */
-int t_next_contacts(struct sip_msg* msg, char* key, char* value)
+int ki_t_next_contacts(struct sip_msg* msg)
 {
 	str uri, dst_uri, path, instance, host, sock_str, ruid, location_ua;
 	struct socket_info *sock;
@@ -732,6 +737,11 @@ check_q_flag:
 	return 1;
 }
 
+int t_next_contacts(struct sip_msg* msg, char* key, char* value)
+{
+	return ki_t_next_contacts(msg);
+}
+
 /*
  * Adds to request a new destination set that includes contacts
  * from contact_flows_avp.  Only one contact with same +sip.instance
@@ -742,7 +752,7 @@ check_q_flag:
  * Returns 1, if contact_flows_avp was not empty and a destination set was
  * successfully added.  Returns -2, if contact_flows_avp was empty and thus
  * there was nothing to do. Returns -1 in case of an error. */
-int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
+int ki_t_next_contact_flow(struct sip_msg* msg)
 {
 	str uri, dst_uri, path, instance, host, ruid, location_ua;
 	str this_instance;
@@ -865,4 +875,9 @@ next_xavp:
 	}
 
 	return -1;
+}
+
+int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
+{
+	return ki_t_next_contact_flow(msg);
 }
