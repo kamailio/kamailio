@@ -49,8 +49,8 @@ extern int init_without_redis;
 extern int redis_connect_timeout_param;
 extern int redis_cmd_timeout_param;
 extern int redis_cluster_param;
-extern int disable_time;
-extern int allowed_timeouts;
+extern int redis_disable_time_param;
+extern int redis_allowed_timeouts_param;
 
 /* backwards compatibility with hiredis < 0.12 */
 #if (HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
@@ -1043,17 +1043,17 @@ int redis_check_server(redisc_server_t *rsrv)
 
 int redis_count_err_and_disable(redisc_server_t *rsrv)
 {
-	if (allowed_timeouts < 0)
+	if (redis_allowed_timeouts_param < 0)
 	{
 		return 0;
 	}
 
 	rsrv->disable.consecutive_errors++;
-	if (rsrv->disable.consecutive_errors > allowed_timeouts)
+	if (rsrv->disable.consecutive_errors > redis_allowed_timeouts_param)
 	{
 		rsrv->disable.disabled=1;
-		rsrv->disable.restore_tick=get_ticks() + disable_time;
-		LM_WARN("REDIS server %.*s disabled for %d seconds",rsrv->sname->len,rsrv->sname->s,disable_time);
+		rsrv->disable.restore_tick=get_ticks() + redis_disable_time_param;
+		LM_WARN("REDIS server %.*s disabled for %d seconds",rsrv->sname->len,rsrv->sname->s,redis_disable_time_param);
 		return 1;
 	}
 	return 0;
