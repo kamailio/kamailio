@@ -46,6 +46,8 @@ Carsten Bock
               3.3. connect_timeout (int)
               3.4. cmd_timeout (int)
               3.5. cluster (integer)
+              3.6. allowed_timeouts (integer)
+              3.7. disable_time (integer)
 
         4. Functions
 
@@ -61,9 +63,11 @@ Carsten Bock
    1.3. Set connect_timeout parameter
    1.4. Set cmd_timeout parameter
    1.5. Set cluster parameter
-   1.6. redis_cmd usage
-   1.7. redis_execute usage
-   1.8. redis_free usage
+   1.6. Set allowed_timeots parameter
+   1.7. Set disable_time parameter
+   1.8. redis_cmd usage
+   1.9. redis_execute usage
+   1.10. redis_free usage
 
 Chapter 1. Admin Guide
 
@@ -82,6 +86,8 @@ Chapter 1. Admin Guide
         3.3. connect_timeout (int)
         3.4. cmd_timeout (int)
         3.5. cluster (integer)
+        3.6. allowed_timeouts (integer)
+        3.7. disable_time (integer)
 
    4. Functions
 
@@ -122,6 +128,8 @@ Chapter 1. Admin Guide
    3.3. connect_timeout (int)
    3.4. cmd_timeout (int)
    3.5. cluster (integer)
+   3.6. allowed_timeouts (integer)
+   3.7. disable_time (integer)
 
 3.1. server (str)
 
@@ -211,6 +219,46 @@ modparam("ndb_redis", "server", "name=127.0.0.1:26008;addr=127.0.0.1;port=26008"
 modparam("ndb_redis", "cluster", 1)
 ...
 
+3.6. allowed_timeouts (integer)
+
+   If this is set to a non-negative value, it sets the number of
+   consecutive REDIS commands that can fail before temporarily disabling
+   the REDIS server. This is similar to rtpengine_disable_tout parameter
+   from the rtpengine module.
+
+   When communicating with a REDIS server, if redis_cmd or redis_execute
+   will fail for more than “allowed_timeouts” consecutive times, the
+   server will be temporary disabled for a number of seconds configured by
+   the “disable_time” parameter.
+
+   Disabling a server means that further redis_cmd and redis_execute
+   commands will not do anything and return a negative value “-2”.
+   Messages are also logged when disabling and re-enabling a server.
+
+   The number of consecutive fails are counted by each Kamailio process,
+   so when disabling a server this is done just for that process, not
+   globally.
+
+   Default value is “-1” (disabled).
+
+   Example 1.6. Set allowed_timeots parameter
+...
+modparam("ndb_redis", "allowed_timeouts", 3)
+...
+
+3.7. disable_time (integer)
+
+   If allowed_timeouts is set to a non negative value this determines the
+   number of seconds the REDIS server will be disabled
+
+   Default value is “0”.
+
+   Example 1.7. Set disable_time parameter
+...
+modparam("ndb_redis", "allowed_timeouts", 0)
+modparam("ndb_redis", "disable_time", 30)
+...
+
 4. Functions
 
    4.1. redis_cmd(srvname, command, ..., replyid)
@@ -241,7 +289,7 @@ modparam("ndb_redis", "cluster", 1)
      * value[n] - returns value of the nth element. value - returns null
        for an array. You need to get each element by index.
 
-   Example 1.6. redis_cmd usage
+   Example 1.8. redis_cmd usage
 ...
 if(redis_cmd("srvN", "INCR cnt", "r")) {
     # success - the incremented value is in $redis(r=>value)
@@ -310,7 +358,7 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
    If cluster parameter is set to 1, this function will log an error and
    do nothing.
 
-   Example 1.7. redis_execute usage
+   Example 1.9. redis_execute usage
 ...
 After several redis command calls:
         redis_pipe_cmd("srvA", "SET foo bar", "r1");
@@ -358,7 +406,7 @@ d commands. The call is not necessary
    function. When ndb_redis module closes, all pending replies are freed
    automatically.
 
-   Example 1.8. redis_free usage
+   Example 1.10. redis_free usage
 ...
 After a redis command call:
         redis_cmd("srvN", "INCR cnt", "r");
