@@ -650,7 +650,7 @@ modparam("rtpengine", "disabled_col", "disabled_column_name")
 
 
 	<section id="rtpengine.p.setid_default">
-		<title><varname>setid_default</varname> (string)</title>
+		<title><varname>setid_default</varname> (integer)</title>
 		<para>
 			The default set of nodes to be used.
 		</para>
@@ -671,9 +671,1274 @@ modparam("rtpengine", "setid_default", 11)
 		</example>
 	</section>
 
+
+	<section id="rtpengine.p.mos_min_pv">
+		<title><varname>mos_min_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the minimum encountered MOS value for the call.
+			The value typically has a range of 1.0 through 5.0.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_min_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_pv", "$avp(mos_min)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_at_pv">
+		<title><varname>mos_min_at_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the timestamp of when the minimum MOS value
+			was encountered during the call, such as <quote>0:30</quote> for 30 seconds
+			after the start of the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_min_at_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_at_pv", "$avp(mos_min_at)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_packetloss_pv">
+		<title><varname>mos_min_packetloss_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of packetloss in percent
+			at the time the minimum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_min_packetloss_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_packetloss_pv", "$avp(mos_min_packetloss)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_jitter_pv">
+		<title><varname>mos_min_jitter_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of jitter in milliseconds
+			at the time the minimum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_min_jitter_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_jitter_pv", "$avp(mos_min_jitter)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_roundtrip_pv">
+		<title><varname>mos_min_roundtrip_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the packet round-trip time in milliseconds
+			at the time the minimum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_min_roundtrip_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_roundtrip_pv", "$avp(mos_min_roundtrip)")
+...
+</programlisting>
+		</example>
 	</section>
 
 
+	<section id="rtpengine.p.mos_max_pv">
+		<title><varname>mos_max_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the maximum encountered MOS value for the call.
+			The value typically has a range of 1.0 through 5.0.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_max_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_pv", "$avp(mos_max)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_at_pv">
+		<title><varname>mos_max_at_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the timestamp of when the maximum MOS value
+			was encountered during the call, such as <quote>0:30</quote> for 30 seconds
+			after the start of the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_max_at_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_at_pv", "$avp(mos_max_at)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_packetloss_pv">
+		<title><varname>mos_max_packetloss_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of packetloss in percent
+			at the time the maximum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_max_packetloss_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_packetloss_pv", "$avp(mos_max_packetloss)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_jitter_pv">
+		<title><varname>mos_max_jitter_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of jitter in milliseconds
+			at the time the maximum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_max_jitter_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_jitter_pv", "$avp(mos_max_jitter)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_roundtrip_pv">
+		<title><varname>mos_max_roundtrip_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the packet round-trip time in milliseconds
+			at the time the maximum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_max_roundtrip_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_roundtrip_pv", "$avp(mos_max_roundtrip)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_pv">
+		<title><varname>mos_average_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) MOS value for the call.
+			The value typically has a range of 1.0 through 5.0.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_average_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_pv", "$avp(mos_average)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_packetloss_pv">
+		<title><varname>mos_average_packetloss_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) amount of packetloss
+			in percent
+			present throughout the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_average_packetloss_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_packetloss_pv", "$avp(mos_average_packetloss)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_jitter_pv">
+		<title><varname>mos_average_jitter_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) amount of jitter
+			in milliseconds
+			present throughout the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_average_jitter_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_jitter_pv", "$avp(mos_average_jitter)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_roundtrip_pv">
+		<title><varname>mos_average_roundtrip_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) packet round-trip
+			time in milliseconds
+			present throughout the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_average_roundtrip_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_roundtrip_pv", "$avp(mos_average_roundtrip)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_samples_pv">
+		<title><varname>mos_average_samples_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the number of samples used to determine
+			the other <quote>average</quote> MOS data points.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<example>
+		<title>Set <varname>mos_average_samples_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_samples_pv", "$avp(mos_average_samples)")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section id="rtpengine.p.mos_A_label_pv">
+		<title><varname>mos_A_label_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold a custom label used in rtpengine signalling.
+			If set, all the statistics pseudovariables with the <quote>_A</quote> suffix will
+			be filled in
+			with statistics only from the call legs that match the label given in this
+			variable.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<example>
+		<title>Set <varname>mos_A_label_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_A_label_pv", "$avp(mos_A_label)")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section id="rtpengine.p.mos_min_A_pv">
+		<title><varname>mos_min_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the minimum encountered MOS value for the call.
+			The value typically has a range of 1.0 through 5.0.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_min_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_A_pv", "$avp(mos_min_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_at_A_pv">
+		<title><varname>mos_min_at_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the timestamp of when the minimum MOS value
+			was encountered during the call, such as <quote>0:30</quote> for 30 seconds
+			after the start of the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_min_at_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_at_A_pv", "$avp(mos_min_at_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_packetloss_A_pv">
+		<title><varname>mos_min_packetloss_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of packetloss in percent
+			at the time the minimum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_min_packetloss_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_packetloss_A_pv", "$avp(mos_min_packetloss_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_jitter_A_pv">
+		<title><varname>mos_min_jitter_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of jitter in milliseconds
+			at the time the minimum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_min_jitter_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_jitter_A_pv", "$avp(mos_min_jitter_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_roundtrip_A_pv">
+		<title><varname>mos_min_roundtrip_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the packet round-trip time in milliseconds
+			at the time the minimum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_min_roundtrip_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_roundtrip_A_pv", "$avp(mos_min_roundtrip_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section id="rtpengine.p.mos_max_A_pv">
+		<title><varname>mos_max_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the maximum encountered MOS value for the call.
+			The value typically has a range of 1.0 through 5.0.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_max_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_A_pv", "$avp(mos_max_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_at_A_pv">
+		<title><varname>mos_max_at_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the timestamp of when the maximum MOS value
+			was encountered during the call, such as <quote>0:30</quote> for 30 seconds
+			after the start of the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_max_at_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_at_A_pv", "$avp(mos_max_at_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_packetloss_A_pv">
+		<title><varname>mos_max_packetloss_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of packetloss in percent
+			at the time the maximum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_max_packetloss_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_packetloss_A_pv", "$avp(mos_max_packetloss_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_jitter_A_pv">
+		<title><varname>mos_max_jitter_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of jitter in milliseconds
+			at the time the maximum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_max_jitter_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_jitter_A_pv", "$avp(mos_max_jitter_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_roundtrip_A_pv">
+		<title><varname>mos_max_roundtrip_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the packet round-trip time in milliseconds
+			at the time the maximum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_max_roundtrip_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_roundtrip_A_pv", "$avp(mos_max_roundtrip_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_A_pv">
+		<title><varname>mos_average_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) MOS value for the call.
+			The value typically has a range of 1.0 through 5.0.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_average_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_A_pv", "$avp(mos_average_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_packetloss_A_pv">
+		<title><varname>mos_average_packetloss_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) amount of packetloss
+			in percent
+			present throughout the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_average_packetloss_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_packetloss_A_pv", "$avp(mos_average_packetloss_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_jitter_A_pv">
+		<title><varname>mos_average_jitter_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) amount of jitter
+			in milliseconds
+			present throughout the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_average_jitter_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_jitter_A_pv", "$avp(mos_average_jitter_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_roundtrip_A_pv">
+		<title><varname>mos_average_roundtrip_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) packet round-trip
+			time in milliseconds
+			present throughout the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_average_roundtrip_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_roundtrip_A_pv", "$avp(mos_average_roundtrip_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_samples_A_pv">
+		<title><varname>mos_average_samples_A_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the number of samples used to determine
+			the other <quote>average</quote> MOS data points.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_A_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_average_samples_A_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_samples_A_pv", "$avp(mos_average_samples_A)")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section id="rtpengine.p.mos_B_label_pv">
+		<title><varname>mos_B_label_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold a custom label used in rtpengine signalling.
+			If set, all the statistics pseudovariables with the <quote>_B</quote> suffix will
+			be filled in
+			with statistics only from the call legs that match the label given in this
+			variable.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<example>
+		<title>Set <varname>mos_B_label_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_B_label_pv", "$avp(mos_B_label)")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section id="rtpengine.p.mos_min_B_pv">
+		<title><varname>mos_min_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the minimum encountered MOS value for the call.
+			The value typically has a range of 1.0 through 5.0.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_min_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_B_pv", "$avp(mos_min_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_at_B_pv">
+		<title><varname>mos_min_at_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the timestamp of when the minimum MOS value
+			was encountered during the call, such as <quote>0:30</quote> for 30 seconds
+			after the start of the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_min_at_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_at_B_pv", "$avp(mos_min_at_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_packetloss_B_pv">
+		<title><varname>mos_min_packetloss_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of packetloss in percent
+			at the time the minimum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_min_packetloss_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_packetloss_B_pv", "$avp(mos_min_packetloss_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_jitter_B_pv">
+		<title><varname>mos_min_jitter_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of jitter in milliseconds
+			at the time the minimum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_min_jitter_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_jitter_B_pv", "$avp(mos_min_jitter_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_min_roundtrip_B_pv">
+		<title><varname>mos_min_roundtrip_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the packet round-trip time in milliseconds
+			at the time the minimum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_min_roundtrip_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_min_roundtrip_B_pv", "$avp(mos_min_roundtrip_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section id="rtpengine.p.mos_max_B_pv">
+		<title><varname>mos_max_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the maximum encountered MOS value for the call.
+			The value typically has a range of 1.0 through 5.0.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_max_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_B_pv", "$avp(mos_max_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_at_B_pv">
+		<title><varname>mos_max_at_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the timestamp of when the maximum MOS value
+			was encountered during the call, such as <quote>0:30</quote> for 30 seconds
+			after the start of the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_max_at_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_at_B_pv", "$avp(mos_max_at_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_packetloss_B_pv">
+		<title><varname>mos_max_packetloss_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of packetloss in percent
+			at the time the maximum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_max_packetloss_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_packetloss_B_pv", "$avp(mos_max_packetloss_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_jitter_B_pv">
+		<title><varname>mos_max_jitter_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the amount of jitter in milliseconds
+			at the time the maximum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_max_jitter_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_jitter_B_pv", "$avp(mos_max_jitter_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_max_roundtrip_B_pv">
+		<title><varname>mos_max_roundtrip_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the packet round-trip time in milliseconds
+			at the time the maximum MOS value was encountered;
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_max_roundtrip_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_max_roundtrip_B_pv", "$avp(mos_max_roundtrip_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_B_pv">
+		<title><varname>mos_average_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) MOS value for the call.
+			The value typically has a range of 1.0 through 5.0.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_average_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_B_pv", "$avp(mos_average_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_packetloss_B_pv">
+		<title><varname>mos_average_packetloss_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) amount of packetloss
+			in percent
+			present throughout the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_average_packetloss_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_packetloss_B_pv", "$avp(mos_average_packetloss_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_jitter_B_pv">
+		<title><varname>mos_average_jitter_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) amount of jitter
+			in milliseconds
+			present throughout the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_average_jitter_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_jitter_B_pv", "$avp(mos_average_jitter_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_roundtrip_B_pv">
+		<title><varname>mos_average_roundtrip_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the average (median) packet round-trip
+			time in milliseconds
+			present throughout the call.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_average_roundtrip_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_roundtrip_B_pv", "$avp(mos_average_roundtrip_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.mos_average_samples_B_pv">
+		<title><varname>mos_average_samples_B_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to hold the number of samples used to determine
+			the other <quote>average</quote> MOS data points.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<para>
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
+			command resulted in a deletion of the call (or call branch).
+		</para>
+		<para>
+			Only call legs matching the rtpengine label given in the <quote>mos_B_label_pv</quote>
+			will be used in calculating this statistics value.
+		</para>
+		<example>
+		<title>Set <varname>mos_average_samples_B_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
 
 
 	<section>
@@ -1081,6 +2346,7 @@ onreply_route[2]
 		</title>
 		<para>
 		Tears down the RTPProxy session for the current call.
+		This populates the statistics pseudovariables (such <quote>mos_min_pv</quote> etc).
 		</para>
 		<para>
 		See rtpengine_offer() function description above for the meaning of the
@@ -1094,6 +2360,30 @@ onreply_route[2]
 		<programlisting format="linespecific">
 ...
 rtpengine_delete();
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="rtpengine.f.rtpengine_query">
+		<title>
+		<function moreinfo="none">rtpengine_query([flags])</function>
+		</title>
+		<para>
+		Queries the &rtp; proxy about the current status and statistics of a running
+		call. This populates the statistics pseudovariables (such <quote>mos_min_pv</quote> etc).
+		</para>
+		<para>
+		See rtpengine_offer() function description above for the meaning of the
+		parameters. Note that not all flags make sense for a <quote>query</quote>.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>rtpengine_query</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtpengine_query();
 ...
 </programlisting>
 		</example>
