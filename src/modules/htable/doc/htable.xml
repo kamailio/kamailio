@@ -39,6 +39,11 @@
 		<surname>Sas</surname>
 		<email>osas@voipembedded.com</email>
 	    </editor>
+	    <editor>
+		<firstname>Emmanuel</firstname>
+		<surname>Schmidbauer</surname>
+		<email>eschmidbauer@gmail.com</email>
+	    </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2008-2011</year>
@@ -46,8 +51,8 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="htable_admin.xml"/>
-    
-    
+
+
 </book>
