@@ -46,12 +46,12 @@ int pv_parse_msrp_name(pv_spec_t *sp, str *in)
 
 	switch(in->len)
 	{
-		case 3: 
+		case 3:
 			if(strncmp(in->s, "buf", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
 		break;
-		case 4: 
+		case 4:
 			if(strncmp(in->s, "body", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "code", 4)==0)
@@ -66,6 +66,7 @@ int pv_parse_msrp_name(pv_spec_t *sp, str *in)
 			else if(strncmp(in->s, "conid", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 21;
 			else goto error;
+		break;
 		case 6:
 			if(strncmp(in->s, "method", 6)==0)
 				sp->pvp.pvn.u.isname.name.n = 6;
@@ -79,7 +80,7 @@ int pv_parse_msrp_name(pv_spec_t *sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 12;
 			else goto error;
 		break;
-		case 7: 
+		case 7:
 			if(strncmp(in->s, "bodylen", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 10;
 			else if(strncmp(in->s, "transid", 7)==0)
@@ -96,7 +97,7 @@ int pv_parse_msrp_name(pv_spec_t *sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 20;
 			else goto error;
 		break;
-		case 8: 
+		case 8:
 			if(strncmp(in->s, "firsthop", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 16;
 			else if(strncmp(in->s, "prevhops", 8)==0)
