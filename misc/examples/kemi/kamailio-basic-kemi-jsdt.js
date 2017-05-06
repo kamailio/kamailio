@@ -335,7 +335,7 @@ function ksr_route_sipout()
 
 	KSR.hdr.append_hf("P-Hint: outbound\r\n");
 	ksr_route_relay();
-	KSR.xexit();;
+	KSR.x.exit();
 }
 
 // Manage outgoing branches
