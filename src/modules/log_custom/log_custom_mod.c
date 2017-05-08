@@ -32,6 +32,7 @@
 #include "../../core/forward.h"
 #include "../../core/resolve.h"
 #include "../../core/udp_server.h"
+#include "../../core/kemi.h"
 
 MODULE_VERSION
 
@@ -70,52 +71,6 @@ struct module_exports exports = {
 	mod_destroy,    /* destroy function */
 	child_init      /* per child init function */
 };
-
-
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	str dest = {0};
-	int ret = 0;
-	struct sip_uri next_hop, *u;
-	char *p;
-
-	if(_km_log_engine_type==0 || _km_log_engine_data==0)
-		return 0;
-
-
-	if(strcasecmp(_km_log_engine_type, "udp")!=0)
-		return 0;
-
-	dest.s = _km_log_engine_data;
-	dest.len = strlen(dest.s);
-
-	init_dest_info(&_lc_udp_dst);
-
-	u = &next_hop;
-	u->port_no = 5060;
-	u->host = dest;
-	p = dest.s;
-	/* detect ipv6 */
-	p = memchr(p, ']', dest.len);
-	if (p) p++;
-	else p = dest.s;
-	p = memchr(p, ':', dest.len - (p - dest.s));
-	if (p) {
-		u->host.len = p - dest.s;
-		p++;
-		u->port_no = str2s(p, dest.len - (p - dest.s), NULL);
-	}
-
-	ret = sip_hostport2su(&_lc_udp_dst.to, &u->host, u->port_no,
-			&_lc_udp_dst.proto);
-	if(ret!=0) {
-		LM_ERR("failed to resolve [%.*s]\n", u->host.len,
-				ZSW(u->host.s));
-		return -1;;
-	}
-
-	return 0;
-}
 
 /**
  * init module function
@@ -194,4 +149,80 @@ void _lc_core_log_udp(int lpriority, const char *format, ...)
 	n += vsnprintf(obuf + n, LC_LOG_MSG_MAX_SIZE - n, format, arglist);
 	va_end(arglist);
 	udp_send(&_lc_udp_dst, obuf, n);
+}
+
+int ki_log_udp(sip_msg_t *msg, str *txt)
+{
+	int ret;
+
+	if(_lc_log_udp==0)
+		return 1;
+
+	ret=udp_send(&_lc_udp_dst, txt->s, txt->len);
+
+	if(ret==0) return 1;
+
+	return ret;
+
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_log_custom_exports[] = {
+	{ str_init("log_custom"), str_init("log_udp"),
+		SR_KEMIP_INT, ki_log_udp,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	str dest = {0};
+	int ret = 0;
+	struct sip_uri next_hop, *u;
+	char *p;
+
+	if(_km_log_engine_type==0 || _km_log_engine_data==0)
+		return 0;
+
+
+	if(strcasecmp(_km_log_engine_type, "udp")!=0)
+		return 0;
+
+	dest.s = _km_log_engine_data;
+	dest.len = strlen(dest.s);
+
+	init_dest_info(&_lc_udp_dst);
+
+	u = &next_hop;
+	u->port_no = 5060;
+	u->host = dest;
+	p = dest.s;
+	/* detect ipv6 */
+	p = memchr(p, ']', dest.len);
+	if (p) p++;
+	else p = dest.s;
+	p = memchr(p, ':', dest.len - (p - dest.s));
+	if (p) {
+		u->host.len = p - dest.s;
+		p++;
+		u->port_no = str2s(p, dest.len - (p - dest.s), NULL);
+	}
+
+	ret = sip_hostport2su(&_lc_udp_dst.to, &u->host, u->port_no,
+			&_lc_udp_dst.proto);
+	if(ret!=0) {
+		LM_ERR("failed to resolve [%.*s]\n", u->host.len,
+				ZSW(u->host.s));
+		return -1;
+	}
+
+	sr_kemi_modules_add(sr_kemi_log_custom_exports);
+	return 0;
 }
