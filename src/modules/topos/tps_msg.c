@@ -789,7 +789,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 			return -1;
 		}
 	} else {
-		if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 0)<0) {
+		if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 1)<0) {
 			LM_ERR("failed to reappend b-route\n");
 			return -1;
 		}
