@@ -1029,7 +1029,7 @@ int redis_check_server(redisc_server_t *rsrv)
 	{
 		if (get_ticks() > rsrv->disable.restore_tick)
 		{
-			LM_INFO("REDIS server %.*s re-enabled",rsrv->sname->len,rsrv->sname->s);
+			LM_NOTICE("REDIS server %.*s re-enabled",rsrv->sname->len,rsrv->sname->s);
 			rsrv->disable.disabled = 0;
 			rsrv->disable.consecutive_errors = 0;
 		}
