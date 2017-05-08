@@ -162,26 +162,29 @@ int db_handle_error(ul_db_handle_t * handle, int no) {
 		LM_ERR("can't get db.\n");
 		return -1;
 	}
-	
-	if (sprintf(query, "UPDATE %.*s "
-				   "SET %.*s=%.*s+1 "
-				   "WHERE %.*s=%i "
-				   "AND %.*s=%i",
-				   reg_table.len, reg_table.s,
-				   error_col.len, error_col.s, error_col.len, error_col.s, 
-				   id_col.len, id_col.s, handle->id,
-		   		   num_col.len, num_col.s, db->no) < 0) {
-		LM_ERR("could not print the query\n");
-		return -1;
-	}
-	tmp.s = query;
-	tmp.len = strlen(query);
 
-	if (mdb.write.dbf.raw_query (mdb.write.dbh, &tmp, NULL)) {
-		LM_ERR("error in database update.\n");
-		return -1;
+	if (db->errors < db_error_threshold) {
+		if (sprintf(query, "UPDATE %.*s "
+						"SET %.*s=%.*s+1 "
+						"WHERE %.*s=%i "
+						"AND %.*s=%i",
+						reg_table.len, reg_table.s,
+						error_col.len, error_col.s, error_col.len, error_col.s,
+						id_col.len, id_col.s, handle->id,
+						num_col.len, num_col.s, db->no) < 0) {
+			LM_ERR("could not print the query\n");
+			return -1;
+		}
+
+		tmp.s = query;
+		tmp.len = strlen(query);
+
+		if (mdb.write.dbf.raw_query (mdb.write.dbh, &tmp, NULL)) {
+			LM_ERR("error in database update.\n");
+			return -1;
+		}
 	}
-	
+
 	for(i=0; i<DB_NUM; i++){
 		if (handle->db[i].dbh && handle->db[i].dbf.close){
 			handle->db[i].dbf.close(handle->db[i].dbh);
