@@ -239,6 +239,38 @@ modparam("ndb_redis", "disable_time", 30)
 			</programlisting>
 		</example>
 	</section>
+	<section id="ndb_redis.p.flush_db_on_reconnect">
+		<title><varname>flush_db_on_reconnect</varname> (integer)</title>
+		<para>
+			If this is set to a non zero value, a "FLUSHALL" command is
+			issued after reconnecting to a REDIS server, to clear the 
+			entire database. 
+		</para>
+		<para>
+			When a command to a REDIS server fails, a reconnection
+			to that server is made, so with this parameter each failed
+			command will result in a flush of the database. 
+		</para>
+		<para>
+			This is useful in scenarios when a REDIS server does not respond
+			to commands, but the commands might have been issued, and the 
+			responses lost. If this leaves the data in the db in an uncertain
+			state, a flush might fix any issues that may occur.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>flush_db_on_reconnect</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("ndb_redis", "flush_db_on_reconnect", 1)
+...
+			</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
