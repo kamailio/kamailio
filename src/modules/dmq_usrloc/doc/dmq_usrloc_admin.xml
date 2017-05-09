@@ -180,10 +180,12 @@ modparam("dmq_usrloc", "batch_usleep", 1000)
 	<section id="usrloc_dmq.p.batch_msg_size">
 		<title><varname>batch_msg_size</varname> (int)</title>
 		<para>
-			The parameter controls the size of the messages during a sync
-			This is to make sure the messages are never larger then 65536 (the maximum datagram size)
-
-			Note that batch_msg_contacts will also be checked
+			The parameter controls the size of the messages during a sync. 
+			This is to make sure the messages are never larger then 65536 (the maximum datagram size).
+		</para>
+		<para>
+			Note that batch_msg_contacts will also be checked.
+		</para>
 		<para>
 		<emphasis>
 			Default value is 60000.
@@ -204,9 +206,11 @@ modparam("dmq_usrloc", "batch_msg_size", 500000)
 	<section id="usrloc_dmq.p.batch_msg_contacts">
 		<title><varname>batch_msg_contacts</varname> (int)</title>
 		<para>
-			The parameter controls the amount of contact per message/transaction during a sync
-
-			Note that batch_msg_size will also be checked
+			The parameter controls the amount of contact per message/transaction during a sync.
+		</para>
+		<para>
+			Note that batch_msg_size will also be checked.
+		</para>
 		<para>
 		<emphasis>
 			Default value is 1.
@@ -224,7 +228,6 @@ modparam("dmq_usrloc", "batch_usleep", 500000)    # one batch every 500ms
 ...
 </programlisting>
 	</example>
-	</section>
 	</section>
 
 	<section id="usrloc_dmq.p.usrloc_domain">
@@ -245,6 +248,7 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 ...
 </programlisting>
 		</example>
+	</section>
 	</section>
 
 </chapter>
