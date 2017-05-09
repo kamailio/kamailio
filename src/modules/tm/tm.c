@@ -2044,17 +2044,32 @@ int t_grep_status(struct sip_msg* msg, char* status, char* bar)
 
 /* drop all the existing replies in failure_route to make sure
  * that none of them is picked up again */
-static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar)
+static int t_drop_replies_helper(sip_msg_t* msg, char* mode)
 {
-	if(foo==NULL)
+	if(mode==NULL)
 		t_drop_replies(1);
-	else if(*foo=='n')
+	else if(*mode=='n')
 		t_drop_replies(0);
-	else if(*foo=='l')
+	else if(*mode=='l')
 		t_drop_replies(2);
 	else
 		t_drop_replies(1);
 	return 1;
+}
+
+static int w_t_drop_replies(struct sip_msg* msg, char* mode, char* bar)
+{
+	return t_drop_replies_helper(msg, mode);
+}
+
+static int ki_t_drop_replies(sip_msg_t* msg, str* mode)
+{
+	return t_drop_replies_helper(msg, (mode)?mode->s:NULL);
+}
+
+static int ki_t_drop_replies_all(sip_msg_t* msg)
+{
+	return t_drop_replies_helper(msg, NULL);
 }
 
 /* save the message lumps after t_newtran() but before t_relay() */
@@ -2693,6 +2708,16 @@ static sr_kemi_t tm_kemi_exports[] = {
 	{ str_init("tm"), str_init("t_next_contact_flow"),
 		SR_KEMIP_INT, ki_t_next_contact_flow,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_drop_replies_all"),
+		SR_KEMIP_INT, ki_t_drop_replies_all,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_drop_replies"),
+		SR_KEMIP_INT, ki_t_drop_replies,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
