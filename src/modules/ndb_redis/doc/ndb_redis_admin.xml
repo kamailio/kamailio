@@ -221,7 +221,7 @@ modparam("ndb_redis", "allowed_timeouts", 3)
 	<section id="ndb_redis.p.disable_time">
 		<title><varname>disable_time</varname> (integer)</title>
 		<para>
-			If allowed_timeouts is set to a non negative value this determines the 
+			If allowed_timeouts is set to a non negative value this determines the
 			number of seconds the REDIS server will be disabled
 		</para>
 		<para>
@@ -239,21 +239,21 @@ modparam("ndb_redis", "disable_time", 30)
 			</programlisting>
 		</example>
 	</section>
-	<section id="ndb_redis.p.flush_db_on_reconnect">
-		<title><varname>flush_db_on_reconnect</varname> (integer)</title>
+	<section id="ndb_redis.p.flush_on_reconnect">
+		<title><varname>flush_on_reconnect</varname> (integer)</title>
 		<para>
 			If this is set to a non zero value, a "FLUSHALL" command is
-			issued after reconnecting to a REDIS server, to clear the 
-			entire database. 
+			issued after reconnecting to a REDIS server, to clear the
+			entire database.
 		</para>
 		<para>
 			When a command to a REDIS server fails, a reconnection
 			to that server is made, so with this parameter each failed
-			command will result in a flush of the database. 
+			command will result in a flush of the database.
 		</para>
 		<para>
 			This is useful in scenarios when a REDIS server does not respond
-			to commands, but the commands might have been issued, and the 
+			to commands, but the commands might have been issued, and the
 			responses lost. If this leaves the data in the db in an uncertain
 			state, a flush might fix any issues that may occur.
 		</para>
@@ -263,10 +263,10 @@ modparam("ndb_redis", "disable_time", 30)
 		</emphasis>
 		</para>
 		<example>
-			<title>Set <varname>flush_db_on_reconnect</varname> parameter</title>
+			<title>Set <varname>flush_on_reconnect</varname> parameter</title>
 			<programlisting format="linespecific">
 ...
-modparam("ndb_redis", "flush_db_on_reconnect", 1)
+modparam("ndb_redis", "flush_on_reconnect", 1)
 ...
 			</programlisting>
 		</example>
