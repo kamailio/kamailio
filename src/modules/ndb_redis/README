@@ -48,6 +48,7 @@ Carsten Bock
               3.5. cluster (integer)
               3.6. allowed_timeouts (integer)
               3.7. disable_time (integer)
+              3.8. flush_on_reconnect (integer)
 
         4. Functions
 
@@ -65,9 +66,10 @@ Carsten Bock
    1.5. Set cluster parameter
    1.6. Set allowed_timeots parameter
    1.7. Set disable_time parameter
-   1.8. redis_cmd usage
-   1.9. redis_execute usage
-   1.10. redis_free usage
+   1.8. Set flush_on_reconnect parameter
+   1.9. redis_cmd usage
+   1.10. redis_execute usage
+   1.11. redis_free usage
 
 Chapter 1. Admin Guide
 
@@ -88,6 +90,7 @@ Chapter 1. Admin Guide
         3.5. cluster (integer)
         3.6. allowed_timeouts (integer)
         3.7. disable_time (integer)
+        3.8. flush_on_reconnect (integer)
 
    4. Functions
 
@@ -130,6 +133,7 @@ Chapter 1. Admin Guide
    3.5. cluster (integer)
    3.6. allowed_timeouts (integer)
    3.7. disable_time (integer)
+   3.8. flush_on_reconnect (integer)
 
 3.1. server (str)
 
@@ -259,6 +263,27 @@ modparam("ndb_redis", "allowed_timeouts", 0)
 modparam("ndb_redis", "disable_time", 30)
 ...
 
+3.8. flush_on_reconnect (integer)
+
+   If this is set to a non zero value, a "FLUSHALL" command is issued
+   after reconnecting to a REDIS server, to clear the entire database.
+
+   When a command to a REDIS server fails, a reconnection to that server
+   is made, so with this parameter each failed command will result in a
+   flush of the database.
+
+   This is useful in scenarios when a REDIS server does not respond to
+   commands, but the commands might have been issued, and the responses
+   lost. If this leaves the data in the db in an uncertain state, a flush
+   might fix any issues that may occur.
+
+   Default value is “0” (disabled).
+
+   Example 1.8. Set flush_on_reconnect parameter
+...
+modparam("ndb_redis", "flush_on_reconnect", 1)
+...
+
 4. Functions
 
    4.1. redis_cmd(srvname, command, ..., replyid)
@@ -289,7 +314,7 @@ modparam("ndb_redis", "disable_time", 30)
      * value[n] - returns value of the nth element. value - returns null
        for an array. You need to get each element by index.
 
-   Example 1.8. redis_cmd usage
+   Example 1.9. redis_cmd usage
 ...
 if(redis_cmd("srvN", "INCR cnt", "r")) {
     # success - the incremented value is in $redis(r=>value)
@@ -358,7 +383,7 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
    If cluster parameter is set to 1, this function will log an error and
    do nothing.
 
-   Example 1.9. redis_execute usage
+   Example 1.10. redis_execute usage
 ...
 After several redis command calls:
         redis_pipe_cmd("srvA", "SET foo bar", "r1");
@@ -406,7 +431,7 @@ d commands. The call is not necessary
    function. When ndb_redis module closes, all pending replies are freed
    automatically.
 
-   Example 1.10. redis_free usage
+   Example 1.11. redis_free usage
 ...
 After a redis command call:
         redis_cmd("srvN", "INCR cnt", "r");
