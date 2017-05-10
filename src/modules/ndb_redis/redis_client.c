@@ -51,6 +51,7 @@ extern int redis_cmd_timeout_param;
 extern int redis_cluster_param;
 extern int redis_disable_time_param;
 extern int redis_allowed_timeouts_param;
+extern int redis_flush_db_on_reconnect_param;
 
 /* backwards compatibility with hiredis < 0.12 */
 #if (HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
@@ -374,7 +375,9 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 		goto err2;
 	if ((redis_cluster_param == 0) && redisCommandNR(rsrv->ctxRedis, "SELECT %i", db))
 		goto err2;
-
+	if (redis_flush_db_on_reconnect_param)
+		if (redisCommandNR(rsrv->ctxRedis, "FLUSHALL"))
+			goto err2;
 	return 0;
 
 err2:
