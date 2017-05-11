@@ -256,7 +256,8 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 	if(get_route_type()==REQUEST_ROUTE) {
 		if(msg->msg_flags & uac_flag)
 		{
-			LM_ERR("Called uac_replace multiple times on the message\n");
+			LM_ERR("called uac_replace_%s() multiple times on the message\n",
+					(hdr==msg->from)?"from":"to");
 			return -1;
 		}
 	}
