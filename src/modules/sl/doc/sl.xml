@@ -4,7 +4,7 @@
 
 <book id="sl" xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
-    	<title>The SL Module - Statless request handling</title>
+		<title>The SL Module - Stateless request handling</title>
 	<authorgroup>
 	    <author>
 		<firstname>Bogdan</firstname>
