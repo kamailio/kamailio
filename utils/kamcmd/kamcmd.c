@@ -76,9 +76,9 @@
 #endif
 
 #define IOVEC_CNT 20
-#define MAX_LINE_SIZE 16384 /* for non readline mode */
-#define MAX_REPLY_SIZE 65536
-#define MAX_BODY_SIZE  65536
+#define MAX_LINE_SIZE 16*1024 /* for non readline mode */
+#define MAX_REPLY_SIZE 128*1024
+#define MAX_BODY_SIZE  128*1024
 #define MAX_BINRPC_ARGS 256
 
 
