@@ -1637,38 +1637,66 @@ static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar)
 /**
  *
  */
-static int w_sdp_content_sloppy(sip_msg_t* msg, char* foo, char *bar)
+static int ki_sdp_content(sip_msg_t* msg)
+{
+	if(parse_sdp(msg)==0 && msg->body!=NULL)
+		return 1;
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_sdp_content_flags(sip_msg_t *msg, int flags)
 {
 	str body;
 	int mime;
 
+	if(flags==0) {
+		return ki_sdp_content(msg);
+	}
+
 	body.s = get_body(msg);
-	if (body.s == NULL) return -1;
+	if(body.s == NULL)
+		return -1;
 	body.len = msg->len - (int)(body.s - msg->buf);
-	if (body.len == 0) return -1;
+	if(body.len == 0)
+		return -1;
 
 	mime = parse_content_type_hdr(msg);
-	if (mime < 0) return -1;  /* error */
-	if (mime == 0) return 1;  /* default is application/sdp */
+	if(mime < 0)
+		return -1; /* error */
+	if(mime == 0)
+		return 1; /* default is application/sdp */
 
-	switch (((unsigned int)mime) >> 16) {
-	case TYPE_APPLICATION:
-		if ((mime & 0x00ff) == SUBTYPE_SDP) return 1; else return -1;
-	case TYPE_MULTIPART:
-		if ((mime & 0x00ff) == SUBTYPE_MIXED) {
-			if (_strnistr(body.s, "application/sdp", body.len) == NULL) {
-				return -1;
-			} else {
+	switch(((unsigned int)mime) >> 16) {
+		case TYPE_APPLICATION:
+			if((mime & 0x00ff) == SUBTYPE_SDP)
 				return 1;
+			else
+				return -1;
+		case TYPE_MULTIPART:
+			if((mime & 0x00ff) == SUBTYPE_MIXED) {
+				if(_strnistr(body.s, "application/sdp", body.len) == NULL) {
+					return -1;
+				} else {
+					return 1;
+				}
+			} else {
+				return -1;
 			}
-		} else {
+		default:
 			return -1;
-		}
-	default:
-		return -1;
 	}
 }
 
+/**
+ *
+ */
+static int w_sdp_content_sloppy(sip_msg_t *msg, char *foo, char *bar)
+{
+	return ki_sdp_content_flags(msg, 1);
+}
 /**
  *
  */
@@ -1935,6 +1963,16 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 	{ str_init("sdpops"), str_init("remove_media"),
 		SR_KEMIP_INT, sdp_remove_media,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_content"),
+		SR_KEMIP_INT, ki_sdp_content,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_content_flags"),
+		SR_KEMIP_INT, ki_sdp_content_flags,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
