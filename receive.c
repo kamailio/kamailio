@@ -333,10 +333,6 @@ end:
 error_rpl:
 	/* execute post reply-script callbacks */
 	exec_post_script_cb(msg, ONREPLY_CB_TYPE);
-	reset_avps();
-#ifdef WITH_XAVP
-	xavp_reset_list();
-#endif
 	goto error02;
 #endif /* NO_ONREPLY_ROUTE_ERROR */
 error_req:
@@ -344,15 +340,14 @@ error_req:
 	/* execute post request-script callbacks */
 	exec_post_script_cb(msg, REQUEST_CB_TYPE);
 error03:
-	/* free possible loaded avps -bogdan */
-	reset_avps();
-#ifdef WITH_XAVP
-	xavp_reset_list();
-#endif
 error02:
 	free_sip_msg(msg);
 	pkg_free(msg);
 error00:
+	reset_avps();
+#ifdef WITH_XAVP
+	xavp_reset_list();
+#endif
 	STATS_RX_DROPS;
 	/* reset log prefix */
 	log_prefix_set(NULL);
