@@ -42,6 +42,7 @@
 #include "../../core/kemi.h"
 
 #include "mtree.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -112,6 +113,7 @@ static int  mod_init(void);
 static void mod_destroy(void);
 static int  child_init(int rank);
 static int mtree_init_rpc(void);
+static int bind_mtree(mtree_api_t* api);
 
 static int mt_match(sip_msg_t *msg, str *tname, str *tomatch,
 		int mval);
@@ -122,6 +124,7 @@ static int mt_load_db_trees();
 static cmd_export_t cmds[]={
 	{"mt_match", (cmd_function)w_mt_match, 3, fixup_mt_match,
 		0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
+	{"bind_mtree", (cmd_function)bind_mtree, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -1190,6 +1193,22 @@ static sr_kemi_t sr_kemi_mtree_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+
+
+/**
+ * load mtree module API
+ */
+static int bind_mtree(mtree_api_t* api)
+{
+	if (!api) {
+		LM_ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->mt_match = mt_match;
+
+	return 0;
+}
+
 
 /**
  *
