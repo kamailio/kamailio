@@ -32,10 +32,12 @@
 	<para>
 	For the purpose of facilitating least cost routing of requests,
 	each gateway of an LCR instance is associated with one or more
-	&lt;prefix, from uri pattern, request uri pattern, priority, weight&gt;
-	tuples.  A gateway matches a request if user part of the Request-URI
-	matches a "prefix", the caller's URI matches a "From-URI" pattern and
-	the callee's URI matches a "Request-URI" pattern in a tuple that is
+	&lt;prefix, from uri pattern, from uri userpart, request uri
+    pattern, priority, weight&gt;
+	tuples.  A gateway matches a request if user part of Request-URI
+	matches a "prefix", caller URI matches a "From-URI" pattern,
+    caller URI userpart matches a mtree with given tree "value", and
+	callee URI matches a "Request-URI" pattern in a tuple that is
 	associated with the gateway.
 	</para>
 	<para>
@@ -552,6 +554,26 @@ modparam("lcr", "from_uri_column", "caller_uri")
 	</section>
 
 	<section>
+		<title><varname>mt_tvalue_column</varname> (string)</title>
+		<para>
+		Name of the column holding mtree tvalue.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>mt_tvalue</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>from_uri_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "mt_tvalue_column", "tree_value")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>request_uri_column</varname> (string)</title>
 		<para>
 		Name of the column holding the regular expression to match
@@ -835,6 +857,51 @@ modparam("lcr", "tag_avp", "$avp(lcr_tag)")
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "flags_avp", "$avp(i:712)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>mt_pv_values</varname> (AVP string)</title>
+		<para>
+		If defined and mt_value is given for a rule, load_gws() matches
+        caller URI userpart to a mtree given as mtree parameter.
+		</para>
+		<para>
+		If defined, must have the same value as mtree module pv_values
+        paramater.
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>tag_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "mt_pv_values", "$avp(mt_values)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>mtree</varname> (string)</title>
+		<para>
+		Name of mtree to which load_gws() matches caller URI userpart.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "lcr".
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>mtree</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "mtree", "caller_tree")
 ...
 </programlisting>
 		</example>
