@@ -96,8 +96,9 @@ int lookup_to_dset(struct sip_msg* _m, udomain_t* _d, str* _uri) {
  * add xavp with details of the record (ruid, ...)
  */
 int xavp_rcd_helper(ucontact_t* ptr) {
-	sr_xavp_t *xavp=NULL;
+	sr_xavp_t **xavp=NULL;
 	sr_xavp_t *list=NULL;
+	sr_xavp_t *new_xavp=NULL;
 	str xname_ruid = {"ruid", 4};
 	str xname_received = { "received", 8};
 	str xname_contact = { "contact", 7};
@@ -105,34 +106,34 @@ int xavp_rcd_helper(ucontact_t* ptr) {
 
 	if(ptr==NULL) return -1;
 
-	if(reg_xavp_rcd.s!=NULL)
-	{
-		list = xavp_get(&reg_xavp_rcd, NULL);
-		xavp = list;
+	if(reg_xavp_rcd.s==NULL || reg_xavp_rcd.len<=0) return 0;
+
+	list = xavp_get(&reg_xavp_rcd, NULL);
+	xavp = list ? &list->val.v.xavp : &new_xavp;
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = ptr->ruid;
+	xavp_add_value(&xname_ruid, &xval, xavp);
+
+	if(ptr->received.len > 0) {
 		memset(&xval, 0, sizeof(sr_xval_t));
 		xval.type = SR_XTYPE_STR;
-		xval.v.s = ptr->ruid;
-		xavp_add_value(&xname_ruid, &xval, &xavp);
+		xval.v.s = ptr->received;
+		xavp_add_value(&xname_received, &xval, xavp);
+	}
 
-		if(ptr->received.len > 0)
-		{
-			memset(&xval, 0, sizeof(sr_xval_t));
-			xval.type = SR_XTYPE_STR;
-			xval.v.s = ptr->received;
-			xavp_add_value(&xname_received, &xval, &xavp);
-		}
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = ptr->c;
+	xavp_add_value(&xname_contact, &xval, xavp);
 
-		memset(&xval, 0, sizeof(sr_xval_t));
-		xval.type = SR_XTYPE_STR;
-		xval.v.s = ptr->c;
-		xavp_add_value(&xname_contact, &xval, &xavp);
-
-		if(list==NULL)
-		{
-			/* no reg_xavp_rcd xavp in root list - add it */
-			xval.type = SR_XTYPE_XAVP;
-			xval.v.xavp = xavp;
-			xavp_add_value(&reg_xavp_rcd, &xval, NULL);
+	if(list==NULL) {
+		/* no reg_xavp_rcd xavp in root list - add it */
+		xval.type = SR_XTYPE_XAVP;
+		xval.v.xavp = *xavp;
+		if(xavp_add_value(&reg_xavp_rcd, &xval, NULL)==NULL) {
+			LM_ERR("cannot add ruid xavp to root list\n");
+			xavp_destroy_list(xavp);
 		}
 	}
 	return 0;
