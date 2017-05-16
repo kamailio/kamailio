@@ -35,9 +35,9 @@
 	&lt;prefix, from uri pattern, from uri userpart, request uri
     pattern, priority, weight&gt;
 	tuples.  A gateway matches a request if user part of Request-URI
-	matches a "prefix", caller URI matches a "From-URI" pattern,
-    caller URI userpart matches a mtree with given tree "value", and
-	callee URI matches a "Request-URI" pattern in a tuple that is
+	matches "prefix", caller URI matches "from_uri" pattern,
+    caller URI userpart matches mtree with "mt_value", and
+	callee URI matches "request_uri" pattern in a tuple that is
 	associated with the gateway.
 	</para>
 	<para>
@@ -134,7 +134,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-	<title>&siprouter; modules</title>
+	<title>&kamailio; Modules</title>
 	<para>
 		The following modules must be loaded before this module:
 		<itemizedlist>
@@ -142,6 +142,11 @@
 		<para>
 			<emphasis>A database module like mysql, postgres or 
 			dbtext</emphasis>.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>mtree module if mt_pv_values parameter is set</emphasis>.
 		</para>
 		</listitem>
 		</itemizedlist>
