@@ -362,11 +362,7 @@ end:
 #ifdef STATS
 	skipped = 0;
 #endif
-	/* free possible loaded avps -bogdan */
-	reset_avps();
-#ifdef WITH_XAVP
-	xavp_reset_list();
-#endif
+	ksr_msg_env_reset();
 	LM_DBG("cleaning up\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
@@ -392,13 +388,21 @@ error02:
 	free_sip_msg(msg);
 	pkg_free(msg);
 error00:
-	reset_avps();
-#ifdef WITH_XAVP
-	xavp_reset_list();
-#endif
+	ksr_msg_env_reset();
 	STATS_RX_DROPS;
 	/* reset log prefix */
 	log_prefix_set(NULL);
 	return -1;
 }
 
+/**
+ * clean up msg environment, such as avp and xavp lists
+ */
+void ksr_msg_env_reset(void)
+{
+	reset_avps();
+#ifdef WITH_XAVP
+	xavp_reset_list();
+#endif
+
+}
