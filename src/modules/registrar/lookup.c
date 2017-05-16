@@ -105,6 +105,7 @@ int xavp_rcd_helper(ucontact_t* ptr)
 	str xname_ruid = {"ruid", 4};
 	str xname_received = { "received", 8};
 	str xname_contact = { "contact", 7};
+	str xname_expires = {"expires", 7};
 	sr_xval_t xval;
 
 	if(ptr==NULL) return -1;
@@ -129,6 +130,11 @@ int xavp_rcd_helper(ucontact_t* ptr)
 	xval.type = SR_XTYPE_STR;
 	xval.v.s = ptr->c;
 	xavp_add_value(&xname_contact, &xval, xavp);
+
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = (int) (ptr->expires - time(0));
+	xavp_add_value(&xname_expires, &xval, xavp);
 
 	if(list==NULL) {
 		/* no reg_xavp_rcd xavp in root list - add it */
