@@ -20,7 +20,7 @@ Juha Heinanen
         1. Overview
         2. Dependencies
 
-              2.1. SIP Router modules
+              2.1. Kamailio Modules
               2.2. External libraries or applications
 
         3. Parameters
@@ -165,7 +165,7 @@ Chapter 1. Admin Guide
    1. Overview
    2. Dependencies
 
-        2.1. SIP Router modules
+        2.1. Kamailio Modules
         2.2. External libraries or applications
 
    3. Parameters
@@ -255,10 +255,9 @@ Chapter 1. Admin Guide
    gateway of an LCR instance is associated with one or more <prefix, from
    uri pattern, from uri userpart, request uri pattern, priority, weight>
    tuples. A gateway matches a request if user part of Request-URI matches
-   a "prefix", caller URI matches a "From-URI" pattern, caller URI
-   userpart matches a mtree with given tree "value", and callee URI
-   matches a "Request-URI" pattern in a tuple that is associated with the
-   gateway.
+   "prefix", caller URI matches "from_uri" pattern, caller URI userpart
+   matches mtree with "mt_value", and callee URI matches "request_uri"
+   pattern in a tuple that is associated with the gateway.
 
    When the function load_gws() is called, matching gateways (that are not
    currently designated as defunct) are ordered for forwarding purposes as
@@ -317,13 +316,14 @@ Chapter 1. Admin Guide
 
 2. Dependencies
 
-   2.1. SIP Router modules
+   2.1. Kamailio Modules
    2.2. External libraries or applications
 
-2.1. SIP Router modules
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * A database module like mysql, postgres or dbtext.
+     * mtree module if mt_pv_values parameter is set.
 
 2.2. External libraries or applications
 
