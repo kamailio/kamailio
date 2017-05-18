@@ -95,7 +95,7 @@ Ramona-Elena Modroiu
    1.10. Set auth_username_avp parameter
    1.11. Set auth_password_avp parameter
    1.12. Set reg_db_url parameter
-   1.13. Set reg_timer_inteval parameter
+   1.13. Set reg_timer_interval parameter
    1.14. Set reg_retry_interval parameter
    1.15. Set reg_random_delay parameter
    1.16. Set reg_db_table parameter
@@ -434,7 +434,7 @@ modparam("uac", "reg_db_url",
 
    The default value is 90 seconds.
 
-   Example 1.13. Set reg_timer_inteval parameter
+   Example 1.13. Set reg_timer_interval parameter
 ...
 modparam("uac", "reg_timer_interval", 60)
 ...
