@@ -1411,7 +1411,7 @@ modparam("tm", "dns_reuse_rcv_socket", 1)
 		<title><varname>xavp_contact</varname> (string)</title>
 		<para>
 		The name of XAVP storing the attributes per contact. This must be the same as
-		the usrloc parameter <varname>xavp_contacts</varname>.
+		the usrloc parameter <varname>xavp_contact</varname>.
 		</para>
 		<para>
 		<emphasis>
