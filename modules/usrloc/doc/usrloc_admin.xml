@@ -922,7 +922,7 @@ modparam("usrloc", "timer_procs", 4)
 		<title>Set <varname>xavp_contact</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc", "xavp_contact", "ulattrs")
+modparam("tm|usrloc", "xavp_contact", "ulattrs")
 ...
 </programlisting>
 		</example>
