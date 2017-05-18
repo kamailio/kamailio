@@ -401,7 +401,7 @@ modparam("uac", "reg_db_url",
 			</para>
 			
 			<example>
-				<title>Set <varname>reg_timer_inteval</varname> parameter</title>
+				<title>Set <varname>reg_timer_interval</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
 modparam("uac", "reg_timer_interval", 60)

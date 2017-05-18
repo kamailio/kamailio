@@ -173,7 +173,7 @@ modparam("topos", "dialog_expire", 3600)
 		</example>
 	</section>
 	<section id="topos.p.clean_interval">
-		<title><varname>clean_inteval</varname> (int)</title>
+		<title><varname>clean_interval</varname> (int)</title>
 		<para>
 			Interval in seconds to run the clean up of stored
 			records.
