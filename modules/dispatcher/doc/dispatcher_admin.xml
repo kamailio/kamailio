@@ -77,7 +77,7 @@
 	<section id="dispatcher.p.list_file">
 		<title><varname>list_file</varname> (string)</title>
 		<para>
-		Path to the file with destination sets.
+		Path to the file with destination sets (destination groups).
 		</para>
 		<para>
 		<emphasis>
@@ -98,7 +98,7 @@ modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
 	<section id="dispatcher.p.db_url">
  		<title><varname>db_url</varname> (string)</title>
  		<para>
-		If you want to load the sets of gateways from the database you must set
+		If you want to load the list of gateways from the database you must set
 		this parameter.
  		</para>
  		<para>
@@ -119,7 +119,7 @@ modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database")
 	<section id="dispatcher.p.table_name">
 		<title><varname>table_name</varname> (string)</title>
 		<para>
-		If you want to load the sets of gateways from the database you must set
+		If you want to load the list of gateways from the database you must set
 		this parameter as the database name.
 		</para>
 		<para>
@@ -140,7 +140,8 @@ modparam("dispatcher", "table_name", "my_dispatcher")
 	<section id="dispatcher.p.setid_col">
 		<title><varname>setid_col</varname> (string)</title>
 		<para>
-			The column's name in the database storing the gateway's group id.
+			The column's name in the database storing the gateway's set (group)
+			id.
 		</para>
 		<para>
 		<emphasis>
@@ -1517,8 +1518,8 @@ onreply_route {
 		<title>Destination List File</title>
 		<para>
 		Each destination point must be on one line. First token is the set
-		id (an integer value), followed by destination address
-		(s string value in SIP URI format).
+		id (an integer value, also referenced by group id), followed by
+		destination address (string value in full SIP URI format).
 		</para>
 		<para>
 		Optionally, these fields can be followed by:
