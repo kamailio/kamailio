@@ -62,9 +62,31 @@
 	</section>
 
 	<section>
-	<title>Parameters</title>
+		<title>Parameters</title>
 		<para>
-		NONE
+		<section id="db_sqlite.p.db_set_readonly">
+		<title><varname>db_set_readonly</varname> (string)</title>
+
+		This will set the db connection to "SQLITE_OPEN_READONLY", useful if another program is writing to the DB.
+		The value is the full path to the sqlite file used for example in any db_url or sqlops/sqlcon
+
+		This parameter may be set multiple times to set many DB connections to readonly in the same configuration file.
+		</para>
+		<para>
+		<emphasis>
+			By default all the db connection are using "SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE"
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_set_readonly</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_sqlite","db_set_readonly","/var/mydb.sqlite")
+modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using the sqlops module
+...
+		</programlisting>
+		</example>
+		</section>
 		</para>
 	</section>
 

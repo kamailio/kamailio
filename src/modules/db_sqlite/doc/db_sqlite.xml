@@ -32,6 +32,22 @@
 	    <year>2011</year>
 	    <holder>Timo Teräs</holder>
 	</copyright>
+	<authorgroup>
+	    <editor>
+		<firstname>Julien</firstname>
+		<surname>Chavanton</surname>
+		<affiliation><orgname>flowroute.com</orgname></affiliation>
+		<email>jchavanton@gmail.com</email>
+		<address>
+		<otheraddr>
+		<ulink></ulink>
+		</otheraddr>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2017</year>
+	</copyright>
     </bookinfo>
     <toc></toc>
 

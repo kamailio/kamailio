@@ -29,6 +29,7 @@
 #include "../../lib/srdb1/db_res.h"
 #include "../../lib/srdb1/db_query.h"
 #include "dbase.h"
+#include "db_sqlite.h"
 
 static time_t sqlite_to_timet(double rT)
 {
@@ -60,8 +61,17 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 	con->hdr.ref = 1;
 	con->hdr.id = (struct db_id*) id; /* set here - freed on error */
 
-	rc = sqlite3_open_v2(id->database, &con->conn,
-		SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
+	int flags = 0;
+	db_param_list_t *db_param = db_param_list_search(id->database);
+	if (db_param && db_param->readonly) {
+		// The database is opened in read-only mode. If the database does not already exist, an error is returned.
+		flags |= SQLITE_OPEN_READONLY;
+		LM_DBG("[%s] opened with [SQLITE_OPEN_READONLY]\n", id->database);
+	} else {
+		flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+		LM_DBG("[%s] opened with [SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE]\n", id->database);
+	}
+	rc = sqlite3_open_v2(id->database, &con->conn, flags, NULL);
 	if (rc != SQLITE_OK) {
 		pkg_free(con);
 		LM_ERR("failed to open sqlite database '%s'\n", id->database);
