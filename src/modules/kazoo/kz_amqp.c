@@ -42,10 +42,6 @@
 #include "../../core/mod_fix.h"
 #include "../../core/lvalue.h"
 #include "../tm/tm_load.h"
-#include "../../core/route.h"
-#include "../../core/receive.h"
-#include "../../core/action.h"
-#include "../../core/script_cb.h"
 
 
 #include "kz_amqp.h"
@@ -2284,14 +2280,11 @@ int kz_amqp_consumer_fire_event(char *eventkey)
 	fmsg = faked_msg_get_next();
 	rtb = get_route_type();
 	set_route_type(REQUEST_ROUTE);
-	if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)!=0 ) {
-		init_run_actions_ctx(&ctx);
-		run_top_route(event_rt.rlist[rt], fmsg, 0);
-		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
-		ksr_msg_env_reset();
-	}
+	init_run_actions_ctx(&ctx);
+	run_top_route(event_rt.rlist[rt], fmsg, 0);
 	set_route_type(rtb);
 	return 0;
+
 }
 
 void kz_amqp_consumer_event(char *payload, char* event_key, char* event_subkey)
@@ -2415,7 +2408,6 @@ void kz_amqp_cb_ok(kz_amqp_cmd_ptr cmd)
 	}
 	struct action *a = main_rt.rlist[n];
 	tmb.t_continue(cmd->t_hash, cmd->t_label, a);
-	ksr_msg_env_reset();
 }
 
 void kz_amqp_cb_error(kz_amqp_cmd_ptr cmd)
@@ -2427,7 +2419,6 @@ void kz_amqp_cb_error(kz_amqp_cmd_ptr cmd)
 	}
 	struct action *a = main_rt.rlist[n];
 	tmb.t_continue(cmd->t_hash, cmd->t_label, a);
-	ksr_msg_env_reset();
 }
 
 int kz_send_worker_error_event(kz_amqp_cmd_ptr cmd)
