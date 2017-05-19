@@ -123,7 +123,6 @@ struct json_object * kz_json_get_field_object(str* json, str* field)
   json_keys keys;
   json_key key;
   char* dup;
-  char* token;
   char f1[250], f2[250];//, f3[25];
   int i, parts;
 
