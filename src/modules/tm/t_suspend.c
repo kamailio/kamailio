@@ -119,8 +119,7 @@ int t_suspend(struct sip_msg *msg,
 		/* this is a reply suspend find which branch */
 
 		if (t_check( msg  , &branch )==-1){
-			LOG(L_ERR, "ERROR: t_suspend_reply: " \
-				"failed find UAC branch\n");
+			LM_ERR("failed find UAC branch\n");
 			return -1;
 		}
 		LM_DBG("found a a match with branch id [%d] - "
@@ -130,7 +129,7 @@ int t_suspend(struct sip_msg *msg,
 		t->uac[branch].reply = sip_msg_cloner( msg, &sip_msg_len );
 
 		if (! t->uac[branch].reply ) {
-			LOG(L_ERR, "can't alloc' clone memory\n");
+			LM_ERR("can't alloc' clone memory\n");
 			return -1;
 		}
 		t->uac[branch].end_reply = ((char*)t->uac[branch].reply) + sip_msg_len;
@@ -339,7 +338,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 
 		if (exec_pre_script_cb(t->uac[branch].reply, cb_type)>0) {
 			if (run_top_route(route, t->uac[branch].reply, 0)<0){
-				LOG(L_ERR, "ERROR: t_continue_reply: Error in run_top_route\n");
+				LM_ERR("Error in run_top_route\n");
 			}
 			exec_post_script_cb(t->uac[branch].reply, cb_type);
 		}
@@ -432,7 +431,7 @@ done:
 		tm_ctx_set_branch_index(T_BR_UNDEFINED);
 		/* unref the transaction */
 		t_unref(t->uac[branch].reply);
-		LOG(L_DBG,"DEBUG: t_continue_reply: Freeing earlier cloned reply\n");
+		LM_DBG("Freeing earlier cloned reply\n");
 
 		/* free lumps that were added during reply processing */
 		del_nonshm_lump( &(t->uac[branch].reply->add_rm) );
@@ -481,8 +480,7 @@ kill_trans:
 	if ((kill_transaction_unsafe(t,
 		tm_error ? tm_error : E_UNSPEC)) <=0
 	) {
-		LOG(L_ERR, "ERROR: t_continue: "
-			"reply generation failed\n");
+		LM_ERR("reply generation failed\n");
 		/* The transaction must be explicitely released,
 		 * no more timer is running */
 		UNLOCK_ASYNC_CONTINUE(t);
@@ -518,16 +516,14 @@ int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 
 	t = get_t();
 	if (!t || t == T_UNDEFINED) {
-		LOG(L_ERR, "ERROR: t_revoke_suspend: " \
-			"no active transaction\n");
+		LM_ERR("no active transaction\n");
 		return -1;
 	}
 	/* Only to double-check the IDs */
 	if ((t->hash_index != hash_index)
 		|| (t->label != label)
 	) {
-		LOG(L_ERR, "ERROR: t_revoke_suspend: " \
-			"transaction id mismatch\n");
+		LM_ERR("transaction id mismatch\n");
 		return -1;
 	}
 
@@ -563,7 +559,7 @@ int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 	}else{
 		branch = t->async_backup.backup_branch;
 
-		LOG(L_DBG,"DEBUG: t_cancel_suspend_reply: This is a cancel suspend for a response\n");
+		LM_DBG("This is a cancel suspend for a response\n");
 
 		t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
 		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
