@@ -29,6 +29,7 @@
 #include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db.h"
 #include "dbase.h"
+#include "db_sqlite.h"
 
 MODULE_VERSION
 
@@ -51,6 +52,82 @@ static int sqlite_bind_api(db_func_t *dbb)
 
 	return 0;
 }
+
+static db_param_list_t *db_param_list = NULL;
+
+static void db_param_list_add(db_param_list_t *e) {
+	if (!db_param_list) {
+		db_param_list = e;
+		LM_DBG("adding readonly database [%s]\n", e->database.s);
+		clist_init(db_param_list, next, prev);
+	} else {
+		LM_DBG("adding append constraint [%s]\n", e->database.s);
+		clist_append(db_param_list, e, next, prev);
+	}
+}
+
+static void db_param_list_destroy(db_param_list_t *e) {
+	if (!e)
+		return;
+	if (e->database.s)
+		pkg_free(e->database.s);
+	pkg_free(e);
+	e = NULL;
+}
+
+static db_param_list_t *db_param_list_new(const char *db_filename) {
+	db_param_list_t *e = pkg_malloc(sizeof(db_param_list_t));
+	if (!e)
+		return NULL;
+	memset(e, 0, sizeof(db_param_list_t));
+
+	e->database.len = strlen(db_filename);
+	e->database.s = pkg_malloc(e->database.len+1);
+	if (!e->database.s) goto error;
+	strcpy(e->database.s, db_filename);
+
+	db_param_list_add(e);
+	return e;
+error:
+	db_param_list_destroy(e);
+	return NULL;
+}
+
+db_param_list_t *db_param_list_search(char *db_filename) {
+	db_param_list_t *e;
+	if (!db_param_list) {
+		return NULL;
+	}
+	if (strcmp(db_filename, db_param_list->database.s) == 0) {
+		return db_param_list;
+	}
+	clist_foreach(db_param_list, e, next){
+		if (strcmp(db_filename, e->database.s) == 0) {
+			return e;
+		}
+	}
+	return NULL;
+}
+
+int db_set_readonly(modparam_t type, void *val) {
+	if(val==NULL)
+		return -1;
+	db_param_list_t *e = db_param_list_search((char*)val);
+	if (!e)
+		e = db_param_list_new((char *)val);
+	if (!e) {
+		LM_ERR("can't create a new db_param for [%s]\n", (char*) val);
+		return -1;
+	}
+	e->readonly = 1;
+	db_param_list_search((char *)val);
+	return 1;
+}
+
+static param_export_t params[] = {
+	{"db_set_readonly",  PARAM_STRING|USE_FUNC_PARAM, (void*)db_set_readonly},
+	{0,0,0}
+};
 
 static cmd_export_t cmds[] = {
 	{"db_bind_api", (cmd_function)sqlite_bind_api, 0, 0, 0, 0},
@@ -86,7 +163,7 @@ struct module_exports exports = {
 	"db_sqlite",
 	DEFAULT_DLFLAGS,	/* dlopen flags */
 	cmds,			/* module commands */
-	0,			/* module parameters */
+	params,			/* module parameters */
 	0,			/* exported statistics */
 	0,			/* exported MI functions */
 	0,			/* exported pseudo-variables */
