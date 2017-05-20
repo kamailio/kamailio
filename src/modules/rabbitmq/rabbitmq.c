@@ -350,7 +350,7 @@ reconnect:
 
 	// alloc reply_to queue
 	if (direct_reply_to == 1) {
-		reply_to = amqp_queue_declare(conn, 1, amqp_cstring_bytes("amq.rabbitmq.reply-to"), 0, 0, 0, 1, amqp_empty_table);
+		reply_to = amqp_queue_declare(conn, 1, amqp_cstring_bytes("amq.rabbitmq.reply-to"), 0, 0, 1, 1, amqp_empty_table);
 	} else {
 		uuid_generate_random(uuid);
 		uuid_unparse(uuid, uuid_buffer);
@@ -358,7 +358,7 @@ reconnect:
 		strcpy(reply_to_buffer, "kamailio-");
 		strcat(reply_to_buffer, uuid_buffer);
 
-		reply_to = amqp_queue_declare(conn, 1, amqp_cstring_bytes(reply_to_buffer), 0, 0, 0, 1, amqp_empty_table);
+		reply_to = amqp_queue_declare(conn, 1, amqp_cstring_bytes(reply_to_buffer), 0, 0, 1, 1, amqp_empty_table);
 	}
 
 	if (log_on_amqp_error(amqp_get_rpc_reply(conn), "amqp_queue_declare()") != AMQP_RESPONSE_NORMAL) {
