@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -108,7 +108,7 @@ int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl)
 	if (iphdr_incl) {
 		t=1;
 		if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &t, sizeof(t))<0){
-			ERR("raw_socket: setsockopt(IP_HDRINCL) failed: %s [%d]\n",
+			LM_ERR("setsockopt(IP_HDRINCL) failed: %s [%d]\n",
 					strerror(errno), errno);
 			goto error;
 		}
@@ -118,13 +118,13 @@ int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl)
 		t=1;
 #ifdef IP_PKTINFO
 		if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &t, sizeof(t))<0){
-			ERR("raw_socket: setsockopt(IP_PKTINFO) failed: %s [%d]\n",
+			LM_ERR("setsockopt(IP_PKTINFO) failed: %s [%d]\n",
 					strerror(errno), errno);
 			goto error;
 		}
 #elif defined(IP_RECVDSTADDR)
 		if (setsockopt(sock, IPPROTO_IP, IP_RECVDSTADDR, &t, sizeof(t))<0){
-			ERR("raw_socket: setsockop(IP_RECVDSTADDR) failed: %s [%d]\n",
+			LM_ERR("setsockop(IP_RECVDSTADDR) failed: %s [%d]\n",
 					strerror(errno), errno);
 			goto error;
 		}
@@ -135,7 +135,7 @@ int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl)
 #if defined (IP_MTU_DISCOVER) && defined (IP_PMTUDISC_DONT)
 	t=IP_PMTUDISC_DONT;
 	if(setsockopt(sock, IPPROTO_IP, IP_MTU_DISCOVER, &t, sizeof(t)) ==-1){
-		ERR("raw_socket: setsockopt(IP_MTU_DISCOVER): %s\n",
+		LM_ERR("setsockopt(IP_MTU_DISCOVER): %s\n",
 				strerror(errno));
 		goto error;
 	}
@@ -155,13 +155,13 @@ int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl)
 		}
 		if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, ifname, ifname_len)
 						<0){
-				ERR("raw_socket: could not bind to %.*s: %s [%d]\n",
+				LM_ERR("could not bind to %.*s: %s [%d]\n",
 							iface->len, ZSW(iface->s), strerror(errno), errno);
 				goto error;
 		}
 #else /* !SO_BINDTODEVICE */
 		/* SO_BINDTODEVICE is linux specific => cannot bind to a device */
-		ERR("raw_socket: bind to device supported only on linux\n");
+		LM_ERR("bind to device supported only on linux\n");
 		goto error;
 #endif /* SO_BINDTODEVICE */
 	}
@@ -169,7 +169,7 @@ int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl)
 	if (ip){
 		init_su(&su, ip, 0);
 		if (bind(sock, &su.s, sockaddru_len(su))==-1){
-			ERR("raw_socket: bind(%s) failed: %s [%d]\n",
+			LM_ERR("bind(%s) failed: %s [%d]\n",
 				ip_addr2a(ip), strerror(errno), errno);
 			goto error;
 		}
@@ -311,16 +311,16 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 
 	n=recvpkt4(rsock, *buf, len, from, to);
 	if (unlikely(n<0)) goto error;
-	
+
 	end=*buf+n;
 	if (unlikely(n<((sizeof(struct ip) * raw_ipip ? 2 : 1)+sizeof(struct udphdr)))) {
 		n=-3;
 		goto error;
 	}
-	
-	if(raw_ipip) 
+
+	if(raw_ipip)
         	*buf = *buf + sizeof(struct ip);
-	
+
 	/* FIXME: if initial buffer is aligned, one could skip the memcpy
 	   and directly cast ip and udphdr pointer to the memory */
 	memcpy(&iph, *buf, sizeof(struct ip));
@@ -337,7 +337,7 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 			n=-3;
 			goto error;
 		}else{
-			ERR("udp length too small: %d/%d\n",
+			LM_ERR("udp length too small: %d/%d\n",
 					(int)udp_len, (int)(end-udph_start));
 			n=-3;
 			goto error;
@@ -366,7 +366,7 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 			goto error;
 		}
 	}
-	
+
 error:
 	return n;
 }
@@ -389,13 +389,13 @@ static inline unsigned short udpv4_vhdr_sum(	struct udphdr* uh,
 										unsigned short length)
 {
 	unsigned sum;
-	
+
 	/* pseudo header */
 	sum=(src->s_addr>>16)+(src->s_addr&0xffff)+
 		(dst->s_addr>>16)+(dst->s_addr&0xffff)+
 		htons(IPPROTO_UDP)+(uh->uh_ulen);
 	/* udp header */
-	sum+=(uh->uh_dport)+(uh->uh_sport)+(uh->uh_ulen) + 0 /*chksum*/; 
+	sum+=(uh->uh_dport)+(uh->uh_sport)+(uh->uh_ulen) + 0 /*chksum*/;
 	/* fold it */
 	sum=(sum>>16)+(sum&0xffff);
 	sum+=(sum>>16);
@@ -429,7 +429,7 @@ inline static unsigned short udpv4_chksum(struct udphdr* u,
 		}
 		if (length&0x1)
 			sum+=((*data)<<8);
-	
+
 	/* fold it */
 	sum=(sum>>16)+(sum&0xffff);
 	sum+=(sum>>16);
@@ -448,7 +448,7 @@ inline static unsigned short udpv4_chksum(struct udphdr* u,
  *                 be set to 0.
  * @return 0 on success, < 0 on error.
  */
-inline static int mk_udp_hdr(struct udphdr* u, struct sockaddr_in* from, 
+inline static int mk_udp_hdr(struct udphdr* u, struct sockaddr_in* from,
 				struct sockaddr_in* to, unsigned char* buf, int len,
 					int do_chk)
 {
@@ -688,7 +688,5 @@ end:
 #endif /* RAW_IPHDR_INC_AUTO_FRAG */
 	return ret;
 }
-
-
 
 #endif /* USE_RAW_SOCKS */
