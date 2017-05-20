@@ -1,5 +1,5 @@
 /*
- * fast pseudo random generation 
+ * fast pseudo random generation
  *
  * Copyright (C) 2007 iptelorg GmbH
  *
@@ -16,10 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
- *History:
- *--------
- *  2007-06-15  wrapper around isaac (see 
- *              http://www.burtleburtle.net/bob/rand/isaacafa.html) (andrei)
+ * wrapper around isaac
+ *  http://www.burtleburtle.net/bob/rand/isaacafa.html
  */
 
 #include "fastrand.h"
@@ -36,7 +34,7 @@ static randctx is_ctx;
 void fastrand_seed(unsigned int seed)
 {
 	int i;
-	
+
 	srandom(seed);
 	for (i=0; i<RANDSIZ; i++)
 		is_ctx.randrsl[i]=random();

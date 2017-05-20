@@ -1,5 +1,5 @@
 /*
- * fast pseudo random generation 
+ * fast pseudo random generation
  *
  * Copyright (C) 2007 iptelorg GmbH
  *
@@ -14,9 +14,9 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- *  2007-06-15  wrapper around isaac (see 
- *              http://www.burtleburtle.net/bob/rand/isaacafa.html) (andrei)
+ */
+/* wrapper around isaac
+ *    http://www.burtleburtle.net/bob/rand/isaacafa.html
  */
 
 #ifndef _fastrand_h
