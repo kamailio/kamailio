@@ -63,7 +63,6 @@
 
 	<section>
 		<title>Parameters</title>
-		<para>
 		<section id="db_sqlite.p.db_set_readonly">
 		<title><varname>db_set_readonly</varname> (string)</title>
 
@@ -87,7 +86,6 @@ modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using
 		</programlisting>
 		</example>
 		</section>
-		</para>
 	</section>
 
 	<section>

@@ -50,6 +50,8 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 {
 	struct sqlite_connection *con;
 	int rc;
+	int flags = 0;
+	db_param_list_t *db_param;
 
 	con = pkg_malloc(sizeof(*con));
 	if (!con) {
@@ -61,8 +63,7 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 	con->hdr.ref = 1;
 	con->hdr.id = (struct db_id*) id; /* set here - freed on error */
 
-	int flags = 0;
-	db_param_list_t *db_param = db_param_list_search(id->database);
+	db_param = db_param_list_search(id->database);
 	if (db_param && db_param->readonly) {
 		// The database is opened in read-only mode. If the database does not already exist, an error is returned.
 		flags |= SQLITE_OPEN_READONLY;
