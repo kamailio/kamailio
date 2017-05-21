@@ -62,10 +62,10 @@
 	</section>
 
 	<section>
-		<title>Parameters</title>
-		<section id="db_sqlite.p.db_set_readonly">
+	<title>Parameters</title>
+	<section id="db_sqlite.p.db_set_readonly">
 		<title><varname>db_set_readonly</varname> (string)</title>
-
+		<para>
 		This will set the db connection to "SQLITE_OPEN_READONLY", useful if another program is writing to the DB.
 		The value is the full path to the sqlite file used for example in any db_url or sqlops/sqlcon
 
@@ -85,7 +85,7 @@ modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using
 ...
 		</programlisting>
 		</example>
-		</section>
+	</section>
 	</section>
 
 	<section>
