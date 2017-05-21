@@ -65,8 +65,12 @@ static int child_init(int rank);
 static void destroy(void);
 
 static int fixup_ht_key(void** param, int param_no);
-static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo);
-static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
+static int w_ht_rm_name_re(struct sip_msg* msg, char*);
+static int w_ht_rm_value_re(struct sip_msg* msg, char*);
+static int ht_rm_re(struct sip_msg* msg, char*, int n);
+static int w_ht_rm_value_re_pv(struct sip_msg* msg, char*, char*);
+static int w_ht_rm_name_re_pv(struct sip_msg* msg, char*, char*);
+static int ht_rm_re_pv(struct sip_msg* msg, char*, char*, int n);
 static int w_ht_slot_lock(struct sip_msg* msg, char* key, char* foo);
 static int w_ht_slot_unlock(struct sip_msg* msg, char* key, char* foo);
 static int ht_reset(struct sip_msg* msg, char* htname, char* foo);
@@ -103,9 +107,13 @@ static pv_export_t mod_pvs[] = {
 static cmd_export_t cmds[]={
 	{"sht_print",       (cmd_function)ht_print,        0, 0, 0,
 		ANY_ROUTE},
-	{"sht_rm_name_re",  (cmd_function)ht_rm_name_re,   1, fixup_ht_key, 0,
+	{"sht_rm_name_re",  (cmd_function)w_ht_rm_name_re,   1, fixup_ht_key, 0,
 		ANY_ROUTE},
-	{"sht_rm_value_re", (cmd_function)ht_rm_value_re,  1, fixup_ht_key, 0,
+	{"sht_rm_name_re",  (cmd_function)w_ht_rm_name_re_pv,   2, fixup_spve_spve, 0,
+		ANY_ROUTE},
+	{"sht_rm_value_re", (cmd_function)w_ht_rm_value_re,  1, fixup_ht_key, 0,
+		ANY_ROUTE},
+	{"sht_rm_value_re",  (cmd_function)w_ht_rm_value_re_pv,   2, fixup_spve_spve, 0,
 		ANY_ROUTE},
 	{"sht_lock",        (cmd_function)w_ht_slot_lock,    1, fixup_ht_key, 0,
 		ANY_ROUTE},
@@ -342,7 +350,7 @@ static int fixup_ht_key(void** param, int param_no)
 	return 0;
 }
 
-static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo)
+static int ht_rm_re(struct sip_msg* msg, char* key, int n)
 {
 	ht_pv_t *hpv;
 	str sre;
@@ -355,56 +363,83 @@ static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo)
 	if(hpv->ht==NULL)
 	{
 		hpv->ht = ht_get_table(&hpv->htname);
-		if(hpv->ht==NULL)
+		if(hpv->ht==NULL) {
+			LM_ERR("cannot get hash table\n");
 			return 1;
+		}
 	}
 	if(pv_printf_s(msg, hpv->pve, &sre)!=0)
 	{
 		LM_ERR("cannot get $sht expression\n");
 		return -1;
 	}
+
 	if (hpv->ht->dmqreplicate>0) {
 		isval.s = sre;
-		if (ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &hpv->htname, NULL, AVP_VAL_STR, &isval, 0)!=0) {
+		if (ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &hpv->htname, NULL, AVP_VAL_STR, &isval, n)!=0) {
 			LM_ERR("dmq relication failed\n");
 		}
 	}
-	if(ht_rm_cell_re(&sre, hpv->ht, 0)<0)
+	LM_INFO("clearing records in htable [%.*s] matching [%.*s]\n", hpv->htname.len, hpv->htname.s, sre.len, sre.s);
+	if(ht_rm_cell_re(&sre, hpv->ht, n)<0)
 		return -1;
 	return 1;
 }
 
-static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo)
+static int w_ht_rm_name_re(struct sip_msg* msg, char* key)
 {
-	ht_pv_t *hpv;
-	str sre;
-	pv_spec_t *sp;
-	sp = (pv_spec_t*)key;
+	return ht_rm_re(msg, key, 0);
+}
+
+static int w_ht_rm_value_re(struct sip_msg* msg, char* key)
+{
+	return ht_rm_re(msg, key, 1);
+}
+
+static int ht_rm_re_pv(struct sip_msg* msg, char* htname, char* key, int n)
+{
+	ht_t *ht;
+	str hname, hkey;
 	int_str isval;
 
-	hpv = (ht_pv_t*)sp->pvp.pvn.u.dname;
-
-	if(hpv->ht==NULL)
-	{
-		hpv->ht = ht_get_table(&hpv->htname);
-		if(hpv->ht==NULL)
-			return 1;
-	}
-	if(pv_printf_s(msg, hpv->pve, &sre)!=0)
-	{
-		LM_ERR("cannot get $sht expression\n");
+	if (fixup_get_svalue(msg, (gparam_t*)htname, &hname) < 0 || hname.len <= 0) {
+		LM_ERR("cannot get hash table name\n");
 		return -1;
 	}
 
-	if (hpv->ht->dmqreplicate>0) {
-		isval.s = sre;
-		if (ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &hpv->htname, NULL, AVP_VAL_STR, &isval, 1)!=0) {
+	if (fixup_get_svalue(msg, (gparam_t*)key, &hkey) < 0 || hkey.len <= 0) {
+		LM_ERR("cannot get key\n");
+		return -1;
+	}
+
+	ht = ht_get_table(&hname);
+	if(ht==NULL) {
+		LM_ERR("cannot get hash table [%.*s]\n", hname.len, hname.s);
+		return -1;
+	}
+
+	if (ht->dmqreplicate > 0) {
+		isval.s = hkey;
+		if (ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &hname, NULL, AVP_VAL_STR, &isval, n)!=0) {
 			LM_ERR("dmq relication failed\n");
 		}
 	}
-	if(ht_rm_cell_re(&sre, hpv->ht, 1)<0)
+	LM_INFO("clearing records in htable [%.*s] matching [%.*s]\n", hname.len, hname.s, hkey.len, hkey.s);
+	if (ht_rm_cell_re(&hkey, ht, n) < 0) {
 		return -1;
+	}
+
 	return 1;
+}
+
+static int w_ht_rm_name_re_pv(struct sip_msg* msg, char* htname, char* key)
+{
+	return ht_rm_re_pv(msg, htname, key, 0);
+}
+
+static int w_ht_rm_value_re_pv(struct sip_msg* msg, char* htname, char* key)
+{
+	return ht_rm_re_pv(msg, htname, key, 1);
 }
 
 static int ht_reset_by_name(str *hname)
@@ -430,6 +465,7 @@ static int ht_reset(struct sip_msg* msg, char* htname, char* foo)
 		LM_ERR("cannot get hash table name\n");
 		return -1;
 	}
+	LM_INFO("resetting htable [%.*s]\n", sname.len, sname.s);
 	if(ht_reset_by_name(&sname)<0) {
 		return -1;
 	}

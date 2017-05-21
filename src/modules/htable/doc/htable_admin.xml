@@ -730,15 +730,14 @@ sht_print();
 	</section>
 	<section id="htable.f.sht_rm_name_re">
 		<title>
-		<function moreinfo="none">sht_rm_name_re(htable=>regexp)</function>
+		<function moreinfo="none">sht_rm_name_re(htable=>regexp[, regexp])</function>
 		</title>
 		<para>
 			Delete all entries in the htable that match the name against
-			regular expression.
+			regular expression. Variables are supported if passing the htable and regexp as individual arguments.
 		</para>
 		<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			ONREPLY_ROUTE, BRANCH_ROUTE.
+			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>sht_rm_name_re</function> usage</title>
@@ -746,26 +745,33 @@ sht_print();
 ...
 sht_rm_name_re("ha=>.*");
 ...
+$var(htable) = "ha"
+$var(match) = "my_key"
+sht_rm_name_re("$var(htable)", ".*$var(match)"); # to use variable names
+...
 </programlisting>
 		</example>
 	</section>
 	<section id="htable.f.sht_rm_value_re">
 		<title>
-		<function moreinfo="none">sht_rm_value_re(htable=>regexp)</function>
+		<function moreinfo="none">sht_rm_value_re(htable=>regexp[, regexp])</function>
 		</title>
 		<para>
 			Delete all entries in the htable that match the value against
-			regular expression.
+			regular expression. Variables are supported if passing the htable and regexp as individual arguments.
 		</para>
 		<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			ONREPLY_ROUTE, BRANCH_ROUTE.
+			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>sht_rm_value_re</function> usage</title>
 		<programlisting format="linespecific">
 ...
 sht_rm_value_re("ha=>.*");
+...
+$var(htable) = "ha"
+$var(match) = "my_key"
+sht_rm_value_re("$var(htable)", ".*$var(match)"); # to use variable names
 ...
 </programlisting>
 		</example>
