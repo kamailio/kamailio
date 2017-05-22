@@ -233,10 +233,6 @@ __dialog_cbtest(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 			LM_ERR("dialog callback type 'DLGCB_RESPONSE_WITHIN' received, from=%.*s\n",
 					dlg->from_uri.len, dlg->from_uri.s);
 			break;
-		case DLGCB_MI_CONTEXT:
-			LM_ERR("dialog callback type 'DLGCB_MI_CONTEXT' received, from=%.*s\n",
-					dlg->from_uri.len, dlg->from_uri.s);
-			break;
 		case DLGCB_DESTROY:
 			LM_ERR("dialog callback type 'DLGCB_DESTROY' received, from=%.*s\n",
 					dlg->from_uri.len, dlg->from_uri.s);
@@ -571,7 +567,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 				DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_CONFIRMED
 				| DLGCB_REQ_WITHIN | DLGCB_TERMINATED | DLGCB_EXPIRED
 				| DLGCB_EARLY | DLGCB_RESPONSE_FWDED | DLGCB_RESPONSE_WITHIN
-				| DLGCB_MI_CONTEXT | DLGCB_DESTROY,
+				| DLGCB_DESTROY,
 				__dialog_cbtest, NULL, NULL) != 0) {
 		LM_ERR("cannot register callback for all dialog types\n");
 		free_dlginfo_cell(dlginfo);
