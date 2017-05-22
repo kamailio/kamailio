@@ -54,7 +54,7 @@ Phil Lavin
               5.10. pubruri_caller_avp (int)
               5.11. pubruri_callee_avp (int)
               5.12. pubruri_caller_dlg_var (str)
-              5.13. pubruri_callee_dlg_var (int)
+              5.13. pubruri_callee_dlg_var (str)
               5.14. callee_trying (int)
 
         6. Functions
@@ -102,7 +102,7 @@ Chapter 1. Admin Guide
         5.10. pubruri_caller_avp (int)
         5.11. pubruri_callee_avp (int)
         5.12. pubruri_caller_dlg_var (str)
-        5.13. pubruri_callee_dlg_var (int)
+        5.13. pubruri_callee_dlg_var (str)
         5.14. callee_trying (int)
 
    6. Functions
@@ -165,7 +165,9 @@ Chapter 1. Admin Guide
    example:
 <?xml version="1.0" encoding="UTF-8"?>
 <dialog-info xmlns="urn:ietf:params:xml:ns:dialog-info"
-             version="1" state="full">
+             version="1"
+             state="full"
+             entity="sip:alice@example.com">
     <dialog id="as7d900as8"
             call-id="a84b4c76e66710"
             local-tag="1928301774"
@@ -284,7 +286,7 @@ Chapter 1. Admin Guide
    5.10. pubruri_caller_avp (int)
    5.11. pubruri_callee_avp (int)
    5.12. pubruri_caller_dlg_var (str)
-   5.13. pubruri_callee_dlg_var (int)
+   5.13. pubruri_callee_dlg_var (str)
    5.14. callee_trying (int)
 
 5.1. include_callid (int)
@@ -456,7 +458,7 @@ modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
 modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 ...
 
-5.13. pubruri_callee_dlg_var (int)
+5.13. pubruri_callee_dlg_var (str)
 
    Must be set to the name of dialog variable where to store the URI for
    callee, used to send the notifications. This is needed to restored the
