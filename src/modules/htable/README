@@ -108,7 +108,7 @@ Ovidiu Sas
    1.19. sht_rm_name_re usage
    1.20. sht_rm_value_re usage
    1.21. sht_rm_name usage
-   1.22. sht_rm_value_re usage
+   1.22. sht_rm_value usage
    1.23. sht_reset usage
    1.24. sht_lock usage
    1.25. sht_unlock usage
@@ -703,6 +703,7 @@ sht_rm_value_re("ha=>.*");
 
    The op parameter can be:
      * re - match the val parameter as regular expression.
+     * sw - match the val parameter as 'starts with'.
 
    All parameters can be static strings or contain variables.
 
@@ -720,12 +721,13 @@ sht_rm_name("ha", "re", ".*");
 
    The op parameter can be:
      * re - match the val parameter as regular expression.
+     * sw - match the val parameter as 'starts with'.
 
    All parameters can be static strings or contain variables.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. sht_rm_value_re usage
+   Example 1.22. sht_rm_value usage
 ...
 sht_rm_value("ha", "re", ".*");
 ...
