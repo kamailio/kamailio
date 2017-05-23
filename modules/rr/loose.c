@@ -520,7 +520,7 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token)
 		return -1;
 	} else if (!ip_addr_cmp(&rcv->src_ip, &_m->rcv.src_ip)
 			|| rcv->src_port != _m->rcv.src_port) {
-		LM_DBG("\"incoming\" request found. Using flow-token for"
+		LM_DBG("\"incoming\" request found. Using flow-token for "
 			"routing\n");
 
 		/* First, force the local socket */
