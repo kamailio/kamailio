@@ -788,6 +788,12 @@ sht_rm_value_re("ha=>.*");
 			expression.
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>sw</emphasis> - match the val parameter as 'starts
+			with'.
+		</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 			All parameters can be static strings or contain variables.
@@ -822,6 +828,12 @@ sht_rm_name("ha", "re", ".*");
 			expression.
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>sw</emphasis> - match the val parameter as 'starts
+			with'.
+		</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 			All parameters can be static strings or contain variables.
@@ -830,7 +842,7 @@ sht_rm_name("ha", "re", ".*");
 			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>sht_rm_value_re</function> usage</title>
+		<title><function>sht_rm_value</function> usage</title>
 		<programlisting format="linespecific">
 ...
 sht_rm_value("ha", "re", ".*");

@@ -437,6 +437,10 @@ static int ht_rm_items(sip_msg_t* msg, str* hname, str* op, str *val,
 					return -1;
 				}
 				return 1;
+			} else if(strncmp(op->s, "sw", 2)==0) {
+				if(ht_rm_cell_op(val, ht, mkey, HT_RM_OP_SW)<0) {
+					return -1;
+				}
 			}
 			LM_WARN("unsupported match operator: %.*s\n", op->len, op->s);
 			break;
