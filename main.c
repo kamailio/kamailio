@@ -709,7 +709,7 @@ void handle_sigs(void)
 				LOG(memlog, "Memory status (pkg):\n");
 				pkg_status();
 			}
-			if (cfg_get(core, core_cfg, mem_summary) & 2) {
+			if (cfg_get(core, core_cfg, mem_summary) & 4) {
 				LOG(memlog, "Memory still-in-use summary (pkg):\n");
 				pkg_sums();
 			}
@@ -717,11 +717,11 @@ void handle_sigs(void)
 #endif
 #ifdef SHM_MEM
 		if (memlog <= cfg_get(core, core_cfg, debug)){
-			if (cfg_get(core, core_cfg, mem_summary) & 1) {
+			if (cfg_get(core, core_cfg, mem_summary) & 2) {
 				LOG(memlog, "Memory status (shm):\n");
 				shm_status();
 			}
-			if (cfg_get(core, core_cfg, mem_summary) & 2) {
+			if (cfg_get(core, core_cfg, mem_summary) & 8) {
 				LOG(memlog, "Memory still-in-use summary (shm):\n");
 				shm_sums();
 			}
@@ -821,7 +821,7 @@ void sig_usr(int signo)
 							LOG(memlog, "Memory status (pkg):\n");
 							pkg_status();
 						}
-						if (cfg_get(core, core_cfg, mem_summary) & 2) {
+						if (cfg_get(core, core_cfg, mem_summary) & 4) {
 							LOG(memlog, "Memory still-in-use summary (pkg):"
 									"\n");
 							pkg_sums();
@@ -840,7 +840,7 @@ void sig_usr(int signo)
 							LOG(memlog, "Memory status (pkg):\n");
 							pkg_status();
 						}
-						if (cfg_get(core, core_cfg, mem_summary) & 2) {
+						if (cfg_get(core, core_cfg, mem_summary) & 4) {
 							LOG(memlog, "Memory still-in-use summary (pkg):\n");
 							pkg_sums();
 						}
