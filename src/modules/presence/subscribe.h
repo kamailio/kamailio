@@ -95,7 +95,10 @@ void msg_active_watchers_clean(unsigned int ticks,void *param);
 void msg_watchers_clean(unsigned int ticks,void *param);
 
 int handle_subscribe0(struct sip_msg*);
-int w_handle_subscribe(struct sip_msg*, char *watcher_uri);
+int w_handle_subscribe0(struct sip_msg*, char*, char*);
+int w_handle_subscribe(struct sip_msg*, char *watcher_uri, char *p2);
+int w_handle_subscribe1(struct sip_msg*, char *watcher_uri);
+int handle_subscribe_uri(struct sip_msg*, str*);
 int handle_subscribe(struct sip_msg*, str watcher_user, str watcher_domain);
 
 void timer_db_update(unsigned int ticks,void *param);

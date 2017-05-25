@@ -43,6 +43,7 @@
 #include "../../core/script_cb.h"
 #include "../../core/parser/digest/digest.h"
 #include "../../core/parser/parse_from.h"
+#include "../../core/kemi.h"
 #include "../dialog/dlg_load.h"
 #include "../dialog/dlg_hash.h"
 
@@ -1031,8 +1032,7 @@ __dialog_loaded(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 //  -2 - Locked
 //  -3 - No provider
 //  -5 - Internal error (message parsing, communication, ...)
-static int
-CallControl(struct sip_msg *msg, char *str1, char *str2)
+static int ki_call_control(sip_msg_t *msg)
 {
     int result;
 
@@ -1054,6 +1054,11 @@ CallControl(struct sip_msg *msg, char *str1, char *str2)
     return result;
 }
 
+static int
+CallControl(struct sip_msg *msg, char *str1, char *str2)
+{
+    return ki_call_control(msg);
+}
 
 // Module management: initialization/destroy/function-parameter-fixing/...
 //
@@ -1206,4 +1211,26 @@ postprocess_request(struct sip_msg *msg, unsigned int flags, void *_param)
     return 1;
 }
 
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_call_control_exports[] = {
+	{ str_init("call_control"), str_init("call_control"),
+		SR_KEMIP_INT, ki_call_control,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_call_control_exports);
+	return 0;
+}

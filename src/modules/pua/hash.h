@@ -178,6 +178,7 @@ static inline int get_event_flag(str* event)
     return -1;
 }
 
-int update_contact(struct sip_msg* msg, char* str1, char* str2);
+int w_pua_update_contact(struct sip_msg* msg, char* str1, char* str2);
+int ki_pua_update_contact(struct sip_msg* msg);
 
 #endif

@@ -1,6 +1,6 @@
-/* 
+/*
  * regexp and regexp substitutions implementations
- * 
+ *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -51,7 +51,7 @@ void subst_expr_free(struct subst_expr* se)
 void replace_lst_free(struct replace_lst* l)
 {
 	struct replace_lst* t;
-	
+
 	while (l){
 		t=l;
 		l=l->next;
@@ -60,7 +60,7 @@ void replace_lst_free(struct replace_lst* l)
 	}
 }
 
-int parse_repl(struct replace_with * rw, char ** begin, 
+int parse_repl(struct replace_with * rw, char ** begin,
 				char * end, int *max_token_nb, int with_sep)
 {
 
@@ -138,12 +138,13 @@ int parse_repl(struct replace_with * rw, char ** begin,
 					rw[token_nb].type=REPLACE_NMATCH;
 					rw[token_nb].u.nmatch=(*p)-'0';
 								/* 0 is the whole matched str*/
-					if (max_pmatch<rw[token_nb].u.nmatch) 
+					if (max_pmatch<rw[token_nb].u.nmatch)
 						max_pmatch=rw[token_nb].u.nmatch;
 					break;
 				default: /* just print current char */
 					if (*p!=c){
-						WARN("subst_parser:\\%c unknown escape in %s\n", *p, *begin);
+						LM_WARN("\\%c unknown escape in %s\n",
+								*p, *begin);
 					}
 					rw[token_nb].size=2;
 					rw[token_nb].offset=(p-1)-repl;
@@ -155,7 +156,7 @@ int parse_repl(struct replace_with * rw, char ** begin,
 			token_nb++;
 
 			if (token_nb>=MAX_REPLACE_WITH){
-				ERR("subst_parser: too many escapes in the replace part %s\n", *begin);
+				LM_ERR("too many escapes in the replace part %s\n", *begin);
 				goto error;
 			}
 		}else if (*p=='\\') {
@@ -166,7 +167,7 @@ int parse_repl(struct replace_with * rw, char ** begin,
 			p0 = pv_parse_spec(&s, &rw[token_nb].u.spec);
 			if(p0==NULL)
 			{
-				ERR("subst_parser: bad specifier in replace part %s\n", *begin);
+				LM_ERR("bad specifier in replace part %s\n", *begin);
 				goto error;
 			}
 			rw[token_nb].size=p0-p;
@@ -179,7 +180,7 @@ int parse_repl(struct replace_with * rw, char ** begin,
 		}
 	}
 	if(with_sep){
-		ERR("subst_parser: missing separator: %s\n", *begin);
+		LM_ERR("missing separator: %s\n", *begin);
 		goto error;
 	}
 
@@ -212,7 +213,7 @@ struct subst_expr* subst_parser(str* subst)
 	regex_t* regex;
 	int max_pmatch;
 	int r;
-	
+
 	/* init */
 	se=0;
 	regex=0;
@@ -222,7 +223,7 @@ struct subst_expr* subst_parser(str* subst)
 		LM_ERR("expression is too short: %.*s\n", subst->len, subst->s);
 		goto error;
 	}
-	
+
 	p=subst->s;
 	c=*p;
 	if (c=='\\'){
@@ -250,7 +251,7 @@ found_re:
 		goto error;
 	repl_end = p;
 	p++;
-	
+
 	/* parse flags */
 	for(;p<end; p++){
 		switch(*p){
@@ -312,7 +313,7 @@ found_re:
 	for (r=0; r<rw_no; r++) se->replace[r]=rw[r];
 	LM_DBG("ok, se is %p\n", se);
 	return se;
-	
+
 error:
 	if (se) { subst_expr_free(se); regex=0; }
 	if (regex) { regfree (regex); pkg_free(regex); }
@@ -344,7 +345,7 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 	p=se->replacement.s;
 	end=p+se->replacement.len;
 	dest=rbuf;
-	
+
 	for (r=0; r<se->n_escapes; r++){
 		/* copy the unescaped parts */
 		size=se->replacement.s+se->replace[r].offset-p;
@@ -357,7 +358,7 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 						/* do the replace */
 						size=pmatch[se->replace[r].u.nmatch].rm_eo-
 								pmatch[se->replace[r].u.nmatch].rm_so;
-						RBUF_APPEND(dest, 
+						RBUF_APPEND(dest,
 									match+pmatch[se->replace[r].u.nmatch].rm_so,
 									size);
 				};
@@ -416,8 +417,7 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 	int nmatch;
 	int eflags;
 	int cnt;
-	
-	
+
 	/* init */
 	head=0;
 	cnt=0;
@@ -453,7 +453,7 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 			(*crt)->offset=pmatch[0].rm_so+(int)(p-input);
 			(*crt)->size=pmatch[0].rm_eo-pmatch[0].rm_so;
 			LM_DBG("matched (%d, %d): [%.*s]\n",
-					(*crt)->offset, (*crt)->size, 
+					(*crt)->offset, (*crt)->size,
 					(*crt)->size, input+(*crt)->offset);
 			/* create subst. string */
 			/* construct the string from replace[] */
@@ -482,8 +482,8 @@ error:
 /* returns the substitution result in a str, input must be 0 term
  *  0 on no match or malloc error
  *  if count is non zero it will be set to the number of matches, or -1
- *   if error 
- */ 
+ *   if error
+ */
 str* subst_str(const char *input, struct sip_msg* msg, struct subst_expr* se,
 				int* count)
 {
@@ -495,8 +495,7 @@ str* subst_str(const char *input, struct sip_msg* msg, struct subst_expr* se,
 	const char* p;
 	char* dest;
 	const char* end;
-	
-	
+
 	/* compute the len */
 	len=strlen(input);
 	end=input+len;
@@ -519,7 +518,7 @@ str* subst_str(const char *input, struct sip_msg* msg, struct subst_expr* se,
 	}
 	res->s[len]=0;
 	res->len=len;
-	
+
 	/* replace */
 	dest=res->s;
 	p=input;

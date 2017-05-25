@@ -40,7 +40,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>    
+#include <sys/time.h>
 #include <sys/resource.h> /* setrlimit */
 #include <unistd.h>
 #include <pwd.h>
@@ -101,7 +101,7 @@ void daemon_status_init()
 int daemon_status_pre_daemonize(void)
 {
 	int ret;
-	
+
 retry:
 	ret = pipe(daemon_status_fd);
 	if (ret < 0 && errno == EINTR)
@@ -123,7 +123,7 @@ retry:
 int daemon_status_wait(char* status)
 {
 	int ret;
-	
+
 	/* close the output side of the pipe */
 	if (daemon_status_fd[1] != -1) {
 		close(daemon_status_fd[1]);
@@ -249,7 +249,7 @@ int enable_dumpable(void)
  * pid_file - if set the pid will be written here (ascii).
  * pgid_file - if set, the pgid will be written here (ascii).
  * log_stderr - if not set syslog will be opened (openlog(name,...))
- * 
+ *
  *
  * Side-effects:
  *  sets own_pgid after becoming session leader (own process group).
@@ -280,7 +280,7 @@ int daemonize(char*  name,  int status_wait)
 		LM_CRIT("Cannot chroot to %s: %s\n", chroot_dir, strerror(errno));
 		goto error;
 	}
-	
+
 	if (chdir(working_dir)<0){
 		LM_CRIT("cannot chdir to %s: %s\n", working_dir, strerror(errno));
 		goto error;
@@ -329,7 +329,7 @@ int daemonize(char*  name,  int status_wait)
 
 	/* added by noh: create a pid file for the main process */
 	if (pid_file!=0){
-		
+
 		if ((pid_stream=fopen(pid_file, "r"))!=NULL){
 			if (fscanf(pid_stream, "%d", &p) < 0) {
 				LM_WARN("could not parse pid file %s\n", pid_file);
@@ -350,7 +350,7 @@ int daemonize(char*  name,  int status_wait)
 		}
 		pid=getpid();
 		if ((pid_stream=fopen(pid_file, "w"))==NULL){
-			LM_WARN("unable to create pid file %s: %s\n", 
+			LM_WARN("unable to create pid file %s: %s\n",
 				pid_file, strerror(errno));
 			goto error;
 		}else{
@@ -396,7 +396,7 @@ int daemonize(char*  name,  int status_wait)
 								  value*/
 		}
 	}
-	
+
 	/* try to replace stdin, stdout & stderr with /dev/null */
 	if (freopen("/dev/null", "r", stdin)==0){
 		LM_ERR("unable to replace stdin with /dev/null: %s\n",
@@ -414,7 +414,7 @@ int daemonize(char*  name,  int status_wait)
 				strerror(errno));
 		/* continue, leave it open */
 	};
-	
+
 	/* close all but the daemon_status_fd output as the main process
 	  must still write into it to tell the parent to exit with 0 */
 	closelog();
@@ -422,7 +422,7 @@ int daemonize(char*  name,  int status_wait)
 		if(r !=  daemon_status_fd[1])
 			close(r);
 	}
-	
+
 	if (log_stderr==0)
 		openlog(name, LOG_PID|LOG_CONS, cfg_get(core, core_cfg, log_facility));
 		/* LOG_CONS, LOG_PERRROR ? */
@@ -438,7 +438,7 @@ error:
 int do_suid()
 {
 	struct passwd *pw;
-	
+
 	if (gid){
 		if(gid!=getgid()) {
 			if(setgid(gid)<0){
@@ -447,7 +447,7 @@ int do_suid()
 			}
 		}
 	}
-	
+
 	if(uid){
 		if (!(pw = getpwuid(uid))){
 			LM_CRIT("user lookup failed: %s\n", strerror(errno));
@@ -455,7 +455,7 @@ int do_suid()
 		}
 		if(uid!=getuid()) {
 			if(initgroups(pw->pw_name, pw->pw_gid)<0){
-				LM_CRIT("cannot set supplementary groups: %s\n", 
+				LM_CRIT("cannot set supplementary groups: %s\n",
 							strerror(errno));
 				goto error;
 			}
@@ -481,7 +481,7 @@ int increase_open_fds(int target)
 {
 	struct rlimit lim;
 	struct rlimit orig;
-	
+
 	if (getrlimit(RLIMIT_NOFILE, &lim)<0){
 		LM_CRIT("cannot get the maximum number of file descriptors: %s\n",
 				strerror(errno));
@@ -498,7 +498,7 @@ int increase_open_fds(int target)
 	}else{
 		/* more than the hard limit */
 		LM_INFO("trying to increase the open file limit"
-				" past the hard limit (%ld -> %d)\n", 
+				" past the hard limit (%ld -> %d)\n",
 				(unsigned long)lim.rlim_max, target);
 		lim.rlim_max=target;
 		lim.rlim_cur=target;
@@ -535,7 +535,7 @@ int set_core_dump(int enable, long unsigned int size)
 {
 	struct rlimit lim;
 	struct rlimit newlim;
-	
+
 	if (enable){
 		if (getrlimit(RLIMIT_CORE, &lim)<0){
 			LM_CRIT("cannot get the maximum core size: %s\n",
@@ -603,11 +603,11 @@ error:
 #else /* if MLOCKALL not defined return error */
 		LM_WARN("failed to lock the memory pages: no mlockall support\n");
 	return -1;
-#endif 
+#endif
 }
 
 
-/*! \brief tries to set real time priority 
+/*! \brief tries to set real time priority
  * policy: 0 - SCHED_OTHER, 1 - SCHED_RR, 2 - SCHED_FIFO */
 int set_rt_prio(int prio, int policy)
 {
@@ -615,7 +615,7 @@ int set_rt_prio(int prio, int policy)
 	struct sched_param sch_p;
 	int min_prio, max_prio;
 	int sched_policy;
-	
+
 	switch(policy){
 		case 0:
 			sched_policy=SCHED_OTHER;

@@ -443,8 +443,15 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 				ptsd->a_rr.len++;
 			} else {
 				/* sip response - get b-side record route */
+				if(i==1) {
+					ptsd->b_rr.s = ptsd->cp;
+				}
+				if(i>1) {
+					*ptsd->cp = ',';
+					ptsd->cp++;
+					ptsd->b_rr.len++;
+				}
 				*ptsd->cp = '<';
-				ptsd->b_rr.s = ptsd->cp;
 				ptsd->cp++;
 				ptsd->b_rr.len++;
 				memcpy(ptsd->cp, rr->nameaddr.uri.s, rr->nameaddr.uri.len);
@@ -782,7 +789,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 			return -1;
 		}
 	} else {
-		if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 0)<0) {
+		if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 1)<0) {
 			LM_ERR("failed to reappend b-route\n");
 			return -1;
 		}
@@ -1016,7 +1023,7 @@ int tps_response_sent(sip_msg_t *msg)
 	tps_remove_headers(msg, HDR_RECORDROUTE_T);
 	tps_remove_headers(msg, HDR_CONTACT_T);
 
-	if(direction==TPS_DIR_UPSTREAM) {
+	if(direction==TPS_DIR_DOWNSTREAM) {
 		tps_reinsert_contact(msg, &stsd, &stsd.as_contact);
 	} else {
 		tps_reinsert_contact(msg, &stsd, &stsd.bs_contact);

@@ -42,6 +42,10 @@
 #include "../../core/mod_fix.h"
 #include "../../core/lvalue.h"
 #include "../tm/tm_load.h"
+#include "../../core/route.h"
+#include "../../core/receive.h"
+#include "../../core/action.h"
+#include "../../core/script_cb.h"
 
 
 #include "kz_amqp.h"
@@ -1848,8 +1852,17 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 		routing = kz_amqp_routing_new("");
 	}
 
-	exchange = kz_amqp_exchange_from_json(&exchange_s, json_obj);
-	queue = kz_amqp_queue_from_json(&queue_s, json_obj);
+	tmpObj = kz_json_get_object(json_obj, "exchange-def");
+	if(tmpObj == NULL) {
+		tmpObj = json_obj;
+	}
+	exchange = kz_amqp_exchange_from_json(&exchange_s, tmpObj);
+
+	tmpObj = kz_json_get_object(json_obj, "queue-def");
+	if(tmpObj == NULL) {
+		tmpObj = json_obj;
+	}
+	queue = kz_amqp_queue_from_json(&queue_s, tmpObj);
 
 	kz_amqp_bind_ptr bind = kz_amqp_bind_alloc(exchange, exchange_binding, queue, routing, event_key, event_subkey);
 	if(bind == NULL) {
@@ -2256,7 +2269,7 @@ int kz_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param,	pv_value_t *
 
 int kz_amqp_consumer_fire_event(char *eventkey)
 {
-	struct sip_msg *fmsg;
+	sip_msg_t *fmsg;
 	struct run_act_ctx ctx;
 	int rtb, rt;
 
@@ -2268,16 +2281,17 @@ int kz_amqp_consumer_fire_event(char *eventkey)
 		return -2;
 	}
 	LM_DBG("executing event_route[%s] (%d)\n", eventkey, rt);
-	if(faked_msg_init()<0)
-		return -2;
-	fmsg = faked_msg_next();
+	fmsg = faked_msg_get_next();
 	rtb = get_route_type();
 	set_route_type(REQUEST_ROUTE);
-	init_run_actions_ctx(&ctx);
-	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)!=0 ) {
+		init_run_actions_ctx(&ctx);
+		run_top_route(event_rt.rlist[rt], fmsg, 0);
+		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
+		ksr_msg_env_reset();
+	}
 	set_route_type(rtb);
 	return 0;
-
 }
 
 void kz_amqp_consumer_event(char *payload, char* event_key, char* event_subkey)
@@ -2394,16 +2408,26 @@ void kz_amqp_fire_connection_event(char *event, char* host, char* zone)
 
 void kz_amqp_cb_ok(kz_amqp_cmd_ptr cmd)
 {
-	int n = route_get(&main_rt, cmd->cb_route);
+	int n = route_lookup(&main_rt, cmd->cb_route);
+	if(n==-1) {
+		/* route block not found in the configuration file */
+		return;
+	}
 	struct action *a = main_rt.rlist[n];
 	tmb.t_continue(cmd->t_hash, cmd->t_label, a);
+	ksr_msg_env_reset();
 }
 
 void kz_amqp_cb_error(kz_amqp_cmd_ptr cmd)
 {
-	int n = route_get(&main_rt, cmd->err_route);
+	int n = route_lookup(&main_rt, cmd->err_route);
+	if(n==-1) {
+		/* route block not found in the configuration file */
+		return;
+	}
 	struct action *a = main_rt.rlist[n];
 	tmb.t_continue(cmd->t_hash, cmd->t_label, a);
+	ksr_msg_env_reset();
 }
 
 int kz_send_worker_error_event(kz_amqp_cmd_ptr cmd)
@@ -2897,6 +2921,7 @@ void kz_amqp_send_worker_event(kz_amqp_server_ptr server_ptr, amqp_envelope_t* e
     }
 
     json_object_object_add(json_obj, BLF_JSON_BROKER_ZONE, json_object_new_string(server_ptr->zone->zone));
+    json_object_object_add(json_obj, BLF_JSON_AMQP_RECEIVED, json_object_new_int(time(NULL)));
 
 
     JObj = kz_json_get_object(json_obj, BLF_JSON_SERVERID);

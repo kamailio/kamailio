@@ -339,6 +339,16 @@ int udp_init(struct socket_info* sock_info)
 	}
 #endif
 
+#if defined(IP_FREEBIND)
+	/* allow bind to non local address.
+	 * useful when daemon started before network initialized */
+	optval = 1;
+	if (_sr_ip_free_bind && setsockopt(sock_info->socket, IPPROTO_IP,
+				IP_FREEBIND, (void*)&optval, sizeof(optval)) ==-1) {
+		LM_WARN("setsockopt freebind failed: %s\n", strerror(errno));
+		/* continue since this is not critical */
+	}
+#endif
 #ifdef USE_MCAST
 	if ((sock_info->flags & SI_IS_MCAST)
 	    && (setup_mcast_rcvr(sock_info->socket, addr, sock_info->mcast.s)<0)){

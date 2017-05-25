@@ -35,46 +35,26 @@
 /**
  * append new branches with generic parameters
  */
-int corex_append_branch(sip_msg_t *msg, gparam_t *pu, gparam_t *pq)
+int corex_append_branch(sip_msg_t *msg, str *uri, str *qv)
 {
-	str uri = {0};
-	str qv = {0};
 	int ret = 0;
 
 	qvalue_t q = Q_UNSPECIFIED;
 	flag_t branch_flags = 0;
 
-	if (pu!=NULL)
+	if(qv!=NULL && qv->len>0 && str2q(&q, qv->s, qv->len)<0)
 	{
-		if(fixup_get_svalue(msg, pu, &uri)!=0)
-		{
-			LM_ERR("cannot get the URI parameter\n");
-			return -1;
-		}
+		LM_ERR("cannot parse the Q parameter\n");
+		return -1;
 	}
-
-	if (pq!=NULL)
-	{
-		if(fixup_get_svalue(msg, pq, &qv)!=0)
-		{
-			LM_ERR("cannot get the Q parameter\n");
-			return -1;
-		}
-		if(qv.len>0 && str2q(&q, qv.s, qv.len)<0)
-		{
-			LM_ERR("cannot parse the Q parameter\n");
-			return -1;
-		}
-	}
-
 
 	getbflagsval(0, &branch_flags);
-	ret = append_branch(msg, (uri.len>0)?&uri:0, &msg->dst_uri,
+	ret = append_branch(msg, (uri && uri->len>0)?uri:0, &msg->dst_uri,
 			    &msg->path_vec, q, branch_flags,
 			    msg->force_send_socket, 0, 0, 0, 0);
 
 
-	if(uri.len<=0)
+	if(uri==NULL ||  uri->len<=0)
 	{
 		/* reset all branch attributes if r-uri was shifted to branch */
 		reset_force_socket(msg);
@@ -94,6 +74,30 @@ int corex_append_branch(sip_msg_t *msg, gparam_t *pu, gparam_t *pq)
 	}
 
 	return ret;
+}
+
+/**
+ * append new branches with generic parameters
+ */
+int w_corex_append_branch(sip_msg_t *msg, gparam_t *pu, gparam_t *pq)
+{
+	str uri = {0};
+	str qv = {0};
+	if (pu!=NULL) {
+		if(fixup_get_svalue(msg, pu, &uri)!=0)
+		{
+			LM_ERR("cannot get the URI parameter\n");
+			return -1;
+		}
+	}
+	if (pq!=NULL) {
+		if(fixup_get_svalue(msg, pq, &qv)!=0)
+		{
+			LM_ERR("cannot get the Q parameter\n");
+			return -1;
+		}
+	}
+	return corex_append_branch(msg, (pu!=NULL)?&uri:NULL, (pq!=NULL)?&qv:NULL);
 }
 
 typedef struct corex_alias {

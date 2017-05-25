@@ -173,8 +173,9 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 	unsigned int ahash;
 	unsigned short digit;
 	int mode;
-	sr_xavp_t *xavp=NULL;
+	sr_xavp_t **xavp=NULL;
 	sr_xavp_t *list=NULL;
+	sr_xavp_t *new_xavp=NULL;
 	str xname = {"ruid", 4};
 	str ename = {"expires", 7};
 	sr_xval_t xval;
@@ -213,7 +214,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 	if(reg_xavp_rcd.s!=NULL)
 	{
 		list = xavp_get(&reg_xavp_rcd, NULL);
-		xavp = list;
+		xavp = list ? &list->val.v.xavp : &new_xavp;
 	}
 
 	fl = 0;
@@ -336,7 +337,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 				xval.type = SR_XTYPE_STR;
 				xval.v.s = c->ruid;
 
-				if(xavp_add_value(&xname, &xval, &xavp)==NULL) {
+				if(xavp_add_value(&xname, &xval, xavp)==NULL) {
 					LM_ERR("cannot add ruid value to xavp\n");
 				}
 				/* Add contact expiry */
@@ -344,7 +345,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 				xval.type = SR_XTYPE_INT;
 				xval.v.i = (int)(c->expires - act_time);
 
-				if(xavp_add_value(&ename, &xval, &xavp)==NULL) {
+				if(xavp_add_value(&ename, &xval, xavp)==NULL) {
 					LM_ERR("cannot add expires value to xavp\n");
 				}
 			}
@@ -354,16 +355,16 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 	}
 
 	/* add xavp with details of the record (ruid, ...) */
+
 	if(reg_xavp_rcd.s!=NULL)
 	{
-		if(list==NULL && xavp!=NULL)
+		if(list==NULL && *xavp!=NULL)
 		{
-			/* no reg_xavp_rcd xavp in root list - add it */
 			xval.type = SR_XTYPE_XAVP;
-			xval.v.xavp = xavp;
+			xval.v.xavp = *xavp;
 			if(xavp_add_value(&reg_xavp_rcd, &xval, NULL)==NULL) {
 				LM_ERR("cannot add ruid xavp to root list\n");
-				xavp_destroy_list(&xavp);
+				xavp_destroy_list(xavp);
 			}
 		}
 	}

@@ -27,6 +27,7 @@
 
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
+#include "../../core/receive.h"
 #include "../../core/locking.h"
 #include "../../core/timer.h"
 #include "../../core/async_task.h"
@@ -174,8 +175,10 @@ void async_timer_exec(unsigned int ticks, void *param)
 
 		if(ai == NULL)
 			break;
-		if(ai->act != NULL)
+		if(ai->act != NULL) {
 			tmb.t_continue(ai->tindex, ai->tlabel, ai->act);
+			ksr_msg_env_reset();
+		}
 		shm_free(ai);
 	}
 }
@@ -196,8 +199,10 @@ void async_exec_task(void *param)
 	tindex = p[0];
 	tlabel = p[1];
 
-	if(act != NULL)
+	if(act != NULL) {
 		tmb.t_continue(tindex, tlabel, act);
+		ksr_msg_env_reset();
+	}
 	/* param is freed along with the async task strucutre in core */
 }
 

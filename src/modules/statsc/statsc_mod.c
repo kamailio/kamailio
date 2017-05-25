@@ -31,6 +31,7 @@
 #include "../../core/timer_proc.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 
 #include "../../core/parser/parse_param.h"
 
@@ -119,9 +120,18 @@ static void mod_destroy(void)
 /**
  *
  */
+static int ki_statsc_reset(sip_msg_t* msg)
+{
+	LM_ERR("not implemented yet\n");
+	return 1;
+}
+
+/**
+ *
+ */
 static int w_statsc_reset(sip_msg_t* msg, char* p1, char* p2)
 {
-	return 1;
+	return ki_statsc_reset(msg);
 }
 
 typedef int (*statsc_func_t)(void *p, int64_t *res);
@@ -473,3 +483,26 @@ int statsc_init_rpc(void)
 	return 0;
 }
 
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_statsc_exports[] = {
+	{ str_init("statsc"), str_init("statsc_reset"),
+		SR_KEMIP_INT, ki_statsc_reset,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_statsc_exports);
+	return 0;
+}

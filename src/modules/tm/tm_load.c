@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -32,7 +32,7 @@ int tm_init = 0;
 int load_tm( struct tm_binds *tmb)
 {
 	if (!tm_init) {
-		LOG(L_ERR, "tm:load_tm: Module not initialized yet,"
+		LM_ERR(" Module not initialized yet,"
 			" make sure that all modules that need"
 		    " tm module are loaded after tm in the configuration file\n");
 		return -1;
@@ -42,29 +42,29 @@ int load_tm( struct tm_binds *tmb)
 
 	/* exported to cfg */
 	if (!( tmb->t_newtran=(tnewtran_f)find_export("t_newtran", 0, 0)) ) {
-		LOG(L_ERR, LOAD_ERROR "'t_newtran' not found\n");
+		LM_ERR(LOAD_ERROR "'t_newtran' not found\n");
 		return -1;
 	}
 #ifdef USE_TCP
 	if (!( tmb->t_relay_to_tcp=find_export("t_relay_to_tcp", 2, 0)) ) {
-		LOG(L_ERR, LOAD_ERROR "'t_relay_to_tcp' not found\n");
+		LM_ERR(LOAD_ERROR "'t_relay_to_tcp' not found\n");
 		return -1;
 	}
 #endif
 	if (!( tmb->t_relay_to_udp=find_export("t_relay_to_udp", 2, 0)) ) {
-		LOG(L_ERR, LOAD_ERROR "'t_relay_to_udp' not found\n");
+		LM_ERR(LOAD_ERROR "'t_relay_to_udp' not found\n");
 		return -1;
 	}
 	if (!( tmb->t_relay=find_export("t_relay", 0, 0)) ) {
-		LOG(L_ERR, LOAD_ERROR "'t_relay' not found\n");
+		LM_ERR(LOAD_ERROR "'t_relay' not found\n");
 		return -1;
 	}
 	if (!(tmb->t_forward_nonack=(tfwd_f)find_export("t_forward_nonack",2,0))) {
-		LOG( L_ERR, LOAD_ERROR "'t_forward_nonack' not found\n");
+		LM_ERR(LOAD_ERROR "'t_forward_nonack' not found\n");
 		return -1;
 	}
 	if (!(tmb->t_release=(trelease_f)find_export("t_release",0,0))) {
-		LOG( L_ERR, LOAD_ERROR "'t_release' not found\n");
+		LM_ERR(LOAD_ERROR "'t_release' not found\n");
 		return -1;
 	}
 /*	if (!(tmb->t_reply=(treply_f)find_export(T_REPLY, 2, 0)) ) {

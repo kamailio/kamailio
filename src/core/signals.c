@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -36,14 +36,14 @@ void (*set_sig_h(int sig, void (*handler) (int) ))(int)
 {
 	struct sigaction act;
 	struct sigaction old;
-	
+
 	memset(&act, 0, sizeof(act));
 	act.sa_handler=handler;
 	/*
 	sigemptyset(&act.sa_mask);
 	act.sa_flags=0;
 	*/
-	/* sa_sigaction not set, we use sa_hanlder instead */ 
+	/* sa_sigaction not set, we use sa_hanlder instead */
 	return (sigaction (sig, &act, &old)==-1)?SIG_ERR:old.sa_handler;
 }
 #endif

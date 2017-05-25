@@ -76,8 +76,7 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 						return proto;
 				case PROTO_WSS:	/* should never see ;transport=wss */
 				default:
-						LOG(L_ERR, "ERROR: get_proto: unsupported transport:"
-								" %d\n", proto );
+						LM_ERR("unsupported transport: %d\n", proto);
 						return PROTO_NONE;
 			}
 		case PROTO_UDP: /* some protocol has been forced -- take it */
@@ -94,8 +93,7 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 #endif
 			return force_proto;
 		default:
-			LOG(L_ERR, "ERROR: get_proto: unsupported forced protocol: "
-					"%d\n", force_proto);
+			LM_ERR("unsupported forced protocol: %d\n", force_proto);
 			return PROTO_NONE;
 	}
 }
@@ -112,15 +110,13 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 	enum sip_protos uri_proto;
 
 	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
-		LOG(L_ERR, "ERROR: uri2proxy: bad_uri: [%.*s]\n",
-				uri->len, uri->s );
+		LM_ERR("bad_uri: [%.*s]\n", uri->len, uri->s );
 		return 0;
 	}
 
 	if (parsed_uri.type==SIPS_URI_T){
 		if (parsed_uri.proto==PROTO_UDP) {
-			LOG(L_ERR, "ERROR: uri2proxy: bad transport for sips uri: %d\n",
-					parsed_uri.proto);
+			LM_ERR("bad transport for sips uri: %d\n", parsed_uri.proto);
 			return 0;
 		}else if (parsed_uri.proto != PROTO_WS)
 			uri_proto=PROTO_TLS;
@@ -134,8 +130,7 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 				parsed_uri.port_no,
 				get_proto(proto, uri_proto));
 		if (p == 0) {
-			LOG(L_ERR, "ERROR: uri2proxy: bad maddr param in URI <%.*s>\n",
-				uri->len, ZSW(uri->s));
+			LM_ERR("bad maddr param in URI <%.*s>\n", uri->len, ZSW(uri->s));
 			return 0;
 		}
 	} else
@@ -144,8 +139,7 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 			parsed_uri.port_no,
 			get_proto(proto, uri_proto));
 	if (p == 0) {
-		LOG(L_ERR, "ERROR: uri2proxy: bad host name in URI <%.*s>\n",
-				uri->len, ZSW(uri->s));
+		LM_ERR("bad host name in URI <%.*s>\n", uri->len, ZSW(uri->s));
 		return 0;
 	}
 
@@ -172,15 +166,13 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
 	enum sip_protos uri_proto;
 
 	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
-		LOG(L_ERR, "ERROR: get_uri_send_info: bad_uri: %.*s\n",
-					uri->len, uri->s );
+		LM_ERR("bad_uri: %.*s\n", uri->len, uri->s );
 		return -1;
 	}
 
 	if (parsed_uri.type==SIPS_URI_T){
 		if (parsed_uri.proto==PROTO_UDP) {
-			LOG(L_ERR, "ERROR: get_uri_send_info: bad transport for"
-						" sips uri: %d\n", parsed_uri.proto);
+			LM_ERR("bad transport for sips uri: %d\n", parsed_uri.proto);
 			return -1;
 		}else if (parsed_uri.proto != PROTO_WS)
 			uri_proto=PROTO_TLS;
@@ -196,7 +188,7 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
 #ifdef HONOR_MADDR
 	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
 		*host=parsed_uri.maddr_val;
-		DBG("maddr dst: %.*s:%d\n", parsed_uri.maddr_val.len,
+		LM_DBG("maddr dst: %.*s:%d\n", parsed_uri.maddr_val.len,
 				parsed_uri.maddr_val.s, parsed_uri.port_no);
 	} else
 #endif
@@ -250,15 +242,13 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 #endif
 
 	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
-		LOG(L_ERR, "ERROR: uri2dst: bad_uri: [%.*s]\n",
-				uri->len, uri->s );
+		LM_ERR("bad_uri: [%.*s]\n", uri->len, uri->s );
 		return 0;
 	}
 
 	if (parsed_uri.type==SIPS_URI_T){
 		if (parsed_uri.proto==PROTO_UDP) {
-			LOG(L_ERR, "ERROR: uri2dst: bad transport for sips uri: %d\n",
-					parsed_uri.proto);
+			LM_ERR("bad transport for sips uri: %d\n", parsed_uri.proto);
 			return 0;
 		}else if (parsed_uri.proto!=PROTO_WS)
 			uri_proto=PROTO_TLS;
@@ -276,7 +266,7 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 #ifdef HONOR_MADDR
 	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
 		host=&parsed_uri.maddr_val;
-		DBG("maddr dst: [%.*s:%d]\n", parsed_uri.maddr_val.len,
+		LM_DBG("maddr dst: [%.*s:%d]\n", parsed_uri.maddr_val.len,
 								parsed_uri.maddr_val.s, parsed_uri.port_no);
 	} else
 #endif
@@ -291,7 +281,7 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 			if (err!=0){
 				if (ip_found==0){
 					if (err!=-E_DNS_EOR)
-						LOG(L_ERR, "ERROR: uri2dst: failed to resolve \"%.*s\" :"
+						LM_ERR("failed to resolve \"%.*s\" :"
 								"%s (%d)\n", host->len, ZSW(host->s),
 									dns_strerror(err), err);
 					return 0; /* error, no ip found */
@@ -309,20 +299,20 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 				return dst; /* found a good one */
 			}
 		}while(dns_srv_handle_next(dns_h, err));
-		ERR("no corresponding socket for \"%.*s\" af %d\n", host->len,
+		LM_ERR("no corresponding socket for \"%.*s\" af %d\n", host->len,
 				ZSW(host->s), dst->to.s.sa_family);
 		/* try to continue */
 		return dst;
 	}
 #endif
 	if (sip_hostport2su(&dst->to, host, parsed_uri.port_no, &dst->proto)!=0){
-		ERR("failed to resolve \"%.*s\"\n", host->len, ZSW(host->s));
+		LM_ERR("failed to resolve \"%.*s\"\n", host->len, ZSW(host->s));
 		return 0;
 	}
 	dst->send_sock = get_send_socket2(force_send_socket, &dst->to,
 										dst->proto, 0);
 	if (dst->send_sock==0) {
-		ERR("no corresponding socket found for \"%.*s\" af %d (%s:%s)\n",
+		LM_ERR("no corresponding socket found for \"%.*s\" af %d (%s:%s)\n",
 			host->len, ZSW(host->s), dst->to.s.sa_family,
 			proto2a(dst->proto), su2a(&dst->to, sizeof(dst->to)));
 		/* ser_error = E_NO_SOCKET;*/

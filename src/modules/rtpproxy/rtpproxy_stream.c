@@ -71,7 +71,7 @@ fixup_var_str_int(void **param, int param_no)
 	return 0;
 }
 
-	static int
+	int
 rtpproxy_stream(struct sip_msg* msg, str *pname, int count, int stream2uac)
 {
 	int nitems;
@@ -160,7 +160,7 @@ rtpproxy_stream2uas2_f(struct sip_msg* msg, char* str1, char* str2)
 	return rtpproxy_stream2_f(msg, str1, (int)(long)str2, 0);
 }
 
-	static int
+	int
 rtpproxy_stop_stream(struct sip_msg* msg, int stream2uac)
 {
 	int nitems;

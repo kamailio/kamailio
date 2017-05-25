@@ -904,12 +904,32 @@ int ws_close(sip_msg_t *msg)
 	return ret;
 }
 
-int ws_close2(sip_msg_t *msg, char *_status, char *_reason)
+int w_ws_close0(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ws_close(msg);
+}
+
+int ws_close2(sip_msg_t *msg, int status, str *reason)
+{
+	ws_connection_t *wsc;
+	int ret;
+
+	if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) == NULL) {
+		LM_ERR("failed to retrieve WebSocket connection\n");
+		return -1;
+	}
+
+	ret = (close_connection(&wsc, LOCAL_CLOSE, status, *reason) == 0) ? 1: 0;
+
+	wsconn_put(wsc);
+
+	return ret;
+}
+
+int w_ws_close2(sip_msg_t *msg, char *_status, char *_reason)
 {
 	int status;
 	str reason;
-	ws_connection_t *wsc;
-	int ret;
 
 	if (get_int_fparam(&status, msg, (fparam_t *) _status) < 0) {
 		LM_ERR("failed to get status code\n");
@@ -920,26 +940,31 @@ int ws_close2(sip_msg_t *msg, char *_status, char *_reason)
 		LM_ERR("failed to get reason string\n");
 		return -1;
 	}
+	return ws_close2(msg, status, &reason);
+}
 
-	if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) == NULL) {
+int ws_close3(sip_msg_t *msg, int status, str *reason, int con)
+{
+	ws_connection_t *wsc;
+	int ret;
+
+	if ((wsc = wsconn_get(con)) == NULL) {
 		LM_ERR("failed to retrieve WebSocket connection\n");
 		return -1;
 	}
 
-	ret = (close_connection(&wsc, LOCAL_CLOSE, status, reason) == 0) ? 1: 0;
+	ret = (close_connection(&wsc, LOCAL_CLOSE, status, *reason) == 0) ? 1: 0;
 
 	wsconn_put(wsc);
 
 	return ret;
 }
 
-int ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con)
+int w_ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con)
 {
 	int status;
 	str reason;
 	int con;
-	ws_connection_t *wsc;
-	int ret;
 
 	if (get_int_fparam(&status, msg, (fparam_t *) _status) < 0) {
 		LM_ERR("failed to get status code\n");
@@ -956,16 +981,7 @@ int ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con)
 		return -1;
 	}
 
-	if ((wsc = wsconn_get(con)) == NULL) {
-		LM_ERR("failed to retrieve WebSocket connection\n");
-		return -1;
-	}
-
-	ret = (close_connection(&wsc, LOCAL_CLOSE, status, reason) == 0) ? 1: 0;
-
-	wsconn_put(wsc);
-
-	return ret;
+	return ws_close3(msg, status, &reason, con);
 }
 
 /*

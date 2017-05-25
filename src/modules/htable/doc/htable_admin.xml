@@ -770,6 +770,86 @@ sht_rm_value_re("ha=>.*");
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.f.sht_rm_name">
+		<title>
+		<function moreinfo="none">sht_rm_name(htable, op, val)</function>
+		</title>
+		<para>
+			Delete all entries in the htable that match the name against
+			the val parameter.
+		</para>
+		<para>
+			The op parameter can be:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>re</emphasis> - match the val parameter as regular
+			expression.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>sw</emphasis> - match the val parameter as 'starts
+			with'.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			All parameters can be static strings or contain variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_rm_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_rm_name("ha", "re", ".*");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_rm_value">
+		<title>
+		<function moreinfo="none">sht_rm_value(htable, op, val)</function>
+		</title>
+		<para>
+			Delete all entries in the htable that match the value against
+			the val parameter.
+		</para>
+		<para>
+			The op parameter can be:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>re</emphasis> - match the val parameter as regular
+			expression.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>sw</emphasis> - match the val parameter as 'starts
+			with'.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			All parameters can be static strings or contain variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_rm_value</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_rm_value("ha", "re", ".*");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="htable.f.sht_reset">
 		<title>
 		<function moreinfo="none">sht_reset(htable)</function>

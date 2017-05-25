@@ -45,7 +45,6 @@
  */
 
 
-
 #include <stdlib.h>
 
 #include "enum.h"
@@ -59,7 +58,7 @@
 #include "../../core/qvalue.h"
 #include "enum_mod.h"
 #include "../../core/strutils.h"
-#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
 
 /*
  * Input: E.164 number w/o leading +
@@ -75,72 +74,71 @@
  */
 static int cclen(const char *number)
 {
-	char d1,d2;
+	char d1, d2;
 
-	if (!number || (strlen(number) < 3))
-		return(0);
+	if(!number || (strlen(number) < 3))
+		return (0);
 
 	d1 = number[0];
 	d2 = number[1];
-	
-	if (!isdigit((int)d2)) 
-		return(0);
+
+	if(!isdigit((int)d2))
+		return (0);
 
 	switch(d1) {
 		case '1':
 		case '7':
-			return(1);
+			return (1);
 		case '2':
-			if ((d2 == '0') || (d1 == '7'))
-				return(2);
+			if((d2 == '0') || (d1 == '7'))
+				return (2);
 			break;
 		case '3':
-			if ((d2 >= '0') && (d1 <= '4'))
-				return(2);
-			if ((d2 == '6') || (d1 == '9'))
-				return(2);
+			if((d2 >= '0') && (d1 <= '4'))
+				return (2);
+			if((d2 == '6') || (d1 == '9'))
+				return (2);
 			break;
 		case '4':
-			if (d2 != '2')
-				return(2);
+			if(d2 != '2')
+				return (2);
 			break;
 		case '5':
-			if ((d2 >= '1') && (d1 <= '8'))
-				return(2);
+			if((d2 >= '1') && (d1 <= '8'))
+				return (2);
 			break;
 		case '6':
-			if (d1 <= '6')
-				return(2);
+			if(d1 <= '6')
+				return (2);
 			break;
 		case '8':
-			if ((d2 == '1') || (d1 == '2') || (d1 == '4') || (d1 == '6')) 
-				return(2);
+			if((d2 == '1') || (d1 == '2') || (d1 == '4') || (d1 == '6'))
+				return (2);
 			break;
 		case '9':
-			if (d1 <= '5')
-				return(2);
-			if (d2 == '8')
-				return(2);
+			if(d1 <= '5')
+				return (2);
+			if(d2 == '8')
+				return (2);
 			break;
 		default:
-			return(0);
+			return (0);
 	}
 
-	return(3);
+	return (3);
 }
 
 
-
 /* return the length of the string until c, if not found returns n */
-static inline int findchr(char* p, int c, unsigned int size)
+static inline int findchr(char *p, int c, unsigned int size)
 {
-	int len=0;
+	int len = 0;
 
-	for(;len<size;p++){
-		if (*p==(unsigned char)c) {
+	for(; len < size; p++) {
+		if(*p == (unsigned char)c) {
 			return len;
 		}
-		len++;   
+		len++;
 	}
 	return len;
 }
@@ -150,19 +148,19 @@ static inline int findchr(char* p, int c, unsigned int size)
  * components in pattern and replacement parameters.  Regexp field starts at
  * address first and is len characters long.
  */
-static inline int parse_naptr_regexp(char* first, int len, str* pattern,
-										str* replacement)
+static inline int parse_naptr_regexp(
+		char *first, int len, str *pattern, str *replacement)
 {
 	char *second, *third;
 
-	if (len > 0) {
-		if (*first == '!') {
+	if(len > 0) {
+		if(*first == '!') {
 			second = (char *)memchr((void *)(first + 1), '!', len - 1);
-			if (second) {
+			if(second) {
 				len = len - (second - first + 1);
-				if (len > 0) {
+				if(len > 0) {
 					third = memchr(second + 1, '!', len);
-					if (third) {
+					if(third) {
 						pattern->len = second - first - 1;
 						pattern->s = first + 1;
 						replacement->len = third - second - 1;
@@ -193,103 +191,91 @@ static inline int parse_naptr_regexp(char* first, int len, str* pattern,
  * e2u+[service:]sip or
  * e2u+service[+service[+service[+...]]]
  */
-static inline int sip_match( struct naptr_rdata* naptr, str* service)
+static inline int sip_match(struct naptr_rdata *naptr, str *service)
 {
-  if (service->len == 0) {
-    return (naptr->flags_len == 1) &&
-      ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U')) &&
-      (naptr->services_len == 7) &&
-      ((strncasecmp(naptr->services, "e2u+sip", 7) == 0) ||
-       (strncasecmp(naptr->services, "sip+e2u", 7) == 0));
-  } else if (service->s[0] != '+') {
-    return (naptr->flags_len == 1) &&
-      ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U')) &&
-      (naptr->services_len == service->len + 8) &&
-      (strncasecmp(naptr->services, "e2u+", 4) == 0) &&
-      (strncasecmp(naptr->services + 4, service->s, service->len) == 0) &&
-      (strncasecmp(naptr->services + 4 + service->len, ":sip", 4) == 0);
-  } else { /* handle compound NAPTRs and multiple services */
-    str bakservice, baknaptr; /* we bakup the str */
-    int naptrlen, len;        /* length of the extracted service */
+	if(service->len == 0) {
+		return (naptr->flags_len == 1)
+			   && ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U'))
+			   && (naptr->services_len == 7)
+			   && ((strncasecmp(naptr->services, "e2u+sip", 7) == 0)
+						  || (strncasecmp(naptr->services, "sip+e2u", 7) == 0));
+	} else if(service->s[0] != '+') {
+		return (naptr->flags_len == 1)
+			   && ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U'))
+			   && (naptr->services_len == service->len + 8)
+			   && (strncasecmp(naptr->services, "e2u+", 4) == 0)
+			   && (strncasecmp(naptr->services + 4, service->s, service->len)
+						  == 0)
+			   && (strncasecmp(naptr->services + 4 + service->len, ":sip", 4)
+						  == 0);
+	} else { /* handle compound NAPTRs and multiple services */
+		str bakservice, baknaptr; /* we bakup the str */
+		int naptrlen, len;		  /* length of the extracted service */
 
-    /* RFC 3761, NAPTR service field must start with E2U+ */
-    if (strncasecmp(naptr->services, "e2u+", 4) != 0) {
-      return 0;
-    }
-    baknaptr.s   = naptr->services + 4; /* leading 'e2u+' */
-    baknaptr.len = naptr->services_len - 4;
-    for (;;) { /* iterate over services in NAPTR */
-      bakservice.s   = service->s + 1; /* leading '+' */
-      bakservice.len = service->len - 1;
-      naptrlen = findchr(baknaptr.s,'+',baknaptr.len);
+		/* RFC 3761, NAPTR service field must start with E2U+ */
+		if(strncasecmp(naptr->services, "e2u+", 4) != 0) {
+			return 0;
+		}
+		baknaptr.s = naptr->services + 4; /* leading 'e2u+' */
+		baknaptr.len = naptr->services_len - 4;
+		for(;;) {						   /* iterate over services in NAPTR */
+			bakservice.s = service->s + 1; /* leading '+' */
+			bakservice.len = service->len - 1;
+			naptrlen = findchr(baknaptr.s, '+', baknaptr.len);
 
-      for (;;) { /* iterate over services in enum_query */
-        len = findchr(bakservice.s,'+',bakservice.len);
-        if ((naptrlen == len ) && !strncasecmp(baknaptr.s, bakservice.s, len)){
-          return 1;
-        }
-        if ( (bakservice.len -= len+1) > 0) {
-          bakservice.s += len+1;
-          continue;
-        }
-        break;
-      }
-      if ( (baknaptr.len -= naptrlen+1) > 0) {
-        baknaptr.s += naptrlen+1;
-        continue;
-      }
-      break;
-    }
-    /* no matching service found */
-    return 0;
-  }
+			for(;;) { /* iterate over services in enum_query */
+				len = findchr(bakservice.s, '+', bakservice.len);
+				if((naptrlen == len)
+						&& !strncasecmp(baknaptr.s, bakservice.s, len)) {
+					return 1;
+				}
+				if((bakservice.len -= len + 1) > 0) {
+					bakservice.s += len + 1;
+					continue;
+				}
+				break;
+			}
+			if((baknaptr.len -= naptrlen + 1) > 0) {
+				baknaptr.s += naptrlen + 1;
+				continue;
+			}
+			break;
+		}
+		/* no matching service found */
+		return 0;
+	}
 }
 
 
 /*
  * Checks if argument is an e164 number starting with +
  */
-static inline int is_e164(str* _user)
+static inline int is_e164(str *_user)
 {
 	int i;
 	char c;
-	
-	if ((_user->len > 1) && (_user->len < MAX_NUM_LEN) && ((_user->s)[0] == '+')) {
-		for (i = 1; i < _user->len; i++) {
+
+	if((_user->len > 1) && (_user->len < MAX_NUM_LEN)
+			&& ((_user->s)[0] == '+')) {
+		for(i = 1; i < _user->len; i++) {
 			c = (_user->s)[i];
-			if ((c < '0') || (c > '9')) return -1;
+			if((c < '0') || (c > '9'))
+				return -1;
 		}
 		return 1;
 	} else {
-	    return -1;
+		return -1;
 	}
 }
-				
+
 
 /*
- * Call is_from_user_enum_2 with module parameter suffix and default service.
+ *
  */
-int is_from_user_enum_0(struct sip_msg* _msg, char* _str1, char* _str2)
-{
-	return is_from_user_enum_2(_msg, (char *)(&suffix), (char *)(&service));
-}
-
-/*
- * Call is_from_user_enum_2 with given suffix and default service.
- */
-int is_from_user_enum_1(struct sip_msg* _msg, char* _suffix, char* _str2)
-{
-	return is_from_user_enum_2(_msg, _suffix, (char *)(&service));
-}
-
-/*
- * Check if from user is a valid enum based user, and check to make sure
- * that the src_ip == an srv record that maps to the enum from user.
- */
-int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
+int is_from_user_enum_helper(sip_msg_t *_msg, str *suffix, str *service)
 {
 	struct ip_addr addr;
-	struct hostent* he;
+	struct hostent *he;
 	unsigned short zp;
 	char proto;
 	char *user_s;
@@ -298,38 +284,32 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	char uri[MAX_URI_SIZE];
 	struct sip_uri *furi;
 	struct sip_uri luri;
-	struct rdata* head;
+	struct rdata *head;
 
-	str* suffix;
-	str* service;
-
-	struct rdata* l;
-	struct naptr_rdata* naptr;
+	struct rdata *l;
+	struct naptr_rdata *naptr;
 
 	str pattern, replacement, result;
 	char string[MAX_NUM_LEN];
 
-	if (parse_from_header(_msg) < 0) {
-	    LM_ERR("Failed to parse From header\n");
-	    return -1;
-	}
-	
-	if(_msg->from==NULL || get_from(_msg)==NULL) {
-	    LM_DBG("No From header\n");
-	    return -1;
+	if(parse_from_header(_msg) < 0) {
+		LM_ERR("Failed to parse From header\n");
+		return -1;
 	}
 
-	if ((furi = parse_from_uri(_msg)) == NULL) {
-	    LM_ERR("Failed to parse From URI\n");
-	    return -1;
+	if(_msg->from == NULL || get_from(_msg) == NULL) {
+		LM_DBG("No From header\n");
+		return -1;
 	}
 
-	suffix = (str*)_suffix;
-	service = (str*)_service;
+	if((furi = parse_from_uri(_msg)) == NULL) {
+		LM_ERR("Failed to parse From URI\n");
+		return -1;
+	}
 
-	if (is_e164(&(furi->user)) == -1) {
-	    LM_ERR("From URI user is not an E164 number\n");
-	    return -1;
+	if(is_e164(&(furi->user)) == -1) {
+		LM_ERR("From URI user is not an E164 number\n");
+		return -1;
 	}
 
 	/* assert: the from user is a valid formatted e164 string */
@@ -338,7 +318,7 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	user_len = furi->user.len;
 
 	j = 0;
-	for (i = user_len - 1; i > 0; i--) {
+	for(i = user_len - 1; i > 0; i--) {
 		name[j] = user_s[i];
 		name[j + 1] = '.';
 		j = j + 2;
@@ -348,7 +328,7 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 
 	head = get_record(name, T_NAPTR, RES_ONLY_TYPE);
 
-	if (head == 0) {
+	if(head == 0) {
 		LM_DBG("No NAPTR record found for %s.\n", name);
 		return -3;
 	}
@@ -356,35 +336,38 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	/* we have the naptr records, loop and find an srv record with */
 	/* same ip address as source ip address, if we do then true is returned */
 
-	for (l = head; l; l = l->next) {
+	for(l = head; l; l = l->next) {
 
-		if (l->type != T_NAPTR) continue; /*should never happen*/
-		naptr = (struct naptr_rdata*)l->rdata;
-		if (naptr == 0) {
+		if(l->type != T_NAPTR)
+			continue; /*should never happen*/
+		naptr = (struct naptr_rdata *)l->rdata;
+		if(naptr == 0) {
 			LM_ERR("Null rdata in DNS response\n");
 			free_rdata_list(head);
 			return -4;
 		}
 
 		LM_DBG("ENUM query on %s: order %u, pref %u, flen %u, flags "
-		       "'%.*s', slen %u, services '%.*s', rlen %u, "
-		       "regexp '%.*s'\n",
-		       name, naptr->order, naptr->pref,
-		    naptr->flags_len, (int)(naptr->flags_len), ZSW(naptr->flags), naptr->services_len,
-		    (int)(naptr->services_len), ZSW(naptr->services), naptr->regexp_len,
-		    (int)(naptr->regexp_len), ZSW(naptr->regexp));
+			   "'%.*s', slen %u, services '%.*s', rlen %u, "
+			   "regexp '%.*s'\n",
+				name, naptr->order, naptr->pref, naptr->flags_len,
+				(int)(naptr->flags_len), ZSW(naptr->flags), naptr->services_len,
+				(int)(naptr->services_len), ZSW(naptr->services),
+				naptr->regexp_len, (int)(naptr->regexp_len),
+				ZSW(naptr->regexp));
 
-		if (sip_match(naptr, service) != 0) {
-			if (parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len,
-					 &pattern, &replacement) < 0) {
+		if(sip_match(naptr, service) != 0) {
+			if(parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len,
+					   &pattern, &replacement)
+					< 0) {
 				free_rdata_list(head); /*clean up*/
 				LM_ERR("Parsing of NAPTR regexp failed\n");
 				return -5;
 			}
 #ifdef LATER
-			if ((pattern.len == 4) && (strncmp(pattern.s, "^.*$", 4) == 0)) {
-				LM_DBG("Resulted in replacement: '%.*s'\n",
-				       replacement.len, ZSW(replacement.s));				
+			if((pattern.len == 4) && (strncmp(pattern.s, "^.*$", 4) == 0)) {
+				LM_DBG("Resulted in replacement: '%.*s'\n", replacement.len,
+						ZSW(replacement.s));
 				retval = set_uri(_msg, replacement.s, replacement.len);
 				free_rdata_list(head); /*clean up*/
 				return retval;
@@ -396,24 +379,22 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 			pattern.s[pattern.len] = (char)0;
 			replacement.s[replacement.len] = (char)0;
 			/* We have already checked the size of
-			   _msg->parsed_uri.user.s */ 
+			   _msg->parsed_uri.user.s */
 			memcpy(&(string[0]), user_s, user_len);
 			string[user_len] = (char)0;
-			if (reg_replace(pattern.s, replacement.s, &(string[0]),
-					&result) < 0) {
+			if(reg_replace(pattern.s, replacement.s, &(string[0]), &result)
+					< 0) {
 				pattern.s[pattern.len] = '!';
 				replacement.s[replacement.len] = '!';
 				LM_ERR("Regexp replace failed\n");
 				free_rdata_list(head); /*clean up*/
 				return -6;
 			}
-			LM_DBG("Resulted in replacement: '%.*s'\n",
-			    result.len, ZSW(result.s));
+			LM_DBG("Resulted in replacement: '%.*s'\n", result.len,
+					ZSW(result.s));
 
-			if(parse_uri(result.s, result.len, &luri) < 0)
-			{
-				LM_ERR("Parsing of URI <%.*s> failed\n",
-				       result.len, result.s);
+			if(parse_uri(result.s, result.len, &luri) < 0) {
+				LM_ERR("Parsing of URI <%.*s> failed\n", result.len, result.s);
 				free_rdata_list(head); /*clean up*/
 				return -7;
 			}
@@ -427,21 +408,87 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 
 			hostent2ip_addr(&addr, he, 0);
 
-			if(ip_addr_cmp(&addr, &_msg->rcv.src_ip))
-			{
+			if(ip_addr_cmp(&addr, &_msg->rcv.src_ip)) {
 				free_rdata_list(head);
-				return(1);
+				return (1);
 			}
 		}
 	}
 	free_rdata_list(head); /*clean up*/
 	LM_DBG("FAIL\n");
 
-    /* must not have found the record */
-    return(-8);
+	/* must not have found the record */
+	return (-8);
 }
 
+/*
+ * Call is_from_user_enum_2 with module parameter suffix and default service.
+ */
+int is_from_user_enum_0(struct sip_msg *_msg, char *_str1, char *_str2)
+{
+	return is_from_user_enum_helper(_msg, &suffix, &service);
+}
 
+/**
+ *
+ */
+int ki_is_from_user_enum(sip_msg_t *msg)
+{
+	return is_from_user_enum_helper(msg, &suffix, &service);
+}
+
+/*
+ * Call is_from_user_enum_2 with given suffix and default service.
+ */
+int is_from_user_enum_1(struct sip_msg *_msg, char *_suffix, char *_str2)
+{
+	str vsuffix;
+
+	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+		LM_ERR("cannot get suffix parameter value\n");
+		return -1;
+	}
+
+	return is_from_user_enum_helper(_msg, &vsuffix, &service);
+}
+
+/**
+ *
+ */
+int ki_is_from_user_enum_suffix(sip_msg_t *msg, str *vsuffix)
+{
+	return is_from_user_enum_helper(msg, vsuffix, &service);
+}
+
+/*
+ * Check if from user is a valid enum based user, and check to make sure
+ * that the src_ip == an srv record that maps to the enum from user.
+ */
+int is_from_user_enum_2(struct sip_msg *_msg, char *_suffix, char *_service)
+{
+	str vsuffix;
+	str vservice;
+
+	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+		LM_ERR("cannot get suffix parameter value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_msg, (gparam_t*)_service, &vservice)<0) {
+		LM_ERR("cannot get service parameter value\n");
+		return -1;
+	}
+
+	return is_from_user_enum_helper(_msg, &vsuffix, &vservice);
+}
+
+/**
+ *
+ */
+int ki_is_from_user_enum_suffix_service(sip_msg_t *msg, str *vsuffix,
+		str *vservice)
+{
+	return is_from_user_enum_helper(msg, vsuffix, vservice);
+}
 
 /* 
  * Add parameter to URI.
@@ -451,12 +498,12 @@ int add_uri_param(str *uri, str *param, str *new_uri)
 	struct sip_uri puri;
 	char *at;
 
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
+	if(parse_uri(uri->s, uri->len, &puri) < 0) {
 		return 0;
 	}
 
 	/* if current uri has no headers, pad param to the end of uri */
-	if (puri.headers.len == 0) {
+	if(puri.headers.len == 0) {
 		memcpy(uri->s + uri->len, param->s, param->len);
 		uri->len = uri->len + param->len;
 		new_uri->len = 0;
@@ -465,31 +512,31 @@ int add_uri_param(str *uri, str *param, str *new_uri)
 
 	/* otherwise take the long path and create new_uri */
 	at = new_uri->s;
-	switch (puri.type) {
-	case SIP_URI_T:
-	    memcpy(at, "sip:", 4);
-	    at = at + 4;
-	    break;
-	case SIPS_URI_T:
-	    memcpy(at, "sips:", 5);
-	    at = at + 5;
-	    break;
-	case TEL_URI_T:
-	    memcpy(at, "tel:", 4);
-	    at = at + 4;
-	    break;
-	case TELS_URI_T:
-	    memcpy(at, "tels:", 5);
-	    at = at + 5;
-	    break;
-	default:
-	    LM_ERR("Unknown URI scheme <%d>\n", puri.type);
-	    return 0;
+	switch(puri.type) {
+		case SIP_URI_T:
+			memcpy(at, "sip:", 4);
+			at = at + 4;
+			break;
+		case SIPS_URI_T:
+			memcpy(at, "sips:", 5);
+			at = at + 5;
+			break;
+		case TEL_URI_T:
+			memcpy(at, "tel:", 4);
+			at = at + 4;
+			break;
+		case TELS_URI_T:
+			memcpy(at, "tels:", 5);
+			at = at + 5;
+			break;
+		default:
+			LM_ERR("Unknown URI scheme <%d>\n", puri.type);
+			return 0;
 	}
-	if (puri.user.len) {
+	if(puri.user.len) {
 		memcpy(at, puri.user.s, puri.user.len);
 		at = at + puri.user.len;
-		if (puri.passwd.len) {
+		if(puri.passwd.len) {
 			*at = ':';
 			at = at + 1;
 			memcpy(at, puri.passwd.s, puri.passwd.len);
@@ -500,13 +547,13 @@ int add_uri_param(str *uri, str *param, str *new_uri)
 	}
 	memcpy(at, puri.host.s, puri.host.len);
 	at = at + puri.host.len;
-	if (puri.port.len) {
+	if(puri.port.len) {
 		*at = ':';
 		at = at + 1;
 		memcpy(at, puri.port.s, puri.port.len);
 		at = at + puri.port.len;
 	}
-	if (puri.params.len) {
+	if(puri.params.len) {
 		*at = ';';
 		at = at + 1;
 		memcpy(at, puri.params.s, puri.params.len);
@@ -528,236 +575,264 @@ int add_uri_param(str *uri, str *param, str *new_uri)
  * valid one.  Valid NAPTR records are compared based on their
  * (order,preference).
  */
-static inline int naptr_greater(struct rdata* a, struct rdata* b)
+static inline int naptr_greater(struct rdata *a, struct rdata *b)
 {
 	struct naptr_rdata *na, *nb;
 
-	if (a->type != T_NAPTR) return 1;
-	if (b->type != T_NAPTR) return 0;
+	if(a->type != T_NAPTR)
+		return 1;
+	if(b->type != T_NAPTR)
+		return 0;
 
-	na = (struct naptr_rdata*)a->rdata;
-	if (na == 0) return 1;
+	na = (struct naptr_rdata *)a->rdata;
+	if(na == 0)
+		return 1;
 
-	nb = (struct naptr_rdata*)b->rdata;
-	if (nb == 0) return 0;
-	
-	return (((na->order) << 16) + na->pref) >
-		(((nb->order) << 16) + nb->pref);
+	nb = (struct naptr_rdata *)b->rdata;
+	if(nb == 0)
+		return 0;
+
+	return (((na->order) << 16) + na->pref) > (((nb->order) << 16) + nb->pref);
 }
-	
-	
+
+
 /*
  * Bubble sorts result record list according to naptr (order,preference).
  */
-static inline void naptr_sort(struct rdata** head)
+static inline void naptr_sort(struct rdata **head)
 {
 	struct rdata *p, *q, *r, *s, *temp, *start;
 
-        /* r precedes p and s points to the node up to which comparisons
-         are to be made */ 
+	/* r precedes p and s points to the node up to which comparisons
+         are to be made */
 
 	s = NULL;
 	start = *head;
-	while ( s != start -> next ) { 
-		r = p = start ; 
-		q = p -> next ;
-		while ( p != s ) { 
-			if ( naptr_greater(p, q) ) { 
-				if ( p == start ) { 
-					temp = q -> next ; 
-					q -> next = p ; 
-					p -> next = temp ;
-					start = q ; 
-					r = q ; 
+	while(s != start->next) {
+		r = p = start;
+		q = p->next;
+		while(p != s) {
+			if(naptr_greater(p, q)) {
+				if(p == start) {
+					temp = q->next;
+					q->next = p;
+					p->next = temp;
+					start = q;
+					r = q;
 				} else {
-					temp = q -> next ; 
-					q -> next = p ; 
-					p -> next = temp ;
-					r -> next = q ; 
-					r = q ; 
-				} 
+					temp = q->next;
+					q->next = p;
+					p->next = temp;
+					r->next = q;
+					r = q;
+				}
 			} else {
-				r = p ; 
-				p = p -> next ; 
-			} 
-			q = p -> next ; 
-			if ( q == s ) s = p ; 
+				r = p;
+				p = p->next;
+			}
+			q = p->next;
+			if(q == s)
+				s = p;
 		}
 	}
 	*head = start;
-}	
-	
+}
+
 
 /*
  * Makes enum query on name.  On success, rewrites user part and 
  * replaces Request-URI.
  */
-int do_query(struct sip_msg* _msg, char *user, char *name, str *service) {
+int do_query(struct sip_msg *_msg, char *user, char *name, str *service)
+{
 
-    char uri[MAX_URI_SIZE];
-    char new_uri[MAX_URI_SIZE];
-    unsigned int priority, curr_prio, first;
-    qvalue_t q;
-    struct rdata* head;
-    struct rdata* l;
-    struct naptr_rdata* naptr;
-    str pattern, replacement, result, new_result;
+	char uri[MAX_URI_SIZE];
+	char new_uri[MAX_URI_SIZE];
+	unsigned int priority, curr_prio, first;
+	qvalue_t q;
+	struct rdata *head;
+	struct rdata *l;
+	struct naptr_rdata *naptr;
+	str pattern, replacement, result, new_result;
 
-    head = get_record(name, T_NAPTR, RES_ONLY_TYPE);
-    
-    if (head == 0) {
-	LM_DBG("No NAPTR record found for %s.\n", name);
-	return -1;
-    }
-    
-    naptr_sort(&head);
+	head = get_record(name, T_NAPTR, RES_ONLY_TYPE);
 
-    q = MAX_Q - 10;
-    curr_prio = 0;
-    first = 1;
-
-    for (l = head; l; l = l->next) {
-
-	if (l->type != T_NAPTR) continue; /*should never happen*/
-	naptr = (struct naptr_rdata*)l->rdata;
-	if (naptr == 0) {
-	    LM_ERR("Null rdata in DNS response\n");
-	    continue;
+	if(head == 0) {
+		LM_DBG("No NAPTR record found for %s.\n", name);
+		return -1;
 	}
 
-	LM_DBG("ENUM query on %s: order %u, pref %u, flen %u, flags '%.*s', "
-	       "slen %u, services '%.*s', rlen %u, regexp '%.*s'\n",
-	       name, naptr->order, naptr->pref,
-	    naptr->flags_len, (int)(naptr->flags_len), ZSW(naptr->flags),
-	    naptr->services_len,
-	    (int)(naptr->services_len), ZSW(naptr->services), naptr->regexp_len,
-	    (int)(naptr->regexp_len), ZSW(naptr->regexp));
-	
-	if (sip_match(naptr, service) == 0) continue;
-	
-	if (parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len,
-			       &pattern, &replacement) < 0) {
-	    LM_ERR("Parsing of NAPTR regexp failed\n");
-	    continue;
+	naptr_sort(&head);
+
+	q = MAX_Q - 10;
+	curr_prio = 0;
+	first = 1;
+
+	for(l = head; l; l = l->next) {
+
+		if(l->type != T_NAPTR)
+			continue; /*should never happen*/
+		naptr = (struct naptr_rdata *)l->rdata;
+		if(naptr == 0) {
+			LM_ERR("Null rdata in DNS response\n");
+			continue;
+		}
+
+		LM_DBG("ENUM query on %s: order %u, pref %u, flen %u, flags '%.*s', "
+			   "slen %u, services '%.*s', rlen %u, regexp '%.*s'\n",
+				name, naptr->order, naptr->pref, naptr->flags_len,
+				(int)(naptr->flags_len), ZSW(naptr->flags), naptr->services_len,
+				(int)(naptr->services_len), ZSW(naptr->services),
+				naptr->regexp_len, (int)(naptr->regexp_len),
+				ZSW(naptr->regexp));
+
+		if(sip_match(naptr, service) == 0)
+			continue;
+
+		if(parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len, &pattern,
+				   &replacement)
+				< 0) {
+			LM_ERR("Parsing of NAPTR regexp failed\n");
+			continue;
+		}
+		result.s = &(uri[0]);
+		result.len = MAX_URI_SIZE;
+		/* Avoid making copies of pattern and replacement */
+		pattern.s[pattern.len] = (char)0;
+		replacement.s[replacement.len] = (char)0;
+		if(reg_replace(pattern.s, replacement.s, user, &result) < 0) {
+			pattern.s[pattern.len] = '!';
+			replacement.s[replacement.len] = '!';
+			LM_ERR("Regexp replace failed\n");
+			continue;
+		}
+		LM_DBG("Resulted in replacement: '%.*s'\n", result.len, ZSW(result.s));
+		pattern.s[pattern.len] = '!';
+		replacement.s[replacement.len] = '!';
+
+		if(param.len > 0) {
+			if(result.len + param.len > MAX_URI_SIZE - 1) {
+				LM_ERR("URI is too long\n");
+				continue;
+			}
+			new_result.s = &(new_uri[0]);
+			new_result.len = MAX_URI_SIZE;
+			if(add_uri_param(&result, &param, &new_result) == 0) {
+				LM_ERR("Parsing of URI <%.*s> failed\n", result.len, result.s);
+				continue;
+			}
+			if(new_result.len > 0) {
+				result = new_result;
+			}
+		}
+
+		if(first) {
+			if(rewrite_uri(_msg, &result) == -1) {
+				goto done;
+			}
+			set_ruri_q(q);
+			first = 0;
+			curr_prio = ((naptr->order) << 16) + naptr->pref;
+		} else {
+			priority = ((naptr->order) << 16) + naptr->pref;
+			if(priority > curr_prio) {
+				q = q - 10;
+				curr_prio = priority;
+			}
+			if(append_branch(_msg, &result, 0, 0, q, 0, 0, 0, 0, 0, 0) == -1) {
+				goto done;
+			}
+		}
 	}
-	result.s = &(uri[0]);
-	result.len = MAX_URI_SIZE;
-	/* Avoid making copies of pattern and replacement */
-	pattern.s[pattern.len] = (char)0;
-	replacement.s[replacement.len] = (char)0;
-	if (reg_replace(pattern.s, replacement.s, user, &result) < 0) {
-	    pattern.s[pattern.len] = '!';
-	    replacement.s[replacement.len] = '!';
-	    LM_ERR("Regexp replace failed\n");
-	    continue;
-	}
-	LM_DBG("Resulted in replacement: '%.*s'\n", result.len, ZSW(result.s));
-	pattern.s[pattern.len] = '!';
-	replacement.s[replacement.len] = '!';
-	
-	if (param.len > 0) {
-	    if (result.len + param.len > MAX_URI_SIZE - 1) {
-		LM_ERR("URI is too long\n");
-		continue;
-	    }
-	    new_result.s = &(new_uri[0]);
-	    new_result.len = MAX_URI_SIZE;
-	    if (add_uri_param(&result, &param, &new_result) == 0) {
-		LM_ERR("Parsing of URI <%.*s> failed\n",
-		       result.len, result.s);
-		continue;
-	    }
-	    if (new_result.len > 0) {
-		result = new_result;
-	    }
-	}
-	
-	if (first) {
-	    if (rewrite_uri(_msg, &result) == -1) {
-		goto done;
-	    }
-	    set_ruri_q(q);
-	    first = 0;
-	    curr_prio = ((naptr->order) << 16) + naptr->pref;
-	} else {
-	    priority = ((naptr->order) << 16) + naptr->pref;
-	    if (priority > curr_prio) {
-		q = q - 10;
-		curr_prio = priority;
-	    }
-	    if (append_branch(_msg, &result, 0, 0, q, 0, 0, 0, 0, 0, 0) == -1) {
-		goto done;
-	    }
-	}
-    }
 
 done:
-    free_rdata_list(head);
-    return first ? -1 : 1;
+	free_rdata_list(head);
+	return first ? -1 : 1;
 }
 
-	
+
 /*
  * Call enum_query_2 with module parameter suffix and default service.
  */
-int enum_query_0(struct sip_msg* _msg, char* _str1, char* _str2)
+int enum_query_0(struct sip_msg *_msg, char *_str1, char *_str2)
 {
 	return enum_query(_msg, &suffix, &service);
 }
 
+/**
+ *
+ */
+int ki_enum_query(sip_msg_t *msg)
+{
+	return enum_query(msg, &suffix, &service);
+}
 
 /*
  * Call enum_query_2 with given suffix and default service.
  */
-int enum_query_1(struct sip_msg* _msg, char* _suffix, char* _str2)
+int enum_query_1(struct sip_msg *_msg, char *_suffix, char *_str2)
 {
-    str suffix;
-  
-    if (get_str_fparam(&suffix, _msg, (fparam_t*)_suffix) != 0) {
-	LM_ERR("unable to get suffix\n");
-	return -1;
-    }
+	str vsuffix;
 
-    return enum_query(_msg, &suffix, &service);
+	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+		LM_ERR("unable to get suffix parameter\n");
+		return -1;
+	}
+
+	return enum_query(_msg, &vsuffix, &service);
 }
 
+/**
+ *
+ */
+int ki_enum_query_suffix(sip_msg_t *msg, str *vsuffix)
+{
+	return enum_query(msg, vsuffix, &service);
+}
 
 /*
  * Call enum_query_2 with given suffix and service.
  */
-int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
+int enum_query_2(struct sip_msg *_msg, char *_suffix, char *_service)
 {
-    str suffix, *service;
-  
-    if (get_str_fparam(&suffix, _msg, (fparam_t*)_suffix) != 0) {
-	LM_ERR("unable to get suffix\n");
-	return -1;
-    }
+	str vsuffix, vservice;
 
-    service = (str*)_service;
-    if ((service == NULL) || (service->len == 0)) {
-	LM_ERR("invalid service parameter");
-	return -1;
-    }
+	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+		LM_ERR("unable to get suffix parameter\n");
+		return -1;
+	}
 
-    return enum_query(_msg, &suffix, service);
+	if(fixup_get_svalue(_msg, (gparam_t*)_service, &vservice)<0
+			|| vservice.len<=0) {
+		LM_ERR("unable to get service parameter\n");
+		return -1;
+	}
+
+	return enum_query(_msg, &vsuffix, &vservice);
 }
 
+/**
+ *
+ */
+int ki_enum_query_suffix_service(sip_msg_t *msg, str *vsuffix, str *vservice)
+{
+	return enum_query(msg, vsuffix, vservice);
+}
 
 /*
  * See documentation in README file.
  */
-int enum_query(struct sip_msg* _msg, str* suffix, str* service)
+int enum_query(struct sip_msg *_msg, str *suffix, str *service)
 {
 	char *user_s;
 	int user_len, i, j;
 	char name[MAX_DOMAIN_SIZE];
 	char string[MAX_NUM_LEN];
 
-	LM_DBG("enum_query on suffix <%.*s> service <%.*s>\n",
-	       suffix->len, suffix->s, service->len, service->s);
+	LM_DBG("enum_query on suffix <%.*s> service <%.*s>\n", suffix->len,
+			suffix->s, service->len, service->s);
 
-	if (parse_sip_msg_uri(_msg) < 0) {
+	if(parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("Parsing of R-URI failed\n");
 		return -1;
 	}
@@ -765,9 +840,8 @@ int enum_query(struct sip_msg* _msg, str* suffix, str* service)
 	user_s = _msg->parsed_uri.user.s;
 	user_len = _msg->parsed_uri.user.len;
 
-	if (is_e164(&(_msg->parsed_uri.user)) == -1) {
-		LM_ERR("R-URI user '<%.*s>' is not an E164 number\n",
-		user_len, user_s);
+	if(is_e164(&(_msg->parsed_uri.user)) == -1) {
+		LM_ERR("R-URI user '<%.*s>' is not an E164 number\n", user_len, user_s);
 		return -1;
 	}
 
@@ -775,7 +849,7 @@ int enum_query(struct sip_msg* _msg, str* suffix, str* service)
 	string[user_len] = (char)0;
 
 	j = 0;
-	for (i = user_len - 1; i > 0; i--) {
+	for(i = user_len - 1; i > 0; i--) {
 		name[j] = user_s[i];
 		name[j + 1] = '.';
 		j = j + 2;
@@ -790,46 +864,27 @@ int enum_query(struct sip_msg* _msg, str* suffix, str* service)
 /*********** INFRASTRUCTURE ENUM ***************/
 
 /*
- * Call enum_query_2 with default suffix and service.
+ *
  */
-int i_enum_query_0(struct sip_msg* _msg, char* _suffix, char* _service)
-{
-	return i_enum_query_2(_msg, (char *)(&i_suffix), (char *)(&service));
-}
-
-/*
- * Call enum_query_2 with given suffix and default service.
- */
-int i_enum_query_1(struct sip_msg* _msg, char* _suffix, char* _service)
-{
-	return i_enum_query_2(_msg, _suffix, (char *)(&service));
-}
-
-
-int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
+int i_enum_query_helper(sip_msg_t *_msg, str *suffix, str *service)
 {
 	char *user_s;
 	int user_len, i, j;
 	char name[MAX_DOMAIN_SIZE];
 	char apex[MAX_COMPONENT_SIZE + 1];
 	char separator[MAX_COMPONENT_SIZE + 1];
-	int sdl = 0;    /* subdomain location: infrastructure enum offset */
+	int sdl = 0; /* subdomain location: infrastructure enum offset */
 	int cc_len;
-	struct rdata* head;
+	struct rdata *head;
 
 	char string[MAX_NUM_LEN];
 
-	str *suffix, *service;
-
-	suffix = (str*)_suffix;
-	service = (str*)_service;
-
-	if (parse_sip_msg_uri(_msg) < 0) {
+	if(parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("Parsing of R-URI failed\n");
 		return -1;
 	}
 
-	if (is_e164(&(_msg->parsed_uri.user)) == -1) {
+	if(is_e164(&(_msg->parsed_uri.user)) == -1) {
 		LM_ERR("R-URI user is not an E164 number\n");
 		return -1;
 	}
@@ -838,15 +893,16 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	user_len = _msg->parsed_uri.user.len;
 
 	/* make sure we don't run out of space in strings */
-	if (( 2*user_len + MAX_COMPONENT_SIZE + MAX_COMPONENT_SIZE + 4) > MAX_DOMAIN_SIZE) {
+	if((2 * user_len + MAX_COMPONENT_SIZE + MAX_COMPONENT_SIZE + 4)
+			> MAX_DOMAIN_SIZE) {
 		LM_ERR("Strings too long\n");
 		return -1;
 	}
-	if ( i_branchlabel.len > MAX_COMPONENT_SIZE ) {
+	if(i_branchlabel.len > MAX_COMPONENT_SIZE) {
 		LM_ERR("i_branchlabel too long\n");
 		return -1;
 	}
-	if ( suffix->len > MAX_COMPONENT_SIZE ) {
+	if(suffix->len > MAX_COMPONENT_SIZE) {
 		LM_ERR("Suffix too long\n");
 		return -1;
 	}
@@ -856,14 +912,14 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	string[user_len] = (char)0;
 
 	/* Set up parameters as for user-enum */
-	memcpy(apex,  suffix->s , suffix->len);
+	memcpy(apex, suffix->s, suffix->len);
 	apex[suffix->len] = (char)0;
-	sdl = 0;		/* where to insert i-enum separator */
-	separator[0] = 0;	/* don't insert anything */
+	sdl = 0;		  /* where to insert i-enum separator */
+	separator[0] = 0; /* don't insert anything */
 
 	cc_len = cclen(string + 1);
 
-	if (!strncasecmp(i_bl_alg.s,"ebl",i_bl_alg.len)) {
+	if(!strncasecmp(i_bl_alg.s, "ebl", i_bl_alg.len)) {
 		sdl = cc_len; /* default */
 
 		j = 0;
@@ -871,32 +927,32 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 		j += i_branchlabel.len;
 		name[j++] = '.';
 
-		for (i = cc_len ; i > 0; i--) {
+		for(i = cc_len; i > 0; i--) {
 			name[j++] = user_s[i];
 			name[j++] = '.';
 		}
 		memcpy(name + j, suffix->s, suffix->len + 1);
 
-		LM_DBG("Looking for EBL record for %s.\n", name); 
+		LM_DBG("Looking for EBL record for %s.\n", name);
 		head = get_record(name, T_EBL, RES_ONLY_TYPE);
-		if (head == 0) {
-			LM_DBG("No EBL found for %s. Defaulting to user ENUM.\n",name);
+		if(head == 0) {
+			LM_DBG("No EBL found for %s. Defaulting to user ENUM.\n", name);
 		} else {
-		    	struct ebl_rdata* ebl;
-			ebl = (struct ebl_rdata *) head->rdata;
+			struct ebl_rdata *ebl;
+			ebl = (struct ebl_rdata *)head->rdata;
 
-			LM_DBG("EBL record for %s is %d / %.*s / %.*s.\n",
-			       name, ebl->position, (int)ebl->separator_len,
-			       ebl->separator,(int)ebl->apex_len, ebl->apex);
+			LM_DBG("EBL record for %s is %d / %.*s / %.*s.\n", name,
+					ebl->position, (int)ebl->separator_len, ebl->separator,
+					(int)ebl->apex_len, ebl->apex);
 
-			if ((ebl->apex_len > MAX_COMPONENT_SIZE) || (ebl->separator_len > MAX_COMPONENT_SIZE)) {
-				LM_ERR("EBL strings too long\n"); 
+			if((ebl->apex_len > MAX_COMPONENT_SIZE)
+					|| (ebl->separator_len > MAX_COMPONENT_SIZE)) {
+				LM_ERR("EBL strings too long\n");
 				return -1;
 			}
 
-			if (ebl->position > 15)  {
-				LM_ERR("EBL position too large (%d)\n",
-				       ebl->position); 
+			if(ebl->position > 15) {
+				LM_ERR("EBL position too large (%d)\n", ebl->position);
 				return -1;
 			}
 
@@ -909,7 +965,7 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 			apex[ebl->apex_len] = 0;
 			free_rdata_list(head);
 		}
-	} else if (!strncasecmp(i_bl_alg.s,"txt",i_bl_alg.len)) {
+	} else if(!strncasecmp(i_bl_alg.s, "txt", i_bl_alg.len)) {
 		sdl = cc_len; /* default */
 		memcpy(separator, i_branchlabel.s, i_branchlabel.len);
 		separator[i_branchlabel.len] = 0;
@@ -920,27 +976,26 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 		j += i_branchlabel.len;
 		name[j++] = '.';
 
-		for (i = cc_len ; i > 0; i--) {
+		for(i = cc_len; i > 0; i--) {
 			name[j++] = user_s[i];
 			name[j++] = '.';
 		}
 		memcpy(name + j, suffix->s, suffix->len + 1);
 
 		head = get_record(name, T_TXT, RES_ONLY_TYPE);
-		if (head == 0) {
-			LM_DBG("TXT found for %s. Defaulting to %d\n",
-			       name, cc_len);
+		if(head == 0) {
+			LM_DBG("TXT found for %s. Defaulting to %d\n", name, cc_len);
 		} else {
-			sdl = atoi(((struct txt_rdata*)head->rdata)->txt[0].cstr);
+			sdl = atoi(((struct txt_rdata *)head->rdata)->txt[0].cstr);
 			LM_DBG("TXT record for %s is %d.\n", name, sdl);
 
-			if ((sdl < 0) || (sdl > 10)) {
+			if((sdl < 0) || (sdl > 10)) {
 				LM_ERR("Sdl %d out of bounds. Set back to cc_len.\n", sdl);
 				sdl = cc_len;
 			}
 			free_rdata_list(head);
 		}
-	} else {	/* defaults to CC */
+	} else { /* defaults to CC */
 		sdl = cc_len;
 		memcpy(separator, i_branchlabel.s, i_branchlabel.len);
 		separator[i_branchlabel.len] = 0;
@@ -949,50 +1004,93 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 
 	j = 0;
 	sdl++; /* to avoid comparing i to (sdl+1) */
-	for (i = user_len - 1; i > 0; i--) {
+	for(i = user_len - 1; i > 0; i--) {
 		name[j] = user_s[i];
 		name[j + 1] = '.';
 		j = j + 2;
-		if (separator[0] && (i == sdl)) { /* insert the I-ENUM separator here? */
-			strcpy(name + j, separator);  /* we've checked string sizes. */
+		if(separator[0] && (i == sdl)) { /* insert the I-ENUM separator here? */
+			strcpy(name + j, separator); /* we've checked string sizes. */
 			j += strlen(separator);
 			name[j++] = '.';
 		}
 	}
 
-	memcpy(name + j, apex, strlen(apex)+1);
+	memcpy(name + j, apex, strlen(apex) + 1);
 
 	return do_query(_msg, string, name, service);
 }
 
+/*
+ * Call enum_query_2 with default suffix and service.
+ */
+int i_enum_query_0(struct sip_msg *_msg, char *_suffix, char *_service)
+{
+	return i_enum_query_helper(_msg, &i_suffix, &service);
+}
 
+/**
+ *
+ */
+int ki_i_enum_query(sip_msg_t *msg)
+{
+	return i_enum_query_helper(msg, &suffix, &service);
+}
+
+/*
+ * Call enum_query_2 with given suffix and default service.
+ */
+int i_enum_query_1(struct sip_msg *_msg, char *_suffix, char *_service)
+{
+	str vsuffix;
+
+	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+		LM_ERR("unable to get suffix parameter\n");
+		return -1;
+	}
+
+	return i_enum_query_helper(_msg, &vsuffix, &service);
+}
+
+/**
+ *
+ */
+int ki_i_enum_query_suffix(sip_msg_t *msg, str *vsuffix)
+{
+	return i_enum_query_helper(msg, vsuffix, &service);
+}
+
+int i_enum_query_2(struct sip_msg *_msg, char *_suffix, char *_service)
+{
+	str vsuffix, vservice;
+
+	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+		LM_ERR("unable to get suffix parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(_msg, (gparam_t*)_service, &vservice)<0
+			|| vservice.len<=0) {
+		LM_ERR("unable to get service parameter\n");
+		return -1;
+	}
+
+	return i_enum_query_helper(_msg, &vsuffix, &vservice);
+}
+
+/**
+ *
+ */
+int ki_i_enum_query_suffix_service(sip_msg_t *msg, str *vsuffix, str *vservice)
+{
+	return i_enum_query_helper(msg, vsuffix, vservice);
+}
 
 /******************* FQUERY *******************/
 
-
 /*
- * Call enum_pv_query_3 with pv arg, module parameter suffix,
- * and default service.
+ *
  */
-int enum_pv_query_1(struct sip_msg* _msg, char* _sp)
-{
-    return enum_pv_query_3(_msg, _sp, (char *)(&suffix), (char *)(&service));
-}
-
-/*
- * Call enum_pv_query_3 with pv and suffix args and default service.
- */
-int enum_pv_query_2(struct sip_msg* _msg, char* _sp, char* _suffix)
-{
-    return enum_pv_query_3(_msg, _sp, _suffix, (char *)(&service));
-}
-
-/*
- * See documentation in README file.
- */
-
-int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
-		    char* _service)
+int enum_pv_query_helper(sip_msg_t *_msg, str *ve164, str *suffix, str *service)
 {
 	char *user_s;
 	int user_len, i, j, first;
@@ -1001,49 +1099,25 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 	char new_uri[MAX_URI_SIZE];
 	unsigned int priority, curr_prio;
 	qvalue_t q;
-	struct rdata* head;
-	struct rdata* l;
-	struct naptr_rdata* naptr;
+	struct rdata *head;
+	struct rdata *l;
+	struct naptr_rdata *naptr;
 	str pattern, replacement, result, new_result;
-	str *suffix, *service;
 	char string[MAX_NUM_LEN];
-	pv_spec_t *sp;
-	pv_value_t pv_val;
 
-	sp = (pv_spec_t *)_sp;
-	suffix = (str*)_suffix;
-	service = (str*)_service;
-
-	/*
-	 * Get E.164 number from pseudo variable
-         */
-	if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-	    if (pv_val.flags & PV_VAL_STR) {
-		if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
-		    LM_DBG("Missing E.164 number\n");
-		    return -1;
-		}
-	    } else {
-		LM_DBG("Pseudo variable value is not string\n");
+	if(is_e164(ve164) == -1) {
+		LM_ERR("pseudo variable does not contain an E164 number\n");
 		return -1;
 	}
-	} else {
-	    LM_DBG("Cannot get pseudo variable value\n");
-	    return -1;
-	}
-	if (is_e164(&(pv_val.rs)) == -1) {
-	    LM_ERR("pseudo variable does not contain an E164 number\n");
-	    return -1;
-	}
 
-	user_s = pv_val.rs.s;
-	user_len = pv_val.rs.len;
+	user_s = ve164->s;
+	user_len = ve164->len;
 
 	memcpy(&(string[0]), user_s, user_len);
 	string[user_len] = (char)0;
 
 	j = 0;
-	for (i = user_len - 1; i > 0; i--) {
+	for(i = user_len - 1; i > 0; i--) {
 		name[j] = user_s[i];
 		name[j + 1] = '.';
 		j = j + 2;
@@ -1053,7 +1127,7 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 
 	head = get_record(name, T_NAPTR, RES_ONLY_TYPE);
 
-	if (head == 0) {
+	if(head == 0) {
 		LM_DBG("No NAPTR record found for %s.\n", name);
 		return -1;
 	}
@@ -1064,28 +1138,31 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 	curr_prio = 0;
 	first = 1;
 
-	for (l = head; l; l = l->next) {
+	for(l = head; l; l = l->next) {
 
-		if (l->type != T_NAPTR) continue; /*should never happen*/
-		naptr = (struct naptr_rdata*)l->rdata;
-		if (naptr == 0) {
+		if(l->type != T_NAPTR)
+			continue; /*should never happen*/
+		naptr = (struct naptr_rdata *)l->rdata;
+		if(naptr == 0) {
 			LM_ERR("Null rdata in DNS response\n");
 			continue;
 		}
 
 		LM_DBG("ENUM query on %s: order %u, pref %u, flen %u, flags "
-		       "'%.*s', slen %u, services '%.*s', rlen %u, "
-		       "regexp '%.*s'\n",
-		       name, naptr->order, naptr->pref,
-		    naptr->flags_len, (int)(naptr->flags_len), ZSW(naptr->flags),
-		    naptr->services_len,
-		    (int)(naptr->services_len), ZSW(naptr->services), naptr->regexp_len,
-		    (int)(naptr->regexp_len), ZSW(naptr->regexp));
+			   "'%.*s', slen %u, services '%.*s', rlen %u, "
+			   "regexp '%.*s'\n",
+				name, naptr->order, naptr->pref, naptr->flags_len,
+				(int)(naptr->flags_len), ZSW(naptr->flags), naptr->services_len,
+				(int)(naptr->services_len), ZSW(naptr->services),
+				naptr->regexp_len, (int)(naptr->regexp_len),
+				ZSW(naptr->regexp));
 
-		if (sip_match(naptr, service) == 0) continue;
+		if(sip_match(naptr, service) == 0)
+			continue;
 
-		if (parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len,
-				       &pattern, &replacement) < 0) {
+		if(parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len, &pattern,
+				   &replacement)
+				< 0) {
 			LM_ERR("Parsing of NAPTR regexp failed\n");
 			continue;
 		}
@@ -1094,37 +1171,34 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 		/* Avoid making copies of pattern and replacement */
 		pattern.s[pattern.len] = (char)0;
 		replacement.s[replacement.len] = (char)0;
-		if (reg_replace(pattern.s, replacement.s, &(string[0]),
-				&result) < 0) {
+		if(reg_replace(pattern.s, replacement.s, &(string[0]), &result) < 0) {
 			pattern.s[pattern.len] = '!';
 			replacement.s[replacement.len] = '!';
 			LM_ERR("Regexp replace failed\n");
 			continue;
 		}
-		LM_DBG("Resulted in replacement: '%.*s'\n",
-		       result.len, ZSW(result.s));
+		LM_DBG("Resulted in replacement: '%.*s'\n", result.len, ZSW(result.s));
 		pattern.s[pattern.len] = '!';
 		replacement.s[replacement.len] = '!';
-		
-		if (param.len > 0) {
-			if (result.len + param.len > MAX_URI_SIZE - 1) {
+
+		if(param.len > 0) {
+			if(result.len + param.len > MAX_URI_SIZE - 1) {
 				LM_ERR("URI is too long\n");
 				continue;
 			}
 			new_result.s = &(new_uri[0]);
 			new_result.len = MAX_URI_SIZE;
-			if (add_uri_param(&result, &param, &new_result) == 0) {
-				LM_ERR("Parsing of URI <%.*s> failed\n",
-				       result.len, result.s);
+			if(add_uri_param(&result, &param, &new_result) == 0) {
+				LM_ERR("Parsing of URI <%.*s> failed\n", result.len, result.s);
 				continue;
 			}
-			if (new_result.len > 0) {
+			if(new_result.len > 0) {
 				result = new_result;
 			}
 		}
 
-		if (first) {
-			if (rewrite_uri(_msg, &result) == -1) {
+		if(first) {
+			if(rewrite_uri(_msg, &result) == -1) {
 				goto done;
 			}
 			set_ruri_q(q);
@@ -1132,12 +1206,11 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 			curr_prio = ((naptr->order) << 16) + naptr->pref;
 		} else {
 			priority = ((naptr->order) << 16) + naptr->pref;
-			if (priority > curr_prio) {
+			if(priority > curr_prio) {
 				q = q - 10;
 				curr_prio = priority;
 			}
-			if (append_branch(_msg, &result, 0, 0, q, 0, 0, 0, 0, 0, 0)
-			    == -1) {
+			if(append_branch(_msg, &result, 0, 0, q, 0, 0, 0, 0, 0, 0) == -1) {
 				goto done;
 			}
 		}
@@ -1148,3 +1221,89 @@ done:
 	return first ? -1 : 1;
 }
 
+/*
+ * Call enum_pv_query_3 with pv arg, module parameter suffix,
+ * and default service.
+ */
+int enum_pv_query_1(sip_msg_t *_msg, char *_sp, char *_p2)
+{
+	str ve164;
+
+	if(fixup_get_svalue(_msg, (gparam_t*)_sp, &ve164)<0) {
+		LM_ERR("cannot get e164 parameter value\n");
+		return -1;
+	}
+
+	return enum_pv_query_helper(_msg, &ve164, &suffix, &service);
+}
+
+/**
+ *
+ */
+int ki_enum_pv_query(sip_msg_t *msg, str *ve164)
+{
+	return enum_pv_query_helper(msg, ve164, &suffix, &service);
+}
+
+/*
+ * Call enum_pv_query_3 with pv and suffix args and default service.
+ */
+int enum_pv_query_2(sip_msg_t *_msg, char *_sp, char *_suffix)
+{
+	str ve164;
+	str vsuffix;
+
+	if(fixup_get_svalue(_msg, (gparam_t*)_sp, &ve164)<0) {
+		LM_ERR("cannot get e164 parameter value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+		LM_ERR("cannot get suffix parameter value\n");
+		return -1;
+	}
+
+	return enum_pv_query_helper(_msg, &ve164, &vsuffix, &service);
+}
+
+/**
+ *
+ */
+int ki_enum_pv_query_suffix(sip_msg_t *msg, str *ve164, str *vsuffix)
+{
+	return enum_pv_query_helper(msg, ve164, vsuffix, &service);
+}
+
+/*
+ * See documentation in README file.
+ */
+
+int enum_pv_query_3(sip_msg_t *_msg, char *_sp, char *_suffix, char *_service)
+{
+	str ve164;
+	str vsuffix;
+	str vservice;
+
+	if(fixup_get_svalue(_msg, (gparam_t*)_sp, &ve164)<0) {
+		LM_ERR("cannot get e164 parameter value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+		LM_ERR("cannot get suffix parameter value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_msg, (gparam_t*)_service, &vservice)<0) {
+		LM_ERR("cannot get service parameter value\n");
+		return -1;
+	}
+
+	return enum_pv_query_helper(_msg, &ve164, &vsuffix, &vservice);
+}
+
+/**
+ *
+ */
+int ki_enum_pv_query_suffix_service(sip_msg_t *msg, str *ve164, str *vsuffix,
+		str *vservice)
+{
+	return enum_pv_query_helper(msg, ve164, vsuffix, vservice);
+}

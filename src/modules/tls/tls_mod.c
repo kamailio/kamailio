@@ -40,6 +40,7 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/dprint.h"
+#include "../../core/kemi.h"
 #include "tls_init.h"
 #include "tls_server.h"
 #include "tls_domain.h"
@@ -77,7 +78,7 @@ static int mod_init(void);
 static int mod_child(int rank);
 static void destroy(void);
 
-static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2);
+static int w_is_peer_verified(struct sip_msg* msg, char* p1, char* p2);
 
 MODULE_VERSION
 
@@ -166,7 +167,7 @@ int sr_tls_renegotiation = 0;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_peer_verified", (cmd_function)is_peer_verified,   0, 0, 0,
+	{"is_peer_verified", (cmd_function)w_is_peer_verified,   0, 0, 0,
 			REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };
@@ -261,25 +262,6 @@ static tls_domains_cfg_t* tls_use_modparams(void)
 }
 #endif
 
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	if (tls_disable) {
-		LOG(L_WARN, "tls support is disabled "
-				"(set enable_tls=1 in the config to enable it)\n");
-		return 0;
-	}
-
-	/* shm is used, be sure it is initialized */
-	if(!shm_initialized() && init_shm()<0)
-		return -1;
-
-	if(tls_pre_init()<0)
-		return -1;
-
-	register_tls_hooks(&tls_h);
-
-	return 0;
-}
 
 static int mod_init(void)
 {
@@ -403,7 +385,7 @@ static void destroy(void)
 }
 
 
-static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
+static int ki_is_peer_verified(sip_msg_t* msg)
 {
 	struct tcp_connection *c;
 	SSL *ssl;
@@ -465,4 +447,48 @@ static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 	LM_DBG("tlsops:is_peer_verified: peer is successfully verified"
 		"...done\n");
 	return 1;
+}
+
+static int w_is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
+{
+	return ki_is_peer_verified(msg);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_tls_exports[] = {
+	{ str_init("tls"), str_init("is_peer_verified"),
+		SR_KEMIP_INT, ki_is_peer_verified,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	if (tls_disable) {
+		LOG(L_WARN, "tls support is disabled "
+				"(set enable_tls=1 in the config to enable it)\n");
+		return 0;
+	}
+
+	/* shm is used, be sure it is initialized */
+	if(!shm_initialized() && init_shm()<0)
+		return -1;
+
+	if(tls_pre_init()<0)
+		return -1;
+
+	register_tls_hooks(&tls_h);
+	sr_kemi_modules_add(sr_kemi_tls_exports);
+
+	return 0;
 }

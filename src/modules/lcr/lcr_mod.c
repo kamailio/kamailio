@@ -69,13 +69,14 @@
 #include "lcr_rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../modules/tm/tm_load.h"
+#include "../mtree/api.h"
 
 MODULE_VERSION
 
 /*
  * versions of database tables required by the module.
  */
-#define LCR_RULE_TABLE_VERSION 2
+#define LCR_RULE_TABLE_VERSION 3
 #define LCR_RULE_TARGET_TABLE_VERSION 1
 #define LCR_GW_TABLE_VERSION 3
 
@@ -89,6 +90,7 @@ MODULE_VERSION
 #define LCR_ID_COL "lcr_id"
 #define PREFIX_COL "prefix"
 #define FROM_URI_COL "from_uri"
+#define MT_TVALUE_COL "mt_tvalue"
 #define REQUEST_URI_COL "request_uri"
 #define STOPPER_COL "stopper"
 #define ENABLED_COL "enabled"
@@ -139,6 +141,7 @@ static str id_col           = str_init(ID_COL);
 static str lcr_id_col       = str_init(LCR_ID_COL);
 static str prefix_col       = str_init(PREFIX_COL);
 static str from_uri_col     = str_init(FROM_URI_COL);
+static str mt_tvalue_col    = str_init(MT_TVALUE_COL);
 static str request_uri_col  = str_init(REQUEST_URI_COL);
 static str stopper_col      = str_init(STOPPER_COL);
 static str enabled_col      = str_init(ENABLED_COL);
@@ -168,6 +171,7 @@ static char *tag_avp_param = NULL;
 static char *flags_avp_param = NULL;
 static char *defunct_gw_avp_param = NULL;
 static char *lcr_id_avp_param = NULL;
+static char *mt_pv_values_param = NULL;
 
 /* max number of lcr instances */
 unsigned int lcr_count_param = DEF_LCR_COUNT;
@@ -194,6 +198,9 @@ str ping_from_param = {"sip:pinger@localhost", 20};
 /* use priority as main ordering criteria */
 static unsigned int priority_ordering_param = 0;
 
+/* mtree tree name */
+str mtree_param = {"lcr", 3};
+
 /*
  * Other module types and variables
  */
@@ -210,6 +217,8 @@ static int     defunct_gw_avp_type;
 static int_str defunct_gw_avp;
 static int     lcr_id_avp_type;
 static int_str lcr_id_avp;
+static int     mt_pv_values_avp_type;
+static int_str mt_pv_values_avp;
 
 /* Pointer to rule hash table pointer table */
 struct rule_info ***rule_pt = (struct rule_info ***)NULL;
@@ -226,6 +235,9 @@ void ping_timer(unsigned int ticks, void* param);
 unsigned int ping_valid_reply_codes[MAX_NO_OF_REPLY_CODES];
 str ping_method = {"OPTIONS", 7};
 unsigned int ping_rc_count = 0;
+
+/* Mtree API var */
+mtree_api_t mtree_api;
 
 /*
  * Functions that are defined later
@@ -291,6 +303,7 @@ static param_export_t params[] = {
     {"id_column",                PARAM_STR, &id_col},
     {"prefix_column",            PARAM_STR, &prefix_col},
     {"from_uri_column",          PARAM_STR, &from_uri_col},
+    {"mt_tvalue_column",         PARAM_STR, &mt_tvalue_col},
     {"request_uri_column",       PARAM_STR, &request_uri_col},
     {"stopper_column",           PARAM_STR, &stopper_col},
     {"enabled_column",           PARAM_STR, &enabled_col},
@@ -317,6 +330,8 @@ static param_export_t params[] = {
     {"defunct_capability",       INT_PARAM, &defunct_capability_param},
     {"defunct_gw_avp",           PARAM_STRING, &defunct_gw_avp_param},
     {"lcr_id_avp",               PARAM_STRING, &lcr_id_avp_param},
+    {"mt_pv_values",             PARAM_STRING, &mt_pv_values_param},
+    {"mtree",                    PARAM_STRING, &mtree_param},
     {"lcr_count",                INT_PARAM, &lcr_count_param},
     {"lcr_rule_hash_size",       INT_PARAM, &lcr_rule_hash_size_param},
     {"lcr_gw_count",             INT_PARAM, &lcr_gw_count_param},
@@ -600,6 +615,26 @@ static int mod_init(void)
 	    }
 	    register_timer(ping_timer, NULL, ping_interval_param);
 	}
+    }
+
+    if (mt_pv_values_param) {
+	if (mtree_load_api(&mtree_api) < 0) {
+	    LM_ERR("could not bind mtree api\n");
+	    return -1;
+	}
+	s.s = mt_pv_values_param; s.len = strlen(s.s);
+	avp_spec = pv_cache_get(&s);
+	if (avp_spec==NULL || (avp_spec->type!=PVT_AVP)) {
+	    LM_ERR("malformed or non AVP definition <%s>\n",
+		   mt_pv_values_param);
+	    return -1;
+	}
+	if (pv_get_avp_name(0, &(avp_spec->pvp), &mt_pv_values_avp,
+			    &avp_flags) != 0) {
+	    LM_ERR("invalid AVP definition <%s>\n", mt_pv_values_param);
+	    return -1;
+	}
+	mt_pv_values_avp_type = avp_flags | AVP_VAL_STR;
     }
 
     if (fetch_rows_param < 1) {
@@ -1279,17 +1314,17 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
  */
 int reload_tables()
 {
-    unsigned int i, n, lcr_id, rule_id, gw_id, from_uri_len, request_uri_len,
-	stopper, prefix_len, enabled, gw_cnt, null_gw_ip_addr, priority,
-	weight, tmp;
-    char *prefix, *from_uri, *request_uri;
+    unsigned int i, n, lcr_id, rule_id, gw_id, from_uri_len, mt_tvalue_len,
+	request_uri_len, stopper, prefix_len, enabled, gw_cnt, null_gw_ip_addr,
+	priority, weight, tmp;
+    char *prefix, *from_uri, *mt_tvalue, *request_uri;
     db1_res_t* res = NULL;
     db_row_t* row;
     db_key_t key_cols[1];
     db_op_t op[1];
     db_val_t vals[1];
     db_key_t gw_cols[13];
-    db_key_t rule_cols[6];
+    db_key_t rule_cols[7];
     db_key_t target_cols[4];
     pcre *from_uri_re, *request_uri_re;
     struct gw_info *gws, *gw_pt_tmp;
@@ -1306,6 +1341,7 @@ int reload_tables()
     rule_cols[3] = &stopper_col;
     rule_cols[4] = &enabled_col;
     rule_cols[5] = &request_uri_col;
+    rule_cols[6] = &mt_tvalue_col;
 	
     gw_cols[0] = &gw_name_col;
     gw_cols[1] = &ip_addr_col;
@@ -1357,7 +1393,7 @@ int reload_tables()
 
 	VAL_INT(vals) = lcr_id;
 	if (DB_CAPABILITY(lcr_dbf, DB_CAP_FETCH)) {
-	    if (lcr_dbf.query(dbh, key_cols, op, vals, rule_cols, 1, 6, 0, 0)
+	    if (lcr_dbf.query(dbh, key_cols, op, vals, rule_cols, 1, 7, 0, 0)
 		< 0) {
 		LM_ERR("db query on lcr_rule table failed\n");
 		goto err;
@@ -1476,6 +1512,31 @@ int reload_tables()
 		    from_uri_re = 0;
 		}
 
+		if (!mt_pv_values_param ||
+		    (VAL_NULL(ROW_VALUES(row) + 6) == 1)) {
+		    mt_tvalue_len = 0;
+		    mt_tvalue = 0;
+		} else {
+		    switch(VAL_TYPE(ROW_VALUES(row) + 6)) {
+		    case DB1_STR:
+			mt_tvalue = VAL_STR(ROW_VALUES(row) + 6).s;
+			mt_tvalue_len = VAL_STR(ROW_VALUES(row) + 6).len;
+			break;
+		    case DB1_STRING:
+			mt_tvalue = (char *)VAL_STRING(ROW_VALUES(row) + 6);
+			mt_tvalue_len = strlen(mt_tvalue);
+			break;
+		    default:
+			LM_ERR("lcr rule <%u> mt_tvalue is not string\n",
+			       rule_id);
+			goto err;
+		    }
+		}
+		if (mt_tvalue_len > MAX_MT_TVALUE_LEN) {
+		    LM_ERR("lcr rule <%u> mt_tvalue is too long\n", rule_id);
+		    goto err;
+		}
+
 		if (VAL_NULL(ROW_VALUES(row) + 5) == 1) {
 		    request_uri_len = 0;
 		    request_uri = 0;
@@ -1511,8 +1572,10 @@ int reload_tables()
 
 		if (!rule_hash_table_insert(rules, lcr_id, rule_id, prefix_len,
 					    prefix, from_uri_len, from_uri,
-					    from_uri_re, request_uri_len,
-					    request_uri, request_uri_re, stopper) ||
+					    from_uri_re, mt_tvalue_len,
+					    mt_tvalue, request_uri_len,
+					    request_uri, request_uri_re,
+					    stopper) ||
 		    !prefix_len_insert(rules, prefix_len)) {
 		    goto err;
 		}
@@ -1945,7 +2008,14 @@ int load_gws_dummy(int lcr_id, str* ruri_user, str* from_uri, str* request_uri,
     struct gw_info *gws;
     struct target *t;
     struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
+    struct sip_uri furi;
+    struct usr_avp *avp;
+    struct search_state st;
+    int_str val;
+    sip_msg_t msg;
 
+    memset(&msg, 0, sizeof(sip_msg_t));
+    
     if ((lcr_id < 1) || (lcr_id > lcr_count_param)) {
 	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
@@ -1959,6 +2029,13 @@ int load_gws_dummy(int lcr_id, str* ruri_user, str* from_uri, str* request_uri,
     gws = gw_pt[lcr_id];
     pl = rules[lcr_rule_hash_size_param];
     gw_index = 0;
+
+    if ((from_uri->len > 0) && mt_pv_values_param) {
+	if (parse_uri(from_uri->s, from_uri->len, &furi) < 0) {
+	    LM_ERR("error while parsing caller_uri\n");
+	    return -1;
+	}
+    }
 
     now = time((time_t *)NULL);
 
@@ -1978,6 +2055,29 @@ int load_gws_dummy(int lcr_id, str* ruri_user, str* from_uri, str* request_uri,
 		(pcre_exec(rule->from_uri_re, NULL, from_uri->s,
 			   from_uri->len, 0, 0, NULL, 0) < 0))
 		goto next;
+
+	    if ((from_uri->len > 0) && (rule->mt_tvalue_len > 0)) {
+		if (mtree_api.mt_match(&msg, &mtree_param, &(furi.user), 2) ==
+		    -1) {
+		    LM_DBG("from uri user <%.*s> was not found in mtree <%.*s>\n",
+			    furi.user.len, furi.user.s,
+			    mtree_param.len, mtree_param.s);
+		    goto next;
+		}
+		for (avp = search_first_avp(mt_pv_values_avp_type,
+					    mt_pv_values_avp, &val, &st);
+		     avp; avp = search_next_avp(&st, &val)) {
+		    if ((val.s.len == rule->mt_tvalue_len) &&
+			strncmp(val.s.s, rule->mt_tvalue, val.s.len) == 0)
+			break;
+		}
+		if (avp == NULL) {
+		    LM_DBG("from uri user <%.*s> did not match mt_tvalue <%.*s>\n",
+			   furi.user.len, furi.user.s,
+			   rule->mt_tvalue_len, rule->mt_tvalue);
+		    goto next;
+		}
+	    }
 
 	    if (rule->request_uri_len != 0) {
 		if (request_uri->len == 0) {
@@ -2053,6 +2153,9 @@ static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
     struct gw_info *gws;
     struct target *t;
     char* tmp;
+    struct sip_uri furi;
+    struct usr_avp *avp;
+    struct search_state st;
 
     /* Get and check parameter values */
     if (argc < 1) {
@@ -2092,6 +2195,13 @@ static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
 
     request_uri = GET_RURI(_m);
 
+    if ((from_uri.len > 0) && mt_pv_values_param) {
+	if (parse_uri(from_uri.s, from_uri.len, &furi) < 0) {
+	    LM_ERR("error while parsing caller_uri\n");
+	    return -1;
+	}
+    }
+    
     /* Use rules and gws with index lcr_id */
     rules = rule_pt[lcr_id];
     gws = gw_pt[lcr_id];
@@ -2132,6 +2242,29 @@ static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
 		       from_uri.len, from_uri.s, rule->from_uri_len,
 		       rule->from_uri);
 		goto next;
+	    }
+
+	    /* Match from uri user */
+	    if ((from_uri.len > 0) && (rule->mt_tvalue_len > 0)) {
+		if (mtree_api.mt_match(_m, &mtree_param, &(furi.user), 2) ==
+		    -1) {
+		    LM_DBG("from uri user <%.*s> was not found in mtree\n",
+			   furi.user.len, furi.user.s);
+		    goto next;
+		}
+		for (avp = search_first_avp(mt_pv_values_avp_type,
+					    mt_pv_values_avp, &val, &st);
+		     avp; avp = search_next_avp(&st, &val)) {
+		    if ((val.s.len == rule->mt_tvalue_len) &&
+			strncmp(val.s.s, rule->mt_tvalue, val.s.len) == 0)
+			break;
+		}
+		if (avp == NULL) {
+		    LM_DBG("from uri user <%.*s> did not match mt_tvalue <%.*s>\n",
+			   furi.user.len, furi.user.s,
+			   rule->mt_tvalue_len, rule->mt_tvalue);
+		    goto next;
+		}
 	    }
 
 	    /* Match request uri */

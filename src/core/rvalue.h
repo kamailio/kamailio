@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -13,15 +13,15 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
- 
+
 /**
- * @file 
+ * @file
  * @brief Kamailio core :: rvalue expressions
  * @ingroup core
  * Module: \ref core
  * @author andrei
  */
- 
+
 #ifndef _rvalue_h_
 #define _rvalue_h_
 
@@ -142,9 +142,9 @@ enum rval_cache_type{
 };
 
 /** value cache for a rvalue struct.
-  * Used to optimize functions that would need to 
-  * get the value repeatedly (e.g. rval_get_btype() and then rval_get_int())
-  */
+ * Used to optimize functions that would need to
+ * get the value repeatedly (e.g. rval_get_btype() and then rval_get_int())
+ */
 struct rval_cache{
 	enum rval_cache_type cache_type;
 	enum rval_type val_type;
@@ -205,12 +205,12 @@ void rval_cache_clean(struct rval_cache* rvc);
  * @return pointer to a rvalue (reference to an existing one or a new
  * one, @see rv_chg_in_place() and the above comment), or 0 on error.
  */
-struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg, 
+struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg,
 							enum rval_type type, struct rvalue* v,
 							struct rval_cache* c);
 
 /** get the integer value of an rvalue. */
-int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg, int* i, 
+int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg, int* i,
 				struct rvalue* rv, struct rval_cache* cache);
 /** get the string value of an rv. */
 int rval_get_str(struct run_act_ctx* h, struct sip_msg* msg,
@@ -246,19 +246,19 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
  * modified only if rv_chg_in_place() returns true.
  * @param h run action context
  * @param msg SIP message
- * @param res_rv pointer to rvalue result, if non-null it means the 
+ * @param res_rv pointer to rvalue result, if non-null it means the
  * expression evaluated to a non-int (str), which will be stored here.
  * @param res_i pointer to int result, if res_rv==0 and the function
  * returns success => the result is an int which will be stored here.
  * @param rve expression that will be evaluated.
  * @param cache write-only value cache, it might be filled if non-null and
  * empty (rval_cache_init()). If non-null, it _must_ be rval_cache_clean()'ed
- * when done. 
+ * when done.
  * @return 0 on success, -1 on error, sets *res_rv or *res_i.
  */
 int rval_expr_eval_rvint( struct run_act_ctx* h, struct sip_msg* msg,
-						 struct rvalue** rv_res, int* i_res,
-						 struct rval_expr* rve, struct rval_cache* cache);
+						struct rvalue** rv_res, int* i_res,
+						struct rval_expr* rve, struct rval_cache* cache);
 
 
 /** guess the type of an expression.  */
@@ -273,7 +273,7 @@ int rve_has_side_effects(struct rval_expr* rve);
  * @param type filled with the type of the expression (RV_INT, RV_STR or
  *                RV_NONE if it's dynamic)
  * @param rve  checked expression
- * @param bad_rve set on failure to the subexpression for which the 
+ * @param bad_rve set on failure to the subexpression for which the
  * type check failed
  * @param bad_t set on failure to the type of the bad subexpression
  * @param exp_t set on failure to the expected type for the bad
@@ -288,7 +288,7 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 char* rval_type_name(enum rval_type type);
 
 /** create a RVE_RVAL_OP rval_expr, containing a single rval of the given type
-  */
+ */
 struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 									struct cfg_pos* pos);
 
@@ -313,8 +313,8 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
  * @return new pkg_malloc'ed rval_expr or 0 on error.
  */
 struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
-													  struct rval_expr* rve2,
-													  struct cfg_pos* pos);
+													struct rval_expr* rve2,
+													struct cfg_pos* pos);
 /** destroys a pkg_malloc'ed rve. */
 void rve_destroy(struct rval_expr* rve);
 

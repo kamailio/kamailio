@@ -69,6 +69,7 @@
 #include "bind_presence.h"
 #include "notify.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../../core/timer_proc.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
@@ -175,23 +176,23 @@ phtable_t* pres_htable=NULL;
 
 static cmd_export_t cmds[]=
 {
-	{"handle_publish",        (cmd_function)handle_publish,          0,
-		fixup_presence,0, REQUEST_ROUTE},
-	{"handle_publish",        (cmd_function)handle_publish,          1,
+	{"handle_publish",        (cmd_function)w_handle_publish,        0,
+		fixup_presence, 0, REQUEST_ROUTE},
+	{"handle_publish",        (cmd_function)w_handle_publish,        1,
 		fixup_presence, 0, REQUEST_ROUTE},
 	{"handle_subscribe",      (cmd_function)handle_subscribe0,       0,
-		fixup_subscribe,0, REQUEST_ROUTE},
+		fixup_subscribe, 0, REQUEST_ROUTE},
 	{"handle_subscribe",      (cmd_function)w_handle_subscribe,      1,
-		fixup_subscribe,0, REQUEST_ROUTE},
+		fixup_subscribe, 0, REQUEST_ROUTE},
 	{"pres_auth_status",      (cmd_function)w_pres_auth_status,      2,
-		fixup_pvar_pvar, fixup_free_pvar_pvar, REQUEST_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
 	{"pres_refresh_watchers", (cmd_function)w_pres_refresh_watchers, 3,
 		fixup_refresh_watchers, 0, ANY_ROUTE},
 	{"pres_refresh_watchers", (cmd_function)w_pres_refresh_watchers5,5,
 		fixup_refresh_watchers, 0, ANY_ROUTE},
 	{"pres_update_watchers",  (cmd_function)w_pres_update_watchers,  2,
 		fixup_update_watchers, 0, ANY_ROUTE},
-        {"pres_has_subscribers",  (cmd_function)w_pres_has_subscribers,  2,
+	{"pres_has_subscribers",  (cmd_function)w_pres_has_subscribers,  2,
                 fixup_has_subscribers, 0, ANY_ROUTE},
  	{"bind_presence",         (cmd_function)bind_presence,           1,
 		0, 0, 0},
@@ -577,36 +578,21 @@ static int fixup_presence(void** param, int param_no)
 	pv_elem_t *model;
 	str s;
 
-	if(library_mode)
-	{
+	if(library_mode) {
 		LM_ERR("Bad config - you can not call 'handle_publish' function"
 				" (db_url not set)\n");
 		return -1;
 	}
-	if(param_no== 0)
+	if(param_no==0)
 		return 0;
 
-	if(*param)
-	{
-		s.s = (char*)(*param); s.len = strlen(s.s);
-		if(pv_parse_format(&s, &model)<0)
-		{
-			LM_ERR( "wrong format[%s]\n",(char*)(*param));
-			return E_UNSPEC;
-		}
-
-		*param = (void*)model;
-		return 0;
-	}
-	LM_ERR( "null format\n");
-	return E_UNSPEC;
+	return fixup_spve_null(param, 1);
 }
 
 static int fixup_subscribe(void** param, int param_no)
 {
 
-	if(library_mode)
-	{
+	if(library_mode) {
 		LM_ERR("Bad config - you can not call 'handle_subscribe' function"
 				" (db_url not set)\n");
 		return -1;
@@ -693,6 +679,16 @@ error:
 	return -1;
 }
 
+int ki_pres_refresh_watchers(sip_msg_t *msg, str *pres, str *event, int type)
+{
+	return pres_refresh_watchers(pres, event, type, NULL, NULL);
+}
+
+int ki_pres_refresh_watchers_file(sip_msg_t *msg, str *pres, str *event,
+		int type, str *file_uri, str *filename)
+{
+	return pres_refresh_watchers(pres, event, type, file_uri, filename);
+}
 
 int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 		db_val_t* query_vals, int n_query_cols, subs_t** subs_array)
@@ -1410,51 +1406,41 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 	return 0;
 }
 
-static int w_pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
+static int w_pres_auth_status(struct sip_msg *_msg, char *_sp1, char *_sp2)
 {
-	pv_spec_t *sp;
-	pv_value_t pv_val;
 	str watcher_uri, presentity_uri;
 
-	sp = (pv_spec_t *)_sp1;
-
-	if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-		if (pv_val.flags & PV_VAL_STR) {
-			watcher_uri = pv_val.rs;
-			if (watcher_uri.len == 0 || watcher_uri.s == NULL) {
-				LM_ERR("missing watcher uri\n");
-				return -1;
-			}
-		} else {
-			LM_ERR("watcher pseudo variable value is not string\n");
-			return -1;
-		}
-	} else {
-		LM_ERR("cannot get watcher pseudo variable value\n");
+	if(fixup_get_svalue(_msg, (gparam_t *)_sp1, &watcher_uri) != 0) {
+		LM_ERR("invalid watcher uri parameter");
 		return -1;
 	}
 
-	sp = (pv_spec_t *)_sp2;
+	if(fixup_get_svalue(_msg, (gparam_t *)_sp2, &presentity_uri) != 0) {
+		LM_ERR("invalid presentity uri parameter");
+		return -1;
+	}
 
-	if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-		if (pv_val.flags & PV_VAL_STR) {
-			presentity_uri = pv_val.rs;
-			if (presentity_uri.len == 0 || presentity_uri.s == NULL) {
-				LM_DBG("missing presentity uri\n");
-				return -1;
-			}
-		} else {
-			LM_ERR("presentity pseudo variable value is not string\n");
-			return -1;
-		}
-	} else {
-		LM_ERR("cannot get presentity pseudo variable value\n");
+	if(watcher_uri.len == 0 || watcher_uri.s == NULL) {
+		LM_ERR("missing watcher uri\n");
+		return -1;
+	}
+
+	if(presentity_uri.len == 0 || presentity_uri.s == NULL) {
+		LM_DBG("missing presentity uri\n");
 		return -1;
 	}
 
 	return pres_auth_status(_msg, watcher_uri, presentity_uri);
 }
 
+int ki_pres_auth_status(sip_msg_t* msg, str* watcher_uri, str* presentity_uri)
+{
+	if(watcher_uri==NULL || presentity_uri==NULL) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	return pres_auth_status(msg, *watcher_uri, *presentity_uri);
+}
 
 int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri)
 {
@@ -1625,6 +1611,58 @@ static int fixup_refresh_watchers(void** param, int param_no)
 
 
 /**
+ * wrapper for update_watchers_status to use via kemi
+ */
+static int ki_pres_update_watchers(struct sip_msg *msg, str *pres_uri,
+		str *event)
+{
+	pres_ev_t* ev;
+	struct sip_uri uri;
+	str* rules_doc = NULL;
+	int ret;
+
+	ev = contains_event(event, NULL);
+	if(ev==NULL)
+	{
+		LM_ERR("event %.*s is not registered\n",
+				event->len, event->s);
+		return -1;
+	}
+	if(ev->get_rules_doc==NULL)
+	{
+		LM_DBG("event  %.*s does not provide rules doc API\n",
+				event->len, event->s);
+		return -1;
+	}
+	if(parse_uri(pres_uri->s, pres_uri->len, &uri)<0)
+	{
+		LM_ERR("failed to parse presentity uri [%.*s]\n",
+				pres_uri->len, pres_uri->s);
+		return -1;
+	}
+	ret = ev->get_rules_doc(&uri.user, &uri.host, &rules_doc);
+	if((ret < 0) || (rules_doc==NULL) || (rules_doc->s==NULL))
+	{
+		LM_DBG("no xcap rules doc found for presentity uri [%.*s]\n",
+				pres_uri->len, pres_uri->s);
+		if(rules_doc != NULL)
+			pkg_free(rules_doc);
+		return -1;
+	}
+	ret = 1;
+	if(update_watchers_status(*pres_uri, ev, rules_doc)<0)
+	{
+		LM_ERR("updating watchers in presence\n");
+		ret = -1;
+	}
+
+	pkg_free(rules_doc->s);
+	pkg_free(rules_doc);
+
+	return ret;
+}
+
+/**
  * wrapper for update_watchers_status to use in config
  */
 static int w_pres_update_watchers(struct sip_msg *msg, char *puri,
@@ -1632,10 +1670,6 @@ static int w_pres_update_watchers(struct sip_msg *msg, char *puri,
 {
 	str pres_uri;
 	str event;
-	pres_ev_t* ev;
-	struct sip_uri uri;
-	str* rules_doc = NULL;
-	int ret;
 
 	if(fixup_get_svalue(msg, (gparam_p)puri, &pres_uri)!=0)
 	{
@@ -1648,48 +1682,8 @@ static int w_pres_update_watchers(struct sip_msg *msg, char *puri,
 		LM_ERR("invalid uri parameter");
 		return -1;
 	}
-
-	ev = contains_event(&event, NULL);
-	if(ev==NULL)
-	{
-		LM_ERR("event %.*s is not registered\n",
-				event.len, event.s);
-		return -1;
-	}
-	if(ev->get_rules_doc==NULL)
-	{
-		LM_DBG("event  %.*s does not provide rules doc API\n",
-				event.len, event.s);
-		return -1;
-	}
-	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0)
-	{
-		LM_ERR("failed to parse presentity uri [%.*s]\n",
-				pres_uri.len, pres_uri.s);
-		return -1;
-	}
-	ret = ev->get_rules_doc(&uri.user, &uri.host, &rules_doc);
-	if((ret < 0) || (rules_doc==NULL) || (rules_doc->s==NULL))
-	{
-		LM_DBG("no xcap rules doc found for presentity uri [%.*s]\n",
-				pres_uri.len, pres_uri.s);
-		if(rules_doc != NULL)
-			pkg_free(rules_doc);
-		return -1;
-	}
-	ret = 1;
-	if(update_watchers_status(pres_uri, ev, rules_doc)<0)
-	{
-		LM_ERR("updating watchers in presence\n");
-		ret = -1;
-	}
-
-	pkg_free(rules_doc->s);
-	pkg_free(rules_doc);
-
-	return ret;
+	return ki_pres_update_watchers(msg, &pres_uri, &event);
 }
-
 /**
  * fixup for w_pres_update_watchers
  */
@@ -1848,28 +1842,95 @@ static int fixup_has_subscribers(void** param, int param_no)
         return 0;
 }
 
-static int w_pres_has_subscribers(struct sip_msg* msg, char* _pres_uri, char* _event)
+static int ki_pres_has_subscribers(sip_msg_t *msg, str *pres_uri, str *wevent)
 {
-        str presentity_uri, watched_event;
-        pres_ev_t* ev;
+	pres_ev_t *ev;
 
-        if(fixup_get_svalue(msg, (gparam_p)_pres_uri, &presentity_uri)!=0)
-        {
-                LM_ERR("invalid presentity_uri parameter");
-                return -1;
-        }
-
-        if(fixup_get_svalue(msg, (gparam_p)_event, &watched_event)!=0)
-        {
-                LM_ERR("invalid watched_event parameter");
-                return -1;
-        }
-
-	ev = contains_event(&watched_event, NULL);
-	if (ev == NULL) {
+	ev = contains_event(wevent, NULL);
+	if(ev == NULL) {
 		LM_ERR("event is not registered\n");
 		return -1;
 	}
 
-	return get_subscribers_count(msg, presentity_uri, watched_event) > 0 ? 1 : -1;
+	return get_subscribers_count(msg, *pres_uri, *wevent) > 0 ? 1 : -1;
+}
+
+static int w_pres_has_subscribers(sip_msg_t *msg, char *_pres_uri, char *_event)
+{
+	str presentity_uri, watched_event;
+
+	if(fixup_get_svalue(msg, (gparam_p)_pres_uri, &presentity_uri) != 0) {
+		LM_ERR("invalid presentity_uri parameter");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)_event, &watched_event) != 0) {
+		LM_ERR("invalid watched_event parameter");
+		return -1;
+	}
+
+	return ki_pres_has_subscribers(msg, &presentity_uri, &watched_event);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_presence_exports[] = {
+	{ str_init("presence"), str_init("handle_publish"),
+		SR_KEMIP_INT, ki_handle_publish,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("presence"), str_init("handle_publish_uri"),
+		SR_KEMIP_INT, ki_handle_publish_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("presence"), str_init("handle_subscribe"),
+		SR_KEMIP_INT, handle_subscribe0,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("presence"), str_init("handle_subscribe_uri"),
+		SR_KEMIP_INT, handle_subscribe_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("presence"), str_init("pres_refresh_watchers"),
+		SR_KEMIP_INT, ki_pres_refresh_watchers,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("presence"), str_init("pres_refresh_watchers_file"),
+		SR_KEMIP_INT, ki_pres_refresh_watchers_file,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("presence"), str_init("pres_update_watchers"),
+		SR_KEMIP_INT, ki_pres_update_watchers,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("presence"), str_init("pres_has_subscribers"),
+		SR_KEMIP_INT, ki_pres_has_subscribers,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("presence"), str_init("pres_auth_status"),
+		SR_KEMIP_INT, ki_pres_auth_status,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_presence_exports);
+	return 0;
 }

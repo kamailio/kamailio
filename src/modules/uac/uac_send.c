@@ -819,3 +819,8 @@ int w_uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 {
 	return uac_req_send();
 }
+
+int ki_uac_req_send(sip_msg_t *msg)
+{
+	return uac_req_send();
+}

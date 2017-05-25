@@ -57,6 +57,7 @@
 #include "../../core/ut.h"
 #include "../../core/dset.h"
 #include "../../core/strutils.h"
+#include "../../core/kemi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -271,8 +272,6 @@ static cmd_export_t cmds[]={
 		0, 0,
 		ANY_ROUTE},
 
-	{"bind_textops",      (cmd_function)bind_textops,       0, 0, 0,
-		0},
 	{"set_body_multipart",         (cmd_function)set_multibody_0,        0,
 		0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
@@ -301,6 +300,9 @@ static cmd_export_t cmds[]={
 		fixup_get_body_part, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
 
+	{"bind_textops",      (cmd_function)bind_textops,       0, 0, 0,
+		0},
+
 	{0,0,0,0,0,0}
 };
 
@@ -326,10 +328,6 @@ static int mod_init(void)
 	return 0;
 }
 
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	return register_trans_mod(path, mod_trans);
-}
 
 static char *get_header(struct sip_msg *msg)
 {
@@ -337,18 +335,21 @@ static char *get_header(struct sip_msg *msg)
 }
 
 
-
-int search_f(struct sip_msg* msg, char* key, char* str2)
+static inline int search_helper_f(struct sip_msg* msg, regex_t* re)
 {
 	/*we registered only 1 param, so we ignore str2*/
 	regmatch_t pmatch;
 
-	if (regexec((regex_t*) key, msg->buf, 1, &pmatch, 0)!=0) return -1;
+	if (regexec(re, msg->buf, 1, &pmatch, 0)!=0) return -1;
 	return 1;
 }
 
+int search_f(struct sip_msg* msg, char* key, char* str2)
+{
+	return search_helper_f(msg, (regex_t*)key);
+}
 
-static int search_body_f(struct sip_msg* msg, char* key, char* str2)
+static inline int search_body_helper_f(struct sip_msg* msg, regex_t* re)
 {
 	str body;
 	/*we registered only 1 param, so we ignore str2*/
@@ -365,10 +366,14 @@ static int search_body_f(struct sip_msg* msg, char* key, char* str2)
 		return -1;
 	}
 
-	if (regexec((regex_t*) key, body.s, 1, &pmatch, 0)!=0) return -1;
+	if (regexec(re, body.s, 1, &pmatch, 0)!=0) return -1;
 	return 1;
 }
 
+static int search_body_f(struct sip_msg* msg, char* key, char* str2)
+{
+	return search_body_helper_f(msg, (regex_t*)key);
+}
 
 int search_append_f(struct sip_msg* msg, char* key, char* str2)
 {
@@ -665,18 +670,16 @@ static int replace_body_f(struct sip_msg* msg, char* key, char* str2)
 
 
 /* sed-perl style re: s/regular expression/replacement/flags */
-static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
+static int subst_helper_f(sip_msg_t* msg, struct subst_expr* se)
 {
 	struct lump* l;
 	struct replace_lst* lst;
 	struct replace_lst* rpl;
 	char* begin;
-	struct subst_expr* se;
 	int off;
 	int ret;
 	int nmatches;
-	
-	se=(struct subst_expr*)subst;
+
 	begin=get_header(msg);  /* start after first line to avoid replacing
 							   the uri */
 	off=begin-msg->buf;
@@ -710,26 +713,28 @@ error:
 	return ret;
 }
 
-
+/* sed-perl style re: s/regular expression/replacement/flags */
+static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
+{
+	return subst_helper_f(msg, (struct subst_expr*)subst);
+}
 
 /* sed-perl style re: s/regular expression/replacement/flags, like
  *  subst but works on the message uri */
-static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
+static int subst_uri_helper_f(struct sip_msg* msg, struct subst_expr* se)
 {
 	char* tmp;
 	int len;
 	char c;
-	struct subst_expr* se;
 	str* result;
-	
-	se=(struct subst_expr*)subst;
+
 	if (msg->new_uri.s){
 		len=msg->new_uri.len;
 		tmp=msg->new_uri.s;
 	}else{
 		tmp=msg->first_line.u.request.uri.s;
 		len	=msg->first_line.u.request.uri.len;
-	};
+	}
 	/* ugly hack: 0 s[len], and restore it afterward
 	 * (our re functions require 0 term strings), we can do this
 	 * because we always alloc len+1 (new_uri) and for first_line, the
@@ -752,15 +757,17 @@ static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
 	return -1; /* false, no subst. made */
 }
 	
-
+static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
+{
+	return subst_uri_helper_f(msg, (struct subst_expr*)subst);
+}
 
 /* sed-perl style re: s/regular expression/replacement/flags, like
  *  subst but works on the user part of the uri */
-static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
+static int subst_user_helper_f(struct sip_msg* msg, struct subst_expr* se)
 {
 	int rval;
 	str* result;
-	struct subst_expr* se;
 	struct action act;
 	struct run_act_ctx h;
 	str user;
@@ -780,7 +787,7 @@ static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
 		c=user.s[user.len];
 		user.s[user.len]=0;
 	}
-	se=(struct subst_expr*)subst;
+
 	result=subst_str(user.s, msg, se, &nmatches);/* pkg malloc'ed result */
 	if (c)	user.s[user.len]=c;
 	if (result == NULL) {
@@ -800,15 +807,18 @@ static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
 	return rval;
 }
 
+static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
+{
+	return subst_user_helper_f(msg, (struct subst_expr*)subst);
+}
 
 /* sed-perl style re: s/regular expression/replacement/flags */
-static int subst_body_f(struct sip_msg* msg, char*  subst, char* ignored)
+static int subst_body_helper_f(struct sip_msg* msg, struct subst_expr* se)
 {
 	struct lump* l;
 	struct replace_lst* lst;
 	struct replace_lst* rpl;
 	char* begin;
-	struct subst_expr* se;
 	int off;
 	int ret;
 	int nmatches;
@@ -824,10 +834,9 @@ static int subst_body_f(struct sip_msg* msg, char*  subst, char* ignored)
 		LM_DBG("message body has zero length\n");
 		return -1;
 	}
-	
-	se=(struct subst_expr*)subst;
+
 	begin=body.s;
-	
+
 	off=begin-msg->buf;
 	ret=-1;
 	if ((lst=subst_run(se, begin, msg, &nmatches))==0)
@@ -860,6 +869,10 @@ error:
 	return ret;
 }
 
+static int subst_body_f(struct sip_msg* msg, char*  subst, char* ignored)
+{
+	return subst_body_helper_f(msg, (struct subst_expr*)subst);
+}
 
 static inline int find_line_start(char *text, unsigned int text_len,
 				  char **buf, unsigned int *buf_len)
@@ -1079,12 +1092,9 @@ static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo)
 	return cnt==0 ? -1 : 1;
 }
 
-static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
+static int is_present_hf_helper_f(struct sip_msg* msg, gparam_t* gp)
 {
 	struct hdr_field *hf;
-	gparam_p gp;
-
-	gp = (gparam_p)str_hf;
 
 	/* we need to be sure we have seen all HFs */
 	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
@@ -1105,6 +1115,11 @@ static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 		return 1;
 	}
 	return -1;
+}
+
+static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
+{
+	return is_present_hf_helper_f(msg, (gparam_t*)str_hf);
 }
 
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo)
@@ -2902,17 +2917,14 @@ int fixup_free_regexp_none(void** param, int param_no)
 /**
  *
  */
-static int search_hf_f(struct sip_msg* msg, char* str_hf, char* re, char *flags)
+static int search_hf_helper_f(sip_msg_t* msg, gparam_t *ghp, regex_t* re, char* flags)
 {
 	hdr_field_t *hf;
 	hdr_field_t *hfl = NULL;
 	str body;
-	gparam_t *gp;
 	regmatch_t pmatch;
 	char c;
 	int ret;
-
-	gp = (gparam_t*)str_hf;
 
 	/* we need to be sure we have seen all HFs */
 	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
@@ -2920,14 +2932,14 @@ static int search_hf_f(struct sip_msg* msg, char* str_hf, char* re, char *flags)
 		return -1;
 	}
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if(gp->type==GPARAM_TYPE_INT)
+		if(ghp->type==GPARAM_TYPE_INT)
 		{
-			if (gp->v.i!=hf->type)
+			if (ghp->v.i!=hf->type)
 				continue;
 		} else {
-			if (hf->name.len!=gp->v.str.len)
+			if (hf->name.len!=ghp->v.str.len)
 				continue;
-			if (cmp_hdrname_str(&hf->name,&gp->v.str)!=0)
+			if (cmp_hdrname_str(&hf->name,&ghp->v.str)!=0)
 				continue;
 		}
 
@@ -2965,6 +2977,14 @@ static int search_hf_f(struct sip_msg* msg, char* str_hf, char* re, char *flags)
 	return -1;
 }
 
+/**
+ *
+ */
+static int search_hf_f(struct sip_msg* msg, char* str_hf, char* re, char *flags)
+{
+	return search_hf_helper_f(msg, (gparam_t*)str_hf, (regex_t*)re, flags);
+}
+
 /*
  * Convert header name, regexp and flags
  */
@@ -2978,25 +2998,22 @@ static int fixup_search_hf(void** param, int param_no)
 }
 
 /* sed-perl style re: s/regular expression/replacement/flags */
-static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flags)
+static int subst_hf_helper_f(sip_msg_t *msg, gparam_t *gp,
+		struct subst_expr* se, char *flags)
 {
 	struct lump* l;
 	struct replace_lst* lst = NULL;
 	struct replace_lst* rpl = NULL;
 	char* begin;
-	struct subst_expr* se;
 	int off;
 	int nmatches=0;
 	str body;
 	hdr_field_t *hf;
 	hdr_field_t *hfl = NULL;
-	gparam_t *gp;
 	char c;
 	int ret;
 
 	ret = -1;
-	gp = (gparam_t*)str_hf;
-	se=(struct subst_expr*)subst;
 
 	/* we need to be sure we have seen all HFs */
 	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
@@ -3114,6 +3131,13 @@ done:
 	return ret;
 }
 
+/* sed-perl style re: s/regular expression/replacement/flags */
+static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flags)
+{
+	return subst_hf_helper_f(msg, (gparam_t*)str_hf, (struct subst_expr*)subst,
+			flags);
+}
+
 /*
  * Convert header name, substexp and flags
  */
@@ -3126,3 +3150,296 @@ static int fixup_subst_hf(void** param, int param_no)
 	return 0;
 }
 
+/**
+ *
+ */
+static int ki_search(sip_msg_t *msg, str *sre)
+{
+	regex_t re;
+	int ret;
+
+	if(sre==NULL || sre->len<=0)
+		return 1;
+
+	memset(&re, 0, sizeof(regex_t));
+	if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+	ret = search_helper_f(msg, &re);
+	regfree(&re);
+	return ret;
+}
+
+/**
+ *
+ */
+static int ki_search_body(sip_msg_t *msg, str *sre)
+{
+	regex_t re;
+	int ret;
+
+	if(sre==NULL || sre->len<=0)
+		return 1;
+
+	memset(&re, 0, sizeof(regex_t));
+	if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+	ret = search_body_helper_f(msg, &re);
+	regfree(&re);
+	return ret;
+}
+
+/*
+ * Convert char* header_name to str* parameter
+ */
+static int ki_hname_gparam(str *hname, gparam_t *gp)
+{
+	char hbuf[256];
+	struct hdr_field hdr;
+
+	if(hname->len<=0) {
+		LM_ERR("invalid header name\n");
+		return -1;
+	}
+
+	if(hname->len>252) {
+		LM_ERR("header name too long: %d (%.*s...)\n",
+			hname->len, 32, hname->s);
+		return -1;
+	}
+	strncpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	memset(gp, 0, sizeof(gparam_t));
+
+	gp->v.str = *hname;
+
+	if (parse_hname2_short(hbuf, hbuf + gp->v.str.len + 1, &hdr)==0) {
+		LM_ERR("error parsing header name: %.*s\n", hname->len, hname->s);
+		return -1;
+	}
+
+	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
+		LM_DBG("using hdr type (%d) instead of <%.*s>\n",
+				hdr.type, gp->v.str.len, gp->v.str.s);
+		gp->v.str.s = NULL;
+		gp->v.i = hdr.type;
+		gp->type = GPARAM_TYPE_INT;
+	} else {
+		gp->type = GPARAM_TYPE_STR;
+		LM_DBG("using hdr type name <%.*s>\n", gp->v.str.len, gp->v.str.s);
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int ki_search_hf(sip_msg_t *msg, str *hname, str *sre, str *flags)
+{
+	regex_t re;
+	gparam_t ghp;
+	int ret;
+
+	if(hname==NULL || hname->len<=0)
+		return -1;
+
+	if(sre==NULL || sre->len<=0)
+		return -1;
+
+	if(ki_hname_gparam(hname, &ghp)<0)
+		return -1;
+
+	memset(&re, 0, sizeof(regex_t));
+	if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+	ret = search_hf_helper_f(msg, &ghp, &re, (flags)?flags->s:NULL);
+	regfree(&re);
+	return ret;
+}
+
+static int ki_is_present_hf(sip_msg_t *msg, str *hname)
+{
+	gparam_t ghp;
+
+	if(hname==NULL || hname->len<=0)
+		return -1;
+	if(ki_hname_gparam(hname, &ghp)<0)
+		return -1;
+
+	return is_present_hf_helper_f(msg, &ghp);
+}
+
+static int ki_subst(sip_msg_t *msg, str *subst)
+{
+	struct subst_expr *se = NULL;
+	int ret;
+
+	if(subst==NULL || subst->len<=0)
+		return -1;
+
+	se=subst_parser(subst);
+	if (se==0) {
+		LM_ERR("cannot compile subst expression\n");
+		return -1;
+	}
+	ret = subst_helper_f(msg, se);
+	subst_expr_free(se);
+
+	return ret;
+}
+
+static int ki_subst_uri(sip_msg_t *msg, str *subst)
+{
+	struct subst_expr *se = NULL;
+	int ret;
+
+	if(subst==NULL || subst->len<=0)
+		return -1;
+
+	se=subst_parser(subst);
+	if (se==0) {
+		LM_ERR("cannot compile subst expression\n");
+		return -1;
+	}
+	ret = subst_uri_helper_f(msg, se);
+	subst_expr_free(se);
+
+	return ret;
+}
+
+static int ki_subst_user(sip_msg_t *msg, str *subst)
+{
+	struct subst_expr *se = NULL;
+	int ret;
+
+	if(subst==NULL || subst->len<=0)
+		return -1;
+
+	se=subst_parser(subst);
+	if (se==0) {
+		LM_ERR("cannot compile subst expression\n");
+		return -1;
+	}
+	ret = subst_user_helper_f(msg, se);
+	subst_expr_free(se);
+
+	return ret;
+}
+
+static int ki_subst_body(sip_msg_t *msg, str *subst)
+{
+	struct subst_expr *se = NULL;
+	int ret;
+
+	if(subst==NULL || subst->len<=0)
+		return -1;
+
+	se=subst_parser(subst);
+	if (se==0) {
+		LM_ERR("cannot compile subst expression\n");
+		return -1;
+	}
+	ret = subst_body_helper_f(msg, se);
+	subst_expr_free(se);
+
+	return ret;
+}
+
+/**
+ *
+ */
+static int ki_subst_hf(sip_msg_t *msg, str *hname, str *subst, str *flags)
+{
+	struct subst_expr *se = NULL;
+	gparam_t ghp;
+	int ret;
+
+	if(hname==NULL || hname->len<=0)
+		return -1;
+
+	if(subst==NULL || subst->len<=0)
+		return -1;
+
+	if(ki_hname_gparam(hname, &ghp)<0)
+		return -1;
+
+	se=subst_parser(subst);
+	if (se==0) {
+		LM_ERR("cannot compile subst expression\n");
+		return -1;
+	}
+
+	ret = subst_hf_helper_f(msg, &ghp, se, (flags)?flags->s:NULL);
+	subst_expr_free(se);
+
+	return ret;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_textops_exports[] = {
+	{ str_init("textops"), str_init("search"),
+		SR_KEMIP_INT, ki_search,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("search_body"),
+		SR_KEMIP_INT, ki_search_body,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("search_hf"),
+		SR_KEMIP_INT, ki_search_hf,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("is_present_hf"),
+		SR_KEMIP_INT, ki_is_present_hf,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("subst"),
+		SR_KEMIP_INT, ki_subst,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("subst_uri"),
+		SR_KEMIP_INT, ki_subst_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("subst_user"),
+		SR_KEMIP_INT, ki_subst_user,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("subst_body"),
+		SR_KEMIP_INT, ki_subst_body,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("subst_hf"),
+		SR_KEMIP_INT, ki_subst_hf,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_textops_exports);
+	return register_trans_mod(path, mod_trans);
+}

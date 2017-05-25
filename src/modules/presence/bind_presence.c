@@ -65,7 +65,7 @@ int bind_presence(presence_api_t* api)
 	api->get_presentity= get_p_notify_body;
 	api->free_presentity= free_notify_body;
 	api->pres_auth_status= pres_auth_status;
-	api->handle_publish= handle_publish;
+	api->handle_publish= w_handle_publish;
 	api->handle_subscribe0= handle_subscribe0;
 	api->handle_subscribe= handle_subscribe;
 	return 0;

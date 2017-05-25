@@ -32,6 +32,7 @@
 
 #include "../../core/str.h"
 #include "../../core/ip_addr.h"
+#include "../keepalive/api.h"
 #include "dr_time.h"
 
 #define PTREE_CHILDREN 13  //decimal digits, '*', '#',  '+'
@@ -67,6 +68,9 @@ typedef struct pgw_ {
 	str ip;
 	int type;
 	str attrs;
+	// gateway state (see keepalive module)
+	ka_state state;
+
 	struct pgw_ *next;
 }pgw_t;
 

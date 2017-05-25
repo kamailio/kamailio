@@ -13,13 +13,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
  * \file
- * \brief Kamailio core :: Proxy 
+ * \brief Kamailio core :: Proxy
  * \ingroup core
  * \author andrei
  * Module: \ref core
@@ -40,7 +40,7 @@ struct proxy_l{
 	unsigned short port;
 	unsigned short reserved; /*align*/
 	int proto;
-	
+
 	/* socket ? */
 
 	int addr_idx;	/* crt. addr. idx. */
@@ -62,7 +62,6 @@ void free_proxy(struct proxy_l* p);
 void free_shm_proxy(struct proxy_l* p);
 
 
-
 /** returns 0 on success, -1 on error (unknown af/bug) */
 inline static int proxy2su(union sockaddr_union* su, struct proxy_l* p)
 {
@@ -73,11 +72,10 @@ inline static int proxy2su(union sockaddr_union* su, struct proxy_l* p)
 		else p->addr_idx=0;
 		p->ok=1;
 	}
-	
+
 	return hostent2su(su, &p->host, p->addr_idx,
 				(p->port)?p->port:((p->proto==PROTO_TLS)?SIPS_PORT:SIP_PORT) );
 }
-
 
 
 /** mark proxy either as ok (err>=0) or as bad (err<0) */
@@ -90,7 +88,6 @@ inline static void proxy_mark(struct proxy_l* p, int err)
 		p->tx++;
 	}
 }
-
 
 
 #endif

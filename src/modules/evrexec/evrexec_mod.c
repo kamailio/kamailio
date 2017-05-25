@@ -183,7 +183,6 @@ int evrexec_param(modparam_t type, void *val)
 	evrexec_task_t tmp;
 	sr_kemi_eng_t *keng = NULL;
 	str s;
-	char c;
 
 	if(val==NULL)
 		return -1;

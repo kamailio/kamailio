@@ -62,6 +62,13 @@ Juha Heinanen
               5.3. mtree.reload
               5.4. mtree.match
 
+   2. Developer Guide
+
+        1. Available Functions
+
+              1.1. mt_load_api(api)
+              1.2. mt_match(msg, mtree, value, mode)
+
    List of Examples
 
    1.1. Set db_url parameter
@@ -407,3 +414,36 @@ kamcmd mtree.list mytree
        - match prefix
      * _mode_
        - matching mode
+
+Chapter 2. Developer Guide
+
+   Table of Contents
+
+   1. Available Functions
+
+        1.1. mt_load_api(api)
+        1.2. mt_match(msg, mtree, value, mode)
+
+1. Available Functions
+
+   1.1. mt_load_api(api)
+   1.2. mt_match(msg, mtree, value, mode)
+
+1.1.  mt_load_api(api)
+
+   The function imports all API functions that are exported by the mtree
+   module (see sections below).
+
+   Meaning of the parameters is as follows:
+     * mtree_api_t* api - mtree API
+
+1.2.  mt_match(msg, mtree, value, mode)
+
+   Match 'value' against 'mtree' using 'mode' (see mt_match function Admin
+   Guide documentation).
+
+   Meaning of the parameters is as follows:
+     * sip_msg_t *msg - SIP Request
+     * str *mtree - Name of mtree
+     * str *value - Value to match
+     * int mode - Match mode

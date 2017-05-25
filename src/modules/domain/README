@@ -35,8 +35,8 @@ Juha Heinanen
 
               4.1. is_from_local()
               4.2. is_uri_host_local()
-              4.3. is_domain_local(pseudo_variable)
-              4.4. lookup_domain(domain[, prefix])
+              4.3. is_domain_local(domain)
+              4.4. lookup_domain(domain [, prefix])
 
         5. RPC Commands
 
@@ -89,8 +89,8 @@ Chapter 1. Admin Guide
 
         4.1. is_from_local()
         4.2. is_uri_host_local()
-        4.3. is_domain_local(pseudo_variable)
-        4.4. lookup_domain(domain[, prefix])
+        4.3. is_domain_local(domain)
+        4.4. lookup_domain(domain [, prefix])
 
    5. RPC Commands
 
@@ -223,8 +223,8 @@ modparam("domain", "register_myself", 1)
 
    4.1. is_from_local()
    4.2. is_uri_host_local()
-   4.3. is_domain_local(pseudo_variable)
-   4.4. lookup_domain(domain[, prefix])
+   4.3. is_domain_local(domain)
+   4.4. lookup_domain(domain [, prefix])
 
 4.1. is_from_local()
 
@@ -259,10 +259,10 @@ if (is_uri_host_local()) {
 };
 ...
 
-4.3. is_domain_local(pseudo_variable)
+4.3. is_domain_local(domain)
 
-   This function checks if the domain contained in the pseudo_variable is
-   local.
+   This function checks if the domain contained in the parameter is local.
+   The parameter can be a static string or contain pseduo-variables.
 
    This function is a generalized form of the is_from_local() and
    is_uri_host_local() functions, being able to completely replace them
@@ -278,28 +278,33 @@ if (is_uri_host_local()) {
 ...
 if (is_domain_local("$rd")) {
         ...
-};
+}
+if (is_domain_local("my.domain.com")) {
+        ...
+}
 if (is_domain_local("$fd")) {
         ...
-};
+}
 if (is_domain_local("$avp(some_avp_alias)")) {
         ...
-};
+}
 if (is_domain_local("$avp(i:850)")) {
         ...
-};
+}
 if (is_domain_local("$avp(s:some_avp)")) {
         ...
-};
+}
 ...
 
-4.4. lookup_domain(domain[, prefix])
+4.4. lookup_domain(domain [, prefix])
 
-   This function checks if domain given in domain argument (pseudo
-   variable) is local and, if so, adds attributes associated with domain's
-   id (did) to AVPs. If prefix argument (string) is given, names of
-   attributes are prefixes by it. In addition to attributes given in
-   domain_attrs table, AVP did containing did of domain is added.
+   This function checks if domain given in domain argument is local and,
+   if so, adds attributes associated with domain's id (did) to AVPs. If
+   prefix argument (string) is given, names of attributes are prefixes by
+   it. In addition to attributes given in domain_attrs table, AVP named
+   did containing the did of domain is added.
+
+   Both parameters can contain pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, and LOCAL_ROUTE.

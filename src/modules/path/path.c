@@ -151,7 +151,7 @@ out1:
 /*! \brief
  * Prepend own uri to Path header
  */
-int add_path(struct sip_msg* _msg, char* _a, char* _b)
+int ki_add_path(struct sip_msg* _msg)
 {
 	str user = {0,0};
 	int ret;
@@ -179,6 +179,11 @@ int add_path(struct sip_msg* _msg, char* _a, char* _b)
 	return ret;
 }
 
+int add_path(sip_msg_t* _msg, char* _a, char* _b)
+{
+	return ki_add_path(_msg);
+}
+
 /*! \brief
  * Prepend own uri to Path header and take care of given
  * user.
@@ -197,10 +202,38 @@ int add_path_usr(struct sip_msg* _msg, char* _usr, char* _parms)
 }
 
 /*! \brief
+ * Prepend own uri to Path header and take care of given
+ * user.
+ */
+int ki_add_path_user(sip_msg_t* _msg, str* _user)
+{
+	str parms = {0,0};
+	return prepend_path(_msg, _user, PATH_PARAM_NONE, &parms);
+}
+
+/*! \brief
+ * Prepend own uri to Path header and take care of given
+ * user.
+ */
+int ki_add_path_user_params(sip_msg_t* _msg, str* _user, str* _params)
+{
+	return prepend_path(_msg, _user, PATH_PARAM_NONE, _params);
+}
+
+/*! \brief
  * Prepend own uri to Path header and append received address as
  * "received"-param to that uri.
  */
 int add_path_received(struct sip_msg* _msg, char* _a, char* _b)
+{
+	return prepend_path(_msg, NULL, PATH_PARAM_RECEIVED, NULL);
+}
+
+/*! \brief
+ * Prepend own uri to Path header and append received address as
+ * "received"-param to that uri.
+ */
+int ki_add_path_received(sip_msg_t* _msg)
 {
 	return prepend_path(_msg, NULL, PATH_PARAM_RECEIVED, NULL);
 }
@@ -220,6 +253,26 @@ int add_path_received_usr(struct sip_msg* _msg, char* _usr, char* _parms)
 		get_str_fparam(&parms, _msg, (fparam_t *) _parms);
 
 	return prepend_path(_msg, &user, PATH_PARAM_RECEIVED, &parms);
+}
+
+/*! \brief
+ * Prepend own uri to Path header and append received address as
+ * "received"-param to that uri and take care of given user.
+ */
+int ki_add_path_received_user(sip_msg_t* _msg, str* _user)
+{
+	str parms = {0,0};
+	return prepend_path(_msg, _user, PATH_PARAM_RECEIVED, &parms);
+}
+
+/*! \brief
+ * Prepend own uri to Path header and append received address as
+ * "received"-param to that uri and take care of given user.
+ */
+int ki_add_path_received_user_params(sip_msg_t* _msg, str* _user, str* _params)
+{
+
+	return prepend_path(_msg, _user, PATH_PARAM_RECEIVED, _params);
 }
 
 /*! \brief

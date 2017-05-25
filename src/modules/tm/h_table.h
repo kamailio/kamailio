@@ -46,7 +46,6 @@
 
 #include "../../core/clist.h"
 #include "../../core/parser/msg_parser.h"
-#include "../../core/types.h"
 #include "../../core/md5utils.h"
 #include "../../core/usr_avp.h"
 #ifdef WITH_XAVP

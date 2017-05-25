@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -37,8 +37,7 @@
 #include "../../core/socket_info.h"
 #include "../../core/dset.h"
 #include "../../core/pt.h"
-#include "../../core/usr_avp.h"
-#include "../../core/xavp.h"
+#include "../../core/receive.h"
 #include "../../core/timer_proc.h"
 #include "../../core/script_cb.h"
 #include "../../core/parser/parse_param.h"
@@ -197,10 +196,7 @@ void stm_timer_exec(unsigned int ticks, void *param)
 		set_route_type(REQUEST_ROUTE);
 		run_top_route(main_rt.rlist[rt->route], fmsg, 0);
 		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
-		reset_avps();
-#ifdef WITH_XAVP
-		xavp_reset_list();
-#endif
+		ksr_msg_env_reset();
 	}
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 iptelorg GmbH 
+ * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -63,14 +63,14 @@ struct tls_hooks{
 	int  (*on_tcpconn_init)(struct tcp_connection *c, int sock);
 	void (*tcpconn_clean)(struct tcp_connection* c);
 	void (*tcpconn_close)(struct tcp_connection*c , int fd);
-	
+
 	/* per listening socket init, called on kamailio startup (after modules,
 	 *  process table, init() and udp socket initialization)*/
 	int (*init_si)(struct socket_info* si);
 	/* generic init function (called at kamailio init, after module initialization
 	 *  and process table creation)*/
 	int (*init)(void);
-	/* destroy function, called after the modules are destroyed, and 
+	/* destroy function, called after the modules are destroyed, and
 	 * after  destroy_tcp() */
 	void (*destroy)(void);
 	/* generic pre-init function (called at kamailio start, before module

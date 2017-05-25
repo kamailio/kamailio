@@ -27,6 +27,7 @@
 #include "../../core/ut.h"
 #include "../../core/lvalue.h"
 #include "../../core/pvar.h"
+#include "../../core/kemi.h"
 
 #include "corex_lib.h"
 #include "corex_rpc.h"
@@ -169,7 +170,7 @@ static void mod_destroy(void)
  */
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq)
 {
-	if(corex_append_branch(msg, (gparam_t*)su, (gparam_t*)sq) < 0)
+	if(w_corex_append_branch(msg, (gparam_t*)su, (gparam_t*)sq) < 0)
 		return -1;
 	return 1;
 }
@@ -429,4 +430,68 @@ static int fixup_file_op(void** param, int param_no)
 
 	LM_ERR("invalid parameter number <%d>\n", param_no);
 	return -1;
+}
+
+/**
+ *
+ */
+static int ki_append_branch(sip_msg_t *msg)
+{
+	if(corex_append_branch(msg, NULL, NULL) < 0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_append_branch_uri(sip_msg_t *msg, str *uri)
+{
+	if(corex_append_branch(msg, uri, NULL) < 0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_append_branch_uri_q(sip_msg_t *msg, str *uri, str *q)
+{
+	if(corex_append_branch(msg, uri, q) < 0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_corex_exports[] = {
+	{ str_init("corex"), str_init("append_branch"),
+		SR_KEMIP_INT, ki_append_branch,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("append_branch_uri"),
+		SR_KEMIP_INT, ki_append_branch_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("append_branch_uri_q"),
+		SR_KEMIP_INT, ki_append_branch_uri_q,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_corex_exports);
+	return 0;
 }

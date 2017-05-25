@@ -124,7 +124,7 @@ static void setup_dh(SSL_CTX *ctx)
 		return;
 	}
 
-#if (OPENSSL_VERSION_NUMBER >= 0x1010000fL)
+#if (OPENSSL_VERSION_NUMBER >= 0x1010000fL) && !defined(LIBRESSL_VERSION_NUMBER)
 	/* libssl >= v1.1.0 */
 	DH_set0_pqg(dh, p, NULL, g);
 #else

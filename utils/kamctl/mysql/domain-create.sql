@@ -14,9 +14,10 @@ CREATE TABLE `domain_attrs` (
     `name` VARCHAR(32) NOT NULL,
     `type` INT UNSIGNED NOT NULL,
     `value` VARCHAR(255) NOT NULL,
-    `last_modified` DATETIME DEFAULT '2000-01-01 00:00:01' NOT NULL,
-    CONSTRAINT domain_attrs_idx UNIQUE (`did`, `name`, `value`)
+    `last_modified` DATETIME DEFAULT '2000-01-01 00:00:01' NOT NULL
 );
+
+CREATE INDEX domain_attrs_idx ON domain_attrs (`did`, `name`);
 
 INSERT INTO version (table_name, table_version) values ('domain_attrs','1');
 

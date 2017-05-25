@@ -45,8 +45,9 @@
 
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
-
 #include "../../core/pvar.h"
+#include "../../core/kemi.h"
+
 #include "sql_api.h"
 #include "sql_var.h"
 #include "sql_trans.h"
@@ -136,11 +137,6 @@ struct module_exports exports= {
 	(destroy_function) destroy,
 	child_init  /* per-child init function */
 };
-
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	return register_trans_mod(path, mod_trans);
-}
 
 static int mod_init(void)
 {
@@ -448,4 +444,79 @@ static int bind_sqlops(sqlops_api_t* api)
 	api->xquery  = sqlops_do_xquery;
 
 	return 0;
+}
+
+static int ki_sqlops_query(sip_msg_t *msg, str *scon, str *squery, str *sres)
+{
+	return sqlops_do_query(scon, squery, sres);
+}
+
+static int ki_sqlops_reset_result(sip_msg_t *msg, str *sres)
+{
+	sqlops_reset_result(sres);
+	return 1;
+}
+
+static int ki_sqlops_num_rows(str *sres)
+{
+	return sqlops_num_rows(sres);
+}
+
+static int ki_sqlops_num_columns(str *sres)
+{
+	return sqlops_num_columns(sres);
+}
+
+static int ki_sqlops_is_null(sip_msg_t *msg, str *sres, int i, int j)
+{
+	return sqlops_is_null(sres, i, j);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_sqlops_exports[] = {
+	{ str_init("sqlops"), str_init("sql_query"),
+		SR_KEMIP_INT, ki_sqlops_query,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_result_free"),
+		SR_KEMIP_INT, ki_sqlops_reset_result,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_num_rows"),
+		SR_KEMIP_INT, ki_sqlops_num_rows,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_num_columns"),
+		SR_KEMIP_INT, ki_sqlops_num_columns,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_is_null"),
+		SR_KEMIP_INT, ki_sqlops_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_xquery"),
+		SR_KEMIP_INT, sqlops_do_xquery,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_sqlops_exports);
+	return register_trans_mod(path, mod_trans);
 }

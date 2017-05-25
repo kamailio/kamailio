@@ -27,9 +27,9 @@ Otmar Lendl
 
         4. Functions
 
-              4.1. enum_query(["suffix"[,"service"]])
-              4.2. enum_pv_query("pvar"[,"suffix"[,"service"]])
-              4.3. i_enum_query(["suffix"[,"service"]])
+              4.1. enum_query(["suffix" [,"service"]])
+              4.2. enum_pv_query("pvar" [,"suffix" [,"service"]])
+              4.3. i_enum_query(["suffix" [,"service"]])
               4.4. is_from_user_enum()
 
    List of Examples
@@ -61,9 +61,9 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. enum_query(["suffix"[,"service"]])
-        4.2. enum_pv_query("pvar"[,"suffix"[,"service"]])
-        4.3. i_enum_query(["suffix"[,"service"]])
+        4.1. enum_query(["suffix" [,"service"]])
+        4.2. enum_pv_query("pvar" [,"suffix" [,"service"]])
+        4.3. i_enum_query(["suffix" [,"service"]])
         4.4. is_from_user_enum()
 
 1. Overview
@@ -224,12 +224,12 @@ modparam("enum", "bl_algorithm", "txt")
 
 4. Functions
 
-   4.1. enum_query(["suffix"[,"service"]])
-   4.2. enum_pv_query("pvar"[,"suffix"[,"service"]])
-   4.3. i_enum_query(["suffix"[,"service"]])
+   4.1. enum_query(["suffix" [,"service"]])
+   4.2. enum_pv_query("pvar" [,"suffix" [,"service"]])
+   4.3. i_enum_query(["suffix" [,"service"]])
    4.4. is_from_user_enum()
 
-4.1.  enum_query(["suffix"[,"service"]])
+4.1.  enum_query(["suffix" [,"service"]])
 
    The function performs an enum query and rewrites the Request-URI with
    the result of the query. See Section 1, “Overview” for more
@@ -240,6 +240,8 @@ modparam("enum", "bl_algorithm", "txt")
        may contain pseudo variables.
      * service - Service string to be used in the service field. String
        may contain pseudo variables.
+
+   Parameters can include pseudo-variables.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -265,17 +267,19 @@ enum_query("e164.arpa.","voice");
 enum_query("e164.arpa.","+sip+voice:sip");
 ...
 
-4.2.  enum_pv_query("pvar"[,"suffix"[,"service"]])
+4.2.  enum_pv_query("pvar" [,"suffix" [,"service"]])
 
-   The function performs an enum query on E.164 number stored in its
-   pseudo variable argument and rewrites the Request-URI with the result
-   of the query. See Section 1, “Overview” for more information.
+   The function performs an enum query on E.164 number stored in its first
+   argument and rewrites the Request-URI with the result of the query. See
+   Section 1, “Overview” for more information.
 
    Meaning of the parameters is as follows:
      * pvar - Pseudo variable that holds an E.164 number on which enum
        query is performed.
      * suffix - Suffix to be appended to the domain name.
      * service - Service string to be used in the service field.
+
+   Parameters can include pseudo-variables.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -301,12 +305,14 @@ enum_pv_query("$avp(i:100)","e164.arpa.","voice");
 enum_pv_query("$avp(i:100)","e164.arpa.","+sip+voice:sip");
 ...
 
-4.3.  i_enum_query(["suffix"[,"service"]])
+4.3.  i_enum_query(["suffix" [,"service"]])
 
    The function performs an enum query and rewrites the Request-URI with
    the result of the query. This the Infrastructure-ENUM version of
    enum_query(). The only difference to enum_query() is in the calculation
    of the FQDN where NAPTR records are looked for.
+
+   Parameters can include pseudo-variables.
 
    See
    ftp://ftp.rfc-editor.org/in-notes/internet-drafts/draft-haberler-carrie

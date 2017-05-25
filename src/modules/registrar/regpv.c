@@ -418,8 +418,8 @@ error:
 	return -1;
 }
 
-int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
-		char* profile)
+int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
+		str* profile)
 {
 	urecord_t* r;
 	ucontact_t* ptr;
@@ -427,7 +427,6 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 	ucontact_t* c0;
 	regpv_profile_t *rpp;
 	str aor = {0, 0};
-	str u = {0, 0};
 	int res;
 	int olen;
 	int ilen;
@@ -445,13 +444,7 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 	if(rpp->flags)
 		regpv_free_profile(rpp);
 
-	if(fixup_get_svalue(msg, (gparam_p)uri, &u)!=0 || u.len<=0)
-	{
-		LM_ERR("invalid uri parameter\n");
-		return -1;
-	}
-
-	if (extract_aor(&u, &aor, NULL) < 0) {
+	if (extract_aor(uri, &aor, NULL) < 0) {
 		LM_ERR("failed to extract Address Of Record\n");
 		return -1;
 	}
@@ -465,16 +458,16 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 	}
 	memcpy(rpp->aor.s, aor.s, aor.len);
 	rpp->aor.len = aor.len;
-	rpp->domain = *((udomain_head_t*)table)->name;
+	rpp->domain = *((udomain_head_t*)dt)->name;
 	rpp->flags = 1;
 
 	/* copy contacts */
 	ilen = sizeof(ucontact_t);
-	ul.lock_udomain((udomain_t*)table, &aor);
-	res = ul.get_urecord((udomain_t*)table, &aor, &r);
+	ul.lock_udomain(dt, &aor);
+	res = ul.get_urecord(dt, &aor, &r);
 	if (res > 0) {
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-		ul.unlock_udomain((udomain_t*)table, &aor);
+		ul.unlock_udomain(dt, &aor);
 		return -1;
 	}
 
@@ -491,7 +484,7 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 		{
 			LM_ERR("no more pkg\n");
 			ul.release_urecord(r);
-			ul.unlock_udomain((udomain_t*)table, &aor);
+			ul.unlock_udomain(dt, &aor);
 			goto error;
 		}
 		memcpy(c0, ptr, ilen);
@@ -544,7 +537,9 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 			c0->instance.len = ptr->instance.len;
 			p += c0->instance.len;
 		}
-		if ((ptr->sock) && (ptr->sock->proto == PROTO_TCP || ptr->sock->proto == PROTO_TLS || ptr->sock->proto == PROTO_WS || ptr->sock->proto == PROTO_WSS))
+		if ((ptr->sock) && (ptr->sock->proto == PROTO_TCP
+				|| ptr->sock->proto == PROTO_TLS || ptr->sock->proto == PROTO_WS
+				|| ptr->sock->proto == PROTO_WSS))
 		{
 			c0->tcpconn_id = ptr->tcpconn_id;
 		}
@@ -561,7 +556,7 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 		ptr = ptr->next;
 	}
 	ul.release_urecord(r);
-	ul.unlock_udomain((udomain_t*)table, &aor);
+	ul.unlock_udomain(dt, &aor);
 	rpp->nrc = n;
 	LM_DBG("fetched <%d> contacts for <%.*s> in [%.*s]\n",
 			n, aor.len, aor.s, rpp->pname.len, rpp->pname.s);
@@ -571,17 +566,47 @@ error:
 	regpv_free_profile(rpp);
 	return -1;
 }
-int pv_free_contacts(struct sip_msg* msg, char* profile, char* s2)
+
+int pv_fetch_contacts(sip_msg_t* msg, char* table, char* uri, char* profile)
+{
+	str u = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)uri, &u)!=0 || u.len<=0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+	return pv_fetch_contacts_helper(msg, (udomain_t*)table, &u, (str*)profile);
+}
+
+int ki_reg_fetch_contacts(sip_msg_t* msg, str* dtable, str* uri, str* profile)
+{
+	udomain_t* d;
+
+	if(ul.get_udomain(dtable->s, &d)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", dtable->s);
+		return -1;
+	}
+
+	return pv_fetch_contacts_helper(msg, d, uri, profile);
+}
+
+int ki_reg_free_contacts(sip_msg_t* msg, str* profile)
 {
 	regpv_profile_t *rpp;
 
-	rpp = regpv_get_profile((str*)profile);
+	rpp = regpv_get_profile(profile);
 	if(rpp==0)
 		return -1;
 
 	regpv_free_profile(rpp);
 
 	return 1;
+}
+
+int pv_free_contacts(struct sip_msg* msg, char* profile, char* s2)
+{
+	return ki_reg_free_contacts(msg, (str*)profile);
 }
 
 void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)

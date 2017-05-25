@@ -46,10 +46,13 @@ enum json_type kz_json_get_type(struct json_object *jso)
   return json_object_get_type(jso);
 }
 
-char** str_split(char* a_str, const char a_delim)
+typedef str* json_key;
+typedef json_key* json_keys;
+
+json_keys str_split(char* a_str, const char a_delim, int* c)
 {
-    char** result    = 0;
-    size_t count     = 0;
+	json_keys result = 0;
+    int count     = 0;
     char* tmp        = a_str;
     char* last_comma = 0;
     char delim[2];
@@ -73,34 +76,43 @@ char** str_split(char* a_str, const char a_delim)
 
     /* Add space for terminating null string so caller
        knows where the list of returned strings ends. */
-    count++;
+//    count++;
+    *c = count;
+    LM_DBG("COUNT %d\n", count);
 
-    result = pkg_malloc(sizeof(char*) * count);
+    result = pkg_malloc(sizeof(json_key) * count);
+    memset(result, 0, sizeof(json_key) * count);
 
     if (result)
     {
-        size_t idx  = 0;
+        int idx  = 0;
         char* token = strtok(a_str, delim);
 
         while (token)
         {
+            LM_DBG("TOKEN %d : %s\n", idx, token);
+
             assert(idx < count);
+
+            result[idx] = pkg_malloc(sizeof(str));
             len = strlen(token);
-            char* ptr = pkg_malloc( (len+1) * sizeof(char));
-            *(result + idx) = ptr;
-        	memcpy(ptr, token, len);
-        	ptr[len] = '\0';
+
+            result[idx]->len = len;
+			result[idx]->s = pkg_malloc((len + 1) * sizeof(char));
+			strncpy(result[idx]->s, token, len);
+			result[idx]->s[len] = '\0';
+
         	int i = 0;
         	while(i < len) {
-        		if(ptr[i] == kz_json_escape_char)
-        			ptr[i] = '.';
+        		if(result[idx]->s[i] == kz_json_escape_char)
+        			result[idx]->s[i] = '.';
         		i++;
         	}
+        	LM_DBG("TOKEN2 %d : %s\n", idx, result[idx]->s);
             token = strtok(0, delim);
             idx++;
         }
-        assert(idx == count - 1);
-        *(result + idx) = 0;
+        assert(idx == count);
     }
 
     return result;
@@ -108,10 +120,11 @@ char** str_split(char* a_str, const char a_delim)
 
 struct json_object * kz_json_get_field_object(str* json, str* field)
 {
-  char** tokens;
+  json_keys keys;
+  json_key key;
   char* dup;
-  char f1[25], f2[25];//, f3[25];
-  int i;
+  char f1[250], f2[250];//, f3[25];
+  int i, parts;
 
   dup = pkg_malloc(json->len+1);
   memcpy(dup, json->s, json->len);
@@ -132,19 +145,22 @@ struct json_object * kz_json_get_field_object(str* json, str* field)
   dup = pkg_malloc(field->len+1);
   memcpy(dup, field->s, field->len);
   dup[field->len] = '\0';
-  tokens = str_split(dup, '.');
+  keys = str_split(dup, '.', &parts);
   pkg_free(dup);
 
-    if (tokens)
+    if (keys)
     {
     	jtree = j;
-        for (i = 0; *(tokens + i); i++)
+        for (i = 0; i < parts; i++)
         {
+        	key = keys[i];
+        	LM_DBG("TOKEN %d , %p, %p : %s\n", i, keys[i], key->s, key->s);
+
         	if(jtree != NULL) {
-				str field = str_init(*(tokens + i));
+				//str field1 = str_init(token);
 				// check for idx []
-				int sresult = sscanf(field.s, "%[^[][%[^]]]", f1, f2); //, f3);
-				LM_DBG("CHECK IDX %d - %s , %s, %s\n", sresult, field.s, f1, (sresult > 1? f2 : "(null)"));
+				int sresult = sscanf(key->s, "%[^[][%[^]]]", f1, f2); //, f3);
+				LM_DBG("CHECK IDX %d - %s , %s, %s\n", sresult, key->s, f1, (sresult > 1? f2 : "(null)"));
 
 				jtree = kz_json_get_object(jtree, f1);
 				if(jtree != NULL) {
@@ -160,9 +176,15 @@ struct json_object * kz_json_get_field_object(str* json, str* field)
 					}
 				}
         	}
-            pkg_free(*(tokens + i));
         }
-        pkg_free(tokens);
+
+        for(i = 0;i < parts; i++) {
+            LM_DBG("FREE %d\n", i);
+            pkg_free(keys[i]->s);
+            pkg_free(keys[i]);
+        }
+
+        pkg_free(keys);
     }
 
 

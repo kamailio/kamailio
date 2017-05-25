@@ -107,7 +107,7 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 VERSION = 5
 PATCHLEVEL = 1
 SUBLEVEL =  0
-EXTRAVERSION = -dev2
+EXTRAVERSION = -dev3
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
@@ -309,6 +309,8 @@ sparc64_macros= __sparcv9 __sparc_v9__
 
 arm_macros= __arm__ __thumb__
 arm6_macros= __ARM_ARCH_6__
+
+aarch64_macros= __aarch64__
 
 ppc_macros= __powerpc __powerpc__ __POWERPC__ __ppc__ _ARCH_PPC
 ppc64_macros= __ppc64__ _ARCH_PPC64
@@ -812,6 +814,11 @@ endif
 ifeq ($(ARCH), arm6)
 	use_fast_lock=yes
 	C_DEFS+=-DNOSMP # very unlikely to have an smp arm
+endif
+
+ifeq ($(ARCH), aarch64)
+	use_fast_lock=yes
+	C_DEFS+=-DNOSMP
 endif
 
 ifeq ($(ARCH), ppc)

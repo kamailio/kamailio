@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -316,7 +316,7 @@ static struct counter_record* cnt_hash_add(
 	counter_array_t* v;
 	int doc_len;
 	int n;
-	
+
 	e = 0;
 	if (cnts_no >= MAX_COUNTER_ID)
 		/* too many counters */
@@ -493,13 +493,13 @@ int counter_register(	counter_handle_t* handle, const char* group,
 
 	if (unlikely(cnts_max_rows)) {
 		/* too late */
-		BUG("late attempt to register counter: %s.%s\n", group, name);
+		LM_BUG("late attempt to register counter: %s.%s\n", group, name);
 		goto error;
 	}
 	n.s = (char*)name;
 	n.len = strlen(name);
 	if (unlikely(group == 0 || *group == 0)) {
-		BUG("attempt to register counter %s without a group\n", name);
+		LM_BUG("attempt to register counter %s without a group\n", name);
 		goto error;
 	}
 	grp.s = (char*)group;
@@ -580,7 +580,7 @@ int counter_lookup(counter_handle_t* handle,
 int counter_register_array(const char* group, counter_def_t* defs)
 {
 	int r;
-	
+
 	for (r=0; defs[r].name; r++)
 		if (counter_register(	defs[r].handle,
 								group, defs[r].name, defs[r].flags,
@@ -604,11 +604,11 @@ counter_val_t counter_get_raw_val(counter_handle_t handle)
 
 	if (unlikely(_cnts_vals == 0)) {
 		/* not init yet */
-		BUG("counters not fully initialized yet\n");
+		LM_BUG("counters not fully initialized yet\n");
 		return 0;
 	}
 	if (unlikely(handle.id >= cnts_no || (short)handle.id < 0)) {
-		BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
+		LM_BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
 		return 0;
 	}
 	ret = 0;
@@ -629,7 +629,7 @@ counter_val_t counter_get_val(counter_handle_t handle)
 
 	if (unlikely(_cnts_vals == 0 || cnt_id2record == 0)) {
 		/* not init yet */
-		BUG("counters not fully initialized yet\n");
+		LM_BUG("counters not fully initialized yet\n");
 		return 0;
 	}
 	cnt_rec = cnt_id2record[handle.id];
@@ -652,11 +652,11 @@ void counter_reset(counter_handle_t handle)
 
 	if (unlikely(_cnts_vals == 0 || cnt_id2record == 0)) {
 		/* not init yet */
-		BUG("counters not fully initialized yet\n");
+		LM_BUG("counters not fully initialized yet\n");
 		return;
 	}
 	if (unlikely(handle.id >= cnts_no)) {
-		BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
+		LM_BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
 		return;
 	}
 	if (unlikely(cnt_id2record[handle.id]->flags & CNT_F_NO_RESET))
@@ -677,11 +677,11 @@ char* counter_get_name(counter_handle_t handle)
 {
 	if (unlikely(_cnts_vals == 0 || cnt_id2record == 0)) {
 		/* not init yet */
-		BUG("counters not fully initialized yet\n");
+		LM_BUG("counters not fully initialized yet\n");
 		goto error;
 	}
 	if (unlikely(handle.id >= cnts_no)) {
-		BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
+		LM_BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
 		goto error;
 	}
 	return cnt_id2record[handle.id]->name.s;
@@ -700,11 +700,11 @@ char* counter_get_group(counter_handle_t handle)
 {
 	if (unlikely(_cnts_vals == 0 || cnt_id2record == 0)) {
 		/* not init yet */
-		BUG("counters not fully initialized yet\n");
+		LM_BUG("counters not fully initialized yet\n");
 		goto error;
 	}
 	if (unlikely(handle.id >= cnts_no)) {
-		BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
+		LM_BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
 		goto error;
 	}
 	return cnt_id2record[handle.id]->group.s;
@@ -723,11 +723,11 @@ char* counter_get_doc(counter_handle_t handle)
 {
 	if (unlikely(_cnts_vals == 0 || cnt_id2record == 0)) {
 		/* not init yet */
-		BUG("counters not fully initialized yet\n");
+		LM_BUG("counters not fully initialized yet\n");
 		goto error;
 	}
 	if (unlikely(handle.id >= cnts_no)) {
-		BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
+		LM_BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
 		goto error;
 	}
 	return cnt_id2record[handle.id]->doc.s;
@@ -767,7 +767,7 @@ void counter_iterate_grp_var_names(	const char* group,
 	struct counter_record* r;
 	struct grp_record* g;
 	str grp;
-	
+
 	grp.s = (char*)group;
 	grp.len = strlen(group);
 	g = grp_hash_lookup(&grp);
@@ -793,7 +793,7 @@ void counter_iterate_grp_vars(const char* group,
 	struct counter_record* r;
 	struct grp_record* g;
 	str grp;
-	
+
 	grp.s = (char*)group;
 	grp.len = strlen(group);
 	g = grp_hash_lookup(&grp);
@@ -830,7 +830,7 @@ int register_stat( char *module, char *name, stat_var **pvar, int flags)
 	int ret;
 
 	if (module == 0 || name == 0 || pvar == 0) {
-		BUG("invalid parameters (%p, %p, %p)\n", module, name, pvar);
+		LM_BUG("invalid parameters (%p, %p, %p)\n", module, name, pvar);
 		return -1;
 	}
 	/* translate kamailio stat flags into sr counter flags */
@@ -845,7 +845,7 @@ int register_stat( char *module, char *name, stat_var **pvar, int flags)
 					"kamailio statistic (no description)", 0);
 	if (ret < 0) {
 		if (ret == -2)
-			ERR("counter %s.%s already registered\n", module, name);
+			LM_ERR("counter %s.%s already registered\n", module, name);
 		goto error;
 	}
 	if (!(flags & STAT_IS_FUNC))
@@ -862,7 +862,7 @@ error:
 int register_module_stats(char *module, stat_export_t *stats)
 {
 	if (module == 0 || *module == 0) {
-		BUG("null or empty module name\n");
+		LM_BUG("null or empty module name\n");
 		goto error;
 	}
 	if (stats == 0 || stats[0].name == 0)
@@ -871,7 +871,7 @@ int register_module_stats(char *module, stat_export_t *stats)
 	for (; stats->name; stats++)
 		if (register_stat(module, stats->name, stats->stat_pointer,
 							stats->flags) < 0 ){
-			ERR("failed to add statistic %s.%s\n", module, stats->name);
+			LM_ERR("failed to add statistic %s.%s\n", module, stats->name);
 			goto error;
 		}
 	return 0;

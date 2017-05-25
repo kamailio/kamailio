@@ -590,7 +590,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 }
 
 /**
- * The sstCheckMin() script command handler. Return 1 (true) if the
+ * The ki_sst_check_min() script command handler. Return 1 (true) if the
  * MIN-SE: of the message is too small compared to the sst_min_se
  * value. This will allow the script to reply to this INVITE with a
  * "422 Session Timer Too Small" response. if sst_min_se was never set
@@ -601,10 +601,9 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
  * no reply is sent.
 
  * @param msg  - The sip message from the script (INVITE only)
- * @param flag - Reply mode Flag. 0/NULL do not send reply, 1 send 422
+ * @param flag - Reply mode Flag. 0 do not send reply, 1 send 422
  *               reply if Session-Expires is to small with the MIN-SE
  *               header in the reply
- * @param str2 - Not used.
  *
  * @return 1 if the MIN-SE is too small, -1 if it is OK, or It could
  *         not be checked.
@@ -612,7 +611,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
  * NOTE: returning 0 == drop message, 1 == true, -1 == false in the
  *       script.
  */
-int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
+int ki_sst_check_min(struct sip_msg *msg, int flag)
 {
 	enum parse_sst_result result;
 	struct session_expires se = {0,0};
@@ -692,6 +691,37 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 	 * All is good.
 	 */
 	return -1; /* return false */
+}
+
+/**
+ * The sstCheckMin() script command handler. Return 1 (true) if the
+ * MIN-SE: of the message is too small compared to the sst_min_se
+ * value. This will allow the script to reply to this INVITE with a
+ * "422 Session Timer Too Small" response. if sst_min_se was never set
+ * the recommended value of 1800 seconds will be used.
+ *
+ * If the flag (str1) is set to 1, the 422 reply will be sent with the
+ * sst MIN_SE value in the header. If the flag is not set or is NULL,
+ * no reply is sent.
+
+ * @param msg  - The sip message from the script (INVITE only)
+ * @param flag - Reply mode Flag. 0/NULL do not send reply, 1 send 422
+ *               reply if Session-Expires is to small with the MIN-SE
+ *               header in the reply
+ * @param str2 - Not used.
+ *
+ * @return 1 if the MIN-SE is too small, -1 if it is OK, or It could
+ *         not be checked.
+ *
+ * NOTE: returning 0 == drop message, 1 == true, -1 == false in the
+ *       script.
+ */
+int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
+{
+	if (flag && *flag) {
+		return ki_sst_check_min(msg, 1);
+	}
+	return ki_sst_check_min(msg, 0);
 }
 
 /**

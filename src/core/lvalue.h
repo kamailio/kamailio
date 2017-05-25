@@ -1,5 +1,4 @@
-/* 
- * 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /**
- * @file 
+ * @file
  * @brief Kamailio core :: lvalues (assignment)
  * @author andrei
  */
@@ -58,6 +57,6 @@ void set_log_assign_action_cb(log_assign_action_f f);
  * @param rve - rvalue expression
  * @return >= 0 on success (expr. bool value), -1 on error
  */
-int lval_assign(struct run_act_ctx* h, struct sip_msg* msg, 
+int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				struct lvalue* lv, struct rval_expr* rve);
 #endif /* __lvalue_h_*/

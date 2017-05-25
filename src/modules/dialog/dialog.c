@@ -780,125 +780,140 @@ static void mod_destroy(void)
 }
 
 
+static int w_set_dlg_profile_helper(sip_msg_t *msg,
+		struct dlg_profile_table *profile, str *value)
+{
+	if (profile->has_value) {
+		if (value==NULL || value->len<=0) {
+			LM_ERR("invalid value parameter\n");
+			return -1;
+		}
+		if ( set_dlg_profile( msg, value, profile) < 0 ) {
+			LM_ERR("failed to set profile with key\n");
+			return -1;
+		}
+	} else {
+		if ( set_dlg_profile( msg, NULL, profile) < 0 ) {
+			LM_ERR("failed to set profile\n");
+			return -1;
+		}
+	}
+	return 1;
+}
 
 static int w_set_dlg_profile(struct sip_msg *msg, char *profile, char *value)
 {
-	pv_elem_t *pve;
-	str val_s;
+	pv_elem_t *pve = NULL;
+	str val_s = STR_NULL;
 
 	pve = (pv_elem_t *)value;
-
-	if (((struct dlg_profile_table*)profile)->has_value) {
-		if ( pve==NULL || pv_printf_s(msg, pve, &val_s)!=0 || 
-		val_s.len == 0 || val_s.s == NULL) {
+	if(pve!=NULL) {
+		if(pv_printf_s(msg, pve, &val_s)!=0 || val_s.len <= 0
+				|| val_s.s == NULL) {
 			LM_WARN("cannot get string for value\n");
 			return -1;
 		}
-		if ( set_dlg_profile( msg, &val_s,
-		(struct dlg_profile_table*)profile) < 0 ) {
-			LM_ERR("failed to set profile");
+	}
+
+	return w_set_dlg_profile_helper(msg, (struct dlg_profile_table*)profile,
+				&val_s);
+}
+
+static int w_unset_dlg_profile_helper(sip_msg_t *msg,
+		struct dlg_profile_table *profile, str *value)
+{
+	if (profile->has_value) {
+		if (value==NULL || value->len<=0) {
+			LM_ERR("invalid value parameter\n");
+			return -1;
+		}
+		if ( unset_dlg_profile( msg, value, profile) < 0 ) {
+			LM_ERR("failed to unset profile with key\n");
 			return -1;
 		}
 	} else {
-		if ( set_dlg_profile( msg, NULL,
-		(struct dlg_profile_table*)profile) < 0 ) {
-			LM_ERR("failed to set profile");
+		if ( unset_dlg_profile( msg, NULL, profile) < 0 ) {
+			LM_ERR("failed to unset profile\n");
 			return -1;
 		}
 	}
 	return 1;
 }
-
-
 
 static int w_unset_dlg_profile(struct sip_msg *msg, char *profile, char *value)
 {
-	pv_elem_t *pve;
-	str val_s;
+	pv_elem_t *pve = NULL;
+	str val_s = STR_NULL;
 
 	pve = (pv_elem_t *)value;
-
-	if (((struct dlg_profile_table*)profile)->has_value) {
-		if ( pve==NULL || pv_printf_s(msg, pve, &val_s)!=0 || 
-		val_s.len == 0 || val_s.s == NULL) {
+	if(pve!=NULL) {
+		if(pv_printf_s(msg, pve, &val_s)!=0 || val_s.len <= 0
+				|| val_s.s == NULL) {
 			LM_WARN("cannot get string for value\n");
 			return -1;
 		}
-		if ( unset_dlg_profile( msg, &val_s,
-		(struct dlg_profile_table*)profile) < 0 ) {
-			LM_ERR("failed to unset profile");
-			return -1;
-		}
-	} else {
-		if ( unset_dlg_profile( msg, NULL,
-		(struct dlg_profile_table*)profile) < 0 ) {
-			LM_ERR("failed to unset profile");
-			return -1;
-		}
 	}
-	return 1;
+
+	return w_unset_dlg_profile_helper(msg, (struct dlg_profile_table*)profile,
+				&val_s);
 }
 
-
+static int w_is_in_profile_helper(sip_msg_t *msg,
+		struct dlg_profile_table *profile, str *value)
+{
+	if (profile->has_value) {
+		if (value==NULL || value->len<=0) {
+			LM_ERR("invalid value parameter\n");
+			return -1;
+		}
+		return is_dlg_in_profile( msg, profile, value);
+	} else {
+		return is_dlg_in_profile( msg, profile, NULL);
+	}
+}
 
 static int w_is_in_profile(struct sip_msg *msg, char *profile, char *value)
 {
-	pv_elem_t *pve;
-	str val_s;
+	pv_elem_t *pve = NULL;
+	str val_s = STR_NULL;
 
 	pve = (pv_elem_t *)value;
-
-	if ( pve!=NULL && ((struct dlg_profile_table*)profile)->has_value) {
-		if ( pv_printf_s(msg, pve, &val_s)!=0 || 
-		val_s.len == 0 || val_s.s == NULL) {
+	if(pve!=NULL) {
+		if(pv_printf_s(msg, pve, &val_s)!=0 || val_s.len <= 0
+				|| val_s.s == NULL) {
 			LM_WARN("cannot get string for value\n");
 			return -1;
 		}
-		return is_dlg_in_profile( msg, (struct dlg_profile_table*)profile,
-			&val_s);
-	} else {
-		return is_dlg_in_profile( msg, (struct dlg_profile_table*)profile,
-			NULL);
 	}
-}
 
+	return w_is_in_profile_helper(msg, (struct dlg_profile_table*)profile,
+				&val_s);
+}
 
 /**
  * get dynamic name profile size
  */
-static int w_get_profile_size3(struct sip_msg *msg, char *profile,
-		char *value, char *result)
+static int w_get_profile_size_helper(sip_msg_t *msg,
+		struct dlg_profile_table *profile, str *value, pv_spec_t *spd)
 {
-	pv_elem_t *pve;
-	str val_s;
-	pv_spec_t *sp_dest;
 	unsigned int size;
 	pv_value_t val;
 
-	if(result!=NULL)
-	{
-		pve = (pv_elem_t *)value;
-		sp_dest = (pv_spec_t *)result;
-	} else {
-		pve = NULL;
-		sp_dest = (pv_spec_t *)value;
-	}
-	if ( pve!=NULL && ((struct dlg_profile_table*)profile)->has_value) {
-		if ( pv_printf_s(msg, pve, &val_s)!=0 || 
-		val_s.len == 0 || val_s.s == NULL) {
-			LM_WARN("cannot get string for value\n");
+	if (profile->has_value) {
+		if(value==NULL || value->s==NULL || value->len<=0) {
+			LM_ERR("invalid value parameter\n");
 			return -1;
 		}
-		size = get_profile_size( (struct dlg_profile_table*)profile, &val_s );
+		size = get_profile_size( profile, value );
 	} else {
-		size = get_profile_size( (struct dlg_profile_table*)profile, NULL );
+		size = get_profile_size( profile, NULL );
 	}
 
 	memset(&val, 0, sizeof(pv_value_t));
 	val.flags = PV_VAL_INT|PV_TYPE_INT;
 	val.ri = (int)size;
 
-	if(sp_dest->setf(msg, &sp_dest->pvp, (int)EQ_T, &val)<0)
+	if(spd->setf(msg, &spd->pvp, (int)EQ_T, &val)<0)
 	{
 		LM_ERR("setting profile PV failed\n");
 		return -1;
@@ -907,6 +922,32 @@ static int w_get_profile_size3(struct sip_msg *msg, char *profile,
 	return 1;
 }
 
+static int w_get_profile_size3(struct sip_msg *msg, char *profile,
+		char *value, char *result)
+{
+	pv_elem_t *pve = NULL;
+	str val_s = STR_NULL;
+	pv_spec_t *spd = NULL;
+
+	if(result!=NULL)
+	{
+		pve = (pv_elem_t *)value;
+		spd = (pv_spec_t *)result;
+	} else {
+		pve = NULL;
+		spd = (pv_spec_t *)value;
+	}
+	if (pve!=NULL) {
+		if ( pv_printf_s(msg, pve, &val_s)!=0
+				|| val_s.len == 0 || val_s.s == NULL) {
+			LM_WARN("cannot get string for value\n");
+			return -1;
+		}
+	}
+
+	return w_get_profile_size_helper(msg, (struct dlg_profile_table*)profile,
+			(pve)?&val_s:NULL, spd);
+}
 
 /**
  * get static name profile size
@@ -917,17 +958,11 @@ static int w_get_profile_size2(struct sip_msg *msg, char *profile, char *result)
 }
 
 
-static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
+static int ki_dlg_setflag(struct sip_msg *msg, int val)
 {
 	dlg_ctx_t *dctx;
 	dlg_cell_t *d;
-	int val;
 
-	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
-	{
-		LM_ERR("no flag value\n");
-		return -1;
-	}
 	if(val<0 || val>31)
 		return -1;
 	if ( (dctx=dlg_get_dlg_ctx())==NULL )
@@ -942,11 +977,8 @@ static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
 	return 1;
 }
 
-
-static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
+static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
 {
-	dlg_ctx_t *dctx;
-	dlg_cell_t *d;
 	int val;
 
 	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
@@ -954,6 +986,15 @@ static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 		LM_ERR("no flag value\n");
 		return -1;
 	}
+
+	return ki_dlg_setflag(msg, val);
+}
+
+static int ki_dlg_resetflag(struct sip_msg *msg, int val)
+{
+	dlg_ctx_t *dctx;
+	dlg_cell_t *d;
+
 	if(val<0 || val>31)
 		return -1;
 
@@ -969,19 +1010,24 @@ static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 	return 1;
 }
 
-
-static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
+static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 {
-	dlg_ctx_t *dctx;
-	dlg_cell_t *d;
 	int val;
-	int ret;
 
 	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
 	{
 		LM_ERR("no flag value\n");
 		return -1;
 	}
+	return ki_dlg_resetflag(msg, val);
+}
+
+static int ki_dlg_isflagset(struct sip_msg *msg, int val)
+{
+	dlg_ctx_t *dctx;
+	dlg_cell_t *d;
+	int ret;
+
 	if(val<0 || val>31)
 		return -1;
 
@@ -995,6 +1041,18 @@ static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
 		return ret;
 	}
 	return (dctx->flags&(1<<val))?1:-1;
+}
+
+static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
+{
+	int val;
+
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
+	{
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_dlg_isflagset(msg, val);
 }
 
 /**
@@ -1336,13 +1394,40 @@ static int fixup_dlg_bridge(void** param, int param_no)
 	return 0;
 }
 
-static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
+static int ki_dlg_get(sip_msg_t *msg, str *sc, str *sf, str *st)
 {
 	dlg_cell_t *dlg = NULL;
+	unsigned int dir = 0;
+
+	if(sc==NULL || sc->s==NULL || sc->len == 0) {
+		LM_ERR("invalid Call-ID parameter\n");
+		return -1;
+	}
+	if(sf==NULL || sf->s==NULL || sf->len == 0) {
+		LM_ERR("invalid From tag parameter\n");
+		return -1;
+	}
+	if(st==NULL || st->s==NULL || st->len == 0) {
+		LM_ERR("invalid To tag parameter\n");
+		return -1;
+	}
+
+	dlg = get_dlg(sc, sf, st, &dir);
+	if(dlg==NULL)
+		return -1;
+	/* set shorcut to dialog internal unique id */
+	_dlg_ctx.iuid.h_entry = dlg->h_entry;
+	_dlg_ctx.iuid.h_id = dlg->h_id;
+	_dlg_ctx.dir = dir;
+	dlg_release(dlg);
+	return 1;
+}
+
+static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
+{
 	str sc = {0,0};
 	str sf = {0,0};
 	str st = {0,0};
-	unsigned int dir = 0;
 
 	if(ci==0 || ft==0 || tt==0)
 	{
@@ -1355,21 +1440,13 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 		LM_ERR("unable to get Call-ID\n");
 		return -1;
 	}
-	if(sc.s==NULL || sc.len == 0)
-	{
-		LM_ERR("invalid Call-ID parameter\n");
-		return -1;
-	}
+
 	if(fixup_get_svalue(msg, (gparam_p)ft, &sf)!=0)
 	{
 		LM_ERR("unable to get From tag\n");
 		return -1;
 	}
-	if(sf.s==NULL || sf.len == 0)
-	{
-		LM_ERR("invalid From tag parameter\n");
-		return -1;
-	}
+
 	if(fixup_get_svalue(msg, (gparam_p)tt, &st)!=0)
 	{
 		LM_ERR("unable to get To Tag\n");
@@ -1381,15 +1458,7 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 		return -1;
 	}
 
-	dlg = get_dlg(&sc, &sf, &st, &dir);
-	if(dlg==NULL)
-		return -1;
-    /* set shorcut to dialog internal unique id */
-	_dlg_ctx.iuid.h_entry = dlg->h_entry;
-	_dlg_ctx.iuid.h_id = dlg->h_id;
-	_dlg_ctx.dir = dir;
-	dlg_release(dlg);
-	return 1;
+	return ki_dlg_get(msg, &sc, &sf, &st);
 }
 
 /**
@@ -1520,6 +1589,195 @@ static int ki_dlg_set_timeout(sip_msg_t *msg, int to)
 /**
  *
  */
+static int ki_set_dlg_profile_static(sip_msg_t *msg, str *sprofile)
+{
+	struct dlg_profile_table *profile = NULL;
+
+	if(sprofile==NULL || sprofile->s==NULL || sprofile->len<=0) {
+		LM_ERR("invalid profile identifier\n");
+		return -1;
+	}
+	profile = search_dlg_profile( sprofile );
+	if (profile==NULL) {
+		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
+		return -1;
+	}
+
+	return w_set_dlg_profile_helper(msg, profile, NULL);
+}
+
+/**
+ *
+ */
+static int ki_set_dlg_profile(sip_msg_t *msg, str *sprofile, str *svalue)
+{
+	struct dlg_profile_table *profile = NULL;
+
+	if(sprofile==NULL || sprofile->s==NULL || sprofile->len<=0) {
+		LM_ERR("invalid profile identifier\n");
+		return -1;
+	}
+	profile = search_dlg_profile( sprofile );
+	if (profile==NULL) {
+		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
+		return -1;
+	}
+
+	return w_set_dlg_profile_helper(msg, profile, svalue);
+}
+
+/**
+ *
+ */
+static int ki_unset_dlg_profile_static(sip_msg_t *msg, str *sprofile)
+{
+	struct dlg_profile_table *profile = NULL;
+
+	if(sprofile==NULL || sprofile->s==NULL || sprofile->len<=0) {
+		LM_ERR("invalid profile identifier\n");
+		return -1;
+	}
+	profile = search_dlg_profile( sprofile );
+	if (profile==NULL) {
+		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
+		return -1;
+	}
+
+	return w_unset_dlg_profile_helper(msg, profile, NULL);
+}
+
+/**
+ *
+ */
+static int ki_unset_dlg_profile(sip_msg_t *msg, str *sprofile, str *svalue)
+{
+	struct dlg_profile_table *profile = NULL;
+
+	if(sprofile==NULL || sprofile->s==NULL || sprofile->len<=0) {
+		LM_ERR("invalid profile identifier\n");
+		return -1;
+	}
+	profile = search_dlg_profile( sprofile );
+	if (profile==NULL) {
+		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
+		return -1;
+	}
+
+	return w_unset_dlg_profile_helper(msg, profile, svalue);
+}
+
+/**
+ *
+ */
+static int ki_is_in_profile_static(sip_msg_t *msg, str *sprofile)
+{
+	struct dlg_profile_table *profile = NULL;
+
+	if(sprofile==NULL || sprofile->s==NULL || sprofile->len<=0) {
+		LM_ERR("invalid profile identifier\n");
+		return -1;
+	}
+	profile = search_dlg_profile( sprofile );
+	if (profile==NULL) {
+		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
+		return -1;
+	}
+
+	return w_is_in_profile_helper(msg, profile, NULL);
+}
+
+/**
+ *
+ */
+static int ki_is_in_profile(sip_msg_t *msg, str *sprofile, str *svalue)
+{
+	struct dlg_profile_table *profile = NULL;
+
+	if(sprofile==NULL || sprofile->s==NULL || sprofile->len<=0) {
+		LM_ERR("invalid profile identifier\n");
+		return -1;
+	}
+	profile = search_dlg_profile( sprofile );
+	if (profile==NULL) {
+		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
+		return -1;
+	}
+
+	return w_is_in_profile_helper(msg, profile, svalue);
+}
+
+/**
+ *
+ */
+static int ki_get_profile_size_static(sip_msg_t *msg, str *sprofile, str *spv)
+{
+	struct dlg_profile_table *profile = NULL;
+	pv_spec_t *pvs = NULL;
+
+	if(sprofile==NULL || sprofile->s==NULL || sprofile->len<=0) {
+		LM_ERR("invalid profile identifier\n");
+		return -1;
+	}
+	if(spv==NULL || spv->s==NULL || spv->len<=0) {
+		LM_ERR("invalid destination var name\n");
+		return -1;
+	}
+	profile = search_dlg_profile( sprofile );
+	if (profile==NULL) {
+		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
+		return -1;
+	}
+	pvs = pv_cache_get(spv);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", spv->len, spv->s);
+		return -1;
+	}
+	if (pvs->type!=PVT_AVP && pvs->type!=PVT_SCRIPTVAR) {
+		LM_ERR("return must be an AVP or SCRIPT VAR!\n");
+		return -1;
+	}
+
+	return w_get_profile_size_helper(msg, profile, NULL, pvs);
+}
+
+/**
+ *
+ */
+static int ki_get_profile_size(sip_msg_t *msg, str *sprofile, str *svalue,
+		str *spv)
+{
+	struct dlg_profile_table *profile = NULL;
+	pv_spec_t *pvs = NULL;
+
+	if(sprofile==NULL || sprofile->s==NULL || sprofile->len<=0) {
+		LM_ERR("invalid profile identifier\n");
+		return -1;
+	}
+	if(spv==NULL || spv->s==NULL || spv->len<=0) {
+		LM_ERR("invalid destination var name\n");
+		return -1;
+	}
+	profile = search_dlg_profile( sprofile );
+	if (profile==NULL) {
+		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
+		return -1;
+	}
+	pvs = pv_cache_get(spv);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", spv->len, spv->s);
+		return -1;
+	}
+	if (pvs->type!=PVT_AVP && pvs->type!=PVT_SCRIPTVAR) {
+		LM_ERR("return must be an AVP or SCRIPT VAR!\n");
+		return -1;
+	}
+
+	return w_get_profile_size_helper(msg, profile, svalue, pvs);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_manage"),
@@ -1550,6 +1808,66 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_set_property"),
 		SR_KEMIP_INT, ki_dlg_set_property,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_get"),
+		SR_KEMIP_INT, ki_dlg_get,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("set_dlg_profile_static"),
+		SR_KEMIP_INT, ki_set_dlg_profile_static,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("set_dlg_profile"),
+		SR_KEMIP_INT, ki_set_dlg_profile,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("unset_dlg_profile_static"),
+		SR_KEMIP_INT, ki_unset_dlg_profile_static,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("unset_dlg_profile"),
+		SR_KEMIP_INT, ki_unset_dlg_profile,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("is_in_profile_static"),
+		SR_KEMIP_INT, ki_is_in_profile_static,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("is_in_profile"),
+		SR_KEMIP_INT, ki_is_in_profile,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("get_profile_size_static"),
+		SR_KEMIP_INT, ki_get_profile_size_static,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("get_profile_size"),
+		SR_KEMIP_INT, ki_get_profile_size,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_setflag"),
+		SR_KEMIP_INT, ki_dlg_setflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_resetflag"),
+		SR_KEMIP_INT, ki_dlg_resetflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_isflagset"),
+		SR_KEMIP_INT, ki_dlg_isflagset,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

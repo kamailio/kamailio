@@ -59,12 +59,14 @@ Ovidiu Sas
               4.1. sht_print()
               4.2. sht_rm_name_re(htable=>regexp)
               4.3. sht_rm_value_re(htable=>regexp)
-              4.4. sht_reset(htable)
-              4.5. sht_lock(htable=>key)
-              4.6. sht_unlock(htable=>key)
-              4.7. sht_iterator_start(iname, hname)
-              4.8. sht_iterator_end(iname)
-              4.9. sht_iterator_next(iname)
+              4.4. sht_rm_name(htable, op, val)
+              4.5. sht_rm_value(htable, op, val)
+              4.6. sht_reset(htable)
+              4.7. sht_lock(htable=>key)
+              4.8. sht_unlock(htable=>key)
+              4.9. sht_iterator_start(iname, hname)
+              4.10. sht_iterator_end(iname)
+              4.11. sht_iterator_next(iname)
 
         5. Exported pseudo-variables
         6. RPC Commands
@@ -105,12 +107,14 @@ Ovidiu Sas
    1.18. sht_print usage
    1.19. sht_rm_name_re usage
    1.20. sht_rm_value_re usage
-   1.21. sht_reset usage
-   1.22. sht_lock usage
-   1.23. sht_unlock usage
-   1.24. sht_iterator_start usage
-   1.25. sht_iterator_end usage
-   1.26. sht_iterator_next usage
+   1.21. sht_rm_name usage
+   1.22. sht_rm_value usage
+   1.23. sht_reset usage
+   1.24. sht_lock usage
+   1.25. sht_unlock usage
+   1.26. sht_iterator_start usage
+   1.27. sht_iterator_end usage
+   1.28. sht_iterator_next usage
 
 Chapter 1. Admin Guide
 
@@ -145,12 +149,14 @@ Chapter 1. Admin Guide
         4.1. sht_print()
         4.2. sht_rm_name_re(htable=>regexp)
         4.3. sht_rm_value_re(htable=>regexp)
-        4.4. sht_reset(htable)
-        4.5. sht_lock(htable=>key)
-        4.6. sht_unlock(htable=>key)
-        4.7. sht_iterator_start(iname, hname)
-        4.8. sht_iterator_end(iname)
-        4.9. sht_iterator_next(iname)
+        4.4. sht_rm_name(htable, op, val)
+        4.5. sht_rm_value(htable, op, val)
+        4.6. sht_reset(htable)
+        4.7. sht_lock(htable=>key)
+        4.8. sht_unlock(htable=>key)
+        4.9. sht_iterator_start(iname, hname)
+        4.10. sht_iterator_end(iname)
+        4.11. sht_iterator_next(iname)
 
    5. Exported pseudo-variables
    6. RPC Commands
@@ -642,12 +648,14 @@ end
    4.1. sht_print()
    4.2. sht_rm_name_re(htable=>regexp)
    4.3. sht_rm_value_re(htable=>regexp)
-   4.4. sht_reset(htable)
-   4.5. sht_lock(htable=>key)
-   4.6. sht_unlock(htable=>key)
-   4.7. sht_iterator_start(iname, hname)
-   4.8. sht_iterator_end(iname)
-   4.9. sht_iterator_next(iname)
+   4.4. sht_rm_name(htable, op, val)
+   4.5. sht_rm_value(htable, op, val)
+   4.6. sht_reset(htable)
+   4.7. sht_lock(htable=>key)
+   4.8. sht_unlock(htable=>key)
+   4.9. sht_iterator_start(iname, hname)
+   4.10. sht_iterator_end(iname)
+   4.11. sht_iterator_next(iname)
 
 4.1.  sht_print()
 
@@ -688,19 +696,55 @@ sht_rm_name_re("ha=>.*");
 sht_rm_value_re("ha=>.*");
 ...
 
-4.4.  sht_reset(htable)
+4.4.  sht_rm_name(htable, op, val)
+
+   Delete all entries in the htable that match the name against the val
+   parameter.
+
+   The op parameter can be:
+     * re - match the val parameter as regular expression.
+     * sw - match the val parameter as 'starts with'.
+
+   All parameters can be static strings or contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.21. sht_rm_name usage
+...
+sht_rm_name("ha", "re", ".*");
+...
+
+4.5.  sht_rm_value(htable, op, val)
+
+   Delete all entries in the htable that match the value against the val
+   parameter.
+
+   The op parameter can be:
+     * re - match the val parameter as regular expression.
+     * sw - match the val parameter as 'starts with'.
+
+   All parameters can be static strings or contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.22. sht_rm_value usage
+...
+sht_rm_value("ha", "re", ".*");
+...
+
+4.6.  sht_reset(htable)
 
    Delete all entries in the htable. The name of the hash table can be a
    dynamic string with variables.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.21. sht_reset usage
+   Example 1.23. sht_reset usage
 ...
 sht_reset("ha$var(x)");
 ...
 
-4.5.  sht_lock(htable=>key)
+4.7.  sht_lock(htable=>key)
 
    Lock the slot in htable corresponding to the key item. Note that the
    locking is re-entrant for the process, therefore the lock and unlock
@@ -708,12 +752,12 @@ sht_reset("ha$var(x)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. sht_lock usage
+   Example 1.24. sht_lock usage
 ...
 sht_lock("ha=>test");
 ...
 
-4.6.  sht_unlock(htable=>key)
+4.8.  sht_unlock(htable=>key)
 
    Unlock the slot in htable corespoding to the key item. Note that the
    locking is re-entrant for the process, therefore the lock and unlock
@@ -721,14 +765,14 @@ sht_lock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. sht_unlock usage
+   Example 1.25. sht_unlock usage
 ...
 sht_lock("ha=>test");
 $sht(ha=>test) = $sht(ha=>test) + 10;
 sht_unlock("ha=>test");
 ...
 
-4.7.  sht_iterator_start(iname, hname)
+4.9.  sht_iterator_start(iname, hname)
 
    Start an iterator for hash table named by the value of parameter hname.
    The parameter iname is used to identify the iterator. There can be up
@@ -743,12 +787,12 @@ sht_unlock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.24. sht_iterator_start usage
+   Example 1.26. sht_iterator_start usage
 ...
 sht_iterator_start("i1", "h1");
 ...
 
-4.8.  sht_iterator_end(iname)
+4.10.  sht_iterator_end(iname)
 
    Close the iterator identified by iname parameter and release the hash
    table slot aquired by the iterator. The iname value must be the same
@@ -758,12 +802,12 @@ sht_iterator_start("i1", "h1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. sht_iterator_end usage
+   Example 1.27. sht_iterator_end usage
 ...
 sht_iterator_end("i1");
 ...
 
-4.9.  sht_iterator_next(iname)
+4.11.  sht_iterator_next(iname)
 
    Move the iterator to the next item in hash table. It must be called
    also after sht_iterator_start() to get the first item in the hash
@@ -780,7 +824,7 @@ sht_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. sht_iterator_next usage
+   Example 1.28. sht_iterator_next usage
 ...
     sht_iterator_start("i1", "h1");
     while(sht_iterator_next("i1")) {

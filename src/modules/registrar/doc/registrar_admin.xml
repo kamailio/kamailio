@@ -1271,7 +1271,8 @@ if (registered("location","$rz:$Au", 2)) {
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>hdr_name</emphasis> - header name to be used.
+			<emphasis>hdr_name</emphasis> - header name to be used, it can be
+			a static string or contain variables.
 			</para>
 		</listitem>
 		</itemizedlist>

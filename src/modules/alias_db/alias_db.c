@@ -346,7 +346,6 @@ int bind_alias_db(struct alias_db_binds *pxb)
  */
 static int ki_alias_db_lookup(sip_msg_t* msg, str* stable)
 {
-	str table_s;
 	unsigned long flags;
 
 	flags = 0;

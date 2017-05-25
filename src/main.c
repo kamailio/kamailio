@@ -471,10 +471,6 @@ int child_rank = 0;
 /* how much to wait for children to terminate, before taking extreme measures*/
 int ser_kill_timeout=DEFAULT_SER_KILL_TIMEOUT;
 
-/* process_bm_t process_bit = 0; */
-#ifdef ROUTE_SRV
-#endif
-
 /* cfg parsing */
 int cfg_errors=0;
 int cfg_warnings=0;
@@ -679,6 +675,7 @@ void handle_sigs(void)
 {
 	pid_t	chld;
 	int	chld_status;
+	int	any_chld_stopped;
 	int memlog;
 
 	switch(sig_flag){
@@ -713,7 +710,7 @@ void handle_sigs(void)
 				LOG(memlog, "Memory status (pkg):\n");
 				pkg_status();
 			}
-			if (cfg_get(core, core_cfg, mem_summary) & 2) {
+			if (cfg_get(core, core_cfg, mem_summary) & 4) {
 				LOG(memlog, "Memory still-in-use summary (pkg):\n");
 				pkg_sums();
 			}
@@ -721,11 +718,11 @@ void handle_sigs(void)
 #endif
 #ifdef SHM_MEM
 		if (memlog <= cfg_get(core, core_cfg, debug)){
-			if (cfg_get(core, core_cfg, mem_summary) & 1) {
+			if (cfg_get(core, core_cfg, mem_summary) & 2) {
 				LOG(memlog, "Memory status (shm):\n");
 				shm_status();
 			}
-			if (cfg_get(core, core_cfg, mem_summary) & 2) {
+			if (cfg_get(core, core_cfg, mem_summary) & 8) {
 				LOG(memlog, "Memory still-in-use summary (shm):\n");
 				shm_sums();
 			}
@@ -734,7 +731,9 @@ void handle_sigs(void)
 			break;
 
 		case SIGCHLD:
+			any_chld_stopped=0;
 			while ((chld=waitpid( -1, &chld_status, WNOHANG ))>0) {
+				any_chld_stopped=1;
 				if (WIFEXITED(chld_status))
 					LM_ALERT("child process %ld exited normally,"
 							" status=%d\n", (long)chld,
@@ -751,6 +750,16 @@ void handle_sigs(void)
 								" signal %d\n", (long)chld,
 								 WSTOPSIG(chld_status));
 			}
+
+			/* If it appears that no child process has stopped, then do not terminate on SIGCHLD.
+			   Certain modules like app_python can run external scripts which cause child processes to be started and
+			   stopped. That can result in SIGCHLD being received here even though there is no real problem. Therefore,
+			   we do not terminate Kamailio unless we can find the child process which has stopped. */
+			if (!any_chld_stopped) {
+				LM_INFO("SIGCHLD received, but no child has stopped, ignoring it\n");
+				break;
+			}
+
 #ifndef STOP_JIRIS_CHANGES
 			if (dont_fork) {
 				LM_INFO("dont_fork turned on, living on\n");
@@ -825,7 +834,7 @@ void sig_usr(int signo)
 							LOG(memlog, "Memory status (pkg):\n");
 							pkg_status();
 						}
-						if (cfg_get(core, core_cfg, mem_summary) & 2) {
+						if (cfg_get(core, core_cfg, mem_summary) & 4) {
 							LOG(memlog, "Memory still-in-use summary (pkg):"
 									"\n");
 							pkg_sums();
@@ -844,7 +853,7 @@ void sig_usr(int signo)
 							LOG(memlog, "Memory status (pkg):\n");
 							pkg_status();
 						}
-						if (cfg_get(core, core_cfg, mem_summary) & 2) {
+						if (cfg_get(core, core_cfg, mem_summary) & 4) {
 							LOG(memlog, "Memory still-in-use summary (pkg):\n");
 							pkg_sums();
 						}
@@ -1364,7 +1373,6 @@ int main_loop(void)
 				if (pid==0){
 					/* child */
 					/* timer!*/
-					/* process_bit = 0; */
 					if (real_time&2)
 						set_rt_prio(rt_timer2_prio, rt_timer2_policy);
 
@@ -1383,7 +1391,6 @@ int main_loop(void)
 				if (pid==0){
 					/* child */
 					/* timer!*/
-					/* process_bit = 0; */
 					if (real_time&1)
 						set_rt_prio(rt_timer1_prio, rt_timer1_policy);
 					if (arm_timer()<0) goto error;

@@ -35,6 +35,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/error.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "enum.h"
 
 MODULE_VERSION
@@ -49,41 +50,43 @@ str i_branchlabel = str_init("i");
 str i_suffix = str_init("e164.arpa.");
 str i_bl_alg = str_init("cc");
 
-str service = {0,0};
+str service = {0, 0};
 
 /*
  * Exported functions
  */
+/* clang-format off */
 static cmd_export_t cmds[] = {
 	{"enum_query", (cmd_function)enum_query_0, 0, 0, 0, REQUEST_ROUTE},
 	{"enum_query", (cmd_function)enum_query_1, 1, fixup_spve_null, 0,
 	 REQUEST_ROUTE},
-	{"enum_query", (cmd_function)enum_query_2, 2, fixup_spve_str, 0,
+	{"enum_query", (cmd_function)enum_query_2, 2, fixup_spve_spve, 0,
 	 REQUEST_ROUTE},
-	{"enum_pv_query", (cmd_function)enum_pv_query_1, 1, fixup_pvar_null,
-	 fixup_free_pvar_null, REQUEST_ROUTE},
-	{"enum_pv_query", (cmd_function)enum_pv_query_2, 2, fixup_pvar_str,
-	 fixup_free_pvar_str, REQUEST_ROUTE},
+	{"enum_pv_query", (cmd_function)enum_pv_query_1, 1, fixup_spve_null,
+	 fixup_free_spve_null, REQUEST_ROUTE},
+	{"enum_pv_query", (cmd_function)enum_pv_query_2, 2, fixup_spve_spve,
+	 fixup_free_spve_spve, REQUEST_ROUTE},
 	{"enum_pv_query", (cmd_function)enum_pv_query_3, 3,
-	 fixup_pvar_str_str, fixup_free_pvar_str_str, REQUEST_ROUTE},
+	 fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE},
 	{"is_from_user_enum", (cmd_function)is_from_user_enum_0, 0, 0, 0,
 	 REQUEST_ROUTE},
 	{"is_from_user_enum", (cmd_function)is_from_user_enum_1, 1,
-	 fixup_str_null, fixup_free_str_null, REQUEST_ROUTE},
+	 fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"is_from_user_enum", (cmd_function)is_from_user_enum_2, 2,
-	 fixup_str_str, fixup_free_str_str, REQUEST_ROUTE},
+	 fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
 	{"i_enum_query", (cmd_function)i_enum_query_0, 0, 0, 0, REQUEST_ROUTE},
-	{"i_enum_query", (cmd_function)i_enum_query_1, 1, fixup_str_null, 0,
+	{"i_enum_query", (cmd_function)i_enum_query_1, 1, fixup_spve_null, 0,
 	 REQUEST_ROUTE},
-	{"i_enum_query", (cmd_function)i_enum_query_2, 2, fixup_str_str, 0,
+	{"i_enum_query", (cmd_function)i_enum_query_2, 2, fixup_spve_spve, 0,
 	 REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
-
+/* clang-format on */
 
 /*
  * Exported parameters
  */
+/* clang-format off */
 static param_export_t params[] = {
 	{"domain_suffix", PARAM_STR, &suffix},
 	{"tel_uri_params", PARAM_STR, &param},
@@ -92,11 +95,12 @@ static param_export_t params[] = {
 	{"bl_algorithm", PARAM_STR, &i_bl_alg},
 	{0, 0, 0}
 };
-
+/* clang-format on */
 
 /*
  * Module parameter variables
  */
+/* clang-format off */
 struct module_exports exports = {
 	"enum", 
 	DEFAULT_DLFLAGS, /* dlopen flags */
@@ -111,4 +115,83 @@ struct module_exports exports = {
 	0,        /* destroy function */
 	0         /* per-child init function */
 };
+/* clang-format on */
 
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_enum_exports[] = {
+	{ str_init("enum"), str_init("enum_query"),
+		SR_KEMIP_INT, ki_enum_query,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_query_suffix"),
+		SR_KEMIP_INT, ki_enum_query_suffix,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_query_suffix_service"),
+		SR_KEMIP_INT, ki_enum_query_suffix_service,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_pv_query"),
+		SR_KEMIP_INT, ki_enum_pv_query,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_pv_query_suffix"),
+		SR_KEMIP_INT, ki_enum_pv_query_suffix,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_pv_query_suffix_service"),
+		SR_KEMIP_INT, ki_enum_pv_query_suffix_service,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("is_from_user_enum"),
+		SR_KEMIP_INT, ki_is_from_user_enum,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("is_from_user_enum_suffix"),
+		SR_KEMIP_INT, ki_is_from_user_enum_suffix,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("is_from_user_enum_suffix_service"),
+		SR_KEMIP_INT, ki_is_from_user_enum_suffix_service,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("i_enum_query"),
+		SR_KEMIP_INT, ki_i_enum_query,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("enum_i_query_suffix"),
+		SR_KEMIP_INT, ki_i_enum_query_suffix,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("enum"), str_init("i_enum_query_suffix_service"),
+		SR_KEMIP_INT, ki_i_enum_query_suffix_service,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_enum_exports);
+	return 0;
+}

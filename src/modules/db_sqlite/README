@@ -6,7 +6,16 @@ Edited by
 
 Timo Teräs
 
+Edited by
+
+Julien Chavanton
+
+   flowroute.com
+   <jchavanton@gmail.com>
+
    Copyright © 2011 Timo Teräs
+
+   Copyright © 2017
      __________________________________________________________________
 
    Table of Contents
@@ -20,14 +29,18 @@ Timo Teräs
               2.2. External Libraries or Applications
 
         3. Parameters
+
+              3.1. db_set_readonly (string)
+
         4. Functions
         5. Usage
 
    List of Examples
 
-   1.1. loading the module usage
-   1.2. db_url module parameter usage
-   1.3. DBURL define usage
+   1.1. Set db_set_readonly parameter
+   1.2. loading the module usage
+   1.3. db_url module parameter usage
+   1.4. DBURL define usage
 
 Chapter 1. Admin Guide
 
@@ -40,6 +53,9 @@ Chapter 1. Admin Guide
         2.2. External Libraries or Applications
 
    3. Parameters
+
+        3.1. db_set_readonly (string)
+
    4. Functions
    5. Usage
 
@@ -68,7 +84,25 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
-   NONE
+   3.1. db_set_readonly (string)
+
+3.1. db_set_readonly (string)
+
+   This will set the db connection to "SQLITE_OPEN_READONLY", useful if
+   another program is writing to the DB. The value is the full path to the
+   sqlite file used for example in any db_url or sqlops/sqlcon This
+   parameter may be set multiple times to set many DB connections to
+   readonly in the same configuration file.
+
+   By default all the db connection are using "SQLITE_OPEN_READWRITE |
+   SQLITE_OPEN_CREATE"
+
+   Example 1.1. Set db_set_readonly parameter
+...
+modparam("db_sqlite","db_set_readonly","/var/mydb.sqlite")
+modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using
+ the sqlops module
+...
 
 4. Functions
 
@@ -79,7 +113,7 @@ Chapter 1. Admin Guide
    To use the module, first you have to load it in the Kamailio
    configuration file.
 
-   Example 1.1. loading the module usage
+   Example 1.2. loading the module usage
 ...
 loadmodule "db_sqlite.so"
 ...
@@ -88,14 +122,14 @@ loadmodule "db_sqlite.so"
    the SQLite database to driver part 'sqlite://', followed by the path to
    database file. For example:
 
-   Example 1.2. db_url module parameter usage
+   Example 1.3. db_url module parameter usage
 ...
 modparam("auth_db", "db_url", "sqlite:///etc/kamailio/kamailio.db")
 ...
 
    In the default config file, defined token DBURL can be updated like:
 
-   Example 1.3. DBURL define usage
+   Example 1.4. DBURL define usage
 ...
 #!define DBURL "sqlite:///etc/kamailio/kamailio.db"
 ...

@@ -13,11 +13,6 @@
 
 #line 15 "rfc1918_parser.c"
 static const int rfc1918_parser_start = 1;
-static const int rfc1918_parser_first_final = 28;
-static const int rfc1918_parser_error = 0;
-
-static const int rfc1918_parser_en_main = 1;
-
 
 #line 26 "rfc1918_parser.rl"
 

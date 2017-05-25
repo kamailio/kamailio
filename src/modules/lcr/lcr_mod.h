@@ -47,6 +47,7 @@
 #define MAX_USER_LEN 64
 #define MAX_PARAMS_LEN 64
 #define MAX_NO_OF_REPLY_CODES 15
+#define MAX_MT_TVALUE_LEN 128
 
 typedef enum sip_protos uri_transport;
 
@@ -56,6 +57,8 @@ struct rule_info {
     unsigned short prefix_len;
     char from_uri[MAX_URI_LEN + 1];
     unsigned short from_uri_len;
+    char mt_tvalue[MAX_MT_TVALUE_LEN + 1];
+    unsigned short mt_tvalue_len;
     pcre *from_uri_re;
     char request_uri[MAX_URI_LEN + 1];
     unsigned short request_uri_len;

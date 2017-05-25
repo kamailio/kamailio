@@ -1,6 +1,6 @@
 /*
  * regexp and regexp substitutions implementations
- * 
+ *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
@@ -41,7 +41,7 @@
 #define WITH_SEP	1
 #define WITHOUT_SEP	0
 
-enum replace_special { REPLACE_NMATCH, REPLACE_CHAR, REPLACE_URI, 
+enum replace_special { REPLACE_NMATCH, REPLACE_CHAR, REPLACE_URI,
 					   REPLACE_SPEC };
 
 struct replace_with{
@@ -58,7 +58,7 @@ struct replace_with{
 struct subst_expr{
 	regex_t* re;
 	str replacement;
-	int replace_all; 
+	int replace_all;
 	int n_escapes; /* escapes number (replace[] size) */
 	int max_pmatch ; /* highest () referenced */
 	struct replace_with replace[1]; /* 0 does not work on all compilers */
@@ -75,7 +75,7 @@ struct replace_lst{
 
 void subst_expr_free(struct subst_expr* se);
 void replace_lst_free(struct replace_lst* l);
-int parse_repl(struct replace_with * rw, char ** begin, 
+int parse_repl(struct replace_with * rw, char ** begin,
 				char * end, int *max_token_nb, int flag);
 struct subst_expr*  subst_parser(str* subst);
 struct replace_lst* subst_run( struct subst_expr* se, const char* input, 
@@ -83,7 +83,4 @@ struct replace_lst* subst_run( struct subst_expr* se, const char* input,
 str* subst_str(const char* input, struct sip_msg* msg,
 				struct subst_expr* se, int* count);
 
-
-
 #endif
-

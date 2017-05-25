@@ -58,6 +58,7 @@
 #include "../../core/script_cb.h" /* exec_*_script_cb */
 #include "../../core/route.h" /* route_get */
 #include "../../core/sip_msg_clone.h" /* sip_msg_shm_clone */
+#include "../../core/kemi.h"
 #include "http.h"
 
 /** @addtogroup xmlrpc
@@ -147,8 +148,8 @@
 MODULE_VERSION
 
 static int process_xmlrpc(sip_msg_t* msg);
-static int dispatch_rpc(sip_msg_t* msg, char* s1, char* s2);
-static int xmlrpc_reply(sip_msg_t* msg, char* code, char* reason);
+static int w_dispatch_rpc(sip_msg_t* msg, char* s1, char* s2);
+static int w_xmlrpc_reply(sip_msg_t* msg, char* code, char* reason);
 static int mod_init(void);
 
 /* first line (w/o the version) of the sip msg created from the http xmlrpc */
@@ -406,8 +407,8 @@ static regex_t xmlrpc_url_skip_regexp;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"dispatch_rpc", dispatch_rpc, 0, 0,                  REQUEST_ROUTE},
-	{"xmlrpc_reply", xmlrpc_reply, 2, fixup_xmlrpc_reply, REQUEST_ROUTE},
+	{"dispatch_rpc", w_dispatch_rpc, 0, 0,                  REQUEST_ROUTE},
+	{"xmlrpc_reply", w_xmlrpc_reply, 2, fixup_xmlrpc_reply, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -2410,7 +2411,7 @@ static int process_xmlrpc(sip_msg_t* msg)
  * when a function with matching name is found then it will be
  * executed.
  */
-static int dispatch_rpc(sip_msg_t* msg, char* s1, char* s2)
+static int ki_dispatch_rpc(sip_msg_t* msg)
 {
 	rpc_export_t* exp;
 	int ret = 1;
@@ -2438,23 +2439,23 @@ static int dispatch_rpc(sip_msg_t* msg, char* s1, char* s2)
 	else return 1;
 }
 
+static int w_dispatch_rpc(sip_msg_t* msg, char* s1, char* s2)
+{
+	return ki_dispatch_rpc(msg);
+}
 
-/** This function can be called from SER scripts to generate
+/** This function can be called from routing scripts to generate
  * an XML-RPC reply.
  */
-static int xmlrpc_reply(sip_msg_t* msg, char* p1, char* p2)
+static int ki_xmlrpc_reply(sip_msg_t* msg, int rcode, str* reason)
 {
-        str reason;
 	static str succ = STR_STATIC_INIT("1");
 	struct xmlrpc_reply reply;
 
 	memset(&reply, 0, sizeof(struct xmlrpc_reply));
 	if (init_xmlrpc_reply(&reply) < 0) return -1;
 
-	if (get_int_fparam(&reply.code, msg, (fparam_t*)p1) < 0) return -1;
-	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) return -1;
-
-	reply.reason = as_asciiz(&reason);
+	reply.reason = as_asciiz(reason);
 	if (reply.reason == NULL) {
 	    ERR("No memory left\n");
 	    return -1;
@@ -2479,6 +2480,16 @@ static int xmlrpc_reply(sip_msg_t* msg, char* p1, char* p2)
 	return -1;
 }
 
+static int w_xmlrpc_reply(sip_msg_t* msg, char* p1, char* p2)
+{
+    str reason;
+	int rcode;
+
+	if (get_int_fparam(&rcode, msg, (fparam_t*)p1) < 0) return -1;
+	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) return -1;
+
+	return ki_xmlrpc_reply(msg, rcode, &reason);
+}
 
 /** Implementation of \@xmlrpc.method select that can be used in
  * SER scripts to retrieve the method string from XML-RPC documents
@@ -2610,15 +2621,6 @@ static int mod_init(void)
 }
 
 
-/**
- * advertise that sip workers handle rpc commands
- */
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	set_child_sip_rpc_mode();
-	return 0;
-}
-
 
 static int fixup_xmlrpc_reply(void** param, int param_no)
 {
@@ -2629,8 +2631,38 @@ static int fixup_xmlrpc_reply(void** param, int param_no)
 		if (ret <= 0) return ret;		
 	    if (fix_param(FPARAM_INT, param) != 0) return -1;
 	} else if (param_no == 2) {
-	        return fixup_var_str_12(param, 2);
+	    return fixup_var_str_12(param, 2);
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_xmlrpc_exports[] = {
+	{ str_init("xmlrpc"), str_init("dispatch_rpc"),
+		SR_KEMIP_INT, ki_dispatch_rpc,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xmlrpc"), str_init("xmlrpc_reply"),
+		SR_KEMIP_INT, ki_xmlrpc_reply,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ * advertise that sip workers handle rpc commands
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	set_child_sip_rpc_mode();
+	sr_kemi_modules_add(sr_kemi_xmlrpc_exports);
 	return 0;
 }
 

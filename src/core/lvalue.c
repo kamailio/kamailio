@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
  */
 
 /**
- * @file 
+ * @file
  * @brief Kamailio core :: lvalues (assignment)
  * \ingroup core
  * Module: \ref core
@@ -41,7 +41,7 @@ void set_log_assign_action_cb(log_assign_action_f f)
 
 /**
  * @brief eval rve and assign the result to an avp
- * 
+ *
  * eval rve and assign the result to an avp, lv->lv.avp=eval(rve)
  * based on do_action() ASSIGN_T.
  * @param h  - script context
@@ -77,16 +77,16 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	#define AVP_ASSIGN_NOVAL() \
 		/* no value => delete avp */ \
 		avp_add=0
-	
+
 	destroy_pval=0;
 	flags = 0;
 	avp=&lv->lv.avps;
 	ret=0;
 	avp_add=1;
-	
+
 	switch(rv->type){
 		case RV_NONE:
-			BUG("non-initialized rval / rval expr \n");
+			LM_BUG("non-initialized rval / rval expr \n");
 			/* unknown value => reset the avp in function of its type */
 			flags=avp->type;
 			AVP_ASSIGN_NOVAL();
@@ -106,8 +106,8 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			flags=avp->type & ~AVP_VAL_STR;
 			if (rv->v.action) {
 				value.n=run_actions_safe(h, rv->v.action, msg);
-				h->run_flags &= ~(RETURN_R_F|BREAK_R_F); /* catch return &
-														    break in expr*/
+				/* catch return & break in expr*/
+				h->run_flags &= ~(RETURN_R_F|BREAK_R_F);
 			} else
 				value.n=-1;
 			ret=value.n;
@@ -117,7 +117,7 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			if (unlikely(value.n<0)){
 				if (value.n==EXPR_DROP) /* hack to quit on drop */
 					goto drop;
-				WARN("error in expression\n");
+				LM_WARN("error in expression\n");
 				value.n=0; /* expr. is treated as false */
 			}
 			flags=avp->type & ~AVP_VAL_STR;
@@ -144,17 +144,17 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				while(r_avp){
 					/* We take only the val type  from the source avp
 					 * and reset the class, track flags and name type  */
-					flags=(avp->type & ~(AVP_INDEX_ALL|AVP_VAL_STR)) | 
+					flags=(avp->type & ~(AVP_INDEX_ALL|AVP_VAL_STR)) |
 							(r_avp->flags & ~(AVP_CLASS_ALL|AVP_TRACK_ALL|
 												AVP_NAME_STR|AVP_NAME_RE));
 					if (add_avp_before(avp_mark, flags, avp->name, value)<0){
-						ERR("failed to assign avp\n");
+						LM_ERR("failed to assign avp\n");
 						ret=-1;
 						goto error;
 					}
 					/* move the mark, so the next found AVP will come before
-					   the one currently added so they will have the same 
-					   order as in the source list */
+					 * the one currently added so they will have the same
+					 * order as in the source list */
 					if (avp_mark) avp_mark=avp_mark->next;
 					else
 						avp_mark=search_first_avp(flags, avp->name, 0, 0);
@@ -169,13 +169,13 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				if (likely(r_avp)){
 					/* take only the val type from the source avp
 					 * and reset the class, track flags and name type  */
-					flags=(avp->type & ~AVP_VAL_STR) | (r_avp->flags & 
+					flags=(avp->type & ~AVP_VAL_STR) | (r_avp->flags &
 								~(AVP_CLASS_ALL|AVP_TRACK_ALL|AVP_NAME_STR|
 									AVP_NAME_RE));
 					ret=1;
 				}else{
 					/* on error, keep the type of the assigned avp, but
-					   reset it to an empty value */
+					 * reset it to an empty value */
 					AVP_ASSIGN_NOVAL();
 					ret=0;
 					break;
@@ -202,7 +202,7 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			}else{
 				/* non existing pvar */
 				/* on error, keep the type of the assigned avp, but
-				   reset it to an empty value */
+				 * reset it to an empty value */
 				AVP_ASSIGN_NOVAL();
 				ret=0;
 			}
@@ -212,7 +212,7 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	 * existing AVPs before adding the new value */
 	delete_avp(avp->type, avp->name);
 	if (avp_add && (add_avp(flags & ~AVP_INDEX_ALL, avp->name, value) < 0)) {
-		ERR("failed to assign value to avp\n");
+		LM_ERR("failed to assign value to avp\n");
 		goto error;
 	}
 end:
@@ -249,22 +249,22 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	int ret;
 	int v;
 	int destroy_pval;
-	
+
 	#define PVAR_ASSIGN_NOVAL() \
 		/* no value found => "undefine" */ \
 		pv_get_null(msg, 0, &pval)
-	
+
 	destroy_pval=0;
 	pvar=lv->lv.pvs;
 	if (unlikely(!pv_is_w(pvar))){
-		ERR("read only pvar\n");
+		LM_ERR("read only pvar\n");
 		goto error;
 	}
 	memset(&pval, 0, sizeof(pval));
 	ret=0;
 	switch(rv->type){
 		case RV_NONE:
-			BUG("non-initialized rval / rval expr \n");
+			LM_BUG("non-initialized rval / rval expr \n");
 			PVAR_ASSIGN_NOVAL();
 			ret=-1;
 			break;
@@ -282,8 +282,8 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			pval.flags=PV_TYPE_INT|PV_VAL_INT;
 			if (rv->v.action) {
 				pval.ri=run_actions_safe(h, rv->v.action, msg);
-				h->run_flags &= ~(RETURN_R_F|BREAK_R_F); /* catch return &
-														    break in expr*/
+				/* catch return & break in expr*/
+				h->run_flags &= ~(RETURN_R_F|BREAK_R_F);
 			} else
 				pval.ri=0;
 			ret=!(!pval.ri);
@@ -294,7 +294,7 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			if (unlikely(pval.ri<0)){
 				if (pval.ri==EXPR_DROP) /* hack to quit on drop */
 					goto drop;
-				WARN("error in expression\n");
+				LM_WARN("error in expression\n");
 				pval.ri=0; /* expr. is treated as false */
 			}
 			ret=!(!pval.ri);
@@ -343,14 +343,14 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 					ret=0;
 				}
 			}else{
-				ERR("non existing right pvar\n");
+				LM_ERR("non existing right pvar\n");
 				PVAR_ASSIGN_NOVAL();
 				ret=-1;
 			}
 			break;
 	}
 	if (unlikely(pvar->setf(msg, &pvar->pvp, EQ_T, &pval)<0)){
-		ERR("setting pvar failed\n");
+		LM_ERR("setting pvar failed\n");
 		goto error;
 	}
 	if (destroy_pval) pv_value_destroy(&pval);
@@ -374,23 +374,23 @@ drop:
  * @param rve - rvalue expression
  * @return >= 0 on success (expr. bool value), -1 on error
  */
-int lval_assign(struct run_act_ctx* h, struct sip_msg* msg, 
+int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				struct lvalue* lv, struct rval_expr* rve)
 {
 	struct rvalue* rv;
 	int ret;
-	
+
 	ret=0;
 	rv=rval_expr_eval(h, msg, rve);
 	if (unlikely(rv==0)){
-		ERR("rval expression evaluation failed (%d,%d-%d,%d)\n",
+		LM_ERR("rval expression evaluation failed (%d,%d-%d,%d)\n",
 				rve->fpos.s_line, rve->fpos.s_col,
 				rve->fpos.e_line, rve->fpos.e_col);
 		goto error;
 	}
 	switch(lv->type){
 		case LV_NONE:
-			BUG("uninitialized/invalid lvalue (%d) (cfg line: %d)\n",
+			LM_BUG("uninitialized/invalid lvalue (%d) (cfg line: %d)\n",
 					lv->type, rve->fpos.s_line);
 			goto error;
 		case LV_AVP:
@@ -401,7 +401,7 @@ int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 	}
 	if (unlikely(ret<0)){
-		ERR("assignment failed at pos: (%d,%d-%d,%d)\n",
+		LM_ERR("assignment failed at pos: (%d,%d-%d,%d)\n",
 			rve->fpos.s_line, rve->fpos.s_col,
 			rve->fpos.e_line, rve->fpos.e_col);
 	}

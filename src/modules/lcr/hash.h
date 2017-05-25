@@ -36,7 +36,8 @@ int rule_hash_table_insert(struct rule_info **hash_table,
 			   unsigned int lcr_id, unsigned int rule_id,
 			   unsigned short prefix_len, char *prefix,
 			   unsigned short from_uri_len, char *from_uri,
-			   pcre *from_uri_re, unsigned short request_uri_len,
+			   pcre *from_uri_re, unsigned short mt_tvalue_len,
+			   char *mt_tvalue, unsigned short request_uri_len,
 			   char *request_uri, pcre *request_uri_re,
 			   unsigned short stopper);
 

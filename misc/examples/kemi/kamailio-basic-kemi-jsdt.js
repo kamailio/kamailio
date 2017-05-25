@@ -89,7 +89,7 @@ function ksr_route_relay()
 	// - serial forking, RTP relaying handling, a.s.o.
 	var METHOD = KSR.pv.get("$rm");
 	if (METHOD=="INVITE" || METHOD=="BYE" || METHOD=="SUBSCRIBE"
-			|| METHOD="UPDATE") {
+			|| METHOD=="UPDATE") {
 		if (KSR.tm.t_is_set("branch_route")<0) {
 			KSR.tm.t_on_branch("ksr_branch_manage");
 		}
@@ -335,7 +335,7 @@ function ksr_route_sipout()
 
 	KSR.hdr.append_hf("P-Hint: outbound\r\n");
 	ksr_route_relay();
-	KSR.xexit();;
+	KSR.x.exit();
 }
 
 // Manage outgoing branches

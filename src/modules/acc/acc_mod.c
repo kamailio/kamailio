@@ -45,6 +45,7 @@
 #include "../../core/mem/mem.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../core/str.h"
+#include "../../core/kemi.h"
 #include "../rr/api.h"
 #include "acc.h"
 #include "acc_api.h"
@@ -288,7 +289,6 @@ struct module_exports exports= {
 
 
 /************************** FIXUP functions ****************************/
-
 
 static int acc_fixup(void** param, int param_no)
 {
@@ -781,3 +781,33 @@ acc_engine_t *acc_api_get_engines(void)
 	return _acc_engines;
 }
 
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_acc_exports[] = {
+	{ str_init("acc"), str_init("acc_log_request"),
+		SR_KEMIP_INT, ki_acc_log_request,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+#ifdef SQL_ACC
+	{ str_init("acc"), str_init("acc_db_request"),
+		SR_KEMIP_INT, ki_acc_db_request,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+#endif
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_acc_exports);
+	return 0;
+}

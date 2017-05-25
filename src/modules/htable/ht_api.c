@@ -1270,6 +1270,61 @@ int ht_rm_cell_re(str *sre, ht_t *ht, int mode)
 	return 0;
 }
 
+int ht_rm_cell_op(str *sre, ht_t *ht, int mode, int op)
+{
+	ht_cell_t *it;
+	ht_cell_t *it0;
+	int match;
+	int i;
+
+	if(sre==NULL || sre->len<=0 || ht==NULL)
+		return -1;
+
+	for(i=0; i<ht->htsize; i++)
+	{
+		/* free entries */
+		ht_slot_lock(ht, i);
+		it = ht->entries[i].first;
+		while(it)
+		{
+			it0 = it->next;
+			match = 0;
+			if(mode==0)
+			{
+				if(op==HT_RM_OP_SW) {
+					if(sre->len<=it->name.len
+							&& strncmp(it->name.s, sre->s, sre->len)==0) {
+						match = 1;
+					}
+				}
+			} else {
+				if(op==HT_RM_OP_SW) {
+					if(it->flags&AVP_VAL_STR) {
+						if(sre->len<=it->value.s.len
+								&& strncmp(it->value.s.s, sre->s, sre->len)==0) {
+							match = 1;
+						}
+					}
+				}
+			}
+			if(match==1)
+			{
+				if(it->prev==NULL)
+					ht->entries[i].first = it->next;
+				else
+					it->prev->next = it->next;
+				if(it->next)
+					it->next->prev = it->prev;
+				ht->entries[i].esize--;
+				ht_cell_free(it);
+			}
+			it = it0;
+		}
+		ht_slot_unlock(ht, i);
+	}
+	return 0;
+}
+
 int ht_reset_content(ht_t *ht)
 {
 	ht_cell_t *it;

@@ -44,6 +44,7 @@
 #include "../../core/resolve.h"
 #include "../../core/locking.h"
 #include "../../core/script_cb.h"
+#include "../../core/kemi.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
 
@@ -89,8 +90,8 @@ int utils_forward(struct sip_msg *msg, int id, int proto);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"xcap_auth_status", (cmd_function)xcap_auth_status, 2, fixup_pvar_pvar,
-		fixup_free_pvar_pvar, REQUEST_ROUTE},
+	{"xcap_auth_status", (cmd_function)w_xcap_auth_status, 2, fixup_spve_spve,
+		fixup_free_spve_spve, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -322,6 +323,29 @@ int utils_forward(struct sip_msg *msg, int id, int proto)
 	return ret;
 }
 
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_utils_exports[] = {
+	{ str_init("utils"), str_init("xcap_auth_status"),
+		SR_KEMIP_INT, ki_xcap_auth_status,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_utils_exports);
+	return 0;
+}
 
 #ifdef MI_REMOVED
 /* FIFO functions */

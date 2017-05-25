@@ -41,6 +41,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "../../core/kemi.h"
+
 #include "../../modules/sl/sl.h"
 #include "sst_handlers.h" /* also includes sr_module.h needed by
                              handlers */
@@ -209,5 +211,29 @@ static int mod_init(void)
 	/* Load dialog hooks */
 	dialog_st.register_dlgcb(NULL, DLGCB_CREATED, sst_dialog_created_CB, NULL, NULL);
 
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_sst_exports[] = {
+	{ str_init("sst"), str_init("sst_check_min"),
+		SR_KEMIP_INT, ki_sst_check_min,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_sst_exports);
 	return 0;
 }

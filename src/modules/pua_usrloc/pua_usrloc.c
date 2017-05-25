@@ -44,6 +44,7 @@
 #include "../../core/str.h"
 #include "../../core/mem/mem.h"
 #include "../../core/pt.h"
+#include "../../core/kemi.h"
 #include "../usrloc/usrloc_mod.h"
 #include "../usrloc/usrloc.h"
 #include "../usrloc/ul_callback.h"
@@ -69,11 +70,9 @@ usrloc_api_t ul;
 
 static int mod_init(void);
 
-int pua_set_publish(struct sip_msg* , char*, char*);
-
 static cmd_export_t cmds[]=
 {
-	{"pua_set_publish", (cmd_function)pua_set_publish, 0, 0, 0, REQUEST_ROUTE},
+	{"pua_set_publish", (cmd_function)w_pua_set_publish, 0, 0, 0, REQUEST_ROUTE},
 	{"bind_pua_usrloc", (cmd_function)bind_pua_usrloc, 1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -204,6 +203,30 @@ int bind_pua_usrloc(struct pua_usrloc_binds *pxb)
 		return -1;
 	}
 
-	pxb->pua_set_publish = pua_set_publish;
+	pxb->pua_set_publish = w_pua_set_publish;
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_pua_usrloc_exports[] = {
+	{ str_init("pua"), str_init("pua_set_publish"),
+		SR_KEMIP_INT, ki_pua_set_publish,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_pua_usrloc_exports);
 	return 0;
 }

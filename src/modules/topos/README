@@ -30,7 +30,7 @@ Daniel-Constantin Mierla
               3.3. sanity_checks (int)
               3.4. branch_expire (int)
               3.5. dialog_expire (int)
-              3.6. clean_inteval (int)
+              3.6. clean_interval (int)
 
    List of Examples
 
@@ -58,7 +58,7 @@ Chapter 1. Admin Guide
         3.3. sanity_checks (int)
         3.4. branch_expire (int)
         3.5. dialog_expire (int)
-        3.6. clean_inteval (int)
+        3.6. clean_interval (int)
 
 1. Overview
 
@@ -97,7 +97,7 @@ Chapter 1. Admin Guide
    3.3. sanity_checks (int)
    3.4. branch_expire (int)
    3.5. dialog_expire (int)
-   3.6. clean_inteval (int)
+   3.6. clean_interval (int)
 
 3.1. db_url (str)
 
@@ -161,7 +161,7 @@ modparam("topos", "branch_expire", 300)
 modparam("topos", "dialog_expire", 3600)
 ...
 
-3.6. clean_inteval (int)
+3.6. clean_interval (int)
 
    Interval in seconds to run the clean up of stored records.
 

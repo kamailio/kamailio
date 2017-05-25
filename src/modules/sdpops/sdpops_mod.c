@@ -51,13 +51,13 @@ static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_with_active_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_with_transport(sip_msg_t* msg, char* transport, char *bar);
 static int w_sdp_with_transport_like(sip_msg_t* msg, char* transport, char *bar);
-static int w_sdp_transport(sip_msg_t* msg, char *bar);
+static int w_sdp_transport(sip_msg_t* msg, char *avp, char *p2);
 static int w_sdp_with_codecs_by_id(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_remove_transport(sip_msg_t* msg, char* transport, char *bar);
 static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
-static int w_sdp_get(sip_msg_t* msg, char *bar);
+static int w_sdp_get(sip_msg_t* msg, char *avp, char *p2);
 static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar);
 static int w_sdp_content_sloppy(sip_msg_t* msg, char* foo, char *bar);
 static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar);
@@ -1165,7 +1165,7 @@ static int sdp_with_transport(sip_msg_t *msg, str *transport, int like)
  * @brief assigns common media transport (if any) of 'm' lines to pv argument
  * @return -1 - error; 0 - not found; 1 - found
  */
-static int w_sdp_transport(sip_msg_t* msg, char *avp)
+static int sdp_transport_helper(sip_msg_t* msg, char *avp)
 {
 	int_str avp_val;
 	int_str avp_name;
@@ -1240,6 +1240,15 @@ static int w_sdp_transport(sip_msg_t* msg, char *avp)
 	return 1;
 }
 
+static int w_sdp_transport(sip_msg_t* msg, char *avp, char *p2)
+{
+	return sdp_transport_helper(msg, avp);
+}
+
+static int ki_sdp_transport(sip_msg_t* msg, str *avp)
+{
+	return sdp_transport_helper(msg, avp->s);
+}
 
 /**
  *
@@ -1571,7 +1580,7 @@ static int w_sdp_print(sip_msg_t* msg, char* level, char *bar)
 /**
  *
  */
-static int w_sdp_get(sip_msg_t* msg, char *avp)
+static int sdp_get_helper(sip_msg_t* msg, char *avp)
 {
 	sdp_info_t *sdp = NULL;
 	int_str avp_val;
@@ -1627,6 +1636,19 @@ static int w_sdp_get(sip_msg_t* msg, char *avp)
 /**
  *
  */
+static int w_sdp_get(sip_msg_t* msg, char *avp, char *p2)
+{
+	return sdp_get_helper(msg, avp);
+}
+
+static int ki_sdp_get(sip_msg_t* msg, str *avp)
+{
+	return sdp_get_helper(msg, avp->s);
+}
+
+/**
+ *
+ */
 static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar)
 {
 	if(parse_sdp(msg)==0 && msg->body!=NULL)
@@ -1637,38 +1659,66 @@ static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar)
 /**
  *
  */
-static int w_sdp_content_sloppy(sip_msg_t* msg, char* foo, char *bar)
+static int ki_sdp_content(sip_msg_t* msg)
+{
+	if(parse_sdp(msg)==0 && msg->body!=NULL)
+		return 1;
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_sdp_content_flags(sip_msg_t *msg, int flags)
 {
 	str body;
 	int mime;
 
+	if(flags==0) {
+		return ki_sdp_content(msg);
+	}
+
 	body.s = get_body(msg);
-	if (body.s == NULL) return -1;
+	if(body.s == NULL)
+		return -1;
 	body.len = msg->len - (int)(body.s - msg->buf);
-	if (body.len == 0) return -1;
+	if(body.len == 0)
+		return -1;
 
 	mime = parse_content_type_hdr(msg);
-	if (mime < 0) return -1;  /* error */
-	if (mime == 0) return 1;  /* default is application/sdp */
+	if(mime < 0)
+		return -1; /* error */
+	if(mime == 0)
+		return 1; /* default is application/sdp */
 
-	switch (((unsigned int)mime) >> 16) {
-	case TYPE_APPLICATION:
-		if ((mime & 0x00ff) == SUBTYPE_SDP) return 1; else return -1;
-	case TYPE_MULTIPART:
-		if ((mime & 0x00ff) == SUBTYPE_MIXED) {
-			if (_strnistr(body.s, "application/sdp", body.len) == NULL) {
-				return -1;
-			} else {
+	switch(((unsigned int)mime) >> 16) {
+		case TYPE_APPLICATION:
+			if((mime & 0x00ff) == SUBTYPE_SDP)
 				return 1;
+			else
+				return -1;
+		case TYPE_MULTIPART:
+			if((mime & 0x00ff) == SUBTYPE_MIXED) {
+				if(_strnistr(body.s, "application/sdp", body.len) == NULL) {
+					return -1;
+				} else {
+					return 1;
+				}
+			} else {
+				return -1;
 			}
-		} else {
+		default:
 			return -1;
-		}
-	default:
-		return -1;
 	}
 }
 
+/**
+ *
+ */
+static int w_sdp_content_sloppy(sip_msg_t *msg, char *foo, char *bar)
+{
+	return ki_sdp_content_flags(msg, 1);
+}
 /**
  *
  */
@@ -1932,8 +1982,38 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("sdpops"), str_init("remove_line_by_prefix"),
+		SR_KEMIP_INT, sdp_remove_line_by_prefix,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("sdpops"), str_init("remove_media"),
 		SR_KEMIP_INT, sdp_remove_media,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_content"),
+		SR_KEMIP_INT, ki_sdp_content,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_content_flags"),
+		SR_KEMIP_INT, ki_sdp_content_flags,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_with_ice"),
+		SR_KEMIP_INT, sdp_with_ice,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_get"),
+		SR_KEMIP_INT, ki_sdp_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_transport"),
+		SR_KEMIP_INT, ki_sdp_transport,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

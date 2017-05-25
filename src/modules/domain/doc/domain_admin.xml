@@ -51,7 +51,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="domain.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		This is <acronym>URL</acronym> of the database to be used.
@@ -67,7 +67,7 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="domain.p.domain_table">
 		<title><varname>domain_table</varname> (string)</title>
 		<para>
 		Name of table containing names of local domains that the proxy is
@@ -83,7 +83,7 @@ modparam("domain", "domain_table", "new_name")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="domain.p.domain_attrs_table">
 		<title><varname>domain_attrs_table</varname> (string)</title>
 		<para>
 		Name of table containing attributes of local domains.
@@ -98,7 +98,7 @@ modparam("domain", "domain_attrs_table", "local_domain_attributes")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="domain.p.did_col">
 		<title><varname>did_col</varname> (string)</title>
 		<para>
 		Name of column containing domain id (did) of domain in domain
@@ -116,7 +116,7 @@ modparam("domain", "did_col", "domain_did")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="domain.p.domain_col">
 		<title><varname>domain_col</varname> (string)</title>
 		<para>
 		Name of column containing domain name in domain table.
@@ -131,7 +131,7 @@ modparam("domain", "domain_col", "domain_name")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="domain.p.name_col">
 		<title><varname>name_col</varname> (string)</title>
 		<para>
 		Name of column containing attribute name in domain_attrs table.
@@ -146,7 +146,7 @@ modparam("domain", "name_col", "attr_name")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="domain.p.type_col">
 		<title><varname>type_col</varname> (string)</title>
 		<para>
 		Name of column containing attribute type in domain_attrs table.
@@ -162,7 +162,7 @@ modparam("domain", "type_col", "attr_type")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="domain.p.value_col">
 		<title><varname>value_col</varname> (string)</title>
 		<para>
 		Name of column containing attribute value in domain_attrs table.
@@ -177,7 +177,7 @@ modparam("domain", "value_col", "attr_value")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="domain.p.register_myself">
 		<title><varname>register_myself</varname> (integer)</title>
 		<para>
 			Register the list of domains to match 'myself' check:
@@ -199,7 +199,7 @@ modparam("domain", "register_myself", 1)
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="domain.f.is_from_local">
 		<title><function moreinfo="none">is_from_local()</function></title>
 		<para>
 		Checks based on domain table if host part of From header uri is
@@ -220,7 +220,7 @@ if (is_from_local()) {
 		</programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="domain.f.is_uri_host_local">
 		<title><function moreinfo="none">is_uri_host_local()</function></title>
 		<para>
 		If called from route or failure route block, checks
@@ -246,18 +246,19 @@ if (is_uri_host_local()) {
 		</programlisting>
 		</example>
 	</section>
-	<section>
-		<title><function moreinfo="none">is_domain_local(pseudo_variable)</function></title>
+	<section id="domain.f.is_domain_local">
+		<title><function moreinfo="none">is_domain_local(domain)</function></title>
 		<para>
 		This function checks if the domain contained in the
-		pseudo_variable is local.
+		parameter is local. The parameter can be a static string or contain
+		pseduo-variables.
 		</para>
 		<para>
 		This function is a generalized form of the is_from_local()
 		and is_uri_host_local() functions, being able to completely
 		replace them and also extends them by allowing the domain to
 		be taken from any of the above mentioned sources.
-                The following equivalences exist:
+        The following equivalences exist:
 		</para>
 		<itemizedlist>
 		<listitem><para>
@@ -277,33 +278,37 @@ if (is_uri_host_local()) {
 ...
 if (is_domain_local("$rd")) {
 	...
-};
+}
+if (is_domain_local("my.domain.com")) {
+	...
+}
 if (is_domain_local("$fd")) {
 	...
-};
+}
 if (is_domain_local("$avp(some_avp_alias)")) {
 	...
-};
+}
 if (is_domain_local("$avp(i:850)")) {
 	...
-};
+}
 if (is_domain_local("$avp(s:some_avp)")) {
 	...
-};
+}
 ...
 		</programlisting>
 		</example>
 	</section>
-	<section>
-		<title><function moreinfo="none">lookup_domain(domain[, prefix])</function></title>
+	<section id="domain.f.lookup_domain">
+		<title><function moreinfo="none">lookup_domain(domain [, prefix])</function></title>
 		<para>
-		This function checks if domain given in
-		domain argument (pseudo variable) is local and, if so,
-		adds attributes
-		associated with domain's id (did) to AVPs.  If prefix
-		argument (string) is given, names of attributes are prefixes by
-		it.  In addition to attributes given in domain_attrs
-		table, AVP did containing did of domain is added.
+		This function checks if domain given in domain argument is local and,
+		if so, adds attributes associated with domain's id (did) to AVPs.
+		If prefix argument (string) is given, names of attributes are prefixes
+		by it. In addition to attributes given in domain_attrs table, AVP
+		named did containing the did of domain is added.
+		</para>
+		<para>
+		Both parameters can contain pseudo-variables.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,

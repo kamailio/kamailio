@@ -44,6 +44,7 @@
 #include "../../core/locking.h"
 #include "../../core/action.h"
 #include "../../core/route.h"
+#include "../../core/kemi.h"
 #include "tree.h"
 #include "pr.h"
 
@@ -256,17 +257,59 @@ static int get_username(struct sip_msg* msg, str *user)
 
 
 /**
- * SER Command "prefix_route"
+ * ki command "prefix_route"
+ */
+static int ki_prefix_route(sip_msg_t *msg, str *ruser)
+{
+	struct run_act_ctx ra_ctx;
+	int err;
+	int route;
+
+	route = tree_route_get(ruser);
+	if (route <= 0)
+		return -1;
+
+	/* If match send to route[x] */
+	init_run_actions_ctx(&ra_ctx);
+
+	err = run_actions(&ra_ctx, main_rt.rlist[route], msg);
+	if (err < 0) {
+		LOG(L_ERR, "prefix_route: run_actions failed (%d)\n", err);
+		return -1;
+	}
+
+	/* Success */
+	return (prefix_route_exit)?0:1;
+}
+
+/**
+ * ki command "prefix_route"
+ */
+static int ki_prefix_route_uri(sip_msg_t *msg)
+{
+	str user;
+	int err;
+
+	err = get_username(msg, &user);
+	if (0 != err) {
+		LOG(L_ERR, "prefix_route: could not get username in"
+			    " Request URI (%d)\n", err);
+		return err;
+	}
+
+	return ki_prefix_route(msg, &user);
+}
+
+/**
+ * cfg command "prefix_route"
  */
 static int prefix_route(struct sip_msg *msg, char *p1, char *p2)
 {
 	struct run_act_ctx ra_ctx;
 	str user;
 	int err;
-	int route;
 
 	/* Unused */
-	(void)p1;
 	(void)p2;
 
 	/* Get request URI */
@@ -285,24 +328,8 @@ static int prefix_route(struct sip_msg *msg, char *p1, char *p2)
 		}
 	}
 
-	route = tree_route_get(&user);
-	if (route <= 0)
-		return -1;
-
-	/* If match send to route[x] */
-	init_run_actions_ctx(&ra_ctx);
-
-	err = run_actions(&ra_ctx, main_rt.rlist[route], msg);
-	if (err < 0) {
-		LOG(L_ERR, "prefix_route: run_actions failed (%d)\n", err);
-		return -1;
-	}
-
-	/* Success */
-	return (prefix_route_exit)?0:1;
+	return ki_prefix_route(msg, &user);
 }
-
-
 /*
  * Exported functions
  */
@@ -338,3 +365,32 @@ struct module_exports exports = {
 	0,               /* OnCancel function       */
 	0                /* Child init function     */
 };
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_prefix_route_exports[] = {
+	{ str_init("prefix_route"), str_init("prefix_route"),
+		SR_KEMIP_INT, ki_prefix_route,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("prefix_route"), str_init("prefix_route_uri"),
+		SR_KEMIP_INT, ki_prefix_route_uri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_prefix_route_exports);
+	return 0;
+}

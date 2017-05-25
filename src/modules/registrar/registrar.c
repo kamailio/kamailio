@@ -84,7 +84,7 @@ static int unreg_fixup(void** param, int param_no);
 static int fetchc_fixup(void** param, int param_no);
 static int registered_fixup(void** param, int param_no);
 /*! \brief Functions */
-static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
+static int w_add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
 int tcp_persistent_flag = -1;			/*!< if the TCP connection should be kept open */
 int method_filtering = 0;			/*!< if the looked up contacts should be filtered based on supported methods */
@@ -176,7 +176,7 @@ static cmd_export_t cmds[] = {
 			ANY_ROUTE },
 	{"registered",   (cmd_function)w_registered4, 4,  registered_fixup, 0,
 			ANY_ROUTE },
-	{"add_sock_hdr", (cmd_function)add_sock_hdr,  1,  fixup_str_null, 0,
+	{"add_sock_hdr", (cmd_function)w_add_sock_hdr,  1,  fixup_spve_null, 0,
 			REQUEST_ROUTE },
 	{"unregister",   (cmd_function)w_unregister,  2,  unreg_fixup, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
@@ -477,6 +477,18 @@ static int w_lookup_branches(sip_msg_t* _m, char* _d, char* _p2)
 }
 
 
+static int ki_lookup_branches(sip_msg_t* _m, str* _dtable)
+{
+	udomain_t* d;
+
+	if(ul.get_udomain(_dtable->s, &d)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
+		return -1;
+	}
+
+	return lookup_branches(_m, d);
+}
+
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri)
 {
 	str uri = {0};
@@ -486,6 +498,18 @@ static int w_registered(struct sip_msg* _m, char* _d, char* _uri)
 		return -1;
 	}
 	return registered(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
+}
+
+static int ki_registered_uri(sip_msg_t* _m, str* _dtable, str* _uri)
+{
+	udomain_t* d;
+
+	if(ul.get_udomain(_dtable->s, &d)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
+		return -1;
+	}
+
+	return registered(_m, d, (_uri && _uri->len>0)?_uri:NULL);
 }
 
 static int w_registered3(struct sip_msg* _m, char* _d, char* _uri, char* _flags)
@@ -503,6 +527,18 @@ static int w_registered3(struct sip_msg* _m, char* _d, char* _uri, char* _flags)
 		return -1;
 	}
 	return registered3(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL, flags);
+}
+
+static int ki_registered_flags(sip_msg_t* _m, str* _dtable, str* _uri, int _f)
+{
+	udomain_t* d;
+
+	if(ul.get_udomain(_dtable->s, &d)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
+		return -1;
+	}
+
+	return registered3(_m, d, (_uri && _uri->len>0)?_uri:NULL, _f);
 }
 
 static int w_registered4(struct sip_msg* _m, char* _d, char* _uri, char* _flags, char* _actionflags)
@@ -528,6 +564,19 @@ static int w_registered4(struct sip_msg* _m, char* _d, char* _uri, char* _flags,
 	return registered4(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL, flags, actionflags);
 }
 
+static int ki_registered_action(sip_msg_t* _m, str* _dtable, str* _uri,
+		int _f, int _aflags)
+{
+	udomain_t* d;
+
+	if(ul.get_udomain(_dtable->s, &d)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
+		return -1;
+	}
+
+	return registered4(_m, d, (_uri && _uri->len>0)?_uri:NULL, _f, _aflags);
+}
+
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri)
 {
 	str uri = {0};
@@ -538,6 +587,22 @@ static int w_unregister(struct sip_msg* _m, char* _d, char* _uri)
 	}
 
 	return unregister(_m, (udomain_t*)_d, &uri, NULL);
+}
+
+static int ki_unregister(sip_msg_t* _m, str* _dtable, str* _uri)
+{
+	udomain_t* d;
+
+	if(_uri==NULL || _uri->len<=0) {
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+	if(ul.get_udomain(_dtable->s, &d)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
+		return -1;
+	}
+
+	return unregister(_m, d, _uri, NULL);
 }
 
 static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid)
@@ -555,8 +620,23 @@ static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid)
 		return -1;
 	}
 
-
 	return unregister(_m, (udomain_t*)_d, &uri, &ruid);
+}
+
+static int ki_unregister_ruid(sip_msg_t* _m, str* _dtable, str* _uri, str *_ruid)
+{
+	udomain_t* d;
+
+	if(_uri==NULL || _uri->len<=0) {
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+	if(ul.get_udomain(_dtable->s, &d)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
+		return -1;
+	}
+
+	return unregister(_m, d, _uri, _ruid);
 }
 
 /*! \brief
@@ -680,15 +760,17 @@ static void mod_destroy(void)
 #include "../../core/ip_addr.h"
 #include "../../core/ut.h"
 
-static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
+static int ki_add_sock_hdr(sip_msg_t* msg, str *hdr_name)
 {
 	struct socket_info* si;
 	struct lump* anchor;
-	str *hdr_name;
 	str hdr;
 	char *p;
 
-	hdr_name = (str*)name;
+	if(hdr_name==NULL || hdr_name->s==NULL || hdr_name->len<=0) {
+		LM_ERR("invalid header name parameter\n");
+		return -1;
+	}
 	si = msg->rcv.bind_address;
 
 	if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
@@ -737,6 +819,16 @@ error:
 	return -1;
 }
 
+static int w_add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
+{
+	str hdr_name;
+	if(fixup_get_svalue(msg, (gparam_t*)name, &hdr_name)<0) {
+		LM_ERR("cannot get the header name\n");
+		return -1;
+	}
+	return ki_add_sock_hdr(msg, &hdr_name);
+}
+
 void default_expires_stats_update(str* gname, str* name){
 	update_stat(default_expire_stat, cfg_get(registrar, registrar_cfg, default_expires));
 }
@@ -782,12 +874,61 @@ static sr_kemi_t sr_kemi_registrar_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("registrar"), str_init("lookup_branches"),
+		SR_KEMIP_INT, ki_lookup_branches,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("registrar"), str_init("registered"),
 		SR_KEMIP_INT, regapi_registered,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("registrar"), str_init("registered_uri"),
+		SR_KEMIP_INT, ki_registered_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("registered_flags"),
+		SR_KEMIP_INT, ki_registered_flags,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("registered_action"),
+		SR_KEMIP_INT, ki_registered_action,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("set_q_override"),
+		SR_KEMIP_INT, regapi_set_q_override,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("add_sock_hdr"),
+		SR_KEMIP_INT, ki_add_sock_hdr,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("unregister"),
+		SR_KEMIP_INT, ki_unregister,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("unregister_ruid"),
+		SR_KEMIP_INT, ki_unregister_ruid,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("reg_fetch_contacts"),
+		SR_KEMIP_INT, ki_reg_fetch_contacts,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("reg_free_contacts"),
+		SR_KEMIP_INT, ki_reg_free_contacts,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 

@@ -52,6 +52,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../outbound/api.h"
 #include "../rr/api.h"
 
@@ -148,5 +149,53 @@ static int mod_init(void)
 		memset(&path_obb, 0, sizeof(ob_api_t));
 	}
 	
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_path_exports[] = {
+	{ str_init("path"), str_init("add_path"),
+		SR_KEMIP_INT, ki_add_path,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_user"),
+		SR_KEMIP_INT, ki_add_path_user,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_user_params"),
+		SR_KEMIP_INT, ki_add_path_user_params,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_received"),
+		SR_KEMIP_INT, ki_add_path_received,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_received_user"),
+		SR_KEMIP_INT, ki_add_path_received_user,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_received_user_params"),
+		SR_KEMIP_INT, ki_add_path_received_user_params,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_path_exports);
 	return 0;
 }
