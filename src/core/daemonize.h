@@ -18,11 +18,11 @@
  * \file
  * \brief Kamailio core :: Daemonize
  * \author andrei
- *      
- * \ingroup core 
- * Module: \ref core                    
- *  
- * 
+ *
+ * \ingroup core
+ * Module: \ref core
+ *
+ *
  */
 
 #ifndef _daemonize_h
