@@ -43,5 +43,9 @@ int pv_parse_srv_name(pv_spec_t *, str *);
 int pv_get_srv(sip_msg_t *, pv_param_t *, pv_value_t *);
 int srv_update_pv(str *, str *);
 
+int pv_parse_naptr_name(pv_spec_t *, str *);
+int pv_get_naptr(sip_msg_t *, pv_param_t *, pv_value_t *);
+int naptr_update_pv(str *, str *);
+
 #endif
 
