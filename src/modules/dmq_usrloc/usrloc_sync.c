@@ -428,6 +428,7 @@ static int init_usrloc_dmq_recv() {
 			LM_ERR("no more pkg memory\n");
 			return -1;
 		}
+		*usrloc_dmq_recv = 0;
 	}
 	return 0;
 }
