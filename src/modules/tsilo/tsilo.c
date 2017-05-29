@@ -250,15 +250,25 @@ static int fixup_ts_append(void** param, int param_no)
  */
 static int w_ts_append(struct sip_msg* _msg, char *_table, char *_ruri)
 {
-	str ruri = {0};
+	str tmp  = STR_NULL;
+	str ruri = STR_NULL;
+	int rc;
 
-	if(_ruri==NULL || (fixup_get_svalue(_msg, (gparam_p)_ruri, &ruri)!=0 || ruri.len<=0)) {
+	if(_ruri==NULL || (fixup_get_svalue(_msg, (gparam_p)_ruri, &tmp)!=0 || tmp.len<=0)) {
 		LM_ERR("invalid ruri parameter\n");
 		return -1;
 	}
-	if(ts_check_uri(&ruri)<0)
+	if(ts_check_uri(&tmp)<0)
 		return -1;
-	return ts_append(_msg, &ruri, _table);
+
+	if (pkg_str_dup(&ruri, &tmp) < 0)
+		return -1;
+
+	rc = ts_append(_msg, &ruri, _table);
+
+	pkg_free(ruri.s);
+
+	return rc;
 }
 /**
  *
