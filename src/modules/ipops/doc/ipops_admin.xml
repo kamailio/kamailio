@@ -965,6 +965,102 @@ if (srv_query ("_sip._udp.example.com", "udp") > 0) {
 ...
         </programlisting>
       </example>
+    </section>
+ 
+    <section id="ipops.f.naptr_query">
+      <title>
+        <function moreinfo="none">naptr_query(domain, pvid)</function>
+      </title>
+
+      <para>
+         Queries DNS NAPTR records to resolve a domain name into a list of orders, preferences, flags, services, regex, replaces sorted by orders and preferences as outlined in <ulink url="http://tools.ietf.org/html/rfc2915">RFC 2915</ulink>.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>domain</emphasis> - string or pseudo-variable containing the domain. For example, "example.com".
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>pvid</emphasis> - container id for script variable.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Output:</para>
+
+      <para>
+        Returns a positive number indicating success or a negative number when an error is encountered. It can be used from ANY_ROUTE.
+      </para>
+
+      <para>
+        The $naptrquery pseudo-variable (PV) is loaded with the results of the query. Multiple queries can be stored in the PV using the pvid key. Each query contains zero-indexed arrays sorted by order and preference that contain:
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>count</emphasis> - number of records found
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>order [index]</emphasis> - order as defined by <ulink url="http://tools.ietf.org/html/rfc2915">RFC 2915</ulink>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>pref [index]</emphasis> - preference as defined by <ulink url="http://tools.ietf.org/html/rfc2915">RFC 2915</ulink>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>flags [index]</emphasis> - flags
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>services [index]</emphasis> - services
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>regex [index]</emphasis> - regular expression
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>replace [index]</emphasis> - replace
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <example>
+        <title>
+          <function>naptr_query</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (naptr_query ("example.com", "res") > 0) {
+  $var(cnt) = $naptrquery(res=>count);
+  $var(i) = 0;
+  while ($var(i) &lt; $var(cnt)) {
+    xlog ("order[$var(i)] $naptrquery(udp=>order[$var(i)])\n");
+    xlog ("pref[$var(i)] $naptrquery(udp=>pref[$var(i)])\n");
+    xlog ("flags[$var(i)] $naptrquery(udp=>flags[$var(i)])\n");
+    xlog ("services[$var(i)] $naptrquery(udp=>services[$var(i)])\n");
+    xlog ("regex[$var(i)] $naptrquery(udp=>regex[$var(i)])\n");
+    xlog ("replace[$var(i)] $naptrquery(udp=>replace[$var(i)])\n");
+    $var(i) = $var(i) + 1;
+  }
+}
+...
+        </programlisting>
+      </example>
 
     </section>
 
