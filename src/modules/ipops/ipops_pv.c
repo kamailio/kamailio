@@ -1133,3 +1133,509 @@ int pv_get_srv (sip_msg_t *pmsg, pv_param_t *param, pv_value_t *res)
 	}
 	return pv_get_null (pmsg, param, res);
 }
+
+/**********
+ * naptrquery PV
+ **********/
+
+static char *naptrqrylst[] =
+{
+	"count",
+	"order",
+	"pref",
+	"flags",
+	"services",
+	"regex",
+	"replace",
+	NULL
+};
+
+#define PV_NAPTR_MAXSTR 64
+#define PV_NAPTR_MAXRECS 32
+
+typedef struct _sr_naptr_record {
+	unsigned short count;
+	unsigned short order;
+	unsigned short pref;
+	char flags[PV_NAPTR_MAXSTR + 1];
+	char services[PV_NAPTR_MAXSTR + 1];
+	char regex[PV_NAPTR_MAXSTR + 1];
+	char replace[PV_NAPTR_MAXSTR + 1];
+} sr_naptr_record_t;
+
+typedef struct _sr_naptr_item {
+	str pvid;
+	unsigned int hashid;
+	int count;
+	sr_naptr_record_t rr[PV_NAPTR_MAXRECS];
+	struct _sr_naptr_item *next;
+} sr_naptr_item_t;
+
+typedef struct _naptr_pv {
+	sr_naptr_item_t *item;
+	int type;
+	int flags;
+	pv_spec_t *pidx;
+	int        nidx;
+} naptr_pv_t;
+
+static sr_naptr_item_t *_sr_naptr_list = NULL;
+
+/**********
+ * Add naptrquery Item
+ *
+ * INPUT:
+ *   Arg (1) = pvid string pointer
+ *   Arg (2) = find flag; <>0=search only
+ * OUTPUT: naptr record pointer; NULL=not found
+ **********/
+
+sr_naptr_item_t *sr_naptr_add_item(str *pvid, int findflg)
+{
+	sr_naptr_item_t *pitem;
+	unsigned int hashid;
+
+	LM_DBG("%s:%d %s - called: pvid => [%.*s] findflg => [%d]\n",
+			__FILE__,__LINE__,__PRETTY_FUNCTION__,
+			STR_FMT(pvid), findflg);
+
+	/**********
+	 * o get hash
+	 * o already exists?
+	 **********/
+
+	hashid = get_hash1_raw (pvid->s, pvid->len);
+	for (pitem = _sr_naptr_list; pitem; pitem = pitem->next) {
+		if (pitem->hashid == hashid
+				&& pitem->pvid.len == pvid->len
+				&& !strncmp(pitem->pvid.s, pvid->s, pvid->len))
+			return pitem;
+	}
+	if (findflg)
+		return NULL;
+
+	/**********
+	 * o alloc/init item structure
+	 * o link in new item
+	 **********/
+
+	pitem = (sr_naptr_item_t *)pkg_malloc(sizeof (sr_naptr_item_t));
+	if (!pitem) {
+		LM_ERR ("No more pkg memory!\n");
+		return NULL;
+	}
+	memset(pitem, 0, sizeof(sr_naptr_item_t));
+
+	pitem->pvid.s = (char *)pkg_malloc(pvid->len + 1);
+	if (!pitem->pvid.s) {
+		LM_ERR ("No more pkg memory!\n");
+		pkg_free(pitem);
+		return NULL;
+	}
+	memcpy(pitem->pvid.s, pvid->s, pvid->len);
+	pitem->pvid.len = pvid->len;
+	pitem->hashid   = hashid;
+	pitem->next     = _sr_naptr_list;
+
+	_sr_naptr_list = pitem;
+
+	LM_DBG("New item [%.*s]", STR_FMT(pvid));
+
+	return pitem;
+}
+
+/**********
+ * Sort NAPTR Records by Order/Pref
+ *
+ * INPUT:
+ *   Arg (1) = pointer to array of NAPTR records
+ *   Arg (2) = record count
+ * OUTPUT: position past skipped
+ **********/
+
+void sort_naptr(struct naptr_rdata **plist, int rcount)
+
+{
+	int idx1, idx2;
+	struct naptr_rdata *pswap;
+
+	for (idx1 = 1; idx1 < rcount; idx1++) {
+		pswap = plist[idx1];
+		for (idx2 = idx1;
+				idx2 &&
+				(
+						(plist[idx2 - 1]->order > pswap->order)
+						||
+						(plist[idx2 - 1]->order == pswap->order && plist[idx2 - 1]->pref > pswap->pref)
+				);
+				--idx2) {
+			plist [idx2] = plist [idx2 - 1];
+		}
+		plist [idx2] = pswap;
+	}
+
+	return;
+}
+
+/**********
+ * Parse naptrquery Name
+ *
+ * INPUT:
+ *   Arg (1) = pv spec pointer
+ *   Arg (2) = input string pointer
+ * OUTPUT: 0=success
+ **********/
+int pv_parse_naptr_name(pv_spec_t *sp, str *in)
+{
+	LM_DBG("%s:%d %s - called: sp => [%p] in => [%.*s]\n",
+			__FILE__,__LINE__,__PRETTY_FUNCTION__,
+			sp, STR_FMT(in));
+
+	char *pstr;
+	int i, pos, sign;
+	naptr_pv_t *dpv;
+	str pvn = {0}, pvk = {0}, pvi = {0};
+
+	/**********
+	 * o alloc/init pvid structure
+	 * o extract pvid name
+	 * o check separator
+	 **********/
+
+	if (!sp || !in || in->len<=0)
+		return -1;
+
+	/* alloc/init pvid structure */
+	dpv = (naptr_pv_t *)pkg_malloc(sizeof(naptr_pv_t));
+	if (!dpv) {
+		LM_ERR ("No more pkg memory!\n");
+		return -1;
+	}
+	memset(dpv, 0, sizeof(naptr_pv_t));
+
+	/* skip blank chars and init pvn.s */
+	pos = skip_over(in, 0, 1);
+	if (pos == in->len)
+		goto error;
+	pvn.s = &in->s[pos];
+	pvn.len = pos;
+
+	/* skip [a-zA-Z0-9] and find pvn.len */
+	pos = skip_over(in, pos, 0);
+	pvn.len = pos - pvn.len;
+	if (!pvn.len)
+		goto error;
+
+	/* skip blank chars */
+	pos = skip_over(in, pos, 1);
+	if ((pos + 2) > in->len)
+		goto error;
+
+	if (strncmp(&in->s[pos], "=>", 2))
+		goto error;
+
+	/**********
+	 * o extract key name
+	 * o check key name
+	 * o count?
+	 **********/
+
+	/* skip blank chars and init pvk.s */
+	pos = skip_over(in, pos + 2, 1);
+	pvk.s = &in->s[pos];
+	pvk.len = pos;
+
+	/* skip [a-zA-Z0-9] and find pvk.len */
+	pos = skip_over(in, pos, 0);
+	pvk.len = pos - pvk.len;
+	if (!pvk.len)
+		goto error;
+
+
+	for (i = 0; naptrqrylst[i]; i++) {
+		if (strlen(naptrqrylst[i]) != pvk.len)
+			continue;
+		if (!strncmp(pvk.s, naptrqrylst[i], pvk.len)) {
+			dpv->type = i;
+			break;
+		}
+	}
+
+	if (!naptrqrylst[i])
+		goto error;
+
+	/* "=>count" doesn't have any index */
+	if (!i)
+		goto noindex;
+
+	/**********
+	 * o check for array
+	 * o extract array index and check
+	 **********/
+
+	/* skip blank between "=>order" and array index "["  */
+	pos = skip_over (in, pos, 1);
+	if ((pos + 3) > in->len)
+		goto error;
+
+	if (in->s [pos] != '[')
+		goto error;
+
+	/* skip blank between index sign "[" and a numeric value */
+	pos = skip_over (in, pos + 1, 1);
+	if ((pos + 2) > in->len)
+		goto error;
+
+	pvi.s = &in->s[pos];
+	pvi.len = pos;
+	if (in->s[pos] == PV_MARKER) {
+		/**********
+		 * o search from the end back to array close
+		 * o get PV value
+		 **********/
+
+		for (i = in->len - 1; i != pos; --i) {
+			if (in->s[i] == ']')
+				break;
+		}
+		/* empty idx */
+		if (i == pos)
+			goto error;
+
+		pvi.len = i - pvi.len;
+		pos = i + 1;
+		dpv->pidx = pv_cache_get(&pvi);
+		if (!dpv->pidx)
+			goto error;
+		dpv->flags |= SR_DNS_PVIDX;
+	} else {
+		/**********
+		 * o get index value
+		 * o check for reverse index
+		 * o convert string to number
+		 **********/
+
+		/* find the end of the index and its length */
+		pos = skip_over(in, pos, 0);
+		pvi.len = pos - pvi.len;
+		sign = 1;
+		i = 0;
+		pstr = pvi.s;
+		if (*pstr == '-') {
+			sign = -1;
+			i++;
+			pstr++;
+		}
+		/* homemade atoi() */
+		for (dpv->nidx = 0; i < pvi.len; i++) {
+			if (*pstr >= '0' && *pstr <= '9')
+				dpv->nidx = (dpv->nidx * 10) + *pstr++ - '0';
+		}
+		if (i != pvi.len)
+			goto error;
+		dpv->nidx *= sign;
+
+		/* skip blanks between index and the final "]" */
+		pos = skip_over(in, pos, 1);
+		if (pos == in->len)
+			goto error;
+
+		/* check the final "]" */
+		if (in->s [pos++] != ']')
+			goto error;
+	}
+
+	/**********
+	 * o check for trailing whitespace
+	 * o add data to PV
+	 **********/
+
+noindex:
+
+	if (skip_over(in, pos, 1) != in->len)
+		goto error;
+
+	LM_DBG ("naptrquery (%.*s => %.*s [%.*s])\n",
+			pvn.len, ZSW(pvn.s), pvk.len, ZSW(pvk.s), pvi.len, ZSW(pvi.s));
+
+	dpv->item = sr_naptr_add_item(&pvn, 0);
+	if (!dpv->item)
+		goto error;
+
+	sp->pvp.pvn.u.dname = (void *)dpv;
+	sp->pvp.pvn.type = PV_NAME_OTHER;
+	return 0;
+
+error:
+	LM_ERR ("error at PV naptrquery: %.*s@%d\n", in->len, in->s, pos);
+	pkg_free (dpv);
+	return -1;
+}
+
+int naptr_update_pv(str *naptrname, str *pvid)
+{
+	LM_DBG("%s:%d %s - called: naptrname => [%.*s], pvid => [%.*s]\n", __FILE__,__LINE__,__PRETTY_FUNCTION__,
+			STR_FMT(naptrname), STR_FMT(pvid));
+
+	int idx1, idx2, rcount;
+	struct rdata *phead, *pnaptr;
+	struct naptr_rdata *plist[PV_SRV_MAXRECS];
+	sr_naptr_item_t *pitem;
+	sr_naptr_record_t *prec;
+
+	/**********
+	 * o service name missing?
+	 * o find pvid
+	 **********/
+
+	if (!naptrname->len) {
+		LM_DBG ("naptr name missing: %.*s\n", naptrname->len, naptrname->s);
+		return -2;
+	}
+	pitem = sr_naptr_add_item(pvid, 1);
+	if (!pitem) {
+		LM_DBG ("pvid not found: %.*s\n", pvid->len, pvid->s);
+		return -3;
+	}
+
+	/**********
+	 * o get records
+	 * o sort by order/pref
+	 * o save to PV
+	 **********/
+
+	LM_DBG ("attempting to query: %.*s\n", naptrname->len, naptrname->s);
+	phead = get_record(naptrname->s, T_NAPTR, RES_ONLY_TYPE);
+	rcount = 0;
+	for (pnaptr = phead; pnaptr; pnaptr = pnaptr->next) {
+		if (rcount < PV_NAPTR_MAXRECS) {
+			plist[rcount++] = (struct naptr_rdata *)pnaptr->rdata;
+		} else {
+			LM_WARN ("truncating naptr_query list to %d records!", PV_NAPTR_MAXRECS);
+			break;
+		}
+	}
+	pitem->count = rcount;
+	if (rcount)
+		sort_naptr(plist, rcount);
+	for (idx1 = 0; idx1 < rcount; idx1++) {
+		prec = &pitem->rr[idx1];
+
+		prec->order = plist[idx1]->order;
+		prec->pref  = plist[idx1]->pref;
+
+		idx2 = plist[idx1]->flags_len;
+		if (idx2 > PV_NAPTR_MAXSTR)
+		{
+			LM_WARN ("truncating naptr_query flags (%.*s)!", idx2, plist[idx1]->flags);
+			idx2 = PV_NAPTR_MAXSTR;
+		}
+		strncpy(prec->flags, plist[idx1]->flags, idx2);
+		prec->flags[idx2] = '\0';
+
+		idx2 = plist[idx1]->services_len;
+		if (idx2 > PV_NAPTR_MAXSTR)
+		{
+			LM_WARN ("truncating naptr query services (%.*s)!", idx2, plist[idx1]->services);
+			idx2 = PV_NAPTR_MAXSTR;
+		}
+		strncpy(prec->services, plist[idx1]->services, idx2);
+		prec->services[idx2] = '\0';
+
+		idx2 = plist[idx1]->regexp_len;
+		if (idx2 > PV_NAPTR_MAXSTR)
+		{
+			LM_WARN ("truncating naptr query regexp (%.*s)!", idx2, plist[idx1]->regexp);
+			idx2 = PV_NAPTR_MAXSTR;
+		}
+		strncpy(prec->regex, plist[idx1]->regexp, idx2);
+		prec->regex[idx2] = '\0';
+
+		idx2 = plist[idx1]->repl_len;
+		if (idx2 > PV_NAPTR_MAXSTR)
+		{
+			LM_WARN ("truncating naptr query replace (%.*s)!", idx2, plist[idx1]->repl);
+			idx2 = PV_NAPTR_MAXSTR;
+		}
+		strncpy(prec->replace, plist[idx1]->repl, idx2);
+		prec->replace[idx2] = '\0';
+	}
+	if (phead)
+		free_rdata_list (phead);
+	LM_DBG ("naptrquery PV updated for: %.*s (%d)\n",
+			naptrname->len, naptrname->s, rcount);
+
+	return 1;
+}
+
+/**********
+ * Get naptrquery Values
+ *
+ * INPUT:
+ *   Arg (1) = SIP message pointer
+ *   Arg (2) = parameter pointer
+ *   Arg (3) = PV value pointer
+ * OUTPUT: 0=success
+ **********/
+
+int pv_get_naptr(sip_msg_t *pmsg, pv_param_t *param, pv_value_t *res)
+{
+	pv_value_t val;
+	naptr_pv_t *dpv;
+
+	LM_DBG("%s:%d %s - called: param => [%p], res => [%p]\n", __FILE__,__LINE__,__PRETTY_FUNCTION__,
+			param, res);
+
+	/**********
+	 * o sipmsg and param exist?
+	 * o PV name exists?
+	 * o count?
+	 **********/
+
+	if (!pmsg || !param)
+		return -1;
+	dpv = (naptr_pv_t *)param->pvn.u.dname;
+	if (!dpv || !dpv->item)
+		return -1;
+	if (!dpv->type)
+		return pv_get_sintval(pmsg, param, res, dpv->item->count);
+
+	/**********
+	 * o get index value
+	 * o reverse index?
+	 * o extract data
+	 **********/
+
+	if (!dpv->pidx) {
+		val.ri = dpv->nidx;
+	} else {
+		if (pv_get_spec_value(pmsg, dpv->pidx, &val) < 0
+				|| !(val.flags & PV_VAL_INT)) {
+			LM_ERR ("failed to evaluate index variable!\n");
+			return pv_get_null (pmsg, param, res);
+		}
+	}
+	if (val.ri < 0) {
+		if ((dpv->item->count + val.ri) < 0)
+			return pv_get_null(pmsg, param, res);
+		val.ri = dpv->item->count + val.ri;
+	}
+	if (val.ri >= dpv->item->count)
+		return pv_get_null(pmsg, param, res);
+
+	switch (dpv->type) {
+		case 1: /* order */
+			return pv_get_sintval(pmsg, param, res, dpv->item->rr[val.ri].order);
+		case 2: /* pref */
+			return pv_get_sintval(pmsg, param, res, dpv->item->rr[val.ri].pref);
+		case 3: /* flags */
+			return pv_get_strzval(pmsg, param, res, dpv->item->rr[val.ri].flags);
+		case 4: /* services */
+			return pv_get_strzval(pmsg, param, res, dpv->item->rr[val.ri].services);
+		case 5: /* regex */
+			return pv_get_strzval(pmsg, param, res, dpv->item->rr[val.ri].regex);
+		case 6: /* replace */
+			return pv_get_strzval(pmsg, param, res, dpv->item->rr[val.ri].replace);
+	}
+	return pv_get_null (pmsg, param, res);
+}
