@@ -122,7 +122,7 @@ static void ka_options_callback(
 		ka_run_route(msg, &uri, state_routes[state]);
 
 		if(ka_dest->statechanged_clb != NULL) {
-			ka_dest->statechanged_clb(ka_dest->uri, state, ka_dest->user_attr);
+			ka_dest->statechanged_clb(&ka_dest->uri, state, ka_dest->user_attr);
 		}
 
 		ka_dest->state = state;
@@ -174,11 +174,11 @@ static void ka_run_route(sip_msg_t *msg, str *uri, char *route)
 /*
  * copy str into dynamically allocated shm memory
  */
-int ka_str_copy(str src, str *dest, char *prefix)
+int ka_str_copy(str *src, str *dest, char *prefix)
 {
 	int lp = prefix ? strlen(prefix) : 0;
 
-	dest->s = (char *)shm_malloc((src.len + 1 + lp) * sizeof(char));
+	dest->s = (char *)shm_malloc((src->len + 1 + lp) * sizeof(char));
 	if(dest->s == NULL) {
 		LM_ERR("no more memory!\n");
 		return -1;
@@ -186,9 +186,9 @@ int ka_str_copy(str src, str *dest, char *prefix)
 
 	if(prefix)
 		strncpy(dest->s, prefix, lp);
-	strncpy(dest->s + lp, src.s, src.len);
-	dest->s[src.len + lp] = '\0';
-	dest->len = src.len + lp;
+	strncpy(dest->s + lp, src->s, src->len);
+	dest->s[src->len + lp] = '\0';
+	dest->len = src->len + lp;
 
 	return 0;
 }

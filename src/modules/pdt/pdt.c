@@ -44,6 +44,7 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 
 #include "pdtree.h"
 
@@ -304,36 +305,22 @@ static int w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2)
 	return pd_translate(msg, &sdall, md, 0);
 }
 
-static int w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sdm)
+static int ki_prefix2domain(sip_msg_t* msg, int m, int s)
 {
-	int m, s, f;
+	int f;
 	str sdomain={"*",1};
 	sip_uri_t *furi;
 
-	if(fixup_get_ivalue(msg, (gparam_p)mode, &m)!=0)
-	{
-		LM_ERR("no mode value\n");
-		return -1;
-	}
-
 	if(m!=1 && m!=2)
 		m = 0;
-
-	if(fixup_get_ivalue(msg, (gparam_p)sdm, &s)!=0)
-	{
-		LM_ERR("no multi-domain mode value\n");
-		return -1;
-	}
 
 	if(s!=1 && s!=2)
 		s = 0;
 
 	f = 0;
-	if(s==1 || s==2)
-	{
+	if(s==1 || s==2) {
 		/* take the domain from  FROM uri as sdomain */
-		if((furi = parse_from_uri(msg))==NULL)
-		{
+		if((furi = parse_from_uri(msg))==NULL) {
 			LM_ERR("cannot parse FROM header URI\n");
 			return -1;
 		}
@@ -342,6 +329,24 @@ static int w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sdm)
 			f = 1;
 	}
 	return pd_translate(msg, &sdomain, m, f);
+}
+
+static int w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sdm)
+{
+	int m, s;
+
+	if(fixup_get_ivalue(msg, (gparam_p)mode, &m)!=0)
+	{
+		LM_ERR("no mode value\n");
+		return -1;
+	}
+
+	if(fixup_get_ivalue(msg, (gparam_p)sdm, &s)!=0)
+	{
+		LM_ERR("no multi-domain mode value\n");
+		return -1;
+	}
+	return ki_prefix2domain(msg, m, s);
 }
 
 /**
@@ -474,6 +479,17 @@ static int w_pd_translate(sip_msg_t* msg, char* sdomain, char* mode)
 		md = 0;
 
 	return pd_translate(msg, &sd, md, 0);
+}
+
+/**
+ *
+ */
+static int ki_pd_translate(sip_msg_t* msg, str* sd, int md)
+{
+	if(md!=1 && md!=2)
+		return pd_translate(msg, sd, 0, 0);;
+
+	return pd_translate(msg, sd, md, 0);
 }
 
 /**
@@ -899,5 +915,34 @@ static int pdt_init_rpc(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_pdt_exports[] = {
+	{ str_init("pdt"), str_init("pd_translate"),
+		SR_KEMIP_INT, ki_pd_translate,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pdt"), str_init("pprefix2domain"),
+		SR_KEMIP_INT, ki_prefix2domain,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_pdt_exports);
 	return 0;
 }

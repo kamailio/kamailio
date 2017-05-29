@@ -219,7 +219,7 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 }
 
 
-void dr_keepalive_statechanged(str uri, ka_state state, void *user_attr) {
+void dr_keepalive_statechanged(str *uri, ka_state state, void *user_attr) {
 
 	((pgw_t *)user_attr)->state = state;
 }
@@ -231,7 +231,7 @@ static int dr_update_keepalive(pgw_t *addrs)
 
 	for(cur = addrs; cur != NULL; cur = cur->next) {
 		LM_DBG("uri: %.*s\n", cur->ip.len, cur->ip.s);
-		keepalive_api.add_destination(cur->ip, owner, 0, dr_keepalive_statechanged, cur);
+		keepalive_api.add_destination(&cur->ip, &owner, 0, dr_keepalive_statechanged, cur);
 	}
 
 	return 0;

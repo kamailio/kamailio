@@ -45,7 +45,7 @@
 #define KA_PROBE_INACTIVE 2
 #define KA_PROBE_ONLYFLAGGED 3
 
-typedef void (*ka_statechanged_f)(str uri, int state, void *user_attr);
+typedef void (*ka_statechanged_f)(str *uri, int state, void *user_attr);
 
 typedef struct _ka_dest
 {
@@ -73,9 +73,9 @@ typedef struct _ka_destinations_list
 
 extern ka_destinations_list_t *ka_destinations_list;
 
-int ka_add_dest(str uri, str owner, int flags, ka_statechanged_f callback,
+int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
 		void *user_attr);
-int ka_destination_state(str uri);
-int ka_str_copy(str src, str *dest, char *prefix);
+int ka_destination_state(str *uri);
+int ka_str_copy(str *src, str *dest, char *prefix);
 
 #endif

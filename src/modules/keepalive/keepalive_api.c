@@ -59,13 +59,13 @@ int bind_keepalive(keepalive_api_t *api)
 /*
  * Add a new destination in keepalive pool
  */
-int ka_add_dest(str uri, str owner, int flags, ka_statechanged_f callback,
+int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
 		void *user_attr)
 {
 	struct sip_uri _uri;
 	ka_dest_t *dest;
 
-	LM_INFO("adding destination: %.*s\n", uri.len, uri.s);
+	LM_INFO("adding destination: %.*s\n", uri->len, uri->s);
 
 	dest = (ka_dest_t *)shm_malloc(sizeof(ka_dest_t));
 	if(dest == NULL) {
@@ -74,8 +74,8 @@ int ka_add_dest(str uri, str owner, int flags, ka_statechanged_f callback,
 	}
 	memset(dest, 0, sizeof(ka_dest_t));
 
-	if(uri.len >= 4 && (!strncasecmp("sip:", uri.s, 4)
-							   || !strncasecmp("sips:", uri.s, 5))) {
+	if(uri->len >= 4 && (!strncasecmp("sip:", uri->s, 4)
+							   || !strncasecmp("sips:", uri->s, 5))) {
 		// protocol found
 		if(ka_str_copy(uri, &(dest->uri), NULL) < 0)
 			goto err;
@@ -123,14 +123,15 @@ int ka_rm_dest()
 /*
  *
  */
-ka_state ka_destination_state(str destination)
+ka_state ka_destination_state(str *destination)
 {
 	ka_dest_t *ka_dest = NULL;
 
 	for(ka_dest = ka_destinations_list->first; ka_dest != NULL;
 			ka_dest = ka_dest->next) {
-		if(strncmp(ka_dest->uri.s + 4, destination.s, ka_dest->uri.len - 4)
-				== 0) {
+		if((destination->len == ka_dest->uri.len - 4)
+				&& (strncmp(ka_dest->uri.s + 4, destination->s, ka_dest->uri.len - 4)
+						== 0)) {
 			break;
 		}
 	}

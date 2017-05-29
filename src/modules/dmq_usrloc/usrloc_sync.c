@@ -37,6 +37,8 @@ static str dmq_200_rpl  = str_init("OK");
 static str dmq_400_rpl  = str_init("Bad Request");
 static str dmq_500_rpl  = str_init("Server Internal Error");
 
+static int *usrloc_dmq_recv = 0;
+
 dmq_api_t usrloc_dmqb;
 dmq_peer_t* usrloc_dmq_peer = NULL;
 dmq_resp_cback_t usrloc_dmq_resp_callback = {&usrloc_dmq_resp_callback_f, 0};
@@ -388,7 +390,6 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 	ci.callid = &callid;
 	ci.cseq = cseq;
 	ci.flags = flags;
-	ci.flags |= FL_RPL;
 	ci.cflags = cflags;
 	ci.user_agent = &user_agent;
 	ci.methods = methods;
@@ -419,6 +420,18 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 	return 1;
 }
 
+static int init_usrloc_dmq_recv() {
+	if (!usrloc_dmq_recv) {
+		LM_DBG("Initializing usrloc_dmq_recv for pid (%d)\n", my_pid());
+		usrloc_dmq_recv = (int*)pkg_malloc(sizeof(int));
+		if (!usrloc_dmq_recv) {
+			LM_ERR("no more pkg memory\n");
+			return -1;
+		}
+		*usrloc_dmq_recv = 0;
+	}
+	return 0;
+}
 
 /**
  * @brief ht dmq callback
@@ -428,6 +441,12 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 	int content_length;
 	str body;
 	srjson_doc_t jdoc;
+
+	if (!usrloc_dmq_recv && init_usrloc_dmq_recv() < 0) {
+		return 0;
+	}
+
+	*usrloc_dmq_recv = 1;
 
 	srjson_InitDoc(&jdoc, NULL);
 	if (parse_from_header(msg)<0) {
@@ -481,18 +500,21 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 		if (!usrloc_dmq_execute_action(jdoc.root->child, node)) goto invalid;
 	}
 
+	*usrloc_dmq_recv = 0;
 	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_200_rpl;
 	resp->resp_code = 200;
 	return 0;
 
 invalid:
+	*usrloc_dmq_recv = 0;
 	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_400_rpl;
 	resp->resp_code = 400;
 	return 0;
 
 error:
+	*usrloc_dmq_recv = 0;
 	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_500_rpl;
 	resp->resp_code = 500;
@@ -619,10 +641,6 @@ int usrloc_dmq_send_multi_contact(ucontact_t* ptr, str aor, int action, dmq_node
 	srjson_doc_t *jdoc = &jdoc_contact_group.jdoc;
 	srjson_t *jdoc_contacts = jdoc_contact_group.jdoc_contacts;
 
-	int flags;
-	flags = ptr->flags;
-	flags &= ~FL_RPL;
-
 	srjson_t * jdoc_contact = srjson_CreateObject(jdoc);
 	if(!jdoc_contact) {
 		LM_ERR("cannot create json root\n");
@@ -654,8 +672,8 @@ int usrloc_dmq_send_multi_contact(ucontact_t* ptr, str aor, int action, dmq_node
 	jdoc_contact_group.size += snprintf(NULL,0,"%.0lf",(double)ptr->expires);
 	srjson_AddNumberToObject(jdoc, jdoc_contact, "cseq", ptr->cseq);
 	jdoc_contact_group.size += snprintf(NULL,0,"%d", ptr->cseq);
-	srjson_AddNumberToObject(jdoc, jdoc_contact, "flags", flags);
-	jdoc_contact_group.size += snprintf(NULL,0,"%d", flags);
+	srjson_AddNumberToObject(jdoc, jdoc_contact, "flags", ptr->flags);
+	jdoc_contact_group.size += snprintf(NULL,0,"%d", ptr->flags);
 	srjson_AddNumberToObject(jdoc, jdoc_contact, "cflags", ptr->cflags);
 	jdoc_contact_group.size += snprintf(NULL,0,"%d", ptr->cflags);
 	srjson_AddNumberToObject(jdoc, jdoc_contact, "q", ptr->q);
@@ -688,16 +706,11 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 	srjson_doc_t jdoc;
 	srjson_InitDoc(&jdoc, NULL);
 
-	int flags;
-
 	jdoc.root = srjson_CreateObject(&jdoc);
 	if(!jdoc.root) {
 		LM_ERR("cannot create json root\n");
 		goto error;
 	}
-
-	flags = ptr->flags;
-	flags &= ~FL_RPL;
 
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "action", action);
 
@@ -711,7 +724,7 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 	srjson_AddStrToObject(&jdoc, jdoc.root, "instance", ptr->instance.s, ptr->instance.len);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "expires", ptr->expires);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "cseq", ptr->cseq);
-	srjson_AddNumberToObject(&jdoc, jdoc.root, "flags", flags);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "flags", ptr->flags);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "cflags", ptr->cflags);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "q", ptr->q);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "last_modified", ptr->last_modified);
@@ -759,8 +772,12 @@ void dmq_ul_cb_contact(ucontact_t* ptr, int type, void* param)
 	aor.s = ptr->aor->s;
 	aor.len = ptr->aor->len;
 
-	if (!(ptr->flags & FL_RPL)) {
+	if (!usrloc_dmq_recv && init_usrloc_dmq_recv() < 0) {
+		return;
+	}
 
+	if (!*usrloc_dmq_recv) {
+		LM_DBG("Replicating local update to other nodes...\n");
 		switch(type){
 			case UL_CONTACT_INSERT:
 				usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, 0);
