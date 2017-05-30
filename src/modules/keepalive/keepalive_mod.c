@@ -35,6 +35,8 @@
 #include <unistd.h>
 
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
+
 #include "../tm/tm_load.h"
 #include "../dispatcher/api.h"
 
@@ -197,4 +199,28 @@ static int w_cmd_is_alive(struct sip_msg *msg, char *str1, char *str2)
 		return -1;
 	}
 	return ki_is_alive(msg, &dest);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_keepalive_exports[] = {
+	{ str_init("keepalive"), str_init("is_alive"),
+		SR_KEMIP_INT, ki_is_alive,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_keepalive_exports);
+	return 0;
 }
