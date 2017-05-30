@@ -20,6 +20,6 @@ notifications:
     on_failure: always
   email:
     recipients:
-      - sr-dev@lists.sip-router.org
+      - sr-dev@lists.kamailio.org
     on_success: never
     on_failure: always
