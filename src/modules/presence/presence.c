@@ -575,9 +575,6 @@ static void destroy(void)
 
 static int fixup_presence(void** param, int param_no)
 {
-	pv_elem_t *model;
-	str s;
-
 	if(library_mode) {
 		LM_ERR("Bad config - you can not call 'handle_publish' function"
 				" (db_url not set)\n");
