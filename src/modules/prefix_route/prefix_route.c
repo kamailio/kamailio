@@ -305,7 +305,6 @@ static int ki_prefix_route_uri(sip_msg_t *msg)
  */
 static int prefix_route(struct sip_msg *msg, char *p1, char *p2)
 {
-	struct run_act_ctx ra_ctx;
 	str user;
 	int err;
 
