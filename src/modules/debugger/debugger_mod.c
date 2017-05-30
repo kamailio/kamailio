@@ -621,7 +621,7 @@ static sr_kemi_t sr_kemi_debugger_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("debugger"), str_init("dbg_pv_dump_ex"),
-		SR_KEMIP_INT, ki_dbg_pv_dump,
+		SR_KEMIP_INT, ki_dbg_pv_dump_ex,
 		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
