@@ -205,10 +205,12 @@ static int set_load_source(modparam_t, void *);
 static void destroy(void);
 
 static cmd_export_t cmds[]={
-	{"rl_check",      (cmd_function)w_rl_check_default,     0, 0,               0,               REQUEST_ROUTE|LOCAL_ROUTE},
-	{"rl_check",      (cmd_function)w_rl_check_forced,      1, fixup_pvar_null,
+	{"rl_check",      (cmd_function)w_rl_check_default,     0, 0,
+		0,               ANY_ROUTE},
+	{"rl_check",      (cmd_function)w_rl_check_forced,      1, fixup_igp_null,
 		fixup_free_pvar_null, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"rl_check_pipe", (cmd_function)w_rl_check_forced_pipe, 1, fixup_uint_null, 0,               REQUEST_ROUTE|LOCAL_ROUTE},
+	{"rl_check_pipe", (cmd_function)w_rl_check_forced_pipe, 1, fixup_igp_null,
+		0,               ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 static param_export_t params[]={
@@ -711,14 +713,13 @@ str queue_other = str_init("*");
  * (expects rl_lock to be taken)
  * \return	0 if a nueue was found, -1 otherwise
  */
-static int find_queue(struct sip_msg * msg, int * queue)
+static int find_queue(struct sip_msg * msg, str * method, int * queue)
 {
-	str method = msg->first_line.u.request.method;
 	int i;
 
 	*queue = -1;
 	for (i=0; i<*nqueues; i++)
-		if (! str_i_cmp(queues[i].method, &method)) {
+		if (! str_i_cmp(queues[i].method, method)) {
 			*queue = i;
 			return 0;
 		} else if (! str_i_cmp(queues[i].method, &queue_other)) {
@@ -791,8 +792,18 @@ static int pipe_push(struct sip_msg * msg, int id)
 static int rl_check(struct sip_msg * msg, int forced_pipe)
 {
 	int que_id, pipe_id, ret;
-	str method = msg->first_line.u.request.method;
+	str method;
 
+	if(msg->first_line.type == SIP_REQUEST) {
+		method = msg->first_line.u.request.method;
+	} else {
+		if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
+				|| (msg->cseq==NULL))) {
+			LM_ERR("no CSEQ header\n");
+			return -1;
+		}
+		method = get_cseq(msg)->method;
+	}
 	if (forced_pipe >=0 && (forced_pipe>=MAX_PIPES || *pipes[forced_pipe].algo==PIPE_ALGO_NOP)) {
 		LM_ERR("forced pipe %d out of range or not defined", forced_pipe);
 		return -1;
@@ -800,7 +811,7 @@ static int rl_check(struct sip_msg * msg, int forced_pipe)
 
 	LOCK_GET(rl_lock);
 	if (forced_pipe < 0) { 
-		if (find_queue(msg, &que_id)) {
+		if (find_queue(msg, &method, &que_id)) {
 			pipe_id = que_id = 0;
 			ret = -1;
 			goto out_release;
@@ -829,35 +840,24 @@ out_release:
 static int w_rl_check_forced(struct sip_msg* msg, char *p1, char *p2)
 {
 	int pipe = -1;
-	pv_value_t pv_val;
 
-	if (p1 && (pv_get_spec_value(msg, (pv_spec_t *)p1, &pv_val) == 0)) {
-		if (pv_val.flags & PV_VAL_INT) {
-			pipe = pv_val.ri;
-			LM_DBG("pipe=%d\n", pipe);
-		} else if (pv_val.flags & PV_VAL_STR) {
-			if(str2int(&(pv_val.rs), (unsigned int*)&pipe) != 0) {
-				LM_ERR("Unable to get pipe from pv '%.*s'"
-					"=> defaulting to method type checking\n",
-					pv_val.rs.len, pv_val.rs.s);
-				pipe = -1;
-			}
-		} else {
-			LM_ERR("pv not a str or int => defaulting to method type checking\n");
-			pipe = -1;
-		}
-	} else {
-		LM_ERR("Unable to get pipe from pv:%p"
-			" => defaulting to method type checking\n", p1);
-		pipe = -1;
+	if(fixup_get_ivalue(msg, (gparam_t*)p1, &pipe)<0) {
+		LM_ERR("failed to get pipe id parameter\n");
+		return -1;
 	}
+
 	return rl_check(msg, pipe);
 }
+
 static int w_rl_check_forced_pipe(struct sip_msg* msg, char *p1, char *p2)
 {
-	int pipe;
+	int pipe = -1;
 
-	pipe = (int)(unsigned int)(unsigned long)p1;
+	if(fixup_get_ivalue(msg, (gparam_t*)p1, &pipe)<0) {
+		LM_ERR("failed to get pipe id parameter\n");
+		return -1;
+	}
+
 	LM_DBG("trying pipe %d\n", pipe);
 	return rl_check(msg, pipe);
 }
