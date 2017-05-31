@@ -122,15 +122,15 @@ static int fixup_pl_check3(void** param, int param_no);
 
 static cmd_export_t cmds[]={
 	{"pl_check",      (cmd_function)w_pl_check,        1, fixup_spve_null,
-		0,               REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
+		0,    ANY_ROUTE},
 	{"pl_check",      (cmd_function)w_pl_check3,       3, fixup_pl_check3,
-		0,               REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
+		0,    ANY_ROUTE},
 	{"pl_drop",       (cmd_function)w_pl_drop_default, 0, 0,
-		0,               REQUEST_ROUTE},
+		0,    REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
 	{"pl_drop",       (cmd_function)w_pl_drop_forced,  1, fixup_uint_null,
-		0,               REQUEST_ROUTE},
+		0,    REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
 	{"pl_drop",       (cmd_function)w_pl_drop,         2, fixup_uint_uint,
-		0,               REQUEST_ROUTE},
+		0,    REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
 	{0,0,0,0,0,0}
 };
 static param_export_t params[]={
