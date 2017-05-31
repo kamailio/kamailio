@@ -1624,7 +1624,8 @@ static inline int ds_update_dst(
 			}
 			init_run_actions_ctx(&ra_ctx);
 			if(do_action(&ra_ctx, &act, msg) < 0) {
-				LM_ERR("error while setting host\n");
+				LM_ERR("error while setting r-uri domain with: %.*s\n",
+						uri->len, uri->s);
 				return -1;
 			}
 			break;
@@ -1635,7 +1636,8 @@ static inline int ds_update_dst(
 
 		default:
 			if(set_dst_uri(msg, uri) < 0) {
-				LM_ERR("error while setting dst uri\n");
+				LM_ERR("error while setting dst uri with: %.*s\n",
+						uri->len, uri->s);
 				return -1;
 			}
 			/* dst_uri changes, so it makes sense to re-use the current uri for
@@ -1834,7 +1836,8 @@ int ds_select_dst_limit(
 
 	if(ds_update_dst(msg, &idx->dlist[hash].uri, idx->dlist[hash].sock, mode)
 			!= 0) {
-		LM_ERR("cannot set dst addr\n");
+		LM_ERR("cannot set next hop address with: %.*s\n",
+				idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
 		return -1;
 	}
 	/* if alg is round-robin then update the shortcut to next to be used */
