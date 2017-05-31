@@ -283,8 +283,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		then the pipe will be identified based on the matched queue.  If a pipe number
 		is provided as a parameter, then the given pipe number will be used for
 		identifying the ratelimit algorithm.
-		The pipe number must be provided via a pseudovariable.  It is recommended to
-		provide the pipe number via an integer pseudovariable.
+		The pipe number must be provided as number or via a pseudovariable.
 		</para>
 		<para>The method will return an error code if the limit for the matched
 		algorithm is reached.
@@ -297,7 +296,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 			</para></listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>rl_check</function> usage</title>
@@ -308,7 +307,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		append_to_reply("Retry-After: 5\r\n");
 		sl_send_reply("503","Limiting");
 		exit;
-	};
+	}
 ...
 	# use pipe no 1 for the current method
 	# set int pvar to 1
@@ -317,30 +316,19 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		append_to_reply("Retry-After: 5\r\n");
 		sl_send_reply("503","Limiting");
 		exit;
-	};
-...
-	# use pipe no 1 for the current method
-	# set str pvar to 1
-	$var(p) = "1";
-	if (!rl_check("$var(p)") {
-		append_to_reply("Retry-After: 5\r\n");
-		sl_send_reply("503","Limiting");
-		exit; 
-	};
+	}
 ...
 </programlisting>
 		</example>
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">rl_check_pipe([pipe_no])</function>
+		<function moreinfo="none">rl_check_pipe(pipe_no)</function>
 		</title>
 		<para>
-		Check the current request against the matched ratelimit algorithm.  If no
-		parameter is provided, the queue will be matched based on method type, and
-		then the pipe will be identified based on the matched queue.  If a pipe number
-		is provided as a parameter, then the given pipe number will be used for
-		identifying the ratelimit algorithm.
+		Check the current request against the matched ratelimit algorithm of the
+		pipe provided as parameter. The parameter can be provided as
+		number or variable.
 		</para>
 		<para>The method will return an error code if the limit for the matched
 		algorithm is reached.
@@ -358,19 +346,12 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		<title><function>rl_check_pipe</function> usage</title>
 		<programlisting format="linespecific">
 ...
-	# perform queue/pipe match for current method
-	if (!rl_check_pipe()) {
-		append_to_reply("Retry-After: 5\r\n");
-		sl_send_reply("503","Limiting");
-		exit;
-	};
-...
 	# use pipe no 1 for the current method
 	if (!rl_check_pipe("1") {
 		append_to_reply("Retry-After: 5\r\n");
 		sl_send_reply("503","Limiting");
 		exit;
-	};
+	}
 ...
 </programlisting>
 		</example>
