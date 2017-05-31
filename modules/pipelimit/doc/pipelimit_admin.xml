@@ -376,7 +376,7 @@ modparam("pipelimit", "reply_reason", "Limiting")
 			</para></listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>pl_check</function> usage</title>
@@ -461,7 +461,7 @@ with unexpected retcode=$var(check_result)\n");
 			</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE.
 		</para>
 		<example>
 		<title><function>pl_drop</function> usage</title>
