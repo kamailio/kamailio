@@ -1633,7 +1633,8 @@ save_keepalive_state(void)
 
     f = fopen(keepalive_state_file, "w");
     if (!f) {
-        LM_ERR("failed to open keepalive state file for writing: %s\n", strerror(errno));
+        LM_ERR("failed to open keepalive state file (%s) for writing: %s\n",
+				keepalive_state_file, strerror(errno));
         return;
     }
 
@@ -1652,7 +1653,8 @@ save_keepalive_state(void)
     }
 
     if (ferror(f))
-        LM_ERR("couldn't write keepalive state file: %s\n", strerror(errno));
+        LM_ERR("couldn't write keepalive state file (%s): %s\n",
+				keepalive_state_file, strerror(errno));
 
     fclose(f);
 }
