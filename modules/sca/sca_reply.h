@@ -26,6 +26,6 @@
 #define SCA_REPLY_ERROR( mod, scode, smsg, sreply ) \
 	sca_reply((mod), (scode), (smsg), NULL, (sreply))
 
-int	sca_reply( sca_mod *, int, char *, str *, sip_msg_t * );
+int sca_reply(sca_mod *, int, char *, str *, sip_msg_t *);
 
 #endif /* SCA_REPLY_H */
