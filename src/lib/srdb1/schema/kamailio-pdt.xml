@@ -8,6 +8,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Prefix-Domain Translation</name>
+    <name>PDT Module</name>
     <xi:include href="pdt.xml"/>
 </database>

@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>uid_credentials</name>
+    <name>UID_AUTH_DB Module</name>
     <xi:include href="uid_credentials.xml"/>
 </database>

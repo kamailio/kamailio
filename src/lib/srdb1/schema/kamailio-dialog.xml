@@ -7,7 +7,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Dialog support</name>
+    <name>DIALOG Module</name>
     <xi:include href="dialog.xml"/>
     <xi:include href="dialog_vars.xml"/>
 </database>

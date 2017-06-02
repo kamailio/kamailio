@@ -7,7 +7,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>MTree keys-values</name>
+    <name>MTREE Module</name>
     <xi:include href="mtree.xml"/>
     <xi:include href="mtrees.xml"/>
 </database>

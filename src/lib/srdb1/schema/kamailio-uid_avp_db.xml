@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>uid_user_attrs</name>
+    <name>UID_AVP_DB Module</name>
     <xi:include href="uid_user_attrs.xml"/>
 </database>
