@@ -1,0 +1,31 @@
+{
+  "name": "rtpengine",
+  "version": 1,
+  "columns": [
+    "setid": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "url": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "weight": {
+      "type": "int",
+      "default": 1,
+      "null": false
+    },
+    "disabled": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "stamp": {
+      "type": "datetime",
+      "default": "1900-01-01 00:00:01",
+      "null": false
+    }
+  ]
+}

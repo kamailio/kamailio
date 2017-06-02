@@ -1,6 +1,6 @@
 {
   "name": "active_watchers",
-  "version": 11,
+  "version": 12,
   "columns": [
     "id": {
       "type": "int",
@@ -125,6 +125,16 @@
     "updated_winfo": {
       "type": "int",
       "default": null,
+      "null": false
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "user_agent": {
+      "type": "string",
+      "default": "",
       "null": false
     }
   ]
