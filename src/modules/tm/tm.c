@@ -199,14 +199,14 @@ static int t_set_no_e2e_cancel_reason(struct sip_msg* msg, char* on_off,
 #endif /* CANCEL_REASON_SUPPORT */
 static int t_set_disable_internal_reply(struct sip_msg* msg, char* on_off,
 		char* f);
-static int t_branch_timeout(struct sip_msg* msg, char*, char*);
-static int t_branch_replied(struct sip_msg* msg, char*, char*);
-static int t_any_timeout(struct sip_msg* msg, char*, char*);
-static int t_any_replied(struct sip_msg* msg, char*, char*);
+static int w_t_branch_timeout(struct sip_msg* msg, char*, char*);
+static int w_t_branch_replied(struct sip_msg* msg, char*, char*);
+static int w_t_any_timeout(struct sip_msg* msg, char*, char*);
+static int w_t_any_replied(struct sip_msg* msg, char*, char*);
 static int w_t_is_canceled(struct sip_msg* msg, char*, char*);
-static int t_is_expired(struct sip_msg* msg, char*, char*);
+static int w_t_is_expired(struct sip_msg* msg, char*, char*);
 static int w_t_is_retr_async_reply(struct sip_msg* msg, char*, char*);
-static int t_grep_status(struct sip_msg* msg, char*, char*);
+static int w_t_grep_status(struct sip_msg* msg, char*, char*);
 static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_check_trans(struct sip_msg* msg, char* foo, char* bar);
@@ -376,21 +376,21 @@ static cmd_export_t cmds[]={
 	{"t_set_disable_internal_reply", t_set_disable_internal_reply, 1,
 		fixup_var_int_1,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-	{"t_branch_timeout",  t_branch_timeout,         0, 0,
+	{"t_branch_timeout",  w_t_branch_timeout,       0, 0,
 		FAILURE_ROUTE|EVENT_ROUTE},
-	{"t_branch_replied",  t_branch_replied,         0, 0,
+	{"t_branch_replied",  w_t_branch_replied,       0, 0,
 		FAILURE_ROUTE|EVENT_ROUTE},
-	{"t_any_timeout",     t_any_timeout,            0, 0,
+	{"t_any_timeout",     w_t_any_timeout,          0, 0,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-	{"t_any_replied",     t_any_replied,            0, 0,
+	{"t_any_replied",     w_t_any_replied,          0, 0,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_is_canceled",     w_t_is_canceled,          0, 0,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-	{"t_is_retr_async_reply",     w_t_is_retr_async_reply,          0, 0,
+	{"t_is_retr_async_reply",     w_t_is_retr_async_reply,     0, 0,
 		TM_ONREPLY_ROUTE},
-	{"t_is_expired",      t_is_expired,             0, 0,
+	{"t_is_expired",      w_t_is_expired,           0, 0,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-	{"t_grep_status",     t_grep_status,            1, fixup_var_int_1,
+	{"t_grep_status",     w_t_grep_status,          1, fixup_var_int_1,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_drop_replies",    w_t_drop_replies,         0, 0,
 		FAILURE_ROUTE},
@@ -1379,7 +1379,7 @@ inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 }
 
 
-static int t_is_set(struct sip_msg* msg, str *target)
+static int t_is_set(sip_msg_t* msg, str *target)
 {
 	int r;
 	tm_cell_t *t = NULL;
@@ -1854,28 +1854,28 @@ int ki_t_reset_max_lifetime(sip_msg_t* msg)
 T_SET_FLAG_GEN_FUNC(t_set_auto_inv_100, T_AUTO_INV_100)
 
 
-	/* set 6xx handling for the current or next to be created transaction */
+/* set 6xx handling for the current or next to be created transaction */
 T_SET_FLAG_GEN_FUNC(t_set_disable_6xx, T_DISABLE_6xx)
 
 
-	/* disable dns failover for the current transaction */
+/* disable dns failover for the current transaction */
 T_SET_FLAG_GEN_FUNC(t_set_disable_failover, T_DISABLE_FAILOVER)
 
 
 #ifdef CANCEL_REASON_SUPPORT
-	/* disable/enable e2e cancel reason copy for the current transaction */
+/* disable/enable e2e cancel reason copy for the current transaction */
 T_SET_FLAG_GEN_FUNC(t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
 #endif /* CANCEL_REASON_SUPPORT */
 
 
-	/* disable internal negative reply for the current transaction */
+/* disable internal negative reply for the current transaction */
 T_SET_FLAG_GEN_FUNC(t_set_disable_internal_reply, T_DISABLE_INTERNAL_REPLY)
 
 
-	/* script function, FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
-	 * returns true if the choosed "failure" branch failed because of a timeout,
-	 * -1 otherwise */
-int t_branch_timeout(struct sip_msg* msg, char* foo, char* bar)
+/* FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
+ * returns true if the choosed "failure" branch failed because of a timeout,
+ * -1 otherwise */
+int t_branch_timeout(sip_msg_t* msg)
 {
 	switch(get_route_type()) {
 		case FAILURE_ROUTE:
@@ -1889,9 +1889,17 @@ int t_branch_timeout(struct sip_msg* msg, char* foo, char* bar)
 
 
 /* script function, FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
+ * returns true if the choosed "failure" branch failed because of a timeout,
+ * -1 otherwise */
+int w_t_branch_timeout(sip_msg_t* msg, char* foo, char* bar)
+{
+	return t_branch_timeout(msg);
+}
+
+/* FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
  * returns true if the choosed "failure" branch ever received a reply,
  * -1 otherwise */
-int t_branch_replied(struct sip_msg* msg, char* foo, char* bar)
+int t_branch_replied(sip_msg_t* msg)
 {
 	switch(get_route_type()) {
 		case FAILURE_ROUTE:
@@ -1904,6 +1912,13 @@ int t_branch_replied(struct sip_msg* msg, char* foo, char* bar)
 }
 
 
+/* script function, FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
+ * returns true if the choosed "failure" branch ever received a reply,
+ * -1 otherwise */
+int w_t_branch_replied(sip_msg_t* msg, char* foo, char* bar)
+{
+	return t_branch_replied(msg);
+}
 
 /* script function, returns: 1 if the transaction was canceled, -1 if not */
 int t_is_canceled(struct sip_msg* msg)
@@ -1923,13 +1938,13 @@ int t_is_canceled(struct sip_msg* msg)
 	return ret;
 }
 
-static int w_t_is_canceled(struct sip_msg* msg, char* foo, char* bar)
+static int w_t_is_canceled(sip_msg_t* msg, char* foo, char* bar)
 {
 	return t_is_canceled(msg);
 }
 
-/* script function, returns: 1 if the transaction is currently suspended, -1 if not */
-int t_is_retr_async_reply(struct sip_msg* msg)
+/* returns: 1 if the transaction is currently suspended, -1 if not */
+int t_is_retr_async_reply(sip_msg_t* msg)
 {
 	struct cell *t;
 	int ret;
@@ -1947,13 +1962,15 @@ int t_is_retr_async_reply(struct sip_msg* msg)
 	return ret;
 }
 
-static int w_t_is_retr_async_reply(struct sip_msg* msg, char* foo, char* bar)
+/* script function, returns: 1 if the transaction is currently suspended,
+ * -1 if not */
+static int w_t_is_retr_async_reply(sip_msg_t* msg, char* foo, char* bar)
 {
 	return t_is_retr_async_reply(msg);
 }
 
-/* script function, returns: 1 if the transaction lifetime interval has already elapsed, -1 if not */
-int t_is_expired(struct sip_msg* msg, char* foo, char* bar)
+/* returns: 1 if the transaction lifetime interval has already elapsed, -1 if not */
+int t_is_expired(sip_msg_t* msg)
 {
 	struct cell *t;
 	int ret;
@@ -1970,8 +1987,15 @@ int t_is_expired(struct sip_msg* msg, char* foo, char* bar)
 	return ret;
 }
 
-/* script function, returns: 1 if any of the branches did timeout, -1 if not */
-int t_any_timeout(struct sip_msg* msg, char* foo, char* bar)
+/* script function, returns: 1 if the transaction lifetime interval
+ * has already elapsed, -1 if not */
+int w_t_is_expired(sip_msg_t* msg, char* foo, char* bar)
+{
+	return t_is_expired(msg);
+}
+
+/* returns: 1 if any of the branches did timeout, -1 if not */
+int t_any_timeout(sip_msg_t* msg)
 {
 	struct cell *t;
 	int r;
@@ -1992,10 +2016,15 @@ int t_any_timeout(struct sip_msg* msg, char* foo, char* bar)
 }
 
 
+/* script function, returns: 1 if any of the branches did timeout, -1 if not */
+int w_t_any_timeout(sip_msg_t* msg, char* foo, char* bar)
+{
+	return t_any_timeout(msg);
+}
 
-/* script function, returns: 1 if any of the branches received at leat one
+/* returns: 1 if any of the branches received at leat one
  * reply, -1 if not */
-int t_any_replied(struct sip_msg* msg, char* foo, char* bar)
+int t_any_replied(sip_msg_t* msg)
 {
 	struct cell *t;
 	int r;
@@ -2016,16 +2045,21 @@ int t_any_replied(struct sip_msg* msg, char* foo, char* bar)
 }
 
 
+/* script function, returns: 1 if any of the branches received at leat one
+ * reply, -1 if not */
+int w_t_any_replied(sip_msg_t* msg, char* foo, char* bar)
+{
+	return t_any_replied(msg);
+}
 
-/* script function, returns: 1 if any of the branches received the
+
+/* returns: 1 if any of the branches received the
  *  reply code "status" */
-int t_grep_status(struct sip_msg* msg, char* status, char* bar)
+int t_grep_status(sip_msg_t* msg, int code)
 {
 	struct cell *t;
 	int r;
-	int code;
 
-	if (get_int_fparam(&code, msg, (fparam_t*)status) < 0) return -1;
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
 	if ((t==0) || (t==T_UNDEFINED)){
@@ -2040,6 +2074,18 @@ int t_grep_status(struct sip_msg* msg, char* status, char* bar)
 		}
 	}
 	return -1;
+}
+
+
+/* script function, returns: 1 if any of the branches received the
+ *  reply code "status" */
+int w_t_grep_status(struct sip_msg* msg, char* status, char* bar)
+{
+	int code;
+
+	if (get_int_fparam(&code, msg, (fparam_t*)status) < 0) return -1;
+
+	return t_grep_status(msg, code);
 }
 
 /* drop all the existing replies in failure_route to make sure
@@ -2073,7 +2119,7 @@ static int ki_t_drop_replies_all(sip_msg_t* msg)
 }
 
 /* save the message lumps after t_newtran() but before t_relay() */
-static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
+static int ki_t_save_lumps(sip_msg_t* msg)
 {
 	struct cell *t;
 
@@ -2092,7 +2138,10 @@ static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
 	return 1;
 }
 
-
+static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
+{
+	return ki_t_save_lumps(msg);
+}
 
 /* wrapper function needed after changes in w_t_reply */
 int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt)
@@ -2341,7 +2390,7 @@ inline static int w_t_relay_to(struct sip_msg *msg, char *proxy, char *flags)
 }
 
 
-static int w_t_use_uac_headers(sip_msg_t* msg, char* foo, char* bar)
+static int ki_t_use_uac_headers(sip_msg_t* msg)
 {
 	tm_cell_t *t;
 
@@ -2352,6 +2401,11 @@ static int w_t_use_uac_headers(sip_msg_t* msg, char* foo, char* bar)
 	msg->msg_flags |= FL_USE_UAC_FROM|FL_USE_UAC_TO;
 
 	return 1;
+}
+
+static int w_t_use_uac_headers(sip_msg_t* msg, char* foo, char* bar)
+{
+	return ki_t_use_uac_headers(msg);
 }
 
 static int w_t_uac_send(sip_msg_t* msg, char* pmethod, char* pruri,
@@ -2718,6 +2772,51 @@ static sr_kemi_t tm_kemi_exports[] = {
 	{ str_init("tm"), str_init("t_drop_replies"),
 		SR_KEMIP_INT, ki_t_drop_replies,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_use_uac_headers"),
+		SR_KEMIP_INT, ki_t_use_uac_headers,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_save_lumps"),
+		SR_KEMIP_INT, ki_t_save_lumps,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_is_expired"),
+		SR_KEMIP_INT, t_is_expired,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_grep_status"),
+		SR_KEMIP_INT, t_grep_status,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_is_retr_async_reply"),
+		SR_KEMIP_INT, t_is_retr_async_reply,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_any_replied"),
+		SR_KEMIP_INT, t_any_replied,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_any_timeout"),
+		SR_KEMIP_INT, t_any_timeout,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_branch_replied"),
+		SR_KEMIP_INT, t_branch_replied,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_branch_timeout"),
+		SR_KEMIP_INT, t_branch_timeout,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

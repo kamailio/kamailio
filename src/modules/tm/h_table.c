@@ -463,7 +463,7 @@ struct s_table *init_hash_table()
 	/*allocs the table*/
 	_tm_table = (struct s_table *)shm_malloc(sizeof(struct s_table));
 	if(!_tm_table) {
-		LOG(L_ERR, "ERROR: init_hash_table: no shmem for TM table\n");
+		LM_ERR("no shmem for TM table\n");
 		goto error0;
 	}
 
