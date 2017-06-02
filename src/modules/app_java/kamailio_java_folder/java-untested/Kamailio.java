@@ -258,7 +258,7 @@ public class Kamailio extends NativeMethods
 		    }
 		    else if (WrappedMethods.is_method("ACK"))
 		    {
-			// ACK is forwarded statelessy
+			// ACK is forwarded statelessly
 			CoreMethods.route("NATMANAGE");
 		    }
 		    else if (WrappedMethods.is_method("NOTIFY"))

@@ -352,7 +352,7 @@ static int fixup_sl_reply(void** param, int param_no)
 }
 
 /**
- * @brief forward SIP reply statelessy with different code and reason text
+ * @brief forward SIP reply statelessly with different code and reason text
  */
 static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 {
@@ -445,7 +445,7 @@ restore:
 }
 
 /**
- * @brief forward SIP reply statelessy
+ * @brief forward SIP reply statelessly
  */
 static int w_sl_forward_reply0(sip_msg_t* msg, char* str1, char* str2)
 {
@@ -453,7 +453,7 @@ static int w_sl_forward_reply0(sip_msg_t* msg, char* str1, char* str2)
 }
 
 /**
- * @brief forward SIP reply statelessy with a new code
+ * @brief forward SIP reply statelessly with a new code
  */
 static int w_sl_forward_reply1(sip_msg_t* msg, char* str1, char* str2)
 {
@@ -466,7 +466,7 @@ static int w_sl_forward_reply1(sip_msg_t* msg, char* str1, char* str2)
 }
 
 /**
- * @brief forward SIP reply statelessy with new code and reason text
+ * @brief forward SIP reply statelessly with new code and reason text
  */
 static int w_sl_forward_reply2(sip_msg_t* msg, char* str1, char* str2)
 {

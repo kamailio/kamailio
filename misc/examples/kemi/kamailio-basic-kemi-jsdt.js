@@ -174,7 +174,7 @@ function ksr_route_withindlg()
 			KSR.setflag(FLT_ACC); // do accounting ...
 			KSR.setflag(FLT_ACCFAILED); // ... even if the transaction fails
 		} else if (METHOD=="ACK") {
-			// ACK is forwarded statelessy
+			// ACK is forwarded statelessly
 			ksr_route_natmanage();
 		} else if (METHOD=="NOTIFY") {
 			// Add Record-Route for in-dialog NOTIFY as per RFC 6665.

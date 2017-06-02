@@ -194,7 +194,7 @@ class kamailio:
                 # ... even if the transaction fails
                 KSR.setflag(FLT_ACCFAILED);
             elif KSR.pv.get("$rm")=="ACK" :
-                # ACK is forwarded statelessy
+                # ACK is forwarded statelessly
                 if self.ksr_route_natmanage(msg)==-255 :
                     return -255;
             elif KSR.pv.get("$rm")=="NOTIFY" :
