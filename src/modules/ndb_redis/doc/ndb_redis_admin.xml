@@ -319,6 +319,12 @@ modparam("ndb_redis", "flush_on_reconnect", 1)
 			</listitem>
 			</itemizedlist>
 		</para>
+		<para>
+			In case one of the members of the array is also an array (for example calling SMEMBERS
+			in a MULTI/EXEC transaction), the members of the array can be accessed by adding any of
+			the above keys, after a value[n] key. The first value[n] references the element in the
+			first array, while the next key references an element of the referenced array.
+		</para>
 		<example>
 		<title><function>redis_cmd</function> usage</title>
 		<programlisting format="linespecific">
@@ -350,6 +356,16 @@ redis_cmd("srvN", "HMGET %s %s %s", "key1", "field1", "field2", "r");
 if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
     xlog("array size: $redis(r=>size)\n");
     xlog("first values: $redis(r=>value[0]) , $redis(r=>value[1])\n");
+}
+
+
+# array as element of an array example
+redis_cmd("srvN", "MULTI", "r1");
+redis_cmd("srvN", "SMEMBERS foo", "r2");
+if (redis_cmd("srvN", "EXEC", "r")) {
+    xlog("array size: $redis(r=>value[0]=>size)\n");
+    xlog("first member of the set:$redis(r=>value[0]=>value[0])\n");
+    xlog("type of the second member of the set:$redis(r=>value[0]=>type[1])\n");
 }
 ...
 </programlisting>

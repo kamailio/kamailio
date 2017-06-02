@@ -35,6 +35,7 @@
 #include "../../core/mod_fix.h"
 
 #define MAXIMUM_PIPELINED_COMMANDS 1000
+#define MAXIMUM_NESTED_KEYS 10
 
 int redisc_init(void);
 int redisc_destroy(void);
@@ -74,7 +75,8 @@ typedef struct redisc_pv {
 	redisc_reply_t *reply;
 	str rkey;
 	int rkeyid;
-	gparam_t pos;  /* Array element position. */
+	gparam_t pos[MAXIMUM_NESTED_KEYS];  /* Array element position. */
+	int rkeynum;
 } redisc_pv_t;
 
 /* Server related functions */
