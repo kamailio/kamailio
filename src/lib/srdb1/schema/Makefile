@@ -267,7 +267,7 @@ docbook-xml:
 		> "$(ROOTDIR)/doc/databases/kamailio/Makefile"
 	echo \
 		>> "$(ROOTDIR)/doc/databases/kamailio/Makefile"
-	echo "docbook_dir = ../../../../doc/docbook" \
+	echo "docbook_dir = $(ROOTDOC)/doc/docbook" \
 		>> "$(ROOTDIR)/doc/databases/kamailio/Makefile"
 	echo "include \$$(docbook_dir)/Makefile" \
 		>> "$(ROOTDIR)/doc/databases/kamailio/Makefile"
