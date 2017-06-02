@@ -1,6 +1,6 @@
 [Unit]
 Description=Kamailio (OpenSER) - the Open Source SIP Server
-After=network.target
+After=network-online.target
 
 [Service]
 Type=forking
