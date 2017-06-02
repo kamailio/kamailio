@@ -382,6 +382,7 @@
 		<column><field>prefix</field><type>DB1_STR</type></column>
 		<column><field>from_uri</field><type>DB1_STR</type></column>
 		<column><field>request_uri</field><type>DB1_STR</type></column>
+		<column><field>mt_tvalue</field><type>DB1_STR</type></column>
 		<column><field>stopper</field><type>DB1_INT</type></column>
 		<column><field>enabled</field><type>DB1_INT</type></column>
 	</db_table>
@@ -2466,6 +2467,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
@@ -2478,6 +2480,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
@@ -2493,6 +2496,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>

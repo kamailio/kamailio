@@ -55,6 +55,7 @@ CREATE TABLE lcr_rule (
     prefix VARCHAR2(16) DEFAULT NULL,
     from_uri VARCHAR2(64) DEFAULT NULL,
     request_uri VARCHAR2(64) DEFAULT NULL,
+    mt_tvalue VARCHAR2(128) DEFAULT NULL,
     stopper NUMBER(10) DEFAULT 0 NOT NULL,
     enabled NUMBER(10) DEFAULT 1 NOT NULL,
     CONSTRAINT ORA_lcr_id_prefix_from_uri_idx  UNIQUE (lcr_id, prefix, from_uri)
@@ -68,5 +69,5 @@ END lcr_rule_tr;
 /
 BEGIN map2users('lcr_rule'); END;
 /
-INSERT INTO version (table_name, table_version) values ('lcr_rule','2');
+INSERT INTO version (table_name, table_version) values ('lcr_rule','3');
 
