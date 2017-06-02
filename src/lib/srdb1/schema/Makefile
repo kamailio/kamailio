@@ -69,7 +69,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext db_berkeley db_sqlite docbook oracle pi_framework #modules dbdoc
+all: mysql postgres dbtext db_berkeley db_sqlite oracle mongodb pi_framework
 
 .PHONY: pi_framework pi_framework_clean
 pi_framework:
