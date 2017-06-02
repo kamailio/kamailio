@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Shared Call Appearance Values</name>
+    <name>SCA Module</name>
     <xi:include href="sca.xml"/>
 </database>

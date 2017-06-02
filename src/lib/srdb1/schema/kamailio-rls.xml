@@ -8,7 +8,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>RLS</name>
+    <name>RLS Module</name>
     <xi:include href="rls_presentity.xml"/>
     <xi:include href="rls_watchers.xml"/>
     -->

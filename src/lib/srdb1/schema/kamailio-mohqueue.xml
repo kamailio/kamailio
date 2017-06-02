@@ -8,7 +8,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>mohqueue</name>
+    <name>MOHQUEUE Module</name>
     <xi:include href="mohqcalls.xml"/>
     <xi:include href="mohqueues.xml"/>
 </database>

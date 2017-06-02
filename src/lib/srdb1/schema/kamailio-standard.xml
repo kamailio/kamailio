@@ -9,6 +9,6 @@
 <!-- Version table for Kamailio, and inclusion point for custom extensions -->
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Version</name>
+    <name>STANDARD CORE Tables</name>
     <xi:include href="version.xml"/>
 </database>

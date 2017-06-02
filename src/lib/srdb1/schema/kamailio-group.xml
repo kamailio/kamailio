@@ -7,7 +7,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Group checking</name>
+    <name>GROUP Module</name>
     <xi:include href="grp.xml"/>
     <xi:include href="re_grp.xml"/>
 </database>

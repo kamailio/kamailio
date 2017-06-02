@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Subscriber</name>
+    <name>AUTH_DB Module</name>
     <xi:include href="subscriber.xml"/>
 </database>

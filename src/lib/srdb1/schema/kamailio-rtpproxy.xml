@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>RTPProxy</name>
+    <name>RTPPROXY Module</name>
     <xi:include href="rtpproxy.xml"/>
 </database>

@@ -8,7 +8,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Accounting</name>
+    <name>ACC Module</name>
     <xi:include href="acc.xml"/>
     <xi:include href="acc_cdrs.xml"/>
     <xi:include href="missed_calls.xml"/>

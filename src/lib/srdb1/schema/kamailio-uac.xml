@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>UAC remote registrations</name>
+    <name>UAC Module</name>
     <xi:include href="uacreg.xml"/>
 </database>

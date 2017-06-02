@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>RTPEngine</name>
+    <name>RTPENGINE Module</name>
     <xi:include href="rtpengine.xml"/>
 </database>

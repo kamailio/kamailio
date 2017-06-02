@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Call-processing language</name>
+    <name>CPLC Module</name>
     <xi:include href="cpl.xml"/>
 </database>
