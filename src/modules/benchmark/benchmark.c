@@ -479,7 +479,7 @@ static inline int fixup_bm_timer(void** param, int param_no)
  */
 void bm_rpc_enable_global(rpc_t* rpc, void* ctx)
 {
-	long int v1;
+	int v1;
 	if(rpc->scan(ctx, "d", (int*)(&v1))<1) {
 		LM_WARN("no parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
@@ -496,7 +496,7 @@ void bm_rpc_enable_global(rpc_t* rpc, void* ctx)
 void bm_rpc_enable_timer(rpc_t* rpc, void* ctx)
 {
 	char *p1 = NULL;
-	long int v2 = 0;
+	int v2 = 0;
 	unsigned int id = 0;
 
 	if(rpc->scan(ctx, "sd", &p1, (int*)(&v2))<2) {
@@ -518,7 +518,7 @@ void bm_rpc_enable_timer(rpc_t* rpc, void* ctx)
 
 void bm_rpc_granularity(rpc_t* rpc, void* ctx)
 {
-	long int v1;
+	int v1;
 	if(rpc->scan(ctx, "d", (int*)(&v1))<1) {
 		LM_WARN("no parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
@@ -533,7 +533,7 @@ void bm_rpc_granularity(rpc_t* rpc, void* ctx)
 
 void bm_rpc_loglevel(rpc_t* rpc, void* ctx)
 {
-	long int v1;
+	int v1;
 	if(rpc->scan(ctx, "d", (int*)(&v1))<1) {
 		LM_WARN("no parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
