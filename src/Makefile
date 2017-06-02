@@ -609,25 +609,27 @@ bin:
 
 .PHONY: deb
 deb:
-	-@if [ -d debian ]; then \
-		dpkg-buildpackage -rfakeroot -tc; \
+	(cd ..; \
+	if [ -d debian ]; then \
+		dpkg-buildpackage -rfakeroot -tc --no-sign; \
 		rm debian; \
 	else \
-		ln -s ../pkg/$(MAIN_NAME)/deb/debian debian; \
-		dpkg-buildpackage -rfakeroot -tc; \
+		ln -s pkg/$(MAIN_NAME)/deb/debian debian; \
+		dpkg-buildpackage -rfakeroot -tc --no-sign; \
 		rm debian; \
-	fi
+	fi)
 
 .PHONY: deb-stable
 deb-stable:
-	-@if [ -d debian ]; then \
-		dpkg-buildpackage -rfakeroot -tc; \
+	(cd ..; \
+	if [ -d debian ]; then \
+		dpkg-buildpackage -rfakeroot -tc --no-sign; \
 		rm debian; \
 	else \
-		ln -s ../pkg/$(MAIN_NAME)/deb/jessie debian; \
-		dpkg-buildpackage -rfakeroot -tc; \
+		ln -s pkg/$(MAIN_NAME)/deb/jessie debian; \
+		dpkg-buildpackage -rfakeroot -tc --no-sign; \
 		rm debian; \
-	fi
+	fi)
 
 .PHONY: sunpkg
 sunpkg:
