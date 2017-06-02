@@ -24,7 +24,7 @@
         transaction information to the specified Application Server. The
         Application Server then executes some call-control logic code, and
         tells &kamailio; to take some actions, ie. forward the message
-        downstream, or respond to the message with a SIP repy, etc.</para>
+        downstream, or respond to the message with a SIP reply, etc.</para>
 
         <para>The module acts implements a network protocol acting as the
         interface between &kamailio; internal API and the external Application

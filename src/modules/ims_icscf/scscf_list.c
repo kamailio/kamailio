@@ -540,7 +540,7 @@ void print_scscf_list(int log_level) {
  * @param msg - message to reply to
  * @param code - the Status-code for the response
  * @param text - the Reason-Phrase for the response
- * @returns the tmb.t_repy() result
+ * @returns the tmb.t_reply() result
  */
 int cscf_reply_transactional(struct sip_msg *msg, int code, char *text) {
     unsigned int hash, label;
@@ -562,7 +562,7 @@ int cscf_reply_transactional_async(struct cell* t, struct sip_msg *msg, int code
  * @param msg - message to reply to
  * @param code - the Status-code for the response
  * @param text - the Reason-Phrase for the response
- * @returns the tmb.t_repy() result
+ * @returns the tmb.t_reply() result
  */
 
 void ims_icscf_timer_routine() {
