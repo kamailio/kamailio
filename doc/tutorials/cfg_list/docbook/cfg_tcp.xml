@@ -42,7 +42,18 @@
 <section id="tcp.max_connections">
     <title>tcp.max_connections</title>
     <para>
-        maximum connection number, soft limit.
+        maximum tcp connections number, soft limit.
+    </para>
+    <para>Range: 0 - 2147483647.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="tcp.max_tls_connections">
+    <title>tcp.max_tls_connections</title>
+    <para>
+        maximum tls connections number, soft limit.
     </para>
     <para>Range: 0 - 2147483647.</para>
     <para>Type: integer.</para>
@@ -265,7 +276,18 @@
 <section id="tcp.accept_no_cl">
     <title>tcp.accept_no_cl</title>
     <para>
-        accept TCP messages without Content-Lenght .
+        accept TCP messages without Content-Length .
+    </para>
+    <para>Range: 0 - 1.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="tcp.reuse_port">
+    <title>tcp.reuse_port</title>
+    <para>
+        reuse TCP ports .
     </para>
     <para>Range: 0 - 1.</para>
     <para>Type: integer.</para>
@@ -279,7 +301,7 @@
         internal read buffer size (should be &gt; max. expected
         datagram).
     </para>
-    <para>Range: 512 - 65536.</para>
+    <para>Range: 512 - 16777216.</para>
     <para>Type: integer.</para>
     <para>
     </para>

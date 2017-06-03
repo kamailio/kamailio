@@ -16,7 +16,7 @@ Configuration Variables for core
 
  3. core.memdbg
         log level for memory debugging messages.
-        Default: 3.
+        Default: 4.
         Type: integer.
 
  4. core.use_dst_blacklist
@@ -124,20 +124,25 @@ Configuration Variables for core
         Range: 1 - 1.
         Type: integer.
 
-23. core.use_dns_cache
+23. core.dns_naptr_ignore_rfc
+        ignore the Order field required by RFC 2915.
+        Default: 1.
+        Type: integer.
+
+24. core.use_dns_cache
         enable/disable the dns cache.
         Default: 1.
         Range: 0 - 1.
         Type: integer.
 
-24. core.dns_cache_flags
+25. core.dns_cache_flags
         dns cache specific resolver flags (1=ipv4 only, 2=ipv6 only,
         4=prefer ipv6.
         Default: 0.
         Range: 0 - 4.
         Type: integer.
 
-25. core.use_dns_failover
+26. core.use_dns_failover
         enable/disable dns failover in case the destination resolves to
         multiple ip addresses and/or multiple SRV records (depends on
         use_dns_cache).
@@ -145,7 +150,7 @@ Configuration Variables for core
         Range: 0 - 1.
         Type: integer.
 
-26. core.dns_srv_lb
+27. core.dns_srv_lb
         enable/disable load balancing to different srv records of the
         same priority based on the srv records weights (depends on
         dns_failover).
@@ -153,35 +158,35 @@ Configuration Variables for core
         Range: 0 - 1.
         Type: integer.
 
-27. core.dns_cache_negative_ttl
+28. core.dns_cache_negative_ttl
         time to live for negative results ("not found") in seconds. Use
         0 to disable.
         Default: 60.
         Type: integer.
 
-28. core.dns_cache_min_ttl
+29. core.dns_cache_min_ttl
         minimum accepted time to live for a record, in seconds.
         Default: 0.
         Type: integer.
 
-29. core.dns_cache_max_ttl
+30. core.dns_cache_max_ttl
         maximum accepted time to live for a record, in seconds.
         Default: -1.
         Type: integer.
 
-30. core.dns_cache_mem
+31. core.dns_cache_mem
         maximum memory used for the dns cache in Kb.
         Default: 500.
         Type: integer.
 
-31. core.dns_cache_del_nonexp
+32. core.dns_cache_del_nonexp
         allow deletion of non-expired records from the cache when there
         is no more space left for new ones.
         Default: 0.
         Range: 0 - 1.
         Type: integer.
 
-32. core.dns_cache_rec_pref
+33. core.dns_cache_rec_pref
         DNS cache record preference:  0 - do not check duplicates 1 -
         prefer old records 2 - prefer new records 3 - prefer records
         with longer lifetime.
@@ -189,42 +194,42 @@ Configuration Variables for core
         Range: 0 - 3.
         Type: integer.
 
-33. core.mem_dump_pkg
+34. core.mem_dump_pkg
         dump process memory status, parameter: pid_number.
         Default: 0.
         Type: integer.
 
-34. core.mem_dump_shm
+35. core.mem_dump_shm
         dump shared memory status.
         Default: 0.
         Type: integer.
 
-35. core.max_while_loops
+36. core.max_while_loops
         maximum iterations allowed for a while loop.
         Default: 100.
         Type: integer.
 
-36. core.udp_mtu
+37. core.udp_mtu
         fallback to a congestion controlled protocol if send size
         exceeds udp_mtu.
         Default: 0.
         Range: 0 - 65535.
         Type: integer.
 
-37. core.udp_mtu_try_proto
+38. core.udp_mtu_try_proto
         if send size > udp_mtu use proto (1 udp, 2 tcp, 3 tls, 4 sctp).
         Default: 0.
         Range: 1 - 4.
         Type: integer.
 
-38. core.udp4_raw
+39. core.udp4_raw
         enable/disable using a raw socket for sending UDP IPV4 packets.
         Should be  faster on multi-CPU linux running machines..
         Default: 0.
         Range: -1 - 1.
         Type: integer.
 
-39. core.udp4_raw_mtu
+40. core.udp4_raw_mtu
         set the MTU used when using raw sockets for udp sending. This
         value will be used when deciding whether or not to fragment the
         packets..
@@ -232,25 +237,25 @@ Configuration Variables for core
         Range: 28 - 65535.
         Type: integer.
 
-40. core.udp4_raw_ttl
+41. core.udp4_raw_ttl
         set the IP TTL used when using raw sockets for udp sending. -1
         will use the same value as for normal udp sockets..
         Default: -1.
         Range: -1 - 255.
         Type: integer.
 
-41. core.force_rport
+42. core.force_rport
         force rport for all the received messages.
         Default: 0.
         Range: 0 - 1.
         Type: integer.
 
-42. core.memlog
+43. core.memlog
         log level for memory status/summary information.
-        Default: 3.
+        Default: 4.
         Type: integer.
 
-43. core.mem_summary
+44. core.mem_summary
         memory debugging information displayed on exit (flags):  0 -
         off, 1 - dump all the pkg used blocks (status), 2 - dump all
         the shm used blocks (status), 4 - summary of pkg used blocks, 8
@@ -260,32 +265,42 @@ Configuration Variables for core
         Range: 0 - 31.
         Type: integer.
 
-44. core.mem_safety
+45. core.mem_safety
         safety level for memory operations.
         Default: 0.
         Type: integer.
 
-45. core.mem_join
+46. core.mem_join
         join free memory fragments.
         Default: 0.
         Type: integer.
 
-46. core.corelog
+47. core.mem_status_mode
+        print status for free or all memory fragments.
+        Default: 0.
+        Type: integer.
+
+48. core.corelog
         log level for non-critical core error messages.
         Default: -1.
         Type: integer.
 
-47. core.latency_log
+49. core.latency_cfg_log
+        log level for printing latency of routing blocks.
+        Default: 3.
+        Type: integer.
+
+50. core.latency_log
         log level for latency limits alert messages.
         Default: -1.
         Type: integer.
 
-48. core.latency_limit_db
+51. core.latency_limit_db
         limit is ms for alerting on time consuming db commands.
         Default: 0.
         Type: integer.
 
-49. core.latency_limit_action
+52. core.latency_limit_action
         limit is ms for alerting on time consuming config actions.
         Default: 0.
         Type: integer.

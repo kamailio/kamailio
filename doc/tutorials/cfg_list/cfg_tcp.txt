@@ -134,12 +134,17 @@ Configuration Variables for tcp
         Range: 0 - 1.
         Type: integer.
 
-25. tcp.rd_buf_size
+25. tcp.reuse_port
+        reuse TCP ports .
+        Range: 0 - 1.
+        Type: integer.
+
+26. tcp.rd_buf_size
         internal read buffer size (should be > max. expected datagram).
         Range: 512 - 16777216.
         Type: integer.
 
-26. tcp.wq_blk_size
+27. tcp.wq_blk_size
         internal async write block size (debugging use only for now).
         Range: 1 - 65535.
         Type: integer.

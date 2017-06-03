@@ -33,7 +33,7 @@
     <para>
         log level for memory debugging messages.
     </para>
-    <para>Default value: 3.</para>
+    <para>Default value: 4.</para>
     <para>Type: integer.</para>
     <para>
     </para>
@@ -253,6 +253,17 @@
     </para>
     <para>Default value: 0.</para>
     <para>Range: 1 - 1.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.dns_naptr_ignore_rfc">
+    <title>core.dns_naptr_ignore_rfc</title>
+    <para>
+        ignore the Order field required by RFC 2915.
+    </para>
+    <para>Default value: 1.</para>
     <para>Type: integer.</para>
     <para>
     </para>
@@ -499,7 +510,7 @@
     <para>
         log level for memory status/summary information.
     </para>
-    <para>Default value: 3.</para>
+    <para>Default value: 4.</para>
     <para>Type: integer.</para>
     <para>
     </para>
@@ -511,12 +522,99 @@
         memory debugging information displayed on exit (flags):  0 -
         off, 1 - dump all the pkg used blocks (status), 2 - dump all
         the shm used blocks (status), 4 - summary of pkg used blocks, 8
-        - summary of shm used blocks, 16 - show only summary of used
-	blocks instead of full dump (to use in conjuntion with flags 1
-	and 2).
+        - summary of shm used blocks, 16 - short status instead of
+        dump.
     </para>
     <para>Default value: 3.</para>
     <para>Range: 0 - 31.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.mem_safety">
+    <title>core.mem_safety</title>
+    <para>
+        safety level for memory operations.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.mem_join">
+    <title>core.mem_join</title>
+    <para>
+        join free memory fragments.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.mem_status_mode">
+    <title>core.mem_status_mode</title>
+    <para>
+        print status for free or all memory fragments.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.corelog">
+    <title>core.corelog</title>
+    <para>
+        log level for non-critical core error messages.
+    </para>
+    <para>Default value: -1.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.latency_cfg_log">
+    <title>core.latency_cfg_log</title>
+    <para>
+        log level for printing latency of routing blocks.
+    </para>
+    <para>Default value: 3.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.latency_log">
+    <title>core.latency_log</title>
+    <para>
+        log level for latency limits alert messages.
+    </para>
+    <para>Default value: -1.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.latency_limit_db">
+    <title>core.latency_limit_db</title>
+    <para>
+        limit is ms for alerting on time consuming db commands.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.latency_limit_action">
+    <title>core.latency_limit_action</title>
+    <para>
+        limit is ms for alerting on time consuming config actions.
+    </para>
+    <para>Default value: 0.</para>
     <para>Type: integer.</para>
     <para>
     </para>

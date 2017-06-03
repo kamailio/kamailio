@@ -6,7 +6,7 @@ Configuration Variables for maxfwd
 
  1. maxfwd.max_limit
         Max. maxfwd limit.
-        Default: 16.
+        Default: 70.
         Range: 0 - 255.
         Type: integer.
 
