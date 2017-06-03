@@ -13,3 +13,6 @@ RPC Exports for cnxcc
  3. cnxcc.kill_call
         Kill call using its call ID
 
+ 4. cnxcc.stats
+        List credit control stats
+

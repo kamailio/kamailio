@@ -17,4 +17,12 @@ RPC Exports for presence
 </para>
 </section>
 
+<section id="presence.refreshWatchers"><title>presence.refreshWatchers</title>
+<para>
+        Trigger refresh of watchers
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

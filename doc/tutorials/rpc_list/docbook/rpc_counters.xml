@@ -32,9 +32,27 @@ RPC Exports for counters
 </para>
 </section>
 
+<section id="cnt.list_groups"><title>cnt.list_groups</title>
+<para>
+        Documentation missing (cnt_grps_list_doc).
+</para>
+<para>
+        Returns an array.
+</para>
+</section>
+
 <section id="cnt.grps_list"><title>cnt.grps_list</title>
 <para>
         Documentation missing (cnt_grps_list_doc).
+</para>
+<para>
+        Returns an array.
+</para>
+</section>
+
+<section id="cnt.list_vars"><title>cnt.list_vars</title>
+<para>
+        Documentation missing (cnt_var_list_doc).
 </para>
 <para>
         Returns an array.
@@ -47,6 +65,14 @@ RPC Exports for counters
 </para>
 <para>
         Returns an array.
+</para>
+</section>
+
+<section id="cnt.get_vars"><title>cnt.get_vars</title>
+<para>
+        Documentation missing (cnt_grp_get_all_doc).
+</para>
+<para>
 </para>
 </section>
 

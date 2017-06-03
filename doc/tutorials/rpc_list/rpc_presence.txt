@@ -8,3 +8,6 @@ RPC Exports for presence
         Manually triggers the cleanup functions for the
         active_watchers, presentity, and watchers tables.
 
+ 2. presence.refreshWatchers
+        Trigger refresh of watchers
+

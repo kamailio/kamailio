@@ -7,3 +7,6 @@ RPC Exports for carrierroute
  1. cr.reload_routes
         Reload routes
 
+ 2. cr.dump_routes
+        Dump routes
+

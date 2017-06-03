@@ -7,3 +7,6 @@ RPC Exports for db_text
  1. db_text.dump
         Write back to disk modified tables
 
+ 2. db_text.query
+        Perform Live Query
+

@@ -28,7 +28,7 @@ RPC Exports for dialog
 
 <section id="dlg.dlg_list"><title>dlg.dlg_list</title>
 <para>
-        Print dialog based on callid and fromtag
+        Print dialog based on callid and optionally fromtag
 </para>
 <para>
 </para>
@@ -37,7 +37,7 @@ RPC Exports for dialog
 <section id="dlg.dlg_list_ctx"><title>dlg.dlg_list_ctx</title>
 <para>
         Print dialog with associated context based on callid and
-        fromtag
+        optionally fromtag
 </para>
 <para>
 </para>
