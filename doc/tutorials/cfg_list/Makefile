@@ -40,7 +40,7 @@ files_list= \
 # list of excluded groups
 grp_exclude=pa
 # list of file prefixes to exclude (full path needed)
-file_exclude= $(COREPATH)/modules/tls/
+file_exclude= $(COREPATH)/obsolete/
 
 # special per file group overrides
 # format= grp_filename=... ,where filename does not contain the extension
