@@ -1471,7 +1471,76 @@
 	<listitem><simpara>@identity_info</simpara>
 	</listitem>
 
-	<listitem><simpara>@cfg_get.*</simpara>
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.name</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.uri</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.uri.type</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.uri.user</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.uri.rn_user</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.uri.pwd</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.uri.host</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.uri.port</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.uri.params{[&quot;string&quot;]}</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.uri.hostport</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.uri.transport</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.nameaddr.params{[&quot;string&quot;]}</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.uri.type</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.uri.user</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.uri.rn_user</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.uri.pwd</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.uri.host</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.uri.port</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.uri.params{[&quot;string&quot;]}</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.uri.hostport</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.uri.transport</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_get[&quot;string&quot;].&lt;string&gt;.params[&quot;string&quot;]</simpara>
+	</listitem>
+
+	<listitem><simpara>@cfg_selected[&quot;string&quot;]</simpara>
 	</listitem>
 
 	</orderedlist>
