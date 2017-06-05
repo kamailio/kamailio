@@ -201,7 +201,7 @@ static char* rcv_avp_param = NULL;
 static unsigned short rcv_avp_type = 0;
 static int_str rcv_avp_name;
 
-static char *natping_socket = 0;
+static char* natping_socket = NULL;
 static int udpping_from_path = 0;
 static int sdp_oldmediaip = 1;
 static int raw_sock = -1;
@@ -213,7 +213,7 @@ static request_method_t sipping_method_id = 0;
 static int nh_filter_srvid = 0;
 
 /*0-> disabled, 1 ->enabled*/
-unsigned int *natping_state=0;
+unsigned int* natping_state = NULL;
 
 static cmd_export_t cmds[] = {
 	{"fix_nated_contact",  (cmd_function)fix_nated_contact_f,    0,
