@@ -102,42 +102,9 @@ MODULE_VERSION
 #define	NAT_UAC_TEST_C_PORT	0x80
 
 
-#define DEFAULT_RTPP_SET_ID		0
-
-#define MI_SET_NATPING_STATE		"nh_enable_ping"
-#define MI_DEFAULT_NATPING_STATE	1
-
-#define MI_MIN_RECHECK_TICKS		0
-#define MI_MAX_RECHECK_TICKS		(unsigned int)-1
-
-#define MI_SHOW_RTP_PROXIES			"nh_show_rtpp"
-
-#define MI_RTP_PROXY_NOT_FOUND		"RTP proxy not found"
-#define MI_RTP_PROXY_NOT_FOUND_LEN	(sizeof(MI_RTP_PROXY_NOT_FOUND)-1)
-#define MI_PING_DISABLED			"NATping disabled from script"
-#define MI_PING_DISABLED_LEN		(sizeof(MI_PING_DISABLED)-1)
-#define MI_SET						"set"
-#define MI_SET_LEN					(sizeof(MI_SET)-1)
-#define MI_INDEX					"index"
-#define MI_INDEX_LEN				(sizeof(MI_INDEX)-1)
-#define MI_DISABLED					"disabled"
-#define MI_DISABLED_LEN				(sizeof(MI_DISABLED)-1)
-#define MI_WEIGHT					"weight"
-#define MI_WEIGHT_LEN				(sizeof(MI_WEIGHT)-1)
-#define MI_RECHECK_TICKS			"recheck_ticks"
-#define MI_RECHECK_T_LEN			(sizeof(MI_RECHECK_TICKS)-1)
+#define DEFAULT_NATPING_STATE	1
 
 
-
-/* Supported version of the RTP proxy command protocol */
-#define	SUP_CPROTOVER	20040107
-/* Required additional version of the RTP proxy command protocol */
-#define	REQ_CPROTOVER	"20050322"
-/* Additional version necessary for re-packetization support */
-#define	REP_CPROTOVER	"20071116"
-#define	PTL_CPROTOVER	"20081102"
-
-#define	CPORT		"22222"
 static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int add_contact_alias_0_f(struct sip_msg *, char *, char *);
@@ -190,7 +157,6 @@ static struct {
 static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
 static str force_socket_str = STR_NULL;
-static pid_t mypid;
 static int sipping_flag = -1;
 static int natping_disable_flag = -1;
 static int natping_processes = 1;
@@ -521,7 +487,7 @@ mod_init(void)
 			LM_ERR("no shmem left\n");
 			return -1;
 		}
-		*natping_state = MI_DEFAULT_NATPING_STATE;
+		*natping_state = DEFAULT_NATPING_STATE;
 
 		if (ping_nated_only && ul.nat_flag==0) {
 			LM_ERR("bad config - ping_nated_only enabled, but no nat bflag"
@@ -595,9 +561,6 @@ child_init(int rank)
 
 	if (rank<=0 && rank!=PROC_TIMER)
 		return 0;
-
-	/* Iterate known RTP proxies - create sockets */
-	mypid = getpid();
 
 	return 0;
 }
