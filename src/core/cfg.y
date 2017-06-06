@@ -1594,6 +1594,7 @@ cfg_var_idn: ID
 	| NUMBER {
 		yyerror("cfg var field name - use of number or reserved token not allowed: %s",
 				yy_number_str);
+		YYERROR;
 	}
 	;
 
