@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
   "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
@@ -12,7 +12,15 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>Table for the call processing language "cpl" module. More information is available at: &KAMAILIO_MOD_DOC;cpl-c.html</db:para>
+		<db:para>
+			Table for the call processing language "cpl" module. More
+			information is available at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;cplc.html">&KAMAILIO_MOD_DOC;cplc.html</ulink>.
+			</listitem>
+			</itemizedlist>
+		</db:para>
     </description>
 
     <column id="id">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
   "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
@@ -13,8 +13,13 @@
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the lcr (Least Cost Routing)
-	    module to store routing rule targets.
-            More information can be found at: &KAMAILIO_MOD_DOC;lcr.html.
+			module to store routing rule targets.
+			More information can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;lcr.html">&KAMAILIO_MOD_DOC;lcr.html</ulink>.
+			</listitem>
+			</itemizedlist>
         </db:para>
     </description>
 

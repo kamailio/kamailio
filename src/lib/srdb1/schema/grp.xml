@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
   "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
@@ -12,7 +12,14 @@
     <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table us used by the group module as a means of group membership checking. Used primarily for Access Control Lists (ACL's). More information about the group module can be found at: &KAMAILIO_MOD_DOC;group.html
+		<db:para>This table us used by the group module as a means of group
+			membership checking. Used primarily for Access Control Lists
+			(ACL's). More information about the group module can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;group.html">&KAMAILIO_MOD_DOC;group.html</ulink>.
+			</listitem>
+			</itemizedlist>
         </db:para>
     </description>
 
