@@ -592,6 +592,7 @@ extern char *default_routename;
 %type <intval> avpflag_oper
 %type <intval> rve_un_op
 %type <strval> cfg_var_id
+%type <strval> cfg_var_idn
 /* %type <intval> rve_op */
 
 /*%type <route_el> rules;
@@ -1572,36 +1573,44 @@ cfg_var_id: ID
 	| DEFAULT { $$="default" ; } /*needed to allow default as cfg var. name*/
 	;
 
+cfg_var_idn: ID
+	| DEFAULT { $$="default" ; } /*needed to allow default as cfg var. name*/
+	| NUMBER {
+		yyerror("cfg var field name - use of number or reserved token not allowed: %s",
+				yy_number_str);
+	}
+	;
+
 cfg_var:
-	cfg_var_id DOT cfg_var_id EQUAL NUMBER {
+	cfg_var_id DOT cfg_var_idn EQUAL NUMBER {
 		if (cfg_declare_int($1, $3, $5, 0, 0, NULL)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| cfg_var_id DOT cfg_var_id EQUAL STRING {
+	| cfg_var_id DOT cfg_var_idn EQUAL STRING {
 		if (cfg_declare_str($1, $3, $5, NULL)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| cfg_var_id DOT cfg_var_id EQUAL NUMBER CFG_DESCRIPTION STRING {
+	| cfg_var_id DOT cfg_var_idn EQUAL NUMBER CFG_DESCRIPTION STRING {
 		if (cfg_declare_int($1, $3, $5, 0, 0, $7)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| cfg_var_id DOT cfg_var_id EQUAL STRING CFG_DESCRIPTION STRING {
+	| cfg_var_id DOT cfg_var_idn EQUAL STRING CFG_DESCRIPTION STRING {
 		if (cfg_declare_str($1, $3, $5, $7)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| cfg_var_id DOT cfg_var_id EQUAL error {
+	| cfg_var_id DOT cfg_var_idn EQUAL error {
 		yyerror("number or string expected");
 	}
-	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_id EQUAL NUMBER {
+	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_idn EQUAL NUMBER {
 		if (cfg_ginst_var_int($1, $3, $6, $8)) {
 			yyerror("variable cannot be added to the group instance");
 		}
 	}
-	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_id EQUAL STRING {
+	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_idn EQUAL STRING {
 		if (cfg_ginst_var_string($1, $3, $6, $8)) {
 			yyerror("variable cannot be added to the group instance");
 		}
