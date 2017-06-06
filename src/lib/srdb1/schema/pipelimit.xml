@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
   "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
@@ -12,8 +12,14 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-		<db:para> This table us used by the pipelimit module to keep the definition of pipes.
-			More information about the pipelimit module can be found at: &KAMAILIO_MOD_DOC;pipelimit.html
+		<db:para>This table us used by the pipelimit module to keep the
+			definition of pipes. More information about the pipelimit module
+			can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;pipelimit.html">&KAMAILIO_MOD_DOC;pipelimit.html</ulink>.
+			</listitem>
+			</itemizedlist>
         </db:para>
     </description>
 

@@ -12,7 +12,14 @@
     <version>4</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table is used by the dispatcher module. It contains the sets of destinations used for load balancing and dispatching. More information about the dispatcher module can be found at: &KAMAILIO_MOD_DOC;dispatcher.html
+		<db:para>This table is used by the dispatcher module. It contains the
+			list of destinations used for load balancing and dispatching. More
+			information about the dispatcher module can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;dispatcher.html">&KAMAILIO_MOD_DOC;dispatcher.html</ulink>.
+			</listitem>
+			</itemizedlist>
         </db:para>
     </description>
 

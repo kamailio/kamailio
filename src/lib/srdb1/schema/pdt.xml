@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
   "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
@@ -12,7 +12,14 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>Prefix-Domain Translation means to change the host and port in R-URI, based on the prefix found in R-URI and source           domain (that is domain in From-URI). More information can be found at: &KAMAILIO_MOD_DOC;pdt.html 
+		<db:para>Prefix-Domain Translation means to change the host and port
+			in R-URI, based on the prefix found in R-URI and source domain
+			(that is domain in From-URI). More information can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;pdt.html">&KAMAILIO_MOD_DOC;pdt.html</ulink>.
+			</listitem>
+			</itemizedlist>
         </db:para>
     </description>
 
