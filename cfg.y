@@ -366,6 +366,7 @@ extern char *default_routename;
 %token DST_BLST_TCP_IMASK
 %token DST_BLST_TLS_IMASK
 %token DST_BLST_SCTP_IMASK
+%token IP_FREE_BIND
 
 %token PORT
 %token STAT
@@ -869,6 +870,8 @@ assign_stm:
 		IF_DST_BLACKLIST(default_core_cfg.blst_sctp_imask=$3);
 	}
 	| DST_BLST_SCTP_IMASK error { yyerror("number(flags) expected"); }
+	| IP_FREE_BIND EQUAL intno { _sr_ip_free_bind=$3; }
+	| IP_FREE_BIND EQUAL error { yyerror("int value expected"); }
 	| PORT EQUAL NUMBER   { port_no=$3; }
 	| STAT EQUAL STRING {
 		#ifdef STATS

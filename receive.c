@@ -59,6 +59,8 @@
 #include <mem/dmalloc.h>
 #endif
 
+int _sr_ip_free_bind = 0;
+
 unsigned int msg_no=0;
 /* address preset vars */
 str default_global_address={0,0};

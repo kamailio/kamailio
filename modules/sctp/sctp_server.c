@@ -468,7 +468,18 @@ static int sctp_init_sock_opt_common(int s, int af)
 			/* continue since this is not critical */
 		}
 	}
-	
+
+#if defined(IP_FREEBIND)
+	/* allow bind to non local address.
+	 * useful when daemon started before network initialized */
+	optval = 1;
+	if (_sr_ip_free_bind && setsockopt(s, IPPROTO_IP, IP_FREEBIND,
+				(void*)&optval, sizeof(optval)) ==-1) {
+		LM_WARN("setsockopt freebind failed: %s\n", strerror(errno));
+		/* continue since this is not critical */
+	}
+#endif
+
 	/* set receive buffer: SO_RCVBUF*/
 	if (cfg_get(sctp, sctp_cfg, so_rcvbuf)){
 		optval=cfg_get(sctp, sctp_cfg, so_rcvbuf);
@@ -479,7 +490,7 @@ static int sctp_init_sock_opt_common(int s, int af)
 			/* continue, non-critical */
 		}
 	}
-	
+
 	/* set send buffer: SO_SNDBUF */
 	if (cfg_get(sctp, sctp_cfg, so_sndbuf)){
 		optval=cfg_get(sctp, sctp_cfg, so_sndbuf);
