@@ -1238,7 +1238,7 @@ duk_ret_t dukopen_KSR(duk_context *J)
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
 			n++;
-			_sr_crt_J_KSRMethods += n;
+			_sr_crt_J_KSRMethods = _sr_J_KSRMethods + n;
 			snprintf(mname, 128, "KSR_%s", emods[k].kexp[0].mname.s);
 			for(i=0; emods[k].kexp[i].func!=NULL; i++) {
 				LM_DBG("exporting %s.%s(...)\n", mname,
