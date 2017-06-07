@@ -986,7 +986,7 @@ int sr_apy_init_ksr(void)
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
 			n++;
-			_sr_crt_KSRMethods += n;
+			_sr_crt_KSRMethods = _sr_KSRMethods + n;
 			snprintf(mname, 128, "KSR.%s", emods[k].kexp[0].mname.s);
 			for(i=0; emods[k].kexp[i].func!=NULL; i++) {
 				LM_DBG("exporting %s.%s(...)\n", mname,
