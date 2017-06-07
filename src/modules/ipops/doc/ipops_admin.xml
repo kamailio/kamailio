@@ -1065,5 +1065,5 @@ if (naptr_query ("example.com", "res") > 0) {
     </section>
 
   </section>
- 
+  
 </chapter>
