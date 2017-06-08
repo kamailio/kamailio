@@ -190,14 +190,14 @@ static int w_t_set_retr(struct sip_msg* msg, char* retr_t1, char* retr_t2);
 static int w_t_reset_retr(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_set_max_lifetime(struct sip_msg* msg, char* inv, char* noninv);
 static int w_t_reset_max_lifetime(struct sip_msg* msg, char* foo, char* bar);
-static int t_set_auto_inv_100(struct sip_msg* msg, char* on_off, char* foo);
-static int t_set_disable_6xx(struct sip_msg* msg, char* on_off, char* foo);
-static int t_set_disable_failover(struct sip_msg* msg, char* on_off, char* f);
+static int w_t_set_auto_inv_100(struct sip_msg* msg, char* on_off, char* foo);
+static int w_t_set_disable_6xx(struct sip_msg* msg, char* on_off, char* foo);
+static int w_t_set_disable_failover(struct sip_msg* msg, char* on_off, char* f);
 #ifdef CANCEL_REASON_SUPPORT
-static int t_set_no_e2e_cancel_reason(struct sip_msg* msg, char* on_off,
+static int w_t_set_no_e2e_cancel_reason(struct sip_msg* msg, char* on_off,
 		char* f);
 #endif /* CANCEL_REASON_SUPPORT */
-static int t_set_disable_internal_reply(struct sip_msg* msg, char* on_off,
+static int w_t_set_disable_internal_reply(struct sip_msg* msg, char* on_off,
 		char* f);
 static int w_t_branch_timeout(struct sip_msg* msg, char*, char*);
 static int w_t_branch_replied(struct sip_msg* msg, char*, char*);
@@ -358,22 +358,22 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_reset_max_lifetime", w_t_reset_max_lifetime, 0, 0,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-	{"t_set_auto_inv_100", t_set_auto_inv_100,       1, fixup_var_int_1,
+	{"t_set_auto_inv_100", w_t_set_auto_inv_100,     1, fixup_var_int_1,
 		REQUEST_ROUTE},
-	{"t_set_disable_6xx", t_set_disable_6xx,         1, fixup_var_int_1,
+	{"t_set_disable_6xx", w_t_set_disable_6xx,       1, fixup_var_int_1,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-	{"t_set_disable_failover", t_set_disable_failover, 1, fixup_var_int_1,
+	{"t_set_disable_failover", w_t_set_disable_failover, 1, fixup_var_int_1,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 #ifdef CANCEL_REASON_SUPPORT
-	{"t_set_no_e2e_cancel_reason", t_set_no_e2e_cancel_reason, 1,
+	{"t_set_no_e2e_cancel_reason", w_t_set_no_e2e_cancel_reason, 1,
 		fixup_var_int_1,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	/* alias for t_set_no_e2e_cancel_reason */
-	{"t_disable_e2e_cancel_reason", t_set_no_e2e_cancel_reason, 1,
+	{"t_disable_e2e_cancel_reason", w_t_set_no_e2e_cancel_reason, 1,
 		fixup_var_int_1,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 #endif /* CANCEL_REASON_SUPPORT */
-	{"t_set_disable_internal_reply", t_set_disable_internal_reply, 1,
+	{"t_set_disable_internal_reply", w_t_set_disable_internal_reply, 1,
 		fixup_var_int_1,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_branch_timeout",  w_t_branch_timeout,       0, 0,
@@ -1808,11 +1808,11 @@ int ki_t_reset_max_lifetime(sip_msg_t* msg)
 
 /**
  * helper macro, builds a function for setting a cell flag from the script.
- * e.g. T_SET_FLAG_GEN_FUNC(t_set_foo, T_FOO) =>
+ * e.g. W_T_SET_FLAG_GEN_FUNC(t_set_foo, T_FOO) =>
  * static int t_set_foo(struct sip_msg* msg, char*, char* )
  * that will expect fparam as first param and will set or reset T_FOO
  * in the current or next to be created transaction. */
-#define T_SET_FLAG_GEN_FUNC(fname, T_FLAG_NAME) \
+#define W_T_SET_FLAG_GEN_FUNC(fname, T_FLAG_NAME) \
 	static int fname(struct sip_msg* msg, char* p1, char* p2) \
 { \
 	int state; \
@@ -1851,25 +1851,25 @@ int ki_t_reset_max_lifetime(sip_msg_t* msg)
 
 /* set automatically sending 100 replies on/off for the current or
  * next to be created transaction */
-T_SET_FLAG_GEN_FUNC(t_set_auto_inv_100, T_AUTO_INV_100)
+W_T_SET_FLAG_GEN_FUNC(w_t_set_auto_inv_100, T_AUTO_INV_100)
 
 
 /* set 6xx handling for the current or next to be created transaction */
-T_SET_FLAG_GEN_FUNC(t_set_disable_6xx, T_DISABLE_6xx)
+W_T_SET_FLAG_GEN_FUNC(w_t_set_disable_6xx, T_DISABLE_6xx)
 
 
 /* disable dns failover for the current transaction */
-T_SET_FLAG_GEN_FUNC(t_set_disable_failover, T_DISABLE_FAILOVER)
+W_T_SET_FLAG_GEN_FUNC(w_t_set_disable_failover, T_DISABLE_FAILOVER)
 
 
 #ifdef CANCEL_REASON_SUPPORT
 /* disable/enable e2e cancel reason copy for the current transaction */
-T_SET_FLAG_GEN_FUNC(t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
+W_T_SET_FLAG_GEN_FUNC(w_t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
 #endif /* CANCEL_REASON_SUPPORT */
 
 
 /* disable internal negative reply for the current transaction */
-T_SET_FLAG_GEN_FUNC(t_set_disable_internal_reply, T_DISABLE_INTERNAL_REPLY)
+W_T_SET_FLAG_GEN_FUNC(w_t_set_disable_internal_reply, T_DISABLE_INTERNAL_REPLY)
 
 
 /* FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
@@ -2373,17 +2373,17 @@ inline static int w_t_relay_to(struct sip_msg *msg, char *proxy, char *flags)
 		/* no auto 100 trying */
 		if(fl&1) {
 			param.v.i = 0;
-			t_set_auto_inv_100(msg, (char*)(&param), 0);
+			w_t_set_auto_inv_100(msg, (char*)(&param), 0);
 		}
 		/* no auto negative reply */
 		if(fl&2) {
 			param.v.i = 1;
-			t_set_disable_internal_reply(msg, (char*)(&param), 0);
+			w_t_set_disable_internal_reply(msg, (char*)(&param), 0);
 		}
 		/* no dns failover */
 		if(fl&4) {
 			param.v.i = 1;
-			t_set_disable_failover(msg, (char*)(&param), 0);
+			w_t_set_disable_failover(msg, (char*)(&param), 0);
 		}
 	}
 	return _w_t_relay_to(msg, px, PROTO_NONE);
