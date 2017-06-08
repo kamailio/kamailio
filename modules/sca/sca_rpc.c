@@ -482,6 +482,11 @@ sca_rpc_release_appearance( rpc_t *rpc, void *ctx )
 	return;
     }
 
+    if (app_idx <= 0) {
+	rpc->fault(ctx, 500, "appearance-index must be > 0");
+	return;
+    }
+
     if (( ht = sca->appearances ) == NULL ) {
 	rpc->fault( ctx, 500, "No active appearances" );
 	return;
