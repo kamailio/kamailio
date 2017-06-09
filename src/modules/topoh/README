@@ -4,13 +4,21 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Alexandr Dubovikov
+
+   <alexandr.dubovikov@gmail.com>
+
 Edited by
 
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2009 FhG FOKUS
+Alexandr Dubovikov
+
+   <alexandr.dubovikov@gmail.com>
+
+   Copyright © 2009, 2017 FhG FOKUS, Alexandr Dubovikov
      __________________________________________________________________
 
    Table of Contents
@@ -18,6 +26,9 @@ Daniel-Constantin Mierla
    1. Admin Guide
 
         1. Overview
+
+              1.1. Trust/Untrust destination
+
         2. Dependencies
 
               2.1. Kamailio Modules
@@ -34,6 +45,15 @@ Daniel-Constantin Mierla
               3.7. vparam_prefix (str)
               3.8. callid_prefix (str)
               3.9. sanity_checks (integer)
+              3.10. db_url (string)
+              3.11. address_table (string)
+              3.12. trust_col (string)
+              3.13. ip_addr_col (string)
+              3.14. mask_col (string)
+              3.15. port_col (string)
+              3.16. max_subnets (int)
+              3.17. trust_mode (int)
+              3.18. allow_ip_check (int)
 
    List of Examples
 
@@ -46,12 +66,24 @@ Daniel-Constantin Mierla
    1.7. Set vparam_prefix parameter
    1.8. Set callid_prefix parameter
    1.9. Set sanity_checks parameter
+   1.10. Set db_url parameter
+   1.11. Set address_table parameter
+   1.12. Set trust_col parameter
+   1.13. Set ip_addr_col parameter
+   1.14. Set mask_col parameter
+   1.15. Set port_col parameter
+   1.16. Set max_subnets parameter
+   1.17. Set trust_mode parameter
+   1.18. Set allow_ip_check parameter
 
 Chapter 1. Admin Guide
 
    Table of Contents
 
    1. Overview
+
+        1.1. Trust/Untrust destination
+
    2. Dependencies
 
         2.1. Kamailio Modules
@@ -68,8 +100,19 @@ Chapter 1. Admin Guide
         3.7. vparam_prefix (str)
         3.8. callid_prefix (str)
         3.9. sanity_checks (integer)
+        3.10. db_url (string)
+        3.11. address_table (string)
+        3.12. trust_col (string)
+        3.13. ip_addr_col (string)
+        3.14. mask_col (string)
+        3.15. port_col (string)
+        3.16. max_subnets (int)
+        3.17. trust_mode (int)
+        3.18. allow_ip_check (int)
 
 1. Overview
+
+   1.1. Trust/Untrust destination
 
    This module hides the SIP routing headers that show topology details.
    It it is not affected by the server being transaction stateless or
@@ -83,6 +126,18 @@ Chapter 1. Admin Guide
 
    By using same mask_key, many SIP servers can decode the message, for
    example, applicable for servers behind load balancers.
+
+1.1. Trust/Untrust destination
+
+   The module can be used to determine if an destination IP address and
+   port matches any of the addresses stored in a cached Kamailio database
+   table. IP addresses in the database table can be subnet addresses. Port
+   0 in cached database table matches any port. This can be activated by
+   allow_ip_check parameter.
+
+   Addresses stored in the database table can be grouped together into two
+   groups specified by a trust identifier (trust equal 1 means trust IP,
+   trust equals 0 means untrust IP).
 
 2. Dependencies
 
@@ -113,6 +168,15 @@ Chapter 1. Admin Guide
    3.7. vparam_prefix (str)
    3.8. callid_prefix (str)
    3.9. sanity_checks (integer)
+   3.10. db_url (string)
+   3.11. address_table (string)
+   3.12. trust_col (string)
+   3.13. ip_addr_col (string)
+   3.14. mask_col (string)
+   3.15. port_col (string)
+   3.16. max_subnets (int)
+   3.17. trust_mode (int)
+   3.18. allow_ip_check (int)
 
 3.1. mask_key (str)
 
@@ -225,4 +289,107 @@ modparam("topoh", "callid_prefix", "***")
    Example 1.9. Set sanity_checks parameter
 ...
 modparam("topoh", "sanity_checks", 1)
+...
+
+3.10. db_url (string)
+
+   This is URL of the database to be used to read IP into cache table.
+
+   Default value is “NULL”.
+
+   Example 1.10. Set db_url parameter
+...
+modparam("topoh", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+
+3.11. address_table (string)
+
+   The name of the database table containing trusted/untrusted IP subnets
+
+   Default value is “topoh_address”.
+
+   Example 1.11. Set address_table parameter
+...
+modparam("topoh", "address_table", "topoh_address_extra")
+...
+
+3.12. trust_col (string)
+
+   Name of address table column containing the type of the address. 1 =
+   trust, 0 = untrust
+
+   Default value is “trust”.
+
+   Example 1.12. Set trust_col parameter
+...
+modparam("topoh", "trust_col", "type")
+...
+
+3.13. ip_addr_col (string)
+
+   Name of address table column containing the IP address part of the
+   address.
+
+   Default value is “ip_addr”.
+
+   Example 1.13. Set ip_addr_col parameter
+...
+modparam("topoh", "ip_addr_col", "ip_address")
+...
+
+3.14. mask_col (string)
+
+   Name of address table column containing the network mask of the
+   address. Possible values are 0-32 for IPv4 and 0-128 for IPv6
+   addresses.
+
+   Default value is “mask”.
+
+   Example 1.14. Set mask_col parameter
+...
+modparam("topoh", "mask_col", "subnet_length")
+...
+
+3.15. port_col (string)
+
+   Name of address table column containing the port part of the address.
+
+   Default value is “port”.
+
+   Example 1.15. Set port_col parameter
+...
+modparam("topoh", "port_col", "port")
+...
+
+3.16. max_subnets (int)
+
+   The maximum number of subnet addresses to be loaded from address table.
+
+   Default value is “512”.
+
+   Example 1.16. Set max_subnets parameter
+...
+modparam("topoh", "max_subnets", 1024)
+...
+
+3.17. trust_mode (int)
+
+   Lookup if the destination IP in trust or in untrust table.
+
+   Default value is “1”.
+
+   Example 1.17. Set trust_mode parameter
+...
+modparam("topoh", "trust_mode", 0)
+...
+
+3.18. allow_ip_check (int)
+
+   Enable or disable destination IP check.
+
+   Default value is “0”.
+
+   Example 1.18. Set allow_ip_check parameter
+...
+modparam("topoh", "allow_ip_check", 1)
 ...
