@@ -1,6 +1,6 @@
 CREATE TABLE topoh_address (
     id NUMBER(10) PRIMARY KEY,
-    trust NUMBER(10) DEFAULT 1 NOT NULL,
+    trust NUMBER(1) DEFAULT 1 NOT NULL,
     ip_addr VARCHAR2(50),
     mask NUMBER(10) DEFAULT 32 NOT NULL,
     port NUMBER(5) DEFAULT 0 NOT NULL,
