@@ -1,0 +1,2 @@
+id(int,auto) trust(int) ip_addr(string) mask(int) port(int) tag(string,null) description(string,null)
+

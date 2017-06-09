@@ -143,8 +143,10 @@ int nio_msg_sent(void *data)
     int_str avp_value;
     struct usr_avp *avp;
     struct run_act_ctx ra_ctx;
-
-    obuf = (str*)data;
+    void **srevp;
+    
+    srevp = (void**)data;
+    obuf = (str*)srevp[0];
 
     if (obuf->len < nio_min_msg_len) {
         return -1;

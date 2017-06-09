@@ -849,7 +849,6 @@ int th_update_hdr_replaces(sip_msg_t *msg)
 	struct lump* l;
 	str out;
 
-	LM_DBG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	if(th_param_mask_callid==0)
 		return 0;
 

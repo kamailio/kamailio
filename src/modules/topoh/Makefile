@@ -11,4 +11,6 @@ LIBS=
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules

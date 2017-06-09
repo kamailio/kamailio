@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 SIP-Router.org
+ * Copyright (C) 2017 Alexandr Dubovikov. SIPCAPTURE.ORG 
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -50,6 +51,7 @@
 
 #include "../../modules/sanity/api.h"
 
+#include "address.h"
 #include "th_mask.h"
 #include "th_msg.h"
 #include "api.h"
@@ -80,21 +82,49 @@ int th_mask_addr_myself = 0;
 int th_msg_received(void *data);
 int th_msg_sent(void *data);
 
+int _perm_max_subnets = 512;
+
+int th_trust_mode = 1;
+int th_allow_ip_check = 0;
+
+/* for allow_address function */
+str db_url = {NULL, 0};      /* Don't connect to the database by default */
+
+/* for check_address function */
+str address_table = str_init("topoh_address");   /* Name of address table */
+str trust_col = str_init("trust");         /* Name of address trust column */
+str ip_addr_col = str_init("ip_addr");     /* Name of ip address column */
+str mask_col = str_init("mask");           /* Name of mask column */
+str port_col = str_init("port");           /* Name of port column */
+str tag_col = str_init("tag");             /* Name of tag column */
+
+
 /** module functions */
 static int mod_init(void);
 
 static param_export_t params[]={
 	{"mask_key",		PARAM_STR, &_th_key},
 	{"mask_ip",			PARAM_STR, &th_ip},
-	{"mask_callid",		PARAM_INT, &th_param_mask_callid},
+	{"mask_callid",		PARAM_INT, &th_param_mask_callid},	
 	{"uparam_name",		PARAM_STR, &th_uparam_name},
 	{"uparam_prefix",	PARAM_STR, &th_uparam_prefix},
 	{"vparam_name",		PARAM_STR, &th_vparam_name},
 	{"vparam_prefix",	PARAM_STR, &th_vparam_prefix},
 	{"callid_prefix",	PARAM_STR, &th_callid_prefix},
 	{"sanity_checks",	PARAM_INT, &th_sanity_checks},
+	{"trust_mode",		PARAM_INT, &th_trust_mode},
+	{"allow_ip_check",	PARAM_INT, &th_allow_ip_check},
+        {"db_url",		PARAM_STR, &db_url},
+        {"address_table",	PARAM_STR, &address_table   },
+        {"tag_col",     	PARAM_STR, &tag_col         },
+        {"trust_col",         	PARAM_STR, &trust_col         },
+        {"ip_addr_col",     	PARAM_STR, &ip_addr_col     },
+        {"mask_col",         	PARAM_STR, &mask_col        },
+        {"port_col",        	PARAM_STR, &port_col        },
+        {"max_subnets",      	PARAM_INT, &_perm_max_subnets },
 	{0,0,0}
 };
+
 
 static cmd_export_t cmds[]={
 	{"bind_topoh",   (cmd_function)bind_topoh,  0,
@@ -198,6 +228,14 @@ static int mod_init(void)
 			th_uparam_prefix.s, th_uparam_prefix.len);
 	th_uri_prefix.s[th_uri_prefix.len] = '\0';
 	LM_DBG("URI prefix: [%s]\n", th_uri_prefix.s);
+
+
+        if (init_addresses() != 0) {
+                LM_ERR("failed to initialize the allow_address function\n");
+                return -1;
+        }
+
+
 
 	th_mask_init();
 	sr_event_register_cb(SREV_NET_DATA_IN, th_msg_received);
@@ -380,15 +418,37 @@ done:
 int th_msg_sent(void *data)
 {
 	sip_msg_t msg;
+	void **srevp;
 	str *obuf;
 	int direction;
 	int dialog;
 	int local;
+	struct dest_info* dst;
+        
+	srevp = (void**)data;
+	
+	obuf = (str*)srevp[0];
+        dst = (struct dest_info *)srevp[1];
 
-	obuf = (str*)data;
+        /* check IP if needed */
+        if(th_allow_ip_check) {
+
+	        if(th_trust_mode) {        
+		        if(check_address(dst, 1)) {        
+	        		LM_DBG("Trust destination IP in trust mode. Skipping\n");
+	        		return 0;
+		        }
+		}
+		else if(!check_address(dst, 0)) {        
+		     LM_DBG("Trust destination IP in untrust mode. Skipping\n");
+		     return 0;
+		}
+	}
+	
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
+
 
 	if(th_prepare_msg(&msg)!=0)
 	{
@@ -399,6 +459,7 @@ int th_msg_sent(void *data)
 	{
 		goto done;
 	}
+
 
 	th_cookie_value.s = th_get_cookie(&msg, &th_cookie_value.len);
 	LM_DBG("the COOKIE is [%.*s]\n", th_cookie_value.len, th_cookie_value.s);
@@ -481,6 +542,8 @@ done:
 	free_sip_msg(&msg);
 	return 0;
 }
+
+
 
 /**
  *

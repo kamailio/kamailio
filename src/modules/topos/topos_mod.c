@@ -347,9 +347,12 @@ int tps_msg_sent(void *data)
 	sip_msg_t msg;
 	str *obuf;
 	int dialog;
-	int local;
-
-	obuf = (str*)data;
+	int local;	
+	void **srevp;
+	
+	srevp = (void**)data;
+	obuf = (str*)srevp[0];
+	
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
