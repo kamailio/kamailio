@@ -1812,15 +1812,13 @@ int ki_t_reset_max_lifetime(sip_msg_t* msg)
  * static int t_set_foo(struct sip_msg* msg, char*, char* )
  * that will expect fparam as first param and will set or reset T_FOO
  * in the current or next to be created transaction. */
-#define W_T_SET_FLAG_GEN_FUNC(fname, T_FLAG_NAME) \
-	static int fname(struct sip_msg* msg, char* p1, char* p2) \
+#define T_SET_FLAG_GEN_FUNC(fname, T_FLAG_NAME) \
+	static int fname(sip_msg_t* msg, int state) \
 { \
-	int state; \
 	struct cell* t; \
 	unsigned int set_flags; \
 	unsigned int reset_flags; \
 	\
-	if (get_int_fparam(&state, msg, (fparam_t*)p1) < 0) return -1; \
 	t=get_t(); \
 	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction; \
 	 * in REQUEST_ROUTE T will be set only if the transaction was already  \
@@ -1848,28 +1846,45 @@ int ki_t_reset_max_lifetime(sip_msg_t* msg)
 	return 1; \
 }
 
+#define W_T_SET_FLAG_GEN_FUNC(fname, T_FLAG_NAME) \
+	static int w_##fname(sip_msg_t* msg, char* p1, char* p2) \
+{ \
+	int state; \
+	if (get_int_fparam(&state, msg, (fparam_t*)p1) < 0) return -1; \
+	return fname(msg, state); \
+}
 
 /* set automatically sending 100 replies on/off for the current or
  * next to be created transaction */
-W_T_SET_FLAG_GEN_FUNC(w_t_set_auto_inv_100, T_AUTO_INV_100)
+T_SET_FLAG_GEN_FUNC(t_set_auto_inv_100, T_AUTO_INV_100)
+
+W_T_SET_FLAG_GEN_FUNC(t_set_auto_inv_100, T_AUTO_INV_100)
 
 
 /* set 6xx handling for the current or next to be created transaction */
-W_T_SET_FLAG_GEN_FUNC(w_t_set_disable_6xx, T_DISABLE_6xx)
+T_SET_FLAG_GEN_FUNC(t_set_disable_6xx, T_DISABLE_6xx)
+
+W_T_SET_FLAG_GEN_FUNC(t_set_disable_6xx, T_DISABLE_6xx)
 
 
 /* disable dns failover for the current transaction */
-W_T_SET_FLAG_GEN_FUNC(w_t_set_disable_failover, T_DISABLE_FAILOVER)
+T_SET_FLAG_GEN_FUNC(t_set_disable_failover, T_DISABLE_FAILOVER)
+
+W_T_SET_FLAG_GEN_FUNC(t_set_disable_failover, T_DISABLE_FAILOVER)
 
 
 #ifdef CANCEL_REASON_SUPPORT
 /* disable/enable e2e cancel reason copy for the current transaction */
-W_T_SET_FLAG_GEN_FUNC(w_t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
+T_SET_FLAG_GEN_FUNC(t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
+
+W_T_SET_FLAG_GEN_FUNC(t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
 #endif /* CANCEL_REASON_SUPPORT */
 
 
 /* disable internal negative reply for the current transaction */
-W_T_SET_FLAG_GEN_FUNC(w_t_set_disable_internal_reply, T_DISABLE_INTERNAL_REPLY)
+T_SET_FLAG_GEN_FUNC(t_set_disable_internal_reply, T_DISABLE_INTERNAL_REPLY)
+
+W_T_SET_FLAG_GEN_FUNC(t_set_disable_internal_reply, T_DISABLE_INTERNAL_REPLY)
 
 
 /* FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
