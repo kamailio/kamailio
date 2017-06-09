@@ -14,13 +14,15 @@ local FLAGS = {
 	FLB_NATSIPPING=7
 }
 
+// local sipscanregex = regexp("friendly-scanner|sipcli");
+
 // SIP request routing
 // equivalent of request_route{}
 function ksr_request_route()
 {
 	local METHOD = KSR.pv.get("$rm");
 	// KSR.sl.sl_send_reply(100,"Intelligent trying");
-	// KSR.info("===== request - from kamailio lua script\n");
+	// KSR.info("===== request - from kamailio SQLang script\n");
 
 	// per request initial checks
 	ksr_route_reqinit();
@@ -135,7 +137,8 @@ function ksr_route_reqinit()
 	}
 	if (!KSR.pv.is_null("$ua")) {
 		local UA = KSR.pv.get("$ua");
-		if (UA.indexOf("friendly-scanner")>=0 || UA.indexOf("sipcli")>=0) {
+		// if (sipscanregex.match(UA)) {
+		if (UA.find("friendly-scanner")!=null || UA.find("sipcli")!=null) {
 			KSR.sl.sl_send_reply(200, "OK");
 			KSR.x.exit();
 		}
@@ -343,7 +346,7 @@ function ksr_route_sipout()
 // equivalent of branch_route[...]{}
 function ksr_branch_manage()
 {
-	KSR.dbg("new branch [" + KSR.pv.get("$T_branch_idx]")
+	KSR.dbg("new branch [" + KSR.pv.get("$T_branch_idx")
 				+ " to " + KSR.pv.get("$ru") + "\n");
 	ksr_route_natmanage();
 	return;
@@ -377,6 +380,6 @@ function ksr_failure_manage()
 // equivalent of reply_route{}
 function ksr_reply_route()
 {
-	KSR.info("===== response - from kamailio JS script\n");
+	KSR.info("===== response - from kamailio SQLang script\n");
 	return;
 }
