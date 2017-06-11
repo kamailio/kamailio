@@ -19,6 +19,7 @@ modules.lst
 *.a
 # archives
 *.tar.gz
+*.tar.xz
 *.deb
 *.rpm
 # tags
@@ -44,5 +45,8 @@ misc/tools/protoshoot/protoshoot
 # MacOSX auto-generated files
 libiname.lst
 *.dylib
+.DS_Store
 # man pages
 *.7
+# vscode tmp files
+.vscode
