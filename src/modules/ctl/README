@@ -16,13 +16,14 @@ Andrei Pelinescu-Onciul
         3. Parameters
 
               3.1. binrpc (string)
-              3.2. mode (integer)
-              3.3. user (integer or string)
-              3.4. group (integer or string)
-              3.5. fifo (integer)
-              3.6. autoconversion (integer)
-              3.7. binrpc_max_body_size (integer)
-              3.8. binrpc_struct_max_body_size (integer)
+              3.2. binrpc_buffer_size (integer or string)
+              3.3. mode (integer)
+              3.4. user (integer or string)
+              3.5. group (integer or string)
+              3.6. fifo (integer)
+              3.7. autoconversion (integer)
+              3.8. binrpc_max_body_size (integer)
+              3.9. binrpc_struct_max_body_size (integer)
 
         4. RPC Functions
 
@@ -34,16 +35,17 @@ Andrei Pelinescu-Onciul
 
    1.1. kamcmd example usage
    1.2. Set binrpc parameter
-   1.3. Set mode parameter
-   1.4. Set user parameter
-   1.5. Set group parameter
-   1.6. Set fifo parameter
-   1.7. Set the autoconversion parameter
-   1.8. Set the binrpc_max_body_size parameter
-   1.9. Set the binrpc_struct_max_body_size parameter
-   1.10. print usage
-   1.11. ctl.connections usage
-   1.12. ctl.who usage
+   1.3. Set binrpc_buffer_size parameter
+   1.4. Set mode parameter
+   1.5. Set user parameter
+   1.6. Set group parameter
+   1.7. Set fifo parameter
+   1.8. Set the autoconversion parameter
+   1.9. Set the binrpc_max_body_size parameter
+   1.10. Set the binrpc_struct_max_body_size parameter
+   1.11. print usage
+   1.12. ctl.connections usage
+   1.13. ctl.who usage
 
 Chapter 1. Admin Guide
 
@@ -54,13 +56,14 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. binrpc (string)
-        3.2. mode (integer)
-        3.3. user (integer or string)
-        3.4. group (integer or string)
-        3.5. fifo (integer)
-        3.6. autoconversion (integer)
-        3.7. binrpc_max_body_size (integer)
-        3.8. binrpc_struct_max_body_size (integer)
+        3.2. binrpc_buffer_size (integer or string)
+        3.3. mode (integer)
+        3.4. user (integer or string)
+        3.5. group (integer or string)
+        3.6. fifo (integer)
+        3.7. autoconversion (integer)
+        3.8. binrpc_max_body_size (integer)
+        3.9. binrpc_struct_max_body_size (integer)
 
    4. RPC Functions
 
@@ -113,13 +116,14 @@ $ kamcmd ps
 3. Parameters
 
    3.1. binrpc (string)
-   3.2. mode (integer)
-   3.3. user (integer or string)
-   3.4. group (integer or string)
-   3.5. fifo (integer)
-   3.6. autoconversion (integer)
-   3.7. binrpc_max_body_size (integer)
-   3.8. binrpc_struct_max_body_size (integer)
+   3.2. binrpc_buffer_size (integer or string)
+   3.3. mode (integer)
+   3.4. user (integer or string)
+   3.5. group (integer or string)
+   3.6. fifo (integer)
+   3.7. autoconversion (integer)
+   3.8. binrpc_max_body_size (integer)
+   3.9. binrpc_struct_max_body_size (integer)
 
 3.1. binrpc (string)
 
@@ -156,7 +160,7 @@ loadmodule "ctl"
 # optional listen addresses, if no one is specified,
 # ctl will listen on unixs:/tmp/ser_ctl
 
-modparam("ctl", "binrpc", "unix:/tmp/kamailio_ctl") # default
+modparam("ctl", "binrpc", "unix:/var/run/kamailio/kamailio_ctl") # default
 modparam("ctl", "binrpc", "udp:localhost:2046")
 modparam("ctl", "binrpc", "tcp:localhost:2046")
 modparam("ctl", "binrpc", "unixd:/tmp/unix_dgram")  # unix datagram
@@ -167,38 +171,49 @@ modparam("ctl", "binrpc", "localhost:3000")         # udp
 modparam("ctl", "binrpc", "tcp:3012")               # tcp any , port 3012
 modparam("ctl", "binrpc", "udp:*:3012")             # udp any , port 3012
 
-3.2. mode (integer)
+3.2. binrpc_buffer_size (integer or string)
+
+   the size of the internal buffer.
+
+   Default: 1024.
+
+   Example 1.3. Set binrpc_buffer_size parameter
+            ...
+            modparam("ctl", "binrpc_buffer_size", 4096)
+            ...
+
+3.3. mode (integer)
 
    Permissions used for the created Unix sockets or for the fifo.
 
    Default: 0600.
 
-   Example 1.3. Set mode parameter
+   Example 1.4. Set mode parameter
 modparam("ctl", "mode", 0600) # permissions
 
-3.3. user (integer or string)
+3.4. user (integer or string)
 
    Username or uid used for the created Unix sockets or for the fifo.
 
    Default: not set (the user under which SER runs).
 
-   Example 1.4. Set user parameter
+   Example 1.5. Set user parameter
 ...
 modparam("ctl", "user", "andrei")
 ...
 
-3.4. group (integer or string)
+3.5. group (integer or string)
 
    Group name or gid used for the created Unix sockets or for the fifo.
 
    Default: not set (the group under which SER runs).
 
-   Example 1.5. Set group parameter
+   Example 1.6. Set group parameter
 ...
 modparam("ctl", "group", 100)
 ...
 
-3.5. fifo (integer)
+3.6. fifo (integer)
 
    fifo used for the obsolete fifo protocol. The fifo protocol can be run
    over a real fifo, over UDP or over TCP. Format:
@@ -210,7 +225,7 @@ modparam("ctl", "group", 100)
 
    Default: not set (no fifo will be used).
 
-   Example 1.6. Set fifo parameter
+   Example 1.7. Set fifo parameter
 ...
 # old fifo support
 modparam("ctl", "fifo", "fifo:/tmp/ser_fifo")      # clasic fifo
@@ -219,7 +234,7 @@ modparam("ctl", "fifo", "udp:*:2050")              # fifo protocol over udp
 modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
 ...
 
-3.6. autoconversion (integer)
+3.7. autoconversion (integer)
 
    Enable or disable automatic type conversion globally, for all the
    methods parameters. If on, a type mismatch in a method parameter will
@@ -233,31 +248,31 @@ modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
    or to modify the target rpc to accept any type (see the rpc scan '.'
    modifier).
 
-   Example 1.7. Set the autoconversion parameter
+   Example 1.8. Set the autoconversion parameter
 ...
 modparam("ctl", "autoconversion", 1)
 ...
 
-3.7. binrpc_max_body_size (integer)
+3.8. binrpc_max_body_size (integer)
 
    Set the size of binrpc buffer for RPC reply. Value represents
    kilobytes.
 
    Default: 32 (meaning 32KB);
 
-   Example 1.8. Set the binrpc_max_body_size parameter
+   Example 1.9. Set the binrpc_max_body_size parameter
 ...
 modparam("ctl", "binrpc_max_body_size", 16)
 ...
 
-3.8. binrpc_struct_max_body_size (integer)
+3.9. binrpc_struct_max_body_size (integer)
 
    Set the size of binrpc structure buffer for RPC reply. Value represents
    kilobytes.
 
    Default: 8 (meaning 8KB);
 
-   Example 1.9. Set the binrpc_struct_max_body_size parameter
+   Example 1.10. Set the binrpc_struct_max_body_size parameter
 ...
 modparam("ctl", "binrpc_struct_max_body_size", 4)
 ...
@@ -272,9 +287,9 @@ modparam("ctl", "binrpc_struct_max_body_size", 4)
 
    List all the sockets on which the ctl module listens.
 
-   Example 1.10. print usage
+   Example 1.11. print usage
  $ kamcmd -f"[%v] %v:%v %v\n" ctl.listen
-[binrpc] unix_stream:/tmp/kamailio_ctl
+[binrpc] unix_stream:/var/run/kamailio/kamailio_ctl
 
 # note: the above command is equivalent with kamcmd listen
 
@@ -282,7 +297,7 @@ modparam("ctl", "binrpc_struct_max_body_size", 4)
 
    Returns the number of open binrpc connections (to the ctl module).
 
-   Example 1.11. ctl.connections usage
+   Example 1.12. ctl.connections usage
  $ kamcmd ctl.connections
 1
 
@@ -290,8 +305,8 @@ modparam("ctl", "binrpc_struct_max_body_size", 4)
 
    List open binrpc connections (to the ctl module).
 
-   Example 1.12. ctl.who usage
+   Example 1.13. ctl.who usage
  $ kamcmd -f"[%v] %v: %v %v -> %v %v\n" ctl.who
-[binrpc] unix_stream: <anonymous unix socket>  -> /tmp/kamailio_ctl
+[binrpc] unix_stream: <anonymous unix socket>  -> /var/run/kamailio/kamailio_ctl
 
 # note the above command is equivalent to kamcmd who
