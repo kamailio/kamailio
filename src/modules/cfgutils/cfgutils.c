@@ -541,7 +541,19 @@ static int set_prob(struct sip_msg *bar, char *percent_par, char *foo)
 	return 1;
 }
 
+static int ki_rand_set_prob(sip_msg_t *msg, int percent_par)
+{
+	*probability=percent_par;
+	return 1;
+}
+
 static int reset_prob(struct sip_msg *bar, char *percent_par, char *foo)
+{
+	*probability=initial_prob;
+	return 1;
+}
+
+static int ki_rand_reset_prob(sip_msg_t *msg)
 {
 	*probability=initial_prob;
 	return 1;
@@ -552,7 +564,12 @@ static int get_prob(struct sip_msg *bar, char *foo1, char *foo2)
 	return *probability;
 }
 
-static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
+static int ki_rand_get_prob(sip_msg_t *bar)
+{
+	return *probability;
+}
+
+static int ki_rand_event(sip_msg_t *msg)
 {
 	double tmp;
 	/* most of the time this will be disabled completly. Tis will also fix the
@@ -570,6 +587,11 @@ static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
 		LM_DBG("return false\n");
 		return -1;
 	}
+}
+
+static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
+{
+	return ki_rand_event(bar);
 }
 
 static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
@@ -923,6 +945,26 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 	{ str_init("cfgutils"), str_init("trylock"),
 		SR_KEMIP_INT, cfg_trylock,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("rand_set_prob"),
+		SR_KEMIP_INT, ki_rand_set_prob,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("rand_reset_prob"),
+		SR_KEMIP_INT, ki_rand_reset_prob,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("rand_get_prob"),
+		SR_KEMIP_INT, ki_rand_get_prob,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("rand_event"),
+		SR_KEMIP_INT, ki_rand_event,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
