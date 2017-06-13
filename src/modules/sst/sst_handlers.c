@@ -224,7 +224,7 @@ void sst_handler_init(pv_spec_t *timeout_avp_p, unsigned int min_se,
  * the state tracking to figure out if and who supports SST.
  *
  * As per RFC4028: Request handling:
- * 
+ *
  * - The proxy may insert a SE header if none found.
  * - The SE value can be anything >= Min-SE (if found)
  * - The proxy MUST NOT add a refresher parameter to the SE.
@@ -266,7 +266,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 		return;
 	}
 
-	/* 
+	/*
 	 * look only at INVITE
 	 */
 	if (msg->first_line.type != SIP_REQUEST ||
@@ -276,7 +276,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 	}
 
 	/*
-	 * Gather all he information about SST for this message
+	 * Gather all the information about SST for this message
 	 */
 	if (parse_msg_for_sst_info(msg, &minfo)) {
 		LM_ERR("failed to parse sst information\n");
@@ -291,18 +291,18 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 										  * later */
 
 	if (minfo.se != 0) {
-		/* 
+		/*
 		 * There is a SE already there, this is good, we just need to
 		 * check the values out a little before passing it along.
 		 */
 		if (minfo.se < sst_min_se) {
-			/* 
+			/*
 			 * Problem, the requested Session-Expires is too small for
 			 * our local policy. We need to fix it, or reject it or
 			 * ignore it.
 			 */
 			if (!minfo.supported) {
-				/* 
+				/*
 				 * Increase the Min-SE: value in the request and
 				 * forward it.
 				 */
@@ -320,6 +320,9 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 			}
 			else if (sst_reject) {
 				/* Make sure that that all are at least 90 */
+				LM_DBG("rejecting 442 - local min se: %d - received min se: %d"
+						" - received se: %d\n",
+						sst_min_se, minfo.min_se, minfo.se);
 				send_reject(msg, MAX(MAX(sst_min_se, minfo.min_se), 90));
 				shm_free(info);
 				return;
@@ -331,7 +334,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 		}
 	}
 	else {
-		/* 
+		/*
 		 * No Session-Expire: stated in request.
 		 */
 		str msehdr;
@@ -346,7 +349,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 				/* What to do? Let is slide, we can still work */
 			}
 		}
-		
+
 		info->requester = SST_PXY;
 		sst_build_se_hdr(info->interval, &msehdr, NULL);
 		if (append_header(msg, msehdr.s)) {
@@ -440,11 +443,11 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 		if ((msg->first_line.u.request.method_value == METHOD_INVITE ||
 						msg->first_line.u.request.method_value == METHOD_UPDATE)) {
 
-			LM_DBG("Update by a REQUEST. %.*s\n", 
-					msg->first_line.u.request.method.len, 
+			LM_DBG("Update by a REQUEST. %.*s\n",
+					msg->first_line.u.request.method.len,
 					msg->first_line.u.request.method.s);
 			if (parse_msg_for_sst_info(msg, &minfo)) {
-				LM_ERR("failed to parse sst information\n"); 
+				LM_ERR("failed to parse sst information\n");
 				return;
 			}
 			/* Early resetting of the value here */
@@ -474,9 +477,9 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 			 * To spec (RFC) the internal time out value so not be reset
 			 * until here.
 			 */
-			LM_DBG("Update by a REPLY %d %.*s\n", 
+			LM_DBG("Update by a REPLY %d %.*s\n",
 					msg->first_line.u.reply.statuscode,
-					msg->first_line.u.reply.reason.len, 
+					msg->first_line.u.reply.reason.len,
 					msg->first_line.u.reply.reason.s);
 			if (parse_msg_for_sst_info(msg, &minfo)) {
 				LM_ERR("failed to parse sst information\n");
@@ -498,7 +501,7 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
  * @param params - The sst information
  */
 static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
-		struct dlg_cb_params * params) 
+		struct dlg_cb_params * params)
 {
 	struct sip_msg* msg = params->rpl;
 
@@ -511,9 +514,9 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 		sst_msg_info_t minfo = {0,0,0,0};
 		sst_info_t *info = (sst_info_t *)*(params->param);
 
-		LM_DBG("Dialog seen REPLY %d %.*s\n", 
+		LM_DBG("Dialog seen REPLY %d %.*s\n",
 				msg->first_line.u.reply.statuscode,
-				msg->first_line.u.reply.reason.len, 
+				msg->first_line.u.reply.reason.len,
 				msg->first_line.u.reply.reason.s);
 		/*
 		 * Need to check to see if it is a 422 response. If it is,
@@ -539,7 +542,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 			LM_ERR("failed to parse CSeq\n");
 			return;
 		}
-		
+
 		/* 2XX replies to INVITES only !*/
 		if (msg->first_line.u.reply.statuscode > 199 &&
 				msg->first_line.u.reply.statuscode < 300 &&
@@ -560,7 +563,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 				/* no se header found, we want to resquest it. */
 				if (info->requester == SST_PXY || info->supported == SST_UAC) {
 					str sehdr;
-					
+
 					LM_DBG("appending the Session-Expires: header to the 2XX reply."
 							" UAC will deal with it.\n");
 					/*
@@ -653,7 +656,7 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 				 * not parse it.
 				 */
 				LM_ERR("failed to parse MIN-SE header.\n");
-				return -1; 
+				return -1;
 			}
 			/*
 			 * If not stated, use the value from the session-expires
@@ -662,7 +665,7 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 			LM_DBG("No MIN-SE header found.\n");
 			minse = 90; /* default by RFC4028, $5 */
 		}
-		
+
 		LM_DBG("Session-Expires: %d; MIN-SE: %d\n",	se.interval, minse);
 
 		/*
@@ -708,7 +711,7 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
  * @return 0 on success, none-zero on an error.
  */
 static int send_response(struct sip_msg *request, int code, str *reason,
-		char *header, int header_len) 
+		char *header, int header_len)
 {
 
 	if (slb.freply != 0) {
@@ -792,7 +795,7 @@ static int remove_header(struct sip_msg *msg, const char *header)
 		LM_ERR("failed to parse headers in message.\n");
 		return(-1);
 	}
-	
+
 	for (hf = msg->headers; hf; hf = hf->next) {
 		if (hf->name.len != len) {
 			continue;
@@ -873,9 +876,9 @@ static int parse_msg_for_sst_info(struct sip_msg *msg, sst_msg_info_t *minfo)
 	if (!msg || !minfo) {
 		return (-1);
 	}
-	
-	/* 
-	 * parse the supported infor
+
+	/*
+	 * parse the supported info
 	 */
 	minfo->supported = 0; /*Clear it */
 	minfo->se = 0;
