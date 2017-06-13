@@ -611,11 +611,11 @@ bin:
 deb:
 	(cd ..; \
 	if [ -d debian ]; then \
-		dpkg-buildpackage -rfakeroot -tc --no-sign; \
+		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	else \
 		ln -s pkg/$(MAIN_NAME)/deb/debian debian; \
-		dpkg-buildpackage -rfakeroot -tc --no-sign; \
+		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	fi)
 
@@ -623,11 +623,11 @@ deb:
 deb-stable:
 	(cd ..; \
 	if [ -d debian ]; then \
-		dpkg-buildpackage -rfakeroot -tc --no-sign; \
+		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	else \
 		ln -s pkg/$(MAIN_NAME)/deb/jessie debian; \
-		dpkg-buildpackage -rfakeroot -tc --no-sign; \
+		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	fi)
 
