@@ -836,7 +836,7 @@ modparam("usrloc", "timer_procs", 4)
 
    Example 1.34. Set xavp_contact parameter
 ...
-modparam("usrloc", "xavp_contact", "ulattrs")
+modparam("tm|usrloc", "xavp_contact", "ulattrs")
 ...
 
 3.35. db_ops_ruid (int)

@@ -328,7 +328,7 @@ Chapter 1. Admin Guide
 
 3.1. list_file (string)
 
-   Path to the file with destination sets.
+   Path to the file with destination sets (destination groups).
 
    Default value is “/etc/kamailio/dispatcher.list” or
    “/usr/local/etc/kamailio/dispatcher.list”.
@@ -340,7 +340,7 @@ modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
 
 3.2. db_url (string)
 
-   If you want to load the sets of gateways from the database you must set
+   If you want to load the list of gateways from the database you must set
    this parameter.
 
    Default value is “NULL” (disable DB support).
@@ -352,7 +352,7 @@ modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database")
 
 3.3. table_name (string)
 
-   If you want to load the sets of gateways from the database you must set
+   If you want to load the list of gateways from the database you must set
    this parameter as the database name.
 
    Default value is “dispatcher”.
@@ -364,7 +364,7 @@ modparam("dispatcher", "table_name", "my_dispatcher")
 
 3.4. setid_col (string)
 
-   The column's name in the database storing the gateway's group id.
+   The column's name in the database storing the gateway's set (group) id.
 
    Default value is “setid”.
 
@@ -1226,8 +1226,8 @@ kamcmd dispatcher.ping_active 0
 7.1. Destination List File
 
    Each destination point must be on one line. First token is the set id
-   (an integer value), followed by destination address (s string value in
-   SIP URI format).
+   (an integer value, also referenced by group id), followed by
+   destination address (string value in full SIP URI format).
 
    Optionally, these fields can be followed by:
      * flags (listed by index - can be bitwise mask of values): 0 (value
@@ -1278,21 +1278,21 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 
    Example 1.40. dispatcher list file
 ...
-# $Id$
-# dispatcher destination sets
+#
+# dispatcher destination sets (groups)
 #
 
 # line format
-# setit(int) destination(sip uri) flags(int,opt) priority(int,opt) attributes(st
+# setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attributes(st
 r,opt)
 
 # proxies
-2 sip:127.0.0.1:5080
-2 sip:127.0.0.1:5082
+2 sip:127.0.0.1:5080;transport=tcp 0 10 class=4;prefix=448;strip=2
+2 sip:127.0.0.1:5082;px=vx 0 5 duid=abc;socket=udp:192.168.0.125:5060;pipe=p10
 
 # gateways
-1 sip:127.0.0.1:7070
-1 sip:127.0.0.1:7072
+1 sip:127.0.0.1:7070 0 0 duid=xyz;maxload=20
+1 sip:127.0.0.1:7072 0 5
 1 sip:127.0.0.1:7074
 
 ...

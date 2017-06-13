@@ -1397,10 +1397,9 @@ redlg_setflag("1");
 
    Meaning of the parameters is as follows:
      * side - where to send the BYE. It can be: 'caller', 'callee', or
-       both.
+       'all' (send to both sides).
 
-   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
-   ONREPLY_ROUTE and FAILURE_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.61. dlg_bye usage
 ...

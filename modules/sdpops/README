@@ -290,6 +290,26 @@ if(sdp_with_active_media("video"))
    Remove the streams that match on 'm=type ...' line. The parameter can
    be static string or variable holding the media type.
 
+   Note: If this is executed on a request, the callee should reply without
+   the Media too. However, RFC 3264 mandates, that the reply should
+   contain the exact same number of "m=" lines as the request.
+
+
+     6 Generating the Answer
+
+     [...]
+
+     For each "m=" line in the offer, there MUST be a corresponding "m="
+     line in the answer. The answer MUST contain exactly the same number of
+     "m=" lines as the offer. This allows for streams to be matched up based
+     on their order. This implies that if the offer contained zero "m="
+     lines, the answer MUST contain zero "m=" lines.
+
+                                                                  --RFC 3264
+
+   So this may not work with all Endpoints, especially if they follow RFC
+   3264 precisely (e.g. JSSIP).
+
    This function can be used from ANY_ROUTE.
 
    Example 1.8. sdp_remove_media usage

@@ -1571,7 +1571,7 @@ modparam("tm", "dns_reuse_rcv_socket", 1)
 4.46. xavp_contact (string)
 
    The name of XAVP storing the attributes per contact. This must be the
-   same as the usrloc parameter xavp_contacts.
+   same as the usrloc parameter xavp_contact.
 
    Default value is “NULL”.
 

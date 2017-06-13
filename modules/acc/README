@@ -34,8 +34,6 @@ Sven Knoblich
    Copyright © 2004, 2006 Voice Sistem SRL
 
    Copyright © 2011 1&1 Internet AG
-   Revision History
-   Revision $Revision$ $Date$
      __________________________________________________________________
 
    Table of Contents
@@ -892,11 +890,11 @@ modparam("acc", "log_missed_flag", 3)
 
    Log level at which accounting messages are issued to syslog.
 
-   Default value is L_NOTICE.
+   Default value is 1 (L_NOTICE).
 
    Example 1.12. log_level example
 ...
-modparam("acc", "log_level", 2)   # Set log_level to 2
+modparam("acc", "log_level", 2)   # Set log_level to 2 (L_INFO)
 ...
 
 6.13. log_facility (string)
@@ -1344,7 +1342,7 @@ modparam("acc", "cdrs_table", "acc_cdrs")
      * 0 - (default), save only unix timestamp for syslog and datetime for
        database.
      * 1 - save seconds in time_attr and microseconds in time_exten.
-     * 2 - save seconds.miliseconds in time_attr.
+     * 2 - save seconds.milliseconds in time_attr.
      * 3 - save formatted time according to time_format parameter, using
        the output of localtime().
      * 4 - save formatted time according to time_format parameter, using
@@ -1385,7 +1383,7 @@ modparam("acc", "time_attr", "seconds")
 
    Example 1.51. time_exten example
 ...
-modparam("acc", "time_exten", "micorsecs")
+modparam("acc", "time_exten", "microsecs")
 ...
 
 6.52. time_format (str)

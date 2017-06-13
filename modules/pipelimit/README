@@ -369,7 +369,7 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
        ratelimit module for details on each algorithm.
      * limit - the integer or pseudovariable with the limit value.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.12. pl_check usage
 ...
@@ -437,7 +437,8 @@ with unexpected retcode=$var(check_result)\n");
      * min - the minimum value of "Retry-After" header.
      * max - the maximum value of "Retry-After" header.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from
+   REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE.
 
    Example 1.13. pl_drop usage
 ...
