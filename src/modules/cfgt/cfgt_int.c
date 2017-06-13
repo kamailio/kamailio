@@ -725,7 +725,11 @@ int cfgt_post(struct sip_msg *msg, unsigned int flags, void *bar) {
 int cfgt_msgout(void *data)
 {
 	srjson_t *jobj;
-	str *buf = (str *) data;
+	void **srevp;
+	
+        srevp = (void**)data;
+        str *buf = (str*)srevp[0];
+
 	if(buf==NULL) return 0;
 	LM_DBG("msg out:{%.*s}\n", buf->len, buf->s);
 

@@ -1,0 +1,11 @@
+	<!-- Declaration of topoh_address table-->
+	<db_table id="topoh_address">
+		<table_name>topoh_address</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>trust</field><type>DB1_INT</type></column>
+		<column><field>ip_addr</field><type>DB1_STR</type></column>
+		<column><field>mask</field><type>DB1_INT</type></column>
+		<column><field>port</field><type>DB1_INT</type></column>
+		<column><field>tag</field><type>DB1_STR</type></column>
+	</db_table>

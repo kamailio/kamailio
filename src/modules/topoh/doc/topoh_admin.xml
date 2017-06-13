@@ -31,6 +31,21 @@
 		By using same mask_key, many SIP servers can decode the message,
 		for example, applicable for servers behind load balancers.
 	</para>
+	<section id="sec-ip-trust">
+		<title>Trust/Untrust destination</title>
+		<para>
+		The module can be used to determine if an destination IP address 
+		and port matches any of the addresses stored in a cached &kamailio; 
+		database table. IP addresses in the database table can be subnet addresses.
+		Port 0 in cached database table matches any port. This can be activated
+		by <varname>allow_ip_check</varname> parameter.
+		</para>
+		<para>
+		Addresses stored in the database table can be grouped together into two 
+		groups specified by a trust identifier (trust equal 1 means trust IP, 
+		trust equals 0 means untrust IP). 
+		</para>
+	</section>
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -249,6 +264,188 @@ modparam("topoh", "callid_prefix", "***")
 		<programlisting format="linespecific">
 ...
 modparam("topoh", "sanity_checks", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	
+	<section id ="topoh.db_url">
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		This is URL of the database to be used to read IP into cache
+		table.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "db_url", "&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="topoh.address_table">
+		<title><varname>address_table</varname> (string)</title>
+		<para>
+		The name of the database table containing trusted/untrusted IP subnets
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>topoh_address</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>address_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "address_table", "topoh_address_extra")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="topoh.trust_col">
+		<title><varname>trust_col</varname> (string)</title>
+		<para>
+		Name of address table column containing the type of the address.
+		1 = trust, 0 = untrust
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>trust</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>trust_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "trust_col", "type")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="topoh.ip_addr_col">
+		<title><varname>ip_addr_col</varname> (string)</title>
+		<para>
+		Name of address table column containing the IP address
+		part of the address.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>ip_addr</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ip_addr_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "ip_addr_col", "ip_address")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="topoh.mask_col">
+		<title><varname>mask_col</varname> (string)</title>
+		<para>
+		Name of address table column containing the network mask of
+		the address.  Possible values are 0-32 for IPv4 and 0-128 for
+		IPv6 addresses.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>mask</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mask_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "mask_col", "subnet_length")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="topoh.port_col">
+		<title><varname>port_col</varname> (string)</title>
+		<para>
+		Name of address table column containing the port
+		part of the address.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>port</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>port_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "port_col", "port")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="topoh.max_subnets">
+		<title><varname>max_subnets</varname> (int)</title>
+		<para>
+			The maximum number of subnet addresses to be loaded from
+			address table.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>512</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>max_subnets</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "max_subnets", 1024)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="topoh.trust_mode">
+		<title><varname>trust_mode</varname> (int)</title>
+		<para>
+			Lookup if the destination IP in trust or in untrust
+			table.
+			
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>trust_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "trust_mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="topoh.allow_ip_check">
+		<title><varname>allow_ip_check</varname> (int)</title>
+		<para>
+			Enable or disable destination IP check.
+			
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>allow_ip_check</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "allow_ip_check", 1)
 ...
 </programlisting>
 		</example>

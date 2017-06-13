@@ -342,8 +342,10 @@ int gzc_msg_sent(void *data)
 	unsigned long olen;
 	unsigned long nlen;
 	int ret;
-
-	obuf = (str*)data;
+	void **srevp;
+  
+	srevp = (void**)data;
+        obuf = (str*)srevp[0];
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;

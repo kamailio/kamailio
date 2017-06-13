@@ -135,7 +135,10 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 	outb.s = buf;
 	outb.len = len;
 	if(!(flags&1)) {
-		sr_event_exec(SREV_NET_DATA_OUT, (void*)&outb);
+		void *sredp[2];
+                sredp[0] = (void*)(&outb);
+                sredp[1] = (void*)dst;
+                sr_event_exec(SREV_NET_DATA_OUT, sredp);
 	}
 
 	if(outb.s==NULL) {

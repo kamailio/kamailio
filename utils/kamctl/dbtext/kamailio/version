@@ -53,6 +53,7 @@ silo:8
 sip_trace:4
 speed_dial:2
 subscriber:7
+topoh_address:1
 topos_d:1
 topos_t:1
 trusted:6

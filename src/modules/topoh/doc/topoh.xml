@@ -18,15 +18,27 @@
 		<surname>Mierla</surname>
 		<email>miconda@gmail.com</email>
 	    </author>
+	    <author>
+		<firstname>Alexandr</firstname>
+		<surname>Dubovikov</surname>
+		<email>alexandr.dubovikov@gmail.com</email>
+	    </author>
 	    <editor>
 		<firstname>Daniel-Constantin</firstname>
 		<surname>Mierla</surname>
 		<email>miconda@gmail.com</email>
 	    </editor>
+	    <editor>
+		<firstname>Alexandr</firstname>
+		<surname>Dubovikov</surname>
+		<email>alexandr.dubovikov@gmail.com</email>
+	    </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2009</year>
 	    <holder>&fhg;</holder>
+	    <year>2017</year>
+	    <holder>Alexandr Dubovikov</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
