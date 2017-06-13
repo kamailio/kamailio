@@ -58,7 +58,12 @@ Chapter 1. Admin Guide
 1. Overview
 
    This module performs destinations monitoring either for itself, or on
-   the behalf of other modules
+   the behalf of other modules. The monitoring is done by sending SIP
+   OPTIONS requests, more or less in the same fashion as the dispatcher
+   module (which was the initial source for this module).
+
+   As an example of usage by other modules, see drouting, which was
+   enahnced to use this module to monitor its gateways.
 
 2. Dependencies
 
