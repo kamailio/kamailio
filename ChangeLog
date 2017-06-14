@@ -2,6 +2,13 @@
 
 ===================== Changes Since Version 5.0.1 ===========================
 
+commit 39d231828c26e697b07f04b4e7250f9da521e1ac
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Fri Feb 10 13:55:20 2017 +0000
+
+    ctl : implement rpc buffer size
+    (cherry picked from commit da6a5d9de5763330cc4159a2168f5e0042116cbc)
+
 commit a7ec69c93e4a25368e7fbfb9a2906044ceabf07e
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Wed Jun 14 14:25:44 2017 +0200
