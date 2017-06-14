@@ -429,19 +429,19 @@ modparam("auth", "one_time_nonce", 1)
    size).
 
    Instead of using single arrays for keeping nonce state, these arrays
-   can be divided into more partitions. Each ser process is assigned to
-   one of these partitions, allowing for higher concurrency on multi-CPU
-   machines. Besides increasing performance, increasing nid_pool_no has
-   also a negative effect: it could decrease the maximum supported
-   in-flight nonces in certain conditions. In the worst case, when only
-   one ser process receives most of the traffic (e.g. very busy tcp
-   connection between two proxies), the in-flight nonces could be limited
-   to the array size (nc_array_size for nonce_count or otn_in_flight_no
-   for one_time_nonce) divided by the partitions number (nid_pool_no).
-   However for normal traffic, when the process receiving a message is
-   either random or chosen in a round-robin fashion the maximum in-flight
-   nonces number will be very little influenced by nid_pool_no (the
-   messages will be close to equally distributed to processes using
+   can be divided into more partitions. Each Kamailio process is assigned
+   to one of these partitions, allowing for higher concurrency on
+   multi-CPU machines. Besides increasing performance, increasing
+   nid_pool_no has also a negative effect: it could decrease the maximum
+   supported in-flight nonces in certain conditions. In the worst case,
+   when only one Kamailio process receives most of the traffic (e.g. very
+   busy tcp connection between two proxies), the in-flight nonces could be
+   limited to the array size (nc_array_size for nonce_count or
+   otn_in_flight_no for one_time_nonce) divided by the partitions number
+   (nid_pool_no). However for normal traffic, when the process receiving a
+   message is either random or chosen in a round-robin fashion the maximum
+   in-flight nonces number will be very little influenced by nid_pool_no
+   (the messages will be close to equally distributed to processes using
    different partitions).
 
    nid_pool_no value should be one of: 1, 2, 4, 8, 16, 32 or 64 (the
