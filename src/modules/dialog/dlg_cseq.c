@@ -270,14 +270,14 @@ error:
 /**
  *
  */
-int dlg_cseq_msg_received(void *data)
+int dlg_cseq_msg_received(sr_event_param_t *evp)
 {
 	sip_msg_t msg;
 	str *obuf;
 	struct via_body *via;
 	str vcseq;
 
-	obuf = (str*)data;
+	obuf = (str*)evp->data;
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
@@ -347,7 +347,7 @@ done:
 /**
  *
  */
-int dlg_cseq_msg_sent(void *data)
+int dlg_cseq_msg_sent(sr_event_param_t *evp)
 {
 	sip_msg_t msg;
 	str *obuf;
@@ -360,7 +360,7 @@ int dlg_cseq_msg_sent(void *data)
 	hdr_field_t *hfk = NULL;
 	sr_cfgenv_t *cenv = NULL;
 
-	obuf = (str*)data;
+	obuf = (str*)evp->data;
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
