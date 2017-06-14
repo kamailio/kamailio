@@ -73,6 +73,7 @@ int msrp_relay(msrp_frame_t *mf)
 	char *p;
 	char *l;
 	int port;
+	sr_event_param_t evp = {0};
 
 	if(mf->buf.len>=MSRP_MAX_FRAME_SIZE-1)
 		return -1;
@@ -167,7 +168,8 @@ done:
 			wsev.buf = reqbuf;
 			wsev.len = p - reqbuf;
 			wsev.id = con->id;
-			return sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+			evp.data = (void *)&wsev;
+			return sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
 		}
 		else if (tcp_send(dst, 0, reqbuf, p - reqbuf) < 0) {
 			LM_ERR("forwarding frame failed\n");
@@ -192,6 +194,7 @@ int msrp_reply(msrp_frame_t *mf, str *code, str *text, str *xhdrs)
 	msrp_env_t *env;
 	char *p;
 	char *l;
+	sr_event_param_t evp = {0};
 
 	/* no reply for a reply */
 	if(mf->fline.msgtypeid==MSRP_REPLY)
@@ -297,9 +300,10 @@ int msrp_reply(msrp_frame_t *mf, str *code, str *text, str *xhdrs)
 		wsev.buf = rplbuf;
 		wsev.len = p - rplbuf;
 		wsev.id = con->id;
-		return sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+		evp.data = (void *)&wsev;
+		return sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
 	}
-	else 
+	else
 	if (tcp_send(&env->srcinfo, 0, rplbuf, p - rplbuf) < 0) {
 		LM_ERR("sending reply failed\n");
 		return -1;
