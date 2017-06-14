@@ -259,11 +259,11 @@ static int km_cb_rpl_stats(struct sip_msg *msg,
 }
 
 
-static int sts_update_core_stats(void *data)
+static int sts_update_core_stats(sr_event_param_t *evp)
 {
 	int type;
 
-	type = (int)(long)data;
+	type = (int)(long)evp;
 	switch(type) {
 		case 1:
 			/* fwd_requests */
