@@ -604,10 +604,11 @@ static int handle_pong(ws_frame_t *frame)
 	return 0;
 }
 
-int ws_frame_receive(void *data)
+int ws_frame_receive(sr_event_param_t *evp)
 {
 	ws_frame_t frame;
-	tcp_event_info_t *tcpinfo = (tcp_event_info_t *) data;
+	tcp_event_info_t *tcpinfo = (tcp_event_info_t *)evp->data;
+	sr_event_param_t levp = {0};
 
 	int opcode      = -1;
 	int ret         = 0;
@@ -725,8 +726,8 @@ int ws_frame_receive(void *data)
 
 				wsconn_put(frame.wsc);
 
-				return sr_event_exec(SREV_TCP_MSRP_FRAME,
-							(void *) &tev);
+				levp.data = (void *) &tev;
+				return sr_event_exec(SREV_TCP_MSRP_FRAME, &levp);
 			}
 			else
 			{
@@ -765,9 +766,9 @@ int ws_frame_receive(void *data)
 	return 0;
 }
 
-int ws_frame_transmit(void *data)
+int ws_frame_transmit(sr_event_param_t *evp)
 {
-	ws_event_info_t *wsev = (ws_event_info_t *) data;
+	ws_event_info_t *wsev = (ws_event_info_t *)evp->data;
 	ws_frame_t frame;
 
 	memset(&frame, 0, sizeof(frame));
