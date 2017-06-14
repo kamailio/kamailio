@@ -49,7 +49,7 @@ int parsing_hepv3_message(char *buf, unsigned int len);
  * HEP message
  */
 /* int hep_msg_received(char * buf, unsigned int len, struct receive_info * ri) */
-int hep_msg_received(void *data)
+int hep_msg_received(sr_event_param_t *evp)
 {
         void **srevp;
         char *buf;
@@ -61,11 +61,11 @@ int hep_msg_received(void *data)
                 return -1;
         }
 
-        srevp = (void**)data;
+        srevp = (void**)evp->data;
 
         buf = (char *)srevp[0];
         len = (unsigned *)srevp[1];
-        ri = (struct receive_info *)srevp[2];                        
+        ri = (struct receive_info *)srevp[2];
 
 	correlation_id = NULL;
 	authkey = NULL;

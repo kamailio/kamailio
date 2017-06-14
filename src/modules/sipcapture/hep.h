@@ -25,6 +25,7 @@
 #define _hep_h
 
 #include "../../core/endianness.h"
+#include "../../core/events.h"
 
 #ifdef __IS_BIG_ENDIAN
 #define to_le(x) bswap32(x)
@@ -45,7 +46,7 @@ extern char *authkey;
 extern char *correlation_id;
 
 /* int hep_msg_received(char * buf, unsigned int len, struct receive_info * ri);*/
-int hep_msg_received(void *data);
+int hep_msg_received(sr_event_param_t *evp);
 
 /* new method for events */
 int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t* msg);
@@ -171,7 +172,7 @@ struct hep_generic_recv {
         hep_chunk_uint32_t *capt_id;
         hep_chunk_uint16_t *keep_tm;
         hep_chunk_str_t    *auth_key;
-        hep_chunk_str_t    *correlation_id;        
+        hep_chunk_str_t    *correlation_id;
         hep_chunk_t   *payload_chunk;
 } __attribute__((packed));
 

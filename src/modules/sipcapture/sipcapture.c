@@ -152,7 +152,7 @@ int init_rawsock_children(void);
 int extract_host_port(void);
 int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto);
 int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip);
-static int nosip_hep_msg(void *data);
+static int nosip_hep_msg(sr_event_param_t *evp);
 
 static int hep_version(struct sip_msg *msg);
 
@@ -282,7 +282,7 @@ static cmd_export_t cmds[] = {
 	{"sip_capture", (cmd_function)w_sip_capture, 2, sipcapture_fixup, 0, ANY_ROUTE },
 	{"report_capture", (cmd_function)w_report_capture, 1, reportcapture_fixup, 0, ANY_ROUTE },
 	{"report_capture", (cmd_function)w_report_capture, 2, reportcapture_fixup, 0, ANY_ROUTE },
-	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },	
+	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },
 	{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0, ANY_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
@@ -2643,7 +2643,7 @@ static int sipcapture_parse_aleg_callid_headers() {
 }
 
 
-static int nosip_hep_msg(void *data)
+static int nosip_hep_msg(sr_event_param_t *evp)
 {
         sip_msg_t* msg;
         char *buf;
@@ -2651,13 +2651,13 @@ static int nosip_hep_msg(void *data)
         struct run_act_ctx ra_ctx;
         int ret = 0;
 
-        msg = (sip_msg_t*)data;
-        
+        msg = (sip_msg_t*)evp->data;
+
         struct hep_hdr *heph;
-        
+
         buf = msg->buf;
         len = msg->len;
-        
+
         /* first send to route */
         init_run_actions_ctx(&ra_ctx);
         ret = run_actions(&ra_ctx, event_rt.rlist[hep_route_no], msg);
@@ -2666,33 +2666,33 @@ static int nosip_hep_msg(void *data)
 
         /* hep_hdr */
         heph = (struct hep_hdr*) msg->buf;
-        
+
 	if(heph->hp_v == 1 || heph->hp_v == 2)  {
 
 		LOG(L_ERR, "ERROR: HEP v 1/2: v:[%d] l:[%d]\n",heph->hp_v, heph->hp_l);
-		if((len = hepv2_message_parse(buf, len, msg)) < 0) 
-		{		
+		if((len = hepv2_message_parse(buf, len, msg)) < 0)
+		{
    		     LOG(L_ERR, "ERROR: during hepv2 parsing :[%d]\n", len);
    		     return 0;
                 }
-                
+
                 buf = msg->buf+len;
 		len = msg->len - len;
-				
+
 		msg->buf = buf;
                 msg->len = len;
         }
         else if(!memcmp(msg->buf, "\x48\x45\x50\x33",4) || !memcmp(msg->buf, "\x45\x45\x50\x31",4)) {
 
-                if((len = hepv3_message_parse(buf, len, msg)) < 0) 
-		{		
+                if((len = hepv3_message_parse(buf, len, msg)) < 0)
+		{
    		     LOG(L_ERR, "ERROR: during hepv3 parsing :[%d]\n", len);
    		     return 0;
                 }
-                
+
                 buf = msg->buf+len;
                 len = msg->len - len;
-                
+
                 msg->buf = buf;
                 msg->len = len;
         }
@@ -2704,10 +2704,10 @@ static int nosip_hep_msg(void *data)
         }
 
         if (parse_msg(buf, len, msg)!=0) {
-             LOG(L_ERR, "couldn't parse sip message\n");               
+             LOG(L_ERR, "couldn't parse sip message\n");
              return -1;
         }
-        
+
         return ret;
 }
 
