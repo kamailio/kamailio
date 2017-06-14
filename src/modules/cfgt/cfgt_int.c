@@ -641,10 +641,10 @@ TODO:
 - parse first line, check if is SIP
 - parse for header cfgtest
 */
-int cfgt_msgin(void *data)
+int cfgt_msgin(sr_event_param_t *evp)
 {
 	srjson_t *jobj;
-	str *buf = (str *) data;
+	str *buf = (str *)evp->data;
 	if(buf==NULL) return 0;
 	if(_cfgt_node) {
 		cfgt_save_node(_cfgt_node);
@@ -722,10 +722,10 @@ int cfgt_post(struct sip_msg *msg, unsigned int flags, void *bar) {
 	return 1;
 }
 
-int cfgt_msgout(void *data)
+int cfgt_msgout(sr_event_param_t *evp)
 {
 	srjson_t *jobj;
-	str *buf = (str *) data;
+	str *buf = (str *)evp->data;
 	if(buf==NULL) return 0;
 	LM_DBG("msg out:{%.*s}\n", buf->len, buf->s);
 
