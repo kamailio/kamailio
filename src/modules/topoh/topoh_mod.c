@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 SIP-Router.org
+ * Copyright (C) 2009 kamailio.org
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -77,8 +77,8 @@ int th_sanity_checks = 0;
 sanity_api_t scb;
 int th_mask_addr_myself = 0;
 
-int th_msg_received(void *data);
-int th_msg_sent(void *data);
+int th_msg_received(sr_event_param_t *evp);
+int th_msg_sent(sr_event_param_t *evp);
 
 /** module functions */
 static int mod_init(void);
@@ -271,7 +271,7 @@ int th_prepare_msg(sip_msg_t *msg)
 /**
  *
  */
-int th_msg_received(void *data)
+int th_msg_received(sr_event_param_t *evp)
 {
 	sip_msg_t msg;
 	str *obuf;
@@ -279,7 +279,7 @@ int th_msg_received(void *data)
 	int direction;
 	int dialog;
 
-	obuf = (str*)data;
+	obuf = (str*)evp->data;
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
@@ -377,7 +377,7 @@ done:
 /**
  *
  */
-int th_msg_sent(void *data)
+int th_msg_sent(sr_event_param_t *evp)
 {
 	sip_msg_t msg;
 	str *obuf;
@@ -385,7 +385,7 @@ int th_msg_sent(void *data)
 	int dialog;
 	int local;
 
-	obuf = (str*)data;
+	obuf = (str*)evp->data;
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
