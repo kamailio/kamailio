@@ -322,7 +322,7 @@ char* get_current_route_type_name()
 /**
  * callback executed for each cfg action
  */
-int dbg_cfg_trace(void *data)
+int dbg_cfg_trace(sr_event_param_t *evp)
 {
 	struct action *a;
 	struct sip_msg *msg;
@@ -334,7 +334,7 @@ int dbg_cfg_trace(void *data)
 	void **srevp;
 	str *an;
 
-	srevp = (void**)data;
+	srevp = (void**)evp->data;
 
 	a = (struct action *)srevp[0];
 	msg = (struct sip_msg *)srevp[1];
