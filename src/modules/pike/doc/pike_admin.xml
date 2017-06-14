@@ -110,7 +110,7 @@ modparam("pike", "reqs_density_per_unit", 30)
 	<section id="pike.p.remove_latency">
 		<title><varname>remove_latency</varname> (integer)</title>
 		<para>
-		Speciies for how long the IP address will be kept in memory after the last
+		Specifies for how long the IP address will be kept in memory after the last
 		request from that IP address. It's a sort of timeout value, in seconds.
 		Note that it is not the duration to keep the IP in state 'blocked'. An
 		IP is unblocked next occurence of 'sampling_time_unit' that does not
