@@ -34,6 +34,8 @@
 #include "../../core/fmsg.h"
 #include "../../core/sr_module.h"
 
+#include "tcpops.h"
+
 
 /* globally enabled by default */
 int tcp_closed_event = 1;
@@ -219,9 +221,9 @@ static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 	set_route_type(backup_rt);
 }
 
-int tcpops_handle_tcp_closed(void *data)
+int tcpops_handle_tcp_closed(sr_event_param_t *evp)
 {
-	tcp_closed_event_info_t *tev = (tcp_closed_event_info_t *) data;
+	tcp_closed_event_info_t *tev = (tcp_closed_event_info_t *)evp->data;
 
 	if (tev == NULL || tev->con == NULL) {
 		LM_WARN("received bad TCP closed event\n");

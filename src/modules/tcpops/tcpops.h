@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef TCP_KEEPALIVE_H_
-#define TCP_KEEPALIVE_H_
+#ifndef _TCPOPS_H_
+#define _TCPOPS_H_
 
 #include "../../core/tcp_conn.h"
 #include "../../core/events.h"
@@ -35,6 +35,6 @@ int tcpops_acquire_fd_from_tcpmain(int conid, int *fd);
 int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int closefd);
 int tcpops_keepalive_disable(int fd, int closefd);
 int tcpops_set_connection_lifetime(struct tcp_connection* con, int time);
-int tcpops_handle_tcp_closed(void *data);
+int tcpops_handle_tcp_closed(sr_event_param_t *evp);
 
-#endif /* TCP_KEEPALIVE_H_ */
+#endif /* _TCPOPS_H_ */
