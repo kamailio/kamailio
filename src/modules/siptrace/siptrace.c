@@ -115,8 +115,8 @@ static int trace_send_hep2_duplicate(str *body, str *from, str *to, struct dest_
 static int trace_send_hep3_duplicate(str *body, str *from, str *to, struct dest_info*, str *correlation_id);
 static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int *proto);
 
-int siptrace_net_data_recv(void *data);
-int siptrace_net_data_send(void *data);
+int siptrace_net_data_recv(sr_event_param_t *evp);
+int siptrace_net_data_send(sr_event_param_t *evp);
 static int _siptrace_mode = 0;
 
 
@@ -2119,7 +2119,7 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 			|| ((ip=str2ip6(&host_uri))!=0)
 	   ) {
 		ip_addr2su(tmp_su, ip, ntohs(port_no));
-		return 0;	
+		return 0;
 
 	}
 
@@ -2131,15 +2131,15 @@ error:
 /**
  *
  */
-int siptrace_net_data_recv(void *data)
+int siptrace_net_data_recv(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
 	struct _siptrace_data sto;
 
-	if(data==0)
+	if(evp->data==0)
 		return -1;
 
-	nd = (sr_net_info_t*)data;
+	nd = (sr_net_info_t*)evp->data;
 	if(nd->rcv==NULL || nd->data.s==NULL || nd->data.len<=0)
 		return -1;
 
@@ -2172,16 +2172,16 @@ int siptrace_net_data_recv(void *data)
 /**
  *
  */
-int siptrace_net_data_send(void *data)
+int siptrace_net_data_send(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
 	struct dest_info new_dst;
 	struct _siptrace_data sto;
 
-	if(data==0)
+	if(evp->data==0)
 		return -1;
 
-	nd = (sr_net_info_t*)data;
+	nd = (sr_net_info_t*)evp->data;
 	if(nd->dst==NULL || nd->data.s==NULL || nd->data.len<=0)
 		return -1;
 
