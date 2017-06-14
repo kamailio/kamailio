@@ -190,6 +190,7 @@ static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_rea
 {
 	int ret;
 	tcp_closed_event_info_t tev;
+	sr_event_param_t evp = {0};
 
 	ret = 0;
 	LM_DBG("TCP closed event creation triggered\n");
@@ -197,7 +198,8 @@ static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_rea
 		memset(&tev, 0, sizeof(tcp_closed_event_info_t));
 		tev.reason = reason;
 		tev.con = con;
-		ret = sr_event_exec(SREV_TCP_CLOSED, (void*)(&tev));
+		evp.data = (void*)(&tev);
+		ret = sr_event_exec(SREV_TCP_CLOSED, &evp);
 	} else {
 		LM_DBG("no callback registering for handling TCP closed event - dropping!\n");
 	}
@@ -1052,6 +1054,7 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 {
 	int ret;
 	tcp_event_info_t tev;
+	sr_event_param_t evp = {0};
 
 	ret = 0;
 	LM_DBG("MSRP Message: [[>>>\n%.*s<<<]]\n", len, tcpbuf);
@@ -1062,7 +1065,8 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 		tev.len = len;
 		tev.rcv = rcv_info;
 		tev.con = con;
-		ret = sr_event_exec(SREV_TCP_MSRP_FRAME, (void*)(&tev));
+		evp.data = (void*)(&tev);
+		ret = sr_event_exec(SREV_TCP_MSRP_FRAME, &evp);
 	} else {
 		LM_DBG("no callback registering for handling MSRP - dropping!\n");
 	}
@@ -1178,6 +1182,7 @@ static int ws_process_msg(char* tcpbuf, unsigned int len,
 {
 	int ret;
 	tcp_event_info_t tev;
+	sr_event_param_t evp = {0};
 
 	ret = 0;
 	LM_DBG("WebSocket Message: [[>>>\n%.*s<<<]]\n", len, tcpbuf);
@@ -1188,7 +1193,8 @@ static int ws_process_msg(char* tcpbuf, unsigned int len,
 		tev.len = len;
 		tev.rcv = rcv_info;
 		tev.con = con;
-		ret = sr_event_exec(SREV_TCP_WS_FRAME_IN, (void*)(&tev));
+		evp.data = (void*)(&tev);
+		ret = sr_event_exec(SREV_TCP_WS_FRAME_IN, &evp);
 	} else {
 		LM_DBG("no callback registering for handling WebSockets - dropping!\n");
 	}

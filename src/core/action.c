@@ -310,6 +310,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct rval_cache c1;
 	str s;
 	void *srevp[2];
+	sr_event_param_t evp = {0};
+
 	/* temporary storage space for a struct action.val[] working copy
 	 (needed to transform RVE intro STRING before calling module
 	   functions). [0] is not used (corresp. to the module export pointer),
@@ -330,7 +332,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	{
 		srevp[0] = (void*)a;
 		srevp[1] = (void*)msg;
-		sr_event_exec(SREV_CFG_RUN_ACTION, (void*)srevp);
+		evp.data = (void*)srevp;
+		sr_event_exec(SREV_CFG_RUN_ACTION, &evp);
 	}
 
 	ret=E_BUG;

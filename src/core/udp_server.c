@@ -422,6 +422,7 @@ int udp_rcv_loop()
 	union sockaddr_union* from;
 	unsigned int fromlen;
 	struct receive_info ri;
+	sr_event_param_t evp = {0};
 
 
 	from=(union sockaddr_union*) pkg_malloc(sizeof(union sockaddr_union));
@@ -473,7 +474,8 @@ int udp_rcv_loop()
 			sredp[0] = (void*)buf;
 			sredp[1] = (void*)(&len);
 			sredp[2] = (void*)(&ri);
-			if(sr_event_exec(SREV_NET_DGRAM_IN, (void*)sredp)<0) {
+			evp.data = (void*)sredp;
+			if(sr_event_exec(SREV_NET_DGRAM_IN, &evp)<0) {
 				/* data handled by callback - continue to next packet */
 				continue;
 			}

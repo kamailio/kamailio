@@ -189,7 +189,7 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 /**
  *
  */
-int sr_event_exec(int type, void *data)
+int sr_event_exec(int type, sr_event_param_t *evp)
 {
 	int ret;
 	int i;
@@ -201,14 +201,14 @@ int sr_event_exec(int type, void *data)
 				if(unlikely(_sr_events_list.net_data_in[0]!=0))
 				{
 #ifdef EXTRA_DEBUG
-					p = (str*)data;
+					p = (str*)evp->data;
 					LM_DBG("PRE-IN ++++++++++++++++++++++++++++++++\n"
 							"%.*s\n+++++\n", p->len, p->s);
 #endif /* EXTRA_DEBUG */
 					ret = 0;
 					for(i=0; i<SREV_CB_LIST_SIZE
 							&& _sr_events_list.net_data_in[i]; i++) {
-						ret |= _sr_events_list.net_data_in[i](data);
+						ret |= _sr_events_list.net_data_in[i](evp);
 					}
 #ifdef EXTRA_DEBUG
 					LM_DBG("POST-IN ++++++++++++++++++++++++++++++++\n"
@@ -228,7 +228,7 @@ int sr_event_exec(int type, void *data)
 					ret = 0;
 					for(i=0; i<SREV_CB_LIST_SIZE; i++) {
 						if(_sr_events_list.net_data_out[i]) {
-							ret |= _sr_events_list.net_data_out[i](data);
+							ret |= _sr_events_list.net_data_out[i](evp);
 						}
 					}
 #ifdef EXTRA_DEBUG
@@ -241,80 +241,80 @@ int sr_event_exec(int type, void *data)
 		case SREV_CORE_STATS:
 				if(unlikely(_sr_events_list.core_stats!=0))
 				{
-					ret = _sr_events_list.core_stats(data);
+					ret = _sr_events_list.core_stats(evp);
 					return ret;
 				} else return 1;
 			break;
 		case SREV_CFG_RUN_ACTION:
 				if(unlikely(_sr_events_list.run_action!=0))
 				{
-					ret = _sr_events_list.run_action(data);
+					ret = _sr_events_list.run_action(evp);
 					return ret;
 				} else return 1;
 		case SREV_PKG_UPDATE_STATS:
 				if(unlikely(_sr_events_list.pkg_update_stats!=0))
 				{
-					ret = _sr_events_list.pkg_update_stats(data);
+					ret = _sr_events_list.pkg_update_stats(evp);
 					return ret;
 				} else return 1;
 		case SREV_NET_DGRAM_IN:
 				if(unlikely(_sr_events_list.net_dgram_in!=0))
 				{
-					ret = _sr_events_list.net_dgram_in(data);
+					ret = _sr_events_list.net_dgram_in(evp);
 					return ret;
 				} else return 1;
 		case SREV_TCP_HTTP_100C:
 				if(unlikely(_sr_events_list.tcp_http_100c!=0))
 				{
-					ret = _sr_events_list.tcp_http_100c(data);
+					ret = _sr_events_list.tcp_http_100c(evp);
 					return ret;
 				} else return 1;
 		case SREV_TCP_MSRP_FRAME:
 				if(unlikely(_sr_events_list.tcp_msrp_frame!=0))
 				{
-					ret = _sr_events_list.tcp_msrp_frame(data);
+					ret = _sr_events_list.tcp_msrp_frame(evp);
 					return ret;
 				} else return 1;
 		case SREV_TCP_WS_FRAME_IN:
 				if(unlikely(_sr_events_list.tcp_ws_frame_in!=0))
 				{
-					ret = _sr_events_list.tcp_ws_frame_in(data);
+					ret = _sr_events_list.tcp_ws_frame_in(evp);
 					return ret;
 				} else return 1;
 		case SREV_TCP_WS_FRAME_OUT:
 				if(unlikely(_sr_events_list.tcp_ws_frame_out!=0))
 				{
-					ret = _sr_events_list.tcp_ws_frame_out(data);
+					ret = _sr_events_list.tcp_ws_frame_out(evp);
 					return ret;
 				} else return 1;
 		case SREV_STUN_IN:
 				if(unlikely(_sr_events_list.stun_in!=0))
 				{
-					ret = _sr_events_list.stun_in(data);
+					ret = _sr_events_list.stun_in(evp);
 					return ret;
 				} else return 1;
 		case SREV_RCV_NOSIP:
 				if(unlikely(_sr_events_list.rcv_nosip!=0))
 				{
-					ret = _sr_events_list.rcv_nosip(data);
+					ret = _sr_events_list.rcv_nosip(evp);
 					return ret;
 				} else return 1;
 		case SREV_TCP_CLOSED:
 				if(unlikely(_sr_events_list.tcp_closed!=0))
 				{
-					ret = _sr_events_list.tcp_closed(data);
+					ret = _sr_events_list.tcp_closed(evp);
 					return ret;
 				} else return 1;
 		case SREV_NET_DATA_RECV:
 				if(unlikely(_sr_events_list.net_data_recv!=0))
 				{
-					ret = _sr_events_list.net_data_recv(data);
+					ret = _sr_events_list.net_data_recv(evp);
 					return ret;
 				} else return 1;
 		case SREV_NET_DATA_SEND:
 				if(unlikely(_sr_events_list.net_data_send!=0))
 				{
-					ret = _sr_events_list.net_data_send(data);
+					ret = _sr_events_list.net_data_send(evp);
 					return ret;
 				} else return 1;
 		default:

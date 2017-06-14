@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -121,6 +121,7 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 	struct dest_info new_dst;
 	str outb;
 	sr_net_info_t netinfo;
+	sr_event_param_t evp = {0};
 
 #ifdef USE_TCP 
 	int port;
@@ -135,7 +136,8 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 	outb.s = buf;
 	outb.len = len;
 	if(!(flags&1)) {
-		sr_event_exec(SREV_NET_DATA_OUT, (void*)&outb);
+		evp.data = (void*)&outb;
+		sr_event_exec(SREV_NET_DATA_OUT, &evp);
 	}
 
 	if(outb.s==NULL) {
@@ -193,7 +195,8 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 		wsev.buf = outb.s;
 		wsev.len = outb.len;
 		wsev.id = con->id;
-		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+		evp.data = (void *)&wsev;
+		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
 		tcpconn_put(con);
 		goto done;
 	}
@@ -320,7 +323,8 @@ done:
 		netinfo.data.s = outb.s;
 		netinfo.data.len = outb.len;
 		netinfo.dst = dst;
-		sr_event_exec(SREV_NET_DATA_SEND, (void*)&netinfo);
+		evp.data = (void*)&netinfo;
+		sr_event_exec(SREV_NET_DATA_SEND, &evp);
 	}
 
 	if(outb.s != buf)

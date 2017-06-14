@@ -40,7 +40,11 @@
 
 #define SREV_CB_LIST_SIZE	3
 
-typedef int (*sr_event_cb_f)(void *data);
+typedef struct sr_event_param {
+	void *data;
+} sr_event_param_t;
+
+typedef int (*sr_event_cb_f)(sr_event_param_t *evp);
 
 typedef struct sr_event_cb {
 	sr_event_cb_f net_data_in[SREV_CB_LIST_SIZE];
@@ -62,7 +66,7 @@ typedef struct sr_event_cb {
 
 void sr_event_cb_init(void);
 int sr_event_register_cb(int type, sr_event_cb_f f);
-int sr_event_exec(int type, void *data);
+int sr_event_exec(int type, sr_event_param_t *evp);
 int sr_event_enabled(int type);
 
 

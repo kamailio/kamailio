@@ -133,6 +133,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	str inb;
 	sr_net_info_t netinfo;
 	sr_kemi_eng_t *keng = NULL;
+	sr_event_param_t evp = {0};
 
 	if(sr_event_enabled(SREV_NET_DATA_RECV)) {
 		if(sip_check_fline(buf, len)==0) {
@@ -140,13 +141,15 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			netinfo.data.s = buf;
 			netinfo.data.len = len;
 			netinfo.rcv = rcv_info;
-			sr_event_exec(SREV_NET_DATA_RECV, (void*)&netinfo);
+			evp.data = (void*)&netinfo;
+			sr_event_exec(SREV_NET_DATA_RECV, &evp);
 		}
 	}
 
 	inb.s = buf;
 	inb.len = len;
-	sr_event_exec(SREV_NET_DATA_IN, (void*)&inb);
+	evp.data = (void*)&inb;
+	sr_event_exec(SREV_NET_DATA_IN, &evp);
 	len = inb.len;
 
 	msg=pkg_malloc(sizeof(struct sip_msg));
@@ -174,7 +177,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	if(likely(sr_msg_time==1)) msg_set_time(msg);
 
 	if (parse_msg(buf,len, msg)!=0){
-		if((ret=sr_event_exec(SREV_RCV_NOSIP, (void*)msg))<NONSIP_MSG_DROP) {
+		evp.data = (void*)msg;
+		if((ret=sr_event_exec(SREV_RCV_NOSIP, &evp))<NONSIP_MSG_DROP) {
 			LOG(cfg_get(core, core_cfg, corelog),
 				"core parsing of SIP message failed (%s:%d/%d)\n",
 				ip_addr2a(&msg->rcv.src_ip), (int)msg->rcv.src_port,
