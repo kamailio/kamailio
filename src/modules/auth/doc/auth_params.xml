@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+	"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
 
 <section id="auth.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
 
@@ -370,12 +376,12 @@ modparam("auth", "one_time_nonce", 1)
 	</para>
 	<para>
 		Instead of using single arrays for keeping nonce state, these arrays
-		can be divided into more partitions. Each ser process is assigned to
+		can be divided into more partitions. Each &kamailio; process is assigned to
 		one of these partitions, allowing for higher concurrency on multi-CPU
 		machines. Besides increasing performance, increasing 
 		<varname>nid_pool_no</varname> has also a negative effect: it could
 		decrease the maximum supported in-flight nonces in certain conditions.
-		In the worst case, when only one ser process receives most of the 
+		In the worst case, when only one &kamailio; process receives most of the 
 		traffic (e.g. very busy tcp connection between two proxies), the 
 		in-flight nonces could be limited to the array size 
 		(<varname>nc_array_size</varname> for <varname>nonce_count</varname>
