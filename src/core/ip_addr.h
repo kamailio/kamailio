@@ -75,6 +75,7 @@ union sockaddr_union{
 	struct sockaddr_in6 sin6;
 };
 
+typedef struct net sr_net_t;
 
 
 enum si_flags { SI_NONE=0, SI_IS_IP=1, SI_IS_LO=2, SI_IS_MCAST=4,
@@ -90,6 +91,8 @@ struct addr_info{
 	struct addr_info* prev;
 };
 
+typedef struct addr_info addr_info_t;
+
 struct advertise_info {
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	unsigned short port_no;  /* port number */
@@ -99,7 +102,9 @@ struct advertise_info {
 	str sock_str; /* Socket proto, ip, and port as string */
 };
 
-struct socket_info{
+typedef struct advertise_info advertise_info_t;
+
+struct socket_info {
 	int socket;
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	struct ip_addr address; /* ip address */
@@ -121,6 +126,7 @@ struct socket_info{
 #endif /* USE_MCAST */
 };
 
+typedef struct socket_info socket_info_t;
 
 struct receive_info{
 	struct ip_addr src_ip;
@@ -139,6 +145,8 @@ struct receive_info{
 	/* no need for dst_su yet */
 };
 
+typedef struct receive_info receive_info_t;
+
 typedef struct sr_net_info {
 	str data;
 	struct dest_info* dst;
@@ -155,8 +163,7 @@ struct snd_flags {
 	unsigned char blst_imask; /* blacklist ignore mask */
 };
 
-
-typedef struct snd_flags  snd_flags_t;
+typedef struct snd_flags snd_flags_t;
 
 
 #define SND_FLAGS_INIT(sflags) \
@@ -180,7 +187,7 @@ typedef struct snd_flags  snd_flags_t;
 	}while(0)
 
 
-struct dest_info{
+struct dest_info {
 	struct socket_info* send_sock;
 	union sockaddr_union to;
 	int id; /* tcp stores the connection id here */
@@ -191,17 +198,20 @@ struct dest_info{
 #endif
 };
 
+typedef struct dest_info dest_info_t;
+
 
 /* list of names for multi-homed sockets that need to bind on
  * multiple addresses in the same time (sctp ) */
-struct name_lst{
+struct name_lst {
 	char* name;
 	struct name_lst* next;
 	int flags;
 };
 
+typedef struct name_lst name_lst_t;
 
-struct socket_id{
+struct socket_id {
 	struct name_lst* addr_lst; /* address list, the first one must
 								* be present and is the main one
 								* (in case of multihoming sctp) */
@@ -211,6 +221,7 @@ struct socket_id{
 	struct socket_id* next;
 };
 
+typedef struct socket_id socket_id_t;
 
 /* len of the sockaddr */
 #ifdef HAVE_SOCKADDR_SA_LEN
@@ -351,7 +362,6 @@ static inline void sockaddr2ip_addr(struct ip_addr* ip, struct sockaddr* sa)
 }
 
 
-
 /* compare 2 ip_addrs (both args are pointers)*/
 #define ip_addr_cmp(ip1, ip2) \
 	(((ip1)->af==(ip2)->af)&& \
@@ -406,7 +416,6 @@ static inline void su_setport(union sockaddr_union* su, unsigned short port)
 			LM_CRIT("unknown address family %d\n", su->s.sa_family);
 	}
 }
-
 
 
 /* inits an ip_addr pointer from a sockaddr_union ip address */
@@ -747,7 +756,6 @@ static inline char* suip2a(union sockaddr_union* su, int su_len)
 	buf[offs]=0;
 	return buf;
 }
-
 
 
 /* converts an ip_addr structure to a hostent, returns pointer to internal
