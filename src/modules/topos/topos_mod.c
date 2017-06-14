@@ -83,8 +83,8 @@ int _tps_clean_interval = 60;
 
 sanity_api_t scb;
 
-int tps_msg_received(void *data);
-int tps_msg_sent(void *data);
+int tps_msg_received(sr_event_param_t *evp);
+int tps_msg_sent(sr_event_param_t *evp);
 
 /** module functions */
 /* Module init function prototype */
@@ -274,7 +274,7 @@ int tps_prepare_msg(sip_msg_t *msg)
 /**
  *
  */
-int tps_msg_received(void *data)
+int tps_msg_received(sr_event_param_t *evp)
 {
 	sip_msg_t msg;
 	str *obuf;
@@ -282,7 +282,7 @@ int tps_msg_received(void *data)
 	int dialog;
 	int ret;
 
-	obuf = (str*)data;
+	obuf = (str*)evp->data;
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
@@ -342,14 +342,14 @@ done:
 /**
  *
  */
-int tps_msg_sent(void *data)
+int tps_msg_sent(sr_event_param_t *evp)
 {
 	sip_msg_t msg;
 	str *obuf;
 	int dialog;
 	int local;
 
-	obuf = (str*)data;
+	obuf = (str*)evp->data;
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
