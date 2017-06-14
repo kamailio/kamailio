@@ -42,8 +42,8 @@ str nio_msg_avp_param;
 int_str nio_msg_avp_name;
 unsigned short nio_msg_avp_type;
 
-int nio_msg_received(void *data);
-int nio_msg_sent(void *data);
+int nio_msg_received(sr_event_param_t *evp);
+int nio_msg_sent(sr_event_param_t *evp);
 
 int nio_check_incoming(void);
 char* nio_msg_update(sip_msg_t *msg, unsigned int *olen);

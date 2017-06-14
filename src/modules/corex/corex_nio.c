@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2009 SIP-Router.org
  *
  * This file is part of Extensible SIP Router, a free SIP server.
@@ -43,14 +41,14 @@ int nio_intercept_init(void)
 	}
 
 	nio_route_no=route_no;
-	
+
 	if (nio_min_msg_len < 0)
 	{
 		LM_WARN("min_msg_len is less then zero, setting it to zero");
 		nio_min_msg_len = 0;
 	}
 
-	if (nio_msg_avp_param.s && nio_msg_avp_param.len > 0) 
+	if (nio_msg_avp_param.s && nio_msg_avp_param.len > 0)
 	{
 		if (pv_parse_spec(&nio_msg_avp_param, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP)
@@ -83,7 +81,7 @@ int nio_intercept_init(void)
 /**
  *
  */
-int nio_msg_received(void *data)
+int nio_msg_received(sr_event_param_t *evp)
 {
     sip_msg_t msg;
     str *obuf;
@@ -92,7 +90,7 @@ int nio_msg_received(void *data)
     struct usr_avp *avp;
     struct run_act_ctx ra_ctx;
 
-    obuf = (str*)data;
+    obuf = (str*)evp->data;
 
     if (obuf->len < nio_min_msg_len) {
         return -1;
@@ -136,7 +134,7 @@ int nio_msg_received(void *data)
 /**
  *
  */
-int nio_msg_sent(void *data)
+int nio_msg_sent(sr_event_param_t *evp)
 {
     sip_msg_t msg;
     str *obuf;
@@ -144,7 +142,7 @@ int nio_msg_sent(void *data)
     struct usr_avp *avp;
     struct run_act_ctx ra_ctx;
 
-    obuf = (str*)data;
+    obuf = (str*)evp->data;
 
     if (obuf->len < nio_min_msg_len) {
         return -1;
