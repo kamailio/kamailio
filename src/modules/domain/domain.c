@@ -175,7 +175,7 @@ int w_lookup_domain(struct sip_msg *_msg, char *_sp, char *_prefix)
 
 	int_str name, val;
 	struct attr_list *attrs;
-	str *prefix, did;
+	str did;
 	unsigned short flags;
 	str sdomain;
 	str sprefix;
@@ -219,7 +219,7 @@ int w_lookup_domain(struct sip_msg *_msg, char *_sp, char *_prefix)
 			return -1;
 		}
 		LM_DBG("added AVP '%.*s'\n", name.s.len, name.s.s);
-		if(prefix)
+		if(_prefix)
 			pkg_free(name.s.s);
 		attrs = attrs->next;
 	}
