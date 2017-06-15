@@ -137,6 +137,7 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 	outb.len = len;
 	if(!(flags&1)) {
 		evp.data = (void*)&outb;
+		evp.dst = dst;
 		sr_event_exec(SREV_NET_DATA_OUT, &evp);
 	}
 
