@@ -35,6 +35,10 @@ Daniel-Constantin Mierla
               3.8. callid_prefix (str)
               3.9. sanity_checks (integer)
 
+        4. Event Routes
+
+              4.1. event_route[topoh:msg-outgoing]
+
    List of Examples
 
    1.1. Set mask_key parameter
@@ -46,6 +50,7 @@ Daniel-Constantin Mierla
    1.7. Set vparam_prefix parameter
    1.8. Set callid_prefix parameter
    1.9. Set sanity_checks parameter
+   1.10. Usage of event_route[topoh:msg-outgoing]
 
 Chapter 1. Admin Guide
 
@@ -68,6 +73,10 @@ Chapter 1. Admin Guide
         3.7. vparam_prefix (str)
         3.8. callid_prefix (str)
         3.9. sanity_checks (integer)
+
+   4. Event Routes
+
+        4.1. event_route[topoh:msg-outgoing]
 
 1. Overview
 
@@ -225,4 +234,29 @@ modparam("topoh", "callid_prefix", "***")
    Example 1.9. Set sanity_checks parameter
 ...
 modparam("topoh", "sanity_checks", 1)
+...
+
+4. Event Routes
+
+   4.1. event_route[topoh:msg-outgoing]
+
+4.1. event_route[topoh:msg-outgoing]
+
+   It is executed before doing topology hiding processing for an outgoing
+   SIP message. If 'drop' is executed inside the event route, then the
+   module skips doing the topology hiding.
+
+   Inside the event route the variables $sndto(ip), $sndto(port) and
+   $sndto(proto) point to the destination. The SIP message is not the one
+   to be sent out, but an internally generated one at startup, to avoid
+   reparsing the outgoing SIP message for the cases when topology hiding
+   is not wanted.
+
+   Example 1.10. Usage of event_route[topoh:msg-outgoing]
+...
+event_route[topoh:msg-outgoing] {
+  if($sndto(ip)=="10.1.1.10") {
+    drop;
+  }
+}
 ...
