@@ -42,6 +42,7 @@
 
 typedef struct sr_event_param {
 	void *data;
+	dest_info_t *dst;
 } sr_event_param_t;
 
 typedef int (*sr_event_cb_f)(sr_event_param_t *evp);
