@@ -62,7 +62,7 @@ unsigned char _mt_char_table[MT_CHAR_TABLE_SIZE];
 void mt_char_table_init(void)
 {
 	unsigned int i;
-	for(i=0; i<=MT_CHAR_TABLE_SIZE; i++) {
+	for(i=0; i<MT_CHAR_TABLE_SIZE; i++) {
 		_mt_char_table[i] = MT_CHAR_TABLE_NOTSET;
 	}
 	for(i=0; i<mt_char_list.len; i++) {
