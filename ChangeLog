@@ -2,6 +2,21 @@
 
 ===================== Changes Since Version 4.4.5 ===========================
 
+commit 3ee232257fbd956b85fa23cf3a5f8766fabd6889
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 16 11:54:53 2017 +0200
+
+    ratelimit: removed unused variable
+
+commit b5a4c125117d46e682595b04b22a6f850ba88087
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 16 11:49:28 2017 +0200
+
+    mtree: avoid char array access over the size
+    
+    (cherry picked from commit 24718a4f0a7579abf9f32967cce2b86e5973cc6d)
+    (cherry picked from commit 2d1dc7cfcde0410e44a8d53849c319c9d234a7b3)
+
 commit 2634a759e8493ebd4f7ce8cbf467d4bf03f5eb71
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Fri Jun 16 11:04:06 2017 +0200
