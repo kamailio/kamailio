@@ -324,7 +324,6 @@ static int get_cpuload(double * load)
 	static int first_time = 1;
 	FILE * f = fopen("/proc/stat", "r");
 	double vload;
-	int ncpu;
 	static int errormsg = 0;
 
 	if (! f) {
