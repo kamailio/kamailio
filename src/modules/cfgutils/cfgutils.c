@@ -647,7 +647,20 @@ static int dbg_abort(struct sip_msg* msg, char* foo, char* bar)
 	return 0;
 }
 
+static int ki_abort(sip_msg_t* msg)
+{
+	LM_CRIT("abort called\n");
+	abort();
+	return 0;
+}
+
 static int dbg_pkg_status(struct sip_msg* msg, char* foo, char* bar)
+{
+	pkg_status();
+	return 1;
+}
+
+static int ki_pkg_status(sip_msg_t* msg)
 {
 	pkg_status();
 	return 1;
@@ -659,13 +672,31 @@ static int dbg_shm_status(struct sip_msg* msg, char* foo, char* bar)
 	return 1;
 }
 
+static int ki_shm_status(sip_msg_t* msg)
+{
+	shm_status();
+	return 1;
+}
+
 static int dbg_pkg_summary(struct sip_msg* msg, char* foo, char* bar)
 {
 	pkg_sums();
 	return 1;
 }
 
+static int ki_pkg_summary(sip_msg_t* msg)
+{
+	pkg_sums();
+	return 1;
+}
+
 static int dbg_shm_summary(struct sip_msg* msg, char* foo, char* bar)
+{
+	shm_sums();
+	return 1;
+}
+
+static int ki_shm_summary(sip_msg_t* msg)
 {
 	shm_sums();
 	return 1;
@@ -964,6 +995,31 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 	},
 	{ str_init("cfgutils"), str_init("rand_event"),
 		SR_KEMIP_INT, ki_rand_event,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("abort"),
+		SR_KEMIP_INT, ki_abort,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("pkg_status"),
+		SR_KEMIP_INT, ki_pkg_status,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("shm_status"),
+		SR_KEMIP_INT, ki_shm_status,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("pkg_summary"),
+		SR_KEMIP_INT, ki_pkg_summary,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("shm_summary"),
+		SR_KEMIP_INT, ki_shm_summary,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
