@@ -943,6 +943,18 @@ static int w_core_hash(struct sip_msg *msg, char *p1, char *p2, char *p3)
         return core_hash(&s1, s2.len ? &s2 : NULL, size) + 1;
 }
 
+static int ki_core_hash(sip_msg_t *msg, str *s1, str *s2, int sz)
+{
+	int size;
+
+	size = sz;
+
+	if (size <= 0) size = 2;
+	else size = 1 << size;
+
+	return core_hash(s1, (s2 && s2->len>0)?s2:NULL, size) + 1;
+}
+
 /**
  * @brief bind functions to CFGUTILS API structure
  */
@@ -1021,6 +1033,11 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 	{ str_init("cfgutils"), str_init("shm_summary"),
 		SR_KEMIP_INT, ki_shm_summary,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("core_hash"),
+		SR_KEMIP_INT, ki_core_hash,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
