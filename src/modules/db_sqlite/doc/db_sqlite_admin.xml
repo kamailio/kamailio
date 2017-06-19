@@ -73,7 +73,7 @@
 		</para>
 		<para>
 		<emphasis>
-			By default all the db connection are using "SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE"
+			By default all the db connections are using "SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE"
 		</emphasis>
 		</para>
 		<example>
@@ -82,6 +82,35 @@
 ...
 modparam("db_sqlite","db_set_readonly","/var/mydb.sqlite")
 modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using the sqlops module
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="db_sqlite.p.db_set_journal_mode">
+		<title><varname>db_set_journal_mode</varname> (string)</title>
+		<para>
+		This will set the db connection journal mode, for the given connection.
+		The value is the full path to the sqlite file used for example in any db_url or sqlops/sqlcon
+
+		Other journal mode are : DELETE | TRUNCATE | PERSIST | MEMORY | WAL | OFF
+
+		This parameter may be set multiple times to set many DB connections to readonly in the same configuration file.
+		</para>
+		<para>
+		<emphasis>
+			By default all the db connections are using sqlite default journaling mode.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_set_journal_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# In this example we are using Write-Ahead Logging in order to update the database from another process(external to Kamailio) without facing any locking.
+
+#!subst "!DB_FILE!/var/mydb.sqlite!"
+modparam("db_sqlite","db_set_readonly","DB_FILE")   # We are also opening the database in readonly
+modparam("db_sqlite","db_set_journal_mode","DB_FILE=WAL;")
+modparam("sqlops","sqlcon","lrn=>sqlite:///DB_FILE")
 ...
 		</programlisting>
 		</example>
