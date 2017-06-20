@@ -59,6 +59,7 @@ static unsigned int opt_settings[5][3] = {
 
 int fifo_err;
 
+#ifdef MI_REMOVED
 static int updated;
 
 static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]);
@@ -67,7 +68,6 @@ static int update_route_data(fifo_opt_t * opts);
 
 static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domain, fifo_opt_t * opts);
 
-#ifdef MI_REMOVED
 static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, char *prefix);
 
 static struct mi_root* print_replace_help(void);
@@ -75,6 +75,7 @@ static struct mi_root* print_replace_help(void);
 static struct mi_root* print_fifo_err(void);
 #endif
 
+#ifdef MI_REMOVED
 static int str_toklen(str * str, const char * delims)
 {
 	int len;
@@ -94,6 +95,7 @@ static int str_toklen(str * str, const char * delims)
 
 	return len;
 }
+#endif
 
 #ifdef MI_REMOVED
 /**
@@ -737,6 +739,7 @@ errout:
 #endif
 
 
+#ifdef MI_REMOVED
 /**
  * Does the work for update_route_data by recursively
  * traversing the routing tree
@@ -903,7 +906,6 @@ static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domai
 	return 0;
 }
 
-#ifdef MI_REMOVED
 /**
  * prints a short help text for fifo command usage
  */
