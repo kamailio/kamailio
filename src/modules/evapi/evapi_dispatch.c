@@ -461,7 +461,7 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	csock = accept(watcher->fd, (struct sockaddr *)&caddr, &clen);
 
 	if (csock < 0) {
-		LM_ERR("cannot accept the client\n");
+		LM_ERR("cannot accept the client '%s' err='%d'\n", gai_strerror(csock), csock);
 		free(evapi_client);
 		return;
 	}
