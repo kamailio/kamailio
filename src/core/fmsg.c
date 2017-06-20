@@ -69,16 +69,33 @@ int faked_msg_init(void)
 	return 0;
 }
 
-sip_msg_t* faked_msg_next(void)
+static inline sip_msg_t* faked_msg_next_id(int mode)
 {
 	_faked_msg.id = 1 + _faked_msg_no++;
 	_faked_msg.pid = my_pid();
 	memset(&_faked_msg.tval, 0, sizeof(struct timeval));
+	if(mode) clear_branches();
 	return &_faked_msg;
+}
+
+sip_msg_t* faked_msg_next(void)
+{
+	return faked_msg_next_id(0);
+}
+
+sip_msg_t* faked_msg_next_clear(void)
+{
+	return faked_msg_next_id(1);
 }
 
 sip_msg_t* faked_msg_get_next(void)
 {
 	faked_msg_init();
 	return faked_msg_next();
+}
+
+sip_msg_t* faked_msg_get_next_clear(void)
+{
+	faked_msg_init();
+	return faked_msg_next_clear();
 }
