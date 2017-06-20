@@ -739,6 +739,34 @@ int pv_get_rcvport(struct sip_msg *msg, pv_param_t *param,
 			&msg->rcv.bind_address->port_no_str);
 }
 
+int pv_get_rcv_advertised_ip(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address!=NULL
+			&& msg->rcv.bind_address->useinfo.address_str.len > 0) {
+		return pv_get_strval(msg, param, res, &msg->rcv.bind_address->useinfo.address_str);
+	}
+
+	return pv_get_rcvip(msg, param, res);
+}
+
+int pv_get_rcv_advertised_port(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address!=NULL
+			&& msg->rcv.bind_address->useinfo.port_no_str.len > 0) {
+		return pv_get_strval(msg, param, res, &msg->rcv.bind_address->useinfo.port_no_str);
+	}
+
+	return pv_get_rcvport(msg, param, res);
+}
+
 /**
  *
  */

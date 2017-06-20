@@ -375,6 +375,12 @@ static pv_export_t mod_pvs[] = {
 	{{"Rp", (sizeof("Rp")-1)}, /* */
 		PVT_OTHER, pv_get_rcvport, 0,
 		0, 0, 0, 0},
+	{{"RAi", (sizeof("RAi")-1)}, /* */
+		PVT_OTHER, pv_get_rcv_advertised_ip, 0,
+		0, 0, 0, 0},
+	{{"RAp", (sizeof("RAp")-1)}, /* */
+		PVT_OTHER, pv_get_rcv_advertised_port, 0,
+		0, 0, 0, 0},
 	{{"sf", (sizeof("sf")-1)}, /* */
 		PVT_OTHER, pv_get_sflags, pv_set_sflags,
 		0, 0, 0, 0},
