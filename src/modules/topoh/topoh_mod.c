@@ -557,7 +557,7 @@ int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
 	}
 	set_route_type(rtb);
 	if(ctx.run_flags&DROP_R_F) {
-		LM_ERR("exit due to 'drop' in event route\n");
+		LM_DBG("exit due to 'drop' in event route\n");
 		p_onsend=NULL;
 		return 1;
 	}
