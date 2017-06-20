@@ -51,7 +51,6 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 	struct sqlite_connection *con;
 	int rc;
 	int flags = 0;
-	db_param_list_t *db_param;
 
 	con = pkg_malloc(sizeof(*con));
 	if (!con) {
@@ -63,7 +62,8 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 	con->hdr.ref = 1;
 	con->hdr.id = (struct db_id*) id; /* set here - freed on error */
 
-	db_param = db_param_list_search(id->database);
+	str db_name = str_init((char *) id->database);
+	db_param_list_t *db_param = db_param_list_search(db_name);
 	if (db_param && db_param->readonly) {
 		// The database is opened in read-only mode. If the database does not already exist, an error is returned.
 		flags |= SQLITE_OPEN_READONLY;
@@ -79,6 +79,32 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 		return NULL;
 	}
 
+	if (db_param && db_param->journal_mode.s) {
+		sqlite3_stmt *stmt;
+		char query[32];
+		snprintf(query, 32, "PRAGMA journal_mode=%s", db_param->journal_mode.s);
+		int rc = sqlite3_prepare_v2(con->conn, query, strlen(query), &stmt, NULL);
+		if (rc != SQLITE_OK) {
+			LM_ERR("error prepare query [%s]\n", sqlite3_errmsg(con->conn));
+		}
+		while (1) {
+			rc = sqlite3_step(stmt);
+			if (rc == SQLITE_DONE) {
+				break;
+			} else if (rc != SQLITE_ROW) {
+				LM_ERR("sqlite3_step[%s]\n", sqlite3_errmsg(con->conn));
+				return NULL;
+			} else {
+				rc = sqlite3_column_count(stmt);
+			}
+		}
+		if (stmt) {
+			if (sqlite3_finalize(stmt) != SQLITE_OK)  {
+				LM_ERR("sqlite3_finalize[%s]\n", sqlite3_errmsg(con->conn));
+			}
+		}
+		LM_DBG("[%s]\n", query);
+	}
 	return con;
 }
 
