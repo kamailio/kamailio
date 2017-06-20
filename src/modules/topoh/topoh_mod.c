@@ -408,7 +408,7 @@ int th_msg_sent(sr_event_param_t *evp)
 	obuf = (str*)evp->data;
 
 	if(th_execute_event_route(NULL, evp)==1) {
-		goto done;
+		return 0;
 	}
 
 	memset(&msg, 0, sizeof(sip_msg_t));
@@ -519,7 +519,7 @@ int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
 		}
 	}
 
-	if(_th_eventrt_outgoing<0 || keng==NULL) {
+	if(_th_eventrt_outgoing<0 && keng==NULL) {
 		return 0;
 	}
 
