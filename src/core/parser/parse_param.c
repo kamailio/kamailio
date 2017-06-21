@@ -460,7 +460,7 @@ static inline int parse_param_body(str *_s, param_t *_c, char separator)
  * 	t: out parameter
  * 	-1: on error
  * 	0: success, but expect a next paramter
- * 	1: success and exepect no more parameters
+ * 	1: success and expect no more parameters
  */
 static inline int parse_param2(
 		str *_s, pclass_t _c, param_hooks_t *_h, param_t *t, char separator)
@@ -533,7 +533,7 @@ error:
  * 	t: out parameter
  * 	-1: on error
  * 	0: success, but expect a next paramter
- * 	1: success and exepect no more parameters
+ * 	1: success and expect no more parameters
  */
 int parse_param(str *_s, pclass_t _c, param_hooks_t *_h, param_t *t)
 {
