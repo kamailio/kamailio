@@ -175,7 +175,7 @@ typedef struct _ds_set {
 	int nr;				/*!< number of items in dst set */
 	int last;			/*!< last used item in dst set (round robin) */
 	int wlast;			/*!< last used item in dst set (by weight) */
-	int rwlast;			/*!< last used item in dst set (by relaitive weight) */
+	int rwlast;			/*!< last used item in dst set (by relative weight) */
 	ds_dest_t *dlist;
 	unsigned int wlist[100];
 	unsigned int rwlist[100];
