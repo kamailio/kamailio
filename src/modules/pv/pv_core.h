@@ -127,6 +127,9 @@ int pv_get_callid(struct sip_msg *msg, pv_param_t *param,
 int pv_get_srcip(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_srcipz(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_srcport(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 

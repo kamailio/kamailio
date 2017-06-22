@@ -665,6 +665,18 @@ int pv_get_srcip(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &s);
 }
 
+int pv_get_srcipz(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	str s;
+	if(msg==NULL)
+		return -1;
+
+	s.s = ip_addr2strz(&msg->rcv.src_ip);
+	s.len = strlen(s.s);
+	return pv_get_strval(msg, param, res, &s);
+}
+
 int pv_get_srcport(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
