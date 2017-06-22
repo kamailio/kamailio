@@ -345,17 +345,10 @@ static const str XHTTP_PI_Response_Menu_Cmd_Table_2 = str_init("</tbody></table>
 
 static const str XHTTP_PI_NBSP = str_init("&nbsp;");
 static const str XHTTP_PI_SLASH = str_init("/");
-static const str XHTTP_PI_SEMICOLON = str_init(" : ");
 static const str XHTTP_PI_SQUOT_GT = str_init("'>");
 
-static const str XHTTP_PI_NODE_INDENT = str_init("\t");
-static const str XHTTP_PI_NODE_SEPARATOR = str_init(":: ");
 static const str XHTTP_PI_ATTR_SEPARATOR = str_init(" ");
 static const str XHTTP_PI_ATTR_VAL_SEPARATOR = str_init("=");
-
-static const str XHTTP_PI_BREAK = str_init("<br/>");
-static const str XHTTP_PI_CODE_1 = str_init("<pre>");
-static const str XHTTP_PI_CODE_2 = str_init("</pre>");
 
 static const str XHTTP_PI_Post_Form_1 = str_init("\n"\
 "		<form name=\"input\" method=\"get\">\n"
