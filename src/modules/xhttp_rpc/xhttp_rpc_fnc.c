@@ -171,9 +171,6 @@ static const str XHTTP_RPC_SLASH = str_init("/");
 static const str XHTTP_RPC_SEMICOLON = str_init(": ");
 
 static const str XHTTP_RPC_NODE_INDENT = str_init("\t");
-static const str XHTTP_RPC_NODE_SEPARATOR = str_init(":: ");
-static const str XHTTP_RPC_ATTR_SEPARATOR = str_init(" ");
-static const str XHTTP_RPC_ATTR_VAL_SEPARATOR = str_init("=");
 
 const str XHTTP_RPC_BREAK = str_init("<br/>");
 static const str XHTTP_RPC_CODE_1 = str_init("<pre>");
@@ -182,12 +179,6 @@ static const str XHTTP_RPC_CODE_2 = str_init("</pre>");
 static const str XHTTP_RPC_Post_1 = str_init("\n"\
 "               <form name=\"input\" method=\"get\">\n"\
 "                       <input type=\"text\" name=\"arg\"/>\n"\
-"                       <input type=\"submit\" value=\"Submit\"/>\n"\
-"               </form>\n");
-
-static const str XHTTP_RPC_Post_1a = str_init("\n"\
-"               <form name=\"input\" method=\"get\">\n"\
-"                       <textarea name=\"arg\" rows=\"2\" cols=\"60\"></textarea>\n"\
 "                       <input type=\"submit\" value=\"Submit\"/>\n"\
 "               </form>\n");
 
