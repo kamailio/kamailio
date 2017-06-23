@@ -43,8 +43,6 @@
 
 #define AMQP_WORKERS_RANKING PROC_XWORKER
 
-#define MAX_ROUTING_KEY_SIZE 255
-
 static int mod_init(void);
 static int  mod_child_init(int rank);
 static int fire_init_event(int rank);
@@ -93,8 +91,6 @@ db_locking_t kz_pua_lock_type = DB_LOCKING_WRITE;
 int dbk_use_hearbeats = 0;
 int dbk_single_consumer_on_reconnect = 1;
 int dbk_consume_messages_on_reconnect = 1;
-
-int kz_max_routing_key_size = MAX_ROUTING_KEY_SIZE;
 
 int startup_time = 0;
 
@@ -202,7 +198,6 @@ static param_export_t params[] = {
     {"amqps_verify_peer", INT_PARAM, &kz_amqps_verify_peer},
     {"amqps_verify_hostname", INT_PARAM, &kz_amqps_verify_hostname},
 	{"pua_lock_type", INT_PARAM, &kz_pua_lock_type},
-    {"amqp_routing_key_max_size", INT_PARAM, &kz_max_routing_key_size},
     {0, 0, 0}
 };
 
