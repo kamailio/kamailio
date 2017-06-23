@@ -1847,7 +1847,7 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 
         if(ps->code == 404
 	   || ps->code == 481
-	   || (ps->code == 408 && timeout_rm_subs)
+	   || (ps->code == 408 && timeout_rm_subs && subs->status != TERMINATED_STATUS)
 	   || pres_get_delete_sub()) {
 		delete_subs(&subs->pres_uri, &subs->event->name,
 				&subs->to_tag, &subs->from_tag, &subs->callid);
