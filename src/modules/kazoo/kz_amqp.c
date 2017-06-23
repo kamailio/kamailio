@@ -80,8 +80,6 @@ extern int kz_amqps_verify_hostname;
 
 extern pv_spec_t kz_query_timeout_spec;
 
-extern int kz_max_routing_key_size;
-
 const amqp_bytes_t kz_amqp_empty_bytes = { 0, NULL };
 const amqp_table_t kz_amqp_empty_table = { 0, NULL };
 
@@ -1235,8 +1233,8 @@ int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char
 			return -1;
 		}
 
-		if (routing_key_s.len > kz_max_routing_key_size) {
-			LM_ERR("routing_key size (%d) > max %d\n", routing_key_s.len, kz_max_routing_key_size);
+		if (routing_key_s.len > MAX_ROUTING_KEY_SIZE) {
+			LM_ERR("routing_key size (%d) > max %d\n", routing_key_s.len, MAX_ROUTING_KEY_SIZE);
 			return -1;
 		}
 
@@ -1298,8 +1296,8 @@ int kz_amqp_async_query(struct sip_msg* msg, char* _exchange, char* _routing_key
 		  goto error;
 	  }
 
-	  if (routing_key_s.len > kz_max_routing_key_size) {
-		  LM_ERR("routing_key size (%d) > max %d\n", routing_key_s.len, kz_max_routing_key_size);
+	  if (routing_key_s.len > MAX_ROUTING_KEY_SIZE) {
+		  LM_ERR("routing_key size (%d) > max %d\n", routing_key_s.len, MAX_ROUTING_KEY_SIZE);
 		  return -1;
 	  }
 
@@ -1451,8 +1449,8 @@ int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, cha
 			return -1;
 		}
 
-		if (routing_key_s.len > kz_max_routing_key_size) {
-			LM_ERR("routing_key size (%d) > max %d\n", routing_key_s.len, kz_max_routing_key_size);
+		if (routing_key_s.len > MAX_ROUTING_KEY_SIZE) {
+			LM_ERR("routing_key size (%d) > max %d\n", routing_key_s.len, MAX_ROUTING_KEY_SIZE);
 			return -1;
 		}
 
@@ -2016,7 +2014,7 @@ void kz_amqp_util_encode(const str * key, char *pdest) {
     	*dest++ = key->s[0];
     	return;
     }
-    for (p = key->s, end = key->s + key->len; p < end && ((dest - pdest) < (kz_max_routing_key_size - 1)); p++) {
+    for (p = key->s, end = key->s + key->len; p < end && ((dest - pdest) < MAX_ROUTING_KEY_SIZE); p++) {
 		if (KEY_SAFE(*p)) {
 			*dest++ = *p;
 		} else if (*p == '.') {
@@ -2035,13 +2033,9 @@ void kz_amqp_util_encode(const str * key, char *pdest) {
 
 int kz_amqp_encode_ex(str* unencoded, pv_value_p dst_val)
 {
-	char *routing_key_buff = (char*)pkg_malloc(kz_max_routing_key_size);
-	if(routing_key_buff == NULL) {
-		LM_ERR("no more private memory allocating for amqp_encode\n");
-	} else {
-		memset(routing_key_buff,0, sizeof(routing_key_buff));
-		kz_amqp_util_encode(unencoded, routing_key_buff);
-	}
+	char routing_key_buff[MAX_ROUTING_KEY_SIZE+1];
+	memset(routing_key_buff,0, sizeof(routing_key_buff));
+	kz_amqp_util_encode(unencoded, routing_key_buff);
 
 	int len = strlen(routing_key_buff);
 	dst_val->rs.s = pkg_malloc(len+1);
@@ -2049,10 +2043,6 @@ int kz_amqp_encode_ex(str* unencoded, pv_value_p dst_val)
 	dst_val->rs.s[len] = '\0';
 	dst_val->rs.len = len;
 	dst_val->flags = PV_VAL_STR | PV_VAL_PKG;
-
-	if(routing_key_buff) {
-		pkg_free(routing_key_buff);
-	}
 
 	return 1;
 
@@ -2070,8 +2060,8 @@ int kz_amqp_encode(struct sip_msg* msg, char* unencoded, char* encoded)
 		return -1;
 	}
 
-	if (unencoded_s.len > kz_max_routing_key_size) {
-		LM_ERR("routing_key size (%d) > max %d\n", unencoded_s.len, kz_max_routing_key_size);
+	if (unencoded_s.len > MAX_ROUTING_KEY_SIZE) {
+		LM_ERR("routing_key size (%d) > max %d\n", unencoded_s.len, MAX_ROUTING_KEY_SIZE);
 		return -1;
 	}
 
