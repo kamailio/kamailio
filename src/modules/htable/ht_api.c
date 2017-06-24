@@ -641,8 +641,7 @@ int ht_del_cell(ht_t *ht, str *name)
 	return 0;
 }
 
-ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
-		ht_cell_t *old)
+ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 {
 	unsigned int idx;
 	unsigned int hid;
@@ -661,7 +660,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	if(ht->htexpire>0)
 		now = time(NULL);
 	prev = NULL;
-	if(mode) ht_slot_lock(ht, idx);
+	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 	{
@@ -683,7 +682,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 					it->value.n = ht->initval.n;
 					/* increment will be done below */
 				} else {
-					if(mode) ht_slot_unlock(ht, idx);
+					ht_slot_unlock(ht, idx);
 					return NULL;
 				}
 			}
@@ -691,7 +690,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 			if(it->flags&AVP_VAL_STR)
 			{
 				/* string value cannot be incremented */
-				if(mode) ht_slot_unlock(ht, idx);
+				ht_slot_unlock(ht, idx);
 				return NULL;
 			} else {
 				it->value.n += val;
@@ -702,7 +701,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 					if(old->msize>=it->msize)
 					{
 						memcpy(old, it, it->msize);
-						if(mode) ht_slot_unlock(ht, idx);
+						ht_slot_unlock(ht, idx);
 						return old;
 					}
 				}
@@ -710,7 +709,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 				if(cell!=NULL)
 					memcpy(cell, it, it->msize);
 
-				if(mode) ht_slot_unlock(ht, idx);
+				ht_slot_unlock(ht, idx);
 				return cell;
 			}
 		}
@@ -720,7 +719,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	/* add val if htable has an integer init value */
 	if(ht->flags!=PV_VAL_INT)
 	{
-		if(mode) ht_slot_unlock(ht, idx);
+		ht_slot_unlock(ht, idx);
 		return NULL;
 	}
 	isval.n = ht->initval.n + val;
@@ -728,7 +727,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	if(it == NULL)
 	{
 		LM_ERR("cannot create new cell.\n");
-		if(mode) ht_slot_unlock(ht, idx);
+		ht_slot_unlock(ht, idx);
 		return NULL;
 	}
 	it->expire = now + ht->htexpire;
@@ -753,7 +752,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 		if(old->msize>=it->msize)
 		{
 			memcpy(old, it, it->msize);
-			if(mode) ht_slot_unlock(ht, idx);
+			ht_slot_unlock(ht, idx);
 			return old;
 		}
 	}
@@ -761,7 +760,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	if(cell!=NULL)
 		memcpy(cell, it, it->msize);
 
-	if(mode) ht_slot_unlock(ht, idx);
+	ht_slot_unlock(ht, idx);
 	return cell;
 }
 

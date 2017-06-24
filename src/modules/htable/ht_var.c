@@ -331,7 +331,7 @@ int pv_get_ht_add(struct sip_msg *msg,  pv_param_t *param,
 		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
-	htc = ht_cell_value_add(hpv->ht, &htname, val, 1, _htc_local);
+	htc = ht_cell_value_add(hpv->ht, &htname, val, _htc_local);
 	if(_htc_local!=htc)
 	{
 		ht_cell_pkg_free(_htc_local);
