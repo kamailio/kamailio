@@ -1973,7 +1973,7 @@ int parse_protohostport(str* ins, sr_phostp_t *r)
 	char* second; /* second ':' occurrence */
 	char* p;
 	int bracket;
-	char* tmp;
+	str tmp=STR_NULL;
 
 	first=second=0;
 	bracket=0;
@@ -2012,15 +2012,20 @@ int parse_protohostport(str* ins, sr_phostp_t *r)
 	if (second) { /* 2 ':' found => check if valid */
 		if (parse_proto((unsigned char*)ins->s, first-ins->s, &r->proto)<0)
 			goto error_proto;
-		r->port=strtol(second+1, &tmp, 10);
-		if ((tmp==0)||(*tmp)||(tmp==second+1)) goto error_port;
+
+		tmp.s=second+1;
+		tmp.len=(ins->s + ins->len) - tmp.s;
+
+		if (str2int(&tmp, (unsigned int *)&(r->port))<0) goto error_port;
+
 		r->host.s=first+1;
 		r->host.len=(int)(second-r->host.s);
 		goto end;
 	}
 	/* only 1 ':' found => it's either proto:host or host:port */
-	r->port=strtol(first+1, &tmp, 10);
-	if ((tmp==0)||(*tmp)||(tmp==first+1)){
+	tmp.s=first+1;
+	tmp.len=(ins->s + ins->len) - tmp.s;
+	if (str2int(&tmp, (unsigned int *)&(r->port))<0) {
 		/* invalid port => it's proto:host */
 		if (parse_proto((unsigned char*)ins->s, first-ins->s, &r->proto)<0)
 			goto error_proto;
