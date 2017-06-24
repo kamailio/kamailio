@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -40,7 +40,7 @@ int pv_parse_time_name(pv_spec_p sp, str *in)
 
 	switch(in->len)
 	{
-		case 3: 
+		case 3:
 			if(strncmp(in->s, "sec", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else if(strncmp(in->s, "min", 3)==0)
@@ -49,7 +49,7 @@ int pv_parse_time_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else goto error;
 		break;
-		case 4: 
+		case 4:
 			if(strncmp(in->s, "hour", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "mday", 4)==0)
@@ -62,7 +62,7 @@ int pv_parse_time_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 7;
 			else goto error;
 		break;
-		case 5: 
+		case 5:
 			if(strncmp(in->s, "isdst", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 8;
 			else goto error;
@@ -145,27 +145,31 @@ int get_time(struct sip_msg *msg, pv_param_t *param,
 	switch(param->pvn.u.isname.name.n)
 	{
 		case 1:
-			return pv_get_uintval(msg, param, res, (unsigned int)_cfgutils_ts->tm_min);
+			return pv_get_uintval(msg, param, res,
+					(unsigned int)_cfgutils_ts->tm_min);
 		case 2:
-			return pv_get_uintval(msg, param, res, (unsigned int)_cfgutils_ts->tm_hour);
+			return pv_get_uintval(msg, param, res,
+					(unsigned int)_cfgutils_ts->tm_hour);
 		case 3:
-			return pv_get_uintval(msg, param, res, (unsigned int)_cfgutils_ts->tm_mday);
+			return pv_get_uintval(msg, param, res,
+					(unsigned int)_cfgutils_ts->tm_mday);
 		case 4:
-			return pv_get_uintval(msg, param, res, 
+			return pv_get_uintval(msg, param, res,
 					(unsigned int)(_cfgutils_ts->tm_mon+1));
 		case 5:
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)(_cfgutils_ts->tm_year+1900));
 		case 6:
-			return pv_get_uintval(msg, param, res, 
+			return pv_get_uintval(msg, param, res,
 					(unsigned int)(_cfgutils_ts->tm_wday+1));
 		case 7:
-			return pv_get_uintval(msg, param, res, 
+			return pv_get_uintval(msg, param, res,
 					(unsigned int)(_cfgutils_ts->tm_yday+1));
 		case 8:
 			return pv_get_sintval(msg, param, res, _cfgutils_ts->tm_isdst);
 		default:
-			return pv_get_uintval(msg, param, res, (unsigned int)_cfgutils_ts->tm_sec);
+			return pv_get_uintval(msg, param, res,
+					(unsigned int)_cfgutils_ts->tm_sec);
 	}
 }
 
@@ -243,7 +247,7 @@ int pv_get_timenowf(struct sip_msg *msg, pv_param_t *param,
 {
 	str s;
 	time_t t;
-	
+
 	t = time(NULL);
 	s.s = ctime(&t);
 	s.len = strlen(s.s)-1;
@@ -265,12 +269,12 @@ int pv_get_timef(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	str s;
-	
+
 	if(msg==NULL)
 		return -1;
 
 	msg_set_time(msg);
-	
+
 	s.s = ctime(&msg->tval.tv_sec);
 	s.len = strlen(s.s)-1;
 	return pv_get_strintval(msg, param, res, &s, (int)msg->tval.tv_sec);
@@ -363,5 +367,3 @@ error:
 	LM_ERR("unknown PV timeval name %.*s\n", in->len, in->s);
 	return -1;
 }
-
-
