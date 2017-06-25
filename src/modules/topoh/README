@@ -34,6 +34,8 @@ Daniel-Constantin Mierla
               3.7. vparam_prefix (str)
               3.8. callid_prefix (str)
               3.9. sanity_checks (integer)
+              3.10. uri_prefix_checks (integer)
+              3.11. event_callback (str)
 
         4. Event Routes
 
@@ -50,7 +52,9 @@ Daniel-Constantin Mierla
    1.7. Set vparam_prefix parameter
    1.8. Set callid_prefix parameter
    1.9. Set sanity_checks parameter
-   1.10. Usage of event_route[topoh:msg-outgoing]
+   1.10. Set uri_prefix_checks parameter
+   1.11. Set event_callback parameter
+   1.12. Usage of event_route[topoh:msg-outgoing]
 
 Chapter 1. Admin Guide
 
@@ -73,6 +77,8 @@ Chapter 1. Admin Guide
         3.7. vparam_prefix (str)
         3.8. callid_prefix (str)
         3.9. sanity_checks (integer)
+        3.10. uri_prefix_checks (integer)
+        3.11. event_callback (str)
 
    4. Event Routes
 
@@ -122,6 +128,8 @@ Chapter 1. Admin Guide
    3.7. vparam_prefix (str)
    3.8. callid_prefix (str)
    3.9. sanity_checks (integer)
+   3.10. uri_prefix_checks (integer)
+   3.11. event_callback (str)
 
 3.1. mask_key (str)
 
@@ -236,6 +244,46 @@ modparam("topoh", "callid_prefix", "***")
 modparam("topoh", "sanity_checks", 1)
 ...
 
+3.10. uri_prefix_checks (integer)
+
+   If set to 1, topoh module will check if URIs to be decoded match the
+   expected prefix composed from mask IP and parameter name prefix. It can
+   make the topoh processing safer by avoiding to try decoding URIs which
+   were not encoded previously by topoh.
+
+   Note: do not enable this option if you have SIP devices that can alter
+   the URI values it takes from Contact or Record-Route headers (like
+   adding port 5060 when no port is in received URIs, or thet introduce
+   new parameters at unknown position).
+
+   Default value is 0.
+
+   Example 1.10. Set uri_prefix_checks parameter
+...
+modparam("topoh", "uri_prefix_checks", 1)
+...
+
+3.11. event_callback (str)
+
+   The name of the function in the KEMI configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event.
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.11. Set event_callback parameter
+...
+modparam("topoh", "event_callback", "ksr_topoh_event")
+...
+-- event callback function implemented in Lua
+function ksr_topoh_event(evname)
+        KSR.info("===== topoh module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
 4. Event Routes
 
    4.1. event_route[topoh:msg-outgoing]
@@ -252,7 +300,7 @@ modparam("topoh", "sanity_checks", 1)
    reparsing the outgoing SIP message for the cases when topology hiding
    is not wanted.
 
-   Example 1.10. Usage of event_route[topoh:msg-outgoing]
+   Example 1.12. Usage of event_route[topoh:msg-outgoing]
 ...
 event_route[topoh:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
