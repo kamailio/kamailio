@@ -9,29 +9,28 @@
 ]>
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
-    <bookinfo>
+	<bookinfo>
 	<title>topoh Module</title>
 	<productname class="trade">sip-router.org</productname>
 	<authorgroup>
-	    <author>
+		<author>
 		<firstname>Daniel-Constantin</firstname>
 		<surname>Mierla</surname>
 		<email>miconda@gmail.com</email>
-	    </author>
-	    <editor>
+		</author>
+		<editor>
 		<firstname>Daniel-Constantin</firstname>
 		<surname>Mierla</surname>
 		<email>miconda@gmail.com</email>
-	    </editor>
+		</editor>
 	</authorgroup>
 	<copyright>
-	    <year>2009</year>
-	    <holder>&fhg;</holder>
+		<year>2009</year>
+		<holder>&fhg;</holder>
 	</copyright>
-    </bookinfo>
-    <toc></toc>
-    
-    <xi:include href="topoh_admin.xml"/>
-    
-    
+	</bookinfo>
+	<toc></toc>
+
+	<xi:include href="topoh_admin.xml"/>
+
 </book>

@@ -19,7 +19,7 @@
 
 /*!
  * \file
- * \brief SIP-router topoh :: 
+ * \brief SIP-router topoh ::
  * \ingroup topoh
  * Module: \ref topoh
  */
