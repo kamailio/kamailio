@@ -77,8 +77,10 @@ str th_uri_prefix = {0, 0};
 int th_param_mask_callid = 0;
 
 int th_sanity_checks = 0;
-sanity_api_t scb;
+int th_uri_prefix_checks = 0;
 int th_mask_addr_myself = 0;
+
+sanity_api_t scb;
 
 int th_msg_received(sr_event_param_t *evp);
 int th_msg_sent(sr_event_param_t *evp);
@@ -101,6 +103,7 @@ static param_export_t params[]={
 	{"vparam_prefix",	PARAM_STR, &th_vparam_prefix},
 	{"callid_prefix",	PARAM_STR, &th_callid_prefix},
 	{"sanity_checks",	PARAM_INT, &th_sanity_checks},
+	{"uri_prefix_checks",	PARAM_INT, &th_uri_prefix_checks},
 	{"event_callback",	PARAM_STR, &_th_eventrt_callback},
 	{0,0,0}
 };
