@@ -57,6 +57,7 @@ extern str th_vparam_prefix;
 
 extern int th_param_mask_callid;
 extern int th_mask_addr_myself;
+extern int th_uri_prefix_checks;
 
 int th_skip_rw(char *s, int len)
 {
@@ -391,8 +392,8 @@ int th_unmask_via(sip_msg_t *msg, str *cookie)
 			if(i!=1)
 			{
 				/* Skip if via is not encoded */
-				if (via->host.len!=th_ip.len
-						|| strncasecmp(via->host.s, th_ip.s, th_ip.len)!=0)
+				if (th_uri_prefix_checks && (via->host.len!=th_ip.len
+						|| strncasecmp(via->host.s, th_ip.s, th_ip.len)!=0))
 				{
 					LM_DBG("via %d is not encoded",i);
 					continue;
@@ -687,10 +688,13 @@ int th_unmask_route(sip_msg_t *msg)
 			if(i!=1)
 			{
 				/* Skip if route is not encoded */
-				if ((rr->nameaddr.uri.len<th_uri_prefix.len) ||
-						(strncasecmp(rr->nameaddr.uri.s,th_uri_prefix.s,th_uri_prefix.len)!=0))
+				if (th_uri_prefix_checks
+						&& ((rr->nameaddr.uri.len<th_uri_prefix.len) ||
+						(strncasecmp(rr->nameaddr.uri.s,th_uri_prefix.s,
+									 th_uri_prefix.len)!=0)))
 				{
-					LM_DBG("rr %d is not encoded: [%.*s]",i,rr->nameaddr.uri.len,rr->nameaddr.uri.s);
+					LM_DBG("rr %d is not encoded: [%.*s]", i,
+							rr->nameaddr.uri.len, rr->nameaddr.uri.s);
 					rr = rr->next;
 					continue;
 				}
@@ -736,8 +740,9 @@ int th_unmask_ruri(sip_msg_t *msg)
 	str out;
 
 	/* Do nothing if ruri is not encoded */
-	if ((REQ_LINE(msg).uri.len<th_uri_prefix.len) ||
-			(strncasecmp(REQ_LINE(msg).uri.s,th_uri_prefix.s,th_uri_prefix.len)!=0))
+	if (th_uri_prefix_checks && ((REQ_LINE(msg).uri.len<th_uri_prefix.len) ||
+			(strncasecmp(REQ_LINE(msg).uri.s, th_uri_prefix.s,
+						 th_uri_prefix.len)!=0)))
 	{
 		LM_DBG("ruri [%.*s] is not encoded",REQ_LINE(msg).uri.len,REQ_LINE(msg).uri.s);
 		return 0;
@@ -798,8 +803,8 @@ int th_unmask_refer_to(sip_msg_t *msg)
 	uri = &(get_refer_to(msg)->uri);
 
 	/* Do nothing if refer_to is not encoded */
-	if ((uri->len<th_uri_prefix.len)
-			|| (strncasecmp(uri->s, th_uri_prefix.s, th_uri_prefix.len)!=0))
+	if (th_uri_prefix_checks && ((uri->len<th_uri_prefix.len)
+			|| (strncasecmp(uri->s, th_uri_prefix.s, th_uri_prefix.len)!=0)))
 	{
 		LM_DBG("refer-to [%.*s] is not encoded",uri->len,uri->s);
 		return 0;
