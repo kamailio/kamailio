@@ -179,6 +179,46 @@ modparam("dispatcher", "destination_col", "uri")
 		</example>
 	</section>
 
+    <section id="dispatcher.p.dest_id_col">
+        <title><varname>dest_id_col</varname> (string)</title>
+        <para>
+            The column's name in the database storing the id of the destination
+        </para>
+        <para>
+        <emphasis>
+            Default value is <quote>id</quote>.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <quote>dest_id_col</quote> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("dispatcher", "dest_id_col", "my_id")
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section id="dispatcher.p.description_col">
+        <title><varname>description_col</varname> (string)</title>
+        <para>
+            The column's name in the database storing the description of the destination
+        </para>
+        <para>
+        <emphasis>
+            Default value is <quote>description</quote>.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <quote>description_col</quote> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("dispatcher", "description_col", "my_description")
+...
+</programlisting>
+        </example>
+    </section>
+
 	<section id="dispatcher.p.flags_col">
 		<title><varname>flags_col</varname> (string)</title>
 		<para>
@@ -929,7 +969,7 @@ end
 			<emphasis>set</emphasis> - the id of the set from where to pick
 			up destination address. It is the first column in destination
 			list file. The parameter can be an integer or a variable holding
-			an integer.
+			an integer.id
 			</para>
 		</listitem>
 		<listitem>
@@ -1221,6 +1261,61 @@ failure_route[tryagain] {
 </programlisting>
 		</example>
  	</section>
+    <section  id="dispatcher.f.ds_list">
+        <title>
+        <function moreinfo="none">ds_list(xavpname)</function>
+        </title>
+        <para>
+        fills xavp with runtime information of dispatcher list.
+        </para>
+        <itemizedlist>
+        <listitem>
+            <para><emphasis>xavpname</emphasis> - name of the xavp to be filled.
+            </para>
+        </listitem>
+        </itemizedlist>
+        <para>
+            This function can be used from ANY_ROUTE.
+        </para>
+        <para>
+            xavp fields.
+        </para>
+        <itemizedlist>
+        <listitem>
+            <para><emphasis>setid</emphasis></para>
+            <para><emphasis>id</emphasis></para>
+            <para><emphasis>uri</emphasis></para>
+            <para><emphasis>description</emphasis></para>
+            <para><emphasis>state</emphasis></para>
+            <para><emphasis>flags</emphasis></para>
+            <para><emphasis>priority</emphasis></para>
+            <para><emphasis>attrs</emphasis></para>
+            <para><emphasis>maxload</emphasis></para>
+            <para><emphasis>weight</emphasis></para>
+            <para><emphasis>rweight</emphasis></para>
+            <para><emphasis>duid</emphasis></para>
+            <para><emphasis>socket</emphasis></para>
+            <para><emphasis>ip</emphasis></para>
+            <para><emphasis>port</emphasis></para>
+            <para><emphasis>proto</emphasis></para>
+        </listitem>
+        </itemizedlist>
+        <example>
+        <title><function>ds_list</function> usage</title>
+        <programlisting format="linespecific">
+...
+if(ds_list("ds")) {
+    while($xavp(ds) != $null) {
+        xlog("L_INFO", "Destination $xavp(ds=>uri) state is $xavp(ds=>state)\n");
+        pv_unset("$xavp(ds)");
+    }
+    ...
+}
+...
+</programlisting>
+    </example>
+    </section>
+
   	<section  id="dispatcher.f.ds_list_exist">
  		<title>
 		<function moreinfo="none">ds_list_exist(groupid)</function>
@@ -1249,6 +1344,7 @@ if(ds_list_exist("10")) {
 </programlisting>
 	</example>
 	</section>
+	
   	<section  id="dispatcher.f.ds_is_from_list">
  		<title>
 		<function moreinfo="none">ds_is_from_list([groupid [, mode [, uri] ] ])</function>

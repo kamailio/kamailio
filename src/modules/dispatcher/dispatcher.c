@@ -62,10 +62,12 @@ MODULE_VERSION
 
 /* clang-format off */
 #define DS_SET_ID_COL			"setid"
+#define DS_DEST_ID_COL			"id"
 #define DS_DEST_URI_COL			"destination"
 #define DS_DEST_FLAGS_COL		"flags"
 #define DS_DEST_PRIORITY_COL	"priority"
 #define DS_DEST_ATTRS_COL		"attrs"
+#define DS_DEST_DESC_COL	    "description"
 #define DS_TABLE_NAME			"dispatcher"
 
 /** parameters */
@@ -126,10 +128,12 @@ struct tm_binds tmb;
 /*db */
 str ds_db_url            = STR_NULL;
 str ds_set_id_col        = str_init(DS_SET_ID_COL);
+str ds_dest_id_col       = str_init(DS_DEST_ID_COL);
 str ds_dest_uri_col      = str_init(DS_DEST_URI_COL);
 str ds_dest_flags_col    = str_init(DS_DEST_FLAGS_COL);
 str ds_dest_priority_col = str_init(DS_DEST_PRIORITY_COL);
 str ds_dest_attrs_col    = str_init(DS_DEST_ATTRS_COL);
+str ds_dest_desc_col     = str_init(DS_DEST_DESC_COL);
 str ds_table_name        = str_init(DS_TABLE_NAME);
 
 str ds_setid_pvname   = STR_NULL;
@@ -165,6 +169,7 @@ static int w_ds_is_from_list2(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list3(struct sip_msg*, char*, char*, char*);
 static int w_ds_list_exist(struct sip_msg*, char*);
 static int w_ds_reload(struct sip_msg* msg);
+static int w_ds_list(struct sip_msg *msg, char *);
 
 static int fixup_ds_is_from_list(void** param, int param_no);
 static int fixup_ds_list_exist(void** param,int param_no);
@@ -212,6 +217,8 @@ static cmd_export_t cmds[]={
 		0, 0, 0},
 	{"ds_reload", (cmd_function)w_ds_reload, 0,
 		0, 0, ANY_ROUTE},
+	{"ds_list", (cmd_function)w_ds_list, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -221,10 +228,12 @@ static param_export_t params[]={
 	{"db_url",		    PARAM_STR, &ds_db_url},
 	{"table_name", 	    PARAM_STR, &ds_table_name},
 	{"setid_col",       PARAM_STR, &ds_set_id_col},
+	{"dest_id_col",     PARAM_STR, &ds_dest_id_col},
 	{"destination_col", PARAM_STR, &ds_dest_uri_col},
 	{"flags_col",       PARAM_STR, &ds_dest_flags_col},
 	{"priority_col",    PARAM_STR, &ds_dest_priority_col},
 	{"attrs_col",       PARAM_STR, &ds_dest_attrs_col},
+	{"description_col", PARAM_STR, &ds_dest_desc_col},
 	{"force_dst",       INT_PARAM, &ds_force_dst},
 	{"flags",           INT_PARAM, &ds_flags},
 	{"use_default",     INT_PARAM, &ds_use_default},
@@ -1409,4 +1418,134 @@ static int ds_init_rpc(void)
 		return -1;
 	}
 	return 0;
+}
+
+static sr_xavp_t *ds_xavp_add_value(char *name, sr_xval_t *val, sr_xavp_t **list)
+{
+	str sname;
+	sname.s = name;
+	sname.len = strlen(name);
+	return xavp_add_value(&sname, val, list);
+}
+
+static int ds_set_to_xavp(ds_set_t *node, str* xavp)
+{
+	sr_xavp_t *row = NULL;
+	sr_xval_t val;
+	int j;
+	char c[3];
+	str data = STR_NULL;
+
+	if(!node)
+		return 1;
+
+	int i = 0, rc = 0;
+	for(; i < 2; ++i) {
+		ds_set_to_xavp(node->next[i], xavp);
+	}
+
+	for(j = 0; j < node->nr; j++) {
+		row = NULL;
+
+		val.type = SR_XTYPE_INT;
+		val.v.i = node->id;
+		ds_xavp_add_value("setid", &val, &row);
+
+		val.v.i = node->dlist[j].id;
+		ds_xavp_add_value("id", &val, &row);
+
+		val.type = SR_XTYPE_STR;
+		val.v.s=node->dlist[j].uri;
+		ds_xavp_add_value("uri", &val, &row);
+
+		val.type = SR_XTYPE_STR;
+		val.v.s=node->dlist[j].description;
+		ds_xavp_add_value("description", &val, &row);
+
+		memset(&c, 0, sizeof(c));
+		if(node->dlist[j].flags & DS_INACTIVE_DST)
+			c[0] = 'I';
+		else if(node->dlist[j].flags & DS_DISABLED_DST)
+			c[0] = 'D';
+		else if(node->dlist[j].flags & DS_TRYING_DST)
+			c[0] = 'T';
+		else
+			c[0] = 'A';
+
+		if(node->dlist[j].flags & DS_PROBING_DST)
+			c[1] = 'P';
+		else
+			c[1] = 'X';
+
+		val.type = SR_XTYPE_STR;
+		val.v.s.len=2;
+		val.v.s.s=c;
+		ds_xavp_add_value("state", &val, &row);
+
+		val.type = SR_XTYPE_INT;
+		val.v.i = node->dlist[j].flags;
+		ds_xavp_add_value("flags", &val, &row);
+
+		val.type = SR_XTYPE_INT;
+		val.v.i = node->dlist[j].priority;
+		ds_xavp_add_value("priority", &val, &row);
+
+		val.type = SR_XTYPE_INT;
+		val.v.i = node->dlist[j].attrs.maxload;
+		ds_xavp_add_value("maxload", &val, &row);
+
+		val.type = SR_XTYPE_INT;
+		val.v.i = node->dlist[j].attrs.weight;
+		ds_xavp_add_value("weight", &val, &row);
+
+		val.type = SR_XTYPE_INT;
+		val.v.i = node->dlist[j].attrs.rweight;
+		ds_xavp_add_value("rweight", &val, &row);
+
+		val.type = SR_XTYPE_STR;
+		val.v.s = node->dlist[j].attrs.duid;
+		ds_xavp_add_value("duid", &val, &row);
+
+		val.type = SR_XTYPE_STR;
+		val.v.s = node->dlist[j].attrs.socket;
+		ds_xavp_add_value("socket", &val, &row);
+
+		val.type = SR_XTYPE_STR;
+		val.v.s = node->dlist[j].attrs.body;
+		ds_xavp_add_value("attrs", &val, &row);
+
+		val.type = SR_XTYPE_STR;
+		val.v.s.s = ip_addr2a(&node->dlist[j].ip_address);
+		val.v.s.len = strlen(val.v.s.s);
+		ds_xavp_add_value("ip", &val, &row);
+
+		val.type = SR_XTYPE_INT;
+		val.v.i = node->dlist[j].port;
+		ds_xavp_add_value("port", &val, &row);
+
+		val.type = SR_XTYPE_INT;
+		val.v.i = node->dlist[j].proto;
+		ds_xavp_add_value("proto", &val, &row);
+
+
+		val.type = SR_XTYPE_XAVP;
+		val.v.xavp = row;
+		xavp_add_value(xavp, &val, NULL);
+
+	}
+
+	return 1;
+}
+
+static int w_ds_list(struct sip_msg *msg, char *xavpname)
+{
+	str xavp;
+	if (fixup_get_svalue(msg, (gparam_p)xavpname, &xavp) != 0) {
+		LM_ERR("cannot get xavp string value\n");
+		return -1;
+	}
+
+	xavp_rm_by_name(&xavp, 1, NULL);
+	ds_set_t *ds_list = ds_get_list();
+	return ds_set_to_xavp(ds_list, &xavp);
 }
