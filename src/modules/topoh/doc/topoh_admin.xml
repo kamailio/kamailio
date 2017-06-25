@@ -281,6 +281,36 @@ modparam("topoh", "uri_prefix_checks", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="topoh.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the KEMI configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "event_callback", "ksr_topoh_event")
+...
+-- event callback function implemented in Lua
+function ksr_topoh_event(evname)
+	KSR.info("===== topoh module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
