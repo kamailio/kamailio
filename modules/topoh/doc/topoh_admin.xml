@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -253,7 +253,34 @@ modparam("topoh", "sanity_checks", 1)
 </programlisting>
 		</example>
 	</section>
-
+	<section>
+		<title><varname>uri_prefix_checks</varname> (integer)</title>
+		<para>
+			If set to 1, topoh module will check if URIs to be decoded match
+			the expected prefix composed from mask IP and parameter name prefix.
+			It can make the topoh processing safer by avoiding to try decoding
+			URIs which were not encoded previously by topoh.
+		</para>
+		<para>
+			Note: do not enable this option if you have SIP devices that can
+			alter the URI values it takes from Contact or Record-Route headers
+			(like adding port 5060 when no port is in received URIs, or
+			thet introduce new parameters at unknown position).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>uri_prefix_checks</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "uri_prefix_checks", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 </chapter>
 
