@@ -62,7 +62,8 @@ int run_top_route(struct action* a, sip_msg_t* msg, struct run_act_ctx* c);
 
 cfg_action_t *get_cfg_crt_action(void);
 int get_cfg_crt_line(void);
-char *get_cfg_crt_name(void);
+char *get_cfg_crt_file_name(void);
+char *get_cfg_crt_route_name(void);
 
 void set_max_recursive_level(unsigned int lev);
 

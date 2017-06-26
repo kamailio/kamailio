@@ -103,11 +103,19 @@ int get_cfg_crt_line(void)
 }
 
 /* return name of config for current executed action */
-char *get_cfg_crt_name(void)
+char *get_cfg_crt_file_name(void)
 {
 	if(_cfg_crt_action==0)
 		return 0;
 	return _cfg_crt_action->cfile;
+}
+
+/* return name of routing block for current executed action */
+char *get_cfg_crt_route_name(void)
+{
+	if(_cfg_crt_action==0)
+		return 0;
+	return _cfg_crt_action->rname;
 }
 
 /* handle the exit code of a module function call.
