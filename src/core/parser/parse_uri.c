@@ -1305,7 +1305,7 @@ static inline int _parse_ruri(str *uri,
 	if (*status) return 1;
 
 	if (parse_uri(uri->s, uri->len, parsed_uri)<0) {
-		LOG(L_ERR, "ERROR: _parse_ruri: bad uri <%.*s>\n", 
+		LOG(L_ERR, "ERROR: _parse_ruri: bad uri <%.*s>\n",
 				uri->len, ZSW(uri->s));
 		*status=0;
 		return -1;
@@ -1347,7 +1347,8 @@ int parse_orig_ruri(struct sip_msg* msg)
 	return ret;
 }
 
-inline int normalize_tel_user(char* res, str* src) {
+int normalize_tel_user(char* res, str* src)
+{
 	int i, l;
 	l=0;
 	for (i=0; i<src->len; i++) {
@@ -1360,7 +1361,7 @@ inline int normalize_tel_user(char* res, str* src) {
 			default:
 				res[l++]=src->s[i];
 		}
-	}  
+	}
 	return l;
 }
 
@@ -1372,7 +1373,7 @@ str	s_tels = STR_STATIC_INIT("tels");
 str	s_urn  = STR_STATIC_INIT("urn");
 static str	s_null = STR_STATIC_INIT("");
 
-inline void uri_type_to_str(uri_type type, str *s) {
+void uri_type_to_str(uri_type type, str *s) {
 	switch (type) {
 	case SIP_URI_T:
 		*s = s_sip;
@@ -1400,7 +1401,7 @@ static str	s_tls  = STR_STATIC_INIT("tls");
 static str	s_sctp = STR_STATIC_INIT("sctp");
 static str	s_ws   = STR_STATIC_INIT("ws");
 
-inline void proto_type_to_str(unsigned short type, str *s) {
+void proto_type_to_str(unsigned short type, str *s) {
 	switch (type) {
 	case PROTO_UDP:
 		*s = s_udp;
