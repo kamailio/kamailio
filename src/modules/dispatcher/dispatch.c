@@ -93,6 +93,24 @@ void shuffle_uint100array(unsigned int *arr);
 int ds_reinit_rweight_on_state_change(
 		int old_state, int new_state, ds_set_t *dset);
 
+void clear_dest(ds_dest_t *dp)
+{
+	if(dp != NULL) {
+		if(dp->uri.s != NULL)
+			shm_free(dp->uri.s);
+		if(dp->description.s != NULL)
+			shm_free(dp->description.s);
+	}
+}
+
+void free_dest(ds_dest_t *dp)
+{
+	if(dp != NULL) {
+		clear_dest(dp);
+		shm_free(dp);
+	}
+}
+
 /**
  *
  */
@@ -282,7 +300,7 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 /**
  *
  */
-ds_dest_t *pack_dest(str uri, int flags, int priority, str *attrs)
+ds_dest_t *pack_dest(int id, str uri, int flags, int priority, str *attrs, str* desc)
 {
 	ds_dest_t *dp = NULL;
 	/* For DNS-Lookups */
@@ -314,6 +332,8 @@ ds_dest_t *pack_dest(str uri, int flags, int priority, str *attrs)
 	}
 	memset(dp, 0, sizeof(ds_dest_t));
 
+	dp->id = id;
+
 	dp->uri.s = (char *)shm_malloc((uri.len + 1) * sizeof(char));
 	if(dp->uri.s == NULL) {
 		LM_ERR("no more memory!\n");
@@ -322,6 +342,17 @@ ds_dest_t *pack_dest(str uri, int flags, int priority, str *attrs)
 	strncpy(dp->uri.s, uri.s, uri.len);
 	dp->uri.s[uri.len] = '\0';
 	dp->uri.len = uri.len;
+
+	if(desc != NULL && desc->len > 0) {
+		dp->description.s = (char *)shm_malloc((desc->len + 1) * sizeof(char));
+		if(dp->description.s == NULL) {
+			LM_ERR("no more memory!\n");
+			goto err;
+		}
+		strncpy(dp->description.s, desc->s, desc->len);
+		dp->description.s[desc->len] = '\0';
+		dp->description.len = desc->len;
+	}
 
 	dp->flags = flags;
 	dp->priority = priority;
@@ -383,19 +414,14 @@ ds_dest_t *pack_dest(str uri, int flags, int priority, str *attrs)
 
 	return dp;
 err:
-	if(dp != NULL) {
-		if(dp->uri.s != NULL)
-			shm_free(dp->uri.s);
-		shm_free(dp);
-	}
-
+	free_dest(dp);
 	return NULL;
 }
 
 /**
  *
  */
-int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
+int add_dest2list(int setid, int id, str uri, int flags, int priority, str *attrs, str *desc,
 		int list_idx, int *setn)
 {
 	ds_dest_t *dp = NULL;
@@ -403,11 +429,11 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	ds_dest_t *dp0 = NULL;
 	ds_dest_t *dp1 = NULL;
 
-	dp = pack_dest(uri, flags, priority, attrs);
+	dp = pack_dest(id, uri, flags, priority, attrs, desc);
 	if(!dp)
 		goto err;
 
-	sp = ds_avl_insert(&ds_lists[list_idx], id, setn);
+	sp = ds_avl_insert(&ds_lists[list_idx], setid, setn);
 	if(!sp) {
 		LM_ERR("no more memory.\n");
 		goto err;
@@ -439,12 +465,7 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 
 	return 0;
 err:
-	if(dp != NULL) {
-		if(dp->uri.s != NULL)
-			shm_free(dp->uri.s);
-		shm_free(dp);
-	}
-
+	free_dest(dp);
 	return -1;
 }
 
@@ -625,7 +646,7 @@ int ds_load_list(char *lfile)
 {
 	char line[256], *p;
 	FILE *f = NULL;
-	int id, setn, flags, priority;
+	int setid, id, setn, flags, priority;
 	str uri;
 	str attrs;
 
@@ -645,13 +666,14 @@ int ds_load_list(char *lfile)
 		return -1;
 	}
 
-	id = setn = flags = priority = 0;
+	setid = id = setn = flags = priority = 0;
 
 	*next_idx = (*crt_idx + 1) % 2;
 	ds_avl_destroy(&ds_lists[*next_idx]);
 
 	p = fgets(line, 256, f);
 	while(p) {
+		id++;
 		/* eat all white spaces */
 		while(*p && (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n'))
 			p++;
@@ -659,9 +681,9 @@ int ds_load_list(char *lfile)
 			goto next_line;
 
 		/* get set id */
-		id = 0;
+		setid = 0;
 		while(*p >= '0' && *p <= '9') {
-			id = id * 10 + (*p - '0');
+			setid = setid * 10 + (*p - '0');
 			p++;
 		}
 
@@ -723,7 +745,7 @@ int ds_load_list(char *lfile)
 		attrs.len = p - attrs.s;
 
 	add_destination:
-		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn)
+		if(add_dest2list(setid, id, uri, flags, priority, &attrs, NULL, *next_idx, &setn)
 				!= 0)
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
@@ -849,19 +871,21 @@ int ds_reload_db(void)
 /*! \brief load groups of destinations from DB*/
 int ds_load_db(void)
 {
-	int i, id, nr_rows, setn;
+	int i, setid, id, nr_rows, setn;
 	int flags;
 	int priority;
 	int nrcols;
 	int dest_errs = 0;
 	str uri;
+	str desc = {0, 0};
 	str attrs = {0, 0};
 	db1_res_t *res;
 	db_val_t *values;
 	db_row_t *rows;
 
-	db_key_t query_cols[5] = {&ds_set_id_col, &ds_dest_uri_col,
-			&ds_dest_flags_col, &ds_dest_priority_col, &ds_dest_attrs_col};
+	db_key_t query_cols[7] = {&ds_set_id_col, &ds_dest_uri_col,
+			&ds_dest_flags_col, &ds_dest_priority_col, &ds_dest_attrs_col,
+			&ds_dest_id_col, &ds_dest_desc_col};
 
 	nrcols = 2;
 	if(_ds_table_version == DS_TABLE_VERSION2)
@@ -869,7 +893,7 @@ int ds_load_db(void)
 	else if(_ds_table_version == DS_TABLE_VERSION3)
 		nrcols = 4;
 	else if(_ds_table_version == DS_TABLE_VERSION4)
-		nrcols = 5;
+		nrcols = 7;
 
 	if((*crt_idx) != (*next_idx)) {
 		LM_WARN("load command already generated, aborting reload...\n");
@@ -905,7 +929,7 @@ int ds_load_db(void)
 	for(i = 0; i < nr_rows; i++) {
 		values = ROW_VALUES(rows + i);
 
-		id = VAL_INT(values);
+		setid = VAL_INT(values);
 		uri.s = VAL_STR(values + 1).s;
 		uri.len = strlen(uri.s);
 		flags = 0;
@@ -917,12 +941,21 @@ int ds_load_db(void)
 
 		attrs.s = 0;
 		attrs.len = 0;
+		id = i+1;
+		desc.s = 0;
+		desc.len = 0;
+
 		if(nrcols >= 5) {
 			attrs.s = VAL_STR(values + 4).s;
 			attrs.len = strlen(attrs.s);
+
+			id = VAL_INT(values + 5);
+
+			desc.s = VAL_STR(values + 6).s;
+			desc.len = strlen(desc.s);
+
 		}
-		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn)
-				!= 0) {
+		if(add_dest2list(setid, id, uri, flags, priority, &attrs, &desc, *next_idx, &setn) != 0) {
 			dest_errs++;
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
@@ -2805,10 +2838,7 @@ void ds_avl_destroy(ds_set_t **node_ptr)
 		ds_avl_destroy(&node->next[i]);
 
 	for(dest = node->dlist; dest != NULL; dest = dest->next) {
-		if(dest->uri.s != NULL) {
-			shm_free(dest->uri.s);
-			dest->uri.s = NULL;
-		}
+		clear_dest(dest);
 	}
 	if(node->dlist != NULL)
 		shm_free(node->dlist);
