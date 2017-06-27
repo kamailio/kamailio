@@ -60,7 +60,7 @@
       <title>Dialog support in RR module</title>
 
       <programlisting format="linespecific">
-  
+...
 UAC                       &kamailio; PROXY                          UAS
 
 ---- INVITE ------&gt;       record_route()          ----- INVITE ----&gt;
@@ -74,7 +74,7 @@ UAC                       &kamailio; PROXY                          UAS
 
 &lt;------ BYE -------        loose_route()          &lt;----- BYE -------
                     check_route_param(";foo=true")
-  
+...
 </programlisting>
     </example>
   </section>
@@ -264,7 +264,6 @@ modparam("rr", "custom_user_avp", "$avp(RR_CUSTOMER_USER_AVP)")
 #usage in cfg file
 $avp(RR_CUSTOM_USER_AVP)="mo";
 record_route();
-
 ...
 </programlisting>
       </example>
