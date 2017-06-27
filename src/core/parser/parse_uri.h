@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -39,7 +39,7 @@ extern str	s_sip, s_sips, s_tel, s_tels, s_urn;
 
 /* buf= pointer to begining of uri (sip:x@foo.bar:5060;a=b?h=i)
  * len= len of uri
- * returns: fills uri & returns <0 on error or 0 if ok 
+ * returns: fills uri & returns <0 on error or 0 if ok
  */
 int parse_uri(char *buf, int len, struct sip_uri* uri);
 int parse_sip_msg_uri(struct sip_msg* msg);
