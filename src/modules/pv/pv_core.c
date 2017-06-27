@@ -797,7 +797,8 @@ int pv_get_rcv_advertised_ip(struct sip_msg *msg, pv_param_t *param,
 
 	if(msg->rcv.bind_address!=NULL
 			&& msg->rcv.bind_address->useinfo.address_str.len > 0) {
-		return pv_get_strval(msg, param, res, &msg->rcv.bind_address->useinfo.address_str);
+		return pv_get_strval(msg, param, res,
+				&msg->rcv.bind_address->useinfo.address_str);
 	}
 
 	return pv_get_rcvip(msg, param, res);
@@ -811,7 +812,9 @@ int pv_get_rcv_advertised_port(struct sip_msg *msg, pv_param_t *param,
 
 	if(msg->rcv.bind_address!=NULL
 			&& msg->rcv.bind_address->useinfo.port_no_str.len > 0) {
-		return pv_get_strval(msg, param, res, &msg->rcv.bind_address->useinfo.port_no_str);
+		return pv_get_intstrval(msg, param, res,
+				(int)msg->rcv.bind_address->useinfo.port_no,
+				&msg->rcv.bind_address->useinfo.port_no_str);
 	}
 
 	return pv_get_rcvport(msg, param, res);
