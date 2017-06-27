@@ -197,6 +197,24 @@ struct json_object * kz_json_get_field_object(str* json, str* field)
 	return ret;
 }
 
+int kz_json_get_count(str* json, str* field, pv_value_p dst_val)
+{
+
+  struct json_object *jtree = kz_json_get_field_object(json, field);
+
+
+	dst_val->flags = PV_TYPE_INT | PV_VAL_INT;
+    dst_val->rs = kz_pv_str_empty;
+    dst_val->ri = 0;
+	if(jtree != NULL) {
+		if(json_object_is_type(jtree, json_type_array)) {
+			dst_val->ri = json_object_array_length(jtree);
+		}
+        json_object_put(jtree);
+	}
+	return 1;
+}
+
 
 int kz_json_get_field_ex(str* json, str* field, pv_value_p dst_val)
 {

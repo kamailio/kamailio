@@ -283,6 +283,8 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 				kz_destroy_pv_value(pv);
 				return -1;
 			}
+
+			kz_free_pv_value(val);
             
 			strncpy(_kz_tr_buffer, pv->rs.s, pv->rs.len);
 			_kz_tr_buffer[pv->rs.len] = '\0';
@@ -293,7 +295,63 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 			val->rs.len = pv->rs.len;
 
 			kz_destroy_pv_value(pv);
+
+			break;
+
+		case TR_KAZOO_JSON_COUNT:
+			if(tp==NULL)
+			{
+				LM_ERR("kazoo json.count transform invalid parameter\n");
+				return -1;
+			}
+
+			pv = kz_alloc_pv_value();
+			if(pv == NULL)
+			{
+				LM_ERR("kazoo json.count transform : no more private memory\n");
+				return -1;
+			}
+
+
+			if(tp->type == TR_PARAM_STRING)
+			{
+				v1 = tp->v.s.s;
+				if(fixup_spve_null(&v1, 1) != 0) {
+					LM_ERR("cannot get spve_value from TR_PARAM_STRING : %.*s\n", tp->v.s.len, tp->v.s.s);
+					return -1;
+				}
+				if (fixup_get_svalue(msg, (gparam_p)v1, &v2) != 0) {
+					LM_ERR("cannot get value from TR_PARAM_STRING\n");
+					fixup_free_spve_null(&v1, 1);
+					return -1;
+				}
+				fixup_free_spve_null(&v1, 1);
+				sv = v2;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
+				{
+					LM_ERR("value cannot get spec value in json transform\n");
+					kz_destroy_pv_value(pv);
+					return -1;
+				}
+				sv = v.rs;
+			}
+
+			if(kz_json_get_count(&val->rs, &sv, pv ) != 1) {
+				LM_ERR("error getting json\n");
+				kz_destroy_pv_value(pv);
+				return -1;
+			}
+
 			kz_free_pv_value(val);
+
+			val->flags = PV_TYPE_INT | PV_VAL_INT;
+			val->rs.s = NULL;
+			val->rs.len = 0;
+			val->ri = pv->ri;
+
+			kz_destroy_pv_value(pv);
 
 			break;
 
@@ -399,6 +457,25 @@ char* kz_tr_parse(str* in, trans_t *t)
 	if(name.len==6 && strncasecmp(name.s, "encode", 6)==0)
 	{
 		t->subtype = TR_KAZOO_ENCODE;
+		goto done;
+	} else if(name.len==10 && strncasecmp(name.s, "json.count", 10)==0) {
+		t->subtype = TR_KAZOO_JSON_COUNT;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid json transformation: %.*s!\n", in->len, in->s);
+			goto error;
+		}
+		p++;
+		_kz_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid json transformation: %.*s!!\n",
+				in->len, in->s);
+			goto error;
+		}
 		goto done;
 	} else if(name.len==4 && strncasecmp(name.s, "json", 4)==0) {
 		t->subtype = TR_KAZOO_JSON;

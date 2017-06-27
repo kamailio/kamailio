@@ -34,7 +34,7 @@
 
 
 enum _kz_tr_type { TR_NONE=0, TR_KAZOO };
-enum _kz_tr_subtype { TR_KAZOO_NONE=0, TR_KAZOO_ENCODE, TR_KAZOO_JSON };
+enum _kz_tr_subtype { TR_KAZOO_NONE=0, TR_KAZOO_ENCODE, TR_KAZOO_JSON, TR_KAZOO_JSON_COUNT };
 
 char* kz_tr_parse(str *in, trans_t *tr);
 
