@@ -183,7 +183,7 @@ static int prepend_path(sip_msg_t* _m, str *user, path_param_t param,
 		if (!l) goto out1;
 		dp = path_strzdup(suffix, cp - suffix);
 		if(dp==NULL) goto out1;
-		l = insert_new_lump_before(l, suffix, cp - suffix, 0);
+		l = insert_new_lump_before(l, dp, cp - suffix, 0);
 		if (!l) goto out1;
 	}
 
