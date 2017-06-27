@@ -49,7 +49,7 @@ Richard Fuchs
    1.1. Add Supported header
    1.2. Set use_received parameter
    1.3. Set received_format parameter
-   1.4. Set use_received parameter
+   1.4. Set enable_r2 parameter
    1.5. add_path usage
    1.6. add_path(user) usage
    1.7. add_path(user, parameters) usage
@@ -208,9 +208,9 @@ modparam("path", "received_format", 1)
 
    Default value is 0.
 
-   Example 1.4. Set use_received parameter
+   Example 1.4. Set enable_r2 parameter
 ...
-modparam("path", "use_received", 1)
+modparam("path", "enable_r2", 1)
 ...
 
 4. Functions
