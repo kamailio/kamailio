@@ -157,6 +157,12 @@ int pv_get_rcv_advertised_ip(struct sip_msg *msg, pv_param_t *param,
 int pv_get_rcv_advertised_port(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_rcvadv_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rcvadv_uri_full(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_force_sock(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 

@@ -760,7 +760,7 @@ int pv_get_rcvaddr_uri_helper(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL)
 		return -1;
 
-	if(get_rcv_socket_uri(msg, tmode, &uri)<0)
+	if(get_rcv_socket_uri(msg, tmode, &uri, 0)<0)
 		return pv_get_null(msg, param, res);
 
 	if (uri.len + 1 >= pv_get_buffer_size())
@@ -818,6 +818,62 @@ int pv_get_rcv_advertised_port(struct sip_msg *msg, pv_param_t *param,
 	}
 
 	return pv_get_rcvport(msg, param, res);
+}
+
+int pv_get_rcvadv_uri_helper(struct sip_msg *msg, pv_param_t *param,
+		int tmode, pv_value_t *res)
+{
+	str uri;
+	str sr;
+
+	if(msg==NULL)
+		return -1;
+
+	if(get_rcv_socket_uri(msg, tmode, &uri, 1)<0)
+		return pv_get_null(msg, param, res);
+
+	if (uri.len + 1 >= pv_get_buffer_size())
+	{
+		LM_ERR("local buffer size exceeded\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	sr.s = pv_get_buffer();
+	strncpy(sr.s, uri.s, uri.len);
+	sr.len = uri.len;
+	sr.s[sr.len] = '\0';
+
+	return pv_get_strval(msg, param, res, &sr);
+}
+
+int pv_get_rcvadv_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address!=NULL
+			&& (msg->rcv.bind_address->useinfo.address_str.len > 0
+				|| msg->rcv.bind_address->useinfo.port_no_str.len > 0)) {
+		return pv_get_rcvadv_uri_helper(msg, param, 0, res);
+	}
+
+	return pv_get_rcvaddr_uri_helper(msg, param, 0, res);
+}
+
+int pv_get_rcvadv_uri_full(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address!=NULL
+			&& (msg->rcv.bind_address->useinfo.address_str.len > 0
+				|| msg->rcv.bind_address->useinfo.port_no_str.len > 0)) {
+		return pv_get_rcvadv_uri_helper(msg, param, 1, res);
+	}
+
+	return pv_get_rcvaddr_uri_helper(msg, param, 1, res);
 }
 
 /**
