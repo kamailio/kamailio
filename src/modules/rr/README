@@ -170,6 +170,7 @@ Chapter 1. Admin Guide
      * check_route_param() - see Section 5.7, “check_route_param(re)”
 
    Example 1.1. Dialog support in RR module
+...
 UAC                       Kamailio PROXY                          UAS
 
 ---- INVITE ------>       record_route()          ----- INVITE ---->
@@ -183,6 +184,7 @@ UAC                       Kamailio PROXY                          UAS
 
 <------ BYE -------        loose_route()          <----- BYE -------
                     check_route_param(";foo=true")
+...
 
 3. Dependencies
 
@@ -321,7 +323,6 @@ modparam("rr", "custom_user_avp", "$avp(RR_CUSTOMER_USER_AVP)")
 #usage in cfg file
 $avp(RR_CUSTOM_USER_AVP)="mo";
 record_route();
-
 ...
 
 5. Functions
