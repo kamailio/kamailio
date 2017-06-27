@@ -64,7 +64,10 @@ MODULE_VERSION
 
 /*! \brief If received-param of current Route uri should be used
  * as dst-uri. */
-int use_received = 0;
+int path_use_received = 0;
+
+int path_received_format = 0;
+int path_enable_r2 = 0;
 
 /*! \brief
  * Module initialization function prototype
@@ -105,7 +108,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"use_received", INT_PARAM, &use_received },
+	{"use_received",    INT_PARAM, &path_use_received },
+	{"received_format", INT_PARAM, &path_received_format },
+	{"enable_r2",       INT_PARAM, &path_enable_r2 },
 	{ 0, 0, 0 }
 };
 
@@ -114,7 +119,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"path", 
+	"path",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
@@ -131,7 +136,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	if (use_received) {
+	if (path_use_received) {
 		if (load_rr_api(&path_rrb) != 0) {
 			LM_ERR("failed to load rr-API\n");
 			return -1;
@@ -148,7 +153,7 @@ static int mod_init(void)
 		LM_INFO("outbound module not available\n");
 		memset(&path_obb, 0, sizeof(ob_api_t));
 	}
-	
+
 	return 0;
 }
 

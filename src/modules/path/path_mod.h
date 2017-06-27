@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Path handling for intermediate proxies
  *
  * Copyright (C) 2006 Inode GmbH (Andreas Granig <andreas.granig@inode.info>)
@@ -17,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -36,7 +34,9 @@
 
 #include "../outbound/api.h"
 
-extern int use_received;
+extern int path_use_received;
+extern int path_received_format;
+extern int path_enable_r2;
 extern ob_api_t path_obb;
 
 #endif /* PATH_MOD_H */
