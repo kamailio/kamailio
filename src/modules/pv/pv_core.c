@@ -751,6 +751,44 @@ int pv_get_rcvport(struct sip_msg *msg, pv_param_t *param,
 			&msg->rcv.bind_address->port_no_str);
 }
 
+int pv_get_rcvaddr_uri_helper(struct sip_msg *msg, pv_param_t *param,
+		int tmode, pv_value_t *res)
+{
+	str uri;
+	str sr;
+
+	if(msg==NULL)
+		return -1;
+
+	if(get_rcv_socket_uri(msg, tmode, &uri)<0)
+		return pv_get_null(msg, param, res);
+
+	if (uri.len + 1 >= pv_get_buffer_size())
+	{
+		LM_ERR("local buffer size exceeded\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	sr.s = pv_get_buffer();
+	strncpy(sr.s, uri.s, uri.len);
+	sr.len = uri.len;
+	sr.s[sr.len] = '\0';
+
+	return pv_get_strval(msg, param, res, &sr);
+}
+
+int pv_get_rcvaddr_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_rcvaddr_uri_helper(msg, param, 0, res);
+}
+
+int pv_get_rcvaddr_uri_full(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_rcvaddr_uri_helper(msg, param, 1, res);
+}
+
 int pv_get_rcv_advertised_ip(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {

@@ -375,6 +375,12 @@ static pv_export_t mod_pvs[] = {
 	{{"Rp", (sizeof("Rp")-1)}, /* */
 		PVT_OTHER, pv_get_rcvport, 0,
 		0, 0, 0, 0},
+	{{"Ru", (sizeof("Ru")-1)}, /* */
+		PVT_OTHER, pv_get_rcvaddr_uri, 0,
+		0, 0, 0, 0},
+	{{"Rut", (sizeof("Rut")-1)}, /* */
+		PVT_OTHER, pv_get_rcvaddr_uri_full, 0,
+		0, 0, 0, 0},
 	{{"RAi", (sizeof("RAi")-1)}, /* */
 		PVT_OTHER, pv_get_rcv_advertised_ip, 0,
 		0, 0, 0, 0},
@@ -408,12 +414,12 @@ static pv_export_t mod_pvs[] = {
 	{{"su", (sizeof("su")-1)}, /* */
 		PVT_OTHER, pv_get_srcaddr_uri, 0,
 		0, 0, 0, 0},
-	{{"td", (sizeof("td")-1)}, /* */
-		PVT_OTHER, pv_get_to_attr, pv_set_to_domain,
-		0, 0, pv_init_iname, 3},
 	{{"sut", (sizeof("sut")-1)}, /* */
 		PVT_OTHER, pv_get_srcaddr_uri_full, 0,
 		0, 0, 0, 0},
+	{{"td", (sizeof("td")-1)}, /* */
+		PVT_OTHER, pv_get_to_attr, pv_set_to_domain,
+		0, 0, pv_init_iname, 3},
 	{{"to.domain", (sizeof("to.domain")-1)}, /* */
 		PVT_OTHER, pv_get_to_attr, pv_set_to_domain,
 		0, 0, pv_init_iname, 3},

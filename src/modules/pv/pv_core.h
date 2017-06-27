@@ -145,6 +145,12 @@ int pv_get_rcvip(struct sip_msg *msg, pv_param_t *param,
 int pv_get_rcvport(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_rcvaddr_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rcvaddr_uri_full(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_rcv_advertised_ip(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
