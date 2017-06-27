@@ -95,7 +95,7 @@
 
 /**
  * \brief Find the first free fragment in a memory block
- * 
+ *
  * Find the first free fragment in a memory block
  * \param qm searched memory block
  * \param start start value
@@ -108,7 +108,7 @@ inline static int fm_bmp_first_set(struct fm_block* qm, int start)
 	int r;
 	fm_hash_bitmap_t test_val;
 	fm_hash_bitmap_t v;
-	
+
 	bmp_idx=start/FM_HASH_BMP_BITS;
 	bit=start%FM_HASH_BMP_BITS;
 	test_val=1UL <<((unsigned long)bit);
@@ -145,7 +145,7 @@ inline static int fm_bmp_first_set(struct fm_block* qm, int start)
 #define FRAG_WAS_USED(f)   (1)
 
 /* other frag related defines:
- * MEM_COALESCE_FRAGS 
+ * MEM_COALESCE_FRAGS
  * MEM_FRAG_AVOIDANCE
  */
 #define MEM_FRAG_AVOIDANCE
@@ -210,19 +210,19 @@ static inline void fm_insert_free(struct fm_block* qm, struct fm_frag* frag)
 	struct fm_frag* f;
 	struct fm_frag* p;
 	int hash;
-	
+
 	hash=GET_HASH(frag->size);
 	f=qm->free_hash[hash].first;
 	p=NULL;
 	if (frag->size > F_MALLOC_OPTIMIZE){ /* because of '<=' in GET_HASH,
 											(different from 0.8.1[24] on
-											 purpose --andrei ) */
+											purpose --andrei ) */
 		/* large fragments list -- add at a position ordered by size */
 		for(; f; f=f->next_free){
 			if (frag->size <= f->size) break;
 			p = f;
 		}
-	
+
 		frag->next_free = f;
 		frag->prev_free = p;
 		if(f) {
@@ -336,7 +336,7 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	if (size < init_overhead)
 	{
 		/* not enough mem to create our control structures !!!*/
-		LOG(L_ERR, "fm_malloc_init(%lu); No memory left to create control structures!\n",
+		LM_ERR("fm_malloc_init(%lu) - no memory left for control structures!\n",
 				(unsigned long)size);
 		return 0;
 	}
@@ -349,7 +349,7 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	qm->max_real_used=init_overhead;
 	qm->type = type;
 	size-=init_overhead;
-	
+
 	qm->first_frag=(struct fm_frag*)(start+ROUNDUP(sizeof(struct fm_block)));
 	qm->last_frag=(struct fm_frag*)(end-sizeof(struct fm_frag));
 	/* init first fragment*/
@@ -362,12 +362,12 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	qm->last_frag->prev_free=0;
 	qm->last_frag->next_free=0;
 	qm->last_frag->is_free=0;
-	
+
 	qm->first_frag->check=ST_CHECK_PATTERN;
 	qm->last_frag->check=END_CHECK_PATTERN1;
-	
+
 	/* link initial fragment into the free list*/
-	
+
 	fm_insert_free(qm, qm->first_frag);
 
 	return qm;
@@ -411,7 +411,7 @@ struct fm_frag* fm_search_defrag(struct fm_block* qm, size_t size)
 		frag = nxt;
 	}
 
-	LOG(L_ERR, "fm_search_defrag(%p, %lu); Free fragment not found!\n", qm,
+	LM_ERR("fm_search_defrag(%p, %lu); Free fragment not found!\n", qm,
 			(unsigned long)size);
 
 	return 0;
@@ -419,7 +419,7 @@ struct fm_frag* fm_search_defrag(struct fm_block* qm, size_t size)
 
 /**
  * \brief Main memory manager allocation function
- * 
+ *
  * Main memory manager allocation function, provide functionality necessary for pkg_malloc
  * \param qm memory block
  * \param size memory allocation size
@@ -427,7 +427,7 @@ struct fm_frag* fm_search_defrag(struct fm_block* qm, size_t size)
  */
 #ifdef DBG_F_MALLOC
 void* fm_malloc(void* qmp, size_t size, const char* file,
-                    const char* func, unsigned int line, const char* mname)
+		const char* func, unsigned int line, const char* mname)
 #else
 void* fm_malloc(void* qmp, size_t size)
 #endif
@@ -438,7 +438,7 @@ void* fm_malloc(void* qmp, size_t size)
 	int hash;
 
 	qm = (struct fm_block*)qmp;
-	
+
 #ifdef DBG_F_MALLOC
 	MDBG("fm_malloc(%p, %lu) called from %s: %s(%d)\n", qm,
 			(unsigned long)size, file, func, line);
@@ -447,7 +447,7 @@ void* fm_malloc(void* qmp, size_t size)
 	if(unlikely(size==0)) size=4;
 	/*size must be a multiple of 8*/
 	size=ROUNDUP(size);
-	
+
 	/*search for a suitable free frag*/
 
 #ifdef F_MALLOC_HASH_BITMAP
@@ -466,12 +466,12 @@ void* fm_malloc(void* qmp, size_t size)
 			hash++;
 		}
 		/* if we are here we are searching next hash slot or a "big" fragment
-		   between F_MALLOC_OPTIMIZE/ROUNDTO+1
-		   and F_MALLOC_OPTIMIZE/ROUNDTO + (32|64) - F_MALLOC_OPTIMIZE_FACTOR
-		   => 18 hash buckets on 32 bits and 50 buckets on 64 bits
-		   The free hash bitmap is used to jump directly to non-empty
-		   hash buckets.
-		*/
+		 * between F_MALLOC_OPTIMIZE/ROUNDTO+1
+		 * and F_MALLOC_OPTIMIZE/ROUNDTO + (32|64) - F_MALLOC_OPTIMIZE_FACTOR
+		 * => 18 hash buckets on 32 bits and 50 buckets on 64 bits
+		 * The free hash bitmap is used to jump directly to non-empty
+		 * hash buckets.
+		 */
 		do {
 			for(f=qm->free_hash[hash].first; f; f=f->next_free)
 				if (f->size>=size) goto found;
@@ -494,10 +494,11 @@ void* fm_malloc(void* qmp, size_t size)
 	if(frag) goto finish;
 
 #ifdef DBG_F_MALLOC
-        LOG(L_ERR, "fm_malloc(%p, %lu) called from %s: %s(%d), module: %s; Free fragment not found!\n",
+	LM_ERR("fm_malloc(%p, %lu) called from %s: %s(%d),"
+			" module: %s; Free fragment not found!\n",
 				qm, (unsigned long)size, file, func, line, mname);
 #else
-        LOG(L_ERR, "fm_malloc(%p, %lu); Free fragment not found!\n",
+	LM_ERR("fm_malloc(%p, %lu); Free fragment not found!\n",
 				qm, (unsigned long)size);
 #endif
 
@@ -567,7 +568,7 @@ static void fm_join_frag(struct fm_block* qm, struct fm_frag* f)
 
 /**
  * \brief Main memory manager free function
- * 
+ *
  * Main memory manager free function, provide functionality necessary for pkg_free
  * \param qm memory block
  * \param p freed memory
@@ -593,8 +594,8 @@ void fm_free(void* qmp, void* p)
 	}
 #ifdef DBG_F_MALLOC
 	if (p>(void*)qm->last_frag || p<(void*)qm->first_frag){
-		LOG(L_CRIT, "BUG: fm_free: bad pointer %p (out of memory block!),"
-				" called from %s: %s(%d) - aborting\n", p,
+		LM_CRIT("BUG: bad pointer %p (out of memory block (%p)!),"
+				" called from %s: %s(%d) - aborting\n", p, qm,
 				file, func, line);
 		if(likely(cfg_get(core, core_cfg, mem_safety)==0))
 			abort();
@@ -630,7 +631,7 @@ void fm_free(void* qmp, void* p)
 
 /**
  * \brief Main memory manager realloc function
- * 
+ *
  * Main memory manager realloc function, provide functionality for pkg_realloc
  * \param qm memory block
  * \param p reallocated memory block
@@ -658,8 +659,8 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 	MDBG("fm_realloc(%p, %p, %lu) called from %s: %s(%d)\n", qm, p,
 			(unsigned long)size, file, func, line);
 	if ((p)&&(p>(void*)qm->last_frag || p<(void*)qm->first_frag)){
-		LOG(L_CRIT, "BUG: fm_free: bad pointer %p (out of memory block!) - "
-				"aborting\n", p);
+		LM_CRIT("BUG: bad pointer %p (out of memory block (%p)!) - "
+				"aborting\n", p, qm);
 		abort();
 	}
 #endif
@@ -703,7 +704,7 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 		diff=size-f->size;
 		n=FRAG_NEXT(f);
 		/*if next frag is free, check if a join has enough size*/
-		if (((char*)n < (char*)qm->last_frag) && 
+		if (((char*)n < (char*)qm->last_frag) &&
 				fm_is_free(n) && ((n->size+FRAG_OVERHEAD)>=diff)){
 			/* detach n from the free list */
 			fm_extract_free(qm, n);
@@ -732,10 +733,11 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 				memcpy(ptr, p, orig_size);
 			} else {
 #ifdef DBG_F_MALLOC
-				LOG(L_ERR, "fm_realloc(%p, %lu) called from %s: %s(%d), module: %s; fm_malloc() failed!\n",
+				LM_ERR("fm_realloc(%p, %lu) called from %s: %s(%d),"
+						" module: %s; fm_malloc() failed!\n",
 						qm, (unsigned long)size, file, func, line, mname);
 #else
-				LOG(L_ERR, "fm_realloc(%p, %lu); fm_malloc() failed!\n",
+				LM_ERR("fm_realloc(%p, %lu); fm_malloc() failed!\n",
 						qm, (unsigned long)size);
 #endif
 			}
@@ -749,7 +751,7 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 	}else{
 		/* do nothing */
 #ifdef DBG_F_MALLOC
-		MDBG("fm_realloc: doing nothing, same size: %lu - %lu\n", 
+		MDBG("fm_realloc: doing nothing, same size: %lu - %lu\n",
 				f->size, (unsigned long)size);
 #endif
 	}
@@ -823,7 +825,7 @@ void fm_status(void* qmp)
 				LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
 							"unused fragm.: hash = %3d, fragment %p,"
 							" address %p size %lu, created from %s: %s(%ld)\n",
-						    h, f, (char*)f+sizeof(struct fm_frag), f->size,
+							h, f, (char*)f+sizeof(struct fm_frag), f->size,
 							f->file, f->func, f->line);
 #endif
 			};
@@ -836,7 +838,7 @@ void fm_status(void* qmp)
 							qm->free_hash[h].first->size
 				);
 		if (j!=qm->free_hash[h].no){
-			LOG(L_CRIT, "BUG: fm_status: different free frag. count: %d!=%ld"
+			LM_CRIT("BUG: fm_status - different free frag. count: %d!=%ld"
 					" for hash %3d\n", j, qm->free_hash[h].no, h);
 		}
 		/*
@@ -847,7 +849,7 @@ void fm_status(void* qmp)
 					(f->u.reserved)?'a':'N',
 					(char*)f+sizeof(struct fm_frag), f->size, f->size);
 #ifdef DBG_F_MALLOC
-			DBG("            %s from %s: %s(%d)\n", 
+			DBG("            %s from %s: %s(%d)\n",
 				(f->u.reserved)?"freed":"alloc'd", f->file, f->func, f->line);
 #endif
 		}
@@ -904,12 +906,12 @@ unsigned long fm_available(void* qmp)
 static mem_counter* get_mem_counter(mem_counter **root,struct fm_frag* f)
 {
 	mem_counter *x;
-	
+
 	if (!*root) goto make_new;
 	for(x=*root;x;x=x->next)
 		if (x->file == f->file && x->func == f->func && x->line == f->line)
 			return x;
-make_new:	
+make_new:
 	x = malloc(sizeof(mem_counter));
 	x->file = f->file;
 	x->func = f->func;
@@ -936,14 +938,14 @@ void fm_sums(void* qmp)
 	int i;
 	int memlog;
 	mem_counter *root,*x;
-	
+
 	root=0;
 	if (!qm) return;
 
 	memlog=cfg_get(core, core_cfg, memlog);
 	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
 			"summarizing all alloc'ed. fragments:\n");
-	
+
 	for (f=qm->first_frag, i=0; (char*)f<(char*)qm->last_frag;
 			f=FRAG_NEXT(f), i++){
 		if (!fm_is_free(f)){
@@ -972,7 +974,7 @@ void fm_sums(void* qmp)
 void fm_mod_get_stats(void *qmp, void **fm_rootp)
 {
 	if (!fm_rootp) {
-		return ;
+		return;
 	}
 
 	LM_DBG("get fm memory statistics\n");
@@ -983,7 +985,7 @@ void fm_mod_get_stats(void *qmp, void **fm_rootp)
 	int i;
 	mem_counter *x;
 
-	if (!qm) return ;
+	if (!qm) return;
 
 	/* update fragment detail list */
 	for (f=qm->first_frag, i=0; (char*)f<(char*)qm->last_frag;
@@ -995,7 +997,7 @@ void fm_mod_get_stats(void *qmp, void **fm_rootp)
 		}
 	}
 
-    return ;
+	return;
 }
 
 void fm_mod_free_stats(void *fm_rootp)
@@ -1072,7 +1074,7 @@ int fm_malloc_init_pkg_manager(void)
 	if (_fm_pkg_pool)
 		_fm_pkg_block=fm_malloc_init(_fm_pkg_pool, pkg_mem_size, MEM_TYPE_PKG);
 	if (_fm_pkg_block==0){
-		LOG(L_CRIT, "could not initialize fm pkg memory pool\n");
+		LM_CRIT("could not initialize fm pkg memory pool\n");
 		fprintf(stderr, "Too much fm pkg memory demanded: %ld bytes\n",
 						pkg_mem_size);
 		return -1;
@@ -1220,7 +1222,7 @@ int fm_malloc_init_shm_manager(void)
 	if (_fm_shm_pool)
 		_fm_shm_block=fm_malloc_init(_fm_shm_pool, shm_mem_size, MEM_TYPE_SHM);
 	if (_fm_shm_block==0){
-		LOG(L_CRIT, "could not initialize fm shm memory pool\n");
+		LM_CRIT("could not initialize fm shm memory pool\n");
 		fprintf(stderr, "Too much fm shm memory demanded: %ld bytes\n",
 						shm_mem_size);
 		return -1;
