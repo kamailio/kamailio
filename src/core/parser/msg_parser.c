@@ -1105,8 +1105,9 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 /**
  * get received-on-socket ip, port and protocol in SIP URI format
  * - tmode - 0: short format (transport=udp is not added, being default)
+ * - atype - 0: listen address; 1: advertised address
  */
-int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri)
+int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 {
 	static char buf[MAX_URI_SIZE];
 	char* p;
@@ -1139,11 +1140,21 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri)
 		}
 	}
 
-	ip.s = m->rcv.bind_address->address_str.s;
-	ip.len = m->rcv.bind_address->address_str.len;
+	if(atype==0 || m->rcv.bind_address->useinfo.address_str.len<=0) {
+		ip.s = m->rcv.bind_address->address_str.s;
+		ip.len = m->rcv.bind_address->address_str.len;
+	} else {
+		ip.s = m->rcv.bind_address->useinfo.address_str.s;
+		ip.len = m->rcv.bind_address->useinfo.address_str.len;
+	}
 
-	port.s = m->rcv.bind_address->port_no_str.s;
-	port.len = m->rcv.bind_address->port_no_str.len;
+	if(atype==0|| m->rcv.bind_address->useinfo.port_no_str.len <= 0) {
+		port.s = m->rcv.bind_address->port_no_str.s;
+		port.len = m->rcv.bind_address->port_no_str.len;
+	} else {
+		port.s = m->rcv.bind_address->useinfo.port_no_str.s;
+		port.len = m->rcv.bind_address->useinfo.port_no_str.len;
+	}
 
 	len = 4 + ip.len + 2*(m->rcv.src_ip.af==AF_INET6)+ 1 + port.len;
 	if (proto.s) {

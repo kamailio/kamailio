@@ -501,6 +501,6 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri);
 /**
  * get received-on-socket ip, port and protocol in SIP URI format
  */
-int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri);
+int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype);
 
 #endif
