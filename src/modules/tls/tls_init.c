@@ -119,7 +119,11 @@ to compile on the  _target_ system)"
 int openssl_kssl_malloc_bug=0; /* is openssl bug #1467 present ? */
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 const SSL_METHOD* ssl_methods[TLS_METHOD_MAX];
+#else
+sr_tls_methods_t sr_tls_methods[TLS_METHOD_MAX];
+#endif
 
 #ifdef NO_TLS_MALLOC_DBG
 #undef TLS_MALLOC_DBG /* extra malloc debug info from openssl */
@@ -352,6 +356,8 @@ error:
  */
 static void init_ssl_methods(void)
 {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	/* libssl < 1.1.0 */
 	memset(ssl_methods, 0, sizeof(ssl_methods));
 
 	/* any SSL/TLS version */
@@ -399,6 +405,69 @@ static void init_ssl_methods(void)
 
 #if OPENSSL_VERSION_NUMBER >= 0x1000105fL
 	ssl_methods[TLS_USE_TLSv1_2_PLUS - 1] = (void*)TLS_OP_TLSv1_2_PLUS;
+#endif
+
+#else
+	/* openssl 1.1.0+ */
+	memset(sr_tls_methods, 0, sizeof(sr_tls_methods));
+
+	/* any SSL/TLS version */
+	sr_tls_methods[TLS_USE_SSLv23_cli - 1].TLSMethod = TLS_client_method();
+	sr_tls_methods[TLS_USE_SSLv23_srv - 1].TLSMethod = TLS_server_method();
+	sr_tls_methods[TLS_USE_SSLv23 - 1].TLSMethod = TLS_method();
+
+#ifndef OPENSSL_NO_SSL3_METHOD
+	sr_tls_methods[TLS_USE_SSLv3_cli - 1].TLSMethod = TLS_client_method();
+	sr_tls_methods[TLS_USE_SSLv3_cli - 1].TLSMethodMin = SSL3_VERSION;
+	sr_tls_methods[TLS_USE_SSLv3_cli - 1].TLSMethodMax = SSL3_VERSION;
+	sr_tls_methods[TLS_USE_SSLv3_srv - 1].TLSMethod = TLS_server_method();
+	sr_tls_methods[TLS_USE_SSLv3_srv - 1].TLSMethodMin = SSL3_VERSION;
+	sr_tls_methods[TLS_USE_SSLv3_srv - 1].TLSMethodMax = SSL3_VERSION;
+	sr_tls_methods[TLS_USE_SSLv3 - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_SSLv3 - 1].TLSMethodMin = SSL3_VERSION;
+	sr_tls_methods[TLS_USE_SSLv3 - 1].TLSMethodMax = SSL3_VERSION;
+#endif
+
+	sr_tls_methods[TLS_USE_TLSv1_cli - 1].TLSMethod = TLS_client_method();
+	sr_tls_methods[TLS_USE_TLSv1_cli - 1].TLSMethodMin = TLS1_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_cli - 1].TLSMethodMax = TLS1_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_srv - 1].TLSMethod = TLS_server_method();
+	sr_tls_methods[TLS_USE_TLSv1_srv - 1].TLSMethodMin = TLS1_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_srv - 1].TLSMethodMax = TLS1_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1 - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_TLSv1 - 1].TLSMethodMin = TLS1_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1 - 1].TLSMethodMax = TLS1_VERSION;
+
+	sr_tls_methods[TLS_USE_TLSv1_1_cli - 1].TLSMethod = TLS_client_method();
+	sr_tls_methods[TLS_USE_TLSv1_1_cli - 1].TLSMethodMin = TLS1_1_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_1_cli - 1].TLSMethodMax = TLS1_1_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_1_srv - 1].TLSMethod = TLS_server_method();
+	sr_tls_methods[TLS_USE_TLSv1_1_srv - 1].TLSMethodMin = TLS1_1_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_1_srv - 1].TLSMethodMax = TLS1_1_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_1 - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_TLSv1_1 - 1].TLSMethodMin = TLS1_1_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_1 - 1].TLSMethodMax = TLS1_1_VERSION;
+
+	sr_tls_methods[TLS_USE_TLSv1_2_cli - 1].TLSMethod = TLS_client_method();
+	sr_tls_methods[TLS_USE_TLSv1_2_cli - 1].TLSMethodMin = TLS1_2_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_2_cli - 1].TLSMethodMax = TLS1_2_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_2_srv - 1].TLSMethod = TLS_server_method();
+	sr_tls_methods[TLS_USE_TLSv1_2_srv - 1].TLSMethodMin = TLS1_2_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_2_srv - 1].TLSMethodMax = TLS1_2_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_2 - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_TLSv1_2 - 1].TLSMethodMin = TLS1_2_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_2 - 1].TLSMethodMax = TLS1_2_VERSION;
+
+	/* ranges of TLS versions (require a minimum TLS version) */
+	sr_tls_methods[TLS_USE_TLSv1_PLUS - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_TLSv1_PLUS - 1].TLSMethodMin = TLS1_VERSION;
+
+	sr_tls_methods[TLS_USE_TLSv1_1_PLUS - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_TLSv1_1_PLUS - 1].TLSMethodMin = TLS1_1_VERSION;
+
+	sr_tls_methods[TLS_USE_TLSv1_2_PLUS - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_TLSv1_2_PLUS - 1].TLSMethodMin = TLS1_2_VERSION;
+
 #endif
 }
 
