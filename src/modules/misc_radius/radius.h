@@ -35,13 +35,14 @@
 		#include <radcli/radcli.h>
 		#define DEFAULT_RADIUSCLIENT_CONF ""
 	#else
-		#include <radiusclient-ng.h>
-		#define DEFAULT_RADIUSCLIENT_CONF \
-			"/usr/local/etc/radiusclient-ng/radiusclient.conf"
+		#include <freeradius-client.h>
+		#define DEFAULT_RADIUSCLIENT_CONF  \
+		"/usr/local/etc/radiusclient/radiusclient.conf"
 	#endif
 #else
-	#include <freeradius-client.h>
-	#define DEFAULT_RADIUSCLIENT_CONF ""
+	#include <radiusclient-ng.h>
+	#define DEFAULT_RADIUSCLIENT_CONF \
+	"/usr/local/etc/radiusclient-ng/radiusclient.conf"
 #endif
 
 
