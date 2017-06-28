@@ -32,6 +32,9 @@
 static int n_static_locks=0;
 static gen_lock_set_t* static_locks=0;
 
+/* OpenSSL is thread-safe since 1.1.0 */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
 /* "dynamic" locks */
 
 struct CRYPTO_dynlock_value{
@@ -59,7 +62,6 @@ static struct CRYPTO_dynlock_value* dyn_create_f(const char* file, int line)
 error:
 	return 0;
 }
-
 
 
 static void dyn_lock_f(int mode, struct CRYPTO_dynlock_value* l,
@@ -116,6 +118,7 @@ static void locking_f(int mode, int n, const char* file, int line)
 	}
 }
 
+#endif /* openssl < 0x10100000L (1.1.0) */
 
 
 void tls_destroy_locks()
@@ -163,10 +166,14 @@ int tls_init_locks()
 		}
 		CRYPTO_set_locking_callback(locking_f);
 	}
+
+/* OpenSSL is thread-safe since 1.1.0 */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	/* set "dynamic" locks callbacks */
 	CRYPTO_set_dynlock_create_callback(dyn_create_f);
 	CRYPTO_set_dynlock_lock_callback(dyn_lock_f);
 	CRYPTO_set_dynlock_destroy_callback(dyn_destroy_f);
+#endif
 
 	/* starting with v1.0.0 openssl does not use anymore getpid(), but address
 	 * of errno which can point to same virtual address in a multi-process
