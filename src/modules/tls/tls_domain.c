@@ -987,6 +987,9 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 	}
 	memset(d->ctx, 0, sizeof(SSL_CTX*) * procs_no);
 	for(i = 0; i < procs_no; i++) {
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+		/* libssl < 1.1.0 */
 		if(d->method>TLS_USE_TLSvRANGE) {
 			d->ctx[i] = SSL_CTX_new(SSLv23_method());
 		} else {
@@ -999,6 +1002,30 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 		if(d->method>TLS_USE_TLSvRANGE) {
 			SSL_CTX_set_options(d->ctx[i], (long)ssl_methods[d->method - 1]);
 		}
+#else
+		/* libssl >= 1.1.0 */
+		d->ctx[i] = SSL_CTX_new(sr_tls_methods[d->method - 1].TLSMethod);
+		if (d->ctx[i] == NULL) {
+			ERR("%s: Cannot create SSL context\n", tls_domain_str(d));
+			return -1;
+		}
+		if(d->method>TLS_USE_TLSvRANGE) {
+			if(sr_tls_methods[d->method - 1].TLSMethodMin) {
+				SSL_CTX_set_min_proto_version(d->ctx[i],
+						sr_tls_methods[d->method - 1].TLSMethodMin);
+			}
+		} else {
+			if(sr_tls_methods[d->method - 1].TLSMethodMin) {
+				SSL_CTX_set_min_proto_version(d->ctx[i],
+						sr_tls_methods[d->method - 1].TLSMethodMin);
+			}
+			if(sr_tls_methods[d->method - 1].TLSMethodMax) {
+				SSL_CTX_set_max_proto_version(d->ctx[i],
+						sr_tls_methods[d->method - 1].TLSMethodMax);
+			}
+		}
+#endif
+
 #ifndef OPENSSL_NO_TLSEXT
 		/*
 		* check server domains for server_name extension and register

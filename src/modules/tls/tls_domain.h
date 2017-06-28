@@ -73,7 +73,7 @@ enum tls_method {
 	TLS_USE_TLSvRANGE,    /* placeholder - TLSvX ranges must be after it */
 	TLS_USE_TLSv1_PLUS,   /* TLSv1.0 or greater */
 	TLS_USE_TLSv1_1_PLUS, /* TLSv1.1 or greater */
-	TLS_USE_TLSv1_2_PLUS, /* TLSv1.1 or greater */
+	TLS_USE_TLSv1_2_PLUS, /* TLSv1.2 or greater */
 	TLS_METHOD_MAX
 };
 
