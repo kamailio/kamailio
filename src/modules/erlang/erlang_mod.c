@@ -164,7 +164,7 @@ static pv_export_t pvs[] = {
 /* exported parameters */
 static param_export_t parameters[] =
 {
-		/* Kamailo C node parameters */
+		/* Kamailio C node parameters */
 		{ "no_cnodes", PARAM_INT, &no_cnodes },
 		{ "cnode_alivename", PARAM_STR, &cnode_alivename },
 		{ "cnode_host", PARAM_STR, &cnode_host },
