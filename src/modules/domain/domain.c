@@ -258,7 +258,7 @@ int ki_lookup_domain_prefix(struct sip_msg *_msg, str *_sdomain, str *_sprefix)
 	val.s = did;
 	if(add_avp(flags, name, val) < 0) {
 		LM_ERR("unable to add a new AVP '%.*s'\n", name.s.len, name.s.s);
-		if(_sprefix)
+		if(_sprefix && _sprefix->s)
 			pkg_free(name.s.s);
 		return -1;
 	}
