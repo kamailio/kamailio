@@ -218,7 +218,7 @@ struct ser_cmd_export_ {
 };
 
 
-/** kamailo/openser version */
+/** kamailio/openser version */
 struct kam_cmd_export_ {
 	char* name;             /**< null terminated command name */
 	cmd_function function;  /**< pointer to the corresponding function */
