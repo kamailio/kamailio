@@ -679,6 +679,7 @@ done:
 	while (raw_conn_list != NULL)
 	{
 		raw_cc = raw_conn_list;
+		raw_conn_list = raw_conn_list->next;
 		if (raw_cc->name.s) pkg_free(raw_cc->name.s);
 		if (raw_cc->url.s) pkg_free(raw_cc->url.s);
 		if (raw_cc->username.s) pkg_free(raw_cc->username.s);
@@ -690,7 +691,6 @@ done:
 		if (raw_cc->ciphersuites.s) pkg_free(raw_cc->ciphersuites.s);
 		if (raw_cc->http_proxy.s) pkg_free(raw_cc->http_proxy.s);
 		pkg_free(raw_cc);
-		raw_conn_list = raw_conn_list->next;
 	}
 	return ret;
 }
