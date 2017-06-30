@@ -436,6 +436,8 @@ int cobj_get_timestamp(uint64_t ts, cobj_elem_t **elem, int limit)
 			elem_new->callid.s = (char*)pkg_malloc(obj->callid.len + 1); /* +1 Zero at the end */
 			if (!elem_new->callid.s) {
 				LM_ERR("Cannot allocate memory for callid\n");
+				pkg_free(elem_new);
+				elem_new = NULL;
 				goto clean;
 			}
 			memcpy(elem_new->callid.s, obj->callid.s, obj->callid.len);
