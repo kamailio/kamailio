@@ -2402,6 +2402,10 @@ inline static struct hostent* dns_entry2he(struct dns_hash_entry* e)
 					case T_AAAA:
 						ip = ((struct aaaa_rdata*)rr->rdata)->ip6;
 						break;
+					default:
+						LM_CRIT("wrong entry type %d for %.*s\n",
+							e->type, e->name_len, e->name);
+						return 0;
 				}
 				memcpy(p_addr[i], ip, len);
 	}
