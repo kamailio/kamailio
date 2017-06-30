@@ -218,13 +218,13 @@ typedef struct CallInfo {
 #define CHECK_COND(cond) \
     if ((cond) == 0) { \
         LM_ERR("malformed modparam\n"); \
-        return -1;                            \
+        goto error;                     \
     }
 
 #define CHECK_ALLOC(p) \
     if (!(p)) {    \
         LM_ERR("no memory left\n"); \
-        return -1;    \
+        goto error;    \
     }
 
 
@@ -242,9 +242,9 @@ destroy_list(AVP_List *list) {
 
 
 int
-parse_param(void *val, AVP_List** avps) {
+cc_parse_param(void *val, AVP_List** avps) {
 
-    char *p;
+    char *p = NULL;
     str s, content;
     AVP_List *mp = NULL;
 
@@ -253,6 +253,10 @@ parse_param(void *val, AVP_List** avps) {
     content.s = (char*) val;
     content.len = strlen(content.s);
 
+	if(content.len==0) {
+		LM_ERR("empty parameter\n");
+		return -1;
+	}
 
     p = (char*) pkg_malloc (content.len + 1);
     CHECK_ALLOC(p);
@@ -298,26 +302,35 @@ parse_param(void *val, AVP_List** avps) {
     }
 
     return 0;
+
+error:
+	if(mp) {
+		if(mp->pv) {
+			pkg_free(mp->pv);
+		}
+		pkg_free(mp);
+	}
+	return -1;
 }
 
 
 int
 parse_param_init(unsigned int type, void *val) {
-    if (parse_param(val, &cc_init_avps) == -1)
+    if (cc_parse_param(val, &cc_init_avps) == -1)
         return E_CFG;
     return 0;
 }
 
 int
 parse_param_start(unsigned int type, void *val) {
-    if (parse_param(val, &cc_start_avps) == -1)
+    if (cc_parse_param(val, &cc_start_avps) == -1)
         return E_CFG;
     return 0;
 }
 
 int
 parse_param_stop(unsigned int type, void *val) {
-    if (parse_param(val, &cc_stop_avps) == -1)
+    if (cc_parse_param(val, &cc_stop_avps) == -1)
         return E_CFG;
     return 0;
 }
