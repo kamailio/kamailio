@@ -209,13 +209,13 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 
 	/* Allocate send buffer and build frame */
 	frame_length = frame->payload_len + extended_length + 2;
-	if ((send_buf = pkg_malloc(sizeof(unsigned char) * frame_length))
+	if ((send_buf = pkg_malloc(sizeof(char) * frame_length))
 			== NULL)
 	{
 		LM_ERR("allocating send buffer from pkg memory\n");
 		return -1;
 	}
-	memset(send_buf, 0, sizeof(unsigned char) * frame_length);
+	memset(send_buf, 0, sizeof(char) * frame_length);
 	send_buf[pos++] = 0x80 | (frame->opcode & 0xff);
 	if (extended_length == 0)
 		send_buf[pos++] = (frame->payload_len & 0xff);
