@@ -16,6 +16,10 @@ MYSQLCFG=$(shell which mysql_config)
 ifeq ($(MYSQLCFG),)
 MYSQLCFG=$(shell which mysql_config5)
 endif
+# If no Mysql - do we have MariaDB?
+ifeq ($(MYSQLCFG),)
+MYSQLCFG=$(shell which mariadb_config)
+endif
 endif
 
 ifneq ($(MYSQLCFG),)
