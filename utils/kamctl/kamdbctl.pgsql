@@ -55,8 +55,8 @@ if [ -z "$DBPORT" ] ; then
 	CMD="psql -q -h $DBHOST -U $DBROOTUSER "
 	DUMP_CMD="pg_dump -h $DBHOST -U $DBROOTUSER -c"
 else
-	CMD="psql -q -h $DBHOST -p $DBHOST -U $DBROOTUSER "
-	DUMP_CMD="pg_dump -h $DBHOST -p $DBHOST -U $DBROOTUSER -c"
+	CMD="psql -q -h $DBHOST -p $DBPORT -U $DBROOTUSER "
+	DUMP_CMD="pg_dump -h $DBHOST -p $DBPORT -U $DBROOTUSER -c"
 fi
 
 #################################################################
