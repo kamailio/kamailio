@@ -55,6 +55,7 @@ typedef struct {
 	char *http_proxy;
 	char *failovercon;
 	char *useragent;
+	char *hdrs;
 	unsigned int authmethod;
 	unsigned int http_proxy_port;
 	unsigned int tlsversion;
@@ -106,10 +107,11 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 
 /*! Send query to server, optionally post data.
  */
-static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const curl_query_t * const params)
+static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst,
+		const curl_query_t * const params)
 {
 	CURL *curl = NULL;;
-	CURLcode res;  
+	CURLcode res;
 	char *at = NULL;
 	curl_res_stream_t stream;
 	long stat;
@@ -121,7 +123,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 	stream.max_size = (size_t) params->maxdatasize;
 
 	if(params->pconn) {
-		LM_DBG("****** ##### We have a pconn - keep_connections: %d!\n", params->keep_connections);
+		LM_DBG("****** ##### We have a pconn - keep_connections: %d!\n",
+				params->keep_connections);
 		params->pconn->result_content_type[0] = '\0';
 		params->pconn->redirecturl[0] = '\0';
 		if (params->pconn->curl != NULL) {
@@ -148,19 +151,20 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 	res = curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 
 	if (params->post) {
-		char ctype[256];
-
-		ctype[0] = '\0';
-		snprintf(ctype, sizeof(ctype), "Content-Type: %s", params->contenttype);
-
-	    	/* Now specify we want to POST data */ 
+		/* Now specify we want to POST data */
 		res |= curl_easy_setopt(curl, CURLOPT_POST, 1L);
-		/* Set the content-type of the DATA */
-		headerlist = curl_slist_append(headerlist, ctype);
-		res |= curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
+
+		if(params->contenttype) {
+			char ctype[256];
+
+			ctype[0] = '\0';
+			snprintf(ctype, sizeof(ctype), "Content-Type: %s", params->contenttype);
+
+			/* Set the content-type of the DATA */
+			headerlist = curl_slist_append(headerlist, ctype);
+		}
 
 		/* Tell CURL we want to upload using POST */
-
 		res |= curl_easy_setopt(curl, CURLOPT_POSTFIELDS, params->post);
 
 	} else {
@@ -168,9 +172,16 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		res |= curl_easy_setopt(curl, CURLOPT_POST, 0L);
 	}
 
+	if (params->hdrs) {
+		headerlist = curl_slist_append(headerlist, params->hdrs);
+	}
+	if(headerlist) {
+		res |= curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
+	}
+
 	if (params->maxdatasize) {
-		/* Maximum data size to download - we always download full response, but
-	   	cut it off before moving to pvar */
+		/* Maximum data size to download - we always download full response,
+		 * but cut it off before moving to pvar */
 		LM_DBG("****** ##### CURL Max datasize %u\n", params->maxdatasize);
 	}
 
@@ -184,45 +195,51 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 
 	/* Client certificate */
 	if (params->clientcert != NULL && params->clientkey != NULL) {
-	    	res |= curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-	    	res |= curl_easy_setopt(curl, CURLOPT_SSLCERT, params->clientcert);
+		res |= curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+		res |= curl_easy_setopt(curl, CURLOPT_SSLCERT, params->clientcert);
 
-	    	res |= curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "PEM");
-	    	res |= curl_easy_setopt(curl, CURLOPT_SSLKEY, params->clientkey);
+		res |= curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "PEM");
+		res |= curl_easy_setopt(curl, CURLOPT_SSLKEY, params->clientkey);
 	}
 
 	if (params->cacert != NULL) {
-	    	res |= curl_easy_setopt(curl, CURLOPT_CAINFO, params->cacert);
+		res |= curl_easy_setopt(curl, CURLOPT_CAINFO, params->cacert);
 	}
 
 	if (params->tlsversion != CURL_SSLVERSION_DEFAULT) {
-	    	res |= curl_easy_setopt(curl, CURLOPT_SSLVERSION, (long) params->tlsversion);
+		res |= curl_easy_setopt(curl, CURLOPT_SSLVERSION,
+				(long) params->tlsversion);
 	}
 
 	if (params->ciphersuites != NULL) {
-	    	res |= curl_easy_setopt(curl, CURLOPT_SSL_CIPHER_LIST, params->ciphersuites);
+		res |= curl_easy_setopt(curl, CURLOPT_SSL_CIPHER_LIST,
+				params->ciphersuites);
 	}
 
 	if (params->http_proxy  != NULL) {
 		LM_DBG("****** ##### CURL proxy [%s] \n", params->http_proxy);
 		res |= curl_easy_setopt(curl, CURLOPT_PROXY, params->http_proxy);
-	 } else {
+	} else {
 		LM_DBG("****** ##### CURL proxy NOT SET \n");
-	 }
+	}
 
 	if (params->http_proxy_port > 0) {
-		res |= curl_easy_setopt(curl, CURLOPT_PROXYPORT, params->http_proxy_port);
+		res |= curl_easy_setopt(curl, CURLOPT_PROXYPORT,
+				params->http_proxy_port);
 	}
 
 
-	res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, (long) params->verify_peer);
-	res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, (long) params->verify_host?2:0);
+	res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER,
+			(long) params->verify_peer);
+	res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST,
+			(long) params->verify_host?2:0);
 
 	res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long) 1);
 	res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) params->timeout);
-	res |= curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, (long) params->http_follow_redirect);
+	res |= curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION,
+			(long) params->http_follow_redirect);
 	if (params->http_follow_redirect) {
-		LM_DBG("****** ##### Following redirects for this request! \n");
+		LM_DBG("Following redirects for this request! \n");
 	}
 
 
@@ -242,7 +259,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 
 		curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &totaltime);
 		curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME, &connecttime);
-		LM_DBG("**** HTTP Call performed in %f s (connect time %f) \n", totaltime, connecttime);
+		LM_DBG("HTTP Call performed in %f s (connect time %f) \n",
+				totaltime, connecttime);
 		if (params->pconn) {
 			params->pconn->querytime = totaltime;
 			params->pconn->connecttime = connecttime;
@@ -305,7 +323,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		}
 		counter_inc(connfail);
 		if (params->failovercon != NULL) {
-			LM_ERR("FATAL FAILURE: Trying failover to curl con (%s)\n", params->failovercon);
+			LM_ERR("FATAL FAILURE: Trying failover to curl con (%s)\n",
+					params->failovercon);
 			return (1000 + res);
 		}
 		return res;
@@ -322,17 +341,19 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		res |= curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url);
 
 		if(ct) {
-	    		LM_DBG("We received Content-Type: %s\n", ct);
+			LM_DBG("We received Content-Type: %s\n", ct);
 			if (params->pconn) {
-				strncpy(params->pconn->result_content_type, ct, sizeof(params->pconn->result_content_type));
+				strncpy(params->pconn->result_content_type, ct,
+						sizeof(params->pconn->result_content_type));
 			}
-	    	}
+		}
 		if(url) {
-	    		LM_DBG("We visited URL: %s\n", url);
+			LM_DBG("We visited URL: %s\n", url);
 			if (params->pconn) {
-				strncpy(params->pconn->redirecturl, url , sizeof(params->pconn->redirecturl));
+				strncpy(params->pconn->redirecturl, url ,
+						sizeof(params->pconn->redirecturl));
 			}
-	    	}
+		}
 	}
 	if (params->pconn) {
 		params->pconn->last_result = stat;
@@ -350,18 +371,22 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 				/* search for line feed */
 				at = memchr(stream.buf, (char)10, download_size);
 				datasize = (double) (at - stream.buf);
-				LM_DBG("  -- curl download size cut to first line: %d \n", (int) datasize);
+				LM_DBG("  -- curl download size cut to first line: %d \n",
+						(int) datasize);
 			}
 			if (at == NULL) {
-				if (params->maxdatasize && ((unsigned int) download_size) > params->maxdatasize) {
+				if (params->maxdatasize
+						&& ((unsigned int) download_size) > params->maxdatasize) {
 					/* Limit at maximum data size */
 					datasize = (double) params->maxdatasize;
-					LM_DBG("  -- curl download size cut to maxdatasize : %d \n", (int) datasize);
+					LM_DBG("  -- curl download size cut to maxdatasize : %d \n",
+							(int) datasize);
 				} else {
 					/* Limit at actual downloaded data size */
 					datasize = (double) download_size;
-					LM_DBG("  -- curl download size cut to download_size : %d \n", (int) datasize);
-	    				//at = stream.buf + (unsigned int) download_size;
+					LM_DBG("  -- curl download size cut to download_size : %d \n",
+							(int) datasize);
+					// at = stream.buf + (unsigned int) download_size;
 				}
 			}
 			/* Create a STR object */
@@ -369,7 +394,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 			rval.len = datasize;
 			/* Duplicate string to return */
 			pkg_str_dup(_dst, &rval);
-			LM_DBG("curl query result: Length %d %.*s \n", rval.len, rval.len, rval.s);
+			LM_DBG("curl query result - length: %d data: [%.*s]\n", rval.len,
+					rval.len, rval.s);
 		} else {
 			_dst->s = NULL;
 			_dst->len = 0;
@@ -381,7 +407,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		counter_inc(connfail);
 		if (stat >= 500) {
 			if (params->failovercon != NULL) {
-				LM_ERR("FAILURE: Trying failover to curl con (%s)\n", params->failovercon);
+				LM_ERR("FAILURE: Trying failover to curl con (%s)\n",
+						params->failovercon);
 				return (1000 + stat);
 			}
 		}
@@ -568,7 +595,8 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection,
  * to pvar.
  * This is the same http_query as used to be in the utils module.
  */
-int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
+int http_client_query(struct sip_msg* _m, char* _url, str* _dst, char* _post,
+		char* _hdrs)
 {
 	int res;
 	curl_query_t query_params;
@@ -577,7 +605,8 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 	query_params.username = NULL;
 	query_params.secret = NULL;
 	query_params.authmethod = default_authmethod;
-	query_params.contenttype = "text/plain";
+	query_params.contenttype = NULL;
+	query_params.hdrs = _hdrs;
 	query_params.post = _post;
 	query_params.clientcert = NULL;
 	query_params.clientkey = NULL;

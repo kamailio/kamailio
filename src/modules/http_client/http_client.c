@@ -103,12 +103,15 @@ static int fixup_http_query_get(void** param, int param_no);
 static int fixup_free_http_query_get(void** param, int param_no);
 static int fixup_http_query_post(void** param, int param_no);
 static int fixup_free_http_query_post(void** param, int param_no);
+static int fixup_http_query_post_hdr(void** param, int param_no);
+static int fixup_free_http_query_post_hdr(void** param, int param_no);
 
 static int fixup_curl_connect(void** param, int param_no);
 static int fixup_free_curl_connect(void** param, int param_no);
 static int fixup_curl_connect_post(void** param, int param_no);
 static int fixup_free_curl_connect_post(void** param, int param_no);
-static int w_curl_connect_post(struct sip_msg* _m, char* _con, char * _url, char* _result, char* _ctype, char* _data);
+static int w_curl_connect_post(struct sip_msg* _m, char* _con, char * _url,
+		char* _result, char* _ctype, char* _data);
 
 static int fixup_curl_get_redirect(void** param, int param_no);
 static int fixup_free_curl_get_redirect(void** param, int param_no);
@@ -116,7 +119,10 @@ static int w_curl_get_redirect(struct sip_msg* _m, char* _con, char* _result);
 
 /* Wrappers for http_query to be defined later */
 static int w_http_query(struct sip_msg* _m, char* _url, char* _result);
-static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* _result);
+static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post,
+		char* _result);
+static int w_http_query_post_hdr(struct sip_msg* _m, char* _url, char* _post,
+		char* _hdrs, char* _result);
 static int w_curl_connect(struct sip_msg* _m, char* _con, char * _url, char* _result);
 
 /* forward function */
@@ -131,6 +137,9 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_client_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
 		fixup_free_http_query_post,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"http_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
+		fixup_free_http_query_post_hdr,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_connect", (cmd_function)w_curl_connect, 3, fixup_curl_connect,
 		fixup_free_curl_connect,
@@ -383,7 +392,7 @@ static int fixup_free_http_query_get(void** param, int param_no)
 	if (param_no == 2) {
 	return fixup_free_pvar_null(param, 1);
 	}
-	
+
 	LM_ERR("http_query: invalid parameter number <%d>\n", param_no);
 	return -1;
 }
@@ -621,22 +630,85 @@ static int fixup_free_http_query_post(void** param, int param_no)
 	return -1;
 }
 
-/*!
- * Wrapper for HTTP-Query (GET)
+/*
+ * Fix http_query params: url (string that may contain pvars) and
+ * result (writable pvar).
  */
-static int w_http_query(struct sip_msg* _m, char* _url, char* _result) {
+static int fixup_http_query_post_hdr(void** param, int param_no)
+{
+	if ((param_no >= 1) && (param_no <= 3)) {
+		return fixup_spve_null(param, 1);
+	}
+
+	if (param_no == 4) {
+		if (fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/*
+ * Free http_query params.
+ */
+static int fixup_free_http_query_post_hdr(void** param, int param_no)
+{
+	if ((param_no >= 1) && (param_no <= 3)) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	if (param_no == 4) {
+		return fixup_free_pvar_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/*!
+ * Wrapper for HTTP-Query function for cfg script
+ */
+static int w_http_query_script(sip_msg_t* _m, char* _url, char* _post,
+		char* _hdrs, char* _result)
+{
 	int ret = 0;
 	str url = {NULL, 0};
+	str post = {NULL, 0};
+	str hdrs = {NULL, 0};
 	str result = {NULL, 0};
 	pv_spec_t *dst;
 	pv_value_t val;
 
-	if (get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
-		LM_ERR("URL undefined\n");
+	if (get_str_fparam(&url, _m, (gparam_p)_url) != 0 || url.len<=0) {
+		LM_ERR("URL has no value\n");
 		return -1;
 	}
+	if (_post && get_str_fparam(&post, _m, (gparam_p)_post) != 0) {
+		LM_ERR("DATA has no value\n");
+		return -1;
+	} else {
+		if(post.len==0) {
+			post.s = NULL;
+		}
+	}
+	if (_hdrs && get_str_fparam(&hdrs, _m, (gparam_p)_hdrs) != 0) {
+		LM_ERR("HDRS has no value\n");
+		return -1;
+	} else {
+		if(hdrs.len==0) {
+			hdrs.s = NULL;
+		}
+	}
 
-	ret = http_query(_m, url.s, &result, NULL);
+	ret = http_client_query(_m, url.s, &result, post.s, hdrs.s);
 
 	val.rs = result;
 	val.flags = PV_VAL_STR;
@@ -645,39 +717,34 @@ static int w_http_query(struct sip_msg* _m, char* _url, char* _result) {
 
 	if (result.s != NULL)
 		pkg_free(result.s);
+
 	return (ret==0)?-1:ret;
 }
 
+/*!
+ * Wrapper for HTTP-Query (GET)
+ */
+static int w_http_query(struct sip_msg* _m, char* _url, char* _result)
+{
+	return w_http_query_script(_m, _url, NULL, NULL, _result);
+}
 
 /*!
  * Wrapper for HTTP-Query (POST-Variant)
  */
-static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* _result) {
-	int ret = 0;
-	str url = {NULL, 0};
-	str post = {NULL, 0};
-	str result = {NULL, 0};
-	pv_spec_t *dst;
-	pv_value_t val;
+static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post,
+		char* _result)
+{
+	return w_http_query_script(_m, _url, _post, NULL, _result);
+}
 
-	if (get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
-		LM_ERR("URL has no value\n");
-		return -1;
-	}
-	if (get_str_fparam(&post, _m, (gparam_p)_post) != 0) {
-		LM_ERR("DATA has no value\n");
-		return -1;
-	}
-
-	ret = http_query(_m, url.s, &result, post.s);
-	val.rs = result;
-	val.flags = PV_VAL_STR;
-	dst = (pv_spec_t *)_result;
-	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
-
-	if (result.s != NULL)
-		pkg_free(result.s);
-	return (ret==0)?-1:ret;
+/*!
+ * Wrapper for HTTP-Query (HDRS-Variant)
+ */
+static int w_http_query_post_hdr(struct sip_msg* _m, char* _url, char* _post,
+		char* _hdrs, char* _result)
+{
+	return w_http_query_script(_m, _url, _post, _hdrs, _result);
 }
 
 /*!

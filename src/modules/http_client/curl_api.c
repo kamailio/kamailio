@@ -8,7 +8,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- *      
+ *
  * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -30,7 +30,7 @@ int bind_httpc_api(httpc_api_t *api)
 		return -1;
 	}
 	api->http_connect = curl_con_query_url;
-	api->http_query = http_query;
+	api->http_client_query = http_client_query;
 	api->http_connection_exists = http_connection_exists;
 	api->http_get_content_type = http_get_content_type;
 
