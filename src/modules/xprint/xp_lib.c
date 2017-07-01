@@ -1706,7 +1706,7 @@ int xl_shm_parse_format2(char *s, xl_elog_p *el, xl_parse_cb cb)
 int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 {
 	int n, h;
-	str tok;
+	str tok = STR_NULL;
 	xl_elog_p it;
 	char *cur;
 
