@@ -19,7 +19,7 @@
 /**
  * \defgroup mem Kamailio memory manager
  * \brief  Kamailio internal memory manager
- * 
+ *
  * Kamailio internal memory manager for private (per process) and shared
  * memory pools. It provides several different strategies for the memory
  * management, like really fast, with extended debugging and also plain system
@@ -29,7 +29,7 @@
 /**
  * \file
  * \brief Main definitions for memory manager
- * 
+ *
  * \brief Main definitions for memory manager, like malloc, free and realloc
  * \ingroup mem
  */
@@ -193,12 +193,12 @@ int init_shm_mallocs(int force_alloc);
 #endif
 
 /** generic logging helper for allocation errors in private memory pool/ system */
-#ifdef SYSTEM_MALLOC
-#define PKG_MEM_ERROR LM_ERR("could not allocate private memory from system")
+#ifdef SYS_MALLOC
+#define PKG_MEM_ERROR LM_ERR("could not allocate private memory from sys pool\n")
 #else
-#define PKG_MEM_ERROR LM_ERR("could not allocate private memory from available pool")
+#define PKG_MEM_ERROR LM_ERR("could not allocate private memory from pkg pool\n")
 #endif
 /** generic logging helper for allocation errors in shared memory pool */
-#define SHM_MEM_ERROR LM_ERR("could not allocate shared memory from available pool")
+#define SHM_MEM_ERROR LM_ERR("could not allocate shared memory from shm pool\n")
 
 #endif
