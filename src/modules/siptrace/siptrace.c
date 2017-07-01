@@ -1758,7 +1758,7 @@ static int trace_send_hep3_duplicate(str *body, str *from, str *to, struct dest_
 		HEP3_PACK_CHUNK_UINT16_NBO(0, 0x0007, htons(from_su.sin6.sin6_port));
 		HEP3_PACK_CHUNK_UINT16_NBO(0, 0x0008, htons(to_su.sin6.sin6_port));
 	} else {
-		LM_ERR("unknown address family [%u]\n", dst.send_sock->address.af);
+		LM_ERR("unknown address family [%u]\n", from_su.s.sa_family);
 		goto error;
 	}
 
