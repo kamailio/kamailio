@@ -52,10 +52,12 @@ void pkg_print_manager(void);
 #	define pkg_mod_free_stats(x)    _pkg_root.xfmodstats(x)
 
 #else /*PKG_MALLOC*/
+
 /* use system allocator */
+#	define SYS_MALLOC
 #	include <stdlib.h>
 #	include "memdbg.h"
-#	ifdef DBG_SYS_MALLOC
+#	ifdef DBG_SYS_MEMORY
 #	define pkg_malloc(s) \
 	(  { void *____v123; ____v123=malloc((s)); \
 	   MDBG("malloc %p size %lu end %p (%s:%d)\n", ____v123, (unsigned long)(s), (char*)____v123+(s), __FILE__, __LINE__);\
