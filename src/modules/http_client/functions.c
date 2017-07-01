@@ -114,9 +114,9 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst,
 	CURLcode res;
 	char *at = NULL;
 	curl_res_stream_t stream;
-	long stat;
-	str rval;
-	double download_size;
+	long stat = 0;
+	str rval = STR_NULL;
+	double download_size = 0;
 	struct curl_slist *headerlist = NULL;
 
 	memset(&stream, 0, sizeof(curl_res_stream_t));
@@ -360,10 +360,11 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst,
 	}
 
 	if ((stat >= 200) && (stat < 500)) {
-		double datasize = download_size;
+		double datasize = 0;
 
 		curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
 		LM_DBG("  -- curl download size: %u \n", (unsigned int)download_size);
+		datasize = download_size;
 
 		if (download_size > 0) {
 
