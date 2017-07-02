@@ -456,8 +456,10 @@ int init_dns_cache_stats(int iproc_num)
 		LM_CRIT("%s: crt(%p, %p, %p)," \
 					" prev(%p, %p, %p), next(%p, %p, %p)\n", txt, \
 					(l), (l)->next, (l)->prev, \
-					(l)->prev, (l)->prev->next, (l)->prev->prev, \
-					(l)->next, (l)->next->next, (l)->next->prev \
+					(l)->prev, ((l)->prev)?(l)->prev->next:NULL, \
+					((l)->prev)?(l)->prev->prev:NULL, \
+					(l)->next, ((l)->next)?(l)->next->next:NULL, \
+					((l)->next)?(l)->next->prev:NULL \
 				)
 
 #define debug_lu_lst( txt, l) \
