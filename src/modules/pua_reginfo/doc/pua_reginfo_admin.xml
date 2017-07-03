@@ -125,7 +125,7 @@ modparam("pua_reginfo", "publish_reginfo", 0)
 	<section>
 		<title><varname>outbound_proxy</varname>(str)</title>
 		<para>
-		The outbound_proxy uri to be used when sending Subscribe requests.
+		The outbound_proxy uri to be used when sending Subscribe and Publish requests.
 		</para>
 		<para>
 		<emphasis>	Default value is <quote>NULL</quote>.	
