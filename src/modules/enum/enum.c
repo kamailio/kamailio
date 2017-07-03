@@ -405,6 +405,11 @@ int is_from_user_enum_helper(sip_msg_t *_msg, str *suffix, str *service)
 			zp = 0;
 			proto = PROTO_NONE;
 			he = sip_resolvehost(&luri.host, &zp, &proto);
+			if(he==NULL) {
+				LM_ERR("failed to resolve the host\n");
+				free_rdata_list(head); /*clean up*/
+				return -8;
+			}
 
 			hostent2ip_addr(&addr, he, 0);
 
@@ -948,11 +953,13 @@ int i_enum_query_helper(sip_msg_t *_msg, str *suffix, str *service)
 			if((ebl->apex_len > MAX_COMPONENT_SIZE)
 					|| (ebl->separator_len > MAX_COMPONENT_SIZE)) {
 				LM_ERR("EBL strings too long\n");
+				free_rdata_list(head);
 				return -1;
 			}
 
 			if(ebl->position > 15) {
 				LM_ERR("EBL position too large (%d)\n", ebl->position);
+				free_rdata_list(head);
 				return -1;
 			}
 
