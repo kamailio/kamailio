@@ -485,7 +485,7 @@ int socketinfo2str(char *s, int *len, struct socket_info *si, int mode)
 		l += 2;
 
 	if(*len < l) {
-		LM_ERR("Destionation buffer too short\n");
+		LM_ERR("Destination buffer too short\n");
 		*len = l;
 		return -1;
 	}
