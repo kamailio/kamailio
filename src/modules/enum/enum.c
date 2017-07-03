@@ -82,7 +82,7 @@ static int cclen(const char *number)
 	d1 = number[0];
 	d2 = number[1];
 
-	if(!isdigit((int)d2))
+	if(!isdigit((int)d1) || !isdigit((int)d2))
 		return (0);
 
 	switch(d1) {
@@ -90,13 +90,13 @@ static int cclen(const char *number)
 		case '7':
 			return (1);
 		case '2':
-			if((d2 == '0') || (d1 == '7'))
+			if((d2 == '0') || (d2 == '7'))
 				return (2);
 			break;
 		case '3':
-			if((d2 >= '0') && (d1 <= '4'))
+			if((d2 >= '0') && (d2 <= '4'))
 				return (2);
-			if((d2 == '6') || (d1 == '9'))
+			if((d2 == '6') || (d2 == '9'))
 				return (2);
 			break;
 		case '4':
@@ -104,19 +104,19 @@ static int cclen(const char *number)
 				return (2);
 			break;
 		case '5':
-			if((d2 >= '1') && (d1 <= '8'))
+			if((d2 >= '1') && (d2 <= '8'))
 				return (2);
 			break;
 		case '6':
-			if(d1 <= '6')
+			if(d2 <= '6')
 				return (2);
 			break;
 		case '8':
-			if((d2 == '1') || (d1 == '2') || (d1 == '4') || (d1 == '6'))
+			if((d2 == '1') || (d2 == '2') || (d2 == '4') || (d2 == '6'))
 				return (2);
 			break;
 		case '9':
-			if(d1 <= '5')
+			if(d2 <= '5')
 				return (2);
 			if(d2 == '8')
 				return (2);
