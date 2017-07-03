@@ -529,12 +529,12 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	}
 
 	if (append_fromtag) {
-		if (parse_from_header(_m) < 0) {
+		if (parse_from_header(_m) < 0 || get_from(_m)==NULL) {
 			LM_ERR("From parsing failed\n");
 			ret = -2;
 			goto error;
 		}
-		from = (struct to_body*)_m->from->parsed;
+		from = get_from(_m);
 	}
 	
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
