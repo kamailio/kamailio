@@ -323,6 +323,9 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 	publ.event |= REGINFO_EVENT;
 	publ.extra_headers= NULL;
 
+	if(outbound_proxy.s && outbound_proxy.len)
+		publ.outbound_proxy= &outbound_proxy;
+
 	if(pua.send_publish(&publ) < 0) {
 		LM_ERR("Error while sending publish\n");
 	}	
