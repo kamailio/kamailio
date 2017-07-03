@@ -1589,7 +1589,7 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 				ail=ail_next;
 				continue;
 			}
-			/* 2. check if the extra addresses contain a duplicates for 
+			/* 2. check if the extra addresses contain a duplicates for
 			 *  other addresses in the same list */
 			for (tmp_ail=ail->next; tmp_ail;){
 				tmp_ail_next=tmp_ail->next;
@@ -1606,6 +1606,9 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 									si->port_no, si->proto);
 						/* remove tmp_ail*/
 					addr_info_listrm(&si->addr_info_lst, tmp_ail);
+					if(ail_next==tmp_ail) {
+						ail_next = tmp_ail_next;
+					}
 					free_addr_info(tmp_ail);
 				}
 				tmp_ail=tmp_ail_next;
