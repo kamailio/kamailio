@@ -518,7 +518,7 @@ exit:
    if(headers.s)
       pkg_free(headers.s);
    if(body.s)
-      pkg_free(headers.s);
+      pkg_free(body.s);
    if(my_msg){
       if(my_msg->headers)
 	 free_hdr_field_lst(my_msg->headers);
