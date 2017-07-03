@@ -55,6 +55,13 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 	trim_leading(&s);
 
 	last = 0;
+	if (*head) {
+		/* go to last rr in list */
+		last = *head;
+		while (last->next) {
+			last = last->next;
+		}
+	}
 
 	while(1) {
 		/* Allocate and clear rr structure */
@@ -128,7 +135,8 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 
 error:
 	if (r) free_rr(&r);
-	free_rr(head); /* Free any contacts created so far */
+	free_rr(head); /* Free any rr created so far */
+	*head = NULL;
 	LM_ERR("Failed parsing rr header body [%.*s]\n", len, ZSW(buf));
 	return -1;
 
