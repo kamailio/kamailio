@@ -3428,7 +3428,7 @@ int ds_get_state(int group, str *address, str *iuid)
 }
 
 /**
- * Update destionation's state
+ * Update destination's state
  */
 int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 		int state, int mode, ds_rctx_t *rctx)
