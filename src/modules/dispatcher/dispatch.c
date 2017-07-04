@@ -1212,12 +1212,16 @@ int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
+	*hash = 0;
 	if(parse_headers(msg, HDR_PROXYAUTH_F, 0) == -1) {
 		LM_ERR("error parsing headers!\n");
 		return -1;
 	}
-	if(msg->proxy_auth && !msg->proxy_auth->parsed)
-		parse_credentials(msg->proxy_auth);
+	if(msg->proxy_auth && !msg->proxy_auth->parsed) {
+		if(parse_credentials(msg->proxy_auth)!=0) {
+			LM_DBG("no parsing for proxy-auth header\n");
+		}
+	}
 	if(msg->proxy_auth && msg->proxy_auth->parsed) {
 		h = msg->proxy_auth;
 	}
@@ -1226,8 +1230,11 @@ int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 			LM_ERR("error parsing headers!\n");
 			return -1;
 		}
-		if(msg->authorization && !msg->authorization->parsed)
-			parse_credentials(msg->authorization);
+		if(msg->authorization && !msg->authorization->parsed) {
+			if(parse_credentials(msg->authorization)!=0) {
+				LM_DBG("no parsing for auth header\n");
+			}
+		}
 		if(msg->authorization && msg->authorization->parsed) {
 			h = msg->authorization;
 		}
