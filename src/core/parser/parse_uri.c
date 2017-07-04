@@ -996,9 +996,11 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			if (scheme==URN_SCH){
 				uri->host.s=s;
 				uri->host.len=p-s;
-				DBG("parsed urn scheme...\n");
+				DBG("parsed urn scheme with host: %.*s\n",
+						uri->host.len, uri->host.s);
 			/* this is the port, it can't be the passwd */
 			}else goto error_bad_port;
+			break;
 		case URI_HOST_P:
 		case URI_HOST6_END:
 			uri->host.s=s;
