@@ -878,8 +878,8 @@ static int nl_bound_sock(void)
 	struct sockaddr_nl la;
 
 	sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-	if(sock <= 0){
-		LM_ERR("could not create NETLINK sock to get interface list");
+	if(sock < 0){
+		LM_ERR("could not create NETLINK sock to get interface list\n");
 		goto error;
 	}
 
@@ -1069,7 +1069,7 @@ static int build_iface_list(void)
 			entry->next = 0;
 			entry->family = families[i];
 			entry->ifa_flags = ifi->ifa_flags;
-                        is_link_local = 0;
+            is_link_local = 0;
 
 			for(;RTA_OK(rtap, rtl);rtap=RTA_NEXT(rtap,rtl)){
 				switch(rtap->rta_type){
@@ -1102,7 +1102,10 @@ static int build_iface_list(void)
 						break;
 				}
 			}
-			if(is_link_local) continue;    /* link local addresses are not bindable */
+			if(is_link_local) {
+				pkg_free(entry);
+				continue;    /* link local addresses are not bindable */
+			}
 
 			if(strlen(ifaces[index].name)==0)
 				strncpy(ifaces[index].name, name, MAX_IF_LEN);
