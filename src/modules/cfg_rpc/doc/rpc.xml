@@ -88,6 +88,22 @@
 # &kamcmd; cfg.sets voicemail srv_ip "1.2.3.4"
 ...
 </programlisting>
+                </example>
+        </section>
+        <section id="cfg_rpc.rpc.reset">
+    <title>cfg.reset</title>
+            <para>
+                <emphasis>cfg.reset</emphasis> - Reset the variable values of
+                a configuration group. The function accepts only one parameter:
+                group name.
+            </para>
+                <example>
+                <title>Use <varname>cfg.reset</varname> RPC command</title>
+                <programlisting format="linespecific">
+...
+# &sercmd; cfg.reset core
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="cfg_rpc.rpc.set_now_string">
