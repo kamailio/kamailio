@@ -1596,7 +1596,7 @@ static int select_attr_fixup(str* res, select_t* s, struct sip_msg* msg)
 
 	if (! msg) { /* fixup call */
 		str attr_name;
-		
+
 		if (s->params[SEL_PARAM_IDX].type != SEL_PARAM_STR) {
 			ERR("attribute name expected.\n");
 			return -1;
@@ -1619,6 +1619,7 @@ static int select_attr_fixup(str* res, select_t* s, struct sip_msg* msg)
 		if (parse_avp_ident(&attr_name, avp_ident) < 0) {
 			ERR("failed to parse attribute name: `%.*s'.\n", STR_FMT(&attr_name));
 			pkg_free(avp_ident);
+			return -1;
 		}
 		s->params[SEL_PARAM_IDX].v.p = avp_ident;
 		s->params[SEL_PARAM_IDX].type = SEL_PARAM_PTR;
