@@ -228,9 +228,11 @@ int delete_expired_subs_rlsdb( void )
 		}
 
 		pkg_free(rlsubs_did.s);
+		rlsubs_did.s = NULL;
 	}
 
 	rls_dbf.free_result(rls_db, result);
+	result = NULL;
 
 	if (rls_dbf.end_transaction)
 	{
