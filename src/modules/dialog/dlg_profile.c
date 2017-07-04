@@ -594,8 +594,14 @@ int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *p
 		linker->hash_linker.value.len = value->len;
 	}
 	sruid_next_safe(&_dlg_profile_sruid);
-	strcpy(linker->hash_linker.puid, _dlg_profile_sruid.uid.s);
-	linker->hash_linker.puid_len = _dlg_profile_sruid.uid.len;
+	if(_dlg_profile_sruid.uid.len<SRUID_SIZE) {
+		strcpy(linker->hash_linker.puid, _dlg_profile_sruid.uid.s);
+		linker->hash_linker.puid_len = _dlg_profile_sruid.uid.len;
+	} else {
+		LM_ERR("sruid size is too large\n");
+		shm_free(linker);
+		goto error;
+	}
 
 	if (dlg!=NULL) {
 		/* add linker directly to the dialog and profile */
