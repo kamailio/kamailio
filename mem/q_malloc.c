@@ -728,18 +728,22 @@ void qm_check(struct qm_block* qm)
 			abort();
 		};
 #endif
-		if (f + sizeof(struct qm_frag) + f->size + sizeof(struct qm_frag_end) > qm->first_frag + qm->size) {
+		if ((char*)f + sizeof(struct qm_frag) + f->size
+				+ sizeof(struct qm_frag_end) > (char*)qm->first_frag + qm->size) {
 			LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p) "
 				"bad size: %lu (frag end: %p > end of block: %p)\n",
-				f, (char*)f + sizeof(struct qm_frag) + sizeof(struct qm_frag_end), f->size,
-				f + sizeof(struct qm_frag) + f->size, qm->first_frag + qm->size);
+				f, (char*)f + sizeof(struct qm_frag), f->size,
+				(char*)f + sizeof(struct qm_frag) + f->size
+					+ sizeof(struct qm_frag_end),
+				(char*)qm->first_frag + qm->size);
 			qm_status(qm);
 			abort();
 		}
 		/* check struct qm_frag_end */
 		if (FRAG_END(f)->size != f->size) {
 			LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p) "
-				"size in qm_frag and qm_frag_end does not match: frag->size=%lu, frag_end->size=%lu)\n",
+					"size in qm_frag and qm_frag_end does not match:"
+					" frag->size=%lu, frag_end->size=%lu)\n",
 				f, (char*)f + sizeof(struct qm_frag),
 				f->size, FRAG_END(f)->size);
 			qm_status(qm);
