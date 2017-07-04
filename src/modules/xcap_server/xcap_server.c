@@ -893,7 +893,7 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 	qvals[n_qcols].nul = 0;
 	qvals[n_qcols].val.str_val = *user;
 	n_qcols++;
-	
+
 	qcols[n_qcols] = &str_domain_col;
 	qvals[n_qcols].type = DB1_STR;
 	qvals[n_qcols].nul = 0;
@@ -904,7 +904,7 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 	rcols[doc_uri_col = n_rcols++] = &str_doc_uri_col;
 	rcols[etag_col = n_rcols++] = &str_etag_col;
 
-	if (xcaps_dbf.use_table(xcaps_db, &xcaps_db_table) < 0) 
+	if (xcaps_dbf.use_table(xcaps_db, &xcaps_db_table) < 0)
 	{
 		LM_ERR("in use_table-[table]= %.*s\n", xcaps_db_table.len,
 				xcaps_db_table.s);
@@ -1015,7 +1015,7 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 			{
 				directory->len += snprintf(directory->s + directory->len,
 							xcaps_buf.len - directory->len,
-			"%.*s", server_name.len, server_name.s);
+							"%.*s", server_name.len, server_name.s);
 			}
 			else
 			{
@@ -1023,8 +1023,10 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 				server_name.len = ip_addr2sbuf(&msg->rcv.dst_ip, server_name.s, IP6_MAX_STR_SIZE);
 				directory->len += snprintf(directory->s + directory->len,
 							xcaps_buf.len - directory->len,
-			"%.*s:%d", server_name.len, server_name.s, msg->rcv.dst_port);
+							"%.*s:%d", server_name.len, server_name.s, msg->rcv.dst_port);
 				pkg_free(server_name.s);
+				server_name.s = 0;
+				server_name.len = 0;
 			}
 		}
 
