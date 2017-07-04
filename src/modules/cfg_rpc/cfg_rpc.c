@@ -368,9 +368,10 @@ static void rpc_reset(rpc_t* rpc, void* c)
 	void	*val;
 	int	i, ret;
 	str	group;
+	char	*ch;
 	unsigned int	*group_id;
 	unsigned int	val_type;
-
+	unsigned int	input_type;
 
 	if (rpc->scan(c, "S", &group) < 1)
 		return;
