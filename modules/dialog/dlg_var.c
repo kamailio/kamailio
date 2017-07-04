@@ -483,6 +483,7 @@ int pv_set_dlg_ctx(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
 	int n;
+	int rlen;
 	char *rtp;
 
 	if(param==NULL)
@@ -509,13 +510,15 @@ int pv_set_dlg_ctx(struct sip_msg* msg, pv_param_t *param,
 						&& val->rs.len<DLG_TOROUTE_SIZE) {
 					_dlg_ctx.to_route = route_lookup(&main_rt, val->rs.s);
 					strcpy(_dlg_ctx.to_route_name, val->rs.s);
-				} else _dlg_ctx.to_route = 0;
+				} else { _dlg_ctx.to_route = 0; }
 			} else {
 				if(n!=0) {
-					rtp = int2str(n, NULL);
-					_dlg_ctx.to_route = route_lookup(&main_rt, rtp);
-					strcpy(_dlg_ctx.to_route_name, rtp);
-				} else _dlg_ctx.to_route = 0;
+					rtp = int2str(n, &rlen);
+					if(rlen<DLG_TOROUTE_SIZE) {
+						_dlg_ctx.to_route = route_lookup(&main_rt, rtp);
+						strcpy(_dlg_ctx.to_route_name, rtp);
+					} else { _dlg_ctx.to_route = 0; }
+				} else { _dlg_ctx.to_route = 0; }
 			}
 			if(_dlg_ctx.to_route <0) _dlg_ctx.to_route = 0;
 		break;
