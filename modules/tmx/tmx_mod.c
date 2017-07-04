@@ -337,15 +337,18 @@ static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
 	init_cancel_info(&cancel_data);
 	switch(n) {
 		case 1:
-			/* prepare cancel for every branch except idx */
+			/* prepare cancel for every branch except idx (others) */
 			_tmx_tmb.prepare_to_cancel(t,
 					&cancel_data.cancel_bitmap, 1<<idx);
+			break;
 		case 2:
+			/* prepare cancel for current branch (idx) */
 			if(msg->first_line.u.reply.statuscode>=200)
 				break;
 			cancel_data.cancel_bitmap = 1<<idx;
 		break;
 		default:
+			/* prepare cancel for all branches */
 			if (msg->first_line.u.reply.statuscode>=200)
 				/* prepare cancel for every branch except idx */
 				_tmx_tmb.prepare_to_cancel(t,
