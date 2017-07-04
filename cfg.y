@@ -2334,7 +2334,7 @@ single_case:
 		}
 	}
 	| DEFAULT COLON actions {
-		if ((($$=mk_case_stm(0, 0, $3, &i_tmp))==0) && (i_tmp=-10)){
+		if ((($$=mk_case_stm(0, 0, $3, &i_tmp))==0) && (i_tmp==-10)){
 				YYABORT;
 		}
 	}
