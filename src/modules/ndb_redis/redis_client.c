@@ -608,7 +608,7 @@ int redisc_exec_pipelined(redisc_server_t *rsrv)
 			goto error_exec;
 		}
 	}
-	LM_DBG("reply is [%s]",rpl->rplRedis->str);
+	LM_DBG_redis_reply(rpl->rplRedis);
 
 	/* replies are received just retrieve them */
 	for (i=1;i<rsrv->piped.pending_commands;i++)
@@ -625,7 +625,13 @@ int redisc_exec_pipelined(redisc_server_t *rsrv)
 			LM_ERR("Unable to read reply\n");
 			continue;
 		}
-		LM_DBG("reply is [%s]",rpl->rplRedis->str);
+		if (rpl->rplRedis == NULL)
+		{
+			LM_ERR("Trying to read reply for command %.*s but nothing in buffer!",
+					rsrv->piped.commands[i].len,rsrv->piped.commands[i].s);
+			continue;
+		}
+		LM_DBG_redis_reply(rpl->rplRedis);
 	}
 	redisc_free_pipelined_cmds(rsrv);
 	rsrv->disable.consecutive_errors = 0;
@@ -1060,4 +1066,58 @@ int redis_count_err_and_disable(redisc_server_t *rsrv)
 		return 1;
 	}
 	return 0;
+}
+
+void print_redis_reply(int log_level, redisReply *rpl,int offset)
+{
+	int i;
+	char padding[MAXIMUM_NESTED_KEYS + 1];
+
+	if(!is_printable(log_level))
+		return;
+
+	if (!rpl)
+	{
+		LM_ERR("Unexpected null reply");
+		return;
+	}
+
+	if (offset > MAXIMUM_NESTED_KEYS)
+	{
+		LM_ERR("Offset is too big");
+		return;
+	}
+
+	for (i=0;i<offset;i++)
+	{
+		padding[i]='\t';
+	}
+	padding[offset]='\0';
+
+	switch (rpl->type)
+	{
+	case REDIS_REPLY_STRING:
+		LOG(log_level,"%sstring reply: [%s]", padding, rpl->str);
+		break;
+	case REDIS_REPLY_INTEGER:
+		LOG(log_level,"%sinteger reply: %lld", padding, rpl->integer);
+		break;
+	case REDIS_REPLY_ARRAY:
+		LOG(log_level,"%sarray reply with %d elements", padding, (int)rpl->elements);
+		for (i=0; i < rpl->elements; i++)
+		{
+			LOG(log_level,"%selement %d:",padding,i);
+			print_redis_reply(log_level,rpl->element[i],offset+1);
+		}
+		break;
+	case REDIS_REPLY_NIL:
+		LOG(log_level,"%snil reply",padding);
+		break;
+	case REDIS_REPLY_STATUS:
+		LOG(log_level,"%sstatus reply: %s", padding, rpl->str);
+		break;
+	case REDIS_REPLY_ERROR:
+		LOG(log_level,"%serror reply: %s", padding, rpl->str);
+		break;
+	}
 }
