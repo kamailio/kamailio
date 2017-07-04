@@ -623,7 +623,7 @@ err1:
 /*! \brief load groups of destinations from file */
 int ds_load_list(char *lfile)
 {
-	char line[256], *p;
+	char line[1024], *p;
 	FILE *f = NULL;
 	int id, setn, flags, priority;
 	str uri;
@@ -650,7 +650,7 @@ int ds_load_list(char *lfile)
 	*next_idx = (*crt_idx + 1) % 2;
 	ds_avl_destroy(&ds_lists[*next_idx]);
 
-	p = fgets(line, 256, f);
+	p = fgets(line, 1024, f);
 	while(p) {
 		/* eat all white spaces */
 		while(*p && (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n'))
@@ -728,7 +728,7 @@ int ds_load_list(char *lfile)
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
 	next_line:
-		p = fgets(line, 256, f);
+		p = fgets(line, 1024, f);
 	}
 
 	if(reindex_dests(ds_lists[*next_idx]) != 0) {
