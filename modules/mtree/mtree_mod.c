@@ -777,16 +777,20 @@ static int mt_load_db_trees()
 		{
 			/* check for NULL values ?!?! */
 			tname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
-			tname.len = strlen(tname.s);
-
 			tprefix.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
-			tprefix.len = strlen(tprefix.s);
-
 			tvalue.s = (char*)(RES_ROWS(db_res)[i].values[2].val.string_val);
+
+			if(tprefix.s==NULL || tvalue.s==NULL || tname.s==NULL)
+			{
+				LM_ERR("Error - null fields in db\n");
+				continue;
+			}
+
+			tname.len = strlen(tname.s);
+			tprefix.len = strlen(tprefix.s);
 			tvalue.len = strlen(tvalue.s);
 
-			if(tprefix.s==NULL || tvalue.s==NULL || tname.s==NULL ||
-					tprefix.len<=0 || tvalue.len<=0 || tname.len<=0)
+			if(tname.len<=0 || tprefix.len<=0 || tvalue.len<=0)
 			{
 				LM_ERR("Error - bad values in db\n");
 				continue;
