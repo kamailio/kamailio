@@ -130,7 +130,7 @@ int dlg_cseq_update(sip_msg_t *msg)
 	sr_cfgenv_t *cenv = NULL;
 
 	if(dlg_cseq_prepare_msg(msg)!=0) {
-		goto error;
+		return -1;
 	}
 	if(msg->first_line.type==SIP_REPLY) {
 		/* nothing to do for outgoing replies */
@@ -186,16 +186,14 @@ int dlg_cseq_update(sip_msg_t *msg)
 	trim(&nval);
 
 	LM_DBG("adding auth cseq header value: %.*s\n", nval.len, nval.s);
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)==-1) {
+		LM_ERR("failed to parse all headers\n");
+	}
 	sr_hdr_add_zs(msg, cenv->uac_cseq_auth.s, &nval);
 
 done:
 	if(dlg!=NULL) dlg_release(dlg);
 	return 0;
-
-error:
-	if(dlg!=NULL) dlg_release(dlg);
-	return -1;
 }
 
 
@@ -256,7 +254,9 @@ int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
 	trim(&nval);
 
 	LM_DBG("adding cseq refresh header value: %.*s\n", nval.len, nval.s);
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)==-1) {
+		LM_ERR("failed to parse all headers\n");
+	}
 	cenv = sr_cfgenv_get();
 	sr_hdr_add_zs(msg, cenv->uac_cseq_refresh.s, &nval);
 
@@ -397,7 +397,9 @@ int dlg_cseq_msg_sent(void *data)
 		goto done;
 	}
 
-	parse_headers(&msg, HDR_EOH_F, 0);
+	if(parse_headers(&msg, HDR_EOH_F, 0)==-1) {
+		LM_ERR("failed to parse all headers\n");
+	}
 
 	/* check if transaction is marked for a new increment */
 	hfk = sr_hdr_get_z(&msg, cenv->uac_cseq_auth.s);
