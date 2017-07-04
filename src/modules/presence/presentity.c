@@ -1148,9 +1148,12 @@ done:
 		if(rules_doc->s)
 			pkg_free(rules_doc->s);
 		pkg_free(rules_doc);
+		rules_doc = NULL;
 	}
-	if(pres_uri.s)
+	if(pres_uri.s) {
 		pkg_free(pres_uri.s);
+		pres_uri.s = NULL;
+	}
 
 	if (pa_dbf.end_transaction)
 	{
@@ -1189,7 +1192,6 @@ error:
 	}
 	if(pres_uri.s) {
 		pkg_free(pres_uri.s);
-		pres_uri.s = NULL;
 	}
 
 	if (pa_dbf.abort_transaction) {
