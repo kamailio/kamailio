@@ -291,11 +291,15 @@ struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
 	p->host.h_addrtype=ip->af;
 	p->host.h_length=ip->len;
 	p->host.h_addr_list=pkg_malloc(2*sizeof(char*));
-	if (p->host.h_addr_list==0) goto error;
+	if (p->host.h_addr_list==0) {
+		pkg_free(p);
+		goto error;
+	}
 	p->host.h_addr_list[1]=0;
 	p->host.h_addr_list[0]=pkg_malloc(ip->len+1);
 	if (p->host.h_addr_list[0]==0){
 		pkg_free(p->host.h_addr_list);
+		pkg_free(p);
 		goto error;
 	}
 
