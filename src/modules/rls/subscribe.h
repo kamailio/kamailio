@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -29,6 +29,7 @@
 
 int rls_handle_subscribe0(struct sip_msg* msg);
 int w_rls_handle_subscribe(struct sip_msg* msg, char* watcher_uri);
-int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain);
+int rls_handle_subscribe(struct sip_msg* msg, str watcher_user,
+		str watcher_domain);
 
 #endif
