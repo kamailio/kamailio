@@ -119,7 +119,7 @@ extern int rls_delete_shtable(shtable_t htable,unsigned int hash_code, subs_t* s
 extern int rls_update_shtable(shtable_t htable,unsigned int hash_code,
 		subs_t* subs, int type);
 extern void rls_update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
-	int htable_size, int no_lock, handle_expired_func_t handle_expired_func);
+		int htable_size, int no_lock, handle_expired_func_t handle_expired_func);
 
 static int rls_rpc_init(void);
 
@@ -209,15 +209,15 @@ int fixup_update_subs(void** param, int param_no);
 static cmd_export_t cmds[]=
 {
 	{"rls_handle_subscribe",  (cmd_function)rls_handle_subscribe0,  0,
-			0, 0, REQUEST_ROUTE},
+		0, 0, REQUEST_ROUTE},
 	{"rls_handle_subscribe",  (cmd_function)w_rls_handle_subscribe, 1,
-			fixup_spve_null, 0, REQUEST_ROUTE},
+		fixup_spve_null, 0, REQUEST_ROUTE},
 	{"rls_handle_notify",     (cmd_function)rls_handle_notify,      0,
-			0, 0, REQUEST_ROUTE},
+		0, 0, REQUEST_ROUTE},
 	{"rls_update_subs",       (cmd_function)rls_update_subs,	2,
-			fixup_update_subs, 0, ANY_ROUTE},
+		fixup_update_subs, 0, ANY_ROUTE},
 	{"bind_rls",              (cmd_function)bind_rls,		1,
-			0, 0, 0},
+		0, 0, 0},
 	{0, 0, 0, 0, 0, 0 }
 };
 
@@ -326,7 +326,7 @@ static int mod_init(void)
 			if(str2int(&port_str, &xcap_port)< 0)
 			{
 				LM_ERR("converting string to int [port]= %.*s\n",
-					port_str.len, port_str.s);
+						port_str.len, port_str.s);
 				return -1;
 			}
 			if(xcap_port< 1 || xcap_port> 65535)
@@ -365,10 +365,10 @@ static int mod_init(void)
 	pres_search_event   = pres.search_event;
 	pres_get_ev_list    = pres.get_event_list;
 
-	if (rls_expires_offset < 0 ) 
+	if (rls_expires_offset < 0 )
 	{
 		LM_ERR( "Negative expires_offset, defaulted to zero\n" );
-		rls_expires_offset = 0; 
+		rls_expires_offset = 0;
 	}
 
 	if (dbmode == RLS_DB_ONLY)
@@ -396,9 +396,9 @@ static int mod_init(void)
 	pres_extract_sdialog_info= pres.extract_sdialog_info;
 
 	if(!pres_contains_event || !pres_get_ev_list || !pres_new_shtable ||
-		!pres_destroy_shtable || !pres_insert_shtable || !pres_delete_shtable
-		 || !pres_update_shtable || !pres_search_shtable || !pres_copy_subs
-		 || !pres_extract_sdialog_info)
+			!pres_destroy_shtable || !pres_insert_shtable || !pres_delete_shtable
+			|| !pres_update_shtable || !pres_search_shtable || !pres_copy_subs
+			|| !pres_extract_sdialog_info)
 	{
 		LM_ERR("importing functions from presence module\n");
 		return -1;
@@ -422,7 +422,7 @@ static int mod_init(void)
 
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(rlpres_db_url.s), rlpres_db_url.len, rlpres_db_url.s);
 
-	
+
 	/* binding to mysql module  */
 
 	if (db_bind_mod(&db_url, &rls_dbf))
@@ -436,7 +436,7 @@ static int mod_init(void)
 		LM_ERR("Database module not found\n");
 		return -1;
 	}
-	
+
 	if (db_bind_mod(&xcap_db_url, &rls_xcap_dbf))
 	{
 		LM_ERR("Database module not found\n");
@@ -484,21 +484,21 @@ static int mod_init(void)
 
 	/* verify table version */
 	if(db_check_table_version(&rls_dbf, rls_db, &rlsubs_table, W_TABLE_VERSION) < 0) {
-			LM_ERR("error during table version check.\n");
-			return -1;
+		LM_ERR("error during table version check.\n");
+		return -1;
 	}
 
 	/* verify table version */
 	if(db_check_table_version(&rlpres_dbf, rlpres_db, &rlpres_table, P_TABLE_VERSION) < 0) {
-			LM_ERR("error during table version check.\n");
-			return -1;
+		LM_ERR("error during table version check.\n");
+		return -1;
 	}
 
 	/* verify table version */
 	if(db_check_table_version(&rls_xcap_dbf, rls_xcap_db, &rls_xcap_table, X_TABLE_VERSION) < 0)
 	{
-			LM_ERR("error during table version check.\n");
-			return -1;
+		LM_ERR("error during table version check.\n");
+		return -1;
 	}
 
 	if (dbmode != RLS_DB_ONLY)
@@ -576,7 +576,7 @@ static int mod_init(void)
 		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
-	
+
 	if (bind_pua(&pua) < 0)
 	{
 		LM_ERR("mod_init Can't bind pua\n");
@@ -588,7 +588,7 @@ static int mod_init(void)
 		return -1;
 	}
 	pua_send_subscribe= pua.send_subscribe;
-	
+
 	if(pua.get_record_id == NULL)
 	{
 		LM_ERR("Could not import get_record_id\n");
@@ -612,7 +612,7 @@ static int mod_init(void)
 			LM_ERR("Can't bind xcap_client\n");
 			return -1;
 		}
-	
+
 		if (bind_xcap(&xcap_api) < 0)
 		{
 			LM_ERR("Can't bind xcap\n");
@@ -629,9 +629,9 @@ static int mod_init(void)
 	if (rlpres_clean_period < 0)
 		rlpres_clean_period = clean_period;
 
-	if (clean_period > 0)		
+	if (clean_period > 0)
 		register_timer(rlsubs_table_update, 0, clean_period);
-	
+
 	if (rlpres_clean_period > 0)
 		register_timer(rls_presentity_clean, 0, rlpres_clean_period);
 
@@ -818,7 +818,7 @@ int handle_expired_record(subs_t* s)
 		LM_ERR("in function send_notify\n");
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -830,26 +830,26 @@ void rlsubs_table_update(unsigned int ticks,void *param)
 
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
-	
+
 	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("sql use table failed\n");
 		return;
 	}
-	pres_update_db_subs_timer(rls_db, rls_dbf, rls_table, hash_size, 
+	pres_update_db_subs_timer(rls_db, rls_dbf, rls_table, hash_size,
 			no_lock, handle_expired_record);
 
 }
 
 int rls_restore_db_subs(void)
 {
-	db_key_t result_cols[24]; 
+	db_key_t result_cols[24];
 	db1_res_t *res= NULL;
-	db_row_t *row = NULL;	
+	db_row_t *row = NULL;
 	db_val_t *row_vals= NULL;
 	int i;
 	int n_result_cols= 0;
-	int pres_uri_col, expires_col, from_user_col, from_domain_col,to_user_col; 
+	int pres_uri_col, expires_col, from_user_col, from_domain_col,to_user_col;
 	int callid_col,totag_col,fromtag_col,to_domain_col,sockinfo_col,reason_col;
 	int event_col,contact_col,record_route_col, event_id_col, status_col;
 	int remote_cseq_col, local_cseq_col, local_contact_col, version_col;
@@ -883,7 +883,7 @@ int rls_restore_db_subs(void)
 	result_cols[version_col= n_result_cols++] = &str_version_col;
 	result_cols[status_col= n_result_cols++] = &str_status_col;
 	result_cols[reason_col= n_result_cols++] = &str_reason_col;
-	
+
 	if(!rls_db)
 	{
 		LM_ERR("null database connection\n");
@@ -927,13 +927,13 @@ int rls_restore_db_subs(void)
 			memset(&s, 0, sizeof(subs_t));
 
 			expires= row_vals[expires_col].val.int_val;
-		
+
 			if(expires< (int)time(NULL))
 				continue;
-	
+
 			s.pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
 			s.pres_uri.len= strlen(s.pres_uri.s);
-		
+
 			s.to_user.s=(char*)row_vals[to_user_col].val.string_val;
 			s.to_user.len= strlen(s.to_user.s);
 
@@ -942,13 +942,13 @@ int rls_restore_db_subs(void)
 
 			s.from_user.s=(char*)row_vals[from_user_col].val.string_val;
 			s.from_user.len= strlen(s.from_user.s);
-		
+
 			s.from_domain.s=(char*)row_vals[from_domain_col].val.string_val;
 			s.from_domain.len= strlen(s.from_domain.s);
 
 			s.watcher_user.s=(char*)row_vals[watcher_user_col].val.string_val;
 			s.watcher_user.len= strlen(s.watcher_user.s);
-		
+
 			s.watcher_domain.s=(char*)row_vals[watcher_domain_col].val.string_val;
 			s.watcher_domain.len= strlen(s.watcher_domain.s);
 
@@ -964,7 +964,7 @@ int rls_restore_db_subs(void)
 
 			ev_sname.s= (char*)row_vals[event_col].val.string_val;
 			ev_sname.len= strlen(ev_sname.s);
-		
+
 			event= pres_contains_event(&ev_sname, &parsed_event);
 			if(event== NULL)
 			{
@@ -980,7 +980,7 @@ int rls_restore_db_subs(void)
 			s.remote_cseq= row_vals[remote_cseq_col].val.int_val;
 			s.local_cseq= row_vals[local_cseq_col].val.int_val;
 			s.version= row_vals[version_col].val.int_val;
-		
+
 			s.expires= expires- (int)time(NULL);
 			s.status= row_vals[status_col].val.int_val;
 
@@ -993,11 +993,11 @@ int rls_restore_db_subs(void)
 
 			s.local_contact.s=(char*)row_vals[local_contact_col].val.string_val;
 			s.local_contact.len= strlen(s.local_contact.s);
-	
+
 			s.record_route.s=(char*)row_vals[record_route_col].val.string_val;
 			if(s.record_route.s)
 				s.record_route.len= strlen(s.record_route.s);
-	
+
 			s.sockinfo_str.s=(char*)row_vals[sockinfo_col].val.string_val;
 			s.sockinfo_str.len= strlen(s.sockinfo_str.s);
 
@@ -1053,16 +1053,16 @@ int add_rls_event(modparam_t type, void* val)
 
 int bind_rls(struct rls_binds *pxb)
 {
-		if (pxb == NULL)
-		{
-				LM_WARN("bind_rls: Cannot load rls API into a NULL pointer\n");
-				return -1;
-		}
+	if (pxb == NULL)
+	{
+		LM_WARN("bind_rls: Cannot load rls API into a NULL pointer\n");
+		return -1;
+	}
 
-		pxb->rls_handle_subscribe = rls_handle_subscribe;
-		pxb->rls_handle_subscribe0 = rls_handle_subscribe0;
-		pxb->rls_handle_notify = rls_handle_notify;
-		return 0;
+	pxb->rls_handle_subscribe = rls_handle_subscribe;
+	pxb->rls_handle_subscribe0 = rls_handle_subscribe0;
+	pxb->rls_handle_notify = rls_handle_notify;
+	return 0;
 }
 
 static void rls_rpc_cleanup(rpc_t* rpc, void* ctx)
