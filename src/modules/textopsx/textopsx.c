@@ -347,7 +347,10 @@ static int w_keep_hf_f(struct sip_msg *msg, char *key, char *foo)
 	}
 
 	/* we need to be sure we have seen all HFs */
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("Error while parsing message\n");
+		return -1;
+	}
 	for(hf = msg->headers; hf; hf = hf->next) {
 		switch(hf->type) {
 			case HDR_FROM_T:
@@ -1636,8 +1639,10 @@ static int sel_hf_value_name(str *res, select_t *s, struct sip_msg *msg)
 			hname->hname = s->params[1].v.s;
 			parse_hname2(buf, buf + i, &hdr);
 
-			if(hdr.type == HDR_ERROR_T)
+			if(hdr.type == HDR_ERROR_T) {
+				pkg_free(hname);
 				return E_CFG;
+			}
 			hname->htype = hdr.type;
 
 			s->params[1].v.p = hname;
