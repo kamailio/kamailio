@@ -49,7 +49,7 @@ static str _tps_redis_dprefix = str_init("d:z:");
 
 // void *redisCommandArgv(redisContext *c, int argc, const char **argv, const size_t *argvlen);
 
-#define TPS_REDIS_NR_KEYS	32
+#define TPS_REDIS_NR_KEYS	48
 #define TPS_REDIS_DATA_SIZE	8192
 
 static char _tps_redis_cbuf[TPS_DATA_SIZE];
