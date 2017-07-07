@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -32,11 +32,11 @@
 		processing in &kamailio; script.
 	</para>
 	<para>
-		Search ignores folded lines. For example, 
+		Search ignores folded lines. For example,
 		search(<quote>(From|f):.*@foo.bar</quote>)
 		doesn't match the following From header field:
 <programlisting format="linespecific">
-From: medabeda 
+From: medabeda
  &lt;sip:medameda@foo.bar&gt;;tag=1234
 </programlisting>
 	</para>
@@ -1154,8 +1154,7 @@ remove_hf("m")
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		FAILURE_ROUTE and BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>remove_hf_re</function> usage</title>
@@ -1170,6 +1169,48 @@ if(remove_hf_re("^P-"))
 		</example>
 	</section>
 
+	<section id="textops.f.remove_hf_exp">
+		<title>
+		<function moreinfo="none">remove_hf_exp(expmatch, expskip)</function>
+		</title>
+		<para>
+			Remove from message all headers with name matching regular
+			expression <quote>expmatch</quote>, but not matching regular
+			expression <quote>expskip</quote>.
+		</para>
+		<para>
+		Returns true if at least one header is found and removed.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>expmatch</emphasis> - regular expression to match
+				the header name to be removed.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>expskip</emphasis> - regular expression to match
+				the header name to be skipped from removal.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_hf_exp</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(remove_hf_exp("^P-", "^P-Keep-"))
+{
+    # All headers starting with "P-" removed,
+    # except the ones starting with "P-Keep-"
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.has_body">
 		<title>
 		<function moreinfo="none">has_body()</function>,
@@ -1177,7 +1218,7 @@ if(remove_hf_re("^P-"))
 		</title>
 		<para>
 		The function returns <emphasis>true</emphasis> if the SIP message
-		has a body attached. The checked includes also the 
+		has a body attached. The checked includes also the
 		<quote>Content-Length</quote> header presence and value.
 		</para>
 		<para>
@@ -1187,7 +1228,7 @@ if(remove_hf_re("^P-"))
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>mime</emphasis> - mime to be checked against the 
+			<para><emphasis>mime</emphasis> - mime to be checked against the
 				<quote>Content-Type</quote> header. If not present or 0, this
 				check will be disabled.
 			</para>
