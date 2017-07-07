@@ -756,6 +756,7 @@ static int jsonrpc_struct_add(srjson_t *jnode, char* fmt, ...)
 	while(*fmt) {
 		mname.s = va_arg(ap, char*);
 		mname.len = (mname.s?strlen(mname.s):0);
+		if(mname.s==NULL) mname.s = "";
 
 		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
