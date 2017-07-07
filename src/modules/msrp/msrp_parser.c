@@ -642,7 +642,8 @@ int msrp_explode_str(str **arr, str *in, str *del)
 		{
 			if(in->s[i]==del->s[j])
 			{
-				larr[k].len = in->s + i - larr[k].s;
+				if(k<n)
+					larr[k].len = in->s + i - larr[k].s;
 				k++;
 				if(k<n)
 					larr[k].s = in->s + i + 1;
@@ -650,7 +651,8 @@ int msrp_explode_str(str **arr, str *in, str *del)
 			}
 		}
 	}
-	larr[k].len = in->s + i - larr[k].s;
+	if(k<n)
+		larr[k].len = in->s + i - larr[k].s;
 
 	*arr = larr;
 
