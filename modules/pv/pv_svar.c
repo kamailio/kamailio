@@ -66,6 +66,7 @@ script_var_t* add_var(str *name, int vtype)
 
 	if(it->name.s==0)
 	{
+		pkg_free(it);
 		LM_ERR("out of pkg mem!\n");
 		return 0;
 	}
