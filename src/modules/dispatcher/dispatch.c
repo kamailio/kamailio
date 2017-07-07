@@ -282,20 +282,43 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 /**
  *
  */
-ds_dest_t *pack_dest(str uri, int flags, int priority, str *attrs)
+ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs)
 {
 	ds_dest_t *dp = NULL;
 	/* For DNS-Lookups */
 	static char hn[256];
+	char ub[512];
 	struct hostent *he;
 	struct sip_uri puri;
 	str host;
 	int port, proto;
 	char c = 0;
+	str uri;
 
+	uri = iuri;
 	/* check uri */
-	if(parse_uri(uri.s, uri.len, &puri) != 0 || puri.host.len > 254) {
-		LM_ERR("bad uri [%.*s]\n", uri.len, uri.s);
+	if(parse_uri(uri.s, uri.len, &puri) != 0) {
+		if(iuri.len>4 && strncmp(iuri.s, "sip:", 4)!=0 && iuri.len<500) {
+			strncpy(ub, "sip:", 4);
+			strncpy(ub+4, iuri.s, iuri.len);
+			ub[iuri.len+4] = '\0';
+			uri.s = ub;
+			uri.len = iuri.len+4;
+			if(parse_uri(uri.s, uri.len, &puri) != 0) {
+				LM_ERR("bad uri [%.*s]\n", iuri.len, iuri.s);
+				goto err;
+			} else {
+				LM_INFO("uri without sip scheme - fixing it: %.*s\n",
+						iuri.len, iuri.s);
+			}
+		} else {
+			LM_ERR("bad uri [%.*s]\n", iuri.len, iuri.s);
+			goto err;
+		}
+	}
+
+	if(puri.host.len > 254) {
+		LM_ERR("hostname in uri is too long [%.*s]\n", uri.len, uri.s);
 		goto err;
 	}
 
