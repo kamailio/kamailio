@@ -129,6 +129,7 @@ static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 );
 static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2 );
 static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 );
 static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
+static int remove_hf_exp_f(sip_msg_t* msg, char* ematch, char* eskip);
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 );
 static int fixup_substre(void**, int);
@@ -206,6 +207,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"remove_hf_re",     (cmd_function)remove_hf_re_f,    1,
 		fixup_regexp_null, fixup_free_regexp_null,
+		ANY_ROUTE},
+	{"remove_hf_exp",     (cmd_function)remove_hf_exp_f,  1,
+		fixup_regexp_regexp, fixup_free_regexp_regexp,
 		ANY_ROUTE},
 	{"is_present_hf",    (cmd_function)is_present_hf_f,   1,
 		hname_fixup, free_hname_fixup,
@@ -1052,16 +1056,14 @@ int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	return cnt==0 ? -1 : 1;
 }
 
-static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo)
+static int remove_hf_re(sip_msg_t* msg, regex_t *re)
 {
 	struct hdr_field *hf;
 	struct lump* l;
 	int cnt;
-	regex_t *re;
 	char c;
 	regmatch_t pmatch;
 
-	re = (regex_t*)key;
 	cnt=0;
 
 	/* we need to be sure we have seen all HFs */
@@ -1089,6 +1091,59 @@ static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo)
 	}
 
 	return cnt==0 ? -1 : 1;
+}
+
+static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo)
+{
+	return remove_hf_re(msg, (regex_t*)key);
+}
+
+static int remove_hf_exp_re(sip_msg_t* msg, regex_t *mre, regex_t *sre)
+{
+	struct hdr_field *hf;
+	struct lump* l;
+	int cnt;
+	char c;
+	regmatch_t pmatch;
+
+	cnt=0;
+
+	/* we need to be sure we have seen all HFs */
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error while parsing message headers\n");
+		return -1;
+	}
+
+	for (hf=msg->headers; hf; hf=hf->next)
+	{
+		c = hf->name.s[hf->name.len];
+		hf->name.s[hf->name.len] = '\0';
+		if (regexec(sre, hf->name.s, 1, &pmatch, 0)==0)
+		{
+			hf->name.s[hf->name.len] = c;
+			continue;
+		}
+		if (regexec(mre, hf->name.s, 1, &pmatch, 0)!=0)
+		{
+			hf->name.s[hf->name.len] = c;
+			continue;
+		}
+		hf->name.s[hf->name.len] = c;
+		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
+		if (l==0)
+		{
+			LM_ERR("cannot remove header\n");
+			return -1;
+		}
+		cnt++;
+	}
+
+	return cnt==0 ? -1 : 1;
+}
+
+static int remove_hf_exp_f(struct sip_msg* msg, char* ematch, char* eskip)
+{
+	return remove_hf_exp_re(msg, (regex_t*)ematch, (regex_t*)eskip);
 }
 
 static int is_present_hf_helper_f(struct sip_msg* msg, gparam_t* gp)
