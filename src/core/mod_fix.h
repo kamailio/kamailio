@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -36,7 +36,7 @@
 /**
  * generic parameter that holds a string, an int, a pseudo-variable
  * or a ser select, avp, or subst.
- * 
+ *
  * Note: used only for compatibility with existing kamailio code,
  *  please use fparam_t directly in the future.
  *
@@ -86,13 +86,8 @@ int fixup_uint_uint(void** param, int param_no);
 
 int fixup_regexp_null(void** param, int param_no);
 int fixup_free_regexp_null(void** param, int param_no);
-#if 0
-int fixup_regexp_none(void** param, int param_no);
-int fixup_free_regexp_none(void** param, int param_no);
-/* not implemened yet */
-int fixup_regexpNL_null(void** param, int param_no);
-int fixup_regexpNL_none(void** param, int param_no);
-#endif
+int fixup_regexp_regexp(void** param, int param_no);
+int fixup_free_regexp_regexp(void** param, int param_no);
 
 int fixup_pvar_null(void **param, int param_no);
 int fixup_free_pvar_null(void** param, int param_no);
