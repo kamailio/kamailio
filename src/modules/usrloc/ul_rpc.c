@@ -545,7 +545,9 @@ static const char* ul_rpc_rm_contact_doc[2] = {
 
 static void ul_rpc_flush(rpc_t* rpc, void* ctx)
 {
-	synchronize_all_udomains(0, 1);
+	if(synchronize_all_udomains(0, 1) != 0) {
+		rpc->fault(ctx, 500, "Operation failed");
+	}
 	return;
 }
 
