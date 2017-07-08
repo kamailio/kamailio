@@ -391,26 +391,26 @@ static inline int should_acc_reply(struct sip_msg *req, struct sip_msg *rpl,
 {
     unsigned int i;
 
-	/* negative transactions reported otherwise only if explicitly 
+	/* negative transactions reported otherwise only if explicitly
 	 * demanded */
 
     if (code >= 300) {
-	if (!is_failed_acc_on(req)) return 0;
-	i = 0;
-	while (failed_filter[i] != 0) {
-	    if (failed_filter[i] == code) return 0;
-	    i++;
-	}
-	return 1;
+		if (!is_failed_acc_on(req)) return 0;
+		i = 0;
+		while (failed_filter[i] != 0) {
+		    if (failed_filter[i] == code) return 0;
+		    i++;
+		}
+		return 1;
     }
 
     if ( !is_acc_on(req) )
-	return 0;
-	
+		return 0;
+
     if ( code<200 && !(early_media &&
 		       parse_headers(rpl,HDR_CONTENTLENGTH_F, 0) == 0 &&
 		       rpl->content_length && get_content_length(rpl) > 0))
-	return 0;
+		return 0;
 
     return 1; /* seed is through, we will account this reply */
 }
@@ -424,8 +424,10 @@ static inline void acc_onreply_in(struct cell *t, struct sip_msg *req,
 	/* don't parse replies in which we are not interested */
 	/* missed calls enabled ? */
 	if ( (reply && reply!=FAKED_REPLY) && (should_acc_reply(req,reply,code)
-	|| (is_invite(t) && code>=300 && is_mc_on(req))) ) {
-		parse_headers(reply, HDR_TO_F, 0 );
+			|| (is_invite(t) && code>=300 && is_mc_on(req))) ) {
+		if(parse_headers(reply, HDR_TO_F, 0)<0) {
+			LM_ERR("failed to parse headers\n");
+		}
 	}
 }
 
@@ -463,7 +465,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 
 	/* we report on missed calls when the first
 	 * forwarding attempt fails; we do not wish to
-	 * report on every attempt; so we clear the flags; 
+	 * report on every attempt; so we clear the flags;
 	 */
 
 	if (is_log_mc_on(req)) {

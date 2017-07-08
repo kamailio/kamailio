@@ -313,16 +313,17 @@ static int acc_fixup(void** param, int param_no)
 		if (strchr(p,PV_MARKER)!=NULL) { /* is a variable $xxxxx */
 			if (pv_parse_format(&accp->reason, &accp->elem)<0)
 			{
-				LM_ERR("bad param 1; "
-					"parse format error [%.*s]\n", accp->reason.len, accp->reason.s);
+				LM_ERR("bad param 1 - parse format error [%.*s]\n",
+						accp->reason.len, accp->reason.s);
+				pkg_free(accp);
 				return E_UNSPEC;
 			}
 		}
 		else {
 			if(acc_parse_code(p,accp)<0)
 			{
-				LM_ERR("bad param 1;"
-					"parse code error\n");
+				LM_ERR("bad param 1 - parse code error\n");
+				pkg_free(accp);
 				return E_UNSPEC;
 			}
 		}
