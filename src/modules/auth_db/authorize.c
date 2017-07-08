@@ -91,7 +91,8 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 		return -1;
 	}
 
-	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, &res) < 0) {
+	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, &res) < 0
+			|| res==NULL) {
 		LM_ERR("failed to query database\n");
 		pkg_free(col);
 		if(res)
@@ -100,8 +101,7 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 	}
 	pkg_free(col);
 	if (RES_ROW_N(res) == 0) {
-		if(res)
-			auth_dbf.free_result(auth_db_handle, res);
+		auth_dbf.free_result(auth_db_handle, res);
 		LM_DBG("no result for user \'%.*s%s%.*s\' in [%.*s]\n",
 				user->len, user->s, (n==2)?"@":"",
 				(n==2)?domain->len:0, (n==2)?domain->s:"",
@@ -114,8 +114,7 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 	}
 	for (cred=credentials, n=0; cred; cred=cred->next, n++) {
 		if (db_val2pv_spec(msg, &RES_ROWS(res)[0].values[n], cred->spec) != 0) {
-			if(res)
-				auth_dbf.free_result(auth_db_handle, res);
+			auth_dbf.free_result(auth_db_handle, res);
 			LM_ERR("Failed to convert value for column %.*s\n",
 					RES_NAMES(res)[n]->len, RES_NAMES(res)[n]->s);
 			return -3;
@@ -542,11 +541,16 @@ int w_auth_check(sip_msg_t *_m, char* _realm, char* _table, char *_flags)
 	str stable;
 	int iflags;
 
+	if(_m==NULL) {
+		LM_ERR("invalid msg parameter\n");
+		return AUTH_ERROR;
+	}
+
 	if ((_m->REQ_METHOD == METHOD_ACK) || (_m->REQ_METHOD == METHOD_CANCEL)) {
 		return AUTH_OK;
 	}
 
-	if(_m==NULL || _realm==NULL || _table==NULL || _flags==NULL) {
+	if(_realm==NULL || _table==NULL || _flags==NULL) {
 		LM_ERR("invalid parameters\n");
 		return AUTH_ERROR;
 	}
