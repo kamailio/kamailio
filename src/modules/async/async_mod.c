@@ -194,8 +194,10 @@ static int fixup_async_sleep(void **param, int param_no)
 	}
 	memset(ap, 0, sizeof(async_param_t));
 	ap->u.paction = get_action_from_param(param, param_no);
-	if(fixup_igp_null(param, param_no) < 0)
+	if(fixup_igp_null(param, param_no) < 0) {
+		pkg_free(ap);
 		return -1;
+	}
 	ap->pinterval = (gparam_t *)(*param);
 	*param = (void *)ap;
 	return 0;
