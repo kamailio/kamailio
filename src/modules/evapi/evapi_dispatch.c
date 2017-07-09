@@ -560,6 +560,7 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	struct ev_io io_server;
 	struct ev_io io_notify;
 	int yes_true = 1;
+	int fflags = 0;
 
 	LM_DBG("starting dispatcher processing\n");
 
@@ -588,7 +589,15 @@ int evapi_run_dispatcher(char *laddr, int lport)
 		return -1;
 	}
 	/* set non-blocking flag */
-	fcntl(evapi_srv_sock, F_SETFL, fcntl(evapi_srv_sock, F_GETFL) | O_NONBLOCK);
+	fflags = fcntl(evapi_srv_sock, F_GETFL);
+	if(fflags<0) {
+		LM_ERR("failed to get the srv socket flags\n");
+		return -1;
+	}
+	if (fcntl(evapi_srv_sock, F_SETFL, fflags | O_NONBLOCK)<0) {
+		LM_ERR("failed to set srv socket flags\n");
+		return -1;
+	}
 
 	bzero(&evapi_srv_addr, sizeof(evapi_srv_addr));
 	evapi_srv_addr.sin_family = h->h_addrtype;
