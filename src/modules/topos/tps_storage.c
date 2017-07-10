@@ -448,6 +448,11 @@ int tps_db_insert_dialog(tps_data_t *td)
 	db_val_t db_vals[TPS_NR_KEYS];
 	int nr_keys;
 
+	if (_tps_db_handle == NULL) {
+		LM_ERR("No database handle - misconfiguration?\n");
+		goto error;
+	}
+
 	memset(db_keys, 0, TPS_NR_KEYS*sizeof(db_key_t));
 	memset(db_vals, 0, TPS_NR_KEYS*sizeof(db_val_t));
 	nr_keys = 0;
@@ -583,6 +588,11 @@ int tps_db_clean_dialogs(void)
 	db_op_t  db_ops[2];
 	int nr_keys;
 
+	if (_tps_db_handle == NULL) {
+		LM_ERR("No database handle - misconfiguration?\n");
+		return -1;
+	}
+
 	nr_keys = 0;
 
 	LM_DBG("cleaning expired dialog records\n");
@@ -628,6 +638,11 @@ int tps_db_insert_branch(tps_data_t *td)
 	db_key_t db_keys[TPS_NR_KEYS];
 	db_val_t db_vals[TPS_NR_KEYS];
 	int nr_keys;
+
+	if (_tps_db_handle == NULL) {
+		LM_ERR("No database handle - misconfiguration?\n");
+		goto error;
+	}
 
 	memset(db_keys, 0, TPS_NR_KEYS*sizeof(db_key_t));
 	memset(db_vals, 0, TPS_NR_KEYS*sizeof(db_val_t));
@@ -729,6 +744,11 @@ int tps_db_clean_branches(void)
 	db_val_t db_vals[2];
 	db_op_t  db_ops[2];
 	int nr_keys;
+
+	if (_tps_db_handle == NULL) {
+		LM_ERR("No database handle - misconfiguration?\n");
+		return -1;
+	}
 
 	nr_keys = 0;
 
