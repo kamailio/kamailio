@@ -68,6 +68,37 @@
 	</section>
 	<section>
 	<title>Parameters</title>
+	<section id="topos.p.storage">
+		<title><varname>storage</varname> (str)</title>
+		<para>
+		Type of storage, valid types are:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>db</emphasis> - Database Backend
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>redis</emphasis> - Redis Backend
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>db</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>storage</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "storage", "redis")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="topos.p.db_url">
 		<title><varname>db_url</varname> (str)</title>
 		<para>
