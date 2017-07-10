@@ -1579,7 +1579,9 @@ int t_retransmit_reply( struct cell *t )
 	}
 	memcpy( b, t->uas.response.buffer, len );
 	UNLOCK_REPLIES( t );
-	SEND_PR_BUFFER( & t->uas.response, b, len );
+	if(SEND_PR_BUFFER( & t->uas.response, b, len )<0) {
+		LM_WARN("send pr buffer failed\n");
+	}
 	if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
 		/* we don't know if it's a retransmission of a local reply or a
 		 * forwarded reply */

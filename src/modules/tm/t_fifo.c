@@ -167,7 +167,7 @@ int parse_tw_append( modparam_t type, void* val)
 {
 	struct hdr_field hdr;
 	struct hdr_avp *last;
-	struct hdr_avp *ha;
+	struct hdr_avp *ha=NULL;
 	struct tw_append *app;
 	int_str avp_name;
 	char *s;
@@ -376,6 +376,7 @@ int parse_tw_append( modparam_t type, void* val)
 				last->next = ha;
 				last = ha;
 			}
+			ha = NULL;
 		}
 
 	} /* end while */
@@ -388,6 +389,7 @@ parse_error:
 	LM_ERR("parse error in <%s> around position %ld\n",
 			(char*)val, (long)(s-(char*)val));
 error:
+	if(ha) pkg_free(ha);
 	return -1;
 }
 
@@ -421,16 +423,19 @@ int fixup_t_write( void** param, int param_no)
 			twi->action.len = s - twi->action.s;
 			if (twi->action.len==0) {
 				LM_ERR("empty action name\n");
+				pkg_free(twi);
 				return E_CFG;
 			}
 			s++;
 			if (*s==0) {
 				LM_ERR("empty append name\n");
+				pkg_free(twi);
 				return E_CFG;
 			}
 			twi->append = search_tw_append( s, strlen(s));
 			if (twi->append==0) {
 				LM_ERR("unknown append name <%s>\n",s);
+				pkg_free(twi);
 				return E_CFG;
 			}
 		} else {

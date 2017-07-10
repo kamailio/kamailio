@@ -159,7 +159,9 @@ char *build_local(struct cell *Trans,unsigned int branch,
 					reason->u.e2e_cancel &&
 					!(Trans->flags & T_NO_E2E_CANCEL_REASON)) {
 			/* parse the entire cancel, to get all the Reason headers */
-			parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0);
+			if(parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0)<0) {
+				LM_WARN("failed to parse headers\n");
+			}
 			for(hdr=get_hdr(reason->u.e2e_cancel, HDR_REASON_T), reas1=hdr;
 					hdr; hdr=next_sibling_hdr(hdr)) {
 				/* hdr->len includes CRLF */
@@ -313,7 +315,9 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 					reason->u.e2e_cancel &&
 					!(Trans->flags & T_NO_E2E_CANCEL_REASON)) {
 			/* parse the entire cancel, to get all the Reason headers */
-			parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0);
+			if(parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0)<0) {
+				LM_WARN("failed to parse headers\n");
+			}
 			for(hdr=get_hdr(reason->u.e2e_cancel, HDR_REASON_T), reas1=hdr;
 					hdr; hdr=next_sibling_hdr(hdr)) {
 				/* hdr->len includes CRLF */

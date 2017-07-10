@@ -1026,7 +1026,7 @@ inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 	int i = 0;
 
 	if(str) {
-		get_int_fparam(&i, msg, (fparam_t*)str);
+		if(get_int_fparam(&i, msg, (fparam_t*)str)<0) return -1;
 	}
 	return ki_t_lookup_cancel_flags(msg, i);
 }

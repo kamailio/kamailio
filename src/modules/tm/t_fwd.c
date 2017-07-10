@@ -1168,7 +1168,10 @@ static struct cancel_reason* cancel_reason_pack(short cause, void* data,
 					data && !(t->flags & T_NO_E2E_CANCEL_REASON))) {
 			/* parse the entire cancel, to get all the Reason headers */
 			e2e_cancel = data;
-			parse_headers(e2e_cancel, HDR_EOH_F, 0);
+			if(parse_headers(e2e_cancel, HDR_EOH_F, 0)==-1) {
+				LM_ERR("failed to parse headers\n");
+				goto error;
+			}
 			for(hdr=get_hdr(e2e_cancel, HDR_REASON_T), reas1=hdr;
 					hdr; hdr=next_sibling_hdr(hdr)) {
 				/* hdr->len includes CRLF */
