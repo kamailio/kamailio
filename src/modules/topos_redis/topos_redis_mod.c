@@ -101,7 +101,7 @@ static int mod_init(void)
 	_tps_storage_api.end_dialog = tps_redis_end_dialog;
 
 	if(_tps_api.set_storage_api(&_tps_storage_api)<0) {
-		LM_ERR("failed to set topos storae api\n");
+		LM_ERR("failed to set topos storage api\n");
 		return -1;
 	}
 	return 0;
