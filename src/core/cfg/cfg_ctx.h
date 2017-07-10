@@ -119,6 +119,9 @@ int cfg_rollback(cfg_ctx_t *ctx);
 int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void **val, unsigned int *val_type);
 
+int cfg_get_default_value_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			void **val, unsigned int *val_type);
+
 /*! \brief returns the description of a variable */
 int cfg_help(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			char **ch, unsigned int *input_type);

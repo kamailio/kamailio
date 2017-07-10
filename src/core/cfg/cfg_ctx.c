@@ -1359,6 +1359,74 @@ int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 	return 0;
 }
 
+/* retrieves the default value of a variable
+ * Return value:
+ *  0 - success
+ * -1 - error
+ *  1 - variable exists, but it is not readable
+ */
+int cfg_get_default_value_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+                       void **val, unsigned int *val_type)
+{
+	cfg_group_t	*group;
+	cfg_mapping_t	*var;
+	void	*p;
+	static str	s;	/* we need the value even
+				after the function returns */
+	cfg_group_inst_t	*group_inst;
+
+	/* verify the context even if we do not need it now
+	to make sure that a cfg driver has called the function
+	(very very weak security) */
+	if (!ctx) {
+		LOG(L_ERR, "ERROR: cfg_get_by_name(): context is undefined\n");
+		return -1;
+	}
+
+	/* look-up the group and the variable */
+	if (cfg_lookup_var(group_name, var_name, &group, &var))
+		return -1;
+	else
+	{
+		if(var->def->type & CFG_READONLY)  /* if variables exist then prevents resetting the read-only ones */
+			return -1;
+	}
+
+	if (var->def->on_change_cb) {
+		/* The variable cannot be retrieved, because the fixup
+		function may have changed it, and it is better to return
+		an error than an incorrect value */
+		return 1;
+	}
+
+	/* use the module's orig_handle to access the default registered value of the variable for any group*/
+	p = (group->orig_handle) + var->offset;
+
+	switch (CFG_VAR_TYPE(var)) {
+		case CFG_VAR_INT:
+			*val = (void *)(long)*(int *)p;
+			break;
+
+		case CFG_VAR_STRING:
+			*val = (void *)*(char **)p;
+			break;
+
+		case CFG_VAR_STR:
+			memcpy(&s, p, sizeof(str));
+			*val = (void *)&s;
+			break;
+
+		case CFG_VAR_POINTER:
+			*val = *(void **)p;
+			break;
+
+	}
+	*val_type = CFG_VAR_TYPE(var);
+
+	return 0;
+}
+
+
 /* returns the description of a variable */
 int cfg_help(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			char **ch, unsigned int *input_type)
