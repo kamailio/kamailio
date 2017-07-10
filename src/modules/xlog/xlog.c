@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -116,7 +116,7 @@ static void destroy(void);
 static int xlog_log_colors_param(modparam_t type, void *val);
 
 int pv_parse_color_name(pv_spec_p sp, str *in);
-static int pv_get_color(struct sip_msg *msg, pv_param_t *param, 
+static int pv_get_color(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 typedef struct _xl_level
@@ -233,7 +233,7 @@ static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
 	/* if facility is not explicitely defined use the xlog default facility */
 	if (facility==NOFACILITY) {
 		facility = xlog_facility;
-	} 
+	}
 
 	if(line>0)
 		if(long_format==1)
@@ -282,7 +282,7 @@ static int xlog_2_helper(struct sip_msg* msg, char* lev, char* frm, int mode, in
 	xlp = (xl_level_p)lev;
 	if(xlp->type==1)
 	{
-		if(pv_get_spec_value(msg, &xlp->v.sp, &value)!=0 
+		if(pv_get_spec_value(msg, &xlp->v.sp, &value)!=0
 			|| value.flags&PV_VAL_NULL || !(value.flags&PV_VAL_INT))
 		{
 			LM_ERR("invalid log level value [%d]\n", value.flags);
@@ -354,7 +354,7 @@ static int xlog_3_helper(struct sip_msg* msg, char* fac, char* lev, char* frm, i
 	xlp = (xl_level_p)lev;
 	if(xlp->type==1)
 	{
-		if(pv_get_spec_value(msg, &xlp->v.sp, &value)!=0 
+		if(pv_get_spec_value(msg, &xlp->v.sp, &value)!=0
 			|| value.flags&PV_VAL_NULL || !(value.flags&PV_VAL_INT))
 		{
 			LM_ERR("invalid log level value [%d]\n", value.flags);
@@ -511,6 +511,7 @@ static int xdbg_fixup_helper(void** param, int param_no, int mode)
 	if(pv_parse_format(&s, &xm->m)<0)
 	{
 		LM_ERR("wrong format[%s]\n", (char*)(*param));
+		pkg_free(xm);
 		return E_UNSPEC;
 	}
 	*param = (void*)xm;
@@ -521,7 +522,7 @@ static int xlog_fixup_helper(void** param, int param_no, int mode)
 {
 	xl_level_p xlp;
 	str s;
-	
+
 	if(param_no==1)
 	{
 		s.s = (char*)(*param);
@@ -545,6 +546,7 @@ static int xlog_fixup_helper(void** param, int param_no, int mode)
 			if(pv_parse_spec(&s, &xlp->v.sp)==NULL)
 			{
 				LM_ERR("invalid level param\n");
+				pkg_free(xlp);
 				return E_UNSPEC;
 			}
 		} else {
@@ -561,10 +563,10 @@ static int xlog_fixup_helper(void** param, int param_no, int mode)
 				case 'D': xlp->v.level = L_DBG; break;
 				default:
 					LM_ERR("unknown log level\n");
+					pkg_free(xlp);
 					return E_UNSPEC;
 			}
 		}
-		pkg_free(*param);
 		*param = (void*)xlp;
 		return 0;
 	}
@@ -696,7 +698,7 @@ int pv_parse_color_name(pv_spec_p sp, str *in)
 		LM_ERR("color name must have two chars\n");
 		return -1;
 	}
-	
+
 	/* foreground */
 	switch(in->s[0])
 	{
@@ -708,10 +710,10 @@ int pv_parse_color_name(pv_spec_p sp, str *in)
 		case 'B': case 'P': case 'C':
 		case 'W':
 		break;
-		default: 
+		default:
 			goto error;
 	}
-                               
+
 	/* background */
 	switch(in->s[1])
 	{
@@ -719,11 +721,11 @@ int pv_parse_color_name(pv_spec_p sp, str *in)
 		case 's': case 'r': case 'g':
 		case 'y': case 'b': case 'p':
 		case 'c': case 'w':
-		break;   
-		default: 
+		break;
+		default:
 			goto error;
 	}
-	
+
 	sp->pvp.pvn.type = PV_NAME_INTSTR;
 	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
 	sp->pvp.pvn.u.isname.name.s = *in;
@@ -813,7 +815,7 @@ static int xlog_log_colors_param(modparam_t type, void *val)
 					pit->name.len, pit->name.s);
 			goto error;
 		}
-			
+
 		if(pit->body.len!=2) {
 			LM_ERR("invalid color spec for level %.*s (%.*s)\n",
 					pit->name.len, pit->name.s,
