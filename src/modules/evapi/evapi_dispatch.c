@@ -592,10 +592,12 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	fflags = fcntl(evapi_srv_sock, F_GETFL);
 	if(fflags<0) {
 		LM_ERR("failed to get the srv socket flags\n");
+		close(evapi_srv_sock);
 		return -1;
 	}
 	if (fcntl(evapi_srv_sock, F_SETFL, fflags | O_NONBLOCK)<0) {
 		LM_ERR("failed to set srv socket flags\n");
+		close(evapi_srv_sock);
 		return -1;
 	}
 
