@@ -1804,6 +1804,7 @@ static int rpc_array_add(struct rpc_struct* s, char* fmt, ...)
 
 	va_start(ap, fmt);
 	while(*fmt) {
+		if (add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
 			p = new_rpcstruct(0, 0, s->reply, (*fmt=='[')?RET_ARRAY:0);
@@ -1821,6 +1822,7 @@ static int rpc_array_add(struct rpc_struct* s, char* fmt, ...)
 		} else {
 			if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
 		}
+		if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 		fmt++;
 	}
 
