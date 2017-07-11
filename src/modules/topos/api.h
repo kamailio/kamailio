@@ -38,6 +38,8 @@ typedef int (*tps_insert_branch_f)(tps_data_t *td);
 typedef int (*tps_clean_branches_f)(void);
 typedef int (*tps_load_branch_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 typedef int (*tps_load_dialog_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+typedef int (*tps_update_branch_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t mode);
 typedef int (*tps_update_dialog_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		uint32_t mode);
 typedef int (*tps_end_dialog_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
@@ -49,6 +51,7 @@ typedef struct tps_storage_api {
 	tps_clean_branches_f clean_branches;
 	tps_load_branch_f load_branch;
 	tps_load_dialog_f load_dialog;
+	tps_update_branch_f update_branch;
 	tps_update_dialog_f update_dialog;
 	tps_end_dialog_f end_dialog;
 } tps_storage_api_t;

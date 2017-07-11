@@ -847,7 +847,8 @@ int tps_response_received(sip_msg_t *msg)
 		goto error;
 	}
 	mtsd.direction = direction;
-	if(tps_storage_update_branch(msg, &mtsd, &btsd)<0) {
+	if(tps_storage_update_branch(msg, &mtsd, &btsd,
+				TPS_DBU_CONTACT|TPS_DBU_RPLATTRS)<0) {
 		goto error;
 	}
 	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_RPLATTRS)<0) {
