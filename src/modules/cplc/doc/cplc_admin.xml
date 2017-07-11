@@ -280,7 +280,7 @@ modparam("cpl-c","proxy_recurse",2)
 			</example>
 		</section>
 		<section>
-			<title><varname>proxy_route</varname> (int)</title>
+			<title><varname>proxy_route</varname> (string)</title>
 			<para>
 				Before doing proxy (forward), a script route can be executed.
 				All modifications made by that route will be reflected only for
@@ -288,14 +288,14 @@ modparam("cpl-c","proxy_recurse",2)
 			</para>
 			<para>
 				<emphasis>
-					Default value of this parameter is 0 (none).
+					Default value of this parameter is NULL (none).
 				</emphasis>
 			</para>
 			<example>
 				<title>Set <varname>proxy_route</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","proxy_route",1)
+modparam("cpl-c","proxy_route","1")
 ...
 </programlisting>
 			</example>
