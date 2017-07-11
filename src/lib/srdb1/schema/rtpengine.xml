@@ -37,7 +37,7 @@
     <column id="setid">
         <name>setid</name>
         <type>unsigned int</type>
-	<size>10</size>
+		<size>10</size>
         <description>RTPEngine instance set ID</description>
         <default>0</default>
         <natural/>
@@ -80,7 +80,7 @@
         <name>rtpengine_nodes</name>
         <colref linkend="setid"/>
         <colref linkend="url"/>
-        <primary/>
+        <unique/>
     </index>
 
 </table>
