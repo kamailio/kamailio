@@ -2,6 +2,11 @@
   "name": "rtpengine",
   "version": 1,
   "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
     "setid": {
       "type": "int",
       "default": 0,

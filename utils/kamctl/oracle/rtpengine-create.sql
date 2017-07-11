@@ -1,4 +1,5 @@
 CREATE TABLE rtpengine (
+    id NUMBER(10) PRIMARY KEY,
     setid NUMBER(10) DEFAULT 0 NOT NULL,
     url VARCHAR2(64),
     weight NUMBER(10) DEFAULT 1 NOT NULL,

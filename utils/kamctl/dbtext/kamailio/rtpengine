@@ -1,1 +1,1 @@
-setid(int) url(string) weight(int) disabled(int) stamp(int) 
+id(int,auto) setid(int) url(string) weight(int) disabled(int) stamp(int) 
