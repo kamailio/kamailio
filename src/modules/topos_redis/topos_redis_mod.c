@@ -97,6 +97,7 @@ static int mod_init(void)
 	_tps_storage_api.clean_branches = tps_redis_clean_branches;
 	_tps_storage_api.load_branch = tps_redis_load_branch;
 	_tps_storage_api.load_dialog = tps_redis_load_dialog;
+	_tps_storage_api.update_branch = tps_redis_update_branch;
 	_tps_storage_api.update_dialog = tps_redis_update_dialog;
 	_tps_storage_api.end_dialog = tps_redis_end_dialog;
 
