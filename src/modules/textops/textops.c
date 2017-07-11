@@ -1098,7 +1098,25 @@ static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo)
 	return remove_hf_re(msg, (regex_t*)key);
 }
 
-static int remove_hf_exp_re(sip_msg_t* msg, regex_t *mre, regex_t *sre)
+static int ki_remove_hf_re(sip_msg_t *msg, str *ematch)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, ematch->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", ematch->len, ematch->s);
+		return -1;
+	}
+
+	ret = remove_hf_re(msg, &mre);
+
+	regfree(&mre);
+
+	return ret;
+}
+
+static int remove_hf_exp(sip_msg_t* msg, regex_t *mre, regex_t *sre)
 {
 	struct hdr_field *hf;
 	struct lump* l;
@@ -1143,7 +1161,33 @@ static int remove_hf_exp_re(sip_msg_t* msg, regex_t *mre, regex_t *sre)
 
 static int remove_hf_exp_f(struct sip_msg* msg, char* ematch, char* eskip)
 {
-	return remove_hf_exp_re(msg, (regex_t*)ematch, (regex_t*)eskip);
+	return remove_hf_exp(msg, (regex_t*)ematch, (regex_t*)eskip);
+}
+
+static int ki_remove_hf_exp(sip_msg_t *msg, str *ematch, str *eskip)
+{
+	regex_t mre;
+	regex_t sre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	memset(&sre, 0, sizeof(regex_t));
+	if (regcomp(&mre, ematch->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", ematch->len, ematch->s);
+		return -1;
+	}
+	if (regcomp(&sre, eskip->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", eskip->len, eskip->s);
+		regfree(&mre);
+		return -1;
+	}
+
+	ret = remove_hf_exp(msg, &mre, &sre);
+
+	regfree(&mre);
+	regfree(&sre);
+
+	return ret;
 }
 
 static int is_present_hf_helper_f(struct sip_msg* msg, gparam_t* gp)
@@ -3488,6 +3532,16 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	{ str_init("textops"), str_init("subst_hf"),
 		SR_KEMIP_INT, ki_subst_hf,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("remove_hf_re"),
+		SR_KEMIP_INT, ki_remove_hf_re,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("remove_hf_exp"),
+		SR_KEMIP_INT, ki_remove_hf_exp,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
