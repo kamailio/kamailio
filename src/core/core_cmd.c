@@ -876,14 +876,16 @@ static const char* core_aliases_list_doc[] = {
 static void core_aliases_list(rpc_t* rpc, void* c)
 {
 	void *hr;
+	void *hs;
 	void *ha;
 	struct host_alias* a;
 
 	rpc->add(c, "{", &hr);
 	rpc->struct_add(hr, "s",
 			"myself_callbacks", is_check_self_func_list_set()?"yes":"no");
+	rpc->struct_add(hr, "[", "aliases", &hs);
 	for(a=aliases; a; a=a->next) {
-		rpc->struct_add(hr, "{", "alias", &ha);
+		rpc->struct_add(hs, "{", "alias", &ha);
 		rpc->struct_add(ha, "sS",
 				"proto",  proto2a(a->proto),
 				"address", &a->alias
