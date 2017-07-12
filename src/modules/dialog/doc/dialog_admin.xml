@@ -313,6 +313,49 @@ modparam("dialog", "default_timeout", 21600)
 		</example>
 	</section>
 
+	<section id="dialog.p.early_timeout">
+		<title><varname>early_timeout</varname> (integer)</title>
+		<para>
+		The timeout (in seconds) after which the dialogs in early state (no
+		final response received) are destroyed.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>300 (5 minutes)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>early_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "early_timeout", 180)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dialog.p.noack_timeout">
+		<title><varname>noack_timeout</varname> (integer)</title>
+		<para>
+		The timeout (in seconds) after which the dialogs which were answered
+		with 200ok but didn't receive the ACK are marked for termination (the
+		lifetime is set to 10 more seconds).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>60 (1 minute)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>noack_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "noack_timeout", 90)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dialog.p.dlg_extra_hdrs">
 		<title><varname>dlg_extra_hdrs</varname> (string)</title>
 		<para>
