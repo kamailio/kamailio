@@ -876,14 +876,16 @@ static const char* core_aliases_list_doc[] = {
 static void core_aliases_list(rpc_t* rpc, void* c)
 {
 	void *hr;
+	void *hs;
 	void *ha;
 	struct host_alias* a;
 
 	rpc->add(c, "{", &hr);
 	rpc->struct_add(hr, "s",
 			"myself_callbacks", is_check_self_func_list_set()?"yes":"no");
+	rpc->struct_add(hr, "[", "aliases", &hs);
 	for(a=aliases; a; a=a->next) {
-		rpc->struct_add(hr, "{", "alias", &ha);
+		rpc->struct_add(hs, "{", "alias", &ha);
 		rpc->struct_add(ha, "sS",
 				"proto",  proto2a(a->proto),
 				"address", &a->alias
@@ -989,7 +991,7 @@ static rpc_export_t core_rpc_methods[] = {
 	{"core.udp4_raw_info",     core_udp4rawinfo,       core_udp4rawinfo_doc,
 		0},
 	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc,   0},
-	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc,   0},
+	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc,   RET_ARRAY},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},
