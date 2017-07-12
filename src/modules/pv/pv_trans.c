@@ -413,6 +413,30 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs.s = _tr_buffer;
 			val->rs.len = i;
 			break;
+		case TR_S_ENCODEBASE58:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			st.len = TR_BUFFER_SIZE-1;
+			st.s = b58_encode(_tr_buffer, &st.len, val->rs.s, val->rs.len);
+			if (st.s==NULL)
+				return -1;
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = st.s;
+			val->rs.len = st.len;
+			break;
+		case TR_S_DECODEBASE58:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			st.len = TR_BUFFER_SIZE-1;
+			st.s = b58_decode(_tr_buffer, &st.len, val->rs.s, val->rs.len);
+			if (st.s==NULL)
+				return -1;
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = st.s;
+			val->rs.len = st.len;
+			break;
 		case TR_S_ENCODEBASE64:
 			if(!(val->flags&PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -2110,6 +2134,12 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==11 && strncasecmp(name.s, "decode.7bit", 11)==0) {
 		t->subtype = TR_S_DECODE7BIT;
+		goto done;
+	} else if(name.len==13 && strncasecmp(name.s, "encode.base58", 13)==0) {
+		t->subtype = TR_S_ENCODEBASE58;
+		goto done;
+	} else if(name.len==13 && strncasecmp(name.s, "decode.base58", 13)==0) {
+		t->subtype = TR_S_DECODEBASE58;
 		goto done;
 	} else if(name.len==13 && strncasecmp(name.s, "encode.base64", 13)==0) {
 		t->subtype = TR_S_ENCODEBASE64;
