@@ -79,7 +79,7 @@
 			<itemizedlist>
 			<listitem>
 				<para>
-				<emphasis>value</emphasis>: name of the queue.
+				<emphasis>name</emphasis>: name of the queue.
 				</para>
 			</listitem>
 			</itemizedlist>
