@@ -72,10 +72,32 @@
 		</emphasis>
 	    </para>
 		<para>
-		Value must be a list of parameters: attr=value;... The attribute 'name'
-		is mandatory, defining the name of the queue. Optional attribute 'size'
-		specifies the maximum number of items in queue, if it is execeeded the
-		oldest one is removed.
+		Value must be a list of parameters: attr=value;...
+		<itemizedlist>
+		<listitem>
+			<para>Mandatory attributes:</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>value</emphasis>: name of the queue.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para>Optional attributes:</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>size</emphasis>: size of the queue.
+				Specifies the maximum number of items in queue.
+				If execeeded the oldest one is removed.
+				If not set the queue will be limitless.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		</itemizedlist>
 	    </para>
 		<para>
 		The parameter can be set many times, each holding the definition of one
