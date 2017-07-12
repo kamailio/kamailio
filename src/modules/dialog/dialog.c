@@ -107,6 +107,8 @@ int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
 static int _dlg_track_cseq_updates = 0;
 int dlg_ka_failed_limit = 1;
+int dlg_early_timeout = 300;
+int dlg_noack_timeout = 60;
 
 int dlg_enable_dmq = 0;
 
@@ -301,7 +303,9 @@ static param_export_t mod_params[]={
 	{ "db_skip_load",          INT_PARAM, &db_skip_load             },
 	{ "ka_failed_limit",       INT_PARAM, &dlg_ka_failed_limit      },
 	{ "enable_dmq",            INT_PARAM, &dlg_enable_dmq           },
-	{"event_callback",         PARAM_STR, &dlg_event_callback       },
+	{ "event_callback",        PARAM_STR, &dlg_event_callback       },
+	{ "early_timeout",         PARAM_INT, &dlg_early_timeout        },
+	{ "noack_timeout",         PARAM_INT, &dlg_noack_timeout        },
 	{ 0,0,0 }
 };
 
