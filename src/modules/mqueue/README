@@ -127,7 +127,7 @@ Chapter 1. Admin Guide
 
    Value must be a list of parameters: attr=value;...
      * Mandatory attributes:
-          + value: name of the queue.
+          + name: name of the queue.
      * Optional attributes:
           + size: size of the queue. Specifies the maximum number of items
             in queue. If execeeded the oldest one is removed. If not set
