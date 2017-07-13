@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History
@@ -144,6 +144,7 @@ int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
 			case INT8OID:
 				LM_DBG("use DB1_BIGINT result type\n");
 				RES_TYPES(_r)[col] = DB1_BIGINT;
+			break;
 
 			case FLOAT4OID:
 			case FLOAT8OID:
@@ -178,7 +179,7 @@ int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
 				LM_DBG("use DB1_BITMAP result type\n");
 				RES_TYPES(_r)[col] = DB1_BITMAP;
 			break;
-				
+
 			default:
 				LM_WARN("unhandled data type column (%.*s) type id (%d), "
 						"use DB1_STRING as default\n", RES_NAMES(_r)[col]->len,
