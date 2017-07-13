@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2007-2008 1&1 Internet AG
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -293,7 +293,7 @@ db1_con_t* db_do_init2(const str* url, void* (*new_connection)(), db_pooling_t p
 		LM_ERR("The configured db_url is too long\n");
 		return 0;
 	}
-	
+
 	/* this is the root memory for this database connection. */
 	res = (db1_con_t*)pkg_malloc(con_size);
 	if (!res) {
@@ -375,6 +375,7 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 	str tmp1 = str_init(TABLENAME_COLUMN);
 	str tmp2 = str_init(VERSION_COLUMN);
 	int ret;
+	int val_type;
 
 	if (!dbf||!connection || !table || !table->s) {
 		LM_CRIT("invalid parameter value\n");
@@ -390,9 +391,9 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 	VAL_TYPE(val) = DB1_STR;
 	VAL_NULL(val) = 0;
 	VAL_STR(val) = *table;
-	
+
 	col[0] = &tmp2;
-	
+
 	if (dbf->query(connection, key, 0, val, col, 1, 1, 0, &res) < 0) {
 		LM_ERR("error in db_query\n");
 		return -1;
@@ -412,7 +413,8 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 	}
 
 	ver = ROW_VALUES(RES_ROWS(res));
-	if ( VAL_TYPE(ver)!=DB1_INT || VAL_NULL(ver) ) {
+	val_type = VAL_TYPE(ver);
+	if ( (val_type!=DB1_INT && val_type!=DB1_DOUBLE && val_type!=DB1_BIGINT) || VAL_NULL(ver) ) {
 		LM_ERR("invalid type (%d) or nul (%d) version "
 			"columns for %.*s\n", VAL_TYPE(ver), VAL_NULL(ver),
 			table->len, ZSW(table->s));
@@ -420,7 +422,14 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 		return -1;
 	}
 
-	ret = VAL_INT(ver);
+	if (val_type == DB1_INT) {
+		ret = VAL_INT(ver);
+	} else if (val_type == DB1_BIGINT) {
+		ret = (int)VAL_BIGINT(ver);
+	} else if (val_type == DB1_DOUBLE) {
+		ret = (int)VAL_DOUBLE(ver);
+	}
+
 	dbf->free_result(connection, res);
 	return ret;
 }
