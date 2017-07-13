@@ -127,8 +127,14 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 #if defined(SO_KEEPALIVE) && defined(TCP_KEEPIDLE)
 	if (pg_keepalive) {
 		i = 1;
-		setsockopt(PQsocket(ptr->con), SOL_SOCKET, SO_KEEPALIVE, &i, sizeof(i));
-		setsockopt(PQsocket(ptr->con), IPPROTO_TCP, TCP_KEEPIDLE, &pg_keepalive, sizeof(pg_keepalive));
+		if(setsockopt(PQsocket(ptr->con), SOL_SOCKET, SO_KEEPALIVE, &i,
+					sizeof(i))<0) {
+			LM_WARN("setsockopt for keepalive failed\n");
+		}
+		if(setsockopt(PQsocket(ptr->con), IPPROTO_TCP, TCP_KEEPIDLE,
+					&pg_keepalive, sizeof(pg_keepalive))<0) {
+			LM_WARN("setsockopt for keepidle failed\n");
+		}
 	}
 #endif
 

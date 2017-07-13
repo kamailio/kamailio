@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -56,7 +56,7 @@ static char *postgres_sql_buf = NULL;
 
 /*!
  * \brief init lock set used to implement SQL REPLACE via UPDATE/INSERT
- * \param sz power of two to compute the lock set size 
+ * \param sz power of two to compute the lock set size
  * \return 0 on success, -1 on error
  */
 int pg_init_lock_set(int sz)
@@ -291,7 +291,8 @@ reset:
  * \param nrows number of fetches rows
  * \return 0 on success, negative on failure
  */
-int db_postgres_fetch_result(const db1_con_t* _con, db1_res_t** _res, const int nrows)
+int db_postgres_fetch_result(const db1_con_t* _con, db1_res_t** _res,
+		const int nrows)
 {
 	int rows;
 	ExecStatusType pqresult;
@@ -392,8 +393,7 @@ int db_postgres_fetch_result(const db1_con_t* _con, db1_res_t** _res, const int 
 
 	if (db_postgres_convert_rows(_con, *_res) < 0) {
 		LM_ERR("failed to convert rows\n");
-		if (*_res)
-			db_free_result(*_res);
+		db_free_result(*_res);
 
 		*_res = 0;
 		return -3;
@@ -610,7 +610,7 @@ int db_postgres_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* 
 		LM_WARN("unexpected result returned");
 		ret = tmp;
 	}
-	
+
 	if (_r)
 		db_free_result(_r);
 
@@ -652,18 +652,22 @@ static pg_constraint_t *pg_constraint = NULL;
  * \brief add/save a detected constraint to the list in memory
  * \param pg_constraint_t constraint
  */
-static void db_postgres_constraint_add(pg_constraint_t *c) {
+static void db_postgres_constraint_add(pg_constraint_t *c)
+{
 	if (!pg_constraint) {
 		pg_constraint = c;
-		LM_DBG("adding init constraint [%s][%s][%s]\n", c->database.s, c->table.s, c->unique.s);
+		LM_DBG("adding init constraint [%s][%s][%s]\n", c->database.s,
+				c->table.s, c->unique.s);
 		clist_init(pg_constraint, next, prev);
 	} else {
-		LM_DBG("adding append constraint [%s][%s][%s]\n", c->database.s, c->table.s, c->unique.s);
+		LM_DBG("adding append constraint [%s][%s][%s]\n", c->database.s,
+				c->table.s, c->unique.s);
 		clist_append(pg_constraint, c, next, prev);
 	}
 }
 
-static void db_postgres_constraint_destroy(pg_constraint_t *c) {
+static void db_postgres_constraint_destroy(pg_constraint_t *c)
+{
 	if (!c)
 		return;
 	if (c->database.s)
@@ -676,8 +680,16 @@ static void db_postgres_constraint_destroy(pg_constraint_t *c) {
 	c = NULL;
 }
 
-static pg_constraint_t *db_postgres_constraint_new(const char *db, const str *table, const char *unique) {
-	pg_constraint_t *c = pkg_malloc(sizeof(pg_constraint_t));
+static pg_constraint_t *db_postgres_constraint_new(const char *db,
+		const str *table, const char *unique)
+{
+	pg_constraint_t *c = NULL;
+
+	if(table==NULL || table->s==NULL || table->len<=0 || unique==NULL)
+		return NULL;
+
+	c = pkg_malloc(sizeof(pg_constraint_t));
+
 	if (!c)
 		return NULL;
 	memset(c, 0, sizeof(pg_constraint_t));
@@ -723,13 +735,21 @@ static str sql_str;
  * \brief search for saved contraint or query pg_constraint to get the unique constraint
  * \param _h structure representing database connection
  */
-static char * db_postgres_constraint_get(const db1_con_t* _h) {
-	pg_constraint_t *constraint = db_postgres_constraint_search(PQdb(CON_CONNECTION(_h)), CON_TABLE(_h)->s);
+static char * db_postgres_constraint_get(const db1_con_t* _h)
+{
+	struct db_row* rows;
+	const char *val = NULL;
+	const char *type = NULL;
+	int x;
+	db1_res_t *res = NULL;
+	int ret;
+	db1_con_t* db_con;
+
+	pg_constraint_t *constraint = db_postgres_constraint_search(
+			PQdb(CON_CONNECTION(_h)), CON_TABLE(_h)->s);
 	if (constraint) {
 		return constraint->unique.s;
 	}
-	db1_res_t *res = NULL;
-	int ret;
 	ret = snprintf(postgres_sql_buf, sql_buffer_size,
 		"select conname, contype from pg_constraint where conrelid = "
 		"(select oid from pg_class where relname like '%s%.*s%s')",
@@ -743,15 +763,12 @@ static char * db_postgres_constraint_get(const db1_con_t* _h) {
 	sql_str.len = ret;
 	sql_str.s = postgres_sql_buf;
 
-	if (db_postgres_raw_query(_h, &sql_str, &res) < 0) {
+	if (db_postgres_raw_query(_h, &sql_str, &res) < 0 || res==NULL) {
 		LM_ERR("error executing pg_constraint query !\n");
 		return NULL;
 	}
 
-	struct db_row* rows = RES_ROWS(res);
-	const char *val = NULL;
-	const char *type = NULL;
-	int x;
+	rows = RES_ROWS(res);
 	for (x=0;x<RES_ROW_N(res);x++) {
 		val = (ROW_VALUES(&rows[x])[0]).val.string_val;
 		type = (ROW_VALUES(&rows[x])[0]).val.string_val;
@@ -759,13 +776,16 @@ static char * db_postgres_constraint_get(const db1_con_t* _h) {
 		if ( type[0] == 'u' )
 			break; // always favor unique constraint over primary key constraint
 	}
-	constraint = db_postgres_constraint_new( PQdb(CON_CONNECTION(_h)), CON_TABLE(_h), val);
+	constraint = db_postgres_constraint_new( PQdb(CON_CONNECTION(_h)),
+			CON_TABLE(_h), val);
 
-	db1_con_t* db_con = (db1_con_t*) _h;
-	if (res) {
-		db_postgres_free_result(db_con, res);
-	}
-	return constraint->unique.s;
+	db_con = (db1_con_t*) _h;
+	db_postgres_free_result(db_con, res);
+
+	if(constraint)
+		return constraint->unique.s;
+
+	return NULL;
 }
 
 /*!
