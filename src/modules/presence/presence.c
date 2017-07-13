@@ -828,13 +828,13 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	int err_ret= -1;
 	int n= 0;
 
-	typedef struct ws
-	{
+	typedef struct ws {
 		int status;
 		str reason;
 		str w_user;
 		str w_domain;
-	}ws_t;
+	} ws_t;
+
 	ws_t* ws_list= NULL;
 
 	LM_DBG("start\n");
@@ -897,7 +897,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	hash_code= core_case_hash(&pres_uri, &ev->name, shtable_size);
 	subs.db_flag= hash_code;
 
-	/*must do a copy as sphere_check requires database queries */
+	/* must do a copy as sphere_check requires database queries */
 	if(sphere_enable)
 	{
 		n= result->n;
@@ -987,6 +987,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			if(ws_list[i].reason.s)
 				pkg_free(ws_list[i].reason.s);
 		}
+		pkg_free(ws_list);
 		ws_list= NULL;
 
 		goto send_notify;
@@ -1066,13 +1067,12 @@ done:
 		{
 			if(ws_list[i].w_user.s)
 				pkg_free(ws_list[i].w_user.s);
-			else
-				break;
 			if(ws_list[i].w_domain.s)
 				pkg_free(ws_list[i].w_domain.s);
 			if(ws_list[i].reason.s)
 				pkg_free(ws_list[i].reason.s);
 		}
+		pkg_free(ws_list);
 	}
 	return err_ret;
 }

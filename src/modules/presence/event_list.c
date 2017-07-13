@@ -389,12 +389,14 @@ int search_event_params(event_t* ev, event_t* searched_ev)
 
 		while(p)
 		{
-			if(p->name.len== ps->name.len &&
-				strncmp(p->name.s,ps->name.s, ps->name.len)== 0) {
-				if((p->body.s== 0 && ps->body.s== 0) ||
-					(p->body.len== ps->body.len &&
-					strncmp(p->body.s,ps->body.s,ps->body.len)== 0))
-				{
+			if(p->name.len==ps->name.len &&
+					strncmp(p->name.s, ps->name.s, ps->name.len)==0) {
+				if(p->body.s==0 && ps->body.s==0) {
+					found= 1;
+					break;
+				}
+				if(p->body.s!=0 && ps->body.s!=0 && p->body.len==ps->body.len
+						&& (strncmp(p->body.s, ps->body.s, ps->body.len)==0)) {
 					found= 1;
 					break;
 				}
