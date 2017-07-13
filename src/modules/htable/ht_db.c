@@ -276,7 +276,8 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 		for(i=0; i<RES_ROW_N(db_res); i++)
 		{
 			if(VAL_NULL(&RES_ROWS(db_res)[i].values[0])) {
-				LM_ERR("key value must not be null\n");
+				LM_ERR("htable [%.*s] row [%d] has NULL key value\n",
+					ht->name.len, ht->name.s, i);
 				goto error;
 			}
 
@@ -284,7 +285,8 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			case DB1_STR:
 				kname.s = (RES_ROWS(db_res)[i].values[0].val.str_val.s);
 				if(kname.s==NULL) {
-					LM_ERR("null key in row %d\n", i);
+					LM_ERR("htable [%.*s] row [%d] has NULL key\n",
+						ht->name.len, ht->name.s, i);
 					goto error;
 				}
 				kname.len = (RES_ROWS(db_res)[i].values[0].val.str_val.len);
@@ -292,7 +294,8 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			case DB1_BLOB:
 				kname.s = (RES_ROWS(db_res)[i].values[0].val.blob_val.s);
 				if(kname.s==NULL) {
-					LM_ERR("null key in row %d\n", i);
+					LM_ERR("htable [%.*s] row [%d] has NULL key\n",
+						ht->name.len, ht->name.s, i);
 					goto error;
 				}
 				kname.len = (RES_ROWS(db_res)[i].values[0].val.blob_val.len);
@@ -300,7 +303,8 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			case DB1_STRING:
 				kname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
 				if(kname.s==NULL) {
-					LM_ERR("null key in row %d\n", i);
+					LM_ERR("htable [%.*s] row [%d] has NULL key\n",
+						ht->name.len, ht->name.s, i);
 					goto error;
 				}
 				kname.len = strlen(kname.s);
