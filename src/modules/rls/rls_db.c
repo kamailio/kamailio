@@ -37,11 +37,11 @@
 
 #define CONT_COPYDB(buf, dest, source)\
 	do{ \
-	dest.s= (char*)buf+ size;\
-	memcpy(dest.s, source, strlen(source));\
-	dest.len= strlen(source);\
-	size+= strlen(source); \
-	} while(0);
+		dest.s= (char*)buf+ size;\
+		memcpy(dest.s, source, strlen(source));\
+		dest.len= strlen(source);\
+		size+= strlen(source); \
+	} while(0)
 
 /* database connection */
 extern db1_con_t *rls_db;
@@ -475,10 +475,10 @@ int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt)
 		memset(dest, 0, size);
 		size= sizeof(subs_t);
 
-		CONT_COPYDB(dest, dest->pres_uri, VAL_STRING(values+r_pres_uri_col))
-		CONT_COPYDB(dest, dest->to_tag, VAL_STRING(values+r_to_tag_col))
-		CONT_COPYDB(dest, dest->from_tag, VAL_STRING(values+r_from_tag_col))
-		CONT_COPYDB(dest, dest->callid, VAL_STRING(values+r_callid_col))
+		CONT_COPYDB(dest, dest->pres_uri, VAL_STRING(values+r_pres_uri_col));
+		CONT_COPYDB(dest, dest->to_tag, VAL_STRING(values+r_to_tag_col));
+		CONT_COPYDB(dest, dest->from_tag, VAL_STRING(values+r_from_tag_col));
+		CONT_COPYDB(dest, dest->callid, VAL_STRING(values+r_callid_col));
 
 		dest->event = pres_contains_event(evt, &parsed_event);
 		if(dest->event == NULL)
@@ -1024,26 +1024,26 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	memset(dest, 0, size);
 	size= sizeof(subs_t);
 
-	CONT_COPYDB(dest, dest->pres_uri, VAL_STRING(values+r_pres_uri_col))
-	CONT_COPYDB(dest, dest->to_user, VAL_STRING(values+r_to_user_col))
-	CONT_COPYDB(dest, dest->to_domain, VAL_STRING(values+r_to_domain_col))
-	CONT_COPYDB(dest, dest->from_user, VAL_STRING(values+r_from_user_col))
-	CONT_COPYDB(dest, dest->from_domain, VAL_STRING(values+r_from_domain_col))
-	CONT_COPYDB(dest, dest->watcher_user, VAL_STRING(values+r_watcher_user_col))
-	CONT_COPYDB(dest, dest->watcher_domain, VAL_STRING(values+r_watcher_domain_col))
-	CONT_COPYDB(dest, dest->to_tag, VAL_STRING(values+r_to_tag_col))
-	CONT_COPYDB(dest, dest->from_tag, VAL_STRING(values+r_from_tag_col))
-	CONT_COPYDB(dest, dest->callid, VAL_STRING(values+r_callid_col))
-	CONT_COPYDB(dest, dest->sockinfo_str, VAL_STRING(values+r_socket_info_col))
-	CONT_COPYDB(dest, dest->local_contact, VAL_STRING(values+r_local_contact_col))
-	CONT_COPYDB(dest, dest->contact, VAL_STRING(values+r_contact_col))
-	CONT_COPYDB(dest, dest->record_route, VAL_STRING(values+r_record_route_col))
+	CONT_COPYDB(dest, dest->pres_uri, VAL_STRING(values+r_pres_uri_col));
+	CONT_COPYDB(dest, dest->to_user, VAL_STRING(values+r_to_user_col));
+	CONT_COPYDB(dest, dest->to_domain, VAL_STRING(values+r_to_domain_col));
+	CONT_COPYDB(dest, dest->from_user, VAL_STRING(values+r_from_user_col));
+	CONT_COPYDB(dest, dest->from_domain, VAL_STRING(values+r_from_domain_col));
+	CONT_COPYDB(dest, dest->watcher_user, VAL_STRING(values+r_watcher_user_col));
+	CONT_COPYDB(dest, dest->watcher_domain, VAL_STRING(values+r_watcher_domain_col));
+	CONT_COPYDB(dest, dest->to_tag, VAL_STRING(values+r_to_tag_col));
+	CONT_COPYDB(dest, dest->from_tag, VAL_STRING(values+r_from_tag_col));
+	CONT_COPYDB(dest, dest->callid, VAL_STRING(values+r_callid_col));
+	CONT_COPYDB(dest, dest->sockinfo_str, VAL_STRING(values+r_socket_info_col));
+	CONT_COPYDB(dest, dest->local_contact, VAL_STRING(values+r_local_contact_col));
+	CONT_COPYDB(dest, dest->contact, VAL_STRING(values+r_contact_col));
+	CONT_COPYDB(dest, dest->record_route, VAL_STRING(values+r_record_route_col));
 
 	if(strlen(VAL_STRING(values+r_event_id_col)) > 0)
-		CONT_COPYDB(dest, dest->event_id, VAL_STRING(values+r_event_id_col))
+		CONT_COPYDB(dest, dest->event_id, VAL_STRING(values+r_event_id_col));
 
 	if(strlen(VAL_STRING(values+r_reason_col)) > 0)
-		CONT_COPYDB(dest, dest->reason, VAL_STRING(values+r_reason_col))
+		CONT_COPYDB(dest, dest->reason, VAL_STRING(values+r_reason_col));
 
 	ev_sname.s= (char *)VAL_STRING(values+r_event_col);
 	ev_sname.len= strlen(ev_sname.s);
