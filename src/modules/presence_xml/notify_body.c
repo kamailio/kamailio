@@ -224,6 +224,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	xmlDocPtr doc= NULL;
 #define KSR_FNB_NAME_SIZE	24
 	char name[KSR_FNB_NAME_SIZE];
+	int name_len;
 	char service_uri_scheme[16];
 	int i= 0, found = 0;
 	str* new_body = NULL;
@@ -268,10 +269,15 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 		if(xmlStrcasecmp(node->name, (unsigned char*)"text")== 0)
 			continue;
 
-		LM_DBG("transf_node->name:%s\n",node->name);
+		/* handle 'provide-xyz' nodes */
+		name_len = strlen((char*)(node->name));
+		if(name_len<9) {
+			continue;
+		}
+		LM_DBG("transf_node->name:%s\n", node->name);
 
 		/* skip 'provide-' (e.g., provide-services) */
-		if(strlen((char*)(node->name + 8))>KSR_FNB_NAME_SIZE-1) {
+		if(name_len-8>KSR_FNB_NAME_SIZE-1) {
 			LM_INFO("unsupported handling of: %s\n", (char*)node->name);
 			continue;
 		}
