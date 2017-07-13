@@ -700,6 +700,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	redisc_reply_t *rpl;
 	char c;
 	va_list ap, ap2, ap3, ap4;
+	int ret = -1;
 
 	va_start(ap, cmd);
 	va_copy(ap2, ap);
@@ -709,13 +710,17 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	if(srv==NULL || cmd==NULL || res==NULL)
 	{
 		LM_ERR("invalid parameters");
-		goto error_exec;
+		goto error;
 	}
 	if(srv->len==0 || res->len==0 || cmd->len==0)
 	{
 		LM_ERR("invalid parameters");
-		goto error_exec;
+		goto error;
 	}
+
+	c = cmd->s[cmd->len];
+	cmd->s[cmd->len] = '\0';
+
 	rsrv = redisc_get_server(srv);
 	if(rsrv==NULL)
 	{
@@ -731,10 +736,11 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		goto error_exec;
 	}
 	LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
-  
+
 	if (rsrv->piped.pending_commands != 0)
 	{
-		LM_NOTICE("Calling redis_cmd with pipelined commands in the buffer. Automatically call redis_execute");
+		LM_NOTICE("Calling redis_cmd with pipelined commands in the buffer."
+				" Automatically call redis_execute");
 		redisc_exec_pipelined(rsrv);
 	}
 	/* if server is disabled do nothing unless the disable time has passed */
@@ -742,15 +748,13 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	{
 		goto srv_disabled;
 	}
-  
+
 	rpl = redisc_get_reply(res);
 	if(rpl==NULL)
 	{
 		LM_ERR("no redis reply id found: %.*s\n", res->len, res->s);
 		goto error_exec;
 	}
-	c = cmd->s[cmd->len];
-	cmd->s[cmd->len] = '\0';
 	if(rpl->rplRedis!=NULL)
 	{
 		/* clean up previous redis reply */
@@ -831,19 +835,21 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	return 0;
 
 error_exec:
-	va_end(ap);
-	va_end(ap2);
-	va_end(ap3);
-	va_end(ap4);
-	return -1;
+	cmd->s[cmd->len] = c;
+	ret = -1;
+	goto error;
 
 srv_disabled:
+	cmd->s[cmd->len] = c;
+	ret = -2;
+	goto error;
+
+error:
 	va_end(ap);
 	va_end(ap2);
 	va_end(ap3);
 	va_end(ap4);
-	return -2;
-
+	return ret;
 }
 
 /**

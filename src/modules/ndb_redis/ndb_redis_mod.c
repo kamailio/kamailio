@@ -618,7 +618,6 @@ int redis_parse_index(str *in, gparam_t *gp)
 		if (gp->v.pvs == NULL)
 		{
 			LM_ERR("no pkg memory left for pv_spec_t\n");
-			pkg_free(gp);
 			return -1;
 		}
 
@@ -626,7 +625,6 @@ int redis_parse_index(str *in, gparam_t *gp)
 		{
 			LM_ERR("invalid PV identifier\n");
 			pkg_free(gp->v.pvs);
-			pkg_free(gp);
 			return -1;
 		}
 	} else {
