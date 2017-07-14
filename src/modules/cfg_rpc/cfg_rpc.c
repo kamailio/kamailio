@@ -403,7 +403,7 @@ static void rpc_reset(rpc_t* rpc, void* c)
 				}
 
 				if (input_type == CFG_INPUT_INT)
-					cfg_set_now_int(ctx, &gname, group_id, &var, val);
+					cfg_set_now_int(ctx, &gname, group_id, &var, (int)(long)val);
 				else if (input_type == CFG_INPUT_STRING)
 					cfg_set_now_string(ctx, &gname, group_id, &var, val);
 			}
