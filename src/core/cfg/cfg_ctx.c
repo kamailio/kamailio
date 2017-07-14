@@ -1284,8 +1284,8 @@ int cfg_rollback(cfg_ctx_t *ctx)
  * -1 - error
  *  1 - variable exists, but it is not readable
  */
-int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
-			void **val, unsigned int *val_type)
+int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id,
+		str *var_name, void **val, unsigned int *val_type)
 {
 	cfg_group_t	*group;
 	cfg_mapping_t	*var;
@@ -1365,8 +1365,9 @@ int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
  * -1 - error
  *  1 - variable exists, but it is not readable
  */
-int cfg_get_default_value_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
-                       void **val, unsigned int *val_type)
+int cfg_get_default_value_by_name(cfg_ctx_t *ctx, str *group_name,
+		unsigned int *group_id, str *var_name, void **val,
+		unsigned int *val_type)
 {
 	cfg_group_t	*group;
 	cfg_mapping_t	*var;
@@ -1384,11 +1385,11 @@ int cfg_get_default_value_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int 
 	}
 
 	/* look-up the group and the variable */
-	if (cfg_lookup_var(group_name, var_name, &group, &var))
+	if (cfg_lookup_var(group_name, var_name, &group, &var)) {
 		return -1;
-	else
-	{
-		if(var->def->type & CFG_READONLY)  /* if variables exist then prevents resetting the read-only ones */
+	} else {
+		/* if variables exist then prevents resetting the read-only ones */
+		if(var->def->type & CFG_READONLY)
 			return -1;
 	}
 
@@ -1399,7 +1400,8 @@ int cfg_get_default_value_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int 
 		return 1;
 	}
 
-	/* use the module's orig_handle to access the default registered value of the variable for any group*/
+	/* use the module's orig_handle to access the default registered value of
+	 * the variable for any group*/
 	p = (group->orig_handle) + var->offset;
 
 	switch (CFG_VAR_TYPE(var)) {
