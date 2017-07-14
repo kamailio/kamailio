@@ -737,7 +737,7 @@ static int lua_sr_hdr_append (lua_State *L)
 
 	hf = env_L->msg->last_header;
 	len = strlen(txt);
-	hdr = (char*)pkg_malloc(len);
+	hdr = (char*)pkg_malloc(len+1);
 	if(hdr==NULL)
 	{
 		LM_ERR("no pkg memory left\n");
@@ -823,7 +823,7 @@ static int lua_sr_hdr_insert (lua_State *L)
 	LM_DBG("insert hf: %s\n", txt);
 	hf = env_L->msg->headers;
 	len = strlen(txt);
-	hdr = (char*)pkg_malloc(len);
+	hdr = (char*)pkg_malloc(len+1);
 	if(hdr==NULL)
 	{
 		LM_ERR("no pkg memory left\n");
@@ -1683,7 +1683,6 @@ int sr_kemi_lua_exec_func_ex(lua_State* L, sr_kemi_t *ket, int pdelta)
 					fname->len, fname->s);
 			return app_lua_return_false(L);
 	}
-	return app_lua_return_false(L);
 }
 
 /**
