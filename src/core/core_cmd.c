@@ -991,7 +991,7 @@ static rpc_export_t core_rpc_methods[] = {
 	{"core.udp4_raw_info",     core_udp4rawinfo,       core_udp4rawinfo_doc,
 		0},
 	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc,   0},
-	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc,   RET_ARRAY},
+	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc,   0},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},
