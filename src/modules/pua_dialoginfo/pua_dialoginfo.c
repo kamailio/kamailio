@@ -584,7 +584,7 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 	struct sip_msg *request = _params->req;
 	struct dlginfo_cell *dlginfo;
 
-	if (request->REQ_METHOD != METHOD_INVITE)
+	if (request==NULL || request->REQ_METHOD != METHOD_INVITE)
 		return;
 
 	if(send_publish_flag > -1 && !(request->flags & (1<<send_publish_flag)))
@@ -682,8 +682,8 @@ static int mod_init(void)
 
 	if(use_pubruri_avps) {
 
-		if(!(pubruri_caller_avp && *pubruri_caller_avp)
-				&& (pubruri_callee_avp && *pubruri_callee_avp)) {
+		if((pubruri_caller_avp==NULL || *pubruri_caller_avp==0)
+				|| (pubruri_callee_avp==NULL || *pubruri_callee_avp==0)) {
 			LM_ERR("pubruri_caller_avp and pubruri_callee_avp must be set,"
 					" if use_pubruri_avps is enabled\n");
 			return -1;
