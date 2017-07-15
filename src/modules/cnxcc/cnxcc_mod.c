@@ -914,14 +914,21 @@ void terminate_all_calls(credit_data_t *credit_data) {
             LM_ERR("BUG: Something went terribly wrong\n");
             return;
     }
-    
-	cd_entry = str_hash_get(hts->credit_data_by_client, credit_data->call_list->client_id.s, credit_data->call_list->client_id.len);
 
+	cd_entry = str_hash_get(hts->credit_data_by_client,
+			credit_data->call_list->client_id.s,
+			credit_data->call_list->client_id.len);
+
+	if(cd_entry==NULL) {
+		LM_WARN("credit data itme not found\n");
+		return;
+	}
 	credit_data->deallocating = 1;
 
 	clist_foreach_safe(credit_data->call_list, call, tmp, next) {
 		if(call->sip_data.callid.s!=NULL) {
-			LM_DBG("Killing call with CID [%.*s]\n", call->sip_data.callid.len, call->sip_data.callid.s);
+			LM_DBG("Killing call with CID [%.*s]\n", call->sip_data.callid.len,
+					call->sip_data.callid.s);
 
 			/*
 			 * Update number of calls forced to end
@@ -936,29 +943,29 @@ void terminate_all_calls(credit_data_t *credit_data) {
 
 	cnxcc_lock(hts->lock);
 
-	if (_data.redis) {                                                                                                                                                               
+	if (_data.redis) {
 		redis_clean_up_if_last(credit_data);
 		shm_free(credit_data->str_id);
 	}
-    
+
 	/*
      * Remove the credit_data_t from the hash table
 	 */
 	str_hash_del(cd_entry);
-    
+
 	cnxcc_unlock(hts->lock);
-    
+
 	/*
 	 * Free client_id in list's root
 	 */
 	shm_free(credit_data->call_list->client_id.s);
 	shm_free(credit_data->call_list);
-    
+
 	/*
 	 * Release the lock since we are going to free the entry down below
 	 */
 	cnxcc_unlock(credit_data->lock);
-    
+
 	/*
 	 * Free the whole entry
 	 */
