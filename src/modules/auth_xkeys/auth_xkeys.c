@@ -59,7 +59,7 @@ int auth_xkeys_list_init(void)
 {
 	if(_auth_xkeys_list!=NULL)
 		return 0;
-	_auth_xkeys_list = shm_malloc(sizeof(auth_xkey_t));
+	_auth_xkeys_list = shm_malloc(sizeof(auth_xkey_t*));
 	if(_auth_xkeys_list==NULL) {
 		LM_ERR("no more shared memory\n");
 		return -1;
