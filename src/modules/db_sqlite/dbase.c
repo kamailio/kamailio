@@ -65,7 +65,8 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 	str db_name = str_init((char *) id->database);
 	db_param_list_t *db_param = db_param_list_search(db_name);
 	if (db_param && db_param->readonly) {
-		// The database is opened in read-only mode. If the database does not already exist, an error is returned.
+		/* The database is opened in read-only mode. If the database does not
+		 * already exist, an error is returned. */
 		flags |= SQLITE_OPEN_READONLY;
 		LM_DBG("[%s] opened with [SQLITE_OPEN_READONLY]\n", id->database);
 	} else {
@@ -93,9 +94,11 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 				break;
 			} else if (rc != SQLITE_ROW) {
 				LM_ERR("sqlite3_step[%s]\n", sqlite3_errmsg(con->conn));
+				pkg_free(con);
 				return NULL;
 			} else {
 				rc = sqlite3_column_count(stmt);
+				LM_DBG("columns in result: %d\n", rc);
 			}
 		}
 		if (stmt) {
