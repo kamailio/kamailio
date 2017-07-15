@@ -2668,7 +2668,7 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 				return ip_addr2he(name,ip);
 			}
 
-			if(srv_proto==PROTO_WS || srv_proto==PROTO_WS) {
+			if(srv_proto==PROTO_WS || srv_proto==PROTO_WSS) {
 				/* no srv records for web sockets */
 				return 0;
 			}
