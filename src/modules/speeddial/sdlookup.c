@@ -199,6 +199,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 				RES_ROWS(db_res)[0].values[0].val.blob_val.len);
 			user_s.len = RES_ROWS(db_res)[0].values[0].val.blob_val.len;
 			user_s.s[user_s.len] = '\0';
+		break;
 		default:
 			LM_ERR("unknown type of DB new_uri column\n");
 			if (db_res != NULL && db_funcs.free_result(db_handle, db_res) < 0)
