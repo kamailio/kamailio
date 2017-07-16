@@ -487,6 +487,7 @@ static int fixup_copy_avp(void** param, int param_no)
 	if (ap->u.sval->type!=PVT_AVP)
 	{
 		LM_ERR("you must specify only AVP as parameter\n");
+		pkg_free(ap);
 		return E_UNSPEC;
 	}
 
@@ -686,9 +687,9 @@ static int fixup_check_avp(void** param, int param_no)
 				LM_DBG("compiling regexp <%.*s>\n", ap->u.s.len, ap->u.s.s);
 				if (regcomp(re, ap->u.s.s,REG_EXTENDED|REG_ICASE|REG_NEWLINE))
 				{
+					LM_ERR("bad re <%.*s>\n", ap->u.s.len, ap->u.s.s);
 					pkg_free(re);
 					pkg_free(ap);
-					LM_ERR("bad re <%.*s>\n", ap->u.s.len, ap->u.s.s);
 					return E_BAD_RE;
 				}
 				ap->u.s.s = (char*)re;
@@ -897,6 +898,7 @@ static int fixup_op_avp(void** param, int param_no)
 		if (ap->u.sval->type!=PVT_AVP)
 		{
 			LM_ERR("bad attribute name/alias <%s>!\n", s);
+			pkg_free(ap);
 			pkg_free(av[0]);
 			pkg_free(av);
 			return E_UNSPEC;
