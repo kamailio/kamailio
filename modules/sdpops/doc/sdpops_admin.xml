@@ -10,13 +10,13 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides functions for checking and managing the 
+		This module provides functions for checking and managing the
 		<acronym>SDP</acronym> payloads of SIP messages.
 	</para>
 	<para>
@@ -311,9 +311,11 @@ sdp_remove_media("video");
 		<function moreinfo="none">sdp_with_transport(type)</function>
 	    </title>
 	    <para>
-		Return true of the SDP has 'media=media port type ...' line. Useful to check
-		the transport of the RTP sessions, such as 'RTP/AVP', 'RTP/SAVP' or 'RTP/SAVPF'. The
-		parameter can be static string or variable holding the transport type.
+		Return true of the SDP has 'media=media port type ...' line. Useful to
+		check the transport of the RTP sessions, such as 'RTP/AVP', 'RTP/SAVP',
+		'RTP/SAVPF' or 'UDP/TLS/RTP/SAVPF'. The parameter can be static string
+		or variable holding the transport type. The function does an exact
+		match of the strings.
 	    </para>
 		<para>
 			This function can be used from ANY_ROUTE.
@@ -323,9 +325,9 @@ sdp_remove_media("video");
 		<programlisting format="linespecific">
 ...
 # check for RTP/SAVP stream
-if(sdp_with_transport("RTP/SAVP"))
+if(sdp_with_transport("UDP/TLS/RTP/SAVPF"))
 {
-    # the session has a SRTP/SAVP stream
+    # the session has a UDP/TLS/RTP/SAVPF stream
 }
 ...
 </programlisting>
@@ -333,11 +335,11 @@ if(sdp_with_transport("RTP/SAVP"))
 	</section>
 	<section id="sdpops.f.sdp_with_transport_like">
 	    <title>
-		<function moreinfo="none">sdp_with_transport_like(string)</function>
+		<function moreinfo="none">sdp_with_transport_like(type)</function>
 	    </title>
 	    <para>
 		Returns true if the SDP has 'media=media port type ...' line,
-		where type contains string. The
+		where type contains the string in the parameter. The
 		parameter can be static string or variable holding a string.
 	    </para>
 		<para>
