@@ -237,7 +237,7 @@ error:
 
 struct fis_param* parse_intstr_value(char *p, int len)
 {
-	struct fis_param *vp;
+	struct fis_param *vp = 0;
 	unsigned int uint;
 	str val_str;
 	int flags;
@@ -313,6 +313,7 @@ struct fis_param* parse_intstr_value(char *p, int len)
 
 	return vp;
 error:
+	if(vp) pkg_free(vp);
 	return 0;
 }
 
