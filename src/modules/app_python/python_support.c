@@ -60,7 +60,7 @@ void python_handle_exception(const char *fmt, ...)
 	PyErr_NormalizeException(&exception, &v, &tb);
 	if (exception == NULL) {
 		LM_ERR("Can't get traceback, PyErr_NormalizeException() has failed.\n");
-		if (buf) pkg_free(srcbuf);
+		if (srcbuf) pkg_free(srcbuf);
 		return;
 	}
 
@@ -71,7 +71,7 @@ void python_handle_exception(const char *fmt, ...)
 	Py_XDECREF(tb);
 	if (args == NULL) {
 		LM_ERR("Can't get traceback, PyTuple_Pack() has failed.\n");
-		if (buf) pkg_free(srcbuf);
+		if (srcbuf) pkg_free(srcbuf);
 		return;
 	}
 
@@ -79,7 +79,7 @@ void python_handle_exception(const char *fmt, ...)
 	Py_DECREF(args);
 	if (pResult == NULL) {
 		LM_ERR("Can't get traceback, traceback.format_exception() has failed.\n");
-		if (buf) pkg_free(srcbuf);
+		if (srcbuf) pkg_free(srcbuf);
 		return;
 	}
 
@@ -89,7 +89,7 @@ void python_handle_exception(const char *fmt, ...)
 	{
 		LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed."
 				" Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
-		if (buf) pkg_free(srcbuf);
+		if (srcbuf) pkg_free(srcbuf);
 		return;
 	}
 	memset(buf, 0, buflen * sizeof(char));
@@ -101,7 +101,7 @@ void python_handle_exception(const char *fmt, ...)
 			Py_DECREF(pResult);
 			if (buf)
 				pkg_free(buf);
-			if (buf) pkg_free(srcbuf);
+			if (srcbuf) pkg_free(srcbuf);
 			return;
 		}
 
@@ -113,7 +113,7 @@ void python_handle_exception(const char *fmt, ...)
 			Py_DECREF(pResult);
 			if (buf)
 				pkg_free(buf);
-			if (buf) pkg_free(srcbuf);
+			if (srcbuf) pkg_free(srcbuf);
 			return;
 		}
 
@@ -127,7 +127,7 @@ void python_handle_exception(const char *fmt, ...)
 					" Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
 			Py_DECREF(line);
 			Py_DECREF(pResult);
-			if (buf) pkg_free(srcbuf);
+			if (srcbuf) pkg_free(srcbuf);
 			return;
 		}
 
