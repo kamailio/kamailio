@@ -278,6 +278,12 @@ again:
 						switch(errno){
 							case ECONNRESET:
 								TCP_STATS_CON_RESET();
+#ifdef USE_DST_BLACKLIST
+								dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto,
+													&c->rcv.src_su,
+													&c->send_flags, 0);
+#endif /* USE_DST_BLACKLIST */
+								break;
 							case ETIMEDOUT:
 #ifdef USE_DST_BLACKLIST
 								dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto,
