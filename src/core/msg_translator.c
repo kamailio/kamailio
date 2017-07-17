@@ -1987,7 +1987,7 @@ after_local_via:
 	if ( received_test(msg) ) {
 		if ((received_buf=received_builder(msg,&received_len))==0){
 			LM_ERR("received_builder failed\n");
-			goto error01;  /* free also line_buf */
+			goto error00;  /* free also line_buf */
 		}
 	}
 
@@ -2000,7 +2000,7 @@ after_local_via:
 			(msg->via1->rport /*&& msg->via1->rport->value.s==0*/)){
 		if ((rport_buf=rport_builder(msg, &rport_len))==0){
 			LM_ERR("rport_builder failed\n");
-			goto error01; /* free everything */
+			goto error00; /* free everything */
 		}
 	}
 
@@ -2031,10 +2031,10 @@ after_local_via:
 			via_insert_param=anchor_lump(msg, msg->via1->hdr.s-buf+size, 0,
 											HDR_VIA_T);
 		}
-		if (via_insert_param==0) goto error02; /* free received_buf */
+		if (via_insert_param==0) goto error00; /* free received_buf */
 		if (insert_new_lump_after(via_insert_param, received_buf, received_len,
 					HDR_VIA_T) ==0 ) {
-			goto error02; /* free received_buf */
+			goto error00; /* free received_buf */
 		}
 		received_buf = NULL;
 	}
@@ -2049,10 +2049,10 @@ after_local_via:
 			via_insert_param=anchor_lump(msg, msg->via1->hdr.s-buf+size, 0,
 											HDR_VIA_T);
 		}
-		if (via_insert_param==0) goto error03; /* free rport_buf */
+		if (via_insert_param==0) goto error00; /* free rport_buf */
 		if (insert_new_lump_after(via_insert_param, rport_buf, rport_len,
 									HDR_VIA_T) ==0 ) {
-			goto error03; /* free rport_buf */
+			goto error00; /* free rport_buf */
 		}
 		rport_buf = NULL;
 	}
@@ -2091,10 +2091,10 @@ after_update_via1:
 									HDR_ROUTE_T);
 		}
 		if (unlikely(path_anchor==0))
-			goto error05;
+			goto error00;
 		if (unlikely((path_lump=insert_new_lump_after(path_anchor, path_buf.s,
 									path_buf.len, HDR_ROUTE_T))==0)) {
-			goto error05;
+			goto error00;
 		}
 		path_buf.s = NULL;
 	}
@@ -2150,7 +2150,7 @@ after_update_via1:
 	if(likely(line_buf)) {
 		if ((via_lump=insert_new_lump_before(via_anchor, line_buf, via_len,
 											HDR_VIA_T))==0) {
-			goto error04;
+			goto error00;
 		}
 		line_buf = 0;
 	}
@@ -2204,17 +2204,12 @@ after_update_via1:
 	*returned_len=new_len;
 	return new_buf;
 
-error01:
-error02:
-error03:
-error04:
-error05:
+error00:
 	if (received_buf) pkg_free(received_buf);
 	if (rport_buf) pkg_free(rport_buf);
 	if (path_buf.s) pkg_free(path_buf.s);
 	if (line_buf) pkg_free(line_buf);
 
-error00:
 	*returned_len=0;
 	return 0;
 }
