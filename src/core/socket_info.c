@@ -882,7 +882,7 @@ int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data,
 
 static int nl_bound_sock(void)
 {
-	int sock;
+	int sock = -1;
 	struct sockaddr_nl la;
 
 	sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
@@ -904,7 +904,7 @@ static int nl_bound_sock(void)
 
 	return sock;
 error:
-	if(sock > 0) close(sock);
+	if(sock >= 0) close(sock);
 	return -1;
 }
 
@@ -930,7 +930,7 @@ static int get_flags(int family){
 	char buf[8192];
 	char *p = buf;
 	int nll = 0;
-        int nl_sock = 0;
+    int nl_sock = -1;
 
 	fill_nl_req(req, RTM_GETLINK, AF_INET);
 
@@ -977,11 +977,11 @@ static int get_flags(int family){
 		ifaces[ifi->ifi_index].flags = ifi->ifi_flags;
 	}
 
-	if(nl_sock>0) close(nl_sock);
+	if(nl_sock>=0) close(nl_sock);
 	return 0;
 
 error:
-	if(nl_sock>0) close(nl_sock);
+	if(nl_sock>=0) close(nl_sock);
 	return -1;
 }
 
@@ -1004,9 +1004,9 @@ static int build_iface_list(void)
 	int index, i;
 	struct idx* entry;
 	struct idx* tmp;
-        int nl_sock = 0;
-        int families[] = {AF_INET, AF_INET6};
-        char name[MAX_IF_LEN];
+	int nl_sock = -1;
+	int families[] = {AF_INET, AF_INET6};
+	char name[MAX_IF_LEN];
 	int is_link_local = 0;
 
 	if(ifaces == NULL){
@@ -1137,7 +1137,7 @@ static int build_iface_list(void)
 
 	return 0;
 error:
-	if(nl_sock>0) close(nl_sock);
+	if(nl_sock>=0) close(nl_sock);
 	return -1;
 
 }
