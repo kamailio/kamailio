@@ -353,7 +353,9 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						break;
 					case RVE_ST:
 						rve=(struct rval_expr*)a->val[0].u.data;
-						rval_expr_eval_int(h, msg, &ret, rve);
+						if(rval_expr_eval_int(h, msg, &ret, rve)<0) {
+							LM_WARN("failed to eval int expression\n");
+						}
 						break;
 					case RETCODE_ST:
 						ret=h->last_retcode;

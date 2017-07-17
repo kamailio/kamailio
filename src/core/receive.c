@@ -188,7 +188,9 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		else if(ret == NONSIP_MSG_DROP) goto error02;
 	}
 
-	parse_headers(msg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F, 0);
+	if(parse_headers(msg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F, 0)<0) {
+		LM_WARN("parsing relevant headers failed\n");
+	}
 	LM_DBG("--- received sip message - %s - call-id: [%.*s] - cseq: [%.*s]\n",
 			(msg->first_line.type==SIP_REQUEST)?"request":"reply",
 			(msg->callid && msg->callid->body.s)?msg->callid->body.len:0,

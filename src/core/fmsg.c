@@ -90,12 +90,16 @@ sip_msg_t* faked_msg_next_clear(void)
 
 sip_msg_t* faked_msg_get_next(void)
 {
-	faked_msg_init();
+	if(faked_msg_init()<0) {
+		LM_ERR("fake msg not initialized\n");
+	}
 	return faked_msg_next();
 }
 
 sip_msg_t* faked_msg_get_next_clear(void)
 {
-	faked_msg_init();
+	if(faked_msg_init()<0) {
+		LM_ERR("fake msg not initialized\n");
+	}
 	return faked_msg_next_clear();
 }

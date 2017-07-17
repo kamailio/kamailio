@@ -231,6 +231,10 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 	cfg_script_var_t	*script_var, *script_var2;
 	str			s;
 
+	if(group==NULL || group->vars==NULL) {
+		LM_ERR("invalid group parameter: %p\n", group);
+		return -1;
+	}
 	mapping = (cfg_mapping_t *)pkg_malloc(sizeof(cfg_mapping_t)*group->num);
 	if (!mapping) goto error;
 	memset(mapping, 0, sizeof(cfg_mapping_t)*group->num);

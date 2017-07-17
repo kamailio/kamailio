@@ -74,7 +74,10 @@ int select_ruri(str* res, select_t* s, struct sip_msg* msg)
 	 * Subsequent select calls will fail when they try to parse
 	 * the URI anyway. (Miklos)
 	 */
-	parse_sip_msg_uri(msg);
+	if(parse_sip_msg_uri(msg)<0) {
+		LM_ERR("failed to parse sip msg uri\n");
+		return -1;
+	}
 
 	if (msg->parsed_uri_ok)
 		select_uri_p = &msg->parsed_uri;
@@ -82,8 +85,7 @@ int select_ruri(str* res, select_t* s, struct sip_msg* msg)
 	if (msg->first_line.type==SIP_REQUEST) {
 		if(msg->new_uri.s) {
 			RETURN0_res(msg->new_uri);
-		}
-		else {
+		} else {
 			RETURN0_res(msg->first_line.u.request.uri);
 		}
 	}

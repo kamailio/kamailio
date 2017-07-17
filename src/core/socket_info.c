@@ -1010,7 +1010,8 @@ static int build_iface_list(void)
 	int is_link_local = 0;
 
 	if(ifaces == NULL){
-		if((ifaces = (struct idxlist*)pkg_malloc(MAX_IFACE_NO*sizeof(struct idxlist))) == NULL){
+		if((ifaces = (struct idxlist*)pkg_malloc(MAX_IFACE_NO
+						*sizeof(struct idxlist))) == NULL){
 			LM_ERR("No more pkg memory\n");
 			return -1;
 		}
@@ -1100,7 +1101,7 @@ static int build_iface_list(void)
 						break;
 					case IFA_LABEL:
 						LM_DBG("iface name is %s\n", (char*)RTA_DATA(rtap));
-						strncpy(name, (char*)RTA_DATA(rtap), MAX_IF_LEN);
+						strncpy(name, (char*)RTA_DATA(rtap), MAX_IF_LEN-1);
 						break;
 					case IFA_BROADCAST:
 					case IFA_ANYCAST:
@@ -1116,7 +1117,7 @@ static int build_iface_list(void)
 			}
 
 			if(strlen(ifaces[index].name)==0)
-				strncpy(ifaces[index].name, name, MAX_IF_LEN);
+				strncpy(ifaces[index].name, name, MAX_IF_LEN-1);
 
 			ifaces[index].index = index;
 

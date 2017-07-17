@@ -743,8 +743,7 @@ int sr_hdr_add(sip_msg_t *msg, str *sname, str *sbody)
 	struct lump* anchor;
 	str h;
 
-	parse_headers(msg, HDR_EOH_F, 0);
-	if(msg->last_header == 0) {
+	if(parse_headers(msg, HDR_EOH_F, 0)<0 || msg->last_header == 0) {
 		LM_ERR("failed to parse headers\n");
 		return -1;
 	}

@@ -340,7 +340,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 		/* add the process to the list in shm */
 		pt[child_process_no].pid=pid;
 		if (desc){
-			strncpy(pt[child_process_no].desc, desc, MAX_PT_DESC);
+			strncpy(pt[child_process_no].desc, desc, MAX_PT_DESC-1);
 		}
 		#ifdef USE_TCP
 			if (make_sock && !tcp_disable){
