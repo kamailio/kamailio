@@ -1044,17 +1044,15 @@ int cfg_commit(cfg_ctx_t *ctx)
 	and replaced group arrays.
 	Prepare the linked list of per-child process
 	callbacks, that will be added to the global list. */
-	for (	changed = ctx->changed_first, group = NULL;
-		changed;
-		changed = changed->next
-	) {
+	for(changed = ctx->changed_first, group = NULL; changed;
+			changed = changed->next) {
 		/* Each string/str potentially causes an old string to be freed
 		 * unless the variable of an additional group instance is set
 		 * which uses the default value. This case cannot be determined
 		 * without locking *cfg_global, hence, it is better to count these
 		 * strings as well even though the slot might not be used later. */
-		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
-		|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR))
+		if((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
+				|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR))
 			replaced_num++;
 
 		/* See the above comments for strings */
@@ -1090,6 +1088,10 @@ int cfg_commit(cfg_ctx_t *ctx)
 			goto error0;
 		}
 		memset(replaced, 0 , size);
+	} else {
+		/* no replacement */
+		LM_INFO("commit operation executed without having changes\n");
+		return 0;
 	}
 
 	/* make sure that nobody else replaces the global config
@@ -1104,11 +1106,9 @@ int cfg_commit(cfg_ctx_t *ctx)
 	Note that the cycle relies on the order of the groups and group instances, i.e.
 	the order is group + group_id + order of commits. */
 	replaced_num = 0;
-	for (	changed = ctx->changed_first, group = NULL; /* group points to the
-							last group array that has been cloned */
-		changed;
-		changed = changed->next
-	) {
+	for(changed = ctx->changed_first, group = NULL; /* group points to the
+										last group array that has been cloned */
+			changed; changed = changed->next) {
 		if (!changed->group_id_set) {
 			p = CFG_GROUP_DATA(block, changed->group)
 				+ changed->var->offset;
