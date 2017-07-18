@@ -485,7 +485,8 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 {
 	struct hdr_field* h;
 	auth_body_t* cred;
-	int ret;
+	auth_cfg_result_t ret;
+	auth_result_t rauth;
 	str hf = {0, 0};
 	avp_value_t val;
 	static char ha1[256];
@@ -545,8 +546,8 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
-	ret = auth_check_response(&(cred->digest), method, ha1);
-	if(ret==AUTHENTICATED) {
+	rauth = auth_check_response(&(cred->digest), method, ha1);
+	if(rauth==AUTHENTICATED) {
 		ret = AUTH_OK;
 		switch(post_auth(msg, h, ha1)) {
 			case AUTHENTICATED:
@@ -556,7 +557,7 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 				break;
 		}
 	} else {
-		if(ret==NOT_AUTHENTICATED)
+		if(rauth==NOT_AUTHENTICATED)
 			ret = AUTH_INVALID_PASSWORD;
 		else
 			ret = AUTH_ERROR;
