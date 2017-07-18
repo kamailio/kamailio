@@ -1344,6 +1344,10 @@ int t_newtran( struct sip_msg* p_msg )
 
 	/* transaction found, it's a retransmission  */
 	if (lret>0) {
+		if ( T==NULL || T==T_UNDEFINED  ) {
+			LM_ERR("BUG: transaction is gone\n");
+			return 0;
+		}
 		if (p_msg->REQ_METHOD==METHOD_ACK) {
 			if (unlikely(has_tran_tmcbs(T, TMCB_ACK_NEG_IN)))
 				run_trans_callbacks(TMCB_ACK_NEG_IN, T, p_msg, 0,

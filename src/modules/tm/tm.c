@@ -953,7 +953,7 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 
 	if (backup) status[msg->first_line.u.reply.status.len] = backup;
 	if (s) pkg_free(s);
-	if ((fp->type != FPARAM_REGEX) && re) {
+	if (fp->type != FPARAM_REGEX) {
 		regfree(re);
 		pkg_free(re);
 	}

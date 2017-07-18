@@ -1021,6 +1021,14 @@ eval_flags:
 				chklen = sizeof(struct rte) + sizeof(rr_t);
 				if (! (t = pkg_malloc(chklen))) {
 					ERR("out of pkg memory (%d required)\n", (int)chklen);
+					/* last element was freed, unlink it */
+					if(prev_t == rtset) {
+						/* there is only one elem in route set: the remote target */
+						rtset = NULL;
+					} else {
+						prev_t->next = NULL;
+					}
+					ret = -1;
 					goto end;
 				}
 				/* this way, .free_rr is also set to 0 (!!!) */

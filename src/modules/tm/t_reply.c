@@ -2177,8 +2177,13 @@ int reply_received( struct sip_msg  *p_msg )
 	sr_kemi_eng_t *keng = NULL;
 
 	/* make sure we know the associated transaction ... */
-	if (t_check( p_msg  , &branch )==-1)
+	branch = T_BR_UNDEFINED;
+	if (t_check(p_msg , &branch)==-1)
 		goto trans_not_found;
+	if (unlikely(branch==T_BR_UNDEFINED)) {
+		LM_CRIT("BUG: invalid branch - report to developers\n");
+		goto trans_not_found;
+	}
 	/*... if there is none, tell the core router to fwd statelessly */
 	t=get_t();
 	if ( (t==0)||(t==T_UNDEFINED))
@@ -2187,8 +2192,6 @@ int reply_received( struct sip_msg  *p_msg )
 	/* if transaction found, increment the rpl_received counter */
 	t_stats_rpl_received();
 
-	if (unlikely(branch==T_BR_UNDEFINED))
-		LM_CRIT("BUG: invalid branch - report to developers\n");
 	tm_ctx_set_branch_index(branch);
 	init_cancel_info(&cancel_data);
 	msg_status=p_msg->REPLY_STATUS;
@@ -2499,6 +2502,7 @@ int reply_received( struct sip_msg  *p_msg )
 		replies_locked=1;
 	}
 	if ( is_local(t) ) {
+		/* local_reply() does UNLOCK_REPLIES( t ) */
 		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_data );
 		replies_locked=0;
 		if (reply_status == RPS_COMPLETED) {
@@ -2516,6 +2520,7 @@ int reply_received( struct sip_msg  *p_msg )
 			cancel_uacs(t, &cancel_data, cfg_get(tm,tm_cfg, cancel_b_flags));
 		}
 	} else {
+		/* relay_reply() does UNLOCK_REPLIES( t ) */
 		reply_status=relay_reply( t, p_msg, branch, msg_status,
 									&cancel_data, 1 );
 		replies_locked=0;

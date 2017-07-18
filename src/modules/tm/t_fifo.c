@@ -502,7 +502,9 @@ static int inline write_to_fifo(char *fifo, int cnt )
 	if((fd_fifo = open(fifo,O_WRONLY | O_NONBLOCK)) == -1){
 		switch(errno){
 			case ENXIO:
-				LM_ERR("nobody listening on [%s] fifo for reading!\n",fifo);
+				LM_ERR("cannot open fifo file - nobody listening for reading"
+					" [%s] (%s)\n", fifo, strerror(errno));
+				break;
 			default:
 				LM_ERR("failed to open [%s] fifo: %s\n", fifo, strerror(errno));
 		}
