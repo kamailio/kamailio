@@ -665,7 +665,21 @@ skip:
 	return -1;
 }
 
-
+/**
+ * test if command flags are compatible with route block flags (type)
+ * - decide if the command is allowed to run within a specific route block
+ * - return: 1 if allowed; 0 if not allowed
+ */
+static inline int sr_cmd_flags_match(int cflags, int rflags)
+{
+	if((cflags & rflags) == rflags) {
+		return 1;
+	}
+	if((rflags==EVENT_ROUTE) && (cflags & EVENT_ROUTE)) {
+		return 1;
+	}
+	return 0;
+}
 
 /* searches the module list for function name in module mod and returns
  *  a pointer to the "name" function record union or 0 if not found
@@ -688,16 +702,16 @@ sr31_cmd_export_t* find_mod_export_record(char* mod, char* name,
 				if((strcmp(name, cmd->name) == 0) &&
 					((cmd->param_no == param_no) ||
 					(cmd->param_no==VAR_PARAM_NO)) &&
-					((cmd->flags & flags) == flags)
+					(sr_cmd_flags_match(cmd->flags, flags)==1)
 				){
-					LM_DBG("find_export_record: found <%s> in module %s [%s]\n",
+					LM_DBG("found export of <%s> in module %s [%s]\n",
 						name, t->exports.name, t->path);
 					*mod_if_ver=t->orig_mod_interface_ver;
 					return cmd;
 				}
 			}
 	}
-	LM_DBG("find_export_record: <%s> not found \n", name);
+	LM_DBG("export of <%s> not found (flags %d)\n", name, flags);
 	return 0;
 }
 
