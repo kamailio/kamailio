@@ -384,7 +384,7 @@ int daemonize(char*  name,  int status_wait)
 			}else{
 				fprintf(pid_stream, "%i\n", (int)pid);
 				fclose(pid_stream);
-				if(chown(pid_file, pid_uid, pid_gid)<0) {
+				if(chown(pgid_file, pid_uid, pid_gid)<0) {
 					LM_ERR("failed to chwon PGID file: %s\n", strerror(errno));
 					goto error;
 				}
