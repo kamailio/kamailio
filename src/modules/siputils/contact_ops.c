@@ -56,8 +56,6 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	int res;
 	char separator;
 
-
-
 	/*
 	 * I have a list of contacts in contact->parsed which is of type contact_body_t
 	 * inside i have a contact->parsed->contact which is the head of the list of contacts
@@ -67,75 +65,62 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	 * I just have to visit each uri and encode each uri according to a scheme
 	 */
 
-	if ((msg->contact == NULL)&&((parse_headers(msg,HDR_CONTACT_F,0) == -1) ||
-				(msg->contact == NULL) ))
-	{
+	if((msg->contact == NULL) && ((parse_headers(msg, HDR_CONTACT_F, 0) == -1)
+			|| (msg->contact == NULL))) {
 		LM_ERR("no Contact header present\n");
 		return -1;
 	}
 
-
 	separator = DEFAULT_SEPARATOR[0];
-	if (contact_flds_separator != NULL)
-		if (strlen(contact_flds_separator)>=1)
+	if(contact_flds_separator != NULL)
+		if(strlen(contact_flds_separator) >= 1)
 			separator = contact_flds_separator[0];
 
-	if (msg->contact->parsed == NULL)	parse_contact (msg->contact);
-	if (msg->contact->parsed != NULL)
-	{
-		cb = (contact_body_t *) msg->contact->parsed;
-		c = cb->contacts;
-		/* we visit each contact */
-		if (c != NULL)
-		{
-			uri = c->uri;
-			res = encode_uri (uri, encoding_prefix, public_ip,separator, &newUri);
+	if(msg->contact->parsed == NULL) {
+		if(parse_contact(msg->contact) < 0 || msg->contact->parsed == NULL) {
+			LM_ERR("contact parsing failed\n");
+			return -4;
+		}
+	}
 
-			if (res != 0)
-			{
-				LM_ERR("failed encoding contact.Code %d\n", res);
+	cb = (contact_body_t *)msg->contact->parsed;
+	c = cb->contacts;
+	/* we visit each contact */
+	if(c != NULL) {
+		uri = c->uri;
+		res = encode_uri(uri, encoding_prefix, public_ip, separator, &newUri);
+
+		if(res != 0) {
+			LM_ERR("failed encoding contact.Code %d\n", res);
+#ifdef STRICT_CHECK
+			return res;
+#endif
+		} else if(patch(msg, uri.s, uri.len, newUri.s, newUri.len) < 0) {
+			LM_ERR("lumping failed in mangling port \n");
+			return -2;
+		}
+
+/* encoding next contacts too?*/
+#ifdef ENCODE_ALL_CONTACTS
+		while(c->next != NULL) {
+			c = c->next;
+			uri = c->uri;
+
+			res = encode_uri(
+					uri, encoding_prefix, public_ip, separator, &newUri);
+			if(res != 0) {
+				LM_ERR("failed encode_uri.Code %d\n", res);
 #ifdef STRICT_CHECK
 				return res;
 #endif
+			} else if(patch(msg, uri.s, uri.len, newUri.s, newUri.len) < 0) {
+				LM_ERR("lumping failed in mangling port \n");
+				return -3;
 			}
-			else
-				if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
-				{
-					LM_ERR("lumping failed in mangling port \n");
-					return -2;
-				}
+		} /* while */
+#endif	/* ENCODE_ALL_CONTACTS */
+	}	 /* if c != NULL */
 
-			/* encoding next contacts too?*/
-#ifdef ENCODE_ALL_CONTACTS
-			while (c->next != NULL)
-			{
-				c = c->next;
-				uri = c->uri;
-
-				res = encode_uri (uri, encoding_prefix,public_ip,separator,&newUri);
-				if (res != 0)
-				{
-					LM_ERR("failed encode_uri.Code %d\n",res);
-#ifdef STRICT_CHECK
-					return res;
-#endif
-				}
-				else
-					if (patch (msg, uri.s, uri.len, newUri.s, newUri.len)< 0)
-					{
-						LM_ERR("lumping failed in mangling port \n");
-						return -3;
-					}
-			} /* while */
-#endif /* ENCODE_ALL_CONTACTS */
-		} /* if c != NULL */
-
-	} /* end if */
-	else /* after parsing still NULL */
-	{
-		LM_ERR("unable to parse Contact header\n");
-		return -4;
-	}
 	return 1;
 }
 
@@ -238,63 +223,52 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 	fprintf (stdout, "INITIAL.s=[%.*s]\n", ruri->len, ruri->s);
 #endif
 
-	if (msg->contact->parsed == NULL) parse_contact (msg->contact);
-	if (msg->contact->parsed != NULL)
-	{
-		cb = (contact_body_t *) msg->contact->parsed;
-		c = cb->contacts;
-		// we visit each contact
-		if (c != NULL)
-		{
+	if(msg->contact->parsed == NULL) {
+		if(parse_contact(msg->contact) < 0 || msg->contact->parsed == NULL) {
+			LM_ERR("contact parsing failed\n");
+			return -4;
+		}
+	}
+
+	cb = (contact_body_t *)msg->contact->parsed;
+	c = cb->contacts;
+	// we visit each contact
+	if(c != NULL) {
+		uri = c->uri;
+
+		res = decode_uri(uri, separator, &newUri);
+#ifdef DEBUG
+		fprintf(stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
+#endif
+		if(res != 0) {
+			LM_ERR("failed decoding contact.Code %d\n", res);
+#ifdef STRICT_CHECK
+			return res;
+#endif
+		} else if(patch(msg, uri.s, uri.len, newUri.s, newUri.len) < 0) {
+			LM_ERR("lumping failed in mangling port \n");
+			return -2;
+		}
+
+#ifdef DECODE_ALL_CONTACTS
+		while(c->next != NULL) {
+			c = c->next;
 			uri = c->uri;
 
-			res = decode_uri (uri, separator, &newUri);
-#ifdef DEBUG
-			fprintf (stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
-#endif
-			if (res != 0)
-			{
+			res = decode_uri(uri, separator, &newUri);
+			if(res != 0) {
 				LM_ERR("failed decoding contact.Code %d\n", res);
 #ifdef STRICT_CHECK
 				return res;
 #endif
+			} else if(patch(msg, uri.s, uri.len, newUri.s, newUri.len) < 0) {
+				LM_ERR("lumping failed in mangling port \n");
+				return -3;
 			}
-			else
-				if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
-				{
-					LM_ERR("lumping failed in mangling port \n");
-					return -2;
-				}
-
-#ifdef DECODE_ALL_CONTACTS
-			while (c->next != NULL)
-			{
-				c = c->next;
-				uri = c->uri;
-
-				res = decode_uri (uri, separator, &newUri);
-				if (res != 0)
-				{
-					LM_ERR("failed decoding contact.Code %d\n",res);
-#ifdef STRICT_CHECK
-					return res;
+		} // end while
 #endif
-				}
-				else
-					if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
-					{
-						LM_ERR("lumping failed in mangling port \n");
-						return -3;
-					}
-			} // end while
-#endif
-		} // if c!= NULL
-	} // end if
-	else // after parsing still NULL
-	{
-		LM_ERR("unable to parse Contact header\n");
-		return -4;
-	}
+	} // if c!= NULL
+
 #ifdef DEBUG
 	fprintf (stdout,"---END--------DECODE CONTACT HEADER-----------------\n");fflush(stdout);
 #endif
