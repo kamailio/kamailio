@@ -209,14 +209,14 @@ int close_extra_socks(int child_id, int proc_no)
 		/* close all listen sockets (needed only in tcp_main */
 		if (!tcp_disable){
 			for(si=tcp_listen; si; si=si->next){
-				close(si->socket);
+				if(si->socket>=0) close(si->socket);
 				/* safe to change since this is a per process copy */
 				si->socket=-1;
 			}
 #ifdef USE_TLS
 			if (!tls_disable){
 				for(si=tls_listen; si; si=si->next){
-					close(si->socket);
+					if(si->socket>=0) close(si->socket);
 					/* safe to change since this is a per process copy */
 					si->socket=-1;
 				}
