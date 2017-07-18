@@ -2560,7 +2560,7 @@ struct hostent* dns_srv_get_he(str* name, unsigned short* port, int flags)
 		rr_name.len=((struct srv_rdata*)rr->rdata)->name_len;
 		if ((he=dns_get_he(&rr_name, flags))!=0){
 				/* success, at least one good ip found */
-				*port=((struct srv_rdata*)rr->rdata)->port;
+				if(port) *port=((struct srv_rdata*)rr->rdata)->port;
 				goto end;
 		}
 		rr_no++; /* try from the next record, the current one was not good */
@@ -3213,9 +3213,9 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 	int ret;
 	struct hostent* he;
 	size_t i,list_len;
-	char origproto;
+	char origproto = 0;
 
-	origproto = *proto;
+	if(proto) origproto = *proto;
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LM_WARN("called before dns cache initialization\n");
 		h->srv=h->a=0;
@@ -3344,7 +3344,7 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 	int ret;
 
 	ret=-E_DNS_NO_NAPTR;
-	origproto=*proto;
+	if(proto) origproto=*proto;
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LM_WARN("called before dns cache initialization\n");
 		h->srv=h->a=0;
@@ -3399,7 +3399,7 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 								from previous dns_srv_sip_resolve calls */
 	}
 naptr_not_found:
-	*proto=origproto;
+	if(proto) *proto=origproto;
 	return dns_srv_sip_resolve(h, name, ip, port, proto, flags);
 }
 #endif /* USE_NAPTR */
