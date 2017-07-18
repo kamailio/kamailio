@@ -50,6 +50,7 @@
 #include "subscribe.h"
 
 #include "../pua/pua_bind.h"
+#include "sec_agree.h"
 
 extern struct tm_binds tmb;
 extern usrloc_api_t ul;
@@ -332,6 +333,15 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	if (ci.received_port == 0)
 		ci.received_port = 5060;
 
+    // Parse security parameters
+    security_t sec_params;
+    memset(&sec_params, 0, sizeof(security_t));
+
+    int ret;
+    if((ret = cscf_get_security(_m, &sec_params)) != 0) {
+        LM_ERR("Error parsing sec-agree parameters: %d\n", ret);
+    }
+
 	ul.lock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 	if (ul.get_pcontact(_d, &ci, &pcontact) != 0) { //need to insert new contact
 		LM_DBG("Adding pending pcontact: <%.*s>\n", c->uri.len, c->uri.s);
@@ -343,9 +353,18 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 			ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE | PCSCF_CONTACT_UPDATE, callback_pcscf_contact_cb, NULL);
 		}
 	} else { //contact already exists - update
-		LM_DBG("Contact already exists - not doing anything for now\n");
+        LM_DBG("Contact already exists - not doing anything for now\n");
 	}
+
+    // Update security parameters
+    if(ul.update_temp_security(_d, sec_params.type, &sec_params, pcontact) != 0)
+    {
+        LM_ERR("Error updating temp security\n");
+    }
+
 	ul.unlock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
+
+    free_security_t(&sec_params);
 
 	return 1;
 
@@ -422,7 +441,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags) {
 		    goto error;
 		}
 	    }else{
-		//Now some how check if there is a pua record and what the presentity uri is from there - if nothing there
+        //Now some how check if there is a pua record and what the presentity uri is from there - if nothing there
 		LM_DBG("No p_associated_uri in 200 OK this must be a de-register - we ignore this - will unsubscribe when the notify is received");
 		goto done;
 		
