@@ -129,7 +129,7 @@ static inline int get_ha1(struct username *_username, str *_domain,
 static inline int do_auth(struct sip_msg *_m, struct hdr_field *_h, str *_realm,
 			str *_method, str *_secret)
 {
-	int ret;
+	auth_result_t ret;
 	char ha1[512];
 	auth_body_t *cred = (auth_body_t*) _h->parsed;
 
@@ -146,21 +146,15 @@ static inline int do_auth(struct sip_msg *_m, struct hdr_field *_h, str *_realm,
 	ret = eph_auth_api.check_response(&cred->digest, _method, ha1);
 	if (ret == AUTHENTICATED)
 	{
-		if (eph_auth_api.post_auth(_m, _h, ha1) != AUTHENTICATED)
-		{
+		if (eph_auth_api.post_auth(_m, _h, ha1) != AUTHENTICATED) {
 			return AUTH_ERROR;
 		}
-	}
-	else if (ret == NOT_AUTHENTICATED)
-	{
+		return AUTH_OK;
+	} else if (ret == NOT_AUTHENTICATED) {
 		return AUTH_INVALID_PASSWORD;
+	} else {
+		return AUTH_ERROR;
 	}
-	else
-	{
-		ret = AUTH_ERROR;
-	}
-
-	return AUTH_OK;
 }
 
 int autheph_verify_timestamp(str *_username)
@@ -219,15 +213,16 @@ static inline int digest_authenticate(struct sip_msg *_m, str *_realm,
 				hdr_types_t _hftype, str *_method)
 {
 	struct hdr_field* h;
-	int ret;
+	auth_cfg_result_t ret;
+	auth_result_t rauth;
 	struct secret *secret_struct;
 	str username;
 
 	LM_DBG("realm: %.*s\n", _realm->len, _realm->s);
 	LM_DBG("method: %.*s\n", _method->len, _method->s);
 
-	ret = eph_auth_api.pre_auth(_m, _realm, _hftype, &h, NULL);
-	switch(ret)
+	rauth = eph_auth_api.pre_auth(_m, _realm, _hftype, &h, NULL);
+	switch(rauth)
 	{
 	case NONCE_REUSED:
 		LM_DBG("nonce reused\n");
@@ -294,15 +289,15 @@ int autheph_check(struct sip_msg *_m, char *_realm)
 		return AUTH_ERROR;
 	}
 
-	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
-	{
-		return AUTH_OK;
-	}
-
 	if(_m == NULL || _realm == NULL)
 	{
 		LM_ERR("invalid parameters\n");
 		return AUTH_ERROR;
+	}
+
+	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
+	{
+		return AUTH_OK;
 	}
 
 	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0)
@@ -340,15 +335,15 @@ int autheph_www(struct sip_msg *_m, char *_realm)
 		return AUTH_ERROR;
 	}
 
-	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
-	{
-		return AUTH_OK;
-	}
-
 	if(_m == NULL || _realm == NULL)
 	{
 		LM_ERR("invalid parameters\n");
 		return AUTH_ERROR;
+	}
+
+	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
+	{
+		return AUTH_OK;
 	}
 
 	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0)
@@ -428,15 +423,15 @@ int autheph_proxy(struct sip_msg *_m, char *_realm)
 		return AUTH_ERROR;
 	}
 
-	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
-	{
-		return AUTH_OK;
-	}
-
 	if(_m == NULL || _realm == NULL)
 	{
 		LM_ERR("invalid parameters\n");
 		return AUTH_ERROR;
+	}
+
+	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
+	{
+		return AUTH_OK;
 	}
 
 	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0)
