@@ -232,17 +232,17 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 				str *table, hdr_types_t hftype, str *method, hdr_field_t **ahdr)
 {
 	char ha1[256];
-	int res;
+	auth_cfg_result_t ret;
+	auth_result_t rauth;
 	struct hdr_field* h;
 	auth_body_t* cred;
 	db1_res_t* result = NULL;
-	int ret;
 
 	cred = 0;
 	ret = AUTH_ERROR;
 
-	ret = auth_api.pre_auth(msg, realm, hftype, &h, NULL);
-	switch(ret) {
+	rauth = auth_api.pre_auth(msg, realm, hftype, &h, NULL);
+	switch(rauth) {
 		case NONCE_REUSED:
 			LM_DBG("nonce reused");
 			ret = AUTH_NONCE_REUSED;
@@ -282,21 +282,21 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 	cred = (auth_body_t*)h->parsed;
 	if(ahdr!=NULL) *ahdr = h;
 
-	res = get_ha1(&cred->digest.username, realm, table, ha1, &result);
-	if (res < 0) {
+	rauth = get_ha1(&cred->digest.username, realm, table, ha1, &result);
+	if (rauth < 0) {
 		/* Error while accessing the database */
 		ret = AUTH_ERROR;
 		goto end;
 	}
-	if (res > 0) {
+	if (rauth > 0) {
 		/* Username not found in the database */
 		ret = AUTH_USER_UNKNOWN;
 		goto end;
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
-	ret = auth_api.check_response(&(cred->digest), method, ha1);
-	if(ret==AUTHENTICATED) {
+	rauth = auth_api.check_response(&(cred->digest), method, ha1);
+	if(rauth==AUTHENTICATED) {
 		ret = AUTH_OK;
 		switch(auth_api.post_auth(msg, h, ha1)) {
 			case AUTHENTICATED:
@@ -307,7 +307,7 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 				break;
 		}
 	} else {
-		if(ret==NOT_AUTHENTICATED)
+		if(rauth==NOT_AUTHENTICATED)
 			ret = AUTH_INVALID_PASSWORD;
 		else
 			ret = AUTH_ERROR;
