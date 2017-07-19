@@ -244,10 +244,18 @@ int add_path_usr(struct sip_msg* _msg, char* _usr, char* _parms)
 	str user = {0,0};
 	str parms = {0,0};
 
-	if (_usr)
-		get_str_fparam(&user, _msg, (fparam_t *) _usr);
-	if (_parms)
-		get_str_fparam(&parms, _msg, (fparam_t *) _parms);
+	if (_usr) {
+		if(get_str_fparam(&user, _msg, (fparam_t *) _usr)<0) {
+			LM_ERR("failed to get user value\n");
+			return -1;
+		}
+	}
+	if (_parms) {
+		if(get_str_fparam(&parms, _msg, (fparam_t *) _parms)<0) {
+			LM_ERR("failed to get params value\n");
+			return -1;
+		}
+	}
 
 	return prepend_path(_msg, &user, PATH_PARAM_NONE, &parms);
 }
@@ -298,10 +306,18 @@ int add_path_received_usr(struct sip_msg* _msg, char* _usr, char* _parms)
 	str user = {0,0};
 	str parms = {0,0};
 
-	if (_usr)
-		get_str_fparam(&user, _msg, (fparam_t *) _usr);
-	if (_parms)
-		get_str_fparam(&parms, _msg, (fparam_t *) _parms);
+	if (_usr) {
+		if(get_str_fparam(&user, _msg, (fparam_t *) _usr)<0) {
+			LM_ERR("failed to get user value\n");
+			return -1;
+		}
+	}
+	if (_parms) {
+		if(get_str_fparam(&parms, _msg, (fparam_t *) _parms)<0) {
+			LM_ERR("failed to get params value\n");
+			return -1;
+		}
+	}
 
 	return prepend_path(_msg, &user, PATH_PARAM_RECEIVED, &parms);
 }
