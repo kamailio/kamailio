@@ -3227,12 +3227,16 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 		return -E_DNS_NO_SRV;
 	}
 	if ((h->srv==0) && (h->a==0)){ /* first call */
-		if (proto && *proto==0){ /* makes sure we have a protocol set*/
-			*proto=PROTO_UDP; /* default */
-		}
-		h->port=(*proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
+		if (proto) {
+			if(*proto==0) { /* makes sure we have a protocol set*/
+				*proto=PROTO_UDP; /* default */
+			}
+			h->port=(*proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
 														don't find another */
-		h->proto=*proto; /* store initial protocol */
+			h->proto=*proto; /* store initial protocol */
+		} else {
+			h->proto=PROTO_UDP; /* default */
+		}
 		if (port){
 			if (*port==0){
 				/* try SRV if initial call & no port specified
@@ -3274,7 +3278,8 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 						srv_name.len=strlen(tmp);
 						if ((ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags))>=0)
 						{
-							h->proto = *proto = srv_proto_list[i].proto;
+							h->proto = srv_proto_list[i].proto;
+							if(proto) *proto = h->proto;
 #ifdef DNS_CACHE_DEBUG
 							LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n",
 								name->len, name->s, h->srv_no, h->ip_no, ret);
