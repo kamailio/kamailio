@@ -103,8 +103,8 @@ static int alias_db_query(struct sip_msg* _msg, str table,
 
 	adbf.use_table(db_handle, &table);
 	if(adbf.query( db_handle, db_keys, NULL, db_vals, db_cols,
-		(flags&ALIAS_DOMAIN_FLAG)?2:1 /*no keys*/, 2 /*no cols*/,
-		NULL, &db_res)!=0)
+			(flags&ALIAS_DOMAIN_FLAG)?2:1 /*no keys*/, 2 /*no cols*/,
+			NULL, &db_res)!=0 || db_res==NULL)
 	{
 		LM_ERR("failed to query database\n");
 		goto err_server;
@@ -113,9 +113,7 @@ static int alias_db_query(struct sip_msg* _msg, str table,
 	if (RES_ROW_N(db_res)<=0 || RES_ROWS(db_res)[0].values[0].nul != 0)
 	{
 		LM_DBG("no alias found for R-URI\n");
-		if (db_res!=NULL && adbf.free_result(db_handle, db_res) < 0)
-			LM_DBG("failed to freeing result of query\n");
-		return -1;
+		goto err_server;
 	}
 
 	memcpy(useruri_buf, "sip:", 4);
@@ -144,10 +142,6 @@ static int alias_db_query(struct sip_msg* _msg, str table,
 			break;
 			default:
 				LM_ERR("unknown type of DB user column\n");
-				if (db_res != NULL && adbf.free_result(db_handle, db_res) < 0)
-				{
-					LM_DBG("failed to freeing result of query\n");
-				}
 				goto err_server;
 		}
 	
@@ -180,10 +174,6 @@ static int alias_db_query(struct sip_msg* _msg, str table,
 			break;
 			default:
 				LM_ERR("unknown type of DB user column\n");
-				if (db_res != NULL && adbf.free_result(db_handle, db_res) < 0)
-				{
-					LM_DBG("failed to freeing result of query\n");
-				}
 				goto err_server;
 		}
 		user_s.s = useruri_buf;
@@ -198,14 +188,18 @@ static int alias_db_query(struct sip_msg* _msg, str table,
 	/**
 	 * Free the DB result
 	 */
-	if (db_res!=NULL && adbf.free_result(db_handle, db_res) < 0)
+	if (adbf.free_result(db_handle, db_res) < 0) {
 		LM_DBG("failed to freeing result of query\n");
+	}
 
 	return 1;
 
 err_server:
-	if (db_res!=NULL && adbf.free_result(db_handle, db_res) < 0)
-		LM_DBG("failed to freeing result of query\n");
+	if (db_res!=NULL) {
+		if(adbf.free_result(db_handle, db_res) < 0) {
+			LM_DBG("failed to freeing result of query\n");
+		}
+	}
 	return -1;
 }
 
