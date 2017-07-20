@@ -244,7 +244,7 @@ int load_domains(domain_t** dest)
 
 	list = 0;
 
-	if (db_exec(&res, load_domains_cmd) < 0) {
+	if ((db_exec(&res, load_domains_cmd) < 0) || (res==NULL)) {
 		ERR("Error while querying database\n");
 		return -1;
 	}
@@ -292,6 +292,7 @@ int load_domains(domain_t** dest)
 	}
 
 	db_res_free(res);
+	res = NULL;
 
 	if (load_domain_attrs) {
 		d = list;
