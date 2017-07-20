@@ -1190,7 +1190,7 @@ static struct cancel_reason* cancel_reason_pack(short cause, void* data,
 		} else if (cause == CANCEL_REAS_PACKED_HDRS &&
 				!(t->flags & T_NO_E2E_CANCEL_REASON) && data) {
 			txt = (str*) data;
-			reason_len = txt?txt->len:0;
+			reason_len = txt->len;
 		} else if (unlikely(cause < CANCEL_REAS_MIN)) {
 			LM_CRIT("unhandled reason cause %d\n", cause);
 			goto error;

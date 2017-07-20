@@ -1004,7 +1004,7 @@ eval_flags:
 			/* find ptr to last route body that contains the (possibly) old
 			 * remote target
 			 */
-			for (t = rtset, prev_t = t; t->next; prev_t = t, t = t->next)
+			for (t = rtset, prev_t = NULL; t->next; prev_t = t, t = t->next)
 				;
 			if ((t->ptr->len == contact->len) &&
 					(memcmp(t->ptr->nameaddr.name.s, contact->s,
@@ -1022,7 +1022,7 @@ eval_flags:
 				if (! (t = pkg_malloc(chklen))) {
 					ERR("out of pkg memory (%d required)\n", (int)chklen);
 					/* last element was freed, unlink it */
-					if(prev_t == rtset) {
+					if(prev_t == NULL) {
 						/* there is only one elem in route set: the remote target */
 						rtset = NULL;
 					} else {
@@ -1036,7 +1036,7 @@ eval_flags:
 				((rr_t *)&t[1])->nameaddr.name = *contact;
 				((rr_t *)&t[1])->len = contact->len;
 				/* chain the new route elem in set */
-				if (prev_t == rtset)
+				if (prev_t == NULL)
 					/* there is only one elem in route set: the remote target */
 					rtset = t;
 				else
