@@ -350,12 +350,61 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 		}
 	} else if(ket->ptypes[5]==SR_KEMIP_NONE) {
 		i = 5;
-		LM_ERR("not implemented yet\n");
-		return sr_kemi_apy_return_false();
+		if(ket->ptypes[0]==SR_KEMIP_STR
+				|| ket->ptypes[1]==SR_KEMIP_STR
+				|| ket->ptypes[2]==SR_KEMIP_STR
+				|| ket->ptypes[3]==SR_KEMIP_STR
+				|| ket->ptypes[4]==SR_KEMIP_STR) {
+			if(!PyArg_ParseTuple(args, "sssss:kemi-param-sssss",
+						&vps[0].s.s, &vps[1].s.s, &vps[2].s.s, &vps[3].s.s,
+						&vps[4].s.s)) {
+				LM_ERR("unable to retrieve str-str-str-str params %d\n", i);
+				return sr_kemi_apy_return_false();
+			}
+			vps[0].s.len = strlen(vps[0].s.s);
+			vps[1].s.len = strlen(vps[1].s.s);
+			vps[2].s.len = strlen(vps[2].s.s);
+			vps[3].s.len = strlen(vps[3].s.s);
+			vps[4].s.len = strlen(vps[4].s.s);
+			LM_DBG("params[%d] for: %.*s are str: [%.*s] [%.*s]"
+					" [%.*s] [%.*s] [%.*s]\n", i,
+				fname.len, fname.s, vps[0].s.len, vps[0].s.s,
+				vps[1].s.len, vps[1].s.s, vps[2].s.len, vps[2].s.s,
+				vps[3].s.len, vps[3].s.s, vps[4].s.len, vps[4].s.s);
+		} else {
+			LM_ERR("not implemented yet\n");
+			return sr_kemi_apy_return_false();
+		}
 	} else {
 		i = 6;
-		LM_ERR("not implemented yet\n");
-		return sr_kemi_apy_return_false();
+		if(ket->ptypes[0]==SR_KEMIP_STR
+				|| ket->ptypes[1]==SR_KEMIP_STR
+				|| ket->ptypes[2]==SR_KEMIP_STR
+				|| ket->ptypes[3]==SR_KEMIP_STR
+				|| ket->ptypes[4]==SR_KEMIP_STR
+				|| ket->ptypes[5]==SR_KEMIP_STR) {
+			if(!PyArg_ParseTuple(args, "ssssss:kemi-param-ssssss",
+						&vps[0].s.s, &vps[1].s.s, &vps[2].s.s, &vps[3].s.s,
+						&vps[4].s.s, &vps[5].s.s)) {
+				LM_ERR("unable to retrieve str-str-str-str params %d\n", i);
+				return sr_kemi_apy_return_false();
+			}
+			vps[0].s.len = strlen(vps[0].s.s);
+			vps[1].s.len = strlen(vps[1].s.s);
+			vps[2].s.len = strlen(vps[2].s.s);
+			vps[3].s.len = strlen(vps[3].s.s);
+			vps[4].s.len = strlen(vps[4].s.s);
+			vps[5].s.len = strlen(vps[5].s.s);
+			LM_DBG("params[%d] for: %.*s are str: [%.*s] [%.*s]"
+					" [%.*s] [%.*s] [%.*s] [%.*s]\n", i,
+				fname.len, fname.s, vps[0].s.len, vps[0].s.s,
+				vps[1].s.len, vps[1].s.s, vps[2].s.len, vps[2].s.s,
+				vps[3].s.len, vps[3].s.s, vps[4].s.len, vps[4].s.s,
+				vps[5].s.len, vps[5].s.s);
+		} else {
+			LM_ERR("not implemented yet\n");
+			return sr_kemi_apy_return_false();
+		}
 	}
 
 	switch(i) {
