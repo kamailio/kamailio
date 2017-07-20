@@ -115,7 +115,10 @@ int tps_remove_headers(sip_msg_t *msg, uint32_t hdr)
 	struct hdr_field *hf;
 	struct lump* l;
 
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
 	for (hf=msg->headers; hf; hf=hf->next) {
 		if (hdr!=hf->type)
 			continue;
@@ -139,7 +142,11 @@ int tps_add_headers(sip_msg_t *msg, str *hname, str *hbody, int hpos)
 	if(hname==NULL || hname->len<=0 || hbody==NULL || hbody->len<=0)
 		return 0;
 
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
+
 	if(hpos == 0) { /* append */
 		/* after last header */
 		anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
