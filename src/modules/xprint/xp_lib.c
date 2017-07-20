@@ -814,7 +814,10 @@ static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	p = local_buf;
 
 	/* we need to be sure we have parsed all headers */
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("failed to parse headers\n");
+		return xl_get_null(msg, res, hp, hi, hf);
+	}
 	for (hdrf=msg->headers; hdrf; hdrf=hdrf->next)
 	{
 		if(hp->s==NULL)
@@ -1898,9 +1901,10 @@ int xl_mod_init()
 					if (inet_ntop(he->h_addrtype, he->h_addr_list[i], s, HOSTNAME_MAX)) {
 						if (str_ipaddr.len==0) {
 							str_ipaddr.len=strlen(s);
-							str_ipaddr.s=(char*)pkg_malloc(str_ipaddr.len);
+							str_ipaddr.s=(char*)pkg_malloc(str_ipaddr.len+1);
 							if (str_ipaddr.s) {
 								memcpy(str_ipaddr.s, s, str_ipaddr.len);
+								str_ipaddr.s[str_ipaddr.len] = '\0';
 							} else {
 								str_ipaddr.len=0;
 								LOG(L_ERR, "ERROR: xl_mod_init: No memory left for str_ipaddr\n");
