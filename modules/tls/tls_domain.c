@@ -480,16 +480,25 @@ static int tls_foreach_CTX_in_cfg(tls_domains_cfg_t* cfg,
 int fix_shm_pathname(str* path)
 {
 	str new_path;
-	char* abs_path;
-	
-	if (path->s && path->len && *path->s != '.' && *path->s != '/') {
+	char *abs_path;
+
+	if(path->s && path->len && *path->s != '.' && *path->s != '/') {
 		abs_path = get_abs_pathname(0, path);
-		if (abs_path == 0) return -1;
+		if(abs_path == 0) {
+			LM_ERR("get abs pathname failed\n");
+			return -1;
+		}
 		new_path.len = strlen(abs_path);
 		new_path.s = shm_malloc(new_path.len + 1);
+		if(new_path.s == 0) {
+			LM_ERR("no more shm memory\n");
+			pkg_free(abs_path);
+			return -1;
+		}
 		memcpy(new_path.s, abs_path, new_path.len);
 		new_path.s[new_path.len] = 0;
 		shm_free(path->s);
+		pkg_free(abs_path);
 		*path = new_path;
 	}
 	return 0;
