@@ -249,7 +249,7 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 			if(p!=pvi.s+pvi.len)
 			{
 				LM_ERR("invalid index [%.*s]\n", in->len, in->s);
-				return -1;
+				goto error;
 			}
 			dpv->nidx *= sign;
 		}
