@@ -225,8 +225,10 @@ int xode_to_file(char *file, xode node)
 
     doc = xode_to_str(node);
     i = write(fd,doc,strlen(doc));
-    if(i < 0)
+    if(i < 0) {
+        close(fd);
         return -1;
+    }
 
     close(fd);
     return 1;
