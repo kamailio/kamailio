@@ -175,7 +175,8 @@ int declare_attr_group(modparam_t type, char* _param)
 	} while (p);
 	
 	if ((!rt->id) || (!rt->flag_name)) {
-		ERR("at least attribute group ID and flags must ve given\n");
+		ERR("at least attribute group ID and flags must be given\n");
+		pkg_free(rt);
 		return -1;
 	}
 	/* insert new element into registered tables */
@@ -449,6 +450,12 @@ int init_extra_avp_locks()
 	int i;
 	registered_table_t *t = tables;
 
+	if(register_script_cb(avpdb_post_script_cb,
+			REQUEST_CB | ONREPLY_CB | POST_SCRIPT_CB, 0)<0) {
+		LM_ERR("failed to register script callbacks\n");
+		return -1;
+	}
+
 	/* zero all 'lock counters' */
 	memset(lock_counters, 0, sizeof(lock_counters));
 
@@ -467,8 +474,6 @@ int init_extra_avp_locks()
 		t->group_mutex_idx = get_hash1_raw(t->table_name, strlen(t->table_name)) % LOCK_CNT;
 		t = t->next;
 	}
-
-	register_script_cb(avpdb_post_script_cb, REQUEST_CB | ONREPLY_CB | POST_SCRIPT_CB, 0);
 
 	return 0;
 }
