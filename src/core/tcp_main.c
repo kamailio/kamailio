@@ -412,6 +412,10 @@ error:
 static int tcp_safe_close(int s)
 {
 	int ret;
+
+	if(s<0)
+		return 0;
+
 retry:
 	if (unlikely((ret = close(s)) < 0 )) {
 		switch(errno) {
@@ -3066,8 +3070,8 @@ static int send_fd_queue_init(struct tcp_send_fd_q *q, unsigned int size)
 		LM_ERR("out of memory\n");
 		return -1;
 	}
-	q->crt=&q->data[0];
-	q->end=&q->data[size];
+	q->crt=q->data;
+	q->end=q->data+size;
 	return 0;
 }
 
@@ -3126,9 +3130,9 @@ inline static int send_fd_queue_add(	struct tcp_send_fd_q* q,
 			LM_ERR("out of memory\n");
 			goto error;
 		}
-		q->crt=(q->crt-&q->data[0])+tmp;
+		q->crt=(q->crt-q->data)+tmp;
 		q->data=tmp;
-		q->end=&q->data[new_size];
+		q->end=q->data + new_size;
 	}
 	q->crt->tcp_conn=t;
 	q->crt->unix_sock=unix_sock;

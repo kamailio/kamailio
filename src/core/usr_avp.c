@@ -432,7 +432,10 @@ avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* sta
 			break;
 	}
 
-	if (!state) state = &st;
+	if (!state) {
+		memset(&st, 0, sizeof(struct search_state));
+		state = &st;
+	}
 
 	if ((ident.flags & AVP_CLASS_ALL) == 0) {
 		     /* The caller did not specify any class to search in, so enable
@@ -455,16 +458,18 @@ avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* sta
 	state->avp = *list;
 	state->name = ident.name;
 
-	if (ident.flags & AVP_NAME_STR) {
+	if(ident.flags & AVP_NAME_STR) {
 		state->id = compute_ID(&ident.name.s);
 	}
 
-        ret = search_next_avp(state, val);
+	ret = search_next_avp(state, val);
 
-	     /* Make sure that search next avp stays in the same class as the first
-	      * avp found
-	      */
-	if (state && ret) state->flags = (ident.flags & ~AVP_CLASS_ALL) | (ret->flags & AVP_CLASS_ALL);
+	/* Make sure that search next avp stays in the same class as the first
+	 * avp found */
+	if(ret) {
+		state->flags =
+				(ident.flags & ~AVP_CLASS_ALL) | (ret->flags & AVP_CLASS_ALL);
+	}
 	return ret;
 }
 

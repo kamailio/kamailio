@@ -1161,7 +1161,7 @@ str *sr_kemi_param_map_get_params(int *ptypes)
 		pn = sr_kemi_param_map_get_name(SR_KEMIP_NONE);
 		if(pn == NULL)
 			return NULL;
-		if(pn->len<KEMI_PARAM_MAP_SIZE-1) strcat(pbuf, pn->s);
+		if(pn->len<KEMI_PARAM_MAP_SIZE-1) strncat(pbuf, pn->s, pn->len);
 	}
 done:
 	sret.s = pbuf;

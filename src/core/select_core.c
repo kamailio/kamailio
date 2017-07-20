@@ -679,18 +679,7 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 	return 0;
 }
 
-//ABSTRACT_F(select_anyheader_params)
-// Instead of ABSTRACT_F(select_anyheader_params)
-// use function which uses select_core_table
-// to avoid gcc warning about not used
- 
-int select_anyheader_params(str* res, select_t* s, struct sip_msg* msg)
-{
-	if (select_core_table.next)
-		return -1;
-	else
-		return -1;
-}
+ABSTRACT_F(select_anyheader_params)
 
 ABSTRACT_F(select_any_uri)
 
@@ -1565,7 +1554,8 @@ int select_sys_now_fmt(str* res, select_t* s, struct sip_msg* msg)
 			tm = localtime(&t);
 			break;
 		default:
-			BUG("Unexpected parameter value 'now' \"%d\"\n", s->params[SEL_POS].v.i);
+			BUG("Unexpected parameter value 'now' \"%d\" (%p)\n",
+					s->params[SEL_POS].v.i, select_core_table.next);
 			return -1;
 	}
 	if (s->n <= SEL_POS+1) {

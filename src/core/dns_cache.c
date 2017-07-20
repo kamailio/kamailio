@@ -2929,7 +2929,6 @@ inline static int dns_a_resolve( struct dns_hash_entry** e,
 			goto error;
 		/* found */
 		*rr_no=0;
-		ret=-E_DNS_BAD_IP_ENTRY;
 	}
 	now=get_ticks_raw();
 	/* if the entry has already expired use the time at the end of lifetime */
@@ -2978,7 +2977,6 @@ inline static int dns_aaaa_resolve( struct dns_hash_entry** e,
 			goto error;
 		/* found */
 		*rr_no=0;
-		ret=-E_DNS_BAD_IP_ENTRY;
 	}
 	now=get_ticks_raw();
 	/* if the entry has already expired use the time at the end of lifetime */
@@ -3112,7 +3110,6 @@ inline static int dns_srv_resolve_nxt(struct dns_hash_entry** e,
 		if (tried)
 			srv_reset_tried(tried);
 #endif
-		ret=-E_DNS_BAD_SRV_ENTRY;
 	}
 	now=get_ticks_raw();
 	/* if the entry has already expired use the time at the end of lifetime */
@@ -4350,11 +4347,12 @@ int dns_cache_add_record(unsigned short type,
 						break; /* insert here */
 				}
 
-				if (!rr_p)
+				if (!rr_p) {
 					for (	rr_p = rr_iter;
 						*rr_p && (*rr_p != new_rr);
 						rr_p = &((*rr_p)->next)
 					);
+				}
 				if (!rr_p) {
 					LM_ERR("Failed to correct the orderd list of SRV resource records\n");
 					goto error;
