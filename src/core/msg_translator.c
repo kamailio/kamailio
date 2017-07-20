@@ -2022,7 +2022,7 @@ after_local_via:
 	}
 	/* if received needs to be added, add anchor after host and add it, or
 	 * overwrite the previous one if already present */
-	if (received_len){
+	if (received_buf){
 		if (msg->via1->received){ /* received already present => overwrite it*/
 			via_insert_param=del_lump(msg,
 								msg->via1->received->start-buf-1, /*;*/
@@ -2039,7 +2039,7 @@ after_local_via:
 		received_buf = NULL;
 	}
 	/* if rport needs to be updated, delete it if present and add it's value */
-	if (rport_len){
+	if (rport_buf){
 		if (msg->via1->rport){ /* rport already present */
 			via_insert_param=del_lump(msg,
 								msg->via1->rport->start-buf-1, /*';'*/
