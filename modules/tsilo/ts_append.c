@@ -51,9 +51,12 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 
 	if (use_domain) {
 		t_uri = ruri;
-	}
-	else {
-		parse_uri(ruri->s, ruri->len, &p_uri);
+	} else {
+		if(parse_uri(ruri->s, ruri->len, &p_uri)<0) {
+			LM_ERR("failed to parse uri %.*s\n", ruri->len, ruri->s);
+			unlock_entry_by_ruri(ruri);
+			return -1;
+		}
 		t_uri = &p_uri.user;
 	}
 
