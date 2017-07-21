@@ -54,6 +54,7 @@ void python_handle_exception(const char *fmt, ...)
 	PyErr_Clear();
 	if (exception == NULL) {
 		LM_ERR("Can't get traceback, PyErr_Fetch() has failed.\n");
+		if (srcbuf) pkg_free(srcbuf);
 		return;
 	}
 
