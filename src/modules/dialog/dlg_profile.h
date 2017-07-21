@@ -54,7 +54,7 @@
 typedef struct dlg_profile_hash {
 	str value; /*!< hash value */
 	struct dlg_cell *dlg; /*!< dialog cell */
-	char puid[SRUID_SIZE];
+	char puid[SRUID_SIZE+2];
 	int puid_len;
 	time_t expires;
 	int flags;
