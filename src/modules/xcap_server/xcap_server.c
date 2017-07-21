@@ -284,7 +284,7 @@ static int xcaps_send_reply(sip_msg_t *msg, int code, str *reason,
 	}
 	if(body && body->len>0)
 	{
-		if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) < 0)
+		if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) == 0)
 		{
 			LM_ERR("Error while adding reply lump\n");
 			return -1;
