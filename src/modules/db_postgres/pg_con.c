@@ -302,8 +302,14 @@ int pg_con_connect(db_con_t* con)
 #if defined(SO_KEEPALIVE) && defined(TCP_KEEPIDLE)
 	if (pg_keepalive) {
 		i = 1;
-		setsockopt(PQsocket(pcon->con), SOL_SOCKET, SO_KEEPALIVE, &i, sizeof(i));
-		setsockopt(PQsocket(pcon->con), IPPROTO_TCP, TCP_KEEPIDLE, &pg_keepalive, sizeof(pg_keepalive));
+		if(setsockopt(PQsocket(pcon->con), SOL_SOCKET, SO_KEEPALIVE, &i,
+				sizeof(i))<0) {
+			LM_WARN("failed to set socket option keepalive\n");
+		}
+		if(setsockopt(PQsocket(pcon->con), IPPROTO_TCP, TCP_KEEPIDLE,
+				&pg_keepalive, sizeof(pg_keepalive))<0) {
+			M_WARN("failed to set socket option keepidle\n");
+		}
 	}
 #endif
 
