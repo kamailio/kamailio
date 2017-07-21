@@ -355,12 +355,12 @@ static void rpc_get(rpc_t* rpc, void* c)
 	}
 
 }
-static const char* rpc_reset_doc[2] = {
+static const char* rpc_cfg_var_reset_doc[2] = {
        "Reset all the values of a configuration group and commit the change immediately",
        0
 };
 
-static void rpc_reset(rpc_t* rpc, void* c)
+static void rpc_cfg_var_reset(rpc_t* rpc, void* c)
 {
 	void	*h;
 	str	gname, var;
@@ -378,7 +378,7 @@ static void rpc_reset(rpc_t* rpc, void* c)
 
 	if (get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
-	return;
+		return;
 	}
 
 	cfg_get_group_init(&h);
@@ -402,10 +402,21 @@ static void rpc_reset(rpc_t* rpc, void* c)
 					return;
 				}
 
-				if (input_type == CFG_INPUT_INT)
-					cfg_set_now_int(ctx, &gname, group_id, &var, (int)(long)val);
-				else if (input_type == CFG_INPUT_STRING)
-					cfg_set_now_string(ctx, &gname, group_id, &var, val);
+				if (input_type == CFG_INPUT_INT) {
+					ret = cfg_set_now_int(ctx, &gname, group_id, &var,
+							(int)(long)val);
+				} else if (input_type == CFG_INPUT_STRING) {
+					ret = cfg_set_now_string(ctx, &gname, group_id, &var, val);
+				} else {
+					rpc->fault(c, 500, "Unsupported input type");
+					return;
+				}
+				if(ret<0) {
+					rpc->fault(c, 500, "Reset failed");
+					return;
+				} else if(ret==1) {
+					LM_WARN("unexpected situation - variable not found\n");
+				}
 			}
 		}
 }
@@ -601,7 +612,7 @@ static rpc_export_t rpc_calls[] = {
 	{"cfg.commit",		rpc_commit,		rpc_commit_doc,		0},
 	{"cfg.rollback",	rpc_rollback,		rpc_rollback_doc,	0},
 	{"cfg.get",		rpc_get,		rpc_get_doc,		0},
-	{"cfg.reset",           rpc_reset,              rpc_reset_doc,          0},
+	{"cfg.reset",	rpc_cfg_var_reset,	rpc_cfg_var_reset_doc,	0},
 	{"cfg.help",		rpc_help,		rpc_help_doc,		0},
 	{"cfg.list",		rpc_list,		rpc_list_doc,		0},
 	{"cfg.diff",		rpc_diff,		rpc_diff_doc,		0},
