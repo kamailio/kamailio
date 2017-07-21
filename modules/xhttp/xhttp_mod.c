@@ -354,11 +354,12 @@ static int xhttp_handler(sip_msg_t* msg)
 		} else {
 			DBG("new fake msg created (%d bytes):\n<%.*s>\n",
 					fake_msg_len, fake_msg_len, fake_msg);
-			if (xhttp_process_request(msg, fake_msg, fake_msg_len)<0)
+			if (xhttp_process_request(msg, fake_msg, fake_msg_len)<0) {
 				ret=NONSIP_MSG_ERROR;
-				pkg_free(fake_msg);
 			}
-			return ret;
+			pkg_free(fake_msg);
+		}
+		return ret;
 	} else {
 		LM_DBG("http msg unchanged (%d bytes):\n<%.*s>\n",
 				msg->len, msg->len, msg->buf);
@@ -403,7 +404,7 @@ static int xhttp_send_reply(sip_msg_t *msg, int code, str *reason,
 
 	if(body!=NULL && body->len>0)
 	{
-		if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) < 0)
+		if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) == 0)
 		{
 			LM_ERR("Error while adding reply lump\n");
 			return -1;
