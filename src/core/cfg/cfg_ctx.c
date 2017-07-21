@@ -1373,8 +1373,7 @@ int cfg_get_default_value_by_name(cfg_ctx_t *ctx, str *group_name,
 	cfg_mapping_t	*var;
 	void	*p;
 	static str	s;	/* we need the value even
-				after the function returns */
-	cfg_group_inst_t	*group_inst;
+					 * after the function returns */
 
 	/* verify the context even if we do not need it now
 	to make sure that a cfg driver has called the function
