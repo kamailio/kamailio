@@ -406,7 +406,7 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 				dlg_lreq_callee_headers.len);
 		lhdrs.len += dlg_lreq_callee_headers.len;
 		if(dlg_lreq_callee_headers.s[dlg_lreq_callee_headers.len-1]!='\n') {
-			strncpy(lhdrs.s+lhdrs.len, CRLF, CRLF_LEN);
+			memcpy(lhdrs.s+lhdrs.len, CRLF, CRLF_LEN);
 			lhdrs.len += CRLF_LEN;
 		}
 	}

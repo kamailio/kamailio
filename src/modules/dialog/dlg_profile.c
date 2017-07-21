@@ -661,7 +661,7 @@ int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profi
 	}
 	if(puid && puid->s && puid->len>0) {
 		if(puid->len<SRUID_SIZE) {
-			strcpy(linker->hash_linker.puid, puid->s);
+			memcpy(linker->hash_linker.puid, puid->s, puid->len);
 			linker->hash_linker.puid_len = puid->len;
 		} else {
 			LM_ERR("puid size is too large\n");
@@ -671,7 +671,8 @@ int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profi
 	} else {
 		sruid_next_safe(&_dlg_profile_sruid);
 		if(_dlg_profile_sruid.uid.len<SRUID_SIZE) {
-			strcpy(linker->hash_linker.puid, _dlg_profile_sruid.uid.s);
+			memcpy(linker->hash_linker.puid, _dlg_profile_sruid.uid.s,
+					_dlg_profile_sruid.uid.len);
 			linker->hash_linker.puid_len = _dlg_profile_sruid.uid.len;
 		} else {
 			LM_ERR("sruid size is too large\n");
