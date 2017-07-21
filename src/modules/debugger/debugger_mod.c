@@ -546,9 +546,11 @@ static int w_dbg_sip_msg(struct sip_msg* msg, char *level, char *facility)
 	}
 
 	/* skip original uri */
-	if (msg->new_uri.s){
-		orig_offs=msg->first_line.u.request.uri.s - msg->buf;
-		orig_offs=msg->first_line.u.request.uri.len;
+	if(msg->first_line.type == SIP_REQUEST) {
+		if(msg->new_uri.s) {
+			orig_offs = msg->first_line.u.request.uri.s - msg->buf;
+			orig_offs += msg->first_line.u.request.uri.len;
+		}
 	}
 
 	/* alloc private mem and copy lumps */
