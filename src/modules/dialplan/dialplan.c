@@ -267,7 +267,7 @@ static int dp_update(struct sip_msg * msg, pv_spec_t * src, pv_spec_t * dest,
 
 set_attr_pvar:
 
-	if(!attr_pvar)
+	if(attr_pvar==NULL || attrs==NULL)
 		return 0;
 
 	val.rs = *attrs;
@@ -393,8 +393,10 @@ static int dp_trans_fixup(void ** param, int param_no){
 		}else{
 			lstr.s = p; lstr.len = strlen(p);
 			dp_par->v.sp[0] = pv_cache_get(&lstr);
-			if (dp_par->v.sp[0]==NULL)
+			if (dp_par->v.sp[0]==NULL) {
+				pkg_free(dp_par);
 				goto error;
+			}
 
 			verify_par_type(param_no, dp_par->v.sp[0]);
 			dp_par->type = DP_VAL_SPEC;
@@ -410,14 +412,18 @@ static int dp_trans_fixup(void ** param, int param_no){
 
 		lstr.s = p; lstr.len = strlen(p);
 		dp_par->v.sp[0] = pv_cache_get(&lstr);
-		if(dp_par->v.sp[0]==NULL)
+		if(dp_par->v.sp[0]==NULL) {
+			pkg_free(dp_par);
 			goto error;
+		}
 
 		if (s != 0) {
 			lstr.s = s; lstr.len = strlen(s);
 			dp_par->v.sp[1] = pv_cache_get(&lstr);
-			if (dp_par->v.sp[1]==NULL)
+			if (dp_par->v.sp[1]==NULL) {
+				pkg_free(dp_par);
 				goto error;
+			}
 			verify_par_type(param_no, dp_par->v.sp[1]);
 		}
 

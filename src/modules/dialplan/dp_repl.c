@@ -234,7 +234,7 @@ dpl_dyn_pcre_p dpl_dynamic_pcre_list(sip_msg_t *msg, str *expr)
 		l = pkg_malloc(sizeof(struct str_list));
 		if(l==NULL) {
 			PKG_MEM_ERROR;
-			return NULL;
+			goto error;
 		}
 		memset(l, 0, sizeof(struct str_list));
 		if(dpl_get_avp_values(msg, elem, avp_elem, &l)<0) {
@@ -342,8 +342,10 @@ struct subst_expr* repl_exp_parse(str subst)
 	rw_no = 0;
 
 	repl = p;
-	if((rw_no = parse_repl(rw, &p, end, &max_pmatch, WITHOUT_SEP))< 0)
+	if((rw_no = parse_repl(rw, &p, end, &max_pmatch, WITHOUT_SEP))< 0) {
+		LM_ERR("parse repl failed\n");
 		goto error;
+	}
 
 	repl_end=p;
 
@@ -378,7 +380,6 @@ struct subst_expr* repl_exp_parse(str subst)
 error:
 	if(shms.s != NULL)
 		shm_free(shms.s);
-	if (se) { repl_expr_free(se);}
 	return NULL;
 }
 
