@@ -200,6 +200,7 @@ typedef struct pv_spec_list {
 } pv_spec_list_t, *pv_spec_list_p;
 
 pvname_list_t* parse_pvname_list(str *in, unsigned int type);
+void free_pvname_list(pvname_list_t* head);
 
 int register_pvars_mod(char *mod_name, pv_export_t *items);
 int pv_free_extra_list(void);
