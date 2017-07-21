@@ -1470,6 +1470,19 @@ error:
 	return NULL;
 }
 
+/**
+ *
+ */
+void free_pvname_list(pvname_list_t* head)
+{
+	pvname_list_t* al;
+
+	while(head) {
+		al = head;
+		head=head->next;
+		pkg_free(al);
+	}
+}
 
 
 /** destroy the content of pv_spec_t structure.
