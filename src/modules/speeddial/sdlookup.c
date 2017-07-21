@@ -164,17 +164,17 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 
 	db_funcs.use_table(db_handle, &table_s);
 	if(db_funcs.query(db_handle, db_keys, NULL, db_vals, db_cols,
-		nr_keys /*no keys*/, 1 /*no cols*/, NULL, &db_res)!=0)
+		nr_keys /*no keys*/, 1 /*no cols*/, NULL, &db_res)!=0 || db_res==NULL)
 	{
 		LM_ERR("failed to query database\n");
 		goto err_server;
 	}
 
-	if (RES_ROW_N(db_res)<=0 || RES_ROWS(db_res)[0].values[0].nul != 0)
-	{
+	if(RES_ROW_N(db_res) <= 0 || RES_ROWS(db_res)[0].values[0].nul != 0) {
 		LM_DBG("no sip address found for R-URI\n");
-		if (db_res!=NULL && db_funcs.free_result(db_handle, db_res) < 0)
+		if(db_funcs.free_result(db_handle, db_res) < 0) {
 			LM_DBG("failed to free result of query\n");
+		}
 		return -1;
 	}
 
@@ -202,8 +202,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 		break;
 		default:
 			LM_ERR("unknown type of DB new_uri column\n");
-			if (db_res != NULL && db_funcs.free_result(db_handle, db_res) < 0)
-			{
+			if (db_funcs.free_result(db_handle, db_res) < 0) {
 				LM_DBG("failed to free result of query\n");
 			}
 			goto err_server;
@@ -220,8 +219,9 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	/**
 	 * Free the result because we don't need it anymore
 	 */
-	if (db_res!=NULL && db_funcs.free_result(db_handle, db_res) < 0)
+	if (db_funcs.free_result(db_handle, db_res) < 0) {
 		LM_DBG("failed to free result of query\n");
+	}
 
 	/* set the URI */
 	LM_DBG("URI of sd from R-URI [%s]\n", user_s.s);
