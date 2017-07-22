@@ -233,6 +233,7 @@ static int mod_init(void) {
 	char *server, *port;
 	unsigned int len = 0;
 	memcached_return rc;
+	struct memcached_server_st *svt;
 
 	if ((port = strchr(mcd_srv_str, ':')) != NULL) {
 		port = port + 1;
@@ -243,7 +244,7 @@ static int mod_init(void) {
 		len = strlen(mcd_srv_str) ;
 	}
 
-	server = pkg_malloc(len);
+	server = pkg_malloc(len+1);
 	if (server == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
@@ -255,6 +256,7 @@ static int mod_init(void) {
 	memcached_h = memcached_create(NULL);
 	if (memcached_h == NULL) {
 		LM_ERR("could not create memcached structure\n");
+		pkg_free(server);
 		return -1;
 	}
 	LM_DBG("allocated new server handle at %p", memcached_h);
@@ -276,16 +278,28 @@ static int mod_init(void) {
 			LM_DBG("memory manager callbacks set\n");
 		} else {
 			LM_ERR("memory manager callbacks not set, returned %s.\n", memcached_strerror(memcached_h, rc));
+			pkg_free(server);
 			return -1;
 		}
 	} else {
 		LM_INFO("Use system memory manager for memcached client library\n");
 	}
 
-        servers = memcached_server_list_append(servers, server, atoi(port), &rc);
+	svt = memcached_server_list_append(servers, server, atoi(port), &rc);
+	if(svt==NULL) {
+		LM_ERR("failed to append server\n");
+		if(servers) {
+			memcached_server_list_free(servers);
+			servers = NULL;
+		}
+		pkg_free(server);
+		return -1;
+	}
 
+	servers = svt;
 	if (memcached_behavior_set(memcached_h, MEMCACHED_BEHAVIOR_CONNECT_TIMEOUT, mcd_timeout) != MEMCACHED_SUCCESS) {
 		LM_ERR("could not set server connection timeout\n");
+		pkg_free(server);
 		return -1;
 	}
 	rc = memcached_server_push(memcached_h, servers);
@@ -293,6 +307,7 @@ static int mod_init(void) {
 		LM_DBG("added server list to structure\n");
 	} else {
 		LM_ERR("attempt to add server list to structure returned %s.\n", memcached_strerror(memcached_h, rc));
+		pkg_free(server);
 		return -1;
 	}
 
