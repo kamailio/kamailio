@@ -621,21 +621,25 @@ int pdt_load_db(void)
 		{
 			/* check for NULL values ?!?! */
 			sdomain.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
-			sdomain.len = strlen(sdomain.s);
-
 			p.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
-			p.len = strlen(p.s);
-			
 			d.s = (char*)(RES_ROWS(db_res)[i].values[2].val.string_val);
-			d.len = strlen(d.s);
 
-			if(p.s==NULL || d.s==NULL || sdomain.s==NULL ||
-					p.len<=0 || d.len<=0 || sdomain.len<=0)
+			if(p.s==NULL || d.s==NULL || sdomain.s==NULL)
 			{
 				LM_ERR("Error - bad values in db\n");
 				continue;
 			}
-		
+
+			sdomain.len = strlen(sdomain.s);
+			p.len = strlen(p.s);
+			d.len = strlen(d.s);
+
+			if(p.len<=0 || d.len<=0 || sdomain.len<=0)
+			{
+				LM_ERR("Error - bad values in db\n");
+				continue;
+			}
+
 			if(pdt_check_domain!=0 && _ptree_new!=NULL
 					&& pdt_check_pd(_ptree_new, &sdomain, &p, &d)==1)
 			{
