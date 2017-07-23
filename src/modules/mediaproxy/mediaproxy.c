@@ -809,12 +809,14 @@ static str
 get_sdp_line_separator(str *sdp)
 {
     char *ptr, *end_ptr, *sdp_end;
-    str separator;
+    str separator = STR_NULL;
 
     sdp_end = sdp->s + sdp->len;
 
     ptr = find_line_starting_with(sdp, "v=", False);
+    if(ptr==NULL) { return separator; }
     end_ptr = findendline(ptr, sdp_end-ptr);
+    if(end_ptr==NULL) { return separator; }
     separator.s = ptr = end_ptr;
     while ((*ptr=='\n' || *ptr=='\r') && ptr<sdp_end)
         ptr++;
@@ -1329,7 +1331,7 @@ insert_element(struct sip_msg *msg, char *position, char *element)
 
     len = strlen(element);
 
-    buf = pkg_malloc(len);
+    buf = pkg_malloc(len+1);
     if (!buf) {
         LM_ERR("out of memory\n");
         return False;
@@ -1343,6 +1345,7 @@ insert_element(struct sip_msg *msg, char *position, char *element)
     }
 
     memcpy(buf, element, len);
+    buf[len] = '\0';
 
     if (insert_new_lump_after(anchor, buf, len, 0)==0) {
         LM_ERR("failed to insert new element\n");
