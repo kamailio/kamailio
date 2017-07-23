@@ -92,7 +92,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, in
 	xmlNsPtr   namespace = NULL;
 
 	xmlNodePtr p_root= NULL;
-	xmlDocPtr* xml_array ;
+	xmlDocPtr* xml_array = NULL ;
 	xmlNodePtr node = NULL;
 	str *body= NULL;
 	char buf[MAX_URI_SIZE+1];
@@ -129,8 +129,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, in
 
 	if(j == 0)  /* no body */
 	{
-		if(xml_array)
-			pkg_free(xml_array);
+		pkg_free(xml_array);
 		return NULL;
 	}
 
@@ -142,7 +141,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, in
 	/* create the new NOTIFY body  */
 	if ( (pres_user->len + pres_domain->len + 1) > MAX_URI_SIZE ) {
 		LM_ERR("entity URI too long, maximum=%d\n", MAX_URI_SIZE);
-		return NULL;
+		goto error;
 	}
 	memcpy(buf, pres_user->s, pres_user->len);
 	buf[pres_user->len] = '@';
