@@ -1039,8 +1039,11 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 	}
 
 	if (msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
-			    db_no_cols, ob_key, &db_res) < 0) {
+			    db_no_cols, ob_key, &db_res) < 0 || db_res==NULL) {
 	    LM_ERR("failed to query database\n");
+		if (db_res!=NULL && msilo_dbf.free_result(db_con, db_res) < 0) {
+			LM_ERR("failed to free the query result\n");
+		}
 	    goto error;
 	}
 
@@ -1071,13 +1074,13 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 			(time_t)RES_ROWS(db_res)[i].values[5/*inc time*/].val.int_val;
 		
 		if (ms_extra_hdrs != NULL) {
-		    if (fixup_get_svalue(msg, (gparam_p)*ms_extra_hdrs_sp,
-					 &extra_hdrs_str) != 0) {
-			if (msilo_dbf.free_result(db_con, db_res) < 0)
-				LM_ERR("failed to free the query result\n");
-			LM_ERR("unable to get extra_hdrs value\n");
-			goto error;
-		    }
+			if(fixup_get_svalue(msg, (gparam_p)*ms_extra_hdrs_sp,
+					&extra_hdrs_str) != 0) {
+				if(msilo_dbf.free_result(db_con, db_res) < 0)
+					LM_ERR("failed to free the query result\n");
+				LM_ERR("unable to get extra_hdrs value\n");
+				goto error;
+			}
 		} else {
 		    extra_hdrs_str.len = 0;
 		}
@@ -1153,7 +1156,7 @@ done:
 	 * Free the result because we don't need it
 	 * anymore
 	 */
-	if ((db_res !=NULL) && msilo_dbf.free_result(db_con, db_res) < 0)
+	if (msilo_dbf.free_result(db_con, db_res) < 0)
 		LM_ERR("failed to free result of query\n");
 
 	return 1;
