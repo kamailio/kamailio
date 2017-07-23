@@ -912,7 +912,6 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 	int is_req;
 	struct sip_uri puri;
 	static size_t chklen;
-	int ret = -1;
 
 	/* parse the retr. buffer */
 	memset(&orig_inv, 0, sizeof(struct sip_msg));
@@ -931,14 +930,14 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 		/* the bug is at message assembly */
 		LM_BUG("failed to parse INVITE retr. buffer and/or extract 'To' HF:"
 				"\n%.*s\n", (int)orig_inv.len, orig_inv.buf);
-		goto end;
+		goto error;
 	}
 	if (((struct to_body *)orig_inv.to->parsed)->tag_value.len) {
 		LM_DBG("building ACK for in-dialog INVITE (using RS in orig. INV.)\n");
 		if (parse_headers(&orig_inv, HDR_EOH_F, 0) < 0) {
 			LM_BUG("failed to parse INVITE retr. buffer to EOH:"
 					"\n%.*s\n", (int)orig_inv.len, orig_inv.buf);
-			goto end;
+			goto error;
 		}
 		sipmsg = &orig_inv;
 		is_req = 1;
@@ -951,7 +950,7 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 	/* extract the route set */
 	if (get_uac_rs(sipmsg, is_req, &rtset) < 0) {
 		LM_ERR("failed to extract route set.\n");
-		goto end;
+		goto error;
 	}
 
 	if (! rtset) { /* No routes */
@@ -961,7 +960,7 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 		if (parse_uri(rtset->ptr->nameaddr.uri.s, rtset->ptr->nameaddr.uri.len,
 				&puri) < 0) {
 			LM_ERR("failed to parse first route in set.\n");
-			goto end;
+			goto error;
 		}
 
 		if (puri.lr.s) { /* Next hop is loose router */
@@ -993,7 +992,7 @@ eval_flags:
 			} else {
 				LM_ERR("failed to establish what kind of router the next "
 						"hop is.\n");
-				goto end;
+				goto error;
 			}
 			break;
 		case F_RB_NH_LOOSE:
@@ -1028,8 +1027,7 @@ eval_flags:
 					} else {
 						prev_t->next = NULL;
 					}
-					ret = -1;
-					goto end;
+					goto error;
 				}
 				/* this way, .free_rr is also set to 0 (!!!) */
 				memset(t, 0, chklen);
@@ -1054,19 +1052,21 @@ eval_flags:
 #ifdef EXTRA_DEBUG
 			abort();
 #else
-			goto end;
+			goto error;
 #endif
 		}
 	}
 
 	*list = rtset;
-	/* all went well */
-	ret = 0;
-end:
 	free_sip_msg(&orig_inv);
-	if (ret < 0)
+	/* all went well */
+	return 0;
+
+error:
+	free_sip_msg(&orig_inv);
+	if (rtset)
 		free_rte_list(rtset);
-	return ret;
+	return -1;
 }
 
 /*
