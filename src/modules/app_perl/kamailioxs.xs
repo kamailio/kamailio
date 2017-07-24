@@ -289,6 +289,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 			LM_ERR("Module function '%s' is unsafe. Call is refused.\n", func);
 			if (argv[0]) pkg_free(argv[0]);
 			if (argv[1]) pkg_free(argv[1]);
+			pkg_free(act);
 			*retval = -1;
 			return -1;
 		}
@@ -297,6 +298,9 @@ int moduleFunc(struct sip_msg *m, char *func,
 			*retval = exp_func_struct->fixup(&(act->val[3].u.data), 2);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (2)\n");
+				if (argv[0]) pkg_free(argv[0]);
+				if (argv[1]) pkg_free(argv[1]);
+				pkg_free(act);
 				return -1;
 			}
 			act->val[3].type = MODFIXUP_ST;
@@ -305,6 +309,9 @@ int moduleFunc(struct sip_msg *m, char *func,
 			*retval = exp_func_struct->fixup(&(act->val[2].u.data), 1);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (1)\n");
+				if (argv[0]) pkg_free(argv[0]);
+				if (argv[1]) pkg_free(argv[1]);
+				pkg_free(act);
 				return -1;
 			}
 			act->val[2].type = MODFIXUP_ST;
@@ -313,6 +320,9 @@ int moduleFunc(struct sip_msg *m, char *func,
 			*retval = exp_func_struct->fixup(0, 0);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (0)\n");
+				if (argv[0]) pkg_free(argv[0]);
+				if (argv[1]) pkg_free(argv[1]);
+				pkg_free(act);
 				return -1;
 			}
 		}
@@ -337,7 +347,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 	if (argv[1]) pkg_free(argv[1]);
 
 	pkg_free(act);
-	
+
 	return 1;
 }
 
@@ -699,7 +709,9 @@ getFullHeader(self)
 			LM_ERR("getFullHeader: Invalid message type.\n");
 			ST(0)  = &PL_sv_undef;
 		} else {
-			parse_headers(msg, ~0, 0);
+			if(parse_headers(msg, ~0, 0)<0) {
+				LM_ERR("failed to parse headers\n");
+			}
 			if (getType(msg) == SIP_REQUEST) {
 				firsttoken = (msg->first_line).u.request.method.s;
 			} else { /* SIP_REPLY */
@@ -713,7 +725,7 @@ getFullHeader(self)
 						-((long)(firsttoken));
 
 			if (headerlen > 0) {
-				ST(0) = 
+				ST(0) =
 				    sv_2mortal(newSVpv(firsttoken, headerlen));
 			} else {
 				ST(0) = &PL_sv_undef;
@@ -739,7 +751,9 @@ getBody(self)
 		LM_ERR("Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
-		parse_headers(msg, ~0, 0);
+		if(parse_headers(msg, ~0, 0)<0) {
+			LM_ERR("failed to parse headers\n");
+		}
 		ST(0) = sv_2mortal(newSVpv(get_body(msg), 0));
 	}
 
@@ -792,7 +806,9 @@ getHeader(self, name)
 	if (!msg) {
 		LM_ERR("Invalid message reference\n");
 	} else {
-		parse_headers(msg, ~0, 0);
+		if(parse_headers(msg, ~0, 0)<0) {
+			LM_ERR("failed to parse headers\n");
+		}
 		for (hf = msg->headers; hf; hf = hf->next) {
 			if (namelen == hf->name.len) {
 				if (strncmp(name, hf->name.s, namelen) == 0) {
@@ -825,11 +841,13 @@ getHeaderNames(self)
     struct hdr_field *hf = NULL;
     int found = 0;
   PPCODE:
-	
+
 	if (!msg) {
 		LM_ERR("Invalid message reference\n");
 	} else {
-		parse_headers(msg, ~0, 0);
+		if(parse_headers(msg, ~0, 0)<0) {
+			LM_ERR("failed to parse headers\n");
+		}
 		for (hf = msg->headers; hf; hf = hf->next) {
 			found = 1;
 			XPUSHs(sv_2mortal(newSVpv(hf->name.s, hf->name.len)));
@@ -1231,17 +1249,22 @@ getParsedRURI(self)
 		LM_ERR("Invalid message reference\n");
 		ST(0) = NULL;
 	} else {
-		parse_sip_msg_uri(msg);
-		parse_headers(msg, ~0, 0);
+		if(parse_sip_msg_uri(msg)<0) {
+			LM_ERR("Invalid message uri\n");
+			ST(0) = NULL;
+		} else {
+			if(parse_headers(msg, ~0, 0)<0) {
+				LM_ERR("failed to parse headers\n");
+			}
+			uri = &(msg->parsed_uri);
+			ret = sv_newmortal();
+			sv_setref_pv(ret, "Kamailio::URI", (void *)uri);
+			SvREADONLY_on(SvRV(ret));
 
-		uri = &(msg->parsed_uri);
-		ret = sv_newmortal();
-		sv_setref_pv(ret, "Kamailio::URI", (void *)uri);
-		SvREADONLY_on(SvRV(ret));
-
-		ST(0) = ret;
+			ST(0) = ret;
+		}
 	}
-	
+
 
 
 MODULE = Kamailio PACKAGE = Kamailio::URI
