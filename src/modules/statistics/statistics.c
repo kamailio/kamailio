@@ -134,6 +134,7 @@ static int fixup_stat(void** param, int param_no)
 		if (s.s[0]=='$') {
 			if (fixup_pvar_null(param, 1)!=0) {
 				LM_ERR("invalid pv %s as parameter\n",s.s);
+				pkg_free(sopv);
 				return E_CFG;
 			}
 			sopv->pv = (pv_spec_t*)(*param);
@@ -142,10 +143,10 @@ static int fixup_stat(void** param, int param_no)
 			sopv->stat = get_stat( &s );
 			if (sopv->stat==0) {
 				LM_ERR("variable <%s> not defined\n", s.s);
+				pkg_free(sopv);
 				return E_CFG;
 			}
 		}
-		pkg_free(s.s);
 		*param=(void*)sopv;
 		return 0;
 	} else if (param_no==2) {
@@ -159,6 +160,7 @@ static int fixup_stat(void** param, int param_no)
 		if (s.s[0] == '$') {
 			if (fixup_pvar_pvar(param, 2) != 0) {
 				LM_ERR("invalid pv %s as parameter\n",s.s);
+				pkg_free(lopv);
 				return E_CFG;
 			}
 			lopv->pv = (pv_spec_t*) (*param);
@@ -178,13 +180,14 @@ static int fixup_stat(void** param, int param_no)
 		if (err==0){
 			if (n==0 && (s.s[0]!='$')) {	//we can't check the value of the pvar so have to ignore this check if it is a pvar
 				LM_ERR("update with 0 has no sense\n");
+				pkg_free(lopv);
 				return E_CFG;
 			}
-			pkg_free(s.s);
 			*param=(void*)lopv;
 			return 0;
 		}else{
 			LM_ERR("bad update number <%s>\n",(char*)(*param));
+			pkg_free(lopv);
 			return E_CFG;
 		}
 	}
