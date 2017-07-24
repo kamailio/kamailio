@@ -653,7 +653,7 @@ static int fix_delayed_reply_ctx(rpc_ctx_t* ctx)
 {
 	if  ((ctx->flags & XMLRPC_DELAYED_CTX_F) && (ctx->reply.buf.s==0)){
 		if (init_xmlrpc_reply(&ctx->reply) <0) return -1;
-		add_xmlrpc_reply(&ctx->reply, &success_prefix);
+		if(add_xmlrpc_reply(&ctx->reply, &success_prefix)<0) return -1;
 		if (ctx->flags & RET_ARRAY)
 			return add_xmlrpc_reply(&ctx->reply, &array_prefix);
 	}
@@ -786,7 +786,7 @@ static int get_rpc_document(str* doc, sip_msg_t* msg)
  */
 static int send_reply(sip_msg_t* msg, str* body)
 {
-	if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) < 0) {
+	if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) == 0) {
 		ERR("Error while adding reply lump\n");
 		return -1;
 	}
@@ -1964,6 +1964,7 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 			break;
 		default:
 			ERR("Invalid parameter type in formatting string: %c\n", *fmt);
+			va_end(ap);
 			return -1;
 		}
 		fmt++;
@@ -2175,7 +2176,7 @@ static int init_context(rpc_ctx_t* ctx, sip_msg_t* msg)
 	ctx->doc = 0;
 	ctx->structs = 0;
 	if (init_xmlrpc_reply(&ctx->reply) < 0) return -1;
-	add_xmlrpc_reply(&ctx->reply, &success_prefix);
+	if (add_xmlrpc_reply(&ctx->reply, &success_prefix)<0) return -1;
 	if (open_doc(ctx, msg) < 0) return -1;
 	return 0;
 }
@@ -2366,7 +2367,9 @@ static int process_xmlrpc(sip_msg_t* msg)
 	n_method = method[0] + (method[1] << 8) + (method[2] << 16) +
 			(method[3] << 24);
 	n_method |= 0x20202020;
-	n_method &= ((method_len < 4) * (1U << method_len * 8) - 1);
+	if(method_len < 4) {
+		n_method &= ((1U << (method_len * 8)) - 1);
+	}
 	/* accept only GET or POST */
 	if ((n_method == N_HTTP_GET) ||
 			((n_method == N_HTTP_POST) && (method_len == HTTP_POST_LEN))) {
