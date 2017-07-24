@@ -15,7 +15,7 @@ EnvironmentFile=-/etc/default/kamailio.d/*
 PIDFile=/var/run/kamailio/kamailio.pid
 # ExecStart requires a full absolute path
 ExecStart=/usr/sbin/kamailio -P /var/run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP
-Restart=on-abort
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
