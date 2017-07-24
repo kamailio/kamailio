@@ -45,32 +45,31 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 
 	int res;
 	int appended;
-
-	lock_entry_by_ruri(ruri);
-
+	
 	if (use_domain) {
 		t_uri = ruri;
 	} else {
 		if(parse_uri(ruri->s, ruri->len, &p_uri)<0) {
 			LM_ERR("failed to parse uri %.*s\n", ruri->len, ruri->s);
-			unlock_entry_by_ruri(ruri);
 			return -1;
 		}
 		t_uri = &p_uri.user;
 	}
 
+	lock_entry_by_ruri(t_uri);
+
 	res = get_ts_urecord(t_uri, &_r);
 
 	if (res != 0) {
-		LM_ERR("failed to retrieve record for %.*s\n", ruri->len, ruri->s);
-		unlock_entry_by_ruri(ruri);
+		LM_ERR("failed to retrieve record for %.*s\n", t_uri->len, t_uri->s);
+		unlock_entry_by_ruri(t_uri);
 		return -1;
 	}
 
 	ptr = _r->transactions;
 
 	while(ptr) {
-		LM_DBG("transaction %u:%u found for %.*s, going to append branches\n",ptr->tindex, ptr->tlabel, ruri->len, ruri->s);
+		LM_DBG("transaction %u:%u found for %.*s, going to append branches\n",ptr->tindex, ptr->tlabel, t_uri->len, t_uri->s);
 
 		appended = ts_append_to(msg, ptr->tindex, ptr->tlabel, table, ruri);
 		if (appended > 0)
@@ -78,7 +77,7 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 		ptr = ptr->next;
 	}
 
-	unlock_entry_by_ruri(ruri);
+	unlock_entry_by_ruri(t_uri);
 
 	return 1;
 }
