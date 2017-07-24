@@ -223,7 +223,7 @@ xcap_node_sel_t* xcapNodeSelAddStep(xcap_node_sel_t* curr_sel, str* name,
 	}
 
 	curr_sel->size+= 1+ new_step.len;
-	if(namespace->len)
+	if(namespace && namespace->len)
 	{
 		curr_sel->size+= namespace->len+ 3;
 	}
