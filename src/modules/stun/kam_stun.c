@@ -336,8 +336,10 @@ static int stun_parse_body(
 					}
 					if (*unknown == NULL) {
 						*unknown = body = tmp_unknown;
-					}
-					else { 
+					} else {
+						if(body==NULL) {
+							body = *unknown;
+						}
 						body->next = tmp_unknown;
 						body = body->next;
 					}
