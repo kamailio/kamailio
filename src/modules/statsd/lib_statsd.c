@@ -29,25 +29,24 @@ bool statsd_connect(void){
     rc = getaddrinfo(
         statsd_connection.ip, statsd_connection.port,
         NULL, &serverAddr);
-    if (rc != 0)
+    if (rc != 0 || serverAddr == NULL)
     {
-        LM_ERR(
-            "Statsd: could not initiate server information (%s)\n",
+        LM_ERR("Statsd: could not initiate server information (%s)\n",
             gai_strerror(rc));
-		if(serverAddr) freeaddrinfo(serverAddr);
+        if(serverAddr) freeaddrinfo(serverAddr);
         return false;
     }
 
     statsd_connection.sock = socket(serverAddr->ai_family, SOCK_DGRAM, IPPROTO_UDP);
     if (statsd_connection.sock < 0 ){
         LM_ERR("Statsd: could not create a socket for statsd connection\n");
-		if(serverAddr) freeaddrinfo(serverAddr);
+        freeaddrinfo(serverAddr);
         return false;
     }
 
-    rc = connect(
-        statsd_connection.sock, serverAddr->ai_addr, serverAddr->ai_addrlen);
-	freeaddrinfo(serverAddr);
+    rc = connect(statsd_connection.sock, serverAddr->ai_addr,
+            serverAddr->ai_addrlen);
+    freeaddrinfo(serverAddr);
     if (rc < 0){
         LM_ERR("Statsd: could not initiate a connect to statsd\n");
         return false;
