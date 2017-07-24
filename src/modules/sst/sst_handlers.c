@@ -791,11 +791,12 @@ static int append_header(struct sip_msg *msg, const char *header)
 		return(1);
 	}
 	len = strlen(header);
-	if ((s = (char *)pkg_malloc(len)) == 0) {
+	if ((s = (char *)pkg_malloc(len+1)) == 0) {
 		LM_ERR("No more pkg memory. (size requested = %d)\n", len);
 		return(1);
 	}
 	memcpy(s, header, len);
+	s[len] = '\0';
 	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
 		LM_ERR("failed to insert lump\n");
 		pkg_free(s);
