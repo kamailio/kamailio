@@ -238,14 +238,14 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 	} else if (id == USE_TO) {
 		get_to_did(&did, msg);
 		if (!msg->to) {
-			if (parse_headers( msg, HDR_TO_F, 0 )==-1) {
+			if (parse_headers(msg, HDR_TO_F, 0)==-1 || !msg->to) {
 				ERR("unable to parse To header\n");
 				return -1;
 			}
 		}
 		to = get_to(msg);
 		if (!to) {
-			LOG(L_ERR, "uri_db:lookup_uid: Unable to get To username\n");
+			LOG(L_ERR, "uri_db:lookup_uid: Unable to get To body\n");
 			return -1;
 		}
 		if (parse_uri(to->uri.s, to->uri.len, &puri) < 0) {
