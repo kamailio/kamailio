@@ -103,11 +103,6 @@ xcap_node_sel_t* xcapNodeSelAddTerminal(xcap_node_sel_t* curr_sel,
 typedef xcap_node_sel_t* (*xcap_nodeSel_add_terminal_t)(xcap_node_sel_t* curr_sel,
 		char* attr_sel, char* namespace_sel, char* extra_sel );
 
-/* generical function to get an element from an xcap server */
-char* xcapGetElem(xcap_get_req_t req, char** etag);
-
-typedef char* (*xcap_get_elem_t)(xcap_get_req_t req, char** etag);
-
 void xcapFreeNodeSel(xcap_node_sel_t* node);
 
 typedef void (*xcap_nodeSel_free_t)(xcap_node_sel_t* node);
@@ -118,7 +113,6 @@ char* xcapGetNewDoc(xcap_get_req_t req, str user, str domain);
 typedef char* (*xcapGetNewDoc_t)(xcap_get_req_t req, str user, str domain);
 
 typedef struct xcap_api {
-	xcap_get_elem_t get_elem;
 	xcap_nodeSel_init_t int_node_sel;
 	xcap_nodeSel_add_step_t add_step;
 	xcap_nodeSel_add_terminal_t add_terminal;
