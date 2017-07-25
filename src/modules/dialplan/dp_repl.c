@@ -571,7 +571,7 @@ error:
 	return -1;
 }
 
-#define DP_MAX_ATTRS_LEN	128
+#define DP_MAX_ATTRS_LEN	255
 static char dp_attrs_buf[DP_MAX_ATTRS_LEN+1];
 int translate(sip_msg_t *msg, str input, str *output, dpl_id_p idp,
 		str *attrs)
