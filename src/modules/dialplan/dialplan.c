@@ -49,6 +49,7 @@
 #include "../../core/action.h"
 #include "../../core/pvar.h"
 #include "../../core/dset.h"
+#include "../../core/mod_fix.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/rpc.h"
@@ -70,9 +71,14 @@ static int dialplan_init_rpc(void);
 static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2);
 static int dp_trans_fixup(void ** param, int param_no);
 static int dp_reload_f(struct sip_msg* msg);
+static int w_dp_replace(sip_msg_t* msg, char* pid, char* psrc, char* pdst);
+static int w_dp_match(sip_msg_t* msg, char* pid, char* psrc);
+
+int dp_replace_fixup(void** param, int param_no);
+int dp_replace_fixup_free(void** param, int param_no);
 
 str attr_pvar_s = STR_NULL;
-pv_spec_t * attr_pvar = NULL;
+pv_spec_t *attr_pvar = NULL;
 
 str default_param_s = str_init(DEFAULT_PARAM);
 dp_param_p default_par2 = NULL;
@@ -104,6 +110,10 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"dp_reload",(cmd_function)dp_reload_f,	0, 0,  0,
 		ANY_ROUTE},
+	{"dp_match",(cmd_function)w_dp_match,	2,	fixup_igp_spve,
+		fixup_free_igp_spve, ANY_ROUTE},
+	{"dp_replace",(cmd_function)w_dp_replace,	2,	dp_replace_fixup,
+		dp_replace_fixup_free, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -235,7 +245,7 @@ static int dp_get_svalue(struct sip_msg * msg, pv_spec_t *spec, str* val)
 }
 
 
-static int dp_update(struct sip_msg * msg, pv_spec_t * src, pv_spec_t * dest,
+static int dp_update(struct sip_msg * msg, pv_spec_t * dest,
 		str * repl, str * attrs)
 {
 	int no_change;
@@ -287,7 +297,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 	str input, output;
 	dpl_id_p idp;
 	dp_param_p id_par, repl_par;
-	str attrs, * attrs_par;
+	str attrs, *outattrs;
 
 	if(!msg)
 		return -1;
@@ -312,8 +322,8 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 
 	LM_DBG("input is %.*s\n", input.len, input.s);
 
-	attrs_par = (!attr_pvar)?NULL:&attrs;
-	if (translate(msg, input, &output, idp, attrs_par)!=0){
+	outattrs = (!attr_pvar)?NULL:&attrs;
+	if (dp_translate_helper(msg, &input, &output, idp, outattrs)!=0) {
 		LM_DBG("could not translate %.*s "
 				"with dpid %i\n", input.len, input.s, idp->dp_id);
 		return -1;
@@ -322,8 +332,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 			input.len, input.s, idp->dp_id, output.len, output.s);
 
 	/* set the output */
-	if (dp_update(msg, repl_par->v.sp[0], repl_par->v.sp[1],
-				&output, attrs_par) !=0){
+	if (dp_update(msg, repl_par->v.sp[1], &output, outattrs) !=0){
 		LM_ERR("cannot set the output\n");
 		return -1;
 	}
@@ -441,6 +450,96 @@ error:
 	return ret;
 }
 
+static int dp_replace_helper(sip_msg_t *msg, int dpid, str *input,
+		pv_spec_t *pvd)
+{
+	dpl_id_p idp;
+	str output = STR_NULL;
+	str attrs = STR_NULL;
+	str *outattrs = NULL;
+
+	if ((idp = select_dpid(dpid)) ==0) {
+		LM_DBG("no information available for dpid %i\n", dpid);
+		return -2;
+	}
+
+	outattrs = (!attr_pvar)?NULL:&attrs;
+	if (dp_translate_helper(msg, input, &output, idp, outattrs)!=0) {
+		LM_DBG("could not translate %.*s "
+				"with dpid %i\n", input->len, input->s, idp->dp_id);
+		return -1;
+	}
+	LM_DBG("input %.*s with dpid %i => output %.*s\n",
+			input->len, input->s, idp->dp_id, output.len, output.s);
+
+	/* set the output */
+	if (dp_update(msg, pvd, &output, outattrs) !=0){
+		LM_ERR("cannot set the output\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+static int w_dp_replace(sip_msg_t* msg, char* pid, char* psrc, char* pdst)
+{
+	int dpid = 1;
+	str src = STR_NULL;
+	pv_spec_t *pvd = NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)pid, &dpid)<0) {
+		LM_ERR("failed to get dialplan id value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)psrc, &src)<0) {
+		LM_ERR("failed to get src value\n");
+		return -1;
+	}
+	pvd = (pv_spec_t*)pdst;
+
+	return dp_replace_helper(msg, dpid, &src, pvd);
+}
+
+static int w_dp_match(sip_msg_t* msg, char* pid, char* psrc)
+{
+	int dpid = 1;
+	str src = STR_NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)pid, &dpid)<0) {
+		LM_ERR("failed to get dialplan id value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)psrc, &src)<0) {
+		LM_ERR("failed to get src value\n");
+		return -1;
+	}
+
+	return dp_replace_helper(msg, dpid, &src, NULL);
+}
+
+int dp_replace_fixup(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_igp_null(param, param_no);
+	else if (param_no == 2)
+		return fixup_spve_all(param, param_no);
+	else if (param_no == 3)
+		return fixup_pvar_all(param, param_no);
+	return E_UNSPEC;
+}
+
+
+int dp_replace_fixup_free(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_free_igp_null(param, param_no);
+	else if (param_no == 2)
+		return fixup_free_spve_all(param, param_no);
+	else if (param_no == 3)
+		return fixup_free_pvar_all(param, param_no);
+	return E_UNSPEC;
+}
+
 /**
  * trigger reload of dialplan db records from config file
  */
@@ -532,7 +631,7 @@ static void dialplan_rpc_translate(rpc_t* rpc, void* ctx)
 
 	LM_DBG("trying to translate %.*s with dpid %i\n",
 			input.len, input.s, idp->dp_id);
-	if (translate(NULL, input, &output, idp, &attrs)!=0){
+	if (dp_translate_helper(NULL, &input, &output, idp, &attrs)!=0){
 		LM_DBG("could not translate %.*s with dpid %i\n",
 				input.len, input.s, idp->dp_id);
 		rpc->fault(ctx, 500, "No translation");

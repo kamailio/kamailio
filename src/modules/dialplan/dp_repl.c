@@ -384,11 +384,10 @@ error:
 }
 
 
-
 #define MAX_PHONE_NB_DIGITS		127
 static char dp_output_buf[MAX_PHONE_NB_DIGITS+1];
-int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
-		pcre *subst_comp, str * result)
+int rule_translate(sip_msg_t *msg, str *instr, dpl_node_t *rule,
+		pcre *subst_comp, str *result)
 {
 	int repl_nb, offset, match_nb, rc, cap_cnt;
 	struct replace_with token;
@@ -431,11 +430,11 @@ int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
 		}
 
 		/*search for the pattern from the compiled subst_exp*/
-		if (pcre_exec(subst_comp, NULL, string.s, string.len,
+		if (pcre_exec(subst_comp, NULL, instr->s, instr->len,
 					0, 0, ovector, 3 * (MAX_REPLACE_WITH + 1)) <= 0) {
 			LM_ERR("the string %.*s matched "
-					"the match_exp %.*s but not the subst_exp %.*s!\n", 
-					string.len, string.s, 
+					"the match_exp %.*s but not the subst_exp %.*s!\n",
+					instr->len, instr->s,
 					rule->match_exp.len, rule->match_exp.s,
 					rule->subst_exp.len, rule->subst_exp.s);
 			return -1;
@@ -484,7 +483,7 @@ int rule_translate(sip_msg_t *msg, str string, dpl_node_t * rule,
 			case REPLACE_NMATCH:
 				/*copy from the match subexpression*/	
 				match_nb = token.u.nmatch * 2;
-				match.s =  string.s + ovector[match_nb];
+				match.s =  instr->s + ovector[match_nb];
 				match.len = ovector[match_nb + 1] - ovector[match_nb];
 				if(result->len + match.len >= MAX_PHONE_NB_DIGITS){
 					LM_ERR("overflow\n");
@@ -573,7 +572,7 @@ error:
 
 #define DP_MAX_ATTRS_LEN	255
 static char dp_attrs_buf[DP_MAX_ATTRS_LEN+1];
-int translate(sip_msg_t *msg, str input, str *output, dpl_id_p idp,
+int dp_translate_helper(sip_msg_t *msg, str *input, str *output, dpl_id_p idp,
 		str *attrs)
 {
 	dpl_node_p rulep;
@@ -583,18 +582,18 @@ int translate(sip_msg_t *msg, str input, str *output, dpl_id_p idp,
 	dpl_dyn_pcre_p re_list = NULL;
 	dpl_dyn_pcre_p rt = NULL;
 
-	if(!input.s || !input.len) {
+	if(!input || !input->s || !input->len) {
 		LM_WARN("invalid or empty input string to be matched\n");
 		return -1;
 	}
 
-	user_len = input.len;
+	user_len = input->len;
 	for(indexp = idp->first_index; indexp!=NULL; indexp = indexp->next)
 		if(!indexp->len || (indexp->len!=0 && indexp->len == user_len) )
 			break;
 
 	if(!indexp || (indexp!= NULL && !indexp->first_rule)){
-		LM_DBG("no rule for len %i\n", input.len);
+		LM_DBG("no rule for len %i\n", input->len);
 		return -1;
 	}
 
@@ -604,7 +603,7 @@ search_rule:
 
 			case DP_REGEX_OP:
 				LM_DBG("regex operator testing over [%.*s]\n",
-						input.len, input.s);
+						input->len, input->s);
 				if(rulep->tflags&DP_TFLAGS_PV_MATCH) {
 					re_list = dpl_dynamic_pcre_list(msg, &rulep->match_exp);
 					if(re_list==NULL) {
@@ -616,7 +615,7 @@ search_rule:
 					rez = -1;
 					do {
 						if(rez<0) {
-							rez = pcre_exec(re_list->re, NULL, input.s, input.len,
+							rez = pcre_exec(re_list->re, NULL, input->s, input->len,
 									0, 0, NULL, 0);
 							LM_DBG("match check: [%.*s] %d\n",
 								re_list->expr.len, re_list->expr.s, rez);
@@ -629,7 +628,7 @@ search_rule:
 						re_list = rt;
 					} while(re_list);
 				} else {
-					rez = pcre_exec(rulep->match_comp, NULL, input.s, input.len,
+					rez = pcre_exec(rulep->match_comp, NULL, input->s, input->len,
 						0, 0, NULL, 0);
 				}
 				break;
@@ -637,10 +636,10 @@ search_rule:
 			case DP_EQUAL_OP:
 				LM_DBG("equal operator testing\n");
 				if(rulep->match_exp.s==NULL
-						|| rulep->match_exp.len != input.len) {
+						|| rulep->match_exp.len != input->len) {
 					rez = -1;
 				} else {
-					rez = strncmp(rulep->match_exp.s,input.s,input.len);
+					rez = strncmp(rulep->match_exp.s, input->s, input->len);
 					rez = (rez==0)?0:-1;
 				}
 				break;
@@ -648,10 +647,10 @@ search_rule:
 			case DP_FNMATCH_OP:
 				LM_DBG("fnmatch operator testing\n");
 				if(rulep->match_exp.s!=NULL) {
-					b = input.s[input.len];
-					input.s[input.len] = '\0';
-					rez = fnmatch(rulep->match_exp.s, input.s, 0);
-					input.s[input.len] = b;
+					b = input->s[input->len];
+					input->s[input->len] = '\0';
+					rez = fnmatch(rulep->match_exp.s, input->s, 0);
+					input->s[input->len] = b;
 					rez = (rez==0)?0:-1;
 				} else {
 					rez = -1;
