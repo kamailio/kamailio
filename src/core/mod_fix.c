@@ -452,7 +452,6 @@ int fixup_igp_pvar(void** param, int param_no)
 }
 
 
-
 int fixup_free_igp_pvar(void** param, int param_no)
 {
 	if (param_no == 1)
@@ -461,7 +460,6 @@ int fixup_free_igp_pvar(void** param, int param_no)
 		return fixup_free_pvar_all(param, param_no);
 	return E_UNSPEC;
 }
-
 
 
 int fixup_igp_pvar_pvar(void** param, int param_no)
@@ -474,7 +472,6 @@ int fixup_igp_pvar_pvar(void** param, int param_no)
 }
 
 
-
 int fixup_free_igp_pvar_pvar(void** param, int param_no)
 {
 	if (param_no == 1)
@@ -484,6 +481,25 @@ int fixup_free_igp_pvar_pvar(void** param, int param_no)
 	return E_UNSPEC;
 }
 
+
+int fixup_igp_spve(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_igp_null(param, param_no);
+	else if (param_no == 2)
+		return fixup_spve_all(param, param_no);
+	return E_UNSPEC;
+}
+
+
+int fixup_free_igp_spve(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_free_igp_null(param, param_no);
+	else if (param_no == 2)
+		return fixup_free_spve_all(param, param_no);
+	return E_UNSPEC;
+}
 
 
 /** macro for declaring a spve fixup and the corresponding free_fixup
