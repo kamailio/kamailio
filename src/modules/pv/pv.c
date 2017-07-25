@@ -538,10 +538,10 @@ static cmd_export_t cmds[]={
 #ifdef WITH_XAVP
 	{"pv_xavp_print",  (cmd_function)pv_xavp_print,  0, 0, 0,
 		ANY_ROUTE },
-	{"pv_var_to_xavp",  (cmd_function)w_var_to_xavp, 2, 0, 0,
-		ANY_ROUTE },
-	{"pv_xavp_to_var",  (cmd_function)w_xavp_to_var, 1, 0, 0,
-		ANY_ROUTE },
+	{"pv_var_to_xavp",  (cmd_function)w_var_to_xavp, 2, fixup_spve_spve,
+		fixup_free_spve_spve, ANY_ROUTE },
+	{"pv_xavp_to_var",  (cmd_function)w_xavp_to_var, 1, fixup_spve_null,
+		fixup_free_spve_null, ANY_ROUTE },
 #endif
 	{"is_int", (cmd_function)is_int, 1, fixup_pvar_null, fixup_free_pvar_null,
 		ANY_ROUTE},
@@ -721,30 +721,38 @@ static int is_int(struct sip_msg* msg, char* pvar, char* s2)
 	return -1;
 }
 
+/**
+ * script variable to xavp
+ */
 static int w_var_to_xavp(sip_msg_t *msg, char *s1, char *s2)
 {
-	str xname, varname;
+	str xname = STR_NULL;
+	str varname = STR_NULL;
 
-	if(s1 == NULL || s2 == NULL) {
-		LM_ERR("wrong parameters\n");
+	if(fixup_get_svalue(msg, (gparam_t*)s1, &varname)<0) {
+		LM_ERR("failed to get the var name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)s2, &xname)<0) {
+		LM_ERR("failed to get the xavp name\n");
 		return -1;
 	}
 
-	varname.len = strlen(s1); varname.s = s1;
-	xname.s = s2; xname.len = strlen(s2);
 	return pv_var_to_xavp(&varname, &xname);
 }
 
+/**
+ * xavp to script variable
+ */
 static int w_xavp_to_var(sip_msg_t *msg, char *s1)
 {
-	str xname;
+	str xname = STR_NULL;
 
-	if(s1 == NULL) {
-		LM_ERR("wrong parameters\n");
+	if(fixup_get_svalue(msg, (gparam_t*)s1, &xname)<0) {
+		LM_ERR("failed to get the xavp name\n");
 		return -1;
 	}
 
-	xname.s = s1; xname.len = strlen(s1);
 	return pv_xavp_to_var(&xname);
 }
 
