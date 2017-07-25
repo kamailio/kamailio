@@ -26,6 +26,7 @@
 #include "../../core/pvar.h"
 #include "../../core/lvalue.h"
 #include "../../core/mod_fix.h"
+#include "../../core/xavp.h"
 #include "../../core/kemi.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
@@ -741,6 +742,11 @@ static int w_var_to_xavp(sip_msg_t *msg, char *s1, char *s2)
 	return pv_var_to_xavp(&varname, &xname);
 }
 
+static int ki_var_to_xavp(sip_msg_t *msg, str *varname, str *xname)
+{
+	return pv_var_to_xavp(varname, xname);
+}
+
 /**
  * xavp to script variable
  */
@@ -754,6 +760,17 @@ static int w_xavp_to_var(sip_msg_t *msg, char *s1)
 	}
 
 	return pv_xavp_to_var(&xname);
+}
+
+static int ki_xavp_to_var(sip_msg_t *msg, str *xname)
+{
+	return pv_xavp_to_var(xname);
+}
+
+static int ki_xavp_print(sip_msg_t* msg)
+{
+	xavp_print_list(NULL);
+	return 1;
 }
 
 /**
@@ -774,6 +791,17 @@ static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname)
 	}
 
 	if(xavp_params_explode(&sparams, &sxname)<0)
+		return -1;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_xavp_params_explode(sip_msg_t *msg, str *sparams, str *sxname)
+{
+	if(xavp_params_explode(sparams, sxname)<0)
 		return -1;
 
 	return 1;
@@ -960,6 +988,26 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	{ str_init("pvx"), str_init("sbranch_reset"),
 		SR_KEMIP_INT, ki_sbranch_reset,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("pv_var_to_xavp"),
+		SR_KEMIP_INT, ki_var_to_xavp,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("pv_xavp_to_var"),
+		SR_KEMIP_INT, ki_xavp_to_var,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("pv_xavp_print"),
+		SR_KEMIP_INT, ki_xavp_print,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_params_explode"),
+		SR_KEMIP_INT, ki_xavp_params_explode,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
