@@ -367,7 +367,7 @@ static param_export_t params[] = {
 	{"insert_retries",   		INT_PARAM, &insert_retries },
 	{"insert_retry_timeout",	INT_PARAM, &insert_retry_timeout },
 	{"table_time_sufix",		PARAM_STR, &table_time_sufix },
-	{"topoh_unamsk",		PARAM_INT, &sc_topoh_unmask },
+	{"topoh_unmask",		PARAM_INT, &sc_topoh_unmask },
 	{"nonsip_hook",			PARAM_INT, &nonsip_hook },
 	{0, 0, 0}
 };
