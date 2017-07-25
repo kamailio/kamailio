@@ -371,11 +371,13 @@ pv_xavp_print();
 
 4.11.  pv_var_to_xavp(varname, xname)
 
-   Copy script variables values to a xavp.
+   Copy the script variable value into an xavp.
 
    First parameter can be '*' in order to copy all script variables.
    Second parameter is the name of the destination xavp. If xavp already
    exists it will be reset first.
+
+   Both parameters can contain variables that are evaluated at runtime.
 
    Function can be used from ANY_ROUTE.
 
@@ -395,7 +397,9 @@ $xavp("ok[0]=>foo") now is "foo indeed"
 
 4.12.  pv_xavp_to_var(xname)
 
-   Copy xavp values to vars. Reverse of pv_var_to_xavp().
+   Copy xavp values into vars. Reverse of pv_var_to_xavp().
+
+   Both parameters can contain variables that are evaluated at runtime.
 
    Function can be used from ANY_ROUTE.
 
