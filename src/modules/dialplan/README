@@ -57,8 +57,10 @@ Luis Martin
 
         6. Functions
 
-              6.1. dp_translate(id, [src[/dest]])
-              6.2. dp_reload()
+              6.1. dp_replace(dpid, inval, outvar)
+              6.2. dp_match(dpid, inval)
+              6.3. dp_translate(id, [src[/dest]])
+              6.4. dp_reload()
 
         7. RPC Commands
 
@@ -85,9 +87,11 @@ Luis Martin
    1.11. Set attrs_pvar parameter
    1.12. Set fetch_rows parameter
    1.13. Set match_dynamic parameter
-   1.14. dp_translate usage
-   1.15. dp_translate usage
-   1.16. Example of rules
+   1.14. dp_replace usage
+   1.15. dp_match usage
+   1.16. dp_translate usage
+   1.17. dp_translate usage
+   1.18. Example of rules
 
 Chapter 1. Admin Guide
 
@@ -119,8 +123,10 @@ Chapter 1. Admin Guide
 
    6. Functions
 
-        6.1. dp_translate(id, [src[/dest]])
-        6.2. dp_reload()
+        6.1. dp_replace(dpid, inval, outvar)
+        6.2. dp_match(dpid, inval)
+        6.3. dp_translate(id, [src[/dest]])
+        6.4. dp_reload()
 
    7. RPC Commands
 
@@ -371,10 +377,68 @@ modparam("dialplan", "match_dynamic", 1)
 
 6. Functions
 
-   6.1. dp_translate(id, [src[/dest]])
-   6.2. dp_reload()
+   6.1. dp_replace(dpid, inval, outvar)
+   6.2. dp_match(dpid, inval)
+   6.3. dp_translate(id, [src[/dest]])
+   6.4. dp_reload()
 
-6.1.  dp_translate(id, [src[/dest]])
+6.1.  dp_replace(dpid, inval, outvar)
+
+   The function translates the input value 'inval' using the rules with
+   dialplan id 'dpid', storing the value in the variable 'outvar'. If the
+   rule that was applied has attributes, they are stored in the variable
+   provided via the module parameter 'attrs_pvar'.
+
+   The behavior is same as dp_translate("dpid", "inval/outvar"), but the
+   parameters have a more flexible format.
+
+   Meaning of the parameters is as follows:
+     * dpid - the dialplan id to match the rules and apply the
+       transformations. It can be a static string or a config variable
+       holding an integer value.
+     * inval - input value. It can be a static or a dynamic string. The
+       dynamic string can contain config variables, combined or not with
+       static strings, that are evaluated at runtime.
+     * outvar - output variable name. The value resulted after applying
+       the matching rule is stored in this variable. The name must refer
+       to a writable variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14. dp_replace usage
+...
+dp_replace("240", "$rU", "$var(newru)");
+xlog("'$rU' was translated to '$var(newru)'\n");
+dp_replace("240", "+49$rU", "$var(newval)");
+...
+
+6.2.  dp_match(dpid, inval)
+
+   The function matches the input value 'inval' using the rules with
+   dialplan id 'dpid'. If the rule that was applied has attributes, they
+   are stored in the variable provided via the module parameter
+   'attrs_pvar'.
+
+   The behavior is same as dp_translate("dpid", "inval"), but the
+   parameters have a more flexible format.
+
+   Meaning of the parameters is as follows:
+     * dpid - the dialplan id to match the rules and apply the
+       transformations. It can be a static string or a config variable
+       holding an integer value.
+     * inval - input value. It can be a static or a dynamic string. The
+       dynamic string can contain config variables, combined or not with
+       static strings, that are evaluated at runtime.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.15. dp_match usage
+...
+dp_match("240", "+49$rU");
+xlog("the attributes associated with '+49$rU' are '$var(attrs)'\n");
+...
+
+6.3.  dp_translate(id, [src[/dest]])
 
    Will try to translate “src” into “dest” according to the translation
    rules in the dialplan identified by “id” . If src/dest is missing the
@@ -409,20 +473,20 @@ modparam("dialplan", "match_dynamic", 1)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. dp_translate usage
+   Example 1.16. dp_translate usage
 ...
 dp_translate("240", "$ruri.user/$avp(s:dest)");
 xlog("translated to var $avp(s:dest) \n");
 ...
 
-   Example 1.15. dp_translate usage
+   Example 1.17. dp_translate usage
 ...
 $avp(s:src) = $ruri.user;
 dp_translate("$var(x)", "$avp(s:src)/$var(y)");
 xlog("translated to var $var(y) \n");
 ...
 
-6.2.  dp_reload()
+6.4.  dp_reload()
 
    Forces an update of the translation rules from the database.
 
@@ -485,7 +549,7 @@ xlog("translated to var $var(y) \n");
    Some sample records from a dialplan table are presented in the next
    figure.
 
-   Example 1.16. Example of rules
+   Example 1.18. Example of rules
 ...
 dpid: 1
 pr: 1
