@@ -332,7 +332,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 
 }
 
-#define verify_par_type(_par_no, _spec)\
+#define verify_par_type(_par_no, _spec, _ret) \
 	do{\
 		if( ((_par_no == 1) \
 					&& (_spec->type != PVT_AVP) && (_spec->type != PVT_XAVP) && \
@@ -343,7 +343,8 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 					&& (_spec->type!=PVT_RURI) && (_spec->type!=PVT_RURI_USERNAME))){\
 			\
 			LM_ERR("Unsupported Parameter TYPE[%d]\n", _spec->type);\
-			return E_UNSPEC;\
+			_ret = E_UNSPEC; \
+			goto error; \
 		}\
 	}while(0);
 
@@ -359,6 +360,7 @@ static int dp_trans_fixup(void ** param, int param_no){
 	dp_param_p dp_par= NULL;
 	char *p, *s=NULL;
 	str lstr;
+	int ret = E_INVALID_PARAMS;
 
 	if(param_no!=1 && param_no!=2)
 		return 0;
@@ -384,8 +386,8 @@ static int dp_trans_fixup(void ** param, int param_no){
 			lstr.s = *param; lstr.len = strlen(*param);
 			if(str2sint(&lstr, &dpid) != 0) {
 				LM_ERR("bad number <%s>\n",(char *)(*param));
-				pkg_free(dp_par);
-				return E_CFG;
+				ret = E_CFG;
+				goto error;
 			}
 
 			dp_par->type = DP_VAL_INT;
@@ -394,11 +396,10 @@ static int dp_trans_fixup(void ** param, int param_no){
 			lstr.s = p; lstr.len = strlen(p);
 			dp_par->v.sp[0] = pv_cache_get(&lstr);
 			if (dp_par->v.sp[0]==NULL) {
-				pkg_free(dp_par);
 				goto error;
 			}
 
-			verify_par_type(param_no, dp_par->v.sp[0]);
+			verify_par_type(param_no, dp_par->v.sp[0], ret);
 			dp_par->type = DP_VAL_SPEC;
 		}
 	} else {
@@ -413,7 +414,6 @@ static int dp_trans_fixup(void ** param, int param_no){
 		lstr.s = p; lstr.len = strlen(p);
 		dp_par->v.sp[0] = pv_cache_get(&lstr);
 		if(dp_par->v.sp[0]==NULL) {
-			pkg_free(dp_par);
 			goto error;
 		}
 
@@ -421,10 +421,9 @@ static int dp_trans_fixup(void ** param, int param_no){
 			lstr.s = s; lstr.len = strlen(s);
 			dp_par->v.sp[1] = pv_cache_get(&lstr);
 			if (dp_par->v.sp[1]==NULL) {
-				pkg_free(dp_par);
 				goto error;
 			}
-			verify_par_type(param_no, dp_par->v.sp[1]);
+			verify_par_type(param_no, dp_par->v.sp[1], ret);
 		}
 
 		dp_par->type = DP_VAL_SPEC;
@@ -437,7 +436,9 @@ static int dp_trans_fixup(void ** param, int param_no){
 
 error:
 	LM_ERR("failed to parse param %i\n", param_no);
-	return E_INVALID_PARAMS;
+	if(dp_par) pkg_free(dp_par);
+
+	return ret;
 }
 
 /**
