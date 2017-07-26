@@ -387,6 +387,28 @@ modparam("dialplan", "match_dynamic", 1)
 		</programlisting>
 		</example>
 	</section>
+	<section id="dialplan.p.append_branch">
+		<title><varname>append_branch</varname> (int)</title>
+		<para>
+		If set to 1, the module appends a new outgoing branch when request
+		URI (r-uri) or its user part are changed by dp_translate() or
+		dp_replace() inside a failure_route block. Set it to 0 if the branch
+		should not be added.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>append_branch</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "append_branch", 0)
+...
+		</programlisting>
+		</example>
+	</section>
 
 	</section>
 
