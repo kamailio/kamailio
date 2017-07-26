@@ -55,6 +55,7 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/lvalue.h"
+#include "../../core/kemi.h"
 #include "dialplan.h"
 #include "dp_db.h"
 
@@ -256,17 +257,21 @@ static int dp_update(struct sip_msg * msg, pv_spec_t * dest,
 	memset(&val, 0, sizeof(pv_value_t));
 	val.flags = PV_VAL_STR;
 
-	no_change = (dest==NULL) || (dest->type == PVT_NONE) || (!repl->s) || (!repl->len);
+	no_change = (dest==NULL) || (dest->type == PVT_NONE)
+						|| (!repl->s) || (!repl->len);
 
 	if (no_change)
 		goto set_attr_pvar;
 
 	val.rs = *repl;
 
-	if(dest->setf(msg, &dest->pvp, (int)EQ_T, &val)<0)
-	{
-		LM_ERR("setting dst pseudo-variable failed\n");
-		return -1;
+	if(dest->setf) {
+		if(dest->setf(msg, &dest->pvp, (int)EQ_T, &val)<0) {
+			LM_ERR("setting dst pseudo-variable failed\n");
+			return -1;
+		}
+	} else {
+		LM_WARN("target variable is read only - skipping setting its value\n");
 	}
 
 	if(dp_append_branch!=0) {
@@ -506,6 +511,19 @@ static int w_dp_replace(sip_msg_t* msg, char* pid, char* psrc, char* pdst)
 	return dp_replace_helper(msg, dpid, &src, pvd);
 }
 
+static int ki_dp_replace(sip_msg_t* msg, int dpid, str* src, str* dst)
+{
+	pv_spec_t *pvd = NULL;
+
+	pvd = pv_cache_get(dst);
+	if(pvd==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", dst->len, dst->s);
+		return -1;
+	}
+
+	return dp_replace_helper(msg, dpid, src, pvd);
+}
+
 static int w_dp_match(sip_msg_t* msg, char* pid, char* psrc)
 {
 	int dpid = 1;
@@ -521,6 +539,11 @@ static int w_dp_match(sip_msg_t* msg, char* pid, char* psrc)
 	}
 
 	return dp_replace_helper(msg, dpid, &src, NULL);
+}
+
+static int ki_dp_match(sip_msg_t* msg, int dpid, str* src)
+{
+	return dp_replace_helper(msg, dpid, src, NULL);
 }
 
 int dp_replace_fixup(void** param, int param_no)
@@ -774,5 +797,34 @@ static int dialplan_init_rpc(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_dialplan_exports[] = {
+	{ str_init("dialplan"), str_init("dp_match"),
+		SR_KEMIP_INT, ki_dp_match,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialplan"), str_init("dp_replace"),
+		SR_KEMIP_INT, ki_dp_replace,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_dialplan_exports);
 	return 0;
 }
