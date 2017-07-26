@@ -10,7 +10,7 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
 
 
@@ -358,10 +358,10 @@ modparam("uac","auth_username_avp","$avp(i:11)")
 			to perform authentication.
 			</para>
 			<para><emphasis>
-				If you define it, you also need to define 
-				<quote>auth_password_avp</quote> 
-				(<xref linkend="uac.p.auth-password-avp-id"/>) and 
-				<quote>auth_username_avp</quote> 
+				If you define it, you also need to define
+				<quote>auth_password_avp</quote>
+				(<xref linkend="uac.p.auth-password-avp-id"/>) and
+				<quote>auth_username_avp</quote>
 				(<xref linkend="uac.p.auth-password-avp-id"/>).
 			</emphasis></para>
 			<example>
@@ -376,8 +376,10 @@ modparam("uac","auth_password_avp","$avp(i:12)")
 		<section id="uac.p.reg-db-url-id">
 			<title><varname>reg_db_url</varname> (string)</title>
 			<para>
-			DB URL to fetch account profiles for registration.
+			DB URL to fetch account profiles for registration. This parameter
+			must be set in order to enable remote registrations feature.
 			</para>
+			<para>The default value is "" (no value).</para>
 			<example>
 				<title>Set <varname>reg_db_url</varname> parameter</title>
 				<programlisting format="linespecific">
@@ -392,14 +394,14 @@ modparam("uac", "reg_db_url",
 		<section id="uac.p.reg-timer-interval-id">
 			<title><varname>reg_timer_interval</varname> (string)</title>
 			<para>
-			Timer interval (in seconds) at which registrations are managed, e.g. renewed as needed.  
+			Timer interval (in seconds) at which registrations are managed, e.g. renewed as needed.
 			</para>
 			<para>
 				<emphasis>
 				The default value is 90 seconds.
 				</emphasis>
 			</para>
-			
+
 			<example>
 				<title>Set <varname>reg_timer_inteval</varname> parameter</title>
 				<programlisting format="linespecific">
