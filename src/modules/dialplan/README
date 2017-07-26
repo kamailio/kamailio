@@ -54,6 +54,7 @@ Luis Martin
               5.11. attrs_pvar (string)
               5.12. fetch_rows (int)
               5.13. match_dynamic (int)
+              5.14. append_branch (int)
 
         6. Functions
 
@@ -87,11 +88,12 @@ Luis Martin
    1.11. Set attrs_pvar parameter
    1.12. Set fetch_rows parameter
    1.13. Set match_dynamic parameter
-   1.14. dp_replace usage
-   1.15. dp_match usage
-   1.16. dp_translate usage
+   1.14. Set append_branch parameter
+   1.15. dp_replace usage
+   1.16. dp_match usage
    1.17. dp_translate usage
-   1.18. Example of rules
+   1.18. dp_translate usage
+   1.19. Example of rules
 
 Chapter 1. Admin Guide
 
@@ -120,6 +122,7 @@ Chapter 1. Admin Guide
         5.11. attrs_pvar (string)
         5.12. fetch_rows (int)
         5.13. match_dynamic (int)
+        5.14. append_branch (int)
 
    6. Functions
 
@@ -219,6 +222,7 @@ Chapter 1. Admin Guide
    5.11. attrs_pvar (string)
    5.12. fetch_rows (int)
    5.13. match_dynamic (int)
+   5.14. append_branch (int)
 
 5.1. db_url (string)
 
@@ -375,6 +379,20 @@ modparam("dialplan", "fetch_rows", 4000)
 modparam("dialplan", "match_dynamic", 1)
 ...
 
+5.14. append_branch (int)
+
+   If set to 1, the module appends a new outgoing branch when request URI
+   (r-uri) or its user part are changed by dp_translate() or dp_replace()
+   inside a failure_route block. Set it to 0 if the branch should not be
+   added.
+
+   Default value is “1”.
+
+   Example 1.14. Set append_branch parameter
+...
+modparam("dialplan", "append_branch", 0)
+...
+
 6. Functions
 
    6.1. dp_replace(dpid, inval, outvar)
@@ -405,7 +423,7 @@ modparam("dialplan", "match_dynamic", 1)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. dp_replace usage
+   Example 1.15. dp_replace usage
 ...
 dp_replace("240", "$rU", "$var(newru)");
 xlog("'$rU' was translated to '$var(newru)'\n");
@@ -432,7 +450,7 @@ dp_replace("240", "+49$rU", "$var(newval)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.15. dp_match usage
+   Example 1.16. dp_match usage
 ...
 dp_match("240", "+49$rU");
 xlog("the attributes associated with '+49$rU' are '$var(attrs)'\n");
@@ -473,13 +491,13 @@ xlog("the attributes associated with '+49$rU' are '$var(attrs)'\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.16. dp_translate usage
+   Example 1.17. dp_translate usage
 ...
 dp_translate("240", "$ruri.user/$avp(s:dest)");
 xlog("translated to var $avp(s:dest) \n");
 ...
 
-   Example 1.17. dp_translate usage
+   Example 1.18. dp_translate usage
 ...
 $avp(s:src) = $ruri.user;
 dp_translate("$var(x)", "$avp(s:src)/$var(y)");
@@ -549,7 +567,7 @@ xlog("translated to var $var(y) \n");
    Some sample records from a dialplan table are presented in the next
    figure.
 
-   Example 1.18. Example of rules
+   Example 1.19. Example of rules
 ...
 dpid: 1
 pr: 1
