@@ -54,7 +54,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="pv.p.shvset">
 		<title><varname>shvset</varname> (string)</title>
 		<para>
 		Set the value of a shared variable ($shv(name)). The parameter
@@ -66,13 +66,13 @@
 		</para>
 		<itemizedlist>
 			<listitem><para>_name_: shared variable name</para></listitem>
-			
+
 			<listitem><para>_type_: type of the value</para>
 			 <itemizedlist>
-	    <listitem><para> <quote>i</quote>: integer value </para></listitem> 
-		<listitem><para> <quote>s</quote>: string value </para></listitem>	
+	    <listitem><para> <quote>i</quote>: integer value </para></listitem>
+		<listitem><para> <quote>s</quote>: string value </para></listitem>
 		      </itemizedlist>
-			</listitem>	  
+			</listitem>
 
 			<listitem><para>_value_: value to be set</para></listitem>
 		</itemizedlist>
@@ -89,7 +89,7 @@ modparam("pv", "shvset", "pstngw=s:sip:10.10.10.10")
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="pv.p.varset">
 		<title><varname>varset</varname> (string)</title>
 		<para>
 		Set the value of a script variable ($var(name)). The parameter
@@ -101,13 +101,13 @@ modparam("pv", "shvset", "pstngw=s:sip:10.10.10.10")
 		</para>
 		<itemizedlist>
 			<listitem><para>_name_: shared variable name</para></listitem>
-			
+
 			<listitem><para>_type_: type of the value</para>
 			 <itemizedlist>
-	     <listitem><para> <quote>i</quote>: integer value </para></listitem> 
-		 <listitem><para> <quote>s</quote>: string value </para></listitem>	
+	     <listitem><para> <quote>i</quote>: integer value </para></listitem>
+		 <listitem><para> <quote>s</quote>: string value </para></listitem>
 			 </itemizedlist>
-			</listitem>	  
+			</listitem>
 
 			<listitem><para>_value_: value to be set</para></listitem>
 		</itemizedlist>
@@ -124,7 +124,7 @@ modparam("pv", "varset", "gw=s:sip:11.11.11.11;transport=tcp")
 </programlisting>
 	    </example>
 	</section>
-		<section>
+		<section id="pv.p.avp_aliases">
 			<title><varname>avp_aliases</varname> (string)</title>
 			<para>
 			Define aliases for PV AVP names.
@@ -146,7 +146,7 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
 	</section>
 	<section>
 	<title>Functions</title>
-		<section>
+		<section id="pv.f.pv_isset">
 		<title><function moreinfo="none">pv_isset(pvar)</function></title>
 		<para>
 			Return true if a PV value is different than 'null'.
@@ -174,7 +174,7 @@ if(pv_isset("$avp(s:x)"))
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="pv.f.pv_unset">
 		<title><function moreinfo="none">pv_unset(pvar)</function></title>
 		<para>
 			Unset the value of the PV (e.g., delete AVP, set to null).
@@ -199,7 +199,7 @@ pv_unset("$avp(s:x)");
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="pv.f.is_int">
 			<title>
 				<function moreinfo="none">is_int(pvar)</function>
 			</title>
@@ -221,7 +221,7 @@ if (is_int("$var(foo)")) {
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="pv.f.typeof">
 			<title>
 				<function moreinfo="none">typeof(pvar, vtype)</function>
 			</title>
@@ -244,7 +244,7 @@ if (typeof("$var(foo)", "str")) {
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="pv.f.not_empty">
 			<title>
 				<function moreinfo="none">not_empty(pvar)</function>
 			</title>
@@ -491,7 +491,7 @@ pv_evalx("$var(z)", "$var(y) one");
 
 	<section>
         <title>RPC Commands</title>
-		<section>
+		<section id="pv.rpc.shvSet">
 			<title><function moreinfo="none">pv.shvSet</function></title>
 			<para>
 				Set the value of a shared variable ($shv(name)).
@@ -518,7 +518,7 @@ $ &kamcmd; pv.shvSet debug int 3
 </programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="pv.rpc.shvGet">
 			<title><function moreinfo="none">pv.shvGet</function></title>
 			<para>
 				Get the value of a shared variable ($shv(name)).
@@ -529,7 +529,7 @@ $ &kamcmd; pv.shvSet debug int 3
 		</itemizedlist>
 		<para>If no name is given, all shared variables are listed.</para>
 			<example>
-			<title><function moreinfo="none">pv.shvSet</function> usage</title>
+			<title><function moreinfo="none">pv.shvGet</function> usage</title>
 			<programlisting format="linespecific">
 ...
 $ &kamcmd; pv.shvGet debug
