@@ -85,6 +85,7 @@ dp_param_p default_par2 = NULL;
 
 int dp_fetch_rows = 1000;
 int dp_match_dynamic = 0;
+int dp_append_branch = 1;
 
 static param_export_t mod_params[]={
 	{ "db_url",			PARAM_STR,	&dp_db_url },
@@ -100,6 +101,7 @@ static param_export_t mod_params[]={
 	{ "attrs_pvar",	    PARAM_STR,	&attr_pvar_s },
 	{ "fetch_rows",		PARAM_INT,	&dp_fetch_rows },
 	{ "match_dynamic",	PARAM_INT,	&dp_match_dynamic },
+	{ "append_branch",	PARAM_INT,	&dp_append_branch },
 	{0,0,0}
 };
 
@@ -267,11 +269,15 @@ static int dp_update(struct sip_msg * msg, pv_spec_t * dest,
 		return -1;
 	}
 
-	if(is_route_type(FAILURE_ROUTE)
-			&& (dest->type==PVT_RURI || dest->type==PVT_RURI_USERNAME)) {
-	    if (append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0) != 1) {
-			LM_ERR("append_branch action failed\n");
-			return -1;
+	if(dp_append_branch!=0) {
+		if(is_route_type(FAILURE_ROUTE)
+				&& (dest->type == PVT_RURI
+						|| dest->type == PVT_RURI_USERNAME)) {
+			if(append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0)
+					!= 1) {
+				LM_ERR("append branch action failed\n");
+				return -1;
+			}
 		}
 	}
 
