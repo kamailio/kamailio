@@ -74,7 +74,7 @@ Daniel-Constantin Mierla
    1.15. pv_xavp_to_var() usage
    1.16. pv_xavp_to_var() usage
    1.17. pv.shvSet usage
-   1.18. pv.shvSet usage
+   1.18. pv.shvGet usage
 
 Chapter 1. Admin Guide
 
@@ -461,7 +461,7 @@ $ kamcmd pv.shvSet debug int 3
 
    If no name is given, all shared variables are listed.
 
-   Example 1.18. pv.shvSet usage
+   Example 1.18. pv.shvGet usage
 ...
 $ kamcmd pv.shvGet debug
 ...
