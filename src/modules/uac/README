@@ -419,7 +419,10 @@ modparam("uac","auth_password_avp","$avp(i:12)")
 
 3.12. reg_db_url (string)
 
-   DB URL to fetch account profiles for registration.
+   DB URL to fetch account profiles for registration. This parameter must
+   be set in order to enable remote registrations feature.
+
+   The default value is "" (no value).
 
    Example 1.12. Set reg_db_url parameter
 ...
