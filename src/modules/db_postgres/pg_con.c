@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -23,10 +23,10 @@
  */
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Functions related to connections to PostgreSQL servers.
  */
 
@@ -46,7 +46,7 @@
 #include <time.h>
 
 
-/* Override the default notice processor to output the messages 
+/* Override the default notice processor to output the messages
  * using SER's output subsystem.
  */
 static void notice_processor(void* arg, const char* message)
@@ -55,7 +55,7 @@ static void notice_processor(void* arg, const char* message)
 }
 
 
-/** Determine the format of timestamps used by the server.  
+/** Determine the format of timestamps used by the server.
  * A PostgresSQL server can be configured to store timestamps either as 8-byte
  * integers or floating point numbers with double precision. This functions
  * sends a simple SQL query to the server and tries to determine the format of
@@ -97,9 +97,9 @@ static int timestamp_format(PGconn* con)
 	}
 
 	val = PQgetvalue(res, 0, 0);
-	offset = ((unsigned long long)ntohl(((unsigned int*)val)[0]) << 32) 
+	offset = ((unsigned long long)ntohl(((unsigned int*)val)[0]) << 32)
 		+ ntohl(((unsigned int*)val)[1]);
-	
+
 	PQclear(res);
 
 	/* Server using int8 timestamps would return 1000000, because it stores
@@ -117,7 +117,7 @@ static int timestamp_format(PGconn* con)
 		DBG("postgres: Server uses double format for timestamps.\n");
 		return 0;
 	}
-	
+
  error:
 	PQclear(res);
 	return -1;
@@ -166,12 +166,12 @@ static int get_oids(db_con_t* con)
 static void pg_con_free(db_con_t* con, struct pg_con* payload)
 {
 	if (!payload) return;
-	
+
 	/* Delete the structure only if there are no more references
 	 * to it in the connection pool
 	 */
 	if (db_pool_remove((db_pool_entry_t*)payload) == 0) return;
-	
+
 	db_pool_entry_free(&payload->gen);
 	pg_destroy_oid_table(payload->oid);
 	if (payload->con) PQfinish(payload->con);
@@ -236,10 +236,10 @@ int pg_con_connect(db_con_t* con)
 	int ret, i = 0;
 	const char *keywords[10], *values[10];
 	char to[16];
-	
+
 	pcon = DB_GET_PAYLOAD(con);
 	puri = DB_GET_PAYLOAD(con->uri);
-	
+
 	/* Do not reconnect already connected connections */
 	if (pcon->flags & PG_CONNECTED) return 0;
 
@@ -277,25 +277,25 @@ int pg_con_connect(db_con_t* con)
 	keywords[i] = values[i] = NULL;
 
 	pcon->con = PQconnectdbParams(keywords, values, 1);
-	
+
 	if (pcon->con == NULL) {
 		ERR("postgres: PQconnectdbParams ran out of memory\n");
 		goto error;
 	}
-	
+
 	if (PQstatus(pcon->con) != CONNECTION_OK) {
 		ERR("postgres: %s\n", PQerrorMessage(pcon->con));
 		goto error;
 	}
-	
+
 	/* Override default notice processor */
 	PQsetNoticeProcessor(pcon->con, notice_processor, 0);
-	
+
 #ifdef HAVE_PGSERVERVERSION
-	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n", 
+	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n",
 	    PQprotocolVersion(pcon->con), PQserverVersion(pcon->con));
 #else
-	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n", 
+	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n",
 	    PQprotocolVersion(pcon->con), 0 );
 #endif
 
@@ -308,7 +308,7 @@ int pg_con_connect(db_con_t* con)
 		}
 		if(setsockopt(PQsocket(pcon->con), IPPROTO_TCP, TCP_KEEPIDLE,
 				&pg_keepalive, sizeof(pg_keepalive))<0) {
-			M_WARN("failed to set socket option keepidle\n");
+			LM_WARN("failed to set socket option keepidle\n");
 		}
 	}
 #endif
