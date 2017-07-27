@@ -1250,8 +1250,7 @@ int cfg_select_next(cfg_group_t *group)
 		return -1;
 	}
 
-	if (!(meta = CFG_GROUP_META(cfg_local, group)))
-		return -1;
+	meta = CFG_GROUP_META(cfg_local, group);
 
 	if (!(old_ginst = CFG_HANDLE_TO_GINST(*(group->handle)) /* the active group instance */)) {
 		LOG(L_ERR, "ERROR: cfg_select_next(): No group instance is set currently. Forgot to call cfg_select_first()?\n");
