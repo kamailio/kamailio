@@ -568,7 +568,10 @@ static int bind_force_send_ip(int sock_idx)
 			memset(&ip4addr, 0, sizeof(ip4addr));
 			ip4addr.sin_family = AF_INET;
 			ip4addr.sin_port = htons(0);
-			inet_pton(AF_INET, force_send_ip_str, &ip4addr.sin_addr);
+			if (inet_pton(AF_INET, force_send_ip_str, &ip4addr.sin_addr) != 1) {
+				LM_ERR("failed to parse IPv4 address %s\n", force_send_ip_str);
+				return -1;
+			}
 
 			if (bind(rtpp_socks[sock_idx], (struct sockaddr*)&ip4addr, sizeof(ip4addr)) < 0) {
 				LM_ERR("can't bind socket to required ipv4 interface\n");
@@ -576,9 +579,12 @@ static int bind_force_send_ip(int sock_idx)
 			}
 
 			memset(&tmp, 0, sizeof(tmp));
-			getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp, &sock_len);
-			inet_ntop(AF_INET, &tmp.sin_addr, str_addr, INET_ADDRSTRLEN);
-			LM_DBG("Binding on %s:%d\n", str_addr, ntohs(tmp.sin_port));
+			if (getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp, &sock_len))
+				LM_ERR("could not determine local socket name\n");
+			else {
+				inet_ntop(AF_INET, &tmp.sin_addr, str_addr, INET_ADDRSTRLEN);
+				LM_DBG("Binding on %s:%d\n", str_addr, ntohs(tmp.sin_port));
+			}
 
 			break;
 
@@ -591,7 +597,10 @@ static int bind_force_send_ip(int sock_idx)
 			ip6addr.sin6_family = AF_INET6;
 			ip6addr.sin6_port = htons(0);
 			ip6addr.sin6_scope_id = scope;
-			inet_pton(AF_INET6, force_send_ip_str, &ip6addr.sin6_addr);
+			if (inet_pton(AF_INET6, force_send_ip_str, &ip6addr.sin6_addr) != 1) {
+				LM_ERR("failed to parse IPv6 address %s\n", force_send_ip_str);
+				return -1;
+			}
 
 			if ((ret = bind(rtpp_socks[sock_idx], (struct sockaddr*)&ip6addr, sizeof(ip6addr))) < 0) {
 				LM_ERR("can't bind socket to required ipv6 interface\n");
@@ -600,9 +609,12 @@ static int bind_force_send_ip(int sock_idx)
 			}
 
 			memset(&tmp6, 0, sizeof(tmp6));
-			getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp6, &sock_len);
-			inet_ntop(AF_INET6, &tmp6.sin6_addr, str_addr6, INET6_ADDRSTRLEN);
-			LM_DBG("Binding on ipv6 %s:%d\n", str_addr6, ntohs(tmp6.sin6_port));
+			if (getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp6, &sock_len))
+				LM_ERR("could not determine local socket name\n");
+			else {
+				inet_ntop(AF_INET6, &tmp6.sin6_addr, str_addr6, INET6_ADDRSTRLEN);
+				LM_DBG("Binding on ipv6 %s:%d\n", str_addr6, ntohs(tmp6.sin6_port));
+			}
 
 			break;
 
@@ -710,11 +722,13 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 	unsigned int my_current_id = 0;
 	int new_list;
 
+#if DEFAULT_RTPP_SET_ID > 0
 	if (set_id < DEFAULT_RTPP_SET_ID )
 	{
 		LM_ERR(" invalid rtpproxy set value [%u]\n", set_id);
 		return NULL;
 	}
+#endif
 
 	my_current_id = set_id;
 	/*search for the current_id*/
@@ -1037,6 +1051,7 @@ static int fixup_set_id(void ** param, int param_no)
 		rtpl->rpv = pv_cache_get(&s);
 		if(rtpl->rpv == NULL) {
 			LM_ERR("invalid pv parameter %s\n", s.s);
+			pkg_free(rtpl);
 			return -1;
 		}
 	} else {
@@ -1045,11 +1060,13 @@ static int fixup_set_id(void ** param, int param_no)
 			pkg_free(*param);
 			if((rtpp_list = select_rtpp_set(set_id)) ==0){
 				LM_ERR("rtpp_proxy set %u not configured\n", set_id);
+				pkg_free(rtpl);
 				return E_CFG;
 			}
 			rtpl->rset = rtpp_list;
 		} else {
 			LM_ERR("bad number <%s>\n",	(char *)(*param));
+			pkg_free(rtpl);
 			return E_CFG;
 		}
 	}
@@ -1651,9 +1668,10 @@ static int build_rtpp_socks() {
 			}
 
 #ifdef IP_MTU_DISCOVER
-			setsockopt(rtpp_socks[pnode->idx], IPPROTO_IP,
-				IP_MTU_DISCOVER, &ip_mtu_discover,
-				sizeof(ip_mtu_discover));
+			if (setsockopt(rtpp_socks[pnode->idx], IPPROTO_IP,
+					IP_MTU_DISCOVER, &ip_mtu_discover,
+					sizeof(ip_mtu_discover)))
+				LM_WARN("Failed enable set MTU discovery socket option\n");
 #endif
 
 			if (bind_force_send_ip(pnode->idx) == -1) {
@@ -2455,6 +2473,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		/* Drain input buffer */
 		while ((poll(fds, 1, 0) == 1) &&
 			((fds[0].revents & POLLIN) != 0)) {
+			/* coverity[check_return : FALSE] */
 			recv(rtpp_socks[node->idx], buf, sizeof(buf) - 1, 0);
 			fds[0].revents = 0;
 		}
@@ -3056,8 +3075,12 @@ rtpengine_delete1_f(struct sip_msg* msg, char* str1, char* str2)
 	str flags;
 
 	flags.s = NULL;
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, flags.s, 1);
 }
@@ -3072,8 +3095,12 @@ rtpengine_query1_f(struct sip_msg* msg, char* str1, char* str2)
 	str flags;
 
 	flags.s = NULL;
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, flags.s, 1);
 }
@@ -3227,8 +3254,12 @@ rtpengine_manage1_f(struct sip_msg *msg, char *str1, char *str2)
 	str flags;
 
 	flags.s = NULL;
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, flags.s, 1);
 }
@@ -3243,8 +3274,12 @@ rtpengine_offer1_f(struct sip_msg *msg, char *str1, char *str2)
 	str flags;
 
 	flags.s = NULL;
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_offer_wrap, flags.s, 1);
 }
@@ -3263,8 +3298,12 @@ rtpengine_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 			return -1;
 
 	flags.s = NULL;
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, flags.s, 2);
 }
