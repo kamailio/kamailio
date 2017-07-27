@@ -989,13 +989,14 @@ int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len, int req_ch
 
                                 case 12:
                                         hg->capt_id  = (hep_chunk_uint32_t *) (tmp);
-                                        ret = pv_get_uintval(msg, param, res, ntohs(hg->capt_id->data));
+                                        ret = pv_get_uintval(msg, param, res, ntohl(hg->capt_id->data));
                                         goto done;
 
                                 case 13:
                                         hg->keep_tm  = (hep_chunk_uint16_t *) (tmp);
-                                        ret = pv_get_uintval(msg, param, res, hg->keep_tm->data);                                                                                
+                                        ret = pv_get_uintval(msg, param, res, ntohs(hg->keep_tm->data));
                                         goto done;
+
                                 case 14:
                                         tmpstr.s = (char *) tmp + sizeof(hep_chunk_t);
                                         tmpstr.len = chunk_length - sizeof(hep_chunk_t); 
