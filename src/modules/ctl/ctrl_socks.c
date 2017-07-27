@@ -271,7 +271,6 @@ int init_ctrl_sockets(struct ctrl_socket** c_lst, struct id_list* lst,
 		cs->transport=l->proto;
 		cs->p_proto=l->data_proto;
 		cs->fd=s;
-		s = -1;
 		cs->write_fd=extra_fd; /* needed for fifo write */
 		cs->name=l->name;
 		cs->port=l->port;
