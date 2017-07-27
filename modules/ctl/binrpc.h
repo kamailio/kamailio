@@ -705,7 +705,7 @@ inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 					ctx->in_struct=0; /* hack to parse a normal record */
 					v->type=type; /* hack */
 					p=binrpc_read_record(ctx, p, end, v, smode, err);
-					if (err<0){
+					if (*err<0){
 						ctx->in_struct=tmp;
 						goto error;
 					}else{
@@ -735,6 +735,7 @@ inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 			v->u.strval.s=(char*)p;
 			v->u.strval.len=len;
 			p+=len;
+			break;
 		case BINRPC_T_ARRAY:
 			if (ctx->in_struct && smode==0) goto error_record;
 			if (end_tag){

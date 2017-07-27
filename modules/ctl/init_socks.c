@@ -125,7 +125,7 @@ int init_unix_sock(struct sockaddr_un* su, char* name, int type, int perm,
 		}
 	}
 	/* try to change ownership */
-	if ((uid!=-1) || (gid!=-1)){
+	if ((uid!=-1) && (gid!=-1)){
 		if (chown(name, uid, gid)<0){
 			LOG(L_ERR, "ERROR: init_unix_sock: failed to change the"
 					" owner/group for %s to %d.%d: %s[%d]\n",

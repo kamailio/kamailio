@@ -811,7 +811,7 @@ int init_fifo_fd(char* fifo, int fifo_mode, int fifo_uid, int fifo_gid,
 	struct stat filestat;
 	int n;
 	long opt;
-	int fifo_read;
+	int fifo_read = -1;
 	
 	if (fifo == NULL) {
 		ERR("null fifo: no fifo will be opened\n");
@@ -822,7 +822,6 @@ int init_fifo_fd(char* fifo, int fifo_mode, int fifo_uid, int fifo_gid,
 		ERR("emtpy fifo: fifo disabled\n");
 		return -1;
 	}
-	
 	
 	DBG("Opening fifo...\n");
 	n = stat(fifo, &filestat);
@@ -862,26 +861,29 @@ int init_fifo_fd(char* fifo, int fifo_mode, int fifo_uid, int fifo_gid,
 	
 	fifo_read = open(fifo, O_RDONLY | O_NONBLOCK, 0);
 	if (fifo_read < 0) {
-		ERR("fifo_read did not open: %s\n",
-		    strerror(errno));
+		ERR("fifo_read did not open: %s\n", strerror(errno));
 		return -1;
 	}
 	/* make sure the read fifo will not close */
 	*fifo_write = open(fifo, O_WRONLY | O_NONBLOCK, 0);
 	if (*fifo_write < 0) {
-		ERR("fifo_write did not open: %s\n",
-		    strerror(errno));
+		ERR("fifo_write did not open: %s\n", strerror(errno));
+		close(fifo_read);
 		return -1;
 	}
 	/* set read fifo blocking mode */
 	if ((opt = fcntl(fifo_read, F_GETFL)) == -1) {
-		ERR("fcntl(F_GETFL) failed: %s [%d]\n",
-		    strerror(errno), errno);
+		ERR("fcntl(F_GETFL) failed: %s [%d]\n", strerror(errno), errno);
+		close(fifo_read);
+		close(*fifo_write);
+		*fifo_write = -1;
 		return -1;
 	}
 	if (fcntl(fifo_read, F_SETFL, opt & (~O_NONBLOCK)) == -1) {
-		ERR("fcntl(F_SETFL) failed: %s [%d]\n",
-		    strerror(errno), errno);
+		ERR("fcntl(F_SETFL) failed: %s [%d]\n", strerror(errno), errno);
+		close(fifo_read);
+		close(*fifo_write);
+		*fifo_write = -1;
 		return -1;
 	}
 	return fifo_read;
