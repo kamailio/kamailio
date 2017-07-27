@@ -419,7 +419,7 @@ static int child_init(int rank)
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_TypeError,
 					"method '%s' of class '%s' should return 'int' type",
-					child_init_mname.s, !classname ? "None" : classname);
+					child_init_mname.s, classname);
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pResult);
