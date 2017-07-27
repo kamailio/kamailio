@@ -926,6 +926,11 @@ static int fixup_do_routing(void** param, int param_no)
 
 	if (param_no==1)
 	{
+		if ( s==NULL || s[0]==0 ) {
+			LM_CRIT("empty group id definition");
+			return E_CFG;
+		}
+
 		drg = (dr_group_t*)pkg_malloc(sizeof(dr_group_t));
 		if(drg==NULL)
 		{
@@ -934,33 +939,31 @@ static int fixup_do_routing(void** param, int param_no)
 		}
 		memset(drg, 0, sizeof(dr_group_t));
 
-		if ( s==NULL || s[0]==0 ) {
-			LM_CRIT("empty group id definition");
-			return E_CFG;
-		}
-
 		if (s[0]=='$') {
 			/* param is a PV (AVP only supported) */
 			r.s = s;
 			r.len = strlen(s);
 			if (pv_parse_spec( &r, &avp_spec)==0
-			|| avp_spec.type!=PVT_AVP) {
+					|| avp_spec.type!=PVT_AVP) {
 				LM_ERR("malformed or non AVP %s AVP definition\n", s);
+				pkg_free(drg);
 				return E_CFG;
 			}
 
 			if( pv_get_avp_name(0, &(avp_spec.pvp), &(drg->u.avp_id.name),
-			&(drg->u.avp_id.type) )!=0) {
+					&(drg->u.avp_id.type) )!=0) {
 				LM_ERR("[%s]- invalid AVP definition\n", s);
+				pkg_free(drg);
 				return E_CFG;
 			}
 			drg->type = 1;
-			/* do not free the param as the AVP spec may point inside 
-			   this string*/
+			/* do not free the param as the AVP spec may point inside
+			 * this string*/
 		} else {
 			while(s && *s) {
 				if(*s<'0' || *s>'9') {
-					LM_ERR( "bad number\n");
+					LM_ERR("bad number\n");
+					pkg_free(drg);
 					return E_UNSPEC;
 				}
 				drg->u.grp_id = (drg->u.grp_id)*10+(*s-'0');

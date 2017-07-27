@@ -78,7 +78,8 @@ internal_check_rt(
 	rt_info_wrp_t* rtlw=NULL;
 
 	if((NULL==ptn) || (NULL==ptn->rg))
-		goto err_exit;
+		return NULL;
+
 	rg_pos = ptn->rg_pos;
 	rg=ptn->rg;
 	for(i=0;(i<rg_pos) && (rg[i].rgid!=rgid);i++);
@@ -88,15 +89,12 @@ internal_check_rt(
 		rtlw=rg[i].rtlw;
 		while(rtlw!=NULL) {
 			if(check_time(rtlw->rtl->time_rec))
-				goto ok_exit;
+				return rtlw->rtl;
 			rtlw=rtlw->next;
 		}
 	}
-err_exit:
-	return NULL;
 
-ok_exit:
-	return rtlw?rtlw->rtl:0;
+	return NULL;
 }
 
 
@@ -129,8 +127,6 @@ get_prefix(
 	/* go the tree down to the last digit in the 
 	 * prefix string or down to a leaf */
 	while(tmp< (prefix->s+prefix->len)) {
-		if(NULL == tmp)
-			goto err_exit;
 		idx = get_node_index(*tmp);
 		if (idx == -1){
 			/* unknown character in the prefix string */
@@ -147,11 +143,8 @@ get_prefix(
 		ptree = ptree->ptnode[idx].next;
 		tmp++;
 	}
-	/* go in the tree up to the root trying to match the
-	 * prefix */
+	/* go in the tree up to the root trying to match the prefix */
 	while(ptree !=NULL ) {
-		if(NULL == tmp)
-			goto err_exit;
 		/* is it a real node or an intermediate one */
 		idx = get_node_index(*tmp);
 		if(idx!=-1 && NULL != ptree->ptnode[idx].rg) {
