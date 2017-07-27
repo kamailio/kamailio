@@ -2333,19 +2333,30 @@ retry:
 	 * extra checks */
 	for (i=0; (i<idx) && (r_sums[i].r_sum<rand_w); i++);
 found:
+	if(i<MAX_SRV_GRP_IDX) {
 #ifdef DNS_CACHE_DEBUG
-	LM_DBG("(%p, %lx, %d, %u): selected %d/%d in grp. %d"
-			" (rand_w=%d, rr=%p rd=%p p=%d w=%d rsum=%d)\n",
-		e, (unsigned long)*tried, *no, now, i, idx, n, rand_w, r_sums[i].rr,
-		(r_sums[i].rr)?r_sums[i].rr->rdata:0,
-		(r_sums[i].rr&&r_sums[i].rr->rdata)?((struct srv_rdata*)r_sums[i].rr->rdata)->priority:0,
-		(r_sums[i].rr&&r_sums[i].rr->rdata)?((struct srv_rdata*)r_sums[i].rr->rdata)->weight:0,
-		r_sums[i].r_sum);
+		LM_DBG("(%p, %lx, %d, %u): selected %d/%d in grp. %d"
+			   " (rand_w=%d, rr=%p rd=%p p=%d w=%d rsum=%d)\n",
+				e, (unsigned long)*tried, *no, now, i, idx, n, rand_w,
+				r_sums[i].rr, (r_sums[i].rr) ? r_sums[i].rr->rdata : 0,
+				(r_sums[i].rr && r_sums[i].rr->rdata)
+						? ((struct srv_rdata *)r_sums[i].rr->rdata)->priority
+						: 0,
+				(r_sums[i].rr && r_sums[i].rr->rdata)
+						? ((struct srv_rdata *)r_sums[i].rr->rdata)->weight
+						: 0,
+				r_sums[i].r_sum);
 #endif
-	/* i is the winner */
-	*no=n; /* grp. start */
-	if(i<8*sizeof(*tried)) srv_mark_tried(tried, i); /* mark it */
-	return r_sums[i].rr;
+		/* i is the winner */
+		*no = n; /* grp. start */
+		if(i < 8 * sizeof(*tried))
+			srv_mark_tried(tried, i); /* mark it */
+		return r_sums[i].rr;
+	} else {
+		LM_WARN("index out of bounds\n");
+		*no=n;
+		return 0;
+	}
 no_more_rrs:
 	*no=n;
 	return 0;
