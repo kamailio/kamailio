@@ -185,7 +185,7 @@ modparam("sipcapture", "db_insert_mode", 1)
 	<section id="sipcapture.p.capture_on">
 		<title><varname>capture_on</varname> (integer)</title>
 		<para>
-		Parameter to enable/disable capture globaly (on(1)/off(0))
+		Parameter to enable/disable capture globally (on(1)/off(0))
 		</para>
 		<para>
 		<emphasis>
