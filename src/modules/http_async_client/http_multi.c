@@ -314,7 +314,9 @@ void reply_error(struct http_m_cell *cell)
 		reply->error[0] = '\0';
 	}
 
-	cell->cb(reply, cell->param);
+	if (cell) {
+		cell->cb(reply, cell->param);
+	}
 
 	pkg_free(reply);
 
