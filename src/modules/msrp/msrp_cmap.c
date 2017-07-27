@@ -210,20 +210,16 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	hid = msrp_get_hashid(&_msrp_sruid.uid);	
 	idx = msrp_get_slot(hid, _msrp_cmap_head->mapsize);
 
-	srcaddr.s = sbuf;
-	if (msrp_tls_module_loaded)
-	{
-		memcpy(srcaddr.s, "msrps://", 8);
-		srcaddr.s+=8;
-	} else {
-		memcpy(srcaddr.s, "msrp://", 7);
-		srcaddr.s+=7;
+	srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE, "msrp%s://%s:%d",
+						(msrp_tls_module_loaded)?"s":"",
+						ip_addr2a(&mf->tcpinfo->rcv->src_ip),
+						(int)mf->tcpinfo->rcv->src_port);
+	if(srcaddr.len<0 || srcaddr.len>=MSRP_SBUF_SIZE) {
+		LM_ERR("failure or address lenght too big (%d)\n", srcaddr.len);
+		return -1;
 	}
-	strcpy(srcaddr.s, ip_addr2a(&mf->tcpinfo->rcv->src_ip));
-	strcat(srcaddr.s, ":");
-	strcat(srcaddr.s, int2str(mf->tcpinfo->rcv->src_port, NULL));
 	srcaddr.s = sbuf;
-	srcaddr.len = strlen(srcaddr.s);
+
 	srcsock = mf->tcpinfo->rcv->bind_address->sock_str;
 	LM_DBG("saving connection info for [%.*s] [%.*s] (%u/%u)\n",
 			fpeer.len, fpeer.s, _msrp_sruid.uid.len, _msrp_sruid.uid.s,
