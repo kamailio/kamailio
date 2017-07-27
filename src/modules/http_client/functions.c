@@ -333,8 +333,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst,
 	/* HTTP_CODE CHANGED TO CURLINFO_RESPONSE_CODE in curl > 7.10.7 */
 	curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
 	if(res == CURLE_OK) {
-		char *ct;
-		char *url;
+		char *ct = NULL;
+		char *url = NULL;
 
 		/* ask for the content-type of the response */
 		res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
@@ -342,14 +342,16 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst,
 
 		if(ct) {
 			LM_DBG("We received Content-Type: %s\n", ct);
-			if (params->pconn) {
+			if (params->pconn &&
+					strlen(ct)<sizeof(params->pconn->result_content_type)-1) {
 				strncpy(params->pconn->result_content_type, ct,
 						sizeof(params->pconn->result_content_type));
 			}
 		}
 		if(url) {
 			LM_DBG("We visited URL: %s\n", url);
-			if (params->pconn) {
+			if (params->pconn
+					&& strlen(url)<sizeof(params->pconn->redirecturl)-1) {
 				strncpy(params->pconn->redirecturl, url ,
 						sizeof(params->pconn->redirecturl));
 			}
