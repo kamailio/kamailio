@@ -701,8 +701,7 @@ static int mod_init(void)
 	    LM_ERR("no memory for gw table\n");
 	    goto err;
 	}
-	memset(gw_pt[i], 0, sizeof(struct gw_info *) *
-	       (lcr_gw_count_param + 1));
+	memset(gw_pt[i], 0, sizeof(struct gw_info) * (lcr_gw_count_param + 1));
     }
 
     /* Allocate and initialize locks */
@@ -2470,7 +2469,10 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     /* Rewrite Request URI */
     uri_str.s = r_uri;
     uri_str.len = r_uri_len;
-    rewrite_uri(_m, &uri_str);
+    if(rewrite_uri(_m, &uri_str)<0) {
+		LM_ERR("failed to rewrite uri\n");
+		return -1;
+	}
     
     /* Set Destination URI if not empty */
     if (dst_uri_len > 0) {
@@ -2479,7 +2481,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	LM_DBG("setting du to <%.*s>\n", uri_str.len, uri_str.s);
 	rval = set_dst_uri(_m, &uri_str);
 	if (rval != 0) {
-	    LM_ERR("calling do_action failed with return value <%d>\n", rval);
+	    LM_ERR("calling set dst uri failed with return value <%d>\n", rval);
 	    return -1;
 	}
 	
