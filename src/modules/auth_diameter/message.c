@@ -293,7 +293,9 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 			goto error;
 
 		/* link the avp into aaa message to the end */
-		AAAAddAVPToMessage( msg, avp, msg->avpList.tail);
+		if(AAAAddAVPToMessage(msg, avp, msg->avpList.tail)!=AAA_ERR_SUCCESS) {
+			LM_ERR("failed to add avp to message\n");
+		}
 
 		ptr += to_32x_len( avp_data_len );
 	}

@@ -64,6 +64,7 @@ int init_mytcp(char* host, int port)
     if (server == NULL) 
 	{
 		LM_ERR("error finding the host\n");
+		close(sockfd);
 		return -1;
     }
 
@@ -76,8 +77,8 @@ int init_mytcp(char* host, int port)
     if (connect(sockfd, (const struct sockaddr *)&serv_addr, 
 							sizeof(serv_addr)) < 0) 
 	{
-        LM_ERR("error connecting to the "
-						"DIAMETER client\n");
+        LM_ERR("error connecting to the DIAMETER client\n");
+		close(sockfd);
 		return -1;
 	}	
 
