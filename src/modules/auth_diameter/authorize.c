@@ -261,7 +261,7 @@ int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype)
 	}
 	
 	if( diameter_authorize(cred?h:NULL, &msg->first_line.u.request.method,
-					puri, msg->parsed_uri, msg->id, rb) != 1)
+					&puri, &msg->parsed_uri, msg->id, rb) != 1)
 	{
 		send_resp(msg, 500, &dia_500_err, NULL, 0);
 		return AUTH_ERROR;
@@ -286,8 +286,8 @@ int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype)
  * 		-1 - error
  * 			
  */
-int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
-						struct sip_uri ruri, unsigned int m_id, rd_buf_t* rb)
+int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
+						sip_uri_t *ruri, unsigned int m_id, rd_buf_t* rb)
 {
 	str user_name;
 	AAAMessage *req;
@@ -314,21 +314,21 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	{
 		/* Username AVP */
 		user_name.s = 0;
-		user_name.len = uri.user.len + uri.host.len;
+		user_name.len = uri->user.len + uri->host.len;
 		if(user_name.len>0)
 		{
 			user_name.len += 2;
 			user_name.s = (char*)ad_malloc(user_name.len*sizeof(char));
 			memset(user_name.s, 0, user_name.len);
 
-			memcpy(user_name.s, uri.user.s, uri.user.len);
-			if(uri.user.len>0)
+			memcpy(user_name.s, uri->user.s, uri->user.len);
+			if(uri->user.len>0)
 			{
-				memcpy(user_name.s+uri.user.len, "@", 1);
-				memcpy(user_name.s+uri.user.len+1, uri.host.s, uri.host.len);
+				memcpy(user_name.s+uri->user.len, "@", 1);
+				memcpy(user_name.s+uri->user.len+1, uri->host.s, uri->host.len);
 			}
 			else
-				memcpy(user_name.s, uri.host.s, uri.host.len);
+				memcpy(user_name.s, uri->host.s, uri->host.len);
 		}
 
 		if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, user_name.s, 
@@ -419,8 +419,6 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 		goto error1;
 	}
 
-	
-	
 	/* SIP Service AVP */
 	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_AUTHENTICATION, 
 				SERVICE_LEN, AVP_DUPLICATE_DATA)) == 0)
@@ -435,15 +433,15 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	}
 		
 	/* Destination-Realm AVP */
-	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, uri.host.s,
-						uri.host.len, AVP_DUPLICATE_DATA)) == 0)
+	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, uri->host.s,
+						uri->host.len, AVP_DUPLICATE_DATA)) == 0)
 	{
 		LM_ERR(" no more pkg memory left!\n");
 		goto error;
 	}
 
 #ifdef DEBUG	
-	LM_DBG("Destination Realm: %.*s\n", uri.host.len, uri.host.s);	
+	LM_DBG("Destination Realm: %.*s\n", uri->host.len, uri->host.s);	
 #endif
 
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
@@ -453,27 +451,27 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	}
 	
 	/* Resource AVP */
-	user_name.len = ruri.user.len + ruri.host.len + ruri.port.len + 2;
+	user_name.len = ruri->user.len + ruri->host.len + ruri->port.len + 2;
 	user_name.s = (char*)ad_malloc(user_name.len*sizeof(char));
 	memset(user_name.s, 0, user_name.len);
-	memcpy(user_name.s, ruri.user.s, ruri.user.len);
+	memcpy(user_name.s, ruri->user.s, ruri->user.len);
 
 	name_flag= 0;
-	if(ruri.user.s)
+	if(ruri->user.s)
 	{		
 		name_flag = 1;
-		memcpy(user_name.s+ruri.user.len, "@", 1);
+		memcpy(user_name.s+ruri->user.len, "@", 1);
 	}	
 
-	memcpy(user_name.s+ruri.user.len+name_flag, ruri.host.s, ruri.host.len);
+	memcpy(user_name.s+ruri->user.len+name_flag, ruri->host.s, ruri->host.len);
 
 	port_flag=0;
-	if(ruri.port.s)
+	if(ruri->port.s)
 	{
 		port_flag = 1;	
-		memcpy(user_name.s+ruri.user.len+ruri.host.len+1, ":", 1);
-		memcpy(user_name.s+ruri.user.len+ruri.host.len+name_flag+port_flag, 
-					ruri.port.s, ruri.port.len);
+		memcpy(user_name.s+ruri->user.len+ruri->host.len+1, ":", 1);
+		memcpy(user_name.s+ruri->user.len+ruri->host.len+name_flag+port_flag, 
+					ruri->port.s, ruri->port.len);
 	}
 #ifdef DEBUG
 	LM_DBG(": AVP_Resource=%.*s\n", user_name.len, user_name.s);

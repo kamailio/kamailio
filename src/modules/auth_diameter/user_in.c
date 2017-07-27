@@ -239,7 +239,6 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		goto error1;
 	}
 
-	
 	/* ServiceType AVP */
 	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_GROUP_CHECK, 
 				SERVICE_LEN, AVP_DUPLICATE_DATA)) == 0)
@@ -252,24 +251,26 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		LM_ERR("avp not added \n");
 		goto error1;
 	}
-	
 
 	/* Destination-Realm AVP */
 	uri = *(GET_RURI(_m));
-	parse_uri(uri.s, uri.len, &puri);
+	if(parse_uri(uri.s, uri.len, &puri)<0) {
+		LM_ERR("failed to parse uri\n");
+		goto error;
+	}
 	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, puri.host.s,
 						puri.host.len, AVP_DUPLICATE_DATA)) == 0)
 	{
 		LM_ERR("no more pkg memory!\n");
 		goto error;
 	}
-	
+
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 	{
 		LM_ERR("avp not added \n");
 		goto error1;
 	}
-	
+
 #ifdef DEBUG
 	AAAPrintMessage(req);
 #endif
@@ -318,4 +319,3 @@ error:
 	return -1;
 
 }
-
