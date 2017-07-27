@@ -62,6 +62,7 @@ int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d)
 	new_lds->host_name = (char*)pkg_malloc(strlen(host_name)+1);
 	if (new_lds->host_name == NULL) {
 		LM_ERR("no memory\n");
+		pkg_free(new_lds);
 		return -1;
 	}
 	strcpy(new_lds->host_name, host_name);
@@ -117,6 +118,8 @@ int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d)
 	new_lds->bind_dn = (char*)pkg_malloc(strlen(bind_dn)+1);
 	if (new_lds->bind_dn == NULL) {
 		LM_ERR("no memory\n");
+		pkg_free(new_lds->host_name);
+		pkg_free(new_lds);
 		return -1;
 	}
 	strcpy(new_lds->bind_dn, bind_dn);
@@ -129,6 +132,9 @@ int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d)
 	new_lds->bind_pwd = (char*)pkg_malloc(strlen(bind_pwd)+1);
 	if (new_lds->bind_pwd == NULL) {
 		LM_ERR("no memory\n");
+		pkg_free(new_lds->bind_dn);
+		pkg_free(new_lds->host_name);
+		pkg_free(new_lds);
 		return -1;
 	}
 	strcpy(new_lds->bind_pwd, bind_pwd);
