@@ -447,6 +447,7 @@ static int ldap_result_check_fixup(void** param, int param_no)
 			if (pv_parse_format(&s, &(lp->check_str_elem_p)) < 0)
 			{
 				LM_ERR("pv_parse_format failed\n");
+				pkg_free(lp);
 				return E_OUT_OF_MEM;
 			}
 		}	
