@@ -1018,7 +1018,10 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 	duri_str.s = (char *)&(duri[0]);
 	duri_str.len = at - duri_str.s;
 	LM_DBG("new DURI is '%.*s'\n",duri_str.len, ZSW(duri_str.s));
-	set_dst_uri(_msg, &duri_str);
+	if(set_dst_uri(_msg, &duri_str)<0) {
+		LM_ERR("failed to se dst uri\n");
+		return -1;
+	}
 	/* dst_uri changes, so it makes sense to re-use the current uri for
 		forking */
 	ruri_mark_new(); /* re-use uri for serial forking */
