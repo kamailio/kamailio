@@ -362,7 +362,7 @@ static int child_init(int rank)
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_AttributeError,
 					"class object '%s' has is not callable attribute '%s'",
-					!classname ? "None" : classname, mod_init_fname.s);
+					classname, mod_init_fname.s);
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
@@ -398,9 +398,6 @@ static int child_init(int rank)
 	Py_DECREF(pFunc);
 	Py_DECREF(pArgs);
 
-
-
-
 	if (PyErr_Occurred()) {
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
@@ -430,7 +427,6 @@ static int child_init(int rank)
 		PyEval_ReleaseLock();
 		return -1;
 	}
-
 
 	rval = PyInt_AsLong(pResult);
 	Py_DECREF(pResult);
