@@ -1096,8 +1096,6 @@ int pv_parse_format(str *in, pv_elem_p *el)
 			goto error;
 		p0 = p + len;
 
-		if(p0==NULL)
-			goto error;
 		if(*p0 == '\0')
 			break;
 		p = p0;
