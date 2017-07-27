@@ -226,7 +226,7 @@ int init_ctrl_sockets(struct ctrl_socket** c_lst, struct id_list* lst,
 						int def_port, int perm, int uid, int gid)
 {
 	struct id_list* l;
-	int s;
+	int s = -1;
 	struct ctrl_socket* cs;
 	int extra_fd;
 	union sockaddr_u su;
@@ -271,6 +271,7 @@ int init_ctrl_sockets(struct ctrl_socket** c_lst, struct id_list* lst,
 		cs->transport=l->proto;
 		cs->p_proto=l->data_proto;
 		cs->fd=s;
+		s = -1;
 		cs->write_fd=extra_fd; /* needed for fifo write */
 		cs->name=l->name;
 		cs->port=l->port;
@@ -281,6 +282,8 @@ int init_ctrl_sockets(struct ctrl_socket** c_lst, struct id_list* lst,
 	}
 	return 0;
 error:
+	if(s>=0) close(s);
+	if(extra_fd>=0) close(extra_fd);
 	return -1;
 }
 
