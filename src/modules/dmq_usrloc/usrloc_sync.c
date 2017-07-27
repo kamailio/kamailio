@@ -198,8 +198,6 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 		goto done;
 	}
 	if (rval > 0) {
-		if (buf != NULL)
-			dmq_usrloc_free(buf);
 		len = rval * 2;
 		buf = dmq_usrloc_malloc(len);
 		if (buf == NULL) {
