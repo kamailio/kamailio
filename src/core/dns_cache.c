@@ -2344,7 +2344,7 @@ found:
 #endif
 	/* i is the winner */
 	*no=n; /* grp. start */
-	srv_mark_tried(tried, i); /* mark it */
+	if(i<8*sizeof(*tried)) srv_mark_tried(tried, i); /* mark it */
 	return r_sums[i].rr;
 no_more_rrs:
 	*no=n;
