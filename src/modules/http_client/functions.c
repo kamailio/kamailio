@@ -344,16 +344,14 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst,
 			LM_DBG("We received Content-Type: %s\n", ct);
 			if (params->pconn &&
 					strlen(ct)<sizeof(params->pconn->result_content_type)-1) {
-				strncpy(params->pconn->result_content_type, ct,
-						sizeof(params->pconn->result_content_type));
+				strcpy(params->pconn->result_content_type, ct);
 			}
 		}
 		if(url) {
 			LM_DBG("We visited URL: %s\n", url);
 			if (params->pconn
 					&& strlen(url)<sizeof(params->pconn->redirecturl)-1) {
-				strncpy(params->pconn->redirecturl, url ,
-						sizeof(params->pconn->redirecturl));
+				strcpy(params->pconn->redirecturl, url);
 			}
 		}
 	}
