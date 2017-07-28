@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,11 +17,6 @@
  * sctp_sockopts.h - portability fixes / compatibility defines for some
  *                   sctp socket options
  */
-/*
- * History:
- * --------
- *  2009-11-12  initial version (andrei)
-*/
 
 #ifndef __sctp_sockopts_h
 #define __sctp_sockopts_h

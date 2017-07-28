@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,11 +16,6 @@
 /*
  * sctp_ev.h - sctp events
  */
-/*
- * History:
- * --------
- *  2009-04-28  initial version (andrei)
-*/
 
 #ifndef __sctp_ev_h
 #define __sctp_ev_h
