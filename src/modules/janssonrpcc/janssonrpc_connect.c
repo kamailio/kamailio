@@ -111,14 +111,15 @@ typedef struct server_backoff_args {
 
 void server_backoff_cb(int fd, short event, void *arg)
 {
+	unsigned int timeout;
+	server_backoff_args_t* a;
+
 	if(!arg)
 		return;
 
-	server_backoff_args_t* a = (server_backoff_args_t*)arg;
-	if(!a)
-		return;
+	a = (server_backoff_args_t*)arg;
 
-	unsigned int timeout = a->timeout;
+	timeout = a->timeout;
 
 	/* exponential backoff */
 	if(timeout < 1) {
