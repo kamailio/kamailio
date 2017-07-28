@@ -72,12 +72,12 @@ static const char* dns_cache_mem_info_doc[] = {
 	0                      /* Method signature(s) */
 };
 static const char* dns_cache_debug_doc[] = {
-	"dns debug  info.",    /* Documentation string */
+	"dns debug info.",    /* Documentation string */
 	0                      /* Method signature(s) */
 };
 
 static const char* dns_cache_debug_all_doc[] = {
-	"complete dns debug  dump",    /* Documentation string */
+	"complete dns debug dump",    /* Documentation string */
 	0                              /* Method signature(s) */
 };
 
@@ -196,7 +196,7 @@ static const char* dst_blst_mem_info_doc[] = {
 	0                                    /* Method signature(s) */
 };
 static const char* dst_blst_debug_doc[] = {
-	"dst blacklist  debug  info.",  /* Documentation string */
+	"dst blacklist debug info.",  /* Documentation string */
 	0                               /* Method signature(s) */
 };
 static const char* dst_blst_view_doc[] = {
@@ -658,7 +658,7 @@ all:
 
 
 static const char* core_sfmalloc_doc[] = {
-	"Returns sfmalloc debugging  info.",  /* Documentation string */
+	"Returns sfmalloc debugging info.",  /* Documentation string */
 	0                                     /* Method signature(s) */
 };
 
@@ -957,7 +957,7 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 
 
 /*
- * RPC Methods exported by this module
+ * RPC Methods exported by core
  */
 static rpc_export_t core_rpc_methods[] = {
 	{"system.listMethods",     system_listMethods,     system_listMethods_doc,     RET_ARRAY},
