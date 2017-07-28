@@ -183,12 +183,11 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 	int offset = 0;
 	int idx = -1;
 	char int_buf[50];
+	int res;
 
 	*_k = NULL;
 	*_o = NULL;
 	*_v = NULL;
-
-	int res;
 
 	len = strlen(where);
 
@@ -199,21 +198,21 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 	}
 
 	_k1 = pkg_malloc(sizeof(db_key_t) * MAX_CLAUSES);
-	memset(_k1, 0, sizeof(db_key_t) * MAX_CLAUSES);
 	_o1 = pkg_malloc(sizeof(char*) * MAX_CLAUSES);
-	memset(_o1, 0, sizeof(db_op_t) * MAX_CLAUSES);
 	_v1 = pkg_malloc(sizeof(db_val_t) * MAX_CLAUSES);
-	memset(_v1, 0, sizeof(db_val_t) * MAX_CLAUSES);
-
 	matches = (regmatch_t*)pkg_malloc(sizeof(regmatch_t) * MAX_MATCH);
-	if(matches==NULL || _k1==NULL || _o1==NULL || _v1==NULL) {
+
+	if(_k1==NULL || _o1==NULL || _v1==NULL || matches==NULL) {
 		LM_ERR("error getting pkg memory\n");
-		pkg_free(_k1);
-		pkg_free(_o1);
-		pkg_free(_v1);
-		pkg_free(matches);
+		if(_k1) pkg_free(_k1);
+		if(_o1) pkg_free(_o1);
+		if(_v1) pkg_free(_v1);
+		if(matches) pkg_free(matches);
 		return -1;
 	}
+	memset(_k1, 0, sizeof(db_key_t) * MAX_CLAUSES);
+	memset(_o1, 0, sizeof(char*) * MAX_CLAUSES);
+	memset(_v1, 0, sizeof(db_val_t) * MAX_CLAUSES);
 
 	while(offset < len) {
 		char* buffer = where + offset;
