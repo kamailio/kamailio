@@ -609,9 +609,7 @@ onreply_route[2]
             to rtpproxy. See flag '1' for its meaning.
           + b - append branch specific variable to Call-ID when sending
             command to rtpproxy. See rtpproxy_offer() for details.
-            <listitem>
-            </listitem>
-            t - do not include To tag to “delete” command to rtpproxy thus
+          + t - do not include To tag to “delete” command to rtpproxy thus
             causing full call to be deleted. Useful for deleting unused
             rtpproxy call when 200 OK is received on a branch, where
             rtpproxy is not needed.
