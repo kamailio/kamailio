@@ -1774,7 +1774,7 @@ static int trace_send_hep3_duplicate(str *body, str *from, str *to, struct dest_
 			HEP3_PACK_CHUNK_DATA (0, 0x0011, correlation_id_str->s, correlation_id_str->len);
 		}
 	}
-	if (auth_key_str.len) {
+	if (auth_key_str.s && auth_key_str.len > 0) {
 		HEP3_PACK_CHUNK_DATA(0, 0x000e, auth_key_str.s, auth_key_str.len);
 	}
 	HEP3_PACK_CHUNK_DATA (0, 0x000f, body->s, body->len);
@@ -2393,7 +2393,7 @@ static int hlog(struct sip_msg *msg, str *correlationid, str *message) {
 	HEP3_PACK_CHUNK_UINT8 (0, 0x000b, 0x64); /* protocol type: log */
 	HEP3_PACK_CHUNK_UINT32(0, 0x000c, hep_capture_id);
 	HEP3_PACK_CHUNK_DATA  (0, 0x0011, correlationid->s, correlationid->len);
-	if (auth_key_str.len) {
+	if (auth_key_str.s && auth_key_str.len > 0) {
 		HEP3_PACK_CHUNK_DATA(0, 0x000e, auth_key_str.s, auth_key_str.len);
 	}
 	HEP3_PACK_CHUNK_DATA  (0, 0x000f, message->s, message->len);
