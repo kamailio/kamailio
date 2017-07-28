@@ -433,7 +433,7 @@ parse_parameters:
 			if(spv->sub_type == 0)
 			{
 				LM_ERR("Unknown SIPT subtype [%.*s]\n", pvsubtype.len, pvsubtype.s);
-				return -1;
+				goto error;
 			}
 			break;
 		}
@@ -443,7 +443,7 @@ parse_parameters:
 	if(spv->type == 0)
 	{
 		LM_ERR("Unknown SIPT type [%.*s]\n",pvtype.len, pvtype.s);
-		return -1;
+		goto error;
 	}
 
 	sp->pvp.pvn.u.dname = (void*)spv;
@@ -451,8 +451,9 @@ parse_parameters:
 
 	return 0;
 error:
-        LM_ERR("error at PV sipt name: %.*s\n", in->len, in->s);
-        return -1;
+	LM_ERR("error at PV sipt name: %.*s\n", in->len, in->s);
+	pkg_free(spv);
+	return -1;
 
 }
 
