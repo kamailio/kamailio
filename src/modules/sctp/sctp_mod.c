@@ -1,6 +1,4 @@
-/**
- * $Id$
- *
+/*
  * Copyright (C) 2008 iptelorg GmbH
  * Copyright (C) 2013 Daniel-Constantin Mierla (asipto.com)
  *

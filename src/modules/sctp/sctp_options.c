@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,12 +15,6 @@
  */
 /* 
  * sctp options
- */
-/*
- * History:
- * --------
- *  2008-08-07  initial version (andrei)
- *  2009-05-26  runtime cfg support (andrei)
  */
 
 /*!
