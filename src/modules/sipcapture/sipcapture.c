@@ -446,6 +446,7 @@ int parse_table_names (str table_name, str ** table_names){
 	names = (str*)pkg_malloc(sizeof(str) * no_tables);
 	if(names == NULL) {
 		LM_ERR("no more pkg memory left\n");
+		pkg_free(table_name_cpy);
 		return -1;
 	}
 	p = strtok (table_name_cpy,"| \t");
