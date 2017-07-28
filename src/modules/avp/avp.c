@@ -1385,39 +1385,9 @@ static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 	if(param_no == 1) {
 		c = *param;
 		if(*c == '#') {
-			c++;
-			n = strtol(c, &params, 10);
-			switch(*params) {
-				case PARAM_DELIM:
-					break;
-				case 0:
-					params = 0;
-					break;
-				default:
-					LOG(L_ERR, "attr_hdr_body2attrs_fixup: bad AVP value\n");
-					return E_CFG;
-			}
-			switch(n) {
-				//				case HDR_xxx:
-				//				case HDR_xxx:
-				//					break;
-				default:
-					LOG(L_ERR, "attr_hdr_body2attrs_fixup: header name is not "
-							"valid and supported HDR_xxx id '%s' resolved "
-							"as %d\n",
-							c, n);
-					return E_CFG;
-			}
-			h = pkg_malloc(sizeof(hdr_name_t));
-			if(!h) {
-				LOG(L_ERR, "attr_hdr_body2attrs_fixup: out of memory\n");
-				return E_OUT_OF_MEM;
-			}
-
-			h->kind = HDR_ID;
-			h->name.n = n;
-			pkg_free(*param);
-
+			LOG(L_ERR, "attr_hdr_body2attrs_fixup: header name is not "
+						"valid '%s'\n", c);
+			return E_CFG;
 		} else {
 			params = strchr(c, PARAM_DELIM);
 			if(params)
