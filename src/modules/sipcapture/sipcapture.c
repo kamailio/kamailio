@@ -1887,7 +1887,7 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	else { EMPTY_STR(sco.custom1); }
 	
 	/* Custom - field2 */
-	if(custom_field3_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
+	if(custom_field2_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
 		sco.custom2 =  tmphdr[5]->body;
 	}
 	else { EMPTY_STR(sco.custom2); }
