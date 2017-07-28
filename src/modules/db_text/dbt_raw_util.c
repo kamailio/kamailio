@@ -206,8 +206,12 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 	memset(_v1, 0, sizeof(db_val_t) * MAX_CLAUSES);
 
 	matches = (regmatch_t*)pkg_malloc(sizeof(regmatch_t) * MAX_MATCH);
-	if(matches==NULL) {
+	if(matches==NULL || _k1==NULL || _o1==NULL || _v1==NULL) {
 		LM_ERR("error getting pkg memory\n");
+		pkg_free(_k1);
+		pkg_free(_o1);
+		pkg_free(_v1);
+		pkg_free(matches);
 		return -1;
 	}
 
