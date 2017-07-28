@@ -856,9 +856,7 @@ avp_copy("$avp(old)","$avp(new)/gd");
 			Prints the formatted string 'format' in the AVP 'dest'. The
 			'format' parameter can include any pseudo-variable defined in
 			&kamailio;. The list with all pseudo-variables in &kamailio; can
-			be found at:	
-			<ulink url="http://kamailio.org/dokuwiki/">
-			http://kamailio.org/dokuwiki/</ulink>.
+			be found at: &kamwikilink;
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
