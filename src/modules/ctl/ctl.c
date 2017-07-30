@@ -376,7 +376,7 @@ static void mod_destroy(void)
 		switch(cs->transport){
 			case UNIXS_SOCK:
 			case UNIXD_SOCK:
-				close(cs->fd);
+				if(cs->fd>=0) close(cs->fd);
 				cs->fd=-1;
 				if (cs->write_fd!=-1){
 					close(cs->write_fd);

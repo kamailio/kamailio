@@ -133,7 +133,6 @@ find_port:
 	
 end:
 	/* fix all the stuff */
-	if (name==0) goto error;
 	if (proto==UNKNOWN_SOCK){
 		/* try to guess */
 		if (port_str){
