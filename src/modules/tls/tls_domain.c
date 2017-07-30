@@ -1086,12 +1086,12 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
  */
 static int passwd_cb(char *buf, int size, int rwflag, void *filename)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L	
-	UI             *ui;
-	const char     *prompt;
-	
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+	UI *ui;
+	const char *prompt;
+
 	ui = UI_new();
-	if (ui == NULL)
+	if(ui == NULL)
 		goto err;
 
 	prompt = UI_construct_prompt(ui, "passphrase", filename);
@@ -1099,16 +1099,13 @@ static int passwd_cb(char *buf, int size, int rwflag, void *filename)
 	UI_process(ui);
 	UI_free(ui);
 	return strlen(buf);
- 
- err:
+
+err:
 	ERR("passwd_cb: Error in passwd_cb\n");
-	if (ui) {
-		UI_free(ui);
-	}
 	return 0;
-	
+
 #else
-	if (des_read_pw_string(buf, size-1, "Enter Private Key password:", 0)) {
+	if(des_read_pw_string(buf, size - 1, "Enter Private Key password:", 0)) {
 		ERR("Error in passwd_cb\n");
 		return 0;
 	}

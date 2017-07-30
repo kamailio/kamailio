@@ -461,7 +461,6 @@ static int check_cert(str* res, int* ires, int local, int err, sip_msg_t* msg)
 	return 0;
 
  error:
-	if (cert) X509_free(cert);
 	if (c) tcpconn_put(c);
 	return -1;
 }
