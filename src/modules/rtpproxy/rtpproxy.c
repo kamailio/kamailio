@@ -547,11 +547,13 @@ static int fixup_set_id(void ** param, int param_no)
 		int_val = pv_locate_name(&s);
 		if(int_val<0 || int_val!=s.len) {
 			LM_ERR("invalid parameter %s\n", s.s);
+			pkg_free(rtpl);
 			return -1;
 		}
 		rtpl->rpv = pv_cache_get(&s);
 		if(rtpl->rpv == NULL) {
 			LM_ERR("invalid pv parameter %s\n", s.s);
+			pkg_free(rtpl);
 			return -1;
 		}
 	} else {
@@ -560,11 +562,13 @@ static int fixup_set_id(void ** param, int param_no)
 			pkg_free(*param);
 			if((rtpp_list = select_rtpp_set(int_val)) ==0){
 				LM_ERR("rtpp_proxy set %i not configured\n", int_val);
+				pkg_free(rtpl);
 				return E_CFG;
 			}
 			rtpl->rset = rtpp_list;
 		} else {
 			LM_ERR("bad number <%s>\n",	(char *)(*param));
+			pkg_free(rtpl);
 			return E_CFG;
 		}
 	}
@@ -1629,10 +1633,14 @@ unforce_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str flags;
 
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
-	else
+	if (str1) {
+		if(get_str_fparam(&flags, msg, (fparam_t *) str1)<0) {
+			LM_ERR("failed to get flags parameter\n");
+			return -1;
+		}
+	} else {
 		flags.s = NULL;
+	}
 
 	return unforce_rtp_proxy(msg, flags.s);
 }
@@ -1653,6 +1661,10 @@ unforce_rtp_proxy(struct sip_msg* msg, char* flags)
 			{NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
 	/* 1 */   /* 2 */   /* 3 */    /* 4 */    /* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */
 
+	if(msg==NULL) {
+		LM_ERR("invalid sip message structure\n");
+		return -1;
+	}
 
 	for (cp = flags; cp && *cp; cp++) {
 		switch (*cp) {
@@ -1665,7 +1677,7 @@ unforce_rtp_proxy(struct sip_msg* msg, char* flags)
 				break;
 
 			case '3':
-				if(msg && msg->first_line.type == SIP_REPLY)
+				if(msg->first_line.type == SIP_REPLY)
 					via = 2;
 				else
 					via = 1;
@@ -1929,10 +1941,14 @@ rtpproxy_offer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	str flags;
 
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
-	else
+	if (str1) {
+		if(get_str_fparam(&flags, msg, (fparam_t *) str1)<0) {
+			LM_ERR("failed to get flags parameter\n");
+			return -1;
+		}
+	} else {
 		flags.s = NULL;
+	}
 
 	return rtpproxy_offer1_helper_f(msg, flags.s);
 }
@@ -1942,8 +1958,14 @@ rtpproxy_offer2_f(struct sip_msg *msg, char *param1, char *param2)
 {
 	str flags, new_ip;
 
-	get_str_fparam(&flags, msg, (fparam_t *) param1);
-	get_str_fparam(&new_ip, msg, (fparam_t *) param2);
+	if(get_str_fparam(&flags, msg, (fparam_t *) param1)<0) {
+		LM_ERR("failed to get flags parameter\n");
+		return -1;
+	}
+	if(get_str_fparam(&new_ip, msg, (fparam_t *) param2)<0) {
+		LM_ERR("failed to get new ip parameter\n");
+		return -1;
+	}
 	return force_rtp_proxy(msg, flags.s, new_ip.s, 1, 1);
 }
 
@@ -1968,10 +1990,14 @@ rtpproxy_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	str flags;
 
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
-	else
+	if (str1) {
+		if(get_str_fparam(&flags, msg, (fparam_t *) str1)<0) {
+			LM_ERR("failed to get flags parameter\n");
+			return -1;
+		}
+	} else {
 		flags.s = NULL;
+	}
 
 	return rtpproxy_answer1_helper_f(msg, flags.s);
 }
@@ -1986,8 +2012,14 @@ rtpproxy_answer2_f(struct sip_msg *msg, char *param1, char *param2)
 		if (msg->first_line.u.request.method_value != METHOD_ACK)
 			return -1;
 
-	get_str_fparam(&flags, msg, (fparam_t *) param1);
-	get_str_fparam(&new_ip, msg, (fparam_t *) param2);
+	if(get_str_fparam(&flags, msg, (fparam_t *) param1)<0) {
+		LM_ERR("failed to get flags parameter\n");
+		return -1;
+	}
+	if(get_str_fparam(&new_ip, msg, (fparam_t *) param2)<0) {
+		LM_ERR("failed to get new ip parameter\n");
+		return -1;
+	}
 	return force_rtp_proxy(msg, flags.s, new_ip.s, 0, 1);
 }
 
@@ -2100,6 +2132,11 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer,
 	sdp_session_cell_t* sdp_session;
 	sdp_stream_cell_t* sdp_stream;
 
+	if(msg==NULL) {
+		LM_ERR("invalid sip message structure\n");
+		return -1;
+	}
+
 	int_str ice_candidate_priority_val;
 
 	memset(&opts, '\0', sizeof(opts));
@@ -2122,7 +2159,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer,
 				break;
 
 			case '3':
-				if(msg && msg->first_line.type == SIP_REPLY)
+				if(msg->first_line.type == SIP_REPLY)
 					via = 2;
 				else
 					via = 1;
