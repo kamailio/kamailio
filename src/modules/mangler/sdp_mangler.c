@@ -39,166 +39,192 @@
 #include "../../core/ut.h"
 #include "../../core/parser/msg_parser.h"	/* struct sip_msg */
 
-regex_t *portExpression;
-regex_t *ipExpression;
+regex_t *portExpression = NULL;
+regex_t *ipExpression = NULL;
 
 
-
-int
-sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
+int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 {
-	int oldContentLength, newContentLength, oldlen, err, oldPort, newPort,
-		diff, offsetValue,len,off,ret,needToDealocate;
+	int oldContentLength, newContentLength, oldlen, err, oldPort, newPort, diff,
+			offsetValue, len, off, ret, needToDealocate;
 	struct lump *l;
 	regmatch_t pmatch;
 	regex_t *re;
-	char *s, *pos,*begin,*key;
+	char *s, *pos, *begin, *key;
 	char buf[6];
-	
-	
-	
+
+
 	key = PORT_REGEX;
 	/*
 	 * Checking if msg has a payload
 	 */
-	if (msg == NULL)
-		{
-		LOG(L_ERR,"ERROR: sdp_mangle_port: Received NULL for msg \n");
+	if(msg == NULL) {
+		LOG(L_ERR, "ERROR: sdp_mangle_port: Received NULL for msg \n");
 		return -1;
-		}
-                
-	if ((msg->content_length==0) &&
-			((parse_headers(msg,HDR_CONTENTLENGTH_F,0)==-1) ||
-			 (msg->content_length==0) )){
-		LOG(L_ERR,"ERROR: sdp_mangle_port: bad or missing "
-				"Content-Length \n");
+	}
+
+	if((msg->content_length == 0)
+			&& ((parse_headers(msg, HDR_CONTENTLENGTH_F, 0) == -1)
+					   || (msg->content_length == 0))) {
+		LOG(L_ERR, "ERROR: sdp_mangle_port: bad or missing "
+				   "Content-Length \n");
 		return -2;
 	}
 
-        oldContentLength = get_content_length(msg);
-        
-	if (oldContentLength <= 0)
-		{
-		LOG(L_ERR,"ERROR: sdp_mangle_port: Received <= 0 for Content-Length \n");
+	oldContentLength = get_content_length(msg);
+
+	if(oldContentLength <= 0) {
+		LOG(L_ERR,
+				"ERROR: sdp_mangle_port: Received <= 0 for Content-Length \n");
 		return -2;
-		}
-	
-	if (offset == NULL)
+	}
+
+	if(offset == NULL)
 		return -14;
-	if (sscanf (offset, "%d", &offsetValue) != 1)
-	{
-		LOG(L_ERR,"ERROR: sdp_mangle_port: Invalid value for offset \n");
+	if(sscanf(offset, "%d", &offsetValue) != 1) {
+		LOG(L_ERR, "ERROR: sdp_mangle_port: Invalid value for offset \n");
 		return -13;
 	}
-	
-	//offsetValue = (int)offset;
+
+//offsetValue = (int)offset;
 #ifdef EXTRA_DEBUG
-	fprintf (stdout,"---START--------MANGLE PORT-----------------\n");
-	fprintf(stdout,"===============OFFSET = %d\n",offsetValue);
+	fprintf(stdout, "---START--------MANGLE PORT-----------------\n");
+	fprintf(stdout, "===============OFFSET = %d\n", offsetValue);
 #endif
-	
-	if ((offsetValue < MIN_OFFSET_VALUE) || (offsetValue > MAX_OFFSET_VALUE))
-	{
-		LOG(L_ERR,"ERROR: sdp_mangle_port: Invalid value %d for offset \n",offsetValue);
+
+	if((offsetValue < MIN_OFFSET_VALUE) || (offsetValue > MAX_OFFSET_VALUE)) {
+		LOG(L_ERR, "ERROR: sdp_mangle_port: Invalid value %d for offset \n",
+				offsetValue);
 		return -3;
 	}
-	begin = get_body(msg); //msg->buf + msg->first_line.len;	// inlocuiesc cu begin = getbody */
+	begin = get_body(msg);
 	ret = -1;
 
 	/* try to use pre-compiled expressions */
 	needToDealocate = 0;
-	if (portExpression != NULL) 
-		{
+	if(portExpression != NULL) {
 		re = portExpression;
 #ifdef EXTRA_DEBUG
-		fprintf(stdout,"Using PRECOMPILED expression for port ...\n");
+		fprintf(stdout, "Using PRECOMPILED expression for port ...\n");
 #endif
+	} else {
+		/* we are not using pre-compiled expressions */
+		re = pkg_malloc(sizeof(regex_t));
+		if(re == NULL) {
+			LOG(L_ERR, "ERROR: sdp_mangle_port: Unable to allocate re\n");
+			return -4;
 		}
-		else /* we are not using pre-compiled expressions */
-			{
-			re = pkg_malloc(sizeof(regex_t));
-			if (re == NULL)
-				{
-				LOG(L_ERR,"ERROR: sdp_mangle_port: Unable to allocate re\n");
-				return -4;
-				}
-			needToDealocate = 1;
-			if ((regcomp (re, key, REG_EXTENDED)) != 0)
-				{
-				LOG(L_ERR,"ERROR: sdp_mangle_port: Unable to compile %s \n",key);
-				return -5;
-				}
+		needToDealocate = 1;
+		if((regcomp(re, key, REG_EXTENDED)) != 0) {
+			LOG(L_ERR, "ERROR: sdp_mangle_port: Unable to compile %s \n", key);
+			pkg_free(re);
+			return -5;
+		}
 #ifdef EXTRA_DEBUG
-		fprintf(stdout,"Using ALLOCATED expression for port ...\n");
+		fprintf(stdout, "Using ALLOCATED expression for port ...\n");
 #endif
+	}
 
-			}
-	
 	diff = 0;
-	while ((begin < msg->buf + msg->len) && (regexec (re, begin, 1, &pmatch, 0) == 0))
-	{
+	while((begin < msg->buf + msg->len)
+			&& (regexec(re, begin, 1, &pmatch, 0) == 0)) {
 		off = begin - msg->buf;
-		if (pmatch.rm_so == -1)
-		{
-			LOG (L_ERR, "ERROR: sdp_mangle_port: offset unknown\n");
+		if(pmatch.rm_so == -1) {
+			LOG(L_ERR, "ERROR: sdp_mangle_port: offset unknown\n");
+			if(needToDealocate) {
+				regfree(re);
+				pkg_free(re);
+			}
 			return -6;
 		}
-	
+
 #ifdef STRICT_CHECK
-		pmatch.rm_eo --; /* return with one space */
+		pmatch.rm_eo--; /* return with one space */
 #endif
-	
+
 		/* 
                 for BSD and Solaris we avoid memrchr
                 pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so); 
                 */
-                pos = begin+pmatch.rm_eo;
+		pos = begin + pmatch.rm_eo;
 #ifdef EXTRA_DEBUG
-                printf("begin=%c pos=%c rm_so=%d rm_eo=%d\n",*begin,*pos,pmatch.rm_so,pmatch.rm_eo);
+		printf("begin=%c pos=%c rm_so=%d rm_eo=%d\n", *begin, *pos,
+				pmatch.rm_so, pmatch.rm_eo);
 #endif
-                do pos--; while (*pos != ' '); /* we should find ' ' because we matched m=audio port */
-                
-		pos++;		/* jumping over space */
-		oldlen = (pmatch.rm_eo - pmatch.rm_so) - (pos - (begin + pmatch.rm_so));	/* port length */
+		do
+			pos--;
+		while(*pos
+				!= ' '); /* we should find ' ' because we matched m=audio port */
+
+		pos++; /* jumping over space */
+		oldlen = (pmatch.rm_eo - pmatch.rm_so)
+				 - (pos - (begin + pmatch.rm_so)); /* port length */
 
 		/* convert port to int */
-		oldPort = str2s (pos, oldlen, &err);
+		oldPort = str2s(pos, oldlen, &err);
 #ifdef EXTRA_DEBUG
-                printf("port to convert [%.*s] to int\n",oldlen,pos);
+		printf("port to convert [%.*s] to int\n", oldlen, pos);
 #endif
-		if (err)
-			{
-			LOG(L_ERR,"ERROR: sdp_mangle_port: Error converting [%.*s] to int\n",oldlen,pos);
+		if(err) {
+			LOG(L_ERR,
+					"ERROR: sdp_mangle_port: Error converting [%.*s] to int\n",
+					oldlen, pos);
 #ifdef STRICT_CHECK
+			if(needToDealocate) {
+				regfree(re);
+				pkg_free(re);
+			}
 			return -7;
 #else
 			goto continue1;
 #endif
-			}
-		if ((oldPort < MIN_ORIGINAL_PORT) || (oldPort > MAX_ORIGINAL_PORT))	/* we silently fail,we ignore this match or return -11 */
+		}
+		if((oldPort < MIN_ORIGINAL_PORT)
+				|| (oldPort
+						   > MAX_ORIGINAL_PORT)) /* we silently fail,we ignore this match or return -11 */
 		{
 #ifdef EXTRA_DEBUG
-                printf("WARNING: sdp_mangle_port: Silent fail for not matching old port %d\n",oldPort);
+			printf("WARNING: sdp_mangle_port: Silent fail for not matching old "
+				   "port %d\n",
+					oldPort);
 #endif
 
-			LOG(L_WARN,"WARNING: sdp_mangle_port: Silent fail for not matching old port %d\n",oldPort);
+			LOG(L_WARN, "WARNING: sdp_mangle_port: Silent fail for not "
+						"matching old port %d\n",
+					oldPort);
 #ifdef STRICT_CHECK
+			if(needToDealocate) {
+				regfree(re);
+				pkg_free(re);
+			}
 			return -8;
 #else
 			goto continue1;
 #endif
 		}
-                if ((offset[0] != '+')&&(offset[0] != '-')) newPort = offsetValue;//fix value
-		else newPort = oldPort + offsetValue;
+		if((offset[0] != '+') && (offset[0] != '-'))
+			newPort = offsetValue; //fix value
+		else
+			newPort = oldPort + offsetValue;
 		/* new port is between 1 and 65536, or so should be */
-		if ((newPort < MIN_MANGLED_PORT) || (newPort > MAX_MANGLED_PORT))	/* we silently fail,we ignore this match */
+		if((newPort < MIN_MANGLED_PORT)
+				|| (newPort
+						   > MAX_MANGLED_PORT)) /* we silently fail,we ignore this match */
 		{
 #ifdef EXTRA_DEBUG
-                printf("WARNING: sdp_mangle_port: Silent fail for not matching new port %d\n",newPort);
+			printf("WARNING: sdp_mangle_port: Silent fail for not matching new "
+				   "port %d\n",
+					newPort);
 #endif
-                
-			LOG(L_WARN,"WARNING: sdp_mangle_port: Silent fail for not matching new port %d\n",newPort);
+
+			LOG(L_WARN, "WARNING: sdp_mangle_port: Silent fail for not "
+						"matching new port %d\n",
+					newPort);
 #ifdef STRICT_CHECK
+			if(needToDealocate) {
+				regfree(re);
+				pkg_free(re);
+			}
 			return -9;
 #else
 			goto continue1;
@@ -206,7 +232,8 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 		}
 
 #ifdef EXTRA_DEBUG
-		fprintf(stdout,"Extracted port is %d and mangling to %d\n",oldPort,newPort);
+		fprintf(stdout, "Extracted port is %d and mangling to %d\n", oldPort,
+				newPort);
 #endif
 
 		/*
@@ -214,68 +241,79 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 		while ((newPort = (newPort / 10)) != 0)	len++;
 		newPort = oldPort + offsetValue;
 		*/
-		if (newPort >= 10000) len = 5;
-			else
-				if (newPort >= 1000) len = 4;
-					else
-						if (newPort >= 100) len = 3;
-							else
-								if (newPort >= 10) len = 2;
-									else len = 1;
+		if(newPort >= 10000)
+			len = 5;
+		else if(newPort >= 1000)
+			len = 4;
+		else if(newPort >= 100)
+			len = 3;
+		else if(newPort >= 10)
+			len = 2;
+		else
+			len = 1;
 
-		/* replaced five div's + 1 add with most probably 1 comparison or 2 */							
-		
+		/* replaced five div's + 1 add with most probably 1 comparison or 2 */
+
 		/* deleting old port */
-		if ((l = del_lump (msg, pmatch.rm_so + off + 
-						(pos -(begin + pmatch.rm_so)),oldlen, 0)) == 0)
-		{
-			LOG (L_ERR,"ERROR: sdp_mangle_port: del_lump failed\n");
+		if((l = del_lump(msg,
+					pmatch.rm_so + off + (pos - (begin + pmatch.rm_so)), oldlen,
+					0))
+				== 0) {
+			LOG(L_ERR, "ERROR: sdp_mangle_port: del_lump failed\n");
+			if(needToDealocate) {
+				regfree(re);
+				pkg_free(re);
+			}
 			return -10;
 		}
-		s = pkg_malloc (len);
-		if (s == 0)
-		{
-			LOG (L_ERR,"ERROR: sdp_mangle_port : memory allocation failure\n");
+		s = pkg_malloc(len);
+		if(s == 0) {
+			LOG(L_ERR, "ERROR: sdp_mangle_port : memory allocation failure\n");
+			if(needToDealocate) {
+				regfree(re);
+				pkg_free(re);
+			}
 			return -11;
 		}
-		snprintf (buf, len + 1, "%u", newPort);	/* converting to string */
-		memcpy (s, buf, len);
+		snprintf(buf, len + 1, "%u", newPort); /* converting to string */
+		memcpy(s, buf, len);
 
-		if (insert_new_lump_after (l, s, len, 0) == 0)
-		{
-			LOG (L_ERR, "ERROR: sdp_mangle_port: could not insert new lump\n");
-			pkg_free (s);
+		if(insert_new_lump_after(l, s, len, 0) == 0) {
+			LOG(L_ERR, "ERROR: sdp_mangle_port: could not insert new lump\n");
+			pkg_free(s);
+			if(needToDealocate) {
+				regfree(re);
+				pkg_free(re);
+			}
 			return -12;
 		}
-		diff = diff + len /*new length */  - oldlen;
+		diff = diff + len /*new length */ - oldlen;
 		/* new cycle */
 		ret++;
 #ifndef STRICT_CHECK
-continue1:
+	continue1:
 #endif
 		begin = begin + pmatch.rm_eo;
 
-	}			/* while  */
-	if (needToDealocate)
-		{
-		regfree (re);
+	} /* while  */
+	if(needToDealocate) {
+		regfree(re);
 		pkg_free(re);
 #ifdef EXTRA_DEBUG
-		fprintf(stdout,"Deallocating expression for port ...\n");
+		fprintf(stdout, "Deallocating expression for port ...\n");
 #endif
-		}
-	
-	if (diff != 0)
-	{
+	}
+
+	if(diff != 0) {
 		newContentLength = oldContentLength + diff;
-		patch_content_length (msg, newContentLength);
+		patch_content_length(msg, newContentLength);
 	}
 
 #ifdef EXTRA_DEBUG
-	fprintf (stdout,"---END--------MANGLE PORT-----------------\n");
+	fprintf(stdout, "---END--------MANGLE PORT-----------------\n");
 #endif
 
-	return ret+2;
+	return ret + 2;
 }
 
 
