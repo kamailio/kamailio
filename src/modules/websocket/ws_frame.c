@@ -199,11 +199,11 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 
 	if (frame->payload_len < 126) extended_length = 0;
 	else if (frame->payload_len <= USHRT_MAX ) extended_length = 2;
-	else if (frame->payload_len <= UINT_MAX) extended_length = 4;
+	else if (frame->payload_len < UINT_MAX) extended_length = 4;
 	else
 	{
-		LM_ERR("Kamailio only supports WebSocket frames with payload "
-			"<= %u\n", UINT_MAX);
+		LM_ERR(NAME " only supports WebSocket frames with payload "
+			"< %u\n", UINT_MAX);
 		return -1;
 	}
 
@@ -759,11 +759,6 @@ int ws_frame_receive(sr_event_param_t *evp)
 		wsconn_put(frame.wsc);
 		return -1;
 	}
-
-	/* how can we get here ? */
-	wsconn_put(frame.wsc);
-
-	return 0;
 }
 
 int ws_frame_transmit(sr_event_param_t *evp)
