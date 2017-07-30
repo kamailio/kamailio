@@ -245,6 +245,7 @@ int
 cc_parse_param(void *val, AVP_List** avps) {
 
     char *p = NULL;
+    char *p0 = NULL;
     str s, content;
     AVP_List *mp = NULL;
 
@@ -258,12 +259,12 @@ cc_parse_param(void *val, AVP_List** avps) {
 		return -1;
 	}
 
-    p = (char*) pkg_malloc (content.len + 1);
-    CHECK_ALLOC(p);
+    p0 = (char*) pkg_malloc (content.len + 1);
+    CHECK_ALLOC(p0);
+    p = p0;
 
     p[content.len] = '\0';
     memcpy(p, content.s, content.len);
-
 
     for (;*p != '\0';) {
 
@@ -296,8 +297,13 @@ cc_parse_param(void *val, AVP_List** avps) {
         s.len = strlen(p);
 
         p = pv_parse_spec(&s, mp->pv);
+        if(p==NULL) {
+            LM_ERR("failed to parse pv spec\n");
+            goto error;
+        }
 
         for (; isspace(*p); p++);
+
         *avps = mp;
     }
 
@@ -310,6 +316,7 @@ error:
 		}
 		pkg_free(mp);
 	}
+    if(p0) pkg_free(p0);
 	return -1;
 }
 
@@ -581,6 +588,7 @@ make_custom_request(struct sip_msg *msg, CallInfo *call)
 {
     static char request[8192];
     int len = 0;
+    int len0 = 0;
     AVP_List *al;
     pv_value_t pt;
 
@@ -601,21 +609,26 @@ make_custom_request(struct sip_msg *msg, CallInfo *call)
     }
 
     for (; al; al = al->next) {
-        pv_get_spec_value(msg, al->pv, &pt);
+        if(pv_get_spec_value(msg, al->pv, &pt)<0) {
+            LM_ERR("failed to get pv value\n");
+            return NULL;
+        }
         if (pt.flags & PV_VAL_INT) {
-            len += snprintf(request + len, sizeof(request),
+            len += snprintf(request + len0, sizeof(request)-len0,
                       "%.*s = %d ", al->name.len, al->name.s,
                    pt.ri);
         } else    if (pt.flags & PV_VAL_STR) {
-            len += snprintf(request + len, sizeof(request),
+            len += snprintf(request + len0, sizeof(request)-len0,
                       "%.*s = %.*s ", al->name.len, al->name.s,
                    pt.rs.len, pt.rs.s);
         }
 
-          if (len >= sizeof(request)) {
-               LM_ERR("callcontrol request is longer than %ld bytes\n", (unsigned long)sizeof(request));
+        if (len >= sizeof(request)-len0) {
+            LM_ERR("callcontrol request is longer than %ld bytes\n",
+                    (unsigned long)sizeof(request));
             return NULL;
-             }
+        }
+        len0 = len;
     }
 
 
