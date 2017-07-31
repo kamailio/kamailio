@@ -362,7 +362,10 @@ void cfgt_save_node(cfgt_node_p node)
 		return;
 	}
 	LM_DBG("dir [%s]\n", dest.s);
-	mkdir(dest.s, S_IRWXO|S_IXGRP|S_IRWXU);
+	if(mkdir(dest.s, S_IRWXO|S_IXGRP|S_IRWXU)<0) {
+		LM_ERR("failed to make directory (%d)\n", errno);
+		return;
+	}
 	dest.s[dir] = '/';
 	fp = fopen(dest.s, "w");
 	LM_DBG("file [%s]\n", dest.s);
