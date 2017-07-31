@@ -203,7 +203,7 @@ static int fixup_cpl_run_script3(void** param, int param_no)
 {
 	if (param_no==1 || param_no==2) {
 		return fixup_cpl_run_script(param, param_no);
-	} else if (param_no==2) {
+	} else if (param_no==3) {
 		return fixup_spve_null(param, 1);
 	}
 	return 0;
