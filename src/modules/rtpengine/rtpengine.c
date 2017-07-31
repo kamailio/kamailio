@@ -1046,6 +1046,7 @@ static int fixup_set_id(void ** param, int param_no)
 		int_val = pv_locate_name(&s);
 		if(int_val<0 || int_val!=s.len) {
 			LM_ERR("invalid parameter %s\n", s.s);
+			pkg_free(rtpl);
 			return -1;
 		}
 		rtpl->rpv = pv_cache_get(&s);
