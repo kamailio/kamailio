@@ -686,6 +686,9 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 	ac_tm_t att;
 	tmrec_t trt;
 
+	memset(&att, 0, sizeof(ac_tm_t));
+	memset(&trt, 0, sizeof(tmrec_t));
+
 	LM_DBG("checking recv. time stamp <%d>\n",
 		intr->recv_time);
 	switch (NR_OF_ATTR(intr->ip)) {
