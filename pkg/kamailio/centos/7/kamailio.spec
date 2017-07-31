@@ -23,7 +23,6 @@ Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-kazoo < %ver
-Conflicts:  kamailio-rabbitmq < %ver
 Conflicts:  kamailio-memcached < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
@@ -234,16 +233,6 @@ BuildRequires:  libuuid-devel, librabbitmq-devel, json-c-devel, libevent-devel
 
 %description    kazoo
 Kazoo module for Kamailio.
-
-
-%package    rabbitmq
-Summary:    RabbitMQ related modules
-Group:      System Environment/Daemons
-Requires:   uuid, librabbitmq, kamailio = %ver
-BuildRequires:    librabbitmq-devel, uuid-devel
-
-%description    rabbitmq
-RabbitMQ module for Kamailio.
 
 
 %package    lcr
@@ -584,7 +573,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     kdnssec \
 %endif
     kgeoip kgzcompress khttp_async kims kjansson kjson kjsonrpcs \
-    kkazoo krabbitmq kldap klua kmemcached \
+    kkazoo kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp kuuid"
@@ -604,7 +593,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kdnssec \
 %endif
     kgeoip kgzcompress khttp_async kims kjansson kjson kjsonrpcs \
-    kkazoo krabbitmq kldap klua kmemcached \
+    kkazoo kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp kuuid"
@@ -1099,12 +1088,6 @@ fi
 %{_libdir}/kamailio/modules/kazoo.so
 
 
-%files      rabbitmq
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.rabbitmq
-%{_libdir}/kamailio/modules/rabbitmq.so
-
-
 %files      lcr
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.lcr
@@ -1369,8 +1352,6 @@ fi
 %{_libdir}/kamailio/modules/app_sqlang.so
 
 %changelog
-* Mon Jul 31 2017 Mititelu Stefan <stefan.mititelu92@gmail.com>
-   - added rabbitmq module
 * Wed Apr 26 2017 Carsten Bock <carsten@ng-voice.co,>
   - added ims_diameter_server module
   - added topos_redis module
