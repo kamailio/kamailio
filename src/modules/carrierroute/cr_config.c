@@ -250,14 +250,14 @@ int load_config(struct route_data_t * rd) {
 
 	/* Create and insert carrier data structure */
 	tmp_carrier_data = create_carrier_data(1, &rd->carrier_map[0].name, allocated_domain_num);
-	tmp_carrier_data->domain_num = 0;
-	tmp_carrier_data->id = 1;
-	tmp_carrier_data->name = &(rd->carrier_map[0].name);
-
 	if (tmp_carrier_data == NULL) {
 		LM_ERR("can't create new carrier\n");
 		goto errclose;
 	}
+	tmp_carrier_data->domain_num = 0;
+	tmp_carrier_data->id = 1;
+	tmp_carrier_data->name = &(rd->carrier_map[0].name);
+
 	if (add_carrier_data(rd, tmp_carrier_data) < 0) {
 		LM_ERR("couldn't add carrier data\n");
 		destroy_carrier_data(tmp_carrier_data);
