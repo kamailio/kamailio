@@ -197,6 +197,7 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	if(!_tbc_temp)
 	{
 		LM_ERR("unable to allocate temp table\n");
+		if(_o_op) pkg_free(_o_op);
 		return -1;
 	}
 
@@ -206,6 +207,7 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	{
 		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 		dbt_db_del_table(DBT_CON_CONNECTION(_h), &_tbc_temp->name, 0);
+		if(_o_op) pkg_free(_o_op);
 		return -1;
 	}
 
