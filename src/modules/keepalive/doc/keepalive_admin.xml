@@ -24,7 +24,7 @@
 		<para>
 			As an example of usage by other modules, see
 			<emphasis>drouting</emphasis>, which was
-			enahnced to use this module to monitor its gateways.
+			enhanced to use this module to monitor its gateways.
 		</para>
 	</section>
 
@@ -62,7 +62,7 @@
 			<section>
 				<title><varname>ping_interval</varname> (integer)</title>
 				<para>
-					Interval requests are sent to destinations (in seconds)
+					Define the interval (in seconds) ping requests are sent to destinations
 				</para>
 				<para>
 				<emphasis>
@@ -81,7 +81,7 @@ modparam("keepalive", "ping_interval", 10)
 			<section>
 				<title><varname>destination</varname> (string)</title>
 				<para>
-					Allows to specify statically destinations you want to monitor
+					Allows to statically define destinations you want to monitor
 				</para>
 				<example>
 					<title>Set <varname>destination</varname> parameter</title>
@@ -102,13 +102,18 @@ modparam("keepalive", "destination", "sip.provider.com")
 					<function moreinfo="none">is_alive(destination)</function>
 			    </title>
 				<para>
-					Get destination status
+					Get destination status.
 				</para>
 		        <para>
-					Parameter <quote>destination</quote> is destination you want to check status
+					The Parameter <emphasis>destination</emphasis> is destination you want to check status
 		        </para>
         		<para>
-		            Return value: 1 if destination is up, 2 if destination is down, -1 on error.
+					Returned value:
+					<itemizedlist>
+						<listitem>1 if destination is up</listitem>
+						<listitem>2 if destination is down</listitem>
+					    <listitem>-1 on error</listitem>
+					</itemizedlist>
         		</para>
 		        <para>
 				    This function can be used from ANY_ROUTE.
@@ -117,7 +122,9 @@ modparam("keepalive", "destination", "sip.provider.com")
 					<title><function>is_alive()</function> usage</title>
 					<programlisting format="linespecific">
 ...
-is_alive("192.168.10.20");
+if(is_alive("192.168.10.20") == 1) {
+  // do stuff
+};
 ...
 			        </programlisting>
 			    </example>
