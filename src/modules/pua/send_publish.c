@@ -457,7 +457,7 @@ done:
 	return;
 
 error:
-	if(*ps->param)
+	if(ps->param && *ps->param)
 	{
 		shm_free(*ps->param);
 		*ps->param= NULL;

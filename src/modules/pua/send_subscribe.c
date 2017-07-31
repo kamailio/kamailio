@@ -980,6 +980,7 @@ int send_subscribe(subs_info_t* subs)
 	if(str_hdr== NULL || str_hdr->s== NULL)
 	{
 		LM_ERR("while building extra headers\n");
+		if(str_hdr) pkg_free(str_hdr);
 		return -1;
 	}
 
