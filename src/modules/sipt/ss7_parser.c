@@ -110,7 +110,7 @@ static int encode_called_party(char * number, unsigned char * flags, int nai, un
 	if(nai)
 	{
 		buf[0] &= 0x80;
-		buf[0] = (unsigned char)(nai&0x7F);
+		buf[0] |= (unsigned char)(nai&0x7F);
 	}
 
 	return numlen + 2;
