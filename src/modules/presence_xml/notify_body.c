@@ -233,17 +233,6 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	char* content = NULL;
 	char all_name[KSR_FNB_NAME_SIZE+8];
 
-	strcpy(all_name, "all-");
-
-	new_body = (str*)pkg_malloc(sizeof(str));
-	if(new_body == NULL)
-	{
-		LM_ERR("while allocating memory\n");
-		return NULL;
-	}	
-
-	memset(new_body, 0, sizeof(str));
-
 	doc = xmlParseMemory(notify_body->s, notify_body->len);
 	if(doc== NULL) 
 	{
@@ -256,6 +245,16 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 		LM_ERR("while extracting the presence node\n");
 		goto error;
 	}
+
+	strcpy(all_name, "all-");
+
+	new_body = (str*)pkg_malloc(sizeof(str));
+	if(new_body == NULL)
+	{
+		LM_ERR("while allocating memory\n");
+		return NULL;
+	}
+	memset(new_body, 0, sizeof(str));
 
 	transf_node = xmlNodeGetChildByName(rule_node, "transformations");
 	if(transf_node == NULL)
@@ -502,34 +501,21 @@ done:
 	LM_DBG("body = \n%.*s\n", new_body->len,
 			new_body->s);
 
-    xmlFreeDoc(doc);
+	xmlFreeDoc(doc);
 
 	xmlFree(class_cont);
 	xmlFree(occurence_ID);
 	xmlFree(deviceID);
 	xmlFree(service_uri);
-    xmlCleanupParser();
-    xmlMemoryDump();
+	xmlCleanupParser();
+	xmlMemoryDump();
 
-    return new_body;
+	return new_body;
+
 error:
-    if(doc)
+    if(doc) {
 		xmlFreeDoc(doc);
-	if(new_body)
-	{
-		if(new_body->s)
-			xmlFree(new_body->s);
-		pkg_free(new_body);
 	}
-	if(class_cont)
-		xmlFree(class_cont);
-	if(occurence_ID)
-		xmlFree(occurence_ID);
-	if(deviceID)
-		xmlFree(deviceID);
-	if(service_uri)
-		xmlFree(service_uri);
-
 	return NULL;
 }	
 
