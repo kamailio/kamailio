@@ -274,108 +274,128 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		if (p_root->children) {
 			for (node = p_root->children; node; node = next_node) {
 				next_node = node->next;
-				if (node->type == XML_ELEMENT_NODE) {
-					LM_DBG("node type: Element, name: %s\n", node->name);
-					/* we do not copy the node, but unlink it and then add it ot the new node
-					 * this destroys the original document but we do not need it anyway.
-					 * using "copy" instead of "unlink" would also copy the namespace which 
-					 * would then be declared redundant (libxml unfortunately can not remove 
-					 * namespaces)
+				if (node->type != XML_ELEMENT_NODE) {
+					continue;
+				}
+				LM_DBG("node type: Element, name: %s\n", node->name);
+				/* we do not copy the node, but unlink it and then add it ot the new node
+				 * this destroys the original document but we do not need it anyway.
+				 * using "copy" instead of "unlink" would also copy the namespace which 
+				 * would then be declared redundant (libxml unfortunately can not remove 
+				 * namespaces)
+				 */
+				if(!force_single_dialog || (j == 1)) {
+					xmlUnlinkNode(node);
+					if(xmlAddChild(root_node, node) == NULL) {
+						xmlFreeNode(node);
+						LM_ERR("while adding child\n");
+						goto error;
+					}
+				} else {
+					/* try to put only the most important into the XML document
+					 * order of importance: terminated->trying->proceeding->confirmed->early
+					 * - check first the relevant states and jump priority for them
 					 */
-					if (!force_single_dialog || (j==1)) {
-						xmlUnlinkNode(node);
-						if(xmlAddChild(root_node, node)== NULL) {
-							xmlFreeNode(node);
-							LM_ERR("while adding child\n");
-							goto error;
+					if(strcasecmp((char *)node->name, "dialog") == 0) {
+						if(dialog_id) {
+							xmlFree(dialog_id);
 						}
-					} else {
-						/* try to put only the most important into the XML document
-						 * order of importance: terminated->trying->proceeding->confirmed->early
-						 * - check first the relevant states and jump priority for them
-						 */
-						if(strcasecmp((char*)node->name,"dialog") == 0)
-						{
-							if(dialog_id) xmlFree(dialog_id);
-							dialog_id = xmlGetProp(node,(const xmlChar *)"id");
-							if(dialog_id) {
-								node_id = i;
-								LM_DBG("Dialog id for this node : %s\n", dialog_id);
-							} else {
-								LM_DBG("No dialog id for this node - index: %d\n", i);
-							}
+						dialog_id = xmlGetProp(node, (const xmlChar *)"id");
+						if(dialog_id) {
+							node_id = i;
+							LM_DBG("Dialog id for this node : %s\n", dialog_id);
+						} else {
+							LM_DBG("No dialog id for this node - index: %d\n",
+									i);
 						}
-						state = xmlNodeGetNodeContentByName(node, "state", NULL);
-						if(state) {
-							LM_DBG("state element content = %s\n", state);
-							if (strcasecmp(state,"terminated") == 0)
-							{
-								LM_DBG("found terminated state\n" );
-								terminated_node = node;
-							} else if (strcasecmp(state,"confirmed") == 0 && node_id == i) {
-								/*  here we check if confirmed is terminated or not
+					}
+					state = xmlNodeGetNodeContentByName(node, "state", NULL);
+					if(state) {
+						LM_DBG("state element content = %s\n", state);
+						if(strcasecmp(state, "terminated") == 0) {
+							LM_DBG("found terminated state\n");
+							terminated_node = node;
+						} else if(strcasecmp(state, "confirmed") == 0
+								  && node_id == i) {
+							/*  here we check if confirmed is terminated or not
 								 *  if it is not we are in the middle of the conversation
 								 */
-								if(check_relevant_state(dialog_id, xml_array, j) >= DEF_TERMINATED_NODE)
-								{
-									LM_DBG("confirmed state for dialog %s, but it is not latest state\n", dialog_id );
-								}else{
-									LM_DBG("confirmed state for dialog %s and latest state for this dialog\n", dialog_id );
-									confirmed_node = node;
-								}
-
-
-							} else if (strcasecmp(state,"early") == 0 && node_id == i) {
-								if(check_relevant_state(dialog_id, xml_array, j)  >= DEF_CONFIRMED_NODE)
-								{
-									LM_DBG("early state for dialog %s, but it is not latest state\n", dialog_id );
-								}else{
-									LM_DBG("early state for dialog %s and latest state for this dialog\n", dialog_id );
-									early_node = node;
-								}
-							} else if (strcasecmp(state,"proceeding") == 0 && node_id == i) {
-								if(check_relevant_state(dialog_id, xml_array, j)  >= DEF_EARLY_NODE)
-								{
-									LM_DBG("proceeding state for dialog %s, but it is not latest state\n", dialog_id );
-								}else{
-									LM_DBG("proceeding state for dialog %s and latest state for this dialog\n", dialog_id );
-									proceed_node = node;
-								}
-							} else if (strcasecmp(state,"trying") == 0 && node_id == i) {
-								if(check_relevant_state(dialog_id, xml_array, j)  >= DEF_PROCEEDING_NODE)
-								{
-									LM_DBG("trying state for dialog %s, but it is not latest state\n", dialog_id );
-								}else{
-									LM_DBG("trying state for dialog %s and latest state for this dialog\n", dialog_id );
-									trying_node = node;
-								}
-							}
-							if(early_node != NULL) {
-								winner_dialog_node = early_node;
-							} else if(confirmed_node != NULL) {
-									winner_dialog_node = confirmed_node;
-							} else if(proceed_node != NULL) {
-									winner_dialog_node = proceed_node;
-							} else if(trying_node != NULL) {
-									winner_dialog_node = trying_node;
-							} else if(terminated_node != NULL) {
-									winner_dialog_node = terminated_node;
+							if(check_relevant_state(dialog_id, xml_array, j)
+									>= DEF_TERMINATED_NODE) {
+								LM_DBG("confirmed state for dialog %s, but it "
+									   "is not latest state\n",
+										dialog_id);
 							} else {
-								/* assume a failure somewhere and all above nodes are NULL */
+								LM_DBG("confirmed state for dialog %s and "
+									   "latest state for this dialog\n",
+										dialog_id);
+								confirmed_node = node;
+							}
+						} else if(strcasecmp(state, "early") == 0
+								  && node_id == i) {
+							if(check_relevant_state(dialog_id, xml_array, j)
+									>= DEF_CONFIRMED_NODE) {
+								LM_DBG("early state for dialog %s, but it is "
+									   "not latest state\n",
+										dialog_id);
+							} else {
+								LM_DBG("early state for dialog %s and latest "
+									   "state for this dialog\n",
+										dialog_id);
+								early_node = node;
+							}
+						} else if(strcasecmp(state, "proceeding") == 0
+								  && node_id == i) {
+							if(check_relevant_state(dialog_id, xml_array, j)
+									>= DEF_EARLY_NODE) {
+								LM_DBG("proceeding state for dialog %s, but it "
+									   "is not latest state\n",
+										dialog_id);
+							} else {
+								LM_DBG("proceeding state for dialog %s and "
+									   "latest state for this dialog\n",
+										dialog_id);
+								proceed_node = node;
+							}
+						} else if(strcasecmp(state, "trying") == 0
+								  && node_id == i) {
+							if(check_relevant_state(dialog_id, xml_array, j)
+									>= DEF_PROCEEDING_NODE) {
+								LM_DBG("trying state for dialog %s, but it is "
+									   "not latest state\n",
+										dialog_id);
+							} else {
+								LM_DBG("trying state for dialog %s and latest "
+									   "state for this dialog\n",
+										dialog_id);
+								trying_node = node;
+							}
+						}
+						if(early_node != NULL) {
+							winner_dialog_node = early_node;
+						} else if(confirmed_node != NULL) {
+							winner_dialog_node = confirmed_node;
+						} else if(proceed_node != NULL) {
+							winner_dialog_node = proceed_node;
+						} else if(trying_node != NULL) {
+							winner_dialog_node = trying_node;
+						} else if(terminated_node != NULL) {
+							winner_dialog_node = terminated_node;
+						} else {
+							/* assume a failure somewhere and all above nodes are NULL */
+							winner_dialog_node = node;
+						}
+						/*
+						if(winner_dialog_node == NULL) {
+							priority = get_dialog_state_priority(state);
+							if (priority > winner_priority) {
+								winner_priority = priority;
+								LM_DBG("new winner priority = %s (%d)\n", state, winner_priority);
 								winner_dialog_node = node;
 							}
-							/*
-							if(winner_dialog_node == NULL) {
-								priority = get_dialog_state_priority(state);
-								if (priority > winner_priority) {
-									winner_priority = priority;
-									LM_DBG("new winner priority = %s (%d)\n", state, winner_priority);
-									winner_dialog_node = node;
-								}
-							}
-							*/
-							xmlFree(state);
 						}
+						*/
+						xmlFree(state);
 					}
 				}
 			}
@@ -460,6 +480,12 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_
 	xmlChar *dialog_id_tmp = NULL;
 	xmlNodePtr p_root;
 	xmlNodePtr node = NULL;
+
+	if(dialog_id==NULL) {
+		LM_WARN("dialog id is null\n");
+		return 0;
+	}
+
 	for (i = 0; i < total_nodes; i++)
 	{
 		p_root = xmlDocGetRootElement (xml_array[i]);
@@ -467,65 +493,74 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_
 		{
 			LM_DBG ("the xml_tree root element is null\n");
 		} else {
-			if (p_root->children)
+			if (p_root->children) {
 				for (node = p_root->children; node; node = node->next)
 				{
-					if (node->type == XML_ELEMENT_NODE)
-					{
-						if (strcasecmp ((char*)node->name, "dialog") == 0)
-						{
-							/* Getting the node id so we would be sure
+					if (node->type != XML_ELEMENT_NODE) {
+						continue;
+					}
+					if(strcasecmp((char *)node->name, "dialog") == 0) {
+						/* Getting the node id so we would be sure
 							 * that terminate state from same one the same */
-							if(dialog_id_tmp) xmlFree(dialog_id_tmp);
-							dialog_id_tmp = xmlGetProp (node, (const xmlChar *) "id");
-							if(dialog_id_tmp) node_id = i;
+						if(dialog_id_tmp)
+							xmlFree(dialog_id_tmp);
+						dialog_id_tmp = xmlGetProp(node, (const xmlChar *)"id");
+						if(dialog_id_tmp)
+							node_id = i;
+					}
+					if(dialog_id_tmp == NULL) {
+						continue;
+					}
+					state = xmlNodeGetNodeContentByName(node, "state", NULL);
+					if(state) {
+						/* check if state is terminated for this dialog. */
+						if((strcasecmp(state, "terminated") == 0)
+								&& (node_id == i) && (node_id >= 0)
+								&& (strcasecmp((char *)dialog_id_tmp,
+											(char *)dialog_id)
+										   == 0)) {
+							LM_DBG("Found terminated in dialog %s\n",
+									dialog_id);
+							result += DEF_TERMINATED_NODE;
 						}
-						state = xmlNodeGetNodeContentByName (node, "state", NULL);
-						if (state)
-						{
-							/* check if state is terminated for this dialog. */
-							if ((strcasecmp (state, "terminated") == 0)
-									&& (node_id == i) && (node_id >= 0)
-									&& (strcasecmp ((char*)dialog_id_tmp, (char*)dialog_id) == 0))
-							{
-								LM_DBG ("Found terminated in dialog %s\n",
-										dialog_id);
-								result += DEF_TERMINATED_NODE;
-							}
-							/* check if state is confirmed for this dialog. */
-							if ((strcasecmp (state, "confirmed") == 0)
-									&& (node_id == i) && (node_id >= 0)
-									&& (strcasecmp ((char*)dialog_id_tmp, (char*)dialog_id) == 0))
-							{
-								LM_DBG ("Found confirmed in dialog %s\n", dialog_id);
-								result += DEF_CONFIRMED_NODE;
-							}
-							if ((strcasecmp (state, "early") == 0)
-									&& (node_id == i) && (node_id >= 0)
-									&& (strcasecmp ((char*)dialog_id_tmp, (char*)dialog_id) == 0))
-							{
-								LM_DBG ("Found early in dialog %s\n", dialog_id);
-								result += DEF_EARLY_NODE;
-							}
-							if ((strcasecmp (state, "proceeding") == 0)
-									&& (node_id == i) && (node_id >= 0)
-									&& (strcasecmp ((char*)dialog_id_tmp, (char*)dialog_id) == 0))
-							{
-								LM_DBG ("Found proceeding in dialog %s\n", dialog_id);
-								result += DEF_PROCEEDING_NODE;
-							}
-							if ((strcasecmp (state, "trying") == 0)
-									&& (node_id == i) && (node_id >= 0)
-									&& (strcasecmp ((char*)dialog_id_tmp, (char*)dialog_id) == 0))
-							{
-								LM_DBG ("Found trying in dialog %s\n", dialog_id);
-								result += DEF_TRYING_NODE;
-							}
-
-							xmlFree (state);
+						/* check if state is confirmed for this dialog. */
+						if((strcasecmp(state, "confirmed") == 0)
+								&& (node_id == i) && (node_id >= 0)
+								&& (strcasecmp((char *)dialog_id_tmp,
+											(char *)dialog_id)
+										   == 0)) {
+							LM_DBG("Found confirmed in dialog %s\n", dialog_id);
+							result += DEF_CONFIRMED_NODE;
 						}
+						if((strcasecmp(state, "early") == 0) && (node_id == i)
+								&& (node_id >= 0)
+								&& (strcasecmp((char *)dialog_id_tmp,
+											(char *)dialog_id)
+										   == 0)) {
+							LM_DBG("Found early in dialog %s\n", dialog_id);
+							result += DEF_EARLY_NODE;
+						}
+						if((strcasecmp(state, "proceeding") == 0)
+								&& (node_id == i) && (node_id >= 0)
+								&& (strcasecmp((char *)dialog_id_tmp,
+											(char *)dialog_id)
+										   == 0)) {
+							LM_DBG("Found proceeding in dialog %s\n",
+									dialog_id);
+							result += DEF_PROCEEDING_NODE;
+						}
+						if((strcasecmp(state, "trying") == 0) && (node_id == i)
+								&& (node_id >= 0)
+								&& (strcasecmp((char *)dialog_id_tmp,
+											(char *)dialog_id)
+										   == 0)) {
+							LM_DBG("Found trying in dialog %s\n", dialog_id);
+							result += DEF_TRYING_NODE;
+						}
+						xmlFree(state);
 					}
 				}
+			}
 		}
 	}
 	if(dialog_id_tmp) xmlFree(dialog_id_tmp);
