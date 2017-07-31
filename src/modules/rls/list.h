@@ -105,14 +105,13 @@ static inline list_entry_t *list_remove(str strng, list_entry_t *list)
 	{
 		if (strncmp(p->strng->s, strng.s, strng.len) == 0)
 		{
+			list = list->next;
 			pkg_free(p->strng->s);
 			pkg_free(p->strng);
 			pkg_free(p);
-			return list->next;
-		}
-		else
-		{
-			list_entry_t *p = list, *q;
+			return list;
+		} else {
+			list_entry_t *q;
 
 			while (p->next != NULL && (cmp = strncmp(p->next->strng->s, strng.s, strng.len)) < 0)
 				p = p->next;
