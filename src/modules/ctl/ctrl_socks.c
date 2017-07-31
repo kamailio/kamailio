@@ -145,7 +145,7 @@ end:
 					proto=UDP_SOCK;
 					DBG("guess:%s is a tcp socket\n", name);
 			}
-		}else if (name && strchr(name, '/')){
+		}else if (strchr(name, '/')){
 			switch(def){
 				case TCP_SOCK:
 				case UDP_SOCK:
