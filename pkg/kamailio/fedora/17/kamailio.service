@@ -10,7 +10,7 @@ EnvironmentFile=/etc/sysconfig/kamailio
 PIDFile=/var/run/kamailio.pid
 ExecStart=/usr/sbin/kamailio -P /var/run/kamailio.pid $OPTIONS
 ExecStopPost=/usr/bin/rm -f /var/run/kamailio.pid
-Restart=on-abort
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
