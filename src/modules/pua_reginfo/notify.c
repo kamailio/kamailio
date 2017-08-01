@@ -232,8 +232,8 @@ int process_body(str notify_body, udomain_t * domain) {
 	char * expires_char,  * cseq_char;
 	int cseq = 0;
 	int len;
-	urecord_t * ul_record;
-	ucontact_t * ul_contact;
+	urecord_t * ul_record = NULL;
+	ucontact_t * ul_contact = NULL;
 	struct sip_uri parsed_aor;
 
 	/* Temporary */
