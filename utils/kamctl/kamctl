@@ -2572,7 +2572,7 @@ tls_ca() {
 			merr "Failed to create root directory $CA_PATH"
 			exit 1
 		fi
-		rm -fr $CA_PATH/*
+		rm -fr "${CA_PATH:?}"/*
 		mkdir $CA_PATH/private
 		mkdir $CA_PATH/certs
 		touch $CA_PATH/index.txt
@@ -2643,7 +2643,7 @@ tls_ca() {
 			merr "Failed to create user directory $USER_DIR "
 			exit 1
 		fi
-		rm -fr $USER_DIR/*
+		rm -fr "${USER_DIR:?}"/*
 
 		mecho "Creating user certificate request"
 		openssl req  -config $USER_CFG -out $USER_DIR/$USER-cert_req.pem \
