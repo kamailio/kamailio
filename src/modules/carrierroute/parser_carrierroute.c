@@ -236,7 +236,10 @@ int parse_options(FILE* file, option_description* opts, int no_options, char* en
 		/* parsing stops when end_str is reached: e.g: }, target */
 		if ( strncmp(data.s, end_str, strlen(end_str)) == 0){
 			LM_DBG("End of options list received \n");
-			fseek(file, -full_line_len, SEEK_CUR);
+			if (fseek(file, -full_line_len, SEEK_CUR) != 0){
+				LM_ERR("fseek failed: %s",strerror(errno));
+				break;
+			}
 			ret = SUCCESSFUL_PARSING;
 			break;
 		}
@@ -385,9 +388,11 @@ int parse_struct_header(FILE* file, char* expected_struct_type, str* struct_name
 		memcpy(struct_name->s, name, struct_name->len);
 		struct_name->s[struct_name->len]='\0';
 	}
-	else
-		fseek(file, -full_line_len, SEEK_CUR);
-
+	else{
+		if (fseek(file, -full_line_len, SEEK_CUR) != 0){
+			LM_ERR("fseek failed: %s",strerror(errno));
+		}
+	}
 	return ret;
 }
 
