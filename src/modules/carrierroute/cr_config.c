@@ -111,7 +111,8 @@ static int init_prefix_opts(){
 
 static int backup_config(void) {
 	FILE * from, * to;
-	char * backup_file, ch;
+	char * backup_file;
+	int ch;
 	LM_INFO("start configuration backup\n");
 	if((backup_file = pkg_malloc(strlen(config_file) + strlen (".bak") + 1)) == NULL){
 		PKG_MEM_ERROR;
