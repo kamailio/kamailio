@@ -280,15 +280,17 @@ int load_route_data_db(struct route_data_t * rd) {
 		return -1;
 	}
 
-	if((rd->carrier_num = load_carrier_map(rd)) <= 0){
+	if((ret = load_carrier_map(rd)) <= 0){
 		LM_ERR("error while retrieving carriers\n");
 		goto errout;
 	}
+	rd->carrier_num = (size_t)ret;
 
-	if((rd->domain_num = load_domain_map(rd)) <= 0){
+	if((ret = load_domain_map(rd)) <= 0){
 		LM_ERR("error while retrieving domains\n");
 		goto errout;
 	}
+	rd->domain_num = (size_t)ret;
 
 	if ((rd->carriers = shm_malloc(sizeof(struct carrier_data_t *) * rd->carrier_num)) == NULL) {
 		SHM_MEM_ERROR;
