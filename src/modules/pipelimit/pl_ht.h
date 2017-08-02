@@ -112,11 +112,11 @@ static inline int str_i_cmp(const str * a, const str * b)
 static inline int str_map_str(const str_map_t * map, const str * key, int * ret)
 {
 	for (; map->str.s; map++)
-		if (! str_cmp(&map->str, key)) {
+		if (! str_i_cmp(&map->str, key)) {
 			*ret = map->id;
 			return 0;
 		}
-	LM_DBG("str_map_str() failed map=%p key=%.*s\n", map, key->len, key->s);
+	LM_DBG("failed to match - map=%p key=%.*s\n", map, key->len, key->s);
 	return -1;
 }
 
@@ -131,7 +131,7 @@ static inline int str_map_int(const str_map_t * map, int key, str * ret)
 			*ret = map->str;
 			return 0;
 		}
-	LM_DBG("str_map_str() failed map=%p key=%d\n", map, key);
+	LM_DBG("failed to match - failed map=%p key=%d\n", map, key);
 	return -1;
 }
 
@@ -144,7 +144,7 @@ static inline int str_cpy(str * dest, str * src)
 	dest->len = src->len;
 	dest->s = shm_malloc(src->len);
 	if (! dest->s) {
-		LM_ERR("oom: '%.*s'\n", src->len, src->s);
+		LM_ERR("out of shared memory: '%.*s'\n", src->len, src->s);
 		return -1;
 	}
 	memcpy(dest->s, src->s, src->len);
