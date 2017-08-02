@@ -74,7 +74,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="tsilo.p.hash_size">
 		<title><varname>hash_size</varname> (integer)</title>
 		<para>
 		The size of the hash table internally used to keep the transaction. A
@@ -97,7 +97,7 @@ modparam("tsilo", "hash_size", 1024)
 		</example>
 	</section>
 
-	<section>
+	<section id="tsilo.p.use_domain">
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 			Specify if the domain part of the URI should be also saved and used for
@@ -122,7 +122,7 @@ modparam("tsilo", "use_domain", 1)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="tsilo.f.ts_store">
 		<title><function moreinfo="none">ts_store([uri])</function></title>
 		<para>
 		The method stores uri, tindex and tlabel of the current transaction. If
@@ -146,7 +146,7 @@ if (is_method("INVITE")) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="tsilo.f.ts_append">
 		<title><function moreinfo="none">ts_append(domain, ruri)</function></title>
 		<para>
 		The method add branches to all the stored transactions for the &sip;
@@ -184,7 +184,7 @@ if (is_method("REGISTER")) {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="tsilo.f.ts_append_to">
 		<title><function moreinfo="none">ts_append_to(tindex, tlabel, domain, [uri])</function></title>
 		<para>
 		The method add branches to the transaction identified by tindex and tlabel,
@@ -238,7 +238,7 @@ if (is_method("REGISTER")) {
 
 	<section>
 	<title>RPC Commands</title>
-		<section>
+		<section id="tsilo.rpc.ts.dump">
 			<title><varname>ts.dump</varname></title>
 			<para>Dumps the content of the TSILO table</para>
 			<para>Name: <emphasis>ts.dump</emphasis></para>
@@ -247,7 +247,7 @@ if (is_method("REGISTER")) {
 			kamcmd ts.dump
 			</programlisting>
 		</section>
-		<section>
+		<section id="tsilo.rpc.ts.lookup">
 			<title><varname>ts.lookup</varname></title>
 			<para>Dumps the transactions stored for the given RURI</para>
 			<para>Name: <emphasis>ts.lookup</emphasis></para>
@@ -259,31 +259,31 @@ if (is_method("REGISTER")) {
 	</section>
 	<section>
 		<title>Statistics</title>
-		<section>
+		<section id="tsilo.stat.stored_ruris">
 			<title><varname>stored_ruris</varname></title>
 			<para>
 			Number of ruris currently stored in the TSILO table.
 			</para>
 		</section>
-		<section>
+		<section id="tsilo.stat.stored_transactions">
 			<title><varname>stored_transactions</varname></title>
 			<para>
 			Number of transactions currently stored in the TSILO table.
 			</para>
 		</section>
-		<section>
+		<section id="tsilo.stat.added_branches">
 			<title><varname>added_branches</varname></title>
 			<para>
 			Total number of added branches from the startup.
 			</para>
 		</section>
-		<section>
+		<section id="tsilo.stat.total_ruris">
 			<title><varname>total_ruris</varname></title>
 			<para>
 			Total number of stored ruris from the startup.
 			</para>
 		</section>
-		<section>
+		<section id="tsilo.stat.total_transactions">
 			<title><varname>total_transactions</varname></title>
 			<para>
 			Total number of stored transactions from the startup.
