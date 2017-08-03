@@ -230,11 +230,18 @@ void cpl_aux_process( int cmd_out, char *log_dir)
 		LM_ERR("cannot set to IGNORE SIGCHLD signal\n");
 	}
 
+	file[0] = '\0';
+	file_ptr = file;
 	/* set the path for logging */
 	if (log_dir) {
-		strcpy( file, log_dir);
-		file_ptr = file + strlen(log_dir);
-		*(file_ptr++) = '/';
+		if(strlen(log_dir)>=MAX_LOG_DIR_SIZE) {
+			/* fallback */
+			LM_ERR("log dir path is too long, ignoring - check workdir\n");
+		} else {
+			strcpy(file, log_dir);
+			file_ptr = file + strlen(log_dir);
+			*(file_ptr++) = '/';
+		}
 	}
 
 	while(1) {
