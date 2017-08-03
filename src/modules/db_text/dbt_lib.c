@@ -442,30 +442,34 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 		case DB1_INT:
 			if(_t0==DB1_DATETIME || _t0==DB1_BITMAP)
 				return 0;
-
+			break;
 		case DB1_BIGINT:
 			LM_ERR("BIGINT not supported\n");
 			return 0;
-
 		case DB1_DATETIME:
 			if(_t0==DB1_INT)
 				return 0;
 			if(_t0==DB1_BITMAP)
 				return 0;
+			break;
 		case DB1_DOUBLE:
 			break;
 		case DB1_STRING:
 			if(_t0==DB1_STR || _t0==DB1_BLOB)
 				return 0;
+			break;
 		case DB1_STR:
 			if(_t0==DB1_STRING || _t0==DB1_BLOB)
 				return 0;
+			break;
 		case DB1_BLOB:
 			if(_t0==DB1_STR || _t0==DB1_STRING)
 				return 0;
+			break;
 		case DB1_BITMAP:
 			if (_t0==DB1_INT)
 				return 0;
+			break;
 		default:
 			LM_ERR("invalid datatype %d\n", _t1);
 			return 1;
@@ -483,7 +487,6 @@ dbt_table_p dbt_db_get_temp_table(dbt_cache_p _dc)
 	int hash;
 	int hashidx;
 
-
 	if(!_dbt_cachetbl || !_dc) {
 		LM_ERR("invalid parameter\n");
 		return NULL;
@@ -500,8 +503,6 @@ dbt_table_p dbt_db_get_temp_table(dbt_cache_p _dc)
 
 	_tbc = _dbt_cachetbl[hashidx].dtp;
 
-
-
 	_tbc = dbt_table_new(&_s, &(_dc->name), NULL);
 
 	_tbc->hash = hash;
@@ -512,7 +513,6 @@ dbt_table_p dbt_db_get_temp_table(dbt_cache_p _dc)
 	_dbt_cachetbl[hashidx].dtp = _tbc;
 
 	dbt_table_update_flags(_tbc, DBT_TBFL_TEMP, DBT_FL_SET, 0);
-
 
 	lock_release(&_dbt_cachetbl[hashidx].sem);
 	return _tbc;
