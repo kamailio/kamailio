@@ -911,6 +911,10 @@ end
             For example, 100 calls in 3-hosts group with rweight params
             1/2/1 will be distributed as 25/50/25. After third host
             failing distribution will be changed to 33/67/0.
+          + “12” - dispatch to all destination in setid at once (parallel
+            forking). Note that the AVPs are no longer set with the values
+            of the destination records, no re-routing making sense in this
+            case.
           + “X” - if the algorithm is not implemented, the first entry in
             set is chosen.
      * limit - the maximum number of items to be stored in AVP list for
