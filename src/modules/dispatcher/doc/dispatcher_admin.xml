@@ -1040,6 +1040,14 @@ end
 			</listitem>
 			<listitem>
 				<para>
+				<quote>12</quote> - dispatch to all destination in setid at
+				once (parallel forking). Note that the AVPs are no longer set
+				with the values of the destination records, no re-routing
+				making sense in this case.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
 				<quote>X</quote> - if the algorithm is not implemented, the
 				first entry in set is chosen.
 				</para>
