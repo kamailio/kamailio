@@ -2122,15 +2122,13 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	while(c) {
-		param = (char*)pkg_malloc(RECEIVED_LEN + 2 + uri.len);
+		param = (char*)pkg_malloc(RECEIVED_LEN + uri.len);
 		if (!param) {
 			LM_ERR("no pkg memory left\n");
 			return -1;
 		}
 		memcpy(param, RECEIVED, RECEIVED_LEN);
-		param[RECEIVED_LEN] = '\"';
-		memcpy(param + RECEIVED_LEN + 1, uri.s, uri.len);
-		param[RECEIVED_LEN + 1 + uri.len] = '\"';
+		memcpy(param + RECEIVED_LEN, uri.s, uri.len);
 
 		if (hdr_param) {
 			/* add the param as header param */
