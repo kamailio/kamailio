@@ -63,8 +63,18 @@
 #define DS_TABLE_VERSION3 3
 #define DS_TABLE_VERSION4 4
 
-#define DS_ALG_RROBIN 4
-#define DS_ALG_LOAD 10
+#define DS_ALG_HASHCALLID 0
+#define DS_ALG_HASHFROMURI 1
+#define DS_ALG_HASHTOURI 2
+#define DS_ALG_HASHRURI 3
+#define DS_ALG_ROUNDROBIN 4
+#define DS_ALG_HASHAUTHUSER 5
+#define DS_ALG_RANDOM 6
+#define DS_ALG_HASHPV 7
+#define DS_ALG_SERIAL 8
+#define DS_ALG_WEIGHT 9
+#define DS_ALG_CALLLOAD 10
+#define DS_ALG_RELWEIGHT 11
 
 static int _ds_table_version = DS_TABLE_VERSION;
 
@@ -1738,35 +1748,35 @@ int ds_select_dst_limit(
 
 	hash = 0;
 	switch(alg) {
-		case 0: /* hash call-id */
+		case DS_ALG_HASHCALLID: /* 0 - hash call-id */
 			if(ds_hash_callid(msg, &hash) != 0) {
 				LM_ERR("can't get callid hash\n");
 				return -1;
 			}
 			break;
-		case 1: /* hash from-uri */
+		case DS_ALG_HASHFROMURI: /* 1 - hash from-uri */
 			if(ds_hash_fromuri(msg, &hash) != 0) {
 				LM_ERR("can't get From uri hash\n");
 				return -1;
 			}
 			break;
-		case 2: /* hash to-uri */
+		case DS_ALG_HASHTOURI: /* 2 - hash to-uri */
 			if(ds_hash_touri(msg, &hash) != 0) {
 				LM_ERR("can't get To uri hash\n");
 				return -1;
 			}
 			break;
-		case 3: /* hash r-uri */
+		case DS_ALG_HASHRURI: /* 3 - hash r-uri */
 			if(ds_hash_ruri(msg, &hash) != 0) {
 				LM_ERR("can't get ruri hash\n");
 				return -1;
 			}
 			break;
-		case DS_ALG_RROBIN: /* round robin */
+		case DS_ALG_ROUNDROBIN: /* 4 - round robin */
 			hash = idx->last;
 			idx->last = (idx->last + 1) % idx->nr;
 			break;
-		case 5: /* hash auth username */
+		case DS_ALG_HASHAUTHUSER: /* 5 - hash auth username */
 			i = ds_hash_authusername(msg, &hash);
 			switch(i) {
 				case 0:
@@ -1782,23 +1792,23 @@ int ds_select_dst_limit(
 					return -1;
 			}
 			break;
-		case 6: /* random selection */
+		case DS_ALG_RANDOM: /* 6 - random selection */
 			hash = kam_rand() % idx->nr;
 			break;
-		case 7: /* hash on PV value */
+		case DS_ALG_HASHPV: /* 7 - hash on PV value */
 			if(ds_hash_pvar(msg, &hash) != 0) {
 				LM_ERR("can't get PV hash\n");
 				return -1;
 			}
 			break;
-		case 8: /* use always first entry */
+		case DS_ALG_SERIAL: /* 8 - use always first entry */
 			hash = 0;
 			break;
-		case 9: /* weight based distribution */
+		case DS_ALG_WEIGHT: /* 9 - weight based distribution */
 			hash = idx->wlist[idx->wlast];
 			idx->wlast = (idx->wlast + 1) % 100;
 			break;
-		case DS_ALG_LOAD: /* call load based distribution */
+		case DS_ALG_CALLLOAD: /* 10 - call load based distribution */
 			/* only INVITE can start a call */
 			if(msg->first_line.u.request.method_value != METHOD_INVITE) {
 				/* use first entry */
@@ -1825,7 +1835,7 @@ int ds_select_dst_limit(
 				}
 			}
 			break;
-		case 11: /* relative weight based distribution */
+		case DS_ALG_RELWEIGHT: /* 11 - relative weight based distribution */
 			hash = idx->rwlist[idx->rwlast];
 			idx->rwlast = (idx->rwlast + 1) % 100;
 			break;
@@ -1871,7 +1881,7 @@ int ds_select_dst_limit(
 		return -1;
 	}
 	/* if alg is round-robin then update the shortcut to next to be used */
-	if(alg == DS_ALG_RROBIN)
+	if(alg == DS_ALG_ROUNDROBIN)
 		idx->last = (hash + 1) % idx->nr;
 
 	LM_DBG("selected [%d-%d/%d] <%.*s>\n", alg, set, hash,
@@ -1906,7 +1916,7 @@ int ds_select_dst_limit(
 					return -1;
 			}
 
-			if(alg == DS_ALG_LOAD) {
+			if(alg == DS_ALG_CALLLOAD) {
 				if(idx->dlist[idx->nr - 1].attrs.duid.len <= 0) {
 					LM_ERR("no uid for destination: %d %.*s\n", set,
 							idx->dlist[idx->nr - 1].uri.len,
@@ -1928,7 +1938,7 @@ int ds_select_dst_limit(
 					|| (ds_use_default != 0 && i == (idx->nr - 1)))
 				continue;
 			/* max load exceeded per destination */
-			if(alg == DS_ALG_LOAD
+			if(alg == DS_ALG_CALLLOAD
 					&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload)
 				continue;
 			LM_DBG("using entry [%d/%d]\n", set, i);
@@ -1952,7 +1962,7 @@ int ds_select_dst_limit(
 					return -1;
 			}
 
-			if(alg == DS_ALG_LOAD) {
+			if(alg == DS_ALG_CALLLOAD) {
 				if(idx->dlist[i].attrs.duid.len <= 0) {
 					LM_ERR("no uid for destination: %d %.*s\n", set,
 							idx->dlist[i].uri.len, idx->dlist[i].uri.s);
@@ -1976,7 +1986,7 @@ int ds_select_dst_limit(
 					|| (ds_use_default != 0 && i == (idx->nr - 1)))
 				continue;
 			/* max load exceeded per destination */
-			if(alg == DS_ALG_LOAD
+			if(alg == DS_ALG_CALLLOAD
 					&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload)
 				LM_DBG("using entry [%d/%d]\n", set, i);
 			avp_val.s = idx->dlist[i].uri;
@@ -1999,7 +2009,7 @@ int ds_select_dst_limit(
 					return -1;
 			}
 
-			if(alg == DS_ALG_LOAD) {
+			if(alg == DS_ALG_CALLLOAD) {
 				if(idx->dlist[i].attrs.duid.len <= 0) {
 					LM_ERR("no uid for destination: %d %.*s\n", set,
 							idx->dlist[i].uri.len, idx->dlist[i].uri.s);
@@ -2033,7 +2043,7 @@ int ds_select_dst_limit(
 				return -1;
 		}
 
-		if(alg == DS_ALG_LOAD) {
+		if(alg == DS_ALG_CALLLOAD) {
 			if(idx->dlist[hash].attrs.duid.len <= 0) {
 				LM_ERR("no uid for destination: %d %.*s\n", set,
 						idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
@@ -2084,7 +2094,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 				dstid_avp_type, dstid_avp_name, &avp_value, &st);
 		if(prev_avp != NULL) {
 			/* load based dispatching */
-			alg = DS_ALG_LOAD;
+			alg = DS_ALG_CALLLOAD;
 			/* off-load destination id */
 			destroy_avp(prev_avp);
 		}
@@ -2122,7 +2132,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 		return -1;
 	}
 	LM_DBG("using [%.*s]\n", avp_value.s.len, avp_value.s.s);
-	if(alg == DS_ALG_LOAD) {
+	if(alg == DS_ALG_CALLLOAD) {
 		prev_avp = search_first_avp(
 				dstid_avp_type, dstid_avp_name, &avp_value, &st);
 		if(prev_avp == NULL) {
