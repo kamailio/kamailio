@@ -37,13 +37,15 @@ int db_query(ul_db_handle_t * handle, db1_con_t *** _r_h, db_func_t ** _r_f,
 	int i;
 	int err[DB_NUM];
 	int ret = -1;
-	order_dbs(handle, order);
-	memset(err, 0 , sizeof(int) * DB_NUM);
 
 	if(!handle || !table || !table->s || !_r_h) {
 		LM_ERR("NULL pointer in parameter.\n");
 		return -1;
 	}
+
+	order_dbs(handle, order);
+	memset(err, 0 , sizeof(int) * DB_NUM);
+
 	i = 0;
 	do {
 		LM_DBG("now trying id %i, db %i.\n", handle->id, handle->db[order[i]].no);
