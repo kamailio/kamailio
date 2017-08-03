@@ -71,7 +71,6 @@ void destroy_handles(void);
 int refresh_handles(db_func_t * dbf, db1_con_t * dbh);
 
 int load_location_number(db_func_t * dbf, db1_con_t * dbh, int*);
-int load_handles(db_func_t * dbf, db1_con_t * dbh);
 
 ul_db_handle_t * get_handle(db_func_t * dbf, db1_con_t * dbh, str * first, str * second);
 
