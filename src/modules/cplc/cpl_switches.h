@@ -873,6 +873,12 @@ inline static int is_lang_tag_matching(str *range,str *cpl_tag,str *cpl_subtag)
 	str tag = {0,0};
 	str subtag = {0,0};
 
+	if(range==NULL || cpl_tag==NULL || cpl_subtag==NULL) {
+		return -1;
+	}
+	if(range->s==NULL || cpl_tag->s==NULL || cpl_subtag->s==NULL) {
+		return -1;
+	}
 	c = range->s;
 	end = range->s + range->len;
 
