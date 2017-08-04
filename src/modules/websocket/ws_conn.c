@@ -29,6 +29,7 @@
 #include "../../core/tcp_conn.h"
 #include "../../core/fmsg.h"
 #include "../../core/counters.h"
+#include "../../core/kemi.h"
 #include "../../core/mem/mem.h"
 #include "ws_conn.h"
 #include "websocket.h"
@@ -37,6 +38,7 @@
 #define MAX_WS_CONNS_DUMP	50
 
 extern int ws_verbose_list;
+extern str ws_event_callback;
 
 ws_connection_t **wsconn_id_hash = NULL;
 #define wsconn_listadd	tcpconn_listadd
@@ -276,14 +278,25 @@ static void wsconn_run_route(ws_connection_t *wsc)
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
+	sr_kemi_eng_t *keng = NULL;
+	str evrtname = str_init("websocket:closed");
 
 	LM_DBG("wsconn_run_route event_route[websocket:closed]\n");
 
-	rt = route_lookup(&event_rt, "websocket:closed");
+	rt = route_lookup(&event_rt, evrtname.s);
 	if (rt < 0 || event_rt.rlist[rt] == NULL)
 	{
-		LM_DBG("route does not exist");
-		return;
+		if(ws_event_callback.len<=0 || ws_event_callback.s==NULL) {
+			LM_DBG("event route does not exist");
+			return;
+		}
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			LM_DBG("event route callback engine does not exist");
+			return;
+		} else {
+			rt = -1;
+		}
 	}
 
 	if (faked_msg_init() < 0)
@@ -297,9 +310,18 @@ static void wsconn_run_route(ws_connection_t *wsc)
 	fmsg->rcv = wsc->rcv;
 
 	backup_rt = get_route_type();
-	set_route_type(REQUEST_ROUTE);
+	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
-	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	if(rt<0) {
+		/* kemi script event route callback */
+		if(keng && keng->froute(fmsg, EVENT_ROUTE,
+					&ws_event_callback, &evrtname)<0) {
+			LM_ERR("error running event route kemi callback\n");
+		}
+	} else {
+		/* native cfg event route */
+		run_top_route(event_rt.rlist[rt], fmsg, 0);
+	}
 	set_route_type(backup_rt);
 }
 

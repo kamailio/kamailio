@@ -70,6 +70,8 @@ static int ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
 
 int ws_verbose_list = 0;
 
+str ws_event_callback = STR_NULL;
+
 static cmd_export_t cmds[] = {
 	/* ws_frame.c */
 	{ "ws_close", (cmd_function)w_ws_close0,
@@ -105,6 +107,8 @@ static param_export_t params[] = {
 	{ "keepalive_processes",	INT_PARAM, &ws_keepalive_processes },
 
 	{ "verbose_list",		PARAM_INT, &ws_verbose_list },
+	{ "event_callback",		PARAM_STR, &ws_event_callback},
+
 	{ 0, 0, 0 }
 };
 
