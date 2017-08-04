@@ -104,7 +104,7 @@ function ksr_route_relay()
 
 	if KSR.pv.get("$rm")=="INVITE" then
 		if KSR.tm.t_is_set("failure_route")<0 then
-			KSR.tm.t_on_failure("MANAGE_FAILURE");
+			KSR.tm.t_on_failure("ksr_failure_manage");
 		end
 	end
 

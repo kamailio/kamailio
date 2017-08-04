@@ -131,7 +131,7 @@ class kamailio:
 
         if KSR.pv.get("$rm")=="INVITE" :
             if KSR.tm.t_is_set("failure_route")<0 :
-                KSR.tm.t_on_failure("MANAGE_FAILURE");
+                KSR.tm.t_on_failure("ksr_failure_manage");
 
         if KSR.tm.t_relay()<0 :
             KSR.sl.sl_reply_error();
