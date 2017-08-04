@@ -279,7 +279,7 @@ static void wsconn_run_route(ws_connection_t *wsc)
 
 	LM_DBG("wsconn_run_route event_route[websocket:closed]\n");
 
-	rt = route_get(&event_rt, "websocket:closed");
+	rt = route_lookup(&event_rt, "websocket:closed");
 	if (rt < 0 || event_rt.rlist[rt] == NULL)
 	{
 		LM_DBG("route does not exist");
@@ -291,7 +291,7 @@ static void wsconn_run_route(ws_connection_t *wsc)
 		LM_ERR("faked_msg_init() failed\n");
 		return;
 	}
-	
+
 	fmsg = faked_msg_next();
 	wsc->rcv.proto_reserved1 = wsc->id;
 	fmsg->rcv = wsc->rcv;
