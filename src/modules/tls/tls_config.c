@@ -44,7 +44,7 @@
 static tls_domains_cfg_t* cfg = NULL;
 static tls_domain_t* domain = NULL;
 
-static int parse_ipv6(struct ip_addr* ip, cfg_token_t* token, 
+static int parse_ipv6(struct ip_addr* ip, cfg_token_t* token,
 		cfg_parser_t* st)
 {
 	int ret;
@@ -70,13 +70,13 @@ static int parse_ipv6(struct ip_addr* ip, cfg_token_t* token,
 	return 0;
 
 err:
-	ERR("%s:%d:%d: Invalid IPv6 address\n", 
+	LM_ERR("%s:%d:%d: Invalid IPv6 address\n",
 			st->file, token->start.line, token->start.col);
 	return -1;
 }
 
 
-static int parse_ipv4(struct ip_addr* ip, cfg_token_t* token, 
+static int parse_ipv4(struct ip_addr* ip, cfg_token_t* token,
 		cfg_parser_t* st)
 {
 	int ret, i;
@@ -106,13 +106,13 @@ static int parse_ipv4(struct ip_addr* ip, cfg_token_t* token,
 
 	return 0;
 err:
-	ERR("%s:%d:%d: Invalid IPv4 address\n", 
+	LM_ERR("%s:%d:%d: Invalid IPv4 address\n",
 			st->file, token->start.line, token->start.col);
 	return -1;
 }
 
 
-static cfg_option_t methods[] = { 
+static cfg_option_t methods[] = {
 	{"SSLv2",   .val = TLS_USE_SSLv2},
 	{"SSLv3",   .val = TLS_USE_SSLv3},
 	{"SSLv23",  .val = TLS_USE_SSLv23},
@@ -134,12 +134,12 @@ static cfg_option_t domain_types[] = {
 	{"s",      .val = TLS_DOMAIN_SRV},
 	{"client", .val = TLS_DOMAIN_CLI},
 	{"cli",    .val = TLS_DOMAIN_CLI},
-	{"c",      .val = TLS_DOMAIN_CLI}, 
+	{"c",      .val = TLS_DOMAIN_CLI},
 	{0}
 };
 
 
-static cfg_option_t token_default[] = { 
+static cfg_option_t token_default[] = {
 	{"default"},
 	{"def"},
 	{"*"},
@@ -193,7 +193,7 @@ static void update_opt_variables(void)
 }
 
 
-static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port, 
+static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 		cfg_token_t* token, cfg_parser_t* st)
 {
 	int ret;
@@ -203,7 +203,7 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("%s:%d:%d: Missing IP address\n", st->file, 
+		LM_ERR("%s:%d:%d: Missing IP address\n", st->file,
 				token->start.line, token->start.col);
 		return -1;
 	}
@@ -220,7 +220,7 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 			if (parse_ipv4(ip, &t, st) < 0) return -1;
 		}
 	} else {
-		ERR("%s:%d:%d: Syntax error, IP address expected\n", 
+		LM_ERR("%s:%d:%d: Syntax error, IP address expected\n",
 				st->file, t.start.line, t.start.col);
 		return -1;
 	}
@@ -230,30 +230,30 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("%s:%d:%d: Syntax error, ':' expected\n", st->file, st->line, 
+		LM_ERR("%s:%d:%d: Syntax error, ':' expected\n", st->file, st->line,
 				st->col);
 		return -1;
 	}
 
 	if (t.type != ':') {
-		ERR("%s:%d:%d: Syntax error, ':' expected\n", 
+		LM_ERR("%s:%d:%d: Syntax error, ':' expected\n",
 				st->file, t.start.line, t.start.col);
 		return -1;
-	}	
+	}
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("%s:%d:%d: Premature end of file, port number missing\n", 
+		LM_ERR("%s:%d:%d: Premature end of file, port number missing\n",
 				st->file, t.start.line, t.start.col);
 		return -1;
 	}
 
 	if (t.type != CFG_TOKEN_ALPHA || (str2int(&t.val, port) < 0)) {
-		ERR("%s:%d:%d: Invalid port number '%.*s'\n", 
+		LM_ERR("%s:%d:%d: Invalid port number '%.*s'\n",
 				st->file, t.start.line, t.start.col, STR_FMT(&t.val));
 		return -1;
-	}		
+	}
 	return 0;
 }
 
@@ -273,14 +273,14 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("%s:%d:%d: TLS domain type missing\n", 
+		LM_ERR("%s:%d:%d: TLS domain type missing\n",
 				st->file, st->line, st->col);
 		return -1;
 	}
 
-	if (t.type != CFG_TOKEN_ALPHA || 
+	if (t.type != CFG_TOKEN_ALPHA ||
 			((opt = cfg_lookup_token(domain_types, &t.val)) == NULL)) {
-		ERR("%s:%d:%d: Invalid TLS domain type %d:'%.*s'\n", 
+		LM_ERR("%s:%d:%d: Invalid TLS domain type %d:'%.*s'\n",
 				st->file, t.start.line, t.start.col, t.type, STR_FMT(&t.val));
 		return -1;
 	}
@@ -288,15 +288,15 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("%s:%d:%d: TLS domain IP address missing\n", 
+		LM_ERR("%s:%d:%d: TLS domain IP address missing\n",
 				st->file, st->line, st->col);
 		return -1;
 	}
 	if (t.type != ':') {
-		ERR("%s:%d:%d: Syntax error, ':' expected\n", 
+		LM_ERR("%s:%d:%d: Syntax error, ':' expected\n",
 				st->file, t.start.line, t.start.col);
 		return -1;
-	}	
+	}
 
 	port = 0;
 	if (parse_hostport(&type, &ip, &port, &t, st) < 0) return -1;
@@ -304,12 +304,12 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("%s:%d:%d: Closing ']' missing\n", 
+		LM_ERR("%s:%d:%d: Closing ']' missing\n",
 				st->file, st->line, st->col);
 		return -1;
 	}
 	if (t.type != ']') {
-		ERR("%s:%d:%d: Syntax error, ']' expected\n", 
+		LM_ERR("%s:%d:%d: Syntax error, ']' expected\n",
 				st->file, t.start.line, t.start.col);
 		return -1;
 	}
@@ -317,18 +317,18 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 	if (cfg_eat_eol(st, flags)) return -1;
 
 	if ((domain = tls_new_domain(opt->val | type, &ip, port)) == NULL) {
-		ERR("%s:%d: Cannot create TLS domain structure\n", st->file, st->line);
+		LM_ERR("%s:%d: Cannot create TLS domain structure\n", st->file, st->line);
 		return -1;
 	}
 
 	ret = tls_add_domain(cfg, domain);
 	if (ret < 0) {
-		ERR("%s:%d: Error while creating TLS domain structure\n", st->file, 
+		LM_ERR("%s:%d: Error while creating TLS domain structure\n", st->file,
 				st->line);
 		tls_free_domain(domain);
 		return -1;
 	} else if (ret == 1) {
-		ERR("%s:%d: Duplicate TLS domain (appears earlier in the config file)\n", 
+		LM_ERR("%s:%d: Duplicate TLS domain (appears earlier in the config file)\n",
 				st->file, st->line);
 		tls_free_domain(domain);
 		return -1;
@@ -364,19 +364,19 @@ tls_domains_cfg_t* tls_load_config(str* filename)
 	if ((cfg = tls_new_cfg()) == NULL) goto error;
 
 	if (stat(filename->s, &file_status) != 0) {
-		LOG(L_ERR, "cannot stat config file %s\n", filename->s);
+		LM_ERR("cannot stat config file %s\n", filename->s);
 		goto error;
 	}
 	if (S_ISDIR(file_status.st_mode)) {
 		filename_is_directory = 1;
 		dir = opendir(filename->s);
 		if (dir == NULL) {
-			LOG(L_ERR, "cannot open directory file %s\n", filename->s);
+			LM_ERR("cannot open directory file %s\n", filename->s);
 			goto error;
 		}
 		out_fd = mkstemp(&(tmp_name[0]));
 		if (out_fd == -1) {
-			LOG(L_ERR, "cannot make tmp file %s\n", &(tmp_name[0]));
+			LM_ERR("cannot make tmp file %s\n", &(tmp_name[0]));
 			goto error;
 		}
 		while ((ent = readdir(dir)) != NULL) {
@@ -386,14 +386,14 @@ tls_domains_cfg_t* tls_load_config(str* filename)
 			file_path[filename->len] = '/';
 			strcpy(file_path + filename->len + 1, ent->d_name);
 			if (stat(file_path, &file_status) != 0) {
-				LOG(L_ERR, "cannot get status of config file %s\n",
+				LM_ERR("cannot get status of config file %s\n",
 						file_path);
 				goto error;
 			}
 			if (S_ISREG(file_status.st_mode)) {
 				in_fd = open(file_path, O_RDONLY);
 				if (in_fd == -1) {
-					LOG(L_ERR, "cannot open config file %s\n",
+					LM_ERR("cannot open config file %s\n",
 							file_path);
 					goto error;
 				}
@@ -401,14 +401,14 @@ tls_domains_cfg_t* tls_load_config(str* filename)
 				file_path = NULL;
 				while (read(in_fd, &ch, 1)) {
 					if (write(out_fd, &ch, 1)<0) {
-						LOG(L_ERR, "write error: %s\n", strerror(errno));
+						LM_ERR("write error: %s\n", strerror(errno));
 					}
 				}
 				close(in_fd);
 				in_fd = 0;
 				ch = '\n';
 				if (write(out_fd, &ch, 1)<0) {
-					LOG(L_ERR, "write error: %s\n", strerror(errno));
+					LM_ERR("write error: %s\n", strerror(errno));
 				}
 			}
 		}
@@ -424,16 +424,16 @@ tls_domains_cfg_t* tls_load_config(str* filename)
 		filename_str.s = &(tmp_name[0]);
 		filename_str.len = strlen(&(tmp_name[0]));
 		if ((parser = cfg_parser_init(&empty, &filename_str)) == NULL) {
-			ERR("tls: Error while initializing configuration file parser.\n");
+			LM_ERR("Error while initializing configuration file parser.\n");
 			unlink(&(tmp_name[0]));
 			goto error;
 		}
 		unlink(&(tmp_name[0]));
 	} else {
 		if ((parser = cfg_parser_init(&empty, filename)) == NULL) {
-			ERR("tls: Error while initializing configuration file parser.\n");
+			LM_ERR("Error while initializing configuration file parser.\n");
 			goto error;
-		}	
+		}
 	}
 
 	cfg_section_parser(parser, parse_domain, NULL);
@@ -463,7 +463,7 @@ int tls_parse_method(str* method)
 	cfg_option_t* opt;
 
 	if (!method) {
-		BUG("Invalid parameter value\n");
+		LM_BUG("Invalid parameter value\n");
 		return -1;
 	}
 
