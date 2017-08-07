@@ -862,6 +862,7 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 	char backup;
 	int lowest_status, n, ret;
 	fparam_t* fp;
+	regex_t* re0 = NULL;
 	regex_t* re = NULL;
 	str tmp;
 
@@ -892,17 +893,18 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 			memcpy(s, tmp.s, tmp.len);
 			s[tmp.len] = '\0';
 
-			if ((re = pkg_malloc(sizeof(regex_t))) == 0) {
+			if ((re0 = pkg_malloc(sizeof(regex_t))) == 0) {
 				LM_ERR("No memory left\n");
 				goto error;
 			}
 
-			if (regcomp(re, s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+			if (regcomp(re0, s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
 				LM_ERR("Bad regular expression '%s'\n", s);
-				pkg_free(re);
-				re = NULL;
+				pkg_free(re0);
+				re0 = NULL;
 				goto error;
 			}
+			re = re0;
 			break;
 	}
 
@@ -953,9 +955,9 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 
 	if (backup) status[msg->first_line.u.reply.status.len] = backup;
 	if (s) pkg_free(s);
-	if (fp->type != FPARAM_REGEX) {
-		regfree(re);
-		pkg_free(re);
+	if (re0) {
+		regfree(re0);
+		pkg_free(re0);
 	}
 
 	if (unlikely(t && is_route_type(CORE_ONREPLY_ROUTE))){
@@ -975,9 +977,9 @@ error:
 		set_t(T_UNDEFINED, T_BR_UNDEFINED);
 	}
 	if (s) pkg_free(s);
-	if ((fp->type != FPARAM_REGEX) && re) {
-		regfree(re);
-		pkg_free(re);
+	if (re0) {
+		regfree(re0);
+		pkg_free(re0);
 	}
 	return -1;
 }
