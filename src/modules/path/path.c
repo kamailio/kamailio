@@ -361,76 +361,83 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 		return;
 	}
 
-	if (hooks.contact.received
-			&& hooks.contact.received->body.len>0) {
-		/* 24 => sip:...;transport=sctp */
-		if(hooks.contact.received->body.len + 24 >= MAX_URI_SIZE) {
-			LM_ERR("received uri is too long\n");
-			goto done;
-		}
-		dst_uri.s = dst_uri_buf;
-		dst_uri.len = MAX_URI_SIZE;
-		if(path_enable_r2==0) {
-			if (unescape_user(&(hooks.contact.received->body), &dst_uri) < 0) {
-				LM_ERR("unescaping received failed\n");
-				free_params(params);
-				return;
-			} else {
-				/* ip~port~proto */
-				strncpy(dst_uri_buf, "sip:", 4);
-				strncpy(dst_uri_buf+4, hooks.contact.received->body.s,
-						hooks.contact.received->body.len);
-				dst_uri_buf[hooks.contact.received->body.len] = '\0';
-				p = dst_uri_buf + 4;
-				n = 0;
-				while(*p!='\0') {
-					if(*p=='~') {
-						n++;
-						if(n==1) {
-							/* port */
-							*p = ':';
-						} else if(n==2) {
-							/* proto */
-							*p = ';';
-							p++;
-							if(*p=='\0') {
-								LM_ERR("invalid received format\n");
-								goto done;
-							}
-							nproto = *p - '0';
-							if (nproto != PROTO_UDP) {
-								proto_type_to_str(nproto, &sproto);
-								if (sproto.len == 0) {
-									LM_ERR("unknown proto in received param\n");
-									goto done;
-								}
-								strncpy(p, "transport=", 10);
-								p += 10;
-								memcpy(p, sproto.s, sproto.len);
-								p += sproto.len;
-								*p = '\0';
-								dst_uri.len = p - dst_uri_buf;
-								break;
-							}
-						} else {
-							LM_ERR("invalid number of spearators (%d)\n", n);
-							goto done;
-						}
-					}
-					p++;
-				}
-			}
-		}
-		LM_DBG("setting dst uri: %.*s\n", dst_uri.len, dst_uri.s);
-		if (set_dst_uri(_m, &dst_uri) != 0) {
-			LM_ERR("failed to set dst-uri\n");
+	if (hooks.contact.received==NULL
+			|| hooks.contact.received->body.len<=0) {
+		LM_DBG("no received parameter in route header\n");
+		free_params(params);
+		return;
+	}
+
+	/* 24 => sip:...;transport=sctp */
+	if(hooks.contact.received->body.len + 24 >= MAX_URI_SIZE) {
+		LM_ERR("received uri is too long\n");
+		goto done;
+	}
+	dst_uri.s = dst_uri_buf;
+	dst_uri.len = MAX_URI_SIZE;
+	if(path_received_format==0) {
+		/* received=sip:...;transport... */
+		if (unescape_user(&(hooks.contact.received->body), &dst_uri) < 0) {
+			LM_ERR("unescaping received failed\n");
 			free_params(params);
 			return;
 		}
-		/* dst_uri changed, so it makes sense to re-use the current uri for
-			forking */
-		ruri_mark_new(); /* re-use uri for serial forking */
+	} else {
+		/* received=ip~port~proto */
+		strncpy(dst_uri_buf, "sip:", 4);
+		strncpy(dst_uri_buf+4, hooks.contact.received->body.s,
+					hooks.contact.received->body.len);
+		dst_uri_buf[hooks.contact.received->body.len] = '\0';
+		p = dst_uri_buf + 4;
+		n = 0;
+		while(*p!='\0') {
+			if(*p=='~') {
+				n++;
+				if(n==1) {
+					/* port */
+					*p = ':';
+				} else if(n==2) {
+					/* proto */
+					*p = ';';
+					p++;
+					if(*p=='\0') {
+						LM_ERR("invalid received format\n");
+						goto done;
+					}
+					nproto = *p - '0';
+					if (nproto != PROTO_UDP) {
+						proto_type_to_str(nproto, &sproto);
+						if (sproto.len == 0) {
+							LM_ERR("unknown proto in received param\n");
+							goto done;
+						}
+						strncpy(p, "transport=", 10);
+						p += 10;
+						memcpy(p, sproto.s, sproto.len);
+						p += sproto.len;
+						*p = '\0';
+						dst_uri.len = p - dst_uri_buf;
+						break;
+					}
+				} else {
+					LM_ERR("invalid number of spearators (%d)\n", n);
+					goto done;
+				}
+			}
+			p++;
+		}
 	}
+
+	LM_DBG("setting dst uri: %.*s\n", dst_uri.len, dst_uri.s);
+	if (set_dst_uri(_m, &dst_uri) != 0) {
+		LM_ERR("failed to set dst-uri\n");
+		free_params(params);
+		return;
+	}
+	/* dst_uri changed, so it makes sense to re-use the current uri
+	 * for forking */
+	ruri_mark_new(); /* re-use uri for serial forking */
+
 done:
 	free_params(params);
 }
