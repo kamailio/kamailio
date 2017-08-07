@@ -735,6 +735,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	str nuri;
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 	int ret;
+	int use_branch = 0;
 
 	LM_DBG("handling incoming request\n");
 
@@ -761,8 +762,15 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 
 	tps_storage_lock_get(&lkey);
 
-	if(tps_storage_load_dialog(msg, &mtsd, &stsd)<0) {
-		goto error;
+	if((get_cseq(msg)->method_id)&(METHOD_PRACK)) {
+		if(tps_storage_load_branch(msg, &mtsd, &stsd)<0) {
+			goto error;
+		}
+		use_branch = 1;
+	} else {
+		if(tps_storage_load_dialog(msg, &mtsd, &stsd)<0) {
+			goto error;
+		}
 	}
 
 	/* detect direction - via from-tag */
@@ -791,14 +799,28 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		return -1;
 	}
 	if(direction == TPS_DIR_UPSTREAM) {
-		if(tps_reappend_route(msg, &stsd, &stsd.a_rr, 0)<0) {
-			LM_ERR("failed to reappend a-route\n");
-			return -1;
+		if(use_branch) {
+			if(tps_reappend_route(msg, &stsd, &stsd.x_rr, 0)<0) {
+				LM_ERR("failed to reappend x-route\n");
+				return -1;
+			}
+		} else {
+			if(tps_reappend_route(msg, &stsd, &stsd.a_rr, 0)<0) {
+				LM_ERR("failed to reappend a-route\n");
+				return -1;
+			}
 		}
 	} else {
-		if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 1)<0) {
-			LM_ERR("failed to reappend b-route\n");
-			return -1;
+		if(use_branch) {
+			if(tps_reappend_route(msg, &stsd, &stsd.y_rr, 1)<0) {
+				LM_ERR("failed to reappend b-route\n");
+				return -1;
+			}
+		} else {
+			if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 1)<0) {
+				LM_ERR("failed to reappend b-route\n");
+				return -1;
+			}
 		}
 	}
 	if(dialog!=0) {
