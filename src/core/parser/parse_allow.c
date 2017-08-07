@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -33,7 +33,7 @@
 #include "parse_methods.h"
 #include "msg_parser.h"
 
- 
+
 /*! \brief
  * This method is used to parse Allow header.
  *
@@ -45,30 +45,30 @@ int parse_allow_header(struct hdr_field* _hf)
 	struct allow_body* ab = 0;
 
 	if (!_hf) {
-		LOG(L_ERR, "parse_allow_header: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	
+
 	/* maybe the header is already parsed! */
- 	if (_hf->parsed) {
- 		return 0;
+	if (_hf->parsed) {
+		return 0;
 	}
 
 	ab = (struct allow_body*)pkg_malloc(sizeof(struct allow_body));
 	if (ab == 0) {
-		LOG(L_ERR, "ERROR:parse_allow_header: out of pkg_memory\n");
+		LM_ERR("out of pkg_memory\n");
 		return -1;
 	}
 	memset(ab,'\0', sizeof(struct allow_body));
-	
+
 	if (parse_methods(&(_hf->body), &(ab->allow)) !=0 ) {
-		LOG(L_ERR, "ERROR:parse_allow_header: bad allow body header\n");		
+		LM_ERR("bad allow body header\n");
 		goto error;
 	}
-	
-	ab->allow_all = 0;	
+
+	ab->allow_all = 0;
 	_hf->parsed = (void*)ab;
- 	return 0;
+	return 0;
 
 error:
 	if (ab) pkg_free(ab);
@@ -81,7 +81,7 @@ error:
  * \return 0 on success,-1 on failure.
  */
 int parse_allow(struct sip_msg *msg)
-{       
+{
 	unsigned int allow;
 	struct hdr_field  *hdr;
 
@@ -105,9 +105,9 @@ int parse_allow(struct sip_msg *msg)
 
 		allow |= ((struct allow_body*)hdr->parsed)->allow;
 	}
-	
+
 	((struct allow_body*)msg->allow->parsed)->allow_all = allow;
-    return 0;
+	return 0;
 }
 
 
@@ -116,8 +116,8 @@ int parse_allow(struct sip_msg *msg)
  */
 void free_allow_body(struct allow_body **ab)
 {
-	if (ab && *ab) {	
-		pkg_free(*ab);		
+	if (ab && *ab) {
+		pkg_free(*ab);
 		*ab = 0;
 	}
 }

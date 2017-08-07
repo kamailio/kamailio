@@ -197,8 +197,7 @@ void clean_hdr_field(struct hdr_field* const hf)
 			break;
 
 		default:
-			LOG(L_CRIT, "BUG: clean_hdr_field: unknown header type %d\n",
-			    hf->type);
+			LM_CRIT("BUG: unknown header type %d\n", hf->type);
 			break;
 		}
 	}
@@ -223,7 +222,7 @@ void free_hdr_field_lst(struct hdr_field* hf)
 /* print the content of hdr_field */
 void dump_hdr_field(struct hdr_field const* const hf )
 {
-	LOG(L_ERR, "DEBUG: dump_hdr_field: type=%d, name=%.*s, "
+	LM_ERR("DEBUG: type=%d, name=%.*s, "
 		"body=%.*s, parsed=%p, next=%p\n",
 		hf->type, hf->name.len, ZSW(hf->name.s),
 		hf->body.len, ZSW(hf->body.s),

@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -43,14 +43,14 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 {
 	int i;
 	str tmp;
-	
+
 	tmp.s = _s;
 	tmp.len = _l;
 
 	trim(&tmp);
 
 	if (tmp.len == 0) {
-		LOG(L_ERR, "expires_parser(): Empty body\n");
+		LM_ERR("Empty body\n");
 		_e->valid = 0;
 		return -1;
 	}
@@ -70,24 +70,24 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 			_e->val += tmp.s[i] - '0';
 		} else {
 			switch(tmp.s[i]) {
-			case ' ':
-			case '\t':
-			case '\r':
-			case '\n':
-				_e->text.len = i;
-				_e->valid = 1;
-				return 0;
+				case ' ':
+				case '\t':
+				case '\r':
+				case '\n':
+					_e->text.len = i;
+					_e->valid = 1;
+					return 0;
 
-			default:
-				     /* Exit normally here, we want to be backwards compatible with
-				      * RFC2543 entities that can put absolute time here
-				      */
-				     /*
-				LOG(L_ERR, "expires_parser(): Invalid character\n");
-				return -2;
-				     */
-				_e->valid = 0;
-				return 0;
+				default:
+					/* Exit normally here, we want to be backwards compatible
+					 * with RFC2543 entities that can put absolute time here
+					 */
+					/*
+					LM_ERR("Invalid character\n");
+					return -2;
+					*/
+					_e->valid = 0;
+					return 0;
 			}
 		}
 	}
@@ -110,18 +110,18 @@ int parse_expires(struct hdr_field* _h)
 
 	e = (exp_body_t*)pkg_malloc(sizeof(exp_body_t));
 	if (e == 0) {
-		LOG(L_ERR, "parse_expires(): No memory left\n");
+		LM_ERR("No pkg memory left\n");
 		return -1;
 	}
-	
+
 	memset(e, 0, sizeof(exp_body_t));
 
 	if (expires_parser(_h->body.s, _h->body.len, e) < 0) {
-		LOG(L_ERR, "parse_expires(): Error while parsing\n");
+		LM_ERR("Error while parsing\n");
 		pkg_free(e);
 		return -2;
 	}
-	
+
 	_h->parsed = (void*)e;
 	return 0;
 }
