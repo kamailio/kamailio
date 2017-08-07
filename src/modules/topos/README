@@ -32,6 +32,11 @@ Daniel-Constantin Mierla
               3.5. branch_expire (int)
               3.6. dialog_expire (int)
               3.7. clean_interval (int)
+              3.8. event_callback (str)
+
+        4. Event Routes
+
+              4.1. event_route[topos:msg-outgoing]
 
    List of Examples
 
@@ -42,6 +47,8 @@ Daniel-Constantin Mierla
    1.5. Set branch_expire parameter
    1.6. Set dialog_expire parameter
    1.7. Set clean_interval parameter
+   1.8. Set event_callback parameter
+   1.9. Usage of event_route[topos:msg-outgoing]
 
 Chapter 1. Admin Guide
 
@@ -62,6 +69,11 @@ Chapter 1. Admin Guide
         3.5. branch_expire (int)
         3.6. dialog_expire (int)
         3.7. clean_interval (int)
+        3.8. event_callback (str)
+
+   4. Event Routes
+
+        4.1. event_route[topos:msg-outgoing]
 
 1. Overview
 
@@ -102,6 +114,7 @@ Chapter 1. Admin Guide
    3.5. branch_expire (int)
    3.6. dialog_expire (int)
    3.7. clean_interval (int)
+   3.8. event_callback (str)
 
 3.1. storage (str)
 
@@ -187,4 +200,50 @@ modparam("topos", "dialog_expire", 3600)
    Example 1.7. Set clean_interval parameter
 ...
 modparam("topos", "clean_interval", 30)
+...
+
+3.8. event_callback (str)
+
+   The name of the function in the KEMI configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event.
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.8. Set event_callback parameter
+...
+modparam("topos", "event_callback", "ksr_topos_event")
+...
+-- event callback function implemented in Lua
+function ksr_topos_event(evname)
+        KSR.info("===== topos module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
+4. Event Routes
+
+   4.1. event_route[topos:msg-outgoing]
+
+4.1. event_route[topos:msg-outgoing]
+
+   It is executed before doing topology stripping processing for an
+   outgoing SIP message. If 'drop' is executed inside the event route,
+   then the module skips doing the topology hiding.
+
+   Inside the event route the variables $sndto(ip), $sndto(port) and
+   $sndto(proto) point to the destination. The SIP message is not the one
+   to be sent out, but an internally generated one at startup, to avoid
+   reparsing the outgoing SIP message for the cases when topology hiding
+   is not wanted.
+
+   Example 1.9. Usage of event_route[topos:msg-outgoing]
+...
+event_route[topos:msg-outgoing] {
+  if($sndto(ip)=="10.1.1.10") {
+    drop;
+  }
+}
 ...
