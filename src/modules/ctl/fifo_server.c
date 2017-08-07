@@ -1277,6 +1277,7 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	int n, buf_size;
 	char* buf;
+	char* buf0;
 	va_list ap;
 	str s;
 	struct text_chunk* l;
@@ -1287,7 +1288,7 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		ERR("No memory left\n");
 		return -1;
 	}
-	
+
 	buf_size = RPC_BUF_SIZE;
 	while (1) {
 		     /* Try to print in the allocated space. */
@@ -1314,11 +1315,12 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		} else {          /* glibc 2.0 */
 			buf_size *= 2;  /* twice the old size */
 		}
-		if ((buf = ctl_realloc(buf, buf_size)) == 0) {
+		if ((buf0 = ctl_realloc(buf, buf_size)) == 0) {
 			rpc_fault(ctx, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
 		}
+		buf = buf0;
 	}
 	return 0;
  err:
