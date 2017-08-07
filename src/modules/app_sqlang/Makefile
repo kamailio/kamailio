@@ -20,11 +20,11 @@ endif
 include ../../Makefile.modules
 
 libsquirrel.a:
-	make -C ./squirrel/squirrel CC_EXTRA_FLAGS="-fPIC" \
+	$(MAKE) -C ./squirrel/squirrel CC_EXTRA_FLAGS="-fPIC" \
 		OUT="../../libsquirrel.a" $(MKSQLANG)
 
 libsqstdlib.a:
-	make -C ./squirrel/sqstdlib CC_EXTRA_FLAGS="-fPIC" \
+	$(MAKE) -C ./squirrel/sqstdlib CC_EXTRA_FLAGS="-fPIC" \
 		OUT="../../libsqstdlib.a" $(MKSQLANG)
 
 app_sqlang.so: libsquirrel.a libsqstdlib.a
