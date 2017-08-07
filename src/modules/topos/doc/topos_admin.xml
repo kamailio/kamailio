@@ -223,7 +223,66 @@ modparam("topos", "clean_interval", 30)
 </programlisting>
 		</example>
 	</section>
-
+	<section id="topos.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the KEMI configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "event_callback", "ksr_topos_event")
+...
+-- event callback function implemented in Lua
+function ksr_topos_event(evname)
+	KSR.info("===== topos module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Event Routes</title>
+	<section>
+		<title>event_route[topos:msg-outgoing]</title>
+		<para>
+		It is executed before doing topology stripping processing for an outgoing
+		SIP message. If 'drop' is executed inside the event route, then the
+		module skips doing the topology hiding.
+		</para>
+		<para>
+		Inside the event route the variables $sndto(ip), $sndto(port) and
+		$sndto(proto) point to the destination. The SIP message is not the one
+		to be sent out, but an internally generated one at startup, to avoid
+		reparsing the outgoing SIP message for the cases when topology hiding
+		is not wanted.
+		</para>
+		<example>
+		<title>Usage of event_route[topos:msg-outgoing]</title>
+		<programlisting format="linespecific">
+...
+event_route[topos:msg-outgoing] {
+  if($sndto(ip)=="10.1.1.10") {
+    drop;
+  }
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 </chapter>
 
