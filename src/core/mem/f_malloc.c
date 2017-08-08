@@ -320,11 +320,11 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 
 	/* make address and size multiple of 8*/
 	start=(char*)ROUNDUP((unsigned long) address);
-	DBG("fm_malloc_init: F_OPTIMIZE=%lu, /ROUNDTO=%lu\n",
+	LM_DBG("F_OPTIMIZE=%lu, /ROUNDTO=%lu\n",
 			F_MALLOC_OPTIMIZE, F_MALLOC_OPTIMIZE/ROUNDTO);
-	DBG("fm_malloc_init: F_HASH_SIZE=%lu, fm_block size=%lu\n",
+	LM_DBG("F_HASH_SIZE=%lu, fm_block size=%lu\n",
 			F_HASH_SIZE, (unsigned long)sizeof(struct fm_block));
-	DBG("fm_malloc_init(%p, %lu), start=%p\n", address, (unsigned long)size,
+	LM_DBG("fm_malloc_init(%p, %lu), start=%p\n", address, (unsigned long)size,
 			start);
 
 	if (size<start-address) return 0;
@@ -710,7 +710,7 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 #endif
 	f=(struct fm_frag*) ((char*)p-sizeof(struct fm_frag));
 #ifdef DBG_F_MALLOC
-	MDBG("fm_realloc: realloc'ing frag %p alloc'ed from %s: %s(%ld)\n",
+	MDBG("realloc'ing frag %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
 #endif
 	size=ROUNDUP(size);
@@ -718,7 +718,7 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 	if (f->size > size){
 		/* shrink */
 #ifdef DBG_F_MALLOC
-		MDBG("fm_realloc: shrinking from %lu to %lu\n", f->size,
+		MDBG("shrinking from %lu to %lu\n", f->size,
 				(unsigned long)size);
 		fm_split_frag(qm, f, size, file, "frag. from fm_realloc", line, mname);
 #else
@@ -727,7 +727,7 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 	}else if (f->size<size){
 		/* grow */
 #ifdef DBG_F_MALLOC
-		MDBG("fm_realloc: growing from %lu to %lu\n", f->size,
+		MDBG("growing from %lu to %lu\n", f->size,
 				(unsigned long)size);
 #endif
 		diff=size-f->size;
@@ -781,12 +781,12 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 	}else{
 		/* do nothing */
 #ifdef DBG_F_MALLOC
-		MDBG("fm_realloc: doing nothing, same size: %lu - %lu\n",
+		MDBG("doing nothing, same size: %lu - %lu\n",
 				f->size, (unsigned long)size);
 #endif
 	}
 #ifdef DBG_F_MALLOC
-	MDBG("fm_realloc: returning %p\n", p);
+	MDBG("returning pointer value %p\n", p);
 #endif
 	if(qm->type==MEM_TYPE_PKG) {
 		sr_event_exec(SREV_PKG_UPDATE_STATS, 0);
