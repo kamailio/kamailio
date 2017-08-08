@@ -70,6 +70,10 @@ int async_http_init_worker(int prank, async_http_worker_t* worker)
 	LM_DBG("base event %p created\n", worker->evbase);
 
 	worker->g = shm_malloc(sizeof(struct http_m_global));
+	if(worker->g==NULL) {
+		LM_ERR("out of shared memory\n");
+		return -1;
+	}
 	memset(worker->g, 0, sizeof(http_m_global_t));
 	LM_DBG("initialized global struct %p\n", worker->g);
 
@@ -189,6 +193,7 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	strncpy(q_id, aq->id, strlen(aq->id));
 	
 	act = (cfg_action_t*)aq->param;
+	cfg_update();
 
 	if (aq->query_params.suspend_transaction) {
 		tindex = aq->tindex;
