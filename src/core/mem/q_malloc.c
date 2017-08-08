@@ -432,6 +432,28 @@ void* qm_malloc(void* qmp, size_t size)
 }
 
 
+#ifdef DBG_QM_MALLOC
+void* qm_mallocxz(void* qmp, size_t size,
+					const char* file, const char* func, unsigned int line,
+					const char *mname)
+#else
+void* qm_mallocxz(void* qmp, size_t size)
+#endif
+{
+	void *p;
+
+#ifdef DBG_QM_MALLOC
+	p = qm_malloc(qmp, size, file, func, line, mname);
+#else
+	p = qm_malloc(qmp, size);
+#endif
+
+	if(p) memset(p, 0, size);
+
+	return p;
+
+}
+
 
 #ifdef DBG_QM_MALLOC
 void qm_free(void* qmp, void* p, const char* file, const char* func,
@@ -669,8 +691,14 @@ void* qm_realloc(void* qmp, void* p, size_t size)
 				ptr=qm_malloc(qm, size);
 	#endif
 				if (ptr){
-					/* copy, need by libssl */
+					/* copy old content */
 					memcpy(ptr, p, orig_size);
+					/* free old pointer */
+		#ifdef DBG_QM_MALLOC
+					qm_free(qm, p, file, func, line, mname);
+		#else
+					qm_free(qm, p);
+		#endif
 				} else {
 #ifdef DBG_QM_MALLOC
 					LOG(L_ERR, "qm_realloc(%p, %lu) called from %s: %s(%d), module: %s; qm_malloc() failed!\n",
@@ -680,11 +708,6 @@ void* qm_realloc(void* qmp, void* p, size_t size)
 							qm, (unsigned long)size);
 #endif
 				}
-	#ifdef DBG_QM_MALLOC
-				qm_free(qm, p, file, func, line, mname);
-	#else
-				qm_free(qm, p);
-	#endif
 				p=ptr;
 			}
 	}else{
@@ -703,6 +726,35 @@ void* qm_realloc(void* qmp, void* p, size_t size)
 	}
 #endif
 	return p;
+}
+
+
+#ifdef DBG_QM_MALLOC
+void* qm_reallocxf(void* qmp, void* p, size_t size,
+					const char* file, const char* func, unsigned int line,
+					const char *mname)
+#else
+void* qm_reallocxf(void* qmp, void* p, size_t size)
+#endif
+{
+	void *r;
+
+#ifdef DBG_QM_MALLOC
+	r = qm_realloc(qmp, p, size, file, func, line, mname);
+#else
+	r = qm_realloc(qmp, p, size);
+#endif
+
+	if(!r) {
+	#ifdef DBG_QM_MALLOC
+		qm_free(qmp, p, file, func, line, mname);
+	#else
+		qm_free(qmp, p);
+	#endif
+
+	}
+
+	return r;
 }
 
 
@@ -1067,8 +1119,10 @@ int qm_malloc_init_pkg_manager(void)
 	ma.mem_pool = _qm_pkg_pool;
 	ma.mem_block = _qm_pkg_block;
 	ma.xmalloc = qm_malloc;
+	ma.xmallocxz = qm_mallocxz;
 	ma.xfree = qm_free;
 	ma.xrealloc = qm_realloc;
+	ma.xreallocxf = qm_reallocxf;
 	ma.xstatus = qm_status;
 	ma.xinfo = qm_info;
 	ma.xavailable = qm_available;
@@ -1096,12 +1150,30 @@ void* qm_shm_malloc(void* qmp, size_t size,
 	shm_unlock();
 	return r;
 }
+void* qm_shm_mallocxz(void* qmp, size_t size,
+					const char* file, const char* func, unsigned int line, const char* mname)
+{
+	void *r;
+	shm_lock();
+	r = qm_mallocxz(qmp, size, file, func, line, mname);
+	shm_unlock();
+	return r;
+}
 void* qm_shm_realloc(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
 	shm_lock();
 	r = qm_realloc(qmp, p, size, file, func, line, mname);
+	shm_unlock();
+	return r;
+}
+void* qm_shm_reallocxf(void* qmp, void* p, size_t size,
+					const char* file, const char* func, unsigned int line, const char* mname)
+{
+	void *r;
+	shm_lock();
+	r = qm_reallocxf(qmp, p, size, file, func, line, mname);
 	shm_unlock();
 	return r;
 }
@@ -1131,11 +1203,27 @@ void* qm_shm_malloc(void* qmp, size_t size)
 	shm_unlock();
 	return r;
 }
+void* qm_shm_mallocxz(void* qmp, size_t size)
+{
+	void *r;
+	shm_lock();
+	r = qm_mallocxz(qmp, size);
+	shm_unlock();
+	return r;
+}
 void* qm_shm_realloc(void* qmp, void* p, size_t size)
 {
 	void *r;
 	shm_lock();
 	r = qm_realloc(qmp, p, size);
+	shm_unlock();
+	return r;
+}
+void* qm_shm_reallocxf(void* qmp, void* p, size_t size)
+{
+	void *r;
+	shm_lock();
+	r = qm_reallocxf(qmp, p, size);
 	shm_unlock();
 	return r;
 }
@@ -1215,10 +1303,12 @@ int qm_malloc_init_shm_manager(void)
 	ma.mem_pool       = _qm_shm_pool;
 	ma.mem_block      = _qm_shm_block;
 	ma.xmalloc        = qm_shm_malloc;
+	ma.xmallocxz      = qm_shm_mallocxz;
 	ma.xmalloc_unsafe = qm_malloc;
 	ma.xfree          = qm_shm_free;
 	ma.xfree_unsafe   = qm_free;
 	ma.xrealloc       = qm_shm_realloc;
+	ma.xreallocxf     = qm_shm_reallocxf;
 	ma.xresize        = qm_shm_resize;
 	ma.xstatus        = qm_shm_status;
 	ma.xinfo          = qm_shm_info;
