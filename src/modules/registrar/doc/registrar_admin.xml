@@ -1477,7 +1477,7 @@ event_route[usrloc:contact-expired] {
 		</para>
 	</section>
 	<section>
-		<title><varname>defaults_expires</varname></title>
+		<title><varname>default_expires</varname></title>
 		<para>
 		The value of default_expires parameter.
 		</para>
