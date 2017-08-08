@@ -387,7 +387,7 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 		strncpy(dst_uri_buf, "sip:", 4);
 		strncpy(dst_uri_buf+4, hooks.contact.received->body.s,
 					hooks.contact.received->body.len);
-		dst_uri_buf[hooks.contact.received->body.len] = '\0';
+		dst_uri_buf[4+hooks.contact.received->body.len] = '\0';
 		p = dst_uri_buf + 4;
 		n = 0;
 		while(*p!='\0') {
