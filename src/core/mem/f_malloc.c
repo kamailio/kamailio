@@ -539,6 +539,34 @@ finish:
 	return (char*)frag+sizeof(struct fm_frag);
 }
 
+/**
+ * \brief Memory manager allocation function, with 0 filling
+ *
+ * Main memory manager allocation function, provide functionality necessary
+ * for pkg_mallocxz
+ * \param qm memory block
+ * \param size memory allocation size
+ * \return address of allocated memory
+ */
+#ifdef DBG_F_MALLOC
+void* fm_mallocxz(void* qmp, size_t size, const char* file,
+		const char* func, unsigned int line, const char* mname)
+#else
+void* fm_mallocxz(void* qmp, size_t size)
+#endif
+{
+	void *p;
+
+#ifdef DBG_F_MALLOC
+	p = fm_malloc(qmp, size, file, func, line, mname);
+#else
+	p = fm_malloc(qmp, size);
+#endif
+
+	if(p) memset(p, 0, size);
+
+	return p;
+}
 
 #ifdef MEM_JOIN_FREE
 /**
@@ -730,8 +758,14 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 			ptr=fm_malloc(qm, size);
 	#endif
 			if (ptr){
-				/* copy, need by libssl */
+				/* copy old content */
 				memcpy(ptr, p, orig_size);
+				/* free old buffer */
+	#ifdef DBG_F_MALLOC
+				fm_free(qm, p, file, func, line, mname);
+	#else
+				fm_free(qm, p);
+	#endif
 			} else {
 #ifdef DBG_F_MALLOC
 				LM_ERR("fm_realloc(%p, %lu) called from %s: %s(%d),"
@@ -742,11 +776,6 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 						qm, (unsigned long)size);
 #endif
 			}
-	#ifdef DBG_F_MALLOC
-			fm_free(qm, p, file, func, line, mname);
-	#else
-			fm_free(qm, p);
-	#endif
 			p=ptr;
 		}
 	}else{
@@ -763,6 +792,44 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 		sr_event_exec(SREV_PKG_UPDATE_STATS, 0);
 	}
 	return p;
+}
+
+
+/**
+ * \brief Memory manager realloc function, always freeing old buffer
+ *
+ * Main memory manager realloc function, provide functionality for pkg_reallocxf
+ * \param qm memory block
+ * \param p reallocated memory block
+ * \param size
+ * \return reallocated memory block
+ */
+#ifdef DBG_F_MALLOC
+void* fm_reallocxf(void* qmp, void* p, size_t size,
+					const char* file, const char* func, unsigned int line,
+					const char *mname)
+#else
+void* fm_reallocxf(void* qmp, void* p, size_t size)
+#endif
+{
+	void *r;
+
+#ifdef DBG_F_MALLOC
+	r = fm_realloc(qmp, p, size, file, func, line, mname);
+#else
+	r = fm_realloc(qmp, p, size);
+#endif
+
+	if(!r) {
+	#ifdef DBG_F_MALLOC
+		fm_free(qmp, p, file, func, line, mname);
+	#else
+		fm_free(qmp, p);
+	#endif
+
+	}
+
+	return r;
 }
 
 
@@ -1086,8 +1153,10 @@ int fm_malloc_init_pkg_manager(void)
 	ma.mem_pool   = _fm_pkg_pool;
 	ma.mem_block  = _fm_pkg_block;
 	ma.xmalloc    = fm_malloc;
+	ma.xmallocxz  = fm_mallocxz;
 	ma.xfree      = fm_free;
 	ma.xrealloc   = fm_realloc;
+	ma.xreallocxf = fm_reallocxf;
 	ma.xstatus    = fm_status;
 	ma.xinfo      = fm_info;
 	ma.xavailable = fm_available;
@@ -1115,12 +1184,30 @@ void* fm_shm_malloc(void* qmp, size_t size,
 	shm_unlock();
 	return r;
 }
+void* fm_shm_mallocxz(void* qmp, size_t size,
+					const char* file, const char* func, unsigned int line, const char* mname)
+{
+	void *r;
+	shm_lock();
+	r = fm_mallocxz(qmp, size, file, func, line, mname);
+	shm_unlock();
+	return r;
+}
 void* fm_shm_realloc(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
 	shm_lock();
 	r = fm_realloc(qmp, p, size, file, func, line, mname);
+	shm_unlock();
+	return r;
+}
+void* fm_shm_reallocxf(void* qmp, void* p, size_t size,
+					const char* file, const char* func, unsigned int line, const char* mname)
+{
+	void *r;
+	shm_lock();
+	r = fm_reallocxf(qmp, p, size, file, func, line, mname);
 	shm_unlock();
 	return r;
 }
@@ -1150,11 +1237,27 @@ void* fm_shm_malloc(void* qmp, size_t size)
 	shm_unlock();
 	return r;
 }
+void* fm_shm_mallocxz(void* qmp, size_t size)
+{
+	void *r;
+	shm_lock();
+	r = fm_mallocxz(qmp, size);
+	shm_unlock();
+	return r;
+}
 void* fm_shm_realloc(void* qmp, void* p, size_t size)
 {
 	void *r;
 	shm_lock();
 	r = fm_realloc(qmp, p, size);
+	shm_unlock();
+	return r;
+}
+void* fm_shm_reallocxf(void* qmp, void* p, size_t size)
+{
+	void *r;
+	shm_lock();
+	r = fm_reallocxf(qmp, p, size);
 	shm_unlock();
 	return r;
 }
@@ -1234,10 +1337,12 @@ int fm_malloc_init_shm_manager(void)
 	ma.mem_pool       = _fm_shm_pool;
 	ma.mem_block      = _fm_shm_block;
 	ma.xmalloc        = fm_shm_malloc;
+	ma.xmallocxz      = fm_shm_mallocxz;
 	ma.xmalloc_unsafe = fm_malloc;
 	ma.xfree          = fm_shm_free;
 	ma.xfree_unsafe   = fm_free;
 	ma.xrealloc       = fm_shm_realloc;
+	ma.xreallocxf     = fm_shm_reallocxf;
 	ma.xresize        = fm_shm_resize;
 	ma.xstatus        = fm_shm_status;
 	ma.xinfo          = fm_shm_info;
