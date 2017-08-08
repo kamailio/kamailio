@@ -32,16 +32,22 @@ void pkg_print_manager(void);
 #ifdef PKG_MALLOC
 
 #ifdef DBG_SR_MEMORY
-#	define pkg_malloc(s)      _pkg_root.xmalloc(_pkg_root.mem_block, (s), _SRC_LOC_, \
-				_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
-#	define pkg_free(p)        _pkg_root.xfree(_pkg_root.mem_block, (p), _SRC_LOC_, \
-				_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
+#	define pkg_malloc(s)      _pkg_root.xmalloc(_pkg_root.mem_block, (s), \
+				_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
+#	define pkg_mallocxz(s)    _pkg_root.xmallocxz(_pkg_root.mem_block, (s), \
+				_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
+#	define pkg_free(p)        _pkg_root.xfree(_pkg_root.mem_block, (p), \
+				_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #	define pkg_realloc(p, s)  _pkg_root.xrealloc(_pkg_root.mem_block, (p), (s), \
+				_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
+#	define pkg_reallocxf(p, s) _pkg_root.xreallocxf(_pkg_root.mem_block, (p), (s), \
 				_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #else
 #	define pkg_malloc(s)      _pkg_root.xmalloc(_pkg_root.mem_block, (s))
-#	define pkg_realloc(p, s)  _pkg_root.xrealloc(_pkg_root.mem_block, (p), (s))
+#	define pkg_mallocxz(s)    _pkg_root.xmallocxz(_pkg_root.mem_block, (s))
 #	define pkg_free(p)        _pkg_root.xfree(_pkg_root.mem_block, (p))
+#	define pkg_realloc(p, s)  _pkg_root.xrealloc(_pkg_root.mem_block, (p), (s))
+#	define pkg_reallocxf(p, s) _pkg_root.xreallocxf(_pkg_root.mem_block, (p), (s))
 #endif
 
 #	define pkg_status()    _pkg_root.xstatus(_pkg_root.mem_block)
@@ -62,15 +68,33 @@ void pkg_print_manager(void);
 	(  { void *____v123; ____v123=malloc((s)); \
 	   MDBG("malloc %p size %lu end %p (%s:%d)\n", ____v123, (unsigned long)(s), (char*)____v123+(s), __FILE__, __LINE__);\
 	   ____v123; } )
+#	define pkg_mallocxz(s) \
+	(  { void *____v123; ____v123=malloc((s)); \
+	   MDBG("malloc %p size %lu end %p (%s:%d)\n", ____v123, (unsigned long)(s), (char*)____v123+(s), __FILE__, __LINE__);\
+	   if(____v123) memset(____v123, 0, (s)); \
+	   ____v123; } )
+#	define pkg_free(p)  do{ MDBG("free %p (%s:%d)\n", (p), __FILE__, __LINE__); free((p)); }while(0)
 #	define pkg_realloc(p, s) \
 	(  { void *____v123; ____v123=realloc(p, s); \
 	   MDBG("realloc %p size %lu end %p (%s:%d)\n", ____v123, (unsigned long)(s), (char*)____v123+(s), __FILE__, __LINE__);\
-	    ____v123; } )
-#	define pkg_free(p)  do{ MDBG("free %p (%s:%d)\n", (p), __FILE__, __LINE__); free((p)); }while(0)
+	   ____v123; } )
+#	define pkg_reallocxf(p, s) \
+	(  { void *____v123; ____v123=realloc(p, s); \
+	   MDBG("realloc %p size %lu end %p (%s:%d)\n", ____v123, (unsigned long)(s), (char*)____v123+(s), __FILE__, __LINE__);\
+	   if(!____v123) free(p); \
+	   ____v123; } )
 #	else
 #	define pkg_malloc(s)		malloc((s))
-#	define pkg_realloc(p, s)	realloc((p), (s))
+#	define pkg_mallocxz(s) \
+	(  { void *____v123; ____v123=malloc((s)); \
+	   if(____v123) memset(____v123, 0, (s)); \
+	   ____v123; } )
 #	define pkg_free(p)			free((p))
+#	define pkg_realloc(p, s)	realloc((p), (s))
+#	define pkg_reallocxf(p, s) \
+	(  { void *____v123; ____v123=realloc((p), (s)); \
+	   if(!____v123) free(p); \
+	   ____v123; } )
 #	endif
 #	define pkg_status() do{}while(0)
 #	define pkg_info(mi) do{ memset((mi),0, sizeof(*(mi))); } while(0)

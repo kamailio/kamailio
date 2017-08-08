@@ -50,9 +50,13 @@ extern sr_shm_api_t _shm_root;
 
 #	define shm_malloc(s)         _shm_root.xmalloc(_shm_root.mem_block, (s), _SRC_LOC_, \
 									_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
+#	define shm_mallocxz(s)       _shm_root.xmallocxz(_shm_root.mem_block, (s), _SRC_LOC_, \
+									_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #	define shm_malloc_unsafe(s)  _shm_root.xmalloc_unsafe(_shm_root.mem_block, (s), _SRC_LOC_, \
 									_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #	define shm_realloc(p, s)     _shm_root.xrealloc(_shm_root.mem_block, (p), (s), \
+									_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
+#	define shm_reallocxf(p, s)   _shm_root.xreallocxf(_shm_root.mem_block, (p), (s), \
 									_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #	define shm_resize(p, s)      _shm_root.xresize(_shm_root.mem_block, (p), (s), \
 									_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
@@ -62,8 +66,10 @@ extern sr_shm_api_t _shm_root;
 									_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #else
 #	define shm_malloc(s)         _shm_root.xmalloc(_shm_root.mem_block, (s))
+#	define shm_mallocxz(s)       _shm_root.xmallocxz(_shm_root.mem_block, (s))
 #	define shm_malloc_unsafe(s)  _shm_root.xmalloc_unsafe(_shm_root.mem_block, (s))
 #	define shm_realloc(p, s)     _shm_root.xrealloc(_shm_root.mem_block, (p), (s))
+#	define shm_reallocxf(p, s)   _shm_root.xreallocxf(_shm_root.mem_block, (p), (s))
 #	define shm_resize(p, s)      _shm_root.xresize(_shm_root.mem_block, (p), (s))
 #	define shm_free(p)           _shm_root.xfree(_shm_root.mem_block, (p))
 #	define shm_free_unsafe(p)    _shm_root.xfree_unsafe(_shm_root.mem_block, (p))

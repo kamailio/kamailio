@@ -66,8 +66,12 @@ typedef struct sr_pkg_api {
 	void *mem_block;
 	/*memory chunk allocation*/
 	sr_malloc_f        xmalloc;
+	/*memory chunk allocation with 0 filling */
+	sr_malloc_f        xmallocxz;
 	/*memory chunk reallocation*/
 	sr_realloc_f       xrealloc;
+	/*memory chunk reallocation with always free of old buffer*/
+	sr_realloc_f       xreallocxf;
 	/*memory chunk free*/
 	sr_free_f          xfree;
 	/*memory status*/
@@ -96,15 +100,19 @@ typedef struct sr_shm_api {
 	void *mem_block;
 	/*memory chunk allocation*/
 	sr_malloc_f        xmalloc;
+	/*memory chunk allocation with 0 filling */
+	sr_malloc_f        xmallocxz;
 	/*memory chunk allocation without locking shm*/
 	sr_malloc_f        xmalloc_unsafe;
 	/*memory chunk reallocation*/
 	sr_realloc_f       xrealloc;
+	/*memory chunk reallocation with always free of old buffer*/
+	sr_realloc_f       xreallocxf;
 	/*memory chunk resizing - free+malloc in same locking*/
 	sr_resize_f        xresize;
 	/*memory chunk free*/
 	sr_free_f          xfree;
-	/*memory chunk free without locking shsm*/
+	/*memory chunk free without locking shm*/
 	sr_free_f          xfree_unsafe;
 	/*memory status*/
 	sr_mem_status_f    xstatus;
