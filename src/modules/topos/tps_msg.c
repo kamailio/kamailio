@@ -763,6 +763,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	tps_storage_lock_get(&lkey);
 
 	if((get_cseq(msg)->method_id)&(METHOD_PRACK)) {
+		if(tps_storage_link_msg(msg, &mtsd, TPS_DIR_DOWNSTREAM)<0) {
+			goto error;
+		}
 		if(tps_storage_load_branch(msg, &mtsd, &stsd, 1)<0) {
 			goto error;
 		}

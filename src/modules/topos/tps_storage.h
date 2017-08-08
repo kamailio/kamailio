@@ -102,6 +102,8 @@ int tps_storage_lock_get(str *lkey);
 int tps_storage_lock_release(str *lkey);
 int tps_storage_lock_set_destroy(void);
 
+int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir);
+
 void tps_storage_clean(unsigned int ticks, void* param);
 
 #endif
