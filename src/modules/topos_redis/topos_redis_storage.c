@@ -440,7 +440,8 @@ int tps_redis_clean_branches(void)
 /**
  *
  */
-int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t mode)
 {
 	char* argv[TPS_REDIS_NR_KEYS];
 	size_t argvlen[TPS_REDIS_NR_KEYS];
