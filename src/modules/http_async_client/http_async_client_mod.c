@@ -346,7 +346,7 @@ static int child_init(int rank)
 			LM_ERR("failed to initialize worker process: %d\n", i);
 			return -1;
 		}
-		pid=fork_process(PROC_RPC, "Http Worker", 1);
+		pid=fork_process(PROC_RPC, "Http Async Worker", 1);
 		if (pid<0)
 			return -1; /* error */
 		if(pid==0) {
