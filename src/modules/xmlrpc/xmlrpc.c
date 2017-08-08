@@ -1841,6 +1841,7 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name,
 {
 	int n, buf_size;
 	char* buf;
+	char* buf0;
 	va_list ap;
 	str st, name;
 	struct xmlrpc_reply* reply;
@@ -1890,11 +1891,12 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name,
 		} else {          /* glibc 2.0 */
 			buf_size *= 2;  /* twice the old size */
 		}
-		if ((buf = mxr_realloc(buf, buf_size)) == 0) {
+		if ((buf0 = mxr_realloc(buf, buf_size)) == 0) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
 		}
+		buf = buf0;
 	}
 	return 0;
  err:
