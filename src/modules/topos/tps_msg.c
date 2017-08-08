@@ -763,7 +763,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	tps_storage_lock_get(&lkey);
 
 	if((get_cseq(msg)->method_id)&(METHOD_PRACK)) {
-		if(tps_storage_load_branch(msg, &mtsd, &stsd)<0) {
+		if(tps_storage_load_branch(msg, &mtsd, &stsd, 1)<0) {
 			goto error;
 		}
 		use_branch = 1;
@@ -862,7 +862,7 @@ int tps_response_received(sip_msg_t *msg)
 		return -1;
 	}
 	tps_storage_lock_get(&lkey);
-	if(tps_storage_load_branch(msg, &mtsd, &btsd)<0) {
+	if(tps_storage_load_branch(msg, &mtsd, &btsd, 0)<0) {
 		goto error;
 	}
 	LM_DBG("loaded dialog a_uuid [%.*s]\n",
@@ -935,7 +935,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 	tps_storage_lock_get(&lkey);
 
-	if(tps_storage_load_branch(msg, &mtsd, &btsd)!=0) {
+	if(tps_storage_load_branch(msg, &mtsd, &btsd, 0)!=0) {
 		if(tps_storage_record(msg, ptsd, dialog)<0) {
 			goto error;
 		}
@@ -1034,7 +1034,7 @@ int tps_response_sent(sip_msg_t *msg)
 	lkey = msg->callid->body;
 
 	tps_storage_lock_get(&lkey);
-	if(tps_storage_load_branch(msg, &mtsd, &btsd)<0) {
+	if(tps_storage_load_branch(msg, &mtsd, &btsd, 0)<0) {
 		goto error;
 	}
 	LM_DBG("loaded branch a_uuid [%.*s]\n",

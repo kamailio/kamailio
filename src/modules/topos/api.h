@@ -36,7 +36,8 @@ typedef int (*tps_insert_dialog_f)(tps_data_t *td);
 typedef int (*tps_clean_dialogs_f)(void);
 typedef int (*tps_insert_branch_f)(tps_data_t *td);
 typedef int (*tps_clean_branches_f)(void);
-typedef int (*tps_load_branch_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+typedef int (*tps_load_branch_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t mode);
 typedef int (*tps_load_dialog_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 typedef int (*tps_update_branch_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		uint32_t mode);

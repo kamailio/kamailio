@@ -88,7 +88,8 @@ int tps_storage_branch_save(sip_msg_t *msg, tps_data_t *td);
 int tps_storage_branch_rm(sip_msg_t *msg, tps_data_t *td);
 
 int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog);
-int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t mode);
 int tps_storage_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		uint32_t mode);
 int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);

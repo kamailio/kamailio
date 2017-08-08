@@ -63,7 +63,8 @@ int tps_db_insert_dialog(tps_data_t *td);
 int tps_db_clean_dialogs(void);
 int tps_db_insert_branch(tps_data_t *td);
 int tps_db_clean_branches(void);
-int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t mode);
 int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 int tps_db_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		uint32_t mode);
@@ -829,13 +830,15 @@ int tps_db_clean_branches(void)
 /**
  *
  */
-int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t mode)
 {
 	db_key_t db_keys[4];
 	db_op_t  db_ops[4];
 	db_val_t db_vals[4];
 	db_key_t db_cols[TPS_NR_KEYS];
 	db1_res_t* db_res = NULL;
+	str sinv = str_init("INVITE");
 	int nr_keys;
 	int nr_cols;
 	int n;
@@ -847,12 +850,37 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	nr_keys = 0;
 	nr_cols = 0;
 
-	db_keys[nr_keys]=&tt_col_x_vbranch;
-	db_ops[nr_keys]=OP_EQ;
-	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val = TPS_STRZ(md->x_vbranch1);
-	nr_keys++;
+	if(mode==0) {
+		/* load same transaction using Via branch */
+		db_keys[nr_keys]=&tt_col_x_vbranch;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->x_vbranch1);
+		nr_keys++;
+	} else {
+		/* load corresponding INVITE transaction using call-id + to-tag */
+		db_keys[nr_keys]=&tt_col_a_callid;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_callid);
+		nr_keys++;
+
+		db_keys[nr_keys]=&tt_col_b_tag;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_tag);
+		nr_keys++;
+
+		db_keys[nr_keys]=&tt_col_s_method;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = sinv;
+		nr_keys++;
+	}
 
 	db_cols[nr_cols++] = &tt_col_rectime;
 	db_cols[nr_cols++] = &tt_col_a_callid;
@@ -881,8 +909,14 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	}
 
 	if (RES_ROW_N(db_res) <= 0) {
-		LM_DBG("no stored record for <%.*s>\n",
-				md->x_vbranch1.len, ZSW(md->x_vbranch1.s));
+		if(mode==0) {
+			LM_DBG("no stored record for <%.*s>\n",
+					md->x_vbranch1.len, ZSW(md->x_vbranch1.s));
+		} else {
+			LM_DBG("no stored record for INVITE <%.*s ~ %.*s>\n",
+					md->a_callid.len, ZSW(md->a_callid.s),
+					md->b_tag.len, ZSW(md->b_tag.s));
+		}
 		ret = 1;
 		goto done;
 	}
@@ -921,9 +955,10 @@ error:
 /**
  *
  */
-int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t mode)
 {
-	return _tps_storage_api.load_branch(msg, md, sd);
+	return _tps_storage_api.load_branch(msg, md, sd, mode);
 }
 
 /**
