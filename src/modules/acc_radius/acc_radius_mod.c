@@ -67,7 +67,7 @@ acc_api_t accb;
 acc_engine_t _acc_radius_engine;
 
 /* ----- RADIUS acc variables ----------- */
-/*! \name AccRadiusVariables  Radius Variables */     
+/*! \name AccRadiusVariables  Radius Variables */
 /*@{*/
 
 static char *radius_config = 0;
@@ -324,7 +324,7 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	int rc_result=-1;
 	double tsecmicro;
 	char smicrosec[18];
-	
+
 	send=NULL;
 
 	attr_cnt = accb.get_core_attrs( req, inf->varr, inf->iarr, inf->tarr );
@@ -344,16 +344,16 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	ADD_RAD_AVPAIR( RA_SIP_METHOD, &av_type, -1);
 
 	// Event Time Stamp with Microseconds
-        if(rad_time_mode==1){
-                gettimeofday(&inf->env->tv, NULL);
-                tsecmicro=inf->env->tv.tv_sec+((double)inf->env->tv.tv_usec/1000000.0);
-                //radius client doesn t support double so convert it
-                sprintf(smicrosec,"%17.6f",tsecmicro);
-                ADD_RAD_AVPAIR(RA_TIME_STAMP, &smicrosec, -1);
-        }else{
-                av_type = (uint32_t)inf->env->ts;
-                ADD_RAD_AVPAIR(RA_TIME_STAMP, &av_type, -1);
-        }
+	if(rad_time_mode==1){
+		gettimeofday(&inf->env->tv, NULL);
+		tsecmicro=inf->env->tv.tv_sec+((double)inf->env->tv.tv_usec/1000000.0);
+		//radius client doesn t support double so convert it
+		sprintf(smicrosec,"%17.6f",tsecmicro);
+		ADD_RAD_AVPAIR(RA_TIME_STAMP, &smicrosec, -1);
+	}else{
+		av_type = (uint32_t)inf->env->ts;
+		ADD_RAD_AVPAIR(RA_TIME_STAMP, &av_type, -1);
+	}
 
 
 	/* add extra also */
@@ -392,29 +392,29 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 
 	rc_result=rc_acct(rh, SIP_PORT, send);
 
-        if (rc_result==ERROR_RC) {
-                LM_ERR("Radius accounting - ERROR - \n");
-                goto error;
-        }else if(rc_result==BADRESP_RC){
-                LM_ERR("Radius accounting - BAD RESPONSE \n");
-                goto error;
-        }else if(rc_result==TIMEOUT_RC){
-                LM_ERR("Radius accounting - TIMEOUT \n");
-                goto error;
-        }else if(rc_result==REJECT_RC){
-                LM_ERR("Radius accounting - REJECTED \n");
-                goto error;
-        }else if(rc_result==OK_RC){
-                LM_DBG("Radius accounting - OK \n");
-        }else{
-        	LM_ERR("Radius accounting - Unknown response \n");
-                goto error;
-        }
+	if (rc_result==ERROR_RC) {
+		LM_ERR("Radius accounting - ERROR - \n");
+		goto error;
+	}else if(rc_result==BADRESP_RC){
+		LM_ERR("Radius accounting - BAD RESPONSE \n");
+		goto error;
+	}else if(rc_result==TIMEOUT_RC){
+		LM_ERR("Radius accounting - TIMEOUT \n");
+		goto error;
+	}else if(rc_result==REJECT_RC){
+		LM_ERR("Radius accounting - REJECTED \n");
+		goto error;
+	}else if(rc_result==OK_RC){
+		LM_DBG("Radius accounting - OK \n");
+	}else{
+		LM_ERR("Radius accounting - Unknown response \n");
+		goto error;
+	}
 
-        rc_avpair_free(send);
-        /* free memory allocated by extra2strar */
-        free_strar_mem( &(inf->tarr[m-o]), &(inf->varr[m-o]), o, m);
-        return 1;
+	rc_avpair_free(send);
+	/* free memory allocated by extra2strar */
+	free_strar_mem( &(inf->tarr[m-o]), &(inf->varr[m-o]), o, m);
+	return 1;
 
 error:
 	rc_avpair_free(send);
