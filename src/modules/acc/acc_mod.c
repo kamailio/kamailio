@@ -45,6 +45,7 @@
 #include "../../core/mem/mem.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../core/str.h"
+#include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 #include "../rr/api.h"
 #include "acc.h"
@@ -79,7 +80,7 @@ int report_ack = 0;		/*!< report e2e ACKs too */
 int detect_direction = 0;	/*!< detect and correct direction in the sequential requests */
 int failed_transaction_flag = -1; /*!< should failed replies (>=3xx) be logged ? default==no */
 static char *failed_filter_str = 0;  /* by default, do not filter logging of
-					failed transactions */
+										failed transactions */
 unsigned short failed_filter[MAX_FAILED_FILTER_COUNT + 1];
 static char* leg_info_str = 0;	/*!< multi call-leg support */
 struct acc_extra *leg_info = 0;
@@ -135,7 +136,7 @@ str acc_cdrs_table = str_init("");
 
 /* ----- DIAMETER acc variables ----------- */
 
-/*! \name AccDiamaterVariables  Radius Variables */     
+/*! \name AccDiamaterVariables  Radius Variables */
 /*@{*/
 #ifdef DIAM_ACC
 int diameter_flag = -1;
@@ -150,7 +151,7 @@ int diameter_client_port=3000;
 /*@}*/
 
 /* ----- SQL acc variables ----------- */
-/*! \name AccSQLVariables  Radius Variables */     
+/*! \name AccSQLVariables  Radius Variables */
 /*@{*/
 
 #ifdef SQL_ACC
@@ -196,6 +197,9 @@ static cmd_export_t cmds[] = {
 		acc_fixup, free_acc_fixup,
 		ANY_ROUTE},
 #endif
+	{"acc_request",  (cmd_function)w_acc_request,  2,
+		fixup_spve_spve, fixup_free_spve_spve,
+		ANY_ROUTE},
 #ifdef DIAM_ACC
 	{"acc_diam_request",(cmd_function)w_acc_diam_request,1,
 		acc_fixup, free_acc_fixup,
@@ -359,41 +363,41 @@ static int free_acc_fixup(void** param, int param_no)
 
 static int parse_failed_filter(char *s, unsigned short *failed_filter)
 {
-    unsigned int n;
-    char *at;
+	unsigned int n;
+	char *at;
 
-    n = 0;
+	n = 0;
 
-    while (1) {
-	if (n >= MAX_FAILED_FILTER_COUNT) {
-	    LM_ERR("too many elements in failed_filter\n");
-	    return 0;
+	while (1) {
+		if (n >= MAX_FAILED_FILTER_COUNT) {
+			LM_ERR("too many elements in failed_filter\n");
+			return 0;
+		}
+		at = s;
+		while ((*at >= '0') && (*at <= '9')) at++;
+		if (at - s != 3) {
+			LM_ERR("respose code in failed_filter must have 3 digits\n");
+			return 0;
+		}
+		failed_filter[n] = (*s - '0') * 100 + (*(s + 1) - '0') * 10 +
+			(*(s + 2) - '0');
+		if (failed_filter[n] < 300) {
+			LM_ERR("invalid respose code %u in failed_filter\n",
+					failed_filter[n]);
+			return 0;
+		}
+		LM_DBG("failed_filter %u = %u\n", n, failed_filter[n]);
+		n++;
+		failed_filter[n] = 0;
+		s = at;
+		if (*s == 0)
+			return 1;
+		if (*s != ',') {
+			LM_ERR("response code is not followed by comma or end of string\n");
+			return 0;
+		}
+		s++;
 	}
-	at = s;
-	while ((*at >= '0') && (*at <= '9')) at++;
-	if (at - s != 3) {
-	    LM_ERR("respose code in failed_filter must have 3 digits\n");
-	    return 0;
-	}
-	failed_filter[n] = (*s - '0') * 100 + (*(s + 1) - '0') * 10 +
-	    (*(s + 2) - '0');
-	if (failed_filter[n] < 300) {
-	    LM_ERR("invalid respose code %u in failed_filter\n",
-		   failed_filter[n]);
-	    return 0;
-	}
-	LM_DBG("failed_filter %u = %u\n", n, failed_filter[n]);
-	n++;
-	failed_filter[n] = 0;
-	s = at;
-	if (*s == 0)
-	    return 1;
-	if (*s != ',') {
-	    LM_ERR("response code is not followed by comma or end of string\n");
-	    return 0;
-	}
-	s++;
-    }
 }
 
 static int mod_init( void )
@@ -440,18 +444,18 @@ static int mod_init( void )
 	/* ----------- GENERIC INIT SECTION  ----------- */
 
 	/* failed transaction handling */
-	if ((failed_transaction_flag != -1) && 
-		!flag_in_range(failed_transaction_flag)) {
+	if ((failed_transaction_flag != -1) &&
+			!flag_in_range(failed_transaction_flag)) {
 		LM_ERR("failed_transaction_flag set to invalid value\n");
 		return -1;
 	}
 	if (failed_filter_str) {
-	    if (parse_failed_filter(failed_filter_str, failed_filter) == 0) {
-		LM_ERR("failed to parse failed_filter param\n");
-		return -1;
-	    }
+		if (parse_failed_filter(failed_filter_str, failed_filter) == 0) {
+			LM_ERR("failed to parse failed_filter param\n");
+			return -1;
+		}
 	} else {
-	    failed_filter[0] = 0;
+		failed_filter[0] = 0;
 	}
 
 	/* load the TM API */
@@ -469,7 +473,7 @@ static int mod_init( void )
 		/* we need the append_fromtag on in RR */
 		if (!rrb.append_fromtag) {
 			LM_ERR("'append_fromtag' RR param is not enabled!"
-				" - required by 'detect_direction'\n");
+					" - required by 'detect_direction'\n");
 			return -1;
 		}
 	}
@@ -522,19 +526,19 @@ static int mod_init( void )
 
 	if( cdr_enable)
 	{
-		if( !cdr_start_str.s || !cdr_end_str.s || !cdr_duration_str.s) 
+		if( !cdr_start_str.s || !cdr_end_str.s || !cdr_duration_str.s)
 		{
-		      LM_ERR( "necessary cdr_parameters are not set\n");
-		      return -1;
-		}			
-		
-		if( !cdr_start_str.len || !cdr_end_str.len || !cdr_duration_str.len) 
-		{
-		      LM_ERR( "necessary cdr_parameters are empty\n");
-		      return -1;
+			LM_ERR( "necessary cdr_parameters are not set\n");
+			return -1;
 		}
-		
-		
+
+		if( !cdr_start_str.len || !cdr_end_str.len || !cdr_duration_str.len)
+		{
+			LM_ERR( "necessary cdr_parameters are empty\n");
+			return -1;
+		}
+
+
 		if( set_cdr_extra( cdr_log_extra_str) != 0)
 		{
 			LM_ERR( "failed to set cdr extra '%s'\n", cdr_log_extra_str);
@@ -546,7 +550,7 @@ static int mod_init( void )
 			LM_ERR( "failed to set cdr facility '%s'\n", cdr_facility_str);
 			return -1;
 		}
-	
+
 		if( init_cdr_generation() != 0)
 		{
 			LM_ERR("failed to init cdr generation\n");
@@ -638,7 +642,7 @@ static int child_init(int rank)
 	LM_DBG("initializing TCP connection\n");
 
 	sockfd = init_mytcp(diameter_client_host, diameter_client_port);
-	if(sockfd==-1) 
+	if(sockfd==-1)
 	{
 		LM_ERR("TCP connection not established\n");
 		return -1;
@@ -799,6 +803,11 @@ static sr_kemi_t sr_kemi_acc_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 #endif
+	{ str_init("acc"), str_init("acc_request"),
+		SR_KEMIP_INT, ki_acc_request,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };

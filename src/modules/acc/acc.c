@@ -304,6 +304,16 @@ int acc_log_request( struct sip_msg *rq)
  *        SQL  ACCOUNTING
  ********************************************/
 
+int acc_is_db_ready(void)
+{
+#ifdef SQL_ACC
+	if(db_handle!=0)
+		return 1;
+#endif
+
+	return 0;
+}
+
 #ifdef SQL_ACC
 
 /* caution: keys need to be aligned to core format

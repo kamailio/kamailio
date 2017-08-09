@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -76,6 +76,8 @@ void acc_log_init(void);
 int  acc_log_request( struct sip_msg *req);
 
 int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals);
+
+int acc_is_db_ready(void);
 
 #ifdef SQL_ACC
 int  acc_db_init(const str* db_url);
