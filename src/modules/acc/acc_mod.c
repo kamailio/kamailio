@@ -154,7 +154,6 @@ int diameter_client_port=3000;
 /*! \name AccSQLVariables  Radius Variables */
 /*@{*/
 
-#ifdef SQL_ACC
 int db_flag = -1;
 int db_missed_flag = -1;
 static char *db_extra_str = 0;		/*!< db extra variables */
@@ -173,7 +172,6 @@ str acc_sipcode_col    = str_init("sip_code");
 str acc_sipreason_col  = str_init("sip_reason");
 str acc_time_col       = str_init("time");
 int acc_db_insert_mode = 0;
-#endif
 
 /*@}*/
 
@@ -192,11 +190,9 @@ static cmd_export_t cmds[] = {
 	{"acc_log_request", (cmd_function)w_acc_log_request, 1,
 		acc_fixup, free_acc_fixup,
 		ANY_ROUTE},
-#ifdef SQL_ACC
 	{"acc_db_request",  (cmd_function)w_acc_db_request,  2,
 		acc_fixup, free_acc_fixup,
 		ANY_ROUTE},
-#endif
 	{"acc_request",  (cmd_function)w_acc_request,  2,
 		fixup_spve_spve, fixup_free_spve_spve,
 		ANY_ROUTE},
@@ -247,7 +243,6 @@ static param_export_t params[] = {
 	{"diameter_extra",       PARAM_STRING, &dia_extra_str     },
 #endif
 	/* db-specific */
-#ifdef SQL_ACC
 	{"db_flag",              INT_PARAM, &db_flag            },
 	{"db_missed_flag",       INT_PARAM, &db_missed_flag     },
 	{"db_extra",             PARAM_STRING, &db_extra_str    },
@@ -262,7 +257,6 @@ static param_export_t params[] = {
 	{"acc_sip_reason_column",PARAM_STR, &acc_sipreason_col  },
 	{"acc_time_column",      PARAM_STR, &acc_time_col       },
 	{"db_insert_mode",       INT_PARAM, &acc_db_insert_mode },
-#endif
 	/* time-mode-specific */
 	{"time_mode",            INT_PARAM, &acc_time_mode        },
 	{"time_attr",            PARAM_STR, &acc_time_attr        },
@@ -332,7 +326,6 @@ static int acc_fixup(void** param, int param_no)
 			}
 		}
 		*param = (void*)accp;
-#ifdef SQL_ACC
 	} else if (param_no == 2) {
 		/* only for db acc - the table name */
 		if (db_url.s==0) {
@@ -341,7 +334,6 @@ static int acc_fixup(void** param, int param_no)
 		} else {
 			return fixup_var_pve_str_12(param, 2);
 		}
-#endif
 	}
 	return 0;
 }
@@ -402,7 +394,6 @@ static int parse_failed_filter(char *s, unsigned short *failed_filter)
 
 static int mod_init( void )
 {
-#ifdef SQL_ACC
 	if (db_url.s) {
 		if(db_url.len<=0) {
 			db_url.s = NULL;
@@ -429,7 +420,6 @@ static int mod_init( void )
 			return -1;
 		}
 	}
-#endif
 
 	if (log_facility_str) {
 		int tmp = str2facility(log_facility_str);
@@ -560,7 +550,6 @@ static int mod_init( void )
 
 	/* ------------ SQL INIT SECTION ----------- */
 
-#ifdef SQL_ACC
 	if (db_url.s && db_url.len > 0) {
 		/* parse the extra string, if any */
 		if (db_extra_str && (db_extra=parse_acc_extra(db_extra_str))==0 ) {
@@ -588,8 +577,6 @@ static int mod_init( void )
 		db_flag = -1;
 		db_missed_flag = -1;
 	}
-#endif
-
 
 	/* ------------ DIAMETER INIT SECTION ----------- */
 
@@ -628,13 +615,10 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-#ifdef SQL_ACC
 	if(db_url.s && acc_db_init_child(&db_url)<0) {
 		LM_ERR("could not open database connection");
 		return -1;
 	}
-
-#endif
 
 	/* DIAMETER */
 #ifdef DIAM_ACC
@@ -668,11 +652,9 @@ static void destroy(void)
 {
 	if (log_extra)
 		destroy_extras( log_extra);
-#ifdef SQL_ACC
 	acc_db_close();
 	if (db_extra)
 		destroy_extras( db_extra);
-#endif
 #ifdef DIAM_ACC
 	close_tcp_connection(sockfd);
 	if (dia_extra)
@@ -796,13 +778,11 @@ static sr_kemi_t sr_kemi_acc_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-#ifdef SQL_ACC
 	{ str_init("acc"), str_init("acc_db_request"),
 		SR_KEMIP_INT, ki_acc_db_request,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-#endif
 	{ str_init("acc"), str_init("acc_request"),
 		SR_KEMIP_INT, ki_acc_request,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,

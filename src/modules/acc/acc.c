@@ -64,11 +64,9 @@ extern int diameter_client_port;
 extern struct acc_extra *dia_extra;
 #endif
 
-#ifdef SQL_ACC
 static db_func_t acc_dbf;
 static db1_con_t* db_handle=0;
 extern struct acc_extra *db_extra;
-#endif
 
 /* arrays used to collect the values before being
  * pushed to the storage backend (whatever used)
@@ -306,15 +304,11 @@ int acc_log_request( struct sip_msg *rq)
 
 int acc_is_db_ready(void)
 {
-#ifdef SQL_ACC
 	if(db_handle!=0)
 		return 1;
-#endif
 
 	return 0;
 }
-
-#ifdef SQL_ACC
 
 /* caution: keys need to be aligned to core format
  * (3 = datetime + max 2 from time_mode) */
@@ -527,8 +521,6 @@ error:
 	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
 	return -1;
 }
-
-#endif
 
 
 /************ RADIUS & DIAMETER helper functions **************/

@@ -8,9 +8,6 @@ auto_gen=
 NAME=acc.so
 LIBS=
 
-# comment the next line if you wish to disable SQL accounting
-DEFS+=-DSQL_ACC
-
 # set ENABLE_DIAMETER_ACC to true if you wish to enable DIAMETER accounting
 #   (uncomment next line or 'ENABLE_DIAMETER_ACC=true make all')
 #ENABLE_DIAMETER_ACC=true

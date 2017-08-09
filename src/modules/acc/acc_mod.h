@@ -60,7 +60,6 @@ extern int diameter_flag;
 extern int diameter_missed_flag;
 #endif
 
-#ifdef SQL_ACC
 extern int db_flag;
 extern int db_missed_flag;
 
@@ -81,7 +80,6 @@ extern str acc_sipreason_col;
 extern str acc_time_col;
 
 extern int acc_db_insert_mode;
-#endif /* SQL_ACC */
 
 /* time mode */
 extern int acc_time_mode;

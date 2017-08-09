@@ -62,14 +62,8 @@ struct acc_enviroment acc_env;
 #define is_log_acc_on(_rq)     is_acc_flag_set(_rq,log_flag)
 #define is_log_mc_on(_rq)      is_acc_flag_set(_rq,log_missed_flag)
 
-#ifdef SQL_ACC
-	#define is_db_acc_on(_rq)     is_acc_flag_set(_rq,db_flag)
-	#define is_db_mc_on(_rq)      is_acc_flag_set(_rq,db_missed_flag)
-#else
-	#define is_db_acc_on(_rq)     (0)
-	#define is_db_mc_on(_rq)      (0)
-#endif
-
+#define is_db_acc_on(_rq)     is_acc_flag_set(_rq,db_flag)
+#define is_db_mc_on(_rq)      is_acc_flag_set(_rq,db_missed_flag)
 
 #ifdef DIAM_ACC
 	#define is_diam_acc_on(_rq)     is_acc_flag_set(_rq,diameter_flag)
@@ -262,7 +256,6 @@ int ki_acc_log_request(sip_msg_t *rq, str *comment)
 }
 
 
-#ifdef SQL_ACC
 int acc_db_set_table_name(struct sip_msg *msg, void *param, str *table)
 {
 #define DB_TABLE_NAME_SIZE	64
@@ -331,7 +324,6 @@ int ki_acc_db_request(sip_msg_t *rq, str *comment, str *dbtable)
 	env_set_comment(&accp);
 	return acc_db_request(rq);
 }
-#endif
 
 int ki_acc_request(sip_msg_t *rq, str *comment, str *dbtable)
 {
@@ -345,12 +337,10 @@ int ki_acc_request(sip_msg_t *rq, str *comment, str *dbtable)
 	if (acc_preparse_req(rq)<0)
 		return -1;
 
-#ifdef SQL_ACC
 	if(acc_db_set_table_name(rq, NULL, dbtable)<0) {
 		LM_ERR("cannot set table name\n");
 		return -1;
 	}
-#endif
 
 	env_set_to(rq->to);
 	env_set_comment(&accp);
@@ -359,14 +349,12 @@ int ki_acc_request(sip_msg_t *rq, str *comment, str *dbtable)
 	if(ret<0) {
 		LM_ERR("acc log request failed\n");
 	}
-#ifdef SQL_ACC
 	if(acc_is_db_ready()) {
 		ret = acc_db_request(rq);
 		if(ret<0) {
 			LM_ERR("acc db request failed\n");
 		}
 	}
-#endif
 
 	return ret;
 }
@@ -531,7 +519,6 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 		acc_log_request( req );
 		flags_to_reset |= log_missed_flag;
 	}
-#ifdef SQL_ACC
 	if (is_db_mc_on(req)) {
 		if(acc_db_set_table_name(req, db_table_mc_data, &db_table_mc)<0) {
 			LM_ERR("cannot set missed call db table name\n");
@@ -540,7 +527,6 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 		acc_db_request( req );
 		flags_to_reset |= db_missed_flag;
 	}
-#endif
 
 /* DIAMETER */
 #ifdef DIAM_ACC
@@ -634,7 +620,6 @@ static void acc_onreply(tm_cell_t *t, sip_msg_t *req, sip_msg_t *reply, int code
 		env_set_text( ACC_ANSWERED, ACC_ANSWERED_LEN);
 		acc_log_request(preq);
 	}
-#ifdef SQL_ACC
 	if (is_db_acc_on(preq)) {
 		if(acc_db_set_table_name(preq, db_table_acc_data, &db_table_acc)<0) {
 			LM_ERR("cannot set acc db table name\n");
@@ -642,7 +627,6 @@ static void acc_onreply(tm_cell_t *t, sip_msg_t *req, sip_msg_t *reply, int code
 			acc_db_request(preq);
 		}
 	}
-#endif
 
 /* DIAMETER */
 #ifdef DIAM_ACC
@@ -690,7 +674,6 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 		env_set_text( ACC_ACKED, ACC_ACKED_LEN);
 		acc_log_request( ack );
 	}
-#ifdef SQL_ACC
 	if (is_db_acc_on(req)) {
 		if(acc_db_set_table_name(ack, db_table_acc_data, &db_table_acc)<0) {
 			LM_ERR("cannot set acc db table name\n");
@@ -698,7 +681,6 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 		}
 		acc_db_request( ack );
 	}
-#endif
 
 /* DIAMETER */
 #ifdef DIAM_ACC

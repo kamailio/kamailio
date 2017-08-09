@@ -45,9 +45,7 @@
 #include "acc_extra.h"
 #include "acc.h"
 
-#ifdef SQL_ACC
 #include "../../lib/srdb1/db.h"
-#endif
 
 #include <sys/time.h>
 
@@ -124,7 +122,6 @@ static int cdr_core2strar( struct dlg_cell* dlg,
     return MAX_CDR_CORE;
 }
 
-#ifdef SQL_ACC
 /* caution: keys need to be aligned to core format */
 static db_key_t db_cdr_keys[ MAX_CDR_CORE + MAX_CDR_EXTRA];
 static db_val_t db_cdr_vals[ MAX_CDR_CORE + MAX_CDR_EXTRA];
@@ -263,7 +260,6 @@ error:
 	free_strar_mem( &(cdr_type_array[m-n]), &(cdr_value_array[m-n]), n, m);
     return -1;
 }
-#endif
 
 /* collect all crd data and write it to a syslog */
 static int log_write_cdr( struct dlg_cell* dialog,
@@ -375,9 +371,7 @@ static int write_cdr( struct dlg_cell* dialog,
 	}
 
 	ret = log_write_cdr(dialog, message);
-#ifdef SQL_ACC
 	ret |= db_write_cdr(dialog, message);
-#endif
 	return ret;
 }
 
