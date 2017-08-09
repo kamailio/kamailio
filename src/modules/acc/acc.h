@@ -85,9 +85,4 @@ void acc_db_close(void);
 int  acc_db_request( struct sip_msg *req);
 int acc_get_db_handlers(void **vf, void **vh);
 
-#ifdef DIAM_ACC
-int  acc_diam_init(void);
-int  acc_diam_request( struct sip_msg *req );
-#endif
-
 #endif

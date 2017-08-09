@@ -65,21 +65,11 @@ struct acc_enviroment acc_env;
 #define is_db_acc_on(_rq)     is_acc_flag_set(_rq,db_flag)
 #define is_db_mc_on(_rq)      is_acc_flag_set(_rq,db_missed_flag)
 
-#ifdef DIAM_ACC
-	#define is_diam_acc_on(_rq)     is_acc_flag_set(_rq,diameter_flag)
-	#define is_diam_mc_on(_rq)      is_acc_flag_set(_rq,diameter_missed_flag)
-#else
-	#define is_diam_acc_on(_rq)     (0)
-	#define is_diam_mc_on(_rq)      (0)
-#endif
-
 #define is_acc_on(_rq) \
-	( (is_log_acc_on(_rq)) || (is_db_acc_on(_rq)) \
-	|| (is_diam_acc_on(_rq)) )
+	( (is_log_acc_on(_rq)) || (is_db_acc_on(_rq)) )
 
 #define is_mc_on(_rq) \
-	( (is_log_mc_on(_rq)) || (is_db_mc_on(_rq)) \
-	|| (is_diam_mc_on(_rq)) )
+	( (is_log_mc_on(_rq)) || (is_db_mc_on(_rq)) )
 
 #define skip_cancel(_rq) \
 	(((_rq)->REQ_METHOD==METHOD_CANCEL) && report_cancels==0)
@@ -377,22 +367,6 @@ int w_acc_request(sip_msg_t *rq, char *comment, char *table)
 }
 
 
-#ifdef DIAM_ACC
-int w_acc_diam_request(struct sip_msg *rq, char *comment, char *foo)
-{
-	struct acc_param *param = (struct acc_param*)comment;
-	if (acc_preparse_req(rq)<0)
-		return -1;
-	if(acc_get_param_value(rq, param)<0)
-		return -1;
-	env_set_to( rq->to );
-	env_set_comment(param);
-	return acc_diam_request(rq);
-}
-#endif
-
-
-
 /* prepare message and transaction context for later accounting */
 void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 {
@@ -528,14 +502,6 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 		flags_to_reset |= db_missed_flag;
 	}
 
-/* DIAMETER */
-#ifdef DIAM_ACC
-	if (is_diam_mc_on(req)) {
-		acc_diam_request( req );
-		flags_to_reset |= diameter_missed_flag;
-	}
-#endif
-
 	/* run extra acc engines */
 	acc_run_engines(req, 1, &flags_to_reset);
 
@@ -628,12 +594,6 @@ static void acc_onreply(tm_cell_t *t, sip_msg_t *req, sip_msg_t *reply, int code
 		}
 	}
 
-/* DIAMETER */
-#ifdef DIAM_ACC
-	if (is_diam_acc_on(preq))
-		acc_diam_request(preq);
-#endif
-
 	/* run extra acc engines */
 	acc_run_engines(preq, 0, NULL);
 
@@ -681,13 +641,6 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 		}
 		acc_db_request( ack );
 	}
-
-/* DIAMETER */
-#ifdef DIAM_ACC
-	if (is_diam_acc_on(req)) {
-		acc_diam_request(ack);
-	}
-#endif
 
 	/* run extra acc engines */
 	acc_run_engines(ack, 0, NULL);

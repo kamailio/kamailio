@@ -8,13 +8,6 @@ auto_gen=
 NAME=acc.so
 LIBS=
 
-# set ENABLE_DIAMETER_ACC to true if you wish to enable DIAMETER accounting
-#   (uncomment next line or 'ENABLE_DIAMETER_ACC=true make all')
-#ENABLE_DIAMETER_ACC=true
-ifeq ($(ENABLE_DIAMETER_ACC),true)
-DEFS+=-DDIAM_ACC
-endif
-
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib

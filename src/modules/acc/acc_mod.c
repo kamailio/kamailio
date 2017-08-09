@@ -55,11 +55,6 @@
 #include "acc_logic.h"
 #include "acc_cdr.h"
 
-#ifdef DIAM_ACC
-#include "diam_dict.h"
-#include "diam_tcp.h"
-#endif
-
 MODULE_VERSION
 
 struct tm_binds tmb;
@@ -134,22 +129,6 @@ str acc_cdrs_table = str_init("");
 
 /*@}*/
 
-/* ----- DIAMETER acc variables ----------- */
-
-/*! \name AccDiamaterVariables  Radius Variables */
-/*@{*/
-#ifdef DIAM_ACC
-int diameter_flag = -1;
-int diameter_missed_flag = -1;
-static char *dia_extra_str = 0;		/*!< diameter extra variables */
-struct acc_extra *dia_extra = 0;
-rd_buf_t *rb;				/*!< buffer used to read from TCP connection*/
-char* diameter_client_host="localhost";
-int diameter_client_port=3000;
-#endif
-
-/*@}*/
-
 /* ----- SQL acc variables ----------- */
 /*! \name AccSQLVariables  Radius Variables */
 /*@{*/
@@ -196,11 +175,6 @@ static cmd_export_t cmds[] = {
 	{"acc_request",  (cmd_function)w_acc_request,  2,
 		fixup_spve_spve, fixup_free_spve_spve,
 		ANY_ROUTE},
-#ifdef DIAM_ACC
-	{"acc_diam_request",(cmd_function)w_acc_diam_request,1,
-		acc_fixup, free_acc_fixup,
-		ANY_ROUTE},
-#endif
 	{"bind_acc",    (cmd_function)bind_acc, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -234,14 +208,6 @@ static param_export_t params[] = {
 	{"cdr_end_id",		 PARAM_STR, &cdr_end_str		},
 	{"cdr_duration_id",	 PARAM_STR, &cdr_duration_str	},
 	{"cdr_expired_dlg_enable", INT_PARAM, &cdr_expired_dlg_enable   },
-	/* DIAMETER specific */
-#ifdef DIAM_ACC
-	{"diameter_flag",        INT_PARAM, &diameter_flag        },
-	{"diameter_missed_flag", INT_PARAM, &diameter_missed_flag },
-	{"diameter_client_host", PARAM_STRING, &diameter_client_host },
-	{"diameter_client_port", INT_PARAM, &diameter_client_port },
-	{"diameter_extra",       PARAM_STRING, &dia_extra_str     },
-#endif
 	/* db-specific */
 	{"db_flag",              INT_PARAM, &db_flag            },
 	{"db_missed_flag",       INT_PARAM, &db_missed_flag     },
@@ -578,28 +544,6 @@ static int mod_init( void )
 		db_missed_flag = -1;
 	}
 
-	/* ------------ DIAMETER INIT SECTION ----------- */
-
-#ifdef DIAM_ACC
-	/* fix the flags */
-	if (flag_idx2mask(&diameter_flag)<0)
-		return -1;
-	if (flag_idx2mask(&diameter_missed_flag)<0)
-		return -1;
-
-	/* parse the extra string, if any */
-	if (dia_extra_str && (dia_extra=parse_acc_extra(dia_extra_str))==0 ) {
-		LM_ERR("failed to parse dia_extra param\n");
-		return -1;
-	}
-
-	if (acc_diam_init()!=0) {
-		LM_ERR("failed to init diameter engine\n");
-		return -1;
-	}
-
-#endif
-
 	_acc_module_initialized = 1;
 	if(acc_init_engines()<0) {
 		LM_ERR("failed to init extra engines\n");
@@ -620,30 +564,6 @@ static int child_init(int rank)
 		return -1;
 	}
 
-	/* DIAMETER */
-#ifdef DIAM_ACC
-	/* open TCP connection */
-	LM_DBG("initializing TCP connection\n");
-
-	sockfd = init_mytcp(diameter_client_host, diameter_client_port);
-	if(sockfd==-1)
-	{
-		LM_ERR("TCP connection not established\n");
-		return -1;
-	}
-
-	LM_DBG("a TCP connection was established on sockfd=%d\n", sockfd);
-
-	/* every child with its buffer */
-	rb = (rd_buf_t*)pkg_malloc(sizeof(rd_buf_t));
-	if(!rb)
-	{
-		LM_DBG("no more pkg memory\n");
-		return -1;
-	}
-	rb->buf = 0;
-#endif
-
 	return 0;
 }
 
@@ -655,11 +575,6 @@ static void destroy(void)
 	acc_db_close();
 	if (db_extra)
 		destroy_extras( db_extra);
-#ifdef DIAM_ACC
-	close_tcp_connection(sockfd);
-	if (dia_extra)
-		destroy_extras( dia_extra);
-#endif
 }
 
 
