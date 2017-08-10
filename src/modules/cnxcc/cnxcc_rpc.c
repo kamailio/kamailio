@@ -131,7 +131,7 @@ void rpc_check_client_stats(rpc_t* rpc, void* ctx) {
 								call->start_timestamp);
 
 		row_len 	= strlen(row_buffer);
-		rows.s		= pkg_realloc(rows.s, rows.len + row_len);
+		rows.s		= pkg_reallocxf(rows.s, rows.len + row_len);
 
 		if (rows.s == NULL) {
 			cnxcc_unlock(credit_data->lock);
@@ -213,7 +213,7 @@ static int iterate_over_table(hash_tables_t *hts, str *result, credit_type_t typ
 				cnxcc_unlock(credit_data->lock);
 
 				row_len 	= strlen(row_buffer);
-				result->s	= pkg_realloc(result->s, result->len + row_len);
+				result->s	= pkg_reallocxf(result->s, result->len + row_len);
 
 				if (result->s == NULL) {
 					cnxcc_unlock(hts->lock);
