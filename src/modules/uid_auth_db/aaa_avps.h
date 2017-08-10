@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Common functions for Digest Authentication and Accounting Modules
  *
  * Copyright (C) 2001-2004 FhG Fokus
@@ -49,7 +47,7 @@ parse_token_list(char *p, char *pend, char separator, str **result)
 	i = 0;
 	*result = NULL;
 	while ((pend - p) > 0) {
-		*result = pkg_realloc(*result, sizeof(**result) * (i + 1));
+		*result = pkg_reallocxf(*result, sizeof(**result) * (i + 1));
 		if (*result == NULL)
 			return -1;
 		(*result)[i].s = p;
