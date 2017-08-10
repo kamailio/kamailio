@@ -671,7 +671,7 @@ static int rtpengine_set_store(modparam_t type, void * val){
 			return -1;
 		}
 	} else {/*realloc to make room for the current set*/
-		rtpp_strings = (char**)pkg_realloc(rtpp_strings, (rtpp_sets+1)* sizeof(char*));
+		rtpp_strings = (char**)pkg_reallocxf(rtpp_strings, (rtpp_sets+1)* sizeof(char*));
 		if(!rtpp_strings){
 			LM_ERR("no pkg memory left\n");
 			return -1;
@@ -1608,7 +1608,7 @@ static int build_rtpp_socks() {
 	}
 
 	rtpp_socks_size = current_rtpp_no;
-	rtpp_socks = (int*)pkg_realloc(rtpp_socks, sizeof(int)*(rtpp_socks_size));
+	rtpp_socks = (int*)pkg_reallocxf(rtpp_socks, sizeof(int)*(rtpp_socks_size));
 	if (!rtpp_socks) {
 		LM_ERR("no more pkg memory for rtpp_socks\n");
 		return -1;
