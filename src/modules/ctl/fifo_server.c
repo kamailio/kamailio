@@ -1204,11 +1204,12 @@ static int rpc_struct_printf(struct text_chunk* c, char* name, char* fmt, ...)
 {
 	int n, buf_size;
 	char* buf;
+	char* buf0;
 	va_list ap;
 	str s, nm;
 	struct text_chunk* l, *m;
 	rpc_ctx_t* ctx;
-	
+
 	ctx=(rpc_ctx_t*)c->ctx;
 	buf = (char*)ctl_malloc(RPC_BUF_SIZE);
 	if (!buf) {
@@ -1216,7 +1217,7 @@ static int rpc_struct_printf(struct text_chunk* c, char* name, char* fmt, ...)
 		ERR("No memory left\n");
 		return -1;
 	}
-	
+
 	buf_size = RPC_BUF_SIZE;
 	while (1) {
 		     /* Try to print in the allocated space. */
@@ -1242,7 +1243,7 @@ static int rpc_struct_printf(struct text_chunk* c, char* name, char* fmt, ...)
 				ERR("Error while creating text_chunk structure");
 				goto err;
 			}
-			
+
 			l->flags |= CHUNK_MEMBER_VALUE;
 			l->next = c->next;
 			c->next = l;
@@ -1260,11 +1261,12 @@ static int rpc_struct_printf(struct text_chunk* c, char* name, char* fmt, ...)
 		} else {          /* glibc 2.0 */
 			buf_size *= 2;  /* twice the old size */
 		}
-		if ((buf = ctl_realloc(buf, buf_size)) == 0) {
+		if ((buf0 = ctl_realloc(buf, buf_size)) == 0) {
 			rpc_fault(ctx, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
 		}
+		buf = buf0;
 	}
 	return 0;
  err:
