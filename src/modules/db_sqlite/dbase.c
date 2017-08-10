@@ -425,7 +425,7 @@ int db_sqlite_store_result(const db1_con_t* _h, db1_res_t** _r)
 				num_alloc *= 2;
 			else
 				num_alloc = 8;
-			rows = pkg_realloc(rows, sizeof(db_row_t) * num_alloc);
+			rows = pkg_reallocxf(rows, sizeof(db_row_t) * num_alloc);
 			if (rows == NULL)
 				goto no_mem;
 			RES_ROWS(res) = rows;
