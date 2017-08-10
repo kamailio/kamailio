@@ -117,7 +117,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 
 	if (callid->len > MAX_URI_SIZE) {
 		LM_ERR("call-id '%.*s' too long, maximum=%d\n", callid->len, callid->s, MAX_URI_SIZE);
-		return NULL;
+		goto error;
 	}
 	memcpy(buf, callid->s, callid->len);
 	buf[callid->len]= '\0';
@@ -130,7 +130,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		if (localtag && localtag->s) {
 			if (localtag->len > MAX_URI_SIZE) {
 				LM_ERR("localtag '%.*s' too long, maximum=%d\n", localtag->len, localtag->s, MAX_URI_SIZE);
-				return NULL;
+				goto error;
 			}
 			memcpy(buf, localtag->s, localtag->len);
 			buf[localtag->len]= '\0';
@@ -139,7 +139,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		if (remotetag && remotetag->s) {
 			if (remotetag->len > MAX_URI_SIZE) {
 				LM_ERR("remotetag '%.*s' too long, maximum=%d\n", remotetag->len, remotetag->s, MAX_URI_SIZE);
-				return NULL;
+				goto error;
 			}
 			memcpy(buf, remotetag->s, remotetag->len);
 			buf[remotetag->len]= '\0';
@@ -172,7 +172,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 
 		if (peer->len > MAX_URI_SIZE) {
 			LM_ERR("peer '%.*s' too long, maximum=%d\n", peer->len, peer->s, MAX_URI_SIZE);
-			return NULL;
+			goto error;
 		}
 		memcpy(buf, peer->s, peer->len);
 		buf[peer->len]= '\0';
@@ -205,7 +205,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 
 		if (entity->len > MAX_URI_SIZE) {
 			LM_ERR("entity '%.*s' too long, maximum=%d\n", entity->len, entity->s, MAX_URI_SIZE);
-			return NULL;
+			goto error;
 		}
 		memcpy(buf, entity->s, entity->len);
 		buf[entity->len]= '\0';
@@ -234,13 +234,18 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	if(body == NULL)
 	{
 		LM_ERR("while allocating memory\n");
-		return NULL;
+		goto error;
 	}
 	memset(body, 0, sizeof(str));
 
 	xmlDocDumpFormatMemory(doc,(unsigned char**)(void*)&body->s,&body->len,1);
 
-	LM_DBG("new_body:\n%.*s\n",body->len, body->s);
+	if(body->s==NULL || body->len==0) {
+		LM_ERR("failure formatting xml doc from memory or empty doc\n");
+		goto error;
+	}
+
+	LM_DBG("new_body:\n%.*s\n", body->len, body->s);
 
 	/*free the document */
 	xmlFreeDoc(doc);
@@ -255,8 +260,11 @@ error:
 			xmlFree(body->s);
 		pkg_free(body);
 	}
-	if(doc)
+	if(doc) {
 		xmlFreeDoc(doc);
+		xmlCleanupParser();
+	}
+
 	return NULL;
 }	
 
