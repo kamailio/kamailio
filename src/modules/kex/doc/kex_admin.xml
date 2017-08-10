@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -22,7 +22,7 @@
 	&kamailio; Core Cookbook is available at: &kamwikilink;
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Dependencies</title>
 	<section>
@@ -645,6 +645,26 @@ resetdebug();
 		<programlisting  format="linespecific">
 ...
 &kamcmd; core.version
+...
+		</programlisting>
+    </section>
+	<section id="kex.r.core.ppdefines">
+		<title>
+		<function moreinfo="none">core.ppdefines</function>
+		</title>
+		<para>
+		List preprocessor defines enabled in config.
+		</para>
+		<para>
+		Name: <emphasis>core.ppdefines</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis>.</para>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; core.ppdefines
 ...
 		</programlisting>
     </section>
