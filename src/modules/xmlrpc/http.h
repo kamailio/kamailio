@@ -28,11 +28,16 @@
 #include <stdlib.h>
 #define mxr_malloc malloc
 #define mxr_realloc realloc
+#define mxr_reallocxf(p, s) \
+	(  { void *____v123; ____v123=realloc((p), (s)); \
+	   if(!____v123 && (p)) free(p); \
+	   ____v123; } )
 #define mxr_free free
 #else
 #include "../../core/mem/mem.h"
 #define mxr_malloc pkg_malloc
 #define mxr_realloc pkg_realloc
+#define mxr_reallocxf pkg_reallocxf
 #define mxr_free pkg_free
 #endif
 

@@ -1644,12 +1644,12 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		if (n > -1 && n < buf_size) {
 			s.s = buf;
 			s.len = n;
-			if (ctx->flags & RET_ARRAY && 
+			if (ctx->flags & RET_ARRAY &&
 				add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &string_prefix) < 0) goto err;
 			if (add_xmlrpc_reply_esc(reply, &s) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &string_suffix) < 0) goto err;
-			if (ctx->flags & RET_ARRAY && 
+			if (ctx->flags & RET_ARRAY &&
 				add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
 			mxr_free(buf);
@@ -1661,7 +1661,7 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		} else {          /* glibc 2.0 */
 			buf_size *= 2;  /* twice the old size */
 		}
-		if ((buf = mxr_realloc(buf, buf_size)) == 0) {
+		if ((buf = mxr_reallocxf(buf, buf_size)) == 0) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
@@ -1836,12 +1836,11 @@ static int rpc_array_add(struct rpc_struct* s, char* fmt, ...)
 
 /** Create a new member from formatting string and add it to a structure.
  */
-static int rpc_struct_printf(struct rpc_struct* s, char* member_name, 
+static int rpc_struct_printf(struct rpc_struct* s, char* member_name,
 							 char* fmt, ...)
 {
 	int n, buf_size;
 	char* buf;
-	char* buf0;
 	va_list ap;
 	str st, name;
 	struct xmlrpc_reply* reply;
@@ -1891,12 +1890,11 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name,
 		} else {          /* glibc 2.0 */
 			buf_size *= 2;  /* twice the old size */
 		}
-		if ((buf0 = mxr_realloc(buf, buf_size)) == 0) {
+		if ((buf = mxr_reallocxf(buf, buf_size)) == 0) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
 		}
-		buf = buf0;
 	}
 	return 0;
  err:
