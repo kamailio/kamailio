@@ -1163,7 +1163,7 @@ void* tlsf_reallocxf(tlsf_t tlsf, void* ptr, size_t size)
 	r = tlsf_realloc(tlsf, ptr, size);
 #endif
 
-	if(!r) {
+	if(!r && ptr) {
 	#ifdef DBG_TLSF_MALLOC
 		tlsf_free(tlsf, ptr, file, function, line, mname);
 	#else

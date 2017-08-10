@@ -742,7 +742,7 @@ void* qm_reallocxf(void* qmp, void* p, size_t size)
 	r = qm_realloc(qmp, p, size);
 #endif
 
-	if(!r) {
+	if(!r && p) {
 	#ifdef DBG_QM_MALLOC
 		qm_free(qmp, p, file, func, line, mname);
 	#else

@@ -93,7 +93,7 @@ void pkg_print_manager(void);
 #	define pkg_realloc(p, s)	realloc((p), (s))
 #	define pkg_reallocxf(p, s) \
 	(  { void *____v123; ____v123=realloc((p), (s)); \
-	   if(!____v123) free(p); \
+	   if(!____v123 && (p)) free(p); \
 	   ____v123; } )
 #	endif
 #	define pkg_status() do{}while(0)

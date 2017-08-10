@@ -820,7 +820,7 @@ void* fm_reallocxf(void* qmp, void* p, size_t size)
 	r = fm_realloc(qmp, p, size);
 #endif
 
-	if(!r) {
+	if(!r && p) {
 	#ifdef DBG_F_MALLOC
 		fm_free(qmp, p, file, func, line, mname);
 	#else
