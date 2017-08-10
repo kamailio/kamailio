@@ -1352,13 +1352,15 @@ error:
  * return 0 on succes, -1 on error
  */
 static int addr_info_to_si_lst(struct addr_info* ai_lst, unsigned short port,
-								char proto, enum si_flags flags,
+								char proto, char *usename,
+								unsigned short useport,
+								enum si_flags flags,
 								struct socket_info** list)
 {
 	struct addr_info* ail;
 	
 	for (ail=ai_lst; ail; ail=ail->next){
-		if(new_sock2list(ail->name.s, 0, port, proto, 0, 0,
+		if(new_sock2list(ail->name.s, 0, port, proto, usename, useport,
 					ail->flags | flags, list)==0)
 			return -1;
 	}
@@ -1373,7 +1375,10 @@ static int addr_info_to_si_lst(struct addr_info* ai_lst, unsigned short port,
  */
 static int addr_info_to_si_lst_after(struct addr_info* ai_lst,
 										unsigned short port,
-										char proto, enum si_flags flags,
+										char proto,
+										char *usename,
+										unsigned short useport,
+										enum si_flags flags,
 										struct socket_info* el)
 {
 	struct addr_info* ail;
@@ -1381,7 +1386,7 @@ static int addr_info_to_si_lst_after(struct addr_info* ai_lst,
 	
 	for (ail=ai_lst; ail; ail=ail->next){
 		if((new_si=new_sock2list_after(ail->name.s, 0, port, proto,
-								0, 0, ail->flags | flags, el))==0)
+								usename, useport, ail->flags | flags, el))==0)
 			return -1;
 		el=new_si;
 	}
@@ -1446,7 +1451,8 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 			}else{
 				/* add all addr. as separate  interfaces */
 				if (addr_info_to_si_lst_after(ai_lst, si->port_no, si->proto,
-						 						si->flags, si)!=0)
+							si->useinfo.name.s, si->useinfo.port_no,
+							si->flags, si)!=0)
 					goto error;
 				/* ai_lst not needed anymore */
 				free_addr_info_lst(&ai_lst);
@@ -1757,7 +1763,7 @@ int fix_all_socket_lists()
 #else
 		&& ( !auto_bind_ipv6 || add_interfaces(0, AF_INET6, 0,  PROTO_UDP, &ai_lst) ==0 ) /* add_interface does not work for IPv6 on Linux */
 #endif /* __OS_linux */
-			 ) && (addr_info_to_si_lst(ai_lst, 0, PROTO_UDP, 0, &udp_listen)==0)){
+			 ) && (addr_info_to_si_lst(ai_lst, 0, PROTO_UDP, 0, 0, 0, &udp_listen)==0)){
 			free_addr_info_lst(&ai_lst);
 			ai_lst=0;
 			/* if ok, try to add the others too */
@@ -1769,7 +1775,7 @@ int fix_all_socket_lists()
 #else
 				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_TCP, &ai_lst) !=0 )
 #endif /* __OS_linux */
-				) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TCP, 0,
+				) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TCP, 0, 0, 0,
 										 				&tcp_listen)!=0))
 					goto error;
 				free_addr_info_lst(&ai_lst);
@@ -1783,7 +1789,7 @@ int fix_all_socket_lists()
 #else
 				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_TLS, &ai_lst)!=0)
 #endif /* __OS_linux */
-					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TLS, 0,
+					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TLS, 0, 0, 0,
 										 				&tls_listen)!=0))
 						goto error;
 				}
@@ -1800,7 +1806,7 @@ int fix_all_socket_lists()
 #else
 				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_SCTP, &ai_lst) != 0)
 #endif /* __OS_linux */
-					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_SCTP, 0,
+					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_SCTP, 0, 0, 0,
 							 				&sctp_listen)!=0))
 					goto error;
 				free_addr_info_lst(&ai_lst);
