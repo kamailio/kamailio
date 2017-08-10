@@ -2180,14 +2180,18 @@ int reply_received( struct sip_msg  *p_msg )
 	branch = T_BR_UNDEFINED;
 	if (t_check(p_msg , &branch)==-1)
 		goto trans_not_found;
-	if (unlikely(branch==T_BR_UNDEFINED)) {
-		LM_CRIT("BUG: invalid branch - report to developers\n");
-		goto trans_not_found;
-	}
 	/*... if there is none, tell the core router to fwd statelessly */
 	t=get_t();
-	if ( (t==0)||(t==T_UNDEFINED))
+	if ( (t==0)||(t==T_UNDEFINED)) {
+		LM_DBG("transaction not found - (branch %d)\n", branch);
 		goto trans_not_found;
+	}
+	if (unlikely(branch==T_BR_UNDEFINED)) {
+		LM_CRIT("BUG: transaction found, but no branch matched\n");
+		/* t_check() referenced the transaction */
+		t_unref(p_msg);
+		goto trans_not_found;
+	}
 
 	/* if transaction found, increment the rpl_received counter */
 	t_stats_rpl_received();
