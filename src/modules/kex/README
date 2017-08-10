@@ -74,14 +74,15 @@ Ovidiu Sas
               4.17. core.udp4_raw_info
               4.18. core.uptime
               4.19. core.version
-              4.20. pkg.stats
-              4.21. stats.get_statistics
-              4.22. stats.reset_statistics
-              4.23. stats.clear_statistics
-              4.24. system.listMethods
-              4.25. system.methodHelp
-              4.26. system.methodSignature
-              4.27. mod.stats module_name/all pkg/shm/all
+              4.20. core.ppdefines
+              4.21. pkg.stats
+              4.22. stats.get_statistics
+              4.23. stats.reset_statistics
+              4.24. stats.clear_statistics
+              4.25. system.listMethods
+              4.26. system.methodHelp
+              4.27. system.methodSignature
+              4.28. mod.stats module_name/all pkg/shm/all
 
    List of Examples
 
@@ -147,14 +148,15 @@ Chapter 1. Admin Guide
         4.17. core.udp4_raw_info
         4.18. core.uptime
         4.19. core.version
-        4.20. pkg.stats
-        4.21. stats.get_statistics
-        4.22. stats.reset_statistics
-        4.23. stats.clear_statistics
-        4.24. system.listMethods
-        4.25. system.methodHelp
-        4.26. system.methodSignature
-        4.27. mod.stats module_name/all pkg/shm/all
+        4.20. core.ppdefines
+        4.21. pkg.stats
+        4.22. stats.get_statistics
+        4.23. stats.reset_statistics
+        4.24. stats.clear_statistics
+        4.25. system.listMethods
+        4.26. system.methodHelp
+        4.27. system.methodSignature
+        4.28. mod.stats module_name/all pkg/shm/all
 
 1. Overview
 
@@ -442,14 +444,15 @@ resetdebug();
    4.17. core.udp4_raw_info
    4.18. core.uptime
    4.19. core.version
-   4.20. pkg.stats
-   4.21. stats.get_statistics
-   4.22. stats.reset_statistics
-   4.23. stats.clear_statistics
-   4.24. system.listMethods
-   4.25. system.methodHelp
-   4.26. system.methodSignature
-   4.27. mod.stats module_name/all pkg/shm/all
+   4.20. core.ppdefines
+   4.21. pkg.stats
+   4.22. stats.get_statistics
+   4.23. stats.reset_statistics
+   4.24. stats.clear_statistics
+   4.25. system.listMethods
+   4.26. system.methodHelp
+   4.27. system.methodSignature
+   4.28. mod.stats module_name/all pkg/shm/all
 
 4.1.  core.aliases_list
 
@@ -576,7 +579,20 @@ kamcmd core.uptime
 kamcmd core.version
 ...
 
-4.20.  pkg.stats
+4.20.  core.ppdefines
+
+   List preprocessor defines enabled in config.
+
+   Name: core.ppdefines
+
+   Parameters: none.
+
+   RPC Command Format:
+...
+kamcmd core.ppdefines
+...
+
+4.21.  pkg.stats
 
    Print private memory (pkg) usage statistics per process. It can take
    optinally a filter to print statistics only for a specific process or
@@ -594,7 +610,7 @@ kamcmd core.version
                 kamcmd pkg.stats rank 1
                 kamcmd pkg.stats index 10
 
-4.21.  stats.get_statistics
+4.22.  stats.get_statistics
 
    Print the list of available internal statistics.
 
@@ -609,7 +625,7 @@ kamcmd core.version
                 kamcmd stats.get_statistics unsupported_methods
                 kamcmd stats.get_statistics shmem: fwd_requests fwd_replies
 
-4.22.  stats.reset_statistics
+4.23.  stats.reset_statistics
 
    Reset internal statistics.
 
@@ -621,7 +637,7 @@ kamcmd core.version
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-4.23.  stats.clear_statistics
+4.24.  stats.clear_statistics
 
    Return statistics and reset their value in one command.
 
@@ -633,7 +649,7 @@ kamcmd core.version
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-4.24.  system.listMethods
+4.25.  system.listMethods
 
    Print list of available RPC commands.
 
@@ -646,15 +662,15 @@ kamcmd core.version
 kamcmd system.listMethods
 ...
 
-4.25.  system.methodHelp
+4.26.  system.methodHelp
 
    Print the help string for given method.
 
-4.26.  system.methodSignature
+4.27.  system.methodSignature
 
    Returns signature of given method.
 
-4.27.  mod.stats module_name/all pkg/shm/all
+4.28.  mod.stats module_name/all pkg/shm/all
 
    Print private(pkg) or shared(shm) memory currently allocated a given
    module or by all modules.
