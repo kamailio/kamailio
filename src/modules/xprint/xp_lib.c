@@ -1862,9 +1862,8 @@ int xl_mod_init()
 		str_domainname.s = NULL;
 	} else {
 		str_fullname.len = strlen(s);
-		s = pkg_realloc(s, str_fullname.len+1); /* this will leave the ending \0 */
+		s = pkg_reallocxf(s, str_fullname.len+1); /* this will leave the ending \0 */
 		if (!s) { /* should never happen because decreasing size */
-			pkg_free(s);
 			return -1;
 		}
 		str_fullname.s = s;
