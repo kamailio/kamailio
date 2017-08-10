@@ -1572,7 +1572,7 @@ str* cscf_get_service_route(struct sip_msg *msg, int *size, int is_shm) {
 				LM_DBG("No items in this Service-Route\n");
 				continue;
 			}
-			x = pkg_realloc(x,(*size+k)*sizeof(str));
+			x = pkg_reallocxf(x,(*size+k)*sizeof(str));
 			if (!x) {
 				LM_ERR("Error our of pkg memory");
 				return 0;
