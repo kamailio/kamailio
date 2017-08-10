@@ -619,7 +619,7 @@ int header_list_add(struct header_list *hl, str* hdr) {
 	char *tmp;
 
 	hl->len++;
-	hl->t = shm_realloc(hl->t, hl->len * sizeof(char*));
+	hl->t = shm_reallocxf(hl->t, hl->len * sizeof(char*));
 	if (!hl->t) {
 		LM_ERR("shm memory allocation failure\n");
 		return -1;
