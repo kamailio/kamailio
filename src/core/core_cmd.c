@@ -45,6 +45,7 @@
 #include "tcp_options.h"
 #include "core_cmd.h"
 #include "cfg_core.h"
+#include "ppcfg.h"
 
 #ifdef USE_DNS_CACHE
 void dns_cache_debug(rpc_t* rpc, void* ctx);
@@ -269,7 +270,7 @@ static void system_methodHelp(rpc_t* rpc, void* c)
 		rpc->fault(c, 400, "Method Name Expected");
 		return;
 	}
-	
+
 	r=rpc_lookup(name, strlen(name));
 	if (r==0){
 		rpc->fault(c, 400, "command not found");
@@ -446,23 +447,23 @@ static const char* core_pwd_doc[] = {
 
 static void core_pwd(rpc_t* rpc, void* c)
 {
-        char *cwd_buf;
-        int max_len;
+	char *cwd_buf;
+	int max_len;
 
-        max_len = pathmax();
-        cwd_buf = pkg_malloc(max_len);
-        if (!cwd_buf) {
-                ERR("core_pwd: No memory left\n");
-                rpc->fault(c, 500, "Server Ran Out of Memory");
+	max_len = pathmax();
+	cwd_buf = pkg_malloc(max_len);
+	if (!cwd_buf) {
+		ERR("core_pwd: No memory left\n");
+		rpc->fault(c, 500, "Server Ran Out of Memory");
 		return;
-        }
+	}
 
-        if (getcwd(cwd_buf, max_len)) {
+	if (getcwd(cwd_buf, max_len)) {
 		rpc->add(c, "s", cwd_buf);
-        } else {
+	} else {
 		rpc->fault(c, 500, "getcwd Failed");
-        }
-        pkg_free(cwd_buf);
+	}
+	pkg_free(cwd_buf);
 }
 
 
@@ -474,11 +475,11 @@ static const char* core_arg_doc[] = {
 
 static void core_arg(rpc_t* rpc, void* c)
 {
-        int p;
+	int p;
 
-        for (p = 0; p < my_argc; p++) {
+	for (p = 0; p < my_argc; p++) {
 		if (rpc->add(c, "s", my_argv[p]) < 0) return;
-        }
+	}
 }
 
 
@@ -955,6 +956,27 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 	} while((proto=next_proto(proto)));
 }
 
+/**
+ *
+ */
+static const char* core_ppdefines_doc[] = {
+	"List preprocessor defines",    /* Documentation string */
+	0                               /* Method signature(s) */
+};
+
+/**
+ * list listen sockets for SIP server
+ */
+static void core_ppdefines(rpc_t* rpc, void* c)
+{
+	str *ppdef;
+	int i=0;
+
+	while((ppdef=pp_get_define_name(i))!=NULL) {
+		if (rpc->add(c, "s", ppdef->s) < 0) return;
+		i++;
+	}
+}
 
 /*
  * RPC Methods exported by core
@@ -990,8 +1012,9 @@ static rpc_export_t core_rpc_methods[] = {
 	{"core.tcp_list",          core_tcp_list,          core_tcp_list_doc,0},
 	{"core.udp4_raw_info",     core_udp4rawinfo,       core_udp4rawinfo_doc,
 		0},
-	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc,   0},
-	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc,   0},
+	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc, 0},
+	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc, 0},
+	{"core.ppdefines",         core_ppdefines,         core_ppdefines_doc,    RET_ARRAY},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},
@@ -1069,8 +1092,7 @@ int register_core_rpcs(void)
 		BUG("failed to register core RPCs\n");
 		goto error;
 	}else if (i>0){
-		ERR("%d duplicate RPCs name detected while registering core RPCs\n",
-			 i);
+		ERR("%d duplicate RPCs name detected while registering core RPCs\n", i);
 		goto error;
 	}
 	return 0;
