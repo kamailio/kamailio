@@ -306,7 +306,7 @@ static int rtpproxy_set_store(modparam_t type, void * val){
 			return -1;
 		}
 	} else {/*realloc to make room for the current set*/
-		rtpp_strings = (char**)pkg_realloc(rtpp_strings,
+		rtpp_strings = (char**)pkg_reallocxf(rtpp_strings,
 				(rtpp_sets+1)* sizeof(char*));
 		if(!rtpp_strings){
 			LM_ERR("no pkg memory left\n");
