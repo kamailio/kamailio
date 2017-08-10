@@ -644,7 +644,7 @@ void constr_multipart_body(const str *const content_type, const str *const body,
 	while(length + chunk_len >= multipart_body_size)
 	{
 		multipart_body_size += BUF_REALLOC_SIZE;
-		multipart_body->s = (char*)pkg_realloc(multipart_body->s, multipart_body_size);
+		multipart_body->s = (char*)pkg_reallocxf(multipart_body->s, multipart_body_size);
 		if(multipart_body->s == NULL)
 		{
 			ERR_MEM("constr_multipart_body");
