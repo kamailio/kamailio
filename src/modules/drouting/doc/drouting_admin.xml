@@ -935,7 +935,7 @@ modparam("drouting", "drl_table", "my_gw_lists")
 		</listitem>
 		<listitem>
 			<emphasis>1</emphasis> - the destinations from each group are
-			randomly arranged (only the two elements are randomly selected);
+			randomly arranged (only the two first elements are randomly selected);
 			groups do maintain their order (as given); the resulting list is 
 			used (with all the defined destinations).
 			Ex: 1,2;3,4,5;6 -> randomizer -> 
@@ -1147,11 +1147,8 @@ modparam("drouting", "force_dns", 0)
 		<para>
 		Enable monitoring of GW/destinations using keepalive module.
 		Destinations found unavailable will not be used on do_routing() call.
-		</para>
-		<para>
-		NOTE: this option is only compatible with <em>sort_order</em> 0 currently.
-		With sort_order value of 1 or 2, destinations status will simply be ignored.
-		</para>
+	    </para>
+
 		<para>
 		<emphasis>Default value is <quote>0 (disabled)</quote>.
 		</emphasis>
