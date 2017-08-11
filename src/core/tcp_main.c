@@ -2621,8 +2621,14 @@ static int tcpconn_1st_send(int fd, struct tcp_connection* c,
 		   ENOTCONN appears on newer FreeBSD versions (non-blocking socket,
 		   connect() & send immediately) */
 		if ((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK || errno==ENOTCONN){
-			LM_DBG("pending write on new connection %p "
-				"(%d/%d bytes written)\n", c, n, len);
+			if(n<0) {
+				LM_DBG("pending write on new connection %p "
+					"(%d/%d bytes written) (err: %d - %s)\n", c, n, len,
+					errno, strerror(errno));
+			} else {
+				LM_DBG("pending write on new connection %p "
+					"(%d/%d bytes written)\n", c, n, len);
+			}
 			if (unlikely(n<0)) n=0;
 			else{
 				if (likely(c->state == S_CONN_CONNECT))
