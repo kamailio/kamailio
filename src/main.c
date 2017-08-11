@@ -471,6 +471,8 @@ int child_rank = 0;
 /* how much to wait for children to terminate, before taking extreme measures*/
 int ser_kill_timeout=DEFAULT_SER_KILL_TIMEOUT;
 
+int ksr_verbose_startup = 0;
+
 /* cfg parsing */
 int cfg_errors=0;
 int cfg_warnings=0;

@@ -476,6 +476,7 @@ extern char *default_routename;
 %token PVBUFSLOTS
 %token HTTP_REPLY_PARSE
 %token VERSION_TABLE_CFG
+%token VERBOSE_STARTUP
 %token CFG_DESCRIPTION
 %token SERVER_ID
 %token MAX_RECURSIVE_LEVEL
@@ -1547,7 +1548,10 @@ assign_stm:
 	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
 	| HTTP_REPLY_PARSE EQUAL NUMBER { http_reply_parse=$3; }
 	| HTTP_REPLY_PARSE EQUAL error { yyerror("boolean value expected"); }
+	| VERBOSE_STARTUP EQUAL NUMBER { ksr_verbose_startup=$3; }
+	| VERBOSE_STARTUP EQUAL error { yyerror("boolean value expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
+	| SERVER_ID EQUAL error  { yyerror("number  expected"); }
     | MAX_RECURSIVE_LEVEL EQUAL NUMBER { set_max_recursive_level($3); }
     | MAX_BRANCHES_PARAM EQUAL NUMBER { sr_dst_max_branches = $3; }
     | LATENCY_LOG EQUAL intno { default_core_cfg.latency_log=$3; }

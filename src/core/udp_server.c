@@ -158,7 +158,8 @@ int probe_max_receive_buffer( int udp_sock )
 			if (phase==1) break;
 			else { phase=1; optval >>=1; continue; }
 		}
-		LM_DBG("trying SO_RCVBUF: %d\n", optval );
+		if(ksr_verbose_startup)
+			LM_DBG("trying SO_RCVBUF: %d\n", optval);
 		if (setsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF,
 			(void*)&optval, sizeof(optval)) ==-1){
 			/* Solaris returns -1 if asked size too big; Linux ignores */
@@ -180,8 +181,9 @@ int probe_max_receive_buffer( int udp_sock )
 			LM_ERR("getsockopt: %s\n", strerror(errno));
 			return -1;
 		} else {
-			LM_DBG("setting SO_RCVBUF; set=%d,verify=%d\n",
-				optval, voptval);
+			if(ksr_verbose_startup)
+				LM_DBG("setting SO_RCVBUF; set=%d,verify=%d\n",
+						optval, voptval);
 			if (voptval<optval) {
 				LM_DBG("setting SO_RCVBUF has no effect\n");
 				/* if setting buffer size failed and still in the aggressive
