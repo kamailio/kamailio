@@ -204,7 +204,9 @@ str ims_get_body(struct sip_msg * msg)
 		LM_DBG("Error parsing until header Content-Length: \n");
 		return x;
 	}
-	x.len = (int)(long)msg->content_length->parsed;
+	if (msg->content_length)
+	    // Content-Length header might be missing
+	    x.len = (int)(long)msg->content_length->parsed;
         
         if (x.len>0) 
             x.s = get_body(msg);	
