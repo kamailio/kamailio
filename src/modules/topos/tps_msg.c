@@ -774,20 +774,24 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		if(tps_storage_load_dialog(msg, &mtsd, &stsd)<0) {
 			goto error;
 		}
+		/* detect direction - via from-tag */
+		if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
+			goto error;
+		}
 	}
 
-	/* detect direction - via from-tag */
-	if(tps_dlg_detect_direction(msg, &stsd, &direction)<0) {
-		goto error;
-	}
 	mtsd.direction = direction;
 
 	tps_storage_lock_release(&lkey);
 
-	if(direction == TPS_DIR_UPSTREAM) {
-		nuri = stsd.a_contact;
-	} else {
+	if(use_branch) {
 		nuri = stsd.b_contact;
+	} else {
+		if(direction == TPS_DIR_UPSTREAM) {
+			nuri = stsd.a_contact;
+		} else {
+			nuri = stsd.b_contact;
+		}
 	}
 	if(nuri.len>0) {
 		if(rewrite_uri(msg, &nuri)<0) {
@@ -796,31 +800,28 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		}
 	}
 
-	if(tps_reappend_route(msg, &stsd, &stsd.s_rr,
-				(direction==TPS_DIR_UPSTREAM)?0:1)<0) {
-		LM_ERR("failed to reappend s-route\n");
-		return -1;
-	}
-	if(direction == TPS_DIR_UPSTREAM) {
-		if(use_branch) {
-			if(tps_reappend_route(msg, &stsd, &stsd.x_rr, 0)<0) {
-				LM_ERR("failed to reappend x-route\n");
-				return -1;
-			}
-		} else {
-			if(tps_reappend_route(msg, &stsd, &stsd.a_rr, 0)<0) {
+	if(use_branch) {
+		if(tps_reappend_route(msg, &stsd, &stsd.s_rr, 1) < 0) {
+			LM_ERR("failed to reappend s-route\n");
+			return -1;
+		}
+		if(tps_reappend_route(msg, &stsd, &stsd.y_rr, 1) < 0) {
+			LM_ERR("failed to reappend b-route\n");
+			return -1;
+		}
+	} else {
+		if(tps_reappend_route(msg, &stsd, &stsd.s_rr,
+					(direction == TPS_DIR_UPSTREAM) ? 0 : 1) < 0) {
+			LM_ERR("failed to reappend s-route\n");
+			return -1;
+		}
+		if(direction == TPS_DIR_UPSTREAM) {
+			if(tps_reappend_route(msg, &stsd, &stsd.a_rr, 0) < 0) {
 				LM_ERR("failed to reappend a-route\n");
 				return -1;
 			}
-		}
-	} else {
-		if(use_branch) {
-			if(tps_reappend_route(msg, &stsd, &stsd.y_rr, 1)<0) {
-				LM_ERR("failed to reappend b-route\n");
-				return -1;
-			}
 		} else {
-			if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 1)<0) {
+			if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 1) < 0) {
 				LM_ERR("failed to reappend b-route\n");
 				return -1;
 			}
