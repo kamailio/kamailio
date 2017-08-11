@@ -107,7 +107,7 @@ AAA_AVP*  AAACreateAVP(
 	size_t length,
 	AVPDataStatus data_status)
 {
-	AAA_AVP *avp;
+	AAA_AVP *avp = NULL;
 
 	/* first check the params */
 	if( data==0 || length==0) {
@@ -146,7 +146,8 @@ AAA_AVP*  AAACreateAVP(
 
 	return avp;
 error:
-	LM_ERR("no more free memoryfor a new AVP!\n");
+	LM_ERR("no more free memory for a new AVP!\n");
+	if(avp) ad_free(avp);
 	return 0;
 }
 

@@ -293,11 +293,15 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 		/* create the AVP */
 		avp = AAACreateAVP( avp_code, avp_flags, avp_vendorID, (char*)ptr,
 			avp_data_len, AVP_DONT_FREE_DATA);
-		if (!avp)
+		if (!avp) {
+			LM_ERR("failed to create aaa avp\n");
 			goto error;
+		}
 
 		/* link the avp into aaa message to the end */
-		AAAAddAVPToMessage( msg, avp, msg->avpList.tail);
+		if(AAAAddAVPToMessage( msg, avp, msg->avpList.tail)!= AAA_ERR_SUCCESS) {
+			LM_ERR("failed to add aaa avp to message\n");
+			goto error;		}
 
 		ptr += to_32x_len( avp_data_len );
 	}

@@ -48,13 +48,13 @@
 /*! \brief TCP connection setup */
 int init_mytcp(char* host, int port)
 {
-	int sockfd;
+	int sfd;
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
 
-	sockfd = socket(PF_INET, SOCK_STREAM, 0);
+	sfd = socket(PF_INET, SOCK_STREAM, 0);
 
-	if (sockfd < 0)
+	if (sfd < 0)
 	{
 		LM_ERR("failed to create the socket\n");
 		return -1;
@@ -64,6 +64,7 @@ int init_mytcp(char* host, int port)
 	if (server == NULL)
 	{
 		LM_ERR("failed to find the host\n");
+		close(sfd);
 		return -1;
 	}
 
@@ -73,18 +74,19 @@ int init_mytcp(char* host, int port)
 			server->h_length);
 	serv_addr.sin_port = htons(port);
 
-	if (connect(sockfd, (const struct sockaddr *)&serv_addr,
+	if (connect(sfd, (const struct sockaddr *)&serv_addr,
 				sizeof(serv_addr)) < 0)
 	{
 		LM_ERR("failed to connec to the DIAMETER client\n");
+		close(sfd);
 		return -1;
 	}
 
-	return sockfd;
+	return sfd;
 }
 
 /*! \brief send a message over an already opened TCP connection */
-int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
+int tcp_send_recv(int sfd, char* buf, int len, rd_buf_t* rb,
 		unsigned int waited_id)
 {
 	int n, number_of_tries;
@@ -97,7 +99,7 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 	unsigned int m_id;
 
 	/* try to write the message to the Diameter client */
-	while( (n=write(sockfd, buf, len))==-1 )
+	while( (n=write(sfd, buf, len))==-1 )
 	{
 		if (errno==EINTR)
 			continue;
@@ -116,26 +118,26 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 
 	/* Initialize the set of active sockets. */
 	FD_ZERO (&active_fd_set);
-	FD_SET (sockfd, &active_fd_set);
+	FD_SET (sfd, &active_fd_set);
 	number_of_tries = 0;
 
 	while(number_of_tries<MAX_TRIES)
 	{
 		read_fd_set = active_fd_set;
-		if (select (sockfd+1, &read_fd_set, NULL, NULL, &tv) < 0)
+		if (select (sfd+1, &read_fd_set, NULL, NULL, &tv) < 0)
 		{
 			LM_ERR("select function failed\n");
 			return AAA_ERROR;
 		}
 
-		/*		if (!FD_ISSET (sockfd, &read_fd_set))
+		/*		if (!FD_ISSET (sfd, &read_fd_set))
 				{
 				LM_ERR("no response received\n");
 		//			return AAA_ERROR;
 		}
 		*/		/* Data arriving on a already-connected socket. */
 		reset_read_buffer(rb);
-		switch( do_read(sockfd, rb) )
+		switch( do_read(sfd, rb) )
 		{
 			case CONN_ERROR:
 				LM_ERR("failed to read from socket\n");
