@@ -743,7 +743,7 @@ static int seas_child_init(int rank)
 }
 
 /* this should close the sockets open to any of the application servers, and
- * send them an EOF event or something that signals that SER is beeing shutdown,
+ * send them an EOF event or something that signals that SER is being shutdown,
  * so they could do their cleanup, etc.
  */
 static int seas_exit(void)

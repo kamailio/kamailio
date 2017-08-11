@@ -45,12 +45,12 @@
  */
 static select_table_t *select_list = &select_core_table;
 
-/** the level of the select call that is beeing evaluated
+/** the level of the select call that is being evaluated
  * by the child process
  */
 int select_level = 0;
 
-/** pointer to the SIP uri beeing processed.
+/** pointer to the SIP uri being processed.
  * Nested function calls can pass information to each
  * other using this pointer. Only for performace reasons.
  * (Miklos)
