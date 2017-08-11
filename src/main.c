@@ -518,10 +518,11 @@ void cleanup(int show_status)
 
 	/*clean-up*/
 #ifndef SHM_SAFE_MALLOC
-	if (_shm_lock)
-		shm_unlock(); /* hack: force-unlock the shared memory lock in case
-					 some process crashed and let it locked; this will
-					 allow an almost gracious shutdown */
+	if(shm_initialized()) {
+		/* force-unlock the shared memory lock in case some process crashed
+		 * and let it locked; this will allow an almost gracious shutdown */
+		shm_global_unlock();
+	}
 #endif
 	destroy_rpcs();
 	destroy_modules();
