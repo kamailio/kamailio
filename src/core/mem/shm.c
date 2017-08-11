@@ -306,5 +306,5 @@ void shm_destroy_manager(void)
 void shm_print_manager(void)
 {
 	LM_DBG("shm - using memory manager: %s\n",
-			(_pkg_root.mname)?_pkg_root.mname:"unknown");
+			(_shm_root.mname)?_shm_root.mname:"unknown");
 }
