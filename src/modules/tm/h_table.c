@@ -147,7 +147,7 @@ void free_cell_helper(
 	if(unlikely(has_tran_tmcbs(dead_cell, TMCB_DESTROY)))
 		run_trans_callbacks(TMCB_DESTROY, dead_cell, 0, 0, 0);
 
-	shm_lock();
+	shm_global_lock();
 	/* UA Server */
 	if(dead_cell->uas.request)
 		sip_msg_free_unsafe(dead_cell->uas.request);
@@ -167,9 +167,9 @@ void free_cell_helper(
 			 * otherwise the release function must to be aware of
 			 * the lock state (Miklos)
 			 */
-			shm_unlock();
+			shm_global_unlock();
 			cbs_tmp->release(cbs_tmp->param);
-			shm_lock();
+			shm_global_lock();
 		}
 		shm_free_unsafe(cbs_tmp);
 	}
@@ -250,7 +250,7 @@ void free_cell_helper(
 	/* the cell's body */
 	shm_free_unsafe(dead_cell);
 
-	shm_unlock();
+	shm_global_unlock();
 	t_stats_freed();
 }
 
