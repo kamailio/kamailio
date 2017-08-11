@@ -306,10 +306,8 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 		}
 	}
 	/* that's a new to-tag -- record it */
-	shm_lock();
-	n=(struct totag_elem*) shm_malloc_unsafe(sizeof(struct totag_elem));
-	s=(char *)shm_malloc_unsafe(tag->len);
-	shm_unlock();
+	n=(struct totag_elem*) shm_malloc(sizeof(struct totag_elem));
+	s=(char *)shm_malloc(tag->len);
 	if (!s || !n) {
 		LM_ERR("no more shm memory \n");
 		if (n) shm_free(n);
