@@ -48,8 +48,6 @@ void shm_core_destroy(void);
 static int _shm_core_shmid[SHM_CORE_POOLS_SIZE] = { -1 }; /*shared memory id*/
 #endif
 
-gen_lock_t* _shm_lock=0;
-
 static void* _shm_core_pools_mem[SHM_CORE_POOLS_SIZE] = { (void*)-1 };
 static int   _shm_core_pools_num = 1;
 
@@ -168,41 +166,6 @@ void* shm_core_get_pool(void)
 }
 
 /**
- * init the core lock
- */
-int shm_core_lock_init(void)
-{
-	if (_shm_lock) {
-		LM_DBG("shared memory lock initialized\n");
-		return 0;
-	}
-	_shm_lock=shm_malloc_unsafe(sizeof(gen_lock_t)); /* skip lock_alloc,
-													   race cond*/
-	if (_shm_lock==0){
-		LOG(L_CRIT, "could not allocate lock\n");
-		shm_core_destroy();
-		return -1;
-	}
-	if (lock_init(_shm_lock)==0){
-		LOG(L_CRIT, "could not initialize lock\n");
-		shm_core_destroy();
-		return -1;
-	}
-	return 0;
-}
-
-/**
- *
- */
-void shm_core_lock_destroy(void)
-{
-	if (_shm_lock){
-		DBG("destroying the shared memory lock\n");
-		lock_destroy(_shm_lock); /* we don't need to dealloc it*/
-	}
-}
-
-/**
  *
  */
 void shm_core_destroy(void)
@@ -255,6 +218,8 @@ int shm_init_api(sr_shm_api_t *ap)
 	_shm_root.xdestroy       = ap->xdestroy;
 	_shm_root.xmodstats      = ap->xmodstats;
 	_shm_root.xfmodstats     = ap->xfmodstats;
+	_shm_root.xglock         = ap->xglock;
+	_shm_root.xgunlock       = ap->xgunlock;
 	return 0;
 
 }
@@ -291,11 +256,10 @@ int shm_init_manager(char *name)
  */
 void shm_destroy_manager(void)
 {
-	shm_core_lock_destroy();
 	if(_shm_root.xdestroy) {
-		_shm_root.xdestroy();
 		LM_DBG("destroying memory manager: %s\n",
 				(_shm_root.mname)?_shm_root.mname:"unknown");
+		_shm_root.xdestroy();
 	}
 	shm_core_destroy();
 }

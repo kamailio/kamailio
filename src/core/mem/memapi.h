@@ -46,6 +46,9 @@ typedef void* (*sr_resize_f)(void* mbp, void* p, size_t size);
 
 #endif /*DBG_SR_MEMORY*/
 
+typedef void  (*sr_shm_glock_f)(void* mbp);
+typedef void  (*sr_shm_gunlock_f)(void* mbp);
+
 typedef void  (*sr_mem_status_f)(void* mbp);
 typedef void  (*sr_mem_info_f)(void* mbp, struct mem_info* info);
 typedef unsigned long (*sr_mem_available_f)(void* mbp);
@@ -128,6 +131,10 @@ typedef struct sr_shm_api {
 	sr_mem_mod_get_stats_f  xmodstats;
 	/*memory stats free per module*/
 	sr_mem_mod_free_stats_f xfmodstats;
+	/*memory managing global lock*/
+	sr_shm_glock_f          xglock;
+	/*memory managing global unlock*/
+	sr_shm_gunlock_f        xgunlock;
 } sr_shm_api_t;
 
 #endif

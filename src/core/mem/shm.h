@@ -38,12 +38,6 @@
 #include "../dprint.h"
 #include "../lock_ops.h" /* we don't include locking.h on purpose */
 
-extern gen_lock_t* _shm_lock;
-#define shm_lock()    lock_get(_shm_lock)
-#define shm_unlock()  lock_release(_shm_lock)
-int shm_core_lock_init(void);
-void shm_core_lock_destroy(void);
-
 extern sr_shm_api_t _shm_root;
 
 #ifdef DBG_SR_MEMORY
@@ -81,6 +75,9 @@ extern sr_shm_api_t _shm_root;
 #	define shm_sums()      _shm_root.xsums(_shm_root.mem_block)
 #	define shm_mod_get_stats(x)     _shm_root.xmodstats(_shm_root.mem_block, x)
 #	define shm_mod_free_stats(x)    _shm_root.xfmodstats(x)
+
+#	define shm_global_lock() _shm_root.xglock(_shm_root.mem_block)
+#	define shm_global_unlock() _shm_root.xgunlock(_shm_root.mem_block)
 
 
 void* shm_core_get_pool(void);
