@@ -138,8 +138,6 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt, str *rtname)
 	sip_msg_t *fmsg;
 	sip_msg_t tmsg;
 	sr_kemi_eng_t *keng = NULL;
-	str evname;
-
 
 	if(evenv==0 || evenv->eset==0) {
 		LM_ERR("evapi env not set\n");
