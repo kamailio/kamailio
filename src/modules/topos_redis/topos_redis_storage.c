@@ -825,10 +825,8 @@ int tps_redis_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	str rcmd = str_init("HMSET");
 	str rkey = STR_NULL;
 	char *rp;
-	str rval = STR_NULL;
 	redisc_server_t *rsrv = NULL;
 	redisReply *rrpl = NULL;
-	int32_t liflags;
 
 	if(sd->a_uuid.len<=0 && sd->b_uuid.len<=0) {
 		LM_INFO("no uuid for this message\n");
