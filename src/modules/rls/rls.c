@@ -1023,8 +1023,7 @@ int rls_restore_db_subs(void)
 	return 0;
 
 error:
-	if(res)
-		rls_dbf.free_result(rls_db, res);
+	rls_dbf.free_result(rls_db, res);
 	return -1;
 
 }
