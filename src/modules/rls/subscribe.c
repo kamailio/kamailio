@@ -339,35 +339,24 @@ int reply_200(struct sip_msg* msg, str* contact, int expires)
 	str hdr_append;
 	int len;
 
-	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(contact->len+ 70));
+	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(contact->len+70));
 	if(hdr_append.s == NULL)
 	{
 		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
-	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", expires);
-	if(hdr_append.len< 0)
+	hdr_append.len = snprintf(hdr_append.s, contact->len+70,
+				"Expires: %d" CRLF
+				"Contact: <%.*s>" CRLF
+				"Require: eventlist" CRLF,
+				expires,
+				contact->len, contact->s
+			);
+	if(hdr_append.len<0 || hdr_append.len>=contact->len+70)
 	{
-		LM_ERR("unsuccessful sprintf\n");
+		LM_ERR("unsuccessful snprintf\n");
 		goto error;
 	}
-	strncpy(hdr_append.s+hdr_append.len ,"Contact: <", 10);
-	hdr_append.len += 10;
-	strncpy(hdr_append.s+hdr_append.len, contact->s, contact->len);
-	hdr_append.len+= contact->len;
-	strncpy(hdr_append.s+hdr_append.len, ">", 1);
-	hdr_append.len += 1;
-	strncpy(hdr_append.s+hdr_append.len, CRLF, CRLF_LEN);
-	hdr_append.len += CRLF_LEN;
-
-	len = sprintf(hdr_append.s+ hdr_append.len, "Require: eventlist\r\n");
-	if(len < 0)
-	{
-		LM_ERR("unsuccessful sprintf\n");
-		goto error;
-	}
-	hdr_append.len+= len;
-	hdr_append.s[hdr_append.len]= '\0';
 
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
