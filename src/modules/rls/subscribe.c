@@ -440,7 +440,7 @@ int rls_handle_subscribe0(struct sip_msg* msg)
 {
 	struct to_body *pfrom;
 
-	if (parse_from_uri(msg) < 0)
+	if (parse_from_uri(msg) == NULL)
 	{
 		LM_ERR("failed to find From header\n");
 		if (slb.freply(msg, 400, &pu_400_rpl) < 0)
@@ -507,7 +507,7 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 		return 0;
 	}
 	/* check for To and From headesr */
-	if(parse_to_uri(msg)<0 || parse_from_uri(msg)<0)
+	if(parse_to_uri(msg)==NULL || parse_from_uri(msg)==NULL)
 	{
 		LM_ERR("failed to find To or From headers\n");
 		if (slb.freply(msg, 400, &pu_400_rpl) < 0)
