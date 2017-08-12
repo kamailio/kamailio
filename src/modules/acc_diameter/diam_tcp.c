@@ -95,7 +95,6 @@ int tcp_send_recv(int sfd, char* buf, int len, rd_buf_t* rb,
 	unsigned long int result_code;
 	AAAMessage *msg;
 	AAA_AVP	*avp;
-	char serviceType;
 	unsigned int m_id;
 
 	/* try to write the message to the Diameter client */
@@ -184,7 +183,6 @@ next:
 		LM_ERR("AVP_Service_Type not found\n");
 		return AAA_ERROR;
 	}
-	serviceType = avp->data.s[0];
 
 	result_code = ntohl(*((unsigned long int*)(msg->res_code->data.s)));
 	switch(result_code)
