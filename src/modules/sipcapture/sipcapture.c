@@ -1039,6 +1039,9 @@ static int w_float2int(struct sip_msg* _m, char* _val, char* _coof, char* s2)
 		return -1;
 	}
 
+	if(value.s==NULL || coof.s==NULL)
+		return -1;
+	
 	ret = (int) (atof (value.s) * atoi(coof.s));
 
 	return  ret ? ret : -1;
