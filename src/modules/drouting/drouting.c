@@ -671,12 +671,12 @@ static int use_next_gw(struct sip_msg* msg)
 	return 1;
 }
 
-int dr_already_choosen(rt_info_t* rt_info, int* local_gwlist, int lgw_size, int check)
+int dr_already_choosen(rt_info_t* rt_info, int *active_gwlist, int* local_gwlist, int lgw_size, int check)
 {
 	int l;
 
 	for ( l = 0; l<lgw_size; l++ ) {
-		if ( rt_info->pgwl[local_gwlist[l]].pgw == rt_info->pgwl[check].pgw ) {
+		if ( rt_info->pgwl[active_gwlist[local_gwlist[l]]].pgw == rt_info->pgwl[check].pgw ) {
 			LM_INFO("Gateway already chosen %.*s, local_gwlist[%d]=%d, %d\n",
 					rt_info->pgwl[check].pgw->ip.len, rt_info->pgwl[check].pgw->ip.s, l, local_gwlist[l], check);
 			return 1;
@@ -697,6 +697,7 @@ static int do_routing(struct sip_msg* msg, dr_group_t *drg)
 	int_str val;
 	struct usr_avp *avp;
 #define DR_MAX_GWLIST	32
+	static int active_gwlist[DR_MAX_GWLIST];
 	static int local_gwlist[DR_MAX_GWLIST];
 	int gwlist_size;
 	int ret;
@@ -794,6 +795,24 @@ again:
 	gwlist_size
 		= (rt_info->pgwa_len>DR_MAX_GWLIST)?DR_MAX_GWLIST:rt_info->pgwa_len;
 	
+	// we filter out inactive gateways
+	for(i=0,j=0; i < gwlist_size; i++) {
+		dest = rt_info->pgwl[i].pgw;
+
+		if (dest->state != KA_STATE_DOWN) {
+			active_gwlist[j++] = i;
+		}
+	}
+	// updating gwlist_size value
+	gwlist_size = j;
+
+	if (gwlist_size == 0) {
+		LM_WARN("no gateways available (all in state down)\n");
+		ret = -1;
+		goto error2;
+	}
+
+
 	/* set gw order */
 	if(sort_order>=1&&gwlist_size>1)
 	{
@@ -803,7 +822,7 @@ again:
 		{
 			/* identify the group: [j..i) */
 			for(i=j+1; i<gwlist_size; i++)
-				if(rt_info->pgwl[j].grpid!=rt_info->pgwl[i].grpid)
+				if(rt_info->pgwl[active_gwlist[j]].grpid!=rt_info->pgwl[active_gwlist[i]].grpid)
 					break;
 			if(i-j==1)
 			{
@@ -853,7 +872,7 @@ again:
 					/* check if all in the current set were already chosen */
 					if (i-j <= t-1) {
 						for( l = j; l< i; l++) {
-							if ( ! dr_already_choosen(rt_info, local_gwlist, t-1, l) )
+							if ( ! dr_already_choosen(rt_info, active_gwlist, local_gwlist, t-1, active_gwlist[l]) )
 								break;
 						}
 						if ( l == i ) {
@@ -862,12 +881,12 @@ again:
 							j=i; continue;
 						}
 					}
-					while ( dr_already_choosen(rt_info, local_gwlist, t-1, local_gwlist[t-1]) ) {
+					while ( dr_already_choosen(rt_info, active_gwlist, local_gwlist, t-1, active_gwlist[local_gwlist[t-1]]) ) {
 						local_gwlist[t-1]   = j + kam_rand()%(i-j);
 					}
 				}
-				LM_DBG("The %d gateway is %.*s [%d]\n", t, rt_info->pgwl[local_gwlist[t-1]].pgw->ip.len,
-						rt_info->pgwl[local_gwlist[t-1]].pgw->ip.s, local_gwlist[t-1]);
+				LM_DBG("The %d gateway is %.*s [%d]\n", t, rt_info->pgwl[active_gwlist[local_gwlist[t-1]]].pgw->ip.len,
+						rt_info->pgwl[active_gwlist[local_gwlist[t-1]]].pgw->ip.s, local_gwlist[t-1]);
 			}
 
 			/* next group starts from i */
@@ -878,13 +897,10 @@ again:
 	} else {
 		LM_DBG("sort order 0\n");
 
-		for(i=0,j=0; i<gwlist_size; i++) {
-			dest = rt_info->pgwl[i].pgw;
-
-			if (dest->state != KA_STATE_DOWN) {
-				local_gwlist[j++] = i;
-			}
+		for(i=0; i<gwlist_size; i++) {
+			local_gwlist[i] = i;
 		}
+
 		t = j;
 	}
 
@@ -899,10 +915,10 @@ again:
 
 	/* push gwlist into avps in reverse order */
 	for( j=t-1 ; j>=1 ; j-- ) {
-		/* build uri*/
-		ruri = build_ruri(&uri, rt_info->pgwl[local_gwlist[j]].pgw->strip,
-				&rt_info->pgwl[local_gwlist[j]].pgw->pri,
-				&rt_info->pgwl[local_gwlist[j]].pgw->ip);
+		/* build uri */
+		ruri = build_ruri(&uri, rt_info->pgwl[active_gwlist[local_gwlist[j]]].pgw->strip,
+				&rt_info->pgwl[active_gwlist[local_gwlist[j]]].pgw->pri,
+				&rt_info->pgwl[active_gwlist[local_gwlist[j]]].pgw->ip);
 		if (ruri==0) {
 			LM_ERR("failed to build avp ruri\n");
 			goto error2;
@@ -918,7 +934,7 @@ again:
 		}
 		pkg_free(ruri->s);
 		/* add attrs avp */
-		val.s = rt_info->pgwl[local_gwlist[j]].pgw->attrs;
+		val.s = rt_info->pgwl[active_gwlist[local_gwlist[j]]].pgw->attrs;
 		LM_DBG("setting attr [%.*s] as avp\n",val.s.len,val.s.s);
 		if (add_avp( AVP_VAL_STR|(attrs_avp.type),attrs_avp.name, val)!=0 ) {
 			LM_ERR("failed to insert attrs avp\n");
@@ -927,12 +943,12 @@ again:
 	}
 
 	/* use first GW in RURI */
-	ruri = build_ruri(&uri, rt_info->pgwl[local_gwlist[0]].pgw->strip,
-			&rt_info->pgwl[local_gwlist[0]].pgw->pri,
-			&rt_info->pgwl[local_gwlist[0]].pgw->ip);
+	ruri = build_ruri(&uri, rt_info->pgwl[active_gwlist[local_gwlist[0]]].pgw->strip,
+			&rt_info->pgwl[active_gwlist[local_gwlist[0]]].pgw->pri,
+			&rt_info->pgwl[active_gwlist[local_gwlist[0]]].pgw->ip);
 
 	/* add attrs avp */
-	val.s = rt_info->pgwl[local_gwlist[0]].pgw->attrs;
+	val.s = rt_info->pgwl[active_gwlist[local_gwlist[0]]].pgw->attrs;
 	LM_DBG("setting attr [%.*s] as for ruri\n",val.s.len,val.s.s);
 	if (add_avp( AVP_VAL_STR|(attrs_avp.type),attrs_avp.name, val)!=0 ) {
 		LM_ERR("failed to insert attrs avp\n");
@@ -950,7 +966,7 @@ again:
 		goto error1;
 	}
 	LM_DBG("setting the gw [%d] as ruri \"%.*s\"\n",
-			local_gwlist[0], ruri->len, ruri->s);
+			active_gwlist[local_gwlist[0]], ruri->len, ruri->s);
 	if (msg->new_uri.s)
 		pkg_free(msg->new_uri.s);
 	msg->new_uri = *ruri;
