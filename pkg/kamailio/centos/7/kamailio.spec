@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver 5.1.0
-%define rel dev1%{dist}
+%define rel dev6%{dist}
 %bcond_with dnssec
 
 
@@ -191,7 +191,6 @@ This module implements protocol functions that use the libcurl to communicate wi
 %package    http_client
 Summary:    HTTP client module for Kamailio.
 Group:      System Environment/Daemons
-Requires:   libcrypto
 
 %description    http_client
 This module implements protocol functions that use the libcurl to communicate with HTTP servers. 
@@ -668,6 +667,7 @@ fi
 
 %dir %{_docdir}/kamailio/modules
 %doc %{_docdir}/kamailio/modules/README.acc
+%doc %{_docdir}/kamailio/modules/README.acc_diameter
 %doc %{_docdir}/kamailio/modules/README.alias_db
 %doc %{_docdir}/kamailio/modules/README.app_jsdt
 %doc %{_docdir}/kamailio/modules/README.async
@@ -810,6 +810,7 @@ fi
 
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/acc.so
+%{_libdir}/kamailio/modules/acc_diameter.so
 %{_libdir}/kamailio/modules/alias_db.so
 %{_libdir}/kamailio/modules/app_jsdt.so
 %{_libdir}/kamailio/modules/async.so
