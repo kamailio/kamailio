@@ -896,6 +896,8 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	db_cols[nr_cols++] = &tt_col_x_tag;
 	db_cols[nr_cols++] = &tt_col_s_method;
 	db_cols[nr_cols++] = &tt_col_s_cseq;
+	db_cols[nr_cols++] = &tt_col_a_contact;
+	db_cols[nr_cols++] = &tt_col_b_contact;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
@@ -938,6 +940,8 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_tag); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_method); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_cseq); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_contact); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_contact); n++;
 
 done:
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
