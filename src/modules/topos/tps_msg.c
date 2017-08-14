@@ -179,6 +179,8 @@ int tps_add_headers(sip_msg_t *msg, str *hname, str *hbody, int hpos)
 		hs.len += 2;
 	}
 
+	LM_DBG("adding to headers(%d) - [%.*s]\n", hpos, hs.len, hs.s);
+
 	if (insert_new_lump_before(anchor, hs.s, hs.len, 0) == 0) {
 		LM_ERR("can't insert lump\n");
 		pkg_free(hs.s);
@@ -797,6 +799,8 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		if(rewrite_uri(msg, &nuri)<0) {
 			LM_ERR("failed to update r-uri\n");
 			return -1;
+		} else {
+			LM_DBG("r-uri updated to: [%.*s]\n", nuri.len, nuri.s);
 		}
 	}
 
