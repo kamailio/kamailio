@@ -444,7 +444,7 @@ str tt_col_b_tag = str_init("b_tag");
 str tt_col_s_method = str_init("s_method");
 str tt_col_s_cseq = str_init("s_cseq");
 
-#define TPS_NR_KEYS	32
+#define TPS_NR_KEYS	48
 
 str _tps_empty = str_init("");
 
