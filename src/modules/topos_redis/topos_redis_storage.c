@@ -337,7 +337,6 @@ int tps_redis_insert_invite_branch(tps_data_t *td)
 		return -1;
 	}
 	rkey.s = rp;
-	rkey.len = _tps_redis_bprefix.len+td->x_vbranch1.len;
 	rp += rkey.len+1;
 
 	argv[argc]    = rcmd.s;
@@ -545,8 +544,7 @@ int tps_redis_clean_branches(void)
 /**
  *
  */
-int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
-		uint32_t mode)
+int tps_redis_load_invite_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
 	char* argv[TPS_REDIS_NR_KEYS];
 	size_t argvlen[TPS_REDIS_NR_KEYS];
@@ -563,8 +561,8 @@ int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	if(msg==NULL || md==NULL || sd==NULL)
 		return -1;
 
-	if(md->x_vbranch1.len<=0) {
-		LM_INFO("no via branch for this message\n");
+	if(md->a_callid.len<=0 || md->b_tag.len<=0) {
+		LM_INFO("no call-id or to-rag for this message\n");
 		return -1;
 	}
 
@@ -580,13 +578,167 @@ int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	argc = 0;
 
 	rp = _tps_redis_cbuf;
+
+	rkey.len = snprintf(rp, TPS_REDIS_DATA_SIZE,
+					"%.*sINVITE:%.*s:%.*s",
+					_tps_redis_bprefix.len, _tps_redis_bprefix.s,
+					md->a_callid.len, md->a_callid.s,
+					md->b_tag.len, md->b_tag.s);
+	if(rkey.len<0 || rkey.len>=TPS_REDIS_DATA_SIZE) {
+		LM_ERR("error or insufficient buffer size: %d\n", rkey.len);
+		return -1;
+	}
+	rkey.s = rp;
+	rp += rkey.len+1;
+
+	argv[argc]    = rcmd.s;
+	argvlen[argc] = rcmd.len;
+	argc++;
+
+	argv[argc]    = rkey.s;
+	argvlen[argc] = rkey.len;
+	argc++;
+
+	LM_DBG("loading branch record for [%.*s]\n", rkey.len, rkey.s);
+
+	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
+	if(rrpl==NULL) {
+		LM_ERR("failed to execute redis command\n");
+		if(rsrv->ctxRedis->err) {
+			LM_ERR("redis error: %s\n", rsrv->ctxRedis->errstr);
+		}
+		return -1;
+	}
+
+	if(rrpl->type != REDIS_REPLY_ARRAY) {
+		LM_WARN("invalid redis result type: %d\n", rrpl->type);
+		freeReplyObject(rrpl);
+		return -1;
+	}
+
+	if(rrpl->elements<=0) {
+		LM_DBG("hmap with key [%.*s] not found\n", rkey.len, rkey.s);
+		freeReplyObject(rrpl);
+		return 1;
+	}
+	if(rrpl->elements % 2) {
+		LM_DBG("hmap with key [%.*s] has invalid result\n", rkey.len, rkey.s);
+		freeReplyObject(rrpl);
+		return -1;
+	}
+
+	memset(sd, 0, sizeof(tps_data_t));
+	sd->cp = sd->cbuf;
+
+	for(i=0; i<rrpl->elements; i++) {
+		if(rrpl->element[i]->type != REDIS_REPLY_STRING) {
+			LM_ERR("invalid type for hmap[%.*s] key pos[%d]\n",
+					rkey.len, rkey.s, i);
+			freeReplyObject(rrpl);
+			return -1;
+		}
+		skey.s = rrpl->element[i]->str;
+		skey.len = rrpl->element[i]->len;
+		i++;
+		if(rrpl->element[i]==NULL) {
+			continue;
+		}
+		sval.s = NULL;
+		switch(rrpl->element[i]->type) {
+			case REDIS_REPLY_STRING:
+				LM_DBG("r[%d]: s[%.*s]\n", i, rrpl->element[i]->len,
+						rrpl->element[i]->str);
+				sval.s = rrpl->element[i]->str;
+				sval.len = rrpl->element[i]->len;
+				break;
+			case REDIS_REPLY_INTEGER:
+				LM_DBG("r[%d]: n[%lld]\n", i, rrpl->element[i]->integer);
+				break;
+			default:
+				LM_WARN("unexpected type [%d] at pos [%d]\n",
+						rrpl->element[i]->type, i);
+		}
+		if(sval.s==NULL) {
+			continue;
+		}
+
+		if(skey.len==tt_key_rectime.len
+				&& strncmp(skey.s, tt_key_rectime.s, skey.len)==0) {
+			/* skip - not needed */
+		} else if(skey.len==tt_key_x_vbranch.len
+				&& strncmp(skey.s, tt_key_x_vbranch.s, skey.len)==0) {
+			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->x_vbranch1);
+		} else {
+			LM_INFO("unuseful key[%.*s]\n", skey.len, skey.s);
+		}
+	}
+
+	freeReplyObject(rrpl);
+	return 0;
+
+error:
+	if(rrpl) freeReplyObject(rrpl);
+	return -1;
+}
+
+/**
+ *
+ */
+int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t mode)
+{
+	char* argv[TPS_REDIS_NR_KEYS];
+	size_t argvlen[TPS_REDIS_NR_KEYS];
+	int argc = 0;
+	str rcmd = str_init("HGETALL");
+	str rkey = STR_NULL;
+	char *rp;
+	int i;
+	redisc_server_t *rsrv = NULL;
+	redisReply *rrpl = NULL;
+	str skey = STR_NULL;
+	str sval = STR_NULL;
+	str *xvbranch1 = NULL;
+	tps_data_t id;
+
+	if(msg==NULL || md==NULL || sd==NULL)
+		return -1;
+
+	if(mode==0 && md->x_vbranch1.len<=0) {
+		LM_INFO("no via branch for this message\n");
+		return -1;
+	}
+
+	rsrv = _tps_redis_api.get_server(&_topos_redis_serverid);
+	if(rsrv==NULL) {
+		LM_ERR("cannot find redis server [%.*s]\n",
+				_topos_redis_serverid.len, _topos_redis_serverid.s);
+		return -1;
+	}
+
+	memset(argv, 0, TPS_REDIS_NR_KEYS * sizeof(char*));
+	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
+	argc = 0;
+
+	if(mode==0) {
+		/* load same transaction using Via branch */
+		xvbranch1 = &md->x_vbranch1;
+	} else {
+		/* load corresponding INVITE transaction using call-id + to-tag */
+		if(tps_redis_load_invite_branch(msg, md, &id)<0) {
+			LM_ERR("failed to load the INVITE branch value\n");
+			return -1;
+		}
+		xvbranch1 = &id.x_vbranch1;
+	}
+	rp = _tps_redis_cbuf;
 	memcpy(rp, _tps_redis_bprefix.s, _tps_redis_bprefix.len);
 	memcpy(rp + _tps_redis_bprefix.len,
-			md->x_vbranch1.s, md->x_vbranch1.len);
-	rp[_tps_redis_bprefix.len+md->x_vbranch1.len] = '\0';
+			xvbranch1->s, xvbranch1->len);
+	rp[_tps_redis_bprefix.len+xvbranch1->len] = '\0';
 	rkey.s = rp;
-	rkey.len = _tps_redis_bprefix.len+md->x_vbranch1.len;
-	rp += _tps_redis_bprefix.len+md->x_vbranch1.len+1;
+	rkey.len = _tps_redis_bprefix.len+xvbranch1->len;
+	rp += _tps_redis_bprefix.len+xvbranch1->len+1;
 
 	argv[argc]    = rcmd.s;
 	argvlen[argc] = rcmd.len;
