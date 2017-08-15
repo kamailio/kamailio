@@ -15,8 +15,8 @@
 	<section id="tls.r.tls.info">
 		<title><function>tls.info</function></title>
 		<para>
-			List internal information related to the TLS module in 
-			a short list - max connections, open connections and the 
+			List internal information related to the TLS module in
+			a short list - max connections, open connections and the
 			write queue size.
 		</para>
 		<para>Parameters: </para>
@@ -53,7 +53,7 @@
 	<section id="tls.r.tls.reload">
 		<title><function>tls.reload</function></title>
 		<para>
-			Reload the external TLS configuration file (aka tls.cfg). It does not reload 
+			Reload the external TLS configuration file (aka tls.cfg). It does not reload
 			modparam() parameters. Note that existing active TLS connections are not
 			terminated and they continue to use the old certificates. The new configuration
 			will be used for new connections.
