@@ -1,3 +1,4 @@
+
 app_sqlang Module
 
 Daniel-Constantin Mierla
@@ -10,7 +11,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2017 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2017 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -125,7 +126,7 @@ Chapter 1. Admin Guide
    at runtime. If you use it for KEMI configuration, then it has to
    include the requited functions.
 
-   Default value is "null".
+   Default value is “null”.
 
    Example 1.1. Set load parameter
 ...
@@ -139,7 +140,7 @@ modparam("app_sqlang", "load", "/usr/local/etc/kamailio/sqlang/myscript.sq")
    4.3. sqlang_run(function [, params])
    4.4. sqlang_runstring(script)
 
-4.1. sqlang_dofile(path)
+4.1.  sqlang_dofile(path)
 
    Note: not implemented yet.
 
@@ -151,39 +152,39 @@ modparam("app_sqlang", "load", "/usr/local/etc/kamailio/sqlang/myscript.sq")
 sqlang_dofile("/usr/local/etc/kamailio/sqlang/myscript.sq");
 ...
 
-4.2. sqlang_dostring(script)
+4.2.  sqlang_dostring(script)
 
    Note: not implemented yet.
 
-   Execute the Lua script stored in parameter. The parameter can be a
+   Execute the Squirrel script stored in parameter. The parameter can be a
    string with pseudo-variables.
 
    Example 1.3. sqlang_dostring usage
 ...
 if(!sqlang_dostring('KSR.dbg("test message\n")'))
 {
-    xdbg("SCRIPT: failed to execute js script!\n");
+    xdbg("SCRIPT: failed to execute squirrel script!\n");
 }
 ...
 
-4.3. sqlang_run(function [, params])
+4.3.  sqlang_run(function [, params])
 
-   Execute the JS function 'func' giving params as parameters. There can
-   be up to 3 string parameters. The function must exist in the script
+   Execute the Squirrel function 'func' giving params as parameters. There
+   can be up to 3 string parameters. The function must exist in the script
    loaded at startup via parameter 'load'. Parameters can be strings with
    pseudo-variables that are evaluated at runtime.
 
    Example 1.4. sqlang_run usage
 ...
-if(!sqlang_run("js_append_fu_to_reply"))
+if(!sqlang_run("sqlang_append_fu_to_reply"))
 {
-    xdbg("SCRIPT: failed to execute js function!\n");
+    xdbg("SCRIPT: failed to execute squirrel function!\n");
 }
 ...
-sqlang_run("js_funcx", "$rU", "2");
+sqlang_run("sqlang_funcx", "$rU", "2");
 ...
 
-4.4. sqlang_runstring(script)
+4.4.  sqlang_runstring(script)
 
    Note: not implemented yet.
 
@@ -195,7 +196,7 @@ sqlang_run("js_funcx", "$rU", "2");
 ...
 if(!sqlang_runstring('KSR.dbg("Hello World from $fU\n")'))
 {
-    xdbg("failed to execute js script!\n");
+    xdbg("failed to execute squirrel script!\n");
 }
 ...
 
@@ -204,7 +205,7 @@ if(!sqlang_runstring('KSR.dbg("Hello World from $fU\n")'))
    5.1. app_swlang.reload
    5.2. app_sqlang.api_list
 
-5.1. app_swlang.reload
+5.1.  app_swlang.reload
 
    Marks the need to reload the SQLang script pointed by 'load'
    parameter.The actual reload is done by every working process when the
@@ -219,7 +220,7 @@ if(!sqlang_runstring('KSR.dbg("Hello World from $fU\n")'))
 kamcmd app_sqlang.reload
 ...
 
-5.2. app_sqlang.api_list
+5.2.  app_sqlang.api_list
 
    List the functions available via Kemi framework.
 
@@ -252,7 +253,7 @@ request_route {
     ...
     if(!sqlang_run("sr_append_fu_to_reply"))
     {
-        xdbg("SCRIPT: failed to execute js function!\n");
+        xdbg("SCRIPT: failed to execute squirrel function!\n");
     }
     ...
 }
