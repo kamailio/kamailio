@@ -18,12 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
-* \file
-* \brief Kamailio core :: Message forwarding
-* \author andrei
-* \ingroup core
-* Module: \ref core
-*/
+ * \file
+ * \brief Kamailio core :: Message forwarding
+ * \author andrei
+ * \ingroup core
+ * Module: \ref core
+ */
 
 #ifndef forward_h
 #define forward_h
@@ -58,12 +58,12 @@ enum ss_mismatch {
 
 
 struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
-									union sockaddr_union* su, int proto,
-									enum ss_mismatch* mismatch);
+		union sockaddr_union* su, int proto,
+		enum ss_mismatch* mismatch);
 
 
 inline static struct socket_info* get_send_socket(struct sip_msg* msg,
-									union sockaddr_union* su, int proto)
+		union sockaddr_union* su, int proto)
 {
 	return get_send_socket2(msg?msg->force_send_socket:0, su, proto, 0);
 }
@@ -78,18 +78,18 @@ int register_check_self_func(check_self_f f);
 int check_self(str* host, unsigned short port, unsigned short proto);
 int check_self_port(unsigned short port, unsigned short proto);
 int forward_request( struct sip_msg* msg, str* dst,  unsigned short port,
-						struct dest_info* send_info);
+		struct dest_info* send_info);
 int update_sock_struct_from_via( union sockaddr_union* to,
-								 struct sip_msg* msg,
-								 struct via_body* via );
+		struct sip_msg* msg,
+		struct via_body* via );
 
 /* use src_ip, port=src_port if rport, via port if via port, 5060 otherwise */
 #define update_sock_struct_from_ip(  to, msg ) \
 	init_su((to), &(msg)->rcv.src_ip, \
 			(((msg)->via1->rport)|| \
-			 (((msg)->msg_flags|global_req_flags)&FL_FORCE_RPORT))? \
-							(msg)->rcv.src_port: \
-							((msg)->via1->port)?(msg)->via1->port: SIP_PORT )
+				(((msg)->msg_flags|global_req_flags)&FL_FORCE_RPORT))? \
+				(msg)->rcv.src_port: \
+				((msg)->via1->port)?(msg)->via1->port: SIP_PORT )
 
 int forward_reply( struct sip_msg* msg);
 int forward_reply_nocb( struct sip_msg* msg);
@@ -106,8 +106,8 @@ int is_check_self_func_list_set(void);
  *                if 0 or mcast a new send_sock will be automatically choosen
  *    proto = TCP|UDP
  *    to = destination (sockaddr_union)
- *    id = only used on tcp, it will force sending on connection "id" if id!=0 
- *         and the connection exists, else it will send to "to" 
+ *    id = only used on tcp, it will force sending on connection "id" if id!=0
+ *         and the connection exists, else it will send to "to"
  *        (useful for sending replies on  the same connection as the request
  *         that generated them; use 0 if you don't want this)
  * buf, len = buffer
@@ -123,7 +123,7 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 	sr_net_info_t netinfo;
 	sr_event_param_t evp = {0};
 
-#ifdef USE_TCP 
+#ifdef USE_TCP
 	int port;
 	struct ip_addr ip;
 	union sockaddr_union* from = NULL;
@@ -132,7 +132,7 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 	struct ws_event_info wsev;
 	int ret;
 #endif
-	
+
 	outb.s = buf;
 	outb.len = len;
 	if(!(flags&1)) {
@@ -149,21 +149,21 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 #ifdef USE_TCP
 	if (unlikely((dst->proto == PROTO_WS
 #ifdef USE_TLS
-		|| dst->proto == PROTO_WSS
+					|| dst->proto == PROTO_WSS
 #endif
-	) && sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
+				) && sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
 		if (unlikely(dst->send_flags.f & SND_F_FORCE_SOCKET
-				&& dst->send_sock)) {
-			
+					&& dst->send_sock)) {
+
 			local_addr = dst->send_sock->su;
 #ifdef SO_REUSEPORT
 			if (cfg_get(tcp, tcp_cfg, reuse_port)) {
-                        	LM_DBG("sending to: %s, force_socket=%d, send_sock=%p\n",
-                                        	su2a(&dst->to,sizeof(struct sockaddr_in)),
-                                        	(dst->send_flags.f & SND_F_FORCE_SOCKET),
-                                        	dst->send_sock);
+				LM_DBG("sending to: %s, force_socket=%d, send_sock=%p\n",
+						su2a(&dst->to,sizeof(struct sockaddr_in)),
+						(dst->send_flags.f & SND_F_FORCE_SOCKET),
+						dst->send_sock);
 
-                        	su_setport(&local_addr, dst->send_sock->port_no);
+				su_setport(&local_addr, dst->send_sock->port_no);
 			}
 			else
 				su_setport(&local_addr, 0); /* any local port will do */
@@ -204,7 +204,7 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 #endif
 
 	if (likely(dst->proto==PROTO_UDP)){
-		if (unlikely((dst->send_sock==0) || 
+		if (unlikely((dst->send_sock==0) ||
 					(dst->send_sock->flags & SI_IS_MCAST))){
 			new_dst=*dst;
 			new_dst.send_sock=get_send_socket(0, &dst->to, dst->proto);
@@ -232,12 +232,12 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 				local_addr=dst->send_sock->su;
 #ifdef SO_REUSEPORT
 				if (cfg_get(tcp, tcp_cfg, reuse_port)) {
-                        		LM_DBG("sending to: %s, force_socket=%d, send_sock=%p\n",
-                                        		su2a(&dst->to,sizeof(struct sockaddr_in)),
-                                        		(dst->send_flags.f & SND_F_FORCE_SOCKET),
-                                        		dst->send_sock);
+					LM_DBG("sending to: %s, force_socket=%d, send_sock=%p\n",
+							su2a(&dst->to,sizeof(struct sockaddr_in)),
+							(dst->send_flags.f & SND_F_FORCE_SOCKET),
+							dst->send_sock);
 
-                        		su_setport(&local_addr, dst->send_sock->port_no);
+					su_setport(&local_addr, dst->send_sock->port_no);
 				}
 				else
 					su_setport(&local_addr, 0); /* any local port will do */
@@ -265,12 +265,12 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 				local_addr=dst->send_sock->su;
 #ifdef SO_REUSEPORT
 				if (cfg_get(tcp, tcp_cfg, reuse_port)) {
-                        		LM_DBG("sending to: %s, force_socket=%d, send_sock=%p\n",
-                                        		su2a(&dst->to,sizeof(struct sockaddr_in)),
-                                        		(dst->send_flags.f & SND_F_FORCE_SOCKET),
-                                        		dst->send_sock);
+					LM_DBG("sending to: %s, force_socket=%d, send_sock=%p\n",
+							su2a(&dst->to,sizeof(struct sockaddr_in)),
+							(dst->send_flags.f & SND_F_FORCE_SOCKET),
+							dst->send_sock);
 
-                        		su_setport(&local_addr, dst->send_sock->port_no);
+					su_setport(&local_addr, dst->send_sock->port_no);
 				}
 				else
 					su_setport(&local_addr, 0); /* any local port will do */
@@ -313,8 +313,8 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 	}
 #endif /* USE_SCTP */
 	else{
-			LM_CRIT("unknown proto %d\n", dst->proto);
-			goto error;
+		LM_CRIT("unknown proto %d\n", dst->proto);
+		goto error;
 	}
 	ret = 0;
 done:
