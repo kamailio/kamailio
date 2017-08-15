@@ -83,6 +83,7 @@ static int w_is_peer_verified(struct sip_msg* msg, char* p1, char* p2);
 MODULE_VERSION
 
 
+extern str sr_tls_event_callback;
 str sr_tls_xavp_cfg = {0, 0};
 /*
  * Default settings when modparams are used
@@ -209,6 +210,7 @@ static param_export_t params[] = {
 	{"low_mem_threshold2",  PARAM_INT,    &default_tls_cfg.low_mem_threshold2},
 	{"renegotiation",       PARAM_INT,    &sr_tls_renegotiation},
 	{"xavp_cfg",            PARAM_STR,    &sr_tls_xavp_cfg},
+	{"event_callback",      PARAM_STR,    &sr_tls_event_callback},
 	{0, 0, 0}
 };
 
@@ -349,7 +351,9 @@ static int mod_init(void)
 #ifndef OPENSSL_NO_DH
 	LM_INFO("With Diffie Hellman\n");
 #endif
-	tls_lookup_event_routes();
+	if(sr_tls_event_callback.s==NULL || sr_tls_event_callback.len<=0) {
+		tls_lookup_event_routes();
+	}
 	return 0;
 error:
 	destroy_tls_h();
