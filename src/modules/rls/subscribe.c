@@ -337,7 +337,6 @@ int reply_421(struct sip_msg* msg)
 int reply_200(struct sip_msg* msg, str* contact, int expires)
 {
 	str hdr_append;
-	int len;
 
 	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(contact->len+70));
 	if(hdr_append.s == NULL)
