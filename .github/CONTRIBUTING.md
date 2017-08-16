@@ -169,4 +169,4 @@ released under BSD must be done under BSD as well.
 
 For any question, do not hesitate to contact other developers via mailing list:
 
-  * **[sr-dev [at] lists.sip-router.org](http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev)**
+  * **[sr-dev [at] lists.kamailio.org](http://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev)**
