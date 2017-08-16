@@ -1292,6 +1292,16 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs = (_tr_parsed_uri.r2_val.s)?
 				_tr_parsed_uri.r2_val:_tr_empty;
 			break;
+		case TR_URI_SCHEME:
+			val->rs.s = _tr_uri.s;
+			val->rs.len = 0;
+			while(val->rs.len<_tr_uri.len) {
+				if(_tr_uri.s[val->rs.len]==':') {
+					break;
+				}
+				val->rs.len++;
+			}
+			break;
 		default:
 			LM_ERR("unknown subtype %d\n",
 					subtype);
@@ -2528,6 +2538,9 @@ char* tr_parse_uri(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==2 && strncasecmp(name.s, "r2", 2)==0) {
 		t->subtype = TR_URI_R2;
+		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "scheme", 6)==0) {
+		t->subtype = TR_URI_SCHEME;
 		goto done;
 	}
 
