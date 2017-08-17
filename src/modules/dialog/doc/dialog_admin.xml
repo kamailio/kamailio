@@ -32,7 +32,7 @@
 	The dialog module provides dialog awareness for the &kamailio; proxy. It's
 	functionality is to keep track of the current dialogs, to offer information
 	about them (e.g. how many dialogs are active), and to manage various
-	characteristics of dialogs. The module exports several functions that can be 
+	characteristics of dialogs. The module exports several functions that can be
 	used directly from the configuration route script as well as functions for
 	the RPC interface.
 	</para>
@@ -1955,24 +1955,24 @@ if(dlg_get("abcdef", "123", "456"))
 </programlisting>
 		</example>
 	</section>
-	
+
 	<section id="dialog.f.is_known_dlg">
 		<title>
 		<function moreinfo="none">is_known_dlg()</function>
 		</title>
 		<para>
 		This function checks if the current SIP message being processed
-		belongs to any transaction within an active dialog that the 
-		dialog module is currently tracking.  This is a check for 
+		belongs to any transaction within an active dialog that the
+		dialog module is currently tracking.  This is a check for
 		tracking of any kind, without regard to profiles.
 		</para>
 		<para>
 		This function has numerous potential applications, among which
-		is that it can be used to strengthen security for 
+		is that it can be used to strengthen security for
 		loose-routing sequential (in-dialog) requests or responses
 		to them, as by providing a preventative check against
 		spoofing on the proxy level instead of leaving the issue
-		purely to the receiving UA.  
+		purely to the receiving UA.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
@@ -2041,7 +2041,7 @@ if(dlg_set_timeout("180", "123", "456"))
 		<function moreinfo="none">dlg_set_timeout_by_profile(profile, [value], timeout)</function>
 		</title>
 		<para>
-			Like <emphasis>dlg_set_timeout()</emphasis>, but 
+			Like <emphasis>dlg_set_timeout()</emphasis>, but
 			simultaneously sets the timeout of all dialogs in
 			a given profile.  Can be constrained by profile value.
 		</para>
@@ -2064,7 +2064,7 @@ if(dlg_set_timeout("180", "123", "456"))
 		<title><function>dlg_set_timeout_by_profile</function> usage</title>
 		<programlisting format="linespecific">
 ...
-# All dialogs belonging to user abc123 (tracked via set_dlg_profile()) 
+# All dialogs belonging to user abc123 (tracked via set_dlg_profile())
 # will be timed out in 3 seconds.
 
 dlg_set_timeout_by_profile("users", "abc123", "3");
@@ -2174,6 +2174,30 @@ dlg_set_property("timeout-noreset");
 ...
 $var(exp) = 3600 + $Ts;
 dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dialog.f.dlg_set_ruri">
+		<title>
+		<function moreinfo="none">dlg_set_ruri()</function>
+		</title>
+		<para>
+		This function sets the R-URI with the corresponding endpoint address
+		stored in dialog structure (i.e., its Contact field).
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_set_ruri()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(has_totag() and is_present_hf("Route") and uri==myself ) {
+	if(dlg_set_ruri()) {
+		xlog("Request URI changed from [$ou] to dlg value: [$ru]\n");
+	}
+}
 ...
 </programlisting>
 		</example>
