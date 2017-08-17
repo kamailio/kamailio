@@ -266,7 +266,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	str st, st2;
 	pv_value_t v, w;
 	time_t t;
-	uint sz1, sz2;
+	uint32_t sz1, sz2;
 
 	if(val==NULL || val->flags&PV_VAL_NULL)
 		return -1;
@@ -1125,7 +1125,9 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 
 		case TR_S_COREHASH:
 			if(!(val->flags&PV_VAL_STR))
-				val->rs.s = int2str(val->ri, &val->rs.len);
+				st.s = int2str(val->ri, &st.len);
+			else
+				st = val->rs;
 
 			sz1 = 0;
 			if(tp != NULL) {
@@ -1143,13 +1145,15 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				}
 			}
 
-			sz2 = core_hash(&val->rs, NULL, sz1);
+			sz2 = core_hash(&st, NULL, sz1);
 
-			j = sprintf(_tr_buffer, "%u", sz2);
+			if((val->rs.s = int2strbuf((unsigned long)sz2, _tr_buffer,
+						INT2STR_MAX_LEN, &val->rs.len))==NULL) {
+				LM_ERR("failed to convert core hash id to string\n");
+				return -1;
+			}
 			val->flags = PV_VAL_STR;
 			val->ri = 0;
-			val->rs.s = _tr_buffer;
-			val->rs.len = j;
 			break;
 
 		default:
