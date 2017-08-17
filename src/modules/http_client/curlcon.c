@@ -228,7 +228,6 @@ int curl_parse_param(char *val)
 	param_t *conparams = NULL;
 	curl_con_t *cc = NULL;
 
-	LM_INFO("http_client modparam parsing starting\n");
 	LM_DBG("modparam httpcon: %s\n", val);
 	LM_DBG(" *** Default httproxy: %s\n", http_proxy.s);
 
@@ -770,6 +769,6 @@ curl_con_t *curl_init_con(str *name)
 	ccp->curl = NULL;
 	_curl_con_pkg_root = ccp;
 
-	LM_INFO("CURL: Added connection [%.*s]\n", name->len, name->s);
+	LM_DBG("CURL: Added connection [%.*s]\n", name->len, name->s);
 	return cc;
 }
