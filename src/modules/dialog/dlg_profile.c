@@ -34,6 +34,7 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/route.h"
+#include "../../core/dset.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/srutils/sruid.h"
 #include "dlg_hash.h"
@@ -874,6 +875,41 @@ int	is_known_dlg(struct sip_msg *msg) {
 	if(dlg == NULL)
 		return -1;
 
+	dlg_release(dlg);
+
+	return 1;
+}
+
+/**
+ *
+ */
+int dlg_set_ruri(sip_msg_t *msg)
+{
+	dlg_cell_t *dlg;
+	unsigned int dir;
+	int leg;
+
+	dlg = dlg_lookup_msg_dialog(msg, &dir);
+	if(dlg == NULL) {
+		LM_DBG("no dialog found\n");
+		return -1;
+	}
+
+	if(dir==DLG_DIR_DOWNSTREAM) {
+		leg = DLG_CALLEE_LEG;
+	} else {
+		leg = DLG_CALLER_LEG;
+	}
+	if(dlg->contact[leg].s==0 || dlg->contact[leg].len==0) {
+		LM_NOTICE("no contact uri (leg: %d)\n", leg);
+		dlg_release(dlg);
+		return -1;
+	}
+	if(rewrite_uri(msg, &dlg->contact[leg])<0) {
+		LM_ERR("failed to rewrite uri (leg: %d)\n", leg);
+		dlg_release(dlg);
+		return -1;
+	}
 	dlg_release(dlg);
 
 	return 1;

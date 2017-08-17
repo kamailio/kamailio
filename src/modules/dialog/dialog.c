@@ -178,13 +178,14 @@ static int w_dlg_refer(struct sip_msg*, char*, char*);
 static int w_dlg_bridge(struct sip_msg*, char*, char*, char*);
 static int w_dlg_set_timeout(struct sip_msg*, char*, char*, char*);
 static int w_dlg_set_timeout_by_profile2(struct sip_msg *, char *, char *);
-static int w_dlg_set_timeout_by_profile3(struct sip_msg *, char *, char *, 
+static int w_dlg_set_timeout_by_profile3(struct sip_msg *, char *, char *,
 					char *);
 static int fixup_dlg_bye(void** param, int param_no);
 static int fixup_dlg_refer(void** param, int param_no);
 static int fixup_dlg_bridge(void** param, int param_no);
 static int w_dlg_get(struct sip_msg*, char*, char*, char*);
 static int w_is_known_dlg(struct sip_msg *);
+static int w_dlg_set_ruri(sip_msg_t *, char *, char *);
 
 static int w_dlg_remote_profile(sip_msg_t *msg, char *cmd, char *pname,
 		char *pval, char *puid, char *expires);
@@ -238,6 +239,8 @@ static cmd_export_t cmds[]={
 	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
 			0, ANY_ROUTE },
 	{"dlg_remote_profile", (cmd_function)w_dlg_remote_profile, 5, fixup_dlg_remote_profile,
+			0, ANY_ROUTE },
+	{"dlg_set_ruri",       (cmd_function)w_dlg_set_ruri,  0, NULL,
 			0, ANY_ROUTE },
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
@@ -2096,6 +2099,11 @@ static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_na
 
 static int w_is_known_dlg(sip_msg_t *msg) {
 	return	is_known_dlg(msg);
+}
+
+static int w_dlg_set_ruri(sip_msg_t *msg, char *p1, char *p2)
+{
+	return	dlg_set_ruri(msg);
 }
 
 static const char *rpc_print_dlgs_doc[2] = {
