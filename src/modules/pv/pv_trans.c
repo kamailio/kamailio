@@ -39,6 +39,7 @@
 #include "../../core/dset.h"
 #include "../../core/basex.h"
 #include "../../core/action.h"
+#include "../../core/hashes.h"
 
 #include "../../core/parser/parse_param.h"
 #include "../../core/parser/parse_uri.h"
@@ -265,6 +266,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	str st, st2;
 	pv_value_t v, w;
 	time_t t;
+	uint sz1, sz2;
 
 	if(val==NULL || val->flags&PV_VAL_NULL)
 		return -1;
@@ -1119,6 +1121,35 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			memset(val, 0, sizeof(pv_value_t));
 			val->flags = PV_VAL_STR;
 			val->rs = st;
+			break;
+
+		case TR_S_COREHASH:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+
+			sz1 = 0;
+			if(tp != NULL) {
+				if(tp->type==TR_PARAM_NUMBER) {
+						sz1 = (uint) tp->v.n;
+				} else {
+					if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+							|| (!(v.flags&PV_VAL_INT)))
+					{
+							LM_ERR("corehash cannot get size (cfg line: %d)\n",
+								get_cfg_crt_line());
+						return -1;
+					}
+					sz1  = (uint) v.ri;
+				}
+			}
+
+			sz2 = core_hash(&val->rs, NULL, sz1);
+
+			j = sprintf(_tr_buffer, "%u", sz2);
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = j;
 			break;
 
 		default:
@@ -2391,6 +2422,23 @@ char* tr_parse_string(str* in, trans_t *t)
 		if(*p!=TR_RBRACKET)
 		{
 			LM_ERR("invalid replace transformation: %.*s!!\n",
+					in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==8 && strncasecmp(name.s, "corehash", 8)==0) {
+		t->subtype = TR_S_COREHASH;
+		if(*p==TR_PARAM_MARKER)
+		{
+			p++;
+			_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
+			t->params = tp;
+		}
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid corehash transformation: %.*s!!\n",
 					in->len, in->s);
 			goto error;
 		}
