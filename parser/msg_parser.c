@@ -955,7 +955,7 @@ hdr_field_t* get_hdr_by_name(const sip_msg_t* const msg, const char* const name,
 
 	for(hdr = msg->headers; hdr; hdr = hdr->next) {
 		if(hdr->name.len == name_len && *hdr->name.s==*name
-				&& strncmp(hdr->name.s, name, name_len)==0)
+				&& strncasecmp(hdr->name.s, name, name_len)==0)
 			return hdr;
 	}
 	return NULL;
@@ -968,7 +968,7 @@ hdr_field_t* next_sibling_hdr_by_name(const hdr_field_t* const hf)
 
 	for(hdr = hf->next; hdr; hdr = hdr->next) {
 		if(hdr->name.len == hf->name.len && *hdr->name.s==*hf->name.s
-				&& strncmp(hdr->name.s, hf->name.s, hf->name.len)==0)
+				&& strncasecmp(hdr->name.s, hf->name.s, hf->name.len)==0)
 			return hdr;
 	}
 	return NULL;
