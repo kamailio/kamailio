@@ -435,13 +435,13 @@ union module_exports_u {
 };
 
 
-struct sr_module {
+typedef struct sr_module {
 	char* path;
 	void* handle;
 	unsigned int orig_mod_interface_ver;
 	struct sr31_module_exports exports;
 	struct sr_module* next;
-};
+} sr_module_t;
 
 
 extern struct sr_module* modules; /**< global module list*/
@@ -459,6 +459,7 @@ void destroy_modules(void);
 int init_child(int rank);
 int init_modules(void);
 struct sr_module* find_module_by_name(char* mod);
+sr_module_t* get_loaded_modules(void);
 
 /**< true if the module with name 'mod_name' is loaded */
 #define module_loaded(mod_name) (find_module_by_name(mod_name)!=0)

@@ -781,6 +781,9 @@ struct sr_module* find_module_by_name(char* mod) {
 	return 0;
 }
 
+sr_module_t* get_loaded_modules(void) {
+	return modules;
+}
 
 /*!
  * \brief Find a parameter with given type

@@ -959,6 +959,26 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 /**
  *
  */
+static const char* core_modules_doc[] = {
+	"List loaded modules",    /* Documentation string */
+	0                               /* Method signature(s) */
+};
+
+/**
+ * list listen sockets for SIP server
+ */
+static void core_modules(rpc_t* rpc, void* c)
+{
+	sr_module_t* t;
+
+	for(t = get_loaded_modules(); t; t = t->next) {
+		if (rpc->add(c, "s", t->exports.name) < 0) return;
+	}
+}
+
+/**
+ *
+ */
 static const char* core_ppdefines_doc[] = {
 	"List preprocessor defines",    /* Documentation string */
 	0                               /* Method signature(s) */
@@ -1014,7 +1034,8 @@ static rpc_export_t core_rpc_methods[] = {
 		0},
 	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc, 0},
 	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc, 0},
-	{"core.ppdefines",         core_ppdefines,         core_ppdefines_doc,    RET_ARRAY},
+	{"core.modules",           core_modules,           core_modules_doc,    RET_ARRAY},
+	{"core.ppdefines",         core_ppdefines,         core_ppdefines_doc,  RET_ARRAY},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},
