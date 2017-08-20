@@ -668,6 +668,26 @@ resetdebug();
 ...
 		</programlisting>
     </section>
+	<section id="kex.r.core.modules">
+		<title>
+		<function moreinfo="none">core.modules</function>
+		</title>
+		<para>
+		List loaded modules in config.
+		</para>
+		<para>
+		Name: <emphasis>core.modules</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis>.</para>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; core.modules
+...
+		</programlisting>
+    </section>
 
 	<section id="kex.r.pkg.stats">
 		<title>
