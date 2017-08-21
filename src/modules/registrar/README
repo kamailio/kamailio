@@ -98,7 +98,7 @@ Bogdan-Andre Iancu
 
               6.1. max_expires
               6.2. max_contacts
-              6.3. defaults_expires
+              6.3. default_expires
               6.4. accepted_regs
               6.5. rejected_regs
 
@@ -214,7 +214,7 @@ Chapter 1. Admin Guide
 
         6.1. max_expires
         6.2. max_contacts
-        6.3. defaults_expires
+        6.3. default_expires
         6.4. accepted_regs
         6.5. rejected_regs
 
@@ -1083,7 +1083,7 @@ event_route[usrloc:contact-expired] {
 
    6.1. max_expires
    6.2. max_contacts
-   6.3. defaults_expires
+   6.3. default_expires
    6.4. accepted_regs
    6.5. rejected_regs
 
@@ -1095,7 +1095,7 @@ event_route[usrloc:contact-expired] {
 
    The value of max_contacts parameter.
 
-6.3. defaults_expires
+6.3. default_expires
 
    The value of default_expires parameter.
 

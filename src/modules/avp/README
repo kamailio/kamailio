@@ -283,7 +283,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
 
 2.12. insert_attr_hf(name)
 
-   Inserts new header into the request, which is beeing forwarded. The AVP
+   Inserts new header into the request, which is being forwarded. The AVP
    name is the name of the header field. If you need to insert header with
    name which differs from the AVP name use insert_attr_hf(header_name,
    $avp_name) instead.
@@ -298,7 +298,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
 
 2.13. insert_attr_hf(header_name, $avp_name)
 
-   Inserts new header into the request, which is beeing forwarded.
+   Inserts new header into the request, which is being forwarded.
 
    Inserting means putting the header to the beginning of the request,
    before any others.
@@ -317,7 +317,7 @@ insert_attr_hf("Route", "$my_route");
 
 2.14. append_attr_hf(name)
 
-   Appends new header into the request, which is beeing forwarded. The AVP
+   Appends new header into the request, which is being forwarded. The AVP
    name is the name of the header field. If you need to append header with
    name which differs from the AVP name use append_attr_hf(header_name,
    $avp_name) instead.
@@ -332,7 +332,7 @@ insert_attr_hf("Route", "$my_route");
 
 2.15. append_attr_hf(header_name, $avp_name)
 
-   Appends new header into the request, which is beeing forwarded.
+   Appends new header into the request, which is being forwarded.
 
    Appending means putting the header to the end of the request, after any
    others.
@@ -345,7 +345,7 @@ insert_attr_hf("Route", "$my_route");
 
 2.16. replace_attr_hf(name)
 
-   Replaces header in the request, which is beeing forwarded. The AVP name
+   Replaces header in the request, which is being forwarded. The AVP name
    is the same as the name of the header field. If you need to replace
    header with name which differs from the AVP name use
    replace_attr_hf(header_name, $avp_name) instead.
@@ -360,7 +360,7 @@ insert_attr_hf("Route", "$my_route");
 
 2.17. replace_attr_hf(header_name, $avp_name)
 
-   Replaces header in the request, which is beeing forwarded.
+   Replaces header in the request, which is being forwarded.
 
    Replacing means removing all the headers with specified name and
    appending new one at the end, with the value from AVP.
