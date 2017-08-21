@@ -172,7 +172,7 @@ curl_con_pkg_t* curl_get_pkg_connection(curl_con_t *con)
 		}
 		ccp = ccp->next;
 	}
-	LM_DBG("curl_get_pkg_connection no success in looking for pkg memory for httpcon: [%.*s]\n", con->name.len, con->name.s);
+	LM_ERR("curl_get_pkg_connection no success in looking for pkg memory for httpcon: [%.*s]\n", con->name.len, con->name.s);
 	return NULL;
 }
 
@@ -751,8 +751,9 @@ curl_con_t *curl_init_con(str *name)
 	ccp = (curl_con_pkg_t*) pkg_malloc(sizeof(curl_con_pkg_t));
 	if(ccp == NULL)
 	{
-		shm_free(ccp);
-		LM_ERR("no shm memory\n");
+		/* We failed to allocate ccp, so let's free cc and quit */
+		shm_free(cc);
+		LM_ERR("no pkg memory available\n");
 		return NULL;
 	}
 
