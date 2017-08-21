@@ -21,7 +21,7 @@
 		the Homer encapsulation protocol, or plain SIP mode)
 	</para>
 	<para>
-		There are two ways of storing information:
+		There are multiple ways of storing information:
 		<itemizedlist>
 		<listitem>
 		<para>
@@ -36,6 +36,11 @@
 		message sent forward is processed. The logging mechanism is based on
 		TM/SL callbacks, so only messages processed with the TM module or sent statelessly
 		are logged.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		by setting <quote>trace_mode</quote> to mirror all traffic.
 		</para>
 		</listitem>
 		</itemizedlist>
