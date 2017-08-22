@@ -149,9 +149,9 @@ modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies"
 
 	<section>
 	<title>RPC Commands</title>
-	<section id="statsc.rpc.exec">
+	<section id="statsc.rpc.report">
 		<title>
-		<function moreinfo="none">statsc.exec</function>
+		<function moreinfo="none">statsc.report</function>
 		</title>
 		<para>
 		Get the report of recorded statistics.
