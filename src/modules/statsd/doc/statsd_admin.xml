@@ -101,11 +101,11 @@ failure_route[tryagain] {
             </title>
             <para>
                 Gauges are a constant data type. They are not subject to averaging
-		and they don’t change unless you change them. That is, once you set
+		and they don't change unless you change them. That is, once you set
 		a gauge value, it will be a flat line on the graph until you change it again.
             </para>
             <para>
-                Gauges are useful for things that are already averaged, or don’t need to reset periodically
+                Gauges are useful for things that are already averaged, or don't need to reset periodically
             </para>
             <para>
                 This function can be used in ALL ROUTES.
@@ -116,10 +116,12 @@ failure_route[tryagain] {
             <example>
                 <title><function>statsd_set</function> usage</title>
                 <programlisting format="linespecific">
+...
 route [gauge_method]{
     statsd_gauge("method"+$rm, "+1");
     statsd_gauge("customer_credit"+$var(customer),"$var(customer_credit)");
 }
+...
                 </programlisting>
             </example>
         </section>
@@ -139,7 +141,7 @@ route [gauge_method]{
             <para>
                 The statsd server collects all timers under the stats.timers prefix 
 		and will calculate the lower bound, mean, 90th percentile, upper bound, and count of each
-		timer for each period (by the time it can be seen in graphite, that’s usually per minute).
+		timer for each period (by the time it can be seen in graphite, that's usually per minute).
             </para>
             <example>
                 <title><function>statsd_start</function> usage</title>
@@ -215,7 +217,7 @@ if(geoip_match("$si", "src")){
 ...
 if (t_check_status("408")) {
     statsd_decr("kamailio.successfulCalls");
-    statsd_incr("kamailio.reply.busy");
+    statsd_incr("kamailio.reply.timeout");
 }
 ...
                 </programlisting>
