@@ -895,7 +895,7 @@ modparam("usrloc", "close_expired_tcp", 1)
 
    If set to 1, Kamailio expects to deal with BIGINT type on database
    columns for expires and last modified values. It allows to handle
-   better the daylight time adjustmens. If set to 0, those columns are
+   better the daylight time adjustments. If set to 0, those columns are
    expected to be on default type 'DATETIME'. When it is 1, the database
    columns types have to be changed manually to 'BIGINT'.
 

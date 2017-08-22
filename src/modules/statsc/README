@@ -31,7 +31,7 @@ Daniel-Constantin Mierla
 
         4. RPC Commands
 
-              4.1. statsc.exec
+              4.1. statsc.report
 
    List of Examples
 
@@ -57,7 +57,7 @@ Chapter 1. Admin Guide
 
    4. RPC Commands
 
-        4.1. statsc.exec
+        4.1. statsc.report
 
 1. Overview
 
@@ -135,9 +135,9 @@ modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies"
 
 4. RPC Commands
 
-   4.1. statsc.exec
+   4.1. statsc.report
 
-4.1.  statsc.exec
+4.1.  statsc.report
 
    Get the report of recorded statistics.
 
