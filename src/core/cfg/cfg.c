@@ -49,13 +49,13 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 
 	mapping = (cfg_mapping_t *)pkg_malloc(sizeof(cfg_mapping_t)*num);
 	if (!mapping) {
-		LOG(L_ERR, "ERROR: register_cfg_def(): not enough memory\n");
+		LM_ERR("not enough memory\n");
 		goto error;
 	}
 	memset(mapping, 0, sizeof(cfg_mapping_t)*num);
 	types=0;
 	/* calculate the size of the memory block that has to
-	be allocated for the cfg variables, and set the content of the 
+	be allocated for the cfg variables, and set the content of the
 	cfg_mapping array the same time */
 	for (i=0, size=0; i<num; i++) {
 		mapping[i].def = &(def[i]);
@@ -87,7 +87,7 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 			break;
 
 		default:
-			LOG(L_ERR, "ERROR: register_cfg_def(): %s.%s: unsupported variable type\n",
+			LM_ERR("%s.%s: unsupported variable type\n",
 					group_name, def[i].name);
 			goto error;
 		}
@@ -98,7 +98,7 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 		} else {
 			if ((CFG_INPUT_MASK(def[i].type) != CFG_VAR_MASK(def[i].type) << CFG_INPUT_SHIFT)
 			&& (def[i].on_change_cb == 0)) {
-				LOG(L_ERR, "ERROR: register_cfg_def(): %s.%s: variable and input types are "
+				LM_ERR("%s.%s: variable and input types are "
 					"different, but no callback is defined for conversion\n",
 					group_name, def[i].name);
 				goto error;
@@ -106,20 +106,20 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 		}
 
 		if (CFG_INPUT_MASK(def[i].type) > CFG_INPUT_STR) {
-			LOG(L_ERR, "ERROR: register_cfg_def(): %s.%s: unsupported input type\n",
+			LM_ERR("%s.%s: unsupported input type\n",
 					group_name, def[i].name);
 			goto error;
 		}
 
 		if (def[i].type & CFG_ATOMIC) {
 			if (CFG_VAR_MASK(def[i].type) != CFG_VAR_INT) {
-				LOG(L_ERR, "ERROR: register_cfg_def(): %s.%s: atomic change is allowed "
+				LM_ERR("%s.%s: atomic change is allowed "
 						"only for integer types\n",
 						group_name, def[i].name);
 				goto error;
 			}
 			if (def[i].on_set_child_cb) {
-				LOG(L_ERR, "ERROR: register_cfg_def(): %s.%s: per-child process callback "
+				LM_ERR("%s.%s: per-child process callback "
 						"does not work together with atomic change\n",
 						group_name, def[i].name);
 				goto error;
@@ -127,13 +127,13 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 		}
 	}
 
-	/* fix the computed size (char*, str or pointer members will force 
+	/* fix the computed size (char*, str or pointer members will force
 	   structure padding to multiple of sizeof(pointer)) */
 	if (types & ((1<<CFG_VAR_STRING)|(1<<CFG_VAR_STR)|(1<<CFG_VAR_POINTER)))
 		size=ROUND_POINTER(size);
 	/* minor validation */
 	if (size != def_size) {
-		LOG(L_ERR, "ERROR: register_cfg_def(): the specified size (%i) of the config "
+		LM_ERR("the specified size (%i) of the config "
 			"structure does not equal with the calculated size (%i), check whether "
 			"the variable types are correctly defined!\n", def_size, size);
 		goto error;
@@ -152,8 +152,7 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 	if ((group = cfg_lookup_group(group_name, group_name_len))) {
 		if (group->dynamic != CFG_GROUP_UNKNOWN) {
 			/* conflict with another module/core group, or with a dynamic group */
-			LOG(L_ERR, "ERROR: register_cfg_def(): "
-				"configuration group has been already declared: %s\n",
+			LM_ERR("configuration group has been already declared: %s\n",
 				group_name);
 			goto error;
 		}
@@ -171,15 +170,14 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 	/* notify the drivers about the new config definition */
 	cfg_notify_drivers(group_name, group_name_len, def);
 
-	LOG(L_DBG, "DEBUG: register_cfg_def(): "
-		"new config group has been registered: '%s' (num=%d, size=%d)\n",
+	LM_DBG("new config group has been registered: '%s' (num=%d, size=%d)\n",
 		group_name, num, size);
 
 	return 0;
 
 error:
 	if (mapping) pkg_free(mapping);
-	LOG(L_ERR, "ERROR: register_cfg_def(): Failed to register the config group: %s\n",
+	LM_ERR("failed to register the config group: %s\n",
 			group_name);
 
 	return -1;
@@ -214,12 +212,12 @@ int cfg_declare_str(char *group_name, char *var_name, char *val, char *descr)
 		len = strlen(val);
 		var->val.s.s = (char *)pkg_malloc(sizeof(char) * (len + 1));
 		if (!var->val.s.s) {
-			LOG(L_ERR, "ERROR: cfg_declare_str(): not enough memory\n");
+			LM_ERR("not enough memory\n");
 			return -1;
 		}
 		memcpy(var->val.s.s, val, len + 1);
 		var->val.s.len = len;
-	} else {	
+	} else {
 		var->val.s.s = NULL;
 		var->val.s.len = 0;
 	}
