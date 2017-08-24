@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -97,7 +97,7 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 {
 	int* temp_sock;
 	socklen_t len;
-	union sockaddr_union from; 
+	union sockaddr_union from;
 	struct socket_info* si;
 	struct ip_addr ip;
 	union sockaddr_union uncon;
@@ -212,13 +212,13 @@ struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 {
 	struct socket_info* send_sock;
 	struct socket_info* orig;
-	
+
 	if (likely(mismatch)) *mismatch=0;
 	/* check if send interface is not forced */
 	if (unlikely(force_send_socket)){
 		orig=force_send_socket;
-		/* Special case here as there is no ;transport=wss - so wss connections will
-		   appear as ws ones and be sorted out in the WebSocket module */
+		/* Special case here as there is no ;transport=wss - so wss connections
+		 * will appear as ws ones and be sorted out in the WebSocket module */
 		if (unlikely(orig->proto!=proto && !(orig->proto==PROTO_TLS && proto==PROTO_WS))){
 			force_send_socket=find_si(&(force_send_socket->address),
 											force_send_socket->port_no,
@@ -245,8 +245,8 @@ struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 			goto not_forced;
 		}
 		/* check if listening on the socket (the check does not work
-		   for TCP and TLS, for them socket==-1 on all the processes
-		   except tcp_main(), see close_extra_socks() */
+		 * for TCP and TLS, for them socket==-1 on all the processes
+		 * except tcp_main(), see close_extra_socks() */
 		if (likely((force_send_socket->socket!=-1 ||
 						force_send_socket->proto==PROTO_TCP ||
 						force_send_socket->proto==PROTO_TLS ||
@@ -257,7 +257,7 @@ struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 		else{
 			if (!(force_send_socket->flags & SI_IS_MCAST))
 				LM_WARN("not listening on the requested socket (%s:%s:%d),"
-							 " no fork mode?\n",
+							" no fork mode?\n",
 							proto2a(force_send_socket->proto),
 							ip_addr2a(&force_send_socket->address),
 							force_send_socket->port_no);
@@ -439,15 +439,15 @@ int check_self_port(unsigned short port, unsigned short proto)
  *               send_info updated with the ip/port. Even if dst is non
  *               null send_info must contain the protocol and if a non
  *               default port or non srv. lookup is desired, the port must
- *               be !=0 
+ *               be !=0
  *   port      - used only if dst!=0 (else the port in send_info->to is used)
  *   send_info - value/result partially filled dest_info structure:
  *                 - send_info->proto and comp are used
  *                 - send_info->to will be filled (dns)
  *                 - send_info->send_flags is filled from the message
- *                 - if the send_socket member is null, a send_socket will be 
+ *                 - if the send_socket member is null, a send_socket will be
  *                   chosen automatically
- * WARNING: don't forget to zero-fill all the  unused members (a non-zero 
+ * WARNING: don't forget to zero-fill all the  unused members (a non-zero
  * random id along with proto==PROTO_TCP can have bad consequences, same for
  *   a bogus send_socket value)
  */
@@ -466,12 +466,11 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 	struct socket_info* prev_send_sock;
 	int err;
 	struct dns_srv_handle dns_srv_h;
-	
+
 	prev_send_sock=0;
 	err=0;
 #endif
-	
-	
+
 	buf=0;
 	orig_send_sock=send_info->send_sock;
 	proto=send_info->proto;
@@ -499,11 +498,11 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 	}/* dst */
 	send_info->send_flags=msg->fwd_send_flags;
 	/* calculate branch for outbound request;
-	   calculate is from transaction key, i.e., as an md5 of From/To/CallID/
-	   CSeq exactly the same way as TM does; good for reboot -- than messages
-	   belonging to transaction lost due to reboot will still be forwarded
-	   with the same branch parameter and will be match-able downstream
-	*/
+	 * calculate is from transaction key, i.e., as an md5 of From/To/CallID/
+	 * CSeq exactly the same way as TM does; good for reboot -- than messages
+	 * belonging to transaction lost due to reboot will still be forwarded
+	 * with the same branch parameter and will be match-able downstream
+	 */
 	if (!char_msg_val( msg, md5 )) 	{ /* parses transaction key */
 		LM_ERR("char_msg_val failed\n");
 		ret=E_UNSPEC;
@@ -535,7 +534,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			goto error;
 #endif
 		}
-	
+
 #ifdef USE_DNS_FAILOVER
 		if (prev_send_sock!=send_info->send_sock){
 			/* rebuild the message only if the send_sock changed */
@@ -552,11 +551,11 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 #ifdef USE_DNS_FAILOVER
 		}
 #endif
-		 /* send it! */
+		/* send it! */
 		LM_DBG("Sending:\n%.*s.\n", (int)len, buf);
 		LM_DBG("orig. len=%d, new_len=%d, proto=%d\n",
 				msg->len, len, send_info->proto );
-	
+
 		if (run_onsend(msg, send_info, buf, len)==0){
 			su2ip_addr(&ip, &send_info->to);
 			LM_INFO("request to %s:%d(%d) dropped (onsend_route)\n",
@@ -615,7 +614,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		}
 #ifdef USE_DNS_FAILOVER
 	}while(dst && cfg_get(core, core_cfg, use_dns_failover) &&
-			dns_srv_handle_next(&dns_srv_h, err) && 
+			dns_srv_handle_next(&dns_srv_h, err) &&
 			((err=dns_sip_resolve2su(&dns_srv_h, &send_info->to, dst, port,
 										&proto, dns_flags))==0));
 	if ((err!=0) && (err!=-E_DNS_EOR)){
@@ -626,7 +625,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		goto error;
 	}
 #endif
-	
+
 error:
 	STATS_TX_DROPS;
 end:
@@ -649,8 +648,8 @@ end:
 
 
 int update_sock_struct_from_via( union sockaddr_union* to,
-								 struct sip_msg* msg,
-								 struct via_body* via )
+									struct sip_msg* msg,
+									struct via_body* via )
 {
 	struct hostent* he;
 	str* name;
@@ -659,7 +658,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 	char proto;
 
 	port=0;
-	if(via==msg->via1){ 
+	if(via==msg->via1){
 		/* _local_ reply, we ignore any rport or received value
 		 * (but we will send back to the original port if rport is
 		 *  present) */
@@ -667,7 +666,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 			port=msg->rcv.src_port;
 		else port=via->port;
 		name=&(via->host); /* received=ip in 1st via is ignored (it's
-							  not added by us so it's bad) */
+							* not added by us so it's bad) */
 	}else{
 		/* "normal" reply, we use rport's & received value if present */
 		if (via->rport && via->rport->value.s){
@@ -684,30 +683,26 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 			name=&(via->received->value);
 			/* making sure that we won't do SRV lookup on "received"
 			 * (possible if no DNS_IP_HACK is used)*/
-			if (port==0) port=via->port?via->port:SIP_PORT; 
+			if (port==0) port=via->port?via->port:SIP_PORT;
 		}else{
 			LM_DBG("using via host\n");
 			name=&(via->host);
 			if (port==0) port=via->port;
 		}
 	}
-	/* we do now a malloc/memcpy because gethostbyname loves \0-terminated 
-	   strings; -jiri 
-	   but only if host is not null terminated
-	   (host.s[len] will always be ok for a via)
-	    BTW: when is via->host.s non null terminated? tm copy? - andrei 
-	    Yes -- it happened on generating a 408 by TM; -jiri
-	    sip_resolvehost now accepts str -janakj
-	*/
+	/* we do now a malloc/memcpy because gethostbyname loves \0-terminated
+	 * strings; but only if host is not null terminated (host.s[len] will
+	 * always be ok for a via)
+	 */
 	LM_DBG("trying SRV lookup\n");
 	proto=via->proto;
 	he=sip_resolvehost(name, &port, &proto);
-	
+
 	if (he==0){
 		LM_NOTICE("resolve_host(%.*s) failure\n", name->len, name->s);
 		return -1;
 	}
-		
+
 	hostent2su(to, he, 0, port);
 	return 1;
 }
@@ -740,14 +735,14 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 			goto error;
 		}
 	}
-	
+
 	/* check modules response_f functions */
 	if(likely(mode==0)) {
 		for (r=0; r<mod_response_cbk_no; r++)
 			if (mod_response_cbks[r](msg)==0) goto skip;
 	}
 	/* we have to forward the reply stateless, so we need second via -bogdan*/
-	if (parse_headers( msg, HDR_VIA2_F, 0 )==-1 
+	if (parse_headers( msg, HDR_VIA2_F, 0 )==-1
 		|| (msg->via2==0) || (msg->via2->error!=PARSE_OK))
 	{
 		/* no second via => error */
@@ -794,9 +789,9 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 				LM_ERR("bad via i param \"%.*s\"\n", len, ZSW(s));
 				dst.id=0;
 			}
-		}		
-				
-	} 
+		}
+
+	}
 #endif
 
 	apply_force_send_socket(&dst, msg);
@@ -812,9 +807,8 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 	if (onsend_route_enabled(SIP_REPLY)){
 		if (run_onsend(msg, &dst, new_buf, new_len)==0){
 			su2ip_addr(&ip, &(dst.to));
-			LOG(L_ERR, "forward_reply: reply to %s:%d(%d) dropped"
-					" (onsend_route)\n", ip_addr2a(&ip),
-						su_getport(&(dst.to)), dst.proto);
+			LM_ERR("reply to %s:%d(%d) dropped (onsend_route)\n",
+					ip_addr2a(&ip), su_getport(&(dst.to)), dst.proto);
 			goto error; /* error ? */
 		}
 	}
@@ -830,7 +824,7 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif
 
-	LM_DBG("reply forwarded to %.*s:%d\n", 
+	LM_DBG("reply forwarded to %.*s:%d\n",
 			msg->via2->host.len, msg->via2->host.s,
 			(unsigned short) msg->via2->port);
 
