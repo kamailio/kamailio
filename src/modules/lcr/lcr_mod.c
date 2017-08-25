@@ -2149,7 +2149,7 @@ static int generate_uris(struct sip_msg* _m, char *r_uri, str *r_uri_user,
     }
 
     if ((dont_strip_or_prefix_flag_param != -1) &&
-	isflagset(_m, dont_strip_or_prefix_flag_param)) {
+	(isflagset(_m, dont_strip_or_prefix_flag_param) == 1)) {
 	strip = 0;
 	prefix.len = 0;
     }
