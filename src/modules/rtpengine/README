@@ -1959,6 +1959,11 @@ rtpengine_offer();
             the Sipwise rtpengine proxy. This is especially useful when
             the first call leg is handled by some rtpengine machine while
             the second call leg is handled by other rtpengine machine.
+          + record-call=on - instructs RTPEngine to record the session.
+            Use it in rtpengine_offer() to start recording immediately and
+            save the call metadata, as alternative to start_recording().
+       Check also the documentation of RTPEngine, these flags are
+       documented there as well: https://github.com/sipwise/rtpengine.
 
    This function can be used from ANY_ROUTE.
 
@@ -2077,8 +2082,10 @@ rtpengine_manage();
 
 5.7.  start_recording()
 
-   This function will send a signal to the RTP proxy to record the RTP
-   stream on the RTP proxy.
+   This function will send a signal to the RTP relay to record the RTP
+   stream flowing through it. See also the option “record-call=on” for
+   rtpengine_manage()/rtpengine_offer(), which offers an alternative for
+   call recording, saving also call metadata from SDP.
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
