@@ -763,7 +763,6 @@ int init_tls_h(void)
 	}else
 		low_mem_threshold2*=1024; /* KB */
 	if ((low_mem_threshold1==0) || (low_mem_threshold2==0))
-	:w
 	 LM_WARN("tls: openssl bug #1491 (crash/mem leaks on low memory)"
 				" workarround disabled\n");
 	else
