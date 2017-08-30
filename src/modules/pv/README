@@ -74,7 +74,7 @@ Daniel-Constantin Mierla
    1.15. pv_xavp_to_var() usage
    1.16. pv_xavp_to_var() usage
    1.17. pv.shvSet usage
-   1.18. pv.shvSet usage
+   1.18. pv.shvGet usage
 
 Chapter 1. Admin Guide
 
@@ -116,8 +116,8 @@ Chapter 1. Admin Guide
 1. Overview
 
    This module collects the core pseudo-variables that can be used in
-   configuration file. They are listed in Dokuwiki:
-   http://www.kamailio.org/wiki/, in Pseudo-Variables section
+   configuration file. They are listed in wiki:
+   https://www.kamailio.org/wiki/ in Pseudo-Variables section
 
 2. Dependencies
 
@@ -371,11 +371,13 @@ pv_xavp_print();
 
 4.11.  pv_var_to_xavp(varname, xname)
 
-   Copy script variables values to a xavp.
+   Copy the script variable value into an xavp.
 
    First parameter can be '*' in order to copy all script variables.
    Second parameter is the name of the destination xavp. If xavp already
    exists it will be reset first.
+
+   Both parameters can contain variables that are evaluated at runtime.
 
    Function can be used from ANY_ROUTE.
 
@@ -395,7 +397,9 @@ $xavp("ok[0]=>foo") now is "foo indeed"
 
 4.12.  pv_xavp_to_var(xname)
 
-   Copy xavp values to vars. Reverse of pv_var_to_xavp().
+   Copy xavp values into vars. Reverse of pv_var_to_xavp().
+
+   Both parameters can contain variables that are evaluated at runtime.
 
    Function can be used from ANY_ROUTE.
 
@@ -457,7 +461,7 @@ $ kamcmd pv.shvSet debug int 3
 
    If no name is given, all shared variables are listed.
 
-   Example 1.18. pv.shvSet usage
+   Example 1.18. pv.shvGet usage
 ...
 $ kamcmd pv.shvGet debug
 ...
