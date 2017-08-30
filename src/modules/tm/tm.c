@@ -2516,6 +2516,11 @@ static const char* rpc_t_uac_wait_doc[2] = {
 	0
 };
 
+static const char* tm_rpc_list_doc[2] = {
+	"List transactions.",
+	0
+};
+
 
 /* rpc exports */
 static rpc_export_t tm_rpc[] = {
@@ -2526,6 +2531,7 @@ static rpc_export_t tm_rpc[] = {
 	{"tm.hash_stats",  tm_rpc_hash_stats, tm_rpc_hash_stats_doc, 0},
 	{"tm.t_uac_start", rpc_t_uac_start, rpc_t_uac_start_doc, 0 },
 	{"tm.t_uac_wait",  rpc_t_uac_wait,  rpc_t_uac_wait_doc, RET_ARRAY},
+	{"tm.list",  tm_rpc_list,  tm_rpc_list_doc, RET_ARRAY},
 	{0, 0, 0, 0}
 };
 
