@@ -65,7 +65,7 @@ Hugh Waite
                       result)
 
               4.2. http_get_redirect(connection, result)
-              4.3. http_client_query(url, [post-data], result)
+              4.3. http_client_query(url, [post-data], [hdrs], result)
 
         5. Pseudovariables
 
@@ -117,7 +117,7 @@ Hugh Waite
    1.18. Short http_client config file
    1.19. http_connect() usage
    1.20. http_get_redirect() usage
-   1.21. curl_http_query() usage
+   1.21. http_client_query() usage
 
 Chapter 1. Admin Guide
 
@@ -153,7 +153,7 @@ Chapter 1. Admin Guide
 
         4.1. http_connect(connection, url, [content_type, data,] result)
         4.2. http_get_redirect(connection, result)
-        4.3. http_client_query(url, [post-data], result)
+        4.3. http_client_query(url, [post-data], [hdrs], result)
 
    5. Pseudovariables
 
@@ -609,7 +609,7 @@ http_follow_redirect = no
 
    4.1. http_connect(connection, url, [content_type, data,] result)
    4.2. http_get_redirect(connection, result)
-   4.3. http_client_query(url, [post-data], result)
+   4.3. http_client_query(url, [post-data], [hdrs], result)
 
 4.1.  http_connect(connection, url, [content_type, data,] result)
 
@@ -667,13 +667,19 @@ modparam("http_client", "httpredirect", 1);
 http_get_redirect("apiserver", "$var(targeturl)");
 ...
 
-4.3.  http_client_query(url, [post-data], result)
+4.3.  http_client_query(url, [post-data], [hdrs], result)
 
    Sends HTTP GET or POST request according to URL given in “url”
    parameter, which is a string that may contain pseudo variables.
 
    If you want to make a POST-Request, you have to define the “post”-data,
    that should be submitted in that request as the second parameter.
+
+   Custom headers may be specified via “hdrs” parameter (e.g.,
+   Content-Type).
+
+   Either of “post-data” or “hdrs” can be also set to empty string in
+   order to be ignored.
 
    If HTTP server returns a class 2xx, 3xx or 4xx reply, the first line of
    the reply's body (if any) is stored in “result” parameter, which must
@@ -689,24 +695,25 @@ http_get_redirect("apiserver", "$var(targeturl)");
    utils module. It is changed to use the same base library and settings
    as the rest of the functions in this module.
 
-   Example 1.21. curl_http_query() usage
+   Example 1.21. http_client_query() usage
 ...
 # GET-Request
 http_client_query("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(
 fu{s.escape.param})",
            "$var(result)");
-switch ($retcode) {
-       ...
+switch ($rc) {
+    ...
 }
-...
 ...
 # POST-Request
-http_client_query("http://api.com/index.php", "r_uri=$(ru{s.escape.param})&f_uri
-=$(fu{s.escape.param})",
-           "$var(result)");
-switch ($retcode) {
-       ...
+http_client_query("http://api.com/index.php",
+    "r_uri=$(ru{s.escape.param})&f_uri=$(fu{s.escape.param})",
+    "$var(result)");
 }
+...
+# POST-Request
+http_client_query("http://api.com/index.php", "src=$si",
+    "Content-Type: text/plain", "$var(result)");
 ...
 
 5. Pseudovariables
