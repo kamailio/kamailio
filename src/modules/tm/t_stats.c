@@ -260,34 +260,37 @@ void tm_rpc_list(rpc_t* rpc, void* c)
 	tm_cell_t *tcell;
 
 	for (r=0; r<TABLE_ENTRIES; r++) {
-		if(_tm_table->entries[r].next_c!=NULL) {
-			if (rpc->add(c, "{", &h) < 0) {
-				LM_ERR("failed to add transaction structure\n");
-				return;
-			}
-			lock_hash(r);
-			clist_foreach(&_tm_table->entries[r], tcell, next_c)
-			{
-				rpc->struct_add(h, "ddSSSSSsdddd",
-						"tindex", (unsigned)tcell->hash_index,
-						"tlabel", (unsigned)tcell->label,
-						"method", &tcell->method,
-						"from", &tcell->from,
-						"to", &tcell->to,
-						"callid", &tcell->callid,
-						"cseq", &tcell->cseq_n,
-						"uas_request", (tcell->uas.request)?"yes":"no",
-						"tflags", (unsigned)tcell->flags,
-						"outgoings", (unsigned)tcell->nr_of_outgoings,
-#ifdef TM_DEL_UNREF
-						"ref_count", (unsigned)atomic_get(&tcell->ref_count),
-#else
-						"ref_count", tcell->ref_count,
-#endif
-						"lifetime", (unsigned)TICKS_TO_S(tcell->end_of_life)
-						);
-			}
+		lock_hash(r);
+		if(clist_empty(&_tm_table->entries[r], next_c)) {
 			unlock_hash(r);
+			continue;
 		}
+		if (rpc->add(c, "{", &h) < 0) {
+			LM_ERR("failed to add transaction structure\n");
+			unlock_hash(r);
+			return;
+		}
+		clist_foreach(&_tm_table->entries[r], tcell, next_c)
+		{
+			rpc->struct_add(h, "ddSSSSSsdddd",
+					"tindex", (unsigned)tcell->hash_index,
+					"tlabel", (unsigned)tcell->label,
+					"method", &tcell->method,
+					"from", &tcell->from,
+					"to", &tcell->to,
+					"callid", &tcell->callid,
+					"cseq", &tcell->cseq_n,
+					"uas_request", (tcell->uas.request)?"yes":"no",
+					"tflags", (unsigned)tcell->flags,
+					"outgoings", (unsigned)tcell->nr_of_outgoings,
+#ifdef TM_DEL_UNREF
+					"ref_count", (unsigned)atomic_get(&tcell->ref_count),
+#else
+					"ref_count", tcell->ref_count,
+#endif
+					"lifetime", (unsigned)TICKS_TO_S(tcell->end_of_life)
+					);
+		}
+		unlock_hash(r);
 	}
 }
