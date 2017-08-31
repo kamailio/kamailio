@@ -268,7 +268,7 @@ void tm_rpc_list(rpc_t* rpc, void* c)
 			lock_hash(r);
 			clist_foreach(&_tm_table->entries[r], tcell, next_c)
 			{
-				rpc->struct_add(h, "ddSSSSSdd",
+				rpc->struct_add(h, "ddSSSSSsdddd",
 						"tindex", (unsigned)tcell->hash_index,
 						"tlabel", (unsigned)tcell->label,
 						"method", &tcell->method,
@@ -276,8 +276,15 @@ void tm_rpc_list(rpc_t* rpc, void* c)
 						"to", &tcell->to,
 						"callid", &tcell->callid,
 						"cseq", &tcell->cseq_n,
+						"uas_request", (tcell->uas.request)?"yes":"no",
 						"tflags", (unsigned)tcell->flags,
-						"outgoings", (unsigned)tcell->nr_of_outgoings
+						"outgoings", (unsigned)tcell->nr_of_outgoings,
+#ifdef TM_DEL_UNREF
+						"ref_count", (unsigned)atomic_get(&tcell->ref_count),
+#else
+						"ref_count", tcell->ref_count,
+#endif
+						"lifetime", (unsigned)TICKS_TO_S(tcell->end_of_life)
 						);
 			}
 			unlock_hash(r);
