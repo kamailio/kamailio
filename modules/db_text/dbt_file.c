@@ -91,17 +91,18 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 	dbt_table_p dtp = NULL;
 	dbt_column_p colp, colp0 = NULL;
 	dbt_row_p rowp, rowp0 = NULL;
-		
+
 	enum {DBT_FLINE_ST, DBT_NLINE_ST, DBT_DATA_ST} state;
-	
-	LM_DBG("request for table [%.*s]\n", tbn->len, tbn->s);
-	
+
 	if(!tbn || !tbn->s || tbn->len<=0 || tbn->len>=255)
 		return NULL;
+
+	LM_DBG("request for table [%.*s] (len: %d)\n", tbn->len, tbn->s, tbn->len);
+
 	path[0] = 0;
 	if(dbn && dbn->s && dbn->len>0)
 	{
-		LM_DBG("db is [%.*s]\n", dbn->len, dbn->s);
+		LM_DBG("db is [%.*s] (len: %d)\n", dbn->len, dbn->s, dbn->len);
 		if(dbn->len+tbn->len<511)
 		{
 			strncpy(path, dbn->s, dbn->len);
@@ -115,12 +116,14 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 		strncpy(path, tbn->s, tbn->len);
 		path[tbn->len] = 0;
 	}
-	
 	LM_DBG("loading file [%s]\n", path);
+
 	fin = fopen(path, "rt");
-	if(!fin)
-		return NULL;	
-	
+	if(!fin) {
+		LM_ERR("failed to open file [%s]\n", path);
+		return NULL;
+	}
+
 	buf = pkg_malloc(_db_text_read_buffer_size);
 	if(!buf) {
 		LM_ERR("error allocating read buffer, %i\n", _db_text_read_buffer_size);
