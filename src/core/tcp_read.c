@@ -192,14 +192,14 @@ static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_rea
 	tcp_closed_event_info_t tev;
 
 	ret = 0;
-	LM_DBG("TCP closed event creation triggered\n");
+	LM_DBG("TCP closed event creation triggered (reason: %d)\n", reason);
 	if(likely(sr_event_enabled(SREV_TCP_CLOSED))) {
 		memset(&tev, 0, sizeof(tcp_closed_event_info_t));
 		tev.reason = reason;
 		tev.con = con;
 		ret = sr_event_exec(SREV_TCP_CLOSED, (void*)(&tev));
 	} else {
-		LM_DBG("no callback registering for handling TCP closed event - dropping!\n");
+		LM_DBG("no callback registering for handling TCP closed event\n");
 	}
 	return ret;
 }
