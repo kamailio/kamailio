@@ -1324,13 +1324,12 @@ int main_loop(void)
 			LM_CRIT("could not initialize shared configuration\n");
 			goto error;
 		}
-	
+
 		/* Register the children that will keep updating their
 		 * local configuration */
 		cfg_register_child(
 				1   /* main = udp listener */
 				+ 1 /* timer */
-				+ 1 /* wtimer */
 #ifdef USE_SLOW_TIMER
 				+ 1 /* slow timer */
 #endif
@@ -1433,7 +1432,6 @@ int main_loop(void)
 		 * will be added later.) */
 		cfg_register_child(
 				1   /* timer */
-				+ 1   /* wtimer */
 #ifdef USE_SLOW_TIMER
 				+ 1 /* slow timer */
 #endif
@@ -1824,7 +1822,6 @@ static int calc_proc_no(void)
 #ifdef USE_SLOW_TIMER
 		+ 1 /* slow timer process */
 #endif
-		+ 1 /* wtimer process */
 #ifdef USE_TCP
 		+((!tcp_disable)?( 1/* tcp main */ + tcp_listeners ):0)
 #endif
