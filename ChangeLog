@@ -1,3 +1,2030 @@
+===================== 2017-09-01 Version 5.0.3 Released =====================
+
+===================== Changes Since Version 5.0.2 ===========================
+
+commit 827ce8ad054d16de296b195111770be225ebc0b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 1 12:20:36 2017 +0200
+
+    Makefile.defs: version set to 5.0.3
+
+commit d4266724bacb8fd30b30c70ff6664bbcd1673a78
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 1 12:20:05 2017 +0200
+
+    pkg: rpm - version set to 5.0.3 in specs
+
+commit 1dd66b7ca9943ac1f172db2fe1b2f073736eb93b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 1 12:00:06 2017 +0200
+
+    core: main - don't count wtimer secondary process separately
+    
+    - it is registered via sr_wtimer_init()
+    - fixes the extra empty entry in process table reported by Juha Heinanen
+    
+    (cherry picked from commit ec15b23f25ba2502a661157ae69b4dc1db923f66)
+
+commit f6c771350756c2b2538c92f701596033b1eea53c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 1 11:58:54 2017 +0200
+
+    core: pt - debug messages when registering app processes
+    
+    (cherry picked from commit bffb6b8374b087799b1979e2ba935dc130436987)
+
+commit 556e066b084099ef89e63ec397e9a431eef33b3b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Sep 1 10:58:32 2017 +0200
+
+    pkg/kamailio/deb: version set to 5.0.3
+
+commit d08c1256939a148d7fd6b3c71b2947f431c56178
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 31 15:48:54 2017 +0200
+
+    core: tcp - print reason in tcp emit closed event debug message
+    
+    (cherry picked from commit 83724225ebc3ed778e7bacb487e3d3376e47e504)
+
+commit 630bf041fd0530368c73a6329c894a8758484ed7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 31 12:38:20 2017 +0200
+
+    db_text: fix computing absolute path to db using cfg dir
+    
+    - reported by GH #1224
+    
+    (cherry picked from commit f74cddd78df3f37f6ea827fc1787796c601572b3)
+
+commit 4e9921d78032a850ca07bd604aa388f73bc3256a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 31 11:31:33 2017 +0200
+
+    db_text: more details in log message when nr of columns is too small
+    
+    (cherry picked from commit 2683b20d7b62f60ce53ed6692a42ed6b19fee972)
+
+commit fbad27e40c3a10b81d7ff3bfe2c31082d28c6335
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Aug 31 00:31:29 2017 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 63eb5293a3ddcd7535e6b2545d76edb7b1289814
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon Aug 21 10:57:34 2017 +0200
+
+    http_client Free the old object when the new can't be allocated properly
+    
+    (cherry picked from commit e129b809e258d94ea39d66c847db3a19eae2b708)
+
+commit 672ea36889c2a7c1ae919b08447234e2ced00677
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 17 13:42:59 2017 +0200
+
+    core: parser - use case insensitive comparison to get header by name
+    
+    - same for next sibling header
+    - GH #1217
+    
+    (cherry picked from commit 4072b0f9fbc084a4f4640e1b4272b7f8495cd1bb)
+
+commit f05b6bca51c38ebea72fd7d4a956242797ac7dc4
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Thu Aug 17 10:00:42 2017 +0200
+
+    http_client Move some logging to debug to avoid annoying messages
+    
+    (cherry picked from commit 4680086105bb41f03a1180be03d7acce113d465a)
+
+commit c3ce7d218e3fdf2036421afad2a0b0d09e855331
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 15 15:47:49 2017 +0200
+
+    uac: use kam_rand() instead of rand()
+    
+    - do kam_srand() when module is initialized
+    
+    (cherry picked from commit 219ddbb54bb787a8f0673014c16e749eef40bdf4)
+
+commit 439daedbc700571aa71af94067eba1014ad85ee8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Aug 12 08:59:06 2017 +0200
+
+    rls: replace sprintf with safer snprintf
+    
+    - compact printing headers in 200ok function by doing it once in a
+      snprintf, instead of combination of many sprintf and strncpy
+    
+    (cherry picked from commit 3d2359b5a349efe4d6571ec0953e5c4aae54a165)
+
+commit de69b1c1212f7ee18578fbd9b0aec972fcc3a2af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Aug 12 08:48:21 2017 +0200
+
+    rls: proper handling of return code for parse from/to uri
+    
+    (cherry picked from commit bb536c3dae01865c42e556989e8aca5be85b20fe)
+
+commit af96836b4934af3b360795391eb29061ba1a913e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 11 16:11:19 2017 +0200
+
+    core: tcp - print str error in debug message if faling to write to connection
+    
+    (cherry picked from commit 85def4c200e216dce5d3d8e53461a69ab408fa3c)
+
+commit e7b2aed6f0d69bdefd199b5beafa1e37256e44f5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 11 12:03:54 2017 +0200
+
+    core: mem - fix printing shm memory manager name
+    
+    (cherry picked from commit fe441c4561a8be852c2baae6568e48ef8203210d)
+
+commit 514d4d1bd2b22a8866a519da9f3752c4391f5654
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 11 10:21:08 2017 +0200
+
+    sms: avoid overflowing ending 0 by sprintf()
+    
+    (cherry picked from commit 2415416df6bd4c599c7fde57fbaa541e2e37f9c7)
+
+commit 07da574ff05f014349f242f1aa6039d976ee8a36
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 10 14:05:13 2017 +0200
+
+    core: store advertise addr for new sockets created from interface name
+    
+    - reported by GH #1209
+    
+    (cherry picked from commit a3e8003274ded1420d2af677246a48ef5c743a3c)
+
+commit 4af7c9a6ada6b9bf1d5f2efe2a22daf3e1aea50a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 10 12:52:58 2017 +0200
+
+    pua_dialoginfo: goto error in case of failures inside build_dialoginfo()
+    
+    (cherry picked from commit e0ff472acfbae9ad1077a3dc6f2309ea01a8fdf0)
+
+commit 2d13c140f0d84edb3ba90fbea0fcd9f29ed4d9de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 8 17:20:33 2017 +0200
+
+    http_async_client: safety check for shm malloc and do cfg_update()
+    
+    (cherry picked from commit 5f5697eac0089e9e2bc72323c6afa839b472ccbd)
+
+commit 3c6ad9786012fc0f702209b7950d30acdd2c806a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 8 10:08:10 2017 +0200
+
+    tm: terminate local uac buffers with 0
+    
+    - received message buffer is terminated with 0 and many functions expect
+      that, so use of them in event_route[tm:local-request] may have ended
+      up in wrong behavior
+    
+    (cherry picked from commit 179a6e699a1021efa55d1ea097ceeb7a12575cc5)
+
+commit 804ba55f2ff2762bf26f91624f3432af0b715d97
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 7 14:54:00 2017 +0200
+
+    http_client: proper free for curl params in case of failover connection
+    
+    (cherry picked from commit 9ce38204d8a59e5d83cc50a2c809d1306346f9b7)
+
+commit a7e5d2eca678d2e9f6ab11588cace7292c484809
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Aug 5 09:45:18 2017 +0200
+
+    tls: updated log macros for config code
+    
+    (cherry picked from commit 475ef89d6fc5780673c7e0091a78036e74f819db)
+
+commit edeb60a861ab90e20b6010b1a68e60d6079b5783
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 4 14:36:42 2017 +0200
+
+    websocket: use route_lookup() instead of route_get()
+    
+    - avoid creating an empty route block structure if not defined in cfg
+    
+    (cherry picked from commit 6752351b69cd991cd11f389f80cf73bd68ff5bb9)
+
+commit e84a82eac27cac9d9381e71815644522041e81cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 3 05:02:41 2017 +0200
+
+    cplc: safety checks for parameters
+    
+    (cherry picked from commit b05f3637f9cc829470d04037f6f5b88e37819706)
+
+commit 23a0450268c601e920b287c9bddfd50e43d8f4c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 2 16:30:24 2017 +0200
+
+    pipelimit: match algorithm name case insensitive
+    
+    (cherry picked from commit 7bb4b7dcc23c582ec666c71c9475e46e4ca12709)
+
+commit 0e075c47ad66464f28ef56b83f8cc8f1936d6758
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 2 09:03:02 2017 +0200
+
+    tsilo: added section ids in docs
+    
+    (cherry picked from commit d302422982aab79ec9af9b9d54d33dbf98dc7b63)
+
+commit 0a5b94d53f59e8f59f8d7d976ca14859fa008c6c
+Author: Alexander Lutay <alutay@sipwise.com>
+Date:   Tue Aug 1 23:20:41 2017 +0200
+
+    kamctl: fix dangerous 'rm -rf' code in case if variables are not defined
+    
+    (cherry picked from commit 62f573d4ecbbebe5f0f2d3b39be7ad4c2b460e65)
+
+commit e86b803d4dee78e395d7ca1960c80f5134174308
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 1 13:30:26 2017 +0200
+
+    uac: fixes for section ids in docs
+    
+    (cherry picked from commit d1d2dda40e1ac787a021c4ea9f9e179870dea99a)
+
+commit 49c191789881f7acfa514940bf1f74930636eb48
+Author: Torrey Searle <torrey@voxbone.com>
+Date:   Mon Jul 31 17:03:52 2017 +0200
+
+    modules/sipt: fix bug in setting NAI of called party
+    
+    (cherry picked from commit 676c96ed860be183bd69ad55c8062523afcc5248)
+
+commit 9c7b176cb8aa71ace150e3b3d60d6f73731eef12
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 31 15:33:57 2017 +0200
+
+    presence_dialoginfo: safety checks to avoid accessing null values
+    
+    (cherry picked from commit 30014025157f9ac79c98f1361a86974858ef8022)
+
+commit 91c5ad41d053e9ab398dd7b8ddd914b7d199ea0e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 31 15:32:57 2017 +0200
+
+    ctl: skip condition on already set name variable
+    
+    (cherry picked from commit fda8de91d80a2aee7a3ec5e44e6fc1d918541254)
+
+commit e7676ca77444936ff5bbd94479b9dd34b3f23a13
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 31 15:30:19 2017 +0200
+
+    cplc: init time switch structures
+    
+    (cherry picked from commit 44db76acb7523b3cd6816c77de45b71857b1a3c1)
+
+commit 77f9af46258cd1853379db683d55638cee1fcda4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 31 15:27:50 2017 +0200
+
+    cplc: init structures, fix parameter number in fixup
+    
+    (cherry picked from commit 3f96ede632ce9ef945086a1f384677151209fcc6)
+
+commit f3f388dfb9d96270b51947f8c75e5ab010e00f5b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 31 14:57:18 2017 +0200
+
+    cfgt: check error case for mkdir()
+    
+    (cherry picked from commit 9a7fee2dac2f59c277d2634937c7449b9659a20d)
+
+commit 4b43735da8a5483b084d8eaa70267c48d5c2ee2e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 31 14:53:08 2017 +0200
+
+    auth_identity: code clarity adjustments
+    
+    (cherry picked from commit 2f29115d8280ccf04ea823d5cf8f6621b8624edc)
+
+commit 5f94960aae57de23f3505a1080204d2f3b169b1d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 31 08:20:08 2017 +0200
+
+    rls: avoid access to item after free
+    
+    (cherry picked from commit 4068ddd3ca01795e5378a738756b2735508f5864)
+
+commit c23c5b426e075a046a57cb06b749ab2088639656
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 30 18:33:55 2017 +0200
+
+    ctl: safety check for closing fd
+    
+    (cherry picked from commit 24c4f357ecc83ded4c8890ed4440a0252191b0a9)
+
+commit 7de2ea05fb953d80a7d6cb22a420555b91b12371
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 30 11:16:01 2017 +0200
+
+    mangler: free on errors inside sdp_mangle_port()
+    
+    (cherry picked from commit 950a9fa428e24242671e83980192db48819d5da6)
+
+commit 726d726ee037ee1b91dd21a843ece2d3476f81cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 30 10:30:59 2017 +0200
+
+    tls: removed useless checks
+    
+    (cherry picked from commit 590c8d9d23e578df38d332ebcfa64421bbedb604)
+
+commit fcaa84b6d7e1ba0c3a8746326e083d3ff42313fd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 30 10:30:19 2017 +0200
+
+    websocket: use NAME in log message, removed unreachable code
+    
+    (cherry picked from commit 5c58ac726c1f96b6666cfd05e13a66328d46d020)
+
+commit a11d4575324402a67e339faaa22a6906c6a78995
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 30 10:18:24 2017 +0200
+
+    xhttp_pi: several compiler warning fixes
+    
+    (cherry picked from commit 8b06397523c440fc20e509889c5fad01ed477d26)
+
+commit bc0041f14cf4d023a8d11d0978977e0dc3ef9d20
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Fri Jul 28 10:51:38 2017 +0300
+
+    sipt: free pkg memory on error
+    
+    (cherry picked from commit 2ea19b82b5e21d4499929cb56964ed43035c6122)
+
+commit 8fe9b7118deb7c91767357094a7cb7b7c701dcbf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 28 10:06:11 2017 +0200
+
+    mangler: pkg free in case of errors
+    
+    (cherry picked from commit 4572a7b100f2eaddb2eb4dbe4aa81a4833f8467e)
+
+commit e176a7ed585f1f3710ee5865b70cea725b8dff57
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 28 09:47:03 2017 +0200
+
+    janssonrpcc: couple of pkg free in case of errors
+    
+    (cherry picked from commit 73a288e14ec8f7a67662842140d5eb02819b7738)
+
+commit a142db940ef379fed6afaf2a605744d2407c6cd6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 28 09:31:16 2017 +0200
+
+    http_client: use strcpy() instead of strncpy() with sizeof dest buffer
+    
+    - padding the rest of dest buffer with 0 is inneficient
+    
+    (cherry picked from commit 9fe84d4ad1ec1eae6bcf44b4067b948d9a16e4dc)
+
+commit 0bec6b328fecb26d423e54ff6939f7665669c7db
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 28 09:26:55 2017 +0200
+
+    h350: coherent indentation, removed dead code and init lenght for str
+    
+    (cherry picked from commit b6c6da62fe9879a43a322ce7f9adac3eef5674e7)
+
+commit 34124c3bed1de3c7778b05cf640e9f035d5012d4
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Fri Jul 28 10:50:57 2017 +0300
+
+    sctp: remove svn tags and history notes
+    
+    (cherry picked from commit cbe051d7cd02b31c385b93284251d0a8daeeacc7)
+
+commit aba92d92696736bed6d6aa70afd415652fcd30f8
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Fri Jul 28 10:50:57 2017 +0300
+
+    modules: use Docbook tag for Kamailio wiki URL
+    
+    (cherry picked from commit aabba8141410a25a19667a3aa750f88081a04bd9)
+
+commit 384b264cc3623f5121232bd3b228a1489c644ce5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 28 09:12:26 2017 +0200
+
+    db_mysql: safer conditions inside sb_add() for db api v2
+    
+    (cherry picked from commit 97db3ee61079de6cc2466628dae0f5e489819e98)
+
+commit 8b8e83fe98f91db0a3b0ca63a73fc6e4054762bf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 28 09:11:25 2017 +0200
+
+    avp: clear code for unsupported parameter format
+    
+    (cherry picked from commit 22fc924aa928fe126156290a10c4be8048ba4f8b)
+
+commit 07b35e90b610e0828d205676582fd806d53dde8e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 18:26:28 2017 +0200
+
+    app_python: removed condition on classname, it cannot be null
+    
+    (cherry picked from commit afe6d712d5ef52ac6f3fe8e6f69406779e3a740e)
+
+commit 9a8ef86e20322f6d51771eba75db09780361d4e2
+Author: Emmanuel Schmidbauer <emmanuel@getweave.com>
+Date:   Wed Jul 26 09:56:00 2017 -0400
+
+    db_postgres: fix typo and whitespace
+    
+    (cherry picked from commit 9219b2116fc2887c0c8c2ad39465087e324784fb)
+
+commit 675abfb90d55e97021b20ce5f6243a92b152955b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 18:19:53 2017 +0200
+
+    ctl: remove useless assignment
+    
+    (cherry picked from commit 6ddca2e08bc8159ed00c80f6857df58c81cbd97d)
+
+commit 7f210023d8b7ad5d24b71a7a403fcc42ba0148c8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 18:19:00 2017 +0200
+
+    core: dns cache - safety check for out of bounds index
+    
+    (cherry picked from commit 59234b8fae1295455e347e27519813e63bf8ffb0)
+
+commit a7912e341581308a52be3fc083ad2e3c0e9cbc6e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 13:13:21 2017 +0200
+
+    pv: remove useless condition
+    
+    (cherry picked from commit 1f50cd26ba0db88fd5f2c33e2b44a461f471e760)
+
+commit 8e887d24a63049407d4f40ee276e9c6fd8be9895
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 13:09:02 2017 +0200
+
+    msrp: use formated string instead of complex sequence of concatenation
+    
+    (cherry picked from commit 2d68418a6df8d814e60f992b3ae1d74fbb13a2f3)
+
+commit 90955519081fa356057b12626bace8815c1f8b1d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 13:08:19 2017 +0200
+
+    ldap: free in case of error cases
+    
+    (cherry picked from commit 6d3a97d1c3e62f876bbb7a17927b2a40243ec268)
+
+commit fa2ff3aa155eb996c1ba6d41b0e0a46fe3290847
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 12:42:42 2017 +0200
+
+    lcr: check return for rewrite_uri() and do memset with size of alloc
+    
+    (cherry picked from commit 67bd080310c5b8371d9943fa964e81154c916356)
+
+commit 6872ead2818868fd9343f852d74f8be771153622
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 11:34:35 2017 +0200
+
+    imc: better check for buffer size limit
+    
+    (cherry picked from commit 0fd33d766c471e0f0710bd6f84898462420bfbaa)
+
+commit f62f38322778da69ce7ead2d11e6ebb606e22df3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 11:33:44 2017 +0200
+
+    http_client: safety check for lenght of retrieved headers
+    
+    (cherry picked from commit eb6c94626d02e5a6fc2c93328591c140853535da)
+
+commit 11820d1698061229fe4777c365dd28abc20c874e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 11:32:56 2017 +0200
+
+    http_async_client: safety check for cell value
+    
+    (cherry picked from commit 00f2cfd1efb81030c705cf4b4f6aa3ac582d3059)
+
+commit e7e1fe4945d3dab11beee065e9bb0b5c6907424d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 11:30:22 2017 +0200
+
+    drouting: handle errors in fixup function
+    
+    (cherry picked from commit 36202503c531e5e6e865da018a59a494da6d9dc3)
+
+commit 20a61ab0857ae2bf33b58ad6855d103177c4cb67
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 11:11:36 2017 +0200
+
+    domainpolicy: check if set dst uri fails
+    
+    (cherry picked from commit e238567daa77f68df05cce68051792c3d7559ab7)
+
+commit 792f8e1fa8d2fd7dfae2a0b4146abfe17d08160f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 11:10:56 2017 +0200
+
+    dmq_usrloc: remove useless condition
+    
+    (cherry picked from commit bda4f0a8f8c7f65360fa73f51fb4fac289a8d334)
+
+commit ac92a5544057f73b3a6cfedfa96487fdeb9770eb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 11:10:01 2017 +0200
+
+    dialog: extra headers for dlg_bridge() built with memcpy
+    
+    (cherry picked from commit 220f2e3a36a7d7f00c77ef6f8cc495b3ff995b01)
+
+commit 414057818756f423ec8a68f7637ee8f0d842c235
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 09:15:00 2017 +0200
+
+    ctl: close opened sockets in case of errors
+    
+    (cherry picked from commit a81a809897ff381526db38e71af38dfcdfa74f04)
+
+commit dd27be05fff75d0bef85338bcc2181d92198492b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 09:12:46 2017 +0200
+
+    avp: typedef hdr name struct to simplify memory allocation
+    
+    (cherry picked from commit a3d3239833a8ca91566a28de2217ec166601e64f)
+
+commit 505914407e105aca32407df3c06d9805e65ab873
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 09:11:17 2017 +0200
+
+    auth_diameter: avoid passing large structs as params and better error handling
+    
+    (cherry picked from commit 67e87eb16059351f174fc6f4d740eed33b5ace6b)
+
+commit 140a50822efc8a0437283cced7366d2e00435e0f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 09:09:26 2017 +0200
+
+    app_python: remove condition on classname, being set to non-null
+    
+    (cherry picked from commit ec4d74ad7c1d1b14a4f33f995845ac7b299540cf)
+
+commit 520bb5c3c6219a7e50cdd96358bd84f600ef219d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 09:08:24 2017 +0200
+
+    core: pvapi - remove useless condition
+    
+    (cherry picked from commit e19c1ec58c8c51defd91f3e2581544bea224c0bf)
+
+commit e37fbf0ada489c97ddb65419ea9df31e0afe4db5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 09:07:09 2017 +0200
+
+    core: mem/f_malloc - explicit set to 0 for bit shifting greater than size
+    
+    (cherry picked from commit 0cb33abe8b2196fb26baf459f66d9d7b9e920013)
+
+commit d887e6ab5ef9a6f6c666563f4b535a31933e95a4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 09:05:16 2017 +0200
+
+    core: dns cache - avoid bitshifting with more than the size
+    
+    - avoid undefined behaviour as per C specs
+    
+    (cherry picked from commit 107dc767391902d5d3b000deecafb804c1c68c1b)
+
+commit 641b9f09ac783973ff2259fbdb7e04f087b38225
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 27 09:03:26 2017 +0200
+
+    core: cfg - removed unreachable code
+    
+    (cherry picked from commit f3c68a5013b5a33937dbf735453da29df75ae09e)
+
+commit 4a44757882e23f84183ddbd43b587a38faafa7b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 26 22:32:39 2017 +0200
+
+    auth_diameter: removed svn id, history
+    
+    (cherry picked from commit 2dc6e4700012336ac15dc9b6190f6750648854aa)
+
+commit e31327d821edc577387799a1c1ad0174081be92a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 26 17:37:28 2017 +0200
+
+    uac: added note about default value for reg_db_url
+    
+    (cherry picked from commit 7d414352e0544cfe1739f3e36cec2c23379ae902)
+
+commit 68ba0c1fbeb65a9444d3544d876c5547d0174d82
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 26 12:00:20 2017 +0200
+
+    pv: added section ids in the docs
+    
+    (cherry picked from commit e95091700857ff96d9e7c6508104a5ba5d5487ff)
+
+commit ac5ebf81413e7a77e6b26a840ca7cb0d1e01a8ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 25 19:00:46 2017 +0200
+
+    core: added helper fixup for int and str dynamic parameters
+    
+    (cherry picked from commit e049d6db78d9a86049f88acc27188d726974054f)
+
+commit 65fe63dd524a53153944b99981ad7e297eaa7ad0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 25 14:36:51 2017 +0200
+
+    dialplan: increased the size for dialplan attributes to 256
+    
+    (cherry picked from commit 36b8c1a138548ea3689cac77e18ac304ec2ee0e5)
+
+commit 698d92d5b7ad8da40987df78374ccabe2d3ab0ed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 25 13:49:05 2017 +0200
+
+    pv: notes about dynamic parameters for xavp to var funtions
+    
+    (cherry picked from commit e9a132afc0fa4b02a7030c2c20ade65a1d693006)
+
+commit 83e529c2e8d74c72e82691660ea6da8946361d28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 25 13:45:28 2017 +0200
+
+    pv: support for dynamic params for var to xavp functions
+    
+    (cherry picked from commit 45506c4343ae03450e33a04b9f2e9a3196d57306)
+
+commit 25689141e3901d9a882dd08ae80a27e77dfd356c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 25 10:54:20 2017 +0200
+
+    dialplan: catch error case from macro used inside dp_trans_fixup()
+    
+    (cherry picked from commit 78722ff2f1e290dc6ae41a4d718e9c4cea20926b)
+
+commit fbb5e22c62c8ad4d4c5883de4ff140eab3c7a660
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 24 13:24:49 2017 +0200
+
+    app_perl: free on error cases for modf execution
+    
+    (cherry picked from commit 0cf4ad7b4e839856eef4dc2cd76adacd1627ce7c)
+
+commit 9b41fd2b7d0cc2dc9f98e4b2e2d73642a391d1a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 24 13:00:44 2017 +0200
+
+    xmlrpc: handle return codes
+    
+    (cherry picked from commit 0f3fb6b8cb04162be07e9246c23bcfa8b8e4e4e6)
+
+commit 31151c8eb61d74d55a6c86b9495a7fbb94f99487
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 24 12:22:00 2017 +0200
+
+    xcap_client: safety check for namespace variable
+    
+    (cherry picked from commit 96582d77583719d7bb9c5e5437198800ae9e7a12)
+
+commit 0c9f93702ba708342cd598b476b22a96988f4004
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 24 12:15:55 2017 +0200
+
+    xcap_client: removed unused api function get_elem()
+    
+    (cherry picked from commit e6e04f4c96e5fdd7a3a90f265fd6cb7470f1135b)
+
+commit 5b7ce6ce1c6183b44840367a5462347386c06387
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 24 12:15:09 2017 +0200
+
+    xcap_client: handle return code for strchr()
+    
+    (cherry picked from commit 8147009b34639304fb75d4f6c39269c49ee385ca)
+
+commit 6d6a51ba60985c025b803c6c7faf4479374638ed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 24 11:56:57 2017 +0200
+
+    stun: link attribute when calling stun_parse_body() with an existing list
+    
+    (cherry picked from commit 4ba402434449ec9cb426d5200b12c5cec4d07ab4)
+
+commit b87bccdd01eba57db00de135f002d2704a8b1d88
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 24 11:44:21 2017 +0200
+
+    statsd: simplified error handling inside statsd_connect()
+    
+    (cherry picked from commit f75eba63a1f0176adc8cd38846a0d1943471e10c)
+
+commit 99340e1f8310b5e4336a9b3eb5867fb6e5385d70
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 24 11:38:51 2017 +0200
+
+    statistics: free vars in case of error in fixup function
+    
+    (cherry picked from commit 711a5600330793b2ca787ce451f2ad48620dd639)
+
+commit 1494ee425cd972088b2fe9551e52133fa889f3a0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 24 08:26:38 2017 +0200
+
+    sst: add 0 after memcpy
+    
+    (cherry picked from commit 6997738a7098ef56becfd40cb6e7c7864d1975f0)
+
+commit 931796dc743ba3bb39a0610a8231fc9ff02d18fc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 24 08:22:24 2017 +0200
+
+    uid_uri_db: safer check for accessing to header
+    
+    (cherry picked from commit 823bad5f3aad5c77ff9986ecf4be2517df043788)
+
+commit 4335647914d8fc0ee7d8ede5cec58ac0d3be6706
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 23 09:58:16 2017 +0200
+
+    presence_conference: free xml array in case of error
+    
+    (cherry picked from commit 9c34b68ee840880dd6be37694de8e8255f8bfb45)
+
+commit 630988036c8e46fdd137e84a4070612027e8f424
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 23 09:42:21 2017 +0200
+
+    msilo: reorganized tests to free db_res and build of extra headers
+    
+    (cherry picked from commit dd0c6fb586a61cb7e2eed1093ccf8f5158761ae3)
+
+commit 43f8aee531c1f7991c7b3f471be00dfd959ce5f5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 23 09:01:07 2017 +0200
+
+    mediaproxy: handle return pointer values
+    
+    (cherry picked from commit 65ac6de1aebd6143c44f35ef28f46c2cd3a56723)
+
+commit 3ad98055bb7ca86d09911a270f737c2853ef9a5d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 23 08:59:43 2017 +0200
+
+    json: remove use of deprecated macro is_error()
+    
+    (cherry picked from commit 0efa76d80e159fd2a7516388fe2405ad4fb6c5b6)
+
+commit 398162799d209d6f129dd32bcaf61ab54c27455a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 22 08:35:01 2017 +0200
+
+    memcached: handle error cases and alloc enough for null termination
+    
+    (cherry picked from commit 5f9eba3eb42cdb8a5c2ec840cec29757d480e136)
+
+commit 59e263c97571a000a8a854d8e36ad9cad33d13de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 22 08:34:01 2017 +0200
+
+    nat_traversal: handle return values for errors
+    
+    (cherry picked from commit 449d435194338a4f3acf079774adcbef7ad7b794)
+
+commit b3079e89ff88d20e65751b43a1a1a7f4f79ce275
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 22 08:33:22 2017 +0200
+
+    pdt: reorder checks to avoid null access
+    
+    (cherry picked from commit 1891dcb958100b5383f40278c4d675474d309df4)
+
+commit 707ab98e69a659335bf386b2bf91ae4bae31ee84
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 13:51:36 2017 +0200
+
+    xhttp: proper check for return of add lump rpl
+    
+    (cherry picked from commit 9136ce8017660e92f624de6f7b8a07e50620dfa1)
+
+commit 41ab1e8ad7fea0abddef1b557ab286dd942e8969
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 13:50:07 2017 +0200
+
+    xcap_server: proper test of retun code for add lump rpl
+    
+    (cherry picked from commit 08c404f245e55b37f71d4326afd959ecf1ea831c)
+
+commit e8fb0b1103ae96656ae404d7ac7a4b2b890d2388
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 08:57:39 2017 +0200
+
+    speeddial: simplified access to db_res and the free of it
+    
+    (cherry picked from commit 1ed223dcccf4c2ea623db75fdda16adc924b916e)
+
+commit 80fcc7dc3653dd2f5db98b0dd500cb5be92c70fd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 08:56:58 2017 +0200
+
+    sqlops: free allocated pv list in case of error inside fixup_sql_pvquery()
+    
+    (cherry picked from commit 8f460d16e84b9bc0b01463113c6e7e79d297f64e)
+
+commit 58578c2ff907fa5bace119d7ce41a8ba239970e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 08:56:10 2017 +0200
+
+    dialplan: free allocated vars in case of errors
+    
+    (cherry picked from commit bd5873c4e33188238633a8f6c48a0c5c28041179)
+
+commit c07e616c0c6d972efa8818002b67e3e40a972b13
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 08:55:04 2017 +0200
+
+    dialog: increase puid size for profile to ensure null termination
+    
+    (cherry picked from commit f2796ceb0a127c1a6580a9d9582ec9bc0fba6081)
+
+commit bff436f66b69501892d5c15aebc5463e77daa201
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 08:53:53 2017 +0200
+
+    debugger: fix orig offset computation inside w_dbg_sip_msg()
+    
+    (cherry picked from commit 06e1ad190ea62efc09a158f9c86d447d078d805b)
+
+commit 5863363964f3ab4e7a65e0dacdf2258165428a68
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 08:52:44 2017 +0200
+
+    db_postgres: handle return code for setsockopt()
+    
+    (cherry picked from commit 4363b863e9dcd3b31c1d2b2febd9b11c40ec3eec)
+
+commit 5350087a275ea29e1997286c7d2775c6c8494156
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 08:52:11 2017 +0200
+
+    db_cluster: free in case of error
+    
+    (cherry picked from commit cbc5502e23f58b50cb11124defe0b7ad618899b6)
+
+commit 6f2783dd8e3bab21dba47f3835db07db74ba8288
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 08:51:26 2017 +0200
+
+    avp: removed history, coherent indentation
+    
+    (cherry picked from commit b441903c6c109aaa35c3b4781c268f9497a00fc6)
+
+commit 4f20ed9c1d711ec429df5eeb42c9af6468f5e5a6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 08:45:18 2017 +0200
+
+    app_python: free buf in case of get exception error
+    
+    (cherry picked from commit dc00778decd5a7c91208fb1ae31d875677a2b9de)
+
+commit d59f5db999c8247c6f656241c0eeec2ad8456e6b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 21 08:44:37 2017 +0200
+
+    core: pvapi - added free_pvname_list()
+    
+    (cherry picked from commit 5c883b5ff70ad24befd5191be41502e6e35fec88)
+
+commit 8193904c074eaf630a22da10475106a8c5ff5f41
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 20 21:55:34 2017 +0200
+
+    ipops: replace return with goto error to release resources
+    
+    (cherry picked from commit a4ee0d3fd0c1b4147d462c8275d0150e8e934e2f)
+
+commit 28ea2cd708df099b6acb2d7c5499b684423a0daa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 20 16:35:15 2017 +0200
+
+    alias_db: simplify error handling for db query function
+    
+    (cherry picked from commit ab627c14e6f06b8e568f9b6ab4e3cd396368d6bb)
+
+commit a41f7a1bc07b7ad920d38996bec4c4300501e8b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 20 09:31:00 2017 +0200
+
+    uid_avp_db: better error handling
+    
+    (cherry picked from commit 42d74f35e4d7be9f46314c1805a77983a7cdf6fb)
+
+commit ff8c184ca339891bdb3ae2fc2861a20c0216c122
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 20 09:30:16 2017 +0200
+
+    uid_domain: avoid double free in case of error
+    
+    (cherry picked from commit c5cdd8dce66d94f69f773b5361ef2b477df47f06)
+
+commit 7fff54711ba4672ce7214a26b4fa869f3050b89b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 20 09:29:47 2017 +0200
+
+    xmpp: close fd in case of write error
+    
+    (cherry picked from commit dadd54a46f81ef05478e622a89a3bb739907cade)
+
+commit 3f4d1b6d3cd8b5b937e19501fff43a5d11744e90
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 20 09:28:58 2017 +0200
+
+    xprint: safety checks for error cases
+    
+    (cherry picked from commit a859ff6e74b0cdc08f30c43adda865a74283b3c4)
+
+commit 3ce03c2765bc75857a3f7e860672c0b4eae3d3f0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 20 09:28:32 2017 +0200
+
+    utils: handle error case for xcap auth status to free allocated structs
+    
+    (cherry picked from commit ae7dce434e10ef570e1c6daa8ca5d9f800239ddf)
+
+commit badc783d132eea9fc7b6302a5fbae654d034bd74
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 20 09:25:20 2017 +0200
+
+    tls: free temporary buffer when fixing shm path name for config
+    
+    (cherry picked from commit 2dc19e5c78977416c15ebe93a4f4e6d72ed475a0)
+
+commit ad19902e6402a06978c8e85b844c6ad8fdbf8c72
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 20 09:23:14 2017 +0200
+
+    core: msg translator - switch condition to buf pointer instead of lenght
+    
+    - better correlation with returned value from functions
+    
+    (cherry picked from commit 1968b43731afdcec1bd40985176680c8af1be921)
+
+commit 5653d95b8b5e4d6dc0e6c706053e144ca77ed3c1
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Wed Jul 19 17:28:16 2017 +0300
+
+    modules/textops: msg_apply_changes() comes from textopsx module
+    
+    (cherry picked from commit 7a6d31935c7e8e29dd150412f1e6281fdf3efd53)
+
+commit c2f33cb7187d7d1bb87828e752cecfd6a4bbb7c8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 19 14:38:22 2017 +0200
+
+    core: dns case - init local proto to UDP if not provided for srv resolve
+    
+    (cherry picked from commit 01771c42d3b96678a2d0ba08bc1e5c83191ada8d)
+
+commit 41c0d250749515877f369f19fb7ba846add3e4ec
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 18 23:24:07 2017 +0200
+
+    auth_ephemeral: use dedicated enum type for auth return codes
+    
+    - reorder safety checks not to access msg structure if null
+    
+    (cherry picked from commit 5937adf01f7c3e2382a1f2dc149a677fe6cd26f1)
+
+commit 3e5e97f7ae67ea1248566dead7a2d87a70e29e61
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 18 15:59:57 2017 +0200
+
+    auth_db: use the dedicated return types to avoid mixing values in int vars
+    
+    (cherry picked from commit e4ebacba9bfd7566436d72a77fd55a1b71066955)
+
+commit 082767604baefdd1b203c98e38ebefcf71e5a3a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 18 15:53:50 2017 +0200
+
+    auth: use the dedicated types for return codes instead of generic int
+    
+    (cherry picked from commit 41e9af5833ff49e36a646a8cbe47d835f73661f0)
+
+commit 455d64cd027a79edd01f5794963c6afdfc6dbdfa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 18 15:32:32 2017 +0200
+
+    siputils: log messages for error cases
+    
+    (cherry picked from commit 2a19f9e6f4203800707e0a63753e0ee1c4bb4685)
+
+commit e0078a5686ede14be0bdc2f4943f9bfb0295f832
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 18 09:11:12 2017 +0200
+
+    core: pt - check to avoid two times closing unneeded sockets
+    
+    (cherry picked from commit 0225f89a658172d0652e0da14549ee03653114d2)
+
+commit ac21783e94782fac141c9801c83a2e9f76ad6ff0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 18 09:09:29 2017 +0200
+
+    core: dns - safety checks for port and proto pointers
+    
+    (cherry picked from commit febccd6808d0729fca1bbf452d43c253ca79249a)
+
+commit ea331fc5185e1da916a867fb4f078ee03dc39c5d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 18 09:08:14 2017 +0200
+
+    core: daemonize - proper chown for pgid file instead of pid file
+    
+    (cherry picked from commit 65593cc23bc89349fb42566cbd7eb2bbf8744db9)
+
+commit 973bf97d5bfe8ef3585c4feab1744f9c76a88509
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 18 09:07:18 2017 +0200
+
+    core: cfg ctx - catch condition when there are no changes to be committed
+    
+    (cherry picked from commit 3deee5be0fa9c68f35ddb273fd86e22af91ced99)
+
+commit de33cc0f9baad61d029b9f73c38e95ebdbf47439
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 18 08:24:15 2017 +0200
+
+    core: locking - rec lock init condition fixed
+    
+    (cherry picked from commit 27186f1d951c89c033bb02c6b446a630e1fce5d3)
+
+commit 56f1c8d9d29567284da6230913e1c82fd6a5e1e5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 17 16:08:45 2017 +0200
+
+    core: tcp read - set own handling for ECONNRESET
+    
+    (cherry picked from commit 6090f7d9de0c71b25bd66c3525b25de7d02a5aa1)
+
+commit 9431e8755a60e5ac34afd5bf90cf1fb908142b1c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 17 15:54:13 2017 +0200
+
+    core: msg translator - unified error handling to simplify freeing allocated memory
+    
+    (cherry picked from commit 882449e3c0b1ac44cf810d079f696187af007451)
+
+commit b964b7be7b4acaa904f62259c055a6d51ea3eb32
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 17 07:55:36 2017 +0200
+
+    core: handle error case also for socket fd 0
+    
+    - avoid fd leak warnings by code analyzer
+    
+    (cherry picked from commit 2654fbb0c02fd8df82ecd6b8514e031952997104)
+
+commit 4b99fc28ea73dd5c34cfd66cccbc43893df1d4e5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 16 11:40:16 2017 +0200
+
+    app_python: proper condition to free srcbuf in exception handling
+    
+    (cherry picked from commit 5250fa3302a4cb9bf9572ded6fb65fa9c067f08d)
+
+commit 0827f0e4017e224d51f83ba3369ca7c993364a44
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 16 11:29:36 2017 +0200
+
+    avpops: few more pkg free in case of errors in fixup functions
+    
+    (cherry picked from commit 5ea16d8de71324e2eeb3c833cde76c52bdc8ac67)
+
+commit e01ff341db4e6ed7bdc5276de260aa69a2b3356c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 16 10:08:06 2017 +0200
+
+    avpops: several pkg free in case of errors in fixup functions
+    
+    - cleaner pkg usage summary in case of errors at start up
+    
+    (cherry picked from commit 51009ab4f4aa6a229fab5abb94d4340f1178868b)
+
+commit b127d8ddb1acc9d630ee98d503d3322d70ef02b4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 16 08:55:30 2017 +0200
+
+    sdpops: more details for sdp_with_transport() docs
+    
+    (cherry picked from commit cad4b8f456d3508a2ec3196c89a4a8e3ce9d9d32)
+
+commit e134708bf7f453e9ba8a1c0eb03386564173cc73
+Author: grumvalski <federico.cabiddu@gmail.com>
+Date:   Fri Jul 14 15:53:41 2017 +0200
+
+    core: build reply of core.sockets_list as an array
+    
+    (cherry picked from commit e3ea10ccfcd94af0e7ce6908a1e378b4a9555b93)
+
+commit ba1503535bda4bc20e8f443382306f6e81c89dde
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 15 09:25:44 2017 +0200
+
+    core: dns cache condition for both proto ws and wss
+    
+    (cherry picked from commit 19f37c944748c72a7069a4fd5e3d8c6160a1e557)
+
+commit ee77f90b9b649c3ab18380609353cad10182eb1a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 15 09:09:04 2017 +0200
+
+    auth_xkeys: use the right size when initializing xkeys list
+    
+    (cherry picked from commit 6b82a103650fd0036490cf02dffcc5ad50c6f669)
+
+commit 998b9e65ac404acbe84c15cf079eea09b338d496
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 15 09:01:38 2017 +0200
+
+    cnxcc: safety check for credit data search return value
+    
+    (cherry picked from commit 5a577ab37719d48fb9a6bc1b200c8892d95ccbdc)
+
+commit cf6c876d1203210c86f751cd9aeb3a63b77e95bb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 15 09:05:18 2017 +0200
+
+    speeddial: add missing break when handling blob db result type
+    
+    (cherry picked from commit 59dde423db52e7a8c69072685c99cd6a11440017)
+
+commit 006d79534711ce054ff45abce7978430cfab38a8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 30 13:00:16 2017 +0200
+
+    kamdbctl: regenerated db creation scripts
+
+commit 68e1b32ca79454cb222ceac08b1ff78f9c265fc4
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Aug 30 12:46:37 2017 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 31d1fba458f941fb5b580d0220118ce3927486da
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 15 08:41:09 2017 +0200
+
+    app_python: several free of allocated vars in case of errors
+    
+    (cherry picked from commit 8353b0341ada19d6f0611e0aa693bfa20db0b51c)
+
+commit d8f0d9e776000415720051fd6e55ed1f8c7924b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 14 14:40:15 2017 +0200
+
+    app_lua: safer alloc size for hdr operations
+    
+    (cherry picked from commit 15de1f06b94588ed0764ab3a3b0cd1202b5c1cb6)
+
+commit d40268a04de501dadc0f8629e521f3f9a83f2efe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 14 14:25:57 2017 +0200
+
+    pdb: avoid unaligned pointer address
+    
+    (cherry picked from commit 7c795adaf0f3899567a9769fecbbb300387837be)
+
+commit b14d34d734fb5065350d35318e34bb90e0dab07f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 13 09:03:54 2017 +0200
+
+    lib/srdb1: db_table_version() can handle DB1_BIGINT and DB1_DOUBLE values
+    
+    - in case of views or other database engine, the type for version value
+      can be different that DB1_INT. If it is a number, cast it to int
+    - extracted from GH #1186 by Emmanuel Schmidbauer
+      <emmanuel@getweave.com>
+    
+    (cherry picked from commit d0ac74742f6aeb71492d2a9cab747162cdc5ddf8)
+
+commit d620b8e94832e2394fb1c48a7f062c7f04489288
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 13 08:49:51 2017 +0200
+
+    db_postgres: added missing break for INT8OID results
+    
+    - instead of DB1_BIGINT, the result type ended to be DB1_DOUBLE
+    
+    (cherry picked from commit d12f96af28e170c3197a47af5840e5e30639adf6)
+
+commit 40586c41d1f9f00210318de2a9862ad6bfac4ab8
+Author: grumvalski <federico.cabiddu@gmail.com>
+Date:   Wed Jul 12 09:04:13 2017 +0200
+
+    core: set RET_ARRAY flag for core.sockets_list command
+    
+    (cherry picked from commit 38f514064a326f759e0e88adeffd03b32b35d6c0)
+
+commit 4ce12109008528bcf03dba0901bf65082da52261
+Author: Oriol Capsada <ocapsada@gmail.com>
+Date:   Tue Jul 11 22:44:16 2017 +0200
+
+    cplc: use route names to set proxy_route modparam
+    
+    - Changed proxy_route modparam type to string. The route to be executed
+      needs to be defined by name as the current id definition led to some
+      unpredictable behavior.
+    
+    (cherry picked from commit 027871f7a91cf288d36029a4f339801e8b620d10)
+
+commit adfc7f6033872d1a81b473df562981e2fdab2f04
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 11 12:35:27 2017 +0200
+
+    lib/srdb1: make (setid,url) unique key instead of primary
+    
+    - conflicts with autoincrement in mysql
+    
+    (cherry picked from commit b8e9d2697a13c2cdb367aabf4966d6fa09a1319f)
+
+commit 93283a687dc77dfdae3f010035427c6057425d7e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 11 12:28:03 2017 +0200
+
+    lib/srdb1: added autoincrement id column for rtpengine
+    
+    (cherry picked from commit 9c74b35b06465c9dde23971e342846491fa41c2c)
+
+commit b3f228d143a0af32a58d73fc49f3664ae849fd17
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 10 17:08:33 2017 +0200
+
+    xlog: free vars in case of errors in fixup functions
+    
+    (cherry picked from commit cd17ca9113031b979fe403255388105ecee0fe73)
+
+commit 273f233c18a56c87e566c9ee452c5ae171de1bab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 10 11:27:12 2017 +0200
+
+    evapi: close server socket if fnctl() fails
+    
+    (cherry picked from commit 23ee80c8d71b9bac63ebe6117620cffc8900c2a9)
+
+commit 046f0123879be21cd78430c6a46e977f4579ae6f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 9 10:21:20 2017 +0200
+
+    evapi: handle return code for fcntl
+    
+    (cherry picked from commit c0125e049f1c34afe7411f763f9f57c7a00109a8)
+
+commit 9e124c03cfcc33ca3f9090fb097353af83fc3600
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 9 10:01:17 2017 +0200
+
+    async: free var in case of fixup error
+    
+    (cherry picked from commit bf9d697c31ad2c7614aa37997c4772df8e8d25a7)
+
+commit 697d19eb23bf01c9c7aa83e8f5638280f19d0967
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 8 09:39:05 2017 +0200
+
+    usrloc: rpc flush to return error in case of failure
+    
+    (cherry picked from commit 3cbae6841c80de89fc7c72b73c1695e3788c1819)
+
+commit c5800bc37a629871476ed0a607a055fa74aa64ed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 8 09:38:13 2017 +0200
+
+    registrar: free var in case of pv name error
+    
+    (cherry picked from commit b28e2943b8d171628f81057a352507b2a56b91a4)
+
+commit 58592f0069ccf35ae1a9cbd4c4500c93425cdca8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 8 09:37:04 2017 +0200
+
+    auth_db: small reorder to do the check before accessing the fields
+    
+    (cherry picked from commit 070057a5d66e2f5dd4bcf90d96f8f8ceeca3a433)
+
+commit 5e36ab3a0028fa9f7c5857c866b0b43432e8a33d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 8 09:35:57 2017 +0200
+
+    lib: dtrie - removed duplicate check for same value
+    
+    (cherry picked from commit 5530fe31fe89a4dfe9e17cbe56c0cd83cb8f45ab)
+
+commit 54c83a86590e66d47470fd1690a03f84b50c2003
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 7 13:33:16 2017 +0200
+
+    dispatcher: try to add sip: scheme to dst uri, if initial parse fails
+    
+    - operation done when records are loaded from database or file
+    
+    (cherry picked from commit 4220c41f9a443d275cf94e1db3a33fbd3ca14d1b)
+
+commit 8872413b981fb12c037ed08b39fbea785ddda2fb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 7 09:53:38 2017 +0200
+
+    pv: free var in case pkg alloc failure
+    
+    (cherry picked from commit 86e349463c7d573e9a5e68bd3984ecc95808adb4)
+
+commit 39956a5595110ac04e01ebd38c4f852acb83c27d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 7 09:48:53 2017 +0200
+
+    jsonrpcs: safety vars init and release checks
+    
+    (cherry picked from commit 080bffeb53181131f8fb8fab0ddcb771bbdd37dc)
+
+commit 3850fe062d5ecbe4f7e9a9ae59192f2c50bdb673
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 7 09:29:41 2017 +0200
+
+    textopsx: free in case of error inside sel_hf_value_name()
+    
+    (cherry picked from commit 7987122d25003dd4b5f0ce47caf3e5c9811917b3)
+
+commit e87051951dcf5a4ea22714c0a1f5c956739cc2df
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 7 09:10:14 2017 +0200
+
+    msrp: safety checks to avoid analyzer reports
+    
+    (cherry picked from commit 74653204f45195944acc42979d0939cef9513cd4)
+
+commit 23162ffd62cffe78107625349a7dbde62a2cf5d4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 5 15:30:36 2017 +0200
+
+    rls: added missing license headers, coherent indentation
+    
+    (cherry picked from commit 61d3d4ad675032b7a1fc059acef68e81c40b4eba)
+
+commit 03e5f8af4bfcc5ea34cf678ac2d9b774c32a5ab5
+Author: Stefan Mititelu <stefan.mititelu@onem.com>
+Date:   Tue Jul 4 13:06:26 2017 +0300
+
+    dispatcher: Increase line buffer size
+    
+    (cherry picked from commit 1391db0f349956795b8cf6936657fb974ec9b65f)
+
+commit 127cafe9eafdf8c3d8ed5926884cba53c400ec2f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 12:29:08 2017 +0200
+
+    rls: reset vars to avoid double free in case of error
+    
+    (cherry picked from commit ceaafc67dae4f7e7424c8706ccea90c30eed45b6)
+
+commit c1e0910498dea28c6405ec0683e42d4e7b2581a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 12:26:41 2017 +0200
+
+    presence: reset vars to avoid double free in case of error
+    
+    (cherry picked from commit 97ac3b910dc955058fa4c08ad22ac01a4f31fe74)
+
+commit cd43bb023447ec47d9f83923995c1aef295b1196
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 12:17:54 2017 +0200
+
+    avp: return in case of error in avp select
+    
+    (cherry picked from commit 9a6182fa8b535bc19c43e905d6b6a110b0e830d2)
+
+commit 15de3bb82f609a1c055194eb9e505ae55062aeb3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 12:17:36 2017 +0200
+
+    xcap_server: reset server_name variable after free
+    
+    - avoid re-use in the loop
+    
+    (cherry picked from commit 22aa9043f179f4de8e90fc5946a7afb28060b6f6)
+
+commit 954fd81f7b0431f16b6a3112f7a421ff50c75a59
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 12:00:47 2017 +0200
+
+    mtree: access values before safety checks of variables
+    
+    (cherry picked from commit 56d1d317e4bac7130586541fed75be670ea0f9ce)
+
+commit 2232c34ed2a0c5953161e7b17e0ca40eedb6af39
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 11:52:53 2017 +0200
+
+    dispatcher: log messages for hashing auth username
+    
+    (cherry picked from commit e9cfb2bf5012cdbde36559f615b58e3a556bfc2d)
+
+commit 301ee8bb20e5853783496f1080b9fc9ba686dbe1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 09:59:10 2017 +0200
+
+    dialog: safety checks and free of profiles in case of errors
+    
+    - free partial list of profiles in dlg_set_timeout_by_profile() when no
+      more memory
+    
+    (cherry picked from commit 609297d62a08d1d75550c2f5e7f7fd19b98fd104)
+
+commit 01a93753d6240515872a9efc58c7eb832bbd93a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 09:08:04 2017 +0200
+
+    tmx: missing break in t_cancel_branches(others)
+    
+    (cherry picked from commit 2ab0adee57aa82487adf7d3776835eca071afa27)
+
+commit eb71b7958cd8217bdc4099462fa3ae68b7d3d1b4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 08:57:36 2017 +0200
+
+    core: msg translator - reworked error handling to free allocated buffers
+    
+    (cherry picked from commit 6118d832d3ba0efb96820915520af3c8a9bf29de)
+
+commit 3f076581e3b9ffc46aa82cfcfba3c0fbb54bc326
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 08:44:50 2017 +0200
+
+    core: free locl link structures not linked to listen sockets
+    
+    (cherry picked from commit 98a6ef19bcfe14b7150183a9bec98854f5c0063b)
+
+commit a309561c6cc81187939234a524e5a9da2fd009c2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 08:43:28 2017 +0200
+
+    core: proxy - free in case of errors making proxy only from ip
+    
+    (cherry picked from commit 0aa7571afe5c25bfffaf865595181470ac78f4d2)
+
+commit 0b940b8f3f5270336a17c8651477749314136d16
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 08:41:34 2017 +0200
+
+    core: parser uri - add missing break to avoid useless assignments
+    
+    (cherry picked from commit 1a5662b212ddcbea40ca33e34bfda0459802b756)
+
+commit 302cc81697d7b7a7b187cfb8c87a486d4c49621d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 08:40:29 2017 +0200
+
+    core: mem/qm - fixed pointer expressions in qm_check() debug function
+    
+    (cherry picked from commit 126e76dc035bd1320cb103c39ad52849844e7448)
+
+commit 2590955b6176acef2633b65dbcc59469f2358d3a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 4 08:39:39 2017 +0200
+
+    core: cfg.y - fixed condition on case parsing
+    
+    (cherry picked from commit 52f728f73914ab960389ff8afbf1a223f91f07e2)
+
+commit 1001a8333f8475f203d5a395139829743c1c84ef
+Author: Vasiliy Ganchev <vance@ukr.net>
+Date:   Mon Jul 3 18:56:52 2017 +0200
+
+    pua_reginfo: use outbound proxy for PUBLISH requests
+    
+    (cherry picked from commit 385995c27084bdca9ebc4a472f9ab41311416f35)
+
+commit 5b727e0f2ee8d4abc6ba4694d545221a6e13dd4d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 3 17:02:02 2017 +0200
+
+    cfgutils: more log messages for locking functions
+    
+    - it was silent if locks set was not initialized properly which could
+      mislead at runtime, but not showing any error message
+    - if locks set size is too big, set it to 14 (this is used as power of 2)
+    
+    (cherry picked from commit 3ce65db8747ad7b382824f389c2b782a76dbb7a1)
+
+commit 2ff8e36250864e6a391bd9d0ebb28a8fafdc9f6b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 3 14:58:59 2017 +0200
+
+    core: parse rr - reset head in case of parse error
+    
+    - avoid acessing an invalid pointer
+    - proper support if trying to parse into an existing rr list in a second
+      attempt (not the case so far)
+    
+    (cherry picked from commit 8eb84f76a6d52598bb2fd5d13b96fba4c6326b7f)
+
+commit e070571cf59a43b615690a3ec2fd9194d20e1e1d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 3 14:42:03 2017 +0200
+
+    core: avoid accessing freed structure in case of duplicated listen addresses
+    
+    (cherry picked from commit dbd52dacae17eca5a48359c605a2d93607b7c041)
+
+commit 571bba63f2cfbcbcd601d41a6d930d2ab3b92013
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 3 11:53:21 2017 +0200
+
+    enum: fixed code for country code length
+    
+    (cherry picked from commit b95e536335083ee6f1f67e2007463ac7e8403ec8)
+
+commit 09488d07231bd59f4466a681f2f792e5c07fde91
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 3 11:45:26 2017 +0200
+
+    seas: avoid double free and leak
+    
+    (cherry picked from commit 366104d2f79ccfa65850cd2e3bfb5ed8be467bc2)
+
+commit 3ba4cc6c039056c8cebd21911709ffa79266d364
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 3 10:01:20 2017 +0200
+
+    rr: use macro to get parsed From in record_route_preset()
+    
+    - safety check for parsed pointer
+    
+    (cherry picked from commit 8b0a42ab64c02a1fa253ce156442bab64a4fe3db)
+
+commit e92b6ecc52cc6a64856c929043504c2876724901
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 2 12:22:33 2017 +0200
+
+    core: dns cachec- safety check in log message before abort
+    
+    (cherry picked from commit ff2e0d96a50eadf4e872865d43f0fbe15aef18bd)
+
+commit f351ea29f2d561fbd4d362a795cf5358ae3a9f89
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 1 08:02:23 2017 +0200
+
+    siptrace: proper varible in log message when af is unknown
+    
+    (cherry picked from commit b1a6830c414ddcfb21fc07bc4995b756d617558e)
+
+commit 1c82b218273bacaf1a6cfa93fdc2c8e63e45cf7e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 1 08:00:56 2017 +0200
+
+    http_client: move assign for download size after right side variable was set
+    
+    (cherry picked from commit 632380ff13dce5d5f1d1553797b7783fdc986c59)
+
+commit cd59fcf3fef3a1446a49d60ad636ff27e27b6ab2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 1 07:50:10 2017 +0200
+
+    core: mem - updated defines for sys malloc and mem error log messages
+    
+    (cherry picked from commit 1cc3f0ddfc517ed2b1f7820f9feedee8a91d0ac7)
+
+commit 29d871493601cb80c77f870aff94a7f1468b939b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 1 07:48:04 2017 +0200
+
+    Makefile.defs: compile with system malloc for pkg if MEMPKG=sys
+    
+    - if MEMDBGSYS=1, the use a debug variant for system malloc
+    
+    (cherry picked from commit cee1de72a2b28d002bc84dd205b7ecf9f285fdd4)
+
+commit 964ca6b32581f6af1ce1b97646d57963a5f5eff8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 30 15:17:46 2017 +0200
+
+    http_client: updated docs for http_client_query()
+    
+    (cherry picked from commit 279e622b53b636d49b207907c8f3fe60ff9e2cd3)
+
+commit f6ac44c5528c4a20e75a4e4b77d27f5eafa6a16f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 30 15:06:24 2017 +0200
+
+    http_client: allow providing headers to http_client_query()
+    
+    - lost from removed http_query() in utils
+    
+    (cherry picked from commit 9c1d4cec94b47cd0b2e69e646f2fd14b84e3cf03)
+
+commit db0e94f53acb6ab86eb8730043effcff6b4550ed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 30 14:15:55 2017 +0200
+
+    http_client: move to next field before freeing item in fixup function
+    
+    (cherry picked from commit fce9044ece62d6b5e81330de62fa1fa402145e68)
+
+commit efee46251f7da2007a4e6e563a6d4e4020f8449e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 30 13:36:26 2017 +0200
+
+    websocket: use sizeof over the type of the pointer to be allocated
+    
+    (cherry picked from commit 145d10f5a2dcad3cbdb477aaabdc853bb606b355)
+
+commit ebe9387547a65f34b81b0184df4f284889c137b1
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Jun 30 11:00:35 2017 +0200
+
+    db_mysql Look for MariaDB as well as MySQL
+    
+    (cherry picked from commit 4f587124998e665c5ab9df7fe14cfbb3a39a9ec8)
+
+commit 4043bbc434ab7f80580c3f71b861bb4049607a23
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 30 10:30:51 2017 +0200
+
+    core: parse fline - cast number to char for print to avoid compile warning
+    
+    (cherry picked from commit ccb368e6420c1e4849867bcdbd136d0e9a8db67d)
+
+commit 55ed4b37da77e0d928078e6b9842325c4675c295
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 30 10:11:50 2017 +0200
+
+    core: dns cache - catch unknown record type to avoid compile warnings
+    
+    (cherry picked from commit f461081a400b398a8c47b1cb338ffc4bf8bd2ede)
+
+commit 1775e88e34acaa30dd0138d241eea0651455cd1c
+Author: Ilya Shipitsin <chipitsine@gmail.com>
+Date:   Wed Jun 28 16:45:54 2017 +0200
+
+    utils/db_berkeley: access variable after null pointer check
+    
+    (cherry picked from commit bbe0370939ff8a14e931595389b6678817ff1056)
+
+commit 5f5c149395c78124f7a84875789d479580ee35f8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 28 11:41:15 2017 +0200
+
+    tls: updated tls version selection for libssl 1.1.0 api
+    
+    - fixes compile warnings for deprecated TLSXY_method() functions
+    
+    (cherry picked from commit 76efc9b7a1489007f9ff431e730ce4e86b446a6c)
+
+commit 3526f30c0e9a882cfe870295d49cc0dff1e70619
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 28 10:26:43 2017 +0200
+
+    tls: dynamic locks not needed for openssl v1.1.0+
+    
+    - openssl v1.1.0 is thread safe
+    - fixes the compile warnings for libssl 1.1.0
+    
+    (cherry picked from commit e7c03ce6ce61119fbf5cb9f41b7abcd4c7138d58)
+
+commit 69bc83888cc8009d319957d24704bcd18f85ade5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 27 15:09:18 2017 +0200
+
+    rr: small formatting adjustments to doc examples
+    
+    (cherry picked from commit e518e5e7a50be3510c896bd5f8a4cc38146631cc)
+
+commit 58656b7f158be13058e72df6779d5d9cebb1799e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 27 15:02:30 2017 +0200
+
+    core: remove inline from implementation of functions declared without it
+    
+    (cherry picked from commit 9c9da87943ad86fd4ca3ba8b007cebfcb7d9bc61)
+
+commit 662d1aac66a35c51e23c69fcb88b446b30bb6553
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Sat Jun 24 12:26:30 2017 +0300
+
+    core/socket_info: use internal str2int() instead of strtol()
+    
+    - strtol() works only for null terminated strings
+    - fix for issue GH #1161
+    
+    (cherry picked from commit baf2d095b1d4dcc932ece9d48a6a8c397fa7b1a7)
+
+commit cec019449abf718f2215cb99616a701a23f9e986
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Sun Jun 25 19:07:06 2017 +0300
+
+    modules/jsonrpcs: add missing apostrophe to example
+    
+    (cherry picked from commit f0f1a9a8db1f5238b0ace1d3f190d0d9f0b2628d)
+
+commit bfeb32bd00f9eaaafcb6e90388bde7d17e3cebe7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jun 24 07:16:47 2017 +0200
+
+    pv: coherent whitespacing and indentation for pv time code
+    
+    (cherry picked from commit da07cc8c724724d89dfe02bbe8a980f241afc582)
+
+commit 00d2cc7695fe97bc82c5d9b7c10b66fa564fdf04
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 21 23:58:11 2017 +0200
+
+    core: updated log macros for parse rpid
+    
+    (cherry picked from commit a526764c65ffea767fecbb13021ba48304524882)
+
+commit cebcf91e1941d4d82d1ca503fe9cf4ca37707c1e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jun 24 07:06:03 2017 +0200
+
+    htable: map $shtrecord() inner names over integer ids
+    
+    - avoid string comparison at runtime
+    
+    (cherry picked from commit 8ce1bcd52cd5117f920acce5f78683e974d4a3a4)
+
+commit a77351ebf01ab7d84259b729c543a9c62ee8d3b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 20 16:00:00 2017 +0200
+
+    core: faked msg - functions to get next fmsg with clear branches
+    
+    (cherry picked from commit 10129d056e3660a33b6ebc7b487b1de0f616dcc9)
+
+commit 852f2d9138dc94d6c49ddc86d0625610ed5d54a2
+Author: Eloy Coto <eloy.coto@gmail.com>
+Date:   Tue Jun 20 14:03:29 2017 +0100
+
+    evapi: Improved error message
+    
+    Signed-off-by: Eloy Coto <eloy.coto@gmail.com>
+    (cherry picked from commit 5f249318adfe26b35426c2b43f4c3df31edc1de1)
+
+commit 06a03ab05b6db405505eff0b7b1bb1d5b37ba8c8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 19 16:26:00 2017 +0200
+
+    core: do not execute clear_branches() on next faked msg
+    
+    - the function clears the global variables for branches
+    
+    (cherry picked from commit 68db22bdfe50ff34df8e33bc06b80b5ad4844d7b)
+
+commit ba6ec1a9c651e43d4a0e89724ad5a7dfa6dafda7
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri Aug 25 10:29:44 2017 +0300
+
+    modules/lcr: fixed testing if dont_strip_or_prefix_flag is set
+    
+    (cherry picked from commit b325a7711ac405e5598f7fbd224fb1b8e84221cf)
+
+commit 071b85f66cabaa3a705a014b26b7c1eb31029b26
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 2 09:54:18 2017 +0200
+
+    tls: explicit libssl v1.1+ cleanup when module is destroyed
+    
+    - OPENSSL_cleanup() explicitely executed for libssl v1.1+ when tls
+      module is destroyed, to avoid being executed again on final exit
+      (due to atexit() callback), because at that moment shared memory
+      is already destroyed and attempts to access the locals will result
+      in cored dump
+    - retported by Victor Seva, GH #1189
+    
+    (cherry picked from commit 00eb71da83347c9d2ea74feacec9c955f7b2a2e6)
+
+commit 605feb7876c4a4a70b3c336b477a597182a8e60a
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Tue Jul 25 15:48:10 2017 +0300
+
+    modules/sipcapture: fix (param_export_t).name typo
+    
+    (cherry picked from commit b59771bb81bbe240b98113252df10377a75da700)
+
+commit 41392baa1b9d40e2d5cff5e532b2fe3b6c132bb6
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Mon Jul 24 15:16:21 2017 +0200
+
+    tsilo: coherent locking in ts_append
+    
+    (cherry picked from commit 34265457e7c09b56dec295b753fd8250ef8b0c41)
+
+commit 3bfc9d4955cf3edd64fe29aa3e88d23609360209
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 20 20:34:57 2017 +0200
+
+    tsilo: check return code for parse_uri()
+    
+    (cherry picked from commit a19a06f6c302a7fbac9b137cc1558d47730ead2f)
+
+commit 25defde62284bd23fc41ec4276bb11c0c6ece687
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 19 11:12:32 2017 +0200
+
+    tm: copy branch flags in the new branch created by the dns failover
+    
+    (cherry picked from commit 632304b90f9af7151c99f98ec63ddbecca31df9c)
+
+commit 7859dd239303f6f98f99a2bace8d7a05b49e337c
+Author: grumvalski <federico.cabiddu@gmail.com>
+Date:   Fri Jul 14 15:53:41 2017 +0200
+
+    core: build reply of core.sockets_list as an array
+    
+    (cherry picked from commit e3ea10ccfcd94af0e7ce6908a1e378b4a9555b93)
+
+commit e7ebdcfee72d0d54c375383565fd1fcd3816c7c1
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Jul 13 18:23:43 2017 -0400
+
+    htable: improve some error logs
+    
+    (cherry picked from commit 9dadfe9234d26d3b8b8ea0603b3f8fa13f96913c)
+
+commit 5646626518d670954158e59a5e501f7b5714dea3
+Author: grumvalski <federico.cabiddu@gmail.com>
+Date:   Wed Jul 12 09:11:16 2017 +0200
+
+    core: return aliases list as an array in core.aliases_list
+    
+    (cherry picked from commit 13c84b8275f2539e8ca03bec38b79110043d75d2)
+
+commit adb39eb5ad3f9d71f6e4eb3ab49682a38185171b
+Author: grumvalski <federico.cabiddu@gmail.com>
+Date:   Wed Jul 12 09:04:13 2017 +0200
+
+    core: set RET_ARRAY flag for core.sockets_list command
+    
+    (cherry picked from commit 38f514064a326f759e0e88adeffd03b32b35d6c0)
+
+commit a5d70bd4babae5242004f089932fa1bfb14493a3
+Author: Alberto Sartori <alberto.sartori@athonet.com>
+Date:   Tue Jul 11 14:09:11 2017 +0200
+
+    xmlrpc: add <value> tag to array elements
+    
+    - add call to `add_xmlrpc_reply(reply, &value_prefix)` to  `rpc_array_add` function
+    - add call to `add_xmlrpc_reply(reply, &value_suffix)` to  `rpc_array_add` function
+    (cherry picked from commit cfc6e364b4a9be95e2e7e48b1a8e5a86324b35f3)
+
+commit 8cdee50d7c89c1617b68e2eff1ce646eba0c33fb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 30 08:38:11 2017 +0200
+
+    kamctl: kamdbctl - proper use of DBPORT for postgres
+    
+    (cherry picked from commit 17f907d5fa1267f434f422fb61e4b315e3eafb97)
+
+commit 2ccf97c2932dcd5242f7997c3230427dfe6b4417
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Tue Jun 27 23:01:37 2017 +0100
+
+    kazoo: add json.count transformation
+    
+    (cherry picked from commit 551413f0952429c3a360b5ccdeaeac48ea15ff8a)
+
+commit d5d15e6c9f67e5a64bb5c3ec6926b39dc8e3b779
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Tue Jun 27 23:00:43 2017 +0100
+
+    kazoo: add $kzRK to accdess routing key of the payload
+    
+    (cherry picked from commit d5c602454a9af6ebce852f44dc88c4efa4bf036f)
+
+commit 3c6e9e02d124ceb1227c8481042ac221ff79bd8d
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Fri Jun 23 21:18:13 2017 +0100
+
+    kazoo: use hardcoded max size of routing key
+    (cherry picked from commit f18da4c9d6cc8d1ab061d68cbd8e9d988ebf2be6)
+
+commit e3f69bf10c09c9817d3839bc58e2f17f8dbeaded
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Fri Jun 23 21:09:54 2017 +0100
+
+    kazoo: max size of routing key
+    
+    (cherry picked from commit 56e07cf2bb281d0aa78517e919055de640468020)
+
+commit d49131e05033a78585bebea1bce503e97274a24e
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Fri Jun 23 18:57:00 2017 +0300
+
+    presence: subsription double delete fix
+    
+    - if timeout_rm_subs parameter set to "1" and NOTIFY timeout about expired subsription
+    
+    (cherry picked from commit 8e185ddf8e81af8d6283a87ec95116965235752a)
+
+commit 8038327f7c0c6e64899072f1c778699f040b2a0a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 23 18:19:37 2017 +0200
+
+    htable: do not call expired event route on get/add operations
+    
+    - have consistent behaviour with set operation
+    - avoid accessing the same (expired) item twice, second after being
+      removed if the item is accessed in the event route
+    - reported by GH #1152
+    
+    (cherry picked from commit 4514c91883d67ee062582aed7b414633609cf6ac)
+
+commit c71bac4aebbef927f7ebbed53c3d51531d6d3622
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sun Jun 25 10:16:23 2017 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 826b3cab606fb51c7139fe81463aeb2409f40b67
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jun 25 10:00:01 2017 +0200
+
+    topoh: documented uri_prefix_checks parameter
+    
+    (cherry picked from commit ca3f2fc6dd2c94410b225d2efb82081b828ddd01)
+
+commit ee4c2a7811552497fe0321fc92b2ecc68034cd44
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jun 25 09:54:09 2017 +0200
+
+    topoh: coherent whitespacing and indentation
+    
+    (cherry picked from commit 66ab19a010f833a7c53f7f46de29a749609d5eef)
+
+commit a9d6ffa5f39e048642bf14129b9b484250cce3ae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jun 25 09:48:26 2017 +0200
+
+    topoh: option to disable uri prefix checks
+    
+    - some devices do not copy the exact URI as received in headers
+      (Contact, Record-Route) - they can add default port or mix parameters
+    - reported by GH #1165
+    
+    (cherry picked from commit de3386e4a303adecc3eee809c05e0654b7a05065)
+
+commit 7f477020368b0f42bfd053f8eb02441b323a610f
+Author: Sebastian Damm <damm@sipgate.de>
+Date:   Thu Jun 22 16:22:49 2017 +0200
+
+    app_lua: add "NOTICE" loglevel to sr.log
+    
+    (cherry picked from commit c2a27bc0875aaaec877c75e9b50fbf41011918b1)
+
+commit 2d1dc7cfcde0410e44a8d53849c319c9d234a7b3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 16 11:49:28 2017 +0200
+
+    mtree: avoid char array access over the size
+    
+    (cherry picked from commit 24718a4f0a7579abf9f32967cce2b86e5973cc6d)
+
+commit e2e8f3e4e887e482dd9908c0c9fc5f85923def81
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 20 19:24:36 2017 +0100
+
+    pua_usrloc: free memory in case of failire in pua send_publish()
+    
+    - related to GH #1001
+    
+    (cherry picked from commit 504699b6c2f34fbf7db02f57909eefdffc6b8180)
+
+commit 1df7cc74fac83aee1d0131962ccefb81d73125e1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 15 15:56:56 2017 +0200
+
+    domain: fix uninitialized variable
+    
+    - reported by Juha Heinanen
+
 ===================== 2017-06-14 Version 5.0.2 Released =====================
 
 ===================== Changes Since Version 5.0.1 ===========================
