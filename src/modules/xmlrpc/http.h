@@ -30,8 +30,8 @@
 #define mxr_realloc realloc
 #define mxr_reallocxf(p, s) \
 	(  { void *____v123; ____v123=realloc((p), (s)); \
-	   if(!____v123 && (p)) free(p); \
-	   ____v123; } )
+		if(!____v123 && (p)) free(p); \
+		____v123; } )
 #define mxr_free free
 #else
 #include "../../core/mem/mem.h"
