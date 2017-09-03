@@ -11,16 +11,16 @@
 <!-- Auth_db Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-		This module contains all authentication related functions that need 
-		the access to the database. This module should be used together with 
-		auth module, it cannot be used independently because it depends on 
-		the module. Select this module if you want to use database to store 
+		This module contains all authentication related functions that need
+		the access to the database. This module should be used together with
+		auth module, it cannot be used independently because it depends on
+		the module. Select this module if you want to use database to store
 		authentication information like subscriber usernames and passwords. If
 		you want to use radius authentication, then use auth_radius instead.
 	</para>
@@ -31,11 +31,11 @@
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words 
+			The module depends on the following modules (in the other words
 			the listed modules must be loaded before this module):
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>auth</emphasis> -- Generic authentication 
+				<para><emphasis>auth</emphasis> -- Generic authentication
 				functions
 				</para>
 			</listitem>
@@ -50,7 +50,7 @@
 		<section>
 			<title>External Libraries or Applications</title>
 			<para>
-			The following libraries or applications must be installed 
+			The following libraries or applications must be installed
 			before running &kamailio; with this module loaded:
 			</para>
 			<itemizedlist>
@@ -67,9 +67,9 @@
 	<section id="auth_db.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-		This is URL of the database to be used. Value of the parameter depends 
-		on the database module used. For example for mysql and postgres modules 
-		this is something like mysql://username:password@host:port/database. 
+		This is URL of the database to be used. Value of the parameter depends
+		on the database module used. For example for mysql and postgres modules
+		this is something like mysql://username:password@host:port/database.
 		For dbtext module (which stores data in plaintext files) it is
 		directory in which the database resides.
 		</para>
@@ -91,7 +91,7 @@ modparam("auth_db", "db_url", "&exampledb;")
 	<section id="auth_db.p.user_column">
 		<title><varname>user_column</varname> (string)</title>
 		<para>
-		This is the name of the column holding usernames. Default value is 
+		This is the name of the column holding usernames. Default value is
 		fine for most people. Use the parameter if you really need to change it.
 		</para>
 		<para>
@@ -110,8 +110,8 @@ modparam("auth_db", "user_column", "user")
 	<section id="auth_db.p.domain_column">
 		<title><varname>domain_column</varname> (string)</title>
 		<para>
-		This is the name of the column holding domains of users. Default value 
-		is fine for most people. Use the parameter if you really need to 
+		This is the name of the column holding domains of users. Default value
+		is fine for most people. Use the parameter if you really need to
 		change it.
 		</para>
 		<para>
@@ -130,10 +130,10 @@ modparam("auth_db", "domain_column", "domain")
 	<section id="auth_db.p.password_column">
 		<title><varname>password_column</varname> (string)</title>
 		<para>
-		This is the name of the column holding passwords. Passwords can be 
-		either stored as plain text or pre-calculated HA1 strings. HA1 strings 
-		are MD5 hashes of username, password, and realm. HA1 strings are more 
-		safe because the server doesn't need to know plaintext passwords and 
+		This is the name of the column holding passwords. Passwords can be
+		either stored as plain text or pre-calculated HA1 strings. HA1 strings
+		are MD5 hashes of username, password, and realm. HA1 strings are more
+		safe because the server doesn't need to know plaintext passwords and
 		they cannot be obtained from HA1 strings.
 		</para>
 		<para>
@@ -152,10 +152,10 @@ modparam("auth_db", "password_column", "password")
 	<section id="auth_db.p.2password_column_2">
 		<title><varname>password_column_2</varname> (string)</title>
 		<para>
-		As described in the previous section this parameter contains name of 
-		column holding pre-calculated HA1 string that were calculated including 
-		the domain in the username. This parameter is used only when 
-		<varname>calculate_ha1</varname> is set to 0 and user agent send a 
+		As described in the previous section this parameter contains name of
+		column holding pre-calculated HA1 string that were calculated including
+		the domain in the username. This parameter is used only when
+		<varname>calculate_ha1</varname> is set to 0 and user agent send a
 		credentials containing the domain in the username.
 		</para>
 		<para>
@@ -181,7 +181,7 @@ modparam("auth_db", "password_column_2", "ha1_2")
 		If the parameter is set to 0 and the username parameter of credentials
 		contains also <quote>@domain</quote> (some user agents append the
 		domain to the username parameter), then the server will use the HA1
-		values from the column specified in the 
+		values from the column specified in the
 		<quote>password_column_2</quote> parameter. If the username parameter
 		doesn't contain a domain, the server will use the HA1 values from the
 		column given in the <quote>password_column</quote>parameter.
@@ -219,14 +219,14 @@ modparam("auth_db", "calculate_ha1", 1)
 	<section id="auth_db.p.use_domain">
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
-		If true (not 0), domain will be also used when looking up in the 
+		If true (not 0), domain will be also used when looking up in the
 		subscriber table. If you have a multi-domain setup, it is strongly
 		recommended to turn on this parameter to avoid username overlapping
 		between domains.
 		</para>
 		<para>
-		IMPORTANT: before turning on this parameter, be sure that the 
-		<varname>domain</varname> column in <varname>subscriber</varname> 
+		IMPORTANT: before turning on this parameter, be sure that the
+		<varname>domain</varname> column in <varname>subscriber</varname>
 		table is properly populated.
 		</para>
 		<para>
@@ -251,7 +251,7 @@ modparam("auth_db", "use_domain", 1)
 		NAME AVP with the same name as the column name.
 		</para>
 		<para>
-		 Parameter syntax:
+		Parameter syntax:
 		<itemizedlist>
 			<listitem><para><emphasis>
 			load_credentials = credential (';' credential)*
@@ -312,13 +312,13 @@ modparam("auth_db", "version_table", 0)
 			Name alias: www_authorize(realm, table)
 		</para>
 		<para>
-		The function verifies credentials according to 
-		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If the 
-		credentials are verified successfully then the function will succeed 
-		and mark the credentials as authorized (marked credentials can be later 
-		used by some other functions). If the function was unable to verify the 
-		credentials for some reason then it will fail and the script should 
-		call <function moreinfo="none">www_challenge</function> which will 
+		The function verifies credentials according to
+		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If the
+		credentials are verified successfully then the function will succeed
+		and mark the credentials as authorized (marked credentials can be later
+		used by some other functions). If the function was unable to verify the
+		credentials for some reason then it will fail and the script should
+		call <function moreinfo="none">www_challenge</function> which will
 		challenge the user again.
 		</para>
 		<para>Negative codes may be interpreted as follows:</para>
@@ -354,9 +354,9 @@ modparam("auth_db", "version_table", 0)
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that 
-			the user agent should present to the user so he can decide what 
-			username and password to use. Usually this is domain of the host 
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			the user agent should present to the user so he can decide what
+			username and password to use. Usually this is domain of the host
 			the server is running on.
 			</para>
 			<para>
@@ -371,7 +371,7 @@ modparam("auth_db", "version_table", 0)
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>table</emphasis> - Table to be used to lookup 
+			<para><emphasis>table</emphasis> - Table to be used to lookup
 			usernames and passwords (usually subscribers table).
 			</para>
 		</listitem>
@@ -415,24 +415,24 @@ if (!www_authorize("kamailio.org", "subscriber")) {
 			Name alias: proxy_authorize(realm, table)
 		</para>
 		<para>
-		The function verifies credentials according to 
-		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If 
-		the credentials are verified successfully then the function will 
-		succeed and mark the credentials as authorized (marked credentials can 
-		be later used by some other functions). If the function was unable to 
+		The function verifies credentials according to
+		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If
+		the credentials are verified successfully then the function will
+		succeed and mark the credentials as authorized (marked credentials can
+		be later used by some other functions). If the function was unable to
 		verify the credentials for some reason then it will fail and
-		the script should call 
+		the script should call
 		<function moreinfo="none">proxy_challenge</function> which will
-		challenge the user again. 
+		challenge the user again.
 		</para>
 		<para>Negative return codes have the same meaning as for
 			www_authenticate().</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that 
-			the user agent should present to the user so he can decide what 
-			username and password to use. Usually this is domain of the host 
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			the user agent should present to the user so he can decide what
+			username and password to use. Usually this is domain of the host
 			the server is running on.
 			</para>
 			<para>
@@ -441,8 +441,8 @@ if (!www_authorize("kamailio.org", "subscriber")) {
 			(e.g., variable $fd).
 			</para>
 			<para>
-			If an empty string <quote></quote> is used then the server will 
-			generate it from the request. From header field domain will be 
+			If an empty string <quote></quote> is used then the server will
+			generate it from the request. From header field domain will be
 			used as realm.
 			</para>
 			<para>
@@ -450,7 +450,7 @@ if (!www_authorize("kamailio.org", "subscriber")) {
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>table</emphasis> - Table to be used to lookup 
+			<para><emphasis>table</emphasis> - Table to be used to lookup
 			usernames and passwords (usually subscribers table).
 			</para>
 		</listitem>
@@ -526,7 +526,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 			<para><emphasis>flags</emphasis> - set of flags to control the
 			behaviour of the function. If it is 1, then the function will
 			check to see if the authentication username matches either To or
-			From header username. REGISTER requests: From and To must match the 
+			From header username. REGISTER requests: From and To must match the
 			authentication user. PUBLISH requests: From, To and Request-URI must
 			match the authentication user. All other requests: From header must
 			match the authentication user. If bit 2 is set as well (flags==3),
@@ -534,7 +534,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 			- these requests can come with anonymoys caller id.
 			</para>
 			<para>
-			Additionally all domains in the checked URIs and the realm in the 
+			Additionally all domains in the checked URIs and the realm in the
 			authentication header will be checked to match the provided realm parameter.
 			</para>
 			<para>
