@@ -1,0 +1,6 @@
+This is RPM packaging scripts for openSUSE Build Service https://build.opensuse.org/
+Scitps build RPM pckages for following dists:
+1) CentOS 6 and 7
+2) RHEL 6 and 7
+3) Fedora 25 adn 26
+4) openSUSE 42.2 and 42.3
