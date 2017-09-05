@@ -427,6 +427,9 @@ modparam("p_usrloc", "risk_group_column", "rg")
 
    Default value is “3600”.
 
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int p_usrloc expire_time 7200
+
    Example 1.12. Set expire_time parameter
 ...
 modparam("p_usrloc", "expire_time", "3600")
@@ -437,6 +440,9 @@ modparam("p_usrloc", "expire_time", "3600")
    Specifies the error value on which a database shall be turned of.
 
    Default value is “50”.
+
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int p_usrloc db_err_threshold 20
 
    Example 1.13. Set db_err_threshold parameter
 ...
@@ -451,6 +457,9 @@ modparam("p_usrloc", "db_err_threshold", "50")
        database
 
    Default value is “1”.
+
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int p_usrloc failover_level 2
 
    Example 1.14. Set failover_level parameter
 ...
@@ -592,6 +601,9 @@ modparam("p_usrloc", "default_db_type", "cluster")
 
    Default value is “1”.
 
+   Can be set at runtime, e.g.:
+                $ kamcmd cfg.set_now_int p_usrloc db_ops_ruid 1
+
    Example 1.24. Set db_ops_ruid parameter
 ...
 modparam("p_usrloc", "db_ops_ruid", 0)
@@ -604,6 +616,9 @@ modparam("p_usrloc", "db_ops_ruid", 0)
    use Cassandra as a DB backend.
 
    Default value is “0”.
+
+   Can be set at runtime, e.g.:
+                $ kamcmd cfg.set_now_int p_usrloc db_update_as_insert 1
 
    Example 1.25. Set db_update_as_insert parameter
 ...
