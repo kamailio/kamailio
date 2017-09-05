@@ -23,6 +23,7 @@
 #include "p_usrloc_mod.h"
 #include "ul_db.h"
 #include "ul_db_watch.h"
+#include "config.h"
 #include "../../core/crc.h"
 
 static ul_db_handle_list_t * db_handles = NULL;
@@ -382,9 +383,12 @@ int check_handle(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle){
 						handle->id, handle->db[i].no, handle->db[i].url.len, handle->db[i].url.s);
 				}
 			} else if((handle->db[i].status == DB_ON) && handle->db[i].dbh) {
-				if((handle->db[i].failover_time < (time(NULL) - expire_time)) && (handle->db[i].failover_time != UL_DB_ZERO_TIME)){
-					LM_ERR("%s: failover_time: %ld, now: %ld, delta: %ld, now going to reset failover time\n", __FUNCTION__, 
-						(long int)handle->db[i].failover_time, (long int)time(NULL), (long int)(time(NULL) - handle->db[i].failover_time));
+				if ((handle->db[i].failover_time
+						< (time(NULL)
+								- cfg_get(p_usrloc, p_usrloc_cfg, expire_time)))
+						&& (handle->db[i].failover_time != UL_DB_ZERO_TIME)) {
+					LM_ERR("%s: failover_time: %ld, now: %ld, delta: %ld, now going to reset failover time\n", __FUNCTION__,
+							(long int)handle->db[i].failover_time, (long int)time(NULL), (long int)(time(NULL) - handle->db[i].failover_time));
 					if(db_reset_failover_time(handle, handle->db[i].no) < 0) {
 						LM_ERR("could not reset failover time for id %i, db %i.\n",
 							handle->id, handle->db[i].no);
