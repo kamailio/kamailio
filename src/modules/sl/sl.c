@@ -367,7 +367,7 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 		LM_ERR("invalid SIP message type\n");
 		return -1;
 	}
-	if(code!=NULL) {
+	if(code!=NULL && code->len>0) {
 		if(code->len!=3) {
 			LM_ERR("invalid reply code value %.*s\n", code->len, code->s);
 			return -1;
@@ -382,16 +382,12 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 			return -1;
 		}
 	}
-	if(reason!=NULL && reason->len<=0) {
-		LM_ERR("invalid reply reason value\n");
-		return -1;
-	}
 	/* backup old values */
 	oldscode[0] = msg->first_line.u.reply.status.s[0];
 	oldscode[1] = msg->first_line.u.reply.status.s[1];
 	oldscode[2] = msg->first_line.u.reply.status.s[2];
 	oldncode = msg->first_line.u.reply.statuscode;
-	if(code!=NULL) {
+	if(code!=NULL && code->len>0) {
 		/* update status code directly in msg buffer */
 		msg->first_line.u.reply.statuscode = (code->s[0]-'0')*100
 			+ (code->s[1]-'0')*10 + code->s[2]-'0';
@@ -400,7 +396,7 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 		msg->first_line.u.reply.status.s[2] = code->s[2];
 
 	}
-	if(reason!=NULL) {
+	if(reason!=NULL && reason->len>0) {
 		ldel = del_lump(msg,
 					msg->first_line.u.reply.reason.s - msg->buf,
 					msg->first_line.u.reply.reason.len,
@@ -419,7 +415,7 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 		memcpy(rbuf, reason->s, reason->len);
 		ladd = insert_new_lump_after(ldel, rbuf, reason->len, 0);
 		if (ladd==0) {
-			LOG(L_ERR, "failed to add reason lump: %.*s\n",
+			LM_ERR("failed to add reason lump: %.*s\n",
 				reason->len, reason->s);
 			pkg_free(rbuf);
 			ret = -1;
@@ -428,14 +424,14 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 	}
 	ret = forward_reply_nocb(msg);
 restore:
-	if(reason!=NULL) {
+	if(reason!=NULL && reason->len>0) {
 		if(ldel!=NULL) {
 			remove_lump(msg, ldel);
 			/* ladd is liked in the 'after' list inside ldel,
 			 * destroyed together, no need for its own remove operation */
 		}
 	}
-	if(code!=NULL) {
+	if(code!=NULL && code->len>0) {
 		msg->first_line.u.reply.statuscode = oldncode;
 		msg->first_line.u.reply.status.s[0] = oldscode[0];
 		msg->first_line.u.reply.status.s[1] = oldscode[1];
@@ -519,6 +515,11 @@ static sr_kemi_t sl_kemi_exports[] = {
 	{ str_init("sl"), str_init("sl_reply_error"),
 		SR_KEMIP_INT, sl_reply_error,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sl"), str_init("sl_forward_reply"),
+		SR_KEMIP_INT, w_sl_forward_reply,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
