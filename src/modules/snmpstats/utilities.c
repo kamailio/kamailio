@@ -1,5 +1,5 @@
-/* 
- * SNMPStats Module 
+/*
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -50,13 +50,13 @@ static cfg_ctx_t  *ctx = NULL;
 
 /*!
  * This function copies an Kamailio "str" datatype into a '\\0' terminated char*
- * string. 
+ * string.
  *
  * \note Make sure to free the memory allocated to *copiedString, when you no
  *       longer have any use for it. (It is allocated with shm_malloc(), so make
- *       sure to deallocate it with shm_free()) 
+ *       sure to deallocate it with shm_free())
  */
-int convertStrToCharString(str *strToConvert, char **copiedString) 
+int convertStrToCharString(str *strToConvert, char **copiedString)
 {
 	/* We want enough space for the string, plus 1 for the '\0' character. */
 	*copiedString = shm_malloc(sizeof(char) * (strToConvert->len + 1));
@@ -75,7 +75,7 @@ int convertStrToCharString(str *strToConvert, char **copiedString)
 
 /*! Silently returns 1 if the supplied parameters are sane.  Otherwise, an error
  * message is logged for parameterName, and 0 returned. */
-int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName) 
+int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName)
 {
 	char *theString = (char *)val;
 
@@ -89,7 +89,7 @@ int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName)
 	/* An empty string was supplied.  We consider this illegal */
 	if (theString==0 || (theString[0])==0) {
 		LM_ERR("the %s parameter was specified  with an empty string\n",
-				parameterName); 
+				parameterName);
 		return 0;
 	}
 
@@ -101,7 +101,7 @@ int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName)
 /*!
  * This function is a wrapper around the standard statistic framework.  It will
  * return the value of the statistic denoted with statName, or zero if the
- * statistic was not found. 
+ * statistic was not found.
  */
 int get_statistic(char *statName)
 {
@@ -113,7 +113,7 @@ int get_statistic(char *statName)
 	theStr.len = strlen(statName);
 
 	stat_var *theVar = get_stat(&theStr);
-	
+
 	if (theVar==0) {
 		LM_INFO("failed to retrieve statistics for %s\n", statName);
 	} else {
@@ -126,7 +126,7 @@ int get_statistic(char *statName)
 /*! Returns a pointer to an SNMP DateAndTime OCTET STRING representation of the
  * time structure.  Note that the pointer is to static data, so it shouldn't be
  * counted on to be around if this function is called again. */
-char * convertTMToSNMPDateAndTime(struct tm *timeStructure) 
+char * convertTMToSNMPDateAndTime(struct tm *timeStructure)
 {
 	static char dateAndTime[8];
 
@@ -151,14 +151,14 @@ char * convertTMToSNMPDateAndTime(struct tm *timeStructure)
 int config_context_init(void)
 {
 	if (cfg_register_ctx(&ctx, NULL)) {
-		LOG(L_ERR, "cfg_rpc: failed to register cfg context\n");
+		LM_ERR("failed to register cfg context\n");
 		return -1;
 	}
 
 	return 0;
 }
 
-/*! \brief Get config framework variable 
+/*! \brief Get config framework variable
  * type will return cfg_type - CFG_VAR_INT, CFG_VAR_STRING, CFG_VAR_STR
  * If type is CFG_VAR_UNSET then call failed and return value should be ignored.
 */
@@ -179,13 +179,14 @@ int snmp_cfg_get_int(char *arg_group, char *arg_name, unsigned int *type)
 
 	res = cfg_get_by_name(ctx, &group, NULL, &name, &val, &val_type);
 	if (res < 0) {
-		LM_ERR("Failed to get the variable\n");
+		LM_ERR("failed to get the variable\n");
 		return -1;
 	} else if (res > 0) {
-		LM_ERR("Variable exists, but it is not readable via RPC interface\n");
+		LM_ERR("fariable exists, but it is not readable via RPC interface\n");
 		return -1;
 	}
-	LM_DBG("Config framework variable %s:%s retrieved %d\n", arg_group, arg_name, (int)(long) val);
+	LM_DBG("xonfig framework variable %s:%s retrieved %d\n",
+			arg_group, arg_name, (int)(long) val);
 	*type = val_type;
 	return (int) (long) val;
 }
