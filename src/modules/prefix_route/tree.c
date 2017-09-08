@@ -72,7 +72,7 @@ struct tree_item *tree_item_alloc(void)
 
 	root = (struct tree_item *)shm_malloc(sizeof(*root));
 	if (NULL == root) {
-		LOG(L_CRIT, "tree_item_alloc: shared memory alloc failed\n");
+		LM_CRIT("shared memory alloc failed\n");
 		return NULL;
 	}
 
@@ -107,7 +107,7 @@ void tree_item_free(struct tree_item *item)
  * Add a route prefix rule to the tree
  */
 int tree_item_add(struct tree_item *root, const char *prefix,
-		  const char *route, int route_ix)
+			const char *route, int route_ix)
 {
 	struct tree_item *item;
 	const char *p;
@@ -129,7 +129,7 @@ int tree_item_add(struct tree_item *root, const char *prefix,
 		if (!item->digits[digit]) {
 			item->digits[digit] = tree_item_alloc();
 			if (!item->digits[digit]) {
-				LOG(L_CRIT, "tree_item_add: alloc failed\n");
+				LM_CRIT("alloc failed\n");
 				err = -1;
 				goto out;
 			}
@@ -139,14 +139,13 @@ int tree_item_add(struct tree_item *root, const char *prefix,
 	}
 
 	if (NULL == item) {
-		LOG(L_CRIT, "tree_item_add: internal error (no item)\n");
+		LM_CRIT("internal error (no item)\n");
 		err = -1;
 		goto out;
 	}
 
 	if (item->route > 0) {
-		LOG(L_ERR, "tree_item_add: prefix %s already set to %s\n",
-		    prefix, item->name);
+		LM_ERR("prefix %s already set to %s\n", prefix, item->name);
 	}
 
 	/* Set route number for the tree item */
@@ -158,7 +157,7 @@ int tree_item_add(struct tree_item *root, const char *prefix,
 
 	err = 0;
 
- out:
+out:
 	return err;
 }
 
@@ -267,8 +266,7 @@ static void tree_flush(struct tree *tree)
 		if (refcnt <= 0)
 			break;
 
-		LOG(L_NOTICE, "prefix_route: tree_flush: waiting refcnt=%d\n",
-		    refcnt);
+		LM_NOTICE("waiting refcnt=%d\n", refcnt);
 
 		usleep(100000);
 	};
