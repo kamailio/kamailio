@@ -1,5 +1,4 @@
-/*
- *
+/**
  * gflags module: global flags; it keeps a bitmap of flags
  * in shared memory and may be used to change behaviour
  * of server based on value of the flags. E.g.,
@@ -131,22 +130,22 @@ static int init_db(void)
 
 	db = db_ctx("gflags");
 	if (db == NULL) {
-		ERR("Error while initializing database layer\n");
+		LM_ERR("failure while initializing database layer\n");
 		return -1;
 	}
 	if (db_add_db(db, db_url) < 0) return -1;
 	if (db_connect(db) < 0) return -1;
-	
+
 	/* SELECT name, type, value, flags FROM global_attrs */
 	load_attrs_cmd = db_cmd(DB_GET, db, attr_table, attr_res, NULL, NULL);
 	if (load_attrs_cmd == NULL) {
-		ERR("Error while building db query to load global attributes\n");
+		LM_ERR("failure while building db query to load global attributes\n");
 		return -1;
 	}
 
 	save_gflags_cmd = db_cmd(DB_PUT, db, attr_table, NULL, NULL, values);
 	if (save_gflags_cmd == NULL) {
-		ERR("Error while building db query to save global flags\n");
+		LM_ERR("failure while building db query to save global flags\n");
 		return -1;
 	}
 
@@ -159,11 +158,11 @@ static int set_gflag(struct sip_msg *bar, char *flag_par, char *foo)
 	unsigned long int flag;
 
 	if (!flag_par || ((fparam_t*)flag_par)->type != FPARAM_INT) {
-	  LOG(L_ERR, "gflags:set_gflag: Invalid parameter\n");
-	  return -1;
+		LM_ERR("invalid parameter\n");
+		return -1;
 	}
-	
-	flag=((fparam_t*)flag_par)->v.i; 
+
+	flag=((fparam_t*)flag_par)->v.i;
 
 	(*gflags) |= 1 << flag;
 	return 1;
@@ -174,11 +173,11 @@ static int reset_gflag(struct sip_msg *bar, char *flag_par, char *foo)
 	unsigned long int flag;
 
 	if (!flag_par || ((fparam_t*)flag_par)->type != FPARAM_INT) {
-	  LOG(L_ERR, "gflags:reset_gflag: Invalid parameter\n");
-	  return -1;
+		LM_ERR("invalid parameter\n");
+		return -1;
 	}
-	
-	flag=((fparam_t*)flag_par)->v.i; 
+
+	flag=((fparam_t*)flag_par)->v.i;
 	(*gflags) &= ~ (1 << flag);
 	return 1;
 }
@@ -188,11 +187,11 @@ static int is_gflag(struct sip_msg *bar, char *flag_par, char *foo)
 	unsigned long int flag;
 
 	if (!flag_par || ((fparam_t*)flag_par)->type != FPARAM_INT) {
-	  LOG(L_ERR, "gflags:is_gflag: Invalid parameter\n");
-	  return -1;
+		LM_ERR("invalid parameter\n");
+		return -1;
 	}
-	
-	flag=((fparam_t*)flag_par)->v.i; 
+
+	flag=((fparam_t*)flag_par)->v.i;
 	return ( (*gflags) & (1<<flag)) ? 1 : -1;
 }
 
@@ -216,7 +215,7 @@ static int load_attrs(avp_list_t* global_avps)
 		if (rec->fld[0].flags & DB_NULL ||
 			rec->fld[1].flags & DB_NULL ||
 			rec->fld[3].flags & DB_NULL) {
-			LOG(L_ERR, "gflags:load_attrs: Skipping row containing NULL entries\n");
+			LM_ERR("skipping row containing NULL entries\n");
 			goto skip;
 		}
 
@@ -224,7 +223,7 @@ static int load_attrs(avp_list_t* global_avps)
 
 		name.s = rec->fld[0].v.lstr;
 
-		     /* Test for NULL value */
+		/* Test for NULL value */
 		if (rec->fld[2].flags & DB_NULL) {
 			avp_val.s = 0;
 			avp_val.len = 0;
@@ -241,15 +240,16 @@ static int load_attrs(avp_list_t* global_avps)
 			/* Integer AVP */
 			str2int(&avp_val, (unsigned*)&v.n);
 			if (rec->fld[0].v.lstr.len == (sizeof(AVP_GFLAGS) - 1) &&
-				!strncmp(rec->fld[0].v.lstr.s, AVP_GFLAGS, sizeof(AVP_GFLAGS) - 1)) {
+					!strncmp(rec->fld[0].v.lstr.s, AVP_GFLAGS,
+						sizeof(AVP_GFLAGS) - 1)) {
 				/* Restore gflags */
 				*gflags = v.n;
 			}
 		}
-		
+
 		if (add_avp_list(global_avps, flags, name, v) < 0) {
-			LOG(L_ERR, "gflags:load_attrs: Error while adding global attribute %.*s, skipping\n",
-			    rec->fld[0].v.lstr.len, ZSW(rec->fld[0].v.lstr.s));
+			LM_ERR("failed adding global attribute %.*s, skipping\n",
+					rec->fld[0].v.lstr.len, ZSW(rec->fld[0].v.lstr.s));
 			goto skip;
 		}
 
@@ -266,20 +266,20 @@ static int mod_init(void)
 {
 	gflags=(unsigned int *) shm_malloc(sizeof(unsigned int));
 	if (!gflags) {
-		LOG(L_ERR, "Error: gflags/mod_init: no shmem\n");
+		LM_ERR("no shared memory\n");
 		return -1;
 	}
 	*gflags=initial;
 
 	avps_1 = shm_malloc(sizeof(*avps_1));
 	if (!avps_1) {
-		ERR("can't allocate memory\n");
+		LM_ERR("can't allocate memory\n");
 		return -1;
 	}
 	*avps_1 = NULL;
 	avps_2 = shm_malloc(sizeof(*avps_2));
 	if (!avps_2) {
-		ERR("can't allocate memory\n");
+		LM_ERR("can't allocate memory\n");
 		return -1;
 	}
 	*avps_2 = NULL;
@@ -290,16 +290,16 @@ static int mod_init(void)
 			shm_free(gflags);
 			return -1;
 		}
-		
+
 		if (load_attrs(*active_global_avps) < 0) {
 			db_cmd_free(load_attrs_cmd);
 			db_cmd_free(save_gflags_cmd);
 			db_ctx_free(db);
 			return -1;
 		}
-		
+
 		set_avp_list(AVP_CLASS_GLOBAL, *active_global_avps);
-		
+
 		db_cmd_free(load_attrs_cmd);
 		db_cmd_free(save_gflags_cmd);
 		db_ctx_free(db);
@@ -345,7 +345,7 @@ int save_gflags(unsigned int flags)
 	str fl;
 
 	if (!load_global_attrs) {
-		LOG(L_ERR, "gflags:save_gflags: You must enable load_global_attrs to make flush_gflag work\n");
+		LM_ERR("enable load_global_attrs to make flush_gflag work\n");
 		return -1;
 	}
 
@@ -357,40 +357,39 @@ int save_gflags(unsigned int flags)
 	save_gflags_cmd->vals[3].v.bitmap = SRDB_LOAD_SER;
 
 	if (db_exec(NULL, save_gflags_cmd) < 0) {
-		LOG(L_ERR, "gflags:save_gflag: Unable to store new value\n");
+		LM_ERR("unable to store new value\n");
 		return -1;
 	}
 
-	DBG("gflags:save_gflags: Successfuly stored in database\n");
+	LM_DBG("successfuly stored in database\n");
 	return 0;
 }
 
 static int reload_global_attributes(void)
 {
 	avp_list_t**  new_global_avps;
-  
-  /* Choose new global AVP list and free its old contents */
-  if (active_global_avps == &avps_1) {
-  	destroy_avp_list(avps_2);
+
+	/* Choose new global AVP list and free its old contents */
+	if (active_global_avps == &avps_1) {
+		destroy_avp_list(avps_2);
 		new_global_avps = &avps_2;
-	} 
-	else {
+	} else {
 		destroy_avp_list(avps_1);
 		new_global_avps = &avps_1;
 	}
-    
-  if (load_attrs(*new_global_avps) < 0) {
-  	goto error;
-  }
-  
-  active_global_avps = new_global_avps;
-  set_avp_list(AVP_CLASS_GLOBAL, *active_global_avps);
 
-  return 0;
-    
+	if (load_attrs(*new_global_avps) < 0) {
+		goto error;
+	}
+
+	active_global_avps = new_global_avps;
+	set_avp_list(AVP_CLASS_GLOBAL, *active_global_avps);
+
+	return 0;
+
 error:
 	destroy_avp_list(*new_global_avps);
-  return -1;
+	return -1;
 }
 
 /*
@@ -404,13 +403,13 @@ static int flush_gflags(struct sip_msg* msg, char* s1, char* s2)
 
 
 static const char* rpc_set_doc[] = {
-	"Load a CPL script to the server.", /* Documentation string */
-	0                                   /* Method signature(s) */
+	"Set gflag.", /* Documentation string */
+	0           /* Method signature(s) */
 };
 
 static void rpc_set(rpc_t* rpc, void* c)
 {
-        int flag;
+	int flag;
 
 	if (rpc->scan(c, "d", &flag) < 1) {
 		rpc->fault(c, 400, "Flag number expected");
@@ -424,13 +423,13 @@ static void rpc_set(rpc_t* rpc, void* c)
 
 
 static const char* rpc_is_set_doc[] = {
-	"Load a CPL script to the server.", /* Documentation string */
-	0                                   /* Method signature(s) */
+	"Test if gflag is set.", /* Documentation string */
+	0                      /* Method signature(s) */
 };
 
 static void rpc_is_set(rpc_t* rpc, void* c)
 {
-        int flag;
+	int flag;
 
 	if (rpc->scan(c, "d", &flag) < 1) {
 		rpc->fault(c, 400, "Flag number expected");
@@ -444,13 +443,13 @@ static void rpc_is_set(rpc_t* rpc, void* c)
 
 
 static const char* rpc_reset_doc[] = {
-	"Load a CPL script to the server.", /* Documentation string */
-	0                                   /* Method signature(s) */
+	"Reset gflags.", /* Documentation string */
+	0               /* Method signature(s) */
 };
 
 static void rpc_reset(rpc_t* rpc, void* c)
 {
-        int flag;
+	int flag;
 
 	if (rpc->scan(c, "d", &flag) < 1) {
 		rpc->fault(c, 400, "Flag number expected");
@@ -464,8 +463,8 @@ static void rpc_reset(rpc_t* rpc, void* c)
 
 
 static const char* rpc_flush_doc[] = {
-	"Load a CPL script to the server.", /* Documentation string */
-	0                                   /* Method signature(s) */
+	"Flush gflags.", /* Documentation string */
+	0               /* Method signature(s) */
 };
 
 static void rpc_flush(rpc_t* rpc, void* c)
@@ -477,13 +476,13 @@ static void rpc_flush(rpc_t* rpc, void* c)
 
 
 static const char* rpc_dump_doc[] = {
-	"Load a CPL script to the server.", /* Documentation string */
-	0                                   /* Method signature(s) */
+	"Dump gflags", /* Documentation string */
+	0               /* Method signature(s) */
 };
 
 static void rpc_dump(rpc_t* rpc, void* c)
 {
-        int i;
+	int i;
 	for(i = 0; i < 32; i++) {
 		rpc->add(c, "b", (*gflags >> i) & 1);
 	}
@@ -500,12 +499,12 @@ static const char* rpc_reload_doc[2] = {
 static void rpc_reload(rpc_t* rpc, void* ctx)
 {
 	if (reload_global_attributes() < 0) {
-		LOG(L_ERR, "ERROR: Reloading of global_attrs table has failed\n");
+		LM_ERR("failed reloading of global_attrs table has failed\n");
 		rpc->fault(ctx, 400, "Reloading of global attributes failed");
 	}
 	else {
 		/* reload is successful */
-		LOG(L_INFO, "INFO: global_attrs table reloaded\n");
+		LM_INFO("global_attrs table reloaded\n");
 	}
 }
 
