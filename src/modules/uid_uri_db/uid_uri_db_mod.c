@@ -1,23 +1,21 @@
 /*
- * $Id$
- *
  * Various URI related functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
+ * For a license to use the Kamailio software under conditions
  * other than those described here, or to purchase support for this
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,14 +24,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- *  2003-03-11: New module interface (janakj)
- *  2003-03-16: flags export parameter added (janakj)
- *  2003-03-19  replaces all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-05: default_uri #define used (jiri)
- *  2004-03-20: has_totag introduced (jiri)
- *  2004-06-07  updated to the new DB api (andrei)
  */
 
 
@@ -110,9 +100,12 @@ str default_did	= STR_STATIC_INIT("_default");
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"lookup_user", lookup_user,   1, header_fixup,      REQUEST_ROUTE | FAILURE_ROUTE},
-	{"lookup_user", lookup_user_2, 2, lookup_user_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"check_uri",   check_uri,     1, header_fixup,      REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_user", lookup_user,   1, header_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_user", lookup_user_2, 2, lookup_user_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"check_uri",   check_uri,     1, header_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -171,15 +164,16 @@ static int child_init(int rank)
 
 	db = db_ctx("uri_db");
 	if (db == NULL) {
-		ERR("Error while initializing database layer\n");
+		LM_ERR("failure initializing database layer\n");
 		return -1;
 	}
 	if (db_add_db(db, db_url.s) < 0) goto error;
 	if (db_connect(db) < 0) goto error;
-	
-	lookup_uid_cmd = db_cmd(DB_GET, db, uri_table.s, lookup_uid_columns, lookup_uid_match, NULL);
+
+	lookup_uid_cmd = db_cmd(DB_GET, db, uri_table.s, lookup_uid_columns,
+			lookup_uid_match, NULL);
 	if (lookup_uid_cmd == NULL) {
-		ERR("Error while building db query to load global attributes\n");
+		LM_ERR("failure building db query to load global attributes\n");
 		goto error;
 	}
 	return 0;
@@ -221,16 +215,16 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 		flag = SRDB_IS_FROM;
 
 		if (parse_from_header(msg) < 0) {
-			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing From header\n");
+			LM_ERR("error while parsing From header\n");
 			return -1;
 		}
 		from = get_from(msg);
 		if (!from) {
-			LOG(L_ERR, "uri_db:lookup_uid: Unable to get From username\n");
+			LM_ERR("unable to get From username\n");
 			return -1;
 		}
 		if (parse_uri(from->uri.s, from->uri.len, &puri) < 0) {
-			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing From URI\n");
+			LM_ERR("error while parsing From URI\n");
 			return -1;
 		}
 		lookup_uid_cmd->match[0].v.lstr = puri.user;
@@ -239,17 +233,17 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 		get_to_did(&did, msg);
 		if (!msg->to) {
 			if (parse_headers(msg, HDR_TO_F, 0)==-1 || !msg->to) {
-				ERR("unable to parse To header\n");
+				LM_ERR("unable to parse To header\n");
 				return -1;
 			}
 		}
 		to = get_to(msg);
 		if (!to) {
-			LOG(L_ERR, "uri_db:lookup_uid: Unable to get To body\n");
+			LM_ERR("unable to get To body\n");
 			return -1;
 		}
 		if (parse_uri(to->uri.s, to->uri.len, &puri) < 0) {
-			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing To URI\n");
+			LM_ERR("error while parsing To URI\n");
 			return -1;
 		}
 		lookup_uid_cmd->match[0].v.lstr = puri.user;
@@ -267,35 +261,38 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 	if (did.s && did.len) {
 		lookup_uid_cmd->match[1].v.lstr = did;
 	} else {
-		LOG(L_DBG, "uri_db:lookup_uid: DID not found, using default value\n");
+		LM_DBG("DID not found, using default value\n");
 		lookup_uid_cmd->match[1].v.lstr = default_did;
 	}
 
 	if (db_exec(&res, lookup_uid_cmd) < 0) {
-		LOG(L_ERR, "uri_db:lookup_uid: Error while executing database query\n");
+		LM_ERR("error while executing database query\n");
 		return -1;
 	}
 
 	rec = db_first(res);
 	while(rec) {
 		if (rec->fld[0].flags & DB_NULL ||
-			rec->fld[1].flags & DB_NULL) {
-			LOG(L_ERR, "uri_db:lookup_uid: Bogus line in %s table\n", uri_table.s);
+				rec->fld[1].flags & DB_NULL) {
+			LM_ERR("bogus line in %s table\n", uri_table.s);
 			goto skip;
 		}
 
-		if ((rec->fld[1].v.int4 & SRDB_DISABLED)) goto skip; /* Skip disabled entries */
-		if ((rec->fld[1].v.int4 & SRDB_LOAD_SER) == 0) goto skip; /* Not for SER */
-		if ((rec->fld[1].v.int4 & flag) == 0) goto skip;        /* Not allowed in the header we are interested in */
+		/* Skip disabled entries */
+		if ((rec->fld[1].v.int4 & SRDB_DISABLED)) goto skip;
+		/* Not for SER */
+		if ((rec->fld[1].v.int4 & SRDB_LOAD_SER) == 0) goto skip;
+		/* Not allowed in the header we are interested in */
+		if ((rec->fld[1].v.int4 & flag) == 0) goto skip;
 		goto found;
 
-	skip:
+skip:
 		rec = db_next(res);
 	}
 	ret = -1; /* Not found -> not allowed */
 	goto freeres;
 
- found:
+found:
 	if (store) {
 		uid = rec->fld[0].v.lstr;
 		if (id == USE_FROM) {
@@ -303,18 +300,19 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 		} else {
 			set_to_uid(&uid);
 			if (id == USE_RURI) {
-				     /* store as str|int avp if alias is canonical or not (1,0) */
+				/* store as str|int avp if alias is canonical or not (1,0) */
 				if ((rec->fld[1].v.int4 & SRDB_CANON) != 0) {
 					avp_name.s = canonical_avp;
 					avp_val.s = canonical_avp_val;
-					add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
+					add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR
+							| AVP_VAL_STR, avp_name, avp_val);
 				}
 			}
 		}
 	}
 	ret = 1;
 
- freeres:
+freeres:
 	db_res_free(res);
 	return ret;
 }
@@ -335,98 +333,102 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 
 static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
 {
-    db_res_t* res;
+	db_res_t* res;
 	db_rec_t* rec;
-    str uri, did, uid;
-    struct sip_uri puri;
-    avp_ident_t* avp;
-    int_str avp_val;
-    int flag, ret;
+	str uri, did, uid;
+	struct sip_uri puri;
+	avp_ident_t* avp;
+	int_str avp_val;
+	int flag, ret;
 
-    avp = &((fparam_t*)attr)->v.avp;
+	avp = &((fparam_t*)attr)->v.avp;
 
-    if (!avp) {
-		ERR("lookup_user: Invalid parameter 1, attribute name expected\n");
+	if (!avp) {
+		LM_ERR("invalid parameter 1, attribute name expected\n");
 		return -1;
-    }
+	}
 
-    if (avp->flags & AVP_TRACK_TO) {
+	if (avp->flags & AVP_TRACK_TO) {
 		flag = SRDB_IS_TO;
-    } else {
+	} else {
 		flag = SRDB_IS_FROM;
-    }
+	}
 
-    if (get_str_fparam(&uri, msg, (fparam_t*)select) != 0) {
-		ERR("lookup_user: Unable to get SIP URI from %s\n", ((fparam_t*)select)->orig);
+	if (get_str_fparam(&uri, msg, (fparam_t*)select) != 0) {
+		LM_ERR("unable to get SIP URI from %s\n", ((fparam_t*)select)->orig);
 		return -1;
-    }
+	}
 
-    if (parse_uri(uri.s, uri.len, &puri) < 0) {
-		ERR("Error while parsing URI '%.*s'\n", uri.len, ZSW(uri.s));
+	if (parse_uri(uri.s, uri.len, &puri) < 0) {
+		LM_ERR("error while parsing URI '%.*s'\n", uri.len, ZSW(uri.s));
 		return -1;
-    }
+	}
 
-    if (puri.host.len) {
+	if (puri.host.len) {
 		/* domain name is present */
 		if (dm_get_did(&did, &puri.host) < 0) {
-			DBG("Cannot lookup DID for domain '%.*s', using default value\n", puri.host.len, ZSW(puri.host.s));
+			LM_DBG("cannot lookup DID for domain '%.*s', using default value\n",
+					puri.host.len, ZSW(puri.host.s));
 			did = default_did;
 		}
-    } else {
+	} else {
 		/* domain name is missing -- can be caused by Tel: URI */
-		DBG("There is no domain name, using default value\n");
+		LM_DBG("there is no domain name, using default value\n");
 		did = default_did;
-    }
+	}
 
-    /* don't lookup users with empty username -- wasted DB time */
-    if (puri.user.len==0) {
-    	return -1;
-    }
+	/* don't lookup users with empty username -- wasted DB time */
+	if (puri.user.len==0) {
+		return -1;
+	}
 
 	lookup_uid_cmd->match[0].v.lstr = puri.user;
-    lookup_uid_cmd->match[1].v.lstr = did;
-    uri_type_to_str(puri.type, &(lookup_uid_cmd->match[2].v.lstr));
+	lookup_uid_cmd->match[1].v.lstr = did;
+	uri_type_to_str(puri.type, &(lookup_uid_cmd->match[2].v.lstr));
 
-    if (db_exec(&res, lookup_uid_cmd) < 0) {
-		LOG(L_ERR, "lookup_user: Error in db_query\n");
+	if (db_exec(&res, lookup_uid_cmd) < 0) {
+		LM_ERR("error in db_query\n");
 		return -1;
-    }
+	}
 
 	rec = db_first(res);
 	while(rec) {
 		if (rec->fld[0].flags & DB_NULL ||
-			rec->fld[1].flags & DB_NULL) {
+				rec->fld[1].flags & DB_NULL) {
 			LOG(L_ERR, "lookup_user: Bogus line in %s table\n", uri_table.s);
 			goto skip;
 		}
-		
-		if ((rec->fld[1].v.int4 & SRDB_DISABLED)) goto skip; /* Skip disabled entries */
-		if ((rec->fld[1].v.int4 & SRDB_LOAD_SER) == 0) goto skip; /* Not for SER */
-		if ((rec->fld[1].v.int4 & flag) == 0) goto skip;        /* Not allowed in the header we are interested in */
+
+		/* Skip disabled entries */
+		if ((rec->fld[1].v.int4 & SRDB_DISABLED)) goto skip;
+		/* Not for SER */
+		if ((rec->fld[1].v.int4 & SRDB_LOAD_SER) == 0) goto skip;
+		/* Not allowed in the header we are interested in */
+		if ((rec->fld[1].v.int4 & flag) == 0) goto skip;
 		goto found;
 
-	skip:
+skip:
 		rec = db_next(res);
-    }
+	}
 
-    DBG("lookup_user: UID not found for '%.*s'\n", uri.len, ZSW(uri.s));
-    ret = -1;
-    goto freeres;
+	LM_DBG("UID not found for '%.*s'\n", uri.len, ZSW(uri.s));
+	ret = -1;
+	goto freeres;
 
- found:
+found:
 	uid = rec->fld[0].v.lstr;
-    avp_val.s = uid;
+	avp_val.s = uid;
 
-    if (add_avp(avp->flags | AVP_VAL_STR, avp->name, avp_val) < 0) {
-		ERR("lookup_user: Error while creating attribute\n");
+	if (add_avp(avp->flags | AVP_VAL_STR, avp->name, avp_val) < 0) {
+		LM_ERR("error while creating attribute\n");
 		ret = -1;
-    } else {
+	} else {
 		ret = 1;
-    }
+	}
 
- freeres:
-    db_res_free(res);
-    return ret;
+freeres:
+	db_res_free(res);
+	return ret;
 }
 
 
@@ -443,7 +445,7 @@ static int header_fixup(void** param, int param_no)
 		} else if (!strcasecmp(*param, "To")) {
 			id = USE_TO;
 		} else {
-			LOG(L_ERR, "uri_db:header_fixup Unknown parameter\n");
+			LM_ERR("unknown parameter: %d\n", param_no);
 			return -1;
 		}
 	}
@@ -456,18 +458,18 @@ static int header_fixup(void** param, int param_no)
 
 static int lookup_user_fixup(void** param, int param_no)
 {
-    if (param_no == 1) {
+	if (param_no == 1) {
 		if (fix_param(FPARAM_AVP, param) != 0) {
-			ERR("lookup_user: Invalid parameter 1, attribute expected\n");
+			LM_ERR("invalid parameter 1, attribute expected\n");
 			return -1;
 		}
 		dm_get_did = (domain_get_did_t)find_export("get_did", 0, 0);
 		if (!dm_get_did) {
-			ERR("lookup_user: Could not find domain module\n");
+			LM_ERR("could not find domain module\n");
 			return -1;
 		}
 		return 0;
-    } else {
+	} else {
 		return fixup_var_str_12(param, 2);
-    }
+	}
 }
