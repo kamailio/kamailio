@@ -103,6 +103,9 @@ int inactive_threshold = 1; /* number of replied requests, before a destination
 str ds_ping_method = str_init("OPTIONS");
 str ds_ping_from   = str_init("sip:dispatcher@localhost");
 static int ds_ping_interval = 0;
+int ds_ping_latency_stats = 0;
+int ds_latency_estimator_alpha_i = 900;
+float ds_latency_estimator_alpha = 0.9f;
 int ds_probing_mode  = DS_PROBE_NONE;
 
 static str ds_ping_reply_codes_str= STR_NULL;
@@ -242,6 +245,8 @@ static param_export_t params[]={
 	{"ds_ping_method",     PARAM_STR, &ds_ping_method},
 	{"ds_ping_from",       PARAM_STR, &ds_ping_from},
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
+	{"ds_ping_latency_stats", INT_PARAM, &ds_ping_latency_stats},
+	{"ds_latency_estimator_alpha", INT_PARAM, &ds_latency_estimator_alpha_i},
 	{"ds_ping_reply_codes", PARAM_STR, &ds_ping_reply_codes_str},
 	{"ds_probing_mode",    INT_PARAM, &ds_probing_mode},
 	{"ds_hash_size",       INT_PARAM, &ds_hash_size},
@@ -527,7 +532,12 @@ static int mod_init(void)
 				return -1;
 		}
 	}
-
+	if (ds_latency_estimator_alpha_i > 0 && ds_latency_estimator_alpha_i < 1000) {
+		ds_latency_estimator_alpha = ds_latency_estimator_alpha_i/1000.0f;
+	} else {
+		LM_ERR("invalid ds_latency_estimator_alpha must be between 0 and 1000,"
+				" using default[%.3f]\n", ds_latency_estimator_alpha);
+	}
 	return 0;
 }
 
@@ -1184,6 +1194,7 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 	void *sh;
 	void *vh;
 	void *wh;
+	void *lh; // latency stats handle
 	int j;
 	char c[3];
 	str data = STR_NULL;
@@ -1243,6 +1254,21 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 		} else {
 			if(rpc->struct_add(vh, "Ssd", "URI", &node->dlist[j].uri, "FLAGS",
 					   c, "PRIORITY", node->dlist[j].priority)
+					< 0) {
+				rpc->fault(ctx, 500, "Internal error creating dest struct");
+				return -1;
+			}
+		}
+		if (ds_ping_latency_stats) {
+			if(rpc->struct_add(vh, "{", "LATENCY", &lh) < 0) {
+				rpc->fault(ctx, 500, "Internal error creating dest");
+				return -1;
+			}
+			if (rpc->struct_add(lh, "fffdd", "AVG", node->dlist[j].latency_stats.average,
+					  "STD", node->dlist[j].latency_stats.stdev,
+					  "EST", node->dlist[j].latency_stats.estimate,
+					  "MAX", node->dlist[j].latency_stats.max,
+					  "TIMEOUT", node->dlist[j].latency_stats.timeout)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
