@@ -319,7 +319,6 @@ static param_export_t params[] = {
     {"params_column",            PARAM_STR, &params_col},
     {"hostname_column",          PARAM_STR, &hostname_col},
     {"strip_column",             PARAM_STR, &strip_col},
-    {"prefix_column",            PARAM_STR, &prefix_col},
     {"tag_column",               PARAM_STR, &tag_col},
     {"flags_column",             PARAM_STR, &flags_col},
     {"defunct_column",           PARAM_STR, &defunct_col},
