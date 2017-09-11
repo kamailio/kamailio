@@ -612,7 +612,7 @@ modparam("p_usrloc", "default_db_type", "cluster")
 	</para>
 	<para>
 	<emphasis>
-		Default value is <quote>1</quote>.
+		Default value is <quote>0</quote>.
 	</emphasis>
 	</para>
 	<para>
@@ -640,7 +640,7 @@ modparam("p_usrloc", "db_ops_ruid", 0)
         </para>
         <para>
         <emphasis>
-             Default value is <quote>0</quote>.
+             Default value is <quote>1</quote>.
         </emphasis>
 	</para>
 	<para>
