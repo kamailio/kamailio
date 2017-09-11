@@ -599,7 +599,7 @@ modparam("p_usrloc", "default_db_type", "cluster")
    value. If it is set to 0, the old style using aor, contact and call-id
    is done.
 
-   Default value is “1”.
+   Default value is “0”.
 
    Can be set at runtime, e.g.:
                 $ kamcmd cfg.set_now_int p_usrloc db_ops_ruid 1
@@ -615,7 +615,7 @@ modparam("p_usrloc", "db_ops_ruid", 0)
    UPDATE DB operations. It is recommended to set this parameter if you
    use Cassandra as a DB backend.
 
-   Default value is “0”.
+   Default value is “1”.
 
    Can be set at runtime, e.g.:
                 $ kamcmd cfg.set_now_int p_usrloc db_update_as_insert 1
