@@ -395,7 +395,7 @@ static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
 	while(rec) {
 		if (rec->fld[0].flags & DB_NULL ||
 				rec->fld[1].flags & DB_NULL) {
-			LOG(L_ERR, "lookup_user: Bogus line in %s table\n", uri_table.s);
+			LM_ERR("bogus line in %s table\n", uri_table.s);
 			goto skip;
 		}
 
