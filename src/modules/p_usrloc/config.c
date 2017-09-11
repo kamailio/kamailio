@@ -46,9 +46,9 @@ cfg_def_t	p_usrloc_cfg_def[] = {
 		" Specifies the error value on which a database shall be turned off. "},
 	{"failover_level",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
 		"Specifies the manner a failover is done (1 = turn off, 2 = find a spare) "},
-	{"db_ops_ruid",	CFG_VAR_INT | CFG_ATOMIC, 	0, 0, 0, 0,
+	{"db_ops_ruid",	CFG_VAR_INT | CFG_ATOMIC, 	0, 1, 0, 0,
 		"Set this if you want to update / delete from DB using ruid value "},
-	{"db_update_as_insert",		CFG_VAR_INT | CFG_ATOMIC, 	0, 0, 0, 0,
+	{"db_update_as_insert",		CFG_VAR_INT | CFG_ATOMIC, 	0, 1, 0, 0,
 		"Set this parameter if you want to do INSERT DB operations instead of UPDATE DB operations. "},
 	{0, 0, 0, 0, 0, 0}
 };
