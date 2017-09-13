@@ -2344,7 +2344,7 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 		</programlisting>
 		</section>
 		<section>
-			<title><varname>dlg.end_dlg</varname></title>
+			<title>dlg.end_dlg</title>
 			<para>
 			Terminates an ongoing dialog by sending BYE in both directions.
 			</para>
@@ -2544,21 +2544,23 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 	<section>
 	<title>Event Routes</title>
 		<section>
-			<title><varname>event_route[dialog:start]</varname></title>
+			<title>event_route[dialog:start]</title>
 			<para>
-			Executed when 200OK for INVITE is processed.
+			Executed when 200OK reply for INVITE is processed.
 			</para>
 		</section>
 		<section>
-			<title><varname>event_route[dialog:end]</varname></title>
+			<title>event_route[dialog:end]</title>
 			<para>
-			Executed when BYE is processed or dialog timed out.
+			Executed when the BYE for the call is processed
+			or the dialog timed out.
 			</para>
 		</section>
 		<section>
-			<title><varname>event_route[dialog:failed]</varname></title>
+			<title>event_route[dialog:failed]</title>
 			<para>
-			Executed when dialog is not completed (+300 reply to INVITE).
+			Executed when dialog is not completed (300 or greater reply code
+			to INVITE).
 			</para>
 		</section>
 	</section>
