@@ -471,7 +471,7 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 			avp_value_t cr_new_uri;
 
 			if(rf->dice_max == 0) {
-				LM_ERR("invalid dice_max value\n");
+				LM_ERR("invalid dice_max value (route has probability 0)\n");
 				return -1;
 			}
 			if ((prob = hash_func(msg, hash_source, rf->dice_max)) < 0) {

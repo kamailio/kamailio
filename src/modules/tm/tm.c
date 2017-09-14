@@ -2521,6 +2521,11 @@ static const char* tm_rpc_list_doc[2] = {
 	0
 };
 
+static const char* tm_rpc_clean_doc[2] = {
+	"Clean expired (lifetime exceeded) transactions.",
+	0
+};
+
 
 /* rpc exports */
 static rpc_export_t tm_rpc[] = {
@@ -2532,6 +2537,7 @@ static rpc_export_t tm_rpc[] = {
 	{"tm.t_uac_start", rpc_t_uac_start, rpc_t_uac_start_doc, 0 },
 	{"tm.t_uac_wait",  rpc_t_uac_wait,  rpc_t_uac_wait_doc, RET_ARRAY},
 	{"tm.list",  tm_rpc_list,  tm_rpc_list_doc, RET_ARRAY},
+	{"tm.clean", tm_rpc_clean,  tm_rpc_clean_doc, 0},
 	{0, 0, 0, 0}
 };
 

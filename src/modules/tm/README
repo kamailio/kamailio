@@ -140,6 +140,7 @@ Daniel-Constantin Mierla
               5.5. tm.hash_stats
               5.6. tm.reply
               5.7. tm.reply_callid
+              5.8. tm.clean
 
         6. Event Routes
 
@@ -379,6 +380,7 @@ Chapter 1. Admin Guide
         5.5. tm.hash_stats
         5.6. tm.reply
         5.7. tm.reply_callid
+        5.8. tm.clean
 
    6. Event Routes
 
@@ -2806,6 +2808,7 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
    5.5. tm.hash_stats
    5.6. tm.reply
    5.7. tm.reply_callid
+   5.8. tm.clean
 
 5.1.  tm.list
 
@@ -2877,6 +2880,13 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
        (“.”) char only if there are no headers;
      * body - (optional, may not be present) reply body (if present,
        requires the “Content-Type” and “Content-length” headers)
+
+5.8.  tm.clean
+
+   Trigger an hard clean of expired transactions.
+
+   Parameters:
+     * none
 
 6. Event Routes
 

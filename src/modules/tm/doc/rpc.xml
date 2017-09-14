@@ -177,5 +177,19 @@
 			</para></listitem>
 		</itemizedlist>
 	</section>
+	<section id="tm.rpc.clean">
+		<title>
+		<function moreinfo="none">tm.clean</function>
+		</title>
+		<para>
+		Trigger an hard clean of expired transactions.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
 
 </section>
