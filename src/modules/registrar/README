@@ -808,11 +808,11 @@ modparam("registrar", "flow_timer", 25)
    supports strings of the configured size in the column “contact” of the
    table specified in “save()” function.
 
-   Default value is 255.
+   Default value is 512.
 
    Example 1.28. Set contact_max_size parameter
 ...
-modparam("registrar", "contact_max_size", 500)
+modparam("registrar", "contact_max_size", 1024)
 ...
 
 4. Functions
