@@ -252,7 +252,7 @@ void tm_rpc_hash_stats(rpc_t* rpc, void* c)
 #endif /* TM_HASH_STATS */
 }
 
-/*  hash statistics */
+/* list active transactions */
 void tm_rpc_list(rpc_t* rpc, void* c)
 {
 	int r;
@@ -293,4 +293,11 @@ void tm_rpc_list(rpc_t* rpc, void* c)
 		}
 		unlock_hash(r);
 	}
+}
+
+
+/* rpc command to clean active but very old transactions */
+void tm_rpc_clean(rpc_t* rpc, void* c)
+{
+	tm_clean_lifetime();
 }

@@ -150,5 +150,6 @@ void tm_rpc_hash_stats(rpc_t* rpc, void* c);
 typedef int (*tm_get_stats_f)(struct t_proc_stats *all);
 int tm_get_stats(struct t_proc_stats *all);
 void tm_rpc_list(rpc_t* rpc, void* c);
+void tm_rpc_clean(rpc_t* rpc, void* c);
 
 #endif

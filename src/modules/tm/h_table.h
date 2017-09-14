@@ -607,6 +607,8 @@ inline static void remove_from_hash_table_unsafe(struct cell *p_cell)
 	t_stats_deleted(is_local(p_cell));
 }
 
+void tm_clean_lifetime(void);
+
 /**
  * backup xdata from/to msg context to local var and use T lists
  */
