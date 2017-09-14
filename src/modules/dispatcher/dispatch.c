@@ -31,6 +31,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 #include "../../core/ut.h"
 #include "../../core/trim.h"
@@ -85,6 +86,8 @@ static int *_ds_ping_active = NULL;
 
 extern int ds_force_dst;
 extern str ds_event_callback;
+extern int ds_ping_latency_stats;
+extern float ds_latency_estimator_alpha;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -2271,6 +2274,85 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 	return (ret == 0) ? 1 : -1;
 }
 
+
+static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int latency) {
+	float current_average, current_q;
+	/* after 2^21 smaples, ~24 days at 1s interval, the average becomes weighted moving average */
+	if (latency_stats->count < 2097152)
+		latency_stats->count++;
+	if (latency_stats->count == 1) {
+		latency_stats->stdev = 0.0f;
+		latency_stats->last_q = 0.0f;
+		latency_stats->max = latency;
+		latency_stats->min = latency;
+		latency_stats->average = latency;
+		latency_stats->estimate = latency;
+	}
+	if (latency_stats->min > latency)
+		latency_stats->min = latency;
+	if (latency_stats->max < latency)
+		latency_stats->max = latency;
+
+	/* standard deviation of the average/weighted moving average */
+	if (latency_stats->count > 1) {
+		current_average = latency_stats->average + (latency - latency_stats->average) / latency_stats->count;
+		current_q = latency_stats->last_q + (latency - latency_stats->average)*(latency - current_average);
+		latency_stats->average = current_average;
+		latency_stats->last_q = current_q;
+		latency_stats->stdev = sqrt(current_q/(latency_stats->count-1));
+	}
+	/* exponentialy weighted moving average */
+	if (latency_stats->count < 10) {
+		latency_stats->estimate = latency_stats->average;
+	} else {
+		latency_stats->estimate = latency_stats->estimate*ds_latency_estimator_alpha
+		                          + latency*(1-ds_latency_estimator_alpha);
+	}
+}
+
+int ds_update_latency(int group, str *address, int code)
+{
+	int i = 0;
+	int state = 0;
+	ds_set_t *idx = NULL;
+
+	if(_ds_list == NULL || _ds_list_nr <= 0) {
+		LM_ERR("the list is null\n");
+		return -1;
+	}
+
+	/* get the index of the set */
+	if(ds_get_index(group, *crt_idx, &idx) != 0) {
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+
+	while(i < idx->nr) {
+		if(idx->dlist[i].uri.len == address->len
+				&& strncasecmp(idx->dlist[i].uri.s, address->s, address->len)
+						   == 0) {
+
+			/* destination address found */
+			state = idx->dlist[i].flags;
+			ds_latency_stats_t *latency_stats = &idx->dlist[i].latency_stats;
+			if (code == 408 && latency_stats->timeout < UINT32_MAX) {
+				latency_stats->timeout++;
+			} else {
+				struct timeval now;
+				gettimeofday(&now, NULL);
+				int latency_ms = (now.tv_sec - latency_stats->start.tv_sec)*1000
+			            + (now.tv_usec - latency_stats->start.tv_usec)/1000;
+				latency_stats_update(latency_stats, latency_ms);
+				LM_DBG("[%d]latency[%d]avg[%.2f][%.*s]code[%d]\n", latency_stats->count, latency_ms,
+					 latency_stats->average, address->len, address->s, code);
+			}
+		}
+		i++;
+	}
+	return state;
+}
+
+
 /**
  * Get state for given destination
  */
@@ -2735,6 +2817,8 @@ static void ds_options_callback(
 	uri.len = t->to.len - 8;
 	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s, group %d)\n",
 			ps->code, uri.len, uri.s, group);
+	if (ds_ping_latency_stats)
+		ds_update_latency(group, &uri, ps->code);
 	/* ps->code contains the result-code of the request.
 	 *
 	 * We accept both a "200 OK" or the configured reply as a valid response */
@@ -2805,6 +2889,9 @@ void ds_ping_set(ds_set_t *node)
 					  && ds_default_socket.len > 0) {
 				uac_r.ssock = &ds_default_socket;
 			}
+
+			gettimeofday(&node->dlist[j].latency_stats.start, NULL);
+
 			if(tmb.t_request(&uac_r, &node->dlist[j].uri, &node->dlist[j].uri,
 					   &ds_ping_from, &ds_outbound_proxy)
 					< 0) {
