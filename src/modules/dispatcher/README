@@ -32,6 +32,12 @@ Edited by
 
 Luis Martin
 
+Edited by
+
+Julien Chavanton
+
+   <jchavanton@gmail.com>
+
    Copyright © 2004 FhG FOKUS
 
    Copyright © 2005 Voice Sistem
@@ -41,6 +47,8 @@ Luis Martin
    Copyright © 2014 Olle E. Johansson, Edvina AB
 
    Copyright © 2015 Alessandro Arrichiello, Hewlett Packard
+
+   Copyright © 2017 Julien chavanton, Flowroute
      __________________________________________________________________
 
    Table of Contents
@@ -81,14 +89,16 @@ Luis Martin
               3.24. ds_inactive_threshold (int)
               3.25. ds_ping_reply_codes (string)
               3.26. ds_probing_mode (int)
-              3.27. ds_hash_size (int)
-              3.28. ds_hash_expire (int)
-              3.29. ds_hash_initexpire (int)
-              3.30. ds_hash_check_interval (int)
-              3.31. outbound_proxy (str)
-              3.32. ds_default_socket (str)
-              3.33. ds_timer_mode (int)
-              3.34. event_callback (str)
+              3.27. ds_ping_latency_stats (int)
+              3.28. ds_latency_estimator_alpha (int)
+              3.29. ds_hash_size (int)
+              3.30. ds_hash_expire (int)
+              3.31. ds_hash_initexpire (int)
+              3.32. ds_hash_check_interval (int)
+              3.33. outbound_proxy (str)
+              3.34. ds_default_socket (str)
+              3.35. ds_timer_mode (int)
+              3.36. event_callback (str)
 
         4. Functions
 
@@ -156,23 +166,26 @@ Luis Martin
    1.25. Set the “ds_inactive_threshold” parameter
    1.26. Set the “ds_ping_reply_codes” parameter
    1.27. Set the “ds_probing_mode” parameter
-   1.28. Set the “ds_hash_size” parameter
-   1.29. Set the “ds_hash_expire” parameter
-   1.30. Set the “ds_hash_initexpire” parameter
-   1.31. Set the “ds_hash_check_interval” parameter
-   1.32. Set the “outbound_proxy” parameter
-   1.33. Set the “ds_default_socket” parameter
-   1.34. Set the “ds_timer_mode” parameter
-   1.35. Set event_callback parameter
-   1.36. ds_select_dst usage
-   1.37. ds_select_domain usage
-   1.38. ds_select usage
-   1.39. ds_mark_dst usage
-   1.40. ds_list_exist usage
-   1.41. ds_is_from_list usage
-   1.42. ds_load_unset usage
-   1.43. dispatcher list file
-   1.44. Kamailio config script - sample dispatcher usage
+   1.28. accessing the metrics
+   1.29. Set the “ds_ping_latency_stats” parameter
+   1.30. Set the “ds_hash_size” parameter
+   1.31. Set the “ds_hash_size” parameter
+   1.32. Set the “ds_hash_expire” parameter
+   1.33. Set the “ds_hash_initexpire” parameter
+   1.34. Set the “ds_hash_check_interval” parameter
+   1.35. Set the “outbound_proxy” parameter
+   1.36. Set the “ds_default_socket” parameter
+   1.37. Set the “ds_timer_mode” parameter
+   1.38. Set event_callback parameter
+   1.39. ds_select_dst usage
+   1.40. ds_select_domain usage
+   1.41. ds_select usage
+   1.42. ds_mark_dst usage
+   1.43. ds_list_exist usage
+   1.44. ds_is_from_list usage
+   1.45. ds_load_unset usage
+   1.46. dispatcher list file
+   1.47. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -212,14 +225,16 @@ Chapter 1. Admin Guide
         3.24. ds_inactive_threshold (int)
         3.25. ds_ping_reply_codes (string)
         3.26. ds_probing_mode (int)
-        3.27. ds_hash_size (int)
-        3.28. ds_hash_expire (int)
-        3.29. ds_hash_initexpire (int)
-        3.30. ds_hash_check_interval (int)
-        3.31. outbound_proxy (str)
-        3.32. ds_default_socket (str)
-        3.33. ds_timer_mode (int)
-        3.34. event_callback (str)
+        3.27. ds_ping_latency_stats (int)
+        3.28. ds_latency_estimator_alpha (int)
+        3.29. ds_hash_size (int)
+        3.30. ds_hash_expire (int)
+        3.31. ds_hash_initexpire (int)
+        3.32. ds_hash_check_interval (int)
+        3.33. outbound_proxy (str)
+        3.34. ds_default_socket (str)
+        3.35. ds_timer_mode (int)
+        3.36. event_callback (str)
 
    4. Functions
 
@@ -319,14 +334,16 @@ Chapter 1. Admin Guide
    3.24. ds_inactive_threshold (int)
    3.25. ds_ping_reply_codes (string)
    3.26. ds_probing_mode (int)
-   3.27. ds_hash_size (int)
-   3.28. ds_hash_expire (int)
-   3.29. ds_hash_initexpire (int)
-   3.30. ds_hash_check_interval (int)
-   3.31. outbound_proxy (str)
-   3.32. ds_default_socket (str)
-   3.33. ds_timer_mode (int)
-   3.34. event_callback (str)
+   3.27. ds_ping_latency_stats (int)
+   3.28. ds_latency_estimator_alpha (int)
+   3.29. ds_hash_size (int)
+   3.30. ds_hash_expire (int)
+   3.31. ds_hash_initexpire (int)
+   3.32. ds_hash_check_interval (int)
+   3.33. outbound_proxy (str)
+   3.34. ds_default_socket (str)
+   3.35. ds_timer_mode (int)
+   3.36. event_callback (str)
 
 3.1. list_file (string)
 
@@ -721,7 +738,56 @@ Note
  modparam("dispatcher", "ds_probing_mode", 1)
  ...
 
-3.27. ds_hash_size (int)
+3.27. ds_ping_latency_stats (int)
+
+   Enable latency measurement when pinging nodes
+     * If set to 0, disable latency measurement.
+     * If set to 1, enable latency measurement.
+
+   Default value is “0”.
+
+   Example 1.28. accessing the metrics
+# using the command :
+kamcmd dispatcher.list
+ ...
+DEST: {
+        URI: sip:1.2.3.4
+        FLAGS: AX
+        PRIORITY: 9
+        LATENCY: {
+                AVG: 24.250000 # weigthed moving average for the last few weeks
+                STD: 1.035000  # standard deviation of AVG
+                EST: 25.000000 # short term estimate, see parameter: ds_latency_
+estimator_alpha
+                MAX: 26        # maximun value seen
+                TIMEOUT: 0     # count of ping timeouts
+        }
+}
+ ...
+
+   Example 1.29. Set the “ds_ping_latency_stats” parameter
+ ...
+ modparam("dispatcher", "ds_ping_latency_stats", 1)
+ ...
+
+3.28. ds_latency_estimator_alpha (int)
+
+   The value to be used to control the memory of the estimator EWMA
+   "exponential weighted moving average" or "the speed at which the older
+   samples are dampened" a goog explanation can be found here :
+   http://www.itl.nist.gov/div898/handbook/pmc/section3/pmc324.htm Because
+   Kamailio doesn't support float parameter types, the value in the
+   parameter is divided by 1000 and stored as float. For example, if you
+   want to set the alpha to be 0.75, use value 750 here.
+
+   Default value is “900 => 0.9”.
+
+   Example 1.30. Set the “ds_hash_size” parameter
+ ...
+ modparam("dispatcher", "ds_latency_estimator_alpha", 900)
+ ...
+
+3.29. ds_hash_size (int)
 
    The value to be used as power of two to set the number of slots to hash
    table storing data for call load dispatching (e.g., value 8 will create
@@ -730,24 +796,24 @@ Note
 
    Default value is “0”.
 
-   Example 1.28. Set the “ds_hash_size” parameter
+   Example 1.31. Set the “ds_hash_size” parameter
  ...
  modparam("dispatcher", "ds_hash_size", 9)
  ...
 
-3.28. ds_hash_expire (int)
+3.30. ds_hash_expire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    BYE was received meanwhile.
 
    Default value is “7200”.
 
-   Example 1.29. Set the “ds_hash_expire” parameter
+   Example 1.32. Set the “ds_hash_expire” parameter
  ...
  modparam("dispatcher", "ds_hash_expire", 3600)
  ...
 
-3.29. ds_hash_initexpire (int)
+3.31. ds_hash_initexpire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    200 for INVITE was received meanwhile and state updated with
@@ -755,35 +821,35 @@ Note
 
    Default value is “7200”.
 
-   Example 1.30. Set the “ds_hash_initexpire” parameter
+   Example 1.33. Set the “ds_hash_initexpire” parameter
  ...
  modparam("dispatcher", "ds_hash_initexpire", 60)
  ...
 
-3.30. ds_hash_check_interval (int)
+3.32. ds_hash_check_interval (int)
 
    Time interval in seconds to scan internal hash table with call load
    dispatching data for expired items.
 
    Default value is “30”.
 
-   Example 1.31. Set the “ds_hash_check_interval” parameter
+   Example 1.34. Set the “ds_hash_check_interval” parameter
  ...
  modparam("dispatcher", "ds_hash_check_interval", 60)
  ...
 
-3.31. outbound_proxy (str)
+3.33. outbound_proxy (str)
 
    SIP URI of outbound proxy to be used when sending pings.
 
    By default no outbound proxy is defined.
 
-   Example 1.32. Set the “outbound_proxy” parameter
+   Example 1.35. Set the “outbound_proxy” parameter
  ...
  modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
  ...
 
-3.32. ds_default_socket (str)
+3.34. ds_default_socket (str)
 
    Default socket to be used for sending pings and dispatching requests
    when a gateway has no send socket configured.
@@ -791,12 +857,12 @@ Note
    By default no default socket is defined, the first configuration script
    listen directive is used.
 
-   Example 1.33. Set the “ds_default_socket” parameter
+   Example 1.36. Set the “ds_default_socket” parameter
  ...
  modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
  ...
 
-3.33. ds_timer_mode (int)
+3.35. ds_timer_mode (int)
 
    Specify the timer process to be used by the module for keepalives and
    active dialogs tracking.
@@ -811,12 +877,12 @@ Note
 
    Default value is “0”.
 
-   Example 1.34. Set the “ds_timer_mode” parameter
+   Example 1.37. Set the “ds_timer_mode” parameter
  ...
  modparam("dispatcher", "ds_timer_mode", 1)
  ...
 
-3.34. event_callback (str)
+3.36. event_callback (str)
 
    The name of the function in the kemi configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
@@ -827,7 +893,7 @@ Note
 
    Default value is 'empty' (no function is executed for events).
 
-   Example 1.35. Set event_callback parameter
+   Example 1.38. Set event_callback parameter
 ...
 modparam("dispatcher", "event_callback", "ksr_dispatcher_event")
 ...
@@ -923,7 +989,7 @@ end
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.36. ds_select_dst usage
+   Example 1.39. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -946,7 +1012,7 @@ ds_select_dst("1", "4", "3");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.37. ds_select_domain usage
+   Example 1.40. ds_select_domain usage
 ...
 $var(a) = 4;
 if(ds_select_domain("1", "$var(a)")) {
@@ -970,7 +1036,7 @@ if(ds_select_domain("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.38. ds_select usage
+   Example 1.41. ds_select usage
 ...
 $var(a) = 4;
 if(ds_select("1", "$var(a)")) {
@@ -1021,7 +1087,7 @@ if(ds_select("1", "$var(a)")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.39. ds_mark_dst usage
+   Example 1.42. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1038,7 +1104,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.40. ds_list_exist usage
+   Example 1.43. ds_list_exist usage
 ...
 if(ds_list_exist("10")) {
     ...
@@ -1081,7 +1147,7 @@ if(ds_list_exist("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.41. ds_is_from_list usage
+   Example 1.44. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1115,7 +1181,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.42. ds_load_unset usage
+   Example 1.45. ds_load_unset usage
 ...
 route {
     ...
@@ -1287,7 +1353,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.43. dispatcher list file
+   Example 1.46. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -1312,7 +1378,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.44. Kamailio config script - sample dispatcher usage
+   Example 1.47. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
