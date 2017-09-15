@@ -1083,8 +1083,8 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 #ifdef READ_WS
 static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 {
-	int bytes, size, pos, mask_present;
-	unsigned int len;
+	int bytes;
+	uint32_t size, pos, mask_present, len;
 	char *p;
 	struct tcp_req *r;
 
@@ -1141,22 +1141,27 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 	/* Work out real length */
 	if (len == 126)
 	{
+		/* 2 bytes store the payload size */
 		if (size < pos + 2)
 			goto skip;
 
-		len =	  ((p[pos + 0] & 0xff) <<  8)
-			| ((p[pos + 1] & 0xff) <<  0);
+		len = ((p[pos + 0] & 0xff) <<  8) | ((p[pos + 1] & 0xff) <<  0);
 		pos += 2;
-	}
-	else if (len == 127)
-	{
-		if (size < pos + 8)
+	} else if (len == 127) {
+		/* 8 bytes store the payload size */
+		if (size < pos + 8) {
 			goto skip;
+		}
 
 		/* Only decoding the last four bytes of the length...
 		   This limits the size of WebSocket messages that can be
 		   handled to 2^32 - which should be plenty for SIP! */
-		len =	  ((p[pos + 4] & 0xff) << 24)
+		if((p[pos] & 0xff)!=0 || (p[pos + 1] & 0xff)!=0
+				|| (p[pos + 2] & 0xff)!=0 || (p[pos + 3] & 0xff)!=0) {
+			LM_WARN("advertised lenght is too large (more than 2^32)\n");
+			goto skip;
+		}
+		len = ((p[pos + 4] & 0xff) << 24)
 			| ((p[pos + 5] & 0xff) << 16)
 			| ((p[pos + 6] & 0xff) <<  8)
 			| ((p[pos + 7] & 0xff) <<  0);
@@ -1171,6 +1176,12 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 		pos += 4;
 	}
 
+	/* check if advertised lenght fits in read buffer */
+	if(len>=r->b_size) {
+		LM_WARN("advertised lenght (%u) greater than buffer size (%u)\n",
+				len, r->b_size);
+		goto skip;
+	}
 	/* Now check the whole message has been received */
 	if (size < pos + len)
 		goto skip;
