@@ -428,7 +428,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 							r->state=(newstate); break; \
 						crlf_default_skip_case; \
 					}
-	
+
 	#define change_state_case(state0, upper, lower, newstate)\
 					case state0: \
 							  change_state(upper, lower, newstate); \
@@ -437,6 +437,22 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 
 
 	r=&c->req;
+	if(r->parsed<r->buf || r->parsed>r->buf+r->b_size) {
+		if(r->parsed<r->buf && (unsigned char)r->state==H_SKIP_EMPTY) {
+			/* give it a chance to parse from beginning */
+			LM_WARN("resetting parsed pointer (buf:%p parsed:%p bsize:%u)\n",
+				r->buf, r->parsed, r->b_size);
+			r->parsed = r->buf;
+		} else {
+			LM_ERR("out of bounds parsed pointer (buf:%p parsed:%p bsize:%u)\n",
+				r->buf, r->parsed, r->b_size);
+			r->parsed = r->buf;
+			r->content_len=0;
+			r->error=TCP_REQ_BAD_LEN;
+			r->state=H_SKIP; /* skip state now */
+			return -1;
+		}
+	}
 	/* if we still have some unparsed part, parse it first, don't do the read*/
 	if (unlikely(r->parsed<r->pos)){
 		bytes=0;
