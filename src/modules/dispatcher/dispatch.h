@@ -163,7 +163,7 @@ typedef struct _ds_latency_stats {
 	float average;  // weigthed average, estimate of the last few weeks
 	float stdev;    // last standard deviation
 	float estimate; // short term estimate, EWMA exponential weighted moving average
-	float last_q;   // q for N-1
+	double m2;      // sum of squares, used for recursive variance calculation
 	int32_t count;
 	uint32_t timeout;
 } ds_latency_stats_t;
