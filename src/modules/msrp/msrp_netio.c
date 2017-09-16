@@ -43,7 +43,7 @@ int msrp_forward_frame(msrp_frame_t *mf, int flags)
 	if ((msrp_uri_to_dstinfo(0, &dst, uac_r->dialog->send_sock, snd_flags,
 						uac_r->dialog->hooks.next_hop, PROTO_NONE)==0) ||
 				(dst.send_sock==0)){
-			LOG(L_ERR, "no send socket found\n");
+			LM_ERR("no send socket found\n");
 			return -1;
 		}
 #endif
@@ -158,7 +158,7 @@ done:
 			LM_WARN("TCP/TLS connection not found\n");
 			return -1;
 		}
-	
+
 		if (unlikely((con->rcv.proto == PROTO_WS || con->rcv.proto == PROTO_WSS)
 				&& sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
 			ws_event_info_t wsev;
@@ -333,13 +333,13 @@ struct dest_info *msrp_uri_to_dstinfo(struct dns_srv_handle* dns_h,
 		LM_ERR("bad msrp uri: %.*s\n", uri->len, uri->s );
 		return 0;
 	}
-	
+
 	if (parsed_uri.scheme_no==MSRP_SCHEME_MSRPS){
 		dst->proto = PROTO_TLS;
 	} else {
 		dst->proto = PROTO_TCP;
 	}
-	
+
 	dst->send_flags=sflags;
 	host=&parsed_uri.host;
 	port = parsed_uri.port_no;
@@ -371,20 +371,20 @@ struct dest_info *msrp_uri_to_dstinfo(struct dns_srv_handle* dns_h,
 				return dst; /* found a good one */
 			}
 		} while(dns_srv_handle_next(dns_h, err));
-		ERR("no corresponding socket for \"%.*s\" af %d\n", host->len, 
+		LM_ERR("no corresponding socket for \"%.*s\" af %d\n", host->len,
 				ZSW(host->s), dst->to.s.sa_family);
 		/* try to continue */
 		return dst;
 	}
 
 	if (sip_hostport2su(&dst->to, host, port, &dst->proto)!=0){
-		ERR("failed to resolve \"%.*s\"\n", host->len, ZSW(host->s));
+		LM_ERR("failed to resolve \"%.*s\"\n", host->len, ZSW(host->s));
 		return 0;
 	}
 	dst->send_sock = get_send_socket2(force_send_socket, &dst->to,
 			dst->proto, 0);
 	if (dst->send_sock==0) {
-		ERR("no corresponding socket for af %d\n", dst->to.s.sa_family);
+		LM_ERR("no corresponding socket for af %d\n", dst->to.s.sa_family);
 		/* try to continue */
 	}
 	return dst;
