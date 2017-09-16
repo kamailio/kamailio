@@ -1303,12 +1303,12 @@ insert_candidates(struct sip_msg *msg, char *where, str *ip, unsigned int port,
 
 	anchor = anchor_lump(msg, where - msg->buf, 0, 0);
 	if (anchor == 0) {
-		LOG(L_ERR, "insert_candidates: can't get anchor\n");
+		LM_ERR("can't get anchor\n");
 		pkg_free(buf);
 		return -1;
 	}
 	if (insert_new_lump_before(anchor, buf, at - buf, 0) == 0) {
-		LM_ERR("insert_candidates: insert_new_lump_before failed\n");
+		LM_ERR("insert_new_lump_before failed\n");
 		pkg_free(buf);
 		return -1;
 	}
