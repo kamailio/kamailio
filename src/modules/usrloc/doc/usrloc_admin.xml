@@ -1268,7 +1268,8 @@ modparam("usrloc", "db_timer_clean", 1)
 				<emphasis>Q</emphasis> - Q value of the contact
 			</para></listitem>
 			<listitem><para>
-				<emphasis>path</emphasis> value of the contact
+				<emphasis>path</emphasis> value with the Path vector (use '0'
+				or '.' if it should not be set)
 			</para></listitem>
 			<listitem><para>
 				<emphasis>flags</emphasis> - internal USRLOC flags of the
@@ -1282,7 +1283,23 @@ modparam("usrloc", "db_timer_clean", 1)
 				<emphasis>methods</emphasis> - mask with supported requests
 				of the contact
 			</para></listitem>
+			<listitem><para>
+				<emphasis>received</emphasis> (optional) value with the
+				received-from address (source address) (use '0'
+				or '.' if it should not be set). Format:
+				sip:srcip:srcport;transport=abc
+			</para></listitem>
+			<listitem><para>
+				<emphasis>socket</emphasis> (optional) value with the local
+				socket address (use '0' or '.' if it should not be set). Format:
+				proto:localip:localport
+			</para></listitem>
 		</itemizedlist>
+		<para>
+			Note: the position of parameters is relevant, in the case of
+			optional parameters, use '0' or '.' for parameters that should not
+			be set which are positioned before any parameter that has to be set.
+		</para>
 	</section>
 
 	<section id="usrloc.r.db_users">
