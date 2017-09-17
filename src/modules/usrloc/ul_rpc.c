@@ -556,6 +556,23 @@ static const char* ul_rpc_flush_doc[2] = {
 	0
 };
 
+/**
+ * test if a rpc parameter is set
+ * - used for optional parameters which can be given '.' or '0' value
+ *   in order to indicate is not intended to be set
+ * - return: 1 if parameter is set; 0 if parameter is not set
+ */
+int ul_rpc_is_param_set(str *p)
+{
+	if(p==NULL || p->len==0 || p->s==NULL)
+		return 0;
+	if(p->len>1)
+		return 1;
+	if((strncmp(p->s, ".", 1)==0) || (strncmp(p->s, "0", 1)==0))
+		return 0;
+	return 1;
+}
+
 /*!
  * \brief Add a new contact for an address of record
  * \note Expects 9 parameters: table name, AOR, contact, expires, Q,
@@ -567,6 +584,8 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	str aor = {0, 0};
 	str contact = {0, 0};
 	str path = {0, 0};
+	str received = {0, 0};
+	str socket = {0, 0};
 	str temp = {0, 0};
 	double dtemp;
 	ucontact_info_t ci;
@@ -583,10 +602,10 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Not enough parameters or wrong format");
 		return;
 	}
-	if(path.len==1 && (strncmp(path.s, "0", 1)==0))	{
-		LM_DBG("path == 0 -> unset\n");
-	} else {
+	if(ul_rpc_is_param_set(&path)) {
 		ci.path = &path;
+	} else {
+		LM_DBG("path == 0 -> unset\n");
 	}
 	LM_DBG("ret: %d table:%.*s aor:%.*s contact:%.*s expires:%d"
 			" dtemp:%f path:%.*s flags:%d bflags:%d methods:%d\n",
