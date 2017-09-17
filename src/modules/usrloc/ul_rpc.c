@@ -584,7 +584,6 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	str aor = {0, 0};
 	str contact = {0, 0};
 	str path = {0, 0};
-	str received = {0, 0};
 	str socket = {0, 0};
 	str temp = {0, 0};
 	double dtemp;
@@ -594,11 +593,12 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	udomain_t *dom;
 	int ret;
 
-	memset( &ci, 0, sizeof(ucontact_info_t));
+	memset(&ci, 0, sizeof(ucontact_info_t));
 
-	ret = rpc->scan(ctx, "SSSdfSddd", &table, &aor, &contact, &ci.expires,
-			&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods);
-	if ( ret != 9) {
+	ret = rpc->scan(ctx, "SSSdfSddd*SS", &table, &aor, &contact, &ci.expires,
+			&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods, &ci.received,
+			&socket);
+	if (ret < 9) {
 		rpc->fault(ctx, 500, "Not enough parameters or wrong format");
 		return;
 	}
@@ -606,6 +606,19 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 		ci.path = &path;
 	} else {
 		LM_DBG("path == 0 -> unset\n");
+	}
+	if(ret>9) {
+		/* received parameter */
+		if(!ul_rpc_is_param_set(&ci.received)) {
+			ci.received.s = 0;
+			ci.received.len = 0;
+		}
+	}
+	if(ret>10) {
+		/* socket parameter */
+		if(ul_rpc_is_param_set(&socket)) {
+			ci.sock = lookup_local_socket(&socket);
+		}
 	}
 	LM_DBG("ret: %d table:%.*s aor:%.*s contact:%.*s expires:%d"
 			" dtemp:%f path:%.*s flags:%d bflags:%d methods:%d\n",
@@ -624,7 +637,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	}
 
 	/* process the aor */
-	if ( rpc_fix_aor(&aor) != 0 ) {
+	if (rpc_fix_aor(&aor) != 0 ) {
 		rpc->fault(ctx, 500, "Domain missing in AOR");
 		return;
 	}
@@ -636,13 +649,13 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	}
 	ci.ruid = _ul_sruid.uid;
 
-	lock_udomain( dom, &aor);
+	lock_udomain(dom, &aor);
 
-	ret = get_urecord( dom, &aor, &r);
+	ret = get_urecord(dom, &aor, &r);
 	if(ret==1) {
-		if (insert_urecord( dom, &aor, &r) < 0)
+		if (insert_urecord(dom, &aor, &r) < 0)
 		{
-			unlock_udomain( dom, &aor);
+			unlock_udomain(dom, &aor);
 			rpc->fault(ctx, 500, "Can't insert record");
 			return;
 		}
@@ -651,7 +664,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 		if (get_ucontact( r, &contact, &rpc_ul_cid, &rpc_ul_path,
 					RPC_UL_CSEQ+1, &c) < 0)
 		{
-			unlock_udomain( dom, &aor);
+			unlock_udomain(dom, &aor);
 			rpc->fault(ctx, 500, "Can't get record");
 			return;
 		}
@@ -670,22 +683,22 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 		if (update_ucontact( r, c, &ci) < 0)
 		{
 			release_urecord(r);
-			unlock_udomain( dom, &aor);
+			unlock_udomain(dom, &aor);
 			rpc->fault(ctx, 500, "Can't update contact");
 			return;
 		}
 	} else {
-		if ( insert_ucontact( r, &contact, &ci, &c) < 0 )
+		if ( insert_ucontact(r, &contact, &ci, &c) < 0 )
 		{
 			release_urecord(r);
-			unlock_udomain( dom, &aor);
+			unlock_udomain(dom, &aor);
 			rpc->fault(ctx, 500, "Can't insert contact");
 			return;
 		}
 	}
 
 	release_urecord(r);
-	unlock_udomain( dom, &aor);
+	unlock_udomain(dom, &aor);
 	return;
 }
 
