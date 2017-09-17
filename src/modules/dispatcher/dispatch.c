@@ -2274,15 +2274,16 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 	return (ret == 0) ? 1 : -1;
 }
 
-
 static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int latency) {
-	float current_average, current_q;
-	/* after 2^21 smaples, ~24 days at 1s interval, the average becomes weighted moving average */
-	if (latency_stats->count < 2097152)
+	/* after 2^21 ~24 days at 1s interval, the average becomes a weighted average */
+	if (latency_stats->count < 2097152) {
 		latency_stats->count++;
+	} else { /* We adjust the sum of squares used by the oneline algorithm proportionally */
+		latency_stats->m2 -= latency_stats->m2/latency_stats->count;
+	}
 	if (latency_stats->count == 1) {
 		latency_stats->stdev = 0.0f;
-		latency_stats->last_q = 0.0f;
+		latency_stats->m2 = 0.0f;
 		latency_stats->max = latency;
 		latency_stats->min = latency;
 		latency_stats->average = latency;
@@ -2293,13 +2294,14 @@ static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int l
 	if (latency_stats->max < latency)
 		latency_stats->max = latency;
 
-	/* standard deviation of the average/weighted moving average */
+	/* standard deviation using oneline algorithm */
+	/* https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm */
 	if (latency_stats->count > 1) {
-		current_average = latency_stats->average + (latency - latency_stats->average) / latency_stats->count;
-		current_q = latency_stats->last_q + (latency - latency_stats->average)*(latency - current_average);
-		latency_stats->average = current_average;
-		latency_stats->last_q = current_q;
-		latency_stats->stdev = sqrt(current_q/(latency_stats->count-1));
+		float delta = latency - latency_stats->average;
+		latency_stats->average += delta/latency_stats->count;
+		float delta2 = latency - latency_stats->average;
+		latency_stats->m2 += delta*delta2;
+		latency_stats->stdev = sqrt(latency_stats->m2 / (latency_stats->count-1));
 	}
 	/* exponentialy weighted moving average */
 	if (latency_stats->count < 10) {
