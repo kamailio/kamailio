@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2013 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
@@ -204,7 +202,7 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 
 	switch(pvs.len)
 	{
-		case 4: 
+		case 4:
 			if(strncmp(pvs.s, "addr", 4)==0)
 				dpv->type = 0;
 			else if(strncmp(pvs.s, "type", 4)==0)
@@ -215,7 +213,7 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 				dpv->type = 3;
 			else goto error;
 			break;
-		case 5: 
+		case 5:
 			if(strncmp(pvs.s, "count", 5)==0)
 				dpv->type = 4;
 			else goto error;
@@ -537,7 +535,7 @@ int pv_parse_hn_name(pv_spec_p sp, str *in)
 
 	switch(in->len)
 	{
-		case 1: 
+		case 1:
 			if(strncmp(in->s, "n", 1)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else if(strncmp(in->s, "f", 1)==0)

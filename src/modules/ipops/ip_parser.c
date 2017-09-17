@@ -26,14 +26,14 @@ enum enum_ip_type ip_parser_execute(const char *str, size_t len)
   p = str;
   pe = str+len;
 
-  
+
 #line 36 "ip_parser.c"
 	{
 	cs = ip_parser_start;
 	}
 
 #line 58 "ip_parser.rl"
-  
+
 #line 43 "ip_parser.c"
 	{
 	if ( p == pe )
