@@ -351,7 +351,7 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Missing command parameter");
 		return;
 	}
-	
+
 	if(cname.len==4 && strncmp(cname.s, "list", 4)==0) {
 		cmode = 1;
 	} else if(cname.len==4 && strncmp(cname.s, "diff", 4)==0) {
