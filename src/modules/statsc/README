@@ -73,8 +73,8 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded along this module:
-     * various - for getting access to the statistics exported by these
-       modules.
+     * various - (optional, e.g., sl, tm, usrloc) for getting access to
+       the statistics exported by these modules.
 
 2.2. External Libraries or Applications
 
