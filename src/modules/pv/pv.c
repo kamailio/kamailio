@@ -906,6 +906,9 @@ int pv_evalx_fixup(void** param, int param_no)
 	return 0;
 }
 
+/**
+ *
+ */
 int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt)
 {
 	pv_spec_t *ispec=NULL;
@@ -925,6 +928,41 @@ int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt)
 	}
 
 	if(pv_eval_str(msg, &val.rs, &tstr)<0){
+		LM_ERR("cannot eval reparsed value of second parameter\n");
+		return -1;
+	}
+
+	val.flags = PV_VAL_STR;
+	if(ispec->setf(msg, &ispec->pvp, EQ_T, &val)<0) {
+		LM_ERR("setting PV failed\n");
+		goto error;
+	}
+
+	return 1;
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+int ki_pv_evalx(sip_msg_t *msg, str *dst, str *fmt)
+{
+	pv_value_t val;
+	pv_spec_t *ispec=NULL;
+
+	if(dst==NULL || dst->s==NULL || dst->len<=0) {
+		LM_ERR("invalid destination var name\n");
+		return -1;
+	}
+	ispec = pv_cache_get(dst);
+	if(ispec==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", dst->len, dst->s);
+		return -1;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	if(pv_eval_str(msg, &val.rs, fmt)<0) {
 		LM_ERR("cannot eval reparsed value of second parameter\n");
 		return -1;
 	}
@@ -1007,6 +1045,11 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	},
 	{ str_init("pvx"), str_init("xavp_params_explode"),
 		SR_KEMIP_INT, ki_xavp_params_explode,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("evalx"),
+		SR_KEMIP_INT, ki_pv_evalx,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
