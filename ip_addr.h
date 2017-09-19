@@ -148,8 +148,8 @@ typedef struct sr_net_info {
 #define SND_F_FORCE_SOCKET		4 /* send socket in dst is forced */
 
 struct snd_flags {
-	unsigned char f;          /* snd flags */
-	unsigned char blst_imask; /* blacklist ignore mask */
+	unsigned short f;          /* snd flags */
+	unsigned short blst_imask; /* blacklist ignore mask */
 };
 
 
