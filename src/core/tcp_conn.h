@@ -199,7 +199,7 @@ struct tcp_connection{
 	struct tcp_req req; /* request data */
 	atomic_t refcnt;
 	enum sip_protos type; /* PROTO_TCP or a protocol over it, e.g. TLS */
-	unsigned short flags; /* connection related flags */
+	unsigned int flags; /* connection related flags */
 	snd_flags_t send_flags; /* special send flags */
 	enum tcp_conn_states state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
