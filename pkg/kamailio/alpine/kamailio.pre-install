@@ -1,0 +1,6 @@
+#!/bin/sh
+
+addgroup -S kamailio 2>/dev/null
+adduser -S -D -H -h /var/empty -s /sbin/nologin -G kamailio -g kamailio kamailio 2>/dev/null
+
+exit 0
