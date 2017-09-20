@@ -33,7 +33,7 @@ static int n_static_locks=0;
 static gen_lock_set_t* static_locks=0;
 
 /* OpenSSL is thread-safe since 1.1.0 */
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 
 /* "dynamic" locks */
 
@@ -118,7 +118,7 @@ static void locking_f(int mode, int n, const char* file, int line)
 	}
 }
 
-#endif /* openssl < 0x10100000L (1.1.0) */
+#endif /* openssl < 0x10100000L (1.1.0) or LibreSSL */
 
 
 void tls_destroy_locks()
