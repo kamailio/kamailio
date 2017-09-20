@@ -327,12 +327,12 @@ int tps_redis_insert_invite_branch(tps_data_t *td)
 	argc = 0;
 
 	rp = _tps_redis_cbuf;
-	rkey.len = snprintf(rp, TPS_REDIS_DATA_SIZE,
+	rkey.len = snprintf(rp, TPS_REDIS_DATA_SIZE-128,
 					"%.*sINVITE:%.*s:%.*s",
 					_tps_redis_bprefix.len, _tps_redis_bprefix.s,
 					td->a_callid.len, td->a_callid.s,
 					td->b_tag.len, td->b_tag.s);
-	if(rkey.len<0 || rkey.len>=TPS_REDIS_DATA_SIZE) {
+	if(rkey.len<0 || rkey.len>=TPS_REDIS_DATA_SIZE-128) {
 		LM_ERR("error or insufficient buffer size: %d\n", rkey.len);
 		return -1;
 	}
