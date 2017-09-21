@@ -13,6 +13,7 @@
 %bcond_without json
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without perl
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -30,6 +31,7 @@
 %bcond_without json
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without perl
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -47,6 +49,7 @@
 %bcond_without json
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without perl
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -64,6 +67,7 @@
 %bcond_with json
 %bcond_with kazoo
 %bcond_without memcached
+%bcond_without perl
 %bcond_with redis
 %bcond_without sctp
 %bcond_without websocket
@@ -82,6 +86,7 @@
 %bcond_without json
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without perl
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -99,6 +104,7 @@
 %bcond_without json
 %bcond_with kazoo
 %bcond_without memcached
+%bcond_without perl
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -116,6 +122,7 @@
 %bcond_with json
 %bcond_with kazoo
 %bcond_with memcached
+%bcond_with perl
 %bcond_with redis
 %bcond_with sctp
 %bcond_with websocket
@@ -133,6 +140,7 @@
 %bcond_with json
 %bcond_with kazoo
 %bcond_with memcached
+%bcond_without perl
 %bcond_without redis
 %bcond_with sctp
 %bcond_with websocket
@@ -531,8 +539,14 @@ Protocol (SIP)" support for Kamailio.
 %package    perl
 Summary:    Perl extensions and database driver for Kamailio
 Group:      System Environment/Daemons 
-Requires:   mod_perl, kamailio = %ver
+Requires:   kamailio = %ver
+%if 0%{?leap_version}
+Requires:   perl
+BuildRequires:  perl
+%else
+Requires:   mod_perl
 BuildRequires:  mod_perl-devel
+%endif
 
 %description    perl
 Perl extensions and database driver for Kamailio.
