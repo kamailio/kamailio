@@ -144,10 +144,6 @@ static stat_export_t stats[] = {
 	{ "ws_sip_successful_handshakes",      0, &ws_sip_successful_handshakes },
 	{ "ws_msrp_successful_handshakes",     0, &ws_msrp_successful_handshakes },
 
-	/* legacy typo's, fixed in 4.4 */
-	{ "ws_sip_max_concurrent_connectons",  0, &ws_sip_max_concurrent_connections },
-	{ "ws_msrp_max_concurrent_connectons", 0, &ws_msrp_max_concurrent_connections },
-
 	{ 0, 0, 0 }
 };
 
