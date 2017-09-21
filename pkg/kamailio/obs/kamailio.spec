@@ -93,8 +93,8 @@
 %bcond_without xmlrpc
 %endif
 
-%if 0%{?leap_version}
-%define dist_name suse
+%if 0%{?suse_version}
+%define dist_name opensuse
 %define dist_version %{?suse_version}
 %bcond_without cnxcc
 %bcond_with dnssec
@@ -178,7 +178,7 @@ Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
 BuildRequires:  bison, flex
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 BuildRequires:  systemd-mini, shadow
 %endif
 
@@ -218,7 +218,7 @@ Functions for authentication using shared keys.
 Summary:    Berkeley database connectivity for Kamailio
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libdb-4_8
 BuildRequires:  libdb-4_8-devel
 %else
@@ -234,7 +234,7 @@ Berkeley database connectivity for Kamailio.
 Summary:    The carrierroute module for Kamailio
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libconfuse0
 BuildRequires:  libconfuse-devel
 %else
@@ -293,7 +293,7 @@ BuildRequires:  openssl-devel
 Requires:   openssl-libs
 BuildRequires:  openssl-devel
 %endif
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libopenssl1_0_0
 BuildRequires:  libopenssl-devel
 %endif
@@ -361,7 +361,7 @@ Summary:    Async HTTP client module for Kamailio
 Group:      System Environment/Daemons
 Requires:   libevent, kamailio = %ver
 BuildRequires: libevent-devel
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libcurl4
 BuildRequires:  libcurl-devel
 %else
@@ -377,7 +377,7 @@ This module implements protocol functions that use the libcurl to communicate wi
 Summary:    HTTP client module for Kamailio
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libcurl4, libxml2-tools
 BuildRequires:  libcurl-devel, libxml2-devel
 %else
@@ -404,7 +404,7 @@ IMS modules and extensions module for Kamailio.
 Summary:    JSON string handling and RPC modules for Kamailio using JANSSON library
 Group:      System Environment/Daemons
 Requires:   libevent, kamailio = %ver
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjansson-devel
 %else
@@ -423,7 +423,7 @@ Summary:    JSON string handling and RPC modules for Kamailio
 Group:      System Environment/Daemons
 Requires:   libevent, kamailio = %ver
 BuildRequires:  libevent-devel
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjson-c-devel
 %else
@@ -462,7 +462,7 @@ Least cost routing for Kamailio.
 Summary:    LDAP search interface for Kamailio
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   openldap2 libsasl2-3
 BuildRequires:  openldap2-devel cyrus-sasl-devel
 %else
@@ -512,7 +512,7 @@ Summary:    MySQL database connectivity for Kamailio
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
 BuildRequires:  zlib-devel
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libmysqlclient18
 BuildRequires:  libmysqlclient-devel
 %else
@@ -540,7 +540,7 @@ Protocol (SIP)" support for Kamailio.
 Summary:    Perl extensions and database driver for Kamailio
 Group:      System Environment/Daemons 
 Requires:   kamailio = %ver
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   perl
 BuildRequires:  perl
 %else
@@ -557,7 +557,7 @@ Perl extensions and database driver for Kamailio.
 Summary:    PostgreSQL database connectivity for Kamailio
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libpq5
 BuildRequires:  postgresql-devel
 %else
@@ -574,7 +574,7 @@ Summary:    SIP Presence (and RLS, XCAP, etc) support for Kamailio
 Group:      System Environment/Daemons
 Requires:   libxml2, kamailio = %ver, kamailio-xmpp = %ver
 BuildRequires:  libxml2-devel
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libcurl4
 BuildRequires:  libcurl-devel
 %else
@@ -600,7 +600,7 @@ Python extensions for Kamailio.
 Summary:    RADIUS modules for Kamailio
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
-%if 0%{?fedora} || 0%{?leap_version}
+%if 0%{?fedora} || 0%{?suse_version}
 Requires:   freeradius-client
 BuildRequires:  freeradius-client-devel
 %else
@@ -668,7 +668,7 @@ This module collects the Transformations for 3GPP-SMS.
 Summary:    SNMP management interface (scalar statistics) for Kamailio
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libsnmp30
 BuildRequires:  net-snmp-devel
 %else
@@ -751,7 +751,7 @@ Summary:    Non-SIP utitility functions for Kamailio
 Group:      System Environment/Daemons
 Requires:   libxml2, kamailio = %ver
 BuildRequires:  libxml2-devel
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libcurl4
 BuildRequires:  libcurl-devel
 %else
@@ -812,7 +812,7 @@ XMLRPC transport and encoding for Kamailio RPCs and MI commands.
 Summary:    SIP/XMPP IM gateway for Kamailio
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:   libexpat1
 BuildRequires:  libexpat-devel
 %else
@@ -828,7 +828,7 @@ SIP/XMPP IM gateway for Kamailio.
 Summary:        UUID generator for Kamailio
 Group:          System Environment/Daemons
 Requires:   kamailio = %ver
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 Requires:       libuuid1
 BuildRequires:  libuuid-devel
 %else
@@ -849,8 +849,9 @@ ln -s ../obs pkg/kamailio/fedora/26
 mkdir -p pkg/kamailio/rhel
 ln -s ../obs pkg/kamailio/rhel/6
 ln -s ../obs pkg/kamailio/rhel/7
-mkdir -p pkg/kamailio/suse
-ln -s ../obs pkg/kamailio/suse/1315
+mkdir -p pkg/kamailio/opensuse
+ln -s ../obs pkg/kamailio/opensuse/1315
+ln -s ../obs pkg/kamailio/opensuse/1330
 rm -Rf pkg/kamailio/centos
 mkdir -p pkg/kamailio/centos
 ln -s ../obs pkg/kamailio/centos/6
@@ -858,7 +859,7 @@ ln -s ../obs pkg/kamailio/centos/7
 
 
 %build
-%if 0%{?fedora} || 0%{?leap_version}
+%if 0%{?fedora} || 0%{?suse_version}
 export FREERADIUS=1
 %endif
 make cfg prefix=/usr basedir=%{buildroot} cfg_prefix=%{buildroot} doc_prefix=%{buildroot} \
@@ -867,7 +868,7 @@ make cfg prefix=/usr basedir=%{buildroot} cfg_prefix=%{buildroot} doc_prefix=%{b
 make
 make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     jabber ndb_cassandra osp" \
-%if 0%{?fedora} || 0%{?leap_version}
+%if 0%{?fedora} || 0%{?suse_version}
     FREERADIUS=1 \
 %endif
     group_include="kstandard kautheph kberkeley kcarrierroute \
@@ -933,7 +934,7 @@ rm -rf %{buildroot}
 make install
 make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     iptrtpproxy jabber osp" \
-%if 0%{?fedora} || 0%{?leap_version}
+%if 0%{?fedora} || 0%{?suse_version}
     FREERADIUS=1 \
 %endif
     group_include="kstandard kautheph kberkeley kcarrierroute \
@@ -1001,7 +1002,7 @@ install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.service %{b
 install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
 %endif
 
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 mkdir -p %{buildroot}/var/adm/fillup-templates/
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
         %{buildroot}/var/adm/fillup-templates/sysconfig.kamailio
@@ -1011,7 +1012,7 @@ install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
         %{buildroot}%{_sysconfdir}/sysconfig/kamailio
 %endif
 
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 %py_compile -O %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
 %endif
 
@@ -1019,6 +1020,11 @@ install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
 rm -f %{buildroot}%{_libdir}/kamailio/lib*.so
 
 %pre
+%if 0%{?suse_version} == 1330
+if ! /usr/bin/getent group daemon &>/dev/null; then
+    /usr/sbin/groupadd --gid 2 daemon &> /dev/null
+fi
+%endif
 if ! /usr/bin/id kamailio &>/dev/null; then
        /usr/sbin/useradd -r -g daemon -s /bin/false -c "Kamailio daemon" -d %{_libdir}/kamailio kamailio || \
                 %logmsg "Unexpected error adding user \"kamailio\". Aborting installation."
@@ -1031,7 +1037,7 @@ rm -rf %{buildroot}
 %post
 %if "%{?_unitdir}" == ""
 mkdir -p %{_var}/run/kamailio 2> /dev/null || :
-chown kamailio:kamailio %{_var}/run/kamailio 2> /dev/null
+chown kamailio:daemon %{_var}/run/kamailio 2> /dev/null
 /sbin/chkconfig --add kamailio
 %else
 %tmpfiles_create kamailio
@@ -1174,7 +1180,7 @@ fi
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
-%if 0%{?leap_version}
+%if 0%{?suse_version}
 /var/adm/fillup-templates/sysconfig.kamailio
 %else
 %config %{_sysconfdir}/sysconfig/*
