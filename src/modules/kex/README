@@ -78,12 +78,13 @@ Ovidiu Sas
               4.21. core.modules
               4.22. pkg.stats
               4.23. stats.get_statistics
-              4.24. stats.reset_statistics
-              4.25. stats.clear_statistics
-              4.26. system.listMethods
-              4.27. system.methodHelp
-              4.28. system.methodSignature
-              4.29. mod.stats module_name/all pkg/shm/all
+              4.24. stats.fetch
+              4.25. stats.reset_statistics
+              4.26. stats.clear_statistics
+              4.27. system.listMethods
+              4.28. system.methodHelp
+              4.29. system.methodSignature
+              4.30. mod.stats module_name/all pkg/shm/all
 
    List of Examples
 
@@ -153,12 +154,13 @@ Chapter 1. Admin Guide
         4.21. core.modules
         4.22. pkg.stats
         4.23. stats.get_statistics
-        4.24. stats.reset_statistics
-        4.25. stats.clear_statistics
-        4.26. system.listMethods
-        4.27. system.methodHelp
-        4.28. system.methodSignature
-        4.29. mod.stats module_name/all pkg/shm/all
+        4.24. stats.fetch
+        4.25. stats.reset_statistics
+        4.26. stats.clear_statistics
+        4.27. system.listMethods
+        4.28. system.methodHelp
+        4.29. system.methodSignature
+        4.30. mod.stats module_name/all pkg/shm/all
 
 1. Overview
 
@@ -450,12 +452,13 @@ resetdebug();
    4.21. core.modules
    4.22. pkg.stats
    4.23. stats.get_statistics
-   4.24. stats.reset_statistics
-   4.25. stats.clear_statistics
-   4.26. system.listMethods
-   4.27. system.methodHelp
-   4.28. system.methodSignature
-   4.29. mod.stats module_name/all pkg/shm/all
+   4.24. stats.fetch
+   4.25. stats.reset_statistics
+   4.26. stats.clear_statistics
+   4.27. system.listMethods
+   4.28. system.methodHelp
+   4.29. system.methodSignature
+   4.30. mod.stats module_name/all pkg/shm/all
 
 4.1.  core.aliases_list
 
@@ -641,7 +644,27 @@ kamcmd core.modules
                 kamcmd stats.get_statistics unsupported_methods
                 kamcmd stats.get_statistics shmem: fwd_requests fwd_replies
 
-4.24.  stats.reset_statistics
+4.24.  stats.fetch
+
+   Print the list of available internal statistics with a more json
+   friendly output. Each printed statistic is a field in the output
+   structure: {"statsgroup.statsname" : "statsvalue"}. The value is
+   represented as string to accomodate large numbers.
+
+   Parameters: statsid - which statistics to be printed. If set to 'all'
+   then all statistics are printed; if set to 'statsgroup:' then all
+   statistics in the group are printed; if set to 'statsname' then the
+   statistics identified by the name is printed (can be also
+   'statsgroup.stastname' or 'statsgroup:statsname').
+
+   Examples:
+                kamcmd stats.fetch all
+                kamcmd stats.fetch core:
+                kamcmd stats.fetch unsupported_methods
+                kamcmd stats.fetch shmem.free_size
+                kamcmd stats.fetch shmem: fwd_requests fwd_replies
+
+4.25.  stats.reset_statistics
 
    Reset internal statistics.
 
@@ -653,7 +676,7 @@ kamcmd core.modules
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-4.25.  stats.clear_statistics
+4.26.  stats.clear_statistics
 
    Return statistics and reset their value in one command.
 
@@ -665,7 +688,7 @@ kamcmd core.modules
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-4.26.  system.listMethods
+4.27.  system.listMethods
 
    Print list of available RPC commands.
 
@@ -678,15 +701,15 @@ kamcmd core.modules
 kamcmd system.listMethods
 ...
 
-4.27.  system.methodHelp
+4.28.  system.methodHelp
 
    Print the help string for given method.
 
-4.28.  system.methodSignature
+4.29.  system.methodSignature
 
    Returns signature of given method.
 
-4.29.  mod.stats module_name/all pkg/shm/all
+4.30.  mod.stats module_name/all pkg/shm/all
 
    Print private(pkg) or shared(shm) memory currently allocated a given
    module or by all modules.
