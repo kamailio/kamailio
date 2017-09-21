@@ -748,6 +748,26 @@ resetdebug();
 		&kamcmd; stats.get_statistics shmem: fwd_requests fwd_replies
 		</programlisting>
     </section>
+	<section id="kex.r.stats.fetch">
+		<title>
+		<function moreinfo="none">stats.fetch</function>
+		</title>
+		<para>Print the list of available internal statistics.</para>
+		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
+			be printed. If set to 'all' then all statistics are printed; if
+			set to 'statsgroup:' then all statistics in the group are printed;
+			if set to 'statsname' then the statistics identified by the name
+			is printed (can be also 'statsgroup.stastname' or
+			'statsgroup:statsname').</para>
+		<para>Examples:</para>
+        <programlisting  format="linespecific">
+		&kamcmd; stats.fetch all
+		&kamcmd; stats.fetch core:
+		&kamcmd; stats.fetch unsupported_methods
+		&kamcmd; stats.fetch shmem.free_size
+		&kamcmd; stats.fetch shmem: fwd_requests fwd_replies
+		</programlisting>
+    </section>
 	<section id="kex.r.stats.reset_statistics">
 		<title>
 		<function moreinfo="none">stats.reset_statistics</function>
