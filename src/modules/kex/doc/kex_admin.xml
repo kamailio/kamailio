@@ -752,7 +752,10 @@ resetdebug();
 		<title>
 		<function moreinfo="none">stats.fetch</function>
 		</title>
-		<para>Print the list of available internal statistics.</para>
+		<para>Print the list of available internal statistics with a more
+		json friendly output. Each printed statistic is a field in the output
+		structure: {"statsgroup.statsname" : "statsvalue"}. The value is
+		represented as string to accomodate large numbers.</para>
 		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
 			be printed. If set to 'all' then all statistics are printed; if
 			set to 'statsgroup:' then all statistics in the group are printed;
