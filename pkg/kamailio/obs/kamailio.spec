@@ -843,15 +843,6 @@ UUID module for Kamailio.
 %prep
 %setup -n %{name}-%{ver}
 
-ln -s ../obs pkg/kamailio/fedora/24
-ln -s ../obs pkg/kamailio/fedora/25
-ln -s ../obs pkg/kamailio/fedora/26
-mkdir -p pkg/kamailio/rhel
-ln -s ../obs pkg/kamailio/rhel/6
-ln -s ../obs pkg/kamailio/rhel/7
-mkdir -p pkg/kamailio/opensuse
-ln -s ../obs pkg/kamailio/opensuse/1315
-ln -s ../obs pkg/kamailio/opensuse/1330
 rm -Rf pkg/kamailio/centos
 mkdir -p pkg/kamailio/centos
 ln -s ../obs pkg/kamailio/centos/6
