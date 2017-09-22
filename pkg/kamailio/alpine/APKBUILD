@@ -8,7 +8,7 @@ pkgrel=0
 
 # If building from a git snapshot, specify the gitcommit
 # If building a proper release, leave gitcommit blank
-#_gitcommit=65ed9b065c497266a4ecd9760e7c168c69b4c6e8
+_gitcommit=1fe5970917f21e9d69127635e04ba8ae585e2da4
 
 [ ! -z "${_gitcommit}" ] && pkgver="${pkgver}.$(date +%Y%m%d)"
 [ ! -z "${_gitcommit}" ] && _suffix="-${_gitcommit:0:7}"
@@ -236,7 +236,6 @@ done
 
 source="${pkgname}-${pkgver}${_suffix}.tar.gz::https://github.com/kamailio/$pkgname/archive/$_gitcommit.tar.gz
 	0001-kamdbctl.base.patch
-	0003-src_modules_tls_tls_init_c.patch
 	0004-src_core_tcp_read_c.patch
 	kamailio.cfg
 	kamailio.initd
@@ -498,9 +497,8 @@ kazoo() {
 }
 
 
-sha512sums="e31c99c4300c2db6d324ca4253161bd55d634ec854809e75c3058bdea91caea789ff4b7022bfc60c1c38212d359d960b00908c6e257ce3de379082bc430d7794  kamailio-5.1.0.20170920-65ed9b0.tar.gz
+sha512sums="6b4c58fe628270f8927721813607ce080b5e257cca8ace8c7b286c77c7880be258c07f1c7fb5711449cfc1f8841468e6ca647cf2e28be7a8d3dbb316527b7198  kamailio-5.1.0.20170922-1fe5970.tar.gz
 6badfb611c02ffcb4c2e9937731162ea1a4b737f042ed52120e2f96ebb80b5b7d240b5612c9ca565e693eec9b8c52c1ee5db04dfc47d204501021f984b4b11db  0001-kamdbctl.base.patch
-384216758a9c95f019cbf9b548533ae88e2069a9f1f1730c51a36d1b8fe6b7c41ec51196eccaaaf8a70fcb74443a5cf94ee62cfe39772d7b4cda2aecce25e128  0003-src_modules_tls_tls_init_c.patch
 af8362201957eae6b66baf7368c9ca884024209a396d77c5c52180c9aabe13772e9c6513e59721d39503e5bb7a8c1030f5c10301ea9055bddafb7f01ee2f3076  0004-src_core_tcp_read_c.patch
 c1abf69b48847dc8c7ab0d11ef9adb531aa4635f9d44db6933981edc5a47df374664fb24867b19aa64abbcc9777bf1cd0360d9aea54e27b081065928c61e0f0b  kamailio.cfg
 cd6e3b677d803cd78561ad14d9b2589fd35ad0096f48047fdcb4ddc7d9103871357efba3b350946844cb53dbb081210746421fc420c22ac845b90251168a628e  kamailio.initd"
