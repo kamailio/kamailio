@@ -23,7 +23,7 @@ pkggroups="kamailio"
 arch="all"
 license="GPL2+"
 depends=""
-makedepends="bison flex expat-dev postgresql-dev pcre-dev mariadb-dev
+makedepends="bison flex freeradius-client-dev expat-dev lksctp-tools-dev postgresql-dev pcre-dev mariadb-dev
 	libxml2-dev curl-dev unixodbc-dev confuse-dev ncurses-dev sqlite-dev
 	lua-dev openldap-dev libressl-dev net-snmp-dev libuuid libev-dev
 	jansson-dev json-c-dev libevent-dev linux-headers libmemcached-dev
@@ -228,7 +228,7 @@ for _i in db postgres sqlite dbtext mysql \
 	ldap utils tls presence lua ims outbound debugger \
 	extras json websocket authephemeral \
 	uuid ev memcached redis geoip2 jansson \
-	jsdt http_async kazoo; do
+	jsdt http_async kazoo rabbitmq sctp radius; do
 
    subpackages="$subpackages $pkgname-$_i"
    eval "_modules=\"\$_modules \$_mod_list_$_i\""
@@ -273,13 +273,13 @@ build() {
 		DESTDIR="$pkgdir" \
 		cfg_prefix="$pkgdir" \
 		cfg
-	make EMBEDDED_UTF8_DECODE=1 STUN=1 \
+	make EMBEDDED_UTF8_DECODE=1 STUN=1 FREERADIUS=1 \
 		all || return 1
 }
 
 package() {
 	cd "$builddir"
-	make -j1 install || return 1
+	make  FREERADIUS=1 -j1 install || return 1
 
 	# move default config to -doc package and use our own default config
 
@@ -494,6 +494,16 @@ http_async() {
 kazoo() {
 	_generic_pkg "Kazoo VoIP platform support" \
 		"$_mod_list_kazoo"
+}
+
+radius() {
+	_generic_pkg "RADIUS modules for Kamailio" \
+		"$_mod_list_radius"
+}
+
+sctp() {
+	_generic_pkg "SCTP transport for Kamailio" \
+		"$_mod_list_sctp"
 }
 
 
