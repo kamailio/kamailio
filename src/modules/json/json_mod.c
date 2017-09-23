@@ -36,7 +36,7 @@ static int fixup_get_field_free(void** param, int param_no);
 
 /* Exported functions */
 static cmd_export_t cmds[]={
-	{"json_get_field", (cmd_function)json_get_field, 3, 
+	{"json_get_field", (cmd_function)json_get_field, 3,
 		fixup_get_field, fixup_get_field_free, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };

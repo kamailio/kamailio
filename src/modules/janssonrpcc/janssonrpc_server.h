@@ -72,7 +72,7 @@ typedef struct jsonrpc_server_group {
 	struct jsonrpc_server_group* next;
 } jsonrpc_server_group_t;
 
-gen_lock_t* jsonrpc_server_group_lock;
+extern gen_lock_t* jsonrpc_server_group_lock;
 
 typedef struct server_list {
 	jsonrpc_server_t* server;
@@ -80,9 +80,9 @@ typedef struct server_list {
 } server_list_t;
 
 /* where all the servers are stored */
-jsonrpc_server_group_t** global_server_group;
+extern jsonrpc_server_group_t** global_server_group;
 
-int  jsonrpc_parse_server(char *_server, jsonrpc_server_group_t** group_ptr);
+int jsonrpc_parse_server(char *_server, jsonrpc_server_group_t** group_ptr);
 int jsonrpc_server_from_srv(str conn, str srv,
 		unsigned int hwm, jsonrpc_server_group_t** group_ptr);
 

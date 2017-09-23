@@ -50,7 +50,7 @@ struct jsonrpc_request {
 	unsigned int timeout;
 };
 
-jsonrpc_request_t* request_table[JSONRPC_DEFAULT_HTABLE_SIZE];
+extern jsonrpc_request_t* request_table[JSONRPC_DEFAULT_HTABLE_SIZE];
 
 jsonrpc_request_t* create_request(jsonrpc_req_cmd_t* cmd);
 void print_request(jsonrpc_request_t* req);

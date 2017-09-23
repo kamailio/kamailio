@@ -42,6 +42,10 @@
 #include "janssonrpc_io.h"
 #include "janssonrpc_server.h"
 
+jsonrpc_srv_t* global_srv_list = NULL;
+
+unsigned int jsonrpc_min_srv_ttl;
+
 int refresh_srv(jsonrpc_srv_t* srv_obj)
 {
 	DEBUG("Refreshing SRV for %.*s\n", STR(srv_obj->srv));

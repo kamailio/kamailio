@@ -61,6 +61,15 @@ int  pipe_fds[2] = {-1,-1};
 
 struct tm_binds tmb;
 
+/* globals */
+int cmd_pipe;
+str result_pv_str;
+retry_range_t* global_retry_ranges;
+#ifndef TEST
+jansson_to_val_f jsontoval;
+pv_spec_t jsonrpc_result_pv;
+#endif
+
 /*
  * Exported Functions
  */
