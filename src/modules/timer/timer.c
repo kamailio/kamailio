@@ -189,7 +189,7 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 		/* execute post request-script callbacks */
 		exec_post_script_cb(msg, REQUEST_CB_TYPE);
 	end:
-		reset_avps();
+		ksr_msg_env_reset();
 		DEBUG(MODULE_NAME": handler: cleaning up\n");
 	err:
 		free_sip_msg(msg);
