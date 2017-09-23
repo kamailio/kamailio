@@ -23,7 +23,7 @@ pkggroups="kamailio"
 arch="all"
 license="GPL2+"
 depends=""
-makedepends="bison flex freeradius-client-dev expat-dev lksctp-tools-dev postgresql-dev pcre-dev mariadb-dev
+makedepends="bison db-dev flex freeradius-client-dev expat-dev lksctp-tools-dev perl-dev postgresql-dev python2-dev pcre-dev mariadb-dev
 	libxml2-dev curl-dev unixodbc-dev confuse-dev ncurses-dev sqlite-dev
 	lua-dev openldap-dev libressl-dev net-snmp-dev libuuid libev-dev
 	jansson-dev json-c-dev libevent-dev linux-headers libmemcached-dev
@@ -57,7 +57,7 @@ _mod_list_extras="auth_diameter call_control cnxcc dmq domainpolicy log_custom \
 		auth_xkeys"
 
 # - common modules depending on database
-_mod_list_db="acc alias_db auth_db avpops cfg_db db_flatstore \
+_mod_list_db="acc alias_db auth_db avpops cfg_db db_berkeley db_flatstore \
 		db_cluster dialog dispatcher domain drouting group \
 		htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
 		pipelimit prefix_route registrar sipcapture siptrace speeddial \
@@ -172,7 +172,7 @@ _mod_list_oracle="db_oracle"
 _mod_list_json="json jsonrpcc jsonrpcs"
 
 # - modules depending on redis library
-_mod_list_redis="ndb_redis"
+_mod_list_redis="ndb_redis topos_redis"
 
 # - modules depending on mono library
 _mod_list_mono="app_mono"
@@ -228,7 +228,7 @@ for _i in db postgres sqlite dbtext mysql \
 	ldap utils tls presence lua ims outbound debugger \
 	extras json websocket authephemeral \
 	uuid ev memcached redis geoip2 jansson \
-	jsdt http_async kazoo rabbitmq sctp radius; do
+	jsdt http_async kazoo rabbitmq sctp radius perl python; do
 
    subpackages="$subpackages $pkgname-$_i"
    eval "_modules=\"\$_modules \$_mod_list_$_i\""
@@ -504,6 +504,16 @@ radius() {
 sctp() {
 	_generic_pkg "SCTP transport for Kamailio" \
 		"$_mod_list_sctp"
+}
+
+perl() {
+	_generic_pkg "Perl extensions and database driver for Kamailio" \
+		"$_mod_list_perl"
+}
+
+python() {
+	_generic_pkg "Python extensions for Kamailio" \
+		"$_mod_list_python"
 }
 
 

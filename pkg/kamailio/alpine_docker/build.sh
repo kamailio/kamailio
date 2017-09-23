@@ -9,7 +9,7 @@ TMP_TAR=/tmp/kamailio_min.tar.gz
 IMG_TAR=kamailio_img.tar.gz
 
 prepare_build() {
-apk add --no-cache abuild git gcc build-base bison flex expat-dev postgresql-dev pcre-dev mariadb-dev \
+apk add --no-cache abuild git gcc build-base bison db-dev flex expat-dev perl-dev postgresql-dev python2-dev pcre-dev mariadb-dev \
     libxml2-dev curl-dev unixodbc-dev confuse-dev ncurses-dev sqlite-dev lua-dev openldap-dev \
     libressl-dev net-snmp-dev libuuid libev-dev jansson-dev json-c-dev libevent-dev linux-headers \
     libmemcached-dev rabbitmq-c-dev hiredis-dev libmaxminddb-dev libunistring-dev freeradius-client-dev lksctp-tools-dev
