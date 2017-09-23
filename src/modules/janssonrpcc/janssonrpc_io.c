@@ -53,6 +53,10 @@
 
 struct tm_binds tmb;
 
+/* event bases */
+struct event_base* global_ev_base = NULL;
+struct evdns_base* global_evdns_base = NULL;
+
 void cmd_pipe_cb(int fd, short event, void *arg);
 void io_shutdown(int sig);
 
