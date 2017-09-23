@@ -215,7 +215,6 @@ static int child_init(int rank)
 void mod_destroy(void)
 {
 	if(jsonrpc_server_group_lock) {
-		lock_get(jsonrpc_server_group_lock); /* blocking */
 		lock_dealloc(jsonrpc_server_group_lock);
 	}
 
