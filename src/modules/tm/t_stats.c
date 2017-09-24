@@ -258,6 +258,7 @@ void tm_rpc_list(rpc_t* rpc, void* c)
 	int r;
 	void* h;
 	tm_cell_t *tcell;
+	char pbuf[32];
 
 	for (r=0; r<TABLE_ENTRIES; r++) {
 		lock_hash(r);
@@ -272,7 +273,9 @@ void tm_rpc_list(rpc_t* rpc, void* c)
 		}
 		clist_foreach(&_tm_table->entries[r], tcell, next_c)
 		{
-			rpc->struct_add(h, "ddSSSSSsdddd",
+			snprintf(pbuf, 31, "%p", (void*)tcell);
+			rpc->struct_add(h, "sddSSSSSsdddd",
+					"cell", pbuf,
 					"tindex", (unsigned)tcell->hash_index,
 					"tlabel", (unsigned)tcell->label,
 					"method", &tcell->method,
