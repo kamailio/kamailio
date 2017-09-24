@@ -8,7 +8,7 @@ pkgrel=0
 
 # If building from a git snapshot, specify the gitcommit
 # If building a proper release, leave gitcommit blank
-#_gitcommit=65ed9b065c497266a4ecd9760e7c168c69b4c6e8
+_gitcommit=1fe5970917f21e9d69127635e04ba8ae585e2da4
 
 [ ! -z "${_gitcommit}" ] && pkgver="${pkgver}.$(date +%Y%m%d)"
 [ ! -z "${_gitcommit}" ] && _suffix="-${_gitcommit:0:7}"
@@ -23,7 +23,7 @@ pkggroups="kamailio"
 arch="all"
 license="GPL2+"
 depends=""
-makedepends="bison flex expat-dev postgresql-dev pcre-dev mariadb-dev
+makedepends="bison db-dev flex freeradius-client-dev expat-dev lksctp-tools-dev perl-dev postgresql-dev python2-dev pcre-dev mariadb-dev
 	libxml2-dev curl-dev unixodbc-dev confuse-dev ncurses-dev sqlite-dev
 	lua-dev openldap-dev libressl-dev net-snmp-dev libuuid libev-dev
 	jansson-dev json-c-dev libevent-dev linux-headers libmemcached-dev
@@ -57,7 +57,7 @@ _mod_list_extras="auth_diameter call_control cnxcc dmq domainpolicy log_custom \
 		auth_xkeys"
 
 # - common modules depending on database
-_mod_list_db="acc alias_db auth_db avpops cfg_db db_flatstore \
+_mod_list_db="acc alias_db auth_db avpops cfg_db db_berkeley db_flatstore \
 		db_cluster dialog dispatcher domain drouting group \
 		htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
 		pipelimit prefix_route registrar sipcapture siptrace speeddial \
@@ -172,7 +172,7 @@ _mod_list_oracle="db_oracle"
 _mod_list_json="json jsonrpcc jsonrpcs"
 
 # - modules depending on redis library
-_mod_list_redis="ndb_redis"
+_mod_list_redis="ndb_redis topos_redis"
 
 # - modules depending on mono library
 _mod_list_mono="app_mono"
@@ -228,7 +228,7 @@ for _i in db postgres sqlite dbtext mysql \
 	ldap utils tls presence lua ims outbound debugger \
 	extras json websocket authephemeral \
 	uuid ev memcached redis geoip2 jansson \
-	jsdt http_async kazoo; do
+	jsdt http_async kazoo rabbitmq sctp radius perl python; do
 
    subpackages="$subpackages $pkgname-$_i"
    eval "_modules=\"\$_modules \$_mod_list_$_i\""
@@ -236,7 +236,6 @@ done
 
 source="${pkgname}-${pkgver}${_suffix}.tar.gz::https://github.com/kamailio/$pkgname/archive/$_gitcommit.tar.gz
 	0001-kamdbctl.base.patch
-	0003-src_modules_tls_tls_init_c.patch
 	0004-src_core_tcp_read_c.patch
 	kamailio.cfg
 	kamailio.initd
@@ -274,13 +273,13 @@ build() {
 		DESTDIR="$pkgdir" \
 		cfg_prefix="$pkgdir" \
 		cfg
-	make EMBEDDED_UTF8_DECODE=1 STUN=1 \
+	make EMBEDDED_UTF8_DECODE=1 STUN=1 FREERADIUS=1 \
 		all || return 1
 }
 
 package() {
 	cd "$builddir"
-	make -j1 install || return 1
+	make  FREERADIUS=1 -j1 install || return 1
 
 	# move default config to -doc package and use our own default config
 
@@ -497,10 +496,29 @@ kazoo() {
 		"$_mod_list_kazoo"
 }
 
+radius() {
+	_generic_pkg "RADIUS modules for Kamailio" \
+		"$_mod_list_radius"
+}
 
-sha512sums="e31c99c4300c2db6d324ca4253161bd55d634ec854809e75c3058bdea91caea789ff4b7022bfc60c1c38212d359d960b00908c6e257ce3de379082bc430d7794  kamailio-5.1.0.20170920-65ed9b0.tar.gz
+sctp() {
+	_generic_pkg "SCTP transport for Kamailio" \
+		"$_mod_list_sctp"
+}
+
+perl() {
+	_generic_pkg "Perl extensions and database driver for Kamailio" \
+		"$_mod_list_perl"
+}
+
+python() {
+	_generic_pkg "Python extensions for Kamailio" \
+		"$_mod_list_python"
+}
+
+
+sha512sums="6b4c58fe628270f8927721813607ce080b5e257cca8ace8c7b286c77c7880be258c07f1c7fb5711449cfc1f8841468e6ca647cf2e28be7a8d3dbb316527b7198  kamailio-5.1.0.20170922-1fe5970.tar.gz
 6badfb611c02ffcb4c2e9937731162ea1a4b737f042ed52120e2f96ebb80b5b7d240b5612c9ca565e693eec9b8c52c1ee5db04dfc47d204501021f984b4b11db  0001-kamdbctl.base.patch
-384216758a9c95f019cbf9b548533ae88e2069a9f1f1730c51a36d1b8fe6b7c41ec51196eccaaaf8a70fcb74443a5cf94ee62cfe39772d7b4cda2aecce25e128  0003-src_modules_tls_tls_init_c.patch
 af8362201957eae6b66baf7368c9ca884024209a396d77c5c52180c9aabe13772e9c6513e59721d39503e5bb7a8c1030f5c10301ea9055bddafb7f01ee2f3076  0004-src_core_tcp_read_c.patch
 c1abf69b48847dc8c7ab0d11ef9adb531aa4635f9d44db6933981edc5a47df374664fb24867b19aa64abbcc9777bf1cd0360d9aea54e27b081065928c61e0f0b  kamailio.cfg
 cd6e3b677d803cd78561ad14d9b2589fd35ad0096f48047fdcb4ddc7d9103871357efba3b350946844cb53dbb081210746421fc420c22ac845b90251168a628e  kamailio.initd"
