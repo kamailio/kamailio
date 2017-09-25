@@ -248,14 +248,15 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	if(leg==DLG_CALLER_LEG)
 		dlg->from_rr_nb = skip_recs;
 
-	LM_DBG("route_set %.*s, contact %.*s, cseq %.*s and bind_addr %.*s\n",
-		rr_set.len, rr_set.s, contact.len, contact.s,
+	LM_DBG("leg(%d) route_set [%.*s], contact [%.*s], cseq [%.*s]"
+			" and bind_addr [%.*s]\n",
+		leg, rr_set.len, rr_set.s, contact.len, contact.s,
 		cseq.len, cseq.s,
 		msg->rcv.bind_address->sock_str.len,
 		msg->rcv.bind_address->sock_str.s);
 
 	if (dlg_set_leg_info( dlg, tag, &rr_set, &contact, &cseq, leg)!=0) {
-		LM_ERR("dlg_set_leg_info failed\n");
+		LM_ERR("dlg_set_leg_info failed (leg %d)\n", leg);
 		if (rr_set.s) pkg_free(rr_set.s);
 		goto error0;
 	}
