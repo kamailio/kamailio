@@ -2494,6 +2494,30 @@ start_recording();
 		</example>
 	</section>
 
+	<section id="rtpengine.f.stop_recording">
+		<title>
+		<function moreinfo="none">stop_recording()</function>
+		</title>
+		<para>
+		This function will send a signal to the &rtp; relay to record
+		the &rtp; stream flowing through it. See also the option
+		<quote>record-call=off</quote> for rtpengine_manage()/rtpengine_offer(),
+		which offers an alternative for call recording, saving also call
+		metadata from SDP.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>stop_recording</function> usage</title>
+		<programlisting format="linespecific">
+...
+stop_recording();
+...
+		</programlisting>
+		</example>
+	</section>
+
 
 	</section>
 

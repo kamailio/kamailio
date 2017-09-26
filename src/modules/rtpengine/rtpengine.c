@@ -126,6 +126,7 @@ static const char *command_strings[] = {
 	[OP_START_RECORDING]	= "start recording",
 	[OP_QUERY]		= "query",
 	[OP_PING]		= "ping",
+	[OP_STOP_RECORDING]	= "stop recording",
 };
 
 struct minmax_mos_stats {
@@ -166,6 +167,7 @@ struct minmax_stats_vals {
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
 static int start_recording_f(struct sip_msg *, char *, char *);
+static int stop_recording_f(struct sip_msg *, char *, char *);
 static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
@@ -280,6 +282,9 @@ static cmd_export_t cmds[] = {
 		fixup_set_id, 0,
 		ANY_ROUTE},
 	{"start_recording",	(cmd_function)start_recording_f,	0,
+		0, 0,
+		ANY_ROUTE },
+	{"stop_recording",	(cmd_function)stop_recording_f, 	0,
 		0, 0,
 		ANY_ROUTE },
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	0,
@@ -3373,10 +3378,20 @@ static int rtpengine_start_recording_wrap(struct sip_msg *msg, void *d, int more
 	return rtpp_function_call_simple(msg, OP_START_RECORDING, NULL);
 }
 
+static int rtpengine_stop_recording_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_STOP_RECORDING, NULL);
+}
+
 static int
 start_recording_f(struct sip_msg* msg, char *foo, char *bar)
 {
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, NULL, 1);
+}
+
+static int
+stop_recording_f(struct sip_msg* msg, char *foo, char *bar)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_recording_wrap, NULL, 1);
 }
 
 static int rtpengine_rtpstat_wrap(struct sip_msg *msg, void *d, int more) {
@@ -3503,6 +3518,11 @@ static int ki_start_recording(sip_msg_t *msg)
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, NULL, 1);
 }
 
+static int ki_stop_recording(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_recording_wrap, NULL, 1);
+}
+
 static int ki_set_rtpengine_set(sip_msg_t *msg, int r1)
 {
 	rtpp_set_link_t rtpl1;
@@ -3609,6 +3629,11 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     },
     { str_init("rtpengine"), str_init("start_recording"),
         SR_KEMIP_INT, ki_start_recording,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("stop_recording"),
+        SR_KEMIP_INT, ki_stop_recording,
         { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
