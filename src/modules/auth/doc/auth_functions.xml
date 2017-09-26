@@ -57,10 +57,10 @@ if (has_credentials("myrealm")) {
 		The function challenges a user agent. It will generate a
 		WWW-Authorize header field containing a digest challenge, it will
 		put the header field into a response generated from the request the
-		server is processing and send the reply. Upon reception of such a
+		server is processing and send the 401 reply. Upon reception of such a
 		reply the user agent should compute credentials and retry the
 		request. For more information regarding digest authentication
-		see RFC2617.  See module parameter force_stateless_reply
+		see RFC2617. See module parameter force_stateless_reply
 		regarding sending of the reply.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -130,7 +130,7 @@ if (!www_authenticate("$td", "subscriber")) {
 		The function challenges a user agent. It will generate a
 		Proxy-Authorize header field containing a digest challenge, it will
 		put the header field into a response generated from the request the
-		server is processing and send the reply. Upon reception of such a
+		server is processing and send the 407 reply. Upon reception of such a
 		reply the user agent should compute credentials and retry the request.
 		For more information regarding digest authentication see RFC2617.
 		See module parameter force_stateless_reply regarding sending of the reply.
@@ -160,7 +160,9 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 		The function challenges a user agent for authentication. It combines
 		the functions www_challenge() and proxy_challenge(), by calling
 		internally the first one for REGISTER requests and the second one for
-		the rest of other request types.
+		the rest of other request types. In other words, it challenges for
+		authentication by sending a 401 reply for REGISTER requests and 407
+		reply for the other types of SIP requests.
 		</para>
 		<para>Meaning of the parameters the same as for function
 		www_challenge(realm, flags)</para>
