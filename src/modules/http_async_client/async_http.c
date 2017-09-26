@@ -192,6 +192,8 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	aq = param;
 	strncpy(q_id, aq->id, strlen(aq->id));
 	
+	q_id[strlen(aq->id)] = '\0';
+
 	act = (cfg_action_t*)aq->param;
 	cfg_update();
 
