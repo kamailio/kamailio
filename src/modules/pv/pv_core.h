@@ -88,6 +88,9 @@ int pv_get_from_attr(struct sip_msg *msg, pv_param_t *param,
 int pv_get_cseq(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_cseq_body(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_msg_buf(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 

@@ -491,6 +491,21 @@ int pv_get_cseq(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &(get_cseq(msg)->number));
 }
 
+int pv_get_cseq_body(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
+				|| (msg->cseq==NULL)) )
+	{
+		LM_ERR("cannot parse CSEQ header\n");
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &msg->cseq->body);
+}
+
 int pv_get_msg_buf(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
