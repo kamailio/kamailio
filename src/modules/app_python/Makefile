@@ -22,8 +22,6 @@ ifeq ($(OS), freebsd)
 LIBS+=-pthread
 endif
 
-# python2 https://www.python.org/dev/peps/pep-3123/
-DEFS+=-fno-strict-aliasing
 DEFS+=-I${PYTHON_INCDIR}
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
