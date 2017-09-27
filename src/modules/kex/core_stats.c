@@ -518,10 +518,10 @@ static void stats_fetch_all(rpc_t* rpc, void* ctx, char* stat)
 			s_statistic.len = strlen(n);
 			s_stat = get_stat(&s_statistic);
 			if (s_stat) {
+				m = get_stat_module(s_stat);
 				if(m==NULL) {
 					return;
 				}
-				m = get_stat_module(s_stat);
 				for(i=0;  m[i]!=0 && stat[i]!=0; i++) {
 					if(stat[i]!=m[i]) {
 						/* module name mismatch */
