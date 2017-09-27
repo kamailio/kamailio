@@ -536,12 +536,12 @@ static int ki_replace_all(sip_msg_t* msg, str* sre, str* sval)
 	return ret;
 }
 
-static int do_replace_body_f(struct sip_msg* msg, char* key, char* str2, int nobol)
+static int replace_body_all_helper(sip_msg_t* msg, regex_t* re, str* val,
+		int nobol)
 {
 	struct lump* l;
 	regmatch_t pmatch;
 	char* s;
-	int len;
 	char* begin;
 	int off;
 	int ret;
@@ -561,11 +561,10 @@ static int do_replace_body_f(struct sip_msg* msg, char* key, char* str2, int nob
 
 	begin=body.s;
 	ret=-1; /* pessimist: we will not find any */
-	len=strlen(str2);
 	eflags=0; /* match ^ at the beginning of the string*/
 
 	while (begin<msg->buf+msg->len
-				&& regexec((regex_t*) key, begin, 1, &pmatch, eflags)==0) {
+				&& regexec(re, begin, 1, &pmatch, eflags)==0) {
 		off=begin-msg->buf;
 		if (pmatch.rm_so==-1){
 			LM_ERR("offset unknown\n");
@@ -580,13 +579,13 @@ static int do_replace_body_f(struct sip_msg* msg, char* key, char* str2, int nob
 			LM_ERR("del_lump failed\n");
 			return -1;
 		}
-		s=pkg_malloc(len+1);
+		s=pkg_malloc(val->len+1);
 		if (s==0){
 			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str2, len);
-		if (insert_new_lump_after(l, s, len, 0)==0){
+		memcpy(s, val->s, val->len);
+		if (insert_new_lump_after(l, s, val->len, 0)==0){
 			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
@@ -605,12 +604,58 @@ static int do_replace_body_f(struct sip_msg* msg, char* key, char* str2, int nob
 
 static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
 {
-	return do_replace_body_f(msg, key, str2, 1);
+	str val;
+
+	val.s = str2;
+	val.len = strlen(val.s);
+
+	return replace_body_all_helper(msg, (regex_t*)key, &val, 1);
+}
+
+static int ki_replace_body_all(sip_msg_t* msg, str* sre, str* sval)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+
+	ret = replace_body_all_helper(msg, &mre, sval, 1);
+
+	regfree(&mre);
+
+	return ret;
 }
 
 static int replace_body_atonce_f(struct sip_msg* msg, char* key, char* str2)
 {
-	return do_replace_body_f(msg, key, str2, 0);
+	str val;
+
+	val.s = str2;
+	val.len = strlen(val.s);
+
+	return replace_body_all_helper(msg, (regex_t*)key, &val, 0);
+}
+
+static int ki_replace_body_atonce(sip_msg_t* msg, str* sre, str* sval)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+
+	ret = replace_body_all_helper(msg, &mre, sval, 0);
+
+	regfree(&mre);
+
+	return ret;
 }
 
 static int replace_helper(sip_msg_t *msg, regex_t *re, str *val)
@@ -674,12 +719,11 @@ static int ki_replace(sip_msg_t* msg, str* sre, str* sval)
 	return ret;
 }
 
-static int replace_body_f(struct sip_msg* msg, char* key, char* str2)
+static int replace_body_helper(sip_msg_t* msg, regex_t *re, str *val)
 {
 	struct lump* l;
 	regmatch_t pmatch;
 	char* s;
-	int len;
 	char* begin;
 	int off;
 	str body;
@@ -697,21 +741,20 @@ static int replace_body_f(struct sip_msg* msg, char* key, char* str2)
 
 	begin=body.s; /* msg->orig previously .. uri problems */
 
-	if (regexec((regex_t*) key, begin, 1, &pmatch, 0)!=0) return -1;
+	if (regexec(re, begin, 1, &pmatch, 0)!=0) return -1;
 	off=begin-msg->buf;
 
 	if (pmatch.rm_so!=-1){
 		if ((l=del_lump(msg, pmatch.rm_so+off,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0)
 			return -1;
-		len=strlen(str2);
-		s=pkg_malloc(len+1);
+		s=pkg_malloc(val->len+1);
 		if (s==0){
 			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str2, len);
-		if (insert_new_lump_after(l, s, len, 0)==0){
+		memcpy(s, val->s, val->len);
+		if (insert_new_lump_after(l, s, val->len, 0)==0){
 			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
@@ -722,6 +765,33 @@ static int replace_body_f(struct sip_msg* msg, char* key, char* str2)
 	return -1;
 }
 
+static int replace_body_f(struct sip_msg* msg, char* key, char* str2)
+{
+	str val;
+
+	val.s = str2;
+	val.len = strlen(val.s);
+
+	return replace_body_helper(msg, (regex_t*)key, &val);
+}
+
+static int ki_replace_body(sip_msg_t* msg, str* sre, str* sval)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+
+	ret = replace_body_helper(msg, &mre, sval);
+
+	regfree(&mre);
+
+	return ret;
+}
 
 /* sed-perl style re: s/regular expression/replacement/flags */
 static int subst_helper_f(sip_msg_t* msg, struct subst_expr* se)
@@ -3616,6 +3686,21 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("replace_all"),
 		SR_KEMIP_INT, ki_replace_all,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("replace_body"),
+		SR_KEMIP_INT, ki_replace_body,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("replace_body_all"),
+		SR_KEMIP_INT, ki_replace_body_all,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("replace_body_atonce"),
+		SR_KEMIP_INT, ki_replace_body_atonce,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
