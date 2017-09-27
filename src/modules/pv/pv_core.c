@@ -1237,6 +1237,17 @@ int pv_get_proto(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strintval(msg, param, res, &s, (int)msg->rcv.proto);
 }
 
+/* proto id of received message */
+int pv_get_protoid(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	str s;
+	if(msg==NULL)
+		return -1;
+
+	return pv_get_sintval(msg, param, res, (int)msg->rcv.proto);
+}
+
 int pv_get_dset(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {

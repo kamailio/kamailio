@@ -304,6 +304,9 @@ static pv_export_t mod_pvs[] = {
 	{{"pr", (sizeof("pr")-1)}, /* */
 		PVT_OTHER, pv_get_proto, 0,
 		0, 0, 0, 0},
+	{{"prid", (sizeof("prid")-1)}, /* */
+		PVT_OTHER, pv_get_protoid, 0,
+		0, 0, 0, 0},
 	{{"proto", (sizeof("proto")-1)}, /* */
 		PVT_OTHER, pv_get_proto, 0,
 		0, 0, 0, 0},

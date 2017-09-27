@@ -187,6 +187,9 @@ int pv_get_pai(struct sip_msg *msg, pv_param_t *param,
 int pv_get_proto(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_protoid(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_dset(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
