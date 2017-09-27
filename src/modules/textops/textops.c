@@ -455,12 +455,11 @@ static int search_append_body_f(struct sip_msg* msg, char* key, char* str2)
 }
 
 
-static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
+static int replace_all_helper(sip_msg_t* msg, regex_t* re, str* val)
 {
 	struct lump* l;
 	regmatch_t pmatch;
 	char* s;
-	int len;
 	char* begin;
 	int off;
 	int ret;
@@ -468,11 +467,10 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 
 	begin = get_header(msg);
 	ret=-1; /* pessimist: we will not find any */
-	len=strlen(str2);
 	eflags=0; /* match ^ at the beginning of the string*/
 
 	while (begin<msg->buf+msg->len
-				&& regexec((regex_t*) key, begin, 1, &pmatch, eflags)==0) {
+				&& regexec(re, begin, 1, &pmatch, eflags)==0) {
 		off=begin-msg->buf;
 		if (pmatch.rm_so==-1){
 			LM_ERR("offset unknown\n");
@@ -487,13 +485,13 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 			LM_ERR("del_lump failed\n");
 			return -1;
 		}
-		s=pkg_malloc(len+1);
+		s=pkg_malloc(val->len+1);
 		if (s==0){
 			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str2, len);
-		if (insert_new_lump_after(l, s, len, 0)==0){
+		memcpy(s, val->s, val->len);
+		if (insert_new_lump_after(l, s, val->len, 0)==0){
 			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
@@ -507,6 +505,34 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 			eflags|=REG_NOTBOL;
 		ret=1;
 	} /* while found ... */
+	return ret;
+}
+
+static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
+{
+	str val;
+
+	val.s = str2;
+	val.len = strlen(val.s);
+
+	return replace_all_helper(msg, (regex_t*)key, &val);
+}
+
+static int ki_replace_all(sip_msg_t* msg, str* sre, str* sval)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+
+	ret = replace_all_helper(msg, &mre, sval);
+
+	regfree(&mre);
+
 	return ret;
 }
 
@@ -587,32 +613,30 @@ static int replace_body_atonce_f(struct sip_msg* msg, char* key, char* str2)
 	return do_replace_body_f(msg, key, str2, 0);
 }
 
-static int replace_f(struct sip_msg* msg, char* key, char* str2)
+static int replace_helper(sip_msg_t *msg, regex_t *re, str *val)
 {
 	struct lump* l;
 	regmatch_t pmatch;
 	char* s;
-	int len;
 	char* begin;
 	int off;
 
 	begin=get_header(msg); /* msg->orig previously .. uri problems */
 
-	if (regexec((regex_t*) key, begin, 1, &pmatch, 0)!=0) return -1;
+	if (regexec(re, begin, 1, &pmatch, 0)!=0) return -1;
 	off=begin-msg->buf;
 
 	if (pmatch.rm_so!=-1){
 		if ((l=del_lump(msg, pmatch.rm_so+off,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0)
 			return -1;
-		len=strlen(str2);
-		s=pkg_malloc(len+1);
+		s=pkg_malloc(val->len+1);
 		if (s==0){
 			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str2, len);
-		if (insert_new_lump_after(l, s, len, 0)==0){
+		memcpy(s, val->s, val->len);
+		if (insert_new_lump_after(l, s, val->len, 0)==0){
 			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
@@ -621,6 +645,33 @@ static int replace_f(struct sip_msg* msg, char* key, char* str2)
 		return 1;
 	}
 	return -1;
+}
+
+static int replace_f(sip_msg_t* msg, char* key, char* str2)
+{
+	str val;
+
+	val.s = str2;
+	val.len = strlen(val.s);
+	return  replace_helper(msg, (regex_t*)key, &val);
+}
+
+static int ki_replace(sip_msg_t* msg, str* sre, str* sval)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+
+	ret = replace_helper(msg, &mre, sval);
+
+	regfree(&mre);
+
+	return ret;
 }
 
 static int replace_body_f(struct sip_msg* msg, char* key, char* str2)
@@ -3555,6 +3606,16 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("remove_hf_exp"),
 		SR_KEMIP_INT, ki_remove_hf_exp,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("replace"),
+		SR_KEMIP_INT, ki_replace,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("replace_all"),
+		SR_KEMIP_INT, ki_replace_all,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
