@@ -284,9 +284,15 @@ static cmd_export_t cmds[] = {
 	{"start_recording",	(cmd_function)start_recording_f,	0,
 		0, 0,
 		ANY_ROUTE },
+	{"start_recording",	(cmd_function)start_recording_f,	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
 	{"stop_recording",	(cmd_function)stop_recording_f, 	0,
 		0, 0,
 		ANY_ROUTE },
+	{"stop_recording",	(cmd_function)stop_recording_f, 	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	0,
 		0, 0,
 		ANY_ROUTE},
@@ -3375,23 +3381,41 @@ error:
 
 
 static int rtpengine_start_recording_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_START_RECORDING, NULL);
+	return rtpp_function_call_simple(msg, OP_START_RECORDING, d);
 }
 
 static int rtpengine_stop_recording_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_STOP_RECORDING, NULL);
+	return rtpp_function_call_simple(msg, OP_STOP_RECORDING, d);
 }
 
 static int
-start_recording_f(struct sip_msg* msg, char *foo, char *bar)
+start_recording_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, NULL, 1);
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, flags.s, 1);
 }
 
 static int
-stop_recording_f(struct sip_msg* msg, char *foo, char *bar)
+stop_recording_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_recording_wrap, NULL, 1);
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_recording_wrap, flags.s, 1);
 }
 
 static int rtpengine_rtpstat_wrap(struct sip_msg *msg, void *d, int more) {
