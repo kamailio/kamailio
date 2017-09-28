@@ -28,18 +28,18 @@
  * \param api cfgt API
  * \return 0 on success, -1 on failure
  */
-int bind_cfgt(cfgt_api_t* api)
+int bind_cfgt(cfgt_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	if (init_flag==0) {
+	if(init_flag == 0) {
 		LM_ERR("configuration error - trying to bind to cfgt module"
-				" before being initialized\n");
+			   " before being initialized\n");
 		return -1;
 	}
 
-	api->cfgt_process_route   = cfgt_process_route;
+	api->cfgt_process_route = cfgt_process_route;
 	return 0;
 }
