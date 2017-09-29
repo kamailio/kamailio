@@ -67,6 +67,9 @@ cat <<EOF
  db nmatch <table> <key> <value>...... display record from table that has
            ........................... column key equal to value as non-string
  db connect .......................... connect to db server via cli
+ db version add <table> <value> ...... add new value in version table
+ db version set <table> <value> ...... set value in version table
+ db version update <table> <value> ... update value in version table
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_db_ops"
@@ -79,7 +82,7 @@ usage_speeddial() {
 cat <<EOF
  speeddial show <speeddial-id> ....... show speeddial details
  speeddial list <sip-id> ............. list speeddial for uri
- speeddial add <sip-id> <sd-id> <new-uri> [<desc>] ... 
+ speeddial add <sip-id> <sd-id> <new-uri> [<desc>] ...
            ........................... add a speedial (*)
  speeddial rm <sip-id> <sd-id> ....... remove a speeddial (*)
  speeddial help ...................... help message

@@ -1050,6 +1050,32 @@ db_ops() {
 			fi
 			$DBCMDCONNECT
 			;;
+		version)
+			shift
+			if [ $# -ne 3 ] ; then
+				merr "missing parameters"
+				exit 1
+			fi
+			case $1 in
+				add)
+					QUERY="INSERT INTO version (table_name, table_version) VALUES ('$2', $3);"
+					$DBCMD "$QUERY"
+				;;
+				set)
+					QUERY="DELETE FROM version WHERE table_name='$2';"
+					$DBCMD "$QUERY"
+					QUERY="INSERT INTO version (table_name, table_version) VALUES ('$2', $3);"
+					$DBCMD "$QUERY"
+				;;
+				update)
+					QUERY="UPDATE version SET table_version=$3 WHERE table_name='$2';"
+					$DBCMD "$QUERY"
+				;;
+				*)
+					usage_db_ops
+					exit 1
+			esac
+			;;
 		*)
 			usage_db_ops
 			exit 1
