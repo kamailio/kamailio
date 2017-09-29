@@ -237,7 +237,7 @@ static int child_init(int rank)
 	LM_DBG("rank is (%d)\n", rank);
 
 	if(rank==PROC_MAIN) {
-		if(ht_timer_procs>0) {
+		if(ht_has_autoexpire() && ht_timer_procs>0) {
 			for(i=0; i<ht_timer_procs; i++) {
 				if(fork_sync_timer(PROC_TIMER, "HTable Timer", 1 /*socks flag*/,
 						ht_timer, (void*)(long)i, ht_timer_interval)<0) {
