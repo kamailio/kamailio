@@ -30,7 +30,7 @@ db.getCollection("version").insert({ table_name: "imc_rooms", table_version: Num
 db.getCollection("version").insert({ table_name: "lcr_gw", table_version: NumberInt(3) });
 db.getCollection("version").insert({ table_name: "lcr_rule", table_version: NumberInt(3) });
 db.getCollection("version").insert({ table_name: "lcr_rule_target", table_version: NumberInt(1) });
-db.getCollection("version").insert({ table_name: "location", table_version: NumberInt(8) });
+db.getCollection("version").insert({ table_name: "location", table_version: NumberInt(9) });
 db.getCollection("version").insert({ table_name: "location_attrs", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "matrix", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "missed_calls", table_version: NumberInt(4) });

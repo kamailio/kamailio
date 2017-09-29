@@ -1,6 +1,6 @@
 {
   "name": "location",
-  "version": 8,
+  "version": 9,
   "columns": [
     "id": {
       "type": "int",
