@@ -2472,7 +2472,7 @@ rtpengine_manage();
 
 	<section id="rtpengine.f.start_recording">
 		<title>
-		<function moreinfo="none">start_recording()</function>
+		<function moreinfo="none">start_recording([flags])</function>
 		</title>
 		<para>
 		This function will send a signal to the &rtp; relay to record
@@ -2482,6 +2482,12 @@ rtpengine_manage();
 		metadata from SDP.
 		</para>
 		<para>
+		It can take the same parameters as <function>rtpengine_manage().</function>
+		The flags parameter to start_recording can be a configuration variable
+		containing the flags as a string.
+		The call-id flag can be used to start recording for a different call.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 		</para>
 		<example>
@@ -2489,6 +2495,35 @@ rtpengine_manage();
 		<programlisting format="linespecific">
 ...
 start_recording();
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.f.stop_recording">
+		<title>
+		<function moreinfo="none">stop_recording([flags])</function>
+		</title>
+		<para>
+		This function will send a signal to the &rtp; relay to stop recording
+		the &rtp; stream flowing through it. See also the option
+		<quote>record-call=off</quote> for rtpengine_manage()/rtpengine_offer(),
+		which offers an alternative for call recording.
+		</para>
+		<para>
+		It can take the same parameters as <function>rtpengine_manage().</function>
+		The flags parameter to start_recording can be a configuration variable
+		containing the flags as a string.
+		The call-id flag can be used to stop recording for a different call.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>stop_recording</function> usage</title>
+		<programlisting format="linespecific">
+...
+stop_recording();
 ...
 		</programlisting>
 		</example>
