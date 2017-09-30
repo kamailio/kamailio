@@ -6,19 +6,13 @@ Size of container decreased to 50MB (23MB compressed)
 Significantly increased security - removed all libs except libc, busybox, tcpdump, dumpcap, kamailio and dependent libs.
 Docker container is created useing Alpine linux packaging
 
-Used environment variables
---------------------------
-
-1. ```SHM_MEMORY``` - amount of shared memory to allocate for the running Kamailio server (in Mb), default value 64Mb;
-2. ```PKG_MEMORY``` - amount of per-process (package) memory to allocate for Kamailio (in Mb), default value 8Mb
-
 Usage container
 ---------------
 
 ```sh
 docker run --net=host --name kamailio \
            -v /etc/kamailio/:/etc/kamailio \
-           kamailio/kamailio
+           kamailio/kamailio -m 64 -M 8
 ```
 
 systemd unit file
