@@ -119,7 +119,6 @@ make_image_tar() {
     cd $BUILD_ROOT
     tar xzf $TMP_TAR
     /bin/busybox --install -s bin
-    sed -i -e '/mi_fifo/d' etc/kamailio/kamailio.cfg
     tar czf /usr/src/kamailio/pkg/kamailio/alpine_docker/$IMG_TAR *
 }
 
