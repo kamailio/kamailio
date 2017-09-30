@@ -60,6 +60,7 @@ extra_files() {
 /var
 /var/run
 /run
+/tmp
 EOF
 }
 
