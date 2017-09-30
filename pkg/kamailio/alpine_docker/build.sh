@@ -107,8 +107,10 @@ find_binaries() {
     sort $FILELIST_BINARY | sort | uniq > $FILELIST_BINARY.new
     mv -f $FILELIST_BINARY.new $FILELIST_BINARY
 
-    # Resolving simbolic links
+    # Resolving symbolic links and removing duplicates
     cat $FILELIST_BINARY | xargs realpath > $FILELIST_BINARY.new
+    cat $FILELIST_BINARY.new >> $FILELIST_BINARY
+    sort $FILELIST_BINARY | sort | uniq > $FILELIST_BINARY.new
     mv -f $FILELIST_BINARY.new $FILELIST_BINARY
 }
 
