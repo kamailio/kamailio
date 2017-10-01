@@ -8,7 +8,7 @@ pkgrel=0
 
 # If building from a git snapshot, specify the gitcommit
 # If building a proper release, leave gitcommit blank
-_gitcommit=1fe5970917f21e9d69127635e04ba8ae585e2da4
+_gitcommit=c5ffc265cf83c7e329ee8d21c3bafba78b670c58
 
 [ ! -z "${_gitcommit}" ] && pkgver="${pkgver}.$(date +%Y%m%d)"
 [ ! -z "${_gitcommit}" ] && _suffix="-${_gitcommit:0:7}"
@@ -237,7 +237,6 @@ done
 source="${pkgname}-${pkgver}${_suffix}.tar.gz::https://github.com/kamailio/$pkgname/archive/$_gitcommit.tar.gz
 	0001-kamdbctl.base.patch
 	0004-src_core_tcp_read_c.patch
-	kamailio.cfg
 	kamailio.initd
 	"
 
@@ -280,13 +279,6 @@ build() {
 package() {
 	cd "$builddir"
 	make  FREERADIUS=1 -j1 install || return 1
-
-	# move default config to -doc package and use our own default config
-
-	mv "$pkgdir"/etc/kamailio/kamailio.cfg \
-		"$pkgdir"/usr/share/doc/kamailio/
-	install -m644 -D "$srcdir"/kamailio.cfg \
-		"$pkgdir"/etc/kamailio/kamailio.cfg
 
 	install -m755 -D "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
 	install -d -o kamailio "$pkgdir"/var/run/kamailio
@@ -517,8 +509,7 @@ python() {
 }
 
 
-sha512sums="6b4c58fe628270f8927721813607ce080b5e257cca8ace8c7b286c77c7880be258c07f1c7fb5711449cfc1f8841468e6ca647cf2e28be7a8d3dbb316527b7198  kamailio-5.1.0.20170922-1fe5970.tar.gz
+sha512sums="245411ac2445f4865cd09f56a3cfc4d10a64c9a1be90bfb35cfe80149e845c34c1a867ff661bbd9dac1c48a0416bc577b57ae6133edb69e2a2b43d3a2305ffde  kamailio-5.1.0.20170930-c5ffc26.tar.gz
 6badfb611c02ffcb4c2e9937731162ea1a4b737f042ed52120e2f96ebb80b5b7d240b5612c9ca565e693eec9b8c52c1ee5db04dfc47d204501021f984b4b11db  0001-kamdbctl.base.patch
 af8362201957eae6b66baf7368c9ca884024209a396d77c5c52180c9aabe13772e9c6513e59721d39503e5bb7a8c1030f5c10301ea9055bddafb7f01ee2f3076  0004-src_core_tcp_read_c.patch
-c1abf69b48847dc8c7ab0d11ef9adb531aa4635f9d44db6933981edc5a47df374664fb24867b19aa64abbcc9777bf1cd0360d9aea54e27b081065928c61e0f0b  kamailio.cfg
 cd6e3b677d803cd78561ad14d9b2589fd35ad0096f48047fdcb4ddc7d9103871357efba3b350946844cb53dbb081210746421fc420c22ac845b90251168a628e  kamailio.initd"

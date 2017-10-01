@@ -22,6 +22,11 @@ apk add --no-cache abuild git gcc build-base bison db-dev flex expat-dev perl-de
 }
 
 build_and_install(){
+    cd /usr/src/kamailio
+    REPO_OWNER=$(git remote get-url origin 2> /dev/null | sed -e 's:^.*github.com/::' -e 's:/.*\.git::')
+    if [ ! -z "$REPO_OWNER" ]; then
+        sed -i -e "s:github.com/kamailio:github.com/$REPO_OWNER:" /usr/src/kamailio/pkg/kamailio/alpine/APKBUILD
+    fi
     if [ ! -z "$GIT_TAG" ]; then
         sed -i -e "s/^_gitcommit=.*/_gitcommit=$GIT_TAG/" /usr/src/kamailio/pkg/kamailio/alpine/APKBUILD
     fi
@@ -60,6 +65,7 @@ extra_files() {
 /var
 /var/run
 /run
+/tmp
 EOF
 }
 
@@ -101,8 +107,10 @@ find_binaries() {
     sort $FILELIST_BINARY | sort | uniq > $FILELIST_BINARY.new
     mv -f $FILELIST_BINARY.new $FILELIST_BINARY
 
-    # Resolving simbolic links
+    # Resolving symbolic links and removing duplicates
     cat $FILELIST_BINARY | xargs realpath > $FILELIST_BINARY.new
+    cat $FILELIST_BINARY.new >> $FILELIST_BINARY
+    sort $FILELIST_BINARY | sort | uniq > $FILELIST_BINARY.new
     mv -f $FILELIST_BINARY.new $FILELIST_BINARY
 }
 
