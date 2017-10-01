@@ -11,20 +11,20 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
-		This module allows the execution of assemblies of managed code, among 
+		This module allows the execution of assemblies of managed code, among
 		the most popular of which is C# (.NET).
 		It uses the Mono project (http://www.mono-project.com/) to embed the managed
 		code interpreter inside the SIP server, providing fast execution.
 	</para>
 	<para>
 		Besides C#, other languages can be used to build managed assemblies,
-		such as: Java, Python, VisualBasic.NET, JavaScript. For more details on 
+		such as: Java, Python, VisualBasic.NET, JavaScript. For more details on
 		what kind of languages can be used to build managed
 		assemblies, see: http://www.mono-project.com/Languages
 	</para>
@@ -36,7 +36,7 @@
 	<para>
 		There are two ways to execute managed code assemblies: load the code at
 		startup and only execute at runtime, or load and execute at runtime. Only
-		one mode at a time may be used.  The mode is determined by the 'load' 
+		one mode at a time may be used.  The mode is determined by the 'load'
 		parameter and the function used to execute the code.
 	</para>
     </section>
@@ -72,7 +72,7 @@
     </section>
     <section>
 	<title>Parameters</title>
-	<section>
+	<section id="app_mono.p.load">
 	    <title><varname>load</varname> (string)</title>
 	    <para>
 			Set the path to the Mono assembly to be loaded at startup.  You
@@ -93,10 +93,10 @@ modparam("app_mono", "load", "/usr/local/etc/kamailio/mono/myscript.exe")
 	    </example>
 	</section>
 	</section>
-	
+
     <section>
 	<title>Functions</title>
- 	<section>
+	<section id="app_mono.f.mono_exec">
 	    <title>
 		<function moreinfo="none">mono_exec(path [, param])</function>
 	    </title>
@@ -119,8 +119,8 @@ mono_exec("/usr/local/etc/kamailio/mono/myscript.exe");
 </programlisting>
 	    </example>
 	</section>
-	
-	<section>
+
+	<section id="app_mono.mono_run">
 	    <title>
 		<function moreinfo="none">mono_run([param])</function>
 	    </title>
@@ -147,7 +147,7 @@ if(!mono_run("myparam"))
 	    </example>
 	</section>
 	</section>
-	
+
     <section>
 	<title>Usage</title>
 	<para>
