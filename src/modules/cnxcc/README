@@ -41,11 +41,11 @@ Carlos Ruiz Díaz
 
         6. Events
         7. Web Interface
-        8. Sample
+        8. Sample Config
 
    List of Examples
 
-   1.1. dlg_flag
+   1.1.
    1.2. credit_check_period
    1.3. cnxcc_set_max_credit()
    1.4. cnxcc_set_max_time()
@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
 
    6. Events
    7. Web Interface
-   8. Sample
+   8. Sample Config
 
 1. Overview
 
@@ -138,11 +138,11 @@ Chapter 1. Admin Guide
    3.1. redis (integer)
    3.2. credit_check_period (integer)
 
-3.1.  redis (integer)
+3.1. redis (integer)
 
    Redis datasource connection information
 
-   Example 1.1. dlg_flag
+   Example 1.1.
 ...
 modparam("cnxcc", "redis", "addr=127.0.0.1;port=6379;db=1")
 ...
@@ -354,7 +354,7 @@ event_route[cnxcc:call-shutdown]
 
    Link: https://github.com/caruizdiaz/cnxcc-web
 
-8. Sample
+8. Sample Config
 
    Example 1.8. kamailio-cnxcc.cfg
 ...
