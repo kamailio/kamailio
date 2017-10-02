@@ -17,7 +17,7 @@
 	<para>
 		This module was designed to act as a mechanism to limit call duration based on credit information parameters.
 		After getting the credit information of the call being set up, you can instruct the module to start monitoring
-		the consumed credit to shutdown a single call or a group of calls in case of credit exhaustion.	
+		the consumed credit to shutdown a single call or a group of calls in case of credit exhaustion.
 	</para>
 	<para>
 		Every call is associated to an unique client/customer identifier. If a credit event occurs, all calls hooked
@@ -49,7 +49,7 @@
 	<section>
 	    <title>Modules</title>
 	    <para>
-		The following module must be loaded before this module: 
+		The following module must be loaded before this module:
 		<itemizedlist>
 		    <listitem>
 		    <para>
@@ -62,7 +62,7 @@
 	<section>
 	    <title>Libraries</title>
 	    <para>
-		The following module must be loaded before this module: 
+		The following module must be loaded before this module:
 		<itemizedlist>
 		    <listitem>
 		    <para>
@@ -83,23 +83,22 @@
 
     <section>
 	<title>Parameters</title>
-	<section>
-		<title><varname> redis </varname> (integer)</title>
+	<section id="cnxcc.p.redis">
+		<title><varname>redis</varname> (integer)</title>
 	    <para>
 		Redis datasource connection information
 	    </para>
 	    <example>
 
-		<title>dlg_flag</title>
 		<programlisting format="linespecific">
 ...
 modparam("cnxcc", "redis", "addr=127.0.0.1;port=6379;db=1")
-...		
+...
 		</programlisting>
 	    </example>
 	</section>
 
-	<section>
+	<section id="cnxcc.p.credit_check_period">
 	    <title><varname>credit_check_period</varname> (integer)</title>
 	    <para>
 		Indicates how often the credit checking function should be called. It is directly related to the precison of the
@@ -114,15 +113,15 @@ modparam("cnxcc", "redis", "addr=127.0.0.1;port=6379;db=1")
 		<programlisting format="linespecific">
 ...
 modparam("cnxcc", "credit_check_period", 1)
-...		
+...
 		</programlisting>
 	    </example>
-	</section> 
+	</section>
    </section>
 
     <section>
 	<title>Functions</title>
-	<section>
+	<section id="cnxcc.f.set_max_credit">
 	    <title>
 		<function moreinfo="none">cnxcc_set_max_credit()</function>
 	    </title>
@@ -164,12 +163,12 @@ $var(initial_p)   = "030";    # intial pulse
 $var(final_p)   = "006";      # final pulse
 
 cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)", "$var(initial_p)", "$var(final_p)");
-...		
+...
 		</programlisting>
 	    </example>
 	</section>
 
-        <section>
+        <section id="cnxcc.f.set_max_time">
             <title>
                 <function moreinfo="none">cnxcc_set_max_time()</function>
             </title>
@@ -184,7 +183,7 @@ cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)", "$var(initia
                         <emphasis>1 - successful</emphasis>
                     </para>
                     </listitem>
-                     
+
                     <listitem>
                     <para>
                         <emphasis>-1 - failed, error logged</emphasis>
@@ -205,7 +204,7 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
             </example>
         </section>
 
-        <section>
+        <section id="cnxcc.f.update_max_time">
             <title>
                 <function moreinfo="none">cnxcc_update_max_time()</function>
             </title>
@@ -220,7 +219,7 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
                         <emphasis>1 - successful</emphasis>
                     </para>
                     </listitem>
-                     
+
                     <listitem>
                     <para>
                         <emphasis>-1 - failed, error logged</emphasis>
@@ -248,7 +247,7 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
 
 
 
-    	<section>
+    	<section id="cnxcc.f.set_max_channel">
             <title>
                 <function moreinfo="none">cnxcc_set_max_channel()</function>
             </title>
@@ -263,7 +262,7 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
                         <emphasis>1 - successful</emphasis>
                     </para>
                     </listitem>
-                     
+
                     <listitem>
                     <para>
                         <emphasis>-1 - failed, error logged</emphasis>
@@ -275,7 +274,7 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
                         <emphasis>-2 - failed, calls established plus calls being established result in more than the limit you specified</emphasis>
                     </para>
                     </listitem>
-		    
+
 		    <listitem>
                     <para>
                         <emphasis>-3 - failed, number of calls established is more than the limit you specified</emphasis>
@@ -312,8 +311,8 @@ if ($var(retcode) &lt; -1) {
 		</programlisting>
             </example>
     	</section>
-	
-    	<section>
+
+    	<section id="cnxcc.f.terminate_all">
             <title>
                 <function moreinfo="none">cnxcc_terminate_all()</function>
             </title>
@@ -328,7 +327,7 @@ if ($var(retcode) &lt; -1) {
                         <emphasis>1 - successful</emphasis>
                     </para>
                     </listitem>
-                     
+
                     <listitem>
                     <para>
                         <emphasis>-1 - failed, error logged</emphasis>
@@ -350,12 +349,12 @@ if (!cnxcc_terminate_all("$var(customer)")) {
             </example>
         </section>
     </section>
-   
+
     <section>
 	<title>RPC Commands</title>
 
-	<section>
-	    <title><varname>cnxcc.active_clients</varname></title>
+	<section id="cnxcc.rpc.active_clients">
+	    <title>cnxcc.active_clients</title>
 	    <para>
 		Retrieves all calls grouped by their identifiers.
 	    </para>
@@ -370,8 +369,8 @@ if (!cnxcc_terminate_all("$var(customer)")) {
 	    </programlisting>
 	</section>
 
-	<section>
-            <title><varname>cnxcc.check_client</varname></title>
+	<section id="cnxcc.rpc.check_client">
+            <title>cnxcc.check_client</title>
             <para>
 		Retrives all calls from a particular identifier.
             </para>
@@ -386,8 +385,8 @@ if (!cnxcc_terminate_all("$var(customer)")) {
             </programlisting>
         </section>
 
-        <section>
-            <title><varname>cnxcc.kill_call</varname></title>
+        <section id="cnxcc.rpc.kill_call">
+            <title>cnxcc.kill_call</title>
             <para>
 		    Kills an active call using its call ID.
 	    </para>
@@ -401,8 +400,8 @@ if (!cnxcc_terminate_all("$var(customer)")) {
             &sercmd; cnxcc.kill_call qumojlaahitafih@carlosrdcnx-laptop.site
             </programlisting>
         </section>
-	<section>
-	    <title><varname>cnxcc.stats</varname></title>
+	<section id="cnxcc.rpc.stats">
+	    <title>cnxcc.stats</title>
 	    <para>
 		List credit control stats.
 	    </para>
@@ -419,9 +418,9 @@ if (!cnxcc_terminate_all("$var(customer)")) {
 
     </section>
 
-    <section>
+    <section id="cnxcc.evr.callshutdown">
 	    <title>Events</title>
-	    
+
 	    <para>
 		When a call is forced to end an event route is automatically invoked. This route is suited with a fake OPTIONS
 		message containing the call ID, ftag and ttag of the original call so it can be located somehow in the accounting
@@ -440,14 +439,14 @@ event_route[cnxcc:call-shutdown]
 }
 ...
 		</programlisting>
-	    
+
     </section>
     <section>
             <title>Web Interface</title>
 
             <para>
 		The module contains a web management interface completely optional. With it, you can review your calls in real time
-		and hang them up if necessary.    
+		and hang them up if necessary.
 	    </para>
             <para>
                 Link: https://github.com/caruizdiaz/cnxcc-web
@@ -455,7 +454,7 @@ event_route[cnxcc:call-shutdown]
     </section>
 
     <section>
-	<title>Sample</title>
+	<title>Sample Config</title>
 	<example>
 	    <title>kamailio-cnxcc.cfg</title>
 	    <programlisting format="linespecific">
@@ -482,7 +481,7 @@ event_route[cnxcc:call-shutdown]
 	xlog("L_INFO", "[$ci]: call killed");
 
 
-}	    
+}
 ...
 	    </programlisting>
 	</example>
