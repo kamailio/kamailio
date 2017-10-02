@@ -2349,6 +2349,9 @@ static int hlog(struct sip_msg *msg, str *correlationid, str *message) {
 	hostent2su(&dst.to, &p->host, p->addr_idx, (p->port)?p->port:SIP_PORT);
 	LM_DBG("setting up the socket_info\n");
 
+	free_proxy(p); /* frees only p content, not p itself */
+	pkg_free(p);
+
 	if (force_send_sock_str.s) {
 		LM_DBG("force_send_sock activated, grep for the sock_info\n");
 		si = grep_sock_info(&force_send_sock_uri->host,
