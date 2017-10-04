@@ -42,7 +42,7 @@
 #include "path_mod.h"
 
 typedef enum {
-	PATH_PARAM_NONE, PATH_PARAM_RECEIVED, PATH_PARAM_OB
+	PATH_PARAM_NONE = 0, PATH_PARAM_RECEIVED = 1, PATH_PARAM_OB = 2
 } path_param_t;
 
 #define PATH_PREFIX		"Path: <sip:"
@@ -73,6 +73,26 @@ static char *path_strzdup(char *src, int len)
 	return res;
 }
 
+static int handleOutbound(sip_msg_t* _m, str *user, path_param_t *param)
+{
+	if (path_obb.use_outbound != NULL && path_obb.use_outbound(_m)) {
+		struct via_body *via;
+
+		if (path_obb.encode_flow_token(user, _m->rcv) != 0) {
+			LM_ERR("encoding outbound flow-token\n");
+			return -1;
+		}
+
+		/* Only include ;ob parameter if this is the first-hop
+		 * (that means only one Via:) */
+		if (parse_via_header(_m, 2, &via) < 0) {
+			*param |= PATH_PARAM_OB;
+		}
+	}
+
+	return 1;
+}
+
 static int prepend_path(sip_msg_t* _m, str *user, path_param_t param,
 		str *add_params)
 {
@@ -94,10 +114,7 @@ static int prepend_path(sip_msg_t* _m, str *user, path_param_t param,
 
 	cp += sprintf(cp, ";lr");
 
-	switch(param) {
-	default:
-		break;
-	case PATH_PARAM_RECEIVED:
+	if (param & PATH_PARAM_RECEIVED) {
 		if(path_received_format==0) {
 			if (_m->rcv.proto
 						< (sizeof(proto_strings) / sizeof(*proto_strings))) {
@@ -125,14 +142,15 @@ static int prepend_path(sip_msg_t* _m, str *user, path_param_t param,
 						_m->rcv.src_port, (int)_m->rcv.proto);
 			}
 		}
-		break;
-	case PATH_PARAM_OB:
-		cp += sprintf(cp, ";ob");
-		break;
 	}
 
-	if (add_params && add_params->len)
+	if (param & PATH_PARAM_OB) {
+		cp += sprintf(cp, ";ob");
+	}
+
+	if (add_params && add_params->len) {
 		cp += sprintf(cp, ";%.*s", add_params->len, add_params->s);
+	}
 
 	if(path_enable_r2==0) {
 		cp += sprintf(cp, ">\r\n");
@@ -207,25 +225,16 @@ int ki_add_path(struct sip_msg* _msg)
 	str user = {0,0};
 	int ret;
 	path_param_t param = PATH_PARAM_NONE;
-	struct via_body *via;
 
-	if (path_obb.use_outbound != NULL
-		&& path_obb.use_outbound(_msg)) {
-		if (path_obb.encode_flow_token(&user, _msg->rcv) != 0) {
-			LM_ERR("encoding outbound flow-token\n");
-			return -1;
-		}
+	ret = handleOutbound(_msg, &user, &param);
 
-		/* Only include ;ob parameter if this is the first-hop
-		 * (that means only one Via:) */
-		if (parse_via_header(_msg, 2, &via) < 0)
-			param = PATH_PARAM_OB;
+	if (ret > 0) {
+		ret = prepend_path(_msg, &user, param, NULL);
 	}
 
-	ret = prepend_path(_msg, &user, param, NULL);
-
-	if (user.s != NULL)
+	if (user.s != NULL) {
 		pkg_free(user.s);
+	}
 
 	return ret;
 }
@@ -283,18 +292,32 @@ int ki_add_path_user_params(sip_msg_t* _msg, str* _user, str* _params)
  * Prepend own uri to Path header and append received address as
  * "received"-param to that uri.
  */
-int add_path_received(struct sip_msg* _msg, char* _a, char* _b)
+int ki_add_path_received(sip_msg_t* _msg)
 {
-	return prepend_path(_msg, NULL, PATH_PARAM_RECEIVED, NULL);
+	str user = {0,0};
+	int ret;
+	path_param_t param = PATH_PARAM_RECEIVED;
+
+	ret = handleOutbound(_msg, &user, &param);
+
+	if (ret > 0) {
+		ret = prepend_path(_msg, &user, param, NULL);
+	}
+
+	if (user.s != NULL) {
+		pkg_free(user.s);
+	}
+
+	return ret;
 }
 
 /*! \brief
  * Prepend own uri to Path header and append received address as
  * "received"-param to that uri.
  */
-int ki_add_path_received(sip_msg_t* _msg)
+int add_path_received(struct sip_msg* _msg, char* _a, char* _b)
 {
-	return prepend_path(_msg, NULL, PATH_PARAM_RECEIVED, NULL);
+	return ki_add_path_received(_msg);
 }
 
 /*! \brief
@@ -338,7 +361,6 @@ int ki_add_path_received_user(sip_msg_t* _msg, str* _user)
  */
 int ki_add_path_received_user_params(sip_msg_t* _msg, str* _user, str* _params)
 {
-
 	return prepend_path(_msg, _user, PATH_PARAM_RECEIVED, _params);
 }
 
