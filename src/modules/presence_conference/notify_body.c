@@ -21,9 +21,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2010-07-12  initial version (mariusbucur)
  */
 /*! \file
  * \brief Kamailio Presence_Conference :: Notify body handling
@@ -78,12 +75,12 @@ str* conf_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, i
 	}
 
 	return n_body;
-}	
+}
 
 str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, int off_index)
 {
 	int i, j = 0;
-	
+
 	if(body_array == NULL || n == 0)
 		return 0;
 
@@ -115,7 +112,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, in
 			continue;
 
 		xml_array[j] = xmlParseMemory( body_array[i]->s, body_array[i]->len );
-		
+
 		/* LM_DBG("parsing XML body: [n]=%d, [i]=%d, [j]=%d xml_array[j]=%p\n", n, i, j, xml_array[j] ); */
 
 		if(unlikely(xml_array[j] == NULL))
@@ -124,7 +121,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, in
 			goto error;
 		}
 		j++;
-		
+
 	}
 
 	if(j == 0)  /* no body */
@@ -206,8 +203,8 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, in
 		ERR_MEM(PKG_MEM_STR);
 	}
 
-	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, 
-			&body->len, 1);	
+	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s,
+			&body->len, 1);
 
 	for(i=0; i<j; i++)
 	{
@@ -218,7 +215,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, in
 		xmlFreeDoc(doc);
 	if(xml_array!=NULL)
 		pkg_free(xml_array);
-    
+
 	return body;
 
 error:
@@ -244,7 +241,7 @@ str *conf_body_setversion(subs_t *subs, str *body) {
 	if (!body) {
 		return NULL;
 	}
-	
+
 	xmlDocPtr doc = xmlParseMemory(body->s, body->len);
 	if(!doc) {
 		goto error;
@@ -256,7 +253,7 @@ str *conf_body_setversion(subs_t *subs, str *body) {
 	if(!xmlSetProp(conf_info, BAD_CAST "version", BAD_CAST version_str)) {
 		goto error;
 	}
-	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, 
+	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s,
 			&body->len, 1);
 	return NULL;
 error:
