@@ -1102,7 +1102,11 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 {
 	avp_t* r_avp;
 	int i;
-	
+
+	if(rv==NULL) {
+		return -1;
+	}
+
 	switch(rv->type){
 		case RV_INT:
 			tmpv->s=sint2strbuf(rv->v.l, tmp_cache->i2s,
