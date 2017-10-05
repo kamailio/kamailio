@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section id="maxfwd.overview">
 	<title>Overview</title>
 	<para>
@@ -45,7 +45,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -64,15 +64,15 @@
 		<title><varname>max_limit</varname> (integer)</title>
 		<para>
 		Set an upper limit for the max-forward value in the outgoing requests.
-		If the header is present, the decremented value is not allowed to 
-		exceed this max_limits - if it does, the header value will by 
+		If the header is present, the decremented value is not allowed to
+		exceed this max_limits - if it does, the header value will by
 		decreased to <quote>max_limit</quote>.
 		</para>
-		<para>Note: This check is done when calling the 
+		<para>Note: This check is done when calling the
 		maxfwd_process() function.
 		</para>
 		<para>
-		The range of values stretches from 1 to 256, which is the maximum 
+		The range of values stretches from 1 to 256, which is the maximum
 		MAX-FORWARDS value allowed by RFC 3261. The value can be changed at
 		runtime.
 		</para>
@@ -93,15 +93,15 @@ modparam("maxfwd", "max_limit", 32)
 	</section>
 
 
-	<section id="maxfwd.f.maxfwd_process">
-	<title>Functions</title>
 	<section>
+	<title>Functions</title>
+	<section id="maxfwd.f.maxfwd_process">
 		<title>
 		<function moreinfo="none">maxfwd_process(max_value)</function>
 		</title>
 		<para>
-		If no Max-Forward header is present in the received request, a header 
-		will be added having the original value equal with 
+		If no Max-Forward header is present in the received request, a header
+		will be added having the original value equal with
 		<quote>max_value</quote>. If a Max-Forward header is already present,
 		its value will be decremented (if not 0). The parameter can be a
 		variable.
@@ -114,7 +114,7 @@ modparam("maxfwd", "max_limit", 32)
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>1 (true)</emphasis> - header was found and its 
+			<para><emphasis>1 (true)</emphasis> - header was found and its
 			value was successfully decremented (had a non-0 value).
 			</para>
 		</listitem>
@@ -129,13 +129,13 @@ modparam("maxfwd", "max_limit", 32)
 		</listitem>
 		</itemizedlist>
 		<para>
-		The return code may be extensivly tested via script variable 
+		The return code may be extensivly tested via script variable
 		<quote>retcode</quote> (or <quote>$?</quote>).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>max_value</emphasis> - Value to be added if 
+			<para><emphasis>max_value</emphasis> - Value to be added if
 			there is no Max-Forwards header field in the message.
 			</para>
 		</listitem>
@@ -181,7 +181,7 @@ if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
 		<function moreinfo="none">is_maxfwd_lt(max_value)</function>
 		</title>
 		<para>
-		Checks if the Max-Forward header value is less then the 
+		Checks if the Max-Forward header value is less then the
 		<quote>max_value</quote> parameter value. It considers also the value
 		of the new inserted header (if locally added). The parameter can be
 		a variable.
@@ -189,12 +189,12 @@ if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
 		<para>Retuning codes:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>1 (true)</emphasis> - header was found or set and 
+			<para><emphasis>1 (true)</emphasis> - header was found or set and
 			its value is stricly less than <quote>max_value</quote>.
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>-1 (false)</emphasis> - the header was found or 
+			<para><emphasis>-1 (false)</emphasis> - the header was found or
 			set and its value is greater or equal to <quote>max_value</quote>.
 			</para>
 		</listitem>
@@ -209,13 +209,13 @@ if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
 		</listitem>
 		</itemizedlist>
 		<para>
-		The return code may be extensivly tested via script variable 
+		The return code may be extensivly tested via script variable
 		<quote>retcode</quote> (or <quote>$?</quote>).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>max_value</emphasis> - value to check the 
+			<para><emphasis>max_value</emphasis> - value to check the
 			Max-Forward.value against (as less than).
 			</para>
 		</listitem>
