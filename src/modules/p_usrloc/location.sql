@@ -1,6 +1,7 @@
 drop table if exists location;
 CREATE TABLE location (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    ruid VARCHAR(64) DEFAULT '' NOT NULL,
     username VARCHAR(64) DEFAULT '' NOT NULL,
     domain VARCHAR(64) DEFAULT NULL,
     contact VARCHAR(255) DEFAULT '' NOT NULL,
@@ -15,7 +16,8 @@ CREATE TABLE location (
     cflags INT(11) DEFAULT 0 NOT NULL,
     user_agent VARCHAR(255) DEFAULT '' NOT NULL,
     socket VARCHAR(64) DEFAULT NULL,
-    methods INT(11) DEFAULT NULL
+    methods INT(11) DEFAULT NULL,
+    reg_id INTEGER DEFAULT 0 NOT NULL
 ) ENGINE=MyISAM;
 
 CREATE INDEX account_contact_idx ON location (username, domain, contact);
