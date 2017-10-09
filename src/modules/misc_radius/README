@@ -182,6 +182,7 @@ Chapter 1. Admin Guide
    Example 1.2. radius_config parameter usage
 ...
 modparam("misc_radius", "radius_config", "/etc/radiusclient.conf")
+...
 
 3.2. caller_service_type (integer)
 
@@ -193,6 +194,7 @@ modparam("misc_radius", "radius_config", "/etc/radiusclient.conf")
    Example 1.3. caller_service_type parameter usage
 ...
 modparam("misc_radius", "caller_service_type", 18)
+...
 
 3.3. callee_service_type (integer)
 
@@ -204,6 +206,7 @@ modparam("misc_radius", "caller_service_type", 18)
    Example 1.4. callee_service_type parameter usage
 ...
 modparam("misc_radius", "callee_service_type", 19)
+...
 
 3.4. group_service_type (integer)
 
@@ -215,6 +218,7 @@ modparam("misc_radius", "callee_service_type", 19)
    Example 1.5. group_service_type parameter usage
 ...
 modparam("misc_radius", "group_service_type", 20)
+...
 
 3.5. uri_service_type (integer)
 
@@ -226,6 +230,7 @@ modparam("misc_radius", "group_service_type", 20)
    Example 1.6. uri_service_type parameter usage
 ...
 modparam("misc_radius", "uri_service_type", 21)
+...
 
 3.6. caller_extra (string)
 
@@ -240,6 +245,7 @@ modparam("misc_radius", "uri_service_type", 21)
    Example 1.7. caller_extra parameter usage
 ...
 modparam("misc_radius", "caller_extra", "Calling-Station-Id=$fu")
+...
 
 3.7. callee_extra (string)
 
@@ -254,6 +260,7 @@ modparam("misc_radius", "caller_extra", "Calling-Station-Id=$fu")
    Example 1.8. callee_extra parameter usage
 ...
 modparam("misc_radius", "callee_extra", "SIP-URI-User=$rU;SIP-URI-Host=$rd")
+...
 
 3.8. group_extra (string)
 
@@ -268,6 +275,7 @@ modparam("misc_radius", "callee_extra", "SIP-URI-User=$rU;SIP-URI-Host=$rd")
    Example 1.9. group_extra parameter usage
 ...
 modparam("misc_radius", "group_extra", "My-Special=$avp(i:100)")
+...
 
 3.9. uri_extra (string)
 
@@ -282,6 +290,7 @@ modparam("misc_radius", "group_extra", "My-Special=$avp(i:100)")
    Example 1.10. uri_extra parameter usage
 ...
 modparam("misc_radius", "uri_extra", "Called-Station-Id=$tu")
+...
 
 3.10. use_sip_uri_host (integer)
 
@@ -295,6 +304,7 @@ modparam("misc_radius", "uri_extra", "Called-Station-Id=$tu")
    Example 1.11. use_sip_uri_host parameter usage
 ...
 modparam("misc_radius", "use_sip_uri_host", 1)
+...
 
 3.11. common_response (integer)
 
