@@ -2453,11 +2453,15 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 			<listitem><para>
 				<emphasis>op</emphasis> (optional) - outbound proxy SIP address
 			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> (optional) - SDP body for initial
+				INVITE
+			</para></listitem>
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.list _from_ _to_ _op_
+&kamcmd; dlg.bridge_dlg _from_ _to_ _op_
 ...
 		</programlisting>
 		</section>
