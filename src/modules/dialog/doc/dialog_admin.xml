@@ -2353,11 +2353,15 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 			<listitem><para>
 				<emphasis>op</emphasis> (optional) - outbound proxy SIP address
 			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> (optional) - SDP body for initial
+				INVITE
+			</para></listitem>
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.list _from_ _to_ _op_
+&kamcmd; dlg.bridge_dlg _from_ _to_ _op_
 ...
 		</programlisting>
 		</section>
