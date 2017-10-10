@@ -1914,10 +1914,11 @@ kamcmd dlg.profile_list inbound_calls
      * from - SIP address to initiate the call
      * to - SIP address to refer 'from' to
      * op (optional) - outbound proxy SIP address
+     * body (optional) - SDP body for initial INVITE
 
    RPC Command Format:
 ...
-kamcmd dlg.list _from_ _to_ _op_
+kamcmd dlg.bridge_dlg _from_ _to_ _op_
 ...
 
 10. Exported Variables
