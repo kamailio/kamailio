@@ -38,29 +38,31 @@
 #include "../../lib/srdb2/db_gen.h"
 
 
-static void pg_res_free(db_res_t* res, struct pg_res* payload)
+static void pg_res_free(db_res_t *res, struct pg_res *payload)
 {
 	db_drv_free(&payload->gen);
-	if (payload->res) PQclear(payload->res);
+	if(payload->res)
+		PQclear(payload->res);
 	pkg_free(payload);
 }
 
 
-int pg_res(db_res_t* res)
+int pg_res(db_res_t *res)
 {
-	struct pg_res* pres;
+	struct pg_res *pres;
 
-	pres = (struct pg_res*)pkg_malloc(sizeof(struct pg_res));
-	if (pres == NULL) {
+	pres = (struct pg_res *)pkg_malloc(sizeof(struct pg_res));
+	if(pres == NULL) {
 		ERR("postgres: No memory left\n");
 		return -1;
 	}
-	if (db_drv_init(&pres->gen, pg_res_free) < 0) goto error;
+	if(db_drv_init(&pres->gen, pg_res_free) < 0)
+		goto error;
 	DB_SET_PAYLOAD(res, pres);
 	return 0;
-	
- error:
-	if (pres) {
+
+error:
+	if(pres) {
 		db_drv_free(&pres->gen);
 		pkg_free(pres);
 	}

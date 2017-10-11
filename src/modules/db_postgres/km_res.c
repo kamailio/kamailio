@@ -46,19 +46,19 @@
  * \param _r result set
  * \return 0 on success, negative on error
  */
-int db_postgres_convert_result(const db1_con_t* _h, db1_res_t* _r)
+int db_postgres_convert_result(const db1_con_t *_h, db1_res_t *_r)
 {
-	if (!_h || !_r)  {
+	if(!_h || !_r) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (db_postgres_get_columns(_h, _r) < 0) {
+	if(db_postgres_get_columns(_h, _r) < 0) {
 		LM_ERR("failed to get column names\n");
 		return -2;
 	}
 
-	if (db_postgres_convert_rows(_h, _r) < 0) {
+	if(db_postgres_convert_rows(_h, _r) < 0) {
 		LM_ERR("failed to convert rows\n");
 		db_free_columns(_r);
 		return -3;
@@ -73,11 +73,11 @@ int db_postgres_convert_result(const db1_con_t* _h, db1_res_t* _r)
  * \param _r result set
  * \return 0 on success, negative on error
  */
-int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
+int db_postgres_get_columns(const db1_con_t *_h, db1_res_t *_r)
 {
 	int col, datatype;
 
-	if (!_h || !_r)  {
+	if(!_h || !_r) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -88,14 +88,14 @@ int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
 	/* Get the number of columns (fields) in each row of the query result. */
 	RES_COL_N(_r) = PQnfields(CON_RESULT(_h));
 
-	if (!RES_COL_N(_r)) {
+	if(!RES_COL_N(_r)) {
 		LM_DBG("no columns returned from the query\n");
 		return -2;
 	} else {
 		LM_DBG("%d columns returned from the query\n", RES_COL_N(_r));
 	}
 
-	if (db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
+	if(db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
 		LM_ERR("could not allocate columns\n");
 		return -3;
 	}
@@ -103,14 +103,14 @@ int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
 	/* For each column both the name and the OID number of the data type are saved. */
 	for(col = 0; col < RES_COL_N(_r); col++) {
 
-		RES_NAMES(_r)[col] = (str*)pkg_malloc(sizeof(str));
-		if (! RES_NAMES(_r)[col]) {
+		RES_NAMES(_r)[col] = (str *)pkg_malloc(sizeof(str));
+		if(!RES_NAMES(_r)[col]) {
 			LM_ERR("no private memory left\n");
 			db_free_columns(_r);
 			return -4;
 		}
-		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n", (unsigned int) sizeof(str), col,
-				RES_NAMES(_r)[col]);
+		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n",
+				(unsigned int)sizeof(str), col, RES_NAMES(_r)[col]);
 
 		/* The pointer that is here returned is part of the result structure. */
 		RES_NAMES(_r)[col]->s = PQfname(CON_RESULT(_h), col);
@@ -120,32 +120,31 @@ int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
 				RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s);
 
 		/* get the datatype of the column */
-		switch(datatype = PQftype(CON_RESULT(_h),col))
-		{
+		switch(datatype = PQftype(CON_RESULT(_h), col)) {
 			case INT2OID:
 			case INT4OID:
 				LM_DBG("use DB1_INT result type\n");
 				RES_TYPES(_r)[col] = DB1_INT;
-			break;
+				break;
 
 			case INT8OID:
 				LM_DBG("use DB1_BIGINT result type\n");
 				RES_TYPES(_r)[col] = DB1_BIGINT;
-			break;
+				break;
 
 			case FLOAT4OID:
 			case FLOAT8OID:
 			case NUMERICOID:
 				LM_DBG("use DB1_DOUBLE result type\n");
 				RES_TYPES(_r)[col] = DB1_DOUBLE;
-			break;
+				break;
 
 			case DATEOID:
 			case TIMESTAMPOID:
 			case TIMESTAMPTZOID:
 				LM_DBG("use DB1_DATETIME result type\n");
 				RES_TYPES(_r)[col] = DB1_DATETIME;
-			break;
+				break;
 
 			case BOOLOID:
 			case CHAROID:
@@ -154,26 +153,27 @@ int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
 			case BPCHAROID:
 				LM_DBG("use DB1_STRING result type\n");
 				RES_TYPES(_r)[col] = DB1_STRING;
-			break;
+				break;
 
 			case TEXTOID:
 			case BYTEAOID:
 				LM_DBG("use DB1_BLOB result type\n");
 				RES_TYPES(_r)[col] = DB1_BLOB;
-			break;
+				break;
 
 			case BITOID:
 			case VARBITOID:
 				LM_DBG("use DB1_BITMAP result type\n");
 				RES_TYPES(_r)[col] = DB1_BITMAP;
-			break;
+				break;
 
 			default:
 				LM_WARN("unhandled data type column (%.*s) type id (%d), "
-						"use DB1_STRING as default\n", RES_NAMES(_r)[col]->len,
-						RES_NAMES(_r)[col]->s, datatype);
+						"use DB1_STRING as default\n",
+						RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s,
+						datatype);
 				RES_TYPES(_r)[col] = DB1_STRING;
-			break;
+				break;
 		}
 	}
 	return 0;
@@ -186,38 +186,40 @@ int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
  * \param _r result set
  * \return 0 on success, negative on error
  */
-int db_postgres_convert_rows(const db1_con_t* _h, db1_res_t* _r)
+int db_postgres_convert_rows(const db1_con_t *_h, db1_res_t *_r)
 {
 	char **row_buf, *s;
 	int row, col, len;
 
-	if (!_h || !_r)  {
+	if(!_h || !_r) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
-	if (!RES_ROW_N(_r)) {
+	if(!RES_ROW_N(_r)) {
 		LM_DBG("no rows returned from the query\n");
 		RES_ROWS(_r) = 0;
 		return 0;
 	}
 	/*Allocate an array of pointers per column to holds the string representation */
 	len = sizeof(char *) * RES_COL_N(_r);
-	row_buf = (char**)pkg_malloc(len);
-	if (!row_buf) {
+	row_buf = (char **)pkg_malloc(len);
+	if(!row_buf) {
 		LM_ERR("no private memory left\n");
 		return -1;
 	}
-	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n", RES_COL_N(_r), len, row_buf);
+	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n",
+			RES_COL_N(_r), len, row_buf);
 
-	if (db_allocate_rows(_r) < 0) {
+	if(db_allocate_rows(_r) < 0) {
 		LM_ERR("could not allocate rows\n");
 		LM_DBG("freeing row buffer at %p\n", row_buf);
 		pkg_free(row_buf);
 		return -2;
 	}
 
-	for(row = RES_LAST_ROW(_r); row < (RES_LAST_ROW(_r) + RES_ROW_N(_r)); row++) {
+	for(row = RES_LAST_ROW(_r); row < (RES_LAST_ROW(_r) + RES_ROW_N(_r));
+			row++) {
 		/* reset row buf content */
 		memset(row_buf, 0, len);
 		for(col = 0; col < RES_COL_N(_r); col++) {
@@ -235,16 +237,19 @@ int db_postgres_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 			 * This differs from the mysql behaviour, that further processing
 			 * steps expect. So we need to simulate this here unfortunally.
 			 */
-			if (PQgetisnull(CON_RESULT(_h), row, col) == 0) {
+			if(PQgetisnull(CON_RESULT(_h), row, col) == 0) {
 				row_buf[col] = s;
-				LM_DBG("[%d][%d] Column[%.*s]=[%s]\n",
-					row, col, RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s, row_buf[col]);
+				LM_DBG("[%d][%d] Column[%.*s]=[%s]\n", row, col,
+						RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s,
+						row_buf[col]);
 			}
 		}
 
 		/* ASSERT: row_buf contains an entire row in strings */
-		if(db_postgres_convert_row(_h, _r, &(RES_ROWS(_r)[row - RES_LAST_ROW(_r)]), row_buf)<0){
-			LM_ERR("failed to convert row #%d\n",  row);
+		if(db_postgres_convert_row(
+				   _h, _r, &(RES_ROWS(_r)[row - RES_LAST_ROW(_r)]), row_buf)
+				< 0) {
+			LM_ERR("failed to convert row #%d\n", row);
 			RES_ROW_N(_r) = row - RES_LAST_ROW(_r);
 			LM_DBG("freeing row buffer at %p\n", row_buf);
 			pkg_free(row_buf);
@@ -268,17 +273,17 @@ int db_postgres_convert_rows(const db1_con_t* _h, db1_res_t* _r)
  * \param row_buf row buffer
  * \return 0 on success, negative on error
  */
-int db_postgres_convert_row(const db1_con_t* _h, db1_res_t* _r, db_row_t* _row,
-		char **row_buf)
+int db_postgres_convert_row(
+		const db1_con_t *_h, db1_res_t *_r, db_row_t *_row, char **row_buf)
 {
 	int col, col_len;
 
-	if (!_h || !_r || !_row)  {
+	if(!_h || !_r || !_row) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (db_allocate_row(_r, _row) != 0) {
+	if(db_allocate_row(_r, _row) != 0) {
 		LM_ERR("could not allocate row\n");
 		return -2;
 	}
@@ -286,14 +291,15 @@ int db_postgres_convert_row(const db1_con_t* _h, db1_res_t* _r, db_row_t* _row,
 	/* For each column in the row */
 	for(col = 0; col < ROW_N(_row); col++) {
 		/* because it can contain NULL */
-		if (!row_buf[col]) {
+		if(!row_buf[col]) {
 			col_len = 0;
 		} else {
 			col_len = strlen(row_buf[col]);
 		}
 		/* Convert the string representation into the value representation */
-		if (db_postgres_str2val(RES_TYPES(_r)[col], &(ROW_VALUES(_row)[col]),
-		row_buf[col], col_len) < 0) {
+		if(db_postgres_str2val(RES_TYPES(_r)[col], &(ROW_VALUES(_row)[col]),
+				   row_buf[col], col_len)
+				< 0) {
 			LM_ERR("failed to convert value\n");
 			LM_DBG("free row at %p\n", _row);
 			db_free_row(_row);
