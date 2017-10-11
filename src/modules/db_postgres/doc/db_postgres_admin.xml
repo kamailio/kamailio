@@ -11,9 +11,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>The module is an implementation of the internal DB API v1 and v2
@@ -130,6 +130,27 @@ modparam("db_postgres", "tcp_keepalive", 600)
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>lockset</varname> (integer)</title>
+		<para>
+			The value is used as power of two to compute the size of the
+			lock set needed to implement the equivalent of REPLACE SQL
+			statement.
+		</para>
+		<para>
+			Default value is 4 (lock set size is 16).
+		</para>
+		<example>
+		<title>Set <varname>lockset</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_postgres", "lockset", 6)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
