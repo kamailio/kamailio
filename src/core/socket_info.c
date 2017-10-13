@@ -1912,7 +1912,7 @@ void print_all_socket_lists()
 				printf("             %s: %s",
 						get_valid_proto_name(proto),
 						si->name.s);
-				if (!si->flags & SI_IS_IP)
+				if (!(si->flags & SI_IS_IP))
 					printf(" [%s]", si->address_str.s);
 				printf( ":%s%s%s",
 						si->port_no_str.s, 
