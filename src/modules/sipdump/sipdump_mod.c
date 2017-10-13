@@ -94,6 +94,11 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(sipdump_rpc_init()<0) {
+		LM_ERR("failed to register rpc commands\n");
+		return -1;
+	}
+
 	if(sipdump_file_init(&sipdump_folder, &sipdump_fprefix) < 0) {
 		LM_ERR("cannot initialize storage file\n");
 		return -1;

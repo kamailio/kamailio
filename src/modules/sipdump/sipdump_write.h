@@ -51,4 +51,6 @@ int sipdump_file_init(str *folder, str *fprefix);
 
 int sipdump_enabled(void);
 
+int sipdump_rpc_init(void);
+
 #endif

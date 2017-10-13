@@ -27,6 +27,8 @@
 
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 #include "sipdump_write.h"
 
@@ -225,4 +227,64 @@ void sipdump_timer_exec(unsigned int ticks, void *param)
 		fwrite(sdd->data.s, 1, sdd->data.len, _sipdump_file);
 		shm_free(sdd);
 	}
+}
+
+static const char *sipdump_rpc_enable_doc[2] = {
+	"Command to control sipdump enable value", 0};
+
+
+/*
+* RPC command to control sipdump enable
+*/
+static void sipdump_rpc_enable(rpc_t *rpc, void *ctx)
+{
+	int enval = -1;
+	int oval = 0;
+	int nval = 0;
+
+	void *th;
+
+	if(rpc->scan(ctx, "*d", &enval) != 1) {
+		enval = -1;
+	}
+
+	if(rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+
+	if(_sipdump_list) {
+		oval = _sipdump_list->enable;
+		if(enval==0 || enval==1) {
+			_sipdump_list->enable = enval;
+			nval = enval;
+		} else {
+			nval = oval;
+		}
+	}
+
+	if(rpc->struct_add(th, "dd", "oldval", oval, "newval", nval) < 0) {
+		rpc->fault(ctx, 500, "Internal error reply structure");
+		return;
+	}
+}
+
+/* clang-format off */
+rpc_export_t sipdump_rpc_cmds[] = {
+	{"sipdump.enable", sipdump_rpc_enable,
+		sipdump_rpc_enable_doc, 0},
+	{0, 0, 0, 0}
+};
+/* clang-format on */
+
+/**
+ * register RPC commands
+ */
+int sipdump_rpc_init(void)
+{
+	if(rpc_register_array(sipdump_rpc_cmds) != 0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }
