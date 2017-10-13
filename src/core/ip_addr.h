@@ -660,15 +660,39 @@ static inline int ip_addr2sbuf(struct ip_addr* ip, char* buff, int len)
 	}
 }
 
+/* same as ip_addr2sbuf, but with [  ] around IPv6 addresses */
+static inline int ip_addr2sbufz(struct ip_addr* ip, char* buff, int len)
+{
+	char *p;
+	int sz;
+
+	p = buff;
+	switch(ip->af){
+		case AF_INET6:
+			*p++ = '[';
+			sz = ip6tosbuf(ip->u.addr, p, len-2);
+			p += sz;
+			*p++ = ']';
+			*p=0;
+			return sz + 2;
+			break;
+		case AF_INET:
+			return ip4tosbuf(ip->u.addr, buff, len);
+			break;
+		default:
+			LM_CRIT("unknown address family %d\n", ip->af);
+			return 0;
+	}
+}
 
 /* maximum size of a str returned by ip_addr2a (including \0) */
 #define IP_ADDR_MAX_STR_SIZE (IP6_MAX_STR_SIZE+1) /* ip62ascii +  \0*/
+#define IP_ADDR_MAX_STRZ_SIZE (IP6_MAX_STR_SIZE+3) /* ip62ascii + [ + ] + \0*/
 /* fast ip_addr -> string converter;
  * it uses an internal buffer
  */
 static inline char* ip_addr2a(struct ip_addr* ip)
 {
-
 	static char buff[IP_ADDR_MAX_STR_SIZE];
 	int len;
 
@@ -683,7 +707,7 @@ static inline char* ip_addr2a(struct ip_addr* ip)
 static inline char* ip_addr2strz(struct ip_addr* ip)
 {
 
-	static char buff[IP_ADDR_MAX_STR_SIZE+2];
+	static char buff[IP_ADDR_MAX_STRZ_SIZE];
 	char *p;
 	int len;
 
