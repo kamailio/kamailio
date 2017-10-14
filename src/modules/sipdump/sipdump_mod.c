@@ -150,8 +150,9 @@ static char _sipdump_wbuf[SIPDUMP_WBUF_SIZE];
 typedef struct sipdump_info {
 	str tag;
 	str buf;
-	int af;
-	int proto;
+	str af;
+	str proto;
+	str subproto;
 	str src_ip;
 	int src_port;
 	str dst_ip;
@@ -176,6 +177,10 @@ int sipdump_buffer_write(sipdump_info_t *sdi, str *obuf)
 		"process: %d\n"
 		"time: %lu.%06lu\n"
 		"date: %s"
+		"srcip: %.*s\n"
+		"srcport: %d\n"
+		"dstip: %.*s\n"
+		"dstport: %d\n"
 		"~~~~~~~~~~~~~~~~~~~~\n"
 		"%.*s"
 		"||||||||||||||||||||\n",
@@ -184,6 +189,8 @@ int sipdump_buffer_write(sipdump_info_t *sdi, str *obuf)
 		process_no,
 		(unsigned long)tv.tv_sec, (unsigned long)tv.tv_usec,
 		asctime(ti),
+		sdi->src_ip.len, sdi->src_ip.s, sdi->src_port,
+		sdi->dst_ip.len, sdi->dst_ip.s, sdi->dst_port,
 		sdi->buf.len, sdi->buf.s
 	);
 	obuf->s = _sipdump_wbuf;
@@ -198,6 +205,7 @@ int ki_sipdump_send(sip_msg_t *msg, str *stag)
 {
 	str wdata;
 	sipdump_info_t sdi;
+	char srcip_buf[IP_ADDR_MAX_STRZ_SIZE];
 
 	if(!sipdump_enabled())
 		return 1;
@@ -207,6 +215,19 @@ int ki_sipdump_send(sip_msg_t *msg, str *stag)
 	sdi.buf.s = msg->buf;
 	sdi.buf.len = msg->len;
 	sdi.tag = *stag;
+	sdi.src_ip.len = ip_addr2sbufz(&msg->rcv.src_ip, srcip_buf,
+			IP_ADDR_MAX_STRZ_SIZE);
+	sdi.src_ip.s = srcip_buf;
+	sdi.src_port = msg->rcv.src_port;
+	if(msg->rcv.bind_address==NULL
+			|| msg->rcv.bind_address->address_str.s==NULL) {
+		sdi.dst_ip.len = 7;
+		sdi.dst_ip.s = "0.0.0.0";
+		sdi.dst_port = 0;
+	} else {
+		sdi.dst_ip = msg->rcv.bind_address->address_str;
+		sdi.dst_port = (int)msg->rcv.bind_address->port_no;
+	}
 
 	if(sipdump_buffer_write(&sdi, &wdata)<0) {
 		LM_ERR("failed to write to buffer\n");
@@ -244,7 +265,8 @@ int sipdump_msg_received(sr_event_param_t *evp)
 {
 	str wdata;
 	sipdump_info_t sdi;
-
+	char srcip_buf[IP_ADDR_MAX_STRZ_SIZE];
+	
 	if(!sipdump_enabled())
 		return 0;
 
@@ -253,7 +275,19 @@ int sipdump_msg_received(sr_event_param_t *evp)
 	sdi.buf = *((str*)evp->data);
 	sdi.tag.s = "rcv";
 	sdi.tag.len = 3;
-
+	sdi.src_ip.len = ip_addr2sbufz(&evp->rcv->src_ip, srcip_buf,
+					IP_ADDR_MAX_STRZ_SIZE);
+	sdi.src_ip.s = srcip_buf;
+	sdi.src_port = evp->rcv->src_port;
+	if(evp->rcv->bind_address==NULL
+			|| evp->rcv->bind_address->address_str.s==NULL) {
+		sdi.dst_ip.len = 7;
+		sdi.dst_ip.s = "0.0.0.0";
+		sdi.dst_port = 0;
+	} else {
+		sdi.dst_ip = evp->rcv->bind_address->address_str;
+		sdi.dst_port = (int)evp->rcv->bind_address->port_no;
+	}
 	if(sipdump_buffer_write(&sdi, &wdata)<0) {
 		LM_ERR("failed to write to buffer\n");
 		return -1;
@@ -273,7 +307,9 @@ int sipdump_msg_sent(sr_event_param_t *evp)
 {
 	str wdata;
 	sipdump_info_t sdi;
-
+	ip_addr_t ip;
+	char dstip_buf[IP_ADDR_MAX_STRZ_SIZE];
+	
 	if(!sipdump_enabled())
 		return 0;
 
@@ -282,6 +318,13 @@ int sipdump_msg_sent(sr_event_param_t *evp)
 	sdi.buf = *((str*)evp->data);
 	sdi.tag.s = "snd";
 	sdi.tag.len = 3;
+
+	sdi.src_ip = evp->dst->send_sock->address_str;
+	sdi.src_port = (int)evp->dst->send_sock->port_no;
+	su2ip_addr(&ip, &evp->dst->to);
+	sdi.dst_ip.len = ip_addr2sbufz(&ip, dstip_buf, IP_ADDR_MAX_STRZ_SIZE);
+	sdi.dst_ip.s = dstip_buf;
+	sdi.dst_port = (int)su_getport(&evp->dst->to);
 
 	if(sipdump_buffer_write(&sdi, &wdata)<0) {
 		LM_ERR("failed to write to buffer\n");
