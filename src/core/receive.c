@@ -149,6 +149,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	inb.s = buf;
 	inb.len = len;
 	evp.data = (void*)&inb;
+	evp.rcv = rcv_info;
 	sr_event_exec(SREV_NET_DATA_IN, &evp);
 	len = inb.len;
 
