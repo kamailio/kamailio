@@ -49,7 +49,7 @@ enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP,
 enum comp_methods { COMP_NONE, COMP_SIGCOMP, COMP_SERGZ };
 #endif
 
-struct ip_addr{
+typedef struct ip_addr {
 	unsigned int af;	/* address family: AF_INET6 or AF_INET */
 	unsigned int len;	/* address len, 16 or 4 */
 
@@ -60,14 +60,12 @@ struct ip_addr{
 		unsigned short addr16[8];
 		unsigned char  addr[16];
 	}u;
-};
+} ip_addr_t;
 
-typedef struct ip_addr ip_addr_t;
-
-struct net{
+typedef struct net {
 	struct ip_addr ip;
 	struct ip_addr mask;
-};
+} sr_net_t;
 
 union sockaddr_union{
 	struct sockaddr     s;
@@ -75,13 +73,11 @@ union sockaddr_union{
 	struct sockaddr_in6 sin6;
 };
 
-typedef struct net sr_net_t;
-
 
 enum si_flags { SI_NONE=0, SI_IS_IP=1, SI_IS_LO=2, SI_IS_MCAST=4,
 	SI_IS_ANY=8, SI_IS_MHOMED=16 };
 
-struct addr_info{
+typedef struct addr_info {
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	struct ip_addr address; /*ip address */
 	str address_str;        /*ip address converted to string -- optimization*/
@@ -89,22 +85,19 @@ struct addr_info{
 	union sockaddr_union su;
 	struct addr_info* next;
 	struct addr_info* prev;
-};
+} addr_info_t;
 
-typedef struct addr_info addr_info_t;
 
-struct advertise_info {
+typedef struct advertise_info {
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	unsigned short port_no;  /* port number */
 	str port_no_str; /* port number converted to string -- optimization*/
 	str address_str;        /*ip address converted to string -- optimization*/
 	struct ip_addr address; /* ip address */
 	str sock_str; /* Socket proto, ip, and port as string */
-};
+} advertise_info_t;
 
-typedef struct advertise_info advertise_info_t;
-
-struct socket_info {
+typedef struct socket_info {
 	int socket;
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	struct ip_addr address; /* ip address */
@@ -124,11 +117,21 @@ struct socket_info {
 #ifdef USE_MCAST
 	str mcast; /* name of interface that should join multicast group*/
 #endif /* USE_MCAST */
-};
+} socket_info_t;
 
-typedef struct socket_info socket_info_t;
 
-struct receive_info{
+/* send flags */
+#define SND_F_FORCE_CON_REUSE	1 /* reuse an existing connection or fail */
+#define SND_F_CON_CLOSE			2 /* close the connection after sending */
+#define SND_F_FORCE_SOCKET		4 /* send socket in dst is forced */
+
+typedef struct snd_flags {
+	unsigned short f;          /* snd flags */
+	unsigned short blst_imask; /* blacklist ignore mask */
+} snd_flags_t;
+
+
+typedef struct receive_info {
 	struct ip_addr src_ip;
 	struct ip_addr dst_ip;
 	unsigned short src_port; /* host byte order */
@@ -143,27 +146,26 @@ struct receive_info{
 	short comp; /* compression */
 #endif
 	/* no need for dst_su yet */
-};
+} receive_info_t;
 
-typedef struct receive_info receive_info_t;
+
+typedef struct dest_info {
+	struct socket_info* send_sock;
+	union sockaddr_union to;
+	int id; /* tcp stores the connection id here */
+	char proto;
+	snd_flags_t send_flags;
+#ifdef USE_COMP
+	short comp;
+#endif
+} dest_info_t;
+
 
 typedef struct sr_net_info {
 	str data;
-	struct dest_info* dst;
-	struct receive_info* rcv;
+	receive_info_t* rcv;
+	dest_info_t* dst;
 } sr_net_info_t;
-
-/* send flags */
-#define SND_F_FORCE_CON_REUSE	1 /* reuse an existing connection or fail */
-#define SND_F_CON_CLOSE			2 /* close the connection after sending */
-#define SND_F_FORCE_SOCKET		4 /* send socket in dst is forced */
-
-struct snd_flags {
-	unsigned short f;          /* snd flags */
-	unsigned short blst_imask; /* blacklist ignore mask */
-};
-
-typedef struct snd_flags snd_flags_t;
 
 
 #define SND_FLAGS_INIT(sflags) \
@@ -187,31 +189,16 @@ typedef struct snd_flags snd_flags_t;
 	}while(0)
 
 
-struct dest_info {
-	struct socket_info* send_sock;
-	union sockaddr_union to;
-	int id; /* tcp stores the connection id here */
-	char proto;
-	snd_flags_t send_flags;
-#ifdef USE_COMP
-	short comp;
-#endif
-};
-
-typedef struct dest_info dest_info_t;
-
-
 /* list of names for multi-homed sockets that need to bind on
  * multiple addresses in the same time (sctp ) */
-struct name_lst {
+typedef struct name_lst {
 	char* name;
 	struct name_lst* next;
 	int flags;
-};
+} name_lst_t;
 
-typedef struct name_lst name_lst_t;
 
-struct socket_id {
+typedef struct socket_id {
 	struct name_lst* addr_lst; /* address list, the first one must
 								* be present and is the main one
 								* (in case of multihoming sctp) */
@@ -219,9 +206,8 @@ struct socket_id {
 	int proto;
 	int port;
 	struct socket_id* next;
-};
+} socket_id_t;
 
-typedef struct socket_id socket_id_t;
 
 /* len of the sockaddr */
 #ifdef HAVE_SOCKADDR_SA_LEN
