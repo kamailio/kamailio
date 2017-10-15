@@ -152,7 +152,6 @@ typedef struct sipdump_info {
 	str buf;
 	str af;
 	str proto;
-	str subproto;
 	str src_ip;
 	int src_port;
 	str dst_ip;
@@ -177,6 +176,7 @@ int sipdump_buffer_write(sipdump_info_t *sdi, str *obuf)
 		"process: %d\n"
 		"time: %lu.%06lu\n"
 		"date: %s"
+		"proto: %.*s %.*s\n"
 		"srcip: %.*s\n"
 		"srcport: %d\n"
 		"dstip: %.*s\n"
@@ -189,6 +189,7 @@ int sipdump_buffer_write(sipdump_info_t *sdi, str *obuf)
 		process_no,
 		(unsigned long)tv.tv_sec, (unsigned long)tv.tv_usec,
 		asctime(ti),
+		sdi->proto.len, sdi->proto.s, sdi->af.len, sdi->af.s,
 		sdi->src_ip.len, sdi->src_ip.s, sdi->src_port,
 		sdi->dst_ip.len, sdi->dst_ip.s, sdi->dst_port,
 		sdi->buf.len, sdi->buf.s
@@ -228,6 +229,16 @@ int ki_sipdump_send(sip_msg_t *msg, str *stag)
 		sdi.dst_ip = msg->rcv.bind_address->address_str;
 		sdi.dst_port = (int)msg->rcv.bind_address->port_no;
 	}
+
+	sdi.af.len = 4;
+	if(msg->rcv.bind_address->address.af==AF_INET6) {
+		sdi.af.s = "ipv6";
+	} else {
+		sdi.af.s = "ipv4";
+	}
+	sdi.proto.s = "none";
+	sdi.proto.len = 4;
+	get_valid_proto_string(msg->rcv.proto, 0, 0, &sdi.proto);
 
 	if(sipdump_buffer_write(&sdi, &wdata)<0) {
 		LM_ERR("failed to write to buffer\n");
@@ -288,6 +299,15 @@ int sipdump_msg_received(sr_event_param_t *evp)
 		sdi.dst_ip = evp->rcv->bind_address->address_str;
 		sdi.dst_port = (int)evp->rcv->bind_address->port_no;
 	}
+	sdi.af.len = 4;
+	if(evp->rcv->bind_address->address.af==AF_INET6) {
+		sdi.af.s = "ipv6";
+	} else {
+		sdi.af.s = "ipv4";
+	}
+	sdi.proto.s = "none";
+	sdi.proto.len = 4;
+	get_valid_proto_string(evp->rcv->proto, 0, 0, &sdi.proto);
 	if(sipdump_buffer_write(&sdi, &wdata)<0) {
 		LM_ERR("failed to write to buffer\n");
 		return -1;
@@ -325,6 +345,16 @@ int sipdump_msg_sent(sr_event_param_t *evp)
 	sdi.dst_ip.len = ip_addr2sbufz(&ip, dstip_buf, IP_ADDR_MAX_STRZ_SIZE);
 	sdi.dst_ip.s = dstip_buf;
 	sdi.dst_port = (int)su_getport(&evp->dst->to);
+
+	sdi.af.len = 4;
+	if(evp->dst->send_sock->address.af==AF_INET6) {
+		sdi.af.s = "ipv6";
+	} else {
+		sdi.af.s = "ipv4";
+	}
+	sdi.proto.s = "none";
+	sdi.proto.len = 4;
+	get_valid_proto_string(evp->dst->proto, 0, 0, &sdi.proto);
 
 	if(sipdump_buffer_write(&sdi, &wdata)<0) {
 		LM_ERR("failed to write to buffer\n");
