@@ -41,7 +41,7 @@
 
 MODULE_VERSION
 
-static int sipdump_enable = 1;
+static int sipdump_enable = 0;
 int sipdump_rotate = 7200;
 static int sipdump_wait = 100;
 static str sipdump_folder = str_init("/tmp");

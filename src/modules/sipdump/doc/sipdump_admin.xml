@@ -80,14 +80,14 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is 1 (0 - off; 1 - on).
+			Default value is 0 (0 - off; 1 - on).
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>enable</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("sipdump", "enable", 0)
+modparam("sipdump", "enable", 1)
 ...
 </programlisting>
 		</example>
