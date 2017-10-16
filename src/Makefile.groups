@@ -15,7 +15,7 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 				   nat_traversal nathelper path pike pv ratelimit rr rtimer \
 				   rtpproxy sanity sdpops siputils sl statistics textops \
 				   textopsx tm tmx topoh xlog rtpengine stun sipt tcpops \
-				   auth_xkeys smsops tsilo cfgt statsc topos
+				   auth_xkeys smsops tsilo cfgt statsc topos sipdump
 
 # - extra used modules, with no extra dependency
 mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
@@ -199,6 +199,9 @@ mod_list_nsq=nsq
 # - modules depending on librabbitmq library
 mod_list_rabbitmq=rabbitmq
 
+# - modules depending on libphonenumber library
+mod_list_phonenum=phonenum
+
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_db) $(mod_list_dbuid) \
@@ -229,7 +232,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_geoip2) \
 			   $(mod_list_erlang) $(mod_list_systemd) \
 			   $(mod_list_http_async) $(mod_list_nsq) \
-			   $(mod_list_rabbitmq) $(mod_list_jsdt))
+			   $(mod_list_rabbitmq) $(mod_list_jsdt)) \
+			   $(mod_list_phonenum)
 
 
 
@@ -436,6 +440,9 @@ module_group_knsq=$(mod_list_nsq)
 
 # K rabbitmq modules
 module_group_krabbitmq=$(mod_list_rabbitmq)
+
+# K phonenumber modules
+module_group_kphonenum=$(mod_list_phonenum)
 
 # list of static modules
 #

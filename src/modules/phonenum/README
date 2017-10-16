@@ -1,0 +1,138 @@
+PHONENUM Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2017 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. smode (int)
+
+        4. Functions
+
+              4.1. phonenum_match(num, pvc)
+
+        5. Pseudo Variables
+
+   List of Examples
+
+   1.1. Set smode parameter
+   1.2. phonenum_match usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. smode (int)
+
+   4. Functions
+
+        4.1. phonenum_match(num, pvc)
+
+   5. Pseudo Variables
+
+1. Overview
+
+   This module allows real-time queries against the libphonenumber to be
+   performed from the config script. With that it is possible to get
+   normalize and get details about a phone number.
+
+   More details about libphonenumber can be found at
+   https://github.com/googlei18n/libphonenumber.
+
+   This module exports a new class of pseudo-variables - $phn(pvc=>key) -
+   to enable access to the results of a query to the database.
+
+   Many queries can be done and store results in different containers to
+   be able to use in parallel.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libphonenumber - the phone number library.
+
+3. Parameters
+
+   3.1. smode (int)
+
+3.1. smode (int)
+
+   Phone number search mode.
+
+   Default value is "0".
+
+   Example 1.1. Set smode parameter
+...
+modparam("phonenum", "smode", 0)
+...
+
+4. Functions
+
+   4.1. phonenum_match(num, pvc)
+
+4.1. phonenum_match(num, pvc)
+
+   Match num against the libphonenumber and set the attributes inside the
+   pvc container. The function has to be called before accessing a key
+   via: $phn(pvc=>key).
+
+   The parameters can be static strings or strings with variables.
+
+   It can be used from ANY_ROUTE.
+
+   Example 1.2. phonenum_match usage
+...
+if(phonenum_match("1-484-555-8888", "src"))
+    xlog("number normalized to: $phn(src=>num)\n");
+...
+
+5. Pseudo Variables
+
+     * $phn(pvc=>key) - pvc is an identifier for this query result; it is
+       designated by the second parameter of phonenum_match(). The key can
+       be one of the following:
+          + number - normalized phone number
+          + country - country for phone number
+          + region - region for phone number
+          + operator - operator for phone number
+
+   Exported pseudo-variables are documented at
+   https://www.kamailio.org/wiki/.
