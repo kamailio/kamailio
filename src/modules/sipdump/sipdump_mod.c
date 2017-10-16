@@ -121,7 +121,6 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	int i;
 
 	if(rank != PROC_MAIN)
 		return 0;
@@ -129,7 +128,7 @@ static int child_init(int rank)
 	if(fork_basic_utimer(PROC_TIMER, "SIPDUMP WRITE TIMER", 1 /*socks flag*/,
 			   sipdump_timer_exec, NULL, sipdump_wait /*usec*/)
 				< 0) {
-		LM_ERR("failed to register timer routine as process (%d)\n", i);
+		LM_ERR("failed to register timer routine as process\n");
 		return -1; /* error */
 	}
 

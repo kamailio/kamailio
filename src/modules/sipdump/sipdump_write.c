@@ -152,6 +152,7 @@ static int sipdump_rotate_file(void)
 			"%d-%02d-%02d--%02d-%02d-%02d.data",
 			1900+ti->tm_year, ti->tm_mon, ti->tm_mday,
 			ti->tm_hour, ti->tm_min, ti->tm_sec);
+	LM_DBG("writing to file: %s (%d)\n", _sipdump_fpath, n);
 	_sipdump_file = fopen( _sipdump_fpath , "w" );
 	if(_sipdump_file==NULL) {
 		LM_ERR("failed to open file %s\n", _sipdump_fpath);
