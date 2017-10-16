@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2017 asipto.com
+   Copyright Â© 2017 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -124,11 +124,11 @@ Chapter 1. Admin Guide
 
    Enable storage.
 
-   Default value is 1 (0 - off; 1 - on).
+   Default value is 0 (0 - off; 1 - on).
 
    Example 1.1. Set enable parameter
 ...
-modparam("sipdump", "enable", 0)
+modparam("sipdump", "enable", 1)
 ...
 
 3.2. wait (int)
@@ -180,7 +180,7 @@ modparam("sipdump", "fprefix", "ksipdump-")
 
    4.1. sipdump_send(tag)
 
-4.1. sipdump_send(tag)
+4.1.  sipdump_send(tag)
 
    Send the details of the current SIP message to the writter process and
    get it stored in the file.
@@ -199,7 +199,7 @@ sipdump_send("cfg");
 
    5.1. sipdump.enable
 
-5.1. sipdump.enable
+5.1.  sipdump.enable
 
    Control the value for "enable" parameter.
 
