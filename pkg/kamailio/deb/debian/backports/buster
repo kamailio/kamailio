@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# Target dist: Debian Stretch
-DIST=stretch
+# Target dist: Debian buster
+DIST=buster
 
 rm -rf ${DIST}
 cp -r debian ${DIST}
