@@ -169,7 +169,6 @@ int sipdump_buffer_write(sipdump_info_t *sdi, str *obuf)
 	ti = localtime(&tv.tv_sec);
 	obuf->len = snprintf(_sipdump_wbuf, SIPDUMP_WBUF_SIZE,
 		"====================\n"
-		"v: 1.0\n"
 		"tag: %.*s\n"
 		"pid: %d\n"
 		"process: %d\n"

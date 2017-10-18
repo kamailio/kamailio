@@ -28,6 +28,8 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/globals.h"
+#include "../../core/ver.h"
+#include "../../core/pt.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 
@@ -133,6 +135,7 @@ static int sipdump_write_meta(char *fpath)
 {
 	char mpath[SIPDUMP_FPATH_SIZE];
 	int len;
+	int i;
 	FILE *mfile = NULL;
 	struct tm *ti;
 
@@ -156,9 +159,19 @@ static int sipdump_write_meta(char *fpath)
 	ti = localtime(&up_since);
 	fprintf(mfile,
 			"v: 1.0\n"
-			"start: %s",
-			asctime(ti)
+			"version: %s %s\n"
+			"start: %s"
+			"nrprocs: %d\n",
+			ver_name, ver_version,
+			asctime(ti),
+			*process_count
 		);
+	for (i=0; i<*process_count; i++) {
+		fprintf(mfile,
+			"process: %d %d %s\n",
+			i, pt[i].pid, pt[i].desc);
+	}
+
 	fclose(mfile);
 	return 0;
 }
