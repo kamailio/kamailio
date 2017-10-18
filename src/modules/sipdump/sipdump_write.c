@@ -27,6 +27,7 @@
 
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
+#include "../../core/globals.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 
@@ -67,7 +68,7 @@ int sipdump_list_init(int en)
 }
 
 /**
- * 
+ *
  */
 int sipdump_enabled(void)
 {
@@ -86,7 +87,7 @@ int sipdump_list_destroy(void)
 	sipdump_data_t *sdd0 = NULL;
 	if(_sipdump_list==NULL)
 		return 0;
-	
+
 	sdd=_sipdump_list->first;
 	while(sdd!=NULL) {
 		sdd0 = sdd;
@@ -126,7 +127,44 @@ int sipdump_list_add(str *data)
 }
 
 /**
- * 
+ *
+ */
+static int sipdump_write_meta(char *fpath)
+{
+	char mpath[SIPDUMP_FPATH_SIZE];
+	int len;
+	FILE *mfile = NULL;
+	struct tm *ti;
+
+	len = strlen(fpath);
+	if(len>=SIPDUMP_FPATH_SIZE-1) {
+		LM_ERR("file path too long\n");
+		return -1;
+	}
+	strcpy(mpath, fpath);
+	mpath[len-4] = 'm';
+	mpath[len-3] = 'e';
+	mpath[len-2] = 't';
+	mpath[len-1] = 'a';
+
+	LM_DBG("writing meta to file: %s\n", mpath);
+	mfile = fopen( mpath , "w" );
+	if(mfile==NULL) {
+		LM_ERR("failed to open meta file %s\n", mpath);
+		return -1;
+	}
+	ti = localtime(&up_since);
+	fprintf(mfile,
+			"v: 1.0\n"
+			"start: %s",
+			asctime(ti)
+		);
+	fclose(mfile);
+	return 0;
+}
+
+/**
+ *
  */
 static int sipdump_rotate_file(void)
 {
@@ -153,18 +191,19 @@ static int sipdump_rotate_file(void)
 			1900+ti->tm_year, ti->tm_mon, ti->tm_mday,
 			ti->tm_hour, ti->tm_min, ti->tm_sec);
 	LM_DBG("writing to file: %s (%d)\n", _sipdump_fpath, n);
-	_sipdump_file = fopen( _sipdump_fpath , "w" );
+	_sipdump_file = fopen( _sipdump_fpath, "w" );
 	if(_sipdump_file==NULL) {
 		LM_ERR("failed to open file %s\n", _sipdump_fpath);
 		return -1;
 	}
+	sipdump_write_meta(_sipdump_fpath);
 	sipdump_last_rotate = tv;
-	
+
 	return 0;
 }
 
 /**
- * 
+ *
  */
 int sipdump_file_init(str *folder, str *fprefix)
 {
