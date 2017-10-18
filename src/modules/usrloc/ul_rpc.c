@@ -599,6 +599,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 			&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods, &ci.received,
 			&socket);
 	if (ret < 9) {
+		LM_ERR("not enough parameters - read so far: %d\n", ret);
 		rpc->fault(ctx, 500, "Not enough parameters or wrong format");
 		return;
 	}
