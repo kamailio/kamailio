@@ -1533,7 +1533,13 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	f=(autoconvert?GET_X_AUTOCONV:0) |
 		(lflf2crlf?GET_X_LFLF2CRLF:0);
 	while(*fmt) {
-		if (!ctx->act_param) goto error;
+		if (!ctx->act_param) {
+			if(*fmt=='*') {
+				break;
+			} else {
+				goto error;
+			}
+		}
 		value = ctx->act_param->xmlChildrenNode;
 
 		switch(*fmt) {
