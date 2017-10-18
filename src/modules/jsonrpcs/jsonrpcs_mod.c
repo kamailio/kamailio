@@ -648,7 +648,7 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 		ctx->req_node = ctx->req_node->next;
 	}
 	/* error if there is still a scan char type and it is not optional */
-	if(*fmt && mandatory_param==1)
+	if(*fmt && *fmt!='*' && mandatory_param==1)
 		goto error;
 
 	va_end(ap);
