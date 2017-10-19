@@ -50,6 +50,7 @@ typedef struct jsonrpc_ctx {
 	srjson_t *rpl_node;    /**< Pointer to crt node in json reply doc */
 	int reply_sent;        /**< Flag set if the json reply was sent */
 	int error_code;        /**< Json error code */
+	str error_text;        /**< Json error text */
 	int http_code;         /**< http reply code */
 	str http_text;         /**< http reply reason text */
 	int transport;         /**< RPC transport */
