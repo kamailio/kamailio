@@ -40,4 +40,17 @@ RPC Exports for lcr
 </para>
 </section>
 
+<section id="lcr.load_gws"><title>lcr.load_gws</title>
+<para>
+        Load matching gateways and prints their ids in priority order.
+        Mandatory parameters are lcr_id and uri_user followed by
+        optional parameters caller_uri and request_uri.  Error is
+        reported if an lcr_rule with matching prefix and from_uri has
+        non-null request_uri and request_uri parameter has not been
+        given.
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

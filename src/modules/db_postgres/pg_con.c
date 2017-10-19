@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -23,10 +23,10 @@
  */
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Functions related to connections to PostgreSQL servers.
  */
 
@@ -46,16 +46,16 @@
 #include <time.h>
 
 
-/* Override the default notice processor to output the messages 
+/* Override the default notice processor to output the messages
  * using SER's output subsystem.
  */
-static void notice_processor(void* arg, const char* message)
+static void notice_processor(void *arg, const char *message)
 {
 	LOG(L_NOTICE, "postgres: %s\n", message);
 }
 
 
-/** Determine the format of timestamps used by the server.  
+/** Determine the format of timestamps used by the server.
  * A PostgresSQL server can be configured to store timestamps either as 8-byte
  * integers or floating point numbers with double precision. This functions
  * sends a simple SQL query to the server and tries to determine the format of
@@ -67,39 +67,41 @@ static void notice_processor(void* arg, const char* message)
  * @retval 1 If the server stores timestamps as 8-byte integers.
  * @retval A negative number on error.
  */
-static int timestamp_format(PGconn* con)
+static int timestamp_format(PGconn *con)
 {
 	unsigned long long offset;
-	PGresult* res = 0;
-	char* val;
+	PGresult *res = 0;
+	char *val;
 	str sql;
 
-	if (build_timestamp_format_sql(&sql) != 0) {
-		ERR("postgres: Error while building SQL query to obtain timestamp format\n");
+	if(build_timestamp_format_sql(&sql) != 0) {
+		ERR("postgres: Error while building SQL query to obtain timestamp "
+			"format\n");
 		return -1;
 	}
 	res = PQexecParams(con, sql.s, 0, 0, 0, 0, 0, 1);
 	pkg_free(sql.s);
 
-	if (PQfformat(res, 0) != 1) {
+	if(PQfformat(res, 0) != 1) {
 		ERR("postgres: Binary format expected but server sent text\n");
 		goto error;
 	}
 
-	if (PQntuples(res) != 1) {
-		ERR("postgres: Only one column expected, %d received\n", PQntuples(res));
+	if(PQntuples(res) != 1) {
+		ERR("postgres: Only one column expected, %d received\n",
+				PQntuples(res));
 		goto error;
 	}
 
-	if (PQnfields(res) != 1) {
+	if(PQnfields(res) != 1) {
 		ERR("postgres: Only one row expected, %d received\n", PQnfields(res));
 		goto error;
 	}
 
 	val = PQgetvalue(res, 0, 0);
-	offset = ((unsigned long long)ntohl(((unsigned int*)val)[0]) << 32) 
-		+ ntohl(((unsigned int*)val)[1]);
-	
+	offset = ((unsigned long long)ntohl(((unsigned int *)val)[0]) << 32)
+			 + ntohl(((unsigned int *)val)[1]);
+
 	PQclear(res);
 
 	/* Server using int8 timestamps would return 1000000, because it stores
@@ -110,15 +112,15 @@ static int timestamp_format(PGconn* con)
 	 * when the memory location occupied by the variable is read as unsigned
 	 * long long.
 	 */
-	if (offset == 1000000) {
-	        DBG("postgres: Server uses int8 format for timestamps.\n");
+	if(offset == 1000000) {
+		DBG("postgres: Server uses int8 format for timestamps.\n");
 		return 1;
 	} else {
 		DBG("postgres: Server uses double format for timestamps.\n");
 		return 0;
 	}
-	
- error:
+
+error:
 	PQclear(res);
 	return -1;
 }
@@ -135,24 +137,28 @@ static int timestamp_format(PGconn* con)
  * @retval 0 If executed successfully.
  * @retval A negative number on error.
  */
-static int get_oids(db_con_t* con)
+static int get_oids(db_con_t *con)
 {
-	struct pg_con* pcon;
-	PGresult* res = NULL;
+	struct pg_con *pcon;
+	PGresult *res = NULL;
 	str sql;
 
 	pcon = DB_GET_PAYLOAD(con);
-	if (build_select_oid_sql(&sql) < 0) goto error;
+	if(build_select_oid_sql(&sql) < 0)
+		goto error;
 	res = PQexec(pcon->con, sql.s);
 	pkg_free(sql.s);
-	if (res == NULL || PQresultStatus(res) != PGRES_TUPLES_OK) goto error;
+	if(res == NULL || PQresultStatus(res) != PGRES_TUPLES_OK)
+		goto error;
 	pcon->oid = pg_new_oid_table(res);
 	PQclear(res);
-	if (pcon->oid == NULL) goto error;
+	if(pcon->oid == NULL)
+		goto error;
 	return 0;
 
- error:
-	if (res) PQclear(res);
+error:
+	if(res)
+		PQclear(res);
 	return -1;
 }
 
@@ -163,54 +169,58 @@ static int get_oids(db_con_t* con)
  * @param con A generic db_con connection structure.
  * @param payload PostgreSQL specific payload to be freed.
  */
-static void pg_con_free(db_con_t* con, struct pg_con* payload)
+static void pg_con_free(db_con_t *con, struct pg_con *payload)
 {
-	if (!payload) return;
-	
+	if(!payload)
+		return;
+
 	/* Delete the structure only if there are no more references
 	 * to it in the connection pool
 	 */
-	if (db_pool_remove((db_pool_entry_t*)payload) == 0) return;
-	
+	if(db_pool_remove((db_pool_entry_t *)payload) == 0)
+		return;
+
 	db_pool_entry_free(&payload->gen);
 	pg_destroy_oid_table(payload->oid);
-	if (payload->con) PQfinish(payload->con);
+	if(payload->con)
+		PQfinish(payload->con);
 	pkg_free(payload);
 }
 
 
-int pg_con(db_con_t* con)
+int pg_con(db_con_t *con)
 {
-	struct pg_con* pcon;
+	struct pg_con *pcon;
 
 	/* First try to lookup the connection in the connection pool and
 	 * re-use it if a match is found
 	 */
-	pcon = (struct pg_con*)db_pool_get(con->uri);
-	if (pcon) {
+	pcon = (struct pg_con *)db_pool_get(con->uri);
+	if(pcon) {
 		DBG("postgres: Connection to %.*s:%.*s found in connection pool\n",
-			con->uri->scheme.len, ZSW(con->uri->scheme.s),
-			con->uri->body.len, ZSW(con->uri->body.s));
+				con->uri->scheme.len, ZSW(con->uri->scheme.s),
+				con->uri->body.len, ZSW(con->uri->body.s));
 		goto found;
 	}
 
-	pcon = (struct pg_con*)pkg_malloc(sizeof(struct pg_con));
-	if (!pcon) {
+	pcon = (struct pg_con *)pkg_malloc(sizeof(struct pg_con));
+	if(!pcon) {
 		LOG(L_ERR, "postgres: No memory left\n");
 		goto error;
 	}
 	memset(pcon, '\0', sizeof(struct pg_con));
-	if (db_pool_entry_init(&pcon->gen, pg_con_free, con->uri) < 0) goto error;
+	if(db_pool_entry_init(&pcon->gen, pg_con_free, con->uri) < 0)
+		goto error;
 
 	DBG("postgres: Preparing new connection to: %.*s:%.*s\n",
-		con->uri->scheme.len, ZSW(con->uri->scheme.s),
-		con->uri->body.len, ZSW(con->uri->body.s));
+			con->uri->scheme.len, ZSW(con->uri->scheme.s), con->uri->body.len,
+			ZSW(con->uri->body.s));
 
 	/* Put the newly created postgres connection into the pool */
-	db_pool_put((struct db_pool_entry*)pcon);
+	db_pool_put((struct db_pool_entry *)pcon);
 	DBG("postgres: Connection stored in connection pool\n");
 
- found:
+found:
 	/* Attach driver payload to the db_con structure and set connect and
 	 * disconnect functions
 	 */
@@ -219,8 +229,8 @@ int pg_con(db_con_t* con)
 	con->disconnect = pg_con_disconnect;
 	return 0;
 
- error:
-	if (pcon) {
+error:
+	if(pcon) {
 		db_pool_entry_free(&pcon->gen);
 		pkg_free(pcon);
 	}
@@ -228,26 +238,26 @@ int pg_con(db_con_t* con)
 }
 
 
-int pg_con_connect(db_con_t* con)
+int pg_con_connect(db_con_t *con)
 {
-	struct pg_con* pcon;
-	struct pg_uri* puri;
-	char* port_str;
+	struct pg_con *pcon;
+	struct pg_uri *puri;
+	char *port_str;
 	int ret, i = 0;
 	const char *keywords[10], *values[10];
 	char to[16];
-	
+
 	pcon = DB_GET_PAYLOAD(con);
 	puri = DB_GET_PAYLOAD(con->uri);
-	
+
 	/* Do not reconnect already connected connections */
-	if (pcon->flags & PG_CONNECTED) return 0;
+	if(pcon->flags & PG_CONNECTED)
+		return 0;
 
-	DBG("postgres: Connecting to %.*s:%.*s\n",
-		con->uri->scheme.len, ZSW(con->uri->scheme.s),
-		con->uri->body.len, ZSW(con->uri->body.s));
+	DBG("postgres: Connecting to %.*s:%.*s\n", con->uri->scheme.len,
+			ZSW(con->uri->scheme.s), con->uri->body.len, ZSW(con->uri->body.s));
 
-	if (puri->port > 0) {
+	if(puri->port > 0) {
 		port_str = int2str(puri->port, 0);
 		keywords[i] = "port";
 		values[i++] = port_str;
@@ -255,7 +265,7 @@ int pg_con_connect(db_con_t* con)
 		port_str = NULL;
 	}
 
-	if (pcon->con) {
+	if(pcon->con) {
 		PQfinish(pcon->con);
 		pcon->con = NULL;
 	}
@@ -268,8 +278,8 @@ int pg_con_connect(db_con_t* con)
 	values[i++] = puri->username;
 	keywords[i] = "password";
 	values[i++] = puri->password;
-	if (pg_timeout > 0) {
-		snprintf(to, sizeof(to)-1, "%d", pg_timeout + 3);
+	if(pg_timeout > 0) {
+		snprintf(to, sizeof(to) - 1, "%d", pg_timeout + 3);
 		keywords[i] = "connect_timeout";
 		values[i++] = to;
 	}
@@ -277,66 +287,76 @@ int pg_con_connect(db_con_t* con)
 	keywords[i] = values[i] = NULL;
 
 	pcon->con = PQconnectdbParams(keywords, values, 1);
-	
-	if (pcon->con == NULL) {
+
+	if(pcon->con == NULL) {
 		ERR("postgres: PQconnectdbParams ran out of memory\n");
 		goto error;
 	}
-	
-	if (PQstatus(pcon->con) != CONNECTION_OK) {
+
+	if(PQstatus(pcon->con) != CONNECTION_OK) {
 		ERR("postgres: %s\n", PQerrorMessage(pcon->con));
 		goto error;
 	}
-	
+
 	/* Override default notice processor */
 	PQsetNoticeProcessor(pcon->con, notice_processor, 0);
-	
+
 #ifdef HAVE_PGSERVERVERSION
-	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n", 
-	    PQprotocolVersion(pcon->con), PQserverVersion(pcon->con));
+	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n",
+			PQprotocolVersion(pcon->con), PQserverVersion(pcon->con));
 #else
-	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n", 
-	    PQprotocolVersion(pcon->con), 0 );
+	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n",
+			PQprotocolVersion(pcon->con), 0);
 #endif
 
 #if defined(SO_KEEPALIVE) && defined(TCP_KEEPIDLE)
-	if (pg_keepalive) {
+	if(pg_keepalive) {
 		i = 1;
-		setsockopt(PQsocket(pcon->con), SOL_SOCKET, SO_KEEPALIVE, &i, sizeof(i));
-		setsockopt(PQsocket(pcon->con), IPPROTO_TCP, TCP_KEEPIDLE, &pg_keepalive, sizeof(pg_keepalive));
+		if(setsockopt(
+				   PQsocket(pcon->con), SOL_SOCKET, SO_KEEPALIVE, &i, sizeof(i))
+				< 0) {
+			LM_WARN("failed to set socket option keepalive\n");
+		}
+		if(setsockopt(PQsocket(pcon->con), IPPROTO_TCP, TCP_KEEPIDLE,
+				   &pg_keepalive, sizeof(pg_keepalive))
+				< 0) {
+			LM_WARN("failed to set socket option keepidle\n");
+		}
 	}
 #endif
 
 	ret = timestamp_format(pcon->con);
-	if (ret == 1 || ret == -1) {
+	if(ret == 1 || ret == -1) {
 		/* Assume INT8 representation if detection fails */
 		pcon->flags |= PG_INT8_TIMESTAMP;
 	} else {
 		pcon->flags &= ~PG_INT8_TIMESTAMP;
 	}
 
-	if (get_oids(con) < 0) goto error;
+	if(get_oids(con) < 0)
+		goto error;
 
 	pcon->flags |= PG_CONNECTED;
 	return 0;
 
- error:
-	if (pcon->con) PQfinish(pcon->con);
+error:
+	if(pcon->con)
+		PQfinish(pcon->con);
 	pcon->con = NULL;
 	return -1;
 }
 
 
-void pg_con_disconnect(db_con_t* con)
+void pg_con_disconnect(db_con_t *con)
 {
-	struct pg_con* pcon;
+	struct pg_con *pcon;
 
 	pcon = DB_GET_PAYLOAD(con);
-	if ((pcon->flags & PG_CONNECTED) == 0) return;
+	if((pcon->flags & PG_CONNECTED) == 0)
+		return;
 
-	DBG("postgres: Disconnecting from %.*s:%.*s\n",
-		con->uri->scheme.len, ZSW(con->uri->scheme.s),
-		con->uri->body.len, ZSW(con->uri->body.s));
+	DBG("postgres: Disconnecting from %.*s:%.*s\n", con->uri->scheme.len,
+			ZSW(con->uri->scheme.s), con->uri->body.len, ZSW(con->uri->body.s));
 
 	PQfinish(pcon->con);
 	pcon->con = NULL;

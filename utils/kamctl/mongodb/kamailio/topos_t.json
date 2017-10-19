@@ -1,0 +1,131 @@
+{
+  "name": "topos_t",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "rectime": {
+      "type": "datetime",
+      "default": null,
+      "null": false
+    },
+    "s_method": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "s_cseq": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "a_callid": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "a_uuid": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "b_uuid": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "direction": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "x_via": {
+      "type": "text",
+      "default": null,
+      "null": true
+    },
+    "x_vbranch": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "x_rr": {
+      "type": "text",
+      "default": null,
+      "null": true
+    },
+    "y_rr": {
+      "type": "text",
+      "default": null,
+      "null": true
+    },
+    "s_rr": {
+      "type": "text",
+      "default": null,
+      "null": true
+    },
+    "x_uri": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "a_contact": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "b_contact": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "as_contact": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "bs_contact": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "x_tag": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "a_tag": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "b_tag": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "a_srcaddr": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "b_srcaddr": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "a_socket": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "b_socket": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

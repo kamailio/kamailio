@@ -471,7 +471,11 @@ int digeststr_asm(dynstr *sout, struct sip_msg *msg, str *sdate, int iflags)
 						LOG(L_ERR, "AUTH_IDENTITY:digeststr_asm: DATE header is not found\n");
 						return -9;
 					}
+					break;
 				}
+				if (app2dynstr(sout,&sact))
+					return -10;
+				break;
 			default:
 				if (iRes==AUTH_NOTFOUND)
 					break;
@@ -514,13 +518,14 @@ int append_hf(struct sip_msg* msg, char *str1, enum _hdr_types_t type)
 
 	len=strlen(str1);
 
-	s = (char*)pkg_malloc(len);
+	s = (char*)pkg_malloc(len+1);
 	if (!s) {
 		LOG(L_ERR, "AUTH_IDENTITY:append_hf: No memory left\n");
 		return -1;
 	}
 
 	memcpy(s, str1, len);
+	s[len] = '\0';
 
 	if (insert_new_lump_before(anchor, s, len, type) == 0) {
 		LOG(L_ERR, "AUTH_IDENTITY:append_hf: Can't insert lump\n");
@@ -643,6 +648,8 @@ static char *auth_get_hf_name(char *begin, char *end, enum _hdr_types_t *type)
 				p += 4;
 				goto dc_end;
 			}
+			*type = HDR_OTHER_T;
+			break;
 		default:
 			/* compact headers */
 			switch(LOWER_BYTE(*p)) {
@@ -656,6 +663,8 @@ static char *auth_get_hf_name(char *begin, char *end, enum _hdr_types_t *type)
 					*type = HDR_CONTACT_T;
 					return (p + 2);
 				}
+				*type = HDR_OTHER_T;
+				break;
 			default:
 				*type = HDR_OTHER_T;
 				break;

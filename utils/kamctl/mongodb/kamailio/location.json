@@ -1,6 +1,6 @@
 {
   "name": "location",
-  "version": 8,
+  "version": 9,
   "columns": [
     "id": {
       "type": "int",
@@ -59,7 +59,7 @@
     },
     "last_modified": {
       "type": "datetime",
-      "default": "1900-01-01 00:00:01",
+      "default": "2000-01-01 00:00:01",
       "null": false
     },
     "flags": {

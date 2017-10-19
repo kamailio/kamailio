@@ -199,23 +199,23 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 
 	if (frame->payload_len < 126) extended_length = 0;
 	else if (frame->payload_len <= USHRT_MAX ) extended_length = 2;
-	else if (frame->payload_len <= UINT_MAX) extended_length = 4;
+	else if (frame->payload_len < UINT_MAX) extended_length = 4;
 	else
 	{
-		LM_ERR("Kamailio only supports WebSocket frames with payload "
-			"<= %u\n", UINT_MAX);
+		LM_ERR(NAME " only supports WebSocket frames with payload "
+			"< %u\n", UINT_MAX);
 		return -1;
 	}
 
 	/* Allocate send buffer and build frame */
 	frame_length = frame->payload_len + extended_length + 2;
-	if ((send_buf = pkg_malloc(sizeof(unsigned char) * frame_length))
+	if ((send_buf = pkg_malloc(sizeof(char) * frame_length))
 			== NULL)
 	{
 		LM_ERR("allocating send buffer from pkg memory\n");
 		return -1;
 	}
-	memset(send_buf, 0, sizeof(unsigned char) * frame_length);
+	memset(send_buf, 0, sizeof(char) * frame_length);
 	send_buf[pos++] = 0x80 | (frame->opcode & 0xff);
 	if (extended_length == 0)
 		send_buf[pos++] = (frame->payload_len & 0xff);
@@ -604,10 +604,11 @@ static int handle_pong(ws_frame_t *frame)
 	return 0;
 }
 
-int ws_frame_receive(void *data)
+int ws_frame_receive(sr_event_param_t *evp)
 {
 	ws_frame_t frame;
-	tcp_event_info_t *tcpinfo = (tcp_event_info_t *) data;
+	tcp_event_info_t *tcpinfo = (tcp_event_info_t *)evp->data;
+	sr_event_param_t levp = {0};
 
 	int opcode      = -1;
 	int ret         = 0;
@@ -725,8 +726,8 @@ int ws_frame_receive(void *data)
 
 				wsconn_put(frame.wsc);
 
-				return sr_event_exec(SREV_TCP_MSRP_FRAME,
-							(void *) &tev);
+				levp.data = (void *) &tev;
+				return sr_event_exec(SREV_TCP_MSRP_FRAME, &levp);
 			}
 			else
 			{
@@ -758,16 +759,11 @@ int ws_frame_receive(void *data)
 		wsconn_put(frame.wsc);
 		return -1;
 	}
-
-	/* how can we get here ? */
-	wsconn_put(frame.wsc);
-
-	return 0;
 }
 
-int ws_frame_transmit(void *data)
+int ws_frame_transmit(sr_event_param_t *evp)
 {
-	ws_event_info_t *wsev = (ws_event_info_t *) data;
+	ws_event_info_t *wsev = (ws_event_info_t *)evp->data;
 	ws_frame_t frame;
 
 	memset(&frame, 0, sizeof(frame));

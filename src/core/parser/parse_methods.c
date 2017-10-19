@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -35,13 +35,13 @@
  */
 static int token_char(char _c)
 {
- 	return 	(_c >= 65 && _c <= 90) ||        /* upper alpha */
- 		(_c >= 97 && _c <= 122) ||       /* lower aplha */
- 		(_c >= 48 && _c <= 57) ||        /* digits */
- 		(_c == '-') || (_c == '.') || (_c == '!') || (_c == '%') ||
- 		(_c == '*') || (_c == '_') || (_c == '+') || (_c == '`') ||
- 		(_c == '\'') || (_c == '~');
- }
+	return 	(_c >= 65 && _c <= 90) ||        /* upper alpha */
+		(_c >= 97 && _c <= 122) ||       /* lower aplha */
+		(_c >= 48 && _c <= 57) ||        /* digits */
+		(_c == '-') || (_c == '.') || (_c == '!') || (_c == '%') ||
+		(_c == '*') || (_c == '_') || (_c == '+') || (_c == '`') ||
+		(_c == '\'') || (_c == '~');
+}
 
 
 
@@ -52,24 +52,24 @@ static int token_char(char _c)
  * \return 0 on success, -1 on error
  */
 int parse_method_name(const str* const s, enum request_method* const method)
- {
+{
 	if (unlikely(!s || !method)) {
-		LOG(L_ERR, "Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
-	
+
 	if (unlikely(!s->len || (s->s==0))) {
-		DBG("No input\n");
+		LM_DBG("No input\n");
 		*method = METHOD_OTHER;
 		return 0;
 	}
-	
+
 	switch ((s->s)[0]) {
 		/* ordered after probability of aparition on a normal proxy */
 		case 'R':
 		case 'r':
 			if (likely((s->len == 8) &&
-					!strncasecmp(s->s + 1, "egister", 7))) {
+						!strncasecmp(s->s + 1, "egister", 7))) {
 				*method = METHOD_REGISTER;
 				return 0;
 			}
@@ -166,245 +166,245 @@ int parse_method_name(const str* const s, enum request_method* const method)
 
 
 
- /*! \brief
-  * Parse a method pointed by _next, assign its enum bit to _method, and update
-  * _next past the method. Returns 1 if parse succeeded and 0 otherwise.
-  */
+/*! \brief
+ * Parse a method pointed by _next, assign its enum bit to _method, and update
+ * _next past the method. Returns 1 if parse succeeded and 0 otherwise.
+ */
 static int parse_method_advance(str* const _next, enum request_method* const _method)
- {
+{
 	char* end;
-	
-	 if (unlikely(!_next || !_method)) {
-		 LOG(L_ERR, "Invalid parameter value\n");
-		 return 0;
-	 }
-	 
-	 if (unlikely(!_next->len || !_next->s)) {
-		 DBG("No input\n");
- 		*_method = METHOD_OTHER;
-		 return 1;
-	 }
+
+	if (unlikely(!_next || !_method)) {
+		LM_ERR("Invalid parameter value\n");
+		return 0;
+	}
+
+	if (unlikely(!_next->len || !_next->s)) {
+		DBG("No input\n");
+		*_method = METHOD_OTHER;
+		return 1;
+	}
 	end=_next->s+_next->len;
-	
-	 switch ((_next->s)[0]) {
-	 case 'A':
-	 case 'a':
-		 if ((_next->len > 2) && !strncasecmp(_next->s + 1, "ck", 2)) {
- 			*_method = METHOD_ACK;
- 			_next->len -= 3;
- 			_next->s += 3;
-			goto found;
- 		} else {
- 			goto unknown;
- 		}
 
- 	case 'B':
- 	case 'b':
- 		if ((_next->len > 2) && !strncasecmp(_next->s + 1, "ye", 2)) {
- 			*_method = METHOD_BYE;
- 			_next->len -= 3;
- 			_next->s += 3;
-			goto found;
- 		} else {
- 			goto unknown;
- 		}
-
- 	case 'C':
- 	case 'c':
- 		if ((_next->len > 5) && !strncasecmp(_next->s + 1, "ancel", 5)) {
- 			*_method = METHOD_CANCEL;
- 			_next->len -= 6;
- 			_next->s += 6;
-			goto found;
- 		} else {
- 			goto unknown;
- 		}
-
- 	case 'I':
- 	case 'i':
- 		if ((_next->len > 3) &&
- 		    ((*(_next->s + 1) == 'N') || (*(_next->s + 1) == 'n'))) {
- 			if (!strncasecmp(_next->s + 2, "fo", 2)) {
- 				*_method = METHOD_INFO;
- 				_next->len -= 4;
- 				_next->s += 4;
+	switch ((_next->s)[0]) {
+		case 'A':
+		case 'a':
+			if ((_next->len > 2) && !strncasecmp(_next->s + 1, "ck", 2)) {
+				*_method = METHOD_ACK;
+				_next->len -= 3;
+				_next->s += 3;
 				goto found;
- 			}
+			} else {
+				goto unknown;
+			}
 
- 			if ((_next->len > 5) && !strncasecmp(_next->s + 2, "vite", 4)) {
- 				*_method = METHOD_INVITE;
- 				_next->len -= 6;
- 				_next->s += 6;
+		case 'B':
+		case 'b':
+			if ((_next->len > 2) && !strncasecmp(_next->s + 1, "ye", 2)) {
+				*_method = METHOD_BYE;
+				_next->len -= 3;
+				_next->s += 3;
 				goto found;
- 			}
- 		}
- 		goto unknown;
+			} else {
+				goto unknown;
+			}
 
- 	case 'M':
- 	case 'm':
- 		if ((_next->len > 6) && !strncasecmp(_next->s + 1, "essage", 6)) {
- 			*_method = METHOD_MESSAGE;
- 			_next->len -= 7;
- 			_next->s += 7;
-			goto found;
- 		} else {
- 			goto unknown;
- 		}
-
- 	case 'N':
- 	case 'n':
- 		if ((_next->len > 5) && !strncasecmp(_next->s + 1, "otify", 5)) {
- 			*_method = METHOD_NOTIFY;
- 			_next->len -= 6;
- 			_next->s += 6;
-			goto found;
- 		} else {
- 			goto unknown;
- 		}
-
- 	case 'O':
- 	case 'o':
- 		if ((_next->len > 6) && !strncasecmp(_next->s + 1, "ptions", 6)) {
- 			*_method = METHOD_OPTIONS;
- 			_next->len -= 7;
- 			_next->s += 7;
-			goto found;
- 		} else {
- 			goto unknown;
- 		}
-
- 	case 'P':
- 	case 'p':
- 		if ((_next->len > 4) && !strncasecmp(_next->s + 1, "rack", 4)) {
- 			*_method = METHOD_PRACK;
- 			_next->len -= 5;
- 			_next->s += 5;
-			goto found;
- 		}
- 		if ((_next->len > 6) && !strncasecmp(_next->s + 1, "ublish", 6)) {
- 			*_method = METHOD_PUBLISH;
- 			_next->len -= 7;
- 			_next->s += 7;
-			goto found;
- 		}
- 		goto unknown;
-
- 	case 'R':
- 	case 'r':
- 		if ((_next->len > 4) &&
- 		    ((*(_next->s + 1) == 'E') || (*(_next->s + 1) == 'e'))) {
- 			if (!strncasecmp(_next->s + 2, "fer", 3)) {
- 				*_method = METHOD_REFER;
- 				_next->len -= 5;
- 				_next->s += 5;
+		case 'C':
+		case 'c':
+			if ((_next->len > 5) && !strncasecmp(_next->s + 1, "ancel", 5)) {
+				*_method = METHOD_CANCEL;
+				_next->len -= 6;
+				_next->s += 6;
 				goto found;
- 			}
+			} else {
+				goto unknown;
+			}
 
- 			if ((_next->len > 7) && !strncasecmp(_next->s + 2, "gister", 6)) {
- 				*_method = METHOD_REGISTER;
- 				_next->len -= 8;
- 				_next->s += 8;
+		case 'I':
+		case 'i':
+			if ((_next->len > 3) &&
+					((*(_next->s + 1) == 'N') || (*(_next->s + 1) == 'n'))) {
+				if (!strncasecmp(_next->s + 2, "fo", 2)) {
+					*_method = METHOD_INFO;
+					_next->len -= 4;
+					_next->s += 4;
+					goto found;
+				}
+
+				if ((_next->len > 5) && !strncasecmp(_next->s + 2, "vite", 4)) {
+					*_method = METHOD_INVITE;
+					_next->len -= 6;
+					_next->s += 6;
+					goto found;
+				}
+			}
+			goto unknown;
+
+		case 'M':
+		case 'm':
+			if ((_next->len > 6) && !strncasecmp(_next->s + 1, "essage", 6)) {
+				*_method = METHOD_MESSAGE;
+				_next->len -= 7;
+				_next->s += 7;
 				goto found;
- 			}
- 		}
- 		goto unknown;
+			} else {
+				goto unknown;
+			}
 
- 	case 'S':
- 	case 's':
- 		if ((_next->len > 8) && !strncasecmp(_next->s + 1, "ubscribe", 8)) {
- 			*_method = METHOD_SUBSCRIBE;
- 			_next->len -= 9;
- 			_next->s += 9;
-			goto found;
- 		} else {
- 			goto unknown;
- 		}
+		case 'N':
+		case 'n':
+			if ((_next->len > 5) && !strncasecmp(_next->s + 1, "otify", 5)) {
+				*_method = METHOD_NOTIFY;
+				_next->len -= 6;
+				_next->s += 6;
+				goto found;
+			} else {
+				goto unknown;
+			}
 
- 	case 'U':
- 	case 'u':
- 		if ((_next->len > 5) && !strncasecmp(_next->s + 1, "pdate", 5)) {
- 			*_method = METHOD_UPDATE;
- 			_next->len -= 6;
- 			_next->s += 6;
-			goto found;
- 		} else {
- 			goto unknown;
- 		}
+		case 'O':
+		case 'o':
+			if ((_next->len > 6) && !strncasecmp(_next->s + 1, "ptions", 6)) {
+				*_method = METHOD_OPTIONS;
+				_next->len -= 7;
+				_next->s += 7;
+				goto found;
+			} else {
+				goto unknown;
+			}
 
- 	default:
- 		goto unknown;
- 	}
+		case 'P':
+		case 'p':
+			if ((_next->len > 4) && !strncasecmp(_next->s + 1, "rack", 4)) {
+				*_method = METHOD_PRACK;
+				_next->len -= 5;
+				_next->s += 5;
+				goto found;
+			}
+			if ((_next->len > 6) && !strncasecmp(_next->s + 1, "ublish", 6)) {
+				*_method = METHOD_PUBLISH;
+				_next->len -= 7;
+				_next->s += 7;
+				goto found;
+			}
+			goto unknown;
 
- unknown:
- 	if (token_char(*(_next->s))) {
- 		do { 
- 			_next->s++;
- 			_next->len--;
- 		} while (_next->len && token_char(*(_next->s)));
- 		*_method = METHOD_OTHER;
- 		return 1;
- 	} else {
- 		return 0;
- 	}
+		case 'R':
+		case 'r':
+			if ((_next->len > 4) &&
+					((*(_next->s + 1) == 'E') || (*(_next->s + 1) == 'e'))) {
+				if (!strncasecmp(_next->s + 2, "fer", 3)) {
+					*_method = METHOD_REFER;
+					_next->len -= 5;
+					_next->s += 5;
+					goto found;
+				}
+
+				if ((_next->len > 7) && !strncasecmp(_next->s + 2, "gister", 6)) {
+					*_method = METHOD_REGISTER;
+					_next->len -= 8;
+					_next->s += 8;
+					goto found;
+				}
+			}
+			goto unknown;
+
+		case 'S':
+		case 's':
+			if ((_next->len > 8) && !strncasecmp(_next->s + 1, "ubscribe", 8)) {
+				*_method = METHOD_SUBSCRIBE;
+				_next->len -= 9;
+				_next->s += 9;
+				goto found;
+			} else {
+				goto unknown;
+			}
+
+		case 'U':
+		case 'u':
+			if ((_next->len > 5) && !strncasecmp(_next->s + 1, "pdate", 5)) {
+				*_method = METHOD_UPDATE;
+				_next->len -= 6;
+				_next->s += 6;
+				goto found;
+			} else {
+				goto unknown;
+			}
+
+		default:
+			goto unknown;
+	}
+
+unknown:
+	if (token_char(*(_next->s))) {
+		do {
+			_next->s++;
+			_next->len--;
+		} while (_next->len && token_char(*(_next->s)));
+		*_method = METHOD_OTHER;
+		return 1;
+	} else {
+		return 0;
+	}
 found:
 	/* check if the method really ends here (if not return 0) */
 	return (_next->s>=end) || (!token_char(*(_next->s)));
- }
- 
- 
- /*! \brief
-  * Parse comma separated list of methods pointed by _body and assign their
-  * enum bits to _methods.  Returns 0 on success and -1 on failure.
-  */
+}
+
+
+/*! \brief
+ * Parse comma separated list of methods pointed by _body and assign their
+ * enum bits to _methods.  Returns 0 on success and -1 on failure.
+ */
 int parse_methods(const str* const _body, unsigned int* const _methods)
- {
- 	str next;
- 	unsigned int method;
-	
+{
+	str next;
+	unsigned int method;
+
 	method=0; /* fixes silly gcc 4.x warning */
- 
+
 	if (!_body || !_methods) {
-		LOG(L_ERR, "parse_methods: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	next.len = _body->len;
 	next.s = _body->s;
- 
- 	trim_leading(&next);
- 
-  	*_methods = 0;
- 
- 	if (next.len == 0) {
- 		return 0;
- 	}
 
- 	while (1) {
- 		if (parse_method_advance(&next, &method)) {
- 			*_methods |= method;
- 		} else {
- 			LOG(L_ERR, "ERROR: parse_methods: Invalid method\n");
- 			return -1;
- 		}
-		
- 		trim_leading(&next);
- 		if (next.len) {
- 			if (next.s[0] == ',') {
- 				next.len--;
- 				next.s++;
- 				trim_leading(&next);
- 				if (next.len == 0) {
- 					LOG(L_ERR, "ERROR: parse_methods: Method expected\n");
- 					return 0;
- 				}
- 			} else {
- 				LOG(L_ERR, "ERROR: parse_methods: Comma expected\n");
- 				return -1;
- 			}
- 		} else {
- 			break;
- 		}
- 	}
+	trim_leading(&next);
 
- 	return 0;
- }
+	*_methods = 0;
+
+	if (next.len == 0) {
+		return 0;
+	}
+
+	while (1) {
+		if (parse_method_advance(&next, &method)) {
+			*_methods |= method;
+		} else {
+			LM_ERR("Invalid method\n");
+			return -1;
+		}
+
+		trim_leading(&next);
+		if (next.len) {
+			if (next.s[0] == ',') {
+				next.len--;
+				next.s++;
+				trim_leading(&next);
+				if (next.len == 0) {
+					LM_ERR("Method expected\n");
+					return 0;
+				}
+			} else {
+				LM_ERR("Comma expected\n");
+				return -1;
+			}
+		} else {
+			break;
+		}
+	}
+
+	return 0;
+}

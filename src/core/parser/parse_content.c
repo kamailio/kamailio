@@ -51,7 +51,7 @@
 typedef struct type_node_s {
 	char c;                      /*!< char contained by this node */
 	unsigned char final;         /*!< says what mime type/subtype was detected
-	                              *!< if string ends at this node */
+									*!< if string ends at this node */
 	unsigned char nr_sons;       /*!< the number of sub-nodes */
 	int next;                    /*!< the next sibling node */
 }type_node_t;
@@ -211,7 +211,8 @@ static type_node_t subtype_tree[] = {
 
 
 
-char* parse_content_length(char* const buffer, const char* const end, int* const length)
+char* parse_content_length(char* const buffer, const char* const end,
+		int* const length)
 {
 	int number;
 	char *p;
@@ -247,14 +248,14 @@ char* parse_content_length(char* const buffer, const char* const end, int* const
 	*length = number;
 	return p;
 error:
-	LOG(L_ERR,"ERROR:parse_content_length: parse error near char [%d][%c]\n",
-		*p,*p);
+	LM_ERR("parse error near char [%d][%c]\n", *p, *p);
 	return 0;
 }
 
 
 
-char* decode_mime_type(char* const start, const char* const end, unsigned int* const mime_type)
+char* decode_mime_type(char* const start, const char* const end,
+		unsigned int* const mime_type)
 {
 	int node;
 	char *mark;
@@ -279,7 +280,7 @@ char* decode_mime_type(char* const start, const char* const end, unsigned int* c
 		mark = p;
 		type_candidate = TYPE_UNKNOWN;
 		while (p<end && is_mime_char(*p)  ) {
-			while ( node!=-1 && !is_char_equal(*p,type_tree[node].c) ){
+			while ( node!=-1 && !is_char_equal(*p,type_tree[node].c) ) {
 				node = type_tree[node].next;
 			}
 			if (node!=-1) {
@@ -361,14 +362,14 @@ char* decode_mime_type(char* const start, const char* const end, unsigned int* c
 
 	/* check the format of the decoded mime */
 	if ((*mime_type)>>16==TYPE_ALL && ((*mime_type)&0x00ff)!=SUBTYPE_ALL) {
-		LOG(L_ERR,"ERROR:decode_mime_type: invalid mime format found "
-			" <*/submime> in [%.*s]!!\n", (int)(end-start),start);
+		LM_ERR("invalid mime format found "
+			" <*/submime> in [%.*s]!!\n", (int)(end-start), start);
 		return 0;
 	}
 
 	return p;
 error:
-	LOG(L_ERR,"ERROR:decode_mime_type: parse error near in [%.*s] char"
+	LM_ERR("parse error near in [%.*s] char"
 		"[%d][%c] offset=%d\n", (int)(end-start),start,*p,*p,(int)(p-start));
 	return 0;
 }
@@ -392,8 +393,7 @@ int parse_content_type_hdr(struct sip_msg* const msg)
 		if ( parse_headers(msg, HDR_CONTENTTYPE_F, 0)==-1)
 			goto error;
 		if ( msg->content_type==0 ) {
-			DBG("DEBUG:parse_content_type_hdr: missing Content-Type"
-				"header\n");
+			LM_DBG("missing Content-Type header\n");
 			return 0;
 		}
 	}
@@ -408,13 +408,11 @@ int parse_content_type_hdr(struct sip_msg* const msg)
 	if (ret==0)
 		goto error;
 	if (ret!=end) {
-		LOG(L_ERR,"ERROR:parse_content_type_hdr: CONTENT_TYPE hdr contains "
-			"more then one mime type :-(!\n");
+		LM_ERR("Content-Type hdr contains more then one mime type!\n");
 		goto error;
 	}
 	if ((mime&0x00ff)==SUBTYPE_ALL || (mime>>16)==TYPE_ALL) {
-		LOG(L_ERR,"ERROR:parse_content_type_hdr: invalid mime with wildcard "
-			"'*' in Content-Type hdr!\n");
+		LM_ERR("invalid mime with wildcard '*' in Content-Type hdr!\n");
 		goto error;
 	}
 
@@ -448,8 +446,8 @@ int parse_accept_body(struct hdr_field* const hdr)
 			goto error;
 		/* a new mime was found  -> put it into array */
 		if (nr_mimes==MAX_MIMES_NR) {
-			LOG(L_ERR,"ERROR:parse_accept_hdr: Accept hdr contains more than"
-				" %d mime type -> buffer overflow!!\n",MAX_MIMES_NR);
+			LM_ERR("Accept hdr contains more than %d mime type"
+					" -> buffer overflow!!\n", MAX_MIMES_NR);
 			goto error;
 		}
 		mimes[nr_mimes++] = mime;
@@ -458,7 +456,7 @@ int parse_accept_body(struct hdr_field* const hdr)
 			break;
 		/* parse the mime separator ',' */
 		if (*ret!=',' || ret+1==end) {
-			LOG(L_ERR,"ERROR:parse_accept_hdr: parse error between mimes at "
+			LM_ERR("parse error between mimes at "
 				"char <%x> (offset=%d) in <%.*s>!\n",
 				*ret, (int)(ret-hdr->body.s),
 				hdr->body.len, hdr->body.s);
@@ -471,7 +469,7 @@ int parse_accept_body(struct hdr_field* const hdr)
 	/* copy and link the mime buffer into the message */
 	hdr->parsed = (void*)pkg_malloc((nr_mimes+1)*sizeof(int));
 	if (hdr->parsed==0) {
-		LOG(L_ERR,"ERROR:parse_accept: no more pkg memory\n");
+		LM_ERR("no more pkg memory\n");
 		goto error;
 	}
 	memcpy(hdr->parsed,mimes,nr_mimes*sizeof(int));
@@ -501,7 +499,7 @@ int parse_accept_hdr(struct sip_msg* const msg)
 		if ( parse_headers(msg, HDR_ACCEPT_F, 0)==-1)
 			goto error;
 		if ( msg->accept==0 ) {
-			DBG("DEBUG:parse_accept_hdr: missing Accept header\n");
+			LM_DBG("missing Accept header\n");
 			return 0;
 		}
 	}
@@ -520,7 +518,7 @@ int parse_accept_hdr(struct sip_msg* const msg)
 			goto error;
 		/* a new mime was found  -> put it into array */
 		if (nr_mimes==MAX_MIMES_NR) {
-			LOG(L_ERR,"ERROR:parse_accept_hdr: Accept hdr contains more than"
+			LM_ERR("Accept hdr contains more than"
 				" %d mime type -> buffer overflow!!\n",MAX_MIMES_NR);
 			goto error;
 		}
@@ -530,7 +528,7 @@ int parse_accept_hdr(struct sip_msg* const msg)
 			break;
 		/* parse the mime separator ',' */
 		if (*ret!=',' || ret+1==end) {
-			LOG(L_ERR,"ERROR:parse_accept_hdr: parse error between mimes at "
+			LM_ERR("parse error between mimes at "
 				"char <%x> (offset=%d) in <%.*s>!\n",
 				*ret, (int)(ret-msg->accept->body.s),
 				msg->accept->body.len, msg->accept->body.s);
@@ -543,7 +541,7 @@ int parse_accept_hdr(struct sip_msg* const msg)
 	/* copy and link the mime buffer into the message */
 	msg->accept->parsed = (void*)pkg_malloc((nr_mimes+1)*sizeof(int));
 	if (msg->accept->parsed==0) {
-		LOG(L_ERR,"ERROR:parse_accept_hdr: no more pkg memory\n");
+		LM_ERR("no more pkg memory\n");
 		goto error;
 	}
 	memcpy(msg->accept->parsed,mimes,nr_mimes*sizeof(int));
@@ -554,4 +552,3 @@ int parse_accept_hdr(struct sip_msg* const msg)
 error:
 	return -1;
 }
-

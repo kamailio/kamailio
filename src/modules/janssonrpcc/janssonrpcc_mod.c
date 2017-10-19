@@ -61,6 +61,15 @@ int  pipe_fds[2] = {-1,-1};
 
 struct tm_binds tmb;
 
+/* globals */
+int cmd_pipe;
+str result_pv_str;
+retry_range_t* global_retry_ranges;
+#ifndef TEST
+jansson_to_val_f jsontoval;
+pv_spec_t jsonrpc_result_pv;
+#endif
+
 /*
  * Exported Functions
  */
@@ -205,8 +214,9 @@ static int child_init(int rank)
 
 void mod_destroy(void)
 {
-	lock_get(jsonrpc_server_group_lock); /* blocking */
-	if(jsonrpc_server_group_lock) lock_dealloc(jsonrpc_server_group_lock);
+	if(jsonrpc_server_group_lock) {
+		lock_dealloc(jsonrpc_server_group_lock);
+	}
 
 	free_server_group(global_server_group);
 	CHECK_AND_FREE(global_server_group);

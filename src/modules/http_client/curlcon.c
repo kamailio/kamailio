@@ -172,7 +172,7 @@ curl_con_pkg_t* curl_get_pkg_connection(curl_con_t *con)
 		}
 		ccp = ccp->next;
 	}
-	LM_DBG("curl_get_pkg_connection no success in looking for pkg memory for httpcon: [%.*s]\n", con->name.len, con->name.s);
+	LM_ERR("curl_get_pkg_connection no success in looking for pkg memory for httpcon: [%.*s]\n", con->name.len, con->name.s);
 	return NULL;
 }
 
@@ -228,7 +228,6 @@ int curl_parse_param(char *val)
 	param_t *conparams = NULL;
 	curl_con_t *cc = NULL;
 
-	LM_INFO("http_client modparam parsing starting\n");
 	LM_DBG("modparam httpcon: %s\n", val);
 	LM_DBG(" *** Default httproxy: %s\n", http_proxy.s);
 
@@ -679,6 +678,7 @@ done:
 	while (raw_conn_list != NULL)
 	{
 		raw_cc = raw_conn_list;
+		raw_conn_list = raw_conn_list->next;
 		if (raw_cc->name.s) pkg_free(raw_cc->name.s);
 		if (raw_cc->url.s) pkg_free(raw_cc->url.s);
 		if (raw_cc->username.s) pkg_free(raw_cc->username.s);
@@ -690,7 +690,6 @@ done:
 		if (raw_cc->ciphersuites.s) pkg_free(raw_cc->ciphersuites.s);
 		if (raw_cc->http_proxy.s) pkg_free(raw_cc->http_proxy.s);
 		pkg_free(raw_cc);
-		raw_conn_list = raw_conn_list->next;
 	}
 	return ret;
 }
@@ -752,8 +751,9 @@ curl_con_t *curl_init_con(str *name)
 	ccp = (curl_con_pkg_t*) pkg_malloc(sizeof(curl_con_pkg_t));
 	if(ccp == NULL)
 	{
-		shm_free(ccp);
-		LM_ERR("no shm memory\n");
+		/* We failed to allocate ccp, so let's free cc and quit */
+		shm_free(cc);
+		LM_ERR("no pkg memory available\n");
 		return NULL;
 	}
 
@@ -770,6 +770,6 @@ curl_con_t *curl_init_con(str *name)
 	ccp->curl = NULL;
 	_curl_con_pkg_root = ccp;
 
-	LM_INFO("CURL: Added connection [%.*s]\n", name->len, name->s);
+	LM_DBG("CURL: Added connection [%.*s]\n", name->len, name->s);
 	return cc;
 }

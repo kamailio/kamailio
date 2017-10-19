@@ -45,9 +45,12 @@
 /** 
  * Per-connection flags for PostgreSQL connections.
  */
-enum pg_con_flags {
-	PG_CONNECTED      = (1 << 0), /**< The connection has been connected successfully */
-	PG_INT8_TIMESTAMP = (1 << 1)  /**< The server uses 8-byte integer format for timestamps */
+enum pg_con_flags
+{
+	PG_CONNECTED =
+			(1 << 0), /**< The connection has been connected successfully */
+	PG_INT8_TIMESTAMP =
+			(1 << 1) /**< The server uses 8-byte integer format for timestamps */
 };
 
 
@@ -56,11 +59,12 @@ enum pg_con_flags {
  * PostgreSQL specific data, such as PostgreSQL connection handle, connection
  * flags, and an array with data types supported by the server.
  */
-typedef struct pg_con {
-	db_pool_entry_t gen;  /**< Generic part of the structure */
-	PGconn* con;          /**< Postgres connection handle */
-	unsigned int flags;   /**< Flags (currently only binary data format) */
-	pg_type_t* oid;       /**< Data types and their Oids obtained from the server */
+typedef struct pg_con
+{
+	db_pool_entry_t gen; /**< Generic part of the structure */
+	PGconn *con;		 /**< Postgres connection handle */
+	unsigned int flags;  /**< Flags (currently only binary data format) */
+	pg_type_t *oid; /**< Data types and their Oids obtained from the server */
 } pg_con_t;
 
 
@@ -72,7 +76,7 @@ typedef struct pg_con {
  * @retval 0 on success
  * @retval A negative number on error
  */
-int pg_con(db_con_t* con);
+int pg_con(db_con_t *con);
 
 
 /** Establish a new connection to server.  
@@ -84,14 +88,14 @@ int pg_con(db_con_t* con);
  * @retval 0 on success.
  * @retval A negative number on error.
  */
-int pg_con_connect(db_con_t* con);
+int pg_con_connect(db_con_t *con);
 
 
 /** Disconnected from PostgreSQL server.
  * Disconnects a previously connected connection to PostgreSQL server.
  * @param con A structure representing the connection to be disconnected.
  */
-void pg_con_disconnect(db_con_t* con);
+void pg_con_disconnect(db_con_t *con);
 
 /** @} */
 

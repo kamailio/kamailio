@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>SIPtrace</name>
+    <name>SIPTRACE Module</name>
     <xi:include href="sip_trace.xml"/>
 </database>

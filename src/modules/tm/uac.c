@@ -715,7 +715,7 @@ int t_uac_with_ids(uac_req_t *uac_r,
 	}
 
 	if (is_ack) {
-		if (cell) free_cell(cell);
+		free_cell(cell);
 		if (ret_index && ret_label)
 			*ret_index = *ret_label = 0;
 	} else {

@@ -90,6 +90,7 @@ int buffered_printer(FILE* infd)
 	 printf("PARSED:%d,last=%d,end=%d\n",k++,last,end);
 	 free_sip_msg(&msg);
 	 pkg_free(missatge);
+	 missatge = NULL;
 	 memmove(mybuffer,&mybuffer[end],1400-end);
 	 last=1400-end;
       }

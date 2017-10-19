@@ -24,6 +24,14 @@ RPC Exports for tm
 </para>
 </section>
 
+<section id="tm.reply_callid"><title>tm.reply_callid</title>
+<para>
+        Documentation missing (rpc_reply_callid_doc).
+</para>
+<para>
+</para>
+</section>
+
 <section id="tm.stats"><title>tm.stats</title>
 <para>
         Documentation missing (tm_rpc_stats_doc).

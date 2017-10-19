@@ -598,7 +598,7 @@ tel2sip("$ru", $fd", "$ru");
 
    Example 1.19. is_e164 usage
 ...
-if (is_164("$fU")) {  # Check From header URI user part
+if (is_e164("$fU")) {  # Check From header URI user part
    ...
 }
 if (is_e164("$avp(i:705)") {

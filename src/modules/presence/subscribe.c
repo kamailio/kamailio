@@ -1003,7 +1003,7 @@ int handle_subscribe0(struct sip_msg* msg)
 {
 	struct to_body *pfrom;
 
-	if (parse_from_uri(msg) < 0)
+	if (parse_from_uri(msg) == NULL)
 	{
 		LM_ERR("failed to find From header\n");
 		if (slb.freply(msg, 400, &pu_400_rpl) < 0)

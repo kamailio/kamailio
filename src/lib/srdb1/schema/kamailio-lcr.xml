@@ -8,7 +8,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Least-cost Routing</name>
+    <name>LCR Module</name>
     <xi:include href="lcr_gw.xml"/>
     <xi:include href="lcr_rule_target.xml"/>
     <xi:include href="lcr_rule.xml"/>

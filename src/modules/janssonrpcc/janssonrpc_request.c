@@ -32,7 +32,9 @@
 #include "janssonrpc_request.h"
 #include "janssonrpc_io.h"
 
-int next_id = 1;
+jsonrpc_request_t* request_table[JSONRPC_DEFAULT_HTABLE_SIZE];
+
+static int next_id = 1;
 
 int store_request(jsonrpc_request_t* req);
 

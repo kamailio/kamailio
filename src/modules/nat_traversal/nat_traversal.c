@@ -1573,6 +1573,10 @@ send_keepalive(NAT_Contact *contact)
     lport = 0;
     lproto = PROTO_NONE;
     hostent = sip_resolvehost(&nat_ip, &lport, &lproto);
+    if(hostent==NULL) {
+        LM_ERR("sip resolve host failed\n");
+        return;
+    }
     hostent2su(&dst.to, hostent, 0, nat_port);
 	dst.proto=PROTO_UDP;
 	dst.send_sock=contact->socket;
@@ -1633,7 +1637,8 @@ save_keepalive_state(void)
 
     f = fopen(keepalive_state_file, "w");
     if (!f) {
-        LM_ERR("failed to open keepalive state file for writing: %s\n", strerror(errno));
+        LM_ERR("failed to open keepalive state file (%s) for writing: %s\n",
+				keepalive_state_file, strerror(errno));
         return;
     }
 
@@ -1652,7 +1657,8 @@ save_keepalive_state(void)
     }
 
     if (ferror(f))
-        LM_ERR("couldn't write keepalive state file: %s\n", strerror(errno));
+        LM_ERR("couldn't write keepalive state file (%s): %s\n",
+				keepalive_state_file, strerror(errno));
 
     fclose(f);
 }
@@ -1898,7 +1904,9 @@ reply_filter(struct sip_msg *reply)
     static str prefix = {NULL, 0};
     str call_id;
 
-    parse_headers(reply, HDR_VIA2_F, 0);
+    if(parse_headers(reply, HDR_VIA2_F, 0)<0) {
+        LM_DBG("second via not parsed\n");
+    }
     if (reply->via2)
         return 1;
 

@@ -1,22 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
 	  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
-	  
+
 	  <!ENTITY % entities SYSTEM "entities.xml">
 	  %entities;
-	  
+
 	  ]>
-	  
+
 	  <table id="carrierroute" xmlns:db="http://docbook.org/ns/docbook">
 		  <name>carrierroute</name>
 		  <version>3</version>
 		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
 		  <description>
-			  <db:para>This table is used by the carrierroute module to provides routing, balancing and blacklisting 
-			  capabilities. It contains the routing data. More information is available at: http://www.kamailio.org/docs/modules/devel/carrierroute.html
+			  <db:para>
+				  This table is used by the carrierroute module to provides
+				  routing, balancing and blacklisting capabilities. It contains
+				  the routing data. More information is available at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;carrierroute.html">&KAMAILIO_MOD_DOC;carrierroute.html</ulink>.
+			</listitem>
+			</itemizedlist>
 			  </db:para>
 		  </description>
-		  
+
 		  <column id="id">
 			  <name>id</name>
 			  <type>unsigned int</type>
@@ -26,7 +33,7 @@
 			  <type db="dbtext">int,auto</type>
 			  <description>Name of the column contains the unique identifier of a route.</description>
 		  </column>
-		  
+
 		  <column>
 			  <name>carrier</name>
 			  <type>unsigned int</type>
@@ -35,7 +42,7 @@
 			  <natural/>
 			  <description>This column contains the carrier id.</description>
 		  </column>
-		  
+
 		  <column>
 			  <name>domain</name>
 			  <type>unsigned int</type>
@@ -46,7 +53,7 @@
 			  domains to have different routing rules. Maybe you use domain 0 for normal routing and
 			  domain 1 if domain 0 failed.</description>
 		  </column>
-		  
+
 		  <column>
 			  <name>scan_prefix</name>
 			  <type>string</type>
@@ -58,7 +65,7 @@
 			  match is taken. If no prefix matches, the number is not routed. To prevent this,
 			  an empty prefix value of <quote></quote> could be added.</description>
 		  </column>
-		  
+
 		  <column>
 			  <name>flags</name>
 			  <type>unsigned int</type>
@@ -66,16 +73,16 @@
 			  <default>0</default>
 			  <description>This column contains the flags used for rule matching.</description>
 		  </column>
-		  
+
 		  <column>
 			  <name>mask</name>
 			  <type>unsigned int</type>
 			  <size>&flag_len;</size>
 			  <default>0</default>
-			  <description>This column contains the mask that is applied to the message flags before rule 
+			  <description>This column contains the mask that is applied to the message flags before rule
 			  matching.</description>
 		  </column>
-		  
+
 		  <column>
 			  <name>prob</name>
 			  <type>float</type>
@@ -95,7 +102,7 @@
 			  values in the first place because of clarity.
 			  </para></description>
 		  </column>
-		  
+
 		  <column>
 			  <name>strip</name>
 			  <type>unsigned int</type>
@@ -103,7 +110,7 @@
 			  <default>0</default>
 			  <description>Name of the column contains the number of digits to be stripped of the userpart of an URI before prepending rewrite_prefix.</description>
 		  </column>
-		  
+
 		  <column>
 			  <name>rewrite_host</name>
 			  <type>string</type>
@@ -113,7 +120,7 @@
 			  for the localpart of the SIP URI. An empty field represents a blacklist entry, anything else
 			  is put as domain part into the Request URI of the SIP message.</description>
 		  </column>
-		  
+
 		  <column>
 			  <name>rewrite_prefix</name>
 			  <type>string</type>
@@ -122,7 +129,7 @@
 			  <description>Name of column contains the rewrite prefixes. Here you can define a rewrite
 			  prefix for the localpart of the SIP URI.</description>
 		  </column>
-		  
+
 		  <column>
 			  <name>rewrite_suffix</name>
 			  <type>string</type>
@@ -131,7 +138,7 @@
 			  <description>Name of column contains the rewrite suffixes. Here you can define a rewrite
 			  suffix for the localpart of the SIP URI.</description>
 		  </column>
-		  
+
 		  <column>
 			  <name>description</name>
 			  <type>string</type>

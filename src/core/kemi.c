@@ -1128,22 +1128,42 @@ str *sr_kemi_param_map_get_name(int ptype)
 str *sr_kemi_param_map_get_params(int *ptypes)
 {
 	int i;
-	static char pbuf[64];
+	int l;
+#define KEMI_PARAM_MAP_SIZE 72
+	static char pbuf[KEMI_PARAM_MAP_SIZE];
 	static str sret = STR_NULL;
 	str *pn;
 
 	pbuf[0] = '\0';
-	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
-		if(ptypes[i]==SR_KEMIP_NONE) break;
-		if(i>0) strcat(pbuf, ", ");
+	l = 0;
+	for(i = 0; i < SR_KEMI_PARAMS_MAX; i++) {
+		if(ptypes[i] == SR_KEMIP_NONE)
+			break;
+		if(i > 0) {
+			l += 2;
+			if(l >= KEMI_PARAM_MAP_SIZE - 8) {
+				strcat(pbuf, ", ...");
+				goto done;
+			}
+			strcat(pbuf, ", ");
+		}
 		pn = sr_kemi_param_map_get_name(ptypes[i]);
-		if(pn==NULL) return NULL;
+		if(pn == NULL)
+			return NULL;
+		l += pn->len;
+		if(l >= KEMI_PARAM_MAP_SIZE - 8) {
+			strcat(pbuf, ", ...");
+			goto done;
+		}
 		strcat(pbuf, pn->s);
 	}
 	if(pbuf[0]=='\0') {
 		pn = sr_kemi_param_map_get_name(SR_KEMIP_NONE);
-		strcat(pbuf, pn->s);
+		if(pn == NULL)
+			return NULL;
+		if(pn->len<KEMI_PARAM_MAP_SIZE-1) strncat(pbuf, pn->s, pn->len);
 	}
+done:
 	sret.s = pbuf;
 	sret.len = strlen(sret.s);
 	return &sret;

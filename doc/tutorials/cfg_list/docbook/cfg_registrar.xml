@@ -6,6 +6,17 @@
 	<title> Configuration Variables for registrar</title>
 
 
+<section id="registrar.realm_pref">
+    <title>registrar.realm_pref</title>
+    <para>
+        Realm prefix to be removed. Default is &quot;&quot;.
+    </para>
+    <para>Default value: &lt;unknown:str&gt;.</para>
+    <para>Type: string.</para>
+    <para>
+    </para>
+</section>
+
 <section id="registrar.default_expires">
     <title>registrar.default_expires</title>
     <para>
@@ -22,6 +33,19 @@
     <title>registrar.default_expires_range</title>
     <para>
         Percent from default_expires that will be used in generating
+        the range for the expire interval.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Range: 0 - 100.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="registrar.expires_range">
+    <title>registrar.expires_range</title>
+    <para>
+        Percent from incoming expires that will be used in generating
         the range for the expire interval.
     </para>
     <para>Default value: 0.</para>
@@ -111,16 +135,6 @@
     </para>
     <para>Default value: 1.</para>
     <para>Type: integer.</para>
-    <para>
-    </para>
-</section>
-
-<section id="registrar.realm_pref">
-    <title>registrar.realm_pref</title>
-    <para>
-        Realm prefix to be removed. Default is &quot;&quot;.
-    </para>
-    <para>Type: string.</para>
     <para>
     </para>
 </section>

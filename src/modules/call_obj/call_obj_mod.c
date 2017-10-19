@@ -121,7 +121,8 @@ static void rpc_call_obj_list(rpc_t *rpc, void *ctx)
 	}
 	
 	uint64_t current_ts;
-	uint64_t dur_ms = duration*1000; /* duration in milliseconds */
+	uint64_t dur_ms = duration;
+	dur_ms *= 1000; /* duration in milliseconds */
 	if (get_timestamp(&current_ts)) {
 		LM_ERR("error getting timestamp");
 		rpc->fault(ctx, 500, "error getting timestamp");

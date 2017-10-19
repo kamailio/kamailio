@@ -1192,7 +1192,7 @@ int mspace_mallopt(int, int);
 extern void*     sbrk(ptrdiff_t);
 #endif /* FreeBSD etc */
 #endif /* LACKS_UNISTD_H */
-#endif /* HAVE_MMAP */
+#endif /* HAVE_MORECORE */
 
 #ifndef WIN32
 #ifndef malloc_getpagesize

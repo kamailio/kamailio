@@ -66,4 +66,12 @@ RPC Exports for permissions
 </para>
 </section>
 
+<section id="permissions.allowUri"><title>permissions.allowUri</title>
+<para>
+        Documentation missing (rpc_test_uri_doc).
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

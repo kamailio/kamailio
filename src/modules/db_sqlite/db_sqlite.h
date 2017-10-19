@@ -30,8 +30,9 @@ typedef struct db_param_list {
 	struct db_param_list* prev;
 	str database;
 	int readonly;
+	str journal_mode;
 } db_param_list_t;
 
-db_param_list_t *db_param_list_search(char *db_filename);
+db_param_list_t *db_param_list_search(str db_filename);
 
 #endif

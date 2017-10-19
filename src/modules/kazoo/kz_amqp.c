@@ -679,7 +679,7 @@ void kz_amqp_destroy() {
 	kz_hash_destroy();
 }
 
-#define KZ_URL_MAX_SIZE 100
+#define KZ_URL_MAX_SIZE 512
 static char* KZ_URL_ROOT = "/";
 
 int kz_amqp_add_connection(modparam_t type, void* val)
@@ -1233,6 +1233,11 @@ int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char
 			return -1;
 		}
 
+		if (routing_key_s.len > MAX_ROUTING_KEY_SIZE) {
+			LM_ERR("routing_key size (%d) > max %d\n", routing_key_s.len, MAX_ROUTING_KEY_SIZE);
+			return -1;
+		}
+
 		struct json_object *j = json_tokener_parse(json_s.s);
 
 		if (is_error(j)) {
@@ -1289,6 +1294,11 @@ int kz_amqp_async_query(struct sip_msg* msg, char* _exchange, char* _routing_key
 	  if (fixup_get_svalue(msg, (gparam_p)_payload, &json_s) != 0) {
 		  LM_ERR("cannot get json string value : %s\n", _payload);
 		  goto error;
+	  }
+
+	  if (routing_key_s.len > MAX_ROUTING_KEY_SIZE) {
+		  LM_ERR("routing_key size (%d) > max %d\n", routing_key_s.len, MAX_ROUTING_KEY_SIZE);
+		  return -1;
 	  }
 
 	  json_obj = json_tokener_parse(json_s.s);
@@ -1436,6 +1446,11 @@ int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, cha
 
 		if (fixup_get_svalue(msg, (gparam_p)payload, &json_s) != 0) {
 			LM_ERR("cannot get json string value : %s\n", payload);
+			return -1;
+		}
+
+		if (routing_key_s.len > MAX_ROUTING_KEY_SIZE) {
+			LM_ERR("routing_key size (%d) > max %d\n", routing_key_s.len, MAX_ROUTING_KEY_SIZE);
 			return -1;
 		}
 
@@ -1992,33 +2007,33 @@ error:
 
 #define hexint(C) (C < 10?('0' + C):('A'+ C - 10))
 
-char *kz_amqp_util_encode(const str * key, char *dest) {
-    if ((key->len == 1) && (key->s[0] == '#' || key->s[0] == '*')) {
-	*dest++ = key->s[0];
-	return dest;
-    }
+void kz_amqp_util_encode(const str * key, char *pdest) {
     char *p, *end;
-    for (p = key->s, end = key->s + key->len; p < end; p++) {
-	if (KEY_SAFE(*p)) {
-	    *dest++ = *p;
-	} else if (*p == '.') {
-	    memcpy(dest, "\%2E", 3);
-	    dest += 3;
-	} else if (*p == ' ') {
-	    *dest++ = '+';
-	} else {
-	    *dest++ = '%';
-	    sprintf(dest, "%c%c", hexint(HI4(*p)), hexint(LO4(*p)));
-	    dest += 2;
-	}
+	char *dest = pdest;
+    if ((key->len == 1) && (key->s[0] == '#' || key->s[0] == '*')) {
+    	*dest++ = key->s[0];
+    	return;
+    }
+    for (p = key->s, end = key->s + key->len; p < end && ((dest - pdest) < MAX_ROUTING_KEY_SIZE); p++) {
+		if (KEY_SAFE(*p)) {
+			*dest++ = *p;
+		} else if (*p == '.') {
+			memcpy(dest, "\%2E", 3);
+			dest += 3;
+		} else if (*p == ' ') {
+			*dest++ = '+';
+		} else {
+			*dest++ = '%';
+			sprintf(dest, "%c%c", hexint(HI4(*p)), hexint(LO4(*p)));
+			dest += 2;
+		}
     }
     *dest = '\0';
-    return dest;
 }
 
 int kz_amqp_encode_ex(str* unencoded, pv_value_p dst_val)
 {
-	char routing_key_buff[256];
+	char routing_key_buff[MAX_ROUTING_KEY_SIZE+1];
 	memset(routing_key_buff,0, sizeof(routing_key_buff));
 	kz_amqp_util_encode(unencoded, routing_key_buff);
 
@@ -2042,6 +2057,11 @@ int kz_amqp_encode(struct sip_msg* msg, char* unencoded, char* encoded)
 
 	if (fixup_get_svalue(msg, (gparam_p)unencoded, &unencoded_s) != 0) {
 		LM_ERR("cannot get unencoded string value\n");
+		return -1;
+	}
+
+	if (unencoded_s.len > MAX_ROUTING_KEY_SIZE) {
+		LM_ERR("routing_key size (%d) > max %d\n", unencoded_s.len, MAX_ROUTING_KEY_SIZE);
 		return -1;
 	}
 
@@ -2261,10 +2281,16 @@ int kz_amqp_send_receive(kz_amqp_server_ptr srv, kz_amqp_cmd_ptr cmd )
 }
 
 char* eventData = NULL;
+char* eventKey = NULL;
 
 int kz_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res)
 {
 	return eventData == NULL ? pv_get_null(msg, param, res) : pv_get_strzval(msg, param, res, eventData);
+}
+
+int kz_pv_get_event_routing_key(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res)
+{
+	return eventKey == NULL ? pv_get_null(msg, param, res) : pv_get_strzval(msg, param, res, eventKey);
 }
 
 int kz_amqp_consumer_fire_event(char *eventkey)
@@ -2294,32 +2320,35 @@ int kz_amqp_consumer_fire_event(char *eventkey)
 	return 0;
 }
 
-void kz_amqp_consumer_event(char *payload, char* event_key, char* event_subkey)
+void kz_amqp_consumer_event(kz_amqp_consumer_delivery_ptr Evt)
 {
     json_obj_ptr json_obj = NULL;
     str ev_name = {0, 0}, ev_category = {0, 0};
     char buffer[512];
     char * p;
 
-    eventData = payload;
+    eventData = Evt->payload;
+    if(Evt->routing_key) {
+    	eventKey = Evt->routing_key->s;
+    }
 
-    json_obj = kz_json_parse(payload);
+    json_obj = kz_json_parse(Evt->payload);
     if (json_obj == NULL)
 		return;
 
-    char* key = (event_key == NULL ? dbk_consumer_event_key.s : event_key);
-    char* subkey = (event_subkey == NULL ? dbk_consumer_event_subkey.s : event_subkey);
+    char* key = (Evt->event_key == NULL ? dbk_consumer_event_key.s : Evt->event_key);
+    char* subkey = (Evt->event_subkey == NULL ? dbk_consumer_event_subkey.s : Evt->event_subkey);
 
     json_extract_field(key, ev_category);
-    if(ev_category.len == 0 && event_key) {
-	    ev_category.s = event_key;
-	    ev_category.len = strlen(event_key);
+    if(ev_category.len == 0 && Evt->event_key) {
+	    ev_category.s = Evt->event_key;
+	    ev_category.len = strlen(Evt->event_key);
     }
 
     json_extract_field(subkey, ev_name);
-    if(ev_name.len == 0 && event_subkey) {
-	    ev_name.s = event_subkey;
-	    ev_name.len = strlen(event_subkey);
+    if(ev_name.len == 0 && Evt->event_subkey) {
+	    ev_name.s = Evt->event_subkey;
+	    ev_name.len = strlen(Evt->event_subkey);
     }
 
     sprintf(buffer, "kazoo:consumer-event-%.*s-%.*s",ev_category.len, ev_category.s, ev_name.len, ev_name.s);
@@ -2350,6 +2379,7 @@ void kz_amqp_consumer_event(char *payload, char* event_key, char* event_subkey)
     	json_object_put(json_obj);
 
 	eventData = NULL;
+	eventKey = NULL;
 }
 
 int check_timeout(struct timeval *now, struct timeval *start, struct timeval *timeout)
@@ -2818,9 +2848,13 @@ char* maybe_add_consumer_key(int server_id, amqp_bytes_t body)
     }
     char buffer[100];
     const char* server_id_str = json_object_get_string(server_id_obj);
-    sprintf(buffer, "consumer://%d/%s", server_id, server_id_str);
-    json_object_object_del(json_obj, BLF_JSON_SERVERID);
-    json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+    if(server_id_str && strlen(server_id_str) > 0) {
+    	sprintf(buffer, "consumer://%d/%s", server_id, server_id_str);
+        json_object_object_del(json_obj, BLF_JSON_SERVERID);
+    	json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+    } else {
+        json_object_object_del(json_obj, BLF_JSON_SERVERID);
+    }
     shm_free(payload);
     payload = kz_amqp_bytes_dup(amqp_cstring_bytes((char*)json_object_to_json_string(json_obj)));
    	json_object_put(json_obj);
@@ -2864,9 +2898,13 @@ void kz_send_targeted_cmd(int server_id, amqp_bytes_t body)
     JObj = kz_json_get_object(json_obj, BLF_JSON_SERVERID);
     if(JObj != NULL) {
     	server_id_str = (char*) json_object_get_string(JObj);
-        sprintf(buffer, "consumer://%d/%s", server_id, server_id_str);
-        json_object_object_del(json_obj, BLF_JSON_SERVERID);
-        json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+        if(server_id_str && strlen(server_id_str) > 0) {
+        	sprintf(buffer, "consumer://%d/%s", server_id, server_id_str);
+            json_object_object_del(json_obj, BLF_JSON_SERVERID);
+        	json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+        } else {
+            json_object_object_del(json_obj, BLF_JSON_SERVERID);
+        }
     }
 
     cmd->return_payload = kz_amqp_string_dup((char*)json_object_to_json_string(json_obj));
@@ -2927,9 +2965,13 @@ void kz_amqp_send_worker_event(kz_amqp_server_ptr server_ptr, amqp_envelope_t* e
     JObj = kz_json_get_object(json_obj, BLF_JSON_SERVERID);
     if(JObj != NULL) {
         const char* _kz_server_id_str = json_object_get_string(JObj);
-        sprintf(buffer, "consumer://%d/%s", _kz_server_id, _kz_server_id_str);
-        json_object_object_del(json_obj, BLF_JSON_SERVERID);
-        json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+        if(_kz_server_id_str && strlen(_kz_server_id_str) > 0) {
+        	sprintf(buffer, "consumer://%d/%s", _kz_server_id, _kz_server_id_str);
+            json_object_object_del(json_obj, BLF_JSON_SERVERID);
+        	json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+        } else {
+            json_object_object_del(json_obj, BLF_JSON_SERVERID);
+        }
     }
 
     json_object_object_add(json_obj, BLF_JSON_BROKER_ZONE, json_object_new_string(server_ptr->zone->zone));
@@ -3170,7 +3212,8 @@ void kz_amqp_consumer_worker_cb(int fd, short event, void *arg)
 			lock_release(&cmd->lock);
 		}
 	} else {
-		kz_amqp_consumer_event(Evt->payload, Evt->event_key, Evt->event_subkey);
+//		kz_amqp_consumer_event(Evt->payload, Evt->event_key, Evt->event_subkey);
+		kz_amqp_consumer_event(Evt);
 	}
 
 	kz_amqp_free_consumer_delivery(Evt);

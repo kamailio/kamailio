@@ -1,6 +1,4 @@
-/* 
- * $Id$
- *
+/*
  * Digest Authentication - Diameter support
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -20,10 +18,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * -------
- *  
  *  
  */
 
@@ -64,7 +58,7 @@ auth_diam_result_t diam_pre_auth(struct sip_msg* m, str* realm, int hftype,
 int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype);
 
 int diameter_authorize(struct hdr_field* cred, str* p_method, 
-					struct sip_uri uri,	struct sip_uri ruri,
+					sip_uri_t *uri,	sip_uri_t *ruri,
 					unsigned int m_id, rd_buf_t *response);
 
 int srv_response(struct sip_msg* msg, rd_buf_t* rb, int hftype);

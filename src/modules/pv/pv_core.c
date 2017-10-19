@@ -491,6 +491,21 @@ int pv_get_cseq(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &(get_cseq(msg)->number));
 }
 
+int pv_get_cseq_body(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
+				|| (msg->cseq==NULL)) )
+	{
+		LM_ERR("cannot parse CSEQ header\n");
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &msg->cseq->body);
+}
+
 int pv_get_msg_buf(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -665,6 +680,18 @@ int pv_get_srcip(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &s);
 }
 
+int pv_get_srcipz(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	str s;
+	if(msg==NULL)
+		return -1;
+
+	s.s = ip_addr2strz(&msg->rcv.src_ip);
+	s.len = strlen(s.s);
+	return pv_get_strval(msg, param, res, &s);
+}
+
 int pv_get_srcport(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -737,6 +764,131 @@ int pv_get_rcvport(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_intstrval(msg, param, res,
 			(int)msg->rcv.bind_address->port_no,
 			&msg->rcv.bind_address->port_no_str);
+}
+
+int pv_get_rcvaddr_uri_helper(struct sip_msg *msg, pv_param_t *param,
+		int tmode, pv_value_t *res)
+{
+	str uri;
+	str sr;
+
+	if(msg==NULL)
+		return -1;
+
+	if(get_rcv_socket_uri(msg, tmode, &uri, 0)<0)
+		return pv_get_null(msg, param, res);
+
+	if (uri.len + 1 >= pv_get_buffer_size())
+	{
+		LM_ERR("local buffer size exceeded\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	sr.s = pv_get_buffer();
+	strncpy(sr.s, uri.s, uri.len);
+	sr.len = uri.len;
+	sr.s[sr.len] = '\0';
+
+	return pv_get_strval(msg, param, res, &sr);
+}
+
+int pv_get_rcvaddr_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_rcvaddr_uri_helper(msg, param, 0, res);
+}
+
+int pv_get_rcvaddr_uri_full(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_rcvaddr_uri_helper(msg, param, 1, res);
+}
+
+int pv_get_rcv_advertised_ip(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address!=NULL
+			&& msg->rcv.bind_address->useinfo.address_str.len > 0) {
+		return pv_get_strval(msg, param, res,
+				&msg->rcv.bind_address->useinfo.address_str);
+	}
+
+	return pv_get_rcvip(msg, param, res);
+}
+
+int pv_get_rcv_advertised_port(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address!=NULL
+			&& msg->rcv.bind_address->useinfo.port_no_str.len > 0) {
+		return pv_get_intstrval(msg, param, res,
+				(int)msg->rcv.bind_address->useinfo.port_no,
+				&msg->rcv.bind_address->useinfo.port_no_str);
+	}
+
+	return pv_get_rcvport(msg, param, res);
+}
+
+int pv_get_rcvadv_uri_helper(struct sip_msg *msg, pv_param_t *param,
+		int tmode, pv_value_t *res)
+{
+	str uri;
+	str sr;
+
+	if(msg==NULL)
+		return -1;
+
+	if(get_rcv_socket_uri(msg, tmode, &uri, 1)<0)
+		return pv_get_null(msg, param, res);
+
+	if (uri.len + 1 >= pv_get_buffer_size())
+	{
+		LM_ERR("local buffer size exceeded\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	sr.s = pv_get_buffer();
+	strncpy(sr.s, uri.s, uri.len);
+	sr.len = uri.len;
+	sr.s[sr.len] = '\0';
+
+	return pv_get_strval(msg, param, res, &sr);
+}
+
+int pv_get_rcvadv_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address!=NULL
+			&& (msg->rcv.bind_address->useinfo.address_str.len > 0
+				|| msg->rcv.bind_address->useinfo.port_no_str.len > 0)) {
+		return pv_get_rcvadv_uri_helper(msg, param, 0, res);
+	}
+
+	return pv_get_rcvaddr_uri_helper(msg, param, 0, res);
+}
+
+int pv_get_rcvadv_uri_full(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address!=NULL
+			&& (msg->rcv.bind_address->useinfo.address_str.len > 0
+				|| msg->rcv.bind_address->useinfo.port_no_str.len > 0)) {
+		return pv_get_rcvadv_uri_helper(msg, param, 1, res);
+	}
+
+	return pv_get_rcvaddr_uri_helper(msg, param, 1, res);
 }
 
 /**
@@ -1098,6 +1250,16 @@ int pv_get_proto(struct sip_msg *msg, pv_param_t *param,
 	}
 
 	return pv_get_strintval(msg, param, res, &s, (int)msg->rcv.proto);
+}
+
+/* proto id of received message */
+int pv_get_protoid(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	return pv_get_sintval(msg, param, res, (int)msg->rcv.proto);
 }
 
 int pv_get_dset(struct sip_msg *msg, pv_param_t *param,

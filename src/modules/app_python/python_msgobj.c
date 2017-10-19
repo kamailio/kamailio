@@ -143,7 +143,9 @@ static PyObject *msg_getHeader(msgobject *self, PyObject *args)
 		return NULL;
 	hname.len = strlen(hname.s);
 
-	parse_headers(self->msg, ~0, 0);
+	if(parse_headers(self->msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("failed to parse msg headers\n");
+	}
 	hbody = NULL;
 	for (hf = self->msg->headers; hf != NULL; hf = hf->next) {
 		if (hname.len == hf->name.len &&
@@ -214,6 +216,7 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 			if (rval < 0) {
 				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (2)");
 				Py_INCREF(Py_None);
+				pkg_free(act);
 				return Py_None;
 			}
 			act->val[3].type = MODFIXUP_ST;
@@ -223,6 +226,7 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 			if (rval < 0) {
 				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (1)");
 				Py_INCREF(Py_None);
+				pkg_free(act);
 				return Py_None;
 			}
 			act->val[2].type = MODFIXUP_ST;
@@ -232,6 +236,7 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 			if (rval < 0) {
 				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (0)");
 				Py_INCREF(Py_None);
+				pkg_free(act);
 				return Py_None;
 			}
 		}

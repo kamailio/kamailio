@@ -814,7 +814,10 @@ static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	p = local_buf;
 
 	/* we need to be sure we have parsed all headers */
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("failed to parse headers\n");
+		return xl_get_null(msg, res, hp, hi, hf);
+	}
 	for (hdrf=msg->headers; hdrf; hdrf=hdrf->next)
 	{
 		if(hp->s==NULL)
@@ -1706,7 +1709,7 @@ int xl_shm_parse_format2(char *s, xl_elog_p *el, xl_parse_cb cb)
 int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 {
 	int n, h;
-	str tok;
+	str tok = STR_NULL;
 	xl_elog_p it;
 	char *cur;
 
@@ -1859,9 +1862,8 @@ int xl_mod_init()
 		str_domainname.s = NULL;
 	} else {
 		str_fullname.len = strlen(s);
-		s = pkg_realloc(s, str_fullname.len+1); /* this will leave the ending \0 */
+		s = pkg_reallocxf(s, str_fullname.len+1); /* this will leave the ending \0 */
 		if (!s) { /* should never happen because decreasing size */
-			pkg_free(s);
 			return -1;
 		}
 		str_fullname.s = s;
@@ -1898,9 +1900,10 @@ int xl_mod_init()
 					if (inet_ntop(he->h_addrtype, he->h_addr_list[i], s, HOSTNAME_MAX)) {
 						if (str_ipaddr.len==0) {
 							str_ipaddr.len=strlen(s);
-							str_ipaddr.s=(char*)pkg_malloc(str_ipaddr.len);
+							str_ipaddr.s=(char*)pkg_malloc(str_ipaddr.len+1);
 							if (str_ipaddr.s) {
 								memcpy(str_ipaddr.s, s, str_ipaddr.len);
+								str_ipaddr.s[str_ipaddr.len] = '\0';
 							} else {
 								str_ipaddr.len=0;
 								LOG(L_ERR, "ERROR: xl_mod_init: No memory left for str_ipaddr\n");

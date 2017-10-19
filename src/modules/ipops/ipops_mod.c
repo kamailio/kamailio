@@ -19,11 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- *  2015-03-31: Added srv_query function (rboisvert)
- *  2011-07-29: Added a function to detect RFC1918 private IPv4 addresses (ibc)
- *  2011-04-27: Initial version (ibc)
  */
 /*!
  * \file
@@ -74,16 +69,21 @@ MODULE_VERSION
 /*
  * Module internal functions
  */
-int _compare_ips(char*, size_t, enum enum_ip_type, char*, size_t, enum enum_ip_type);
+int _compare_ips(char*, size_t, enum enum_ip_type, char*, size_t,
+		enum enum_ip_type);
 int _compare_ips_v4(struct in_addr *ip, char*, size_t);
 int _compare_ips_v6(struct in6_addr *ip, char*, size_t);
 int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type,
 		char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask);
-int _ip_is_in_subnet_v4(struct in_addr *ip, char *net, size_t netlen, int netmask);
-int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen, int netmask);
+int _ip_is_in_subnet_v4(struct in_addr *ip, char *net, size_t netlen,
+		int netmask);
+int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen,
+		int netmask);
 int _ip_is_in_subnet_str(void *ip, enum enum_ip_type type, char *s, int slen);
-int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b, char *e);
-static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,  char *_dst);
+int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b,
+		char *e);
+static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg,
+		char* _s,  char *_dst);
 
 
 /*
@@ -189,11 +189,11 @@ struct module_exports exports = {
 
 
 static int mod_init(void) {
-    /* turn detailed_ip_type relevant structures to netowork byte order so no need to
-     * transform each ip to host order before comparing */
-    ipv4ranges_hton();
-    ipv6ranges_hton();
-    return 0;
+	/* turn detailed_ip_type relevant structures to netowork byte order
+	 * so no need to transform each ip to host order before comparing */
+	ipv4ranges_hton();
+	ipv6ranges_hton();
+	return 0;
 }
 
 
@@ -204,39 +204,39 @@ static int mod_init(void) {
  */
 static int fixup_detailed_ip_type(void** param, int param_no)
 {
-    if (param_no == 1) {
-        return fixup_spve_null(param, 1);
-    }
+	if (param_no == 1) {
+		return fixup_spve_null(param, 1);
+	}
 
-    if (param_no == 2) {
-        if (fixup_pvar_null(param, 1) != 0) {
-            LM_ERR("failed to fixup result pvar\n");
-            return -1;
-        }
-        if (((pv_spec_t *) (*param))->setf == NULL) {
-            LM_ERR("result pvar is not writeble\n");
-            return -1;
-        }
-        return 0;
-    }
+	if (param_no == 2) {
+		if (fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if (((pv_spec_t *) (*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
+	}
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 static int fixup_free_detailed_ip_type(void** param, int param_no)
 {
-    if (param_no == 1) {
-    //LM_WARN("free function has not been defined for spve\n");
-    return 0;
-    }
+	if (param_no == 1) {
+		//LM_WARN("free function has not been defined for spve\n");
+		return 0;
+	}
 
-    if (param_no == 2) {
-    return fixup_free_pvar_null(param, 1);
-    }
+	if (param_no == 2) {
+		return fixup_free_pvar_null(param, 1);
+	}
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
@@ -244,7 +244,8 @@ static int fixup_free_detailed_ip_type(void** param, int param_no)
  */
 
 /*! \brief Return 1 if both pure IP's are equal, 0 otherwise. */
-int _compare_ips(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type)
+int _compare_ips(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2,
+		size_t len2, enum enum_ip_type ip2_type)
 {
 	struct in_addr in_addr1, in_addr2;
 	struct in6_addr in6_addr1, in6_addr2;
@@ -273,7 +274,8 @@ int _compare_ips(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, 
 		case(ip_type_ipv6):
 			if (inet_pton(AF_INET6, _ip1, &in6_addr1) != 1)  return 0;
 			if (inet_pton(AF_INET6, _ip2, &in6_addr2) != 1)  return 0;
-			if (memcmp(in6_addr1.s6_addr, in6_addr2.s6_addr, sizeof(in6_addr1.s6_addr)) == 0)
+			if (memcmp(in6_addr1.s6_addr, in6_addr2.s6_addr,
+						sizeof(in6_addr1.s6_addr)) == 0)
 				return 1;
 			else
 				return 0;
@@ -305,8 +307,10 @@ int _compare_ips_v6(struct in6_addr *ip, char* ip2, size_t len2)
 	memcpy(_ip2, ip2, len2);
 	_ip2[len2] = '\0';
 
-	if (inet_pton(AF_INET6, _ip2, &in6_addr2) != 1)  return 0;
-	if (memcmp(ip->s6_addr, in6_addr2.s6_addr, sizeof(ip->s6_addr)) == 0) return 1;
+	if (inet_pton(AF_INET6, _ip2, &in6_addr2) != 1)
+		return 0;
+	if (memcmp(ip->s6_addr, in6_addr2.s6_addr, sizeof(ip->s6_addr)) == 0)
+		return 1;
 	return 0;
 }
 
@@ -352,11 +356,13 @@ int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type,
 			for (i=0; i<16; i++)
 			{
 				if (netmask > ((i+1)*8)) ipv6_mask[i] = 0xFF;
-				else if (netmask > (i*8))  ipv6_mask[i] = ~(0xFF >> (netmask-(i*8)));
+				else if (netmask > (i*8))
+					ipv6_mask[i] = ~(0xFF >> (netmask-(i*8)));
 				else ipv6_mask[i] = 0x00;
 			}
 			for (i=0; i<16; i++)  in6_addr1.s6_addr[i] &= ipv6_mask[i];
-			if (memcmp(in6_addr1.s6_addr, in6_addr2.s6_addr, sizeof(in6_addr1.s6_addr)) == 0)
+			if (memcmp(in6_addr1.s6_addr, in6_addr2.s6_addr,
+						sizeof(in6_addr1.s6_addr)) == 0)
 				return 1;
 			else
 				return 0;
@@ -367,7 +373,8 @@ int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type,
 	}
 }
 
-int _ip_is_in_subnet_v4(struct in_addr *ip, char *net, size_t netlen, int netmask)
+int _ip_is_in_subnet_v4(struct in_addr *ip, char *net, size_t netlen,
+		int netmask)
 {
 	struct in_addr net_addr;
 	char _net[INET6_ADDRSTRLEN];
@@ -387,7 +394,8 @@ int _ip_is_in_subnet_v4(struct in_addr *ip, char *net, size_t netlen, int netmas
 	return 0;
 }
 
-int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen, int netmask)
+int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen,
+		int netmask)
 {
 	struct in6_addr net_addr;
 	char _net[INET6_ADDRSTRLEN];
@@ -444,47 +452,48 @@ int _ip_is_in_subnet_str(void *ip, enum enum_ip_type type, char *s, int slen)
 	if (netmask == -1)
 	{
 		switch(type){
-		case ip_type_ipv4:
-			if (_compare_ips_v4((struct in_addr *)ip, s, slen))
-				return 1;
-			else
-				return -1;
-			break;
-		case ip_type_ipv6:
-			if (_compare_ips_v6((struct in6_addr *)ip, s, slen))
-				return 1;
-			else
-				return -1;
-			break;
-			break;
-		default:
-			break;
+			case ip_type_ipv4:
+				if (_compare_ips_v4((struct in_addr *)ip, s, slen))
+					return 1;
+				else
+					return -1;
+				break;
+			case ip_type_ipv6:
+				if (_compare_ips_v6((struct in6_addr *)ip, s, slen))
+					return 1;
+				else
+					return -1;
+				break;
+				break;
+			default:
+				break;
 		}
 	}
 	else
 	{
 		switch(type){
-		case ip_type_ipv4:
-			if (_ip_is_in_subnet_v4((struct in_addr *)ip, s, slen,netmask))
-				return 1;
-			else
-				return -1;
-			break;
-		case ip_type_ipv6:
-			if (_ip_is_in_subnet_v6((struct in6_addr *)ip, s, slen,netmask))
-				return 1;
-			else
-				return -1;
-			break;
-			break;
-		default:
-			break;
+			case ip_type_ipv4:
+				if (_ip_is_in_subnet_v4((struct in_addr *)ip, s, slen,netmask))
+					return 1;
+				else
+					return -1;
+				break;
+			case ip_type_ipv6:
+				if (_ip_is_in_subnet_v6((struct in6_addr *)ip, s, slen,netmask))
+					return 1;
+				else
+					return -1;
+				break;
+				break;
+			default:
+				break;
 		}
 	}
 	return 0;
 }
 
-int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b, char *e)
+int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b,
+		char *e)
 {
 	while(b<e && *b==' ') b++;
 	while(b<e && *(e-1)==' ') e--;
@@ -496,7 +505,8 @@ int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b, char
  * Script functions
  */
 
-/*! \brief Return true if the given argument (string or pv) is a valid IPv4, IPv6 or IPv6 reference. */
+/*! \brief Return true if the given argument (string or pv) is a valid IPv4,
+ * IPv6 or IPv6 reference. */
 static int w_is_ip(struct sip_msg* _msg, char* _s)
 {
 	str string;
@@ -519,7 +529,8 @@ static int w_is_ip(struct sip_msg* _msg, char* _s)
 }
 
 
-/*! \brief Return true if the given argument (string or pv) is a valid IPv4 or IPv6. */
+/*! \brief Return true if the given argument (string or pv) is a valid
+ * IPv4 or IPv6. */
 static int w_is_pure_ip(struct sip_msg* _msg, char* _s)
 {
 	str string;
@@ -595,7 +606,8 @@ static int w_is_ipv6(struct sip_msg* _msg, char* _s)
 }
 
 
-/*! \brief Return true if the given argument (string or pv) is a valid IPv6 reference. */
+/*! \brief Return true if the given argument (string or pv) is a valid
+ * IPv6 reference. */
 static int w_is_ipv6_reference(struct sip_msg* _msg, char* _s)
 {
 	str string;
@@ -618,7 +630,8 @@ static int w_is_ipv6_reference(struct sip_msg* _msg, char* _s)
 }
 
 
-/*! \brief Return the IP type of the given argument (string or pv): 1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
+/*! \brief Return the IP type of the given argument (string or pv):
+ *  1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
 static int w_ip_type(struct sip_msg* _msg, char* _s)
 {
 	str string;
@@ -652,73 +665,76 @@ static int w_ip_type(struct sip_msg* _msg, char* _s)
 
 static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *_dst)
 {
-    return _detailed_ip_type(ip_type_ipv4, _msg, _s, _dst);
+	return _detailed_ip_type(ip_type_ipv4, _msg, _s, _dst);
 }
 
 static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *_dst)
 {
-    return _detailed_ip_type(ip_type_ipv6, _msg, _s, _dst);
+	return _detailed_ip_type(ip_type_ipv6, _msg, _s, _dst);
 }
 
 static int w_detailed_ip_type(struct sip_msg* _msg, char* _s,  char *_dst)
 {
-    /* `ip_type_error` should read `unknown type` */
-    return _detailed_ip_type(ip_type_error, _msg, _s, _dst);
+	/* `ip_type_error` should read `unknown type` */
+	return _detailed_ip_type(ip_type_error, _msg, _s, _dst);
 }
 
-static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,  char *_dst)
+static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg,
+		char* _s,  char *_dst)
 {
-  str string;
-  pv_spec_t *dst;
-  pv_value_t val;
-  char *res;
-  unsigned int assumed_type;
+	str string;
+	pv_spec_t *dst;
+	pv_value_t val;
+	char *res;
+	unsigned int assumed_type;
 
-  if (_s == NULL) {
-    LM_ERR("bad parameter\n");
-    return -2;
-  }
+	if (_s == NULL) {
+		LM_ERR("bad parameter\n");
+		return -2;
+	}
 
-  if (fixup_get_svalue(_msg, (gparam_p)_s, &string))
-  {
-    LM_ERR("cannot print the format for string\n");
-    return -3;
-  }
+	if (fixup_get_svalue(_msg, (gparam_p)_s, &string))
+	{
+		LM_ERR("cannot print the format for string\n");
+		return -3;
+	}
 
-  assumed_type = (ip_type_error == _type)? ip_parser_execute(string.s, string.len) : _type;
+	assumed_type = (ip_type_error == _type)?
+						ip_parser_execute(string.s, string.len) : _type;
 
-  switch (assumed_type) {
-      case ip_type_ipv4:
-          if (!ip4_iptype(string, &res)) {
-              LM_ERR("bad ip parameter\n");
-              return -1;
-          }
-          break;
-      case ip_type_ipv6_reference:
-      case ip_type_ipv6:
-          /* consider this reference */
-          if (string.s[0] == '[') {
-              string.s++;
-              string.len -= 2;
-          }
-          if (!ip6_iptype(string, &res)) {
-              LM_ERR("bad ip parameter\n");
-              return -1;
-          }
-          break;
-      default:
-          return -1;
-  }
+	switch (assumed_type) {
+		case ip_type_ipv4:
+			if (!ip4_iptype(string, &res)) {
+				LM_ERR("bad ip parameter\n");
+				return -1;
+			}
+			break;
+		case ip_type_ipv6_reference:
+		case ip_type_ipv6:
+			/* consider this reference */
+			if (string.s[0] == '[') {
+				string.s++;
+				string.len -= 2;
+			}
+			if (!ip6_iptype(string, &res)) {
+				LM_ERR("bad ip parameter\n");
+				return -1;
+			}
+			break;
+		default:
+			return -1;
+	}
 
-  val.rs.s = res;
-  val.rs.len = strlen(res);
-  val.flags = PV_VAL_STR;
-  dst = (pv_spec_t *)_dst;
-  dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
-  return 1;
+	val.rs.s = res;
+	val.rs.len = strlen(res);
+	val.flags = PV_VAL_STR;
+	dst = (pv_spec_t *)_dst;
+	dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
+	return 1;
 }
 
-/*! \brief Return true if both IP's (string or pv) are equal. This function also allows comparing an IPv6 with an IPv6 reference. */
+/*! \brief Return true if both IP's (string or pv) are equal.
+ * This function also allows comparing an IPv6 with an IPv6 reference. */
 static int w_compare_ips(struct sip_msg* _msg, char* _s1, char* _s2)
 {
 	str string1, string2;
@@ -766,14 +782,16 @@ static int w_compare_ips(struct sip_msg* _msg, char* _s1, char* _s2)
 			break;
 	}
 
-	if (_compare_ips(string1.s, string1.len, ip1_type, string2.s, string2.len, ip2_type))
+	if (_compare_ips(string1.s, string1.len, ip1_type, string2.s, string2.len,
+				ip2_type))
 		return 1;
 	else
 		return -1;
 }
 
 
-/*! \brief Return true if both pure IP's (string or pv) are equal. IPv6 references not allowed. */
+/*! \brief Return true if both pure IP's (string or pv) are equal.
+ * IPv6 references not allowed. */
 static int w_compare_pure_ips(struct sip_msg* _msg, char* _s1, char* _s2)
 {
 	str string1, string2;
@@ -817,14 +835,17 @@ static int w_compare_pure_ips(struct sip_msg* _msg, char* _s1, char* _s2)
 			break;
 	}
 
-	if (_compare_ips(string1.s, string1.len, ip1_type, string2.s, string2.len, ip2_type))
+	if (_compare_ips(string1.s, string1.len, ip1_type, string2.s, string2.len,
+				ip2_type))
 		return 1;
 	else
 		return -1;
 }
 
 
-/*! \brief Return true if the first IP (string or pv) is within the subnet defined by the second commma-separated IP list in CIDR notation. IPv6 references not allowed. */
+/*! \brief Return true if the first IP (string or pv) is within the subnet
+ * defined by the second commma-separated IP list in CIDR notation.
+ * IPv6 references not allowed. */
 static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
 {
 	struct in6_addr ip_addr6;
@@ -889,7 +910,8 @@ static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
 }
 
 
-/*! \brief Return true if the given argument (string or pv) is a valid RFC 1918 IPv4 (private address). */
+/*! \brief Return true if the given argument (string or pv) is a valid
+ * RFC 1918 IPv4 (private address). */
 static int w_is_ip_rfc1918(struct sip_msg* _msg, char* _s)
 {
 	str string;
@@ -1121,4 +1143,3 @@ static int w_naptr_query(struct sip_msg* msg, char* str1, char* str2)
 
 	return naptr_update_pv(&naptrname, &name);
 }
-

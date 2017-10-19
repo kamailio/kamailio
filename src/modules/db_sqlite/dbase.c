@@ -51,7 +51,6 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 	struct sqlite_connection *con;
 	int rc;
 	int flags = 0;
-	db_param_list_t *db_param;
 
 	con = pkg_malloc(sizeof(*con));
 	if (!con) {
@@ -63,9 +62,11 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 	con->hdr.ref = 1;
 	con->hdr.id = (struct db_id*) id; /* set here - freed on error */
 
-	db_param = db_param_list_search(id->database);
+	str db_name = str_init((char *) id->database);
+	db_param_list_t *db_param = db_param_list_search(db_name);
 	if (db_param && db_param->readonly) {
-		// The database is opened in read-only mode. If the database does not already exist, an error is returned.
+		/* The database is opened in read-only mode. If the database does not
+		 * already exist, an error is returned. */
 		flags |= SQLITE_OPEN_READONLY;
 		LM_DBG("[%s] opened with [SQLITE_OPEN_READONLY]\n", id->database);
 	} else {
@@ -79,6 +80,34 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 		return NULL;
 	}
 
+	if (db_param && db_param->journal_mode.s) {
+		sqlite3_stmt *stmt;
+		char query[32];
+		snprintf(query, 32, "PRAGMA journal_mode=%s", db_param->journal_mode.s);
+		int rc = sqlite3_prepare_v2(con->conn, query, strlen(query), &stmt, NULL);
+		if (rc != SQLITE_OK) {
+			LM_ERR("error prepare query [%s]\n", sqlite3_errmsg(con->conn));
+		}
+		while (1) {
+			rc = sqlite3_step(stmt);
+			if (rc == SQLITE_DONE) {
+				break;
+			} else if (rc != SQLITE_ROW) {
+				LM_ERR("sqlite3_step[%s]\n", sqlite3_errmsg(con->conn));
+				pkg_free(con);
+				return NULL;
+			} else {
+				rc = sqlite3_column_count(stmt);
+				LM_DBG("columns in result: %d\n", rc);
+			}
+		}
+		if (stmt) {
+			if (sqlite3_finalize(stmt) != SQLITE_OK)  {
+				LM_ERR("sqlite3_finalize[%s]\n", sqlite3_errmsg(con->conn));
+			}
+		}
+		LM_DBG("[%s]\n", query);
+	}
 	return con;
 }
 
@@ -396,7 +425,7 @@ int db_sqlite_store_result(const db1_con_t* _h, db1_res_t** _r)
 				num_alloc *= 2;
 			else
 				num_alloc = 8;
-			rows = pkg_realloc(rows, sizeof(db_row_t) * num_alloc);
+			rows = pkg_reallocxf(rows, sizeof(db_row_t) * num_alloc);
 			if (rows == NULL)
 				goto no_mem;
 			RES_ROWS(res) = rows;

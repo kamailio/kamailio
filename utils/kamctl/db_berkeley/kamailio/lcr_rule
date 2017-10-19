@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) lcr_id(int) prefix(str) from_uri(str) request_uri(str) stopper(int) enabled(int)
+id(int) lcr_id(int) prefix(str) from_uri(str) request_uri(str) mt_tvalue(str) stopper(int) enabled(int)
 METADATA_KEY
 2 
 METADATA_READONLY
@@ -7,4 +7,4 @@ METADATA_READONLY
 METADATA_LOGFLAGS
 0
 METADATA_DEFAULTS
-NIL|NIL|NULL|NULL|NULL|0|1
+NIL|NIL|NULL|NULL|NULL|NULL|0|1

@@ -38,21 +38,19 @@
 #include "../dprint.h"
 #include "../lock_ops.h" /* we don't include locking.h on purpose */
 
-extern gen_lock_t* _shm_lock;
-#define shm_lock()    lock_get(_shm_lock)
-#define shm_unlock()  lock_release(_shm_lock)
-int shm_core_lock_init(void);
-void shm_core_lock_destroy(void);
-
 extern sr_shm_api_t _shm_root;
 
 #ifdef DBG_SR_MEMORY
 
 #	define shm_malloc(s)         _shm_root.xmalloc(_shm_root.mem_block, (s), _SRC_LOC_, \
 									_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
+#	define shm_mallocxz(s)       _shm_root.xmallocxz(_shm_root.mem_block, (s), _SRC_LOC_, \
+									_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #	define shm_malloc_unsafe(s)  _shm_root.xmalloc_unsafe(_shm_root.mem_block, (s), _SRC_LOC_, \
 									_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #	define shm_realloc(p, s)     _shm_root.xrealloc(_shm_root.mem_block, (p), (s), \
+									_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
+#	define shm_reallocxf(p, s)   _shm_root.xreallocxf(_shm_root.mem_block, (p), (s), \
 									_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #	define shm_resize(p, s)      _shm_root.xresize(_shm_root.mem_block, (p), (s), \
 									_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
@@ -62,8 +60,10 @@ extern sr_shm_api_t _shm_root;
 									_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #else
 #	define shm_malloc(s)         _shm_root.xmalloc(_shm_root.mem_block, (s))
+#	define shm_mallocxz(s)       _shm_root.xmallocxz(_shm_root.mem_block, (s))
 #	define shm_malloc_unsafe(s)  _shm_root.xmalloc_unsafe(_shm_root.mem_block, (s))
 #	define shm_realloc(p, s)     _shm_root.xrealloc(_shm_root.mem_block, (p), (s))
+#	define shm_reallocxf(p, s)   _shm_root.xreallocxf(_shm_root.mem_block, (p), (s))
 #	define shm_resize(p, s)      _shm_root.xresize(_shm_root.mem_block, (p), (s))
 #	define shm_free(p)           _shm_root.xfree(_shm_root.mem_block, (p))
 #	define shm_free_unsafe(p)    _shm_root.xfree_unsafe(_shm_root.mem_block, (p))
@@ -75,6 +75,9 @@ extern sr_shm_api_t _shm_root;
 #	define shm_sums()      _shm_root.xsums(_shm_root.mem_block)
 #	define shm_mod_get_stats(x)     _shm_root.xmodstats(_shm_root.mem_block, x)
 #	define shm_mod_free_stats(x)    _shm_root.xfmodstats(x)
+
+#	define shm_global_lock() _shm_root.xglock(_shm_root.mem_block)
+#	define shm_global_unlock() _shm_root.xgunlock(_shm_root.mem_block)
 
 
 void* shm_core_get_pool(void);

@@ -75,7 +75,7 @@ loadmodule "ctl"
 # optional listen addresses, if no one is specified,
 # ctl will listen on unixs:/tmp/ser_ctl
 
-modparam("ctl", "binrpc", "unix:/tmp/&ctlsocket;") # default
+modparam("ctl", "binrpc", "unix:/var/run/&kamailiobinary;/&kamailiobinary;_ctl") # default
 modparam("ctl", "binrpc", "udp:localhost:2046")
 modparam("ctl", "binrpc", "tcp:localhost:2046")
 modparam("ctl", "binrpc", "unixd:/tmp/unix_dgram")  # unix datagram

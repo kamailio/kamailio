@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
   "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
@@ -12,7 +12,13 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>Table for the RLS module.
+		<db:para>
+			Table for the RLS module:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;rls.html">&KAMAILIO_MOD_DOC;rls.html</ulink>.
+			</listitem>
+			</itemizedlist>
         </db:para>
     </description>
 

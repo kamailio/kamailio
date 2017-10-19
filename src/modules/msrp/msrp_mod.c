@@ -69,7 +69,7 @@ int msrp_timer_interval = 60;
 str msrp_use_path_addr = { 0 };
 int msrp_tls_module_loaded = 0;
 
-static int msrp_frame_received(void *data);
+static int msrp_frame_received(sr_event_param_t *evp);
 sip_msg_t *msrp_fake_sipmsg(msrp_frame_t *mf);
 
 static tr_export_t mod_trans[] = {
@@ -435,7 +435,7 @@ static int w_msrp_cmap_lookup(sip_msg_t* msg, char* str1, char* str2)
 /**
  *
  */
-static int msrp_frame_received(void *data)
+static int msrp_frame_received(sr_event_param_t *evp)
 {
 	tcp_event_info_t *tev;
 	static msrp_frame_t mf;
@@ -444,7 +444,7 @@ static int msrp_frame_received(void *data)
 	int rtb, rt;
 
 
-	tev = (tcp_event_info_t*)data;
+	tev = (tcp_event_info_t*)evp->data;
 
 	if(tev==NULL || tev->buf==NULL || tev->len<=0)
 	{

@@ -23,7 +23,7 @@
 		<title><function>print</function> usage</title>
 		<programlisting>
  $ &sercmd; -f"[%v] %v:%v %v\n" ctl.listen
-[binrpc] unix_stream:/tmp/&ctlsocket;
+[binrpc] unix_stream:/var/run/&kamailiobinary;/&kamailiobinary;_ctl
  
 # note: the above command is equivalent with &sercmd; listen
 		</programlisting>
@@ -53,7 +53,7 @@
 		<title><function>ctl.who</function> usage</title>
 		<programlisting>
  $ &sercmd; -f"[%v] %v: %v %v -> %v %v\n" ctl.who
-[binrpc] unix_stream: &lt;anonymous unix socket&gt;  -> /tmp/&ctlsocket;
+[binrpc] unix_stream: &lt;anonymous unix socket&gt;  -> /var/run/&kamailiobinary;/&kamailiobinary;_ctl
 
 # note the above command is equivalent to &sercmd; who
 		</programlisting>

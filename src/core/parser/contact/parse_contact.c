@@ -20,17 +20,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- *  2003-03-25 Adapted to use new parameter parser (janakj)
  */
 
 #include <string.h>          /* memset */
-#include "../hf.h"     
+#include "../hf.h"
 #include "../../mem/mem.h"   /* pkg_malloc, pkg_free */
 #include "../../dprint.h"
 #include "../../trim.h"      /* trim_leading */
@@ -48,7 +45,7 @@ static inline int contact_parser(char* _s, int _l, contact_body_t* _c)
 	trim_leading(&tmp);
 
 	if (tmp.len == 0) {
-		LOG(L_ERR, "contact_parser(): Empty body\n");
+		LM_ERR("empty body\n");
 		return -1;
 	}
 
@@ -56,7 +53,7 @@ static inline int contact_parser(char* _s, int _l, contact_body_t* _c)
 		_c->star = 1;
 	} else {
 		if (parse_contacts(&tmp, &(_c->contacts)) < 0) {
-			LOG(L_ERR, "contact_parser(): Error while parsing contacts\n");
+			LM_ERR("error while parsing contacts\n");
 			return -2;
 		}
 	}
@@ -78,14 +75,14 @@ int parse_contact(struct hdr_field* _h)
 
 	b = (contact_body_t*)pkg_malloc(sizeof(contact_body_t));
 	if (b == 0) {
-		LOG(L_ERR, "parse_contact(): No memory left\n");
+		LM_ERR("no memory left\n");
 		return -1;
 	}
 
 	memset(b, 0, sizeof(contact_body_t));
 
 	if (contact_parser(_h->body.s, _h->body.len, b) < 0) {
-		LOG(L_ERR, "parse_contact(): Error while parsing\n");
+		LM_ERR("error while parsing\n");
 		pkg_free(b);
 		return -2;
 	}
@@ -105,7 +102,7 @@ void free_contact(contact_body_t** _c)
 	if ((*_c)->contacts) {
 		free_contacts(&((*_c)->contacts));
 	}
-	
+
 	pkg_free(*_c);
 	*_c = 0;
 }
@@ -134,19 +131,19 @@ int contact_iterator(contact_t** c, struct sip_msg* msg, contact_t* prev)
 	contact_body_t* cb;
 
 	if (!msg) {
-		LOG(L_ERR, "Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	if (!prev) {
-		     /* No pointer to previous contact given, find topmost
-		      * contact and return pointer to the first contact
-		      * inside that header field
-		      */
+		/* No pointer to previous contact given, find topmost
+		 * contact and return pointer to the first contact
+		 * inside that header field
+		 */
 		hdr = msg->contact;
 		if (!hdr) {
 			if (parse_headers(msg, HDR_CONTACT_F, 0) == -1) {
-				LOG(L_ERR, "Error while parsing headers\n");
+				LM_ERR("error while parsing headers\n");
 				return -1;
 			}
 
@@ -155,7 +152,7 @@ int contact_iterator(contact_t** c, struct sip_msg* msg, contact_t* prev)
 
 		if (hdr) {
 			if (parse_contact(hdr) < 0) {
-				LOG(L_ERR, "Error while parsing Contact\n");
+				LM_ERR("error while parsing Contact\n");
 				return -1;
 			}
 		} else {
@@ -167,63 +164,63 @@ int contact_iterator(contact_t** c, struct sip_msg* msg, contact_t* prev)
 		*c = cb->contacts;
 		return 0;
 	} else {
-		     /* Check if there is another contact in the
-		      * same header field and if so then return it
-		      */
+		/* Check if there is another contact in the
+		 * same header field and if so then return it
+		 */
 		if (prev->next) {
 			*c = prev->next;
 			return 0;
 		}
 
 		if(hdr==NULL) {
-			LOG(L_ERR, "contact iterator not initialized\n");
+			LM_ERR("contact iterator not initialized\n");
 			return -1;
 		}
 
-		     /* Try to find and parse another Contact
-		      * header field
-		      */
+		/* Try to find and parse another Contact
+		 * header field
+		 */
 		last = hdr;
 		hdr = hdr->next;
 
-		     /* Search another already parsed Contact
-		      * header field
-		      */
+		/* Search another already parsed Contact
+		 * header field
+		 */
 		while(hdr && hdr->type != HDR_CONTACT_T) {
 			hdr = hdr->next;
 		}
 
 		if (!hdr) {
-			     /* Look for another Contact HF in unparsed
-			      * part of the message header
-			      */
+			/* Look for another Contact HF in unparsed
+			 * part of the message header
+			 */
 			if (parse_headers(msg, HDR_CONTACT_F, 1) == -1) {
-				LOG(L_ERR, "Error while parsing message header\n");
+				LM_ERR("error while parsing message header\n");
 				return -1;
 			}
-			
-			     /* Check if last found header field is Contact
-			      * and if it is not the same header field as the
-			      * previous Contact HF (that indicates that the previous 
-			      * one was the last header field in the header)
-			      */
+
+			/* Check if last found header field is Contact
+			 * and if it is not the same header field as the
+			 * previous Contact HF (that indicates that the previous
+			 * one was the last header field in the header)
+			 */
 			if ((msg->last_header->type == HDR_CONTACT_T) &&
-			    (msg->last_header != last)) {
+					(msg->last_header != last)) {
 				hdr = msg->last_header;
 			} else {
 				*c = 0;
 				return 1;
 			}
 		}
-		
+
 		if (parse_contact(hdr) < 0) {
-			LOG(L_ERR, "Error while parsing Contact HF body\n");
+			LM_ERR("error while parsing Contact HF body\n");
 			return -1;
 		}
-		
-		     /* And return first contact within that
-		      * header field
-		      */
+
+		/* And return first contact within that
+		 * header field
+		 */
 		cb = (contact_body_t*)hdr->parsed;
 		*c = cb->contacts;
 		return 0;

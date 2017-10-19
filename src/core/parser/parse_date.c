@@ -154,7 +154,7 @@ void parse_date(char *buffer, char *end, struct date_body *db)
 	db->error=PARSE_OK;
 	return ;
 error:
-	LOG(L_ERR,"ERROR: parse_date: parse error\n");
+	LM_ERR("parse error\n");
 	return ;
 }
 
@@ -164,7 +164,7 @@ int parse_date_header(struct sip_msg *msg)
 
 
 	if ( !msg->date && (parse_headers(msg,HDR_DATE_F,0)==-1 || !msg->date) ) {
-		LOG(L_ERR,"ERROR:parse_date_header: bad msg or missing DATE header\n");
+		LM_ERR("bad msg or missing DATE header\n");
 		goto error;
 	}
 
@@ -174,7 +174,7 @@ int parse_date_header(struct sip_msg *msg)
 
 	date_b=pkg_malloc(sizeof(*date_b));
 	if (date_b==0){
-		LOG(L_ERR, "ERROR:parse_date_header: out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		goto error;
 	}
 	memset(date_b, 0, sizeof(*date_b));

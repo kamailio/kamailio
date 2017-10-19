@@ -24,6 +24,7 @@
 #include "ul_db_handle.h"
 #include "ul_db.h"
 #include "p_usrloc_mod.h"
+#include "config.h"
 
 static ul_db_handle_t spare;
 
@@ -38,7 +39,7 @@ static int ul_db_failover_switch(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_
 static int ul_db_failover_normal(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle, int no);
 
 int db_failover(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle, int no) {
-	if(failover_level & FAILOVER_MODE_NORMAL){
+	if(cfg_get(p_usrloc, p_usrloc_cfg, failover_level) & FAILOVER_MODE_NORMAL){
 		if(ul_db_failover_normal(dbf, dbh, handle, no) < 0){
 			LM_ERR("could not switch to spare, try to "
 					"turn off broken db id %i, db %i.\n", 
@@ -47,7 +48,7 @@ int db_failover(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle, int n
 			return 0;
 		}
 	}
-	if(failover_level & (FAILOVER_MODE_NONE | FAILOVER_MODE_NORMAL)){
+	if(cfg_get(p_usrloc, p_usrloc_cfg, failover_level) & (FAILOVER_MODE_NONE | FAILOVER_MODE_NORMAL)){
 		if(db_failover_deactivate(dbf, dbh, handle, no) < 0){
 			LM_ERR("could not deactivate "
 					"id %i, db %i.\n",

@@ -10,7 +10,7 @@ RPC Exports for pv
 
 <section id="pv.shvSet"><title>pv.shvSet</title>
 <para>
-        Set a shared variable (args: name type value)
+        Documentation missing (rpc_shv_set_doc).
 </para>
 <para>
 </para>
@@ -18,7 +18,7 @@ RPC Exports for pv
 
 <section id="pv.shvGet"><title>pv.shvGet</title>
 <para>
-        Get the value of a shared variable. If no argument, dumps all
+        Documentation missing (rpc_shv_get_doc).
 </para>
 <para>
 </para>

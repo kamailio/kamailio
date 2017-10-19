@@ -36,7 +36,7 @@ static int fixup_get_field_free(void** param, int param_no);
 
 /* Exported functions */
 static cmd_export_t cmds[]={
-	{"json_get_field", (cmd_function)json_get_field, 3, 
+	{"json_get_field", (cmd_function)json_get_field, 3,
 		fixup_get_field, fixup_get_field_free, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -82,7 +82,7 @@ static int fixup_get_field(void** param, int param_no)
 static int fixup_get_field_free(void** param, int param_no)
 {
 	if (param_no == 1 || param_no == 2) {
-		LM_WARN("free function has not been defined for spve\n");
+		fixup_free_spve_null(param, 1);
 		return 0;
 	}
 

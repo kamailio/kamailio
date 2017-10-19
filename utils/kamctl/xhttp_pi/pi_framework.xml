@@ -382,6 +382,7 @@
 		<column><field>prefix</field><type>DB1_STR</type></column>
 		<column><field>from_uri</field><type>DB1_STR</type></column>
 		<column><field>request_uri</field><type>DB1_STR</type></column>
+		<column><field>mt_tvalue</field><type>DB1_STR</type></column>
 		<column><field>stopper</field><type>DB1_INT</type></column>
 		<column><field>enabled</field><type>DB1_INT</type></column>
 	</db_table>
@@ -675,6 +676,7 @@
 	<db_table id="rtpengine">
 		<table_name>rtpengine</table_name>
 		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>setid</field><type>DB1_INT</type></column>
 		<column><field>url</field><type>DB1_STR</type></column>
 		<column><field>weight</field><type>DB1_INT</type></column>
@@ -2466,6 +2468,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
@@ -2478,6 +2481,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
@@ -2493,6 +2497,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
@@ -3618,6 +3623,7 @@
 			<db_table_id>rtpengine</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>setid</field></col>
 				<col><field>url</field></col>
 				<col><field>weight</field></col>
@@ -3635,6 +3641,27 @@
 				<col><field>disabled</field></col>
 				<col><field>stamp</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>rtpengine</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>setid</field></col>
+				<col><field>url</field></col>
+				<col><field>weight</field></col>
+				<col><field>disabled</field></col>
+				<col><field>stamp</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>rtpengine</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>
 	<!-- rtpproxy provisionning -->

@@ -133,7 +133,6 @@ find_port:
 	
 end:
 	/* fix all the stuff */
-	if (name==0) goto error;
 	if (proto==UNKNOWN_SOCK){
 		/* try to guess */
 		if (port_str){
@@ -146,7 +145,7 @@ end:
 					proto=UDP_SOCK;
 					DBG("guess:%s is a tcp socket\n", name);
 			}
-		}else if (name && strchr(name, '/')){
+		}else if (strchr(name, '/')){
 			switch(def){
 				case TCP_SOCK:
 				case UDP_SOCK:
@@ -226,7 +225,7 @@ int init_ctrl_sockets(struct ctrl_socket** c_lst, struct id_list* lst,
 						int def_port, int perm, int uid, int gid)
 {
 	struct id_list* l;
-	int s;
+	int s = -1;
 	struct ctrl_socket* cs;
 	int extra_fd;
 	union sockaddr_u su;
@@ -281,6 +280,8 @@ int init_ctrl_sockets(struct ctrl_socket** c_lst, struct id_list* lst,
 	}
 	return 0;
 error:
+	if(s>=0) close(s);
+	if(extra_fd>=0) close(extra_fd);
 	return -1;
 }
 

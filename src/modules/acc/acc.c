@@ -47,28 +47,14 @@
 #include "acc_logic.h"
 #include "acc_api.h"
 
-#ifdef DIAM_ACC
-#include "diam_dict.h"
-#include "diam_message.h"
-#include "diam_tcp.h"
-#endif
-
 extern struct acc_extra *log_extra;
 extern struct acc_extra *leg_info;
 extern struct acc_enviroment acc_env;
 extern char *acc_time_format;
 
-#ifdef DIAM_ACC
-extern char *diameter_client_host;
-extern int diameter_client_port;
-extern struct acc_extra *dia_extra;
-#endif
-
-#ifdef SQL_ACC
 static db_func_t acc_dbf;
 static db1_con_t* db_handle=0;
 extern struct acc_extra *db_extra;
-#endif
 
 /* arrays used to collect the values before being
  * pushed to the storage backend (whatever used)
@@ -113,7 +99,7 @@ int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals)
 	/* from/to URI and TAG */
 	if (req->msg_flags&FL_REQ_UPSTREAM) {
 		LM_DBG("the flag UPSTREAM is set -> swap F/T\n"); \
-		from = acc_env.to;
+			from = acc_env.to;
 		to = req->from;
 	} else {
 		from = req->from;
@@ -254,8 +240,8 @@ int acc_log_request( struct sip_msg *rq)
 				}
 			}
 		} while (p!=log_msg_end && (n=legs2strar(leg_info,rq,val_arr+m,
-							int_arr+m,type_arr+m,
-							0))!=0);
+						int_arr+m,type_arr+m,
+						0))!=0);
 	}
 
 	/* terminating line */
@@ -264,15 +250,15 @@ int acc_log_request( struct sip_msg *rq)
 
 	if(acc_time_mode==1) {
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%u%s",
-			acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
-			acc_time_exten.s, (unsigned int)acc_env.tv.tv_usec,
-			log_msg);
+				acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
+				acc_time_exten.s, (unsigned int)acc_env.tv.tv_usec,
+				log_msg);
 	} else if(acc_time_mode==2) {
 		dtime = (double)acc_env.tv.tv_usec;
 		dtime = (dtime / 1000000) + (double)acc_env.tv.tv_sec;
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%.3f%s",
-			acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
-			acc_time_attr.s, dtime, log_msg);
+				acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
+				acc_time_attr.s, dtime, log_msg);
 	} else if(acc_time_mode==3 || acc_time_mode==4) {
 		if(acc_time_mode==3) {
 			t = localtime(&acc_env.ts);
@@ -284,14 +270,14 @@ int acc_log_request( struct sip_msg *rq)
 			acc_time_format_buf[0] = '\0';
 		}
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%s%s",
-			acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
-			acc_time_attr.s,
-			acc_time_format_buf,
-			log_msg);
+				acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
+				acc_time_attr.s,
+				acc_time_format_buf,
+				log_msg);
 	} else {
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu%s",
-			acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
-			log_msg);
+				acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
+				log_msg);
 	}
 	/* free memory allocated by extra2strar */
 	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
@@ -304,7 +290,13 @@ int acc_log_request( struct sip_msg *rq)
  *        SQL  ACCOUNTING
  ********************************************/
 
-#ifdef SQL_ACC
+int acc_is_db_ready(void)
+{
+	if(db_handle!=0)
+		return 1;
+
+	return 0;
+}
 
 /* caution: keys need to be aligned to core format
  * (3 = datetime + max 2 from time_mode) */
@@ -506,7 +498,7 @@ int acc_db_request( struct sip_msg *rq)
 				}
 			}
 		}while ( (n=legs2strar(leg_info,rq,val_arr+m,int_arr+m,
-				       type_arr+m,0))!=0 );
+						type_arr+m,0))!=0 );
 	}
 
 	/* free memory allocated by extra2strar */
@@ -517,268 +509,6 @@ error:
 	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
 	return -1;
 }
-
-#endif
-
-
-/************ RADIUS & DIAMETER helper functions **************/
-#if defined (DIAM_ACC)
-#ifndef UINT4
-#define UINT4 uint32_t
-#endif
-inline static UINT4 phrase2code(str *phrase)
-{
-	UINT4 code;
-	int i;
-
-	if (phrase->len<3) return 0;
-	code=0;
-	for (i=0;i<3;i++) {
-		if (!(phrase->s[i]>='0' && phrase->s[i]<'9'))
-				return 0;
-		code=code*10+phrase->s[i]-'0';
-	}
-	return code;
-}
-#endif
-
-
-
-/********************************************
- *        DIAMETER  ACCOUNTING
- ********************************************/
-#ifdef DIAM_ACC
-
-#define AA_REQUEST 265
-#define AA_ANSWER  265
-
-#define ACCOUNTING_REQUEST 271
-#define ACCOUNTING_ANSWER  271
-
-static int diam_attrs[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG];
-
-int acc_diam_init()
-{
-	int n;
-	int m;
-
-	n = 0;
-	/* caution: keep these aligned to core acc output */
-	diam_attrs[n++] = AVP_SIP_METHOD;
-	diam_attrs[n++] = AVP_SIP_FROM_TAG;
-	diam_attrs[n++] = AVP_SIP_TO_TAG;
-	diam_attrs[n++] = AVP_SIP_CALLID;
-	diam_attrs[n++] = AVP_SIP_STATUS;
-
-	m = extra2int( dia_extra, diam_attrs+n);
-	if (m<0) {
-		LM_ERR("extra names for DIAMETER must be integer AVP codes\n");
-		return -1;
-	}
-	n += m;
-
-	m = extra2int( leg_info, diam_attrs+n);
-	if (m<0) {
-		LM_ERR("leg info names for DIAMTER must be integer AVP codes\n");
-		return -1;
-	}
-	n += m;
-
-	return 0;
-}
-
-
-inline unsigned long diam_status(struct sip_msg *rq, int code)
-{
-	if ((rq->REQ_METHOD==METHOD_INVITE || rq->REQ_METHOD==METHOD_ACK)
-				&& code>=200 && code<300) 
-		return AAA_ACCT_START;
-
-	if ((rq->REQ_METHOD==METHOD_BYE || rq->REQ_METHOD==METHOD_CANCEL))
-		return AAA_ACCT_STOP;
-
-	if (code>=200 && code <=300)  
-		return AAA_ACCT_EVENT;
-
-	return -1;
-}
-
-
-int acc_diam_request( struct sip_msg *req )
-{
-	int attr_cnt;
-	int cnt;
-	AAAMessage *send = NULL;
-	AAA_AVP *avp;
-	struct sip_uri puri;
-	str *uri;
-	int ret;
-	int i;
-	int status;
-	char tmp[2];
-	unsigned int mid;
-	int m;
-	int o;
-
-	attr_cnt = core2strar( req, val_arr, int_arr, type_arr );
-	/* last value is not used */
-	attr_cnt--;
-
-	if ( (send=AAAInMessage(ACCOUNTING_REQUEST, AAA_APP_NASREQ))==NULL) {
-		LM_ERR("failed to create new AAA request\n");
-		return -1;
-	}
-
-	m = 0;
-	o = 0;
-	/* AVP_ACCOUNTIG_RECORD_TYPE */
-	if( (status = diam_status(req, acc_env.code))<0) {
-		LM_ERR("status unknown\n");
-		goto error;
-	}
-	tmp[0] = status+'0';
-	tmp[1] = 0;
-	if( (avp=AAACreateAVP(AVP_Accounting_Record_Type, 0, 0, tmp,
-	1, AVP_DUPLICATE_DATA)) == 0) {
-		LM_ERR("failed to create AVP:no more free memory!\n");
-		goto error;
-	}
-	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-		LM_ERR("avp not added \n");
-		AAAFreeAVP(&avp);
-		goto error;
-	}
-	/* SIP_MSGID AVP */
-	mid = req->id;
-	if( (avp=AAACreateAVP(AVP_SIP_MSGID, 0, 0, (char*)(&mid), 
-	sizeof(mid), AVP_DUPLICATE_DATA)) == 0) {
-		LM_ERR("failed to create AVP:no more free memory!\n");
-		goto error;
-	}
-	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-		LM_ERR("avp not added \n");
-		AAAFreeAVP(&avp);
-		goto error;
-	}
-
-	/* SIP Service AVP */
-	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_ACCOUNTING, 
-	SERVICE_LEN, AVP_DUPLICATE_DATA)) == 0) {
-		LM_ERR("failed to create AVP:no more free memory!\n");
-		goto error;
-	}
-	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-		LM_ERR("avp not added \n");
-		AAAFreeAVP(&avp);
-		goto error;
-	}
-
-	/* also the extra attributes */
-	o = extra2strar( dia_extra, req, val_arr, int_arr, type_arr);
-	attr_cnt += o;
-	m = attr_cnt;
-
-	/* add attributes */
-	for(i=0; i<attr_cnt; i++) {
-		if((avp=AAACreateAVP(diam_attrs[i], 0,0, val_arr[i].s, val_arr[i].len,
-		AVP_DUPLICATE_DATA)) == 0) {
-			LM_ERR("failed to create AVP: no more free memory!\n");
-			goto error;
-		}
-		if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-			LM_ERR("avp not added \n");
-			AAAFreeAVP(&avp);
-			goto error;
-		}
-	}
-
-	/* and the leg attributes */
-	if ( leg_info ) {
-	        cnt = legs2strar(leg_info,req,val_arr,int_arr,type_arr,1);
-		do {
-			for (i=0; i<cnt; i++) {
-				if((avp=AAACreateAVP(diam_attrs[attr_cnt+i], 0, 0,
-				val_arr[i].s, val_arr[i].len, AVP_DUPLICATE_DATA)) == 0) {
-					LM_ERR("failed to create AVP: no more free memory!\n");
-					goto error;
-				}
-				if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-					LM_ERR("avp not added \n");
-					AAAFreeAVP(&avp);
-					goto error;
-				}
-			}
-		} while ( (cnt=legs2strar(leg_info,req,val_arr,int_arr,
-					  type_arr,0))!=0 );
-	}
-
-	if (get_uri(req, &uri) < 0) {
-		LM_ERR("failed to get uri, From/To URI not found\n");
-		goto error;
-	}
-
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
-		LM_ERR("failed to parse From/To URI\n");
-		goto error;
-	}
-
-	/* Destination-Realm AVP */
-	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, puri.host.s,
-	puri.host.len, AVP_DUPLICATE_DATA)) == 0) {
-		LM_ERR("failed to create AVP:no more free memory!\n");
-		goto error;
-	}
-
-	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-		LM_ERR("avp not added \n");
-		AAAFreeAVP(&avp);
-		goto error;
-	}
-
-	/* prepare the message to be sent over the network */
-	if(AAABuildMsgBuffer(send) != AAA_ERR_SUCCESS) {
-		LM_ERR("message buffer not created\n");
-		goto error;
-	}
-
-	if(sockfd==AAA_NO_CONNECTION) {
-		sockfd = init_mytcp(diameter_client_host, diameter_client_port);
-		if(sockfd==AAA_NO_CONNECTION) {
-			LM_ERR("failed to reconnect to Diameter client\n");
-			goto error;
-		}
-	}
-
-	/* send the message to the DIAMETER client */
-	ret = tcp_send_recv(sockfd, send->buf.s, send->buf.len, rb, req->id);
-	if(ret == AAA_CONN_CLOSED) {
-		LM_NOTICE("connection to Diameter client closed.It will be "
-				"reopened by the next request\n");
-		close(sockfd);
-		sockfd = AAA_NO_CONNECTION;
-		goto error;
-	}
-
-	if(ret != ACC_SUCCESS) {
-		/* a transmission error occurred */
-		LM_ERR("message sending to the DIAMETER backend authorization "
-				"server failed\n");
-		goto error;
-	}
-
-	AAAFreeMessage(&send);
-	/* free memory allocated by extra2strar */
-	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
-	return 1;
-
-error:
-	AAAFreeMessage(&send);
-	/* free memory allocated by extra2strar */
-	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
-	return -1;
-}
-
-#endif
 
 /**
  * @brief execute all acc engines for a SIP request event

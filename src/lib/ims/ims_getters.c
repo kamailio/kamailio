@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
  * 
@@ -67,15 +65,13 @@ static inline void cscf_strip_uri(str *uri)
 {
 	int i;
 	/* Strip the ending */
-	i=0;
-	while(i<uri->len&&uri->s[i]!='@')
+	i = 0;
+	while(i < uri->len && uri->s[i] != '@')
 		i++;
-	while(i<uri->len&&
-			uri->s[i]!=':'&&
-			uri->s[i]!='/'&&
-			uri->s[i]!='&')
+	while(i < uri->len && uri->s[i] != ':' && uri->s[i] != '/'
+			&& uri->s[i] != '&')
 		i++;
-	uri->len=i;
+	uri->len = i;
 }
 
 /**
@@ -85,30 +81,33 @@ static inline void cscf_strip_uri(str *uri)
  */
 contact_body_t *cscf_parse_contacts(struct sip_msg *msg)
 {
-	struct hdr_field* ptr;
-	if (!msg) return 0;
+	struct hdr_field *ptr;
+	if(!msg)
+		return 0;
 
-	if (parse_headers(msg, HDR_EOH_F, 0)<0){
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("Error parsing headers \n");
 		return 0;
 	}
-	if (msg->contact) {
+	if(msg->contact) {
 		ptr = msg->contact;
 		while(ptr) {
-			if (ptr->type == HDR_CONTACT_T) {
-				if (ptr->parsed==0){					
-					if (parse_contact(ptr)<0){
-						LM_DBG("error parsing contacts [%.*s]\n",
-								ptr->body.len,ptr->body.s);
+			if(ptr->type == HDR_CONTACT_T) {
+				if(ptr->parsed == 0) {
+					if(parse_contact(ptr) < 0) {
+						LM_DBG("error parsing contacts [%.*s]\n", ptr->body.len,
+								ptr->body.s);
 					}
 				}
 			}
 			ptr = ptr->next;
 		}
 	}
-	if (!msg->contact) return 0;
+	if(!msg->contact)
+		return 0;
 	return msg->contact->parsed;
 }
+
 /**
  * Returns the Private Identity extracted from the Authorization header.
  * If none found there takes the SIP URI in To without the "sip:" prefix
@@ -117,65 +116,67 @@ contact_body_t *cscf_parse_contacts(struct sip_msg *msg)
  * @param realm - the realm to match in an Authorization header
  * @returns the str containing the private id, no mem dup
  */
-str cscf_get_private_identity(struct sip_msg *msg, str realm) {
+str cscf_get_private_identity(struct sip_msg *msg, str realm)
+{
 	str pi = {0, 0};
-	struct hdr_field* h = 0;
+	struct hdr_field *h = 0;
 	int ret, i, res;
 
-	if ((parse_headers(msg, HDR_AUTHORIZATION_F, 0) != 0) && (parse_headers(msg, HDR_PROXYAUTH_F, 0) != 0)) {
+	if((parse_headers(msg, HDR_AUTHORIZATION_F, 0) != 0)
+			&& (parse_headers(msg, HDR_PROXYAUTH_F, 0) != 0)) {
 		return pi;
 	}
 
-	h = msg->authorization;
-	if (!msg->authorization) {
+	if(!msg->authorization) {
 		goto fallback;
 	}
-		
-	if (realm.len && realm.s) {
+	h = msg->authorization;
+
+	if(realm.len && realm.s) {
 		ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_T, &h);
-		if (ret < 0) {
+		if(ret < 0) {
 			ret = find_credentials(msg, &realm, HDR_PROXYAUTH_T, &h);
-			if (ret < 0) {
+			if(ret < 0) {
 				goto fallback;
 			} else {
-				if (ret >0) {
+				if(ret > 0) {
 					goto fallback;
 				}
 				h = msg->proxy_auth;
 			}
 		} else {
-			if (ret > 0) {
+			if(ret > 0) {
 				goto fallback;
 			}
 		}
 	}
-	
-	if (!h)
+
+	if(!h)
 		goto fallback;
 
 	res = parse_credentials(h);
-	if (res != 0) {
+	if(res != 0) {
 		LOG(L_ERR, "Error while parsing credentials\n");
 		return pi;
 	}
 
-	if (h) {
-		pi = ((auth_body_t*) h->parsed)->digest.username.whole;
-		if (memchr(pi.s, '@', pi.len) == 0) {
-			LM_DBG("no domain in username - required for IMPI - falling back to IMPU\n");
-			goto fallback;
-		}
+	pi = ((auth_body_t *)h->parsed)->digest.username.whole;
+	if(memchr(pi.s, '@', pi.len) == 0) {
+		LM_DBG("no domain in username - required for IMPI - falling back "
+			   "to IMPU\n");
+		goto fallback;
 	}
+
 	goto done;
 
 fallback:
 	pi = cscf_get_public_identity(msg);
-	if (pi.len > 4 && strncasecmp(pi.s, "sip:", 4) == 0) {
+	if(pi.len > 4 && strncasecmp(pi.s, "sip:", 4) == 0) {
 		pi.s += 4;
 		pi.len -= 4;
 	}
-	for (i = 0; i < pi.len; i++)
-		if (pi.s[i] == ';') {
+	for(i = 0; i < pi.len; i++)
+		if(pi.s[i] == ';') {
 			pi.len = i;
 			break;
 		}
@@ -193,49 +194,51 @@ done:
  */
 str cscf_get_private_identity_from(struct sip_msg *msg, str realm)
 {
-	str pi={0,0};
-	struct hdr_field* h=0;
-	int ret,i,res;
+	str pi = {0, 0};
+	struct hdr_field *h = 0;
+	int ret, i, res;
 
-	if (parse_headers(msg,HDR_AUTHORIZATION_F,0)!=0) {
+	if(parse_headers(msg, HDR_AUTHORIZATION_F, 0) != 0) {
 		return pi;
 	}
-        
-        h = msg->authorization;
-	if (!msg->authorization){
+
+	if(!msg->authorization) {
 		goto fallback;
 	}
-        
-        if (realm.len && realm.s) {
-            ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_T, &h);
-            if (ret < 0) {
-                    goto fallback;
-            } else 
-                    if (ret > 0) {
-                            goto fallback;
-                    }
-        }
+	h = msg->authorization;
+
+	if(realm.len && realm.s) {
+		ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_T, &h);
+		if(ret < 0) {
+			goto fallback;
+		} else if(ret > 0) {
+			goto fallback;
+		}
+	}
 
 	res = parse_credentials(h);
-        if (res != 0) {
-                LOG(L_ERR, "Error while parsing credentials\n");
-                return pi;
-        }
+	if(res != 0) {
+		LOG(L_ERR, "Error while parsing credentials\n");
+		return pi;
+	}
 
-	if (h) pi=((auth_body_t*)h->parsed)->digest.username.whole;
+	pi = ((auth_body_t *)h->parsed)->digest.username.whole;
 
 	goto done;
 
-	fallback:
+fallback:
 	pi = cscf_get_public_identity_from(msg);
-	if (pi.len>4&&strncasecmp(pi.s,"sip:",4)==0) {pi.s+=4;pi.len-=4;}
-	for(i=0;i<pi.len;i++)
-		if (pi.s[i]==';') {
-			pi.len=i;
+	if(pi.len > 4 && strncasecmp(pi.s, "sip:", 4) == 0) {
+		pi.s += 4;
+		pi.len -= 4;
+	}
+	for(i = 0; i < pi.len; i++)
+		if(pi.s[i] == ';') {
+			pi.len = i;
 			break;
 		}
-	done:
-	return pi;	
+done:
+	return pi;
 }
 
 /**
@@ -248,33 +251,37 @@ str cscf_get_private_identity_from(struct sip_msg *msg, str realm)
  */
 str cscf_get_private_identity_no_realm(struct sip_msg *msg, str realm)
 {
-	str pi={0,0};
-	struct hdr_field* h=0;
+	str pi = {0, 0};
+	struct hdr_field *h = 0;
 	int i;
 
-	if (parse_headers(msg,HDR_AUTHORIZATION_F,0)!=0) {
+	if(parse_headers(msg, HDR_AUTHORIZATION_F, 0) != 0) {
 		return pi;
 	}
 
-	if (!msg->authorization){
+	if(!msg->authorization) {
 		goto fallback;
 	}
 
-        h = msg->authorization;
-        if (h) pi=((auth_body_t*)h->parsed)->digest.username.whole;
+	h = msg->authorization;
+	if(h)
+		pi = ((auth_body_t *)h->parsed)->digest.username.whole;
 
 	goto done;
 
-	fallback:
+fallback:
 	pi = cscf_get_public_identity(msg);
-	if (pi.len>4&&strncasecmp(pi.s,"sip:",4)==0) {pi.s+=4;pi.len-=4;}
-	for(i=0;i<pi.len;i++)
-		if (pi.s[i]==';') {
-			pi.len=i;
+	if(pi.len > 4 && strncasecmp(pi.s, "sip:", 4) == 0) {
+		pi.s += 4;
+		pi.len -= 4;
+	}
+	for(i = 0; i < pi.len; i++)
+		if(pi.s[i] == ';') {
+			pi.len = i;
 			break;
 		}
-	done:
-	return pi;	
+done:
+	return pi;
 }
 
 /**
@@ -284,26 +291,26 @@ str cscf_get_private_identity_no_realm(struct sip_msg *msg, str realm)
  */
 str cscf_get_public_identity(struct sip_msg *msg)
 {
-	str pu={0,0};
+	str pu = {0, 0};
 	struct to_body *to;
 	int i;
 
-	if (parse_headers(msg,HDR_TO_F,0)!=0) {
+	if(parse_headers(msg, HDR_TO_F, 0) != 0) {
 		return pu;
 	}
 
-	if ( get_to(msg) == NULL ) {
-		to = (struct to_body*) pkg_malloc(sizeof(struct to_body));
-		parse_to( msg->to->body.s, msg->to->body.s + msg->to->body.len, to );
+	if(get_to(msg) == NULL) {
+		to = (struct to_body *)pkg_malloc(sizeof(struct to_body));
+		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len, to);
 		msg->to->parsed = to;
-	}
-	else to=(struct to_body *) msg->to->parsed;
+	} else
+		to = (struct to_body *)msg->to->parsed;
 
 	pu = to->uri;
 
 	/* truncate to sip:username@host or tel:number */
-	for(i=4;i<pu.len;i++)
-		if (pu.s[i]==';' || pu.s[i]=='?' ||pu.s[i]==':'){
+	for(i = 4; i < pu.len; i++)
+		if(pu.s[i] == ';' || pu.s[i] == '?' || pu.s[i] == ':') {
 			pu.len = i;
 		}
 
@@ -317,32 +324,32 @@ str cscf_get_public_identity(struct sip_msg *msg)
  */
 str cscf_get_public_identity_from(struct sip_msg *msg)
 {
-	str pu={0,0};
+	str pu = {0, 0};
 	struct to_body *from;
 	int i;
 
-	if (parse_headers(msg,HDR_FROM_F,0)!=0) {
+	if(parse_headers(msg, HDR_FROM_F, 0) != 0) {
 		return pu;
 	}
 
-	if ( get_from(msg) == NULL ) {
-		from = (struct to_body*) pkg_malloc(sizeof(struct to_body));
-		parse_to( msg->from->body.s, msg->from->body.s + msg->from->body.len, from );
+	if(get_from(msg) == NULL) {
+		from = (struct to_body *)pkg_malloc(sizeof(struct to_body));
+		parse_to(msg->from->body.s, msg->from->body.s + msg->from->body.len,
+				from);
 		msg->from->parsed = from;
-	}
-	else from=(struct to_body *) msg->from->parsed;
+	} else
+		from = (struct to_body *)msg->from->parsed;
 
 	pu = from->uri;
 
 	/* truncate to sip:username@host or tel:number */
-	for(i=4;i<pu.len;i++)
-		if (pu.s[i]==';' || pu.s[i]=='?' ||pu.s[i]==':'){
+	for(i = 4; i < pu.len; i++)
+		if(pu.s[i] == ';' || pu.s[i] == '?' || pu.s[i] == ':') {
 			pu.len = i;
 		}
 
 	return pu;
 }
-
 
 
 /**
@@ -356,22 +363,25 @@ int cscf_get_expires_hdr(struct sip_msg *msg, int is_shm)
 {
 	exp_body_t *exp;
 	int expires;
-	if (!msg) return -1;
+	if(!msg)
+		return -1;
 	/*first search in Expires header */
-	if (parse_headers(msg,HDR_EXPIRES_F,0)!=0) {
+	if(parse_headers(msg, HDR_EXPIRES_F, 0) != 0) {
 		return -1;
 	}
-	if (msg->expires){		
-		if (!msg->expires->parsed) {
-			parse_expires(msg->expires);
+	if(msg->expires) {
+		if(!msg->expires->parsed) {
+			if(parse_expires(msg->expires) < 0) {
+				LM_ERR("failed to parse expires header\n");
+			}
 		}
-		if (msg->expires->parsed) {
-			exp = (exp_body_t*) msg->expires->parsed;
-			if (exp->valid) {
+		if(msg->expires->parsed) {
+			exp = (exp_body_t *)msg->expires->parsed;
+			if(exp->valid) {
 				expires = exp->val;
 				if(is_shm) {
-					free_expires((exp_body_t**)&exp);
-					msg->expires->parsed = 0;	
+					free_expires((exp_body_t **)&exp);
+					msg->expires->parsed = 0;
 				}
 				return expires;
 			}
@@ -399,20 +409,22 @@ int cscf_get_max_expires(struct sip_msg *msg, int is_shm)
 	max_expires = cscf_get_expires_hdr(msg, is_shm);
 
 	cscf_parse_contacts(msg);
-	for(h=msg->contact;h;h=h->next){
-		if (h->type==HDR_CONTACT_T && h->parsed) {
-			for(c=((contact_body_t *) h->parsed)->contacts;c;c=c->next){
-				if(c->expires){
-					if (!str2int(&(c->expires->body), (unsigned int*)&exp) && (int)exp>max_expires) max_expires = exp;
+	for(h = msg->contact; h; h = h->next) {
+		if(h->type == HDR_CONTACT_T && h->parsed) {
+			for(c = ((contact_body_t *)h->parsed)->contacts; c; c = c->next) {
+				if(c->expires) {
+					if(!str2int(&(c->expires->body), (unsigned int *)&exp)
+							&& (int)exp > max_expires)
+						max_expires = exp;
 				}
 			}
-		}	
+		}
 	}
 
-	if(is_shm){
-		for(h=msg->contact;h;h=h->next){
-			if (h->type==HDR_CONTACT_T && h->parsed) {
-				free_contact((contact_body_t**)&(h->parsed));
+	if(is_shm) {
+		for(h = msg->contact; h; h = h->next) {
+			if(h->type == HDR_CONTACT_T && h->parsed) {
+				free_contact((contact_body_t **)&(h->parsed));
 				h->parsed = 0;
 			}
 		}
@@ -429,42 +441,43 @@ int cscf_get_max_expires(struct sip_msg *msg, int is_shm)
  */
 str cscf_get_public_identity_from_requri(struct sip_msg *msg)
 {
-	str pu={0,0};
+	str pu = {0, 0};
 
-	if (msg->first_line.type!=SIP_REQUEST) {
+	if(msg->first_line.type != SIP_REQUEST) {
 		return pu;
 	}
-	if (parse_sip_msg_uri(msg)<0){
+	if(parse_sip_msg_uri(msg) < 0) {
 		return pu;
 	}
 
-	if(msg->parsed_uri.type==TEL_URI_T){
-		pu.len = 4 + msg->parsed_uri.user.len ;
-		pu.s = shm_malloc(pu.len+1);
-		if (!pu.s){
-                        LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d bytes\n", pu.len + 1);
-                        pu.len = 0;
+	if(msg->parsed_uri.type == TEL_URI_T) {
+		pu.len = 4 + msg->parsed_uri.user.len;
+		pu.s = shm_malloc(pu.len + 1);
+		if(!pu.s) {
+			LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d "
+				   "bytes\n",
+					pu.len + 1);
+			pu.len = 0;
 			goto done;
-                }
-		sprintf(pu.s,"tel:%.*s",
-				msg->parsed_uri.user.len,
+		}
+		sprintf(pu.s, "tel:%.*s", msg->parsed_uri.user.len,
 				msg->parsed_uri.user.s);
-	}else{
+	} else {
 		pu.len = 4 + msg->parsed_uri.user.len + 1 + msg->parsed_uri.host.len;
-		pu.s = shm_malloc(pu.len+1);
-		if (!pu.s){
-                        LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d bytes\n", pu.len + 1);
-                        pu.len = 0;
+		pu.s = shm_malloc(pu.len + 1);
+		if(!pu.s) {
+			LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d "
+				   "bytes\n",
+					pu.len + 1);
+			pu.len = 0;
 			goto done;
-                }
-		sprintf(pu.s,"sip:%.*s@%.*s",
-				msg->parsed_uri.user.len,
-				msg->parsed_uri.user.s,
-				msg->parsed_uri.host.len,
+		}
+		sprintf(pu.s, "sip:%.*s@%.*s", msg->parsed_uri.user.len,
+				msg->parsed_uri.user.s, msg->parsed_uri.host.len,
 				msg->parsed_uri.host.s);
 	}
 
-	done:
+done:
 	return pu;
 }
 
@@ -478,49 +491,51 @@ str cscf_get_public_identity_from_requri(struct sip_msg *msg)
  */
 str cscf_get_contact_from_requri(struct sip_msg *msg)
 {
-	str pu={0,0};
+	str pu = {0, 0};
 
-	if (msg->first_line.type!=SIP_REQUEST) {
+	if(msg->first_line.type != SIP_REQUEST) {
 		return pu;
 	}
-	if (parse_sip_msg_uri(msg)<0){
+	if(parse_sip_msg_uri(msg) < 0) {
 		return pu;
 	}
-	if(!msg->parsed_uri.port.len){
-	    return pu;
+	if(!msg->parsed_uri.port.len) {
+		return pu;
 	}
 
-	if(msg->parsed_uri.type==TEL_URI_T){
-		pu.len = 4 + msg->parsed_uri.user.len + msg->parsed_uri.port.len + 1 /*for colon before port*/;
-		pu.s = shm_malloc(pu.len+1);
-		if (!pu.s){
-                        LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d bytes\n", pu.len + 1);
-                        pu.len = 0;
+	if(msg->parsed_uri.type == TEL_URI_T) {
+		pu.len = 4 + msg->parsed_uri.user.len + msg->parsed_uri.port.len
+				 + 1 /*for colon before port*/;
+		pu.s = shm_malloc(pu.len + 1);
+		if(!pu.s) {
+			LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d "
+				   "bytes\n",
+					pu.len + 1);
+			pu.len = 0;
 			goto done;
-                }
-		sprintf(pu.s,"tel:%.*s:%.*s",
-				msg->parsed_uri.user.len,
-				msg->parsed_uri.user.s,
-				msg->parsed_uri.port.len,
+		}
+		sprintf(pu.s, "tel:%.*s:%.*s", msg->parsed_uri.user.len,
+				msg->parsed_uri.user.s, msg->parsed_uri.port.len,
 				msg->parsed_uri.port.s);
-	}else{
-		pu.len = 4 + msg->parsed_uri.user.len + 1/*for @*/ + msg->parsed_uri.host.len + msg->parsed_uri.port.len + 1 /*for colon before port*/;
-		pu.s = shm_malloc(pu.len+1);
-		if (!pu.s){
-                        LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d bytes\n", pu.len + 1);
-                        pu.len = 0;
+	} else {
+		pu.len = 4 + msg->parsed_uri.user.len
+				 + 1 /*for @*/ + msg->parsed_uri.host.len
+				 + msg->parsed_uri.port.len + 1 /*for colon before port*/;
+		pu.s = shm_malloc(pu.len + 1);
+		if(!pu.s) {
+			LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d "
+				   "bytes\n",
+					pu.len + 1);
+			pu.len = 0;
 			goto done;
-                }
-		sprintf(pu.s,"sip:%.*s@%.*s:%.*s",
-				msg->parsed_uri.user.len,
-				msg->parsed_uri.user.s,
-				msg->parsed_uri.host.len,
-				msg->parsed_uri.host.s,
-				msg->parsed_uri.port.len,
+		}
+		sprintf(pu.s, "sip:%.*s@%.*s:%.*s", msg->parsed_uri.user.len,
+				msg->parsed_uri.user.s, msg->parsed_uri.host.len,
+				msg->parsed_uri.host.s, msg->parsed_uri.port.len,
 				msg->parsed_uri.port.s);
 	}
 
-	done:
+done:
 	return pu;
 }
 
@@ -531,65 +546,78 @@ str cscf_get_contact_from_requri(struct sip_msg *msg)
  * @param str2 - not used
  * @returns #CSCF_RETURN_TRUE if yes, else #CSCF_RETURN_FALSE
  */
-int cscf_has_originating(struct sip_msg *msg,char *str1,char *str2)
+int cscf_has_originating(struct sip_msg *msg, char *str1, char *str2)
 {
 	//int ret=CSCF_RETURN_FALSE;
 	struct hdr_field *h;
-	str* uri;
+	str *uri;
 	rr_t *r;
 
-	if (parse_headers(msg, HDR_ROUTE_F, 0)<0){
+	if(parse_headers(msg, HDR_ROUTE_F, 0) < 0) {
 		LM_DBG("I_originating: error parsing headers\n");
 		return CSCF_RETURN_FALSE;
 	}
 	h = msg->route;
-	if (!h){
+	if(!h) {
 		LM_DBG("I_originating: Header Route not found\n");
 		return CSCF_RETURN_FALSE;
 	}
-	if (parse_rr(h)<0){
+	if(parse_rr(h) < 0) {
 		LM_DBG("I_originating: Error parsing as Route header\n");
 		return CSCF_RETURN_FALSE;
 	}
-	r = (rr_t*)h->parsed;
+	r = (rr_t *)h->parsed;
 
 	uri = &r->nameaddr.uri;
 	struct sip_uri puri;
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
-		LM_DBG( "I_originating: Error while parsing the first route URI\n");
+	if(parse_uri(uri->s, uri->len, &puri) < 0) {
+		LM_DBG("I_originating: Error while parsing the first route URI\n");
 		return -1;
 	}
-	if (puri.params.len < 4) return CSCF_RETURN_FALSE;
+	if(puri.params.len < 4)
+		return CSCF_RETURN_FALSE;
 	int c = 0;
-	int state = 0; 
-	while (c < puri.params.len) {
-		switch (puri.params.s[c]) {
-		case 'o': if (state==0) state=1;
-		break;
-		case 'r': if (state==1) state=2;
-		break;
-		case 'i': if (state==2) state=3;
-		break;
-		case 'g': if (state==3) state=4;
-		break;
-		case ' ':
-		case '\t':
-		case '\r':
-		case '\n':
-		case ',':
-		case ';':
-			if (state==4) return CSCF_RETURN_TRUE;
-			state=0;
-			break;
-		case '=': if (state==4) return CSCF_RETURN_TRUE;
-		state=-1;
-		break;
-		default: state=-1;
+	int state = 0;
+	while(c < puri.params.len) {
+		switch(puri.params.s[c]) {
+			case 'o':
+				if(state == 0)
+					state = 1;
+				break;
+			case 'r':
+				if(state == 1)
+					state = 2;
+				break;
+			case 'i':
+				if(state == 2)
+					state = 3;
+				break;
+			case 'g':
+				if(state == 3)
+					state = 4;
+				break;
+			case ' ':
+			case '\t':
+			case '\r':
+			case '\n':
+			case ',':
+			case ';':
+				if(state == 4)
+					return CSCF_RETURN_TRUE;
+				state = 0;
+				break;
+			case '=':
+				if(state == 4)
+					return CSCF_RETURN_TRUE;
+				state = -1;
+				break;
+			default:
+				state = -1;
 		}
 		c++;
 	}
 
-	return state==4 ? CSCF_RETURN_TRUE : CSCF_RETURN_FALSE;
+	return state == 4 ? CSCF_RETURN_TRUE : CSCF_RETURN_FALSE;
 }
 
 str s_asserted_identity={"P-Asserted-Identity",19};
@@ -1437,7 +1465,7 @@ int cscf_get_p_associated_uri(struct sip_msg *msg, str **public_id,
 		r2 = r2->next;
 	}
 	*public_id = pkg_malloc(sizeof(str)*(*public_id_cnt));
-	if (!public_id) {
+	if (*public_id==NULL) {
 		LM_ERR("Error out of pkg memory");
 		return 0;
 	}
@@ -1544,7 +1572,7 @@ str* cscf_get_service_route(struct sip_msg *msg, int *size, int is_shm) {
 				LM_DBG("No items in this Service-Route\n");
 				continue;
 			}
-			x = pkg_realloc(x,(*size+k)*sizeof(str));
+			x = pkg_reallocxf(x,(*size+k)*sizeof(str));
 			if (!x) {
 				LM_ERR("Error our of pkg memory");
 				return 0;

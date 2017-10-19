@@ -62,7 +62,7 @@ unsigned char _mt_char_table[MT_CHAR_TABLE_SIZE];
 void mt_char_table_init(void)
 {
 	unsigned int i;
-	for(i=0; i<=MT_CHAR_TABLE_SIZE; i++) {
+	for(i=0; i<MT_CHAR_TABLE_SIZE; i++) {
 		_mt_char_table[i] = MT_CHAR_TABLE_NOTSET;
 	}
 	for(i=0; i<mt_char_list.len; i++) {
@@ -985,12 +985,13 @@ int mt_rpc_add_tvalues(rpc_t* rpc, void* ctx, m_tree_t *pt, str *tomatch)
 	mt_node_t *itn;
 	mt_is_t *tvalues;
 	void *vstruct = NULL;
-	str prefix = *tomatch;
+	str prefix = STR_NULL;
 
 	if (pt == NULL || tomatch == NULL || tomatch->s == NULL) {
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
+	prefix = *tomatch;
 
 	l = 0;
 	itn = pt->head;
@@ -1051,7 +1052,7 @@ int mt_rpc_match_prefix(rpc_t* rpc, void* ctx, m_tree_t *it,
 	is_t *tvalue;
 	mt_dw_t *dw;
 	int tprefix_len = 0;
-	str prefix = *tomatch;
+	str prefix = STR_NULL;
 	void *vstruct = NULL;
 
 #define MT_MAX_DST_LIST	64
@@ -1063,6 +1064,7 @@ int mt_rpc_match_prefix(rpc_t* rpc, void* ctx, m_tree_t *it,
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
+	prefix = *tomatch;
 
 	if (rpc->add(ctx, "S", &it->tname) < 0) {
 		rpc->fault(ctx, 500, "Internal error adding tname");

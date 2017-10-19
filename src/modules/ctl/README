@@ -160,7 +160,7 @@ loadmodule "ctl"
 # optional listen addresses, if no one is specified,
 # ctl will listen on unixs:/tmp/ser_ctl
 
-modparam("ctl", "binrpc", "unix:/tmp/kamailio_ctl") # default
+modparam("ctl", "binrpc", "unix:/var/run/kamailio/kamailio_ctl") # default
 modparam("ctl", "binrpc", "udp:localhost:2046")
 modparam("ctl", "binrpc", "tcp:localhost:2046")
 modparam("ctl", "binrpc", "unixd:/tmp/unix_dgram")  # unix datagram
@@ -289,7 +289,7 @@ modparam("ctl", "binrpc_struct_max_body_size", 4)
 
    Example 1.11. print usage
  $ kamcmd -f"[%v] %v:%v %v\n" ctl.listen
-[binrpc] unix_stream:/tmp/kamailio_ctl
+[binrpc] unix_stream:/var/run/kamailio/kamailio_ctl
 
 # note: the above command is equivalent with kamcmd listen
 
@@ -307,6 +307,6 @@ modparam("ctl", "binrpc_struct_max_body_size", 4)
 
    Example 1.13. ctl.who usage
  $ kamcmd -f"[%v] %v: %v %v -> %v %v\n" ctl.who
-[binrpc] unix_stream: <anonymous unix socket>  -> /tmp/kamailio_ctl
+[binrpc] unix_stream: <anonymous unix socket>  -> /var/run/kamailio/kamailio_ctl
 
 # note the above command is equivalent to kamcmd who

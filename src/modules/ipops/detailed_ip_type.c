@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Functions that operate on IP addresses
  *
  * Copyright (C) 2012 Hugh Waite (crocodile-rcs.com)

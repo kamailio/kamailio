@@ -792,6 +792,30 @@ modparam("permissions", "max_subnets", 1024)
 </programlisting>
 		</example>
 	</section>
+	<section id ="permissions.p.load_backends">
+		<title><varname>load_backends</varname> (int)</title>
+		<para>
+			Control what backends should be loaded: 1 - address table;
+			2 - trusted table; 4 - allow file; 8 - deny file.
+		</para>
+		<para>
+			It can be a combination (sum) of the options to load many backends
+			(e.g., 3 - loads address and trusted tables).
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>0xffff</quote> (load all backends).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>load_backends</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "load_backends", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

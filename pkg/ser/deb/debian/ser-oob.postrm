@@ -1,6 +1,0 @@
-#!/bin/sh
-
-#DEBHELPER#
-
-
-exit 0

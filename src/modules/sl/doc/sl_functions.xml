@@ -112,7 +112,7 @@ sl_reply_error();
 		<function moreinfo="none">sl_forward _reply([ code, [ reason ] ])</function>
 		</title>
 		<para>
-		Forward statelessy the current received SIP reply, with the option to
+		Forward statelessly the current received SIP reply, with the option to
 		change the status code and reason text. The new code has to be in the same
 		class. The received reply is forwarded as well by core when the config
 		execution ended, unless it is dropped from config.

@@ -1,5 +1,4 @@
-/* 
- *
+/**
  * ip address family related structures
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -16,16 +15,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
-* \file
-* \brief Kamailio core :: ip address family related structures
-* \ingroup core
-* Module: \ref core
-*/
+ * \file
+ * \brief Kamailio core :: ip address family related structures
+ * \ingroup core
+ * Module: \ref core
+ */
 
 #ifndef ip_addr_h
 #define ip_addr_h
@@ -42,17 +41,18 @@
 
 #include "dprint.h"
 
-enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP, PROTO_WS, PROTO_WSS, PROTO_OTHER };
+enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP,
+	PROTO_WS, PROTO_WSS, PROTO_OTHER };
 #define PROTO_LAST PROTO_OTHER
 
 #ifdef USE_COMP
 enum comp_methods { COMP_NONE, COMP_SIGCOMP, COMP_SERGZ };
 #endif
 
-struct ip_addr{
-	unsigned int af; /* address family: AF_INET6 or AF_INET */
-	unsigned int len;    /* address len, 16 or 4 */
-	
+typedef struct ip_addr {
+	unsigned int af;	/* address family: AF_INET6 or AF_INET */
+	unsigned int len;	/* address len, 16 or 4 */
+
 	/* 64 bits aligned address */
 	union {
 		unsigned long  addrl[16/sizeof(long)]; /* long format*/
@@ -60,27 +60,24 @@ struct ip_addr{
 		unsigned short addr16[8];
 		unsigned char  addr[16];
 	}u;
-};
+} ip_addr_t;
 
-typedef struct ip_addr ip_addr_t;
-
-struct net{
+typedef struct net {
 	struct ip_addr ip;
 	struct ip_addr mask;
-};
+} sr_net_t;
 
 union sockaddr_union{
-		struct sockaddr     s;
-		struct sockaddr_in  sin;
-		struct sockaddr_in6 sin6;
+	struct sockaddr     s;
+	struct sockaddr_in  sin;
+	struct sockaddr_in6 sin6;
 };
-
 
 
 enum si_flags { SI_NONE=0, SI_IS_IP=1, SI_IS_LO=2, SI_IS_MCAST=4,
-				 SI_IS_ANY=8, SI_IS_MHOMED=16 };
+	SI_IS_ANY=8, SI_IS_MHOMED=16 };
 
-struct addr_info{
+typedef struct addr_info {
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	struct ip_addr address; /*ip address */
 	str address_str;        /*ip address converted to string -- optimization*/
@@ -88,25 +85,26 @@ struct addr_info{
 	union sockaddr_union su;
 	struct addr_info* next;
 	struct addr_info* prev;
-};
+} addr_info_t;
 
-struct advertise_info {
+
+typedef struct advertise_info {
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	unsigned short port_no;  /* port number */
 	str port_no_str; /* port number converted to string -- optimization*/
 	str address_str;        /*ip address converted to string -- optimization*/
 	struct ip_addr address; /* ip address */
 	str sock_str; /* Socket proto, ip, and port as string */
-};
+} advertise_info_t;
 
-struct socket_info{
+typedef struct socket_info {
 	int socket;
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	struct ip_addr address; /* ip address */
 	str address_str;        /*ip address converted to string -- optimization*/
 	str port_no_str; /* port number converted to string -- optimization*/
 	enum si_flags flags; /* SI_IS_IP | SI_IS_LO | SI_IS_MCAST */
-	union sockaddr_union su; 
+	union sockaddr_union su;
 	struct socket_info* next;
 	struct socket_info* prev;
 	unsigned short port_no;  /* port number */
@@ -119,10 +117,21 @@ struct socket_info{
 #ifdef USE_MCAST
 	str mcast; /* name of interface that should join multicast group*/
 #endif /* USE_MCAST */
-};
+} socket_info_t;
 
 
-struct receive_info{
+/* send flags */
+#define SND_F_FORCE_CON_REUSE	1 /* reuse an existing connection or fail */
+#define SND_F_CON_CLOSE			2 /* close the connection after sending */
+#define SND_F_FORCE_SOCKET		4 /* send socket in dst is forced */
+
+typedef struct snd_flags {
+	unsigned short f;          /* snd flags */
+	unsigned short blst_imask; /* blacklist ignore mask */
+} snd_flags_t;
+
+
+typedef struct receive_info {
 	struct ip_addr src_ip;
 	struct ip_addr dst_ip;
 	unsigned short src_port; /* host byte order */
@@ -130,33 +139,34 @@ struct receive_info{
 	int proto_reserved1; /* tcp stores the connection id here */
 	int proto_reserved2;
 	union sockaddr_union src_su; /* useful for replies*/
-	struct socket_info* bind_address; /* sock_info structure on which 
-									  the msg was received*/
+	struct socket_info* bind_address; /* sock_info structure on which
+										* the msg was received */
 	char proto;
 #ifdef USE_COMP
 	short comp; /* compression */
 #endif
 	/* no need for dst_su yet */
-};
+} receive_info_t;
+
+
+typedef struct dest_info {
+	struct socket_info* send_sock;
+	union sockaddr_union to;
+	int id; /* tcp stores the connection id here */
+	char proto;
+	snd_flags_t send_flags;
+#ifdef USE_COMP
+	short comp;
+#endif
+} dest_info_t;
+
 
 typedef struct sr_net_info {
 	str data;
-	struct dest_info* dst;
-	struct receive_info* rcv;
+	receive_info_t* rcv;
+	dest_info_t* dst;
 } sr_net_info_t;
 
-/* send flags */
-#define SND_F_FORCE_CON_REUSE	1 /* reuse an existing connection or fail */
-#define SND_F_CON_CLOSE			2 /* close the connection after sending */
-#define SND_F_FORCE_SOCKET		4 /* send socket in dst is forced */
-
-struct snd_flags {
-	unsigned char f;          /* snd flags */
-	unsigned char blst_imask; /* blacklist ignore mask */
-};
-
-
-typedef struct snd_flags  snd_flags_t;
 
 #define SND_FLAGS_INIT(sflags) \
 	do{ \
@@ -164,11 +174,13 @@ typedef struct snd_flags  snd_flags_t;
 		(sflags)->blst_imask=0; \
 	}while(0)
 
+
 #define SND_FLAGS_OR(dst, src1, src2) \
 	do{ \
 		(dst)->f = (src1)->f | (src2)->f; \
 		(dst)->blst_imask = (src1)->blst_imask | (src2)->blst_imask; \
 	}while(0)
+
 
 #define SND_FLAGS_AND(dst, src1, src2) \
 	do{ \
@@ -176,37 +188,25 @@ typedef struct snd_flags  snd_flags_t;
 		(dst)->blst_imask = (src1)->blst_imask & (src2)->blst_imask; \
 	}while(0)
 
-struct dest_info{
-	struct socket_info* send_sock;
-	union sockaddr_union to;
-	int id; /* tcp stores the connection id here */ 
-	char proto;
-	snd_flags_t send_flags;
-#ifdef USE_COMP
-	short comp;
-#endif
-};
-
 
 /* list of names for multi-homed sockets that need to bind on
  * multiple addresses in the same time (sctp ) */
-struct name_lst{
+typedef struct name_lst {
 	char* name;
 	struct name_lst* next;
 	int flags;
-};
+} name_lst_t;
 
 
-struct socket_id{
+typedef struct socket_id {
 	struct name_lst* addr_lst; /* address list, the first one must
-								  be present and is the main one
-								  (in case of multihoming sctp)*/
+								* be present and is the main one
+								* (in case of multihoming sctp) */
 	int flags;
 	int proto;
 	int port;
 	struct socket_id* next;
-};
-
+} socket_id_t;
 
 
 /* len of the sockaddr */
@@ -214,10 +214,10 @@ struct socket_id{
 #define sockaddru_len(su)	((su).s.sa_len)
 #else
 #define sockaddru_len(su)	\
-			(((su).s.sa_family==AF_INET6)?sizeof(struct sockaddr_in6):\
-					sizeof(struct sockaddr_in))
+	(((su).s.sa_family==AF_INET6)?sizeof(struct sockaddr_in6):\
+		sizeof(struct sockaddr_in))
 #endif /* HAVE_SOCKADDR_SA_LEN*/
-	
+
 /* inits an ip_addr with the addr. info from a hostent structure
  * ip = struct ip_addr*
  * he= struct hostent*
@@ -228,16 +228,12 @@ struct socket_id{
 		(ip)->len=(he)->h_length;  \
 		memcpy((ip)->u.addr, (he)->h_addr_list[(addr_no)], (ip)->len); \
 	}while(0)
-	
-
 
 
 /* gets the protocol family corresponding to a specific address family
  * ( PF_INET - AF_INET, PF_INET6 - AF_INET6, af for others)
  */
 #define AF2PF(af)   (((af)==AF_INET)?PF_INET:((af)==AF_INET6)?PF_INET6:(af))
-
-
 
 
 struct net* mk_new_net(struct ip_addr* ip, struct ip_addr* mask);
@@ -267,14 +263,13 @@ inline static int ip_addr_any(struct ip_addr* ip)
 {
 	int r;
 	int l;
-	
+
 	l=ip->len/4;
 	for (r=0; r<l; r++)
 		if (ip->u.addr32[r]!=0)
 			return 0;
 	return 1;
 }
-
 
 
 /* returns 1 if the given ip address is a loopback address
@@ -287,7 +282,6 @@ inline static int ip_addr_loopback(struct ip_addr* ip)
 		return IN6_IS_ADDR_LOOPBACK((struct in6_addr*)ip->u.addr32);
 	return 0;
 }
-
 
 
 /* creates an ANY ip_addr (filled with 0, af and len properly set) */
@@ -313,17 +307,18 @@ inline static void ip_addr_mk_any(int af, struct ip_addr* ip)
 	}
 }
 
-/* returns 1 if ip & net.mask == net.ip ; 0 otherwise & -1 on error 
-	[ diff. address families ]) */
+
+/* returns 1 if ip & net.mask == net.ip ; 0 otherwise & -1 on error
+ * [ diff. address families ]) */
 inline static int matchnet(struct ip_addr* ip, struct net* net)
 {
 	unsigned int r;
 
 	if (ip->af == net->ip.af){
 		for(r=0; r<ip->len/4; r++){ /* ipv4 & ipv6 addresses are
-									   all multiple of 4*/
-			if ((ip->u.addr32[r]&net->mask.u.addr32[r])!=
-														 net->ip.u.addr32[r]){
+									 * all multiple of 4*/
+			if ((ip->u.addr32[r]&net->mask.u.addr32[r])
+					!=net->ip.u.addr32[r]) {
 				return 0;
 			}
 		}
@@ -333,54 +328,49 @@ inline static int matchnet(struct ip_addr* ip, struct net* net)
 }
 
 
-
-
 /* inits an ip_addr pointer from a sockaddr structure*/
 static inline void sockaddr2ip_addr(struct ip_addr* ip, struct sockaddr* sa)
 {
 	switch(sa->sa_family){
-	case AF_INET:
+		case AF_INET:
 			ip->af=AF_INET;
 			ip->len=4;
 			memcpy(ip->u.addr, &((struct sockaddr_in*)sa)->sin_addr, 4);
 			break;
-	case AF_INET6:
+		case AF_INET6:
 			ip->af=AF_INET6;
 			ip->len=16;
 			memcpy(ip->u.addr, &((struct sockaddr_in6*)sa)->sin6_addr, 16);
 			break;
-	default:
+		default:
 			LM_CRIT("unknown address family %d\n", sa->sa_family);
 	}
 }
 
 
-
 /* compare 2 ip_addrs (both args are pointers)*/
 #define ip_addr_cmp(ip1, ip2) \
 	(((ip1)->af==(ip2)->af)&& \
-	 	(memcmp((ip1)->u.addr, (ip2)->u.addr, (ip1)->len)==0))
-
+		(memcmp((ip1)->u.addr, (ip2)->u.addr, (ip1)->len)==0))
 
 
 /* compare 2 sockaddr_unions */
 static inline int su_cmp(const union sockaddr_union* s1,
-						 const union sockaddr_union* s2)
+		const union sockaddr_union* s2)
 {
 	if (s1->s.sa_family!=s2->s.sa_family) return 0;
 	switch(s1->s.sa_family){
 		case AF_INET:
 			return (s1->sin.sin_port==s2->sin.sin_port)&&
-					(memcmp(&s1->sin.sin_addr, &s2->sin.sin_addr, 4)==0);
+				(memcmp(&s1->sin.sin_addr, &s2->sin.sin_addr, 4)==0);
 		case AF_INET6:
 			return (s1->sin6.sin6_port==s2->sin6.sin6_port)&&
-					(memcmp(&s1->sin6.sin6_addr, &s2->sin6.sin6_addr, 16)==0);
+				(memcmp(&s1->sin6.sin6_addr, &s2->sin6.sin6_addr, 16)==0);
 		default:
 			LM_CRIT("unknown address family %d\n", s1->s.sa_family);
 			return 0;
 	}
 }
-
 
 
 /* gets the port number (host byte order) */
@@ -398,7 +388,6 @@ static inline unsigned short su_getport(const union sockaddr_union* su)
 }
 
 
-
 /* sets the port number (host byte order) */
 static inline void su_setport(union sockaddr_union* su, unsigned short port)
 {
@@ -407,31 +396,30 @@ static inline void su_setport(union sockaddr_union* su, unsigned short port)
 			su->sin.sin_port=htons(port);
 			break;
 		case AF_INET6:
-			 su->sin6.sin6_port=htons(port);
-			 break;
+			su->sin6.sin6_port=htons(port);
+			break;
 		default:
 			LM_CRIT("unknown address family %d\n", su->s.sa_family);
 	}
 }
 
 
-
 /* inits an ip_addr pointer from a sockaddr_union ip address */
 static inline void su2ip_addr(struct ip_addr* ip, union sockaddr_union* su)
 {
 	switch(su->s.sa_family){
-	case AF_INET: 
-					ip->af=AF_INET;
-					ip->len=4;
-					memcpy(ip->u.addr, &su->sin.sin_addr, 4);
-					break;
-	case AF_INET6:
-					ip->af=AF_INET6;
-					ip->len=16;
-					memcpy(ip->u.addr, &su->sin6.sin6_addr, 16);
-					break;
-	default:
-					LM_CRIT("unknown address family %d\n", su->s.sa_family);
+		case AF_INET:
+			ip->af=AF_INET;
+			ip->len=4;
+			memcpy(ip->u.addr, &su->sin.sin_addr, 4);
+			break;
+		case AF_INET6:
+			ip->af=AF_INET6;
+			ip->len=16;
+			memcpy(ip->u.addr, &su->sin6.sin6_addr, 16);
+			break;
+		default:
+			LM_CRIT("unknown address family %d\n", su->s.sa_family);
 	}
 }
 
@@ -439,37 +427,36 @@ static inline void su2ip_addr(struct ip_addr* ip, union sockaddr_union* su)
 /* ip_addr2su -> the same as init_su*/
 #define ip_addr2su init_su
 
-/* inits a struct sockaddr_union from a struct ip_addr and a port no 
+/* inits a struct sockaddr_union from a struct ip_addr and a port no
  * returns 0 if ok, -1 on error (unknown address family)
  * the port number is in host byte order */
 static inline int init_su( union sockaddr_union* su,
-							struct ip_addr* ip,
-							unsigned short   port ) 
+		struct ip_addr* ip,
+		unsigned short port )
 {
 	memset(su, 0, sizeof(union sockaddr_union));/*needed on freebsd*/
 	su->s.sa_family=ip->af;
 	switch(ip->af){
-	case	AF_INET6:
-		memcpy(&su->sin6.sin6_addr, ip->u.addr, ip->len); 
-		#ifdef HAVE_SOCKADDR_SA_LEN
+		case	AF_INET6:
+			memcpy(&su->sin6.sin6_addr, ip->u.addr, ip->len);
+#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin6.sin6_len=sizeof(struct sockaddr_in6);
-		#endif
-		su->sin6.sin6_port=htons(port);
-		break;
-	case AF_INET:
-		memcpy(&su->sin.sin_addr, ip->u.addr, ip->len);
-		#ifdef HAVE_SOCKADDR_SA_LEN
+#endif
+			su->sin6.sin6_port=htons(port);
+			break;
+		case AF_INET:
+			memcpy(&su->sin.sin_addr, ip->u.addr, ip->len);
+#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin.sin_len=sizeof(struct sockaddr_in);
-		#endif
-		su->sin.sin_port=htons(port);
-		break;
-	default:
-		LM_CRIT("unknown address family %d\n", ip->af);
-		return -1;
+#endif
+			su->sin.sin_port=htons(port);
+			break;
+		default:
+			LM_CRIT("unknown address family %d\n", ip->af);
+			return -1;
 	}
 	return 0;
 }
-
 
 
 /* inits a struct sockaddr_union from a struct hostent, an address index in
@@ -477,34 +464,33 @@ static inline int init_su( union sockaddr_union* su,
  * WARNING: no index overflow  checks!
  * returns 0 if ok, -1 on error (unknown address family) */
 static inline int hostent2su( union sockaddr_union* su,
-								struct hostent* he,
-								unsigned int idx,
-								unsigned short   port ) 
+		struct hostent* he,
+		unsigned int idx,
+		unsigned short port )
 {
 	memset(su, 0, sizeof(union sockaddr_union)); /*needed on freebsd*/
 	su->s.sa_family=he->h_addrtype;
 	switch(he->h_addrtype){
-	case	AF_INET6:
-		memcpy(&su->sin6.sin6_addr, he->h_addr_list[idx], he->h_length);
-		#ifdef HAVE_SOCKADDR_SA_LEN
+		case	AF_INET6:
+			memcpy(&su->sin6.sin6_addr, he->h_addr_list[idx], he->h_length);
+#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin6.sin6_len=sizeof(struct sockaddr_in6);
-		#endif
-		su->sin6.sin6_port=htons(port);
-		break;
-	case AF_INET:
-		memcpy(&su->sin.sin_addr, he->h_addr_list[idx], he->h_length);
-		#ifdef HAVE_SOCKADDR_SA_LEN
+#endif
+			su->sin6.sin6_port=htons(port);
+			break;
+		case AF_INET:
+			memcpy(&su->sin.sin_addr, he->h_addr_list[idx], he->h_length);
+#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin.sin_len=sizeof(struct sockaddr_in);
-		#endif
-		su->sin.sin_port=htons(port);
-		break;
-	default:
-		LM_CRIT("unknown address family %d\n", he->h_addrtype);
-		return -1;
+#endif
+			su->sin.sin_port=htons(port);
+			break;
+		default:
+			LM_CRIT("unknown address family %d\n", he->h_addrtype);
+			return -1;
 	}
 	return 0;
 }
-
 
 
 /* maximum size of a str returned by ip_addr2str */
@@ -519,9 +505,9 @@ static inline int ip6tosbuf(unsigned char* ip6, char* buff, int len)
 	register unsigned char d;
 	register unsigned short hex4;
 	int r;
-	#define HEXDIG(x) (((x)>=10)?(x)-10+'A':(x)+'0')
-	
-	
+
+#define HEXDIG(x) (((x)>=10)?(x)-10+'A':(x)+'0')
+
 	offset=0;
 	if (unlikely(len<IP6_MAX_STR_SIZE))
 		return 0;
@@ -580,10 +566,9 @@ static inline int ip6tosbuf(unsigned char* ip6, char* buff, int len)
 		buff[offset]=HEXDIG(d);
 		offset+=1;
 	}
-	
+
 	return offset;
 }
-
 
 
 /* converts a raw ipv4 addr (4 bytes) to ascii */
@@ -592,8 +577,7 @@ static inline int ip4tosbuf(unsigned char* ip4, char* buff, int len)
 	int offset;
 	register unsigned char a,b,c;
 	int r;
-	
-	
+
 	offset=0;
 	if (unlikely(len<IP4_MAX_STR_SIZE))
 		return 0;
@@ -635,10 +619,9 @@ static inline int ip4tosbuf(unsigned char* ip4, char* buff, int len)
 		buff[offset]=c+'0';
 		offset+=1;
 	}
-	
+
 	return offset;
 }
-
 
 
 /* fast ip_addr -> string converter;
@@ -663,31 +646,54 @@ static inline int ip_addr2sbuf(struct ip_addr* ip, char* buff, int len)
 	}
 }
 
+/* same as ip_addr2sbuf, but with [  ] around IPv6 addresses */
+static inline int ip_addr2sbufz(struct ip_addr* ip, char* buff, int len)
+{
+	char *p;
+	int sz;
 
+	p = buff;
+	switch(ip->af){
+		case AF_INET6:
+			*p++ = '[';
+			sz = ip6tosbuf(ip->u.addr, p, len-2);
+			p += sz;
+			*p++ = ']';
+			*p=0;
+			return sz + 2;
+			break;
+		case AF_INET:
+			return ip4tosbuf(ip->u.addr, buff, len);
+			break;
+		default:
+			LM_CRIT("unknown address family %d\n", ip->af);
+			return 0;
+	}
+}
 
 /* maximum size of a str returned by ip_addr2a (including \0) */
 #define IP_ADDR_MAX_STR_SIZE (IP6_MAX_STR_SIZE+1) /* ip62ascii +  \0*/
+#define IP_ADDR_MAX_STRZ_SIZE (IP6_MAX_STR_SIZE+3) /* ip62ascii + [ + ] + \0*/
 /* fast ip_addr -> string converter;
  * it uses an internal buffer
  */
 static inline char* ip_addr2a(struct ip_addr* ip)
 {
-
 	static char buff[IP_ADDR_MAX_STR_SIZE];
 	int len;
-	
-	
+
 	len=ip_addr2sbuf(ip, buff, sizeof(buff)-1);
 	buff[len]=0;
 
 	return buff;
 }
 
+
 /* full address in text representation, including [] for ipv6 */
 static inline char* ip_addr2strz(struct ip_addr* ip)
 {
 
-	static char buff[IP_ADDR_MAX_STR_SIZE+2];
+	static char buff[IP_ADDR_MAX_STRZ_SIZE];
 	char *p;
 	int len;
 
@@ -706,7 +712,8 @@ static inline char* ip_addr2strz(struct ip_addr* ip)
 }
 
 #define SU2A_MAX_STR_SIZE  (IP6_MAX_STR_SIZE + 2 /* [] */+\
-								1 /* : */ + USHORT2SBUF_MAX_LEN + 1 /* \0 */)
+		1 /* : */ + USHORT2SBUF_MAX_LEN + 1 /* \0 */)
+
 /* returns an asciiz string containing the ip and the port
  *  (<ip_addr>:port or [<ipv6_addr>]:port)
  */
@@ -720,14 +727,14 @@ static inline char* su2a(union sockaddr_union* su, int su_len)
 			return "<addr. error>";
 		buf[0]='[';
 		offs=1+ip6tosbuf((unsigned char*)su->sin6.sin6_addr.s6_addr, &buf[1],
-							sizeof(buf)-4);
+				sizeof(buf)-4);
 		buf[offs]=']';
 		offs++;
 	}else
-	if (unlikely(su_len<sizeof(su->sin)))
-		return "<addr. error>";
-	else
-		offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, sizeof(buf)-2);
+		if (unlikely(su_len<sizeof(su->sin)))
+			return "<addr. error>";
+		else
+			offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, sizeof(buf)-2);
 	buf[offs]=':';
 	offs+=1+ushort2sbuf(su_getport(su), &buf[offs+1], sizeof(buf)-(offs+1)-1);
 	buf[offs]=0;
@@ -748,18 +755,17 @@ static inline char* suip2a(union sockaddr_union* su, int su_len)
 			return "<addr. error>";
 		buf[0]='[';
 		offs=1+ip6tosbuf((unsigned char*)su->sin6.sin6_addr.s6_addr, &buf[1],
-							IP6_MAX_STR_SIZE);
+				IP6_MAX_STR_SIZE);
 		buf[offs]=']';
 		offs++;
 	}else
-	if (unlikely(su_len<sizeof(su->sin)))
-		return "<addr. error>";
-	else
-		offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, IP4_MAX_STR_SIZE);
+		if (unlikely(su_len<sizeof(su->sin)))
+			return "<addr. error>";
+		else
+			offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, IP4_MAX_STR_SIZE);
 	buf[offs]=0;
 	return buf;
 }
-
 
 
 /* converts an ip_addr structure to a hostent, returns pointer to internal
@@ -771,14 +777,14 @@ static inline struct hostent* ip_addr2he(str* name, struct ip_addr* ip)
 	static char* p_aliases[1];
 	static char* p_addr[2];
 	static char address[16];
-	
+
 	p_aliases[0]=0; /* no aliases*/
 	p_addr[1]=0; /* only one address*/
 	p_addr[0]=address;
 	strncpy(hostname, name->s, (name->len<256)?(name->len)+1:256);
 	if (ip->len>16) return 0;
 	memcpy(address, ip->u.addr, ip->len);
-	
+
 	he.h_addrtype=ip->af;
 	he.h_length=ip->len;
 	he.h_addr_list=p_addr;
@@ -788,29 +794,28 @@ static inline struct hostent* ip_addr2he(str* name, struct ip_addr* ip)
 }
 
 
-
 /* init a dest_info structure */
 #define init_dest_info(dst) \
 	do{ \
 		memset((dst), 0, sizeof(struct dest_info)); \
-	} while(0) 
-
+	} while(0)
 
 
 /* init a dest_info structure from a recv_info structure */
 inline static void init_dst_from_rcv(struct dest_info* dst,
-									struct receive_info* rcv)
+		struct receive_info* rcv)
 {
-		dst->send_sock=rcv->bind_address;
-		dst->to=rcv->src_su;
-		dst->id=rcv->proto_reserved1;
-		dst->proto=rcv->proto;
-		dst->send_flags.f=0;
-		dst->send_flags.blst_imask=0;
+	dst->send_sock=rcv->bind_address;
+	dst->to=rcv->src_su;
+	dst->id=rcv->proto_reserved1;
+	dst->proto=rcv->proto;
+	dst->send_flags.f=0;
+	dst->send_flags.blst_imask=0;
 #ifdef USE_COMP
-		dst->comp=rcv->comp;
+	dst->comp=rcv->comp;
 #endif
 }
+
 
 /**
  * match ip address with net address and bitmask

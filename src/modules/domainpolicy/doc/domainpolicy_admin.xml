@@ -50,13 +50,13 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="dompolicy.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		This is <acronym>URL</acronym> of the database to be used.
 		</para>
 		<para>
-		Default value is 
+		Default value is
 			<quote>&defaultdb;</quote>
 		</para>
 		<example>
@@ -66,7 +66,7 @@ modparam("domainpolicy", "db_url", "&exampleotherdb;")
 		</programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="dompolicy.p.dp_table">
 		<title><varname>dp_table</varname> (string)</title>
 		<para>
 		Name of table containing the local support domain policy setup.
@@ -81,7 +81,7 @@ modparam("domainpolicy", "dp_table", "supportedpolicies")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="dompolicy.p.col_rule">
 		<title><varname>dp_col_rule</varname> (string)</title>
 		<para>
 		Name of column containing the domain policy rule name which is equal
@@ -97,7 +97,7 @@ modparam("domainpolicy", "dp_col_rule", "rules")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="dompolicy.p.col_type">
 		<title><varname>dp_col_type</varname> (string)</title>
 		<para>
 		Name of column containing the domain policy rule type.
@@ -117,7 +117,7 @@ modparam("domainpolicy", "dp_col_type", "type")
 	</section>
 
 
-	<section>
+	<section id="dompolicy.p.col_att">
 		<title><varname>dp_col_att</varname> (string)</title>
 		<para>
 		Name of column containing the AVP's name. If the rule stored in this
@@ -133,7 +133,7 @@ modparam("domainpolicy", "dp_col_att", "attribute")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="dompolicy.p.col_val">
 		<title><varname>dp_col_val</varname> (string)</title>
 		<para>
 		Name of column containing the value for AVPs created by dp_can_connect().
@@ -148,11 +148,11 @@ modparam("domainpolicy", "dp_col_val", "values")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="dompolicy.p.port_override_avp">
 		<title><varname>port_override_avp</varname> (string)</title>
 		<para>
 		This parameter defines the name of the AVP where dp_apply_policy() will look
-		for an override port number. 
+		for an override port number.
 		</para>
 		<para>
 		Default value is <quote>portoverride</quote>.
@@ -165,10 +165,10 @@ modparam("domainpolicy", "port_override_avp", "portoverride")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="dompolicy.p.transport_override_avp">
 		<title><varname>transport_override_avp</varname> (string)</title>
 		<para>
-		Name of the AVP which contains the override transport setting. 
+		Name of the AVP which contains the override transport setting.
 		</para>
 		<para>
 		Default value is <quote>transportoverride</quote>.
@@ -185,7 +185,7 @@ modparam("domainpolicy", "transport_override_avp", "transportoverride")
 	<section>
 		<title><varname>domain_replacement_avp</varname> (string)</title>
 		<para>
-		Name of the AVP which contains a domain replacement. 
+		Name of the AVP which contains a domain replacement.
 		</para>
 		<para>
 		Default value is <quote>domainreplacement</quote>.
@@ -202,7 +202,7 @@ modparam("domainpolicy", "domain_replacement_avp", "domainreplacement")
 	<section>
 		<title><varname>domain_prefix_avp</varname> (string)</title>
 		<para>
-		Name of the AVP which contains a domain prefix. 
+		Name of the AVP which contains a domain prefix.
 		</para>
 		<para>
 		Default value is <quote>domainprefix</quote>.
@@ -219,7 +219,7 @@ modparam("domainpolicy", "domain_prefix_avp", "domainprefix")
 	<section>
 		<title><varname>domain_suffix_avp</varname> (string)</title>
 		<para>
-		Name of the AVP which contains a domain suffix. 
+		Name of the AVP which contains a domain suffix.
 		</para>
 		<para>
 		Default value is <quote>domainsuffix</quote>.
@@ -237,7 +237,7 @@ modparam("domainpolicy", "domain_suffix_avp", "domainsuffix")
 		<para>
 		Name of the AVP which contains a send_socket. The format of the
 		send socket (the payload of this AVP) must be in the format
-		[proto:]ip_address[:port]. The function dp_apply_policy will 
+		[proto:]ip_address[:port]. The function dp_apply_policy will
 		look for this AVP and if defined, it will force the send socket
 		to its value (similar to the force_send_socket core function).
 		</para>
@@ -259,14 +259,14 @@ modparam("domainpolicy", "send_socket_avp", "sendsocket")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="dompolicy.f.dp_can_connect">
 		<title><function moreinfo="none">dp_can_connect()</function></title>
 		<para>
-		Checks the interconnection policy of the caller. It uses the domain in the 
-		request URI to perform the DP-DDDS algorithm according to draft-lendl-domain-policy-ddds-02 
-		to retrieve the domain's policy announcements. 
+		Checks the interconnection policy of the caller. It uses the domain in the
+		request URI to perform the DP-DDDS algorithm according to draft-lendl-domain-policy-ddds-02
+		to retrieve the domain's policy announcements.
 		As of this version, only records conforming to draft-lendl-speermint-federations-02
-		and draft-lendl-speermint-technical-policy-00 are supported. 
+		and draft-lendl-speermint-technical-policy-00 are supported.
 		</para>
 		<para>
 		Non-terminal NAPTR records will cause recursion to the replacement domain. dp_can_connect()
@@ -276,14 +276,14 @@ modparam("domainpolicy", "send_socket_avp", "sendsocket")
 		</para>
 		<para>
 		In order to simplify direct domain-based peerings all destination domains are
-		treated as if they contain a top priority "D2P+SIP:dom" rule with the domain itself as the 
+		treated as if they contain a top priority "D2P+SIP:dom" rule with the domain itself as the
 		value of the rule. Thus any database row with type = 'dom' and rule = 'example.com'
 		will override any dynamic DNS-discovered rules.
 		</para>
 		<para>
-		For NAPTRs with service-type "D2P+SIP:fed", the federation IDs 
+		For NAPTRs with service-type "D2P+SIP:fed", the federation IDs
 		(as extracted from the regexp field) are used to retrieve
-		policy records from a local local database (basically: "SELECT dp_col_att, dp_col_val FROM 
+		policy records from a local local database (basically: "SELECT dp_col_att, dp_col_val FROM
 		dp_table WHERE dp_col_rule = '[federationID]' AND type = 'fed'). If records are found (and all other
 		records with the same order value are fulfillable) then AVPs will be created from
 		the dp_col_att and dp_col_val columns.
@@ -297,8 +297,8 @@ modparam("domainpolicy", "send_socket_avp", "sendsocket")
 		"order" match and try to set the same AVP, then the behaviour is undefined.
 		</para>
 		<para>
-		The dp_col_att column specifies the AVP's name. If the AVP start with "s:" or "i:", the 
-		corresponding AVP type (string named or integer named) will be generated. If the excat specifier 
+		The dp_col_att column specifies the AVP's name. If the AVP start with "s:" or "i:", the
+		corresponding AVP type (string named or integer named) will be generated. If the excat specifier
 		is omited, the AVP type will be guessed.
 		</para>
 		<para>
@@ -363,7 +363,7 @@ switch(retcode) {
 		</programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="dompolicy.f.dp_apply_policy">
 		<title><function moreinfo="none">dp_apply_policy()</function></title>
 		<para>
 		This function sets the destination URI according to the policy returned
@@ -373,7 +373,7 @@ switch(retcode) {
 		The AVPs can be configured in the module's parameter section.
 		</para>
 		<para>
-		Note: The name of the AVPs must correspond with the names in the 
+		Note: The name of the AVPs must correspond with the names in the
 		<emphasis>att</emphasis> column in the domainpolicy table.
 		</para>
 		<para>
@@ -384,7 +384,7 @@ switch(retcode) {
 		<listitem>
 		<para>
 			<emphasis>port_override_avp</emphasis>: If this AVP is set, the port
-			in the destination URI is set to this port. 
+			in the destination URI is set to this port.
 			Setting an override port disables NAPTR and
 			SRV lookups according to RFC 3263.
 		</para>
@@ -394,14 +394,14 @@ switch(retcode) {
 			<emphasis>transport_override_avp</emphasis>: If this AVP is set, the transport
 			parameter in the destination URI is set to the specified transport ("udp", "tcp",
 			"tls").
-			Setting an override transport also disables NAPTR lookups, but retains 
+			Setting an override transport also disables NAPTR lookups, but retains
 			an SRV lookup according to RFC 3263.
 		</para>
 		</listitem>
 		<listitem>
 		<para>
 			<emphasis>domain_replacement_avp</emphasis>: If this AVP is set, the domain
-			in the destination URI will be replaced by this domain. 
+			in the destination URI will be replaced by this domain.
 		</para>
 		<para>
 			A non-terminal NAPTR and thus a referral to a new domain implicitly
@@ -411,9 +411,9 @@ switch(retcode) {
 		<listitem>
 		<para>
 			<emphasis>domain_prefix_avp</emphasis>: If this AVP is set, the domain
-			in the destination URI will be prefixed with this "subdomain".  
-			E.g. if the domain in the request URI is 
-			"example.com" and the domain_prefix_avp contains "inbound", the domain 
+			in the destination URI will be prefixed with this "subdomain".
+			E.g. if the domain in the request URI is
+			"example.com" and the domain_prefix_avp contains "inbound", the domain
 			in the destinaton URI is set to "inbound.example.com".
 		</para>
 		</listitem>
@@ -421,15 +421,15 @@ switch(retcode) {
 		<para>
 			<emphasis>domain_suffix_avp</emphasis>: If this AVP is set, the domain
 			in the destination URI will have the content of the AVP appended to it.
-			E.g. if the domain in the request URI is 
-			"example.com" and the domain_suffix_avp contains "myroot.com", the domain 
+			E.g. if the domain in the request URI is
+			"example.com" and the domain_suffix_avp contains "myroot.com", the domain
 			in the destination URI is set to "example.com.myroot.com".
 		</para>
 		</listitem>
 		<listitem>
 		<para>
 			<emphasis>send_socket_avp</emphasis>: If this AVP is set, the sending socket
-			will be forced to the socket in the AVP. The payload format of this AVP must 
+			will be forced to the socket in the AVP. The payload format of this AVP must
 			be [proto:]ip_address[:port].
 		</para>
 		</listitem>
@@ -454,12 +454,6 @@ if (dp_apply_policy()) {
 		</programlisting>
 		</example>
 	</section>
-	</section>
-
-	<section>
-	<title>RPC Commands</title>
-	<para>
-	</para>
 	</section>
 
 	<section>

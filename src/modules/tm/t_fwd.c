@@ -1018,6 +1018,8 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 		t->uac[t->nr_of_outgoings].on_failure = old_uac->on_failure;
 		t->uac[t->nr_of_outgoings].on_reply = old_uac->on_reply;
 		t->uac[t->nr_of_outgoings].on_branch_failure = old_uac->on_branch_failure;
+		/* copy branch flags */
+		t->uac[t->nr_of_outgoings].branch_flags = old_uac->branch_flags;
 
 		if (cfg_get(tm, tm_cfg, reparse_on_dns_failover)){
 			/* Reuse the old buffer and only replace the via header.
@@ -1168,7 +1170,10 @@ static struct cancel_reason* cancel_reason_pack(short cause, void* data,
 					data && !(t->flags & T_NO_E2E_CANCEL_REASON))) {
 			/* parse the entire cancel, to get all the Reason headers */
 			e2e_cancel = data;
-			parse_headers(e2e_cancel, HDR_EOH_F, 0);
+			if(parse_headers(e2e_cancel, HDR_EOH_F, 0)==-1) {
+				LM_ERR("failed to parse headers\n");
+				goto error;
+			}
 			for(hdr=get_hdr(e2e_cancel, HDR_REASON_T), reas1=hdr;
 					hdr; hdr=next_sibling_hdr(hdr)) {
 				/* hdr->len includes CRLF */
@@ -1185,7 +1190,7 @@ static struct cancel_reason* cancel_reason_pack(short cause, void* data,
 		} else if (cause == CANCEL_REAS_PACKED_HDRS &&
 				!(t->flags & T_NO_E2E_CANCEL_REASON) && data) {
 			txt = (str*) data;
-			reason_len = txt?txt->len:0;
+			reason_len = txt->len;
 		} else if (unlikely(cause < CANCEL_REAS_MIN)) {
 			LM_CRIT("unhandled reason cause %d\n", cause);
 			goto error;

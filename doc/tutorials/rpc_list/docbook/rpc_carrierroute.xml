@@ -16,4 +16,12 @@ RPC Exports for carrierroute
 </para>
 </section>
 
+<section id="cr.dump_routes"><title>cr.dump_routes</title>
+<para>
+        Dump routes
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

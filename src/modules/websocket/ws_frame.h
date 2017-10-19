@@ -30,6 +30,7 @@
 #include "../../core/config.h"
 #include "../../core/sr_module.h"
 #include "../../core/str.h"
+#include "../../core/events.h"
 #include "../../core/rpc.h"
 #include "ws_conn.h"
 
@@ -70,8 +71,8 @@ extern stat_var *ws_msrp_received_frames;
 extern stat_var *ws_msrp_remote_closed_connections;
 extern stat_var *ws_msrp_transmitted_frames;
 
-int ws_frame_receive(void *data);
-int ws_frame_transmit(void *data);
+int ws_frame_receive(sr_event_param_t *evp);
+int ws_frame_transmit(sr_event_param_t *evp);
 void ws_keepalive(unsigned int ticks, void *param);
 
 int ws_close(sip_msg_t *msg);

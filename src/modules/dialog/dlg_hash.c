@@ -48,6 +48,9 @@ extern int dlg_ka_interval;
 
 extern int dlg_enable_dmq;
 
+extern int dlg_early_timeout;
+extern int dlg_noack_timeout;
+
 /*! global dialog table */
 struct dlg_table *d_table = 0;
 
@@ -229,14 +232,16 @@ int dlg_clean_run(ticks_t ti)
 		while (dlg) {
 			tdlg = dlg;
 			dlg = dlg->next;
-			if(tdlg->state==DLG_STATE_UNCONFIRMED && tdlg->init_ts<tm-300) {
+			if(tdlg->state==DLG_STATE_UNCONFIRMED
+					&& tdlg->init_ts<tm-dlg_early_timeout) {
 				/* dialog in early state older than 5min */
 				LM_NOTICE("dialog in early state is too old (%p ref %d)\n",
 						tdlg, tdlg->ref);
 				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
 				destroy_dlg(tdlg);
 			}
-			if(tdlg->state==DLG_STATE_CONFIRMED_NA && tdlg->start_ts<tm-60) {
+			if(tdlg->state==DLG_STATE_CONFIRMED_NA
+					&& tdlg->start_ts<tm-dlg_noack_timeout) {
 				if(update_dlg_timer(&tdlg->tl, 10)<0) {
 					LM_ERR("failed to update dialog lifetime in long non-ack state\n");
 				}

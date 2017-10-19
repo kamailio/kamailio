@@ -882,12 +882,12 @@ int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data,
 
 static int nl_bound_sock(void)
 {
-	int sock;
+	int sock = -1;
 	struct sockaddr_nl la;
 
 	sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-	if(sock <= 0){
-		LM_ERR("could not create NETLINK sock to get interface list");
+	if(sock < 0){
+		LM_ERR("could not create NETLINK sock to get interface list\n");
 		goto error;
 	}
 
@@ -904,7 +904,7 @@ static int nl_bound_sock(void)
 
 	return sock;
 error:
-	if(sock > 0) close(sock);
+	if(sock >= 0) close(sock);
 	return -1;
 }
 
@@ -930,7 +930,7 @@ static int get_flags(int family){
 	char buf[8192];
 	char *p = buf;
 	int nll = 0;
-        int nl_sock = 0;
+    int nl_sock = -1;
 
 	fill_nl_req(req, RTM_GETLINK, AF_INET);
 
@@ -977,11 +977,11 @@ static int get_flags(int family){
 		ifaces[ifi->ifi_index].flags = ifi->ifi_flags;
 	}
 
-	if(nl_sock>0) close(nl_sock);
+	if(nl_sock>=0) close(nl_sock);
 	return 0;
 
 error:
-	if(nl_sock>0) close(nl_sock);
+	if(nl_sock>=0) close(nl_sock);
 	return -1;
 }
 
@@ -1004,13 +1004,14 @@ static int build_iface_list(void)
 	int index, i;
 	struct idx* entry;
 	struct idx* tmp;
-        int nl_sock = 0;
-        int families[] = {AF_INET, AF_INET6};
-        char name[MAX_IF_LEN];
+	int nl_sock = -1;
+	int families[] = {AF_INET, AF_INET6};
+	char name[MAX_IF_LEN];
 	int is_link_local = 0;
 
 	if(ifaces == NULL){
-		if((ifaces = (struct idxlist*)pkg_malloc(MAX_IFACE_NO*sizeof(struct idxlist))) == NULL){
+		if((ifaces = (struct idxlist*)pkg_malloc(MAX_IFACE_NO
+						*sizeof(struct idxlist))) == NULL){
 			LM_ERR("No more pkg memory\n");
 			return -1;
 		}
@@ -1077,7 +1078,7 @@ static int build_iface_list(void)
 			entry->next = 0;
 			entry->family = families[i];
 			entry->ifa_flags = ifi->ifa_flags;
-                        is_link_local = 0;
+            is_link_local = 0;
 
 			for(;RTA_OK(rtap, rtl);rtap=RTA_NEXT(rtap,rtl)){
 				switch(rtap->rta_type){
@@ -1100,7 +1101,7 @@ static int build_iface_list(void)
 						break;
 					case IFA_LABEL:
 						LM_DBG("iface name is %s\n", (char*)RTA_DATA(rtap));
-						strncpy(name, (char*)RTA_DATA(rtap), MAX_IF_LEN);
+						strncpy(name, (char*)RTA_DATA(rtap), MAX_IF_LEN-1);
 						break;
 					case IFA_BROADCAST:
 					case IFA_ANYCAST:
@@ -1110,10 +1111,13 @@ static int build_iface_list(void)
 						break;
 				}
 			}
-			if(is_link_local) continue;    /* link local addresses are not bindable */
+			if(is_link_local) {
+				pkg_free(entry);
+				continue;    /* link local addresses are not bindable */
+			}
 
 			if(strlen(ifaces[index].name)==0)
-				strncpy(ifaces[index].name, name, MAX_IF_LEN);
+				strncpy(ifaces[index].name, name, MAX_IF_LEN-1);
 
 			ifaces[index].index = index;
 
@@ -1134,7 +1138,7 @@ static int build_iface_list(void)
 
 	return 0;
 error:
-	if(nl_sock>0) close(nl_sock);
+	if(nl_sock>=0) close(nl_sock);
 	return -1;
 
 }
@@ -1349,13 +1353,15 @@ error:
  * return 0 on succes, -1 on error
  */
 static int addr_info_to_si_lst(struct addr_info* ai_lst, unsigned short port,
-								char proto, enum si_flags flags,
+								char proto, char *usename,
+								unsigned short useport,
+								enum si_flags flags,
 								struct socket_info** list)
 {
 	struct addr_info* ail;
 	
 	for (ail=ai_lst; ail; ail=ail->next){
-		if(new_sock2list(ail->name.s, 0, port, proto, 0, 0,
+		if(new_sock2list(ail->name.s, 0, port, proto, usename, useport,
 					ail->flags | flags, list)==0)
 			return -1;
 	}
@@ -1370,7 +1376,10 @@ static int addr_info_to_si_lst(struct addr_info* ai_lst, unsigned short port,
  */
 static int addr_info_to_si_lst_after(struct addr_info* ai_lst,
 										unsigned short port,
-										char proto, enum si_flags flags,
+										char proto,
+										char *usename,
+										unsigned short useport,
+										enum si_flags flags,
 										struct socket_info* el)
 {
 	struct addr_info* ail;
@@ -1378,7 +1387,7 @@ static int addr_info_to_si_lst_after(struct addr_info* ai_lst,
 	
 	for (ail=ai_lst; ail; ail=ail->next){
 		if((new_si=new_sock2list_after(ail->name.s, 0, port, proto,
-								0, 0, ail->flags | flags, el))==0)
+								usename, useport, ail->flags | flags, el))==0)
 			return -1;
 		el=new_si;
 	}
@@ -1443,7 +1452,8 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 			}else{
 				/* add all addr. as separate  interfaces */
 				if (addr_info_to_si_lst_after(ai_lst, si->port_no, si->proto,
-						 						si->flags, si)!=0)
+							si->useinfo.name.s, si->useinfo.port_no,
+							si->flags, si)!=0)
 					goto error;
 				/* ai_lst not needed anymore */
 				free_addr_info_lst(&ai_lst);
@@ -1597,7 +1607,7 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 				ail=ail_next;
 				continue;
 			}
-			/* 2. check if the extra addresses contain a duplicates for 
+			/* 2. check if the extra addresses contain a duplicates for
 			 *  other addresses in the same list */
 			for (tmp_ail=ail->next; tmp_ail;){
 				tmp_ail_next=tmp_ail->next;
@@ -1614,6 +1624,9 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 									si->port_no, si->proto);
 						/* remove tmp_ail*/
 					addr_info_listrm(&si->addr_info_lst, tmp_ail);
+					if(ail_next==tmp_ail) {
+						ail_next = tmp_ail_next;
+					}
 					free_addr_info(tmp_ail);
 				}
 				tmp_ail=tmp_ail_next;
@@ -1751,7 +1764,7 @@ int fix_all_socket_lists()
 #else
 		&& ( !auto_bind_ipv6 || add_interfaces(0, AF_INET6, 0,  PROTO_UDP, &ai_lst) ==0 ) /* add_interface does not work for IPv6 on Linux */
 #endif /* __OS_linux */
-			 ) && (addr_info_to_si_lst(ai_lst, 0, PROTO_UDP, 0, &udp_listen)==0)){
+			 ) && (addr_info_to_si_lst(ai_lst, 0, PROTO_UDP, 0, 0, 0, &udp_listen)==0)){
 			free_addr_info_lst(&ai_lst);
 			ai_lst=0;
 			/* if ok, try to add the others too */
@@ -1763,7 +1776,7 @@ int fix_all_socket_lists()
 #else
 				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_TCP, &ai_lst) !=0 )
 #endif /* __OS_linux */
-				) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TCP, 0,
+				) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TCP, 0, 0, 0,
 										 				&tcp_listen)!=0))
 					goto error;
 				free_addr_info_lst(&ai_lst);
@@ -1777,7 +1790,7 @@ int fix_all_socket_lists()
 #else
 				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_TLS, &ai_lst)!=0)
 #endif /* __OS_linux */
-					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TLS, 0,
+					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TLS, 0, 0, 0,
 										 				&tls_listen)!=0))
 						goto error;
 				}
@@ -1794,7 +1807,7 @@ int fix_all_socket_lists()
 #else
 				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_SCTP, &ai_lst) != 0)
 #endif /* __OS_linux */
-					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_SCTP, 0,
+					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_SCTP, 0, 0, 0,
 							 				&sctp_listen)!=0))
 					goto error;
 				free_addr_info_lst(&ai_lst);
@@ -1900,7 +1913,7 @@ void print_all_socket_lists()
 				printf("             %s: %s",
 						get_valid_proto_name(proto),
 						si->name.s);
-				if (!si->flags & SI_IS_IP)
+				if (!(si->flags & SI_IS_IP))
 					printf(" [%s]", si->address_str.s);
 				printf( ":%s%s%s",
 						si->port_no_str.s, 
@@ -1973,7 +1986,7 @@ int parse_protohostport(str* ins, sr_phostp_t *r)
 	char* second; /* second ':' occurrence */
 	char* p;
 	int bracket;
-	char* tmp;
+	str tmp=STR_NULL;
 
 	first=second=0;
 	bracket=0;
@@ -2012,15 +2025,20 @@ int parse_protohostport(str* ins, sr_phostp_t *r)
 	if (second) { /* 2 ':' found => check if valid */
 		if (parse_proto((unsigned char*)ins->s, first-ins->s, &r->proto)<0)
 			goto error_proto;
-		r->port=strtol(second+1, &tmp, 10);
-		if ((tmp==0)||(*tmp)||(tmp==second+1)) goto error_port;
+
+		tmp.s=second+1;
+		tmp.len=(ins->s + ins->len) - tmp.s;
+
+		if (str2int(&tmp, (unsigned int *)&(r->port))<0) goto error_port;
+
 		r->host.s=first+1;
 		r->host.len=(int)(second-r->host.s);
 		goto end;
 	}
 	/* only 1 ':' found => it's either proto:host or host:port */
-	r->port=strtol(first+1, &tmp, 10);
-	if ((tmp==0)||(*tmp)||(tmp==first+1)){
+	tmp.s=first+1;
+	tmp.len=(ins->s + ins->len) - tmp.s;
+	if (str2int(&tmp, (unsigned int *)&(r->port))<0) {
 		/* invalid port => it's proto:host */
 		if (parse_proto((unsigned char*)ins->s, first-ins->s, &r->proto)<0)
 			goto error_proto;

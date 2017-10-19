@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Common functions for Digest Authentication and Accounting Modules
  *
  * Copyright (C) 2001-2004 FhG Fokus
@@ -41,15 +39,15 @@
  * Parse list of tokens separated by some char and put each token
  * into result array. Caller frees result array!
  */
-static inline int
-parse_token_list(char *p, char *pend, char separator, str **result)
+static inline int parse_token_list(char *p, char *pend, char separator,
+		str **result)
 {
 	int i;
 
 	i = 0;
 	*result = NULL;
 	while ((pend - p) > 0) {
-		*result = pkg_realloc(*result, sizeof(**result) * (i + 1));
+		*result = pkg_reallocxf(*result, sizeof(**result) * (i + 1));
 		if (*result == NULL)
 			return -1;
 		(*result)[i].s = p;
@@ -65,29 +63,27 @@ parse_token_list(char *p, char *pend, char separator, str **result)
  * Parse the list of AVP names separated by '|' into an array
  * of names, each element of the array is str string
  */
-static int
-aaa_avps_init(str *avp_list, str **parsed_avps, int *avps_n)
+static int aaa_avps_init(str *avp_list, str **parsed_avps, int *avps_n)
 {
 	int errcode, i;
 	char *cp;
 
 	if (!avp_list->s || !avp_list->len) {
-		     /* AVPs disabled, nothing to do */
+		/* AVPs disabled, nothing to do */
 		*avps_n = 0;
 		return 1;
 	}
 
 	cp = pkg_malloc(avp_list->len + 1);
 	if (cp == NULL) {
-		LOG(L_ERR, "aaa_avps::aaa_avps_init(): can't allocate memory\n");
+		LM_ERR("can't allocate memory\n");
 		errcode = -1;
 		goto bad;
 	}
 	memcpy(cp, avp_list->s, avp_list->len);
 	*avps_n = parse_token_list(cp, cp + avp_list->len, '|', parsed_avps);
 	if (*avps_n == -1) {
-		LOG(L_ERR, "aaa_avps::aaa_avps_init(): can't parse avps_column_int "
-		    "parameter\n");
+		LM_ERR("can't parse avps_column_int parameter\n");
 		errcode = -2;
 		pkg_free(cp);
 		goto bad;

@@ -222,25 +222,16 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	xmlNodePtr doc_root = NULL, doc_node = NULL, provide_node = NULL;
 	xmlNodePtr all_node = NULL;
 	xmlDocPtr doc= NULL;
-	char name[15];
-	char service_uri_scheme[10];
+#define KSR_FNB_NAME_SIZE	24
+	char name[KSR_FNB_NAME_SIZE];
+	int name_len;
+	char service_uri_scheme[16];
 	int i= 0, found = 0;
 	str* new_body = NULL;
     char* class_cont = NULL, *occurence_ID= NULL, *service_uri= NULL;
 	char* deviceID = NULL;
 	char* content = NULL;
-	char all_name[20];
-
-	strcpy(all_name, "all-");
-
-	new_body = (str*)pkg_malloc(sizeof(str));
-	if(new_body == NULL)
-	{
-		LM_ERR("while allocating memory\n");
-		return NULL;
-	}	
-
-	memset(new_body, 0, sizeof(str));
+	char all_name[KSR_FNB_NAME_SIZE+8];
 
 	doc = xmlParseMemory(notify_body->s, notify_body->len);
 	if(doc== NULL) 
@@ -255,6 +246,16 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 		goto error;
 	}
 
+	strcpy(all_name, "all-");
+
+	new_body = (str*)pkg_malloc(sizeof(str));
+	if(new_body == NULL)
+	{
+		LM_ERR("while allocating memory\n");
+		return NULL;
+	}
+	memset(new_body, 0, sizeof(str));
+
 	transf_node = xmlNodeGetChildByName(rule_node, "transformations");
 	if(transf_node == NULL)
 	{
@@ -267,9 +268,19 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 		if(xmlStrcasecmp(node->name, (unsigned char*)"text")== 0)
 			continue;
 
-		LM_DBG("transf_node->name:%s\n",node->name);
+		/* handle 'provide-xyz' nodes */
+		name_len = strlen((char*)(node->name));
+		if(name_len<9) {
+			continue;
+		}
+		LM_DBG("transf_node->name:%s\n", node->name);
 
-		strcpy((char*)name ,(char*)(node->name + 8));
+		/* skip 'provide-' (e.g., provide-services) */
+		if(name_len-8>KSR_FNB_NAME_SIZE-1) {
+			LM_INFO("unsupported handling of: %s\n", (char*)node->name);
+			continue;
+		}
+		strcpy((char*)name, (char*)(node->name + 8));
 		strcpy(all_name+4, name);
 		
 		if(xmlStrcasecmp((unsigned char*)name,(unsigned char*)"services") == 0)
@@ -490,34 +501,21 @@ done:
 	LM_DBG("body = \n%.*s\n", new_body->len,
 			new_body->s);
 
-    xmlFreeDoc(doc);
+	xmlFreeDoc(doc);
 
 	xmlFree(class_cont);
 	xmlFree(occurence_ID);
 	xmlFree(deviceID);
 	xmlFree(service_uri);
-    xmlCleanupParser();
-    xmlMemoryDump();
+	xmlCleanupParser();
+	xmlMemoryDump();
 
-    return new_body;
+	return new_body;
+
 error:
-    if(doc)
+    if(doc) {
 		xmlFreeDoc(doc);
-	if(new_body)
-	{
-		if(new_body->s)
-			xmlFree(new_body->s);
-		pkg_free(new_body);
 	}
-	if(class_cont)
-		xmlFree(class_cont);
-	if(occurence_ID)
-		xmlFree(occurence_ID);
-	if(deviceID)
-		xmlFree(deviceID);
-	if(service_uri)
-		xmlFree(service_uri);
-
 	return NULL;
 }	
 

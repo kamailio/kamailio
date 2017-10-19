@@ -37,40 +37,43 @@
 
 
 /*! Postgres specific connection data */
-struct pg_con {
-	struct db_id* id;        /*!< Connection identifier */
-	unsigned int ref;        /*!< Reference count */
-	struct pool_con* next;   /*!< Next connection in the pool */
+struct pg_con
+{
+	struct db_id *id;	  /*!< Connection identifier */
+	unsigned int ref;	  /*!< Reference count */
+	struct pool_con *next; /*!< Next connection in the pool */
 
-	int connected;      /*!< connection status */
-	char *sqlurl;		/*!< the url we are connected to, all connection memory parents from this */
-	PGconn *con;		/*!< this is the postgres connection */
-	PGresult *res;		/*!< this is the current result */
-	char**  row;		/*!< Actual row in the result */
-	time_t timestamp;	/*!< Timestamp of last query */
-	int affected_rows;	/*!< Number of rows affected by the last statement */
-	int transaction;	/*!< indicates whether a multi-query transaction is currently open */
+	int connected; /*!< connection status */
+	char *sqlurl; /*!< the url we are connected to, all connection memory parents from this */
+	PGconn *con;	   /*!< this is the postgres connection */
+	PGresult *res;	 /*!< this is the current result */
+	char **row;		   /*!< Actual row in the result */
+	time_t timestamp;  /*!< Timestamp of last query */
+	int affected_rows; /*!< Number of rows affected by the last statement */
+	int transaction; /*!< indicates whether a multi-query transaction is currently open */
 };
 
-#define CON_SQLURL(db_con)     (((struct pg_con*)((db_con)->tail))->sqlurl)
-#define CON_RESULT(db_con)     (((struct pg_con*)((db_con)->tail))->res)
-#define CON_CONNECTION(db_con) (((struct pg_con*)((db_con)->tail))->con)
-#define CON_CONNECTED(db_con)  (((struct pg_con*)((db_con)->tail))->connected)
-#define CON_ROW(db_con)	       (((struct pg_con*)((db_con)->tail))->row)
-#define CON_TIMESTAMP(db_con)  (((struct pg_con*)((db_con)->tail))->timestamp)
-#define CON_ID(db_con) 	       (((struct pg_con*)((db_con)->tail))->id)
-#define CON_AFFECTED(db_con)   (((struct pg_con*)((db_con)->tail))->affected_rows)
-#define CON_TRANSACTION(db_con) (((struct pg_con*)((db_con)->tail))->transaction)
+#define CON_SQLURL(db_con) (((struct pg_con *)((db_con)->tail))->sqlurl)
+#define CON_RESULT(db_con) (((struct pg_con *)((db_con)->tail))->res)
+#define CON_CONNECTION(db_con) (((struct pg_con *)((db_con)->tail))->con)
+#define CON_CONNECTED(db_con) (((struct pg_con *)((db_con)->tail))->connected)
+#define CON_ROW(db_con) (((struct pg_con *)((db_con)->tail))->row)
+#define CON_TIMESTAMP(db_con) (((struct pg_con *)((db_con)->tail))->timestamp)
+#define CON_ID(db_con) (((struct pg_con *)((db_con)->tail))->id)
+#define CON_AFFECTED(db_con) \
+	(((struct pg_con *)((db_con)->tail))->affected_rows)
+#define CON_TRANSACTION(db_con) \
+	(((struct pg_con *)((db_con)->tail))->transaction)
 
 /*
  * Create a new connection structure,
  * open the PostgreSQL connection and set reference count to 1
  */
-struct pg_con* db_postgres_new_connection(struct db_id* id);
+struct pg_con *db_postgres_new_connection(struct db_id *id);
 
 /*
  * Close the connection and release memory
  */
-void db_postgres_free_connection(struct pool_con* con);
+void db_postgres_free_connection(struct pool_con *con);
 
 #endif /* KM_PG_CON_H */

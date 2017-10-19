@@ -7,7 +7,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Topology Stripping</name>
+    <name>TOPOS Module</name>
     <xi:include href="topos_d.xml"/>
     <xi:include href="topos_t.xml"/>
 </database>

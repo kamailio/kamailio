@@ -54,7 +54,8 @@
 #define CORE_ONREPLY_ROUTE (1 << 7)
 #define BRANCH_FAILURE_ROUTE (1 << 8)
 #define ONREPLY_ROUTE (TM_ONREPLY_ROUTE|CORE_ONREPLY_ROUTE)
-#define EVENT_ROUTE   REQUEST_ROUTE
+#define ONEVENT_ROUTE (1 << 9)
+#define EVENT_ROUTE   (REQUEST_ROUTE|ONEVENT_ROUTE)
 #define ANY_ROUTE     (0xFFFFFFFF)
 
 /* The value of this variable is one of the route types defined above and it
@@ -74,7 +75,7 @@ extern int route_type;
 
 struct route_list{
 	struct action** rlist;
-	int idx; /* first empty entry */ 
+	int idx; /* first empty entry */
 	int entries; /* total number of entries */
 	struct str_hash_table names; /* name to route index mappings */
 };

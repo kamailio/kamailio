@@ -43,6 +43,7 @@
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/rand/kam_rand.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -538,7 +539,7 @@ int reg_ht_add(reg_uac_t *reg)
 	if (reg->reg_delay)
 		nr->reg_delay = reg->reg_delay;
 	else if (reg_random_delay>0)
-		nr->reg_delay = rand() % reg_random_delay;
+		nr->reg_delay = kam_rand() % reg_random_delay;
 	nr->reg_init  = time(NULL);
 	nr->h_uuid = reg_compute_hash(&reg->l_uuid);
 	nr->h_user = reg_compute_hash(&reg->l_username);

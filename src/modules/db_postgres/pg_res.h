@@ -39,13 +39,14 @@
 
 #include <libpq-fe.h>
 
-struct pg_res {
+struct pg_res
+{
 	db_drv_t gen;
-	PGresult* res;
-    int row, rows;
+	PGresult *res;
+	int row, rows;
 };
 
-int pg_res(db_res_t* res);
+int pg_res(db_res_t *res);
 
 /** @} */
 

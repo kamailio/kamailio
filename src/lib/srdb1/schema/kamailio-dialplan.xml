@@ -8,6 +8,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Matching and translation rules</name>
+    <name>DIALPLAN Module</name>
     <xi:include href="dialplan.xml"/>
 </database>

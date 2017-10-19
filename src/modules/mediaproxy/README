@@ -25,7 +25,7 @@ Dan Pascu
               4.1. SIP Router Modules
               4.2. External Libraries or Applications
 
-        5. Exported parameters
+        5. Parameters
 
               5.1. disable (int)
               5.2. mediaproxy_socket (string)
@@ -66,7 +66,7 @@ Chapter 1. Admin Guide
         4.1. SIP Router Modules
         4.2. External Libraries or Applications
 
-   5. Exported parameters
+   5. Parameters
 
         5.1. disable (int)
         5.2. mediaproxy_socket (string)
@@ -160,7 +160,7 @@ Chapter 1. Admin Guide
      * Mediaproxy version 2.4.2 or higher (but not necessarily on the same
        host as SIP Router).
 
-5. Exported parameters
+5. Parameters
 
    5.1. disable (int)
    5.2. mediaproxy_socket (string)

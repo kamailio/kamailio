@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+		This module allows real-time queries against the libphonenumber
+		to be performed from the config script. With that it is possible
+		to get normalize and get details about a phone number.
+	</para>
+	<para>
+		More details about libphonenumber can be found at
+		<ulink url="https://github.com/googlei18n/libphonenumber">
+			https://github.com/googlei18n/libphonenumber</ulink>.
+	</para>
+	<para>
+		This module exports a new class of pseudo-variables -
+		$phn(pvc=&gt;key) - to enable access to the results of a query to the
+		database.
+	</para>
+	<para>
+		Many queries can be done and store results in different containers to
+		be able to use in parallel.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>libphonenumber</emphasis> - the phone number library.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section>
+	    <title><varname>smode</varname> (int)</title>
+	    <para>
+		Phone number search mode.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>smode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("phonenum", "smode", 0)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+    <section>
+	<title>Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">phonenum_match(num, pvc)</function>
+	    </title>
+	    <para>
+			Match num against the libphonenumber and set the attributes inside
+			the pvc container. The function has to be called before accessing
+			a key via: $phn(pvc=&gt;key).
+	    </para>
+	    <para>
+	    	The parameters can be static strings or strings with variables.
+	    </para>
+	    <para>
+	    	It can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>phonenum_match</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(phonenum_match("1-484-555-8888", "src"))
+    xlog("number normalized to: $phn(src=&gt;num)\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+
+	<section>
+		<title>Pseudo Variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$phn(pvc=&gt;key)</emphasis> - <emphasis>pvc</emphasis>
+				is an identifier for this query result; it is designated by
+				the second parameter of phonenum_match().
+				The <emphasis>key</emphasis> can be one of the following:
+				</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>number</emphasis> - normalized phone number
+				</para></listitem>
+				<listitem><para>
+					<emphasis>country</emphasis> - country for phone number
+				</para></listitem>
+				<listitem><para>
+					<emphasis>region</emphasis> - region for phone number
+				</para></listitem>
+				<listitem><para>
+					<emphasis>operator</emphasis> - operator for phone number
+				</para></listitem>
+			</itemizedlist>
+			</listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+
+</chapter>
+

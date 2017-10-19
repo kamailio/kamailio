@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 SIP-Router.org
+ * Copyright (C) 2009 kamailio.org
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -26,7 +26,7 @@
 /*! \defgroup topoh Kamailio :: Topology hiding
  *
  * This module hides the SIP routing headers that show topology details.
- * It it is not affected by the server being transaction stateless or
+ * It is not affected by the server being transaction stateless or
  * stateful. The script interpreter gets the SIP messages decoded, so all
  * existing functionality is preserved.
  */
@@ -43,6 +43,9 @@
 #include "../../core/ut.h"
 #include "../../core/forward.h"
 #include "../../core/config.h"
+#include "../../core/fmsg.h"
+#include "../../core/onsend.h"
+#include "../../core/kemi.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_to.h"
@@ -74,14 +77,21 @@ str th_uri_prefix = {0, 0};
 int th_param_mask_callid = 0;
 
 int th_sanity_checks = 0;
-sanity_api_t scb;
+int th_uri_prefix_checks = 0;
 int th_mask_addr_myself = 0;
 
-int th_msg_received(void *data);
-int th_msg_sent(void *data);
+sanity_api_t scb;
+
+int th_msg_received(sr_event_param_t *evp);
+int th_msg_sent(sr_event_param_t *evp);
+int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp);
 
 /** module functions */
 static int mod_init(void);
+
+static int _th_eventrt_outgoing = -1;
+static str _th_eventrt_callback = STR_NULL;
+static str _th_eventrt_name = str_init("topoh:msg-outgoing");
 
 static param_export_t params[]={
 	{"mask_key",		PARAM_STR, &_th_key},
@@ -93,6 +103,8 @@ static param_export_t params[]={
 	{"vparam_prefix",	PARAM_STR, &th_vparam_prefix},
 	{"callid_prefix",	PARAM_STR, &th_callid_prefix},
 	{"sanity_checks",	PARAM_INT, &th_sanity_checks},
+	{"uri_prefix_checks",	PARAM_INT, &th_uri_prefix_checks},
+	{"event_callback",	PARAM_STR, &_th_eventrt_callback},
 	{0,0,0}
 };
 
@@ -125,6 +137,17 @@ static int mod_init(void)
 {
 	sip_uri_t puri;
 	char buri[MAX_URI_SIZE];
+
+	_th_eventrt_outgoing = route_lookup(&event_rt, _th_eventrt_name.s);
+	if(_th_eventrt_outgoing<0
+			|| event_rt.rlist[_th_eventrt_outgoing]==NULL) {
+		_th_eventrt_outgoing = -1;
+	}
+
+	if(faked_msg_init()<0) {
+		LM_ERR("failed to init fmsg\n");
+		return -1;
+	}
 
 	if(th_sanity_checks!=0)
 	{
@@ -271,7 +294,7 @@ int th_prepare_msg(sip_msg_t *msg)
 /**
  *
  */
-int th_msg_received(void *data)
+int th_msg_received(sr_event_param_t *evp)
 {
 	sip_msg_t msg;
 	str *obuf;
@@ -279,7 +302,7 @@ int th_msg_received(void *data)
 	int direction;
 	int dialog;
 
-	obuf = (str*)data;
+	obuf = (str*)evp->data;
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
@@ -377,7 +400,7 @@ done:
 /**
  *
  */
-int th_msg_sent(void *data)
+int th_msg_sent(sr_event_param_t *evp)
 {
 	sip_msg_t msg;
 	str *obuf;
@@ -385,27 +408,30 @@ int th_msg_sent(void *data)
 	int dialog;
 	int local;
 
-	obuf = (str*)data;
+	obuf = (str*)evp->data;
+
+	if(th_execute_event_route(NULL, evp)==1) {
+		return 0;
+	}
+
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
 
-	if(th_prepare_msg(&msg)!=0)
-	{
+	if(th_prepare_msg(&msg)!=0) {
 		goto done;
 	}
 
-	if(th_skip_msg(&msg))
-	{
+	if(th_skip_msg(&msg)) {
 		goto done;
 	}
 
 	th_cookie_value.s = th_get_cookie(&msg, &th_cookie_value.len);
 	LM_DBG("the COOKIE is [%.*s]\n", th_cookie_value.len, th_cookie_value.s);
-	if(th_cookie_value.s[0]!='x')
+	if(th_cookie_value.s[0]!='x') {
 		th_del_cookie(&msg);
-	if(msg.first_line.type==SIP_REQUEST)
-	{
+	}
+	if(msg.first_line.type==SIP_REQUEST) {
 		direction = (th_cookie_value.s[0]=='u')?1:0; /* upstream/downstram */
 		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
 
@@ -420,13 +446,11 @@ int th_msg_sent(void *data)
 			local = (th_cookie_value.s[0]!='d' && th_cookie_value.s[0]!='u')?1:0;
 		}
 		/* local generated requests */
-		if(local)
-		{
+		if(local) {
 			/* ACK and CANCEL go downstream */
 			if(get_cseq(&msg)->method_id==METHOD_ACK
 					|| get_cseq(&msg)->method_id==METHOD_CANCEL
-					|| local==2)
-			{
+					|| local==2) {
 				th_mask_callid(&msg);
 				goto ready;
 			} else {
@@ -437,11 +461,9 @@ int th_msg_sent(void *data)
 		th_mask_via(&msg);
 		th_mask_contact(&msg);
 		th_mask_record_route(&msg);
-		if(dialog)
-		{
+		if(dialog) {
 			/* dialog request */
-			if(direction==0)
-			{
+			if(direction==0) {
 				/* downstream */
 				th_mask_callid(&msg);
 			}
@@ -452,23 +474,19 @@ int th_msg_sent(void *data)
 		}
 	} else {
 		/* reply */
-		if(th_cookie_value.s[th_cookie_value.len-1]=='x')
-		{
+		if(th_cookie_value.s[th_cookie_value.len-1]=='x') {
 			/* ?!?! - we should have a cookie in any reply case */
 			goto done;
 		}
-		if(th_cookie_value.s[th_cookie_value.len-1]=='v')
-		{
+		if(th_cookie_value.s[th_cookie_value.len-1]=='v') {
 			/* reply generated locally - direction was set by request */
-			if(th_cookie_value.s[0]=='u')
-			{
+			if(th_cookie_value.s[0]=='u') {
 				th_mask_callid(&msg);
 			}
 		} else {
 			th_flip_record_route(&msg, 1);
 			th_mask_contact(&msg);
-			if(th_cookie_value.s[0]=='d')
-			{
+			if(th_cookie_value.s[0]=='d') {
 				th_mask_callid(&msg);
 			}
 		}
@@ -479,6 +497,76 @@ ready:
 
 done:
 	free_sip_msg(&msg);
+	return 0;
+}
+
+/**
+ *
+ */
+int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
+{
+	struct sip_msg *fmsg;
+	struct run_act_ctx ctx;
+	int rtb;
+	sr_kemi_eng_t *keng = NULL;
+	struct onsend_info onsnd_info = {0};
+
+	if(_th_eventrt_outgoing<0) {
+		if(_th_eventrt_callback.s!=NULL || _th_eventrt_callback.len>0) {
+			keng = sr_kemi_eng_get();
+			if(keng==NULL) {
+				LM_DBG("event callback (%s) set, but no cfg engine\n",
+						_th_eventrt_callback.s);
+				goto done;
+			}
+		}
+	}
+
+	if(_th_eventrt_outgoing<0 && keng==NULL) {
+		return 0;
+	}
+
+	LM_DBG("executing event_route[topoh:...] (%d)\n",
+			_th_eventrt_outgoing);
+	fmsg = faked_msg_next();
+
+	onsnd_info.to = &evp->dst->to;
+	onsnd_info.send_sock = evp->dst->send_sock;
+	if(msg!=NULL) {
+		onsnd_info.buf = msg->buf;
+		onsnd_info.len = msg->len;
+		onsnd_info.msg = msg;
+	} else {
+		onsnd_info.buf = fmsg->buf;
+		onsnd_info.len = fmsg->len;
+		onsnd_info.msg = fmsg;
+	}
+	p_onsend = &onsnd_info;
+
+	rtb = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	if(_th_eventrt_outgoing>=0) {
+		run_top_route(event_rt.rlist[_th_eventrt_outgoing], fmsg, &ctx);
+	} else {
+		if(keng!=NULL) {
+			if(keng->froute(fmsg, EVENT_ROUTE,
+						&_th_eventrt_callback, &_th_eventrt_name)<0) {
+				LM_ERR("error running event route kemi callback\n");
+				p_onsend=NULL;
+				return -1;
+			}
+		}
+	}
+	set_route_type(rtb);
+	if(ctx.run_flags&DROP_R_F) {
+		LM_DBG("exit due to 'drop' in event route\n");
+		p_onsend=NULL;
+		return 1;
+	}
+
+done:
+	p_onsend=NULL;
 	return 0;
 }
 

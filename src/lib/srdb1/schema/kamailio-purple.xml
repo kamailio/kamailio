@@ -8,6 +8,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>PURPLE</name>
+    <name>PURPLE Module</name>
     <xi:include href="purplemap.xml"/>
 </database>

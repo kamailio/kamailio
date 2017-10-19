@@ -96,6 +96,8 @@ static int lua_sr_log (lua_State *L)
 				LM_DBG("%s", txt);
 			} else if(strcasecmp(level, "info")==0) {
 				LM_INFO("%s", txt);
+			} else if(strcasecmp(level, "notice")==0) {
+				LM_NOTICE("%s", txt);
 			} else if(strcasecmp(level, "warn")==0) {
 				LM_WARN("%s", txt);
 			} else if(strcasecmp(level, "crit")==0) {
@@ -735,7 +737,7 @@ static int lua_sr_hdr_append (lua_State *L)
 
 	hf = env_L->msg->last_header;
 	len = strlen(txt);
-	hdr = (char*)pkg_malloc(len);
+	hdr = (char*)pkg_malloc(len+1);
 	if(hdr==NULL)
 	{
 		LM_ERR("no pkg memory left\n");
@@ -821,7 +823,7 @@ static int lua_sr_hdr_insert (lua_State *L)
 	LM_DBG("insert hf: %s\n", txt);
 	hf = env_L->msg->headers;
 	len = strlen(txt);
-	hdr = (char*)pkg_malloc(len);
+	hdr = (char*)pkg_malloc(len+1);
 	if(hdr==NULL)
 	{
 		LM_ERR("no pkg memory left\n");
@@ -1681,7 +1683,6 @@ int sr_kemi_lua_exec_func_ex(lua_State* L, sr_kemi_t *ket, int pdelta)
 					fname->len, fname->s);
 			return app_lua_return_false(L);
 	}
-	return app_lua_return_false(L);
 }
 
 /**
@@ -1953,7 +1954,7 @@ void lua_sr_kemi_register_libs(lua_State *L)
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
 			n++;
-			_sr_crt_KSRMethods += n;
+			_sr_crt_KSRMethods = _sr_KSRMethods + n;
 			snprintf(mname, 128, "KSR.%s", emods[k].kexp[0].mname.s);
 			for(i=0; emods[k].kexp[i].func!=NULL; i++) {
 				LM_DBG("exporting %s.%s(...)\n", mname,

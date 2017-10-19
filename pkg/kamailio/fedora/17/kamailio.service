@@ -1,6 +1,8 @@
 [Unit]
 Description=Kamailio (OpenSER) - the Open Source SIP Server
-After=syslog.target network.target
+Documentation=man:kamailio(8) https://www.kamailio.org/
+Wants=network-online.target
+After=syslog.target network-online.target
 
 [Service]
 Type=forking
@@ -8,7 +10,7 @@ EnvironmentFile=/etc/sysconfig/kamailio
 PIDFile=/var/run/kamailio.pid
 ExecStart=/usr/sbin/kamailio -P /var/run/kamailio.pid $OPTIONS
 ExecStopPost=/usr/bin/rm -f /var/run/kamailio.pid
-Restart=on-abort
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target

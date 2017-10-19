@@ -104,7 +104,7 @@ function ksr_route_relay()
 
 	if KSR.pv.get("$rm")=="INVITE" then
 		if KSR.tm.t_is_set("failure_route")<0 then
-			KSR.tm.t_on_failure("MANAGE_FAILURE");
+			KSR.tm.t_on_failure("ksr_failure_manage");
 		end
 	end
 
@@ -173,7 +173,7 @@ function ksr_route_withindlg()
 			KSR.setflag(FLT_ACC); -- do accounting ...
 			KSR.setflag(FLT_ACCFAILED); -- ... even if the transaction fails
 		elseif KSR.pv.get("$rm")=="ACK" then
-			-- ACK is forwarded statelessy
+			-- ACK is forwarded statelessly
 			ksr_route_natmanage();
 		elseif  KSR.pv.get("$rm")=="NOTIFY" then
 			-- Add Record-Route for in-dialog NOTIFY as per RFC 6665.

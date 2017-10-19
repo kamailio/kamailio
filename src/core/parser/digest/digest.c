@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -42,10 +42,10 @@ static inline int new_credentials(struct hdr_field* _h)
 
 	b = (auth_body_t*)pkg_malloc(sizeof(auth_body_t));
 	if (b == 0) {
-		LOG(L_ERR, "parse_credentials(): No memory left\n");
+		LM_ERR("no memory left\n");
 		return -1;
 	}
-		
+
 	init_dig_cred(&(b->digest));
 	b->stale = 0;
 	b->authorized = 0;
@@ -73,16 +73,16 @@ int parse_credentials(struct hdr_field* _h)
 	}
 
 	if (new_credentials(_h) < 0) {
-		LOG(L_ERR, "parse_credentials(): Can't create new credentials\n");
+		LM_ERR("can't create new credentials\n");
 		return -1;
 	}
 
-	     /* parse_digest_cred must return < -1 on error otherwise we will be
-	      * unable to distinguish if the error was caused by the server or if the
-	      * credentials are broken
-	      */
+	/* parse_digest_cred must return < -1 on error otherwise we will be
+	 * unable to distinguish if the error was caused by the server or if the
+	 * credentials are broken
+	 */
 	res = parse_digest_cred(&(_h->body), &(((auth_body_t*)(_h->parsed))->digest));
-	
+
 	if (res != 0) {
 		ph_parsed=&_h->parsed;
 		free_credentials((auth_body_t**)ph_parsed);
@@ -104,42 +104,42 @@ void free_credentials(auth_body_t** _b)
 
 /*
  * Check semantics of a digest credentials structure
- * Make sure that all attributes needed to verify response 
+ * Make sure that all attributes needed to verify response
  * string are set or at least have a default value
  *
  * The returned value is logical OR of all errors encountered
- * during the check, see dig_err_t type for more details 
+ * during the check, see dig_err_t type for more details
  */
 dig_err_t check_dig_cred(dig_cred_t* _c)
 {
 	dig_err_t res = E_DIG_OK;
 
-	     /* Username must be present */
+	/* Username must be present */
 	if (_c->username.user.s == 0) res |= E_DIG_USERNAME;
 
-	     /* Realm must be present */
+	/* Realm must be present */
 	if (_c->realm.s == 0)  res |= E_DIG_REALM;
 
-	     /* Nonce that was used must be specified */
+	/* Nonce that was used must be specified */
 	if (_c->nonce.s == 0) res |= E_DIG_NONCE;
 
-	     /* URI must be specified */
+	/* URI must be specified */
 	if (_c->uri.s == 0) res |= E_DIG_URI;
 
-	     /* We cannot check credentials without response */
+	/* We cannot check credentials without response */
 	if (_c->response.s == 0) res |= E_DIG_RESPONSE;
 
-	     /* If QOP parameter is present, some additional
-	      * requirements must be met
-	      */
+	/* If QOP parameter is present, some additional
+	 * requirements must be met
+	 */
 	if ((_c->qop.qop_parsed == QOP_AUTH) || (_c->qop.qop_parsed == QOP_AUTHINT)) {
-		     /* CNONCE must be specified */
+		/* CNONCE must be specified */
 		if (_c->cnonce.s == 0) res |= E_DIG_CNONCE;
-		     /* and also nonce count must be specified */
+		/* and also nonce count must be specified */
 		if (_c->nc.s == 0) res |= E_DIG_NC;
 	}
-		
-	return res;	
+
+	return res;
 }
 
 
@@ -195,18 +195,18 @@ void print_cred(dig_cred_t* _c)
 int mark_authorized_cred(struct sip_msg* _m, struct hdr_field* _h)
 {
 	struct hdr_field* f;
-	
+
 	switch(_h->type) {
 	case HDR_AUTHORIZATION_T: f = _m->authorization; break;
 	case HDR_PROXYAUTH_T:     f = _m->proxy_auth;    break;
 	default:
-		LOG(L_ERR, "mark_authorized_cred(): Invalid header field type\n");
+		LM_ERR("invalid header field type\n");
 		return -1;
 	}
 
 	if (!(f->parsed)) {
 		if (new_credentials(f) < 0) {
-			LOG(L_ERR, "mark_authorized_cred(): Error in new_credentials\n");
+			LM_ERR("error in new_credentials\n");
 			return -1;
 		}
 	}
@@ -228,7 +228,7 @@ int get_authorized_cred(struct hdr_field* _f, struct hdr_field** _h)
 	} else {
 		*_h = 0;
 	}
-	
+
 	return 0;
 }
 
@@ -237,20 +237,20 @@ int get_authorized_cred(struct hdr_field* _f, struct hdr_field** _h)
  * Find credentials with given realm in a SIP message header
  */
 int find_credentials(struct sip_msg* msg, str* realm,
-		     hdr_types_t hftype, struct hdr_field** hdr)
+		hdr_types_t hftype, struct hdr_field** hdr)
 {
 	struct hdr_field** hook, *ptr;
 	hdr_flags_t hdr_flags;
 	int res;
 	str* r;
 
-	     /*
-	      * Determine if we should use WWW-Authorization or
-	      * Proxy-Authorization header fields, this parameter
-	      * is set in www_authorize and proxy_authorize
-	      */
+	/*
+	 * Determine if we should use WWW-Authorization or
+	 * Proxy-Authorization header fields, this parameter
+	 * is set in www_authorize and proxy_authorize
+	 */
 	switch(hftype) {
-	case HDR_AUTHORIZATION_T: 
+	case HDR_AUTHORIZATION_T:
 		hook = &(msg->authorization);
 		hdr_flags=HDR_AUTHORIZATION_F;
 		break;
@@ -258,33 +258,33 @@ int find_credentials(struct sip_msg* msg, str* realm,
 		hook = &(msg->proxy_auth);
 		hdr_flags=HDR_PROXYAUTH_F;
 		break;
-	default:				
+	default:
 		hook = &(msg->authorization);
 		hdr_flags=HDR_T2F(hftype);
 		break;
 	}
 
-	     /*
-	      * If the credentials haven't been parsed yet, do it now
-	      */
+	/*
+	 * If the credentials haven't been parsed yet, do it now
+	 */
 	if (*hook == 0) {
-		     /* No credentials parsed yet */
+		/* No credentials parsed yet */
 		if (parse_headers(msg, hdr_flags, 0) == -1) {
-			LOG(L_ERR, "auth:find_credentials: Error while parsing headers\n");
+			LM_ERR("error while parsing headers\n");
 			return -1;
 		}
 	}
 
 	ptr = *hook;
 
-	     /*
-	      * Iterate through the credentials in the message and
-	      * find credentials with given realm
-	      */
+	/*
+	 * Iterate through the credentials in the message and
+	 * find credentials with given realm
+	 */
 	while(ptr) {
 		res = parse_credentials(ptr);
 		if (res < 0) {
-			LOG(L_ERR, "auth:find_credentials: Error while parsing credentials\n");
+			LM_ERR("error while parsing credentials\n");
 			return (res == -1) ? -2 : -3;
 		} else if (res == 0) {
 			r = &(((auth_body_t*)(ptr->parsed))->digest.realm);
@@ -298,7 +298,7 @@ int find_credentials(struct sip_msg* msg, str* realm,
 		}
 
 		if (parse_headers(msg, hdr_flags, 1) == -1) {
-			LOG(L_ERR, "auth:find_credentials: Error while parsing headers\n");
+			LM_ERR("error while parsing headers\n");
 			return -4;
 		} else {
 			ptr = next_sibling_hdr(ptr);
@@ -306,9 +306,9 @@ int find_credentials(struct sip_msg* msg, str* realm,
 				break;
 		}
 	}
-	
-	     /*
-	      * Credentials with given realm not found
-	      */
+
+	/*
+	 * Credentials with given realm not found
+	 */
 	return 1;
 }

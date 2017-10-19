@@ -42,6 +42,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 
 MODULE_VERSION
 
@@ -507,14 +508,53 @@ static void free_shared_memory(void)
  */
 
 /*! \brief Return true if the argument matches the regular expression parameter */
-static int w_pcre_match(struct sip_msg* _msg, char* _s1, char* _s2)
+static int ki_pcre_match(sip_msg_t* msg, str* string, str* regex)
 {
-	str string;
-	str regex;
 	pcre *pcre_re = NULL;
 	int pcre_rc;
 	const char *pcre_error;
 	int pcre_erroffset;
+
+	pcre_re = pcre_compile(regex->s, pcre_options, &pcre_error, &pcre_erroffset, NULL);
+	if (pcre_re == NULL) {
+		LM_ERR("pcre_re compilation of '%s' failed at offset %d: %s\n",
+				regex->s, pcre_erroffset, pcre_error);
+		return -4;
+	}
+
+	pcre_rc = pcre_exec(
+		pcre_re,                    /* the compiled pattern */
+		NULL,                       /* no extra data - we didn't study the pattern */
+		string->s,                  /* the matching string */
+		(int)(string->len),         /* the length of the subject */
+		0,                          /* start at offset 0 in the string */
+		0,                          /* default options */
+		NULL,                       /* output vector for substring information */
+		0);                         /* number of elements in the output vector */
+
+	/* Matching failed: handle error cases */
+	if (pcre_rc < 0) {
+		switch(pcre_rc) {
+			case PCRE_ERROR_NOMATCH:
+				LM_DBG("'%s' doesn't match '%s'\n", string->s, regex->s);
+				break;
+			default:
+				LM_DBG("matching error '%d'\n", pcre_rc);
+				break;
+		}
+		pcre_free(pcre_re);
+		return -1;
+	}
+	pcre_free(pcre_re);
+	LM_DBG("'%s' matches '%s'\n", string->s, regex->s);
+	return 1;
+}
+
+/*! \brief Return true if the argument matches the regular expression parameter */
+static int w_pcre_match(struct sip_msg* _msg, char* _s1, char* _s2)
+{
+	str string;
+	str regex;
 
 	if (_s1 == NULL) {
 		LM_ERR("bad parameters\n");
@@ -537,46 +577,12 @@ static int w_pcre_match(struct sip_msg* _msg, char* _s1, char* _s2)
 		return -3;
 	}
 
-	pcre_re = pcre_compile(regex.s, pcre_options, &pcre_error, &pcre_erroffset, NULL);
-	if (pcre_re == NULL) {
-		LM_ERR("pcre_re compilation of '%s' failed at offset %d: %s\n", regex.s, pcre_erroffset, pcre_error);
-		return -4;
-	}
-
-	pcre_rc = pcre_exec(
-		pcre_re,                    /* the compiled pattern */
-		NULL,                       /* no extra data - we didn't study the pattern */
-		string.s,                   /* the matching string */
-		(int)(string.len),          /* the length of the subject */
-		0,                          /* start at offset 0 in the string */
-		0,                          /* default options */
-		NULL,                       /* output vector for substring information */
-		0);                         /* number of elements in the output vector */
-
-	/* Matching failed: handle error cases */
-	if (pcre_rc < 0) {
-		switch(pcre_rc) {
-			case PCRE_ERROR_NOMATCH:
-				LM_DBG("'%s' doesn't match '%s'\n", string.s, regex.s);
-				break;
-			default:
-				LM_DBG("matching error '%d'\n", pcre_rc);
-				break;
-		}
-		pcre_free(pcre_re);
-		return -1;
-	}
-	pcre_free(pcre_re);
-	LM_DBG("'%s' matches '%s'\n", string.s, regex.s);
-	return 1;
+	return ki_pcre_match(_msg, &string, &regex);
 }
 
-
 /*! \brief Return true if the string argument matches the pattern group parameter */
-static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
+static int ki_pcre_match_group(sip_msg_t* _msg, str* string, int num_pcre)
 {
-	str string, group;
-	unsigned int num_pcre;
 	int pcre_rc;
 
 	/* Check if group matching feature is enabled */
@@ -584,6 +590,49 @@ static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
 		LM_ERR("group matching is disabled\n");
 		return -2;
 	}
+
+	if (num_pcre >= *num_pcres) {
+		LM_ERR("invalid pcre index '%i', there are %i pcres\n", num_pcre,
+				*num_pcres);
+		return -4;
+	}
+
+	lock_get(reload_lock);
+
+	pcre_rc = pcre_exec(
+		(*pcres_addr)[num_pcre],    /* the compiled pattern */
+		NULL,                       /* no extra data - we didn't study the pattern */
+		string->s,                  /* the matching string */
+		(int)(string->len),         /* the length of the subject */
+		0,                          /* start at offset 0 in the string */
+		0,                          /* default options */
+		NULL,                       /* output vector for substring information */
+		0);                         /* number of elements in the output vector */
+
+	lock_release(reload_lock);
+
+	/* Matching failed: handle error cases */
+	if (pcre_rc < 0) {
+		switch(pcre_rc) {
+			case PCRE_ERROR_NOMATCH:
+				LM_DBG("'%s' doesn't match pcres[%i]\n", string->s, num_pcre);
+				break;
+			default:
+				LM_DBG("matching error '%d'\n", pcre_rc);
+				break;
+		}
+		return -1;
+	} else {
+		LM_DBG("'%s' matches pcres[%i]\n", string->s, num_pcre);
+		return 1;
+	}
+}
+
+/*! \brief Return true if the string argument matches the pattern group parameter */
+static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
+{
+	str string, group;
+	unsigned int num_pcre;
 
 	if (_s1 == NULL) {
 		LM_ERR("bad parameters\n");
@@ -601,48 +650,13 @@ static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
 		str2int(&group, &num_pcre);
 	}
 
-	if (num_pcre >= *num_pcres) {
-		LM_ERR("invalid pcre index '%i', there are %i pcres\n", num_pcre, *num_pcres);
-		return -4;
-	}
-
 	if (fixup_get_svalue(_msg, (gparam_p)_s1, &string))
 	{
 		LM_ERR("cannot print the format for first param\n");
 		return -5;
 	}
 
-	lock_get(reload_lock);
-
-	pcre_rc = pcre_exec(
-		(*pcres_addr)[num_pcre],    /* the compiled pattern */
-		NULL,                       /* no extra data - we didn't study the pattern */
-		string.s,                   /* the matching string */
-		(int)(string.len),          /* the length of the subject */
-		0,                          /* start at offset 0 in the string */
-		0,                          /* default options */
-		NULL,                       /* output vector for substring information */
-		0);                         /* number of elements in the output vector */
-
-	lock_release(reload_lock);
-
-	/* Matching failed: handle error cases */
-	if (pcre_rc < 0) {
-		switch(pcre_rc) {
-			case PCRE_ERROR_NOMATCH:
-				LM_DBG("'%s' doesn't match pcres[%i]\n", string.s, num_pcre);
-				break;
-			default:
-				LM_DBG("matching error '%d'\n", pcre_rc);
-				break;
-		}
-		return -1;
-	}
-	else {
-		LM_DBG("'%s' matches pcres[%i]\n", string.s, num_pcre);
-		return 1;
-	}
-
+	return ki_pcre_match_group(_msg, &string, (int)num_pcre);
 }
 
 
@@ -693,3 +707,31 @@ static int regex_init_rpc(void)
 	return 0;
 }
 
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_regex_exports[] = {
+	{ str_init("regex"), str_init("pcre_match"),
+		SR_KEMIP_INT, ki_pcre_match,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("regex"), str_init("pcre_match_group"),
+		SR_KEMIP_INT, ki_pcre_match_group,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_regex_exports);
+	return 0;
+}

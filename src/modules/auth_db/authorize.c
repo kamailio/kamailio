@@ -91,7 +91,8 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 		return -1;
 	}
 
-	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, &res) < 0) {
+	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, &res) < 0
+			|| res==NULL) {
 		LM_ERR("failed to query database\n");
 		pkg_free(col);
 		if(res)
@@ -100,8 +101,7 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 	}
 	pkg_free(col);
 	if (RES_ROW_N(res) == 0) {
-		if(res)
-			auth_dbf.free_result(auth_db_handle, res);
+		auth_dbf.free_result(auth_db_handle, res);
 		LM_DBG("no result for user \'%.*s%s%.*s\' in [%.*s]\n",
 				user->len, user->s, (n==2)?"@":"",
 				(n==2)?domain->len:0, (n==2)?domain->s:"",
@@ -114,8 +114,7 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 	}
 	for (cred=credentials, n=0; cred; cred=cred->next, n++) {
 		if (db_val2pv_spec(msg, &RES_ROWS(res)[0].values[n], cred->spec) != 0) {
-			if(res)
-				auth_dbf.free_result(auth_db_handle, res);
+			auth_dbf.free_result(auth_db_handle, res);
 			LM_ERR("Failed to convert value for column %.*s\n",
 					RES_NAMES(res)[n]->len, RES_NAMES(res)[n]->s);
 			return -3;
@@ -233,17 +232,17 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 				str *table, hdr_types_t hftype, str *method, hdr_field_t **ahdr)
 {
 	char ha1[256];
-	int res;
+	auth_cfg_result_t ret;
+	auth_result_t rauth;
 	struct hdr_field* h;
 	auth_body_t* cred;
 	db1_res_t* result = NULL;
-	int ret;
 
 	cred = 0;
 	ret = AUTH_ERROR;
 
-	ret = auth_api.pre_auth(msg, realm, hftype, &h, NULL);
-	switch(ret) {
+	rauth = auth_api.pre_auth(msg, realm, hftype, &h, NULL);
+	switch(rauth) {
 		case NONCE_REUSED:
 			LM_DBG("nonce reused");
 			ret = AUTH_NONCE_REUSED;
@@ -283,21 +282,21 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 	cred = (auth_body_t*)h->parsed;
 	if(ahdr!=NULL) *ahdr = h;
 
-	res = get_ha1(&cred->digest.username, realm, table, ha1, &result);
-	if (res < 0) {
+	rauth = get_ha1(&cred->digest.username, realm, table, ha1, &result);
+	if (rauth < 0) {
 		/* Error while accessing the database */
 		ret = AUTH_ERROR;
 		goto end;
 	}
-	if (res > 0) {
+	if (rauth > 0) {
 		/* Username not found in the database */
 		ret = AUTH_USER_UNKNOWN;
 		goto end;
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
-	ret = auth_api.check_response(&(cred->digest), method, ha1);
-	if(ret==AUTHENTICATED) {
+	rauth = auth_api.check_response(&(cred->digest), method, ha1);
+	if(rauth==AUTHENTICATED) {
 		ret = AUTH_OK;
 		switch(auth_api.post_auth(msg, h, ha1)) {
 			case AUTHENTICATED:
@@ -308,7 +307,7 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 				break;
 		}
 	} else {
-		if(ret==NOT_AUTHENTICATED)
+		if(rauth==NOT_AUTHENTICATED)
 			ret = AUTH_INVALID_PASSWORD;
 		else
 			ret = AUTH_ERROR;
@@ -542,11 +541,16 @@ int w_auth_check(sip_msg_t *_m, char* _realm, char* _table, char *_flags)
 	str stable;
 	int iflags;
 
+	if(_m==NULL) {
+		LM_ERR("invalid msg parameter\n");
+		return AUTH_ERROR;
+	}
+
 	if ((_m->REQ_METHOD == METHOD_ACK) || (_m->REQ_METHOD == METHOD_CANCEL)) {
 		return AUTH_OK;
 	}
 
-	if(_m==NULL || _realm==NULL || _table==NULL || _flags==NULL) {
+	if(_realm==NULL || _table==NULL || _flags==NULL) {
 		LM_ERR("invalid parameters\n");
 		return AUTH_ERROR;
 	}

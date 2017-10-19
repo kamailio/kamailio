@@ -6,13 +6,25 @@
 	<title> Configuration Variables for dispatcher</title>
 
 
-<section id="dispatcher.probing_threshhold">
-    <title>dispatcher.probing_threshhold</title>
+<section id="dispatcher.probing_threshold">
+    <title>dispatcher.probing_threshold</title>
     <para>
         Number of failed requests, before a destination is set to
         probing..
     </para>
-    <para>Default value: 3.</para>
+    <para>Default value: 1.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="dispatcher.inactive_threshold">
+    <title>dispatcher.inactive_threshold</title>
+    <para>
+        Number of successful requests, before a destination is set to
+        active..
+    </para>
+    <para>Default value: 1.</para>
     <para>Type: integer.</para>
     <para>
     </para>

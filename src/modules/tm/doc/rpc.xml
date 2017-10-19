@@ -7,6 +7,21 @@
     </sectioninfo>
 	<title>RPC Commands</title>
 
+	<section id="tm.rpc.list">
+		<title>
+		<function moreinfo="none">tm.list</function>
+		</title>
+		<para>
+		List details of transactions.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
 	<section id="tm.rpc.t_uac_start">
 		<title>
 		<function moreinfo="none">tm.t_uac_start</function>
@@ -159,6 +174,20 @@
 				reply body (if present, requires the
 				<quote>Content-Type</quote> and <quote>Content-length</quote>
 				headers)
+			</para></listitem>
+		</itemizedlist>
+	</section>
+	<section id="tm.rpc.clean">
+		<title>
+		<function moreinfo="none">tm.clean</function>
+		</title>
+		<para>
+		Trigger an hard clean of expired transactions.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
 			</para></listitem>
 		</itemizedlist>
 	</section>

@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>AVP Operations</name>
+    <name>AVPOPS Module</name>
     <xi:include href="usr_preferences.xml"/>
 </database>

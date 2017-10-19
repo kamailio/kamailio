@@ -279,7 +279,7 @@ int cxdx_add_result_code(AAAMessage *msg,unsigned int data);
  * @param msg - message to reply to
  * @param code - the Status-code for the response
  * @param text - the Reason-Phrase for the response
- * @returns the tmb.t_repy() result
+ * @returns the tmb.t_reply() result
  */
 int cscf_reply_transactional(struct sip_msg *msg, int code, char *text);
 

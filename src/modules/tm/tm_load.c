@@ -34,7 +34,7 @@ int load_tm( struct tm_binds *tmb)
 	if (!tm_init) {
 		LM_ERR(" Module not initialized yet,"
 			" make sure that all modules that need"
-		    " tm module are loaded after tm in the configuration file\n");
+			" tm module are loaded after tm in the configuration file\n");
 		return -1;
 	}
 
@@ -68,7 +68,7 @@ int load_tm( struct tm_binds *tmb)
 		return -1;
 	}
 /*	if (!(tmb->t_reply=(treply_f)find_export(T_REPLY, 2, 0)) ) {
-		LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
+		LM_ERR(LOAD_ERROR "'t_reply' not found\n");
 		return -1;
 	}*/
 

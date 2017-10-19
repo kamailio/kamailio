@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
   "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
@@ -14,7 +14,12 @@
 	<description>
 		<db:para>This table is used by the drouting module to define
 		lists of gateways to be used in rule definitions.
-		More information can be found at: &KAMAILIO_MOD_DOC;drouting.html.
+		More information can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;drouting.html">&KAMAILIO_MOD_DOC;drouting.html</ulink>.
+			</listitem>
+			</itemizedlist>
 		</db:para>
 	</description>
 

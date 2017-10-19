@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -34,10 +34,9 @@
 MODULE_VERSION
 
 static int mod_init(void);
-static int stun_msg_receive(void *data);
+static int stun_msg_receive(sr_event_param_t *evp);
 
-struct module_exports exports= 
-{
+struct module_exports exports = {
 	"stun",
 	DEFAULT_DLFLAGS,	/* dlopen flags */
 	0,			/* Exported functions */
@@ -70,8 +69,8 @@ static int mod_init(void)
 	return 0;
 }
 
-int stun_msg_receive(void *data)
+int stun_msg_receive(sr_event_param_t *evp)
 {
-	stun_event_info_t *sev = (stun_event_info_t *) data;
+	stun_event_info_t *sev = (stun_event_info_t *)evp->data;
 	return process_stun_msg(sev->buf, sev->len, sev->rcv);
 }

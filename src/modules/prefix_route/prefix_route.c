@@ -58,7 +58,7 @@ static char *db_table = "prefix_route";
 static int prefix_route_exit = 1;
 
 static int add_route(struct tree_item *root, const char *prefix,
-		     const char *route)
+		const char *route)
 {
 	int ix, err;
 
@@ -67,21 +67,18 @@ static int add_route(struct tree_item *root, const char *prefix,
 	 */
 	ix = route_lookup(&main_rt, (char *)route);
 	if (ix < 0) {
-		LOG(L_CRIT, "prefix_route: db_load(): "
-		    "route name '%s' is not defined\n", route);
+		LM_CRIT("route name '%s' is not defined\n", route);
 		return -1;
 	}
 
 	if (ix >= main_rt.entries) {
-		LOG(L_CRIT, "prefix_route: route %d > n_entries (%d)\n",
-		    ix, main_rt.entries);
+		LM_CRIT("route %d > n_entries (%d)\n", ix, main_rt.entries);
 		return -1;
 	}
 
 	err = tree_item_add(root, prefix, route, ix);
 	if (0 != err) {
-		LOG(L_CRIT, "prefix_route: db_load(): "
-		    "tree_item_add() failed (%d)\n", err);
+		LM_CRIT("tree_item_add() failed (%d)\n", err);
 		return err;
 	}
 
@@ -110,32 +107,32 @@ int pr_db_load(void)
 
 	ctx = db_ctx("prefix_route");
 	if (!ctx) {
-		LOG(L_ERR, "prefix_route: db_load(): db_ctx() failed\n");
+		LM_ERR("db_ctx() failed\n");
 		return -1;
 	}
 	if (db_add_db(ctx, db_url) < 0) {
-		LOG(L_ERR, "prefix_route: db_load(): could not add db\n");
+		LM_ERR(" could not add db\n");
 		goto out;
 	}
 	if (db_connect(ctx) < 0) {
-		LOG(L_ERR, "prefix_route: db_load(): could not connect\n");
+		LM_ERR("could not connect\n");
 		goto out;
 	}
 
 	cmd = db_cmd(DB_GET, ctx, db_table, match, NULL, NULL);
 	if (!cmd) {
-		LOG(L_ERR, "prefix_route: db_load(): db_cmd() failed\n");
+		LM_ERR("db_cmd() failed\n");
 		goto out;
 	}
 
 	if (db_exec(&res, cmd) < 0) {
-		LOG(L_ERR, "prefix_route: db_load(): db_exec() failed\n");
+		LM_ERR("db_exec() failed\n");
 		goto out;
 	}
 
 	root = tree_item_alloc();
 	if (NULL == root) {
-		LOG(L_ERR, "prefix_route: db_load() tree alloc failed\n");
+		LM_ERR("tree alloc failed\n");
 		err = -1;
 		goto out;
 	}
@@ -150,13 +147,11 @@ int pr_db_load(void)
 		++count;
 
 		if (rec->fld[0].flags & DB_NULL) {
-			LOG(L_CRIT, "prefix_route: ERROR: bad 'prefix' "
-			    "record in table %s, skipping...\n", db_table);
+			LM_CRIT("bad 'prefix' record in table %s, skipping...\n", db_table);
 			continue;
 		}
 		if (rec->fld[1].flags & DB_NULL) {
-			LOG(L_CRIT, "prefix_route: ERROR: bad 'route' "
-			    "record in table %s, skipping...\n", db_table);
+			LM_CRIT("bad 'route' record in table %s, skipping...\n", db_table);
 			continue;
 		}
 
@@ -164,17 +159,17 @@ int pr_db_load(void)
 		route   = rec->fld[1].v.cstr;
 		comment = rec->fld[2].v.cstr;
 
-		LOG(L_INFO, "  %d: prefix=%-10s  route=%-15s  comment=%s\n",
-		    count, prefix, route, comment);
+		LM_DBG("  %d: prefix=%-10s  route=%-15s  comment=%s\n",
+				count, prefix, route, comment);
 
 		err = add_route(root, prefix, route);
 	}
 
-	LOG(L_NOTICE, "prefix_route: Total prefix routes loaded: %d\n", count);
+	LM_NOTICE("Total prefix routes loaded: %d\n", count);
 
 	/* Error */
 	if (0 != err) {
-		LOG(L_ERR, "prefix_route: db_load(): error, flushing tree\n");
+		LM_ERR("error flushing tree\n");
 		tree_item_free(root);
 		goto out;
 	}
@@ -184,7 +179,7 @@ int pr_db_load(void)
 	if (0 != err)
 		goto out;
 
- out:
+out:
 	/* Free database results */
 	if (res)
 		db_res_free(res);
@@ -206,13 +201,13 @@ static int mod_init(void)
 {
 	/* Initialise tree */
 	if (0 != tree_init()) {
-		LOG(L_CRIT, "prefix_route: tree_init() failed\n\n");
+		LM_CRIT("tree init failed\n\n");
 		return -1;
 	}
 
 	/* Populate database */
 	if (0 != pr_db_load()) {
-		LOG(L_CRIT, "prefix_route: db_load() failed\n\n");
+		LM_CRIT("db load failed\n\n");
 		return -1;
 	}
 
@@ -240,13 +235,13 @@ static int get_username(struct sip_msg* msg, str *user)
 		return -1;
 
 	if (parse_sip_msg_uri(msg) < 0){
-		LOG(L_ERR, "get_username(): bad uri\n");
+		LM_ERR("bad sip msg uri\n");
 		return -1; /* error, bad uri */
 	}
 
 	if (msg->parsed_uri.user.s == 0){
 		/* no user in uri */
-		LOG(L_ERR, "get_username(): no user in uri\n");
+		LM_ERR("no user in uri\n");
 		return -2;
 	}
 
@@ -274,7 +269,7 @@ static int ki_prefix_route(sip_msg_t *msg, str *ruser)
 
 	err = run_actions(&ra_ctx, main_rt.rlist[route], msg);
 	if (err < 0) {
-		LOG(L_ERR, "prefix_route: run_actions failed (%d)\n", err);
+		LM_ERR("run_actions failed (%d)\n", err);
 		return -1;
 	}
 
@@ -292,8 +287,7 @@ static int ki_prefix_route_uri(sip_msg_t *msg)
 
 	err = get_username(msg, &user);
 	if (0 != err) {
-		LOG(L_ERR, "prefix_route: could not get username in"
-			    " Request URI (%d)\n", err);
+		LM_ERR("could not get username in Request URI (%d)\n", err);
 		return err;
 	}
 
@@ -305,7 +299,6 @@ static int ki_prefix_route_uri(sip_msg_t *msg)
  */
 static int prefix_route(struct sip_msg *msg, char *p1, char *p2)
 {
-	struct run_act_ctx ra_ctx;
 	str user;
 	int err;
 
@@ -316,14 +309,12 @@ static int prefix_route(struct sip_msg *msg, char *p1, char *p2)
 	if(p1==NULL) {
 		err = get_username(msg, &user);
 		if (0 != err) {
-			LOG(L_ERR, "prefix_route: could not get username in"
-			    " Request URI (%d)\n", err);
+			LM_ERR("could not get username in Request URI (%d)\n", err);
 			return err;
 		}
 	} else {
-		if(fixup_get_svalue(msg, (gparam_t*)p1, &user)<0)
-		{
-			LOG(L_ERR, "could not get username in parameter\n");
+		if(fixup_get_svalue(msg, (gparam_t*)p1, &user)<0) {
+			LM_ERR("could not get username in parameter\n");
 			return -1;
 		}
 	}

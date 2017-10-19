@@ -102,9 +102,6 @@ int log_on_amqp_error(amqp_rpc_reply_t x, char const *context)
 			LM_ERR("%s: unknown reply type 0x%08X\n", context, x.reply_type);
 			return x.reply_type;
 	}
-
-	LM_ERR("%s: unknown reply type, method id 0x%08X - should not reach here!\n", context, x.reply_type);
-	return x.reply_type;
 }
 
 static void dump_row(long count, int numinrow, int *chs)

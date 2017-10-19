@@ -547,9 +547,11 @@ static int w_dbg_sip_msg(struct sip_msg* msg, char *level, char *facility)
 	}
 
 	/* skip original uri */
-	if (msg->new_uri.s){
-		orig_offs=msg->first_line.u.request.uri.s - msg->buf;
-		orig_offs=msg->first_line.u.request.uri.len;
+	if(msg->first_line.type == SIP_REQUEST) {
+		if(msg->new_uri.s) {
+			orig_offs = msg->first_line.u.request.uri.s - msg->buf;
+			orig_offs += msg->first_line.u.request.uri.len;
+		}
 	}
 
 	/* alloc private mem and copy lumps */
@@ -621,7 +623,7 @@ static sr_kemi_t sr_kemi_debugger_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("debugger"), str_init("dbg_pv_dump_ex"),
-		SR_KEMIP_INT, ki_dbg_pv_dump,
+		SR_KEMIP_INT, ki_dbg_pv_dump_ex,
 		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

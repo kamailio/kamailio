@@ -45,9 +45,9 @@
 
 
 #if MAX_ACC_EXTRA<MAX_ACC_LEG
-	#define MAX_ACC_INT_BUF MAX_ACC_LEG
+#define MAX_ACC_INT_BUF MAX_ACC_LEG
 #else
-	#define MAX_ACC_INT_BUF MAX_ACC_EXTRA
+#define MAX_ACC_INT_BUF MAX_ACC_EXTRA
 #endif
 /* here we copy the strings returned by int2str (which uses a static buffer) */
 static char int_buf[INT2STR_MAX_LEN*MAX_ACC_INT_BUF];
@@ -118,7 +118,7 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 			LM_ERR("no more pkg mem 1\n");
 			goto error;
 		}
- 		memset( extra, 0, sizeof(struct acc_extra));
+		memset( extra, 0, sizeof(struct acc_extra));
 
 		/* link the new extra at the end */
 		if (tail==0) {
@@ -168,7 +168,7 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 	return head;
 parse_error:
 	LM_ERR("parse failed in <%s> "
-		"around position %d\n",extra_str, (int)(long)(s-extra_str));
+			"around position %d\n",extra_str, (int)(long)(s-extra_str));
 error:
 	LM_ERR("error\n");
 	destroy_extras(head);
@@ -189,7 +189,7 @@ void destroy_extras( struct acc_extra *extra)
 }
 
 
-/*! \brief converts the name of the extra from str to integer 
+/*! \brief converts the name of the extra from str to integer
  * and stores it over str.len ; str.s is freed and made zero
  */
 int extra2int( struct acc_extra *extra, int *attrs )
@@ -216,7 +216,7 @@ int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 
 	n = 0;
 	i = 0;
-	
+
 	while (extra) {
 		/* get the value */
 		if (pv_get_spec_value( rq, &extra->spec, &value)!=0) {
@@ -235,27 +235,27 @@ int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 			val_arr[n].len = 0;
 			type_arr[n] = TYPE_NULL;
 		} else {
-		    val_arr[n].s = (char *)pkg_malloc(value.rs.len);
-		    if (val_arr[n].s == NULL ) {
-		        LM_ERR("extra2strar: out of memory.\n");
-		        /* Cleanup already allocated memory and
-                   return that we didn't do anything */
-                for (i = 0; i < n ; i++) {
-						if (NULL != val_arr[i].s){
-							pkg_free(val_arr[i].s);
-							val_arr[i].s = NULL;
-						}
-                }
-                n = 0;
-                goto done;
-            }
-            memcpy(val_arr[n].s, value.rs.s, value.rs.len);
-            val_arr[n].len = value.rs.len;
+			val_arr[n].s = (char *)pkg_malloc(value.rs.len);
+			if (val_arr[n].s == NULL ) {
+				LM_ERR("out of memory.\n");
+				/* Cleanup already allocated memory and
+				 * return that we didn't do anything */
+				for (i = 0; i < n ; i++) {
+					if (NULL != val_arr[i].s){
+						pkg_free(val_arr[i].s);
+						val_arr[i].s = NULL;
+					}
+				}
+				n = 0;
+				goto done;
+			}
+			memcpy(val_arr[n].s, value.rs.s, value.rs.len);
+			val_arr[n].len = value.rs.len;
 			if (value.flags&PV_VAL_INT) {
-			    int_arr[n] = value.ri;
-			    type_arr[n] = TYPE_INT;
+				int_arr[n] = value.ri;
+				type_arr[n] = TYPE_INT;
 			} else {
-			    type_arr[n] = TYPE_STR;
+				type_arr[n] = TYPE_STR;
 			}
 		}
 		n++;
@@ -270,48 +270,48 @@ done:
 int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg, str *val_arr,
 		int *int_arr, char *type_arr, const struct dlg_binds* p_dlgb)
 {
-   //string value;
-   str* value = 0;
-   int n=0;
+	//string value;
+	str* value = 0;
+	int n=0;
 
-   if( !dlg || !val_arr || !int_arr || !type_arr || !p_dlgb)
-   {
-       LM_ERR( "invalid input parameter!\n");
-       return 0;
-   }
+	if( !dlg || !val_arr || !int_arr || !type_arr || !p_dlgb)
+	{
+		LM_ERR( "invalid input parameter!\n");
+		return 0;
+	}
 
-   while (extra) {
+	while (extra) {
 
-       /* check for overflow */
-       if (n==MAX_ACC_EXTRA) {
-           LM_WARN("array to short -> omitting extras for accounting\n");
-           goto done;
-       }
+		/* check for overflow */
+		if (n==MAX_ACC_EXTRA) {
+			LM_WARN("array to short -> omitting extras for accounting\n");
+			goto done;
+		}
 
-       val_arr[n].s = 0;
-       val_arr[n].len = 0;
-       type_arr[n] = TYPE_NULL;
+		val_arr[n].s = 0;
+		val_arr[n].len = 0;
+		type_arr[n] = TYPE_NULL;
 
-	   str key = extra->spec.pvp.pvn.u.isname.name.s;
-	   if ( key.len == 0 || !key.s)
-	   {
-		   n++; extra = extra->next; continue;
-	   }
-	   /* get the value */
-	   value = p_dlgb->get_dlg_var( dlg, &key);
+		str key = extra->spec.pvp.pvn.u.isname.name.s;
+		if ( key.len == 0 || !key.s)
+		{
+			n++; extra = extra->next; continue;
+		}
+		/* get the value */
+		value = p_dlgb->get_dlg_var( dlg, &key);
 
-       if (value)
-       {
-           val_arr[n].s = value->s;
-           val_arr[n].len = value->len;
-           type_arr[n] = TYPE_STR;
-       }
+		if (value)
+		{
+			val_arr[n].s = value->s;
+			val_arr[n].len = value->len;
+			type_arr[n] = TYPE_STR;
+		}
 
-       n++;
-       extra = extra->next;
-   }
+		n++;
+		extra = extra->next;
+	}
 done:
-    return n;
+	return n;
 }
 
 int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
@@ -348,7 +348,7 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 				type_arr[n] = TYPE_STR;
 			} else {
 				val_arr[n].s = int2bstr( value.n, int_buf+r*INT2STR_MAX_LEN,
-					&val_arr[n].len);
+						&val_arr[n].len);
 				r++;
 				int_arr[n] = value.n;
 				type_arr[n] = TYPE_INT;

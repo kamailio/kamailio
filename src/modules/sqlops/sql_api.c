@@ -394,14 +394,15 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 					res->vals[i][j].value.s.len = 0;
 					continue;
 				}
-				res->vals[i][j].value.s.s 
-					= (char*)pkg_malloc(sv.len*sizeof(char));
+				res->vals[i][j].value.s.s
+					= (char*)pkg_malloc((sv.len+1)*sizeof(char));
 				if(res->vals[i][j].value.s.s==NULL)
 				{
 					LM_ERR("no more memory\n");
 					goto error;
 				}
 				memcpy(res->vals[i][j].value.s.s, sv.s, sv.len);
+				res->vals[i][j].value.s.s[sv.len] = '\0';
 				res->vals[i][j].value.s.len = sv.len;
 			}
 		}

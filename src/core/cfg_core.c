@@ -113,7 +113,7 @@ struct cfg_group_core default_core_cfg = {
 	L_DBG+1, /*!< memlog */
 	3, /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
 		4 pkg_sums, 8 shm_sums, 16 short_status */
-	0, /*!< mem_safety - 0 disabled */
+	1, /*!< mem_safety - 0 disabled; 1 enabled */
 	0, /*!< mem_join - 0 disabled */
 	0, /*!< mem_status_mode - 0 only free fragments, 1 all fragements */
 	L_ERR, /*!< corelog */

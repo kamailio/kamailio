@@ -107,7 +107,7 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 VERSION = 5
 PATCHLEVEL = 1
 SUBLEVEL =  0
-EXTRAVERSION = -dev3
+EXTRAVERSION = -dev8
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
@@ -653,9 +653,13 @@ C_DEFS= $(extra_defs) \
 	 -D__CPU_$(ARCH) $(os_defs) \
 	 -DSER_VER=$(SER_VER) \
 	 -DCFG_DIR='"$(cfg_target)"'\
-	 -DRUN_DIR='"$(run_target)"'\
-	 -DPKG_MALLOC \
-	 -DSHM_MEM  -DSHM_MMAP \
+	 -DRUN_DIR='"$(run_target)"'
+
+ifneq ($(MEMPKG), sys)
+C_DEFS+= -DPKG_MALLOC
+endif
+
+C_DEFS+= -DSHM_MEM  -DSHM_MMAP \
 	 -DDNS_IP_HACK \
 	 -DUSE_MCAST \
 	 -DUSE_TCP \
@@ -682,7 +686,7 @@ C_DEFS= $(extra_defs) \
 	 #-DSTATS \
 	 #-DNO_LOG \
 	 #-DPROFILING \
-	 #-DNO_SIG_DEBUG 
+	 #-DNO_SIG_DEBUG
 
 #PROFILE=  -pg	# set this if you want profiling
 				# you may also want to set -DPROFILING
@@ -699,8 +703,16 @@ C_DEFS+= -DF_MALLOC
 C_DEFS+= -DQ_MALLOC
 # enable TLSF malloc
 C_DEFS+= -DTLSF_MALLOC
-ifeq 	($(MEMDBG), 1)
+
+ifeq ($(MEMDBG), 1)
 	C_DEFS+= -DDBG_SR_MEMORY
+
+ifeq ($(MEMPKG), sys)
+ifeq ($(MEMDBGSYS), 1)
+	C_DEFS+= -DDBG_SYS_MEMORY
+endif
+endif
+
 endif
 
 ifneq ($(PKG_MEM_SIZE),)

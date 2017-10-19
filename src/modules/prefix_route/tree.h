@@ -25,7 +25,8 @@
  * \ingroup prefix_route
  */
 
-
+#ifndef __PR_TREE_H__
+#define __PR_TREE_H__
 struct tree_item;
 
 struct tree_item *tree_item_alloc(void);
@@ -43,3 +44,4 @@ void tree_close(void);
 int  tree_swap(struct tree_item *root);
 int  tree_route_get(const str *user);
 void tree_print(FILE *f);
+#endif

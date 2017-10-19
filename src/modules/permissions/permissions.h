@@ -60,6 +60,12 @@ extern str mask_col;      /* Name of mask column */
 extern str port_col;      /* Name of port column */
 extern int peer_tag_mode; /* Matching mode */
 
+/* backends to be loaded */
+#define PERM_LOAD_ADDRESSDB	(1<<0)
+#define PERM_LOAD_TRUSTEDDB	(1<<1)
+#define PERM_LOAD_ALLOWFILE	(1<<2)
+#define PERM_LOAD_DENYFILE	(1<<3)
+extern int _perm_load_backends; /* */
 
 typedef struct int_or_pvar {
 	unsigned int i;

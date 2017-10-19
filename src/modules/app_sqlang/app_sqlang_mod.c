@@ -193,15 +193,16 @@ int sr_kemi_config_engine_sqlang(sip_msg_t *msg, int rtype, str *rname,
 	return 1;
 }
 
-static char _sqlang_buf_stack[4][512];
+#define SQLANG_BUF_STACK_SIZE 1024
+static char _sqlang_buf_stack[4][SQLANG_BUF_STACK_SIZE];
 
 /**
  *
  */
 static int ki_app_sqlang_dostring(sip_msg_t *msg, str *script)
 {
-	if(script==NULL || script->s==NULL || script->len>=511) {
-		LM_ERR("script too short or too long %d\n", script->len);
+	if(script==NULL || script->s==NULL || script->len>=SQLANG_BUF_STACK_SIZE-1) {
+		LM_ERR("script too short or too long %d\n", (script)?script->len:0);
 		return -1;
 	}
 	if(!sqlang_sr_initialized())
@@ -233,8 +234,8 @@ static int w_app_sqlang_dostring(struct sip_msg *msg, char *script, char *extra)
  */
 static int ki_app_sqlang_dofile(sip_msg_t *msg, str *script)
 {
-	if(script==NULL || script->s==NULL || script->len>=511) {
-		LM_ERR("script too short or too long %d\n", script->len);
+	if(script==NULL || script->s==NULL || script->len>=SQLANG_BUF_STACK_SIZE-1) {
+		LM_ERR("script too short or too long %d\n", (script)?script->len:0);
 		return -1;
 	}
 	if(!sqlang_sr_initialized())
@@ -266,8 +267,8 @@ static int w_app_sqlang_dofile(struct sip_msg *msg, char *script, char *extra)
  */
 static int ki_app_sqlang_runstring(sip_msg_t *msg, str *script)
 {
-	if(script==NULL || script->s==NULL || script->len>=511) {
-		LM_ERR("script too short or too long %d\n", script->len);
+	if(script==NULL || script->s==NULL || script->len>=SQLANG_BUF_STACK_SIZE-1) {
+		LM_ERR("script too short or too long %d\n", (script)?script->len:0);
 		return -1;
 	}
 	if(!sqlang_sr_initialized())
@@ -311,7 +312,7 @@ static int w_app_sqlang_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 		LM_ERR("cannot get the function\n");
 		return -1;
 	}
-	if(s.len>=511)
+	if(s.len>=SQLANG_BUF_STACK_SIZE-1)
 	{
 		LM_ERR("function too long %d\n", s.len);
 		return -1;
@@ -326,7 +327,7 @@ static int w_app_sqlang_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 			LM_ERR("cannot get p1\n");
 			return -1;
 		}
-		if(s.len>=511)
+		if(s.len>=SQLANG_BUF_STACK_SIZE-1)
 		{
 			LM_ERR("p1 too long %d\n", s.len);
 			return -1;
@@ -341,7 +342,7 @@ static int w_app_sqlang_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 				LM_ERR("cannot get p2\n");
 				return -1;
 			}
-			if(s.len>=511)
+			if(s.len>=SQLANG_BUF_STACK_SIZE-1)
 			{
 				LM_ERR("p2 too long %d\n", s.len);
 				return -1;
@@ -356,7 +357,7 @@ static int w_app_sqlang_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 					LM_ERR("cannot get p3\n");
 					return -1;
 				}
-				if(s.len>=511)
+				if(s.len>=SQLANG_BUF_STACK_SIZE-1)
 				{
 					LM_ERR("p3 too long %d\n", s.len);
 					return -1;

@@ -152,7 +152,7 @@ int init_rawsock_children(void);
 int extract_host_port(void);
 int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto);
 int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip);
-static int nosip_hep_msg(void *data);
+static int nosip_hep_msg(sr_event_param_t *evp);
 
 static int hep_version(struct sip_msg *msg);
 
@@ -282,7 +282,7 @@ static cmd_export_t cmds[] = {
 	{"sip_capture", (cmd_function)w_sip_capture, 2, sipcapture_fixup, 0, ANY_ROUTE },
 	{"report_capture", (cmd_function)w_report_capture, 1, reportcapture_fixup, 0, ANY_ROUTE },
 	{"report_capture", (cmd_function)w_report_capture, 2, reportcapture_fixup, 0, ANY_ROUTE },
-	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },	
+	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },
 	{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0, ANY_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
@@ -367,7 +367,7 @@ static param_export_t params[] = {
 	{"insert_retries",   		INT_PARAM, &insert_retries },
 	{"insert_retry_timeout",	INT_PARAM, &insert_retry_timeout },
 	{"table_time_sufix",		PARAM_STR, &table_time_sufix },
-	{"topoh_unamsk",		PARAM_INT, &sc_topoh_unmask },
+	{"topoh_unmask",		PARAM_INT, &sc_topoh_unmask },
 	{"nonsip_hook",			PARAM_INT, &nonsip_hook },
 	{0, 0, 0}
 };
@@ -446,6 +446,7 @@ int parse_table_names (str table_name, str ** table_names){
 	names = (str*)pkg_malloc(sizeof(str) * no_tables);
 	if(names == NULL) {
 		LM_ERR("no more pkg memory left\n");
+		pkg_free(table_name_cpy);
 		return -1;
 	}
 	p = strtok (table_name_cpy,"| \t");
@@ -1038,6 +1039,9 @@ static int w_float2int(struct sip_msg* _m, char* _val, char* _coof, char* s2)
 		return -1;
 	}
 
+	if(value.s==NULL || coof.s==NULL)
+		return -1;
+	
 	ret = (int) (atof (value.s) * atoi(coof.s));
 
 	return  ret ? ret : -1;
@@ -1887,7 +1891,7 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	else { EMPTY_STR(sco.custom1); }
 	
 	/* Custom - field2 */
-	if(custom_field3_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
+	if(custom_field2_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
 		sco.custom2 =  tmphdr[5]->body;
 	}
 	else { EMPTY_STR(sco.custom2); }
@@ -2643,7 +2647,7 @@ static int sipcapture_parse_aleg_callid_headers() {
 }
 
 
-static int nosip_hep_msg(void *data)
+static int nosip_hep_msg(sr_event_param_t *evp)
 {
         sip_msg_t* msg;
         char *buf;
@@ -2651,13 +2655,13 @@ static int nosip_hep_msg(void *data)
         struct run_act_ctx ra_ctx;
         int ret = 0;
 
-        msg = (sip_msg_t*)data;
-        
+        msg = (sip_msg_t*)evp->data;
+
         struct hep_hdr *heph;
-        
+
         buf = msg->buf;
         len = msg->len;
-        
+
         /* first send to route */
         init_run_actions_ctx(&ra_ctx);
         ret = run_actions(&ra_ctx, event_rt.rlist[hep_route_no], msg);
@@ -2666,33 +2670,33 @@ static int nosip_hep_msg(void *data)
 
         /* hep_hdr */
         heph = (struct hep_hdr*) msg->buf;
-        
+
 	if(heph->hp_v == 1 || heph->hp_v == 2)  {
 
 		LOG(L_ERR, "ERROR: HEP v 1/2: v:[%d] l:[%d]\n",heph->hp_v, heph->hp_l);
-		if((len = hepv2_message_parse(buf, len, msg)) < 0) 
-		{		
+		if((len = hepv2_message_parse(buf, len, msg)) < 0)
+		{
    		     LOG(L_ERR, "ERROR: during hepv2 parsing :[%d]\n", len);
    		     return 0;
                 }
-                
+
                 buf = msg->buf+len;
 		len = msg->len - len;
-				
+
 		msg->buf = buf;
                 msg->len = len;
         }
         else if(!memcmp(msg->buf, "\x48\x45\x50\x33",4) || !memcmp(msg->buf, "\x45\x45\x50\x31",4)) {
 
-                if((len = hepv3_message_parse(buf, len, msg)) < 0) 
-		{		
+                if((len = hepv3_message_parse(buf, len, msg)) < 0)
+		{
    		     LOG(L_ERR, "ERROR: during hepv3 parsing :[%d]\n", len);
    		     return 0;
                 }
-                
+
                 buf = msg->buf+len;
                 len = msg->len - len;
-                
+
                 msg->buf = buf;
                 msg->len = len;
         }
@@ -2704,10 +2708,10 @@ static int nosip_hep_msg(void *data)
         }
 
         if (parse_msg(buf, len, msg)!=0) {
-             LOG(L_ERR, "couldn't parse sip message\n");               
+             LOG(L_ERR, "couldn't parse sip message\n");
              return -1;
         }
-        
+
         return ret;
 }
 

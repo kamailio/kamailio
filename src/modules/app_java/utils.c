@@ -70,7 +70,7 @@ char **split(char *str, char *sep)
 		if (token == NULL || !strcmp(token, ""))
 			break;
 
-		buf = (char **)pkg_realloc(buf, (i+2) * sizeof(char *));
+		buf = (char **)pkg_reallocxf(buf, (i+2) * sizeof(char *));
 		if (!buf)
 		{
 			LM_ERR("%s: pkg_realloc() has failed. Not enough memory!\n", APP_NAME);

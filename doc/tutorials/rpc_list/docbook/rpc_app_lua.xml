@@ -10,7 +10,7 @@ RPC Exports for app_lua
 
 <section id="app_lua.reload"><title>app_lua.reload</title>
 <para>
-        Documentation missing (app_lua_rpc_reload_doc).
+        Reload lua script
 </para>
 <para>
 </para>

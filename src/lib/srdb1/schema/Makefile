@@ -1,13 +1,14 @@
 #
-# $Id$
+#
 #
 
 # Kamailio database descriptions for modules
 TABLES := $(patsubst kamailio-%.xml,%,$(wildcard kamailio-*.xml))
 
-ROOT=../../../../
-STYLESHEETS=$(ROOT)/doc/stylesheets/dbschema_k/xsl
-SCHEME=$(ROOT)/utils/kamctl/
+ROOTDIR=../../../..
+ROOTDOC=../../..
+STYLESHEETS=$(ROOTDIR)/doc/stylesheets/dbschema_k/xsl
+SCHEME=$(ROOTDIR)/utils/kamctl/
 
 #Stylesheet used to generate db_table nodes for pi_framework XML schema
 PI_FRAMEWORK_TABLE_XSL = $(STYLESHEETS)/pi_framework_table.xsl
@@ -55,7 +56,7 @@ VALIDATE = 0
 VERBOSE = 0
 
 # XML Catalog used to resolve entities
-CATALOG = $(ROOT)/doc/stylesheets/dbschema_k/catalog.xml
+CATALOG = $(ROOTDIR)/doc/stylesheets/dbschema_k/catalog.xml
 
 XSLTPROC = /usr/bin/xsltproc
 XSLTPROC_FLAGS = --xinclude
@@ -68,7 +69,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext db_berkeley db_sqlite docbook oracle pi_framework #modules dbdoc
+all: mysql postgres dbtext db_berkeley db_sqlite oracle mongodb pi_framework
 
 .PHONY: pi_framework pi_framework_clean
 pi_framework:
@@ -92,8 +93,8 @@ pi_framework:
 		$(SCHEME)/xhttp_pi/pi_framework.xml
 
 pi_framework_clean:
-	-@rm -f $(ROOT)/scripts/xhttp_pi/*-table
-	-@rm -f $(ROOT)/scripts/xhttp_pi/*-mod
+	-@rm -f $(ROOTDIR)/scripts/xhttp_pi/*-table
+	-@rm -f $(ROOTDIR)/scripts/xhttp_pi/*-mod
 
 .PHONY: mysql mysql_clean
 mysql:
@@ -231,91 +232,98 @@ mongodb_clean:
 docbook-xml:
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(ROOT)/doc/databases/kamailio" \
+		--stringparam dir "$(ROOTDIR)/doc/databases/kamailio" \
 		--stringparam prefix "$$FILE-" \
 		$(DOCBOOK_XSL) kamailio-"$$FILE".xml ; \
 	done
 	# link all documents to one file, to get nicer output
 	echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" \
-		> "$(ROOT)/doc/databases/kamailio/tables.xml"
+		> "$(ROOTDIR)/doc/databases/kamailio/tables.xml"
 	echo "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook XML V4.4//EN\"" \
-		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.xml"
 	echo "        \"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd\" [" \
-		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
-	#Include general documentation entities
-	echo "    <!ENTITY % docentities SYSTEM \"../../../../doc/docbook/entities.xml\">" \
-		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.xml"
+	# include general documentation entities
+	echo "    <!ENTITY % docentities SYSTEM \"$(ROOTDOC)/doc/docbook/entities.xml\">" \
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.xml"
 	echo "    %docentities;" \
-		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.xml"
 	echo "]>" \
-		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.xml"
 	echo "<book xmlns:xi=\"http://www.w3.org/2001/XInclude\">" \
-		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.xml"
 	# add bookinfo
-	cat "$(ROOT)/doc/stylesheets/dbschema_k/bookinfo.xml" | tail -n +2 \
-		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+	cat "$(ROOTDIR)/doc/stylesheets/dbschema_k/bookinfo.xml" | tail -n +2 \
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.xml"
 	# actually include the entities
-	for FILE in $(wildcard $(ROOT)/doc/databases/kamailio/*-dbschema.xml); do \
-		echo "    <xi:include href=\"$$FILE\" />" \
-			>> "$(ROOT)/doc/databases/kamailio/tables.xml" ; \
+	for FILE in $(sort $(wildcard $(ROOTDIR)/doc/databases/kamailio/*-dbschema.xml)); do \
+		echo "    <xi:include href=\"$$(basename $$FILE)\" />" \
+			>> "$(ROOTDIR)/doc/databases/kamailio/tables.xml" ; \
 	done
 	echo "</book>" \
-		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.xml"
 	# generate makefile
 	echo "docs = tables.xml" \
-		> "$(ROOT)/doc/databases/kamailio/Makefile"
+		> "$(ROOTDIR)/doc/databases/kamailio/Makefile"
 	echo \
-		>> "$(ROOT)/doc/databases/kamailio/Makefile"
-	echo "docbook_dir = ../../../../doc/docbook" \
-		>> "$(ROOT)/doc/databases/kamailio/Makefile"
+		>> "$(ROOTDIR)/doc/databases/kamailio/Makefile"
+	echo "docbook_dir = $(ROOTDOC)/doc/docbook" \
+		>> "$(ROOTDIR)/doc/databases/kamailio/Makefile"
 	echo "include \$$(docbook_dir)/Makefile" \
-		>> "$(ROOT)/doc/databases/kamailio/Makefile"
+		>> "$(ROOTDIR)/doc/databases/kamailio/Makefile"
 
-.PHONY: docbook docbook_clean
-docbook:
+.PHONY: docbook-sgml
+docbook-sgml:
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(ROOT)/doc/databases/kamailio" \
+		--stringparam dir "$(ROOTDIR)/doc/databases/kamailio" \
 		--stringparam prefix "$$FILE-" \
 		$(DOCBOOK_XSL) kamailio-"$$FILE".xml ; \
 	done ; \
-
 	# link all documents to one file, to get nicer output
-	echo "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook V4.4//EN\" \"http://www.oasis-open.org/docbook/sgml/4.4/docbook.dtd\"[" > "$(ROOT)/doc/databases/kamailio/tables.sgml"
-	
+	printf "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook V4.4//EN\"" \
+		> "$(ROOTDIR)/doc/databases/kamailio/tables.sgml"
+	echo " \"http://www.oasis-open.org/docbook/sgml/4.4/docbook.dtd\" [" \
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.sgml"
 	# create entities, as xi:include is not available in sgml docbook
 	# substitute '-' for '_', docbook smgl don't like this
-	for FILE in $(wildcard $(ROOT)/doc/databases/kamailio/*.xml); do \
-		echo "  <!ENTITY `basename "$$FILE" | sed -e 's#_#-#g'` SYSTEM \""$$FILE"\">" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
+	for FILE in $(sort $(wildcard $(ROOTDIR)/doc/databases/kamailio/*.xml)); do \
+		echo "  <!ENTITY `basename "$$FILE" | sed -e 's#_#-#g'` SYSTEM \"$$(basename $$FILE)\">" \
+			>> "$(ROOTDIR)/doc/databases/kamailio/tables.sgml" ; \
 	done ; \
-	#Include general documentation entities
-	echo "  <!ENTITY % docentities SYSTEM \"../../../../doc/docbook/entities.xml\"> %docentities;" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
-	echo "]>" >> "$(ROOT)/doc/databases/kamailio/tables.sgml"
+	# include general documentation entities
+	echo "  <!ENTITY % docentities SYSTEM \"$(ROOTDOC)/doc/docbook/entities.xml\"> %docentities;" \
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.sgml" ; \
+	echo "]>" >> "$(ROOTDIR)/doc/databases/kamailio/tables.sgml"
 	# add bookinfo
-	cat "$(ROOT)/doc/stylesheets/dbschema_k/bookinfo.xml" >> "$(ROOT)/doc/databases/kamailio/tables.sgml"
+	cat "$(ROOTDIR)/doc/stylesheets/dbschema_k/bookinfo.xml" \
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.sgml"
 	# actually include the entities
-	for FILE in $(wildcard $(ROOT)/doc/databases/kamailio/*.xml); do \
-		echo "    &`basename "$$FILE" | sed -e 's#_#-#g'`" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
+	for FILE in $(wildcard $(ROOTDIR)/doc/databases/kamailio/*.xml); do \
+		echo "    &`basename "$$FILE" | sed -e 's#_#-#g'`;" \
+		>> "$(ROOTDIR)/doc/databases/kamailio/tables.sgml" ; \
 	done ; \
-	echo "</book>" >> "$(ROOT)/doc/databases/kamailio/tables.sgml"
+	echo "</book>" >> "$(ROOTDIR)/doc/databases/kamailio/tables.sgml"
+
+.PHONY: docbook docbook_clean
+docbook: docbook-xml
 
 docbook_clean:
-	-@rm -f $(ROOT)/doc/databases/kamailio/*.xml
-	-@rm -f $(ROOT)/doc/databases/kamailio/tables.sgml
+	-@rm -f $(ROOTDIR)/doc/databases/kamailio/*.xml
+	-@rm -f $(ROOTDIR)/doc/databases/kamailio/tables.sgml
 
 .PHONY: modules modules_clean
 modules:
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(ROOT)/modules_k/$$FILE/" \
+		--stringparam dir "$(ROOTDIR)/modules_k/$$FILE/" \
 		--stringparam prefix "$$FILE" \
 		--stringparam db "modules" \
 		$(MODULES_H_XSL) kamailio-"$$FILE".xml ; \
 	done
-	
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(ROOT)/modules_k/$$FILE/" \
+		--stringparam dir "$(ROOTDIR)/modules_k/$$FILE/" \
 		--stringparam prefix "$$FILE" \
 		--stringparam db "modules" \
 		$(MODULES_C_XSL) kamailio-"$$FILE".xml ; \
@@ -323,14 +331,14 @@ modules:
 
 modules_clean:
 	for FILE in $(TABLES); do \
-		rm -f $(ROOT)/modules/$$FILE/db_*.c; \
-		rm -f $(ROOT)/modules/$$FILE/db_*.h; \
+		rm -f $(ROOTDIR)/modules/$$FILE/db_*.c; \
+		rm -f $(ROOTDIR)/modules/$$FILE/db_*.h; \
 	done
 
 dbdoc:
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(ROOT)/modules_k/$$FILE/doc/" \
+		--stringparam dir "$(ROOTDIR)/modules_k/$$FILE/doc/" \
 		--stringparam prefix "$$FILE" \
 		--stringparam db "modules" \
 		$(DBDOC_XSL) kamailio-"$$FILE".xml ; \
@@ -338,7 +346,7 @@ dbdoc:
 
 dbdoc_clean:
 	for FILE in $(TABLES); do \
-		rm -f $(ROOT)/modules/$$FILE/doc/*_db.xml; \
+		rm -f $(ROOTDIR)/modules/$$FILE/doc/*_db.xml; \
 	done
 
 .PHONY: clean

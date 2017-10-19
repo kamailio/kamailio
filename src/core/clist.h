@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -121,4 +121,10 @@
 #define clist_foreach_safe(head, v, bak,  dir) \
 	for((v)=(head)->dir, (bak)=(v)->dir; (v)!=(void*)(head); \
 				(v)=(bak), (bak)=(v)->dir)
+
+/*! \brief test if clist is empty (1 - empty; 0 - not empty)*/
+#define clist_empty(head, dir) \
+	(((head)->dir!=(void*)(head))?0:1)
+
+
 #endif

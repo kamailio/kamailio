@@ -91,7 +91,7 @@ parse_ip_address (char *c, unsigned int *address)	//inet_aton
 	addrp = (unsigned char *) address;
 
 	/* make a copy of the dotted string, because we modify it */
-	strncpy (buf, c, 20);
+	strcpy (buf, c);
 	p = buf;
 
 	/* search three times for a dot in the string */

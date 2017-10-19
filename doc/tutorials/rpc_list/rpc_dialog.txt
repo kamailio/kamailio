@@ -13,11 +13,11 @@ RPC Exports for dialog
         Returns an array.
 
  3. dlg.dlg_list
-        Print dialog based on callid and fromtag
+        Print dialog based on callid and optionally fromtag
 
  4. dlg.dlg_list_ctx
         Print dialog with associated context based on callid and
-        fromtag
+        optionally fromtag
 
  5. dlg.end_dlg
         End a given dialog based on [h_entry] [h_id]

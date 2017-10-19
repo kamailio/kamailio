@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Digest Authentication - Diameter support
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -20,11 +18,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * -------
- *  
- *  
  */
 
 #include <stdio.h>
@@ -71,6 +64,7 @@ int init_mytcp(char* host, int port)
     if (server == NULL) 
 	{
 		LM_ERR("error finding the host\n");
+		close(sockfd);
 		return -1;
     }
 
@@ -83,8 +77,8 @@ int init_mytcp(char* host, int port)
     if (connect(sockfd, (const struct sockaddr *)&serv_addr, 
 							sizeof(serv_addr)) < 0) 
 	{
-        LM_ERR("error connecting to the "
-						"DIAMETER client\n");
+        LM_ERR("error connecting to the DIAMETER client\n");
+		close(sockfd);
 		return -1;
 	}	
 

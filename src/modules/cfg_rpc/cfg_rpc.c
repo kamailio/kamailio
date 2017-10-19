@@ -355,6 +355,72 @@ static void rpc_get(rpc_t* rpc, void* c)
 	}
 
 }
+static const char* rpc_cfg_var_reset_doc[2] = {
+       "Reset all the values of a configuration group and commit the change immediately",
+       0
+};
+
+static void rpc_cfg_var_reset(rpc_t* rpc, void* c)
+{
+	void	*h;
+	str	gname, var;
+	cfg_def_t	*def;
+	void	*val;
+	int	i, ret;
+	str	group;
+	char	*ch;
+	unsigned int	*group_id;
+	unsigned int	val_type;
+	unsigned int	input_type;
+
+	if (rpc->scan(c, "S", &group) < 1)
+		return;
+
+	if (get_group_id(&group, &group_id)) {
+		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
+		return;
+	}
+
+	cfg_get_group_init(&h);
+	while(cfg_get_group_next(&h, &gname, &def))
+		if (((gname.len == group.len) && (memcmp(gname.s, group.s, group.len) == 0)))
+		{
+			for (i=0; def[i].name; i++){
+
+				var.s = def[i].name;
+				var.len = (int)strlen(def[i].name);
+				ret = cfg_get_default_value_by_name(ctx, &gname, group_id, &var,
+						&val, &val_type);
+
+				if (ret != 0)
+					continue;
+
+				if (cfg_help(ctx, &group, &var,
+							&ch, &input_type)
+					) {
+					rpc->fault(c, 400, "Failed to get the variable description");
+					return;
+				}
+
+				if (input_type == CFG_INPUT_INT) {
+					ret = cfg_set_now_int(ctx, &gname, group_id, &var,
+							(int)(long)val);
+				} else if (input_type == CFG_INPUT_STRING) {
+					ret = cfg_set_now_string(ctx, &gname, group_id, &var, val);
+				} else {
+					rpc->fault(c, 500, "Unsupported input type");
+					return;
+				}
+				if(ret<0) {
+					rpc->fault(c, 500, "Reset failed");
+					return;
+				} else if(ret==1) {
+					LM_WARN("unexpected situation - variable not found\n");
+				}
+			}
+		}
+}
+
 
 static const char* rpc_help_doc[2] = {
         "Print the description of a configuration variable",
@@ -546,6 +612,7 @@ static rpc_export_t rpc_calls[] = {
 	{"cfg.commit",		rpc_commit,		rpc_commit_doc,		0},
 	{"cfg.rollback",	rpc_rollback,		rpc_rollback_doc,	0},
 	{"cfg.get",		rpc_get,		rpc_get_doc,		0},
+	{"cfg.reset",	rpc_cfg_var_reset,	rpc_cfg_var_reset_doc,	0},
 	{"cfg.help",		rpc_help,		rpc_help_doc,		0},
 	{"cfg.list",		rpc_list,		rpc_list_doc,		0},
 	{"cfg.diff",		rpc_diff,		rpc_diff_doc,		0},

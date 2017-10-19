@@ -155,12 +155,6 @@ unsigned char get_auth_scheme_type(str scheme) {
     return AUTH_UNKNOWN;
 }
 
-static int get_ha1(struct username* _username, str* _domain,
-        const str* _table, char* _ha1, db1_res_t** res) {
-
-    return 0;
-}
-
 /*
  * Authorize digest credentials
  */

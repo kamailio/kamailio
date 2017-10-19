@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>HashTable Values</name>
+    <name>HTABLE Module</name>
     <xi:include href="htable.xml"/>
 </database>

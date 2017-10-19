@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -31,7 +31,7 @@
 	<para>
 	The connections can either be defined with the "httpcon" module parameter
 	or in a separate configuration file, as specified by the "config_file" module
-	parameter. 
+	parameter.
 	</para>
 	<para>
 	Like in SIP, the HTTP URL may need encoding to be transported safely
@@ -711,21 +711,29 @@ http_get_redirect("apiserver", "$var(targeturl)");
 				</programlisting>
 			</example>
 		</section>
-		<section id="http_client.f.curl_http_query">
+		<section id="http_client.f.http_query">
 			<title>
-				<function moreinfo="none">http_client_query(url, [post-data], result)</function>
+				<function moreinfo="none">http_client_query(url, [post-data], [hdrs], result)</function>
 			</title>
 			<para>
 			Sends HTTP GET or POST request according to URL given in
 			<quote>url</quote> parameter, which is a string that may
 			contain pseudo variables.
-	    	        </para>
+			</para>
 			<para>
 			If you want to make a POST-Request, you have to define
 			the <quote>post</quote>-data, that should be submitted
 			in that request as the second parameter.
-	    	        </para>
-		        <para>
+			</para>
+			<para>
+			Custom headers may be specified via <quote>hdrs</quote> parameter
+			(e.g., Content-Type).
+			</para>
+			<para>
+			Either of <quote>post-data</quote> or <quote>hdrs</quote> can be
+			also set to empty string in order to be ignored.
+			</para>
+			<para>
 			If HTTP server returns a class 2xx, 3xx or 4xx reply,
 			the first line of the reply's body (if any) is
 			stored in <quote>result</quote> parameter,
@@ -734,7 +742,7 @@ http_get_redirect("apiserver", "$var(targeturl)");
 			<para>
 			Function returns reply code of HTTP reply or -1
 			if something went wrong.
-	   	     	</para>
+			</para>
 			<para>
 			This function can be used from REQUEST_ROUTE,
 			ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
@@ -744,25 +752,25 @@ http_get_redirect("apiserver", "$var(targeturl)");
 			It is changed to use the same base library and settings as the rest of the functions in this module.
 			</para>
 			<example>
-				<title><function>curl_http_query()</function> usage</title>
+				<title><function>http_client_query()</function> usage</title>
 				<programlisting format="linespecific">
 ...
 # GET-Request
 http_client_query("http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
 	   "$var(result)");
-switch ($retcode) {
-       ...
+switch ($rc) {
+    ...
 }
-...
-				</programlisting>
-				<programlisting format="linespecific">
 ...
 # POST-Request
-http_client_query("http://api.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
-	   "$var(result)");
-switch ($retcode) {
-       ...
+http_client_query("http://api.com/index.php",
+    "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+    "$var(result)");
 }
+...
+# POST-Request
+http_client_query("http://api.com/index.php", "src=$si",
+    "Content-Type: text/plain", "$var(result)");
 ...
 				</programlisting>
 			</example>

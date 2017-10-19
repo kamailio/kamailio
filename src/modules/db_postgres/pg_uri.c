@@ -46,36 +46,43 @@
  * return 0 if match, 1 if not 
  */
 #define cmpstr(s1, s2, f) \
-	((s1)!=(s2)) && ((s1)==0 || (s2)==0 || (f)((s1), (s2))!=0)
+	((s1) != (s2)) && ((s1) == 0 || (s2) == 0 || (f)((s1), (s2)) != 0)
 
 
 /** Compare two connection URIs */
-static unsigned char pg_uri_cmp(db_uri_t* uri1, db_uri_t* uri2)
+static unsigned char pg_uri_cmp(db_uri_t *uri1, db_uri_t *uri2)
 {
-	struct pg_uri* puri1, *puri2;
+	struct pg_uri *puri1, *puri2;
 
-	if (!uri1 || !uri2) return 0;
+	if(!uri1 || !uri2)
+		return 0;
 
 	puri1 = DB_GET_PAYLOAD(uri1);
 	puri2 = DB_GET_PAYLOAD(uri2);
-	if (puri1->port != puri2->port) return 0;
+	if(puri1->port != puri2->port)
+		return 0;
 
-	if (cmpstr(puri1->username, puri2->username, strcmp)) return 0;
-	if (cmpstr(puri1->password, puri2->password, strcmp)) return 0;
-	if (cmpstr(puri1->host, puri2->host, strcasecmp)) return 0;
-	if (cmpstr(puri1->database, puri2->database, strcmp)) return 0;
+	if(cmpstr(puri1->username, puri2->username, strcmp))
+		return 0;
+	if(cmpstr(puri1->password, puri2->password, strcmp))
+		return 0;
+	if(cmpstr(puri1->host, puri2->host, strcasecmp))
+		return 0;
+	if(cmpstr(puri1->database, puri2->database, strcmp))
+		return 0;
 	return 1;
 }
 
 
 /** Duplicate a string
  */
-static int dupl_string(char** dst, const char* begin, const char* end)
+static int dupl_string(char **dst, const char *begin, const char *end)
 {
-	if (*dst) pkg_free(*dst);
+	if(*dst)
+		pkg_free(*dst);
 
 	*dst = pkg_malloc(end - begin + 1);
-	if ((*dst) == NULL) {
+	if((*dst) == NULL) {
 		return -1;
 	}
 
@@ -90,160 +97,181 @@ static int dupl_string(char** dst, const char* begin, const char* end)
  *
  * Returns 0 if parsing was successful and -1 otherwise
  */
-static int parse_postgres_uri(struct pg_uri* res, str* uri)
+static int parse_postgres_uri(struct pg_uri *res, str *uri)
 {
 #define SHORTEST_DB_URL "//a/b"
 #define SHORTEST_DB_URL_LEN (sizeof(SHORTEST_DB_URL) - 1)
 
-	enum state {
-		ST_SLASH1,     /* First slash */
-		ST_SLASH2,     /* Second slash */
-		ST_USER_HOST,  /* Username or hostname */
-		ST_PASS_PORT,  /* Password or port part */
-		ST_HOST,       /* Hostname part */
-		ST_PORT,       /* Port part */
-		ST_DB          /* Database part */
+	enum state
+	{
+		ST_SLASH1,	/* First slash */
+		ST_SLASH2,	/* Second slash */
+		ST_USER_HOST, /* Username or hostname */
+		ST_PASS_PORT, /* Password or port part */
+		ST_HOST,	  /* Hostname part */
+		ST_PORT,	  /* Port part */
+		ST_DB		  /* Database part */
 	};
 
 	enum state st;
-	int  i;
-	const char* begin;
-	char* prev_token;
+	int i;
+	const char *begin;
+	char *prev_token;
 
 	prev_token = 0;
 
-	if (!res || !uri) {
+	if(!res || !uri) {
 		goto err;
 	}
-	
-	if (uri->len < SHORTEST_DB_URL_LEN) {
+
+	if(uri->len < SHORTEST_DB_URL_LEN) {
 		goto err;
 	}
-	
+
 	st = ST_SLASH1;
 	begin = uri->s;
 
 	for(i = 0; i < uri->len; i++) {
 		switch(st) {
-		case ST_SLASH1:
-			switch(uri->s[i]) {
-			case '/':
-				st = ST_SLASH2;
+			case ST_SLASH1:
+				switch(uri->s[i]) {
+					case '/':
+						st = ST_SLASH2;
+						break;
+
+					default:
+						goto err;
+				}
 				break;
 
-			default:
-				goto err;
-			}
-			break;
+			case ST_SLASH2:
+				switch(uri->s[i]) {
+					case '/':
+						st = ST_USER_HOST;
+						begin = uri->s + i + 1;
+						break;
 
-		case ST_SLASH2:
-			switch(uri->s[i]) {
-			case '/':
-				st = ST_USER_HOST;
-				begin = uri->s + i + 1;
-				break;
-				
-			default:
-				goto err;
-			}
-			break;
-
-		case ST_USER_HOST:
-			switch(uri->s[i]) {
-			case '@':
-				st = ST_HOST;
-				if (dupl_string(&res->username, begin, uri->s + i) < 0) goto err;
-				begin = uri->s + i + 1;
+					default:
+						goto err;
+				}
 				break;
 
-			case ':':
-				st = ST_PASS_PORT;
-				if (dupl_string(&prev_token, begin, uri->s + i) < 0) goto err;
-				begin = uri->s + i + 1;
+			case ST_USER_HOST:
+				switch(uri->s[i]) {
+					case '@':
+						st = ST_HOST;
+						if(dupl_string(&res->username, begin, uri->s + i) < 0)
+							goto err;
+						begin = uri->s + i + 1;
+						break;
+
+					case ':':
+						st = ST_PASS_PORT;
+						if(dupl_string(&prev_token, begin, uri->s + i) < 0)
+							goto err;
+						begin = uri->s + i + 1;
+						break;
+
+					case '/':
+						if(memchr(uri->s + i + 1, '/', uri->len - i - 1)
+								!= NULL)
+							break;
+						if(dupl_string(&res->host, begin, uri->s + i) < 0)
+							goto err;
+						if(dupl_string(&res->database, uri->s + i + 1,
+								   uri->s + uri->len)
+								< 0)
+							goto err;
+						return 0;
+				}
 				break;
 
-			case '/':
-				if (memchr(uri->s + i + 1, '/', uri->len - i - 1) != NULL)
-					break;
-				if (dupl_string(&res->host, begin, uri->s + i) < 0) goto err;
-				if (dupl_string(&res->database, uri->s + i + 1, uri->s + uri->len) < 0) 
-					goto err;
-				return 0;
-			}
-			break;
+			case ST_PASS_PORT:
+				switch(uri->s[i]) {
+					case '@':
+						st = ST_HOST;
+						res->username = prev_token;
+						if(dupl_string(&res->password, begin, uri->s + i) < 0)
+							goto err;
+						begin = uri->s + i + 1;
+						break;
 
-		case ST_PASS_PORT:
-			switch(uri->s[i]) {
-			case '@':
-				st = ST_HOST;
-				res->username = prev_token;
-				if (dupl_string(&res->password, begin, uri->s + i) < 0) goto err;
-				begin = uri->s + i + 1;
+					case '/':
+						if(memchr(uri->s + i + 1, '/', uri->len - i - 1)
+								!= NULL)
+							break;
+						res->host = prev_token;
+						res->port = str2s(begin, uri->s + i - begin, 0);
+						if(dupl_string(&res->database, uri->s + i + 1,
+								   uri->s + uri->len)
+								< 0)
+							goto err;
+						return 0;
+				}
 				break;
 
-			case '/':
-				if (memchr(uri->s + i + 1, '/', uri->len - i - 1) != NULL)
-					break;
-				res->host = prev_token;
-				res->port = str2s(begin, uri->s + i - begin, 0);
-				if (dupl_string(&res->database, uri->s + i + 1, uri->s + uri->len) < 0) 
-					goto err;
-				return 0;
-			}
-			break;
+			case ST_HOST:
+				switch(uri->s[i]) {
+					case ':':
+						st = ST_PORT;
+						if(dupl_string(&res->host, begin, uri->s + i) < 0)
+							goto err;
+						begin = uri->s + i + 1;
+						break;
 
-		case ST_HOST:
-			switch(uri->s[i]) {
-			case ':':
-				st = ST_PORT;
-				if (dupl_string(&res->host, begin, uri->s + i) < 0) goto err;
-				begin = uri->s + i + 1;
+					case '/':
+						if(memchr(uri->s + i + 1, '/', uri->len - i - 1)
+								!= NULL)
+							break;
+						if(dupl_string(&res->host, begin, uri->s + i) < 0)
+							goto err;
+						if(dupl_string(&res->database, uri->s + i + 1,
+								   uri->s + uri->len)
+								< 0)
+							goto err;
+						return 0;
+				}
 				break;
 
-			case '/':
-				if (memchr(uri->s + i + 1, '/', uri->len - i - 1) != NULL)
-					break;
-				if (dupl_string(&res->host, begin, uri->s + i) < 0) goto err;
-				if (dupl_string(&res->database, uri->s + i + 1, uri->s + uri->len) < 0) 
-					goto err;
-				return 0;
-			}
-			break;
+			case ST_PORT:
+				switch(uri->s[i]) {
+					case '/':
+						res->port = str2s(begin, uri->s + i - begin, 0);
+						if(dupl_string(&res->database, uri->s + i + 1,
+								   uri->s + uri->len)
+								< 0)
+							goto err;
+						return 0;
+				}
+				break;
 
-		case ST_PORT:
-			switch(uri->s[i]) {
-			case '/':
-				res->port = str2s(begin, uri->s + i - begin, 0);
-				if (dupl_string(&res->database, uri->s + i + 1, uri->s + uri->len) < 0) 
-					goto err;
-				return 0;
-			}
-			break;
-			
-		case ST_DB:
-			break;
+			case ST_DB:
+				break;
 		}
 	}
 
-	if (st != ST_DB) goto err;
+	if(st != ST_DB)
+		goto err;
 	return 0;
 
- err:
-	if (prev_token) pkg_free(prev_token);
-	if (res == NULL) return -1;
-	if (res->username) {
+err:
+	if(prev_token)
+		pkg_free(prev_token);
+	if(res == NULL)
+		return -1;
+	if(res->username) {
 		pkg_free(res->username);
 		res->username = NULL;
 	}
-	if (res->password) {
+	if(res->password) {
 		pkg_free(res->password);
 		res->password = NULL;
 	}
-	if (res->host) {
+	if(res->host) {
 		pkg_free(res->host);
 		res->host = NULL;
 	}
-	if (res->database) {
+	if(res->database) {
 		pkg_free(res->database);
 		res->database = NULL;
 	}
@@ -251,40 +279,47 @@ static int parse_postgres_uri(struct pg_uri* res, str* uri)
 }
 
 
-
-static void pg_uri_free(db_uri_t* uri, struct pg_uri* payload)
+static void pg_uri_free(db_uri_t *uri, struct pg_uri *payload)
 {
-	if (payload == NULL) return;
+	if(payload == NULL)
+		return;
 	db_drv_free(&payload->drv);
-	if (payload->username) pkg_free(payload->username);
-	if (payload->password) pkg_free(payload->password);
-	if (payload->host) pkg_free(payload->host);
-	if (payload->database) pkg_free(payload->database);
+	if(payload->username)
+		pkg_free(payload->username);
+	if(payload->password)
+		pkg_free(payload->password);
+	if(payload->host)
+		pkg_free(payload->host);
+	if(payload->database)
+		pkg_free(payload->database);
 	pkg_free(payload);
 }
 
 
-int pg_uri(db_uri_t* uri)
+int pg_uri(db_uri_t *uri)
 {
-	struct pg_uri* puri;
+	struct pg_uri *puri;
 
-	puri = (struct pg_uri*)pkg_malloc(sizeof(struct pg_uri));
-	if (puri == NULL) {
+	puri = (struct pg_uri *)pkg_malloc(sizeof(struct pg_uri));
+	if(puri == NULL) {
 		ERR("postgres: No memory left\n");
 		goto error;
 	}
 	memset(puri, '\0', sizeof(struct pg_uri));
-	if (db_drv_init(&puri->drv, pg_uri_free) < 0) goto error;
-	if (parse_postgres_uri(puri, &uri->body) < 0) goto error;
+	if(db_drv_init(&puri->drv, pg_uri_free) < 0)
+		goto error;
+	if(parse_postgres_uri(puri, &uri->body) < 0)
+		goto error;
 
 	DB_SET_PAYLOAD(uri, puri);
 	uri->cmp = pg_uri_cmp;
 	return 0;
 
- error:
-	if (puri) {
+error:
+	if(puri) {
 		db_drv_free(&puri->drv);
-		if (puri) pkg_free(puri);
+		if(puri)
+			pkg_free(puri);
 	}
 	return -1;
 }

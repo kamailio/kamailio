@@ -396,7 +396,7 @@ event_route[xhttp:request] {
 
    Example 1.15. jsonrpc_exec usage
 ...
-jsonrpc_exec({"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
+jsonrpc_exec('{"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
 ...
 
 6. JSONRPC Commands

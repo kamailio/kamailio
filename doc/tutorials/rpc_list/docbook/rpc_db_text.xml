@@ -16,4 +16,12 @@ RPC Exports for db_text
 </para>
 </section>
 
+<section id="db_text.query"><title>db_text.query</title>
+<para>
+        Perform Live Query
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

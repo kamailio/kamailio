@@ -519,8 +519,8 @@ modparam("lcr", "lcr_rule_table", "rules")
 	<section>
 		<title><varname>prefix_column</varname> (string)</title>
 		<para>
-		Name of the column holding prefix of Request-URI user
-		part and prefix of gateway.
+		Name of the column in lcr_rule and lcr_gw tables holding prefix
+        of Request-URI user part and prefix of gateway, respectively.
 		</para>
 		<para>
 		<emphasis>

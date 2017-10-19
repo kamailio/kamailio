@@ -48,78 +48,71 @@ enum prefix_opt_ids { PO_MAX_TARGETS = 0, PO_MAX_IDS };
 option_description target_options[TO_MAX_IDS];
 option_description prefix_options[PO_MAX_IDS];
 
-static void reset_opts(option_description * opts, int size){
+static void reset_target_opts(){
 	int i;
-	if ( NULL == opts){
-		LM_ERR("Trying to init a NULL pointer location \n");
-		return;
-	}
-	for (i=0; i < size; i++){
-		memset(&(opts[i].value),'\0', sizeof(union opt_data));
-		opts[i].visited = 0;
-		opts[i].no_elems = 0;
-		if ( CFG_STR == opts[i].type ){
-			opts[i].value.string_data.s = opts[i].str_buf;
-			strcpy(opts[i].str_buf,"");
-			opts[i].value.string_data.len = 0;
+	for (i=0; i < TO_MAX_IDS; i++){
+		memset(&(target_options[i].value),'\0', sizeof(union opt_data));
+		target_options[i].visited = 0;
+		target_options[i].no_elems = 0;
+		if ( CFG_STR == target_options[i].type ){
+			target_options[i].value.string_data.s = target_options[i].str_buf;
+			strcpy(target_options[i].str_buf,"");
+			target_options[i].value.string_data.len = 0;
 		}
 	}
 
-	opts[TO_ID_STRIP     ].value.int_data=0;
-	opts[TO_ID_PROB      ].value.float_data=0;
-	opts[TO_ID_HASH_INDEX].value.int_data=0;
-	opts[TO_ID_STATUS    ].value.int_data=0;
-	opts[TO_ID_BACKUP    ].value.int_data=-1;
-
-	return;
+	target_options[TO_ID_STRIP     ].value.int_data=0;
+	target_options[TO_ID_PROB      ].value.float_data=0;
+	target_options[TO_ID_HASH_INDEX].value.int_data=0;
+	target_options[TO_ID_STATUS    ].value.int_data=0;
+	target_options[TO_ID_BACKUP    ].value.int_data=-1;
 }
 
-static int init_target_opts(option_description * opts){
-	if ( NULL == opts){
-		LM_DBG("Trying to init a NULL pointer location \n");
-		return -1;
-	}
-	memset(opts, '\0', sizeof(option_description) * TO_MAX_IDS);
+static int init_target_opts(){
 
-	strcpy((char*)(opts[TO_ID_COMMENT].name),    "comment");
-	strcpy((char*)(opts[TO_ID_STRIP].name),      "strip");
-	strcpy((char*)(opts[TO_ID_REWR_PREFIX].name),"rewrite_prefix");
-	strcpy((char*)(opts[TO_ID_PROB].name),       "prob");
-	strcpy((char*)(opts[TO_ID_HASH_INDEX].name), "hash_index");
-	strcpy((char*)(opts[TO_ID_REWR_SUFFIX].name),"rewrite_suffix");
-	strcpy((char*)(opts[TO_ID_STATUS].name),     "status");
-	strcpy((char*)(opts[TO_ID_BACKED_UP].name),  "backed_up");
-	strcpy((char*)(opts[TO_ID_BACKUP].name),     "backup");
+	memset(target_options, '\0', sizeof(option_description) * TO_MAX_IDS);
 
-	opts[TO_ID_COMMENT    ].type=CFG_STR;
-	opts[TO_ID_STRIP      ].type=CFG_INT;
-	opts[TO_ID_REWR_PREFIX].type=CFG_STR;
-	opts[TO_ID_PROB       ].type=CFG_FLOAT;
-	opts[TO_ID_HASH_INDEX ].type=CFG_INT;
-	opts[TO_ID_REWR_SUFFIX].type=CFG_STR;
-	opts[TO_ID_STATUS     ].type=CFG_INT;
-	opts[TO_ID_BACKED_UP  ].type=CFG_INT_LIST;
-	opts[TO_ID_BACKUP     ].type=CFG_INT;
+	strcpy((char*)(target_options[TO_ID_COMMENT].name),    "comment");
+	strcpy((char*)(target_options[TO_ID_STRIP].name),      "strip");
+	strcpy((char*)(target_options[TO_ID_REWR_PREFIX].name),"rewrite_prefix");
+	strcpy((char*)(target_options[TO_ID_PROB].name),       "prob");
+	strcpy((char*)(target_options[TO_ID_HASH_INDEX].name), "hash_index");
+	strcpy((char*)(target_options[TO_ID_REWR_SUFFIX].name),"rewrite_suffix");
+	strcpy((char*)(target_options[TO_ID_STATUS].name),     "status");
+	strcpy((char*)(target_options[TO_ID_BACKED_UP].name),  "backed_up");
+	strcpy((char*)(target_options[TO_ID_BACKUP].name),     "backup");
 
-	reset_opts(opts, TO_MAX_IDS);
+	target_options[TO_ID_COMMENT    ].type=CFG_STR;
+	target_options[TO_ID_STRIP      ].type=CFG_INT;
+	target_options[TO_ID_REWR_PREFIX].type=CFG_STR;
+	target_options[TO_ID_PROB       ].type=CFG_FLOAT;
+	target_options[TO_ID_HASH_INDEX ].type=CFG_INT;
+	target_options[TO_ID_REWR_SUFFIX].type=CFG_STR;
+	target_options[TO_ID_STATUS     ].type=CFG_INT;
+	target_options[TO_ID_BACKED_UP  ].type=CFG_INT_LIST;
+	target_options[TO_ID_BACKUP     ].type=CFG_INT;
+
+	reset_target_opts();
 	return 0;
 }
 
-static int init_prefix_opts(option_description * opts){
-	if ( NULL == opts){
-		LM_DBG("Trying to init a NULL pointer location \n");
-		return -1;
-	}
-	memset(opts, '\0', sizeof(option_description) * PO_MAX_IDS);
-	strcpy((char*)(opts[PO_MAX_TARGETS].name), "max_targets");
-	opts[PO_MAX_TARGETS].type=CFG_INT;
-	opts[PO_MAX_TARGETS].value.int_data=-1;
+static void reset_prefix_opts(){
+	prefix_options[PO_MAX_TARGETS].value.int_data=-1;
+}
+
+static int init_prefix_opts(){
+
+	memset(prefix_options, '\0', sizeof(option_description) * PO_MAX_IDS);
+	strcpy((char*)(prefix_options[PO_MAX_TARGETS].name), "max_targets");
+	prefix_options[PO_MAX_TARGETS].type=CFG_INT;
+	reset_prefix_opts();
 	return 0;
 }
 
 static int backup_config(void) {
 	FILE * from, * to;
-	char * backup_file, ch;
+	char * backup_file;
+	int ch;
 	LM_INFO("start configuration backup\n");
 	if((backup_file = pkg_malloc(strlen(config_file) + strlen (".bak") + 1)) == NULL){
 		PKG_MEM_ERROR;
@@ -258,22 +251,22 @@ int load_config(struct route_data_t * rd) {
 
 	/* Create and insert carrier data structure */
 	tmp_carrier_data = create_carrier_data(1, &rd->carrier_map[0].name, allocated_domain_num);
-	tmp_carrier_data->domain_num = 0;
-	tmp_carrier_data->id = 1;
-	tmp_carrier_data->name = &(rd->carrier_map[0].name);
-
 	if (tmp_carrier_data == NULL) {
 		LM_ERR("can't create new carrier\n");
 		goto errclose;
 	}
+	tmp_carrier_data->domain_num = 0;
+	tmp_carrier_data->id = 1;
+	tmp_carrier_data->name = &(rd->carrier_map[0].name);
+
 	if (add_carrier_data(rd, tmp_carrier_data) < 0) {
 		LM_ERR("couldn't add carrier data\n");
 		destroy_carrier_data(tmp_carrier_data);
 		goto errclose;
 	}
 
-	init_prefix_opts(prefix_options);
-	init_target_opts(target_options);
+	init_prefix_opts();
+	init_target_opts();
 
 	/* add all routes by parsing the route conf file */
 	/* while there are domain structures, get name and parse the structure*/
@@ -346,7 +339,7 @@ int load_config(struct route_data_t * rd) {
 		while ((ret_prefix = parse_struct_header(file, "prefix", &prefix_name))
 				== SUCCESSFUL_PARSING) {
 
-			reset_opts(prefix_options, PO_MAX_IDS);
+			reset_prefix_opts();
 			if (str_strcasecmp(&prefix_name, &CR_EMPTY_PREFIX) == 0) {
 				prefix_name.s[0] = '\0';
 				prefix_name.len = 0;
@@ -369,7 +362,7 @@ int load_config(struct route_data_t * rd) {
 					goto errclose;
 				}
 
-				reset_opts(target_options, TO_MAX_IDS);
+				reset_target_opts();
 				/* look for the target options: prob, hash index, status, etc*/
 				ret_target_opts = parse_options(file, target_options, TO_MAX_IDS, "}");
 				if ( SUCCESSFUL_PARSING == ret_target_opts ){

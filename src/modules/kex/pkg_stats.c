@@ -124,7 +124,7 @@ int pkg_proc_stats_destroy(void)
 /**
  *
  */
-static int pkg_proc_update_stats(void *data)
+static int pkg_proc_update_stats(sr_event_param_t *evp)
 {
 	struct mem_info info;
 	if(unlikely(_pkg_proc_stats_list==NULL))

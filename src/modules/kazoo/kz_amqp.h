@@ -293,6 +293,7 @@ int kz_amqp_consumer_worker_proc(int cmd_pipe);
 int kz_amqp_handle_server_failure(kz_amqp_conn_ptr connection);
 
 int kz_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
+int kz_pv_get_event_routing_key(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
 int kz_pv_get_last_query_result(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
 int kz_pv_get_connection_host(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
 

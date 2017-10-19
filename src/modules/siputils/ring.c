@@ -90,7 +90,10 @@ static int contains(str callid);
 int ring_insert_callid(struct sip_msg *msg, char *unused1, char *unused2)
 {
 	/* could fail, eg if already parsed don't care about result */
-	parse_headers(msg, HDR_CALLID_F, 0);
+	if(parse_headers(msg, HDR_CALLID_F, 0)<0) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
 
 	if (msg->callid) {
 		lock_get(ring_lock);
@@ -345,7 +348,10 @@ int ring_filter(struct sip_msg *msg, unsigned int flags, void *bar)
 
 	if (msg->first_line.type == SIP_REPLY && msg->first_line.u.reply.statuscode == 183) {
 		/* could fail, eg if already parsed, don't care about result */
-		parse_headers(msg, HDR_CALLID_F, 0);
+		if(parse_headers(msg, HDR_CALLID_F, 0)<0) {
+			LM_ERR("headers parsing failed\n");
+			return -1;
+		}
 
 		if (msg->callid) {
 			lock_get(ring_lock);

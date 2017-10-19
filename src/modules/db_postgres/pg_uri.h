@@ -41,13 +41,14 @@
  * to generic db_uri structures in the database API in SER. The 
  * structure contains parsed elements of postgres:// uri.
  */
-struct pg_uri {
+struct pg_uri
+{
 	db_drv_t drv;
-	char* username;
-	char* password;
-	char* host;
+	char *username;
+	char *password;
+	char *host;
 	unsigned short port;
-	char* database;
+	char *database;
 };
 
 /** Create a new pg_uri structure and parse the URI in parameter.
@@ -57,9 +58,8 @@ struct pg_uri {
  * @retval 0 on success
  * @retval A negative number on error.
  */
-int pg_uri(db_uri_t* uri);
+int pg_uri(db_uri_t *uri);
 
 /** @} */
 
 #endif /* _PG_URI_H */
-

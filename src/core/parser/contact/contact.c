@@ -20,13 +20,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- *  2003-03-25 Adapted to use new parameter parser (janakj)
  */
 
 #include <string.h>        /* memset */
@@ -54,55 +51,55 @@ static inline int skip_uri(str* _s)
 
 	while(_s->len) {
 		switch(*(_s->s)) {
-		case ',':
-		case ';':
-			if (st == ST1) return 0;
-			break;
+			case ',':
+			case ';':
+				if (st == ST1) return 0;
+				break;
 
-		case '\"':
-			switch(st) {
-			case ST1: st = ST2; break;
-			case ST2: st = ST1; break;
-			case ST3: st = ST4; break;
-			case ST4: st = ST3; break;
-			case ST5: st = ST2; break;
-			case ST6: st = ST4; break;
-			}
-			break;
+			case '\"':
+				switch(st) {
+					case ST1: st = ST2; break;
+					case ST2: st = ST1; break;
+					case ST3: st = ST4; break;
+					case ST4: st = ST3; break;
+					case ST5: st = ST2; break;
+					case ST6: st = ST4; break;
+				}
+				break;
 
-		case '<':
-			switch(st) {
-			case ST1: st = ST3; break;
-			case ST3: 
-				LOG(L_ERR, "skip_uri(): Second < found\n");
-				return -1;
-			case ST5: st = ST2; break;
-			case ST6: st = ST4; break;
-			}
-			break;
-			
-		case '>':
-			switch(st) {
-			case ST1: 
-				LOG(L_ERR, "skip_uri(): > is first\n");
-				return -2;
+			case '<':
+				switch(st) {
+					case ST1: st = ST3; break;
+					case ST3:
+							  LM_ERR("second bracket < found\n");
+							  return -1;
+					case ST5: st = ST2; break;
+					case ST6: st = ST4; break;
+				}
+				break;
 
-			case ST3: st = ST1; break;
-			case ST5: st = ST2; break;
-			case ST6: st = ST4; break;
-			}
-			break;
+			case '>':
+				switch(st) {
+					case ST1:
+						LM_ERR("bracket > is first\n");
+						return -2;
 
-		case '\\':
-			switch(st) {
-			case ST2: st = ST5; break;
-			case ST4: st = ST6; break;
-			case ST5: st = ST2; break;
-			case ST6: st = ST4; break;
-			}
-			break;
+					case ST3: st = ST1; break;
+					case ST5: st = ST2; break;
+					case ST6: st = ST4; break;
+				}
+				break;
 
-		default: break;
+			case '\\':
+				switch(st) {
+					case ST2: st = ST5; break;
+					case ST4: st = ST6; break;
+					case ST5: st = ST2; break;
+					case ST6: st = ST4; break;
+				}
+				break;
+
+			default: break;
 
 		}
 
@@ -111,7 +108,7 @@ static inline int skip_uri(str* _s)
 	}
 
 	if (st != ST1) {
-		LOG(L_ERR, "skip_uri(): < or \" not closed\n");
+		LM_ERR("bracket < or \" not closed\n");
 		return -3;
 	}
 
@@ -129,10 +126,9 @@ static inline int skip_name(str* _s)
 {
 	char* last_wsp, *p;
 	int i, quoted = 0;
-	
 
 	if (!_s) {
-		LOG(L_ERR, "skip_name(): Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -150,7 +146,7 @@ static inline int skip_name(str* _s)
 					_s->len -= i;
 					return 0;
 				}
-				
+
 				if (*p == ':') {
 					if (last_wsp) {
 						_s->s = last_wsp;
@@ -170,9 +166,9 @@ static inline int skip_name(str* _s)
 	}
 
 	if (quoted) {
-		LOG(L_ERR, "skip_name(): Closing quote missing in name part of Contact\n");
+		LM_ERR("closing quote missing in name part of Contact\n");
 	} else {
-		LOG(L_ERR, "skip_name(): Error in contact, scheme separator not found\n");
+		LM_ERR("error in contact, scheme separator not found\n");
 	}
 
 	return -1;
@@ -188,56 +184,57 @@ int parse_contacts(str* _s, contact_t** _c)
 	param_hooks_t hooks;
 
 	while(1) {
-		     /* Allocate and clear contact structure */
+		/* Allocate and clear contact structure */
 		c = (contact_t*)pkg_malloc(sizeof(contact_t));
 		if (c == 0) {
-			LOG(L_ERR, "parse_contacts(): No memory left\n");
+			LM_ERR("no memory left\n");
 			goto error;
 		}
 		memset(c, 0, sizeof(contact_t));
-		
+
 		c->name.s = _s->s;
 
 		if (skip_name(_s) < 0) {
-			LOG(L_ERR, "parse_contacts(): Error while skipping name part\n");
+			LM_ERR("error while skipping name part\n");
 			goto error;
 		}
 
 		c->uri.s = _s->s;
 		c->name.len = _s->s - c->name.s;
 		trim_trailing(&c->name);
-		
-		     /* Find the end of the URI */
+
+		/* Find the end of the URI */
 		if (skip_uri(_s) < 0) {
-			LOG(L_ERR, "parse_contacts(): Error while skipping URI\n");
+			LM_ERR("error while skipping URI\n");
 			goto error;
 		}
-		
+
 		c->uri.len = _s->s - c->uri.s; /* Calculate URI length */
 		trim_trailing(&(c->uri));      /* Remove any trailing spaces from URI */
 
-		     /* Remove <> if any */
-		if ((c->uri.len >= 2) && (c->uri.s[0] == '<') && (c->uri.s[c->uri.len - 1] == '>')) {
+		/* Remove <> if any */
+		if ((c->uri.len >= 2) && (c->uri.s[0] == '<')
+				&& (c->uri.s[c->uri.len - 1] == '>')) {
 			c->uri.s++;
 			c->uri.len -= 2;
 		}
 
 		trim(&c->uri);
-		
+
 		if (_s->len == 0) goto ok;
-		
+
 		if (_s->s[0] == ';') {         /* Contact parameter found */
 			_s->s++;
 			_s->len--;
 			trim_leading(_s);
-			
+
 			if (_s->len == 0) {
-				LOG(L_ERR, "parse_contacts(): Error while parsing params\n");
+				LM_ERR("error while parsing params\n");
 				goto error;
 			}
 
 			if (parse_params(_s, CLASS_CONTACT, &hooks, &c->params) < 0) {
-				LOG(L_ERR, "parse_contacts(): Error while parsing parameters\n");
+				LM_ERR("error while parsing parameters\n");
 				goto error;
 			}
 
@@ -251,14 +248,14 @@ int parse_contacts(str* _s, contact_t** _c)
 			if (_s->len == 0) goto ok;
 		}
 
-		     /* Next character is comma */
+		/* Next character is comma */
 		c->len = _s->s - c->name.s;
 		_s->s++;
 		_s->len--;
 		trim_leading(_s);
 
 		if (_s->len == 0) {
-			LOG(L_ERR, "parse_contacts(): Text after comma missing\n");
+			LM_ERR("text after comma missing\n");
 			goto error;
 		}
 
@@ -266,12 +263,12 @@ int parse_contacts(str* _s, contact_t** _c)
 		*_c = c;
 	}
 
- error:
+error:
 	if (c) pkg_free(c);
 	free_contacts(_c); /* Free any contacts created so far */
 	return -1;
 
- ok:
+ok:
 	c->len = _s->s - c->name.s;
 	c->next = *_c;
 	*_c = c;

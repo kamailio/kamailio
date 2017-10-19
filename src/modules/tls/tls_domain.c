@@ -480,16 +480,25 @@ static int tls_foreach_CTX_in_cfg(tls_domains_cfg_t* cfg,
 int fix_shm_pathname(str* path)
 {
 	str new_path;
-	char* abs_path;
-	
-	if (path->s && path->len && *path->s != '.' && *path->s != '/') {
+	char *abs_path;
+
+	if(path->s && path->len && *path->s != '.' && *path->s != '/') {
 		abs_path = get_abs_pathname(0, path);
-		if (abs_path == 0) return -1;
+		if(abs_path == 0) {
+			LM_ERR("get abs pathname failed\n");
+			return -1;
+		}
 		new_path.len = strlen(abs_path);
 		new_path.s = shm_malloc(new_path.len + 1);
+		if(new_path.s == 0) {
+			LM_ERR("no more shm memory\n");
+			pkg_free(abs_path);
+			return -1;
+		}
 		memcpy(new_path.s, abs_path, new_path.len);
 		new_path.s[new_path.len] = 0;
 		shm_free(path->s);
+		pkg_free(abs_path);
 		*path = new_path;
 	}
 	return 0;
@@ -987,6 +996,9 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 	}
 	memset(d->ctx, 0, sizeof(SSL_CTX*) * procs_no);
 	for(i = 0; i < procs_no; i++) {
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+		/* libssl < 1.1.0 */
 		if(d->method>TLS_USE_TLSvRANGE) {
 			d->ctx[i] = SSL_CTX_new(SSLv23_method());
 		} else {
@@ -999,6 +1011,30 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 		if(d->method>TLS_USE_TLSvRANGE) {
 			SSL_CTX_set_options(d->ctx[i], (long)ssl_methods[d->method - 1]);
 		}
+#else
+		/* libssl >= 1.1.0 */
+		d->ctx[i] = SSL_CTX_new(sr_tls_methods[d->method - 1].TLSMethod);
+		if (d->ctx[i] == NULL) {
+			ERR("%s: Cannot create SSL context\n", tls_domain_str(d));
+			return -1;
+		}
+		if(d->method>TLS_USE_TLSvRANGE) {
+			if(sr_tls_methods[d->method - 1].TLSMethodMin) {
+				SSL_CTX_set_min_proto_version(d->ctx[i],
+						sr_tls_methods[d->method - 1].TLSMethodMin);
+			}
+		} else {
+			if(sr_tls_methods[d->method - 1].TLSMethodMin) {
+				SSL_CTX_set_min_proto_version(d->ctx[i],
+						sr_tls_methods[d->method - 1].TLSMethodMin);
+			}
+			if(sr_tls_methods[d->method - 1].TLSMethodMax) {
+				SSL_CTX_set_max_proto_version(d->ctx[i],
+						sr_tls_methods[d->method - 1].TLSMethodMax);
+			}
+		}
+#endif
+
 #ifndef OPENSSL_NO_TLSEXT
 		/*
 		* check server domains for server_name extension and register
@@ -1050,12 +1086,12 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
  */
 static int passwd_cb(char *buf, int size, int rwflag, void *filename)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L	
-	UI             *ui;
-	const char     *prompt;
-	
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+	UI *ui;
+	const char *prompt;
+
 	ui = UI_new();
-	if (ui == NULL)
+	if(ui == NULL)
 		goto err;
 
 	prompt = UI_construct_prompt(ui, "passphrase", filename);
@@ -1063,16 +1099,13 @@ static int passwd_cb(char *buf, int size, int rwflag, void *filename)
 	UI_process(ui);
 	UI_free(ui);
 	return strlen(buf);
- 
- err:
+
+err:
 	ERR("passwd_cb: Error in passwd_cb\n");
-	if (ui) {
-		UI_free(ui);
-	}
 	return 0;
-	
+
 #else
-	if (des_read_pw_string(buf, size-1, "Enter Private Key password:", 0)) {
+	if(des_read_pw_string(buf, size - 1, "Enter Private Key password:", 0)) {
 		ERR("Error in passwd_cb\n");
 		return 0;
 	}

@@ -16,22 +16,25 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  */
 #ifndef _CFGT_INT_H_
 #define _CFGT_INT_H_
 
-#include "../../lib/srutils/srjson.h"
 #include "../../core/locking.h"
 #include "../../core/route_struct.h"
 #include "../../core/str_hash.h"
+#include "../../lib/srutils/srjson.h"
 
 #define CFGT_HASH_SIZE 32
 
-enum _cfgt_action_type {
-	CFGT_ROUTE=1,
-	CFGT_DROP_E, CFGT_DROP_D, CFGT_DROP_R
+enum _cfgt_action_type
+{
+	CFGT_ROUTE = 1,
+	CFGT_DROP_E,
+	CFGT_DROP_D,
+	CFGT_DROP_R
 };
 
 typedef struct _cfgt_hash

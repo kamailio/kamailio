@@ -391,6 +391,7 @@ static int fixup_sql_pvquery(void** param, int param_no)
 			if (pvl->sname.setf == NULL)
 			{
 				LM_ERR("result variable [%d] is read-only\n", i);
+				free_pvname_list(res);
 				return E_UNSPEC;
 			}
 			i++;

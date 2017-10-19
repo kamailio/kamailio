@@ -145,7 +145,6 @@ void check_dbs(unsigned int ticks, void *param){
 			ul_db_check(handles->handle);
 		}
 		tmp = tmp->next;
-		i++;
 	}
 	lock_release(list_lock);
 }

@@ -571,8 +571,8 @@ modparam("lcr", "lcr_rule_table", "rules")
 
 3.17. prefix_column (string)
 
-   Name of the column holding prefix of Request-URI user part and prefix
-   of gateway.
+   Name of the column in lcr_rule and lcr_gw tables holding prefix of
+   Request-URI user part and prefix of gateway, respectively.
 
    Default value is “prefix”.
 

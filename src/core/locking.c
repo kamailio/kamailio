@@ -39,7 +39,7 @@ rec_lock_t* rec_lock_alloc()
 rec_lock_t* rec_lock_init(rec_lock_t* rlock)
 {
 	memset(rlock, 0, sizeof(rec_lock_t));
-	if(lock_init(&rlock->lock)<0) {
+	if(lock_init(&rlock->lock)==0) {
 		return NULL;
 	}
 	return rlock;

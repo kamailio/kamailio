@@ -1,0 +1,16 @@
+# RPM Specs For OpenSuse Build Service (OBS) #
+
+Here are the RPM packaging specs for openSUSE Build Service:
+
+  * https://build.opensuse.org/
+
+It builds RPM packages for following distributions:
+
+  * CentOS 6 and 7
+  * RHEL 6 and 7
+  * Fedora 25 adn 26
+  * openSUSE 42.2 and 42.3
+
+Kamailio's RPMs bulding projects for various versions can be found at:
+
+  * https://build.opensuse.org/project/subprojects/home:kamailio

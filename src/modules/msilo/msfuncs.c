@@ -211,30 +211,30 @@ int m_build_headers(str *buf, str ctype, str contact, time_t date, str extra)
 	if(date > 0)
 	{
 		lenDate = timetToSipDateStr(date,strDate,48);
-		strncpy(p, strDate, lenDate);
+		memcpy(p, strDate, lenDate);
 		p += lenDate;
 	}
 	if(ctype.len > 0)
 	{
-		strncpy(p, "Content-Type: ", 14);
+		memcpy(p, "Content-Type: ", 14);
 		p += 14;
-		strncpy(p, ctype.s, ctype.len);
+		memcpy(p, ctype.s, ctype.len);
 		p += ctype.len;
-		strncpy(p, CRLF, CRLF_LEN);
+		memcpy(p, CRLF, CRLF_LEN);
 		p += CRLF_LEN;
 	
 	}
 	if(contact.len > 0 && ms_add_contact)
 	{
-		strncpy(p, CONTACT_PREFIX, CONTACT_PREFIX_LEN);
+		memcpy(p, CONTACT_PREFIX, CONTACT_PREFIX_LEN);
 		p += CONTACT_PREFIX_LEN;
-		strncpy(p, contact.s, contact.len);
+		memcpy(p, contact.s, contact.len);
 		p += contact.len;
-		strncpy(p, CONTACT_SUFFIX, CONTACT_SUFFIX_LEN);
+		memcpy(p, CONTACT_SUFFIX, CONTACT_SUFFIX_LEN);
 		p += CONTACT_SUFFIX_LEN;
 	}
 	if (extra.len > 0) {
-	    strncpy(p, extra.s, extra.len);
+	    memcpy(p, extra.s, extra.len);
 	    p += extra.len;
 	}
 	buf->len = p - buf->s;	
@@ -263,18 +263,18 @@ int m_build_body(str *body, time_t date, str msg, time_t sdate)
 	{
 		if(sdate!=0)
 		{
-			strncpy(p, "[Reminder message - ", 20);
+			memcpy(p, "[Reminder message - ", 20);
 			p += 20;
 		
-			strncpy(p, ctime(&sdate), 24);
+			memcpy(p, ctime(&sdate), 24);
 			p += 24;
 
 			*p++ = ']';
 		} else {
-			strncpy(p, "[Offline message - ", 19);
+			memcpy(p, "[Offline message - ", 19);
 			p += 19;
 	
-			strncpy(p, ctime(&date), 24);
+			memcpy(p, ctime(&date), 24);
 			p += 24;
 
 			*p++ = ']';

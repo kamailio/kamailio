@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module writes SIP traffic and some associated details into local
+		files. It intercepts automatically all the SIP traffic received
+		or sent by &kamailio; and provides a function to trigger storage from
+		configuration file.
+	</para>
+	<para>
+		Received traffic has the tag 'rcv' and the one to be sent has the tag
+		'snd'. The tag value is provided as parameter for the config function.
+	</para>
+	<para>
+		Besides the SIP packets, the module aims to save details related to
+		&kamailio; runtime environment that are useful for troubleshooting, like
+		process id, child rank, a.s.o.
+	</para>
+	<para>
+		The module should be useful for troubleshooting during development or
+		testing of new deployments, especially when dealing with traffic over
+		TLS with forward privacy, when other tools such as wireshark cannot
+		decrypt. For production environments with a lot of SIP traffic, look
+		at siptrace and sipcapture modules for a scalable alternative to
+		capture all the SIP traffic and then search using Homer Sipcapture
+		web toolkit.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="sipdump.p.enable">
+		<title><varname>enable</varname> (int)</title>
+		<para>
+			Enable storage.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (0 - off; 1 - on).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipdump", "enable", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipdump.p.wait">
+		<title><varname>wait</varname> (int)</title>
+		<para>
+			Wait time (microseconds) when no SIP traffic is received.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 100.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>wait</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipdump", "wait", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipdump.p.rotate">
+		<title><varname>rotate</varname> (int)</title>
+		<para>
+			Time interval in seconds to rotate files.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 7200 (2 hours).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rotate</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipdump", "rotate", 3600)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipdump.p.folder">
+		<title><varname>folder</varname> (str)</title>
+		<para>
+			Path to the folder where to save the files.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "/tmp".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>folder</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipdump", "folder", "/var/run/kamailio")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipdump.p.fprefix">
+		<title><varname>fprefix</varname> (str)</title>
+		<para>
+			File name prefix. The date is appended to this prefix in the format
+			yyyy-mm-dd--hh-mm-ss. The extension of the file is ".data".
+		</para>
+		<para>
+		<emphasis>
+			Default value is "kamailio-sipdump-".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fprefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipdump", "fprefix", "ksipdump-")
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="sipdump.f.sipdump_send">
+	    <title>
+		<function moreinfo="none">sipdump_send(tag)</function>
+	    </title>
+	    <para>
+		Send the details of the current SIP message to the writter process and
+		get it stored in the file.
+		</para>
+		<para>
+		The parameter "tag" can be any string, it is going to be written in
+		the tag attribute inside the storage file.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sipdump_send</function> usage</title>
+		<programlisting format="linespecific">
+...
+sipdump_send("cfg");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+	<section>
+	<title>RPC Commands</title>
+	<section id="sipdump.rpc.enable">
+	    <title>
+		<function moreinfo="none">sipdump.enable</function>
+	    </title>
+	    <para>
+		Control the value for "enable" parameter.
+		</para>
+		<para>
+		If no value is provided to this command, the value of "enable"
+		parameter is returned.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sipdump.enable</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamcmd; sipdump.enable
+&kamcmd; sipdump.enable 1
+&kamcmd; sipdump.enable 0
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+</chapter>
+

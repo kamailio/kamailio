@@ -46,6 +46,9 @@ typedef void* (*sr_resize_f)(void* mbp, void* p, size_t size);
 
 #endif /*DBG_SR_MEMORY*/
 
+typedef void  (*sr_shm_glock_f)(void* mbp);
+typedef void  (*sr_shm_gunlock_f)(void* mbp);
+
 typedef void  (*sr_mem_status_f)(void* mbp);
 typedef void  (*sr_mem_info_f)(void* mbp, struct mem_info* info);
 typedef unsigned long (*sr_mem_available_f)(void* mbp);
@@ -66,8 +69,12 @@ typedef struct sr_pkg_api {
 	void *mem_block;
 	/*memory chunk allocation*/
 	sr_malloc_f        xmalloc;
+	/*memory chunk allocation with 0 filling */
+	sr_malloc_f        xmallocxz;
 	/*memory chunk reallocation*/
 	sr_realloc_f       xrealloc;
+	/*memory chunk reallocation with always free of old buffer*/
+	sr_realloc_f       xreallocxf;
 	/*memory chunk free*/
 	sr_free_f          xfree;
 	/*memory status*/
@@ -96,15 +103,19 @@ typedef struct sr_shm_api {
 	void *mem_block;
 	/*memory chunk allocation*/
 	sr_malloc_f        xmalloc;
+	/*memory chunk allocation with 0 filling */
+	sr_malloc_f        xmallocxz;
 	/*memory chunk allocation without locking shm*/
 	sr_malloc_f        xmalloc_unsafe;
 	/*memory chunk reallocation*/
 	sr_realloc_f       xrealloc;
+	/*memory chunk reallocation with always free of old buffer*/
+	sr_realloc_f       xreallocxf;
 	/*memory chunk resizing - free+malloc in same locking*/
 	sr_resize_f        xresize;
 	/*memory chunk free*/
 	sr_free_f          xfree;
-	/*memory chunk free without locking shsm*/
+	/*memory chunk free without locking shm*/
 	sr_free_f          xfree_unsafe;
 	/*memory status*/
 	sr_mem_status_f    xstatus;
@@ -120,6 +131,10 @@ typedef struct sr_shm_api {
 	sr_mem_mod_get_stats_f  xmodstats;
 	/*memory stats free per module*/
 	sr_mem_mod_free_stats_f xfmodstats;
+	/*memory managing global lock*/
+	sr_shm_glock_f          xglock;
+	/*memory managing global unlock*/
+	sr_shm_gunlock_f        xgunlock;
 } sr_shm_api_t;
 
 #endif

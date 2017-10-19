@@ -73,7 +73,7 @@ static int cfg_new_select(str *gname, str *vname, void **group_p, void **var_p)
 	return 0;
 
 error:
-	LOG(L_ERR, "ERROR: cfg_new_select(): not enough memory\n");
+	LM_ERR("not enough memory\n");
 	if (sel) {
 		if (sel->gname.s) pkg_free(sel->gname.s);
 		if (sel->vname.s) pkg_free(sel->vname.s);
@@ -111,17 +111,17 @@ int cfg_fixup_selects()
 
 		if (sel->var_p) {
 			if (cfg_lookup_var(&sel->gname, &sel->vname, &group, &var)) {
-				LOG(L_ERR, "ERROR: cfg_parse_selects(): unknown variable: %.*s.%.*s\n",
-					sel->gname.len, sel->gname.s,
-					sel->vname.len, sel->vname.s);
+				LM_ERR("unknown variable: %.*s.%.*s\n",
+						sel->gname.len, sel->gname.s,
+						sel->vname.len, sel->vname.s);
 				return -1;
 			}
 			*(sel->group_p) = (void *)group;
 			*(sel->var_p) = (void *)var;
 		} else {
 			if (!(group = cfg_lookup_group(sel->gname.s, sel->gname.len))) {
-				LOG(L_ERR, "ERROR: cfg_parse_selects(): unknown configuration group: %.*s\n",
-					sel->gname.len, sel->gname.s);
+				LM_ERR("unknown configuration group: %.*s\n",
+						sel->gname.len, sel->gname.s);
 				return -1;
 			}
 			*(sel->group_p) = (void *)group;
@@ -145,22 +145,22 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 
 		/* two parameters are mandatory, group name and variable name */
 		if (s->n < 3) {
-			LOG(L_ERR, "ERROR: select_cfg_var(): At least two parameters are expected\n");
+			LM_ERR("At least two parameters are expected\n");
 			return -1;
 		}
 
 		if ((s->params[1].type != SEL_PARAM_STR)
-		|| (s->params[2].type != SEL_PARAM_STR)) {
-			LOG(L_ERR, "ERROR: select_cfg_var(): string parameters are expected\n");
+				|| (s->params[2].type != SEL_PARAM_STR)) {
+			LM_ERR("string parameters are expected\n");
 			return -1;
 		}
 
 		/* look-up the group and the variable */
 		if (cfg_lookup_var(&s->params[1].v.s, &s->params[2].v.s, &group, &var)) {
 			if (cfg_shmized) {
-				LOG(L_ERR, "ERROR: select_cfg_var(): unknown variable: %.*s.%.*s\n",
-					s->params[1].v.s.len, s->params[1].v.s.s,
-					s->params[2].v.s.len, s->params[2].v.s.s);
+				LM_ERR("unknown variable: %.*s.%.*s\n",
+						s->params[1].v.s.len, s->params[1].v.s.s,
+						s->params[2].v.s.len, s->params[2].v.s.s);
 				return -1;
 			}
 			/* The variable was not found, add it to the non-fixed select list.
@@ -169,9 +169,9 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 						&s->params[1].v.p, &s->params[2].v.p))
 				return -1;
 
-			LOG(L_DBG, "DEBUG: select_cfg_var(): select fixup is postponed: %.*s.%.*s\n",
-				s->params[1].v.s.len, s->params[1].v.s.s,
-				s->params[2].v.s.len, s->params[2].v.s.s);
+			LM_DBG("select fixup is postponed: %.*s.%.*s\n",
+					s->params[1].v.s.len, s->params[1].v.s.s,
+					s->params[2].v.s.len, s->params[2].v.s.s);
 
 			s->params[1].type = SEL_PARAM_PTR;
 			s->params[1].v.p = NULL;
@@ -184,8 +184,8 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 
 		if (var->def->on_change_cb) {
 			/* fixup function is defined -- safer to return an error
-			than an incorrect value */
-			LOG(L_ERR, "ERROR: select_cfg_var(): variable cannot be retrieved\n");
+			 * than an incorrect value */
+			LM_ERR("variable cannot be retrieved\n");
 			return -1;
 		}
 
@@ -203,34 +203,30 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 	if (!group || !var) return -1;
 
 	/* use the module's handle to access the variable, so the variables
-	are read from the local config */
+	 * are read from the local config */
 	p = *(group->handle) + var->offset;
-	if (p == NULL)
-		return -1;	/* The group is not yet ready.
-				 * (Trying to read the value from the
-				 * main process that has no local configuration) */
 
 	switch (CFG_VAR_TYPE(var)) {
-	case CFG_VAR_INT:
-		i = *(int *)p;
-		res->len = snprintf(buf, sizeof(buf)-1, "%d", i);
-		buf[res->len] = '\0';
-		res->s = buf;
-		break;
+		case CFG_VAR_INT:
+			i = *(int *)p;
+			res->len = snprintf(buf, sizeof(buf)-1, "%d", i);
+			buf[res->len] = '\0';
+			res->s = buf;
+			break;
 
-	case CFG_VAR_STRING:
-		res->s = *(char **)p;
-		res->len = (res->s) ? strlen(res->s) : 0;
-		break;
+		case CFG_VAR_STRING:
+			res->s = *(char **)p;
+			res->len = (res->s) ? strlen(res->s) : 0;
+			break;
 
-	case CFG_VAR_STR:
-		memcpy(res, p, sizeof(str));
-		break;
+		case CFG_VAR_STR:
+			memcpy(res, p, sizeof(str));
+			break;
 
-	default:
-		LOG(L_DBG, "DEBUG: select_cfg_var(): unsupported variable type: %d\n",
-			CFG_VAR_TYPE(var));
-		return -1;
+		default:
+			LM_DBG("unsupported variable type: %d\n",
+					CFG_VAR_TYPE(var));
+			return -1;
 	}
 	return 0;
 }
@@ -238,14 +234,14 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 /* fake function to eat the first parameter of @cfg_get */
 ABSTRACT_F(select_cfg_var1)
 
-/* fix-up function for read_cfg_var()
- *
- * return value:
- * >0 - success
- *  0 - the variable has not been declared yet, but it will be automatically
- *	fixed-up later.
- * <0 - error
- */
+	/* fix-up function for read_cfg_var()
+	 *
+	 * return value:
+	 * >0 - success
+	 *  0 - the variable has not been declared yet, but it will be automatically
+	 *	fixed-up later.
+	 * <0 - error
+	 */
 int read_cfg_var_fixup(char *gname, char *vname, struct cfg_read_handle *read_handle)
 {
 	cfg_group_t	*group;
@@ -263,9 +259,9 @@ int read_cfg_var_fixup(char *gname, char *vname, struct cfg_read_handle *read_ha
 	/* look-up the group and the variable */
 	if (cfg_lookup_var(&group_name, &var_name, &group, &var)) {
 		if (cfg_shmized) {
-			LOG(L_ERR, "ERROR: read_cfg_var_fixup(): unknown variable: %.*s.%.*s\n",
-				group_name.len, group_name.s,
-				var_name.len, var_name.s);
+			LM_ERR("unknown variable: %.*s.%.*s\n",
+					group_name.len, group_name.s,
+					var_name.len, var_name.s);
 			return -1;
 		}
 		/* The variable was not found, add it to the non-fixed select list.
@@ -274,9 +270,9 @@ int read_cfg_var_fixup(char *gname, char *vname, struct cfg_read_handle *read_ha
 					&read_handle->group, &read_handle->var))
 			return -1;
 
-		LOG(L_DBG, "DEBUG: read_cfg_var_fixup(): cfg read fixup is postponed: %.*s.%.*s\n",
-			group_name.len, group_name.s,
-			var_name.len, var_name.s);
+		LM_DBG("cfg read fixup is postponed: %.*s.%.*s\n",
+				group_name.len, group_name.s,
+				var_name.len, var_name.s);
 
 		read_handle->group = NULL;
 		read_handle->var = NULL;
@@ -306,30 +302,26 @@ unsigned int read_cfg_var(struct cfg_read_handle *read_handle, void **val)
 
 
 	/* use the module's handle to access the variable, so the variables
-	are read from the local config */
+	 * are read from the local config */
 	p = *(group->handle) + var->offset;
-	if (p == NULL)
-		return 0;	/* The group is not yet ready.
-				 * (Trying to read the value from the
-				 * main process that has no local configuration) */
 
 	switch (CFG_VAR_TYPE(var)) {
-	case CFG_VAR_INT:
-		*val = (void *)(long)*(int *)p;
-		break;
+		case CFG_VAR_INT:
+			*val = (void *)(long)*(int *)p;
+			break;
 
-	case CFG_VAR_STRING:
-		*val = (void *)*(char **)p;
-		break;
+		case CFG_VAR_STRING:
+			*val = (void *)*(char **)p;
+			break;
 
-	case CFG_VAR_STR:
-		memcpy(&s, p, sizeof(str));
-		*val = (void *)&s;
-		break;
+		case CFG_VAR_STR:
+			memcpy(&s, p, sizeof(str));
+			*val = (void *)&s;
+			break;
 
-	case CFG_VAR_POINTER:
-		*val = *(void **)p;
-		break;
+		case CFG_VAR_POINTER:
+			*val = *(void **)p;
+			break;
 
 	}
 	return CFG_VAR_TYPE(var);
@@ -382,20 +374,20 @@ int cfg_selected_inst(str *res, select_t *s, struct sip_msg *msg)
 
 		/* one parameter is mandatory: group name */
 		if (s->n != 2) {
-			LOG(L_ERR, "ERROR: selected_inst(): One parameter is expected\n");
+			LM_ERR("One parameter is expected\n");
 			return -1;
 		}
 
 		if (s->params[1].type != SEL_PARAM_STR) {
-			LOG(L_ERR, "ERROR: selected_inst(): string parameter is expected\n");
+			LM_ERR("string parameter is expected\n");
 			return -1;
 		}
 
 		/* look-up the group and the variable */
 		if (!(group = cfg_lookup_group(s->params[1].v.s.s, s->params[1].v.s.len))) {
 			if (cfg_shmized) {
-				LOG(L_ERR, "ERROR: selected_inst(): unknown configuration group: %.*s\n",
-					s->params[1].v.s.len, s->params[1].v.s.s);
+				LM_ERR("unknown configuration group: %.*s\n",
+						s->params[1].v.s.len, s->params[1].v.s.s);
 				return -1;
 			}
 			/* The group was not found, add it to the non-fixed select list.
@@ -404,8 +396,8 @@ int cfg_selected_inst(str *res, select_t *s, struct sip_msg *msg)
 						&s->params[1].v.p, NULL))
 				return -1;
 
-			LOG(L_DBG, "DEBUG: selected_inst(): select fixup is postponed: %.*s\n",
-				s->params[1].v.s.len, s->params[1].v.s.s);
+			LM_DBG("select fixup is postponed: %.*s\n",
+					s->params[1].v.s.len, s->params[1].v.s.s);
 
 			s->params[1].type = SEL_PARAM_PTR;
 			s->params[1].v.p = NULL;
@@ -433,4 +425,3 @@ int cfg_selected_inst(str *res, select_t *s, struct sip_msg *msg)
 	}
 	return 0;
 }
-

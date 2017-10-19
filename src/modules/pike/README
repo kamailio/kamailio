@@ -143,7 +143,7 @@ modparam("pike", "reqs_density_per_unit", 30)
 
 3.3. remove_latency (integer)
 
-   Speciies for how long the IP address will be kept in memory after the
+   Specifies for how long the IP address will be kept in memory after the
    last request from that IP address. It's a sort of timeout value, in
    seconds. Note that it is not the duration to keep the IP in state
    'blocked'. An IP is unblocked next occurence of 'sampling_time_unit'

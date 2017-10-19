@@ -58,6 +58,7 @@
 #include "ul_db.h"
 #include "ul_db_layer.h"
 #include "dlist.h"
+#include "config.h"
 
 MODULE_VERSION
 
@@ -85,7 +86,6 @@ static void destroy(void);                          /*!< Module destroy function
 static int child_init(int rank);                    /*!< Per-child init function */
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
-int ul_db_update_as_insert = 0;
 
 /*
  * Module parameters and their default values
@@ -160,15 +160,11 @@ str failover_time_col    = str_init(FAILOVER_T_COL);
 str spare_col            = str_init(SPARE_COL);
 str error_col            = str_init(ERROR_COL);
 str risk_group_col       = str_init(RISK_GROUP_COL);
-int expire_time          = DEFAULT_EXPIRE;
-int db_error_threshold   = DEFAULT_ERR_THRESHOLD;
-int failover_level       = DEFAULT_FAILOVER_LEVEL;
 int retry_interval       = DB_RETRY;
 int policy               = DB_DEFAULT_POLICY;
 int db_write             = 0;
 int db_master_write      = 0;
 int alg_location         = 0;
-int ul_db_ops_ruid 		 = 0;
 
 int db_use_transactions  = 0;
 str db_transaction_level = str_init(DB_DEFAULT_TRANSACTION_LEVEL);
@@ -240,9 +236,9 @@ static param_export_t params[] = {
 	{"spare_flag_column",    PARAM_STR, &spare_col         },
 	{"error_column",         PARAM_STR, &error_col         },
 	{"risk_group_column",    PARAM_STR, &risk_group_col    },
-	{"expire_time",          INT_PARAM, &expire_time         },
-	{"db_err_threshold",     INT_PARAM, &db_error_threshold  },
-	{"failover_level",       INT_PARAM, &failover_level      },
+	{"expire_time",          INT_PARAM, &default_p_usrloc_cfg.expire_time},
+	{"db_err_threshold",     INT_PARAM, &default_p_usrloc_cfg.db_err_threshold},
+	{"failover_level",       INT_PARAM, &default_p_usrloc_cfg.failover_level},
 	{"db_retry_interval",    INT_PARAM, &retry_interval      },
 	{"db_use_transactions",  INT_PARAM, &db_use_transactions },
 	{"db_transaction_level", INT_PARAM, &db_transaction_level},
@@ -250,7 +246,8 @@ static param_export_t params[] = {
 	{"write_on_master_db",   INT_PARAM, &db_master_write     },
 	{"connection_expires",   INT_PARAM, &connection_expires  },
 	{"alg_location",         INT_PARAM, &alg_location },
-    {"db_ops_ruid",          INT_PARAM, &ul_db_ops_ruid },
+    {"db_ops_ruid",          INT_PARAM, &default_p_usrloc_cfg.db_ops_ruid},
+	{"db_update_as_insert",  INT_PARAM, &default_p_usrloc_cfg.db_update_as_insert},
 	{0, 0, 0}
 };
 
@@ -316,6 +313,10 @@ static int mod_init(void)
 		ul_hash_size = 1<<ul_hash_size;
 	ul_locks_no = ul_hash_size;
 
+	if(cfg_declare("p_usrloc", p_usrloc_cfg_def, &default_p_usrloc_cfg, cfg_sizeof(p_usrloc), &p_usrloc_cfg)){
+		LM_ERR("Fail to declare the configuration\n");
+	        return -1;
+	}
 	/* check matching mode */
 	switch (matching_mode) {
 		case CONTACT_ONLY:

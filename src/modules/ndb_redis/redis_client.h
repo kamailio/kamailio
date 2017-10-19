@@ -35,6 +35,8 @@
 #include "../../core/mod_fix.h"
 
 #define MAXIMUM_PIPELINED_COMMANDS 1000
+#define MAXIMUM_NESTED_KEYS 10
+#define LM_DBG_redis_reply(rpl) print_redis_reply(L_DBG,(rpl),0)
 
 int redisc_init(void);
 int redisc_destroy(void);
@@ -74,7 +76,8 @@ typedef struct redisc_pv {
 	redisc_reply_t *reply;
 	str rkey;
 	int rkeyid;
-	gparam_t pos;  /* Array element position. */
+	gparam_t pos[MAXIMUM_NESTED_KEYS];  /* Array element position. */
+	int rkeynum;
 } redisc_pv_t;
 
 /* Server related functions */
@@ -95,4 +98,5 @@ int redisc_free_reply(str *name);
 int redisc_check_auth(redisc_server_t *rsrv, char *pass);
 int redis_check_server(redisc_server_t *rsrv);
 int redis_count_err_and_disable(redisc_server_t *rsrv);
+void print_redis_reply(int log_level, redisReply *rpl,int offset);
 #endif

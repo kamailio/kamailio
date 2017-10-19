@@ -48,16 +48,16 @@ int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 		return -1;
 	}
 	htc = ht_cell_pkg_copy(hpv->ht, &htname, _htc_local);
+	if(_htc_local!=htc)
+	{
+		ht_cell_pkg_free(_htc_local);
+		_htc_local=htc;
+	}
 	if(htc==NULL)
 	{
 		if(hpv->ht->flags==PV_VAL_INT)
 			return pv_get_sintval(msg, param, res, hpv->ht->initval.n);
 		return pv_get_null(msg, param, res);
-	}
-	if(_htc_local!=htc)
-	{
-		ht_cell_pkg_free(_htc_local);
-		_htc_local=htc;
 	}
 
 	if(htc->flags&AVP_VAL_STR)
@@ -91,7 +91,9 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
 		/* delete it */
-		if (hpv->ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &hpv->htname, &htname, 0, NULL, 0)!=0) {
+		if (hpv->ht->dmqreplicate>0
+				&& ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &hpv->htname,
+					&htname, 0, NULL, 0)!=0) {
 			LM_ERR("dmq relication failed\n");
 		}
 		ht_del_cell(hpv->ht, &htname);
@@ -101,7 +103,9 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 	if(val->flags&PV_TYPE_INT)
 	{
 		isval.n = val->ri;
-		if (hpv->ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname, &htname, 0, &isval, 1)!=0) {
+		if (hpv->ht->dmqreplicate>0
+				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname,
+					&htname, 0, &isval, 1)!=0) {
 			LM_ERR("dmq relication failed\n");
 		}
 		if(ht_set_cell(hpv->ht, &htname, 0, &isval, 1)!=0)
@@ -111,7 +115,9 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		}
 	} else {
 		isval.s = val->rs;
-		if (hpv->ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname, &htname, AVP_VAL_STR, &isval, 1)!=0) {
+		if (hpv->ht->dmqreplicate>0
+				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname,
+					&htname, AVP_VAL_STR, &isval, 1)!=0) {
 			LM_ERR("dmq relication failed\n");
 		}
 		if(ht_set_cell(hpv->ht, &htname, AVP_VAL_STR, &isval, 1)!=0)
@@ -325,15 +331,15 @@ int pv_get_ht_add(struct sip_msg *msg,  pv_param_t *param,
 		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
-	htc = ht_cell_value_add(hpv->ht, &htname, val, 1, _htc_local);
-	if(htc==NULL)
-	{
-		return pv_get_null(msg, param, res);
-	}
+	htc = ht_cell_value_add(hpv->ht, &htname, val, _htc_local);
 	if(_htc_local!=htc)
 	{
 		ht_cell_pkg_free(_htc_local);
 		_htc_local=htc;
+	}
+	if(htc==NULL)
+	{
+		return pv_get_null(msg, param, res);
 	}
 
 	if(htc->flags&AVP_VAL_STR)
@@ -362,49 +368,57 @@ int pv_get_ht_dec(struct sip_msg *msg,  pv_param_t *param,
 
 int pv_parse_ht_expired_cell(pv_spec_t *sp, str *in)
 {
-	if ((in->len != 3 || strncmp(in->s, "key", in->len) != 0) &&
-			(in->len != 5 || strncmp(in->s, "value", in->len) != 0))
-	{
+	if(sp==NULL || in==NULL || in->len<=0)
 		return -1;
+	switch(in->len)
+	{
+		case 3:
+			if(strncmp(in->s, "key", in->len)==0) {
+				sp->pvp.pvn.u.isname.name.n = 0;
+			} else {
+				goto error;
+			}
+		break;
+		case 5:
+			if(strncmp(in->s, "value", in->len)==0) {
+				sp->pvp.pvn.u.isname.name.n = 1;
+			} else {
+				goto error;
+			}
+		break;
+		default:
+			goto error;
 	}
-
-	sp->pvp.pvn.u.isname.name.s.s = in->s;
-	sp->pvp.pvn.u.isname.name.s.len = in->len;
 	sp->pvp.pvn.u.isname.type = 0;
 	sp->pvp.pvn.type = PV_NAME_INTSTR;
 
 	return 0;
+
+error:
+	LM_ERR("unknown pv name %.*s\n", in->len, in->s);
+	return -1;
 }
 
 int pv_get_ht_expired_cell(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
-	if (res == NULL || ht_expired_cell == NULL)
-	{
+	if (res == NULL || ht_expired_cell == NULL) {
 		return -1;
 	}
 
-	if (param->pvn.u.isname.name.s.len == 3 &&
-		strncmp(param->pvn.u.isname.name.s.s, "key", 3) == 0)
+	switch(param->pvn.u.isname.name.n)
 	{
-		res->rs = ht_expired_cell->name;
+		case 0:
+			return pv_get_strval(msg, param, res, &ht_expired_cell->name);
+		case 1:
+			if(ht_expired_cell->flags&AVP_VAL_STR) {
+				return pv_get_strval(msg, param, res, &ht_expired_cell->value.s);
+			} else {
+				return pv_get_sintval(msg, param, res, ht_expired_cell->value.n);
+			}
+		default:
+			return pv_get_null(msg, param, res);
 	}
-	else if (param->pvn.u.isname.name.s.len == 5 &&
-		strncmp(param->pvn.u.isname.name.s.s, "value", 5) == 0)
-	{
-		if(ht_expired_cell->flags&AVP_VAL_STR) {
-			return pv_get_strval(msg, param, res, &ht_expired_cell->value.s);
-		} else {
-			return pv_get_sintval(msg, param, res, ht_expired_cell->value.n);
-		}
-	}
-
-	if (res->rs.s == NULL)
-		res->flags = PV_VAL_NULL;
-	else
-		res->flags = PV_VAL_STR;
-
-	return 0;
 }
 
 int pv_parse_iterator_name(pv_spec_t *sp, str *in)

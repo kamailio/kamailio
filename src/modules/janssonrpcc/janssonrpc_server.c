@@ -43,6 +43,11 @@
 #include "janssonrpc_server.h"
 #include "janssonrpc_connect.h"
 
+gen_lock_t* jsonrpc_server_group_lock = NULL;
+
+/* where all the servers are stored */
+jsonrpc_server_group_t** global_server_group = NULL;
+
 /* used for debugging only */
 void print_server(jsonrpc_server_t* server)
 {

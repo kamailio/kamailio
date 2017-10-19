@@ -272,7 +272,7 @@ size_t write_cb(void *ptr, size_t size, size_t nmemb, void *data)
 
 	old_len = cell->reply->result->len;
 	cell->reply->result->len += realsize;
-	cell->reply->result->s = (char*)shm_realloc(cell->reply->result->s, cell->reply->result->len);
+	cell->reply->result->s = (char*)shm_reallocxf(cell->reply->result->s, cell->reply->result->len);
 	if (cell->reply->result->s == NULL) {
 		LM_ERR("Cannot allocate shm memory for reply's result\n");
 		shm_free(cell->reply->result);
@@ -314,7 +314,9 @@ void reply_error(struct http_m_cell *cell)
 		reply->error[0] = '\0';
 	}
 
-	cell->cb(reply, cell->param);
+	if (cell) {
+		cell->cb(reply, cell->param);
+	}
 
 	pkg_free(reply);
 

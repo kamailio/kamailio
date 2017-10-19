@@ -58,7 +58,6 @@ int dbk_auth_wait_timeout = 3;
 int dbk_reconn_retries = 8;
 int dbk_presentity_phtable_size = 4096;
 int dbk_command_table_size = 2048;
-
 int dbk_use_federated_exchange = 0;
 str dbk_federated_exchange = str_init("federation");
 str dbk_primary_zone_name = str_init("local");
@@ -130,6 +129,7 @@ static tr_export_t mod_trans[] = {
 static pv_export_t kz_mod_pvs[] = {
 	{{"kzR", (sizeof("kzR")-1)}, PVT_OTHER, kz_pv_get_last_query_result, 0,	0, 0, 0, 0},
 	{{"kzE", (sizeof("kzE")-1)}, PVT_OTHER, kz_pv_get_event_payload, 0,	0, 0, 0, 0},
+	{{"kzRK", (sizeof("kzRK")-1)}, PVT_OTHER, kz_pv_get_event_routing_key, 0,	0, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 

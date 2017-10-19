@@ -372,8 +372,10 @@ static inline int sb_add(struct string_buffer *sb, str *nstr)
 	int rsize = sb->len + nstr->len;
 	int asize;
 	char *newp;
-	
-	if ( rsize > sb->size ) {
+
+	if(nstr->len==0) return 0;
+
+	if ( sb->s==NULL || rsize > sb->size ) {
 		asize = rsize - sb->size;
 		new_size = sb->size + (asize / sb->increment  + (asize % sb->increment > 0)) * sb->increment;
 		newp = pkg_malloc(new_size);
@@ -423,6 +425,9 @@ static int build_update_cmd(str* sql_cmd, db_cmd_t* cmd)
 	rv = sb_add(&sql_buf, &strings[STR_UPDATE]);	/* "UPDATE " */
 	rv |= sb_add(&sql_buf, &cmd->table);			/* table name */
 	rv |= sb_add(&sql_buf, &strings[STR_SET]);		/* " SET " */
+	if (rv) {
+		goto err;
+	}
 
 	/* column name-value pairs */
 	for(i = 0, fld = cmd->vals; !DB_FLD_LAST(fld[i]); i++) {

@@ -11,7 +11,7 @@
     <para>
         Max. maxfwd limit.
     </para>
-    <para>Default value: 16.</para>
+    <para>Default value: 70.</para>
     <para>Range: 0 - 255.</para>
     <para>Type: integer.</para>
     <para>

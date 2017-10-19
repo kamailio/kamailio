@@ -49,11 +49,13 @@
 #include "../../core/action.h"
 #include "../../core/pvar.h"
 #include "../../core/dset.h"
+#include "../../core/mod_fix.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/lvalue.h"
+#include "../../core/kemi.h"
 #include "dialplan.h"
 #include "dp_db.h"
 
@@ -70,15 +72,21 @@ static int dialplan_init_rpc(void);
 static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2);
 static int dp_trans_fixup(void ** param, int param_no);
 static int dp_reload_f(struct sip_msg* msg);
+static int w_dp_replace(sip_msg_t* msg, char* pid, char* psrc, char* pdst);
+static int w_dp_match(sip_msg_t* msg, char* pid, char* psrc);
+
+int dp_replace_fixup(void** param, int param_no);
+int dp_replace_fixup_free(void** param, int param_no);
 
 str attr_pvar_s = STR_NULL;
-pv_spec_t * attr_pvar = NULL;
+pv_spec_t *attr_pvar = NULL;
 
 str default_param_s = str_init(DEFAULT_PARAM);
 dp_param_p default_par2 = NULL;
 
 int dp_fetch_rows = 1000;
 int dp_match_dynamic = 0;
+int dp_append_branch = 1;
 
 static param_export_t mod_params[]={
 	{ "db_url",			PARAM_STR,	&dp_db_url },
@@ -94,6 +102,7 @@ static param_export_t mod_params[]={
 	{ "attrs_pvar",	    PARAM_STR,	&attr_pvar_s },
 	{ "fetch_rows",		PARAM_INT,	&dp_fetch_rows },
 	{ "match_dynamic",	PARAM_INT,	&dp_match_dynamic },
+	{ "append_branch",	PARAM_INT,	&dp_append_branch },
 	{0,0,0}
 };
 
@@ -104,6 +113,10 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"dp_reload",(cmd_function)dp_reload_f,	0, 0,  0,
 		ANY_ROUTE},
+	{"dp_match",(cmd_function)w_dp_match,	2,	fixup_igp_spve,
+		fixup_free_igp_spve, ANY_ROUTE},
+	{"dp_replace",(cmd_function)w_dp_replace,	2,	dp_replace_fixup,
+		dp_replace_fixup_free, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -235,7 +248,7 @@ static int dp_get_svalue(struct sip_msg * msg, pv_spec_t *spec, str* val)
 }
 
 
-static int dp_update(struct sip_msg * msg, pv_spec_t * src, pv_spec_t * dest,
+static int dp_update(struct sip_msg * msg, pv_spec_t * dest,
 		str * repl, str * attrs)
 {
 	int no_change;
@@ -244,30 +257,38 @@ static int dp_update(struct sip_msg * msg, pv_spec_t * src, pv_spec_t * dest,
 	memset(&val, 0, sizeof(pv_value_t));
 	val.flags = PV_VAL_STR;
 
-	no_change = (dest==NULL) || (dest->type == PVT_NONE) || (!repl->s) || (!repl->len);
+	no_change = (dest==NULL) || (dest->type == PVT_NONE)
+						|| (!repl->s) || (!repl->len);
 
 	if (no_change)
 		goto set_attr_pvar;
 
 	val.rs = *repl;
 
-	if(dest->setf(msg, &dest->pvp, (int)EQ_T, &val)<0)
-	{
-		LM_ERR("setting dst pseudo-variable failed\n");
-		return -1;
+	if(dest->setf) {
+		if(dest->setf(msg, &dest->pvp, (int)EQ_T, &val)<0) {
+			LM_ERR("setting dst pseudo-variable failed\n");
+			return -1;
+		}
+	} else {
+		LM_WARN("target variable is read only - skipping setting its value\n");
 	}
 
-	if(is_route_type(FAILURE_ROUTE)
-			&& (dest->type==PVT_RURI || dest->type==PVT_RURI_USERNAME)) {
-	    if (append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0) != 1) {
-			LM_ERR("append_branch action failed\n");
-			return -1;
+	if(dp_append_branch!=0) {
+		if(is_route_type(FAILURE_ROUTE)
+				&& (dest->type == PVT_RURI
+						|| dest->type == PVT_RURI_USERNAME)) {
+			if(append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0)
+					!= 1) {
+				LM_ERR("append branch action failed\n");
+				return -1;
+			}
 		}
 	}
 
 set_attr_pvar:
 
-	if(!attr_pvar)
+	if(attr_pvar==NULL || attrs==NULL)
 		return 0;
 
 	val.rs = *attrs;
@@ -287,7 +308,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 	str input, output;
 	dpl_id_p idp;
 	dp_param_p id_par, repl_par;
-	str attrs, * attrs_par;
+	str attrs, *outattrs;
 
 	if(!msg)
 		return -1;
@@ -312,8 +333,8 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 
 	LM_DBG("input is %.*s\n", input.len, input.s);
 
-	attrs_par = (!attr_pvar)?NULL:&attrs;
-	if (translate(msg, input, &output, idp, attrs_par)!=0){
+	outattrs = (!attr_pvar)?NULL:&attrs;
+	if (dp_translate_helper(msg, &input, &output, idp, outattrs)!=0) {
 		LM_DBG("could not translate %.*s "
 				"with dpid %i\n", input.len, input.s, idp->dp_id);
 		return -1;
@@ -322,8 +343,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 			input.len, input.s, idp->dp_id, output.len, output.s);
 
 	/* set the output */
-	if (dp_update(msg, repl_par->v.sp[0], repl_par->v.sp[1],
-				&output, attrs_par) !=0){
+	if (dp_update(msg, repl_par->v.sp[1], &output, outattrs) !=0){
 		LM_ERR("cannot set the output\n");
 		return -1;
 	}
@@ -332,7 +352,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 
 }
 
-#define verify_par_type(_par_no, _spec)\
+#define verify_par_type(_par_no, _spec, _ret) \
 	do{\
 		if( ((_par_no == 1) \
 					&& (_spec->type != PVT_AVP) && (_spec->type != PVT_XAVP) && \
@@ -343,7 +363,8 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 					&& (_spec->type!=PVT_RURI) && (_spec->type!=PVT_RURI_USERNAME))){\
 			\
 			LM_ERR("Unsupported Parameter TYPE[%d]\n", _spec->type);\
-			return E_UNSPEC;\
+			_ret = E_UNSPEC; \
+			goto error; \
 		}\
 	}while(0);
 
@@ -359,6 +380,7 @@ static int dp_trans_fixup(void ** param, int param_no){
 	dp_param_p dp_par= NULL;
 	char *p, *s=NULL;
 	str lstr;
+	int ret = E_INVALID_PARAMS;
 
 	if(param_no!=1 && param_no!=2)
 		return 0;
@@ -384,8 +406,8 @@ static int dp_trans_fixup(void ** param, int param_no){
 			lstr.s = *param; lstr.len = strlen(*param);
 			if(str2sint(&lstr, &dpid) != 0) {
 				LM_ERR("bad number <%s>\n",(char *)(*param));
-				pkg_free(dp_par);
-				return E_CFG;
+				ret = E_CFG;
+				goto error;
 			}
 
 			dp_par->type = DP_VAL_INT;
@@ -393,10 +415,11 @@ static int dp_trans_fixup(void ** param, int param_no){
 		}else{
 			lstr.s = p; lstr.len = strlen(p);
 			dp_par->v.sp[0] = pv_cache_get(&lstr);
-			if (dp_par->v.sp[0]==NULL)
+			if (dp_par->v.sp[0]==NULL) {
 				goto error;
+			}
 
-			verify_par_type(param_no, dp_par->v.sp[0]);
+			verify_par_type(param_no, dp_par->v.sp[0], ret);
 			dp_par->type = DP_VAL_SPEC;
 		}
 	} else {
@@ -410,15 +433,17 @@ static int dp_trans_fixup(void ** param, int param_no){
 
 		lstr.s = p; lstr.len = strlen(p);
 		dp_par->v.sp[0] = pv_cache_get(&lstr);
-		if(dp_par->v.sp[0]==NULL)
+		if(dp_par->v.sp[0]==NULL) {
 			goto error;
+		}
 
 		if (s != 0) {
 			lstr.s = s; lstr.len = strlen(s);
 			dp_par->v.sp[1] = pv_cache_get(&lstr);
-			if (dp_par->v.sp[1]==NULL)
+			if (dp_par->v.sp[1]==NULL) {
 				goto error;
-			verify_par_type(param_no, dp_par->v.sp[1]);
+			}
+			verify_par_type(param_no, dp_par->v.sp[1], ret);
 		}
 
 		dp_par->type = DP_VAL_SPEC;
@@ -431,7 +456,117 @@ static int dp_trans_fixup(void ** param, int param_no){
 
 error:
 	LM_ERR("failed to parse param %i\n", param_no);
-	return E_INVALID_PARAMS;
+	if(dp_par) pkg_free(dp_par);
+
+	return ret;
+}
+
+static int dp_replace_helper(sip_msg_t *msg, int dpid, str *input,
+		pv_spec_t *pvd)
+{
+	dpl_id_p idp;
+	str output = STR_NULL;
+	str attrs = STR_NULL;
+	str *outattrs = NULL;
+
+	if ((idp = select_dpid(dpid)) ==0) {
+		LM_DBG("no information available for dpid %i\n", dpid);
+		return -2;
+	}
+
+	outattrs = (!attr_pvar)?NULL:&attrs;
+	if (dp_translate_helper(msg, input, &output, idp, outattrs)!=0) {
+		LM_DBG("could not translate %.*s "
+				"with dpid %i\n", input->len, input->s, idp->dp_id);
+		return -1;
+	}
+	LM_DBG("input %.*s with dpid %i => output %.*s\n",
+			input->len, input->s, idp->dp_id, output.len, output.s);
+
+	/* set the output */
+	if (dp_update(msg, pvd, &output, outattrs) !=0){
+		LM_ERR("cannot set the output\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+static int w_dp_replace(sip_msg_t* msg, char* pid, char* psrc, char* pdst)
+{
+	int dpid = 1;
+	str src = STR_NULL;
+	pv_spec_t *pvd = NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)pid, &dpid)<0) {
+		LM_ERR("failed to get dialplan id value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)psrc, &src)<0) {
+		LM_ERR("failed to get src value\n");
+		return -1;
+	}
+	pvd = (pv_spec_t*)pdst;
+
+	return dp_replace_helper(msg, dpid, &src, pvd);
+}
+
+static int ki_dp_replace(sip_msg_t* msg, int dpid, str* src, str* dst)
+{
+	pv_spec_t *pvd = NULL;
+
+	pvd = pv_cache_get(dst);
+	if(pvd==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", dst->len, dst->s);
+		return -1;
+	}
+
+	return dp_replace_helper(msg, dpid, src, pvd);
+}
+
+static int w_dp_match(sip_msg_t* msg, char* pid, char* psrc)
+{
+	int dpid = 1;
+	str src = STR_NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)pid, &dpid)<0) {
+		LM_ERR("failed to get dialplan id value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)psrc, &src)<0) {
+		LM_ERR("failed to get src value\n");
+		return -1;
+	}
+
+	return dp_replace_helper(msg, dpid, &src, NULL);
+}
+
+static int ki_dp_match(sip_msg_t* msg, int dpid, str* src)
+{
+	return dp_replace_helper(msg, dpid, src, NULL);
+}
+
+int dp_replace_fixup(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_igp_null(param, param_no);
+	else if (param_no == 2)
+		return fixup_spve_all(param, param_no);
+	else if (param_no == 3)
+		return fixup_pvar_all(param, param_no);
+	return E_UNSPEC;
+}
+
+
+int dp_replace_fixup_free(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_free_igp_null(param, param_no);
+	else if (param_no == 2)
+		return fixup_free_spve_all(param, param_no);
+	else if (param_no == 3)
+		return fixup_free_pvar_all(param, param_no);
+	return E_UNSPEC;
 }
 
 /**
@@ -525,7 +660,7 @@ static void dialplan_rpc_translate(rpc_t* rpc, void* ctx)
 
 	LM_DBG("trying to translate %.*s with dpid %i\n",
 			input.len, input.s, idp->dp_id);
-	if (translate(NULL, input, &output, idp, &attrs)!=0){
+	if (dp_translate_helper(NULL, &input, &output, idp, &attrs)!=0){
 		LM_DBG("could not translate %.*s with dpid %i\n",
 				input.len, input.s, idp->dp_id);
 		rpc->fault(ctx, 500, "No translation");
@@ -662,5 +797,34 @@ static int dialplan_init_rpc(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_dialplan_exports[] = {
+	{ str_init("dialplan"), str_init("dp_match"),
+		SR_KEMIP_INT, ki_dp_match,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialplan"), str_init("dp_replace"),
+		SR_KEMIP_INT, ki_dp_replace,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_dialplan_exports);
 	return 0;
 }

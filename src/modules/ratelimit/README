@@ -51,7 +51,7 @@ Hendrik Scholz
         6. Functions
 
               6.1. rl_check([pvar])
-              6.2. rl_check_pipe([pipe_no])
+              6.2. rl_check_pipe(pipe_no)
 
         7. RPC Commands
 
@@ -103,7 +103,7 @@ Chapter 1. Admin Guide
    6. Functions
 
         6.1. rl_check([pvar])
-        6.2. rl_check_pipe([pipe_no])
+        6.2. rl_check_pipe(pipe_no)
 
    7. RPC Commands
 
@@ -325,7 +325,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 6. Functions
 
    6.1. rl_check([pvar])
-   6.2. rl_check_pipe([pipe_no])
+   6.2. rl_check_pipe(pipe_no)
 
 6.1.  rl_check([pvar])
 
@@ -334,8 +334,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    type, and then the pipe will be identified based on the matched queue.
    If a pipe number is provided as a parameter, then the given pipe number
    will be used for identifying the ratelimit algorithm. The pipe number
-   must be provided via a pseudovariable. It is recommended to provide the
-   pipe number via an integer pseudovariable.
+   must be provided as number or via a pseudovariable.
 
    The method will return an error code if the limit for the matched
    algorithm is reached.
@@ -344,7 +343,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
      * pvar - the pseudovariable holding the pipe id to be used by
        ratelimit.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.4. rl_check usage
 ...
@@ -353,7 +352,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
                 append_to_reply("Retry-After: 5\r\n");
                 sl_send_reply("503","Limiting");
                 exit;
-        };
+        }
 ...
         # use pipe no 1 for the current method
         # set int pvar to 1
@@ -362,25 +361,14 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
                 append_to_reply("Retry-After: 5\r\n");
                 sl_send_reply("503","Limiting");
                 exit;
-        };
-...
-        # use pipe no 1 for the current method
-        # set str pvar to 1
-        $var(p) = "1";
-        if (!rl_check("$var(p)") {
-                append_to_reply("Retry-After: 5\r\n");
-                sl_send_reply("503","Limiting");
-                exit;
-        };
+        }
 ...
 
-6.2.  rl_check_pipe([pipe_no])
+6.2.  rl_check_pipe(pipe_no)
 
-   Check the current request against the matched ratelimit algorithm. If
-   no parameter is provided, the queue will be matched based on method
-   type, and then the pipe will be identified based on the matched queue.
-   If a pipe number is provided as a parameter, then the given pipe number
-   will be used for identifying the ratelimit algorithm.
+   Check the current request against the matched ratelimit algorithm of
+   the pipe provided as parameter. The parameter can be provided as number
+   or variable.
 
    The method will return an error code if the limit for the matched
    algorithm is reached.
@@ -392,19 +380,12 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 
    Example 1.5. rl_check_pipe usage
 ...
-        # perform queue/pipe match for current method
-        if (!rl_check_pipe()) {
-                append_to_reply("Retry-After: 5\r\n");
-                sl_send_reply("503","Limiting");
-                exit;
-        };
-...
         # use pipe no 1 for the current method
         if (!rl_check_pipe("1") {
                 append_to_reply("Retry-After: 5\r\n");
                 sl_send_reply("503","Limiting");
                 exit;
-        };
+        }
 ...
 
 7. RPC Commands

@@ -10,21 +10,19 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
 	This module collects extensions from &kamailio; core.
 	</para>
 	<para>
-	&kamailio; Core CookBook is available at:
-	<ulink url="http://kamailio.org/dokuwiki/">
-	http://kamailio.org/dokuwiki/</ulink>
+	&kamailio; Core Cookbook is available at: &kamwikilink;
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Dependencies</title>
 	<section>
@@ -436,7 +434,15 @@ resetdebug();
 
 	<section>
 	<title>RPC Commands</title>
-	<section id="kex.r.arg">
+	<section id="kex.r.core.aliases_list">
+		<title>
+		<function moreinfo="none">core.aliases_list</function>
+		</title>
+		<para>
+		Returns the list of local SIP server host aliases.
+		</para>
+	</section>
+	<section id="kex.r.core.arg">
 		<title>
 		<function moreinfo="none">core.arg</function>
 		</title>
@@ -455,8 +461,32 @@ resetdebug();
 &kamcmd; core.arg
 ...
 		</programlisting>
-    	</section>
-	<section id="kex.r.kill">
+    </section>
+	<section id="kex.r.core.echo">
+		<title>
+		<function moreinfo="none">core.echo</function>
+		</title>
+		<para>
+		Returns back its parameters.
+		</para>
+	</section>
+	<section id="kex.r.core.flags">
+		<title>
+		<function moreinfo="none">core.flags</function>
+		</title>
+		<para>
+		Returns the compile flags.
+		</para>
+	</section>
+	<section id="kex.r.core.info">
+		<title>
+		<function moreinfo="none">core.info</function>
+		</title>
+		<para>
+		Verbose info, including version number, compile flags, compiler, repository, hash
+		</para>
+	</section>
+	<section id="kex.r.core.kill">
 		<title>
 		<function moreinfo="none">core.kill</function>
 		</title>
@@ -475,8 +505,40 @@ resetdebug();
 &kamcmd; core.kill
 ...
 		</programlisting>
-    	</section>
-	<section id="kex.r.pwd">
+    </section>
+	<section id="kex.r.core.printi">
+		<title>
+		<function moreinfo="none">core.printi</function>
+		</title>
+		<para>
+		Returns the integers given as parameters.
+		</para>
+	</section>
+	<section id="kex.r.core.prints">
+		<title>
+		<function moreinfo="none">core.prints</function>
+		</title>
+		<para>
+		Returns the strings given as parameters.
+		</para>
+	</section>
+	<section id="kex.r.core.ps">
+		<title>
+		<function moreinfo="none">core.ps</function>
+		</title>
+		<para>
+		Returns the description of running processes.
+		</para>
+	</section>
+	<section id="kex.r.core.psx">
+		<title>
+		<function moreinfo="none">core.psx</function>
+		</title>
+		<para>
+		Returns the detailed description of running processes.
+		</para>
+	</section>
+	<section id="kex.r.core.pwd">
 		<title>
 		<function moreinfo="none">core.pwd</function>
 		</title>
@@ -495,8 +557,58 @@ resetdebug();
 &kamcmd; core.pwd
 ...
 		</programlisting>
-    	</section>
-	<section id="kex.r.uptime">
+    </section>
+	<section id="kex.r.core.shmem">
+		<title>
+		<function moreinfo="none">core.shmem</function>
+		</title>
+		<para>
+		Returns shared memory info. It has an optional parameter that specifies
+		the measuring unit: b - bytes (default), k or kb, m or mb, g or gb.
+		Note: when using something different from bytes, the value is truncated.
+		</para>
+	</section>
+	<section id="kex.r.core.sockets_list">
+		<title>
+		<function moreinfo="none">core.sockets_list</function>
+		</title>
+		<para>
+		Returns the list of local SIP server listen sockets.
+		</para>
+	</section>
+	<section id="kex.r.core.tcp_info">
+		<title>
+		<function moreinfo="none">core.tcp_info</function>
+		</title>
+		<para>
+		Returns TCP related info.
+		</para>
+	</section>
+	<section id="kex.r.core.tcp_list">
+		<title>
+		<function moreinfo="none">core.tcp_list</function>
+		</title>
+		<para>
+		Returns TCP connections details.
+		</para>
+	</section>
+	<section id="kex.r.core.tcp_options">
+		<title>
+		<function moreinfo="none">core.tcp_options</function>
+		</title>
+		<para>
+		Returns active TCP options.
+		</para>
+	</section>
+	<section id="kex.r.core.udp4_raw_info">
+		<title>
+		<function moreinfo="none">core.udp4_raw_info</function>
+		</title>
+		<para>
+		Returns udp4_raw mode related info.
+		</para>
+	</section>
+	<section id="kex.r.core.uptime">
 		<title>
 		<function moreinfo="none">core.uptime</function>
 		</title>
@@ -518,7 +630,7 @@ resetdebug();
     </section>
 	<section id="kex.r.core.version">
 		<title>
-		<function moreinfo="none">version</function>
+		<function moreinfo="none">core.version</function>
 		</title>
 		<para>
 		Print version information.
@@ -536,26 +648,47 @@ resetdebug();
 ...
 		</programlisting>
     </section>
-	<section id="kex.r.system.listMethods">
+	<section id="kex.r.core.ppdefines">
 		<title>
-		<function moreinfo="none">system.listMethods</function>
+		<function moreinfo="none">core.ppdefines</function>
 		</title>
 		<para>
-		Print list of available RPC commands.
+		List preprocessor defines enabled in config.
 		</para>
 		<para>
-		Name: <emphasis>system.listMethods</emphasis>
+		Name: <emphasis>core.ppdefines</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis>.</para>
- 		<para>
+		<para>
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; system.listMethods
+&kamcmd; core.ppdefines
 ...
 		</programlisting>
     </section>
+	<section id="kex.r.core.modules">
+		<title>
+		<function moreinfo="none">core.modules</function>
+		</title>
+		<para>
+		List loaded modules in config.
+		</para>
+		<para>
+		Name: <emphasis>core.modules</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis>.</para>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; core.modules
+...
+		</programlisting>
+    </section>
+
 	<section id="kex.r.pkg.stats">
 		<title>
 		<function moreinfo="none">pkg.stats</function>
@@ -591,10 +724,10 @@ resetdebug();
 		Examples:
 		</para>
         <programlisting  format="linespecific">
-		&sercmd; pkg.stats
-		&sercmd; pkg.stats pid 1234
-		&sercmd; pkg.stats rank 1
-		&sercmd; pkg.stats index 10
+		&kamcmd; pkg.stats
+		&kamcmd; pkg.stats pid 1234
+		&kamcmd; pkg.stats rank 1
+		&kamcmd; pkg.stats index 10
 		</programlisting>
     </section>
 	<section id="kex.r.stats.get_statistics">
@@ -609,10 +742,33 @@ resetdebug();
 			is printed.</para>
 		<para>Examples:</para>
         <programlisting  format="linespecific">
-		&sercmd; stats.get_statistics all
-		&sercmd; stats.get_statistics core:
-		&sercmd; stats.get_statistics unsupported_methods
-		&sercmd; stats.get_statistics shmem: fwd_requests fwd_replies
+		&kamcmd; stats.get_statistics all
+		&kamcmd; stats.get_statistics core:
+		&kamcmd; stats.get_statistics unsupported_methods
+		&kamcmd; stats.get_statistics shmem: fwd_requests fwd_replies
+		</programlisting>
+    </section>
+	<section id="kex.r.stats.fetch">
+		<title>
+		<function moreinfo="none">stats.fetch</function>
+		</title>
+		<para>Print the list of available internal statistics with a more
+		json friendly output. Each printed statistic is a field in the output
+		structure: {"statsgroup.statsname" : "statsvalue"}. The value is
+		represented as string to accomodate large numbers.</para>
+		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
+			be printed. If set to 'all' then all statistics are printed; if
+			set to 'statsgroup:' then all statistics in the group are printed;
+			if set to 'statsname' then the statistics identified by the name
+			is printed (can be also 'statsgroup.stastname' or
+			'statsgroup:statsname').</para>
+		<para>Examples:</para>
+        <programlisting  format="linespecific">
+		&kamcmd; stats.fetch all
+		&kamcmd; stats.fetch core:
+		&kamcmd; stats.fetch unsupported_methods
+		&kamcmd; stats.fetch shmem.free_size
+		&kamcmd; stats.fetch shmem: fwd_requests fwd_replies
 		</programlisting>
     </section>
 	<section id="kex.r.stats.reset_statistics">
@@ -625,10 +781,10 @@ resetdebug();
 		</para>
 		<para>Examples:</para>
         <programlisting  format="linespecific">
-		&sercmd; stats.reset_statistics all
-		&sercmd; stats.reset_statistics core:
-		&sercmd; stats.reset_statistics unsupported_methods
-		&sercmd; stats.reset_statistics shmem: fwd_requests fwd_replies
+		&kamcmd; stats.reset_statistics all
+		&kamcmd; stats.reset_statistics core:
+		&kamcmd; stats.reset_statistics unsupported_methods
+		&kamcmd; stats.reset_statistics shmem: fwd_requests fwd_replies
 		</programlisting>
     </section>
 	<section id="kex.r.stats.clear_statistics">
@@ -641,12 +797,48 @@ resetdebug();
 		</para>
 		<para>Examples:</para>
         <programlisting  format="linespecific">
-		&sercmd; stats.reset_statistics all
-		&sercmd; stats.reset_statistics core:
-		&sercmd; stats.reset_statistics unsupported_methods
-		&sercmd; stats.reset_statistics shmem: fwd_requests fwd_replies
+		&kamcmd; stats.reset_statistics all
+		&kamcmd; stats.reset_statistics core:
+		&kamcmd; stats.reset_statistics unsupported_methods
+		&kamcmd; stats.reset_statistics shmem: fwd_requests fwd_replies
 		</programlisting>
     </section>
+	<section id="kex.r.system.listMethods">
+		<title>
+		<function moreinfo="none">system.listMethods</function>
+		</title>
+		<para>
+		Print list of available RPC commands.
+		</para>
+		<para>
+		Name: <emphasis>system.listMethods</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis>.</para>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; system.listMethods
+...
+		</programlisting>
+    </section>
+	<section id="kex.r.system.methodHelp">
+		<title>
+		<function moreinfo="none">system.methodHelp</function>
+		</title>
+		<para>
+		Print the help string for given method.
+		</para>
+	</section>
+	<section id="kex.r.system.methodSignature">
+		<title>
+		<function moreinfo="none">system.methodSignature</function>
+		</title>
+		<para>
+		Returns signature of given method.
+		</para>
+	</section>
 
 	<section id="kex.r.mod.stats">
 		<title>
@@ -700,10 +892,10 @@ resetdebug();
 		Examples:
 		</para>
         <programlisting  format="linespecific">
-		&sercmd; mod.stats core all
-		&sercmd; mod.stats userblacklist shm
-		&sercmd; mod.stats kex pkg
-		&sercmd; mod.stats all all
+		&kamcmd; mod.stats core all
+		&kamcmd; mod.stats userblacklist shm
+		&kamcmd; mod.stats kex pkg
+		&kamcmd; mod.stats all all
 		</programlisting>
 		<para>
 		Output:

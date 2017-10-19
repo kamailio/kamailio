@@ -31,6 +31,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 #include "../../core/ut.h"
 #include "../../core/trim.h"
@@ -63,8 +64,19 @@
 #define DS_TABLE_VERSION3 3
 #define DS_TABLE_VERSION4 4
 
-#define DS_ALG_RROBIN 4
-#define DS_ALG_LOAD 10
+#define DS_ALG_HASHCALLID 0
+#define DS_ALG_HASHFROMURI 1
+#define DS_ALG_HASHTOURI 2
+#define DS_ALG_HASHRURI 3
+#define DS_ALG_ROUNDROBIN 4
+#define DS_ALG_HASHAUTHUSER 5
+#define DS_ALG_RANDOM 6
+#define DS_ALG_HASHPV 7
+#define DS_ALG_SERIAL 8
+#define DS_ALG_WEIGHT 9
+#define DS_ALG_CALLLOAD 10
+#define DS_ALG_RELWEIGHT 11
+#define DS_ALG_PARALLEL 12
 
 static int _ds_table_version = DS_TABLE_VERSION;
 
@@ -74,6 +86,8 @@ static int *_ds_ping_active = NULL;
 
 extern int ds_force_dst;
 extern str ds_event_callback;
+extern int ds_ping_latency_stats;
+extern float ds_latency_estimator_alpha;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -282,20 +296,43 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 /**
  *
  */
-ds_dest_t *pack_dest(str uri, int flags, int priority, str *attrs)
+ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs)
 {
 	ds_dest_t *dp = NULL;
 	/* For DNS-Lookups */
 	static char hn[256];
+	char ub[512];
 	struct hostent *he;
 	struct sip_uri puri;
 	str host;
 	int port, proto;
 	char c = 0;
+	str uri;
 
+	uri = iuri;
 	/* check uri */
-	if(parse_uri(uri.s, uri.len, &puri) != 0 || puri.host.len > 254) {
-		LM_ERR("bad uri [%.*s]\n", uri.len, uri.s);
+	if(parse_uri(uri.s, uri.len, &puri) != 0) {
+		if(iuri.len>4 && strncmp(iuri.s, "sip:", 4)!=0 && iuri.len<500) {
+			strncpy(ub, "sip:", 4);
+			strncpy(ub+4, iuri.s, iuri.len);
+			ub[iuri.len+4] = '\0';
+			uri.s = ub;
+			uri.len = iuri.len+4;
+			if(parse_uri(uri.s, uri.len, &puri) != 0) {
+				LM_ERR("bad uri [%.*s]\n", iuri.len, iuri.s);
+				goto err;
+			} else {
+				LM_INFO("uri without sip scheme - fixing it: %.*s\n",
+						iuri.len, iuri.s);
+			}
+		} else {
+			LM_ERR("bad uri [%.*s]\n", iuri.len, iuri.s);
+			goto err;
+		}
+	}
+
+	if(puri.host.len > 254) {
+		LM_ERR("hostname in uri is too long [%.*s]\n", uri.len, uri.s);
 		goto err;
 	}
 
@@ -623,7 +660,7 @@ err1:
 /*! \brief load groups of destinations from file */
 int ds_load_list(char *lfile)
 {
-	char line[256], *p;
+	char line[1024], *p;
 	FILE *f = NULL;
 	int id, setn, flags, priority;
 	str uri;
@@ -650,7 +687,7 @@ int ds_load_list(char *lfile)
 	*next_idx = (*crt_idx + 1) % 2;
 	ds_avl_destroy(&ds_lists[*next_idx]);
 
-	p = fgets(line, 256, f);
+	p = fgets(line, 1024, f);
 	while(p) {
 		/* eat all white spaces */
 		while(*p && (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n'))
@@ -728,7 +765,7 @@ int ds_load_list(char *lfile)
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
 	next_line:
-		p = fgets(line, 256, f);
+		p = fgets(line, 1024, f);
 	}
 
 	if(reindex_dests(ds_lists[*next_idx]) != 0) {
@@ -1214,12 +1251,16 @@ int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
+	*hash = 0;
 	if(parse_headers(msg, HDR_PROXYAUTH_F, 0) == -1) {
 		LM_ERR("error parsing headers!\n");
 		return -1;
 	}
-	if(msg->proxy_auth && !msg->proxy_auth->parsed)
-		parse_credentials(msg->proxy_auth);
+	if(msg->proxy_auth && !msg->proxy_auth->parsed) {
+		if(parse_credentials(msg->proxy_auth)!=0) {
+			LM_DBG("no parsing for proxy-auth header\n");
+		}
+	}
 	if(msg->proxy_auth && msg->proxy_auth->parsed) {
 		h = msg->proxy_auth;
 	}
@@ -1228,8 +1269,11 @@ int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 			LM_ERR("error parsing headers!\n");
 			return -1;
 		}
-		if(msg->authorization && !msg->authorization->parsed)
-			parse_credentials(msg->authorization);
+		if(msg->authorization && !msg->authorization->parsed) {
+			if(parse_credentials(msg->authorization)!=0) {
+				LM_DBG("no parsing for auth header\n");
+			}
+		}
 		if(msg->authorization && msg->authorization->parsed) {
 			h = msg->authorization;
 		}
@@ -1624,7 +1668,8 @@ static inline int ds_update_dst(
 			}
 			init_run_actions_ctx(&ra_ctx);
 			if(do_action(&ra_ctx, &act, msg) < 0) {
-				LM_ERR("error while setting host\n");
+				LM_ERR("error while setting r-uri domain with: %.*s\n",
+						uri->len, uri->s);
 				return -1;
 			}
 			break;
@@ -1635,7 +1680,8 @@ static inline int ds_update_dst(
 
 		default:
 			if(set_dst_uri(msg, uri) < 0) {
-				LM_ERR("error while setting dst uri\n");
+				LM_ERR("error while setting dst uri with: %.*s\n",
+						uri->len, uri->s);
 				return -1;
 			}
 			/* dst_uri changes, so it makes sense to re-use the current uri for
@@ -1645,6 +1691,86 @@ static inline int ds_update_dst(
 	}
 	if(sock)
 		msg->force_send_socket = sock;
+	return 0;
+}
+
+/**
+ *
+ */
+int ds_add_branches(sip_msg_t *msg, ds_set_t *idx, unsigned int hash, int mode)
+{
+	unsigned int i = 0;
+	str ruri = STR_NULL;
+	sip_uri_t *puri = NULL;
+	char buri[MAX_URI_SIZE];
+
+	if(hash+1>=idx->nr) {
+		/* nothing to add */
+		return 0;
+	}
+
+	if(mode==1) {
+		/* ruri updates */
+		LM_DBG("adding branches with ruri\n");
+		if(parse_sip_msg_uri(msg)<0) {
+			LM_ERR("failed to parse sip msg uri\n");
+			return -1;
+		}
+		puri = &msg->parsed_uri;
+	} else {
+		/* duri updates */
+		LM_DBG("adding branches with duri\n");
+	}
+	for(i=hash+1; i<idx->nr; i++) {
+		if(mode==1) {
+			/* ruri updates */
+			if(puri->user.len<=0) {
+				/* no username to preserve */
+				if(append_branch(msg, &idx->dlist[i].uri, NULL, NULL,
+						Q_UNSPECIFIED, 0, idx->dlist[i].sock, NULL, 0,
+						NULL, NULL)<0) {
+					LM_ERR("failed to add branch with ruri\n");
+					return -1;
+				}
+			} else {
+				/* new uri from ruri username and dispatcher uri */
+				if(idx->dlist[i].uri.len<6) {
+					LM_WARN("invalid dispatcher uri - skipping (%u)\n", i);
+					continue;
+				}
+				if(strncmp(idx->dlist[i].uri.s, "sips:", 5)==0) {
+					ruri.len = snprintf(buri, MAX_URI_SIZE, "sips:%.*s@%.*s",
+							puri->user.len, puri->user.s,
+							idx->dlist[i].uri.len-5, idx->dlist[i].uri.s+5);
+				} else {
+					if(strncmp(idx->dlist[i].uri.s, "sip:", 4)==0) {
+						ruri.len = snprintf(buri, MAX_URI_SIZE, "sip:%.*s@%.*s",
+								puri->user.len, puri->user.s,
+								idx->dlist[i].uri.len-4, idx->dlist[i].uri.s+4);
+					} else {
+						LM_WARN("unsupported protocol schema - ignoring\n");
+						continue;
+					}
+				}
+				ruri.s = buri;
+				if(append_branch(msg, &ruri, NULL, NULL,
+						Q_UNSPECIFIED, 0, idx->dlist[i].sock, NULL, 0,
+						NULL, NULL)<0) {
+					LM_ERR("failed to add branch with user ruri\n");
+					return -1;
+				}
+			}
+		} else {
+			/* duri updates */
+			if(append_branch(msg, GET_RURI(msg), &idx->dlist[i].uri, NULL,
+					Q_UNSPECIFIED, 0, idx->dlist[i].sock, NULL, 0,
+					NULL, NULL)<0) {
+				LM_ERR("failed to add branch with duri\n");
+				return -1;
+			}
+		}
+
+	}
 	return 0;
 }
 
@@ -1706,35 +1832,35 @@ int ds_select_dst_limit(
 
 	hash = 0;
 	switch(alg) {
-		case 0: /* hash call-id */
+		case DS_ALG_HASHCALLID: /* 0 - hash call-id */
 			if(ds_hash_callid(msg, &hash) != 0) {
 				LM_ERR("can't get callid hash\n");
 				return -1;
 			}
 			break;
-		case 1: /* hash from-uri */
+		case DS_ALG_HASHFROMURI: /* 1 - hash from-uri */
 			if(ds_hash_fromuri(msg, &hash) != 0) {
 				LM_ERR("can't get From uri hash\n");
 				return -1;
 			}
 			break;
-		case 2: /* hash to-uri */
+		case DS_ALG_HASHTOURI: /* 2 - hash to-uri */
 			if(ds_hash_touri(msg, &hash) != 0) {
 				LM_ERR("can't get To uri hash\n");
 				return -1;
 			}
 			break;
-		case 3: /* hash r-uri */
+		case DS_ALG_HASHRURI: /* 3 - hash r-uri */
 			if(ds_hash_ruri(msg, &hash) != 0) {
 				LM_ERR("can't get ruri hash\n");
 				return -1;
 			}
 			break;
-		case DS_ALG_RROBIN: /* round robin */
+		case DS_ALG_ROUNDROBIN: /* 4 - round robin */
 			hash = idx->last;
 			idx->last = (idx->last + 1) % idx->nr;
 			break;
-		case 5: /* hash auth username */
+		case DS_ALG_HASHAUTHUSER: /* 5 - hash auth username */
 			i = ds_hash_authusername(msg, &hash);
 			switch(i) {
 				case 0:
@@ -1750,23 +1876,23 @@ int ds_select_dst_limit(
 					return -1;
 			}
 			break;
-		case 6: /* random selection */
+		case DS_ALG_RANDOM: /* 6 - random selection */
 			hash = kam_rand() % idx->nr;
 			break;
-		case 7: /* hash on PV value */
+		case DS_ALG_HASHPV: /* 7 - hash on PV value */
 			if(ds_hash_pvar(msg, &hash) != 0) {
 				LM_ERR("can't get PV hash\n");
 				return -1;
 			}
 			break;
-		case 8: /* use always first entry */
+		case DS_ALG_SERIAL: /* 8 - use always first entry */
 			hash = 0;
 			break;
-		case 9: /* weight based distribution */
+		case DS_ALG_WEIGHT: /* 9 - weight based distribution */
 			hash = idx->wlist[idx->wlast];
 			idx->wlast = (idx->wlast + 1) % 100;
 			break;
-		case DS_ALG_LOAD: /* call load based distribution */
+		case DS_ALG_CALLLOAD: /* 10 - call load based distribution */
 			/* only INVITE can start a call */
 			if(msg->first_line.u.request.method_value != METHOD_INVITE) {
 				/* use first entry */
@@ -1793,9 +1919,12 @@ int ds_select_dst_limit(
 				}
 			}
 			break;
-		case 11: /* relative weight based distribution */
+		case DS_ALG_RELWEIGHT: /* 11 - relative weight based distribution */
 			hash = idx->rwlist[idx->rwlast];
 			idx->rwlast = (idx->rwlast + 1) % 100;
+			break;
+		case DS_ALG_PARALLEL: /* 12 - parallel dispatching */
+			hash = 0;
 			break;
 		default:
 			LM_WARN("algo %d not implemented - using first entry...\n", alg);
@@ -1834,15 +1963,25 @@ int ds_select_dst_limit(
 
 	if(ds_update_dst(msg, &idx->dlist[hash].uri, idx->dlist[hash].sock, mode)
 			!= 0) {
-		LM_ERR("cannot set dst addr\n");
+		LM_ERR("cannot set next hop address with: %.*s\n",
+				idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
 		return -1;
 	}
 	/* if alg is round-robin then update the shortcut to next to be used */
-	if(alg == DS_ALG_RROBIN)
+	if(alg == DS_ALG_ROUNDROBIN)
 		idx->last = (hash + 1) % idx->nr;
 
 	LM_DBG("selected [%d-%d/%d] <%.*s>\n", alg, set, hash,
 			idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
+
+	if(alg == DS_ALG_PARALLEL) {
+		if(ds_add_branches(msg, idx, hash, mode)<0) {
+			LM_ERR("failed to add additional branches\n");
+			/* one destination was already set - return success anyhow */
+			return 2;
+		}
+		return 1;
+	}
 
 	if(!(ds_flags & DS_FAILOVER_ON))
 		return 1;
@@ -1873,7 +2012,7 @@ int ds_select_dst_limit(
 					return -1;
 			}
 
-			if(alg == DS_ALG_LOAD) {
+			if(alg == DS_ALG_CALLLOAD) {
 				if(idx->dlist[idx->nr - 1].attrs.duid.len <= 0) {
 					LM_ERR("no uid for destination: %d %.*s\n", set,
 							idx->dlist[idx->nr - 1].uri.len,
@@ -1895,7 +2034,7 @@ int ds_select_dst_limit(
 					|| (ds_use_default != 0 && i == (idx->nr - 1)))
 				continue;
 			/* max load exceeded per destination */
-			if(alg == DS_ALG_LOAD
+			if(alg == DS_ALG_CALLLOAD
 					&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload)
 				continue;
 			LM_DBG("using entry [%d/%d]\n", set, i);
@@ -1919,7 +2058,7 @@ int ds_select_dst_limit(
 					return -1;
 			}
 
-			if(alg == DS_ALG_LOAD) {
+			if(alg == DS_ALG_CALLLOAD) {
 				if(idx->dlist[i].attrs.duid.len <= 0) {
 					LM_ERR("no uid for destination: %d %.*s\n", set,
 							idx->dlist[i].uri.len, idx->dlist[i].uri.s);
@@ -1943,7 +2082,7 @@ int ds_select_dst_limit(
 					|| (ds_use_default != 0 && i == (idx->nr - 1)))
 				continue;
 			/* max load exceeded per destination */
-			if(alg == DS_ALG_LOAD
+			if(alg == DS_ALG_CALLLOAD
 					&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload)
 				LM_DBG("using entry [%d/%d]\n", set, i);
 			avp_val.s = idx->dlist[i].uri;
@@ -1966,7 +2105,7 @@ int ds_select_dst_limit(
 					return -1;
 			}
 
-			if(alg == DS_ALG_LOAD) {
+			if(alg == DS_ALG_CALLLOAD) {
 				if(idx->dlist[i].attrs.duid.len <= 0) {
 					LM_ERR("no uid for destination: %d %.*s\n", set,
 							idx->dlist[i].uri.len, idx->dlist[i].uri.s);
@@ -2000,7 +2139,7 @@ int ds_select_dst_limit(
 				return -1;
 		}
 
-		if(alg == DS_ALG_LOAD) {
+		if(alg == DS_ALG_CALLLOAD) {
 			if(idx->dlist[hash].attrs.duid.len <= 0) {
 				LM_ERR("no uid for destination: %d %.*s\n", set,
 						idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
@@ -2051,7 +2190,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 				dstid_avp_type, dstid_avp_name, &avp_value, &st);
 		if(prev_avp != NULL) {
 			/* load based dispatching */
-			alg = DS_ALG_LOAD;
+			alg = DS_ALG_CALLLOAD;
 			/* off-load destination id */
 			destroy_avp(prev_avp);
 		}
@@ -2089,7 +2228,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 		return -1;
 	}
 	LM_DBG("using [%.*s]\n", avp_value.s.len, avp_value.s.s);
-	if(alg == DS_ALG_LOAD) {
+	if(alg == DS_ALG_CALLLOAD) {
 		prev_avp = search_first_avp(
 				dstid_avp_type, dstid_avp_name, &avp_value, &st);
 		if(prev_avp == NULL) {
@@ -2134,6 +2273,87 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 
 	return (ret == 0) ? 1 : -1;
 }
+
+static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int latency) {
+	/* after 2^21 ~24 days at 1s interval, the average becomes a weighted average */
+	if (latency_stats->count < 2097152) {
+		latency_stats->count++;
+	} else { /* We adjust the sum of squares used by the oneline algorithm proportionally */
+		latency_stats->m2 -= latency_stats->m2/latency_stats->count;
+	}
+	if (latency_stats->count == 1) {
+		latency_stats->stdev = 0.0f;
+		latency_stats->m2 = 0.0f;
+		latency_stats->max = latency;
+		latency_stats->min = latency;
+		latency_stats->average = latency;
+		latency_stats->estimate = latency;
+	}
+	if (latency_stats->min > latency)
+		latency_stats->min = latency;
+	if (latency_stats->max < latency)
+		latency_stats->max = latency;
+
+	/* standard deviation using oneline algorithm */
+	/* https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm */
+	if (latency_stats->count > 1) {
+		float delta = latency - latency_stats->average;
+		latency_stats->average += delta/latency_stats->count;
+		float delta2 = latency - latency_stats->average;
+		latency_stats->m2 += delta*delta2;
+		latency_stats->stdev = sqrt(latency_stats->m2 / (latency_stats->count-1));
+	}
+	/* exponentialy weighted moving average */
+	if (latency_stats->count < 10) {
+		latency_stats->estimate = latency_stats->average;
+	} else {
+		latency_stats->estimate = latency_stats->estimate*ds_latency_estimator_alpha
+		                          + latency*(1-ds_latency_estimator_alpha);
+	}
+}
+
+int ds_update_latency(int group, str *address, int code)
+{
+	int i = 0;
+	int state = 0;
+	ds_set_t *idx = NULL;
+
+	if(_ds_list == NULL || _ds_list_nr <= 0) {
+		LM_ERR("the list is null\n");
+		return -1;
+	}
+
+	/* get the index of the set */
+	if(ds_get_index(group, *crt_idx, &idx) != 0) {
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+
+	while(i < idx->nr) {
+		if(idx->dlist[i].uri.len == address->len
+				&& strncasecmp(idx->dlist[i].uri.s, address->s, address->len)
+						   == 0) {
+
+			/* destination address found */
+			state = idx->dlist[i].flags;
+			ds_latency_stats_t *latency_stats = &idx->dlist[i].latency_stats;
+			if (code == 408 && latency_stats->timeout < UINT32_MAX) {
+				latency_stats->timeout++;
+			} else {
+				struct timeval now;
+				gettimeofday(&now, NULL);
+				int latency_ms = (now.tv_sec - latency_stats->start.tv_sec)*1000
+			            + (now.tv_usec - latency_stats->start.tv_usec)/1000;
+				latency_stats_update(latency_stats, latency_ms);
+				LM_DBG("[%d]latency[%d]avg[%.2f][%.*s]code[%d]\n", latency_stats->count, latency_ms,
+					 latency_stats->average, address->len, address->s, code);
+			}
+		}
+		i++;
+	}
+	return state;
+}
+
 
 /**
  * Get state for given destination
@@ -2599,6 +2819,8 @@ static void ds_options_callback(
 	uri.len = t->to.len - 8;
 	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s, group %d)\n",
 			ps->code, uri.len, uri.s, group);
+	if (ds_ping_latency_stats)
+		ds_update_latency(group, &uri, ps->code);
 	/* ps->code contains the result-code of the request.
 	 *
 	 * We accept both a "200 OK" or the configured reply as a valid response */
@@ -2669,6 +2891,9 @@ void ds_ping_set(ds_set_t *node)
 					  && ds_default_socket.len > 0) {
 				uac_r.ssock = &ds_default_socket;
 			}
+
+			gettimeofday(&node->dlist[j].latency_stats.start, NULL);
+
 			if(tmb.t_request(&uac_r, &node->dlist[j].uri, &node->dlist[j].uri,
 					   &ds_ping_from, &ds_outbound_proxy)
 					< 0) {

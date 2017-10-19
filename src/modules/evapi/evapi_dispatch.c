@@ -138,8 +138,6 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt, str *rtname)
 	sip_msg_t *fmsg;
 	sip_msg_t tmsg;
 	sr_kemi_eng_t *keng = NULL;
-	str evname;
-
 
 	if(evenv==0 || evenv->eset==0) {
 		LM_ERR("evapi env not set\n");
@@ -492,7 +490,7 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	csock = accept(watcher->fd, (struct sockaddr *)&caddr, &clen);
 
 	if (csock < 0) {
-		LM_ERR("cannot accept the client\n");
+		LM_ERR("cannot accept the client '%s' err='%d'\n", gai_strerror(csock), csock);
 		free(evapi_client);
 		return;
 	}
@@ -591,6 +589,7 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	struct ev_io io_server;
 	struct ev_io io_notify;
 	int yes_true = 1;
+	int fflags = 0;
 
 	LM_DBG("starting dispatcher processing\n");
 
@@ -619,7 +618,17 @@ int evapi_run_dispatcher(char *laddr, int lport)
 		return -1;
 	}
 	/* set non-blocking flag */
-	fcntl(evapi_srv_sock, F_SETFL, fcntl(evapi_srv_sock, F_GETFL) | O_NONBLOCK);
+	fflags = fcntl(evapi_srv_sock, F_GETFL);
+	if(fflags<0) {
+		LM_ERR("failed to get the srv socket flags\n");
+		close(evapi_srv_sock);
+		return -1;
+	}
+	if (fcntl(evapi_srv_sock, F_SETFL, fflags | O_NONBLOCK)<0) {
+		LM_ERR("failed to set srv socket flags\n");
+		close(evapi_srv_sock);
+		return -1;
+	}
 
 	bzero(&evapi_srv_addr, sizeof(evapi_srv_addr));
 	evapi_srv_addr.sin_family = h->h_addrtype;

@@ -5,15 +5,15 @@ RPC Exports for pipelimit
 
 
  1. pl.stats
-        Print pipelimit statistics: <id> <load> <counter>
+        Documentation missing (rpc_pl_stats_doc).
         Returns an array.
 
  2. pl.get_pipes
-        Print pipes info: <id> <algorithm> <limit> <counter>
+        Documentation missing (rpc_pl_get_pipes_doc).
         Returns an array.
 
  3. pl.set_pipe
-        Sets a pipe params: <pipe_id> <pipe_algorithm> <pipe_limit>
+        Documentation missing (rpc_pl_set_pipe_doc).
 
  4. pl.get_pid
         Print PID Controller parameters for the FEEDBACK algorithm:

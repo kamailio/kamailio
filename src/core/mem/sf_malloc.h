@@ -18,10 +18,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef SF_MALLOC
 
-#if !defined(sf_malloc_h)  
+#if !defined(sf_malloc_h)
 #define sf_malloc_h
-
 
 #include "meminfo.h"
 
@@ -30,6 +30,9 @@
 #include "../compiler_opt.h"
 /* defs*/
 
+#ifdef DBG_SR_MEMORY
+#define DBG_SF_MALLOC
+#endif
 
 #ifdef GEN_LOCK_T_UNLIMITED
 #define SFM_LOCK_PER_BUCKET
@@ -44,8 +47,8 @@
  * aligned memory */
 	#define SF_ROUNDTO	sizeof(long long)
 #else
-	#define SF_ROUNDTO	sizeof(void*) /* size we round to, must be = 2^n, and
-                      sizeof(sfm_frag) must be multiple of SF_ROUNDTO !*/
+	#define SF_ROUNDTO	sizeof(void*) /* size we round to, must be = 2^n,
+					* and sizeof(sfm_frag) must be multiple of SF_ROUNDTO !*/
 #endif
 #else /* DBG_SF_MALLOC */
 	#define SF_ROUNDTO 8UL
@@ -53,7 +56,7 @@
 #define SF_MIN_FRAG_SIZE	SF_ROUNDTO
 
 #define SFM_POOLS_NO 4U /* the more the better, but higher initial
-                            mem. consumption */
+						* mem. consumption */
 
 #define SF_MALLOC_OPTIMIZE_FACTOR 14UL /*used below */
 #define SF_MALLOC_OPTIMIZE  (1UL<<SF_MALLOC_OPTIMIZE_FACTOR)
@@ -142,28 +145,44 @@ int sfm_pool_reset();
 
 #ifdef DBG_SF_MALLOC
 void* sfm_malloc(struct sfm_block*, unsigned long size,
-					const char* file, const char* func, unsigned int line);
+				const char* file, const char* func, unsigned int line);
 #else
 void* sfm_malloc(struct sfm_block*, unsigned long size);
 #endif
 
 #ifdef DBG_SF_MALLOC
-void  sfm_free(struct sfm_block*, void* p, const char* file, const char* func, 
+void* sfm_mallocxz(struct sfm_block*, unsigned long size,
+				const char* file, const char* func, unsigned int line);
+#else
+void* sfm_mallocxz(struct sfm_block*, unsigned long size);
+#endif
+
+#ifdef DBG_SF_MALLOC
+void  sfm_free(struct sfm_block*, void* p, const char* file, const char* func,
 				unsigned int line);
 #else
 void  sfm_free(struct sfm_block*, void* p);
 #endif
 
 #ifdef DBG_SF_MALLOC
-void*  sfm_realloc(struct sfm_block*, void* p, unsigned long size, 
-					const char* file, const char* func, unsigned int line);
+void*  sfm_realloc(struct sfm_block*, void* p, unsigned long size,
+				const char* file, const char* func, unsigned int line);
 #else
 void*  sfm_realloc(struct sfm_block*, void* p, unsigned long size);
+#endif
+
+#ifdef DBG_SF_MALLOC
+void*  sfm_reallocxf(struct sfm_block*, void* p, unsigned long size,
+				const char* file, const char* func, unsigned int line);
+#else
+void*  sfm_reallocxf(struct sfm_block*, void* p, unsigned long size);
 #endif
 
 void  sfm_status(struct sfm_block*);
 void  sfm_info(struct sfm_block*, struct mem_info*);
 
 unsigned long sfm_available(struct sfm_block*);
+
+#endif
 
 #endif

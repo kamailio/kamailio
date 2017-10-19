@@ -62,6 +62,10 @@ str flat_pid = STR_NULL;
 /** Enable/disable flushing after eaach write. */
 int flat_flush = 1;
 
+/** Escape delimiter using
+ * ""%" HEX HEX" mechanism for escaping from RFC 2396
+ *  */
+int encode_delimiter = 1;
 
 /** Row delimiter.
  * The character in this variable will be used to delimit rows.
@@ -116,6 +120,7 @@ static cmd_export_t cmds[] = {
 /* Exported parameters */
 static param_export_t params[] = {
 	{"flush",            PARAM_INT, &flat_flush},
+	{"encode_delimiter", PARAM_INT, &encode_delimiter},
 	{"field_delimiter",  PARAM_STR, &flat_delimiter},
 	{"record_delimiter", PARAM_STR, &flat_record_delimiter},
 	{"escape_char",      PARAM_STR, &flat_escape},

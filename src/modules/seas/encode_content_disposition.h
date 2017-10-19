@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright (C) 2006-2007 VozTelecom Sistemas S.L
  *
  * This file is part of Kamailio, a free SIP server.
@@ -14,11 +13,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
+#ifndef __ENCODE_CONTENT_DISPOSITION_H__
+#define __ENCODE_CONTENT_DISPOSITION_H__
 int encode_content_disposition(char *hdrstart,int hdrlen,struct disposition *body,unsigned char *where);
 int print_encoded_content_disposition(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix);
+#endif

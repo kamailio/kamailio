@@ -62,6 +62,7 @@ static str db_table        = str_init("cpl");  /* database table */
 static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
 static char *lookup_domain = 0;
 static str  timer_avp      = STR_NULL;  /* name of variable timer AVP */
+static str  proxy_route    = STR_NULL;
 
 
 struct cpl_enviroment    cpl_env = {
@@ -132,7 +133,7 @@ static param_export_t params[] = {
 	{"db_table",       PARAM_STR, &db_table                        },
 	{"cpl_dtd_file",   PARAM_STRING, &dtd_file                          },
 	{"proxy_recurse",  INT_PARAM, &cpl_env.proxy_recurse             },
-	{"proxy_route",    INT_PARAM, &cpl_env.proxy_route               },
+	{"proxy_route",    PARAM_STR, &proxy_route                     },
 	{"log_dir",        PARAM_STRING, &cpl_env.log_dir                   },
 	{"case_sensitive", INT_PARAM, &cpl_env.case_sensitive            },
 	{"realm_prefix",   PARAM_STR, &cpl_env.realm_prefix            },
@@ -202,7 +203,7 @@ static int fixup_cpl_run_script3(void** param, int param_no)
 {
 	if (param_no==1 || param_no==2) {
 		return fixup_cpl_run_script(param, param_no);
-	} else if (param_no==2) {
+	} else if (param_no==3) {
 		return fixup_spve_null(param, 1);
 	}
 	return 0;
@@ -230,6 +231,14 @@ static int cpl_init(void)
 			"the maximum safety value (%d)\n",
 			cpl_env.proxy_recurse,MAX_PROXY_RECURSE);
 		goto error;
+	}
+
+	if (proxy_route.len>0) {
+		cpl_env.proxy_route=route_lookup(&main_rt, proxy_route.s);
+		if (cpl_env.proxy_route==-1) {
+			LM_CRIT("route <%s> defined in proxy_route does not exist\n",proxy_route.s);
+			goto error;
+		}
 	}
 
 	/* fix the timer_avp name */

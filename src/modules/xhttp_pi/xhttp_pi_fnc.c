@@ -345,17 +345,10 @@ static const str XHTTP_PI_Response_Menu_Cmd_Table_2 = str_init("</tbody></table>
 
 static const str XHTTP_PI_NBSP = str_init("&nbsp;");
 static const str XHTTP_PI_SLASH = str_init("/");
-static const str XHTTP_PI_SEMICOLON = str_init(" : ");
 static const str XHTTP_PI_SQUOT_GT = str_init("'>");
 
-static const str XHTTP_PI_NODE_INDENT = str_init("\t");
-static const str XHTTP_PI_NODE_SEPARATOR = str_init(":: ");
 static const str XHTTP_PI_ATTR_SEPARATOR = str_init(" ");
 static const str XHTTP_PI_ATTR_VAL_SEPARATOR = str_init("=");
-
-static const str XHTTP_PI_BREAK = str_init("<br/>");
-static const str XHTTP_PI_CODE_1 = str_init("<pre>");
-static const str XHTTP_PI_CODE_2 = str_init("</pre>");
 
 static const str XHTTP_PI_Post_Form_1 = str_init("\n"\
 "		<form name=\"input\" method=\"get\">\n"
@@ -507,10 +500,10 @@ int ph_getDbUrlNodes(ph_framework_t *_ph_framework_data, xmlNodePtr framework_no
 			xmlFree(db_url.s);db_url.s=NULL;db_url.len=0;
 
 			for(i=0;i<_ph_framework_data->ph_db_urls_size;i++){
-				if(db_urls->id.len==ph_db_urls[i].id.len &&
-                                        strncmp(ph_db_urls[i].id.s,
-                                                db_urls->id.s,
-						db_urls->id.len)==0){
+				if(db_urls->id.len == ph_db_urls[i].id.len
+						&& strncmp(ph_db_urls[i].id.s, db_urls->id.s,
+								   db_urls->id.len)
+								   == 0) {
 					LM_ERR("duplicated %s %s [%.*s]\n",
 						XHTTP_PI_XML_DB1_URL_NODE,
 						XHTTP_PI_XML_ID_ATTR,
@@ -518,10 +511,10 @@ int ph_getDbUrlNodes(ph_framework_t *_ph_framework_data, xmlNodePtr framework_no
 						db_urls->id.s);
 					return -1;
 				}
-				if(db_urls->db_url.len==ph_db_urls[i].db_url.len &&
-                                        strncmp(ph_db_urls[i].db_url.s,
-                                                db_urls->db_url.s,
-						db_urls->db_url.len)==0){
+				if(db_urls->db_url.len == ph_db_urls[i].db_url.len
+						&& strncmp(ph_db_urls[i].db_url.s, db_urls->db_url.s,
+								   db_urls->db_url.len)
+								   == 0) {
 					LM_ERR("duplicated %s [%.*s]\n",
 						XHTTP_PI_XML_DB1_URL_NODE,
 						db_urls->db_url.len,
@@ -538,16 +531,17 @@ int ph_getDbUrlNodes(ph_framework_t *_ph_framework_data, xmlNodePtr framework_no
 			_ph_framework_data->ph_db_urls_size++;
 		}
 	}
-	if(_ph_framework_data->ph_db_urls_size==0){
+	if(ph_db_urls==NULL || _ph_framework_data->ph_db_urls_size==0){
 		LM_ERR("No [%s] node in config file\n", XHTTP_PI_XML_DB1_URL_NODE);
 		return -1;
 	}
 	/* */
-	for(i=0;i<_ph_framework_data->ph_db_urls_size;i++){
-		LM_DBG("got node %s [%d][%.*s][%.*s]\n", XHTTP_PI_XML_DB1_URL_NODE,
-			i, ph_db_urls[i].id.len, ph_db_urls[i].id.s,
-			ph_db_urls[i].db_url.len, ph_db_urls[i].db_url.s);
+	for(i = 0; i < _ph_framework_data->ph_db_urls_size; i++) {
+		LM_DBG("got node %s [%d][%.*s][%.*s]\n", XHTTP_PI_XML_DB1_URL_NODE, i,
+				ph_db_urls[i].id.len, ph_db_urls[i].id.s,
+				ph_db_urls[i].db_url.len, ph_db_urls[i].db_url.s);
 	}
+
 	/* */
 	return 0;
 }
@@ -844,7 +838,7 @@ int ph_getDbTables(ph_framework_t *_ph_framework_data, xmlNodePtr framework_node
 			*/
 		}
 	}
-	if(_ph_framework_data->ph_db_tables_size==0){
+	if(ph_db_tables==NULL || _ph_framework_data->ph_db_tables_size==0){
 		LM_ERR("No [%s] node in config file\n", XHTTP_PI_XML_DB1_TABLE_NODE);
 		return -1;
 	}
@@ -2623,9 +2617,9 @@ int getVal(db_val_t *val, db_type_t val_type, db_key_t key, ph_db_table_t *table
 					goto done;
 				}
 				arg->s[arg->len] = c;
-				LM_DBG("[%.*s]->[%d][%.*s][%d]\n",
+				LM_DBG("[%.*s]->[%d][%.*s][%d] (%d)\n",
 					arg->len, arg->s, proto,
-					host.len, host.s, port);
+					host.len, host.s, port, (int)flags);
 				continue;
 			}
 			LM_DBG("[%.*s] has flags [%d]\n", key->len, key->s, flags);
@@ -2644,9 +2638,9 @@ int getVal(db_val_t *val, db_type_t val_type, db_key_t key, ph_db_table_t *table
 					goto done;
 				}
 				arg->s[arg->len] = c;
-				LM_DBG("[%.*s]->[%d][%.*s][%d]\n",
+				LM_DBG("[%.*s]->[%d][%.*s][%d] (%d)\n",
 					arg->len, arg->s, proto,
-					host.len, host.s, port);
+					host.len, host.s, port, (int)flags);
 				if (str2ip(&host)==NULL) {
 					XHTTP_PI_BUILD_REPLY(ctx,
 						"Invalid IPv4 in [proto:]IPv4[:port]"
@@ -2667,6 +2661,7 @@ int getVal(db_val_t *val, db_type_t val_type, db_key_t key, ph_db_table_t *table
 						key->len, key->s, arg->len, arg->s);
 					goto done;
 				}
+				LM_DBG("[%.*s] has new flags [%d]\n", key->len, key->s, flags);
 				continue;
 			}
 			LM_DBG("[%.*s] has flags [%d]\n", key->len, key->s, flags);
@@ -2678,6 +2673,7 @@ int getVal(db_val_t *val, db_type_t val_type, db_key_t key, ph_db_table_t *table
 						key->len, key->s, arg->len, arg->s);
 					goto done;
 				}
+				LM_DBG("[%.*s] has new flags [%d]\n", key->len, key->s, flags);
 				continue;
 			}
 			LM_DBG("[%.*s] has flags [%d]\n", key->len, key->s, flags);
@@ -2698,6 +2694,7 @@ int getVal(db_val_t *val, db_type_t val_type, db_key_t key, ph_db_table_t *table
 						arg->len, arg->s);
 					goto done;
 				}
+				LM_DBG("[%.*s] has new flags [%d]\n", key->len, key->s, flags);
 				continue;
 			}
 			LM_DBG("[%.*s] has flags [%d]\n", key->len, key->s, flags);
@@ -2924,7 +2921,7 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 		return ret;
 	} else if(arg_val.len==2 && strncmp(arg_val.s, "on", 2)==0) {
 		/* allocate c_vals array */
-		if(command->c_keys_size && command->c_keys_size){
+		if(command->c_keys_size){
 			c_vals = (db_val_t*)pkg_malloc(command->c_keys_size*sizeof(db_val_t));
 			if(c_vals==NULL){
 				LM_ERR("oom\n");
@@ -2961,7 +2958,7 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 			}
 		}
 	}
-	if(command->q_keys_size && command->q_keys_size && command->type!=DB_CAP_QUERY){
+	if(command->q_keys_size && command->type!=DB_CAP_QUERY){
 		q_vals = (db_val_t*)pkg_malloc(command->q_keys_size*sizeof(db_val_t));
 		if(q_vals==NULL){
 			LM_ERR("oom\n");

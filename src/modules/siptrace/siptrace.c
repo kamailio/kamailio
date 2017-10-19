@@ -115,8 +115,8 @@ static int trace_send_hep2_duplicate(str *body, str *from, str *to, struct dest_
 static int trace_send_hep3_duplicate(str *body, str *from, str *to, struct dest_info*, str *correlation_id);
 static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int *proto);
 
-int siptrace_net_data_recv(void *data);
-int siptrace_net_data_send(void *data);
+int siptrace_net_data_recv(sr_event_param_t *evp);
+int siptrace_net_data_send(sr_event_param_t *evp);
 static int _siptrace_mode = 0;
 
 
@@ -1760,7 +1760,7 @@ static int trace_send_hep3_duplicate(str *body, str *from, str *to, struct dest_
 		HEP3_PACK_CHUNK_UINT16_NBO(0, 0x0007, htons(from_su.sin6.sin6_port));
 		HEP3_PACK_CHUNK_UINT16_NBO(0, 0x0008, htons(to_su.sin6.sin6_port));
 	} else {
-		LM_ERR("unknown address family [%u]\n", dst.send_sock->address.af);
+		LM_ERR("unknown address family [%u]\n", from_su.s.sa_family);
 		goto error;
 	}
 
@@ -1774,7 +1774,7 @@ static int trace_send_hep3_duplicate(str *body, str *from, str *to, struct dest_
 			HEP3_PACK_CHUNK_DATA (0, 0x0011, correlation_id_str->s, correlation_id_str->len);
 		}
 	}
-	if (auth_key_str.len) {
+	if (auth_key_str.s && auth_key_str.len > 0) {
 		HEP3_PACK_CHUNK_DATA(0, 0x000e, auth_key_str.s, auth_key_str.len);
 	}
 	HEP3_PACK_CHUNK_DATA (0, 0x000f, body->s, body->len);
@@ -2119,7 +2119,7 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 			|| ((ip=str2ip6(&host_uri))!=0)
 	   ) {
 		ip_addr2su(tmp_su, ip, ntohs(port_no));
-		return 0;	
+		return 0;
 
 	}
 
@@ -2131,15 +2131,15 @@ error:
 /**
  *
  */
-int siptrace_net_data_recv(void *data)
+int siptrace_net_data_recv(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
 	struct _siptrace_data sto;
 
-	if(data==0)
+	if(evp->data==0)
 		return -1;
 
-	nd = (sr_net_info_t*)data;
+	nd = (sr_net_info_t*)evp->data;
 	if(nd->rcv==NULL || nd->data.s==NULL || nd->data.len<=0)
 		return -1;
 
@@ -2172,16 +2172,16 @@ int siptrace_net_data_recv(void *data)
 /**
  *
  */
-int siptrace_net_data_send(void *data)
+int siptrace_net_data_send(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
 	struct dest_info new_dst;
 	struct _siptrace_data sto;
 
-	if(data==0)
+	if(evp->data==0)
 		return -1;
 
-	nd = (sr_net_info_t*)data;
+	nd = (sr_net_info_t*)evp->data;
 	if(nd->dst==NULL || nd->data.s==NULL || nd->data.len<=0)
 		return -1;
 
@@ -2349,6 +2349,9 @@ static int hlog(struct sip_msg *msg, str *correlationid, str *message) {
 	hostent2su(&dst.to, &p->host, p->addr_idx, (p->port)?p->port:SIP_PORT);
 	LM_DBG("setting up the socket_info\n");
 
+	free_proxy(p); /* frees only p content, not p itself */
+	pkg_free(p);
+
 	if (force_send_sock_str.s) {
 		LM_DBG("force_send_sock activated, grep for the sock_info\n");
 		si = grep_sock_info(&force_send_sock_uri->host,
@@ -2393,7 +2396,7 @@ static int hlog(struct sip_msg *msg, str *correlationid, str *message) {
 	HEP3_PACK_CHUNK_UINT8 (0, 0x000b, 0x64); /* protocol type: log */
 	HEP3_PACK_CHUNK_UINT32(0, 0x000c, hep_capture_id);
 	HEP3_PACK_CHUNK_DATA  (0, 0x0011, correlationid->s, correlationid->len);
-	if (auth_key_str.len) {
+	if (auth_key_str.s && auth_key_str.len > 0) {
 		HEP3_PACK_CHUNK_DATA(0, 0x000e, auth_key_str.s, auth_key_str.len);
 	}
 	HEP3_PACK_CHUNK_DATA  (0, 0x000f, message->s, message->len);

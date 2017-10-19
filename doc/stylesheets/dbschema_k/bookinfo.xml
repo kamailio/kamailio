@@ -1,5 +1,5 @@
 <book>
-<title>&kamailio; database tables</title>
+<title>&kamailio; Database Tables</title>
 <bookinfo>
 	<productname class="trade">&kamailio;</productname>
 	<authorgroup>
@@ -23,7 +23,7 @@
 		</editor>
 	</authorgroup>
 	<copyright>
-		<year>2014</year>
-		<holder>&kamailio; development Team</holder>
+		<year>2008-2017</year>
+		<holder>&kamailio; Project</holder>
 	</copyright>
 </bookinfo>

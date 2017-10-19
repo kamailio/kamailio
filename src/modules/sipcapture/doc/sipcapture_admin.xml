@@ -185,7 +185,7 @@ modparam("sipcapture", "db_insert_mode", 1)
 	<section id="sipcapture.p.capture_on">
 		<title><varname>capture_on</varname> (integer)</title>
 		<para>
-		Parameter to enable/disable capture globaly (on(1)/off(0))
+		Parameter to enable/disable capture globally (on(1)/off(0))
 		</para>
 		<para>
 		<emphasis>
@@ -493,6 +493,26 @@ modparam("sipcapture", "topoh_unmask", 1)
 			</programlisting>
 		</example>
 	</section>
+
+	<section id="sipcapture.p.nonsip_hook">
+		<title><varname>nonsip_hook</varname> (int)</title>
+		<para>
+		If set to 1, event route <emphasis>sipcapture:siprequest</emphasis> is
+		run when HEP message is received.
+		</para>
+		<para>
+			Default value is <emphasis>0</emphasis>.
+		</para>
+		<example>
+			<title>Set <varname>nonsip_hook</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "nonsip_hook", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+
 </section>	
 <section>
 	<title>Functions</title>

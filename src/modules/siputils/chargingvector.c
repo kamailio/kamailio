@@ -355,7 +355,10 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 	pcv.len = 0;
 	pcv_status = PCV_NONE;
 
-	fixup_get_svalue(msg, (gparam_p)flags, &flag_str);
+	if(fixup_get_svalue(msg, (gparam_p)flags, &flag_str)<0) {
+		LM_ERR("failed to retrieve parameter value\n");
+		return -1;
+	}
 
 	// Process command flags
 	for (i = 0; i < flag_str.len; i++)
@@ -392,7 +395,7 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 	if ( pcv_status == PCV_PARSED && (replace_pcv || remove_pcv)  )
 	{
 		i = sip_remove_charging_vector(msg, hf_pcv);
-		if (i <= 0) return i;
+		if (i <= 0) return (i==0)?-1:i;
 	}
 
 	/* Generate PCV if
@@ -431,7 +434,7 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 		if (i <= 0)
 		{
 			LM_ERR("Failed to add P-Charging-Vector header\n");
-			return i;
+			return (i==0)?-1:i;
 		}
 	}
 

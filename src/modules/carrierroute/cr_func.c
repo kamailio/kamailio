@@ -471,7 +471,7 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 			avp_value_t cr_new_uri;
 
 			if(rf->dice_max == 0) {
-				LM_ERR("invalid dice_max value\n");
+				LM_ERR("invalid dice_max value (route has probability 0)\n");
 				return -1;
 			}
 			if ((prob = hash_func(msg, hash_source, rf->dice_max)) < 0) {
@@ -673,12 +673,7 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 	}
 	
 	carrier_data=NULL;
-	if (carrier_id < 0) {
-		if (cfg_get(carrierroute, carrierroute_cfg, fallback_default)) {
-			LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
-			carrier_data = get_carrier_data(rd, rd->default_carrier_id);
-		}
-	} else if (carrier_id == 0) {
+	if (carrier_id == 0) {
 		carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 	} else {
 		carrier_data = get_carrier_data(rd, carrier_id);
@@ -889,12 +884,7 @@ int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
 	}
 
 	carrier_data=NULL;
-	if (carrier_id < 0) {
-		if (cfg_get(carrierroute, carrierroute_cfg, fallback_default)) {
-			LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
-			carrier_data = get_carrier_data(rd, rd->default_carrier_id);
-		}
-	} else if (carrier_id == 0) {
+	if (carrier_id == 0) {
 		carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 	} else {
 		carrier_data = get_carrier_data(rd, carrier_id);

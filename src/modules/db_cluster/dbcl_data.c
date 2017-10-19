@@ -115,6 +115,7 @@ int dbcl_init_con(str *name, str *url)
 	if(sc->sinfo==NULL)
 	{
 		LM_ERR("no shm memory\n");
+		pkg_free(sc);
 		return -1;
 	}
 	memset(sc->sinfo, 0, sizeof(dbcl_shared_t));

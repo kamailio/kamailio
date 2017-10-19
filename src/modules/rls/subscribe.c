@@ -58,7 +58,7 @@ static str pu_489_rpl     = str_init("Bad Event");
 
 #define Stale_cseq_code 401
 
-subs_t* constr_new_subs(struct sip_msg* msg, struct to_body *pto, 
+subs_t* constr_new_subs(struct sip_msg* msg, struct to_body *pto,
 		pres_ev_t* event);
 int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node);
 
@@ -73,7 +73,7 @@ xmlNodePtr rls_get_by_service_uri(xmlDocPtr doc, str* service_uri)
 	xmlNodePtr root, node;
 	struct sip_uri sip_uri;
 	str uri, uri_str;
-	str *normalized_uri;	
+	str *normalized_uri;
 
 	root = XMLDocGetNodeByName(doc, "rls-services", NULL);
 	if(root==NULL)
@@ -89,8 +89,8 @@ xmlNodePtr rls_get_by_service_uri(xmlDocPtr doc, str* service_uri)
 			uri.s = XMLNodeGetAttrContentByName(node, "uri");
 			if (uri.s == NULL)
 			{
-			        LM_DBG("failed to fetch 'uri' in service [invalid XML from XCAP]\n");
-			        continue;
+				LM_DBG("failed to fetch 'uri' in service [invalid XML from XCAP]\n");
+				continue;
 			}
 			uri.len = strlen(uri.s);
 			normalized_uri = normalize_sip_uri(&uri);
@@ -111,7 +111,7 @@ xmlNodePtr rls_get_by_service_uri(xmlDocPtr doc, str* service_uri)
 				LM_ERR("failed to construct uri from user and domain\n");
 				return NULL;
 			}
-			if(uri_str.len== service_uri->len && 
+			if(uri_str.len== service_uri->len &&
 					strncmp(uri_str.s, service_uri->s, uri_str.len) == 0)
 			{
 				pkg_free(uri_str.s);
@@ -129,7 +129,7 @@ xmlNodePtr rls_get_by_service_uri(xmlDocPtr doc, str* service_uri)
  * - document is taken from DB or via xcap client
  */
 int rls_get_service_list(str *service_uri, str *user, str *domain,
-		 xmlNodePtr *service_node, xmlDocPtr *rootdoc)
+		xmlNodePtr *service_node, xmlDocPtr *rootdoc)
 {
 	db_key_t query_cols[5];
 	db_val_t query_vals[5];
@@ -159,13 +159,13 @@ int rls_get_service_list(str *service_uri, str *user, str *domain,
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *user;
 	n_query_cols++;
-	
+
 	query_cols[n_query_cols] = &str_domain_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *domain;
 	n_query_cols++;
-	
+
 	query_cols[n_query_cols] = &str_doc_type_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
@@ -173,7 +173,7 @@ int rls_get_service_list(str *service_uri, str *user, str *domain,
 	n_query_cols++;
 
 	LM_DBG("searching document for user sip:%.*s@%.*s\n",
-		user->len, user->s, domain->len, domain->s);
+			user->len, user->s, domain->len, domain->s);
 
 	if(rls_xcap_dbf.use_table(rls_xcap_db, &rls_xcap_table) < 0)
 	{
@@ -204,13 +204,13 @@ int rls_get_service_list(str *service_uri, str *user, str *domain,
 	if(result->n<=0)
 	{
 		LM_DBG("No rl document found\n");
-		
+
 		if(rls_integrated_xcap_server)
 		{
 			rls_xcap_dbf.free_result(rls_xcap_db, result);
 			return 0;
 		}
-		
+
 		/* make an initial request to xcap_client module */
 		memset(&doc_sel, 0, sizeof(xcap_doc_sel_t));
 		doc_sel.auid.s= "rls-services";
@@ -270,8 +270,8 @@ int rls_get_service_list(str *service_uri, str *user, str *domain,
 	if(*service_node==NULL)
 	{
 		LM_DBG("service uri %.*s not found in rl document for user"
-			" sip:%.*s@%.*s\n", service_uri->len, service_uri->s,
-			user->len, user->s, domain->len, domain->s);
+				" sip:%.*s@%.*s\n", service_uri->len, service_uri->s,
+				user->len, user->s, domain->len, domain->s);
 		rootdoc = NULL;
 		if(xmldoc!=NULL)
 			xmlFreeDoc(xmldoc);
@@ -305,7 +305,7 @@ int reply_421(struct sip_msg* msg)
 {
 	str hdr_append;
 	char buffer[256];
-	
+
 	hdr_append.s = buffer;
 	hdr_append.s[0]='\0';
 	hdr_append.len = sprintf(hdr_append.s, "Require: eventlist\r\n");
@@ -337,38 +337,26 @@ int reply_421(struct sip_msg* msg)
 int reply_200(struct sip_msg* msg, str* contact, int expires)
 {
 	str hdr_append;
-	int len;
-	
-	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(contact->len+ 70));
+
+	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(contact->len+70));
 	if(hdr_append.s == NULL)
 	{
 		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
-	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", expires);
-	if(hdr_append.len< 0)
+	hdr_append.len = snprintf(hdr_append.s, contact->len+70,
+				"Expires: %d" CRLF
+				"Contact: <%.*s>" CRLF
+				"Require: eventlist" CRLF,
+				expires,
+				contact->len, contact->s
+			);
+	if(hdr_append.len<0 || hdr_append.len>=contact->len+70)
 	{
-		LM_ERR("unsuccessful sprintf\n");
+		LM_ERR("unsuccessful snprintf\n");
 		goto error;
 	}
-	strncpy(hdr_append.s+hdr_append.len ,"Contact: <", 10);
-	hdr_append.len += 10;
-	strncpy(hdr_append.s+hdr_append.len, contact->s, contact->len);
-	hdr_append.len+= contact->len;
-	strncpy(hdr_append.s+hdr_append.len, ">", 1);
-	hdr_append.len += 1;
-	strncpy(hdr_append.s+hdr_append.len, CRLF, CRLF_LEN);
-	hdr_append.len += CRLF_LEN;
 
-	len = sprintf(hdr_append.s+ hdr_append.len, "Require: eventlist\r\n");
-	if(len < 0)
-	{
-		LM_ERR("unsuccessful sprintf\n");
-		goto error;
-	}
-	hdr_append.len+= len;
-	hdr_append.s[hdr_append.len]= '\0';
-	
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
 		LM_ERR("unable to add lump_rl\n");
@@ -379,14 +367,14 @@ int reply_200(struct sip_msg* msg, str* contact, int expires)
 	{
 		LM_ERR("while sending reply\n");
 		goto error;
-	}	
+	}
 	pkg_free(hdr_append.s);
 	return 0;
 
 error:
 	pkg_free(hdr_append.s);
 	return -1;
-}	
+}
 
 /**
  * reply 489 with allow-events header
@@ -410,7 +398,7 @@ int reply_489(struct sip_msg * msg)
 	{
 		LM_ERR("while getting ev_list\n");
 		return -1;
-	}	
+	}
 	memcpy(hdr_append.s+ hdr_append.len, ev_list->s, ev_list->len);
 	hdr_append.len+= ev_list->len;
 	pkg_free(ev_list->s);
@@ -418,7 +406,7 @@ int reply_489(struct sip_msg * msg)
 	memcpy(hdr_append.s+ hdr_append.len, CRLF, CRLF_LEN);
 	hdr_append.len+=  CRLF_LEN;
 	hdr_append.s[hdr_append.len]= '\0';
-		
+
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
 		LM_ERR("unable to add lump_rl\n");
@@ -431,7 +419,7 @@ int reply_489(struct sip_msg * msg)
 	}
 	return 0;
 }
-	
+
 
 /**
  * handle RLS subscription
@@ -440,7 +428,7 @@ int rls_handle_subscribe0(struct sip_msg* msg)
 {
 	struct to_body *pfrom;
 
-	if (parse_from_uri(msg) < 0)
+	if (parse_from_uri(msg) == NULL)
 	{
 		LM_ERR("failed to find From header\n");
 		if (slb.freply(msg, 400, &pu_400_rpl) < 0)
@@ -451,7 +439,7 @@ int rls_handle_subscribe0(struct sip_msg* msg)
 		return 0;
 	}
 	pfrom = (struct to_body *) msg->from->parsed;
-	
+
 	return rls_handle_subscribe(msg, pfrom->parsed_uri.user,
 			pfrom->parsed_uri.host);
 }
@@ -460,7 +448,7 @@ int w_rls_handle_subscribe(struct sip_msg* msg, char* watcher_uri)
 {
 	str wuri;
 	struct sip_uri parsed_wuri;
-	
+
 	if (fixup_get_svalue(msg, (gparam_p)watcher_uri, &wuri) != 0)
 	{
 		LM_ERR("invalid uri parameter\n");
@@ -507,7 +495,7 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 		return 0;
 	}
 	/* check for To and From headesr */
-	if(parse_to_uri(msg)<0 || parse_from_uri(msg)<0)
+	if(parse_to_uri(msg)==NULL || parse_from_uri(msg)==NULL)
 	{
 		LM_ERR("failed to find To or From headers\n");
 		if (slb.freply(msg, 400, &pu_400_rpl) < 0)
@@ -561,7 +549,7 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 			goto error;
 		}
 		if(! ( ((event_t*)msg->event->parsed)->type & rls_events) )
-		{	
+		{
 			goto forpresence;
 		}
 	} else {
@@ -606,10 +594,10 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 	}
 	subs.updated = core_hash(&rlsubs_did, NULL, 0) %
 		(waitn_time * rls_notifier_poll_rate * rls_notifier_processes);
-	
+
 	if(get_to(msg)->tag_value.s==NULL || get_to(msg)->tag_value.len==0)
 	{ /* initial Subscribe */
-		/*verify if Request URI represents a list by asking xcap server*/	
+		/*verify if Request URI represents a list by asking xcap server*/
 		if(uandd_to_uri(msg->parsed_uri.user, msg->parsed_uri.host,
 					&subs.pres_uri)<0)
 		{
@@ -688,7 +676,7 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 			else if(rt>=400)
 			{
 				reason = (rt==400)?pu_400_rpl:stale_cseq_rpl;
-		
+
 				if (slb.freply(msg, 400, &reason) < 0)
 				{
 					LM_ERR("while sending reply\n");
@@ -731,7 +719,7 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 		{
 			lock_get(&rls_table[hash_code].lock);
 			if(pres_search_shtable(rls_table, subs.callid,
-					subs.to_tag, subs.from_tag, hash_code)==NULL)
+						subs.to_tag, subs.from_tag, hash_code)==NULL)
 			{
 				lock_release(&rls_table[hash_code].lock);
 				LM_DBG("subscription dialog not found for <%.*s@%.*s>\n",
@@ -752,11 +740,11 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 				LM_ERR("while updating resource list subscription\n");
 				goto error;
 			}
-	
+
 			if(rt>=400)
 			{
 				reason = (rt==400)?pu_400_rpl:stale_cseq_rpl;
-		
+
 				if (slb.freply(msg, 400, &reason) < 0)
 				{
 					LM_ERR("while sending reply\n");
@@ -765,7 +753,7 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 				ret = 0;
 				goto stop;
 			}
-		}	
+		}
 		if(rls_get_service_list(&subs.pres_uri, &subs.watcher_user,
 					&subs.watcher_domain, &service_node, &doc)<0)
 		{
@@ -806,7 +794,7 @@ done:
 stop:
 forpresence:
 	if(contact!=NULL)
-	{	
+	{
 		if(contact->s!=NULL)
 			pkg_free(contact->s);
 		pkg_free(contact);
@@ -834,7 +822,7 @@ error:
 	LM_ERR("occurred in rls_handle_subscribe\n");
 
 	if(contact!=NULL)
-	{	
+	{
 		if(contact->s!=NULL)
 			pkg_free(contact->s);
 		pkg_free(contact);
@@ -856,7 +844,7 @@ error:
 		if (rls_dbf.abort_transaction(rls_db) < 0)
 			LM_ERR("in abort_transaction\n");
 	}
-	
+
 	return err_ret;
 }
 
@@ -871,7 +859,7 @@ int remove_expired_rlsubs( subs_t* subs, unsigned int hash_code)
 	if (dbmode == RLS_DB_ONLY)
 	{
 		LM_ERR( "remove_expired_rlsubs called in RLS_DB_ONLY mode\n" );
-	} 
+	}
 
 	/* search the record in hash table */
 	lock_get(&rls_table[hash_code].lock);
@@ -917,7 +905,7 @@ int update_rlsubs( subs_t* subs, unsigned int hash_code)
 	if (dbmode == RLS_DB_ONLY)
 	{
 		LM_ERR( "update_rlsubs called in RLS_DB_ONLY mode\n" );
-	} 
+	}
 
 	/* search the record in hash table */
 	lock_get(&rls_table[hash_code].lock);
@@ -932,10 +920,10 @@ int update_rlsubs( subs_t* subs, unsigned int hash_code)
 	}
 
 	s->expires= subs->expires+ (int)time(NULL);
-	
+
 	if(s->db_flag & NO_UPDATEDB_FLAG)
 		s->db_flag= UPDATEDB_FLAG;
-	
+
 	if(	s->remote_cseq>= subs->remote_cseq)
 	{
 		lock_release(&rls_table[hash_code].lock);
@@ -956,7 +944,7 @@ int update_rlsubs( subs_t* subs, unsigned int hash_code)
 	if(s->record_route.s!=NULL && s->record_route.len>0)
 	{
 		subs->record_route.s =
-				(char*)pkg_malloc(s->record_route.len* sizeof(char));
+			(char*)pkg_malloc(s->record_route.len* sizeof(char));
 		if(subs->record_route.s==NULL)
 		{
 			ERR_MEM(PKG_MEM_STR);
@@ -983,7 +971,7 @@ int send_resource_subs(char* uri, void* param)
 	struct sip_uri parsed_pres_uri;
 	int duplicate = 0;
 	str *normalized_uri;
-	
+
 	subs_info_t *s = (subs_info_t *) ((void**)param)[0];
 	list_entry_t **rls_contact_list = (list_entry_t **) ((void**)param)[1];
 
@@ -992,19 +980,19 @@ int send_resource_subs(char* uri, void* param)
 
 	normalized_uri = normalize_sip_uri(&pres_uri);
 	if (normalized_uri->s == NULL || normalized_uri->len == 0) {
-	    LM_ERR("failed to normalize RLS entry URI %.*s\n",
-		   pres_uri.len, pres_uri.s);
-	    return -1;
+		LM_ERR("failed to normalize RLS entry URI %.*s\n",
+				pres_uri.len, pres_uri.s);
+		return -1;
 	}
-	
+
 	if (parse_uri(normalized_uri->s, normalized_uri->len, &parsed_pres_uri)
-	    < 0) {
-	    LM_ERR("bad uri: %.*s\n", normalized_uri->len, normalized_uri->s);
-	    return -1;
+			< 0) {
+		LM_ERR("bad uri: %.*s\n", normalized_uri->len, normalized_uri->s);
+		return -1;
 	}
 
 	if (check_self(&parsed_pres_uri.host, 0, PROTO_NONE) != 1
-		&& rls_disable_remote_presence != 0)
+			&& rls_disable_remote_presence != 0)
 	{
 		LM_WARN("Unable to subscribe to remote contact %.*s for watcher %.*s\n",
 				normalized_uri->len, normalized_uri->s,
@@ -1014,7 +1002,7 @@ int send_resource_subs(char* uri, void* param)
 	}
 
 	/* Silently drop subscribes over the limit - will print a single warning
- 	   later */
+	 * later */
 	if (rls_max_backend_subs > 0 && ++counter > rls_max_backend_subs)
 		return 1;
 
@@ -1039,8 +1027,8 @@ int send_resource_subs(char* uri, void* param)
 	if (duplicate != 0)
 	{
 		LM_WARN("%.*s has %.*s multiple times in the same resource list\n",
-			s->watcher_uri->len, s->watcher_uri->s,
-			s->pres_uri->len, s->pres_uri->s);
+				s->watcher_uri->len, s->watcher_uri->s,
+				s->pres_uri->len, s->pres_uri->s);
 		pkg_free(tmp_str->s);
 		pkg_free(tmp_str);
 		return 1;
@@ -1062,8 +1050,8 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	list_entry_t *rls_contact_list = NULL;
 	list_entry_t *rls_subs_list = NULL;
 	void* params[2] = {&s, &rls_contact_list};
-		
-	/* if is initial send an initial Subscribe 
+
+	/* if is initial send an initial Subscribe
 	 * else search in hash table for a previous subscription */
 
 	if(CONSTR_RLSUBS_DID(subs, &did_str)<0)
@@ -1093,9 +1081,9 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	if(rls_outbound_proxy.s)
 		s.outbound_proxy = &rls_outbound_proxy;
 	extra_headers.s = "Supported: eventlist\r\n"
-				"Accept: application/pidf+xml, application/rlmi+xml,"
-					" application/watcherinfo+xml,"
-					" multipart/related\r\n";
+		"Accept: application/pidf+xml, application/rlmi+xml,"
+		" application/watcherinfo+xml,"
+		" multipart/related\r\n";
 	extra_headers.len = strlen(extra_headers.s);
 
 	s.extra_headers = &extra_headers;
@@ -1103,9 +1091,9 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	s.internal_update_flag = subs->internal_update_flag;
 
 	counter = 0;
-	
+
 	if(process_list_and_exec(xmlnode, subs->watcher_user, subs->watcher_domain,
-			send_resource_subs, params)<0)
+				send_resource_subs, params)<0)
 	{
 		LM_ERR("while processing list\n");
 		goto error;
@@ -1113,7 +1101,7 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 
 	if (rls_max_backend_subs > 0 && counter > rls_max_backend_subs)
 		LM_WARN("%.*s has too many contacts.  Max: %d, has: %d\n",
-			wuri.len, wuri.s, rls_max_backend_subs, counter);
+				wuri.len, wuri.s, rls_max_backend_subs, counter);
 
 	if (s.internal_update_flag == INTERNAL_UPDATE_TRUE)
 	{
@@ -1178,7 +1166,7 @@ void update_a_sub(subs_t *subs_copy)
 	{
 		subs_copy->expires = 0;
 		LM_WARN("found expired subscription for: %.*s\n",
-			subs_copy->pres_uri.len, subs_copy->pres_uri.s);
+				subs_copy->pres_uri.len, subs_copy->pres_uri.s);
 		goto done;
 	}
 	subs_copy->expires -= now;
@@ -1187,14 +1175,14 @@ void update_a_sub(subs_t *subs_copy)
 				&subs_copy->watcher_domain, &service_node, &doc)<0)
 	{
 		LM_ERR("failed getting resource list for: %.*s\n",
-			subs_copy->pres_uri.len, subs_copy->pres_uri.s);
+				subs_copy->pres_uri.len, subs_copy->pres_uri.s);
 		goto done;
 	}
 
 	if(doc==NULL)
 	{
 		LM_WARN("no document returned for: %.*s\n",
-			subs_copy->pres_uri.len, subs_copy->pres_uri.s);
+				subs_copy->pres_uri.len, subs_copy->pres_uri.s);
 		goto done;
 	}
 
@@ -1220,7 +1208,7 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 	struct sip_uri parsed_uri;
 	event_t e;
 	int i;
-	
+
 	if (fixup_get_svalue(msg, (gparam_p)puri, &uri) != 0)
 	{
 		LM_ERR("invalid uri parameter\n");
@@ -1248,7 +1236,7 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 	if (!(e.type & rls_events))
 	{
 		LM_ERR("event not supported by RLS: %.*s\n", event.len,
-			event.s);
+				event.s);
 		return -1;
 	}
 
@@ -1259,8 +1247,8 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 	}
 
 	LM_DBG("watcher username: %.*s, watcher domain: %.*s\n",
-		parsed_uri.user.len, parsed_uri.user.s,
-		parsed_uri.host.len, parsed_uri.host.s);
+			parsed_uri.user.len, parsed_uri.user.s,
+			parsed_uri.host.len, parsed_uri.host.s);
 
 	if (dbmode==RLS_DB_ONLY)
 	{
@@ -1290,15 +1278,15 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 		while (subs != NULL)
 		{
 			if (subs->watcher_user.len == parsed_uri.user.len &&
-				strncmp(subs->watcher_user.s, parsed_uri.user.s, parsed_uri.user.len) == 0 &&
-				subs->watcher_domain.len == parsed_uri.host.len &&
-				strncmp(subs->watcher_domain.s, parsed_uri.host.s, parsed_uri.host.len) == 0 &&
-				subs->event->evp->type == e.type)
+					strncmp(subs->watcher_user.s, parsed_uri.user.s, parsed_uri.user.len) == 0 &&
+					subs->watcher_domain.len == parsed_uri.host.len &&
+					strncmp(subs->watcher_domain.s, parsed_uri.host.s, parsed_uri.host.len) == 0 &&
+					subs->event->evp->type == e.type)
 			{
 				subs_t *subs_copy = NULL;
 
 				LM_DBG("found matching RLS subscription for: %.*s\n",
-					subs->pres_uri.len, subs->pres_uri.s);
+						subs->pres_uri.len, subs->pres_uri.s);
 
 				if ((subs_copy = pres_copy_subs(subs, PKG_MEM_TYPE)) == NULL)
 				{
@@ -1310,7 +1298,7 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 				update_a_sub(subs_copy);
 			}
 			subs = subs->next;
-		}		
+		}
 		lock_release(&rls_table[i].lock);
 	}
 

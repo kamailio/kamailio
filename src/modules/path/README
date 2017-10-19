@@ -32,6 +32,8 @@ Richard Fuchs
         3. Parameters
 
               3.1. use_received (int)
+              3.2. received_format (int)
+              3.3. enable_r2 (int)
 
         4. Functions
 
@@ -46,12 +48,14 @@ Richard Fuchs
 
    1.1. Add Supported header
    1.2. Set use_received parameter
-   1.3. add_path usage
-   1.4. add_path(user) usage
-   1.5. add_path(user, parameters) usage
-   1.6. add_path_received() usage
-   1.7. add_path_received(user) usage
-   1.8. add_path_received(user, parameters) usage
+   1.3. Set received_format parameter
+   1.4. Set enable_r2 parameter
+   1.5. add_path usage
+   1.6. add_path(user) usage
+   1.7. add_path(user, parameters) usage
+   1.8. add_path_received() usage
+   1.9. add_path_received(user) usage
+   1.10. add_path_received(user, parameters) usage
 
 Chapter 1. Admin Guide
 
@@ -70,6 +74,8 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. use_received (int)
+        3.2. received_format (int)
+        3.3. enable_r2 (int)
 
    4. Functions
 
@@ -154,6 +160,8 @@ append_hf("Supported: path\r\n");
 3. Parameters
 
    3.1. use_received (int)
+   3.2. received_format (int)
+   3.3. enable_r2 (int)
 
 3.1. use_received (int)
 
@@ -165,6 +173,44 @@ append_hf("Supported: path\r\n");
    Example 1.2. Set use_received parameter
 ...
 modparam("path", "use_received", 1)
+...
+
+3.2. received_format (int)
+
+   If set to 0, the “received” parameter value will be in the escaped SIP
+   URI format.
+
+   If set to 1, the “received” parameter value will be in the same format
+   as the “alias” parameter added by set_contact_alias() from “nathelper”
+   module (i.e., “ip~port~protid”). This is a solution with some SIP
+   applications that incorrectly match the transport from received
+   parameter instead of the one from the SIP URI.
+
+   Default value is 0.
+
+   Example 1.3. Set received_format parameter
+...
+modparam("path", "received_format", 1)
+...
+
+3.3. enable_r2 (int)
+
+   If set to 1, the module will add two Path headers, similar to the
+   double Record-Route done by rr module. One Path headers corresponds to
+   incoming network socket and the other to outgoing network socket. The
+   URIs in the Path headers will have the 'r2=on' parameter as well.
+
+   Note: if enabled, the module adds the two Path headers even when the
+   incoming socket is the same as outgoing socket. Improvements to skip
+   the second Path header in this case may be introduced in the future,
+   meanwhile, if you need to enable this parameter but also deal with same
+   socket routing, use 'insert_hf("Path: <$Ru>\r\n")'.
+
+   Default value is 0.
+
+   Example 1.4. Set enable_r2 parameter
+...
+modparam("path", "enable_r2", 1)
 ...
 
 4. Functions
@@ -191,7 +237,7 @@ modparam("path", "use_received", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.3. add_path usage
+   Example 1.5. add_path usage
 ...
 if (!add_path()) {
         sl_send_reply("503", "Internal Path Error");
@@ -209,7 +255,7 @@ if (!add_path()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.4. add_path(user) usage
+   Example 1.6. add_path(user) usage
 ...
 if (!add_path("loadbalancer")) {
         sl_send_reply("503", "Internal Path Error");
@@ -231,7 +277,7 @@ if (!add_path("loadbalancer")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.5. add_path(user, parameters) usage
+   Example 1.7. add_path(user, parameters) usage
 ...
 if (!add_path("loadbalancer", "ob")) {
         sl_send_reply("503", "Internal Path Error");
@@ -246,9 +292,16 @@ if (!add_path("loadbalancer", "ob")) {
    address as domain-part, and the address the request has been received
    from as received-parameter.
 
+   If the “outbound” module was loaded before this module, and outbound is
+   required for this request, the header will be in the form “Path:
+   <sip:flowtoken@1.2.3.4;lr;received=sip:2.3.4.5:1234;ob>”, where
+   “flowtoken” is the RFC 5626 flow-token that can be used to identify the
+   source and local address and transport the request was received on, and
+   where “1.2.3.4” is the address of the outgoing interface.
+
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.6. add_path_received() usage
+   Example 1.8. add_path_received() usage
 ...
 if (!add_path_received()) {
         sl_send_reply("503", "Internal Path Error");
@@ -265,7 +318,7 @@ if (!add_path_received()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.7. add_path_received(user) usage
+   Example 1.9. add_path_received(user) usage
 ...
 if (!add_path_received("inbound")) {
         sl_send_reply("503", "Internal Path Error");
@@ -282,7 +335,7 @@ if (!add_path_received("inbound")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.8. add_path_received(user, parameters) usage
+   Example 1.10. add_path_received(user, parameters) usage
 ...
 if (!add_path_received("inbound", "ob")) {
         sl_send_reply("503", "Internal Path Error");

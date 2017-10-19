@@ -23,6 +23,7 @@
 #include "p_usrloc_mod.h"
 #include "ul_db.h"
 #include "ul_db_watch.h"
+#include "config.h"
 #include "../../core/crc.h"
 
 static ul_db_handle_list_t * db_handles = NULL;
@@ -301,80 +302,6 @@ int load_location_number(db_func_t * dbf, db1_con_t* dbh, int *loc_nr){
 	return 0;
 }
 
-int load_handles(db_func_t * dbf, db1_con_t * dbh) {
-	static char query[UL_DB_QUERY_LEN];
-	db1_res_t * res;
-	db_row_t * row;
-	ul_db_handle_list_t * element;
-	int i, id, query_len;
-	str tmp;
-
-	if(!dbf || !dbh){
-		LM_ERR("NULL parameter passed \n");
-		return -1;
-	}
-
-	query_len = 25 + id_col.len + reg_table.len;
-
-	if(query_len > UL_DB_QUERY_LEN) {
-		LM_ERR("weird: query larger than %i bytes.\n", UL_DB_QUERY_LEN);
-		return -1;
-	}
-
-	memset(query, 0, UL_DB_QUERY_LEN);
-
-	if (sprintf(query,
-	        "SELECT DISTINCT "
-	        "%.*s "
-	        "FROM "
-	        "%.*s",
-	        id_col.len, id_col.s,
-	        reg_table.len, reg_table.s) < 0) {
-		LM_ERR("could not print query\n");
-		return -1;
-	}
-	tmp.s = query;
-	tmp.len = strlen(query);
-
-	if (dbf->raw_query (dbh, &tmp, &res) < 0) {
-		LM_ERR("in database query.\n");
-		return -1;
-	}
-
-	if (RES_ROW_N (res) == 0) {
-		dbf->free_result (dbh, res);
-		LM_DBG ("no data found\n");
-		return 1;
-	}
-
-	for (i = 0; i < RES_ROW_N (res); ++i) {
-		row = RES_ROWS (res) + i;
-
-		if((element = allocate_handle_list()) == NULL) {
-			LM_ERR("couldnt allocate handle.\n");
-			goto errout;
-		}
-
-		if (VAL_NULL (ROW_VALUES(row) + 0)) {
-			LM_ERR("Weird: Empty ID-Field\n");
-			goto errout;
-		}
-
-		id = VAL_INT (ROW_VALUES(row) + 0);
-		if(load_data(dbf, dbh, element->handle, id) < 0){
-			LM_ERR("couldn't load handle data.\n");
-			goto errout;
-		}
-		element->next = db_handles;
-		db_handles = element;
-	}
-	dbf->free_result (dbh, res);
-	return 0;
-errout:
-	dbf->free_result (dbh, res);
-	return -1;
-}
-
 int refresh_handles(db_func_t * dbf, db1_con_t * dbh) {
 	ul_db_handle_list_t * element;
 	int i;
@@ -456,9 +383,12 @@ int check_handle(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle){
 						handle->id, handle->db[i].no, handle->db[i].url.len, handle->db[i].url.s);
 				}
 			} else if((handle->db[i].status == DB_ON) && handle->db[i].dbh) {
-				if((handle->db[i].failover_time < (time(NULL) - expire_time)) && (handle->db[i].failover_time != UL_DB_ZERO_TIME)){
-					LM_ERR("%s: failover_time: %ld, now: %ld, delta: %ld, now going to reset failover time\n", __FUNCTION__, 
-						(long int)handle->db[i].failover_time, (long int)time(NULL), (long int)(time(NULL) - handle->db[i].failover_time));
+				if ((handle->db[i].failover_time
+						< (time(NULL)
+								- cfg_get(p_usrloc, p_usrloc_cfg, expire_time)))
+						&& (handle->db[i].failover_time != UL_DB_ZERO_TIME)) {
+					LM_ERR("%s: failover_time: %ld, now: %ld, delta: %ld, now going to reset failover time\n", __FUNCTION__,
+							(long int)handle->db[i].failover_time, (long int)time(NULL), (long int)(time(NULL) - handle->db[i].failover_time));
 					if(db_reset_failover_time(handle, handle->db[i].no) < 0) {
 						LM_ERR("could not reset failover time for id %i, db %i.\n",
 							handle->id, handle->db[i].no);

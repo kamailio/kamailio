@@ -31,8 +31,8 @@
 
 #include "../../core/sr_module.h"
 #include "../jansson/jansson_utils.h"
-jansson_to_val_f jsontoval;
-pv_spec_t jsonrpc_result_pv;
+extern jansson_to_val_f jsontoval;
+extern pv_spec_t jsonrpc_result_pv;
 
 #endif
 
@@ -86,10 +86,10 @@ typedef struct retry_range {
 } retry_range_t;
 
 /* globals */
-int cmd_pipe;
+extern int cmd_pipe;
+extern str result_pv_str;
+extern retry_range_t* global_retry_ranges;
 extern const str null_str;
-str result_pv_str;
-retry_range_t* global_retry_ranges;
 
 static inline str pkg_strdup(str src)
 {

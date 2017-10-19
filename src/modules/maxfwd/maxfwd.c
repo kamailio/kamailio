@@ -38,6 +38,7 @@
 
 MODULE_VERSION
 
+/* clang-format off */
 struct cfg_group_maxfwd {
 	int max_limit;
 };
@@ -100,20 +101,18 @@ struct module_exports exports= {
 	0,
 	0           /* per-child init function */
 };
-
+/* clang-format on */
 
 
 static int mod_init(void)
 {
-	if (cfg_declare("maxfwd", maxfwd_cfg_def, &default_maxfwd_cfg,
-				cfg_sizeof(maxfwd), &maxfwd_cfg)) {
+	if(cfg_declare("maxfwd", maxfwd_cfg_def, &default_maxfwd_cfg,
+			   cfg_sizeof(maxfwd), &maxfwd_cfg)) {
 		LM_ERR("failed to declare the configuration\n");
 		return E_CFG;
 	}
 	return 0;
 }
-
-
 
 
 /**
@@ -125,17 +124,17 @@ int process_maxfwd_header(struct sip_msg *msg, int limit)
 	str mf_value = {0};
 	int max_limit;
 
-	if(limit<0 || limit>255) {
+	if(limit < 0 || limit > 255) {
 		LM_ERR("invalid param value: %d\n", limit);
 		return -1;
 	}
 	max_limit = cfg_get(maxfwd, maxfwd_cfg, max_limit);
 
-	val=is_maxfwd_present(msg, &mf_value);
-	switch (val) {
+	val = is_maxfwd_present(msg, &mf_value);
+	switch(val) {
 		/* header not found */
 		case -1:
-			if (add_maxfwd_header(msg, (unsigned int)limit)!=0)
+			if(add_maxfwd_header(msg, (unsigned int)limit) != 0)
 				goto error;
 			return 2;
 		/* error */
@@ -145,11 +144,11 @@ int process_maxfwd_header(struct sip_msg *msg, int limit)
 		case 0:
 			return -1;
 		default:
-			if (val>max_limit){
+			if(val > max_limit) {
 				LM_DBG("value %d decreased to %d\n", val, max_limit);
-				val = max_limit+1;
+				val = max_limit + 1;
 			}
-			if ( decrement_maxfwd(msg, val, &mf_value)!=0 ) {
+			if(decrement_maxfwd(msg, val, &mf_value) != 0) {
 				LM_ERR("decrement failed!\n");
 				goto error;
 			}
@@ -163,10 +162,10 @@ error:
 /**
  *
  */
-static int w_process_maxfwd_header(struct sip_msg* msg, char* str1, char* str2)
+static int w_process_maxfwd_header(struct sip_msg *msg, char *str1, char *str2)
 {
 	int mfval;
-	if (get_int_fparam(&mfval, msg, (fparam_t*) str1) < 0) {
+	if(get_int_fparam(&mfval, msg, (fparam_t *)str1) < 0) {
 		LM_ERR("could not get param value\n");
 		return -1;
 	}
@@ -184,21 +183,21 @@ static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo)
 	int val;
 
 	limit = (int)(long)slimit;
-	if (get_int_fparam(&limit, msg, (fparam_t*) slimit) < 0) {
+	if(get_int_fparam(&limit, msg, (fparam_t *)slimit) < 0) {
 		LM_ERR("could not get param value\n");
 		return -1;
 	}
-	if(limit<0 || limit>255) {
+	if(limit < 0 || limit > 255) {
 		LM_ERR("invalid param value: %d\n", limit);
 		return -1;
 	}
-	val = is_maxfwd_present( msg, &mf_value);
-	LM_DBG("value = %d \n",val);
+	val = is_maxfwd_present(msg, &mf_value);
+	LM_DBG("value = %d \n", val);
 
-	if ( val<0 ) {
+	if(val < 0) {
 		/* error or not found */
-		return val-1;
-	} else if ( val>=limit ) {
+		return val - 1;
+	} else if(val >= limit) {
 		/* greater or equal than/to limit */
 		return -1;
 	}
@@ -211,7 +210,7 @@ static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo)
  */
 int bind_maxfwd(maxfwd_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
@@ -224,14 +223,12 @@ int bind_maxfwd(maxfwd_api_t *api)
  *
  */
 static sr_kemi_t sr_kemi_maxfwd_exports[] = {
-	{ str_init("maxfwd"), str_init("process_maxfwd"),
-		SR_KEMIP_INT, process_maxfwd_header,
-		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
+		{str_init("maxfwd"), str_init("process_maxfwd"), SR_KEMIP_INT,
+				process_maxfwd_header,
+				{SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
 
-	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
-};
+		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}};
 
 /**
  *

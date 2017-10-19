@@ -1,7 +1,5 @@
 #!/bin/bash
 #
-# Hook for automatic backports at buildserver.net
-#
 # Target dist: Debian Stretch
 DIST=stretch
 

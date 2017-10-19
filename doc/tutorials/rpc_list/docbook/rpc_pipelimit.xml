@@ -10,8 +10,7 @@ RPC Exports for pipelimit
 
 <section id="pl.stats"><title>pl.stats</title>
 <para>
-        Print pipelimit statistics: &lt;id&gt; &lt;load&gt;
-        &lt;counter&gt;
+        Documentation missing (rpc_pl_stats_doc).
 </para>
 <para>
         Returns an array.
@@ -20,8 +19,7 @@ RPC Exports for pipelimit
 
 <section id="pl.get_pipes"><title>pl.get_pipes</title>
 <para>
-        Print pipes info: &lt;id&gt; &lt;algorithm&gt; &lt;limit&gt;
-        &lt;counter&gt;
+        Documentation missing (rpc_pl_get_pipes_doc).
 </para>
 <para>
         Returns an array.
@@ -30,8 +28,7 @@ RPC Exports for pipelimit
 
 <section id="pl.set_pipe"><title>pl.set_pipe</title>
 <para>
-        Sets a pipe params: &lt;pipe_id&gt; &lt;pipe_algorithm&gt;
-        &lt;pipe_limit&gt;
+        Documentation missing (rpc_pl_set_pipe_doc).
 </para>
 <para>
 </para>

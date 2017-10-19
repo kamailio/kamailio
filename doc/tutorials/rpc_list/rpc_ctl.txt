@@ -5,7 +5,7 @@ RPC Exports for ctl
 
 
  1. ctl.who
-        list open connections
+        Documentation missing (io_listen_who_doc).
 
  2. ctl.connections
         returns number of open connections

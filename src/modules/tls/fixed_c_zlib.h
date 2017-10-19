@@ -1,8 +1,8 @@
 /*
  * TLS module
- * 
+ *
  * This file contains modified zlib compression functions
- * originally part of crypto/comp/c_zlib.c from the openssl library 
+ * originally part of crypto/comp/c_zlib.c from the openssl library
  * (version 0.9.8a).
  * It's distributed under the same license as OpenSSL.
  *
@@ -15,15 +15,15 @@
  * Module: \ref tls
  *
  * This file contains modified zlib compression functions
- * originally part of crypto/comp/c_zlib.c from the openssl library 
+ * originally part of crypto/comp/c_zlib.c from the openssl library
  * (version 0.9.8a).
  *
- * The changes are: 
+ * The changes are:
  *   - proper zalloc and zfree initialization for the zlib compression
  *     methods (use OPENSSL_malloc & OPENSSL_free to construct zalloc/zfree)
  *   - zlib_stateful_ex_idx is now a macro, a pointer to int is alloc'ed now
- *    on init and zlib_stateful_ex_idx is now the contents of this pointer 
- *    (deref). This allows using compression from different processes (if 
+ *    on init and zlib_stateful_ex_idx is now the contents of this pointer
+ *    (deref). This allows using compression from different processes (if
  *    the OPENSSL_malloc's are initialized previously to a shared mem. using
  *    version).
  *  -- andrei
@@ -46,7 +46,7 @@
 static void* comp_calloc(void* foo, unsigned int no, unsigned int size)
 {
 	void *p;
-	
+
 	p=OPENSSL_malloc(no*size);
 	if (p)
 		memset(p, 0, no*size);
@@ -64,9 +64,9 @@ static void comp_free(void* foo, void* p)
 static int zlib_stateful_init(COMP_CTX *ctx);
 static void zlib_stateful_finish(COMP_CTX *ctx);
 static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
-	unsigned int olen, unsigned char *in, unsigned int ilen);
+		unsigned int olen, unsigned char *in, unsigned int ilen);
 static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
-	unsigned int olen, unsigned char *in, unsigned int ilen);
+		unsigned int olen, unsigned char *in, unsigned int ilen);
 
 
 static COMP_METHOD zlib_method={
@@ -78,20 +78,20 @@ static COMP_METHOD zlib_method={
 	zlib_stateful_expand_block,
 	NULL,
 	NULL,
-	};
+};
 
 
 struct zlib_state
-	{
+{
 	z_stream istream;
 	z_stream ostream;
-	};
+};
 
-static int* pzlib_stateful_ex_idx = 0; 
+static int* pzlib_stateful_ex_idx = 0;
 #define zlib_stateful_ex_idx (*pzlib_stateful_ex_idx)
 
 static void zlib_stateful_free_ex_data(void *obj, void *item,
-	CRYPTO_EX_DATA *ad, int ind,long argl, void *argp);
+		CRYPTO_EX_DATA *ad, int ind,long argl, void *argp);
 
 int fixed_c_zlib_init()
 {
@@ -103,7 +103,7 @@ int fixed_c_zlib_init()
 			CRYPTO_w_lock(CRYPTO_LOCK_COMP);
 			zlib_stateful_ex_idx =
 				CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
-					0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
+						0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
 			CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
 			return 0;
 		} else return -1;
@@ -114,20 +114,21 @@ int fixed_c_zlib_init()
 
 
 static void zlib_stateful_free_ex_data(void *obj, void *item,
-	CRYPTO_EX_DATA *ad, int ind,long argl, void *argp)
-	{
+		CRYPTO_EX_DATA *ad, int ind,long argl, void *argp)
+{
 	struct zlib_state *state = (struct zlib_state *)item;
 	if (state)
-		{
-			inflateEnd(&state->istream);
-			deflateEnd(&state->ostream);
-			OPENSSL_free(state);
-		}
-	else LOG(L_CRIT, "WARNING: zlib_stateful_free_ex(%p, %p, %p, %d, %ld, %p)" ": cannot free, null item/state\n", obj, item, ad, ind, argl, argp);
+	{
+		inflateEnd(&state->istream);
+		deflateEnd(&state->ostream);
+		OPENSSL_free(state);
 	}
+	else LM_CRIT("WARNING: zlib_stateful_free_ex(%p, %p, %p, %d, %ld, %p)"
+			": cannot free, null item/state\n", obj, item, ad, ind, argl, argp);
+}
 
 static int zlib_stateful_init(COMP_CTX *ctx)
-	{
+{
 	int err;
 	struct zlib_state *state =
 		(struct zlib_state *)OPENSSL_malloc(sizeof(struct zlib_state));
@@ -146,7 +147,7 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	state->istream.avail_in = 0;
 	state->istream.avail_out = 0;
 	err = inflateInit_(&state->istream,
-		ZLIB_VERSION, sizeof(z_stream));
+			ZLIB_VERSION, sizeof(z_stream));
 	if (err != Z_OK)
 		goto err;
 	inflate_init=1;
@@ -159,7 +160,7 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	state->ostream.avail_in = 0;
 	state->ostream.avail_out = 0;
 	err = deflateInit_(&state->ostream,Z_DEFAULT_COMPRESSION,
-		ZLIB_VERSION, sizeof(z_stream));
+			ZLIB_VERSION, sizeof(z_stream));
 	if (err != Z_OK)
 		goto err;
 	deflate_init=1;
@@ -167,16 +168,16 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data))
 		goto err;
 	if (zlib_stateful_ex_idx == -1)
-		{
+	{
 		CRYPTO_w_lock(CRYPTO_LOCK_COMP);
 		if (zlib_stateful_ex_idx == -1)
 			zlib_stateful_ex_idx =
 				CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
-					0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
+						0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
 		CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
 		if (zlib_stateful_ex_idx == -1)
 			goto err_ex_data;
-		}
+	}
 	if (!CRYPTO_set_ex_data(&ctx->ex_data,zlib_stateful_ex_idx,state))
 		goto err_ex_data;
 	return 1;
@@ -186,26 +187,26 @@ err:
 	if (state){
 		/* ctx->ex_data freed from outside */
 		if (inflate_init)
-				inflateEnd(&state->istream);
+			inflateEnd(&state->istream);
 		if (deflate_init)
-				deflateEnd(&state->ostream);
+			deflateEnd(&state->ostream);
 		OPENSSL_free(state);
 	}
 	return 0;
-	}
+}
 
 static void zlib_stateful_finish(COMP_CTX *ctx)
-	{
+{
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data);
-	}
+}
 
 static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
-	unsigned int olen, unsigned char *in, unsigned int ilen)
-	{
+		unsigned int olen, unsigned char *in, unsigned int ilen)
+{
 	int err = Z_OK;
 	struct zlib_state *state =
 		(struct zlib_state *)CRYPTO_get_ex_data(&ctx->ex_data,
-			zlib_stateful_ex_idx);
+				zlib_stateful_ex_idx);
 
 	if (state == NULL)
 		return -1;
@@ -220,20 +221,20 @@ static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
 		return -1;
 #ifdef DEBUG_ZLIB
 	fprintf(stderr,"compress(%4d)->%4d %s\n",
-		ilen,olen - state->ostream.avail_out,
-		(ilen != olen - state->ostream.avail_out)?"zlib":"clear");
+			ilen,olen - state->ostream.avail_out,
+			(ilen != olen - state->ostream.avail_out)?"zlib":"clear");
 #endif
 	return olen - state->ostream.avail_out;
-	}
+}
 
 static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
-	unsigned int olen, unsigned char *in, unsigned int ilen)
-	{
+		unsigned int olen, unsigned char *in, unsigned int ilen)
+{
 	int err = Z_OK;
 
 	struct zlib_state *state =
 		(struct zlib_state *)CRYPTO_get_ex_data(&ctx->ex_data,
-			zlib_stateful_ex_idx);
+				zlib_stateful_ex_idx);
 
 	if (state == NULL)
 		return 0;
@@ -248,10 +249,10 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
 		return -1;
 #ifdef DEBUG_ZLIB
 	fprintf(stderr,"expand(%4d)->%4d %s\n",
-		ilen,olen - state->istream.avail_out,
-		(ilen != olen - state->istream.avail_out)?"zlib":"clear");
+			ilen,olen - state->istream.avail_out,
+			(ilen != olen - state->istream.avail_out)?"zlib":"clear");
 #endif
 	return olen - state->istream.avail_out;
-	}
+}
 
 #endif /* TLS_FIX_ZLIB_COMPRESSION */

@@ -88,6 +88,9 @@ int pv_get_from_attr(struct sip_msg *msg, pv_param_t *param,
 int pv_get_cseq(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_cseq_body(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_msg_buf(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
@@ -127,6 +130,9 @@ int pv_get_callid(struct sip_msg *msg, pv_param_t *param,
 int pv_get_srcip(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_srcipz(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_srcport(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
@@ -140,6 +146,24 @@ int pv_get_rcvip(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 int pv_get_rcvport(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rcvaddr_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rcvaddr_uri_full(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rcv_advertised_ip(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rcv_advertised_port(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rcvadv_uri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rcvadv_uri_full(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 int pv_get_force_sock(struct sip_msg *msg, pv_param_t *param,
@@ -164,6 +188,9 @@ int pv_get_pai(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 int pv_get_proto(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_protoid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 int pv_get_dset(struct sip_msg *msg, pv_param_t *param,

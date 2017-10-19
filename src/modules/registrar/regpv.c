@@ -288,8 +288,8 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 {
 	str pn;
 	str pa;
-	regpv_name_t *rp;
-	regpv_profile_t *rpp;
+	regpv_name_t *rp = NULL;
+	regpv_profile_t *rpp = NULL;
 
 	if(sp==NULL || in==NULL || in->len<=0)
 		return -1;
@@ -414,6 +414,7 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 	return 0;
 
 error:
+	if(rp) pkg_free(rp);
 	LM_ERR("unknown contact attr name in %.*s\n", in->len, in->s);
 	return -1;
 }
@@ -537,6 +538,7 @@ int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 			c0->instance.len = ptr->instance.len;
 			p += c0->instance.len;
 		}
+		LM_DBG("memory block between %p - %p\n", c0, p);
 		if ((ptr->sock) && (ptr->sock->proto == PROTO_TCP
 				|| ptr->sock->proto == PROTO_TLS || ptr->sock->proto == PROTO_WS
 				|| ptr->sock->proto == PROTO_WSS))

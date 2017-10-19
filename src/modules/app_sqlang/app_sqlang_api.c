@@ -1357,7 +1357,6 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 					fname->len, fname->s);
 			return app_sqlang_return_false(J);
 	}
-	return app_sqlang_return_false(J);
 }
 
 /**
@@ -1466,7 +1465,7 @@ SQInteger sqlang_open_KSR(HSQUIRRELVM J)
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
 			n++;
-			_sr_crt_J_KSRMethods += n;
+			_sr_crt_J_KSRMethods = _sr_J_KSRMethods + n;
 			snprintf(mname, 128, "%s", emods[k].kexp[0].mname.s);
 			sq_pushstring(J, mname, -1);  /* stack[4] */
 			sq_newtable(J);  /* stack[5] */

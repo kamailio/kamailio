@@ -98,7 +98,7 @@ Bogdan-Andre Iancu
 
               6.1. max_expires
               6.2. max_contacts
-              6.3. defaults_expires
+              6.3. default_expires
               6.4. accepted_regs
               6.5. rejected_regs
 
@@ -214,7 +214,7 @@ Chapter 1. Admin Guide
 
         6.1. max_expires
         6.2. max_contacts
-        6.3. defaults_expires
+        6.3. default_expires
         6.4. accepted_regs
         6.5. rejected_regs
 
@@ -808,11 +808,11 @@ modparam("registrar", "flow_timer", 25)
    supports strings of the configured size in the column “contact” of the
    table specified in “save()” function.
 
-   Default value is 255.
+   Default value is 512.
 
    Example 1.28. Set contact_max_size parameter
 ...
-modparam("registrar", "contact_max_size", 500)
+modparam("registrar", "contact_max_size", 1024)
 ...
 
 4. Functions
@@ -1083,7 +1083,7 @@ event_route[usrloc:contact-expired] {
 
    6.1. max_expires
    6.2. max_contacts
-   6.3. defaults_expires
+   6.3. default_expires
    6.4. accepted_regs
    6.5. rejected_regs
 
@@ -1095,7 +1095,7 @@ event_route[usrloc:contact-expired] {
 
    The value of max_contacts parameter.
 
-6.3. defaults_expires
+6.3. default_expires
 
    The value of default_expires parameter.
 

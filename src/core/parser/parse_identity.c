@@ -41,8 +41,8 @@ inline static int isendofhash (char* p, char* end)
 {
 	/* new header line */
 	if ((p<end && *p=='"')
-		/* end of message */
-		|| ((*p=='\n' || *p=='\r') && p+1==end))
+			/* end of message */
+			|| ((*p=='\n' || *p=='\r') && p+1==end))
 		return 1;
 	else
 		return 0;
@@ -54,16 +54,16 @@ inline static int isendofhash (char* p, char* end)
  * a new buffer and move there the LWSless part
  */
 int movetomybuffer (char *pstart,
-					char *pend,
-					char *pcur,
-					struct identity_body *ib)
+		char *pend,
+		char *pcur,
+		struct identity_body *ib)
 {
 	char *phashend;
 
 	for (phashend = pcur; !isendofhash(phashend, pend); phashend++);
 
 	if (!(ib->hash.s=pkg_malloc(phashend-pstart))) {
-		LOG(L_ERR, "parse_identity: out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		return -2;
 	}
 	ib->ballocated=1;
@@ -92,9 +92,9 @@ void parse_identity(char *buffer, char* end, struct identity_body* ib)
 	for (p = pstart; p < end; p++) {
 		/* check the BASE64 alphabet */
 		if (((*p >= 'a' && *p <='z')
-			|| (*p >= 'A' && *p <='Z')
-			|| (*p >= '0' && *p <='9')
-			|| (*p == '+' || *p == '/' || *p == '='))) {
+					|| (*p >= 'A' && *p <='Z')
+					|| (*p >= '0' && *p <='9')
+					|| (*p == '+' || *p == '/' || *p == '='))) {
 			if (ib->ballocated)
 				ib->hash.s[ib->hash.len]=*p;
 			ib->hash.len++;
@@ -130,9 +130,8 @@ void parse_identity(char *buffer, char* end, struct identity_body* ib)
 	return ;
 
 parseerror:
-	LOG( L_ERR , "ERROR: parse_identity: "
-		"unexpected char [0x%X]: <<%.*s>> .\n",
-		*p,(int)(p-buffer), ZSW(buffer));
+	LM_ERR("unexpected char [0x%X]: <<%.*s>> .\n",
+			*p,(int)(p-buffer), ZSW(buffer));
 error:
 	return ;
 }
@@ -143,9 +142,9 @@ int parse_identity_header(struct sip_msg *msg)
 
 
 	if ( !msg->identity
-		 && (parse_headers(msg,HDR_IDENTITY_F,0)==-1
-		 || !msg->identity) ) {
-		LOG(L_ERR,"ERROR:parse_identity_header: bad msg or missing IDENTITY header\n");
+			&& (parse_headers(msg,HDR_IDENTITY_F,0)==-1
+				|| !msg->identity) ) {
+		LM_ERR("bad msg or missing IDENTITY header\n");
 		goto error;
 	}
 
@@ -155,14 +154,14 @@ int parse_identity_header(struct sip_msg *msg)
 
 	identity_b=pkg_malloc(sizeof(*identity_b));
 	if (identity_b==0){
-		LOG(L_ERR, "ERROR:parse_identity_header: out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		goto error;
 	}
 	memset(identity_b, 0, sizeof(*identity_b));
 
 	parse_identity(msg->identity->body.s,
-				   msg->identity->body.s + msg->identity->body.len+1,
-				   identity_b);
+			msg->identity->body.s + msg->identity->body.len+1,
+			identity_b);
 	if (identity_b->error==PARSE_ERROR){
 		free_identity(identity_b);
 		goto error;

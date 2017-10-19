@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Domainpolicy</name>
+    <name>DOMAINPOLICY Module</name>
     <xi:include href="domainpolicy.xml"/>
 </database>

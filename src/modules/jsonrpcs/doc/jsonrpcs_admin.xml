@@ -458,7 +458,7 @@ event_route[xhttp:request] {
 		<title><function>jsonrpc_exec</function> usage</title>
 		<programlisting format="linespecific">
 ...
-jsonrpc_exec({"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
+jsonrpc_exec('{"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
 ...
 </programlisting>
 	    </example>

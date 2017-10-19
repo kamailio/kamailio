@@ -388,9 +388,9 @@ int jsonrpc_dgram_init_server(jsonrpc_dgram_sockaddr_t *addr,
 
 	return 0;
 err_both:
-	close(socks->tx_sock);
+	if(socks->tx_sock>=0) close(socks->tx_sock);
 err_rx:
-	close(socks->rx_sock);
+	if(socks->rx_sock>=0) close(socks->rx_sock);
 	return -1;
 }
 
@@ -528,7 +528,7 @@ static int jsonrpc_dgram_send_data(int fd, char* buf, unsigned int len,
 {
 	int n;
 	unsigned int optlen = sizeof(int);
-	int optval;
+	int optval = 0;
 
 	if(len == 0 || tolen ==0)
 		return -1;
@@ -536,7 +536,9 @@ static int jsonrpc_dgram_send_data(int fd, char* buf, unsigned int len,
 	/*LM_DBG("destination address length is %i\n", tolen);*/
 	n=sendto(fd, buf, len, 0, to, tolen);
 	if(n!=len) {
-		getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (int*)&optval, &optlen);
+		if(getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (int*)&optval, &optlen)==-1) {
+			LM_ERR("getsockopt failed\n");
+		}
 		LM_ERR("failed to send the response - ret: %d, len: %d (%d),"
 				" err: %d - %s)\n",
 				n, len, optval, errno, strerror(errno));

@@ -49,7 +49,7 @@ int parsing_hepv3_message(char *buf, unsigned int len);
  * HEP message
  */
 /* int hep_msg_received(char * buf, unsigned int len, struct receive_info * ri) */
-int hep_msg_received(void *data)
+int hep_msg_received(sr_event_param_t *evp)
 {
         void **srevp;
         char *buf;
@@ -61,11 +61,11 @@ int hep_msg_received(void *data)
                 return -1;
         }
 
-        srevp = (void**)data;
+        srevp = (void**)evp->data;
 
         buf = (char *)srevp[0];
         len = (unsigned *)srevp[1];
-        ri = (struct receive_info *)srevp[2];                        
+        ri = (struct receive_info *)srevp[2];
 
 	correlation_id = NULL;
 	authkey = NULL;
@@ -372,16 +372,14 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
                                         break;
                                 case 9:
                                         hg->time_sec  = (hep_chunk_uint32_t *) (tmp);
-                                        hg->time_sec->data = ntohl(hg->time_sec->data);
-                                        heptime->tv_sec = hg->time_sec->data;
+                                        heptime->tv_sec = ntohl(hg->time_sec->data);
                                         i+=chunk_length;
                                         totelem++;
-                                        break;                                                     
-                                                     
+                                        break;
+
                                 case 10:
                                         hg->time_usec  = (hep_chunk_uint32_t *) (tmp);
-                                        hg->time_usec->data = ntohl(hg->time_usec->data);
-                                        heptime->tv_usec = hg->time_usec->data;
+                                        heptime->tv_usec = ntohl(hg->time_usec->data);
                                         i+=chunk_length;
                                         totelem++;
                                         break;      
@@ -394,8 +392,8 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
 
                                 case 12:
                                         hg->capt_id  = (hep_chunk_uint32_t *) (tmp);
-                                        i+=chunk_length;
                                         heptime->captid = ntohl(hg->capt_id->data);
+                                        i+=chunk_length;
                                         totelem++;
                                         break;
 
@@ -482,13 +480,6 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
         si->name.len = si->address_str.len;
         si->name.s = si->address_str.s;
         ri.bind_address=si;
-
-
-	/*TIME*/ 
-        heptime->tv_sec = hg->time_sec->data;
-        heptime->tv_usec = hg->time_usec->data;
-        heptime->captid = ntohl(hg->capt_id->data);
-          
 
         if(payload != NULL ) {
                 /* and now recieve message */
@@ -646,19 +637,17 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t* msg) {
                                         break;
                                 case 9:
                                         hg->time_sec  = (hep_chunk_uint32_t *) (tmp);
-                                        hg->time_sec->data = ntohl(hg->time_sec->data);
-                                        heptime->tv_sec = hg->time_sec->data;
+                                        heptime->tv_sec = ntohl(hg->time_sec->data);
                                         i+=chunk_length;
                                         totelem++;
-                                        break;                                                     
-                                                     
+                                        break;
+
                                 case 10:
                                         hg->time_usec  = (hep_chunk_uint32_t *) (tmp);
-                                        hg->time_usec->data = ntohl(hg->time_usec->data);
-                                        heptime->tv_usec = hg->time_usec->data;
+                                        heptime->tv_usec = ntohl(hg->time_usec->data);
                                         i+=chunk_length;
                                         totelem++;
-                                        break;      
+                                        break;
 
                                 case 11:
                                         hg->proto_t  = (hep_chunk_uint8_t *) (tmp);
@@ -728,10 +717,10 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t* msg) {
 
         if(payload != NULL) ret = len - payload_len;
 
-	/*TIME*/ 
-        heptime->tv_sec = hg->time_sec->data;
-        heptime->tv_usec = hg->time_usec->data;
-        heptime->captid = ntohl(hg->capt_id->data);
+
+
+
+
 
 done:
           
@@ -984,14 +973,12 @@ int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len, int req_ch
                                         goto done;
                                 case 9:
                                         hg->time_sec  = (hep_chunk_uint32_t *) (tmp);
-                                        hg->time_sec->data = ntohl(hg->time_sec->data);
-                                        ret = pv_get_uintval(msg, param, res, hg->time_sec->data);
+                                        ret = pv_get_uintval(msg, param, res, ntohl(hg->time_sec->data));
                                         goto done;
-                                                     
+
                                 case 10:
                                         hg->time_usec  = (hep_chunk_uint32_t *) (tmp);
-                                        hg->time_usec->data = ntohl(hg->time_usec->data);
-                                        ret = pv_get_uintval(msg, param, res, hg->time_usec->data);
+                                        ret = pv_get_uintval(msg, param, res, ntohl(hg->time_usec->data));
                                         goto done;
 
                                 case 11:
@@ -1001,13 +988,14 @@ int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len, int req_ch
 
                                 case 12:
                                         hg->capt_id  = (hep_chunk_uint32_t *) (tmp);
-                                        ret = pv_get_uintval(msg, param, res, ntohs(hg->capt_id->data));
+                                        ret = pv_get_uintval(msg, param, res, ntohl(hg->capt_id->data));
                                         goto done;
 
                                 case 13:
                                         hg->keep_tm  = (hep_chunk_uint16_t *) (tmp);
-                                        ret = pv_get_uintval(msg, param, res, hg->keep_tm->data);                                                                                
+                                        ret = pv_get_uintval(msg, param, res, ntohs(hg->keep_tm->data));
                                         goto done;
+
                                 case 14:
                                         tmpstr.s = (char *) tmp + sizeof(hep_chunk_t);
                                         tmpstr.len = chunk_length - sizeof(hep_chunk_t); 

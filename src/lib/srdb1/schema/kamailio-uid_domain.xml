@@ -7,7 +7,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>uid_domain</name>
+    <name>UID_DOMAIN Module</name>
     <xi:include href="uid_domain.xml"/>
     <xi:include href="uid_domain_attrs.xml"/>
 </database>

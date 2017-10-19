@@ -156,12 +156,25 @@ typedef struct _ds_attrs {
 	int rweight;
 } ds_attrs_t;
 
+typedef struct _ds_latency_stats {
+	struct timeval start;
+	int min;
+	int max;
+	float average;  // weigthed average, estimate of the last few weeks
+	float stdev;    // last standard deviation
+	float estimate; // short term estimate, EWMA exponential weighted moving average
+	double m2;      // sum of squares, used for recursive variance calculation
+	int32_t count;
+	uint32_t timeout;
+} ds_latency_stats_t;
+
 typedef struct _ds_dest {
 	str uri;
 	int flags;
 	int priority;
 	int dload;
 	ds_attrs_t attrs;
+	ds_latency_stats_t latency_stats;
 	struct socket_info * sock;
 	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
 	unsigned short int port; 	/*!< Port of the URI */
@@ -175,7 +188,7 @@ typedef struct _ds_set {
 	int nr;				/*!< number of items in dst set */
 	int last;			/*!< last used item in dst set (round robin) */
 	int wlast;			/*!< last used item in dst set (by weight) */
-	int rwlast;			/*!< last used item in dst set (by relaitive weight) */
+	int rwlast;			/*!< last used item in dst set (by relative weight) */
 	ds_dest_t *dlist;
 	unsigned int wlist[100];
 	unsigned int rwlist[100];

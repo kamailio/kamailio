@@ -27,3 +27,6 @@ RPC Exports for permissions
  7. permissions.testUri
         Documentation missing (rpc_test_uri_doc).
 
+ 8. permissions.allowUri
+        Documentation missing (rpc_test_uri_doc).
+

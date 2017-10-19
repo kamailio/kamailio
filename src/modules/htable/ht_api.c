@@ -641,8 +641,7 @@ int ht_del_cell(ht_t *ht, str *name)
 	return 0;
 }
 
-ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
-		ht_cell_t *old)
+ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 {
 	unsigned int idx;
 	unsigned int hid;
@@ -661,7 +660,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	if(ht->htexpire>0)
 		now = time(NULL);
 	prev = NULL;
-	if(mode) ht_slot_lock(ht, idx);
+	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 	{
@@ -676,7 +675,6 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 			/* found */
 			if(now>0 && it->expire!=0 && it->expire<now) {
 				/* entry has expired */
-				ht_handle_expired_record(ht, it);
 
 				if(ht->flags==PV_VAL_INT) {
 					/* initval is integer, use it to create a fresh entry */
@@ -684,16 +682,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 					it->value.n = ht->initval.n;
 					/* increment will be done below */
 				} else {
-					/* delete expired entry */
-					if(it->prev==NULL)
-						ht->entries[idx].first = it->next;
-					else
-						it->prev->next = it->next;
-					if(it->next)
-						it->next->prev = it->prev;
-					ht->entries[idx].esize--;
-					if(mode) ht_slot_unlock(ht, idx);
-					ht_cell_free(it);
+					ht_slot_unlock(ht, idx);
 					return NULL;
 				}
 			}
@@ -701,7 +690,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 			if(it->flags&AVP_VAL_STR)
 			{
 				/* string value cannot be incremented */
-				if(mode) ht_slot_unlock(ht, idx);
+				ht_slot_unlock(ht, idx);
 				return NULL;
 			} else {
 				it->value.n += val;
@@ -712,7 +701,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 					if(old->msize>=it->msize)
 					{
 						memcpy(old, it, it->msize);
-						if(mode) ht_slot_unlock(ht, idx);
+						ht_slot_unlock(ht, idx);
 						return old;
 					}
 				}
@@ -720,7 +709,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 				if(cell!=NULL)
 					memcpy(cell, it, it->msize);
 
-				if(mode) ht_slot_unlock(ht, idx);
+				ht_slot_unlock(ht, idx);
 				return cell;
 			}
 		}
@@ -730,7 +719,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	/* add val if htable has an integer init value */
 	if(ht->flags!=PV_VAL_INT)
 	{
-		if(mode) ht_slot_unlock(ht, idx);
+		ht_slot_unlock(ht, idx);
 		return NULL;
 	}
 	isval.n = ht->initval.n + val;
@@ -738,7 +727,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	if(it == NULL)
 	{
 		LM_ERR("cannot create new cell.\n");
-		if(mode) ht_slot_unlock(ht, idx);
+		ht_slot_unlock(ht, idx);
 		return NULL;
 	}
 	it->expire = now + ht->htexpire;
@@ -763,7 +752,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 		if(old->msize>=it->msize)
 		{
 			memcpy(old, it, it->msize);
-			if(mode) ht_slot_unlock(ht, idx);
+			ht_slot_unlock(ht, idx);
 			return old;
 		}
 	}
@@ -771,7 +760,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	if(cell!=NULL)
 		memcpy(cell, it, it->msize);
 
-	if(mode) ht_slot_unlock(ht, idx);
+	ht_slot_unlock(ht, idx);
 	return cell;
 }
 
@@ -804,18 +793,8 @@ ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 		{
 			/* found */
 			if(ht->htexpire>0 && it->expire!=0 && it->expire<time(NULL)) {
-				/* entry has expired, delete it and return NULL */
-				ht_handle_expired_record(ht, it);
-
-				if(it->prev==NULL)
-					ht->entries[idx].first = it->next;
-				else
-					it->prev->next = it->next;
-				if(it->next)
-					it->next->prev = it->prev;
-				ht->entries[idx].esize--;
+				/* entry has expired, return NULL */
 				ht_slot_unlock(ht, idx);
-				ht_cell_free(it);
 				return NULL;
 			}
 			if(old!=NULL)

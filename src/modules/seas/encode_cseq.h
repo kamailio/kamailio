@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright (C) 2006-2007 VozTelecom Sistemas S.L
  *
  * This file is part of Kamailio, a free SIP server.
@@ -14,13 +13,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
+#ifndef __ENCODE_CSEQ_H__
+#define __ENCODE_CSEQ_H__
 #include "../../core/str.h"
 #include "../../core/parser/msg_parser.h"
 int encode_cseq(char *hdrstart,int hdrlen,struct cseq_body *body,unsigned char *where);
 int print_encoded_cseq(FILE* fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix);
+#endif

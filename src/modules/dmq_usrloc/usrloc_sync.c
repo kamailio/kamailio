@@ -198,8 +198,6 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 		goto done;
 	}
 	if (rval > 0) {
-		if (buf != NULL)
-			dmq_usrloc_free(buf);
 		len = rval * 2;
 		buf = dmq_usrloc_malloc(len);
 		if (buf == NULL) {
@@ -324,9 +322,10 @@ int usrloc_dmq_send(str* body, dmq_node_t* node) {
 static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 	static ucontact_info_t ci;
 	srjson_t *it = NULL;
-	unsigned int action, expires, cseq, flags, cflags, q, last_modified, methods, reg_id;
-	str aor=STR_NULL, ruid=STR_NULL, c=STR_NULL, received=STR_NULL, path=STR_NULL,
-		callid=STR_NULL, user_agent=STR_NULL, instance=STR_NULL;
+	unsigned int action, expires, cseq, flags, cflags, q, last_modified,
+				 methods, reg_id;
+	str aor=STR_NULL, ruid=STR_NULL, received=STR_NULL, instance=STR_NULL;
+	static str c=STR_NULL, callid=STR_NULL, path=STR_NULL, user_agent=STR_NULL;
 
 	action = expires = cseq = flags = cflags = q = last_modified
 		= methods = reg_id = 0;

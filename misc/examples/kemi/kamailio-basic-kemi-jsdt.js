@@ -102,7 +102,7 @@ function ksr_route_relay()
 
 	if (METHOD=="INVITE") {
 		if (KSR.tm.t_is_set("failure_route")<0) {
-			KSR.tm.t_on_failure("MANAGE_FAILURE");
+			KSR.tm.t_on_failure("ksr_failure_manage");
 		}
 	}
 
@@ -174,7 +174,7 @@ function ksr_route_withindlg()
 			KSR.setflag(FLT_ACC); // do accounting ...
 			KSR.setflag(FLT_ACCFAILED); // ... even if the transaction fails
 		} else if (METHOD=="ACK") {
-			// ACK is forwarded statelessy
+			// ACK is forwarded statelessly
 			ksr_route_natmanage();
 		} else if (METHOD=="NOTIFY") {
 			// Add Record-Route for in-dialog NOTIFY as per RFC 6665.

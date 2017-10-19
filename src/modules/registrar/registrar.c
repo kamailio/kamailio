@@ -106,7 +106,7 @@ int reg_outbound_mode = 0;
 int reg_regid_mode = 0;
 int reg_flow_timer = 0;
 
-int contact_max_size = 255; /* max size of contact URIs */
+int contact_max_size = 512; /* max size of contact URIs */
 
 str match_callid_name = str_init("match_callid");
 str match_received_name = str_init("match_received");

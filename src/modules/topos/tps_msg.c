@@ -115,7 +115,10 @@ int tps_remove_headers(sip_msg_t *msg, uint32_t hdr)
 	struct hdr_field *hf;
 	struct lump* l;
 
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
 	for (hf=msg->headers; hf; hf=hf->next) {
 		if (hdr!=hf->type)
 			continue;
@@ -139,7 +142,11 @@ int tps_add_headers(sip_msg_t *msg, str *hname, str *hbody, int hpos)
 	if(hname==NULL || hname->len<=0 || hbody==NULL || hbody->len<=0)
 		return 0;
 
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
+
 	if(hpos == 0) { /* append */
 		/* after last header */
 		anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
@@ -171,6 +178,8 @@ int tps_add_headers(sip_msg_t *msg, str *hname, str *hbody, int hpos)
 		hs.s[hname->len + 2 + hbody->len+1] = '\n';
 		hs.len += 2;
 	}
+
+	LM_DBG("adding to headers(%d) - [%.*s]\n", hpos, hs.len, hs.s);
 
 	if (insert_new_lump_before(anchor, hs.s, hs.len, 0) == 0) {
 		LM_ERR("can't insert lump\n");
@@ -728,6 +737,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	str nuri;
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 	int ret;
+	int use_branch = 0;
 
 	LM_DBG("handling incoming request\n");
 
@@ -754,44 +764,84 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 
 	tps_storage_lock_get(&lkey);
 
-	if(tps_storage_load_dialog(msg, &mtsd, &stsd)<0) {
-		goto error;
+	if((get_cseq(msg)->method_id)&(METHOD_PRACK)) {
+		if(tps_storage_link_msg(msg, &mtsd, TPS_DIR_DOWNSTREAM)<0) {
+			goto error;
+		}
+		if(tps_storage_load_branch(msg, &mtsd, &stsd, 1)<0) {
+			goto error;
+		}
+		use_branch = 1;
+	} else {
+		if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
+			goto error;
+		}
+		if(((get_cseq(msg)->method_id) & (METHOD_BYE))
+				&& stsd.b_contact.len <= 0) {
+			/* BYE but not B-side contact, look for INVITE transaction record */
+			memset(&stsd, 0, sizeof(tps_data_t));
+			if(tps_storage_link_msg(msg, &mtsd, TPS_DIR_DOWNSTREAM) < 0) {
+				goto error;
+			}
+			if(tps_storage_load_branch(msg, &mtsd, &stsd, 1) < 0) {
+				goto error;
+			}
+			use_branch = 1;
+		} else {
+			/* detect direction - via from-tag */
+			if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
+				goto error;
+			}
+		}
 	}
 
-	/* detect direction - via from-tag */
-	if(tps_dlg_detect_direction(msg, &stsd, &direction)<0) {
-		goto error;
-	}
 	mtsd.direction = direction;
 
 	tps_storage_lock_release(&lkey);
 
-	if(direction == TPS_DIR_UPSTREAM) {
-		nuri = stsd.a_contact;
-	} else {
+	if(use_branch) {
 		nuri = stsd.b_contact;
+	} else {
+		if(direction == TPS_DIR_UPSTREAM) {
+			nuri = stsd.a_contact;
+		} else {
+			nuri = stsd.b_contact;
+		}
 	}
 	if(nuri.len>0) {
 		if(rewrite_uri(msg, &nuri)<0) {
 			LM_ERR("failed to update r-uri\n");
 			return -1;
+		} else {
+			LM_DBG("r-uri updated to: [%.*s]\n", nuri.len, nuri.s);
 		}
 	}
 
-	if(tps_reappend_route(msg, &stsd, &stsd.s_rr,
-				(direction==TPS_DIR_UPSTREAM)?0:1)<0) {
-		LM_ERR("failed to reappend s-route\n");
-		return -1;
-	}
-	if(direction == TPS_DIR_UPSTREAM) {
-		if(tps_reappend_route(msg, &stsd, &stsd.a_rr, 0)<0) {
-			LM_ERR("failed to reappend a-route\n");
+	if(use_branch) {
+		if(tps_reappend_route(msg, &stsd, &stsd.s_rr, 1) < 0) {
+			LM_ERR("failed to reappend s-route\n");
+			return -1;
+		}
+		if(tps_reappend_route(msg, &stsd, &stsd.y_rr, 1) < 0) {
+			LM_ERR("failed to reappend b-route\n");
 			return -1;
 		}
 	} else {
-		if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 1)<0) {
-			LM_ERR("failed to reappend b-route\n");
+		if(tps_reappend_route(msg, &stsd, &stsd.s_rr,
+					(direction == TPS_DIR_UPSTREAM) ? 0 : 1) < 0) {
+			LM_ERR("failed to reappend s-route\n");
 			return -1;
+		}
+		if(direction == TPS_DIR_UPSTREAM) {
+			if(tps_reappend_route(msg, &stsd, &stsd.a_rr, 0) < 0) {
+				LM_ERR("failed to reappend a-route\n");
+				return -1;
+			}
+		} else {
+			if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 1) < 0) {
+				LM_ERR("failed to reappend b-route\n");
+				return -1;
+			}
 		}
 	}
 	if(dialog!=0) {
@@ -833,7 +883,7 @@ int tps_response_received(sip_msg_t *msg)
 		return -1;
 	}
 	tps_storage_lock_get(&lkey);
-	if(tps_storage_load_branch(msg, &mtsd, &btsd)<0) {
+	if(tps_storage_load_branch(msg, &mtsd, &btsd, 0)<0) {
 		goto error;
 	}
 	LM_DBG("loaded dialog a_uuid [%.*s]\n",
@@ -847,7 +897,8 @@ int tps_response_received(sip_msg_t *msg)
 		goto error;
 	}
 	mtsd.direction = direction;
-	if(tps_storage_update_branch(msg, &mtsd, &btsd)<0) {
+	if(tps_storage_update_branch(msg, &mtsd, &btsd,
+				TPS_DBU_CONTACT|TPS_DBU_RPLATTRS)<0) {
 		goto error;
 	}
 	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_RPLATTRS)<0) {
@@ -905,7 +956,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 	tps_storage_lock_get(&lkey);
 
-	if(tps_storage_load_branch(msg, &mtsd, &btsd)!=0) {
+	if(tps_storage_load_branch(msg, &mtsd, &btsd, 0)!=0) {
 		if(tps_storage_record(msg, ptsd, dialog)<0) {
 			goto error;
 		}
@@ -1004,7 +1055,7 @@ int tps_response_sent(sip_msg_t *msg)
 	lkey = msg->callid->body;
 
 	tps_storage_lock_get(&lkey);
-	if(tps_storage_load_branch(msg, &mtsd, &btsd)<0) {
+	if(tps_storage_load_branch(msg, &mtsd, &btsd, 0)<0) {
 		goto error;
 	}
 	LM_DBG("loaded branch a_uuid [%.*s]\n",

@@ -40,6 +40,8 @@
 #include "ucontact.h"
 #include "ul_db_layer.h"
 #include "dlist.h"
+#include "config.h"
+
 
 /*!
  * \brief Create a new contact structure
@@ -957,7 +959,7 @@ int db_update_ucontact_ruid(ucontact_t* _c)
  */
 int db_update_ucontact(ucontact_t* _c)
 {
-   if(ul_db_ops_ruid==0)
+   if(cfg_get(p_usrloc, p_usrloc_cfg, db_ops_ruid)==0)
        return db_update_ucontact_addr(_c);
    else
        return db_update_ucontact_ruid(_c);
@@ -1090,7 +1092,7 @@ int db_delete_ucontact_ruid(ucontact_t* _c)
  */
 int db_delete_ucontact(ucontact_t* _c)
 {
-   if(ul_db_ops_ruid==0)
+	if (cfg_get(p_usrloc, p_usrloc_cfg, db_ops_ruid) == 0)
        return db_delete_ucontact_addr(_c);
    else
        return db_delete_ucontact_ruid(_c);
@@ -1204,7 +1206,7 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 		 * in the second DB will not work. Thus the expire mechanism don't work, it
 		 * takes too long until both DBs have the same number of entries again.
 		 */
-		if (ul_db_update_as_insert)
+		if (cfg_get(p_usrloc, p_usrloc_cfg, db_update_as_insert))
 		    res = db_insert_ucontact(_c);
         else
             res = db_update_ucontact(_c);

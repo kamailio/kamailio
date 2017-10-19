@@ -158,7 +158,8 @@ int probe_max_receive_buffer( int udp_sock )
 			if (phase==1) break;
 			else { phase=1; optval >>=1; continue; }
 		}
-		LM_DBG("trying SO_RCVBUF: %d\n", optval );
+		if(ksr_verbose_startup)
+			LM_DBG("trying SO_RCVBUF: %d\n", optval);
 		if (setsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF,
 			(void*)&optval, sizeof(optval)) ==-1){
 			/* Solaris returns -1 if asked size too big; Linux ignores */
@@ -180,8 +181,9 @@ int probe_max_receive_buffer( int udp_sock )
 			LM_ERR("getsockopt: %s\n", strerror(errno));
 			return -1;
 		} else {
-			LM_DBG("setting SO_RCVBUF; set=%d,verify=%d\n",
-				optval, voptval);
+			if(ksr_verbose_startup)
+				LM_DBG("setting SO_RCVBUF; set=%d,verify=%d\n",
+						optval, voptval);
 			if (voptval<optval) {
 				LM_DBG("setting SO_RCVBUF has no effect\n");
 				/* if setting buffer size failed and still in the aggressive
@@ -422,6 +424,7 @@ int udp_rcv_loop()
 	union sockaddr_union* from;
 	unsigned int fromlen;
 	struct receive_info ri;
+	sr_event_param_t evp = {0};
 
 
 	from=(union sockaddr_union*) pkg_malloc(sizeof(union sockaddr_union));
@@ -473,7 +476,8 @@ int udp_rcv_loop()
 			sredp[0] = (void*)buf;
 			sredp[1] = (void*)(&len);
 			sredp[2] = (void*)(&ri);
-			if(sr_event_exec(SREV_NET_DGRAM_IN, (void*)sredp)<0) {
+			evp.data = (void*)sredp;
+			if(sr_event_exec(SREV_NET_DGRAM_IN, &evp)<0) {
 				/* data handled by callback - continue to next packet */
 				continue;
 			}

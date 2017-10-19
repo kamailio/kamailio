@@ -49,7 +49,7 @@
  * @param cmd The command whose data will be used to generate the query.
  * @return 0 on success, negative number on error
  */
-int build_update_sql(str* sql_cmd, db_cmd_t* cmd);
+int build_update_sql(str *sql_cmd, db_cmd_t *cmd);
 
 
 /** Builds an INSERT SQL statement.
@@ -62,7 +62,7 @@ int build_update_sql(str* sql_cmd, db_cmd_t* cmd);
  * @param cmd The command whose data will be used to generate the query.
  * @return 0 on success, negative number on error
  */
-int build_insert_sql(str* sql_cmd, db_cmd_t* cmd);
+int build_insert_sql(str *sql_cmd, db_cmd_t *cmd);
 
 
 /** Builds a DELETE SQL statement.
@@ -76,7 +76,7 @@ int build_insert_sql(str* sql_cmd, db_cmd_t* cmd);
  * @param cmd The command whose data will be used to generate the query.
  * @return 0 on success, negative number on error
  */
-int build_delete_sql(str* sql_cmd, db_cmd_t* cmd);
+int build_delete_sql(str *sql_cmd, db_cmd_t *cmd);
 
 
 /** Builds a SELECT SQL statement.
@@ -90,14 +90,14 @@ int build_delete_sql(str* sql_cmd, db_cmd_t* cmd);
  * @param cmd The command whose data will be used to generate the query.
  * @return 0 on success, negative number on error
  */
-int build_select_sql(str* sql_cmd, db_cmd_t* cmd);
+int build_select_sql(str *sql_cmd, db_cmd_t *cmd);
 
 
 /* Builds SQL query used to obtain the list of supported field types.
  * This function builds a special SQL query that is used to obtain the list
  * of supported field type from the server's system catalogs.
  */
-int build_select_oid_sql(str* sql_cmd);
+int build_select_oid_sql(str *sql_cmd);
 
 
 /** Builds the SQL query used to determine the format of timestamp fields.
@@ -105,7 +105,7 @@ int build_select_oid_sql(str* sql_cmd);
  * immediately after establishing a connection to determine the format of
  * timestamp fields used on the server.
  */
-int build_timestamp_format_sql(str* sql_cmd);
+int build_timestamp_format_sql(str *sql_cmd);
 
 /** @} */
 

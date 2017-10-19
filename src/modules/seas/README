@@ -188,7 +188,7 @@ Chapter 1. The Sip Express Application Server User's Guide
    Application Server. The Application Server then executes some
    call-control logic code, and tells Kamailio to take some actions, ie.
    forward the message downstream, or respond to the message with a SIP
-   repy, etc.
+   reply, etc.
 
    The module acts implements a network protocol acting as the interface
    between Kamailio internal API and the external Application Server

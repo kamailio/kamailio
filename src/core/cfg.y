@@ -476,6 +476,7 @@ extern char *default_routename;
 %token PVBUFSLOTS
 %token HTTP_REPLY_PARSE
 %token VERSION_TABLE_CFG
+%token VERBOSE_STARTUP
 %token CFG_DESCRIPTION
 %token SERVER_ID
 %token MAX_RECURSIVE_LEVEL
@@ -594,6 +595,7 @@ extern char *default_routename;
 %type <intval> avpflag_oper
 %type <intval> rve_un_op
 %type <strval> cfg_var_id
+%type <strval> cfg_var_idn
 /* %type <intval> rve_op */
 
 /*%type <route_el> rules;
@@ -1546,7 +1548,10 @@ assign_stm:
 	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
 	| HTTP_REPLY_PARSE EQUAL NUMBER { http_reply_parse=$3; }
 	| HTTP_REPLY_PARSE EQUAL error { yyerror("boolean value expected"); }
+	| VERBOSE_STARTUP EQUAL NUMBER { ksr_verbose_startup=$3; }
+	| VERBOSE_STARTUP EQUAL error { yyerror("boolean value expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
+	| SERVER_ID EQUAL error  { yyerror("number  expected"); }
     | MAX_RECURSIVE_LEVEL EQUAL NUMBER { set_max_recursive_level($3); }
     | MAX_BRANCHES_PARAM EQUAL NUMBER { sr_dst_max_branches = $3; }
     | LATENCY_LOG EQUAL intno { default_core_cfg.latency_log=$3; }
@@ -1588,36 +1593,45 @@ cfg_var_id: ID
 	| DEFAULT { $$="default" ; } /*needed to allow default as cfg var. name*/
 	;
 
+cfg_var_idn: ID
+	| DEFAULT { $$="default" ; } /*needed to allow default as cfg var. name*/
+	| NUMBER {
+		yyerror("cfg var field name - use of number or reserved token not allowed: %s",
+				yy_number_str);
+		YYERROR;
+	}
+	;
+
 cfg_var:
-	cfg_var_id DOT cfg_var_id EQUAL NUMBER {
+	cfg_var_id DOT cfg_var_idn EQUAL NUMBER {
 		if (cfg_declare_int($1, $3, $5, 0, 0, NULL)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| cfg_var_id DOT cfg_var_id EQUAL STRING {
+	| cfg_var_id DOT cfg_var_idn EQUAL STRING {
 		if (cfg_declare_str($1, $3, $5, NULL)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| cfg_var_id DOT cfg_var_id EQUAL NUMBER CFG_DESCRIPTION STRING {
+	| cfg_var_id DOT cfg_var_idn EQUAL NUMBER CFG_DESCRIPTION STRING {
 		if (cfg_declare_int($1, $3, $5, 0, 0, $7)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| cfg_var_id DOT cfg_var_id EQUAL STRING CFG_DESCRIPTION STRING {
+	| cfg_var_id DOT cfg_var_idn EQUAL STRING CFG_DESCRIPTION STRING {
 		if (cfg_declare_str($1, $3, $5, $7)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| cfg_var_id DOT cfg_var_id EQUAL error {
+	| cfg_var_id DOT cfg_var_idn EQUAL error {
 		yyerror("number or string expected");
 	}
-	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_id EQUAL NUMBER {
+	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_idn EQUAL NUMBER {
 		if (cfg_ginst_var_int($1, $3, $6, $8)) {
 			yyerror("variable cannot be added to the group instance");
 		}
 	}
-	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_id EQUAL STRING {
+	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_idn EQUAL STRING {
 		if (cfg_ginst_var_string($1, $3, $6, $8)) {
 			yyerror("variable cannot be added to the group instance");
 		}
@@ -2379,7 +2393,7 @@ single_case:
 		}
 	}
 	| DEFAULT COLON actions {
-		if ((($$=mk_case_stm(0, 0, $3, &i_tmp))==0) && (i_tmp=-10)){
+		if ((($$=mk_case_stm(0, 0, $3, &i_tmp))==0) && (i_tmp==-10)){
 				YYABORT;
 		}
 	}

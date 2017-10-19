@@ -76,10 +76,10 @@ static void rpc_dump(rpc_t *rpc, void *c)
  */
 static void rpc_reload(rpc_t *rpc, void *c)
 {
-	LOG(L_NOTICE, "prefix_route: Reloading prefix route tree from DB\n");
+	LM_NOTICE("Reloading prefix route tree from DB\n");
 
 	if (0 != pr_db_load()) {
-		LOG(L_ERR, "prefix_route: rpc_reload(): db_load() failed\n");
+		LM_ERR("db load failed\n");
 		rpc->fault(c, 400, "failed to reload prefix routes");
 	}
 	else {

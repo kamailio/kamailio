@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,11 +17,6 @@
  * @file sctp_stats.c
  * @ingroup:  core (sctp)
  */
-/*
- * History:
- * --------
- *  2010-08-09  initial version (andrei)
-*/
 
 #ifdef USE_SCTP
 

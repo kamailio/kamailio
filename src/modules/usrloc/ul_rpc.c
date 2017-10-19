@@ -31,11 +31,11 @@
 /*! CSEQ nr used */
 #define RPC_UL_CSEQ 1
 /*! call-id used for ul_add and ul_rm_contact */
-static str rpc_ul_cid = str_init("dfjrewr12386fd6-343@kamailio.mi");
+static str rpc_ul_cid = str_init("dfjrewr12386fd6-343@kamailio.rpc");
 /*! path used for ul_add and ul_rm_contact */
 static str rpc_ul_path = str_init("dummypath");
 /*! user agent used for ul_add */
-static str rpc_ul_ua  = str_init("SIP Router MI Server");
+static str rpc_ul_ua  = str_init(NAME " SIP Router - RPC Server");
 
 extern sruid_t _ul_sruid;
 
@@ -65,10 +65,10 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		return -1;
 	}
 	if (c->expires == 0) { if(rpc->struct_add(vh, "s", "Expires", "permanent")<0)
-	{
+		{
 			rpc->fault(ctx, 500, "Internal error adding expire");
 			return -1;
-	}
+		}
 	} else if (c->expires == UL_EXPIRED_TIME) {
 		if(rpc->struct_add(vh, "s", "Expires", "deleted")<0)
 		{
@@ -122,19 +122,19 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		return -1;
 	}
 	if(rpc->struct_add(vh, "S", "User-Agent",
-			(c->user_agent.len)?&c->user_agent: &empty_str)<0)
+				(c->user_agent.len)?&c->user_agent: &empty_str)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding user-agent");
 		return -1;
 	}
 	if(rpc->struct_add(vh, "S", "Received",
-			(c->received.len)?&c->received: &empty_str)<0)
+				(c->received.len)?&c->received: &empty_str)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding received");
 		return -1;
 	}
 	if(rpc->struct_add(vh, "S", "Path",
-			(c->path.len)?&c->path: &empty_str)<0)
+				(c->path.len)?&c->path: &empty_str)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding path");
 		return -1;
@@ -170,7 +170,7 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		return -1;
 	}
 	if(rpc->struct_add(vh, "S", "Instance",
-			(c->instance.len)?&c->instance: &empty_str)<0)
+				(c->instance.len)?&c->instance: &empty_str)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding instance");
 		return -1;
@@ -180,17 +180,17 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		rpc->fault(ctx, 500, "Internal error adding reg_id");
 		return -1;
 	}
-    if(rpc->struct_add(vh, "d", "Server-Id", c->server_id)<0)
+	if(rpc->struct_add(vh, "d", "Server-Id", c->server_id)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding server_id");
 		return -1;
 	}
-    if(rpc->struct_add(vh, "d", "Tcpconn-Id", c->tcpconn_id)<0)
+	if(rpc->struct_add(vh, "d", "Tcpconn-Id", c->tcpconn_id)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding tcpconn_id");
 		return -1;
 	}
-    if(rpc->struct_add(vh, "d", "Keepalive", c->keepalive)<0)
+	if(rpc->struct_add(vh, "d", "Keepalive", c->keepalive)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding keepalive");
 		return -1;
@@ -227,7 +227,7 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 
 	if(brief.len==5 && (strncmp(brief.s, "brief", 5)==0))
 		summary = 1;
-	
+
 	for( dl=root ; dl ; dl=dl->next ) {
 		dom = dl->d;
 		if (rpc->add(ctx, "{", &th) < 0)
@@ -252,23 +252,23 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 				if(summary==1)
 				{
 					if(rpc->struct_add(ah, "S",
-							"AoR", &r->aor)<0)
+								"AoR", &r->aor)<0)
 					{
 						rpc->fault(ctx, 500, "Internal error creating aor struct");
 						return;
 					}
 				} else {
 					if(rpc->struct_add(ah, "{",
-							"Info", &bh)<0)
+								"Info", &bh)<0)
 					{
 						unlock_ulslot( dom, i);
 						rpc->fault(ctx, 500, "Internal error creating aor struct");
 						return;
 					}
 					if(rpc->struct_add(bh, "Sd[",
-							"AoR", &r->aor,
-							"HashID", r->aorhash,
-							"Contacts", &ih)<0)
+								"AoR", &r->aor,
+								"HashID", r->aorhash,
+								"Contacts", &ih)<0)
 					{
 						unlock_ulslot( dom, i);
 						rpc->fault(ctx, 500, "Internal error creating aor struct");
@@ -294,8 +294,8 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 			return;
 		}
 		if(rpc->struct_add(sh, "dd",
-				"Records", n,
-				"Max-Slots", max)<0)
+					"Records", n,
+					"Max-Slots", max)<0)
 		{
 			rpc->fault(ctx, 500, "Internal error adding stats");
 			return;
@@ -319,7 +319,7 @@ static inline udomain_t* rpc_find_domain(str* table)
 
 	for( dom=root ; dom ; dom=dom->next ) {
 		if ((dom->name.len == table->len) &&
-		!memcmp(dom->name.s, table->s, table->len))
+				!memcmp(dom->name.s, table->s, table->len))
 			return dom->d;
 	}
 	return 0;
@@ -410,8 +410,8 @@ static void ul_rpc_lookup(rpc_t* rpc, void* ctx)
 		return;
 	}
 	if(rpc->struct_add(th, "S[",
-			"AoR", &aor,
-			"Contacts", &ih)<0)
+				"AoR", &aor,
+				"Contacts", &ih)<0)
 	{
 		unlock_udomain(dom, &aor);
 		rpc->fault(ctx, 500, "Internal error creating aor struct");
@@ -545,7 +545,9 @@ static const char* ul_rpc_rm_contact_doc[2] = {
 
 static void ul_rpc_flush(rpc_t* rpc, void* ctx)
 {
-	synchronize_all_udomains(0, 1);
+	if(synchronize_all_udomains(0, 1) != 0) {
+		rpc->fault(ctx, 500, "Operation failed");
+	}
 	return;
 }
 
@@ -553,6 +555,23 @@ static const char* ul_rpc_flush_doc[2] = {
 	"Flush the usrloc memory cache to DB",
 	0
 };
+
+/**
+ * test if a rpc parameter is set
+ * - used for optional parameters which can be given '.' or '0' value
+ *   in order to indicate is not intended to be set
+ * - return: 1 if parameter is set; 0 if parameter is not set
+ */
+int ul_rpc_is_param_set(str *p)
+{
+	if(p==NULL || p->len==0 || p->s==NULL)
+		return 0;
+	if(p->len>1)
+		return 1;
+	if((strncmp(p->s, ".", 1)==0) || (strncmp(p->s, "0", 1)==0))
+		return 0;
+	return 1;
+}
 
 /*!
  * \brief Add a new contact for an address of record
@@ -565,6 +584,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	str aor = {0, 0};
 	str contact = {0, 0};
 	str path = {0, 0};
+	str socket = {0, 0};
 	str temp = {0, 0};
 	double dtemp;
 	ucontact_info_t ci;
@@ -573,23 +593,40 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	udomain_t *dom;
 	int ret;
 
-	memset( &ci, 0, sizeof(ucontact_info_t));
+	memset(&ci, 0, sizeof(ucontact_info_t));
 
-	ret = rpc->scan(ctx, "SSSdfSddd", &table, &aor, &contact, &ci.expires,
-		&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods);
-	if(path.len==1 && (strncmp(path.s, "0", 1)==0))	{
-		LM_DBG("path == 0 -> unset\n");
-	}
-	else {
-		ci.path = &path;
-	}
-	LM_DBG("ret: %d table:%.*s aor:%.*s contact:%.*s expires:%d dtemp:%f path:%.*s flags:%d bflags:%d methods:%d\n",
-		ret, table.len, table.s, aor.len, aor.s, contact.len, contact.s,
-		(int) ci.expires, dtemp, (ci.path)?ci.path->len:0, (ci.path && ci.path->s)?ci.path->s:"", ci.flags, ci.cflags, (int) ci.methods);
-	if ( ret != 9) {
+	ret = rpc->scan(ctx, "SSSdfSddd*SS", &table, &aor, &contact, &ci.expires,
+			&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods, &ci.received,
+			&socket);
+	if (ret < 9) {
+		LM_ERR("not enough parameters - read so far: %d\n", ret);
 		rpc->fault(ctx, 500, "Not enough parameters or wrong format");
 		return;
 	}
+	if(ul_rpc_is_param_set(&path)) {
+		ci.path = &path;
+	} else {
+		LM_DBG("path == 0 -> unset\n");
+	}
+	if(ret>9) {
+		/* received parameter */
+		if(!ul_rpc_is_param_set(&ci.received)) {
+			ci.received.s = 0;
+			ci.received.len = 0;
+		}
+	}
+	if(ret>10) {
+		/* socket parameter */
+		if(ul_rpc_is_param_set(&socket)) {
+			ci.sock = lookup_local_socket(&socket);
+		}
+	}
+	LM_DBG("ret: %d table:%.*s aor:%.*s contact:%.*s expires:%d"
+			" dtemp:%f path:%.*s flags:%d bflags:%d methods:%d\n",
+			ret, table.len, table.s, aor.len, aor.s, contact.len, contact.s,
+			(int) ci.expires, dtemp, (ci.path)?ci.path->len:0,
+			(ci.path && ci.path->s)?ci.path->s:"", ci.flags, ci.cflags,
+			(int) ci.methods);
 	ci.q = double2q(dtemp);
 	temp.s = q2str(ci.q, (unsigned int*)&temp.len);
 	LM_DBG("q:%.*s\n", temp.len, temp.s);
@@ -601,7 +638,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	}
 
 	/* process the aor */
-	if ( rpc_fix_aor(&aor) != 0 ) {
+	if (rpc_fix_aor(&aor) != 0 ) {
 		rpc->fault(ctx, 500, "Domain missing in AOR");
 		return;
 	}
@@ -613,21 +650,22 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	}
 	ci.ruid = _ul_sruid.uid;
 
-	lock_udomain( dom, &aor);
+	lock_udomain(dom, &aor);
 
-	ret = get_urecord( dom, &aor, &r);
+	ret = get_urecord(dom, &aor, &r);
 	if(ret==1) {
-		if (insert_urecord( dom, &aor, &r) < 0)
+		if (insert_urecord(dom, &aor, &r) < 0)
 		{
-			unlock_udomain( dom, &aor);
+			unlock_udomain(dom, &aor);
 			rpc->fault(ctx, 500, "Can't insert record");
 			return;
 		}
 		c = 0;
 	} else {
-		if (get_ucontact( r, &contact, &rpc_ul_cid, &rpc_ul_path, RPC_UL_CSEQ+1, &c) < 0)
+		if (get_ucontact( r, &contact, &rpc_ul_cid, &rpc_ul_path,
+					RPC_UL_CSEQ+1, &c) < 0)
 		{
-			unlock_udomain( dom, &aor);
+			unlock_udomain(dom, &aor);
 			rpc->fault(ctx, 500, "Can't get record");
 			return;
 		}
@@ -646,22 +684,22 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 		if (update_ucontact( r, c, &ci) < 0)
 		{
 			release_urecord(r);
-			unlock_udomain( dom, &aor);
+			unlock_udomain(dom, &aor);
 			rpc->fault(ctx, 500, "Can't update contact");
 			return;
 		}
 	} else {
-		if ( insert_ucontact( r, &contact, &ci, &c) < 0 )
+		if ( insert_ucontact(r, &contact, &ci, &c) < 0 )
 		{
 			release_urecord(r);
-			unlock_udomain( dom, &aor);
+			unlock_udomain(dom, &aor);
 			rpc->fault(ctx, 500, "Can't insert contact");
 			return;
 		}
 	}
 
 	release_urecord(r);
-	unlock_udomain( dom, &aor);
+	unlock_udomain(dom, &aor);
 	return;
 }
 
@@ -674,52 +712,52 @@ static const char* ul_rpc_add_doc[2] = {
 
 static void ul_rpc_db_users(rpc_t* rpc, void* ctx)
 {
-    str table = {0, 0};
-    char query[QUERY_LEN];
-    str query_str;
-    db1_res_t* res;
-    int count;
+	str table = {0, 0};
+	char query[QUERY_LEN];
+	str query_str;
+	db1_res_t* res;
+	int count;
 
-    if (db_mode == NO_DB) {
-	rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
-	return;
-    }
+	if (db_mode == NO_DB) {
+		rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
+		return;
+	}
 
-    if (rpc->scan(ctx, "S", &table) != 1) {
-	rpc->fault(ctx, 500, "Not enough parameters (table to lookup)");
-	return;
-    }
+	if (rpc->scan(ctx, "S", &table) != 1) {
+		rpc->fault(ctx, 500, "Not enough parameters (table to lookup)");
+		return;
+	}
 
-    if (user_col.len + domain_col.len + table.len + 32 > QUERY_LEN) {
-	rpc->fault(ctx, 500, "Too long database query");
-	return;
-    }
+	if (user_col.len + domain_col.len + table.len + 32 > QUERY_LEN) {
+		rpc->fault(ctx, 500, "Too long database query");
+		return;
+	}
 
-    if (!DB_CAPABILITY(ul_dbf, DB_CAP_RAW_QUERY)) {
-	rpc->fault(ctx, 500, "Database does not support raw queries");
-	return;
-    }
-    if (ul_dbf.use_table(ul_dbh, &table) < 0) {
-	rpc->fault(ctx, 500, "Failed to use table");
-	return;
-    }
-	
-    memset(query, 0, QUERY_LEN);
-    query_str.len = snprintf(query, QUERY_LEN,
-			     "SELECT COUNT(DISTINCT %.*s, %.*s) FROM %.*s WHERE (UNIX_TIMESTAMP(expires) = 0) OR (expires > NOW())",
-			     user_col.len, user_col.s,
-			     domain_col.len, domain_col.s,
-			     table.len, table.s);
-    query_str.s = query;
-    if (ul_dbf.raw_query(ul_dbh, &query_str, &res) < 0) {
-	rpc->fault(ctx, 500, "Failed to query AoR count");
-	return;
-    }
+	if (!DB_CAPABILITY(ul_dbf, DB_CAP_RAW_QUERY)) {
+		rpc->fault(ctx, 500, "Database does not support raw queries");
+		return;
+	}
+	if (ul_dbf.use_table(ul_dbh, &table) < 0) {
+		rpc->fault(ctx, 500, "Failed to use table");
+		return;
+	}
 
-    count = (int)VAL_INT(ROW_VALUES(RES_ROWS(res)));
-    ul_dbf.free_result(ul_dbh, res);
+	memset(query, 0, QUERY_LEN);
+	query_str.len = snprintf(query, QUERY_LEN,
+			"SELECT COUNT(DISTINCT %.*s, %.*s) FROM %.*s WHERE (UNIX_TIMESTAMP(expires) = 0) OR (expires > NOW())",
+			user_col.len, user_col.s,
+			domain_col.len, domain_col.s,
+			table.len, table.s);
+	query_str.s = query;
+	if (ul_dbf.raw_query(ul_dbh, &query_str, &res) < 0) {
+		rpc->fault(ctx, 500, "Failed to query AoR count");
+		return;
+	}
 
-    rpc->add(ctx, "d", count);
+	count = (int)VAL_INT(ROW_VALUES(RES_ROWS(res)));
+	ul_dbf.free_result(ul_dbh, res);
+
+	rpc->add(ctx, "d", count);
 }
 
 static const char* ul_rpc_db_users_doc[2] = {
@@ -729,49 +767,49 @@ static const char* ul_rpc_db_users_doc[2] = {
 
 static void ul_rpc_db_contacts(rpc_t* rpc, void* ctx)
 {
-    str table = {0, 0};
-    char query[QUERY_LEN];
-    str query_str;
-    db1_res_t* res;
-    int count;
+	str table = {0, 0};
+	char query[QUERY_LEN];
+	str query_str;
+	db1_res_t* res;
+	int count;
 
-    if (db_mode == NO_DB) {
-	rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
-	return;
-    }
+	if (db_mode == NO_DB) {
+		rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
+		return;
+	}
 
-    if (rpc->scan(ctx, "S", &table) != 1) {
-	rpc->fault(ctx, 500, "Not enough parameters (table to lookup)");
-	return;
-    }
+	if (rpc->scan(ctx, "S", &table) != 1) {
+		rpc->fault(ctx, 500, "Not enough parameters (table to lookup)");
+		return;
+	}
 
-    if (table.len + 22 > QUERY_LEN) {
-	rpc->fault(ctx, 500, "Too long database query");
-	return;
-    }
+	if (table.len + 22 > QUERY_LEN) {
+		rpc->fault(ctx, 500, "Too long database query");
+		return;
+	}
 
-    if (!DB_CAPABILITY(ul_dbf, DB_CAP_RAW_QUERY)) {
-	rpc->fault(ctx, 500, "Database does not support raw queries");
-	return;
-    }
-    if (ul_dbf.use_table(ul_dbh, &table) < 0) {
-	rpc->fault(ctx, 500, "Failed to use table");
-	return;
-    }
-	
-    memset(query, 0, QUERY_LEN);
-    query_str.len = snprintf(query, QUERY_LEN, "SELECT COUNT(*) FROM %.*s WHERE (UNIX_TIMESTAMP(expires) = 0) OR (expires > NOW())",
-			     table.len, table.s);
-    query_str.s = query;
-    if (ul_dbf.raw_query(ul_dbh, &query_str, &res) < 0) {
-	rpc->fault(ctx, 500, "Failed to query contact count");
-	return;
-    }
+	if (!DB_CAPABILITY(ul_dbf, DB_CAP_RAW_QUERY)) {
+		rpc->fault(ctx, 500, "Database does not support raw queries");
+		return;
+	}
+	if (ul_dbf.use_table(ul_dbh, &table) < 0) {
+		rpc->fault(ctx, 500, "Failed to use table");
+		return;
+	}
 
-    count = (int)VAL_INT(ROW_VALUES(RES_ROWS(res)));
-    ul_dbf.free_result(ul_dbh, res);
+	memset(query, 0, QUERY_LEN);
+	query_str.len = snprintf(query, QUERY_LEN, "SELECT COUNT(*) FROM %.*s WHERE (UNIX_TIMESTAMP(expires) = 0) OR (expires > NOW())",
+			table.len, table.s);
+	query_str.s = query;
+	if (ul_dbf.raw_query(ul_dbh, &query_str, &res) < 0) {
+		rpc->fault(ctx, 500, "Failed to query contact count");
+		return;
+	}
 
-    rpc->add(ctx, "d", count);
+	count = (int)VAL_INT(ROW_VALUES(RES_ROWS(res)));
+	ul_dbf.free_result(ul_dbh, res);
+
+	rpc->add(ctx, "d", count);
 }
 
 static const char* ul_rpc_db_contacts_doc[2] = {
@@ -781,49 +819,49 @@ static const char* ul_rpc_db_contacts_doc[2] = {
 
 static void ul_rpc_db_expired_contacts(rpc_t* rpc, void* ctx)
 {
-    str table = {0, 0};
-    char query[QUERY_LEN];
-    str query_str;
-    db1_res_t* res;
-    int count;
+	str table = {0, 0};
+	char query[QUERY_LEN];
+	str query_str;
+	db1_res_t* res;
+	int count;
 
-    if (db_mode == NO_DB) {
-	rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
-	return;
-    }
+	if (db_mode == NO_DB) {
+		rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
+		return;
+	}
 
-    if (rpc->scan(ctx, "S", &table) != 1) {
-	rpc->fault(ctx, 500, "Not enough parameters (table to lookup)");
-	return;
-    }
+	if (rpc->scan(ctx, "S", &table) != 1) {
+		rpc->fault(ctx, 500, "Not enough parameters (table to lookup)");
+		return;
+	}
 
-    if (table.len + 22 > QUERY_LEN) {
-	rpc->fault(ctx, 500, "Too long database query");
-	return;
-    }
+	if (table.len + 22 > QUERY_LEN) {
+		rpc->fault(ctx, 500, "Too long database query");
+		return;
+	}
 
-    if (!DB_CAPABILITY(ul_dbf, DB_CAP_RAW_QUERY)) {
-	rpc->fault(ctx, 500, "Database does not support raw queries");
-	return;
-    }
-    if (ul_dbf.use_table(ul_dbh, &table) < 0) {
-	rpc->fault(ctx, 500, "Failed to use table");
-	return;
-    }
-	
-    memset(query, 0, QUERY_LEN);
-    query_str.len = snprintf(query, QUERY_LEN, "SELECT COUNT(*) FROM %.*s WHERE (UNIX_TIMESTAMP(expires) > 0) AND (expires <= NOW())",
-			     table.len, table.s);
-    query_str.s = query;
-    if (ul_dbf.raw_query(ul_dbh, &query_str, &res) < 0) {
-	rpc->fault(ctx, 500, "Failed to query contact count");
-	return;
-    }
+	if (!DB_CAPABILITY(ul_dbf, DB_CAP_RAW_QUERY)) {
+		rpc->fault(ctx, 500, "Database does not support raw queries");
+		return;
+	}
+	if (ul_dbf.use_table(ul_dbh, &table) < 0) {
+		rpc->fault(ctx, 500, "Failed to use table");
+		return;
+	}
 
-    count = (int)VAL_INT(ROW_VALUES(RES_ROWS(res)));
-    ul_dbf.free_result(ul_dbh, res);
+	memset(query, 0, QUERY_LEN);
+	query_str.len = snprintf(query, QUERY_LEN, "SELECT COUNT(*) FROM %.*s WHERE (UNIX_TIMESTAMP(expires) > 0) AND (expires <= NOW())",
+			table.len, table.s);
+	query_str.s = query;
+	if (ul_dbf.raw_query(ul_dbh, &query_str, &res) < 0) {
+		rpc->fault(ctx, 500, "Failed to query contact count");
+		return;
+	}
 
-    rpc->add(ctx, "d", count);
+	count = (int)VAL_INT(ROW_VALUES(RES_ROWS(res)));
+	ul_dbf.free_result(ul_dbh, res);
+
+	rpc->add(ctx, "d", count);
 }
 
 static const char* ul_rpc_db_expired_contacts_doc[2] = {

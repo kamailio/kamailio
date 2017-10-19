@@ -22,43 +22,50 @@ Configuration Variables for registrar
         Range: 0 - 100.
         Type: integer.
 
- 4. registrar.min_expires
+ 4. registrar.expires_range
+        Percent from incoming expires that will be used in generating
+        the range for the expire interval.
+        Default: 0.
+        Range: 0 - 100.
+        Type: integer.
+
+ 5. registrar.min_expires
         The minimum expires value of a Contact. Value 0 disables the
         checking. .
         Default: 60.
         Type: integer.
 
- 5. registrar.max_expires
+ 6. registrar.max_expires
         The maximum expires value of a Contact. Value 0 disables the
         checking. .
         Default: 0.
         Type: integer.
 
- 6. registrar.max_contacts
+ 7. registrar.max_contacts
         The maximum number of Contacts for an AOR. Value 0 disables the
         checking. .
         Default: 0.
         Type: integer.
 
- 7. registrar.retry_after
+ 8. registrar.retry_after
         If you want to add the Retry-After header field in 5xx replies,
         set this parameter to a value grater than zero.
         Default: 0.
         Type: integer.
 
- 8. registrar.case_sensitive
+ 9. registrar.case_sensitive
         If set to 1 then AOR comparison will be case sensitive.
         Recommended and default is 0, case insensitive.
         Default: 0.
         Type: integer.
 
- 9. registrar.default_q
+10. registrar.default_q
         The parameter represents default q value for new contacts..
         Default: -1.
         Range: -1 - 1000.
         Type: integer.
 
-10. registrar.append_branches
+11. registrar.append_branches
         If set to 1(default), lookup will put all contacts found in msg
         structure.
         Default: 1.

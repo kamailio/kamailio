@@ -41,14 +41,14 @@
  * aligned memory */
 	#define ROUNDTO		sizeof(long long)
 #else
-	#define ROUNDTO		sizeof(void*) /* minimum possible ROUNDTO ->heavy 
-										 debugging*/
-#endif 
+	#define ROUNDTO		sizeof(void*) /* minimum possible ROUNDTO
+										* ->heavy debugging*/
+#endif
 #else /* DBG_QM_MALLOC */
 	#define ROUNDTO		16UL /* size we round to, must be = 2^n  and also
-							 sizeof(qm_frag)+sizeof(qm_frag_end)
-							 must be multiple of ROUNDTO!
-						   */
+							* sizeof(qm_frag)+sizeof(qm_frag_end)
+							* must be multiple of ROUNDTO!
+							*/
 #endif
 #define MIN_FRAG_SIZE	ROUNDTO
 
@@ -115,14 +115,13 @@ struct qm_block{
 	unsigned long real_used; /* used+malloc overhead*/
 	unsigned long max_real_used;
 	unsigned long ffrags;
-	
+
 	struct qm_frag* first_frag;
 	struct qm_frag_end* last_frag_end;
-	
+
 	struct qm_frag_lnk free_hash[QM_HASH_SIZE];
 	/*struct qm_frag_end free_lst_end;*/
 };
-
 
 
 struct qm_block* qm_malloc_init(char* address, unsigned long size, int type);
@@ -135,16 +134,33 @@ void* qm_malloc(void*, size_t size);
 #endif
 
 #ifdef DBG_QM_MALLOC
+void* qm_mallocxz(void*, size_t size, const char* file,
+					const char* func, unsigned int line, const char* mname);
+#else
+void* qm_mallocxz(void*, size_t size);
+#endif
+
+#ifdef DBG_QM_MALLOC
 void  qm_free(void*, void* p, const char* file, const char* func,
 				unsigned int line, const char* mname);
 #else
 void  qm_free(void*, void* p);
 #endif
+
 #ifdef DBG_QM_MALLOC
 void* qm_realloc(void*, void* p, size_t size,
-					const char* file, const char* func, unsigned int line, const char *mname);
+					const char* file, const char* func, unsigned int line,
+					const char *mname);
 #else
 void* qm_realloc(void*, void* p, size_t size);
+#endif
+
+#ifdef DBG_QM_MALLOC
+void* qm_reallocxf(void*, void* p, size_t size,
+					const char* file, const char* func, unsigned int line,
+					const char *mname);
+#else
+void* qm_reallocxf(void*, void* p, size_t size);
 #endif
 
 void  qm_check(struct qm_block*);

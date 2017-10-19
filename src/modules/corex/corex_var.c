@@ -44,6 +44,13 @@ int pv_parse_cfg_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else if(strncmp(in->s, "name", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "file", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "route", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
 			else goto error;
 		break;
 		default:
@@ -72,7 +79,12 @@ int pv_get_cfg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	switch(param->pvn.u.isname.name.n)
 	{
 		case 1:
-			n = get_cfg_crt_name();
+			n = get_cfg_crt_file_name();
+			if(n==0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strzval(msg, param, res, n);
+		case 2:
+			n = get_cfg_crt_route_name();
 			if(n==0)
 				return pv_get_null(msg, param, res);
 			return pv_get_strzval(msg, param, res, n);

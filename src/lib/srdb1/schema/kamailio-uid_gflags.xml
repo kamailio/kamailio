@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>uid_gflags</name>
+    <name>UID_GFLAGS Module</name>
     <xi:include href="uid_global_attrs.xml"/>
 </database>

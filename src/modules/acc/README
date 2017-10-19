@@ -34,8 +34,6 @@ Sven Knoblich
    Copyright © 2004, 2006 Voice Sistem SRL
 
    Copyright © 2011 1&1 Internet AG
-   Revision History
-   Revision $Revision$ $Date$
      __________________________________________________________________
 
    Table of Contents
@@ -136,7 +134,8 @@ Sven Knoblich
 
               7.1. acc_log_request(comment)
               7.2. acc_db_request(comment, table)
-              7.3. acc_diam_request(comment)
+              7.3. acc_request(comment, table)
+              7.4. acc_diam_request(comment)
 
    2. Frequently Asked Questions
 
@@ -194,7 +193,8 @@ Sven Knoblich
    1.50. cdr_on_failed
    1.51. acc_log_request usage
    1.52. acc_db_request usage
-   1.53. acc_diam_request usage
+   1.53. acc_db_request usage
+   1.54. acc_diam_request usage
 
 Chapter 1. Admin Guide
 
@@ -294,7 +294,8 @@ Chapter 1. Admin Guide
 
         7.1. acc_log_request(comment)
         7.2. acc_db_request(comment, table)
-        7.3. acc_diam_request(comment)
+        7.3. acc_request(comment, table)
+        7.4. acc_diam_request(comment)
 
 1. Overview
 
@@ -1344,7 +1345,8 @@ modparam("acc", "cdr_on_failed", 0)
 
    7.1. acc_log_request(comment)
    7.2. acc_db_request(comment, table)
-   7.3. acc_diam_request(comment)
+   7.3. acc_request(comment, table)
+   7.4. acc_diam_request(comment)
 
 7.1.  acc_log_request(comment)
 
@@ -1388,7 +1390,31 @@ acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 ...
 
-7.3.  acc_diam_request(comment)
+7.3.  acc_request(comment, table)
+
+   Warapper around acc_log_request and acc_db_request functions, writing
+   the accounting record to LOG and DATABASE backends. If “db_url”
+   parameter is not set, the acc record is written only to LOG backend.
+
+   Meaning of the parameters is as follows:
+     * comment - Comment to be used for generating the SIP response code
+       and text fields, if in the format “CODE TEXT”. The CODE should be a
+       valid SIP response code (100..699). The TEXT can be one or many
+       words. If CODE is missing, then 0 is used. The parameter can
+       contain pseudo-variables.
+     * table - Database table to be used. It can contain config variables
+       that are evaluated at runtime.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.53. acc_db_request usage
+...
+acc_request("100 Received", "acc");
+acc_request("100 Received", "acc_$time(year)_$time(mon)");
+acc_db_request("$var(code) $avp(reason)", "acc");
+...
+
+7.4.  acc_diam_request(comment)
 
    Like acc_log_request, acc_diam_request reports on a request. It reports
    to the configured Diameter server.
@@ -1399,7 +1425,7 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.53. acc_diam_request usage
+   Example 1.54. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
 acc_diam_request("$var(code) Error: $avp(reason)");

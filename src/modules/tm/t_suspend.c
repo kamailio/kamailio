@@ -166,7 +166,9 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		struct action *route)
 {
 	struct cell	*t;
-	struct sip_msg *faked_req;
+	sip_msg_t *faked_req;
+	sip_msg_t *brpl;
+	void *erpl;
 	int faked_req_len = 0;
 	struct cancel_info cancel_data;
 	int	branch;
@@ -240,6 +242,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 				/* Either t_continue() has already been
 				* called or the branch has already timed out.
 				* Needless to continue. */
+				t->flags &= ~T_ASYNC_CONTINUE;
 				UNLOCK_ASYNC_CONTINUE(t);
 				UNREF(t); /* t_unref would kill the transaction */
 				return 1;
@@ -254,6 +257,14 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			 * a failure route => deadlock, because both
 			 * of them need the reply lock to be held. */
 			t->uac[branch].last_received=500;
+			if(t->uac[branch].reply!=NULL) {
+				LM_WARN("reply (%p) already set for suspended transaction"
+						" (branch: %d)\n",
+						t->uac[branch].reply, branch);
+			} else {
+				/* set it as a faked reply */
+				t->uac[branch].reply=FAKED_REPLY;
+			}
 			uac = &t->uac[branch];
 		}
 		/* else
@@ -311,7 +322,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 
 			if (branch == t->nr_of_outgoings) {
 			/* There is not any open branch so there is
-			* no chance that a final response will be received. */
+			 * no chance that a final response will be received. */
 				ret = 0;
 				goto kill_trans;
 			}
@@ -422,40 +433,52 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	}
 
 done:
+	t->flags &= ~T_ASYNC_CONTINUE;
+	if(t->async_backup.backup_route == TM_ONREPLY_ROUTE) {
+		/* response handling */
+		/* backup branch reply to free it later and reset it here under lock */
+		brpl = t->uac[branch].reply;
+		erpl = (void*)t->uac[branch].end_reply;
+		t->uac[branch].reply = 0;
+		t->uac[branch].end_reply = 0;
+	}
 	UNLOCK_ASYNC_CONTINUE(t);
 
 	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
+		/* request handling */
 		/* unref the transaction */
 		t_unref(t->uas.request);
 	} else {
+		/* response handling */
 		tm_ctx_set_branch_index(T_BR_UNDEFINED);
 		/* unref the transaction */
-		t_unref(t->uac[branch].reply);
+		t_unref(brpl);
 		LM_DBG("Freeing earlier cloned reply\n");
 
 		/* free lumps that were added during reply processing */
-		del_nonshm_lump( &(t->uac[branch].reply->add_rm) );
-		del_nonshm_lump( &(t->uac[branch].reply->body_lumps) );
-		del_nonshm_lump_rpl( &(t->uac[branch].reply->reply_lump) );
+		del_nonshm_lump( &(brpl->add_rm) );
+		del_nonshm_lump( &(brpl->body_lumps) );
+		del_nonshm_lump_rpl( &(brpl->reply_lump) );
 
 		/* free header's parsed structures that were added */
-		for( hdr=t->uac[branch].reply->headers ; hdr ; hdr=hdr->next ) {
+		for( hdr=brpl->headers ; hdr ; hdr=hdr->next ) {
 			if ( hdr->parsed && hdr_allocs_parse(hdr) &&
-				(hdr->parsed<(void*)t->uac[branch].reply ||
-				hdr->parsed>=(void*)t->uac[branch].end_reply)) {
+					(hdr->parsed<(void*)brpl ||
+					hdr->parsed>=(void*)erpl)) {
 				clean_hdr_field(hdr);
 				hdr->parsed = 0;
 			}
 		}
 
-		/* now go through hdr_fields themselves and remove the pkg allocated space */
-		hdr = t->uac[branch].reply->headers;
+		/* now go through hdr fields themselves
+		 * and remove the pkg allocated space */
+		hdr = brpl->headers;
 		while (hdr) {
-			if ( hdr && ((void*)hdr<(void*)t->uac[branch].reply ||
-				(void*)hdr>=(void*)t->uac[branch].end_reply)) {
-				//this header needs to be freed and removed form the list.
+			if ( hdr && ((void*)hdr<(void*)brpl ||
+					(void*)hdr>=(void*)erpl)) {
+				/* this header needs to be freed and removed form the list */
 				if (!prev) {
-					t->uac[branch].reply->headers = hdr->next;
+					brpl->headers = hdr->next;
 				} else {
 					prev->next = hdr->next;
 				}
@@ -467,8 +490,7 @@ done:
 				hdr = hdr->next;
 			}
 		}
-		sip_msg_free(t->uac[branch].reply);
-		t->uac[branch].reply = 0;
+		sip_msg_free(brpl);
 	}
 
 
@@ -478,21 +500,24 @@ kill_trans:
 	/* The script has hopefully set the error code. If not,
 	 * let us reply with a default error. */
 	if ((kill_transaction_unsafe(t,
-		tm_error ? tm_error : E_UNSPEC)) <=0
-	) {
+				tm_error ? tm_error : E_UNSPEC)) <=0) {
 		LM_ERR("reply generation failed\n");
 		/* The transaction must be explicitely released,
 		 * no more timer is running */
+		t->flags &= ~T_ASYNC_CONTINUE;
 		UNLOCK_ASYNC_CONTINUE(t);
 		t_release_transaction(t);
 	} else {
+		t->flags &= ~T_ASYNC_CONTINUE;
 		UNLOCK_ASYNC_CONTINUE(t);
 	}
 
+	/* unref the transaction */
 	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
+		/* request handling */
 		t_unref(t->uas.request);
 	} else {
-		/* unref the transaction */
+		/* response handling */
 		t_unref(t->uac[branch].reply);
 	}
 	return ret;

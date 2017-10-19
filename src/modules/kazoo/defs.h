@@ -30,6 +30,7 @@
 #define DBK_DEFS_H_
 
 #define BLF_MAX_DIALOGS 8
+#define MAX_ROUTING_KEY_SIZE 255
 
 #define BLF_JSON_AMQP_RECEIVED	"AMQP-Received"
 #define BLF_JSON_AMQP_CONSUMER	"AMQP-Consumer"

@@ -136,6 +136,7 @@ int avp_add_db_scheme( modparam_t type, void* val)
 
 	return 0;
 error:
+	if(scheme) pkg_free(scheme);
 	return -1;
 }
 

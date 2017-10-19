@@ -7,3 +7,6 @@ RPC Exports for pike
  1. pike.top
         Documentation missing (pike_top_doc).
 
+ 2. pike.list
+        Documentation missing (pike_top_doc).
+

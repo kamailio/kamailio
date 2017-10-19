@@ -18,7 +18,7 @@
  */
 /*!
  * \file
- * \brief Kamailio topoh :: 
+ * \brief Kamailio topoh ::
  * \ingroup topoh
  * Module: \ref topoh
  */

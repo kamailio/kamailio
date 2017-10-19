@@ -55,26 +55,26 @@ static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
 
-static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2);
+static int t_cancel_branches(sip_msg_t* msg, char *k, char *s2);
 static int fixup_cancel_branches(void** param, int param_no);
-static int w_t_cancel_callid_3(struct sip_msg* msg, char *cid, char *cseq,
+static int w_t_cancel_callid_3(sip_msg_t* msg, char *cid, char *cseq,
 		char *flag);
-static int w_t_cancel_callid_4(struct sip_msg* msg, char *cid, char *cseq,
+static int w_t_cancel_callid_4(sip_msg_t* msg, char *cid, char *cseq,
 		char *flag, char *creason);
 static int fixup_cancel_callid(void** param, int param_no);
-static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
+static int t_reply_callid(sip_msg_t* msg, char *cid, char *cseq,
 		char *rc, char *rs);
 static int fixup_reply_callid(void** param, int param_no);
 
-static int t_flush_flags(struct sip_msg* msg, char*, char* );
-static int w_t_is_failure_route(struct sip_msg* msg, char*, char* );
-static int w_t_is_branch_route(struct sip_msg* msg, char*, char* );
-static int w_t_is_reply_route(struct sip_msg* msg, char*, char*);
-static int w_t_is_request_route(struct sip_msg* msg, char*, char*);
+static int t_flush_flags(sip_msg_t* msg, char*, char* );
+static int w_t_is_failure_route(sip_msg_t* msg, char*, char* );
+static int w_t_is_branch_route(sip_msg_t* msg, char*, char* );
+static int w_t_is_reply_route(sip_msg_t* msg, char*, char*);
+static int w_t_is_request_route(sip_msg_t* msg, char*, char*);
 
-static int w_t_suspend(struct sip_msg* msg, char*, char*);
-static int w_t_continue(struct sip_msg* msg, char *idx, char *lbl, char *rtn);
-static int w_t_reuse_branch(struct sip_msg* msg, char*, char*);
+static int w_t_suspend(sip_msg_t* msg, char*, char*);
+static int w_t_continue(sip_msg_t* msg, char *idx, char *lbl, char *rtn);
+static int w_t_reuse_branch(sip_msg_t* msg, char*, char*);
 static int fixup_t_continue(void** param, int param_no);
 static int w_t_precheck_trans(sip_msg_t*, char*, char*);
 
@@ -305,10 +305,10 @@ static int fixup_cancel_branches(void** param, int param_no)
 /**
  *
  */
-static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
+static int t_cancel_branches(sip_msg_t* msg, char *k, char *s2)
 {
 	struct cancel_info cancel_data;
-	struct cell *t = 0;
+	tm_cell_t *t = 0;
 	tm_ctx_t *tcx = 0;
 	int n=0;
 	int idx = 0;
@@ -322,15 +322,18 @@ static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
 	init_cancel_info(&cancel_data);
 	switch(n) {
 		case 1:
-			/* prepare cancel for every branch except idx */
+			/* prepare cancel for every branch except idx (others) */
 			_tmx_tmb.prepare_to_cancel(t,
 					&cancel_data.cancel_bitmap, 1<<idx);
+			break;
 		case 2:
+			/* prepare cancel for current branch (idx) */
 			if(msg->first_line.u.reply.statuscode>=200)
 				break;
 			cancel_data.cancel_bitmap = 1<<idx;
 			break;
 		default:
+			/* prepare cancel for all branches */
 			if (msg->first_line.u.reply.statuscode>=200)
 				/* prepare cancel for every branch except idx */
 				_tmx_tmb.prepare_to_cancel(t,
@@ -363,10 +366,10 @@ static int fixup_cancel_callid(void** param, int param_no)
 /**
  *
  */
-static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *flag, char *creason)
+static int t_cancel_callid(sip_msg_t* msg, char *cid, char *cseq, char *flag, char *creason)
 {
-	struct cell *trans;
-	struct cell *bkt;
+	tm_cell_t *trans;
+	tm_cell_t *bkt;
 	int bkb;
 	struct cancel_info cancel_data;
 	str cseq_s;
@@ -428,7 +431,7 @@ static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *fla
 /**
  *
  */
-static int w_t_cancel_callid_3(struct sip_msg* msg, char *cid, char *cseq, char *flag)
+static int w_t_cancel_callid_3(sip_msg_t* msg, char *cid, char *cseq, char *flag)
 {
 	return t_cancel_callid(msg, cid, cseq, flag, NULL);
 }
@@ -436,7 +439,7 @@ static int w_t_cancel_callid_3(struct sip_msg* msg, char *cid, char *cseq, char 
 /**
  *
  */
-static int w_t_cancel_callid_4(struct sip_msg* msg, char *cid, char *cseq, char *flag, char *creason)
+static int w_t_cancel_callid_4(sip_msg_t* msg, char *cid, char *cseq, char *flag, char *creason)
 {
 	return t_cancel_callid(msg, cid, cseq, flag, creason);
 }
@@ -458,10 +461,10 @@ static int fixup_reply_callid(void** param, int param_no)
 /**
  *
  */
-static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
+static int t_reply_callid(sip_msg_t* msg, char *cid, char *cseq,
 		char *rc, char *rs)
 {
-	struct cell *trans;
+	tm_cell_t *trans;
 	str cseq_s;
 	str callid_s;
 	str status_s;
@@ -493,11 +496,11 @@ static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
 
 	if(_tmx_tmb.t_lookup_callid(&trans, callid_s, cseq_s) < 0 )
 	{
-		DBG("Lookup failed - no transaction\n");
+		LM_DBG("Lookup failed - no transaction\n");
 		return -1;
 	}
 
-	DBG("Now calling internal replay\n");
+	LM_DBG("Now calling internal replay\n");
 	if(_tmx_tmb.t_reply_trans(trans, trans->uas.request, code, status_s.s)>0)
 		return 1;
 
@@ -507,9 +510,9 @@ static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
 /**
  *
  */
-static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar)
+static int t_flush_flags(sip_msg_t* msg, char *foo, char *bar)
 {
-	struct cell *t;
+	tm_cell_t *t;
 
 	t=_tmx_tmb.t_gett();
 	if ( t==0 || t==T_UNDEFINED) {
@@ -524,7 +527,7 @@ static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar)
 /**
  *
  */
-static int w_t_is_failure_route(struct sip_msg* msg, char *foo, char *bar)
+static int w_t_is_failure_route(sip_msg_t* msg, char *foo, char *bar)
 {
 	if(route_type==FAILURE_ROUTE)
 		return 1;
@@ -544,7 +547,7 @@ static int t_is_failure_route(sip_msg_t* msg)
 /**
  *
  */
-static int w_t_is_branch_route(struct sip_msg* msg, char *foo, char *bar)
+static int w_t_is_branch_route(sip_msg_t* msg, char *foo, char *bar)
 {
 	if(route_type==BRANCH_ROUTE)
 		return 1;
@@ -564,7 +567,7 @@ static int t_is_branch_route(sip_msg_t* msg)
 /**
  *
  */
-static int w_t_is_reply_route(struct sip_msg* msg, char *foo, char *bar)
+static int w_t_is_reply_route(sip_msg_t* msg, char *foo, char *bar)
 {
 	if(route_type & ONREPLY_ROUTE)
 		return 1;
@@ -584,7 +587,7 @@ static int t_is_reply_route(sip_msg_t* msg)
 /**
  *
  */
-static int w_t_is_request_route(struct sip_msg* msg, char *foo, char *bar)
+static int w_t_is_request_route(sip_msg_t* msg, char *foo, char *bar)
 {
 	if(route_type == REQUEST_ROUTE)
 		return 1;
@@ -604,7 +607,7 @@ static int t_is_request_route(sip_msg_t* msg)
 /**
  *
  */
-static int w_t_suspend(struct sip_msg* msg, char *p1, char *p2)
+static int w_t_suspend(sip_msg_t* msg, char *p1, char *p2)
 {
 	unsigned int tindex;
 	unsigned int tlabel;
@@ -638,7 +641,7 @@ static int w_t_suspend(struct sip_msg* msg, char *p1, char *p2)
 /**
  *
  */
-static int w_t_continue(struct sip_msg* msg, char *idx, char *lbl, char *rtn)
+static int w_t_continue(sip_msg_t* msg, char *idx, char *lbl, char *rtn)
 {
 	unsigned int tindex;
 	unsigned int tlabel;
@@ -692,9 +695,9 @@ static int w_t_continue(struct sip_msg* msg, char *idx, char *lbl, char *rtn)
  * Currently the following branch attributes are included:
  * request-uri, ruid, path, instance, and branch flags.
  */
-static int w_t_reuse_branch(struct sip_msg* msg, char *p1, char *p2)
+static int w_t_reuse_branch(sip_msg_t* msg, char *p1, char *p2)
 {
-	struct cell *t;
+	tm_cell_t *t;
 	int branch;
 
 	if (msg == NULL) return -1;

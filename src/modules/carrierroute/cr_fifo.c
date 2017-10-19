@@ -59,6 +59,7 @@ static unsigned int opt_settings[5][3] = {
 
 int fifo_err;
 
+#ifdef MI_REMOVED
 static int updated;
 
 static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]);
@@ -67,7 +68,6 @@ static int update_route_data(fifo_opt_t * opts);
 
 static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domain, fifo_opt_t * opts);
 
-#ifdef MI_REMOVED
 static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, char *prefix);
 
 static struct mi_root* print_replace_help(void);
@@ -75,6 +75,7 @@ static struct mi_root* print_replace_help(void);
 static struct mi_root* print_fifo_err(void);
 #endif
 
+#ifdef MI_REMOVED
 static int str_toklen(str * str, const char * delims)
 {
 	int len;
@@ -94,6 +95,7 @@ static int str_toklen(str * str, const char * delims)
 
 	return len;
 }
+#endif
 
 #ifdef MI_REMOVED
 /**
@@ -737,6 +739,7 @@ errout:
 #endif
 
 
+#ifdef MI_REMOVED
 /**
  * Does the work for update_route_data by recursively
  * traversing the routing tree
@@ -903,7 +906,6 @@ static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domai
 	return 0;
 }
 
-#ifdef MI_REMOVED
 /**
  * prints a short help text for fifo command usage
  */
@@ -1072,14 +1074,19 @@ static int cr_rpc_dump_tree_recursor (rpc_t* rpc, void* ctx, void *gh,
 	char s[256];
 	char rbuf[1024];
 	char *p;
-	int i;
+	int i,len;
 	struct route_flags *rf;
 	struct route_rule *rr;
 	struct route_rule_p_list * rl;
 	double prob;
 
+	len=strlen(prefix);
+	if (len > 254) {
+		LM_ERR("prefix too large");
+		return -1;
+	}
 	strcpy (s, prefix);
-	p = s + strlen (s);
+	p = s + len;
 	p[1] = '\0';
 	for (i = 0; i < cr_match_mode; ++i) {
 		if (node->child[i] != NULL) {
@@ -1099,7 +1106,7 @@ static int cr_rpc_dump_tree_recursor (rpc_t* rpc, void* ctx, void *gh,
 			}
 			snprintf(rbuf, 1024,
 					"%10s: %0.3f %%, '%.*s': %s, '%i', '%.*s', '%.*s', '%.*s'",
-					strlen(prefix) > 0 ? prefix : "NULL", prob * 100,
+					len > 0 ? prefix : "NULL", prob * 100,
 					rr->host.len, rr->host.s,
 					(rr->status ? "ON" : "OFF"), rr->strip,
 					rr->local_prefix.len, rr->local_prefix.s,

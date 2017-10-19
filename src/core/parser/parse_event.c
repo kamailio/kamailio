@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -43,7 +43,7 @@
 
 static struct {
 	str name;
-	int type;	
+	int type;
 } events[] = {
 	{STR_STATIC_INIT("presence"),        EVENT_PRESENCE},
 	{STR_STATIC_INIT("presence.winfo"),  EVENT_PRESENCE_WINFO},
@@ -63,12 +63,12 @@ static inline char* skip_token(char* _b, int _l)
 
 	for(i = 0; i < _l; i++) {
 		switch(_b[i]) {
-		case ' ':
-		case '\r':
-		case '\n':
-		case '\t':
-		case ';':
-			return _b + i;
+			case ' ':
+			case '\r':
+			case '\n':
+			case '\t':
+			case ';':
+				return _b + i;
 		}
 	}
 
@@ -85,7 +85,7 @@ int event_parser(char* s, int len, event_t* e)
 	enum pclass pclass = CLASS_ANY;
 
 	if (e == NULL) {
-		ERR("event_parser: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -94,7 +94,7 @@ int event_parser(char* s, int len, event_t* e)
 	trim_leading(&tmp);
 
 	if (tmp.len == 0) {
-		LOG(L_ERR, "event_parser: Empty body\n");
+		LM_ERR("Empty body\n");
 		return -1;
 	}
 
@@ -105,7 +105,7 @@ int event_parser(char* s, int len, event_t* e)
 	e->type = EVENT_OTHER;
 	for(i = 0; events[i].name.len; i++) {
 		if (e->name.len == events[i].name.len &&
-			!strncasecmp(e->name.s, events[i].name.s, e->name.len)) {
+				!strncasecmp(e->name.s, events[i].name.s, e->name.len)) {
 			e->type = events[i].type;
 			break;
 		}
@@ -116,7 +116,7 @@ int event_parser(char* s, int len, event_t* e)
 	trim_leading(&tmp);
 
 	e->params.list = NULL;
-	
+
 	if (tmp.len && (tmp.s[0] == ';')) {
 		/* Shift the semicolon and skip any leading whitespace, this is needed
 		 * for parse_params to work correctly. */
@@ -131,7 +131,7 @@ int event_parser(char* s, int len, event_t* e)
 		}
 
 		if (parse_params(&tmp, pclass, phooks, &e->params.list) < 0) {
-			ERR("event_parser: Error while parsing parameters parameters\n");
+			LM_ERR("Error while parsing parameters parameters\n");
 			return -1;
 		}
 	}
@@ -152,14 +152,14 @@ int parse_event(struct hdr_field* _h)
 
 	e = (event_t*)pkg_malloc(sizeof(event_t));
 	if (e == 0) {
-		LOG(L_ERR, "parse_event(): No memory left\n");
+		LM_ERR("No memory left\n");
 		return -1;
 	}
 
 	memset(e, 0, sizeof(event_t));
 
 	if (event_parser(_h->body.s, _h->body.len, e) < 0) {
-		LOG(L_ERR, "parse_event(): Error in event_parser\n");
+		LM_ERR("Error in event_parser\n");
 		pkg_free(e);
 		return -2;
 	}

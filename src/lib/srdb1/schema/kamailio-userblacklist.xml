@@ -8,7 +8,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>User and global blacklists</name>
+    <name>USERBLACKLIST Module</name>
     <xi:include href="userblacklist.xml"/>
     <xi:include href="globalblacklist.xml"/>
 </database>

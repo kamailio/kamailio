@@ -1,0 +1,5 @@
+%if 0%{?suse_version}
+Release: <CI_CNT>.<B_CNT>
+%else
+Release: <CI_CNT>%{dist}
+%endif

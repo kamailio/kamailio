@@ -103,11 +103,19 @@ int get_cfg_crt_line(void)
 }
 
 /* return name of config for current executed action */
-char *get_cfg_crt_name(void)
+char *get_cfg_crt_file_name(void)
 {
 	if(_cfg_crt_action==0)
 		return 0;
 	return _cfg_crt_action->cfile;
+}
+
+/* return name of routing block for current executed action */
+char *get_cfg_crt_route_name(void)
+{
+	if(_cfg_crt_action==0)
+		return 0;
+	return _cfg_crt_action->rname;
 }
 
 /* handle the exit code of a module function call.
@@ -310,6 +318,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct rval_cache c1;
 	str s;
 	void *srevp[2];
+	sr_event_param_t evp = {0};
+
 	/* temporary storage space for a struct action.val[] working copy
 	 (needed to transform RVE intro STRING before calling module
 	   functions). [0] is not used (corresp. to the module export pointer),
@@ -330,7 +340,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	{
 		srevp[0] = (void*)a;
 		srevp[1] = (void*)msg;
-		sr_event_exec(SREV_CFG_RUN_ACTION, (void*)srevp);
+		evp.data = (void*)srevp;
+		sr_event_exec(SREV_CFG_RUN_ACTION, &evp);
 	}
 
 	ret=E_BUG;
@@ -342,7 +353,9 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						break;
 					case RVE_ST:
 						rve=(struct rval_expr*)a->val[0].u.data;
-						rval_expr_eval_int(h, msg, &ret, rve);
+						if(rval_expr_eval_int(h, msg, &ret, rve)<0) {
+							LM_WARN("failed to eval int expression\n");
+						}
 						break;
 					case RETCODE_ST:
 						ret=h->last_retcode;

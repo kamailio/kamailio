@@ -29,6 +29,7 @@
 #define __KEEPALIVE_API_H_
 
 #include "../../core/sr_module.h"
+#include "keepalive.h"
 
 typedef int ka_state;
 
@@ -36,7 +37,6 @@ typedef int ka_state;
 #define KA_STATE_UP 1
 #define KA_STATE_DOWN 2
 
-typedef void (*ka_statechanged_f)(str *uri, int state, void *user_attr);
 typedef int (*ka_add_dest_f)(str *uri, str *owner, int flags,
 		ka_statechanged_f callback, void *user_attr);
 typedef ka_state (*ka_dest_state_f)(str *uri);

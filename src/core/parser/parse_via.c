@@ -167,7 +167,7 @@ enum
 	FIN_COMP
 #endif
 	/*GEN_PARAM,
-	       PARAM_ERROR*/ /* declared in msg_parser.h*/
+	PARAM_ERROR*/ /* declared in msg_parser.h*/
 };
 
 
@@ -238,7 +238,7 @@ static /*inline*/ char *parse_via_param(char *const p, const char *const end,
 				break;                                                        \
 			default:                                                          \
 				LM_ERR("invalid "                                             \
-					   "char <%c> in state %d\n",                             \
+						"char <%c> in state %d\n",                            \
 						*tmp, state);                                         \
 				goto error;                                                   \
 		}
@@ -502,7 +502,7 @@ static /*inline*/ char *parse_via_param(char *const p, const char *const end,
 					case FIN_COMP:
 #endif
 						LM_ERR("new via found"
-							   "(',') when '=' expected (state %d=)\n",
+								"(',') when '=' expected (state %d=)\n",
 								state);
 						goto error; /* or we could ignore this bad param*/
 					case F_CR:
@@ -1305,12 +1305,12 @@ normal_exit:
 
 end_via:
 	/* if we are here we found an "unexpected" end of via
-	      *  (cr/lf). This is valid only if the param type is GEN_PARAM or
-		  *  RPORT (the only ones which can miss the value; HIDDEN is a
-		  *  special case )*/
+	 * (cr/lf). This is valid only if the param type is GEN_PARAM or
+	 *  RPORT (the only ones which can miss the value; HIDDEN is a
+	 *  special case )*/
 	if((param->type == GEN_PARAM) || (param->type == PARAM_RPORT)) {
 		saved_state = L_PARAM; /* change the saved_state, we have an unknown
-		                        param. w/o a value */
+								* param. w/o a value */
 		/* param->size should be computed before */
 		goto normal_exit;
 	}
@@ -1347,7 +1347,7 @@ char *parse_via(
 	struct via_param *param;
 
 	vb = vbody; /* keep orignal vbody value, needed to set the error member
-				 in case of multiple via bodies in the same header */
+				* in case of multiple via bodies in the same header */
 parse_again:
 	vb->error = PARSE_ERROR;
 	/* parse start of via ( SIP/2.0/UDP    )*/
@@ -2527,11 +2527,11 @@ main_via:
 								break;
 							case F_VIA:
 								vb->params.len = param->start + param->size
-												 - vb->params.s;
+													- vb->params.s;
 								break;
 							case END_OF_HEADER:
 								vb->params.len = param->start + param->size
-												 - vb->params.s;
+													- vb->params.s;
 								break;
 							case PARAM_ERROR:
 								pkg_free(param);
@@ -2539,7 +2539,7 @@ main_via:
 							default:
 								pkg_free(param);
 								LM_ERR("parsing via after parse_via_param:"
-									   " invalid char <%c> on state %d\n",
+										" invalid char <%c> on state %d\n",
 										*tmp, state);
 								goto error;
 						}
@@ -2581,7 +2581,7 @@ main_via:
 													SERGZ_NAME_LEN)==0)){
 									vb->comp_no=COMP_SERGZ;
 								}else{
-									LOG(L_ERR, "ERROR: parse_via: unrecognized"
+									LM_ERR("unrecognized"
 										" compression method in comp=%.*s\n",
 										param->value.len, param->value.s);
 								}
@@ -2624,7 +2624,7 @@ main_via:
 						goto endofheader;
 					default:
 						LM_ERR("BUG: parsing via - invalid char <%c>"
-							   " in state %d\n",
+								" in state %d\n",
 								*tmp, state);
 						goto error;
 				}
@@ -2711,7 +2711,7 @@ error:
 	}
 	vb->error = PARSE_ERROR;
 	vbody->error = PARSE_ERROR; /* make sure the first via body is marked
-								 as bad also */
+								 * as bad also */
 	return tmp;
 }
 
@@ -2749,7 +2749,7 @@ int parse_via_header(struct sip_msg *msg, int n, struct via_body **q)
 		case 1:
 		case 2:
 			if(!msg->h_via1 && (parse_headers(msg, HDR_VIA_F, 0) == -1
-									   || !msg->h_via1)) {
+									|| !msg->h_via1)) {
 				DBG("bad msg or missing VIA1 header \n");
 				return -1;
 			}
@@ -2761,7 +2761,7 @@ int parse_via_header(struct sip_msg *msg, int n, struct via_body **q)
 				break;
 
 			if(!msg->h_via2 && (parse_headers(msg, HDR_VIA2_F, 0) == -1
-									   || !msg->h_via2)) {
+									|| !msg->h_via2)) {
 				DBG("bad msg or missing VIA2 header \n");
 				return -1;
 			}

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//pub/kamailio/.org//DTD DBSchema V1.1//EN" 
+<!DOCTYPE table PUBLIC "-//pub/kamailio/.org//DTD DBSchema V1.1//EN"
   "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
@@ -14,7 +14,11 @@
     <description>
 		<db:para>This table is used to store topos structures in database. More
 			informations can be found in the topos module documentation at:
-			&KAMAILIO_MOD_DOC;topos.html.
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;topos.html">&KAMAILIO_MOD_DOC;topos.html</ulink>.
+			</listitem>
+			</itemizedlist>
         </db:para>
     </description>
 

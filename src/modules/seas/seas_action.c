@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright (C) 2006-2007 VozTelecom Sistemas S.L
  *
  * This file is part of Kamailio, a free SIP server.
@@ -14,14 +13,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * -------
- * 2008-04-04 added support for local and remote dispaly name in TM dialogs
- *            (by Andrei Pisau <andrei at voice-system dot ro> )
  *
  */
 
@@ -496,7 +490,7 @@ int ac_cancel(as_p the_as,unsigned char processor_id,unsigned int flags,char *ac
    the_param->uac_id=uac_id;
    the_param->processor_id=processor_id;
    the_param->destroy_cb_set=0;
-   
+
    /* registers TMCB_RESPONSE_IN|TMCB_LOCAL_COMPLETED tm callbacks */
    ret=seas_f.tmb.t_cancel_uac(&headers,&body,cancelled_hashIdx,cancelled_label,uac_cb,(void*)the_param);
    if (ret == 0) {
@@ -518,7 +512,7 @@ exit:
    if(headers.s)
       pkg_free(headers.s);
    if(body.s)
-      pkg_free(headers.s);
+      pkg_free(body.s);
    if(my_msg){
       if(my_msg->headers)
 	 free_hdr_field_lst(my_msg->headers);
@@ -901,15 +895,15 @@ int forward_sl_request(struct sip_msg *msg,str *uri,int proto)
         if ((uri2dst(NULL,&dst, msg,  uri, proto)==0) || (dst.send_sock==0))
 #else
         if ((uri2dst(&dst, msg,  uri, proto)==0) || (dst.send_sock==0))
-#endif 
+#endif
         {
-		LOG(L_ERR, "forward_sl_request: no socket found\n");
+		LM_ERR("no socket found\n");
 		return -1;
 	}
 
         LM_DBG("Sending:\n%.*s.\n", (int)msg->len,msg->buf);
         if (msg_send(&dst, msg->buf,msg->len)<0){
-           LM_ERR("ERROR:seas:forward_sl_request: Error sending message !!\n");
+           LM_ERR("Error sending message !!\n");
            return -1;
         }
 	return ret;

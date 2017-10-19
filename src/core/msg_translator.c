@@ -1987,7 +1987,7 @@ after_local_via:
 	if ( received_test(msg) ) {
 		if ((received_buf=received_builder(msg,&received_len))==0){
 			LM_ERR("received_builder failed\n");
-			goto error01;  /* free also line_buf */
+			goto error00;  /* free also line_buf */
 		}
 	}
 
@@ -2000,7 +2000,7 @@ after_local_via:
 			(msg->via1->rport /*&& msg->via1->rport->value.s==0*/)){
 		if ((rport_buf=rport_builder(msg, &rport_len))==0){
 			LM_ERR("rport_builder failed\n");
-			goto error01; /* free everything */
+			goto error00; /* free everything */
 		}
 	}
 
@@ -2022,7 +2022,7 @@ after_local_via:
 	}
 	/* if received needs to be added, add anchor after host and add it, or
 	 * overwrite the previous one if already present */
-	if (received_len){
+	if (received_buf){
 		if (msg->via1->received){ /* received already present => overwrite it*/
 			via_insert_param=del_lump(msg,
 								msg->via1->received->start-buf-1, /*;*/
@@ -2031,12 +2031,15 @@ after_local_via:
 			via_insert_param=anchor_lump(msg, msg->via1->hdr.s-buf+size, 0,
 											HDR_VIA_T);
 		}
-		if (via_insert_param==0) goto error02; /* free received_buf */
+		if (via_insert_param==0) goto error00; /* free received_buf */
 		if (insert_new_lump_after(via_insert_param, received_buf, received_len,
-					HDR_VIA_T) ==0 ) goto error02; /* free received_buf */
+					HDR_VIA_T) ==0 ) {
+			goto error00; /* free received_buf */
+		}
+		received_buf = NULL;
 	}
 	/* if rport needs to be updated, delete it if present and add it's value */
-	if (rport_len){
+	if (rport_buf){
 		if (msg->via1->rport){ /* rport already present */
 			via_insert_param=del_lump(msg,
 								msg->via1->rport->start-buf-1, /*';'*/
@@ -2046,11 +2049,12 @@ after_local_via:
 			via_insert_param=anchor_lump(msg, msg->via1->hdr.s-buf+size, 0,
 											HDR_VIA_T);
 		}
-		if (via_insert_param==0) goto error03; /* free rport_buf */
+		if (via_insert_param==0) goto error00; /* free rport_buf */
 		if (insert_new_lump_after(via_insert_param, rport_buf, rport_len,
-									HDR_VIA_T) ==0 )
-			goto error03; /* free rport_buf */
-
+									HDR_VIA_T) ==0 ) {
+			goto error00; /* free rport_buf */
+		}
+		rport_buf = NULL;
 	}
 
 after_update_via1:
@@ -2073,25 +2077,26 @@ after_update_via1:
 		   (if present & parsed), after the local via or after in front of
 		    the first via if we don't add a local via*/
 		if (msg->route){
-			path_anchor=anchor_lump(msg, msg->route->name.s-buf, 0, 
+			path_anchor=anchor_lump(msg, msg->route->name.s-buf, 0,
 									HDR_ROUTE_T);
 		}else if (likely(via_anchor)){
 			path_anchor=via_anchor;
 		}else if (likely(msg->via1)){
-			path_anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, 
+			path_anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0,
 									HDR_ROUTE_T);
 		}else{
 			/* if no via1 (theoretically possible for non-sip messages,
 			   e.g. http xmlrpc) */
-			path_anchor=anchor_lump(msg, msg->headers->name.s-buf, 0, 
+			path_anchor=anchor_lump(msg, msg->headers->name.s-buf, 0,
 									HDR_ROUTE_T);
 		}
 		if (unlikely(path_anchor==0))
-			goto error05;
+			goto error00;
 		if (unlikely((path_lump=insert_new_lump_after(path_anchor, path_buf.s,
-														path_buf.len,
-														HDR_ROUTE_T))==0))
-			goto error05;
+									path_buf.len, HDR_ROUTE_T))==0)) {
+			goto error00;
+		}
+		path_buf.s = NULL;
 	}
 	/* compute new msg len and fix overlapping zones*/
 	new_len=len+body_delta+lumps_len(msg, msg->add_rm, send_info)+via_len;
@@ -2100,7 +2105,7 @@ after_update_via1:
 #endif
 	udp_mtu=cfg_get(core, core_cfg, udp_mtu);
 	di.proto=PROTO_NONE;
-	if (unlikely((send_info->proto==PROTO_UDP) && udp_mtu && 
+	if (unlikely((send_info->proto==PROTO_UDP) && udp_mtu &&
 					(flags & FL_MTU_FB_MASK) && (new_len>udp_mtu)
 					&& (!(mode&BUILD_NO_LOCAL_VIA)))){
 
@@ -2127,7 +2132,7 @@ after_update_via1:
 			di.proto=PROTO_SCTP;
 		 }
 #endif /* USE_SCTP */
-		
+
 		if (di.proto!=PROTO_NONE){
 			new_len-=via_len;
 			if(likely(line_buf)) pkg_free(line_buf);
@@ -2144,8 +2149,10 @@ after_update_via1:
 	/* add first via, as an anchor for second via*/
 	if(likely(line_buf)) {
 		if ((via_lump=insert_new_lump_before(via_anchor, line_buf, via_len,
-											HDR_VIA_T))==0)
-			goto error04;
+											HDR_VIA_T))==0) {
+			goto error00;
+		}
+		line_buf = 0;
 	}
 	if (msg->new_uri.s){
 		uri_len=msg->new_uri.len;
@@ -2182,7 +2189,7 @@ after_update_via1:
 	new_buf[new_len]=0;
 
 	/* update the send_info if udp_mtu affected */
-	if (di.proto!=PROTO_NONE) { 
+	if (di.proto!=PROTO_NONE) {
 		send_info->proto=di.proto;
 		send_info->send_sock=di.send_sock;
 	}
@@ -2197,16 +2204,12 @@ after_update_via1:
 	*returned_len=new_len;
 	return new_buf;
 
-error01:
-error02:
-	if (received_buf) pkg_free(received_buf);
-error03:
-	if (rport_buf) pkg_free(rport_buf);
-error04:
-	if (line_buf) pkg_free(line_buf);
-error05:
-	if (path_buf.s) pkg_free(path_buf.s);
 error00:
+	if (received_buf) pkg_free(received_buf);
+	if (rport_buf) pkg_free(rport_buf);
+	if (path_buf.s) pkg_free(path_buf.s);
+	if (line_buf) pkg_free(line_buf);
+
 	*returned_len=0;
 	return 0;
 }

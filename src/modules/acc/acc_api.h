@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -66,7 +66,7 @@ typedef struct acc_extra {
 } acc_extra_t;
 
 typedef int (*core2strar_f)( struct sip_msg *req, str *c_vals,
-			      int *i_vals, char *t_vals);
+		int *i_vals, char *t_vals);
 typedef int (*extra2strar_f)(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 		int *int_arr, char *type_arr);
 typedef int (*legs2strar_f)( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,

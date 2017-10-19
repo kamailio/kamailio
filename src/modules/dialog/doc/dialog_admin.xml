@@ -32,7 +32,7 @@
 	The dialog module provides dialog awareness for the &kamailio; proxy. It's
 	functionality is to keep track of the current dialogs, to offer information
 	about them (e.g. how many dialogs are active), and to manage various
-	characteristics of dialogs. The module exports several functions that can be 
+	characteristics of dialogs. The module exports several functions that can be
 	used directly from the configuration route script as well as functions for
 	the RPC interface.
 	</para>
@@ -308,6 +308,49 @@ modparam("dialog", "timeout_avp", "$avp(i:10)")
 		<programlisting format="linespecific">
 ...
 modparam("dialog", "default_timeout", 21600)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dialog.p.early_timeout">
+		<title><varname>early_timeout</varname> (integer)</title>
+		<para>
+		The timeout (in seconds) after which the dialogs in early state (no
+		final response received) are destroyed.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>300 (5 minutes)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>early_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "early_timeout", 180)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dialog.p.noack_timeout">
+		<title><varname>noack_timeout</varname> (integer)</title>
+		<para>
+		The timeout (in seconds) after which the dialogs which were answered
+		with 200ok but didn't receive the ACK are marked for termination (the
+		lifetime is set to 10 more seconds).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>60 (1 minute)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>noack_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "noack_timeout", 90)
 ...
 </programlisting>
 		</example>
@@ -1912,24 +1955,24 @@ if(dlg_get("abcdef", "123", "456"))
 </programlisting>
 		</example>
 	</section>
-	
+
 	<section id="dialog.f.is_known_dlg">
 		<title>
 		<function moreinfo="none">is_known_dlg()</function>
 		</title>
 		<para>
 		This function checks if the current SIP message being processed
-		belongs to any transaction within an active dialog that the 
-		dialog module is currently tracking.  This is a check for 
+		belongs to any transaction within an active dialog that the
+		dialog module is currently tracking.  This is a check for
 		tracking of any kind, without regard to profiles.
 		</para>
 		<para>
 		This function has numerous potential applications, among which
-		is that it can be used to strengthen security for 
+		is that it can be used to strengthen security for
 		loose-routing sequential (in-dialog) requests or responses
 		to them, as by providing a preventative check against
 		spoofing on the proxy level instead of leaving the issue
-		purely to the receiving UA.  
+		purely to the receiving UA.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
@@ -1998,7 +2041,7 @@ if(dlg_set_timeout("180", "123", "456"))
 		<function moreinfo="none">dlg_set_timeout_by_profile(profile, [value], timeout)</function>
 		</title>
 		<para>
-			Like <emphasis>dlg_set_timeout()</emphasis>, but 
+			Like <emphasis>dlg_set_timeout()</emphasis>, but
 			simultaneously sets the timeout of all dialogs in
 			a given profile.  Can be constrained by profile value.
 		</para>
@@ -2021,7 +2064,7 @@ if(dlg_set_timeout("180", "123", "456"))
 		<title><function>dlg_set_timeout_by_profile</function> usage</title>
 		<programlisting format="linespecific">
 ...
-# All dialogs belonging to user abc123 (tracked via set_dlg_profile()) 
+# All dialogs belonging to user abc123 (tracked via set_dlg_profile())
 # will be timed out in 3 seconds.
 
 dlg_set_timeout_by_profile("users", "abc123", "3");
@@ -2131,6 +2174,30 @@ dlg_set_property("timeout-noreset");
 ...
 $var(exp) = 3600 + $Ts;
 dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dialog.f.dlg_set_ruri">
+		<title>
+		<function moreinfo="none">dlg_set_ruri()</function>
+		</title>
+		<para>
+		This function sets the R-URI with the corresponding endpoint address
+		stored in dialog structure (i.e., its Contact field).
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_set_ruri()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(has_totag() and is_present_hf("Route") and uri==myself ) {
+	if(dlg_set_ruri()) {
+		xlog("Request URI changed from [$ou] to dlg value: [$ru]\n");
+	}
+}
 ...
 </programlisting>
 		</example>
@@ -2277,7 +2344,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</programlisting>
 		</section>
 		<section>
-			<title><varname>dlg.end_dlg</varname></title>
+			<title>dlg.end_dlg</title>
 			<para>
 			Terminates an ongoing dialog by sending BYE in both directions.
 			</para>
@@ -2386,11 +2453,15 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 			<listitem><para>
 				<emphasis>op</emphasis> (optional) - outbound proxy SIP address
 			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> (optional) - SDP body for initial
+				INVITE
+			</para></listitem>
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.list _from_ _to_ _op_
+&kamcmd; dlg.bridge_dlg _from_ _to_ _op_
 ...
 		</programlisting>
 		</section>
@@ -2477,21 +2548,23 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 	<section>
 	<title>Event Routes</title>
 		<section>
-			<title><varname>event_route[dialog:start]</varname></title>
+			<title>event_route[dialog:start]</title>
 			<para>
-			Executed when 200OK for INVITE is processed.
+			Executed when 200OK reply for INVITE is processed.
 			</para>
 		</section>
 		<section>
-			<title><varname>event_route[dialog:end]</varname></title>
+			<title>event_route[dialog:end]</title>
 			<para>
-			Executed when BYE is processed or dialog timed out.
+			Executed when the BYE for the call is processed
+			or the dialog timed out.
 			</para>
 		</section>
 		<section>
-			<title><varname>event_route[dialog:failed]</varname></title>
+			<title>event_route[dialog:failed]</title>
 			<para>
-			Executed when dialog is not completed (+300 reply to INVITE).
+			Executed when dialog is not completed (300 or greater reply code
+			to INVITE).
 			</para>
 		</section>
 	</section>

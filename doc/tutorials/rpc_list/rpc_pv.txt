@@ -5,8 +5,8 @@ RPC Exports for pv
 
 
  1. pv.shvSet
-        Set a shared variable (args: name type value)
+        Documentation missing (rpc_shv_set_doc).
 
  2. pv.shvGet
-        Get the value of a shared variable. If no argument, dumps all
+        Documentation missing (rpc_shv_get_doc).
 
