@@ -426,7 +426,7 @@ Package: kamailio-berkeley-modules
 Architecture: linux-any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Depends: db5.1-util,
+Depends: db-util (>= 4.6.19),
          kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
