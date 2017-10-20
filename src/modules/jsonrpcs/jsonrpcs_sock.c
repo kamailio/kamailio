@@ -453,7 +453,7 @@ int jsonrpc_dgram_child_init(int rank)
 			return -1;
 		}
 		for(i=0; i<jsonrpc_dgram_workers; i++) {
-			pid=fork_process(PROC_NOCHLDINIT, "JSONRPC-S DATAGRAM", 1);
+			pid=fork_process(PROC_NOCHLDINIT, "JSONRPCS DATAGRAM", 1);
 			if (pid<0)
 				return -1; /* error */
 			if(pid==0) {
