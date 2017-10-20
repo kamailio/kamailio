@@ -254,6 +254,7 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 					if(rpc->struct_add(ah, "S",
 								"AoR", &r->aor)<0)
 					{
+						unlock_ulslot( dom, i);
 						rpc->fault(ctx, 500, "Internal error creating aor struct");
 						return;
 					}
