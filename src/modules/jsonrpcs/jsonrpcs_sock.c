@@ -90,7 +90,7 @@ int jsonrpc_dgram_destroy(void);
 
 
 void jsonrpc_dgram_server(int rx_sock, int tx_sock);
-static int jsonrpc_dgram_pre_process(void);
+static int jsonrpc_dgram_init_socks(void);
 static int jsonrpc_dgram_post_process(void);
 
 int jsonrpc_dgram_mod_init(void)
@@ -241,6 +241,11 @@ int jsonrpc_dgram_mod_init(void)
 			jsonrpc_dgram_socket, strlen(jsonrpc_dgram_socket));
 
 done:
+	if(jsonrpc_dgram_init_socks()!=0) {
+		LM_ERR("init datagram sockets function failed\n");
+		return -1;
+	}
+
 	/* add space for extra processes */
 	register_procs(jsonrpc_dgram_workers);
 	/* add child to update local config framework structures */
@@ -395,7 +400,7 @@ err_rx:
 }
 
 
-static int jsonrpc_dgram_pre_process(void)
+static int jsonrpc_dgram_init_socks(void)
 {
 	int res;
 
@@ -448,10 +453,6 @@ int jsonrpc_dgram_child_init(int rank)
 	int pid;
 
 	if (rank==PROC_MAIN) {
-		if(jsonrpc_dgram_pre_process()!=0) {
-			LM_ERR("pre-fork function failed\n");
-			return -1;
-		}
 		for(i=0; i<jsonrpc_dgram_workers; i++) {
 			pid=fork_process(PROC_RPC, "JSONRPCS DATAGRAM", 1);
 			if (pid<0)
