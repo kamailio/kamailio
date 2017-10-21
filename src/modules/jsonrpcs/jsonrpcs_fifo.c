@@ -550,7 +550,7 @@ int jsonrpc_fifo_child_init(int rank)
 		LM_ERR("invalid fifo file path\n");
 	}
 
-	pid=fork_process(PROC_NOCHLDINIT, "JSONRPCS FIFO", 1);
+	pid=fork_process(PROC_RPC, "JSONRPCS FIFO", 1);
 	if (pid<0) {
 		return -1; /* error */
 	}
