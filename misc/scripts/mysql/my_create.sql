@@ -29,7 +29,7 @@ CREATE TABLE acc (
     KEY acc_cid_key (sip_callid),
     KEY acc_from_uid (from_uid),
     KEY acc_to_uid (to_uid)
-);
+) COMMENT='used by the ACC module to report on transactions - accounted calls.';
 
 CREATE TABLE missed_calls (
     id INT AUTO_INCREMENT NOT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE missed_calls (
     UNIQUE KEY mc_id_key (server_id, id),
     KEY mc_cid_key (sip_callid),
     KEY mc_to_uid (to_uid)
-);
+) COMMENT='used by the ACC module for keeping track of missed calls';
 
 CREATE TABLE credentials (
     auth_username VARCHAR(64) NOT NULL,
@@ -109,7 +109,7 @@ CREATE TABLE domain_attrs (
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     UNIQUE KEY domain_attr_idx (did, name, value),
     KEY domain_did (did, flags)
-);
+) COMMENT='attributes of domain ids';
 
 CREATE TABLE user_attrs (
     uid VARCHAR(64) NOT NULL,
@@ -137,7 +137,7 @@ CREATE TABLE domain (
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     UNIQUE KEY domain_idx (domain),
     KEY did_idx (did)
-);
+) COMMENT='used by the domain module to determine if a host part of a URI is "local" or not';
 
 CREATE TABLE domain_settings (
     did VARCHAR(64) NOT NULL,
@@ -166,7 +166,7 @@ CREATE TABLE location (
     UNIQUE KEY location_key (uid, contact),
     KEY location_contact (contact),
     KEY location_expires (expires)
-);
+) COMMENT='Persistent user location information for the usrloc module';
 
 CREATE TABLE contact_attrs (
     uid VARCHAR(64) NOT NULL,
@@ -183,7 +183,7 @@ CREATE TABLE trusted (
     proto VARCHAR(4) NOT NULL,
     from_pattern VARCHAR(64) NOT NULL,
     UNIQUE KEY trusted_idx (src_ip, proto, from_pattern)
-);
+) COMMENT='used by the permissions module to determine if a call has the appropriate permission to be established';
 
 CREATE TABLE ipmatch (
     ip VARCHAR(50) NOT NULL DEFAULT '',
@@ -229,14 +229,14 @@ CREATE TABLE lcr (
     KEY lcr_idx1 (prefix),
     KEY lcr_idx2 (from_uri),
     KEY lcr_idx3 (grp_id)
-);
+) COMMENT='used by the LCR (least cost routing) module';
 
 CREATE TABLE grp (
     uid VARCHAR(64) NOT NULL DEFAULT '',
     grp VARCHAR(64) NOT NULL DEFAULT '',
-    last_modified DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    last_modified DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY grp_idx (uid, grp)
-);
+) COMMENT='used by the group module as a means of group membership checking';
 
 CREATE TABLE silo (
     mid INT AUTO_INCREMENT NOT NULL,
@@ -249,7 +249,7 @@ CREATE TABLE silo (
     ctype VARCHAR(128) NOT NULL DEFAULT 'text/plain',
     body BLOB NOT NULL DEFAULT '',
     UNIQUE KEY silo_idx1 (mid)
-);
+) COMMENT='used by the msilo module to provide offline message storage';
 
 CREATE TABLE uri (
     uid VARCHAR(64) NOT NULL,
@@ -259,7 +259,7 @@ CREATE TABLE uri (
     scheme VARCHAR(8) NOT NULL DEFAULT 'sip',
     KEY uri_idx1 (username, did, scheme),
     KEY uri_uid (uid)
-);
+) COMMENT='used by uri_db module to implement various SIP URI checks';
 
 CREATE TABLE speed_dial (
     id INT AUTO_INCREMENT NOT NULL,
@@ -270,7 +270,7 @@ CREATE TABLE speed_dial (
     UNIQUE KEY speeddial_idx1 (uid, dial_did, dial_username),
     UNIQUE KEY speeddial_id (id),
     KEY speeddial_uid (uid)
-);
+) COMMENT='used by the speeddial module to provide on-server speed dial facilities';
 
 CREATE TABLE sd_attrs (
     id VARCHAR(64) NOT NULL,
@@ -288,7 +288,7 @@ CREATE TABLE presentity (
     pdomain VARCHAR(128) NOT NULL,
     xcap_params BLOB NOT NULL,
     UNIQUE KEY presentity_key (pres_id)
-);
+) COMMENT='Table for the presence module';
 
 CREATE TABLE presentity_notes (
     dbid VARCHAR(64) NOT NULL,
@@ -403,14 +403,14 @@ CREATE TABLE pdt (
     prefix VARCHAR(32) NOT NULL,
     domain VARCHAR(255) NOT NULL,
     UNIQUE KEY pdt_idx (prefix)
-);
+) COMMENT='used by the PDT (Prefix-Domain Translation) module';
 
 CREATE TABLE cpl (
     uid VARCHAR(64) NOT NULL,
     cpl_xml BLOB,
     cpl_bin BLOB,
     UNIQUE KEY cpl_key (uid)
-);
+) COMMENT='Table for the call processing language "cpl" module.';
 
 CREATE TABLE customers (
     cid INT AUTO_INCREMENT NOT NULL,
