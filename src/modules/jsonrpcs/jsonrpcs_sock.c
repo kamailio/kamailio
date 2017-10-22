@@ -63,7 +63,7 @@ typedef struct{
 } jsonrpc_dgram_address_t;
 
 typedef struct jsonrpc_dgram_rx_tx {
-	int rx_sock, tx_sock;
+	int rx_sock;
 } jsonrpc_dgram_rx_tx_t;
 
 /* dgram variables */
@@ -71,7 +71,7 @@ static int jsonrpc_dgram_socket_domain =  AF_LOCAL;
 static jsonrpc_dgram_sockaddr_t jsonrpc_dgram_addr;
 
 /* dgram socket definition parameter */
-static jsonrpc_dgram_rx_tx_t jsonrpc_dgram_sockets;
+static jsonrpc_dgram_rx_tx_t jsonrpc_dgram_sockets = { -1 };
 
 /* dgram unixsock specific parameters */
 char *jsonrpc_dgram_socket = NAME "_rpc.sock";
@@ -89,7 +89,7 @@ int jsonrpc_dgram_child_init(int rank);
 int jsonrpc_dgram_destroy(void);
 
 
-void jsonrpc_dgram_server(int rx_sock, int tx_sock);
+void jsonrpc_dgram_server(int rx_sock);
 static int jsonrpc_dgram_init_socks(void);
 static int jsonrpc_dgram_post_process(void);
 
@@ -363,7 +363,7 @@ int jsonrpc_dgram_init_server(jsonrpc_dgram_sockaddr_t *addr,
 
 	case AF_INET:
 			if (bind(socks->rx_sock, &addr->udp_addr.s,
-			sockaddru_len(addr->udp_addr))< 0) {
+						sockaddru_len(addr->udp_addr))< 0) {
 				LM_ERR("bind: %s\n", strerror(errno));
 				goto err_rx;
 			}
@@ -377,13 +377,12 @@ int jsonrpc_dgram_init_server(jsonrpc_dgram_sockaddr_t *addr,
 			break;
 	default:
 			LM_ERR("domain not supported\n");
-			goto err_both;
+			goto err_rx;
 
 	}
-	jsonrpc_dgram_create_reply_socket(socks->tx_sock, socket_domain, err_both);
 
 	optval = 64 * 1024;
-	if (setsockopt(socks->tx_sock, SOL_SOCKET, SO_SNDBUF,
+	if (setsockopt(socks->rx_sock, SOL_SOCKET, SO_SNDBUF,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LM_ERR("failed to increse send buffer size via setsockopt "
 				" SO_SNDBUF (%d) - %d: %s\n", optval,
@@ -391,9 +390,18 @@ int jsonrpc_dgram_init_server(jsonrpc_dgram_sockaddr_t *addr,
 		/* continue, non-critical */
 	}
 
+	/* Turn non-blocking mode on for tx*/
+	flags = fcntl(socks->rx_sock, F_GETFL);
+	if (flags == -1){
+		LM_ERR("fcntl failed: %s\n", strerror(errno));
+		goto err_rx;
+	}
+	if (fcntl(socks->rx_sock, F_SETFL, flags | O_NONBLOCK) == -1) {
+		LM_ERR("fcntl: set non-blocking failed: %s\n", strerror(errno));
+		goto err_rx;
+	}
 	return 0;
-err_both:
-	if(socks->tx_sock>=0) close(socks->tx_sock);
+
 err_rx:
 	if(socks->rx_sock>=0) close(socks->rx_sock);
 	return -1;
@@ -440,8 +448,7 @@ static void jsonrpc_dgram_process(int rank)
 
 	jsonrpc_dgram_write_buffer_len = JSONRPC_DGRAM_BUF_SIZE ;
 
-	jsonrpc_dgram_server(jsonrpc_dgram_sockets.rx_sock,
-			jsonrpc_dgram_sockets.tx_sock);
+	jsonrpc_dgram_server(jsonrpc_dgram_sockets.rx_sock);
 
 	exit(-1);
 }
@@ -480,8 +487,7 @@ int jsonrpc_dgram_child_init(int rank)
 static int jsonrpc_dgram_post_process(void)
 {
 	/* close the sockets */
-	close(jsonrpc_dgram_sockets.rx_sock);
-	close(jsonrpc_dgram_sockets.tx_sock);
+	if(jsonrpc_dgram_sockets.rx_sock>=0) close(jsonrpc_dgram_sockets.rx_sock);
 	return 0;
 }
 
@@ -549,7 +555,7 @@ static int jsonrpc_dgram_send_data(int fd, char* buf, unsigned int len,
 	return n;
 }
 
-void jsonrpc_dgram_server(int rx_sock, int tx_sock)
+void jsonrpc_dgram_server(int rx_sock)
 {
 	int ret;
 	str scmd;
@@ -608,7 +614,7 @@ void jsonrpc_dgram_server(int rx_sock, int tx_sock)
 				jr->rcode, jr->rbody.s,
 				jr->rbody.len, jr->rbody.s);
 
-		jsonrpc_dgram_send_data(tx_sock, jr->rbody.s, jr->rbody.len,
+		jsonrpc_dgram_send_data(rx_sock, jr->rbody.s, jr->rbody.len,
 						  (struct sockaddr*)&jsonrpc_dgram_reply_addr,
 						  jsonrpc_dgram_reply_addr_len,
 						  jsonrpc_dgram_timeout);
