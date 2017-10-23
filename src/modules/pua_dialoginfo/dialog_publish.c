@@ -1,6 +1,4 @@
 /*
- * $Id: ul_publish.c 4518 2008-07-28 15:39:28Z henningw $
- *
  * pua_usrloc module - usrloc pua module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -17,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -53,13 +51,13 @@ void print_publ(publ_info_t* p)
 	LM_DBG("uri= %.*s\n", p->pres_uri->len, p->pres_uri->s);
 	LM_DBG("id= %.*s\n", p->id.len, p->id.s);
 	LM_DBG("expires= %d\n", p->expires);
-}	
+}
 
-str* build_dialoginfo(char *state, str *entity, str *peer, str *callid, 
-	unsigned int initiator, str *localtag, str *remotetag,
-	str *localtarget, str *remotetarget)
+str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
+		unsigned int initiator, str *localtag, str *remotetag,
+		str *localtarget, str *remotetarget)
 {
-	xmlDocPtr  doc = NULL; 
+	xmlDocPtr  doc = NULL;
 	xmlNodePtr root_node = NULL;
 	xmlNodePtr dialog_node = NULL;
 	xmlNodePtr state_node = NULL;
@@ -70,7 +68,8 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	char buf[MAX_URI_SIZE+1];
 
 	if (entity->len > MAX_URI_SIZE) {
-		LM_ERR("entity URI '%.*s' too long, maximum=%d\n",entity->len, entity->s, MAX_URI_SIZE);
+		LM_ERR("entity URI '%.*s' too long, maximum=%d\n",entity->len,
+				entity->s, MAX_URI_SIZE);
 		return NULL;
 	}
 	memcpy(buf, entity->s, entity->len);
@@ -90,22 +89,22 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	xmlNewProp(root_node, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:dialog-info");
 	/* we set the version to 0 but it should be set to the correct value
-	in the pua module */
+	 * in the pua module */
 	xmlNewProp(root_node, BAD_CAST "version",
 			BAD_CAST "0");
 	xmlNewProp(root_node, BAD_CAST  "state",
 			BAD_CAST "full" );
-	xmlNewProp(root_node, BAD_CAST "entity", 
+	xmlNewProp(root_node, BAD_CAST "entity",
 			BAD_CAST buf);
 
 	/* RFC 3245 differs between id and call-id. For example if a call
-	   is forked and 2 early dialogs are established, we should send 2
-	   PUBLISH requests, both have the same call-id but different id.
-	   Thus, id could be for example derived from the totag.
-
-	   Currently the dialog module does not support multiple dialogs.
-	   Thus, it does no make sense to differ here between multiple dialog.
-	   Thus, id and call-id will be populated identically */
+	 * is forked and 2 early dialogs are established, we should send 2
+	 * PUBLISH requests, both have the same call-id but different id.
+	 * Thus, id could be for example derived from the totag.
+	 *
+	 * Currently the dialog module does not support multiple dialogs.
+	 * Thus, it does no make sense to differ here between multiple dialog.
+	 * Thus, id and call-id will be populated identically */
 
 	/* dialog tag */
 	dialog_node =xmlNewChild(root_node, NULL, BAD_CAST "dialog", NULL) ;
@@ -116,7 +115,8 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	}
 
 	if (callid->len > MAX_URI_SIZE) {
-		LM_ERR("call-id '%.*s' too long, maximum=%d\n", callid->len, callid->s, MAX_URI_SIZE);
+		LM_ERR("call-id '%.*s' too long, maximum=%d\n", callid->len,
+				callid->s, MAX_URI_SIZE);
 		goto error;
 	}
 	memcpy(buf, callid->s, callid->len);
@@ -129,7 +129,8 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	if (include_tags) {
 		if (localtag && localtag->s) {
 			if (localtag->len > MAX_URI_SIZE) {
-				LM_ERR("localtag '%.*s' too long, maximum=%d\n", localtag->len, localtag->s, MAX_URI_SIZE);
+				LM_ERR("localtag '%.*s' too long, maximum=%d\n",
+						localtag->len, localtag->s, MAX_URI_SIZE);
 				goto error;
 			}
 			memcpy(buf, localtag->s, localtag->len);
@@ -138,7 +139,8 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		}
 		if (remotetag && remotetag->s) {
 			if (remotetag->len > MAX_URI_SIZE) {
-				LM_ERR("remotetag '%.*s' too long, maximum=%d\n", remotetag->len, remotetag->s, MAX_URI_SIZE);
+				LM_ERR("remotetag '%.*s' too long, maximum=%d\n",
+						remotetag->len, remotetag->s, MAX_URI_SIZE);
 				goto error;
 			}
 			memcpy(buf, remotetag->s, remotetag->len);
@@ -154,7 +156,8 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	}
 
 	/* state tag */
-	state_node = xmlNewChild(dialog_node, NULL, BAD_CAST "state", BAD_CAST state) ;
+	state_node = xmlNewChild(dialog_node, NULL, BAD_CAST "state",
+			BAD_CAST state) ;
 	if( state_node ==NULL)
 	{
 		LM_ERR("while adding child\n");
@@ -162,7 +165,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	}
 
 	if (include_localremote) {
-		/* remote tag*/	
+		/* remote tag*/
 		remote_node = xmlNewChild(dialog_node, NULL, BAD_CAST "remote", NULL) ;
 		if( remote_node ==NULL)
 		{
@@ -171,19 +174,21 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		}
 
 		if (peer->len > MAX_URI_SIZE) {
-			LM_ERR("peer '%.*s' too long, maximum=%d\n", peer->len, peer->s, MAX_URI_SIZE);
+			LM_ERR("peer '%.*s' too long, maximum=%d\n", peer->len, peer->s,
+					MAX_URI_SIZE);
 			goto error;
 		}
 		memcpy(buf, peer->s, peer->len);
 		buf[peer->len]= '\0';
 
-		tag_node = xmlNewChild(remote_node, NULL, BAD_CAST "identity", BAD_CAST buf) ;
+		tag_node = xmlNewChild(remote_node, NULL, BAD_CAST "identity",
+				BAD_CAST buf) ;
 		if( tag_node ==NULL)
 		{
 			LM_ERR("while adding child\n");
 			goto error;
 		}
-		tag_node = xmlNewChild(remote_node, NULL, BAD_CAST "target", NULL) ;
+		tag_node = xmlNewChild(remote_node, NULL, BAD_CAST "target", NULL);
 		if( tag_node ==NULL)
 		{
 			LM_ERR("while adding child\n");
@@ -195,8 +200,8 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		}
 		xmlNewProp(tag_node, BAD_CAST "uri", BAD_CAST buf);
 
-		/* local tag*/	
-		local_node = xmlNewChild(dialog_node, NULL, BAD_CAST "local", NULL) ;
+		/* local tag*/
+		local_node = xmlNewChild(dialog_node, NULL, BAD_CAST "local", NULL);
 		if( local_node ==NULL)
 		{
 			LM_ERR("while adding child\n");
@@ -204,19 +209,21 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		}
 
 		if (entity->len > MAX_URI_SIZE) {
-			LM_ERR("entity '%.*s' too long, maximum=%d\n", entity->len, entity->s, MAX_URI_SIZE);
+			LM_ERR("entity '%.*s' too long, maximum=%d\n",
+					entity->len, entity->s, MAX_URI_SIZE);
 			goto error;
 		}
 		memcpy(buf, entity->s, entity->len);
 		buf[entity->len]= '\0';
 
-		tag_node = xmlNewChild(local_node, NULL, BAD_CAST "identity", BAD_CAST buf) ;
+		tag_node = xmlNewChild(local_node, NULL, BAD_CAST "identity",
+				BAD_CAST buf) ;
 		if( tag_node ==NULL)
 		{
 			LM_ERR("while adding child\n");
 			goto error;
 		}
-		tag_node = xmlNewChild(local_node, NULL, BAD_CAST "target", NULL) ;
+		tag_node = xmlNewChild(local_node, NULL, BAD_CAST "target", NULL);
 		if( tag_node ==NULL)
 		{
 			LM_ERR("while adding child\n");
@@ -266,11 +273,12 @@ error:
 	}
 
 	return NULL;
-}	
+}
 
 void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
-	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag,
-	str *localtarget, str *remotetarget, unsigned short do_pubruri_localcheck)
+		unsigned int initiator, unsigned int lifetime, str *localtag,
+		str *remotetag, str *localtarget, str *remotetarget,
+		unsigned short do_pubruri_localcheck)
 {
 	str* body= NULL;
 	str uri= {NULL, 0};
@@ -289,7 +297,8 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 
 		/* send PUBLISH only if the receiver PUBLISH R-URI is local*/
 		if (!check_self(&(ruri_uri.host), 0, 0)) {
-			LM_DBG("do not send PUBLISH to external URI %.*s\n",ruri->len, ruri->s);
+			LM_DBG("do not send PUBLISH to external URI %.*s\n",
+					ruri->len, ruri->s);
 			return;
 		}
 
@@ -298,19 +307,20 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	content_type.s= "application/dialog-info+xml";
 	content_type.len= 27;
 
-	body= build_dialoginfo(state, entity, peer, callid, initiator, localtag, remotetag, localtarget, remotetarget);
+	body= build_dialoginfo(state, entity, peer, callid, initiator, localtag,
+			remotetag, localtarget, remotetarget);
 	if(body == NULL || body->s == NULL)
 		goto error;
-	
+
 	LM_DBG("publish uri= %.*s\n", ruri->len, ruri->s);
-	
-	size= sizeof(publ_info_t) 
-			+ sizeof(str) 			/* *pres_uri */
-			+ ( ruri->len 		/* pres_uri->s */
-			+ callid->len + 16	/* id.s */
-			+ content_type.len	/* content_type.s */
-			)*sizeof(char); 
-	
+
+	size= sizeof(publ_info_t)
+		+ sizeof(str) 			/* *pres_uri */
+		+ ( ruri->len 		/* pres_uri->s */
+				+ callid->len + 16	/* id.s */
+				+ content_type.len	/* content_type.s */
+			)*sizeof(char);
+
 	if(body)
 		size+= sizeof(str)+ body->len* sizeof(char);
 
@@ -352,9 +362,9 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	size+= content_type.len;
 
 	publ->expires= lifetime;
-	
-	/* make UPDATE_TYPE, as if this "publish dialog" is not found 
-	   by pua it will fallback to INSERT_TYPE anyway */
+
+	/* make UPDATE_TYPE, as if this "publish dialog" is not found
+	 * by pua it will fallback to INSERT_TYPE anyway */
 	publ->flag|= UPDATE_TYPE;
 
 	publ->source_flag|= DIALOG_PUBLISH;
@@ -364,7 +374,7 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	if(pua_send_publish(publ)< 0)
 	{
 		LM_ERR("while sending publish\n");
-	}	
+	}
 
 error:
 
@@ -377,7 +387,7 @@ error:
 			xmlFree(body->s);
 		pkg_free(body);
 	}
-	
+
 	if(uri.s)
 		pkg_free(uri.s);
 
@@ -386,14 +396,18 @@ error:
 
 
 
-void dialog_publish_multi(char *state, struct str_list* ruris, str *entity, str *peer, str *callid,
-	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag,
-	str *localtarget, str *remotetarget, unsigned short do_pubruri_localcheck) {
-
+void dialog_publish_multi(char *state, struct str_list* ruris, str *entity,
+		str *peer, str *callid, unsigned int initiator, unsigned int lifetime,
+		str *localtag, str *remotetag,
+		str *localtarget, str *remotetarget, unsigned short
+		do_pubruri_localcheck)
+{
 	while(ruris) {
-		LM_DBG("CALLING dialog_publish for URI %.*s\n",ruris->s.len, ruris->s.s);
-		dialog_publish(state,&(ruris->s),entity,peer,callid,initiator,lifetime,localtag,remotetag,localtarget,remotetarget,do_pubruri_localcheck);
+		LM_DBG("CALLING dialog_publish for URI %.*s\n",
+				ruris->s.len, ruris->s.s);
+		dialog_publish(state,&(ruris->s),entity,peer,callid,initiator,
+				lifetime,localtag,remotetag,localtarget,remotetarget,
+				do_pubruri_localcheck);
 		ruris=ruris->next;
 	}
-
 }
