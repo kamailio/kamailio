@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -560,15 +561,28 @@ void jsonrpc_dgram_server(int rx_sock)
 	int ret;
 	str scmd;
 	jsonrpc_plain_reply_t* jr = NULL;
+	fd_set readfds;
+	int n;
 
 	ret = 0;
 
 	while(1) { /*read the datagram*/
 		/* update the local config framework structures */
 		cfg_update();
-
 		memset(jsonrpc_dgram_buf, 0, JSONRPC_DGRAM_BUF_SIZE);
 		jsonrpc_dgram_reply_addr_len = sizeof(jsonrpc_dgram_reply_addr);
+
+		FD_ZERO(&readfds);
+		FD_SET(rx_sock, &readfds);
+		n = select(rx_sock+1, &readfds, 0, 0, 0);
+		if(n < 0) {
+			LM_ERR("failure in select: (%d) %s\n", errno, strerror(errno));
+			continue;
+		}
+		if(!FD_ISSET(rx_sock, &readfds)) {
+			/* no data on udp socket */
+			continue;
+		}
 
 		/* get the client's address */
 		ret = recvfrom(rx_sock, jsonrpc_dgram_buf, JSONRPC_DGRAM_BUF_SIZE, 0,
