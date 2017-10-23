@@ -1,6 +1,4 @@
 /*
- * $Id: pua_usrloc.h 4518 2008-07-28 15:39:28Z henningw $
- *
  * pua_dialoginfo module - publish dialog-info from dialo module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -18,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -33,15 +31,15 @@ void dialog_publish_multi(char *state, struct str_list* ruris, str *entity, str 
 	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag,
 	str *localtarget, str *remotetarget, unsigned short do_pubruri_localcheck);
 
-/* store the important data locally to avoid reading the data from the 
-   dlg_cell during the callback (as this could create a race condition 
-   if the dlg_cell gets meanwhile deleted) */
+/* store the important data locally to avoid reading the data from the
+ * dlg_cell during the callback (as this could create a race condition
+ * if the dlg_cell gets meanwhile deleted) */
 struct dlginfo_cell {
 	str from_uri;
 	str to_uri;
 	str callid;
 	str from_tag;
-/*	str *to_tag; */
+	/* str *to_tag; */
 	str req_uri;
 	str from_contact;
 	struct str_list* pubruris_caller;
