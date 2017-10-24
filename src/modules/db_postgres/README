@@ -26,6 +26,7 @@ Greg Fausak
               3.1. retries (integer)
               3.2. timeout (integer)
               3.3. tcp_keepalive (integer)
+              3.4. lockset (integer)
 
         4. Functions
 
@@ -34,6 +35,7 @@ Greg Fausak
    1.1. Set retries parameter
    1.2. Set timeout parameter
    1.3. Set tcp_keepalive parameter
+   1.4. Set lockset parameter
 
 Chapter 1. Admin Guide
 
@@ -50,6 +52,7 @@ Chapter 1. Admin Guide
         3.1. retries (integer)
         3.2. timeout (integer)
         3.3. tcp_keepalive (integer)
+        3.4. lockset (integer)
 
    4. Functions
 
@@ -81,6 +84,7 @@ Chapter 1. Admin Guide
    3.1. retries (integer)
    3.2. timeout (integer)
    3.3. tcp_keepalive (integer)
+   3.4. lockset (integer)
 
 3.1. retries (integer)
 
@@ -125,6 +129,18 @@ modparam("db_postgres", "timeout", 10)
    Example 1.3. Set tcp_keepalive parameter
 ...
 modparam("db_postgres", "tcp_keepalive", 600)
+...
+
+3.4. lockset (integer)
+
+   The value is used as power of two to compute the size of the lock set
+   needed to implement the equivalent of REPLACE SQL statement.
+
+   Default value is 4 (lock set size is 16).
+
+   Example 1.4. Set lockset parameter
+...
+modparam("db_postgres", "lockset", 6)
 ...
 
 4. Functions

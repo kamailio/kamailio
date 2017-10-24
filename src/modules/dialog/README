@@ -1833,10 +1833,11 @@ kamcmd dlg.profile_list inbound_calls
      * from - SIP address to initiate the call
      * to - SIP address to refer 'from' to
      * op (optional) - outbound proxy SIP address
+     * body (optional) - SDP body for initial INVITE
 
    RPC Command Format:
 ...
-kamcmd dlg.list _from_ _to_ _op_
+kamcmd dlg.bridge_dlg _from_ _to_ _op_
 ...
 
 10. Exported Variables
@@ -1898,15 +1899,17 @@ kamcmd dlg.list _from_ _to_ _op_
 
 11.1. event_route[dialog:start]
 
-   Executed when 200OK for INVITE is processed.
+   Executed when 200OK reply for INVITE is processed.
 
 11.2. event_route[dialog:end]
 
-   Executed when BYE is processed or dialog timed out.
+   Executed when the BYE for the call is processed or the dialog timed
+   out.
 
 11.3. event_route[dialog:failed]
 
-   Executed when dialog is not completed (+300 reply to INVITE).
+   Executed when dialog is not completed (300 or greater reply code to
+   INVITE).
 
 Chapter 2. Developer Guide
 

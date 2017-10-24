@@ -49,14 +49,13 @@ Klaus Darilion
               4.1. dp_can_connect()
               4.2. dp_apply_policy()
 
-        5. RPC Commands
-        6. Usage Scenarios
+        5. Usage Scenarios
 
-              6.1. TLS Based Federation
-              6.2. SIP Hub based Federation
-              6.3. Walled Garden Federation
+              5.1. TLS Based Federation
+              5.2. SIP Hub based Federation
+              5.3. Walled Garden Federation
 
-        7. Known Limitations
+        6. Known Limitations
 
    List of Examples
 
@@ -101,14 +100,13 @@ Chapter 1. Admin Guide
         4.1. dp_can_connect()
         4.2. dp_apply_policy()
 
-   5. RPC Commands
-   6. Usage Scenarios
+   5. Usage Scenarios
 
-        6.1. TLS Based Federation
-        6.2. SIP Hub based Federation
-        6.3. Walled Garden Federation
+        5.1. TLS Based Federation
+        5.2. SIP Hub based Federation
+        5.3. Walled Garden Federation
 
-   7. Known Limitations
+   6. Known Limitations
 
 1. Overview
 
@@ -407,18 +405,16 @@ if (dp_apply_policy()) {
 }
 ...
 
-5. RPC Commands
+5. Usage Scenarios
 
-6. Usage Scenarios
-
-   6.1. TLS Based Federation
-   6.2. SIP Hub based Federation
-   6.3. Walled Garden Federation
+   5.1. TLS Based Federation
+   5.2. SIP Hub based Federation
+   5.3. Walled Garden Federation
 
    This section describes how this module can be use to implement
    selective VoIP peerings.
 
-6.1. TLS Based Federation
+5.1. TLS Based Federation
 
    This example shows how a secure peering fabric can be configured based
    on TLS and Domain Policies.
@@ -460,7 +456,7 @@ tls_client_domain["tlsfed"] {
  tls_verify_server = 1
 }
 
-6.2. SIP Hub based Federation
+5.2. SIP Hub based Federation
 
    This example shows how a peering fabric based on a central SIP hub can
    be configured.
@@ -490,7 +486,7 @@ mysql> select * from domainpolicy;
 | 1  | http://HUBFED.org/ | fed  | domainreplacement | sip.HUBFED.org |
 +----+--------------------+------+-------------------+----------------+
 
-6.3. Walled Garden Federation
+5.3. Walled Garden Federation
 
    This example assumes that a set of SIP providers have established a
    secure Layer 3 network between their proxies. It does not matter
@@ -529,4 +525,4 @@ mysql> select * from domainpolicy;
 | 1  | http://l3fed.org/ | fed  | domainprefix | l3fed |
 +----+-------------------+------+--------------+-------+
 
-7. Known Limitations
+6. Known Limitations
