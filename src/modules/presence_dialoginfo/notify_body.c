@@ -1,7 +1,5 @@
 /*
- * $Id: notify_body.c 1337 2006-12-07 18:05:05Z bogdan_iancu $
- *
- * presence_dialoginfo module -  
+ * presence_dialoginfo module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  * Copyright (C) 2008 Klaus Darilion, IPCom
@@ -22,10 +20,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2008-08-25  initial version (kd)
  */
+
 /*! \file
  * \brief Kamailio Presence_XML :: Notify BODY handling
  * \ingroup presence_xml
@@ -53,7 +49,8 @@
 #include "pidf.h"
 
 str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n);
-int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_nodes);
+int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
+		int total_nodes);
 
 extern int force_single_dialog;
 extern int force_dummy_dialog;
@@ -68,10 +65,10 @@ void free_xml_body(char* body)
 }
 
 #define DIALOGINFO_EMPTY_BODY "<dialog-info>\
-<dialog id=\"615293b33c62dec073e05d9421e9f48b\" direction=\"recipient\">\
-<state>terminated</state>\
-</dialog>\
-</dialog-info>"
+	<dialog id=\"615293b33c62dec073e05d9421e9f48b\" direction=\"recipient\">\
+	<state>terminated</state>\
+	</dialog>\
+	</dialog-info>"
 
 #define DIALOGINFO_EMPTY_BODY_SIZE 512
 
@@ -97,7 +94,7 @@ str* dlginfo_agg_nbody_empty(str* pres_user, str* pres_domain)
 		return NULL;
 	}
 
-	sprintf(body, DIALOGINFO_EMPTY_BODY);//, pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
+	sprintf(body, DIALOGINFO_EMPTY_BODY);
 	body_array->s = body;
 	body_array->len = strlen(body);
 
@@ -120,7 +117,8 @@ str* dlginfo_agg_nbody_empty(str* pres_user, str* pres_domain)
 	return n_body;
 }
 
-str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, int off_index)
+str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array,
+		int n, int off_index)
 {
 	str* n_body= NULL;
 
@@ -148,7 +146,7 @@ str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n
 	xmlMemoryDump();
 
 	return n_body;
-}	
+}
 
 str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 {
@@ -199,7 +197,8 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		xml_array[j] = NULL;
 		xml_array[j] = xmlParseMemory( body_array[i]->s, body_array[i]->len );
 
-		/* LM_DBG("parsing XML body: [n]=%d, [i]=%d, [j]=%d xml_array[j]=%p\n", n, i, j, xml_array[j] ); */
+		/* LM_DBG("parsing XML body: [n]=%d, [i]=%d, [j]=%d xml_array[j]=%p\n",
+		 *			n, i, j, xml_array[j] ); */
 
 		if( xml_array[j]== NULL)
 		{
@@ -208,7 +207,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		}
 		j++;
 
-	} 
+	}
 
 	if(j== 0)  /* no body */
 	{
@@ -219,7 +218,8 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	/* n: number of bodies in total */
 	/* j: number of useful bodies; created XML structures */
 	/* i: loop counter */
-	/* LM_DBG("number of bodies in total [n]=%d, number of useful bodies [j]=%d\n", n, j ); */
+	/* LM_DBG("number of bodies in total [n]=%d, number of"
+	 *			" useful bodies [j]=%d\n", n, j ); */
 
 	/* create the new NOTIFY body  */
 	if ( (pres_user->len + pres_domain->len + 1 + 4 + 1) >= MAX_URI_SIZE) {
@@ -243,21 +243,22 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		goto error;
 
 	xmlDocSetRootElement(doc, root_node);
-	namespace = xmlNewNs(root_node, BAD_CAST "urn:ietf:params:xml:ns:dialog-info", NULL);
+	namespace = xmlNewNs(root_node,
+			BAD_CAST "urn:ietf:params:xml:ns:dialog-info", NULL);
 	if (!namespace) {
 		LM_ERR("creating namespace failed\n");
 	}
 	xmlSetNs(root_node, namespace);
 	/* The version must be increased for each new document and is a 32bit int.
-	   As the version is different for each watcher, we can not set here the
-	   correct value. Thus, we just put here a placeholder which will be
-	   replaced by the correct value in the aux_body_processing callback.
-	   Thus we have CPU intensive XML aggregation only once and can use
-	   quick search&replace in the per-watcher aux_body_processing callback.
-	   We use 11 chracters as an signed int (although RFC says unsigned int we
-	   use signed int as presence module stores "version" in DB as
-	   signed int) has max. 10 characters + 1 character for the sign
-	   */
+	 * As the version is different for each watcher, we can not set here the
+	 * correct value. Thus, we just put here a placeholder which will be
+	 * replaced by the correct value in the aux_body_processing callback.
+	 * Thus we have CPU intensive XML aggregation only once and can use
+	 * quick search&replace in the per-watcher aux_body_processing callback.
+	 * We use 11 chracters as an signed int (although RFC says unsigned int we
+	 * use signed int as presence module stores "version" in DB as
+	 * signed int) has max. 10 characters + 1 character for the sign
+	 */
 	xmlNewProp(root_node, BAD_CAST "version", BAD_CAST "00000000000");
 	xmlNewProp(root_node, BAD_CAST  "state",  BAD_CAST "full" );
 	xmlNewProp(root_node, BAD_CAST "entity",  BAD_CAST buf);
@@ -265,7 +266,8 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	/* loop over all bodies and create the aggregated body */
 	for(i=0; i<j; i++)
 	{
-		/* LM_DBG("[n]=%d, [i]=%d, [j]=%d xml_array[i]=%p\n", n, i, j, xml_array[j] ); */
+		/* LM_DBG("[n]=%d, [i]=%d, [j]=%d xml_array[i]=%p\n",
+		 *			n, i, j, xml_array[j] ); */
 		p_root= xmlDocGetRootElement(xml_array[i]);
 		if(p_root ==NULL) {
 			LM_ERR("the xml_tree root element is null\n");
@@ -280,8 +282,8 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 				LM_DBG("node type: Element, name: %s\n", node->name);
 				/* we do not copy the node, but unlink it and then add it ot the new node
 				 * this destroys the original document but we do not need it anyway.
-				 * using "copy" instead of "unlink" would also copy the namespace which 
-				 * would then be declared redundant (libxml unfortunately can not remove 
+				 * using "copy" instead of "unlink" would also copy the namespace which
+				 * would then be declared redundant (libxml unfortunately can not remove
 				 * namespaces)
 				 */
 				if(!force_single_dialog || (j == 1)) {
@@ -316,57 +318,57 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 							LM_DBG("found terminated state\n");
 							terminated_node = node;
 						} else if(strcasecmp(state, "confirmed") == 0
-								  && node_id == i) {
+								&& node_id == i) {
 							/*  here we check if confirmed is terminated or not
-								 *  if it is not we are in the middle of the conversation
-								 */
+							 *  if it is not we are in the middle of the conversation
+							 */
 							if(check_relevant_state(dialog_id, xml_array, j)
 									>= DEF_TERMINATED_NODE) {
 								LM_DBG("confirmed state for dialog %s, but it "
-									   "is not latest state\n",
+										"is not latest state\n",
 										dialog_id);
 							} else {
 								LM_DBG("confirmed state for dialog %s and "
-									   "latest state for this dialog\n",
+										"latest state for this dialog\n",
 										dialog_id);
 								confirmed_node = node;
 							}
 						} else if(strcasecmp(state, "early") == 0
-								  && node_id == i) {
+								&& node_id == i) {
 							if(check_relevant_state(dialog_id, xml_array, j)
 									>= DEF_CONFIRMED_NODE) {
 								LM_DBG("early state for dialog %s, but it is "
-									   "not latest state\n",
+										"not latest state\n",
 										dialog_id);
 							} else {
 								LM_DBG("early state for dialog %s and latest "
-									   "state for this dialog\n",
+										"state for this dialog\n",
 										dialog_id);
 								early_node = node;
 							}
 						} else if(strcasecmp(state, "proceeding") == 0
-								  && node_id == i) {
+								&& node_id == i) {
 							if(check_relevant_state(dialog_id, xml_array, j)
 									>= DEF_EARLY_NODE) {
 								LM_DBG("proceeding state for dialog %s, but it "
-									   "is not latest state\n",
+										"is not latest state\n",
 										dialog_id);
 							} else {
 								LM_DBG("proceeding state for dialog %s and "
-									   "latest state for this dialog\n",
+										"latest state for this dialog\n",
 										dialog_id);
 								proceed_node = node;
 							}
 						} else if(strcasecmp(state, "trying") == 0
-								  && node_id == i) {
+								&& node_id == i) {
 							if(check_relevant_state(dialog_id, xml_array, j)
 									>= DEF_PROCEEDING_NODE) {
 								LM_DBG("trying state for dialog %s, but it is "
-									   "not latest state\n",
+										"not latest state\n",
 										dialog_id);
 							} else {
 								LM_DBG("trying state for dialog %s and latest "
-									   "state for this dialog\n",
+										"state for this dialog\n",
 										dialog_id);
 								trying_node = node;
 							}
@@ -385,16 +387,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 							/* assume a failure somewhere and all above nodes are NULL */
 							winner_dialog_node = node;
 						}
-						/*
-						if(winner_dialog_node == NULL) {
-							priority = get_dialog_state_priority(state);
-							if (priority > winner_priority) {
-								winner_priority = priority;
-								LM_DBG("new winner priority = %s (%d)\n", state, winner_priority);
-								winner_dialog_node = node;
-							}
-						}
-						*/
+
 						xmlFree(state);
 					}
 				}
@@ -420,8 +413,8 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		ERR_MEM(PKG_MEM_STR);
 	}
 
-	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, 
-			&body->len, 1);	
+	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s,
+			&body->len, 1);
 
 	if(dialog_id!=NULL) xmlFree(dialog_id);
 	for(i=0; i<j; i++) {
@@ -453,25 +446,10 @@ error:
 	return NULL;
 }
 
-/*
-int get_dialog_state_priority(char *state) {
-	if (strcasecmp(state,"terminated") == 0)
-		return 0;
-	if (strcasecmp(state,"trying") == 0)
-		return 1;
-	if (strcasecmp(state,"proceeding") == 0)
-		return 2;
-	if (strcasecmp(state,"confirmed") == 0)
-		return 3;
-	if (strcasecmp(state,"early") == 0)
-		return 4;
-
-	return 0;
-}
-*/
 
 /* returns 16 -> terminated, 8 -> confirmed, 4 -> early */
-int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_nodes)
+int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
+		int total_nodes)
 {
 	int result = 0;
 	int i = 0;
@@ -501,7 +479,7 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_
 					}
 					if(strcasecmp((char *)node->name, "dialog") == 0) {
 						/* Getting the node id so we would be sure
-							 * that terminate state from same one the same */
+						 * that terminate state from same one the same */
 						if(dialog_id_tmp)
 							xmlFree(dialog_id_tmp);
 						dialog_id_tmp = xmlGetProp(node, (const xmlChar *)"id");
@@ -517,8 +495,8 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_
 						if((strcasecmp(state, "terminated") == 0)
 								&& (node_id == i) && (node_id >= 0)
 								&& (strcasecmp((char *)dialog_id_tmp,
-											(char *)dialog_id)
-										   == 0)) {
+										(char *)dialog_id)
+									== 0)) {
 							LM_DBG("Found terminated in dialog %s\n",
 									dialog_id);
 							result += DEF_TERMINATED_NODE;
@@ -527,24 +505,24 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_
 						if((strcasecmp(state, "confirmed") == 0)
 								&& (node_id == i) && (node_id >= 0)
 								&& (strcasecmp((char *)dialog_id_tmp,
-											(char *)dialog_id)
-										   == 0)) {
+										(char *)dialog_id)
+									== 0)) {
 							LM_DBG("Found confirmed in dialog %s\n", dialog_id);
 							result += DEF_CONFIRMED_NODE;
 						}
 						if((strcasecmp(state, "early") == 0) && (node_id == i)
 								&& (node_id >= 0)
 								&& (strcasecmp((char *)dialog_id_tmp,
-											(char *)dialog_id)
-										   == 0)) {
+										(char *)dialog_id)
+									== 0)) {
 							LM_DBG("Found early in dialog %s\n", dialog_id);
 							result += DEF_EARLY_NODE;
 						}
 						if((strcasecmp(state, "proceeding") == 0)
 								&& (node_id == i) && (node_id >= 0)
 								&& (strcasecmp((char *)dialog_id_tmp,
-											(char *)dialog_id)
-										   == 0)) {
+										(char *)dialog_id)
+									== 0)) {
 							LM_DBG("Found proceeding in dialog %s\n",
 									dialog_id);
 							result += DEF_PROCEEDING_NODE;
@@ -552,8 +530,8 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_
 						if((strcasecmp(state, "trying") == 0) && (node_id == i)
 								&& (node_id >= 0)
 								&& (strcasecmp((char *)dialog_id_tmp,
-											(char *)dialog_id)
-										   == 0)) {
+										(char *)dialog_id)
+									== 0)) {
 							LM_DBG("Found trying in dialog %s\n", dialog_id);
 							result += DEF_TRYING_NODE;
 						}
@@ -569,7 +547,8 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array, int total_
 }
 
 
-str *dlginfo_body_setversion(subs_t *subs, str *body) {
+str *dlginfo_body_setversion(subs_t *subs, str *body)
+{
 	char *version_start=0;
 	char version[MAX_INT_LEN + 2]; /* +2 becasue of trailing " and \0 */
 	int version_len;
@@ -630,18 +609,20 @@ str *dlginfo_body_setversion(subs_t *subs, str *body) {
 	memcpy(version_start, version, version_len);
 	memset(version_start + version_len, ' ', 12 - version_len);
 
-	xmlDocPtr doc = xmlReadMemory(aux_body->s, aux_body->len, "noname.xml", NULL, 0);
-        if (doc == NULL) {
+	xmlDocPtr doc = xmlReadMemory(aux_body->s, aux_body->len, "noname.xml",
+			NULL, 0);
+	if (doc == NULL) {
 		LM_ERR("error allocation xmldoc\n");
 		pkg_free(aux_body->s);
 		pkg_free(aux_body);
 		return NULL;
 	}
 	pkg_free(aux_body->s);
-        xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&aux_body->s, &aux_body->len, 1);
+	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&aux_body->s,
+			&aux_body->len, 1);
 	xmlFreeDoc(doc);
-        xmlCleanupParser();
-        xmlMemoryDump();
+	xmlCleanupParser();
+	xmlMemoryDump();
 
 	return aux_body;
 }
