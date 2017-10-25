@@ -1,3 +1,714 @@
+===================== 2017-10-25 Version 5.0.4 Released =====================
+
+===================== Changes Since Version 5.0.3 ===========================
+
+commit 6f6d0fb03ea80bfad049e13743c95adccdca2235
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 25 14:58:42 2017 +0200
+
+    Makefile.defs: version set to 5.0.4
+
+commit d191ff8712a775cf2f6c48b1134890fd636ae969
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 25 14:38:32 2017 +0200
+
+    pkg: rpm - version set to 5.0.4 in specs
+
+commit 10a6dec6a0278bfc4161651f28edf9402cc6b1d4
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Oct 25 12:16:21 2017 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 81c7a69b0be87c39365c405f0e3f945b9d99a199
+Merge: 49d4af496 055ad1cb6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 25 12:06:34 2017 +0200
+
+    Merge pull request #1281 from oyvindkolbu/sipcapture-backport
+    
+    Sipcapture backport
+
+commit 055ad1cb61f61d9996f0018727adfcb92fa98912
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Jul 27 19:03:42 2017 +0300
+
+    sipcapture: documentation typo
+    
+    (cherry picked from commit 6452e86bcc3e4b927a2e511f3c7a9f464a69ac66)
+
+commit a3d53389992f2ca7798a530d24677206b8be668b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Aug 13 11:07:42 2017 +0200
+
+    sipcapture: safety checks for values inside w_float2int()
+    
+    (cherry picked from commit 97d8ebc966aba71efb3a964e71b00736db51401b)
+
+commit 5274a0f9e5a5b74bbc37a6d74504b517d9dbfebe
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Mon Jul 31 13:08:58 2017 +0300
+
+    sipcapture: keep hep buffer unmodified while getting PV $hep(NNN)
+    
+    - addition to GH PR #1191
+    
+    (cherry picked from commit 2140d0141b5a7551ebbd072d801ce2339020dac0)
+
+commit f909250081f06c5b9dfd96792cc7960ff00c9f32
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Fri Jul 28 10:51:38 2017 +0300
+
+    sipcapture: free allocated process memory before return
+    
+    (cherry picked from commit ecf1ad77a2b9f69d5ae4f68fdc71cb1b10ebe729)
+
+commit 1c944f3fb1d67dbeb97879d3177171af8d8aecd7
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Fri Jul 28 10:51:38 2017 +0300
+
+    sipcapture: fix custom field variable naming
+    
+    (cherry picked from commit c8a804f5e3c3b12b64871d3989a87d79d8627afe)
+
+commit 1ecac0c9eb4c328c9b69ae048817e1b13813b134
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Jul 27 22:43:04 2017 +0300
+
+    sipcapture: add missing or invalid byte order conversion
+    
+    (cherry picked from commit dac238ac3fdf2d0f47d6915508160b8160e9ab11)
+
+commit 97b5af5d5ac874c848f698136645dd1b92d0030a
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Jul 27 22:37:03 2017 +0300
+
+    sipcapture: remove excess byte order conversion
+    
+    - buffer pointer `tmp` in hepv3_get_chunk() was assigned to hg->time_(Âµ)sec
+    - therefore everytime route script calls pseudovariables, part of original
+      `buf` was byte converted
+    
+    (cherry picked from commit 6e43bf84a2afc4e83ce33b7a416d7b81f7dd5658)
+
+commit 1e5eb8bb8ae5fe4f2a8e8940462bdd67ea760d43
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Tue Jul 25 15:53:52 2017 +0300
+
+    modules/sipcapture: improve nonsip_hook documentation
+    
+    (cherry picked from commit 2f872dcc684a345cff09a437ae4a3767613b5529)
+
+commit 49d4af49682ea189321875c7132b3987d55a5519
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Oct 25 10:49:57 2017 +0200
+
+    pkg/kamailio/deb: set version to 5.0.4 [skip ci]
+
+commit 3ffbd3796cc8507480ccb666e724725c06b901ca
+Author: Bastian Triller <btriller@broadsoft.com>
+Date:   Sun Apr 16 13:36:44 2017 +0200
+
+    sipcapture: fix HEP3 capture-id >= 2^16
+    
+    (cherry picked from commit dbd57c3eac30e1de54d98eb2ba8f608a17f7adbf)
+
+commit 14560cbba998cbb5904ce279119afe4590d9660d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 25 10:17:12 2017 +0200
+
+    dialog: safety check for handling http replies in cseq update code
+    
+    - reported by GH #1277
+    
+    (cherry picked from commit ba7f663a0f1da799fc7a8be9b86039af2862f287)
+
+commit 5cb020ac9ed53f8520b9070a1945329abad08029
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 25 10:16:43 2017 +0200
+
+    core: parser - typedef'ed msg_start struct to msg_start_t
+    
+    (cherry picked from commit a21ea97800c7d7d3b082a9b1d57887e125d83d68)
+
+commit bbe47d4a0c43008dfa1c009e2061d90ea5556d26
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Oct 24 12:16:35 2017 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 5d41da20a121370ec33155fe92ac94a31af8c27f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 23 10:33:28 2017 +0200
+
+    pua_dialoginfo: removed svn ids, history, done indentation
+    
+    (cherry picked from commit 904e7435cc4206a9058602b12ba23a1d733674db)
+
+commit e23e875be66d4f42d18f495b5fc86e3e6954612f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 13 12:19:30 2017 +0200
+
+    core: fix bitwise test for priting socket details
+    
+    (cherry picked from commit 18b996262fb1c7bde94b494ce837754dc82c9e7e)
+
+commit b0b77e07e10e8bbf65c991c7dae8f33627c7cbe4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 13 12:18:32 2017 +0200
+
+    core: fix for bitwise test in core rpc command
+    
+    (cherry picked from commit f662a62519f99e046caf03063147104af22ec3c3)
+
+commit 09a0a36e8ce21ed0422fe8649c9cfa4a1d6ff5bc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 12 09:34:59 2017 +0200
+
+    nat_traversal: added section ids in docs
+    
+    (cherry picked from commit 642dcef14271bc1376a54f8afe3a159d4e831ba6)
+
+commit f39462818a109481281ad06303d9c7ee6888f6ea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 11 18:27:50 2017 +0200
+
+    db_postgres: documentation for lockset parameter
+    
+    (cherry picked from commit 7d27b682cc6259b1f6bcd21584b9f1d5bbfc9a36)
+
+commit e9106f999c9a5ec0d82bbf061ccb8ee89dff3987
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 10 11:33:22 2017 +0200
+
+    dialog: documented optional sdp body for rpc bridge command
+    
+    (cherry picked from commit 59b58035bfe8e722a696db889d5295254092ae90)
+
+commit bdfbaaebdd4b4abd1f48d52e7179706c069e4b49
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 9 18:27:28 2017 +0200
+
+    tm: updated some structs to typedefs
+    
+    (cherry picked from commit 4267e1ef7c9ffaac606964fb1b2d64334754b5d9)
+
+commit 813f0d868a076dae51a6018917dfc668cdecb163
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 8 22:54:00 2017 +0200
+
+    misc_radius: end separator for examples in docs
+    
+    - added section ids
+    
+    (cherry picked from commit e49512ce80693aa2638d9fca940ded5a889cd2f9)
+
+commit 7cdfc2083292e4ee75845aabc03379701501c90d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Oct 7 23:11:01 2017 +0200
+
+    mediaproxy: added section ids in docs
+    
+    (cherry picked from commit 5535a612445ea71a938e427e0ed7e3f7ea5d88cf)
+
+commit d5580542873e2a71101e625a96e855b732d5adae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 6 01:16:10 2017 +0200
+
+    maxfwd: fixed location for section id of maxfwd_process
+    
+    (cherry picked from commit 1f54f3d21a81badb4ba43c6adb88195bdd2c42f1)
+
+commit 66cdd82fa174eb89cced4bb90c011dc0a61091fb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 5 17:34:13 2017 +0200
+
+    presence_conference: removed history and svn ids
+    
+    (cherry picked from commit e4cb62486644cdca753fe6c7768bd738ee19c8a5)
+
+commit 010e0fcce60adbf15f91e8049e0257c631a1fd03
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 4 13:42:30 2017 +0200
+
+    domainpolicy: removed empty rpc section
+    
+    - added several section ids
+    
+    (cherry picked from commit d94a65cbd0a86e1869037bbcfa261bc4219be908)
+
+commit 81712b43b3f1863f1a4d0fefada7cf1e6f16c3d7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 3 15:38:29 2017 +0200
+
+    cplc: added section ids in docs
+    
+    (cherry picked from commit f460607b5b0903c0937e5272c18d1c4fed38d42d)
+
+commit 26fa101b3019d113ef4eea870921d22cee75a478
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 2 19:11:26 2017 +0200
+
+    cnxcc: added section ids in the docs
+    
+    (cherry picked from commit f5430eb0ad6134539d5eb4369e4c60bdb5fa4a63)
+
+commit 078a253702e7ab320d346f2ed5cad584ce5d365b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 2 09:50:56 2017 +0200
+
+    app_python: added section ids in docs
+    
+    (cherry picked from commit b24c3093feeb49bd6e9e508a6947fb3926c4ea8f)
+
+commit 8c9d1d8cb198dc377029db76b16be13d681bbb93
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 1 08:21:55 2017 +0200
+
+    app_mono: added section ids
+    
+    (cherry picked from commit 9229cb397e3afebd5e25e67713e4df9b6d622192)
+
+commit a91e787ebbe39e6f608e77da929c9f44385d5052
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 30 09:23:34 2017 +0200
+
+    auth_radius: added section ids in docs
+    
+    (cherry picked from commit 563004ca54cb31d19e3bd9e30633c9f860070883)
+
+commit 24048d5cc742f9421a1ea8962190e760269df798
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 29 13:11:50 2017 +0200
+
+    sqlops: keep string values zero-terminated inside db result structure
+    
+    (cherry picked from commit f90e785114c7dd738ca7ce7e70d72dd92cbd7136)
+
+commit f1921513187d432b67dd94df437f1ba07045e1bc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 29 09:58:04 2017 +0200
+
+    kamctl: added db subcommand to mange records in version table
+    
+    (cherry picked from commit d3b7f0d390dd430d40a1d47112f076f4b21e3afe)
+
+commit 751aff9d26b910f0c9021d340831fe4a0101b476
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 26 10:06:36 2017 +0200
+
+    auth: explicit listing of status codes for replies in docs of challenge functions
+    
+    (cherry picked from commit 4e2c3f2b41859767f13bef237b93ea7101f36d12)
+
+commit 1a096c81bf36f5de3f5f6632dd041a58f45069ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 25 15:13:58 2017 +0200
+
+    dialog: adjusted debug messages when updating attributes
+    
+    (cherry picked from commit 47bfa060e6b182167c5d0b21cbaebf5b1c0bb8d2)
+
+commit ececbd9c1753b101e12e66ed86496b57d081fc54
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 23 09:30:08 2017 +0200
+
+    janssonrpcc: do not lock in mod destroy
+    
+    - all children are killed already and if lock was already set results in
+      a deadlock
+    
+    (cherry picked from commit 185db312ed91bba6c997a42a84c4da1e4ce2319f)
+
+commit 5ff6d3761a0722c5a8a18dfec3c856da5784b95f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 23 09:29:10 2017 +0200
+
+    jsonrpcc: do not declare variables in header files
+    
+    - avoid declaration in each .c that includes the .h
+    
+    (cherry picked from commit 291649821f4d19790072ffaf9aefc41891a3551d)
+
+commit 2c509fdc77997c3a71add4d2b729e4211d99bf93
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Fri Feb 24 14:23:57 2017 +0100
+
+    janssonrcp-c: Fix segfault in mod_destroy
+    
+    Check variable before dereferencing it.
+    
+    (cherry picked from commit 894e64ae69f485ee8b764092d255c65ab7740da7)
+
+commit 963594eaf13949a0c1e0c5e0221c8e0f27f5d566
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Mon Feb 20 18:30:27 2017 +0100
+
+    json: Add fixup_free function for json_get_field
+    
+    (cherry picked from commit 305dbe7197f87d8e14bb75f14553852c8e3c9b8c)
+
+commit fe960c65c028bccd348140a4d02f23eec4ce0cad
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Oct 6 12:35:38 2015 +0200
+
+    cfgutils: Remove debug statements in sleep functions
+    
+    Too much noise when debug logging is on
+    
+    (cherry picked from commit efe9d554a912edb0ffc5ae8e7176adc5bcc44a5e)
+
+commit 635ff24db1e2f3439d15b9a0f3e3156f0d7026ee
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Mon Feb 20 18:26:01 2017 +0100
+
+    cfgutils: Properly handle 'exit' when from route_if_exists()
+    
+    exit is supposed to exit the routing script. route_if_exists() wasn't
+    handling the exit, so script would continue to run after 'exit'.
+    
+    (cherry picked from commit d6a374d707f23afddfc007edfeae40b01836b3c0)
+
+commit 43efb087f618be3bba5fa4da15041fd6f9fc9d34
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Mon Jan 2 19:22:03 2017 +0100
+
+    cfgutils: Allow pv in check_route_exists() and route_if_exists()
+    
+    These functions are somewhat useless if a dynamic parameter is not allowed.
+    
+    (cherry picked from commit 92e404b3676aa57bca531096cddc14d58e06c789)
+
+commit 85ad34b0f5afd7fd4c560efafb940fb7a341837b
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Mon Jan 2 19:21:19 2017 +0100
+
+    cfgutils: Add fixup_free functions to (u)sleep functions
+    
+    (cherry picked from commit 194d1bd1d1b86a92ee51bb32d88c105eb6130910)
+
+commit 14bb444e8c106bf0d8ac6009ff6c47b373621775
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 19 11:45:46 2017 +0200
+
+    core: tcp - increased the size for flags field in connection struct
+    
+    (cherry picked from commit 65ed9b065c497266a4ecd9760e7c168c69b4c6e8)
+
+commit 0edd5072b35809a7529d413c45372f338558479d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 16 23:09:44 2017 +0200
+
+    msrp: updates to log macros
+    
+    (cherry picked from commit 0e38dabe44e475e8054d3905e553637977dd26e1)
+
+commit c7350a733d0c000f67192943be3d925e39905414
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 16 23:05:33 2017 +0200
+
+    rtpproxy: removed function name from log messages
+    
+    (cherry picked from commit 574f2d4d40fbdecf379292d65ad0218e8ecaab10)
+
+commit 5eda789b9885ca27afb29ab6145dcc53c4a137be
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 13 11:43:04 2017 +0200
+
+    dialog: small updates to docs
+    
+    (cherry picked from commit e23c50aed89be717c0bc76e6fbfc902cf3deacb6)
+
+commit 0dd00c1aedc14e2b5509b84468c277e69056493b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 12 16:10:10 2017 +0200
+
+    seas: added guards to several include files
+    
+    - bits of formating and removal of inline history
+    
+    (cherry picked from commit e04716f4f9325fa5290555823132455ea599daac)
+
+commit 9800aba65146b72623bb512049300d1beb8c8ec4
+Author: Huseyin Dikme <hueseyin.dikme@1und1.de>
+Date:   Tue Sep 12 15:37:17 2017 +0200
+
+    carrierroute: warning for the same carrier/domain having routes with only 0 probability
+    
+    - While starting kamailio or reloading the routes, if the same carrier/domain pairs do not have
+      any route with a probability other than 0 (zero) then an error log will be printed on the screen.
+      Besides, the log "invalid dice_max value" in the cr_func.c has been made more clear.
+    
+    (cherry picked from commit 9741bee7af8136b35af8e6279e530aa0ad54f574)
+
+commit 50579308d7830388e379ec039167f9e559b1dff1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 11 23:16:39 2017 +0200
+
+    uid_auth_db: removed history, updated log macros
+    
+    (cherry picked from commit 6eb9f46bc413b72f41423673f1ad1083775760c4)
+
+commit 83d4e1826e8f3f0876ccc6be0df4abf3edee4a23
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 11 23:15:29 2017 +0200
+
+    uid_uri_db: fixed log message
+    
+    (cherry picked from commit 6fa1e72a8e8b74876432afe47830d2ee22b1caf6)
+
+commit dc37a5e439a23132db79a46d70ba17cfcbee6d3d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 10 11:34:13 2017 +0200
+
+    uid_uri_db: removed history, updated application name
+    
+    - adjustments to log messages and indentation
+    
+    (cherry picked from commit f5a329ff0ce0e433c5ff8a7bfdc815819dcf1022)
+
+commit 6c2630274461d33ac41217239a7436a89dfeffaa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 10 10:25:18 2017 +0200
+
+    jsonrpcc: more debug messages if init fails
+    
+    - coherent indentation and whitespacing
+    
+    (cherry picked from commit f60a3cfa3070a4782038dcf9f2169562220cc396)
+
+commit 270c8fce6414b8401a5d8181caa4fd50f73677f5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 9 23:12:43 2017 +0200
+
+    uid_gflags: fixed rpc commands doc strings
+    
+    - converted log macros
+    - coherent indentation and whitespacing
+    
+    (cherry picked from commit 0281dc351ca4cde8d3343164cc3091d02808f3cb)
+
+commit 42d7fa47bdb9447d3522b3d233bc93b7f65c4e8f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 7 15:29:09 2017 +0200
+
+    snmpstats: removed wrong function name from log message
+    
+    (cherry picked from commit e27ba180ab9801e6b32bfb31aad1c02d28f7e559)
+
+commit 335eb8eed8009505fca8ee7859c1e452c137ce30
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 5 07:55:09 2017 +0200
+
+    presence_xml: small adjustments, added section ids
+    
+    (cherry picked from commit 6fbaac0d9383da5fe30ea9d2e9671ab3dffd9694)
+
+commit 92a0bccdc1ed5c1e00bced6a7cc996b21a9e3e60
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 23 14:35:43 2017 +0200
+
+    jsonrpcs: use select on udp socket to work on non-blocking mode
+    
+    (cherry picked from commit b57c83c936bf729bda3174803cacbf006552f2dc)
+
+commit 114acb1d4c94846e1371e476237fc62e57f90bb0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 14 08:21:40 2017 +0200
+
+    pua_dialoginfo: fixed condition in mod init checking avp names
+    
+    (cherry picked from commit 666c9d1fcdde00dbdd2e87ff797e554af6d72b5c)
+
+commit 64a2bec28f1182b30bd3404f6bba9b2f4e868258
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 22 09:49:22 2017 +0200
+
+    jsonrpcs: use same socket for dgram transport
+    
+    (cherry picked from commit 9c3883a7856d6fb12d103baf3f784107a7c3914c)
+
+commit 8a01ab81074313efa5daa4cc87d571f67f43178a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Oct 21 12:19:41 2017 +0200
+
+    jsonrpcs: init fifo stream via mod init callback
+    
+    (cherry picked from commit 17697e4bcabcec62d4393c6ae60fabec7d1c8e98)
+
+commit 04c774d86a62387a6f297b29040220e7dcf597f1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Oct 21 12:10:29 2017 +0200
+
+    jsonrpcs: init dgram sockets via mod init callback
+    
+    (cherry picked from commit 70fa5b79e413e162427f5a8ffad3357252c517e2)
+
+commit 6702903ee846590fd0759f71fa741af95150677d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Oct 21 11:47:35 2017 +0200
+
+    jsonrpcs: set rank PROC_RPC for fifo and dgram processes
+    
+    (cherry picked from commit a2b862a74c77bc71238d9b8c9ef19ddb629c75ce)
+
+commit 0b02a2f0cfecdb72e020d3d6bdab4ac6e97ecd27
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 20 11:23:06 2017 +0200
+
+    jsonrpcs: updated the name of module in description of extra procs
+    
+    (cherry picked from commit d4f11b6ffc459faf5c6577cc3374420c1469baeb)
+
+commit 60dc10a3948bdc51d1c9298e8a174a0af066557a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Oct 19 10:36:27 2017 +0200
+
+    pkg/kamailio/deb: fix kamailio-berkeley-modules dependence
+
+commit 1b86bf2faa09d3a9ef3684f42582a83267635668
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 19 08:58:59 2017 +0200
+
+    jsonrpcs: proper propagation of rpc fault code and message
+    
+    (cherry picked from commit 9364b1691412ec1d3d59ca8a801613470e079c1d)
+
+commit 71876926dd7add9f7423bda1aa4489933d8174ac
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 18 18:41:01 2017 +0200
+
+    xmlrpc: fix handling the optional param spec on no more params
+    
+    (cherry picked from commit 9483efe6af26a2a8b08ee132e8ed2afe25e71cbc)
+
+commit dc9efda1bb416874fd3fe4320326d067fa9fb0c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 18 18:36:26 2017 +0200
+
+    jsonrpcs: fix handling the optional param spec on no more params
+    
+    (cherry picked from commit 87d71619e7896d3d333bb6c15d4c00616add71a6)
+
+commit 9e3096e16ac233e1667110904e1d944753d53c7a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Oct 5 13:17:18 2017 +0200
+
+    core: add safety check to rval_get_tmp_str()
+    
+    See #1263
+    
+    (cherry picked from commit c6e921e45f1257913848110189eab82a34aa2f8b)
+
+commit eabe0f84b46840d1164c83791c998021f9c42bd1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 29 18:58:49 2017 +0200
+
+    htable: do not fork clean timer if no auto-expire is defined
+    
+    - match the same condition used in mod init to declare the extra process
+    - reported by GH #1237
+    
+    (cherry picked from commit dc15a8cd44fa17bb5ad12bf418c78af9f6e071e1)
+
+commit 445adb0482a95f47dce518ecb403cbb1aa7cd1ac
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 29 18:21:53 2017 +0200
+
+    kamctl: do not set privileges on drouting tables without id for pgsql
+    
+    - reported by #1256
+    
+    (cherry picked from commit 711917153a4be290fd7e405c2c5578fe42ef9aff)
+
+commit a62698612bccaaa2defd640feb3552f6d916b279
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 29 09:28:08 2017 +0200
+
+    domain: proper output format for rpc dump command
+    
+    - arrays have to be used to list domains and attributes
+    
+    (cherry picked from commit 6d4367e4ab1e7e2d38b94b942f2383e3878a1e7a)
+
+commit 9312498fad89297bdd37f1a3bdd32df5b6970358
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Tue Sep 26 15:32:20 2017 +0200
+
+    http_async_client: null terminate the request id in the callback
+    
+    (cherry picked from commit b356c73494da7ef53447a5c7615bebeb8eb9a9e2)
+
+commit e37b0934ba3531e9d179fca360207a96b2b49bae
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Sat Sep 23 11:56:58 2017 +0100
+
+    timer: reset xavp using common function
+    (cherry picked from commit f083513f0139156e3b0f1ce68cb934b687d0a56d)
+
+commit 1ecc88431777f0013aa29cbcccc041168002dea5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 15 09:27:07 2017 +0200
+
+    core: tcp_read_headers() safety checks for parsed pointer
+    
+    - reset if it is out of read buffer range and the state is H_SKIP_EMPTY
+    
+    (cherry picked from commit f47f42ac12ad111b3bad52aa2d495fbed5ef395d)
+
+commit fd96ab480515713e4a390376f38bc09aa28e93b4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 15 09:00:18 2017 +0200
+
+    core: tcp_read_ws() - safety checks for very large advetised lenght
+    
+    - use unsigned for lenght to avoid going negative on large read values
+    
+    (cherry picked from commit 35ee3a4b0357820bf31b3aa68323dcb7df267e94)
+
+commit 6c749dea59d8f35b8a5303baba540edc2295cd92
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 6 11:13:16 2017 +0200
+
+    tm: reset T_ASYNC_CONTINUE once t_continue() callback is executed
+    
+    - by having it still set, the reply field was not reset, causing to free
+      an invalid pointer when transaction was destroyed, reported by Vitaliy
+      Aleksandrov
+    - set reply of suspended request branch to FAKED_REPLY on continue,
+      the code was already set to 500 - make it coherent with the local
+      replied transactions
+    - reset cloned reply under lock for suspended reply branch and free it
+      later via backup pointer - safer if someone risks to access the
+      suspended reply branch (should happen now, just future proof)
+    
+    (cherry picked from commit b672d8ef63715cf816390a05ce7a441377c3e468)
+
+commit d5f89eb46c6d463d162dab0af1a7b56af513549c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 6 09:09:13 2017 +0200
+
+    tm: more info in some log messages
+    
+    (cherry picked from commit 8599f6fca16367a3e2a0dd4a638c667459482cd5)
+
+commit 629d0dad29868926dc3ac8e60e15383ac681a7a2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 4 16:13:01 2017 +0200
+
+    pkg/obs: more details in the readme
+    
+    (cherry picked from commit 498e6a96fa101863170399e237cad66a8620a9e6)
+
+commit 0e201145cf9465c2752993867813ae8bff60336d
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Sep 4 16:08:36 2017 +0200
+
+    pkg/kamailio/OBS: Added RPM packaging scripts for openSUSE  Build Service
+    
+    (cherry picked from commit 2406f79169aac6a94a4a8f26aa50dd6291d821ec)
+
+
 ===================== 2017-09-01 Version 5.0.3 Released =====================
 
 ===================== Changes Since Version 5.0.2 ===========================
