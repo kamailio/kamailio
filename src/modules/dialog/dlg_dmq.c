@@ -323,6 +323,13 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 								dlg, dlg->h_entry, dlg->h_id);
 						}
 					}
+
+					/* remove dialog from profiles when no longer active */
+					if (dlg->profile_links!=NULL) {
+						destroy_linkers(dlg->profile_links);
+						dlg->profile_links = NULL;
+					}
+
 					/* prevent DB sync */
 					dlg->dflags |= DLG_FLAG_NEW;
 					/* keep dialog around for a bit, to prevent out-of-order
