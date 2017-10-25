@@ -1,5 +1,5 @@
 %define name	kamailio
-%define ver	5.0.3
+%define ver	5.0.4
 %define rel	dev7.2%{dist}
 
 
