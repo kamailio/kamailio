@@ -59,12 +59,16 @@ static int dlg_cseq_prepare_msg(sip_msg_t *msg)
 	LM_DBG("prepare msg for cseq update operations\n");
 
 	if(msg->first_line.type==SIP_REQUEST) {
-		if(!IS_SIP(msg))
-		{
+		if(!IS_SIP(msg)) {
 			LM_DBG("non sip request message\n");
 			return 1;
 		}
-	} else if(msg->first_line.type!=SIP_REPLY) {
+	} else if(msg->first_line.type==SIP_REPLY) {
+		if(!IS_SIP_REPLY(msg)) {
+			LM_DBG("non sip reply message\n");
+			return 1;
+		}
+	} else {
 		LM_DBG("non sip message\n");
 		return 1;
 	}
