@@ -271,7 +271,7 @@ enum hash_source source = hs_error;
 
 //unsigned int rr_idx = 0;
 
-struct hep_timehdr* heptime;
+struct hep_timeinfo* heptime;
 
 /*! \brief
  * Exported functions
@@ -446,6 +446,7 @@ int parse_table_names (str table_name, str ** table_names){
 	names = (str*)pkg_malloc(sizeof(str) * no_tables);
 	if(names == NULL) {
 		LM_ERR("no more pkg memory left\n");
+		pkg_free(table_name_cpy);
 		return -1;
 	}
 	p = strtok (table_name_cpy,"| \t");
@@ -1038,6 +1039,9 @@ static int w_float2int(struct sip_msg* _m, char* _val, char* _coof, char* s2)
 		return -1;
 	}
 
+	if(value.s==NULL || coof.s==NULL)
+		return -1;
+	
 	ret = (int) (atof (value.s) * atoi(coof.s));
 
 	return  ret ? ret : -1;
@@ -1150,7 +1154,7 @@ static int child_init(int rank)
 	}
 
 
-	heptime = (struct hep_timehdr*)pkg_malloc(sizeof(struct hep_timehdr));
+	heptime = (struct hep_timeinfo*)pkg_malloc(sizeof(struct hep_timeinfo));
 	if(heptime==NULL) {
 		LM_ERR("no more pkg memory left\n");
 		return -1;
@@ -1887,7 +1891,7 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	else { EMPTY_STR(sco.custom1); }
 	
 	/* Custom - field2 */
-	if(custom_field3_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
+	if(custom_field2_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
 		sco.custom2 =  tmphdr[5]->body;
 	}
 	else { EMPTY_STR(sco.custom2); }
