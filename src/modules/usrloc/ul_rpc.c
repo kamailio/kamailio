@@ -217,6 +217,8 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 	int summary = 0;
 	ucontact_t* c;
 	void* th;
+	void* dah;
+	void* dh;
 	void* ah;
 	void* bh;
 	void* ih;
@@ -228,14 +230,27 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 	if(brief.len==5 && (strncmp(brief.s, "brief", 5)==0))
 		summary = 1;
 
+	if (rpc->add(ctx, "{", &th) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error creating top rpc");
+		return;
+	}
+	if (rpc->struct_add(th, "[", "Domains", &dah) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error creating inner struct");
+		return;
+	}
+	
 	for( dl=root ; dl ; dl=dl->next ) {
 		dom = dl->d;
-		if (rpc->add(ctx, "{", &th) < 0)
+
+		if (rpc->struct_add(dah, "{", "Domain", &dh) < 0)
 		{
-			rpc->fault(ctx, 500, "Internal error creating top rpc");
+			rpc->fault(ctx, 500, "Internal error creating inner struct");
 			return;
 		}
-		if(rpc->struct_add(th, "Sd[",
+
+		if(rpc->struct_add(dh, "Sd[",
 					"Domain",  &dl->name,
 					"Size",    (int)dom->size,
 					"AoRs",    &ah)<0)
@@ -254,6 +269,7 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 					if(rpc->struct_add(ah, "S",
 								"AoR", &r->aor)<0)
 					{
+						unlock_ulslot( dom, i);
 						rpc->fault(ctx, 500, "Internal error creating aor struct");
 						return;
 					}
@@ -288,7 +304,7 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 		}
 
 		/* extra attributes node */
-		if(rpc->struct_add(th, "{", "Stats",    &sh)<0)
+		if(rpc->struct_add(dh, "{", "Stats",    &sh)<0)
 		{
 			rpc->fault(ctx, 500, "Internal error creating stats struct");
 			return;
