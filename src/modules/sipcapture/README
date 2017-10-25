@@ -49,6 +49,7 @@ Alexandr Dubovikov
               3.18. insert_retry_timeout (integer)
               3.19. callid_aleg_header (str)
               3.20. topoh_unmask (int)
+              3.21. nonsip_hook (int)
 
         4. Functions
 
@@ -84,8 +85,9 @@ Alexandr Dubovikov
    1.18. Set insert_retry_timeout parameter
    1.19. Set callid_aleg_header parameter
    1.20. Set topoh_unmask parameter
-   1.21. sip_capture() usage
-   1.22. report_capture() usage
+   1.21. Set nonsip_hook parameter
+   1.22. sip_capture() usage
+   1.23. report_capture() usage
 
 Chapter 1. Admin Guide
 
@@ -119,6 +121,7 @@ Chapter 1. Admin Guide
         3.18. insert_retry_timeout (integer)
         3.19. callid_aleg_header (str)
         3.20. topoh_unmask (int)
+        3.21. nonsip_hook (int)
 
    4. Functions
 
@@ -186,6 +189,7 @@ Chapter 1. Admin Guide
    3.18. insert_retry_timeout (integer)
    3.19. callid_aleg_header (str)
    3.20. topoh_unmask (int)
+   3.21. nonsip_hook (int)
 
 3.1. db_url (str)
 
@@ -257,7 +261,7 @@ modparam("sipcapture", "db_insert_mode", 1)
 
 3.6. capture_on (integer)
 
-   Parameter to enable/disable capture globaly (on(1)/off(0))
+   Parameter to enable/disable capture globally (on(1)/off(0))
 
    Default value is "0".
 
@@ -456,6 +460,18 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
 modparam("sipcapture", "topoh_unmask", 1)
 ...
 
+3.21. nonsip_hook (int)
+
+   If set to 1, event route sipcapture:siprequest is run when HEP message
+   is received.
+
+   Default value is 0.
+
+   Example 1.21. Set nonsip_hook parameter
+...
+modparam("sipcapture", "nonsip_hook", 1)
+...
+
 4. Functions
 
    4.1. sip_capture([table])
@@ -477,7 +493,7 @@ modparam("sipcapture", "topoh_unmask", 1)
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.21. sip_capture() usage
+   Example 1.22. sip_capture() usage
 ...
 sip_capture();
 ...
@@ -496,7 +512,7 @@ sip_capture("sip_capture_call_20160124");
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.22. report_capture() usage
+   Example 1.23. report_capture() usage
 ...
 report_capture();
 ...
