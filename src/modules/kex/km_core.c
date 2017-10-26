@@ -33,16 +33,17 @@
 
 int w_setdsturi(struct sip_msg *msg, char *uri, str *s2)
 {
-	str s;
+	str suri;
 
-	/* todo: fixup */
-	s.s = uri;
-	s.len = strlen(uri);
-
-	if(set_dst_uri(msg, &s)!=0)
+	if(fixup_get_svalue(msg, (gparam_t*)uri, &suri)!=0) {
+		LM_ERR("cannot get the URI parameter\n");
 		return -1;
-	/* dst_uri changes, so it makes sense to re-use the current uri for
-		forking */
+	}
+
+	if(set_dst_uri(msg, &suri)!=0)
+		return -1;
+	/* dst_uri changed, so it makes sense to re-use the current uri
+	 * for forking */
 	ruri_mark_new(); /* re-use uri for serial forking */
 	return 1;
 
