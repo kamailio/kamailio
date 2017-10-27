@@ -75,5 +75,36 @@
     <xi:include href="sl_params.xml"/>
     <xi:include href="sl_functions.xml"/>
     <xi:include href="sl_stats.xml"/>
+
+	<section>
+		<title>Event routes</title>
+			<section>
+					<title><function moreinfo="none">sl:filtered-ack</function></title>
+					<para>
+					Executed when ACK to locally generated reply is recognized and absorbed.
+					</para>
+					<programlisting  format="linespecific">
+...
+event_route[sl:filtered-ack] {
+    xlog("sl:filtered-ack ACK to local reply absorbed\n");
+}
+...
+					</programlisting>
+			</section>
+			<section>
+					<title><function moreinfo="none">sl:local-response</function></title>
+					<para>
+					Executed after sl module reply function has sent local reply.
+					</para>
+					<programlisting  format="linespecific">
+...
+event_route[sl:local-response] {
+    xlog("sl:local-response replied locally\n");
+}
+...
+					</programlisting>
+			</section>
+	</section>
+
     </chapter>
 </book>
