@@ -54,8 +54,12 @@ MODULE_VERSION
 
 #define MODULE_NAME "timer"
 
+#define TIMER_ROUTE_NAME_SIZE 64
+
 typedef struct timer_action {
 	char *timer_name;
+	char route_name_buf[TIMER_ROUTE_NAME_SIZE];
+	str route_name;
 	int route_no;
 	int interval;
 	int enable_on_start;
@@ -67,10 +71,10 @@ typedef struct timer_action {
 } timer_action_t;
 
 /* list of all operations */
-static struct timer_action* timer_actions = 0;
-static struct timer_action* pkg_timer_actions = 0;
-static struct receive_info rcv_info;
-static struct timer_action* timer_executed = 0;
+static timer_action_t* timer_actions = 0;
+static timer_action_t* pkg_timer_actions = 0;
+static receive_info_t rcv_info;
+static timer_action_t* timer_executed = 0;
 
 #define eat_spaces(_p) \
 	while( *(_p)==' ' || *(_p)=='\t' ){\
@@ -318,6 +322,7 @@ static int declare_timer(modparam_t type, char* param)
 	timer_action_t *pa;
 	char *p, *save_p, c, *timer_name;
 	str s;
+	str route_name = STR_NULL;
 
 	timer_name = 0;
 	save_p = p = param;
@@ -335,12 +340,17 @@ static int declare_timer(modparam_t type, char* param)
 	save_p = p;
 	if (!get_next_part(&p, &s, ',')) goto err;
 
+	if(s.len>=TIMER_ROUTE_NAME_SIZE-1) {
+		LM_ERR("route name is too long [%.*s] (%d)\n", s.len, s.s, s.len);
+		return E_CFG;
+	}
 	c = s.s[s.len];
 	s.s[s.len] = '\0';
 	n = route_lookup(&main_rt, s.s);
 	s.s[s.len] = c;
 	if (n == -1) goto err;
 	route_no = n;
+	route_name = s;
 
 	save_p = p;
 	if (!get_next_part(&p, &s, ','))
@@ -374,6 +384,10 @@ static int declare_timer(modparam_t type, char* param)
 	}
 	memset(pa, 0, sizeof(*pa));
 	pa->timer_name = timer_name;
+	memcpy(pa->route_name_buf, route_name.s, route_name.len);
+	pa->route_name_buf[route_name.len] = '\0';
+	pa->route_name.s = pa->route_name_buf;
+	pa->route_name.len = route_name.len;
 	pa->route_no = route_no;
 	pa->interval = interval;
 	pa->enable_on_start = enabled;
@@ -402,6 +416,7 @@ static int mod_init()
 			return E_OUT_OF_MEM;
 		}
 		memcpy(*pa, a, sizeof(**pa));
+		(*pa)->route_name.s = (*pa)->route_name_buf;
 		(*pa)->next = 0;
 		pkg_timer_actions = a->next;
 		pkg_free(a);
