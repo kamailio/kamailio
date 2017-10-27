@@ -1541,7 +1541,7 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 			<function moreinfo="none">acc_request(comment, table)</function>
 		</title>
 		<para>
-		Warapper around <function moreinfo="none">acc_log_request</function>
+		Wrapper around <function moreinfo="none">acc_log_request</function>
 		and <function moreinfo="none">acc_db_request</function> functions,
 		writing the accounting record to LOG and DATABASE backends. If
 		<quote>db_url</quote> parameter is not set, the acc record is written
