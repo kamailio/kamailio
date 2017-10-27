@@ -2,11 +2,16 @@
   <title>RPM Packages for Kamailio v5.0.x</title>
   <description>RPM Packages for Kamailio v5.0.x</description>
   <person userid="kamailio" role="maintainer"/>
-  <repository name="openSUSE_Leap_42.3_Update">
+  <repository name="openSUSE_Tumbleweed">
+    <path project="openSUSE:Factory" repository="snapshot"/>
+    <arch>i586</arch>
+    <arch>x86_64</arch>
+  </repository>
+  <repository name="openSUSE_Leap_42.3">
     <path project="openSUSE:Leap:42.3:Update" repository="standard"/>
     <arch>x86_64</arch>
   </repository>
-  <repository name="openSUSE_Leap_42.2_Update">
+  <repository name="openSUSE_Leap_42.2">
     <path project="openSUSE:Leap:42.2:Update" repository="standard"/>
     <arch>x86_64</arch>
   </repository>
