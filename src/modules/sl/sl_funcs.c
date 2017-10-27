@@ -384,7 +384,7 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 	/*check the timeout value*/
 	if ( *(sl_timeout)<= get_ticks_raw() )
 	{
-		LM_DBG("to late to be a local ACK!\n");
+		LM_DBG("too late to be a local ACK!\n");
 		goto pass_it;
 	}
 

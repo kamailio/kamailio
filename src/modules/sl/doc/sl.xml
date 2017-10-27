@@ -49,7 +49,7 @@
 	</para>
 	<para>
 	    To speed up the filtering process, the module uses a timeout
-	    mechanism. When a reply is sent, a timer us set. As long as the
+	    mechanism. When a reply is sent, a timer is set. As long as the
 	    timer is valid, the incoming ACK requests will be checked using TO
 	    tag value. Once the timer expires, all the ACK messages are let 
 	    through - a long time passed till it sent a reply, so it does not 
@@ -63,7 +63,7 @@
 	    re-INVITE) and the server want to reply to it. Then, it will keep the
 	    current to-tag, which will be mirrored in ACK. SER will not see
 	    its signature and forward the ACK downstream. Caused harm is not
-	    bad--just a useless ACK is forwarded.
+	    bad, just a useless ACK is forwarded.
 	</para>
 
     </section>

@@ -194,7 +194,7 @@ static void mod_destroy()
 /**
  * @brief Small wrapper around sl_send_reply
  *
- * Warapper around sl_send_rply() which accepts parameters that include
+ * Wrapper around sl_send_reply() which accepts parameters that include
  * config variables
  *
  */
