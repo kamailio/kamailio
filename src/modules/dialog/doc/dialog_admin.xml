@@ -2550,7 +2550,7 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 		<section>
 			<title>event_route[dialog:start]</title>
 			<para>
-			Executed when 200OK reply for INVITE is processed.
+			Executed when 200 OK reply for INVITE is processed.
 			</para>
 		</section>
 		<section>
