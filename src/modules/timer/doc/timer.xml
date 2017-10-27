@@ -35,7 +35,6 @@
 		<para>
 		The module supports triggering a specific route block on a specific timer.
 		The timer can be activated and de-activated from the routing script at runtime.
-
 		</para>
     </section>
 
@@ -58,7 +57,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be
-		installed before  
+		installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -74,11 +73,12 @@
 	<section id="timer.syntax">
 		<title>ABNF syntax</title>
 		<programlisting>
+...
 	timer_id = alphanum
 	slow_fast = "slow" | "fast"
 	declare_timer_syntax = timer_id "=" (route#|route_name) "," interval "," slow_fast "," ["enable"]
 	enable_disable = "0" | "1"
-
+...
 		</programlisting>
 	</section>
 
@@ -113,20 +113,20 @@
 				<emphasis>slow_fast</emphasis> determines if handler will be
 				hooked in slow or fast timer queue, fast timer handler returns
 				as quickly as possible, slow timer handler may spend longer time,
-				see kamailio/doc/timers.txt documentation. 
+				see kamailio/doc/timers.txt documentation.
 				</listitem>
 				<listitem>
 				<emphasis>enable</emphasis> - enable timer when &kamailio; is starting,
-				otherwise use <function>timer_enable</function> to start it later.		
+				otherwise use <function>timer_enable</function> to start it later.
 				</listitem>
 				</itemizedlist>
 			</para>
 			<example>
 				<title>Example <varname>declare_timer</varname></title>
 				<programlisting>
-	...
-	modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,enable");
-	...
+...
+modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,enable");
+...
 				</programlisting>
 			</example>
 		</section>
@@ -148,7 +148,7 @@
 				Disabling and enabling in sequence may be tricky.
 				<itemizedlist>
 				<listitem>
-				<emphasis>timer_id</emphasis> references to timer declared by 
+				<emphasis>timer_id</emphasis> references to timer declared by
 				<varname>declare_timer</varname>.
 				</listitem>
 				<listitem>
@@ -161,14 +161,17 @@
 			<example>
 				<title><function>timer_enable</function> usage</title>
 				<programlisting>
-	...
-	timer_enable("MY_TIMER", 1);
-	...
+...
+timer_enable("MY_TIMER", 1);
+...
 				</programlisting>
 			</example>
 		</section>
+	</section>
 
-		<section id="timer.timer.timer_id.enabled">
+	<section id="timer.selects">
+		<title>Selects</title>
+		<section id="timer.sel.timer_id.enabled">
 			<title>
 				<function>@timer.timer.timer_id.enabled</function>
 			</title>
@@ -180,36 +183,36 @@
 			<example>
 				<title><function>timer.timer.timer_id.enabled</function> usage</title>
 				<programlisting>
-
-	if (@timer.timer.MY_TIMER.enabled == "1") {
-	....
-	}
+...
+if (@timer.timer.MY_TIMER.enabled == "1") {
+	...
+}
+...
 				</programlisting>
 			</example>
 		</section>
 
-		<section id="timer.executed">
+		<section id="timer.sel.executed">
 			<title>
 				<function>@timer.executed</function>
 			</title>
 			<para>
-				Returns name of timer which has been executed, i.e. non empty value is returned only 
+				Returns name of timer which has been executed, i.e. non empty value is returned only
 				when handler is being processed.
 			</para>
 
 			<example>
 				<title><function>timer.executed</function> usage</title>
 				<programlisting>
-
-	if (@timer.executed != "") {
-		# timer is being handled
-	....
-	}
+...
+if (@timer.executed != "") {
+	# timer is being handled
+	...
+}
+...
 				</programlisting>
 			</example>
 		</section>
-
-
 	</section>
 
     <section id="timer.examples">
@@ -217,10 +220,11 @@
 		<example>
 			<title>timer common example</title>
 			<programlisting>
+...
 loadmodule "modules/xprint/xprint.so"
 loadmodule "modules/timer/timer.so"
 
-modparam("timer", "declare_timer", "tmr1=ONTIMER,1000"); 
+modparam("timer", "declare_timer", "tmr1=ONTIMER,1000");
 modparam("timer", "declare_timer", "tmr2=ONTIMER2,2000,slow,enable");
 
 route["print"] {
@@ -237,36 +241,37 @@ route["ONTIMER2"] {
 	timer_enable("tmr1", 0);
 	route("print");
 }
-
+...
 			</programlisting>
 
 		</example>
 		<example>
 			<title>Using timer module for testing a functionality</title>
 			<para>
-				The timer module may be used to test a functionality being developed and 
+				The timer module may be used to test a functionality being developed and
 				not requiring real request. A developer may put tested code in route section
 				which is called once after &kamailio; starts.
 			</para>
 			<programlisting>
-			
-loadmodule "timer"; 
-loadmodule "xprint";  
+...
+loadmodule "timer";
+loadmodule "xprint";
 
-modparam("timer", "declare_timer", "TIMER_TEST=TEST,100,,enable"); 
+modparam("timer", "declare_timer", "TIMER_TEST=TEST,100,,enable");
 
-route {  
-	xplog("L_E","main route"); 
-}  
-    
-route[TEST] {  
-	timer_enable("TIMER_TEST", "0");  
-	xplog("L_E","test start\n");    
-		
-	# add here tested functionality
-		
-	xplog("L_E","test end\n"); 
+request_route {
+	xplog("L_E","main route");
 }
+
+route[TEST] {
+	timer_enable("TIMER_TEST", "0");
+	xplog("L_E","test start\n");
+
+	# add here tested functionality
+
+	xplog("L_E","test end\n");
+	}
+...
 			</programlisting>
 
 		</example>
