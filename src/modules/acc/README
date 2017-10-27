@@ -1392,7 +1392,7 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 
 7.3.  acc_request(comment, table)
 
-   Warapper around acc_log_request and acc_db_request functions, writing
+   Wrapper around acc_log_request and acc_db_request functions, writing
    the accounting record to LOG and DATABASE backends. If “db_url”
    parameter is not set, the acc record is written only to LOG backend.
 

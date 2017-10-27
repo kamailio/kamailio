@@ -1980,7 +1980,7 @@ kamcmd dlg.bridge_dlg _from_ _to_ _op_
 
 11.1. event_route[dialog:start]
 
-   Executed when 200OK reply for INVITE is processed.
+   Executed when 200 OK reply for INVITE is processed.
 
 11.2. event_route[dialog:end]
 
