@@ -252,12 +252,8 @@ static int timer_enable_fixup(void** param, int param_no)
 	return 0;
 }
 
-static int timer_enable_func(sip_msg_t* m, char* timer_act, char* enable)
+static int timer_enable_helper(sip_msg_t* m, timer_action_t* a, int en)
 {
-	timer_action_t* a;
-	int en;
-	a = (void*) timer_act;
-	en = (int)(long) enable;
 	/* timer is not deleted immediately but is removed from handler
 	 * by itself because timer_del may be slow blocking procedure
 	 * Disable and enable in sequence may be tricky
@@ -280,6 +276,16 @@ static int timer_enable_func(sip_msg_t* m, char* timer_act, char* enable)
 	}
 	/* end critical section */
 	return 1;
+}
+
+static int timer_enable_func(sip_msg_t* m, char* timer_act, char* enable)
+{
+	timer_action_t* a;
+	int en;
+	a = (void*) timer_act;
+	en = (int)(long) enable;
+
+	return  timer_enable_helper(m, a, en);
 }
 
 static int get_next_part(char** s, str* part, char delim)
@@ -331,7 +337,7 @@ static int declare_timer(modparam_t type, char* param)
 
 	c = s.s[s.len];
 	s.s[s.len] = '\0';
-	n = route_get(&main_rt, s.s);
+	n = route_lookup(&main_rt, s.s);
 	s.s[s.len] = c;
 	if (n == -1) goto err;
 	route_no = n;
