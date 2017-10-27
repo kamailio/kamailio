@@ -26,10 +26,13 @@ Tomas Mandys
         5. Functions
 
               5.1. timer_enable(timer_id, enable_disable)
-              5.2. @timer.timer.timer_id.enabled
-              5.3. @timer.executed
 
-        6. Examples
+        6. Selects
+
+              6.1. @timer.timer.timer_id.enabled
+              6.2. @timer.executed
+
+        7. Examples
 
    List of Examples
 
@@ -58,10 +61,13 @@ Chapter 1. Admin Guide
    5. Functions
 
         5.1. timer_enable(timer_id, enable_disable)
-        5.2. @timer.timer.timer_id.enabled
-        5.3. @timer.executed
 
-   6. Examples
+   6. Selects
+
+        6.1. @timer.timer.timer_id.enabled
+        6.2. @timer.executed
+
+   7. Examples
 
 1. Overview
 
@@ -87,11 +93,13 @@ Chapter 1. Admin Guide
 
 3. ABNF syntax
 
+...
         timer_id = alphanum
         slow_fast = "slow" | "fast"
         declare_timer_syntax = timer_id "=" (route#|route_name) "," interval ","
  slow_fast "," ["enable"]
         enable_disable = "0" | "1"
+...
 
 4. Parameters
 
@@ -115,16 +123,13 @@ Chapter 1. Admin Guide
        timer_enable to start it later.
 
    Example 1.1. Example declare_timer
-        ...
-        modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,enab
-le");
-        ...
+...
+modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,enable");
+...
 
 5. Functions
 
    5.1. timer_enable(timer_id, enable_disable)
-   5.2. @timer.timer.timer_id.enabled
-   5.3. @timer.executed
 
 5.1.  timer_enable(timer_id, enable_disable)
 
@@ -136,34 +141,44 @@ le");
      * enable_distable - set to 1 to enable timer, to 0 to disable.
 
    Example 1.2. timer_enable usage
-        ...
-        timer_enable("MY_TIMER", 1);
-        ...
+...
+timer_enable("MY_TIMER", 1);
+...
 
-5.2.  @timer.timer.timer_id.enabled
+6. Selects
+
+   6.1. @timer.timer.timer_id.enabled
+   6.2. @timer.executed
+
+6.1.  @timer.timer.timer_id.enabled
 
    Return true ("1") if timer specified by timer_id is enabled, otherwise
    returns false ("0").
 
    Example 1.3. timer.timer.timer_id.enabled usage
-        if (@timer.timer.MY_TIMER.enabled == "1") {
-        ....
-        }
+...
+if (@timer.timer.MY_TIMER.enabled == "1") {
+        ...
+}
+...
 
-5.3.  @timer.executed
+6.2.  @timer.executed
 
    Returns name of timer which has been executed, i.e. non empty value is
    returned only when handler is being processed.
 
    Example 1.4. timer.executed usage
-        if (@timer.executed != "") {
-                # timer is being handled
-        ....
-        }
+...
+if (@timer.executed != "") {
+        # timer is being handled
+        ...
+}
+...
 
-6. Examples
+7. Examples
 
    Example 1.5. timer common example
+...
 loadmodule "modules/xprint/xprint.so"
 loadmodule "modules/timer/timer.so"
 
@@ -184,18 +199,20 @@ route["ONTIMER2"] {
         timer_enable("tmr1", 0);
         route("print");
 }
+...
 
    Example 1.6. Using timer module for testing a functionality
 
    The timer module may be used to test a functionality being developed
    and not requiring real request. A developer may put tested code in
    route section which is called once after Kamailio starts.
+...
 loadmodule "timer";
 loadmodule "xprint";
 
 modparam("timer", "declare_timer", "TIMER_TEST=TEST,100,,enable");
 
-route {
+request_route {
         xplog("L_E","main route");
 }
 
@@ -206,4 +223,5 @@ route[TEST] {
         # add here tested functionality
 
         xplog("L_E","test end\n");
-}
+        }
+...
