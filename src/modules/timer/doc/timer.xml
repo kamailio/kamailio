@@ -100,11 +100,14 @@
 			<para>
 				<itemizedlist>
 				<listitem>
-				<emphasis>timer_id</emphasis> is timer identifier,
+				<emphasis>timer_id</emphasis> is timer identifier.
 				</listitem>
 				<listitem>
 				<emphasis>route</emphasis> is handler to be called when
-				timer is triggered,
+				timer is triggered. It has to be a route block name when native
+				scripting is used, or Kemi function name. The Kemi function
+				name receives one string parameter (for now it has a static
+				value, respectively the module name).
 				</listitem>
 				<listitem>
 				<emphasis>interval</emphasis> is timer interval in milliseconds,
@@ -218,7 +221,7 @@ if (@timer.executed != "") {
     <section id="timer.examples">
 		<title>Examples</title>
 		<example>
-			<title>timer common example</title>
+			<title>Common example using timer module</title>
 			<programlisting>
 ...
 loadmodule "modules/xprint/xprint.so"
@@ -243,7 +246,25 @@ route["ONTIMER2"] {
 }
 ...
 			</programlisting>
+		</example>
 
+		<example>
+			<title>Using timer module with kemi</title>
+			<programlisting>
+...
+loadmodule "timer.so"
+
+modparam("timer", "declare_timer", "tmr1=ksr_timer,1000");
+...
+
+...
+-- timer event callback function implemented in Lua
+function ksr_timer(evname)
+	KSR.info("===== timer module triggered event\n");
+	return 1;
+end
+...
+			</programlisting>
 		</example>
 		<example>
 			<title>Using timer module for testing a functionality</title>
