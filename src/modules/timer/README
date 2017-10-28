@@ -40,8 +40,9 @@ Tomas Mandys
    1.2. timer_enable usage
    1.3. timer.timer.timer_id.enabled usage
    1.4. timer.executed usage
-   1.5. timer common example
-   1.6. Using timer module for testing a functionality
+   1.5. Common example using timer module
+   1.6. Using timer module with kemi
+   1.7. Using timer module for testing a functionality
 
 Chapter 1. Admin Guide
 
@@ -112,8 +113,11 @@ Chapter 1. Admin Guide
    The format is:
                         declare_timer = declare_timer_syntax
 
-     * timer_id is timer identifier,
-     * route is handler to be called when timer is triggered,
+     * timer_id is timer identifier.
+     * route is handler to be called when timer is triggered. It has to be
+       a route block name when native scripting is used, or Kemi function
+       name. The Kemi function name receives one string parameter (for now
+       it has a static value, respectively the module name).
      * interval is timer interval in milliseconds,
      * slow_fast determines if handler will be hooked in slow or fast
        timer queue, fast timer handler returns as quickly as possible,
@@ -177,7 +181,7 @@ if (@timer.executed != "") {
 
 7. Examples
 
-   Example 1.5. timer common example
+   Example 1.5. Common example using timer module
 ...
 loadmodule "modules/xprint/xprint.so"
 loadmodule "modules/timer/timer.so"
@@ -201,7 +205,22 @@ route["ONTIMER2"] {
 }
 ...
 
-   Example 1.6. Using timer module for testing a functionality
+   Example 1.6. Using timer module with kemi
+...
+loadmodule "timer.so"
+
+modparam("timer", "declare_timer", "tmr1=ksr_timer,1000");
+...
+
+...
+-- timer event callback function implemented in Lua
+function ksr_timer(evname)
+        KSR.info("===== timer module triggered event\n");
+        return 1;
+end
+...
+
+   Example 1.7. Using timer module for testing a functionality
 
    The timer module may be used to test a functionality being developed
    and not requiring real request. A developer may put tested code in
