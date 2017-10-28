@@ -48,6 +48,7 @@
 #include "../../core/script_cb.h"
 #include "../../core/dset.h"
 #include "../../core/usr_avp.h"
+#include "../../core/kemi.h"
 
 
 MODULE_VERSION
@@ -162,6 +163,8 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data)
 	sip_msg_t* msg;
 	timer_action_t *a;
 	run_act_ctx_t ra_ctx;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("timer");
 
 	a = data;
 	if (!a->disable_itself) {
@@ -169,14 +172,17 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data)
 		LM_DBG("handler called at %d ticks, timer: '%s', pid:%d\n",
 				ticks, a->timer_name, getpid());
 
-		if (a->route_no >= main_rt.idx) {
-			LM_BUG("invalid routing table number #%d of %d\n",
-					a->route_no, main_rt.idx);
-			goto err2;
-		}
-		if (!main_rt.rlist[a->route_no]) {
-			LM_WARN("route not declared (hash:%d)\n", a->route_no);
-			goto err2;
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			if (a->route_no >= main_rt.idx) {
+				LM_BUG("invalid routing table number #%d of %d\n",
+						a->route_no, main_rt.idx);
+				goto err2;
+			}
+			if (!main_rt.rlist[a->route_no]) {
+				LM_WARN("route not declared (hash:%d)\n", a->route_no);
+				goto err2;
+			}
 		}
 		msg=pkg_malloc(sizeof(sip_msg_t));
 		if (msg==0) {
@@ -206,7 +212,13 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data)
 		/* exec the routing script */
 		timer_executed = a;
 		init_run_actions_ctx(&ra_ctx);
-		run_actions(&ra_ctx, main_rt.rlist[a->route_no], msg);
+		if(keng==NULL) {
+			run_actions(&ra_ctx, main_rt.rlist[a->route_no], msg);
+		} else {
+			if(keng->froute(msg, EVENT_ROUTE, &a->route_name, &evname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
 		timer_executed = 0;
 		/* execute post request-script callbacks */
 		exec_post_script_cb(msg, REQUEST_CB_TYPE);
@@ -323,6 +335,7 @@ static int declare_timer(modparam_t type, char* param)
 	char *p, *save_p, c, *timer_name;
 	str s;
 	str route_name = STR_NULL;
+	sr_kemi_eng_t *keng = NULL;
 
 	timer_name = 0;
 	save_p = p = param;
@@ -346,10 +359,16 @@ static int declare_timer(modparam_t type, char* param)
 	}
 	c = s.s[s.len];
 	s.s[s.len] = '\0';
-	n = route_lookup(&main_rt, s.s);
-	s.s[s.len] = c;
-	if (n == -1) goto err;
-	route_no = n;
+	keng = sr_kemi_eng_get();
+	if(keng==NULL) {
+		n = route_lookup(&main_rt, s.s);
+		s.s[s.len] = c;
+		if (n == -1) goto err;
+		route_no = n;
+	} else {
+		s.s[s.len] = c;
+		route_no = -1;
+	}
 	route_name = s;
 
 	save_p = p;
