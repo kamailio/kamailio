@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -136,7 +136,10 @@ modparam("rtimer", "timer", "name=ta;interval=100000u;mode=1;")
 		</listitem>
 		<listitem>
 		<para>
-		<emphasis>route</emphasis> - the index of the route to be executed.
+		<emphasis>route</emphasis> - the name of the route block to be executed,
+		or the name of the function from kemi script. The kemi function
+		receives a string parameter with the value being the name of the
+		module.
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -150,9 +153,9 @@ modparam("rtimer", "timer", "name=ta;interval=100000u;mode=1;")
 		<programlisting format="linespecific">
 ...
 modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
-modparam("rtimer", "exec", "timer=ta;route=8")
+modparam("rtimer", "exec", "timer=ta;route=ONTIMER")
 
-route[8] {
+route[ONTIMER] {
     xlog("timer routine: time is $TF\n");
     # delete from my sql cache table entries older than 2H
     sql_query("delete from kamailio_cache where last_updated&lt;$TS-3600");
@@ -160,6 +163,22 @@ route[8] {
 ...
 </programlisting>
 		</example>
+		<example>
+		<title>Use <varname>exec</varname> parameter with a Kemi engine</title>
+		<programlisting format="linespecific">
+...
+modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+modparam("rtimer", "exec", "timer=ta;route=ksr_rtimer")
+...
+-- rtimer event callback function implemented in Lua
+function ksr_rtimer(evname)
+	KSR.info("===== rtimer module triggered event\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+
 	</section>
 	</section>
 
