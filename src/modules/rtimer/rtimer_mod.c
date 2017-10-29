@@ -44,9 +44,13 @@
 
 MODULE_VERSION
 
+#define RTIMER_ROUTE_NAME_SIZE  64
+
 typedef struct _stm_route {
 	str timer;
 	unsigned int route;
+	char route_name_buf[RTIMER_ROUTE_NAME_SIZE];
+	str route_name;
 	struct _stm_route *next;
 } stm_route_t;
 
@@ -336,12 +340,20 @@ int stm_e_param(modparam_t type, void *val)
 	}
 	c = s.s[s.len];
 	s.s[s.len] = '\0';
+	if(s.len>=RTIMER_ROUTE_NAME_SIZE-1) {
+		LM_ERR("route block name is too long [%.*s] (%d)\n", s.len, s.s, s.len);
+		free_params(params_list);
+		return -1;
+	}
 	tmp.route = route_get(&main_rt, s.s);
+	memcpy(tmp.route_name_buf, s.s, s.len);
+	tmp.route_name_buf[s.len] = '\0';
+	tmp.route_name.s = tmp.route_name_buf;
+	tmp.route_name.len = s.len;
 	s.s[s.len] = c;
 	if(tmp.route == -1)
 	{
-		LM_ERR("invalid route: %.*s\n",
-				s.len, s.s);
+		LM_ERR("invalid route: %.*s\n", s.len, s.s);
 		free_params(params_list);
 		return -1;
 	}
@@ -354,6 +366,7 @@ int stm_e_param(modparam_t type, void *val)
 		return -1;
 	}
 	memcpy(rt, &tmp, sizeof(stm_route_t));
+	rt->route_name.s = rt->route_name_buf;
 	rt->next = nt->rt;
 	nt->rt = rt;
 	free_params(params_list);
