@@ -335,7 +335,6 @@ static int declare_timer(modparam_t type, char* param)
 	char *p, *save_p, c, *timer_name;
 	str s;
 	str route_name = STR_NULL;
-	sr_kemi_eng_t *keng = NULL;
 
 	timer_name = 0;
 	save_p = p = param;
@@ -359,16 +358,10 @@ static int declare_timer(modparam_t type, char* param)
 	}
 	c = s.s[s.len];
 	s.s[s.len] = '\0';
-	keng = sr_kemi_eng_get();
-	if(keng==NULL) {
-		n = route_lookup(&main_rt, s.s);
-		s.s[s.len] = c;
-		if (n == -1) goto err;
-		route_no = n;
-	} else {
-		s.s[s.len] = c;
-		route_no = -1;
-	}
+	n = route_get(&main_rt, s.s);
+	s.s[s.len] = c;
+	if (n == -1) goto err;
+	route_no = n;
 	route_name = s;
 
 	save_p = p;
