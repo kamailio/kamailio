@@ -40,6 +40,7 @@
 #include "../../core/script_cb.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 
 
 MODULE_VERSION
@@ -183,6 +184,8 @@ void stm_timer_exec(unsigned int ticks, void *param)
 	stm_timer_t *it;
 	stm_route_t *rt;
 	sip_msg_t *fmsg;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("rtimer");
 
 	if(param==NULL)
 		return;
@@ -196,7 +199,15 @@ void stm_timer_exec(unsigned int ticks, void *param)
 		if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)==0 )
 			continue; /* drop the request */
 		set_route_type(REQUEST_ROUTE);
-		run_top_route(main_rt.rlist[rt->route], fmsg, 0);
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			run_top_route(main_rt.rlist[rt->route], fmsg, 0);
+		} else {
+			if(keng->froute(fmsg, EVENT_ROUTE, &rt->route_name, &evname)<0) {
+				LM_ERR("error running event route kemi callback [%.*s]\n",
+						rt->route_name.len, rt->route_name.s);
+			}
+		}
 		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
 		ksr_msg_env_reset();
 	}
