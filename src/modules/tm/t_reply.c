@@ -1117,8 +1117,8 @@ inline static short int get_4xx_prio(unsigned char xx)
 /* returns response priority, lower number => highest prio
  *
  * responses                    priority val
- *  0-99                        32000+reponse         (special)
- *  1xx                         11000+reponse         (special)
+ *  0-99                        32000+response        (special)
+ *  1xx                         11000+response        (special)
  *  700-999                     10000+response        (very low)
  *  5xx                          5000+xx              (low)
  *  4xx                          4000+xx
