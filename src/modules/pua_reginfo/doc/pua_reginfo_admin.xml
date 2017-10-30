@@ -166,8 +166,8 @@ modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
 				the local registry accordingly.
 			</para>
 			<para>
-				This method does not create any SIP-Reponse, this has to be done
-				the script-writer.
+				This method does not create any SIP-Response, this has to be done
+				by the script-writer.
 			</para>
 			<para>
 				The parameter has to correspond to user location table (domain)
