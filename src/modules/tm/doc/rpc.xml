@@ -192,4 +192,19 @@
 		</itemizedlist>
 	</section>
 
+	<section id="tm.stats">
+		<title>
+		<function moreinfo="none">tm.stats</function>
+		</title>
+		<para>
+		Gets information about current and past TM transaction handling.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
 </section>
