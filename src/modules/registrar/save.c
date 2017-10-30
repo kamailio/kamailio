@@ -1008,9 +1008,9 @@ error:
 	if (is_route_type(REQUEST_ROUTE) && !is_cflag_set(REG_SAVE_NORPL_FL) )
 		reg_send_reply(_m);
     if (R_TOO_MANY == rerrno)
-	    return -2; 
+	    return -2;
 	/* for all other */
-	return 0;
+	return -1;
 }
 
 /* Return values:
@@ -1018,7 +1018,7 @@ error:
 	-2 Error in unregistering user
 	-3 Contacts for AOR not found
 */
-	
+
 int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid)
 {
 	str aor = {0, 0};
