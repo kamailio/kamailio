@@ -547,7 +547,7 @@ static rpc_export_t rpc_calls[] = {
 	{"cfg.rollback",	rpc_rollback,		rpc_rollback_doc,	0},
 	{"cfg.get",		rpc_get,		rpc_get_doc,		0},
 	{"cfg.help",		rpc_help,		rpc_help_doc,		0},
-	{"cfg.list",		rpc_list,		rpc_list_doc,		0},
+	{"cfg.list",		rpc_list,		rpc_list_doc,		RET_ARRAY},
 	{"cfg.diff",		rpc_diff,		rpc_diff_doc,		0},
 	{"cfg.add_group_inst",	rpc_add_group_inst,	rpc_add_group_inst_doc,	0},	
 	{"cfg.del_group_inst",	rpc_del_group_inst,	rpc_del_group_inst_doc,	0},	
