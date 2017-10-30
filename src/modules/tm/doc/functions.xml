@@ -163,8 +163,8 @@ failure_route[1] {
 	    </programlisting>
 	</example>
 	<para>
-	    See <filename>test/onr.cfg</filename> for a more complex example of
-	    combination of serial with parallel forking.
+	    See <filename>misc/examples/mixed/onr.cfg</filename> for a more complex
+	    example of combination of serial with parallel forking.
 	</para>
     </section>
      <section id="tm.f.t_on_branch_failure">
@@ -314,7 +314,7 @@ if (t_newtran()) {
 	    </programlisting>
 	</example>
 	<para>
-	    See test/uas.cfg for more examples.
+	    See <filename>misc/examples/mixed/uas.cfg</filename> for more examples.
 	</para>
     </section>
 

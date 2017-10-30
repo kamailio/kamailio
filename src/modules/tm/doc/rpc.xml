@@ -65,7 +65,7 @@
 		<function moreinfo="none">tm.t_uac_wait</function>
 		</title>
 		<para>
-		Similar to rm.t_uac_start, but waits for the SIP reponse and tries to
+		Similar to tm.t_uac_start, but waits for the SIP response and tries to
 		provide its details via RPC response.
 		</para>
 	</section>
