@@ -23,6 +23,12 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
+Edited by
+
+Ovidiu Sas
+
+   <osas@voipembedded.com>
+
    Copyright © 2003 FhG FOKUS
      __________________________________________________________________
 
@@ -904,7 +910,9 @@ if(has_body("application/sdp"))
 4.32.  is_audio_on_hold()
 
    The function returns true if the SIP message has a body attached and at
-   least one audio stream in on hold.
+   least one audio stream in on hold. Only RFC2543 is supported
+   (c=0.0.0.0). Hold detection based on RFC3264 is not supported
+   (a=sendonly/inactive).
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
