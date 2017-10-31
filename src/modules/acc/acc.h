@@ -83,6 +83,9 @@ int  acc_db_init(const str* db_url);
 int  acc_db_init_child(const str* db_url);
 void acc_db_close(void);
 int  acc_db_request( struct sip_msg *req);
-int acc_get_db_handlers(void **vf, void **vh);
+int  acc_get_db_handlers(void **vf, void **vh);
+
+int  is_eng_acc_on(sip_msg_t *msg);
+int  is_eng_mc_on(sip_msg_t *msg);
 
 #endif

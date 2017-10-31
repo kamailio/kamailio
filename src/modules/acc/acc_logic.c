@@ -66,10 +66,10 @@ struct acc_enviroment acc_env;
 #define is_db_mc_on(_rq)      is_acc_flag_set(_rq,db_missed_flag)
 
 #define is_acc_on(_rq) \
-	( (is_log_acc_on(_rq)) || (is_db_acc_on(_rq)) )
+	( (is_log_acc_on(_rq)) || (is_db_acc_on(_rq)) || (is_eng_acc_on(_rq)) )
 
 #define is_mc_on(_rq) \
-	( (is_log_mc_on(_rq)) || (is_db_mc_on(_rq)) )
+	( (is_log_mc_on(_rq)) || (is_db_mc_on(_rq)) || (is_eng_mc_on(_rq)) )
 
 #define skip_cancel(_rq) \
 	(((_rq)->REQ_METHOD==METHOD_CANCEL) && report_cancels==0)
