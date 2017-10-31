@@ -39,6 +39,7 @@
 #include "../../core/nonsip_hooks.h"
 #include "../../modules/xhttp/api.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 #include "xhttp_pi.h"
 #include "xhttp_pi_fnc.h"
 #include "http_db_handler.h"
@@ -87,7 +88,8 @@ int buf_size = 0;
 char error_buf[ERROR_REASON_BUF_LEN];
 
 static cmd_export_t cmds[] = {
-	{"dispatch_xhttp_pi",(cmd_function)xhttp_pi_dispatch,0,0,0,REQUEST_ROUTE},
+	{"dispatch_xhttp_pi",(cmd_function)xhttp_pi_dispatch,0,0,0,
+			REQUEST_ROUTE|EVENT_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -309,7 +311,7 @@ int destroy(void)
 }
 
 
-static int xhttp_pi_dispatch(sip_msg_t* msg, char* s1, char* s2)
+static int ki_xhttp_pi_dispatch(sip_msg_t* msg)
 {
 	str arg = {NULL, 0};
 	int ret = 0;
@@ -369,6 +371,10 @@ send_reply:
 	return 0;
 }
 
+static int xhttp_pi_dispatch(sip_msg_t* msg, char* s1, char* s2)
+{
+	return ki_xhttp_pi_dispatch(msg);
+}
 
 /* rpc function documentation */
 static const char *rpc_reload_doc[2] = {
@@ -392,3 +398,26 @@ static rpc_export_t rpc_methods[] = {
 	{0, 0, 0, 0}
 };
 
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_xhttp_pi_exports[] = {
+	{ str_init("xhttp_pi"), str_init("dispatch"),
+		SR_KEMIP_INT, ki_xhttp_pi_dispatch,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_xhttp_pi_exports);
+	return 0;
+}

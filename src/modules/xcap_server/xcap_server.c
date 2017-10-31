@@ -1714,7 +1714,7 @@ static int check_match_header(str body, str *etag)
 static sr_kemi_t sr_kemi_xcap_server_exports[] = {
 	{ str_init("xcap_server"), str_init("xcaps_put"),
 		SR_KEMIP_INT, ki_xcaps_put,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_STR,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("xcap_server"), str_init("xcaps_get"),
