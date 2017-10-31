@@ -2782,10 +2782,9 @@ char* via_builder( unsigned int *len,
 		pkg_free(line_buf);
 		return 0;
 	}
-	/* add [] only if ipv6 and outbound socket address is used;
+	/* add [] only if ipv6 address is used;
 	 * if using pre-set no check is made */
-	if ((send_sock->address.af==AF_INET6) &&
-		(address_str==&(send_sock->address_str))) {
+	if (send_sock->address.af==AF_INET6) {
 		line_buf[via_prefix_len]='[';
 		line_buf[via_prefix_len+1+address_str->len]=']';
 		extra_len=1;
