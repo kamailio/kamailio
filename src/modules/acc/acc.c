@@ -781,6 +781,52 @@ error:
 #endif
 
 /**
+ * @brief test if acc flag from enternal engines is set
+ */
+int is_eng_acc_on(sip_msg_t *msg)
+{
+	acc_engine_t *e;
+
+	e = acc_api_get_engines();
+
+	if(e==NULL) {
+		return 0;
+	}
+	while(e) {
+		if(e->flags & 1) {
+			if(msg->flags & e->acc_flag) {
+				return 1;
+			}
+		}
+		e = e->next;
+	}
+	return 0;
+}
+
+/**
+ * @brief test if acc flag from enternal engines is set
+ */
+int is_eng_mc_on(sip_msg_t *msg)
+{
+	acc_engine_t *e;
+
+	e = acc_api_get_engines();
+
+	if(e==NULL) {
+		return 0;
+	}
+	while(e) {
+		if(e->flags & 1) {
+			if(msg->flags & e->missed_flag) {
+				return 1;
+			}
+		}
+		e = e->next;
+	}
+	return 0;
+}
+
+/**
  * @brief execute all acc engines for a SIP request event
  */
 int acc_run_engines(struct sip_msg *msg, int type, int *reset)

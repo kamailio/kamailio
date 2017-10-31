@@ -90,4 +90,7 @@ int  acc_diam_init(void);
 int  acc_diam_request( struct sip_msg *req );
 #endif
 
+int  is_eng_acc_on(sip_msg_t *msg);
+int  is_eng_mc_on(sip_msg_t *msg);
+
 #endif
