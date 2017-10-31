@@ -28,6 +28,7 @@
 #include "../../core/trim.h"
 #include "../../core/sr_module.h"
 #include "../../core/nonsip_hooks.h"
+#include "../../core/kemi.h"
 #include "../../modules/xhttp/api.h"
 #include "xhttp_rpc.h"
 #include "xhttp_rpc_fnc.h"
@@ -85,7 +86,8 @@ int buf_size = 0;
 char error_buf[ERROR_REASON_BUF_LEN];
 
 static cmd_export_t cmds[] = {
-	{"dispatch_xhttp_rpc",(cmd_function)xhttp_rpc_dispatch,0,0,0,REQUEST_ROUTE},
+	{"dispatch_xhttp_rpc",(cmd_function)xhttp_rpc_dispatch,0,0,0,
+			REQUEST_ROUTE|EVENT_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -766,7 +768,7 @@ static int child_init(int rank)
 }
 
 
-static int xhttp_rpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
+static int ki_xhttp_rpc_dispatch(sip_msg_t* msg)
 {
 	rpc_export_t* rpc_e;
 	str arg = {NULL, 0};
@@ -837,3 +839,31 @@ send_reply:
 	return 0;
 }
 
+static int xhttp_rpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
+{
+	return ki_xhttp_rpc_dispatch(msg);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_xhttp_rpc_exports[] = {
+	{ str_init("xhttp_rpc"), str_init("dispatch"),
+		SR_KEMIP_INT, ki_xhttp_rpc_dispatch,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_xhttp_rpc_exports);
+	return 0;
+}
