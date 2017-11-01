@@ -92,7 +92,7 @@ MODULE_VERSION
 
 #define EMPTY_STR(val) \
 	val.s = "";        \
-val.len = 0;
+	val.len = 0;
 
 #define TABLE_LEN 256
 
@@ -140,18 +140,20 @@ static int sipcapture_fixup(void **param, int param_no);
 static int reportcapture_fixup(void **param, int param_no);
 static int float2int_fixup(void **param, int param_no);
 
-static int pv_get_hep(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int pv_get_hep(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_hep_name(pv_spec_p sp, str *in);
 
-static int sip_capture(
-		struct sip_msg *msg, str *dtable, _capture_mode_data_t *cm_data);
-static int report_capture(
-		struct sip_msg *msg, str *_table, str *_corr, str *_data);
+static int sip_capture(sip_msg_t *msg, str *dtable,
+		_capture_mode_data_t *cm_data);
+static int report_capture(sip_msg_t *msg, str *_table, str *_corr, str *_data);
+static int w_sip_capture0(sip_msg_t *_m, char *_p1, char *_p2);
+static int w_sip_capture1(sip_msg_t *_m, char *_table, char *_p2);
+static int w_sip_capture2(sip_msg_t *_m, char *_table, char *_cmdata);
 static int w_sip_capture(struct sip_msg *_m, char *_table,
-		_capture_mode_data_t *_cm_data, char *s2);
-static int w_report_capture(
-		struct sip_msg *_m, char *_table, char *_corr, char *_data);
-static int w_float2int(struct sip_msg *_m, char *_val, char *_coof, char *s2);
+		_capture_mode_data_t *_cm_data);
+static int w_report_capture(sip_msg_t *_m, char *_table, char *_corr,
+		char *_data);
+static int w_float2int(sip_msg_t *_m, char *_val, char *_coof, char *s2);
 
 static int sipcapture_parse_aleg_callid_headers();
 int parse_aleg_callid_headers(str *headers_str, str *headers);
@@ -291,11 +293,11 @@ struct hep_timeinfo *heptime;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"sip_capture", (cmd_function)w_sip_capture, 0, 0, 0,
+	{"sip_capture", (cmd_function)w_sip_capture0, 0, 0, 0,
 		ANY_ROUTE},
-	{"sip_capture", (cmd_function)w_sip_capture, 1, sipcapture_fixup, 0,
+	{"sip_capture", (cmd_function)w_sip_capture1, 1, sipcapture_fixup, 0,
 		ANY_ROUTE},
-	{"sip_capture", (cmd_function)w_sip_capture, 2, sipcapture_fixup, 0,
+	{"sip_capture", (cmd_function)w_sip_capture2, 2, sipcapture_fixup, 0,
 		ANY_ROUTE},
 	{"report_capture", (cmd_function)w_report_capture, 1,
 		reportcapture_fixup, 0, ANY_ROUTE},
@@ -1089,8 +1091,8 @@ static int w_float2int(struct sip_msg *_m, char *_val, char *_coof, char *s2)
 }
 
 
-static int w_sip_capture(struct sip_msg *_m, char *_table,
-		_capture_mode_data_t *cm_data, char *s2)
+static int w_sip_capture(sip_msg_t *_m, char *_table,
+		_capture_mode_data_t *cm_data)
 {
 	str table = {0};
 
@@ -1102,8 +1104,23 @@ static int w_sip_capture(struct sip_msg *_m, char *_table,
 	return sip_capture(_m, (table.len > 0) ? &table : NULL, cm_data);
 }
 
-static int w_report_capture(
-		struct sip_msg *_m, char *_table, char *_corr, char *_data)
+static int w_sip_capture0(sip_msg_t *_m, char *_p1, char *_p2)
+{
+	return w_sip_capture(_m, NULL, NULL);
+}
+
+static int w_sip_capture1(sip_msg_t *_m, char *_table, char *_p2)
+{
+	return w_sip_capture(_m, _table, NULL);
+}
+
+static int w_sip_capture2(sip_msg_t *_m, char *_table, char *_cmdata)
+{
+	return w_sip_capture(_m, _table, (_capture_mode_data_t*)_cmdata);
+}
+
+static int w_report_capture(sip_msg_t *_m, char *_table, char *_corr,
+		char *_data)
 {
 	str table = {0};
 	str corr = {0};
