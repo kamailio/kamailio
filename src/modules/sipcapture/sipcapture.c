@@ -151,9 +151,11 @@ static int w_sip_capture1(sip_msg_t *_m, char *_table, char *_p2);
 static int w_sip_capture2(sip_msg_t *_m, char *_table, char *_cmdata);
 static int w_sip_capture(struct sip_msg *_m, char *_table,
 		_capture_mode_data_t *_cm_data);
-static int w_report_capture(sip_msg_t *_m, char *_table, char *_corr,
+static int w_report_capture1(sip_msg_t *_m, char *_table, char *_p2);
+static int w_report_capture2(sip_msg_t *_m, char *_table, char *_corr);
+static int w_report_capture3(sip_msg_t *_m, char *_table, char *_corr,
 		char *_data);
-static int w_float2int(sip_msg_t *_m, char *_val, char *_coof, char *s2);
+static int w_float2int(sip_msg_t *_m, char *_val, char *_coof);
 
 static int sipcapture_parse_aleg_callid_headers();
 int parse_aleg_callid_headers(str *headers_str, str *headers);
@@ -299,11 +301,11 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE},
 	{"sip_capture", (cmd_function)w_sip_capture2, 2, sipcapture_fixup, 0,
 		ANY_ROUTE},
-	{"report_capture", (cmd_function)w_report_capture, 1,
+	{"report_capture", (cmd_function)w_report_capture1, 1,
 		reportcapture_fixup, 0, ANY_ROUTE},
-	{"report_capture", (cmd_function)w_report_capture, 2,
+	{"report_capture", (cmd_function)w_report_capture2, 2,
 		reportcapture_fixup, 0, ANY_ROUTE},
-	{"report_capture", (cmd_function)w_report_capture, 3,
+	{"report_capture", (cmd_function)w_report_capture3, 3,
 		reportcapture_fixup, 0, ANY_ROUTE},
 	{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0,
 		ANY_ROUTE},
@@ -1066,7 +1068,7 @@ static int float2int_fixup(void **param, int param_no)
 }
 
 
-static int w_float2int(struct sip_msg *_m, char *_val, char *_coof, char *s2)
+static int w_float2int(sip_msg_t *_m, char *_val, char *_coof)
 {
 	str value = {0};
 	str coof = {0};
@@ -1089,7 +1091,6 @@ static int w_float2int(struct sip_msg *_m, char *_val, char *_coof, char *s2)
 
 	return ret ? ret : -1;
 }
-
 
 static int w_sip_capture(sip_msg_t *_m, char *_table,
 		_capture_mode_data_t *cm_data)
@@ -1119,7 +1120,17 @@ static int w_sip_capture2(sip_msg_t *_m, char *_table, char *_cmdata)
 	return w_sip_capture(_m, _table, (_capture_mode_data_t*)_cmdata);
 }
 
-static int w_report_capture(sip_msg_t *_m, char *_table, char *_corr,
+static int w_report_capture1(sip_msg_t *_m, char *_table, char *_p2)
+{
+	return w_report_capture3(_m, _table, NULL, NULL);
+}
+
+static int w_report_capture2(sip_msg_t *_m, char *_table, char *_corr)
+{
+	return w_report_capture3(_m, _table, _corr, NULL);
+}
+
+static int w_report_capture3(sip_msg_t *_m, char *_table, char *_corr,
 		char *_data)
 {
 	str table = {0};
@@ -2358,7 +2369,8 @@ static const char *sipcapture_status_doc[2] = {
 
 rpc_export_t sipcapture_rpc[] = {
 	{"sipcapture.status", sipcapture_rpc_status, sipcapture_status_doc, 0},
-	{0, 0, 0, 0}};
+	{0, 0, 0, 0}
+};
 
 static int sipcapture_init_rpc(void)
 {
@@ -2559,8 +2571,7 @@ error:
 	return -1;
 }
 
-static int report_capture(
-		struct sip_msg *msg, str *_table, str *_corr, str *_data)
+static int report_capture(sip_msg_t *msg, str *_table, str *_corr, str *_data)
 {
 	struct _sipcapture_object sco;
 	db_key_t db_keys[RTCP_NR_KEYS];
@@ -2630,7 +2641,6 @@ static int report_capture(
 		sco.node.s = tmp_node;
 		sco.node.len = strlen(tmp_node);
 		epoch_time_as_time_t = heptime->tv_sec;
-		;
 	} else {
 		sco.tmstamp = (unsigned long long)tvb.tv_sec * 1000000
 			+ tvb.tv_usec; /* micro ts */
