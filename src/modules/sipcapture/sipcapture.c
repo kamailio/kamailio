@@ -74,6 +74,7 @@
 #include "../../core/receive.h"
 #include "../../core/mod_fix.h"
 #include "../../core/rand/kam_rand.h"
+#include "../../core/kemi.h"
 #include "sipcapture.h"
 #include "hash_mode.h"
 #include "hep.h"
@@ -1092,6 +1093,19 @@ static int w_float2int(sip_msg_t *_m, char *_val, char *_coof)
 	return ret ? ret : -1;
 }
 
+static int ki_float2int(sip_msg_t *_m, str *_val, str *_coof)
+{
+	int ret = 0;
+
+	if(_val == NULL || _val->s == NULL || _val->len <= 0
+			|| _coof == NULL || _coof->s == NULL || _coof->len <= 0)
+		return -1;
+
+	ret = (int)(atof(_val->s) * atoi(_coof->s));
+
+	return ret ? ret : -1;
+}
+
 static int w_sip_capture(sip_msg_t *_m, char *_table,
 		_capture_mode_data_t *cm_data)
 {
@@ -1118,6 +1132,43 @@ static int w_sip_capture1(sip_msg_t *_m, char *_table, char *_p2)
 static int w_sip_capture2(sip_msg_t *_m, char *_table, char *_cmdata)
 {
 	return w_sip_capture(_m, _table, (_capture_mode_data_t*)_cmdata);
+}
+
+static int ki_sip_capture_mode(sip_msg_t *_m, str *_table, str *_cmdata)
+{
+	_capture_mode_data_t *pcmdata = NULL;
+	unsigned int id;
+
+	if(_cmdata != NULL && _cmdata->len > 0) {
+		pcmdata = capture_modes_root;
+		id = core_case_hash(_cmdata, 0, 0);
+		while(pcmdata) {
+			if(id == pcmdata->id && pcmdata->name.len == _cmdata->len
+					&& strncmp(pcmdata->name.s, _cmdata->s, _cmdata->len) == 0) {
+				break;
+			}
+			pcmdata = pcmdata->next;
+		}
+		if(pcmdata) {
+			LM_DBG("found capture mode: [%.*s]\n", _cmdata->len, _cmdata->s);
+		} else {
+			LM_ERR("not found capture mode: [%.*s]\n", _cmdata->len, _cmdata->s);
+			return -1;
+		}
+	}
+
+	return sip_capture(_m, (_table != NULL && _table->len > 0) ? _table : NULL,
+			pcmdata);
+}
+
+static int ki_sip_capture(sip_msg_t *_m)
+{
+	return sip_capture(_m, NULL, NULL);
+}
+
+static int ki_sip_capture_table(sip_msg_t *_m, str *_table)
+{
+	return sip_capture(_m, _table, NULL);
 }
 
 static int w_report_capture1(sip_msg_t *_m, char *_table, char *_p2)
@@ -1162,6 +1213,35 @@ static int w_report_capture3(sip_msg_t *_m, char *_table, char *_corr,
 			(corr.len > 0) ? &corr : NULL, (data.len > 0) ? &data : NULL);
 }
 
+
+static int ki_report_capture_data(sip_msg_t *_m, str *_table, str *_cid,
+		str *_data)
+{
+	/* workaround for data function */
+	if(_data!=NULL && _data->len > 0 && _data->len == 14
+			&& !strncmp(_data->s, "report_capture", 14)) {
+		return report_capture(_m,
+				(_table!=NULL && _table->len > 0) ? _table : NULL,
+				(_cid != NULL && _cid->len > 0) ? _cid : NULL, NULL);
+
+	} else {
+		return report_capture(_m,
+				(_table!=NULL && _table->len > 0) ? _table : NULL,
+				(_cid != NULL && _cid->len > 0) ? _cid : NULL,
+				(_data != NULL && _data->len > 0) ? _data : NULL);
+
+	}
+}
+
+static int ki_report_capture(sip_msg_t *_m, str *_table)
+{
+	return ki_report_capture_data(_m, _table, NULL, NULL);
+}
+
+static int ki_report_capture_cid(sip_msg_t *_m, str *_table, str *_cid)
+{
+	return ki_report_capture_data(_m, _table, _cid, NULL);
+}
 
 int extract_host_port(void)
 {
@@ -1675,8 +1755,8 @@ error:
 	return -1;
 }
 
-static int sip_capture(
-		struct sip_msg *msg, str *_table, _capture_mode_data_t *cm_data)
+static int sip_capture(sip_msg_t *msg, str *_table,
+		_capture_mode_data_t *cm_data)
 {
 	struct _sipcapture_object sco;
 	struct sip_uri from, to, contact;
@@ -2975,5 +3055,59 @@ static int pv_get_hep(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			return hepv3_get_chunk(msg, msg->buf, msg->len,
 					param->pvn.u.isname.name.n, param, res);
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_sipcapture_exports[] = {
+	{ str_init("sipcapture"), str_init("sip_capture"),
+		SR_KEMIP_INT, ki_sip_capture,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipcapture"), str_init("sip_capture_table"),
+		SR_KEMIP_INT, ki_sip_capture_table,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipcapture"), str_init("sip_capture_mode"),
+		SR_KEMIP_INT, ki_sip_capture_mode,
+		{ SR_KEMIP_NONE, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipcapture"), str_init("report_capture"),
+		SR_KEMIP_INT, ki_report_capture,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipcapture"), str_init("report_capture_cid"),
+		SR_KEMIP_INT, ki_report_capture_cid,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipcapture"), str_init("report_capture_data"),
+		SR_KEMIP_INT, ki_report_capture_data,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipcapture"), str_init("float2int"),
+		SR_KEMIP_INT, ki_float2int,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_sipcapture_exports);
 	return 0;
 }
