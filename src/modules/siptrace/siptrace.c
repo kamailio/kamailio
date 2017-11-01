@@ -51,6 +51,7 @@
 #include "../../core/str.h"
 #include "../../core/onsend.h"
 #include "../../core/events.h"
+#include "../../core/kemi.h"
 
 #include "siptrace_data.h"
 #include "siptrace_hep.h"
@@ -69,9 +70,10 @@ static int mod_init(void);
 static int siptrace_init_rpc(void);
 static int child_init(int rank);
 static void destroy(void);
-static int sip_trace(
-		struct sip_msg *, struct dest_info *, str *correlation_id_str, char *);
-static int sip_trace2(struct sip_msg *, char *dest, char *correlation_id);
+static int sip_trace(sip_msg_t *, dest_info_t *, str *, char *);
+static int w_sip_trace0(struct sip_msg *, char *p1, char *p2);
+static int w_sip_trace1(struct sip_msg *, char *dest, char *p2);
+static int w_sip_trace2(struct sip_msg *, char *dest, char *correlation_id);
 static int fixup_siptrace(void **param, int param_no);
 
 static int w_hlog1(struct sip_msg *, char *message, char *);
@@ -155,11 +157,11 @@ db_func_t db_funcs;		  /*!< Database functions */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"sip_trace", (cmd_function)sip_trace, 0, 0, 0,
+	{"sip_trace", (cmd_function)w_sip_trace0, 0, 0, 0,
 		ANY_ROUTE},
-	{"sip_trace", (cmd_function)sip_trace, 1, fixup_siptrace, 0,
+	{"sip_trace", (cmd_function)w_sip_trace1, 1, fixup_siptrace, 0,
 		ANY_ROUTE},
-	{"sip_trace", (cmd_function)sip_trace2, 2, fixup_spve_spve, 0,
+	{"sip_trace", (cmd_function)w_sip_trace2, 2, fixup_spve_spve, 0,
 		ANY_ROUTE},
 	{"hlog", (cmd_function)w_hlog1, 1, fixup_spve_null, 0,
 		ANY_ROUTE},
@@ -703,22 +705,17 @@ static int fixup_siptrace(void **param, int param_no)
 	return 0;
 }
 
-static int sip_trace2(struct sip_msg *msg, char *dest, char *correlation_id)
+/**
+ * Send sip trace with destination and correlation id
+ */
+static int ki_sip_trace_dst_cid(sip_msg_t *msg, str *duri, str *cid)
 {
 	struct dest_info *dst = NULL;
 	struct sip_uri uri;
 	struct proxy_l *p = NULL;
-	str dup_uri_str = {0, 0};
-	str correlation_id_str = {0, 0};
-	;
-
-	if(fixup_get_svalue(msg, (gparam_t *)dest, &dup_uri_str) != 0) {
-		LM_ERR("unable to parse the dest URI string\n");
-		return -1;
-	}
 
 	// If the dest is empty, use the module parameter, if set
-	if(dup_uri_str.len == 0) {
+	if(duri == NULL || duri->len <= 0) {
 		if(dup_uri) {
 			uri = *dup_uri;
 		} else {
@@ -727,7 +724,7 @@ static int sip_trace2(struct sip_msg *msg, char *dest, char *correlation_id)
 		}
 	} else {
 		memset(&uri, 0, sizeof(struct sip_uri));
-		if(parse_uri(dup_uri_str.s, dup_uri_str.len, &uri) < 0) {
+		if(parse_uri(duri->s, duri->len, &uri) < 0) {
 			LM_ERR("bad dup uri\n");
 			return -1;
 		}
@@ -757,16 +754,64 @@ static int sip_trace2(struct sip_msg *msg, char *dest, char *correlation_id)
 		pkg_free(p);
 	}
 
+	return sip_trace(msg, dst, ((cid!=NULL && cid->len>0)?cid:NULL), NULL);
+}
+
+/**
+ * Send sip trace with destination
+ */
+static int ki_sip_trace_dst(sip_msg_t *msg, str *duri)
+{
+	return ki_sip_trace_dst_cid(msg, duri, NULL);
+}
+
+/**
+ *
+ */
+static int ki_sip_trace(sip_msg_t *msg)
+{
+	return sip_trace(msg, NULL, NULL, NULL);
+}
+
+/**
+ *
+ */
+static int w_sip_trace0(sip_msg_t *msg, char *dest, char *correlation_id)
+{
+	return sip_trace(msg, NULL, NULL, NULL);
+}
+
+/**
+ *
+ */
+static int w_sip_trace1(sip_msg_t *msg, char *dest, char *correlation_id)
+{
+	return sip_trace(msg, (dest_info_t*)dest, NULL, NULL);
+}
+
+/**
+ *
+ */
+static int w_sip_trace2(sip_msg_t *msg, char *dest, char *correlation_id)
+{
+	str dup_uri_str = {0, 0};
+	str correlation_id_str = {0, 0};
+
+	if(fixup_get_svalue(msg, (gparam_t *)dest, &dup_uri_str) != 0) {
+		LM_ERR("unable to parse the dest URI string\n");
+		return -1;
+	}
+
 	if(fixup_get_svalue(msg, (gparam_t *)correlation_id, &correlation_id_str)
 			!= 0) {
 		LM_ERR("unable to parse the correlation id\n");
 		return -1;
 	}
 
-	return sip_trace(msg, dst, &correlation_id_str, NULL);
+	return ki_sip_trace_dst_cid(msg, &dup_uri_str, &correlation_id_str);
 }
 
-static int sip_trace(struct sip_msg *msg, struct dest_info *dst,
+static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 		str *correlation_id_str, char *dir)
 {
 	struct _siptrace_data sto;
@@ -1420,6 +1465,9 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 	return 0;
 }
 
+/**
+ *
+ */
 static int w_hlog1(struct sip_msg *msg, char *message, char *_)
 {
 	str smessage;
@@ -1430,6 +1478,17 @@ static int w_hlog1(struct sip_msg *msg, char *message, char *_)
 	return hlog(msg, NULL, &smessage);
 }
 
+/**
+ *
+ */
+static int ki_hlog(sip_msg_t *msg, str *message)
+{
+	return hlog(msg, NULL, message);
+}
+
+/**
+ *
+ */
 static int w_hlog2(struct sip_msg *msg, char *correlationid, char *message)
 {
 	str scorrelationid, smessage;
@@ -1444,6 +1503,17 @@ static int w_hlog2(struct sip_msg *msg, char *correlationid, char *message)
 	return hlog(msg, &scorrelationid, &smessage);
 }
 
+/**
+ *
+ */
+static int ki_hlog_cid(sip_msg_t *msg, str *correlationid, str *message)
+{
+	return hlog(msg, correlationid, message);
+}
+
+/**
+ *
+ */
 static void siptrace_rpc_status(rpc_t *rpc, void *c)
 {
 	str status = {0, 0};
@@ -1492,5 +1562,49 @@ static int siptrace_init_rpc(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_siptrace_exports[] = {
+	{ str_init("siptrace"), str_init("sip_trace"),
+		SR_KEMIP_INT, ki_sip_trace,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siptrace"), str_init("sip_trace_dst"),
+		SR_KEMIP_INT, ki_sip_trace_dst,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siptrace"), str_init("sip_trace_dst_cid"),
+		SR_KEMIP_INT, ki_sip_trace_dst_cid,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siptrace"), str_init("hlog"),
+		SR_KEMIP_INT, ki_hlog,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siptrace"), str_init("hlog_cid"),
+		SR_KEMIP_INT, ki_hlog_cid,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_siptrace_exports);
 	return 0;
 }
