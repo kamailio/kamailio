@@ -2788,10 +2788,15 @@ char* via_builder( unsigned int *len,
 	/* add [] only if ipv6 address is used;
 	 * if using pre-set no check is made */
 	if (send_sock->address.af==AF_INET6) {
-		line_buf[via_prefix_len]='[';
-		line_buf[via_prefix_len+1+address_str->len]=']';
-		extra_len=1;
-		via_len+=2; /* [ ]*/
+		/* lightweight safety checks if brackets set
+		 * or non-ipv6 (e.g., advertised hostname) */
+		if(address_str->s[0] != '['
+				&& memchr(address_str->s, ':', address_str->len)!=NULL) {
+			line_buf[via_prefix_len]='[';
+			line_buf[via_prefix_len+1+address_str->len]=']';
+			extra_len=1;
+			via_len+=2; /* [ ]*/
+		}
 	}
 	memcpy(line_buf+via_prefix_len+extra_len, address_str->s,
 				address_str->len);
