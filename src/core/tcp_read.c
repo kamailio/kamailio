@@ -91,6 +91,7 @@ static ticks_t tcp_reader_prev_ticks;
 
 int is_msg_complete(struct tcp_req* r);
 
+int ksr_tcp_accept_hep3=0;
 /**
  * control cloning of TCP receive buffer
  * - needed for operations working directly inside the buffer
@@ -481,7 +482,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					goto skip;
 				}
 				break;
-				
+
 			case H_SKIP:
 				/* find lf, we are in this state if we are not interested
 				 * in anything till end of line*/
@@ -674,10 +675,10 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 						r->start=p;
 						break;
 					default:
-						/* stun test */						
+						/* stun test */
 						if (unlikely(sr_event_enabled(SREV_STUN_IN)) && (unsigned char)*p == 0x00) {
 							r->state=H_STUN_MSG;
-						/* body will used as pointer to the last used byte */
+							/* body is used as pointer to the last used byte */
 							r->body=p;
 							r->content_len = 0;
 							LM_DBG("stun msg detected\n");
@@ -1235,6 +1236,88 @@ static int ws_process_msg(char* tcpbuf, unsigned int len,
 }
 #endif
 
+static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
+{
+	int bytes;
+	uint32_t size, mask_present, len;
+	char *p;
+	struct tcp_req *r;
+
+	r=&c->req;
+#ifdef USE_TLS
+	if (unlikely(c->type == PROTO_TLS))
+		bytes = tls_read(c, read_flags);
+	else
+#endif
+		bytes = tcp_read(c, read_flags);
+
+	if (bytes <= 0) {
+		if (likely(r->parsed >= r->pos))
+			return 0;
+	}
+
+	size = r->pos - r->parsed;
+
+	p = r->parsed;
+
+	/* Process first six bytes (HEP3 + 2 bytes the size)*/
+	if (size < 6)
+		goto skip;
+
+	if(p[0]!='H' || p[1]!='E' || p[2]!='P' || p[3]=='3') {
+		/* not hep3 */
+		goto skip;
+	}
+
+	len = ((uint32_t)(p[4] & 0xff) <<  8) + (p[5] & 0xff);
+
+	/* check if advertised lenght fits in read buffer */
+	if(len>=r->b_size) {
+		LM_WARN("advertised lenght (%u) greater than buffer size (%u)\n",
+				len, r->b_size);
+		goto skip;
+	}
+	/* check the whole message has been received */
+	if (size < len)
+		goto skip;
+
+	r->flags |= F_TCP_REQ_COMPLETE;
+	r->flags |= F_TCP_REQ_HEP3;
+	r->parsed = &p[len];
+
+skip:
+	return bytes;
+}
+
+static int hep3_process_msg(char* tcpbuf, unsigned int len,
+		struct receive_info* rcv_info, struct tcp_connection* con)
+{
+	sip_msg_t msg;
+	int ret;
+	sr_event_param_t evp = {0};
+
+	memset(&msg, 0, sizeof(sip_msg_t)); /* init everything to 0 */
+	/* fill in msg */
+	msg.buf=tcpbuf;
+	msg.len=len;
+	/* zero termination (termination of orig message bellow not that
+	 * useful as most of the work is done with scratch-pad; -jiri  */
+	/* buf[len]=0; */ /* WARNING: zero term removed! */
+	msg.rcv=*rcv_info;
+	msg.id=msg_no;
+	msg.pid=my_pid();
+	msg.set_global_address=default_global_address;
+	msg.set_global_port=default_global_port;
+
+	if(likely(sr_msg_time==1)) msg_set_time(&msg);
+	evp.data = (void*)(&msg);
+	ret=sr_event_exec(SREV_RCV_NOSIP, &evp);
+	LM_DBG("running hep3 handling event returned %d\n", ret);
+	free_sip_msg(&msg);
+
+	return 0;
+}
+
 /**
  * @brief wrapper around receive_msg() to clone the tcpbuf content
  *
@@ -1265,6 +1348,8 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 			return ws_process_msg(tcpbuf, len, rcv_info, con);
 #endif
+		if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
+			return hep3_process_msg(tcpbuf, len, rcv_info, con);
 
 		return receive_msg(tcpbuf, len, rcv_info);
 	}
@@ -1313,6 +1398,8 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 	if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 		return ws_process_msg(buf, len, rcv_info, con);
 #endif
+	if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
+		return hep3_process_msg(tcpbuf, len, rcv_info, con);
 	return receive_msg(buf, len, rcv_info);
 #else /* TCP_CLONE_RCVBUF */
 #ifdef READ_MSRP
@@ -1323,6 +1410,8 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 	if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 		return ws_process_msg(tcpbuf, len, rcv_info, con);
 #endif
+	if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
+		return hep3_process_msg(tcpbuf, len, rcv_info, con);
 	return receive_msg(tcpbuf, len, rcv_info);
 #endif /* TCP_CLONE_RCVBUF */
 }
@@ -1346,11 +1435,24 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 again:
 		if (likely(req->error==TCP_REQ_OK)){
 #ifdef READ_WS
-			if (unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
+			if (unlikely(con->type == PROTO_WS || con->type == PROTO_WSS)) {
 				bytes=tcp_read_ws(con, read_flags);
-			else
+			} else {
 #endif
-				bytes=tcp_read_headers(con, read_flags);
+				if(unlikely(ksr_tcp_accept_hep3!=0)) {
+					bytes=tcp_read_hep3(con, read_flags);
+					if (bytes>=0) {
+						if(!(con->req.flags & F_TCP_REQ_HEP3)) {
+							/* not hep3, try to read headers */
+							bytes=tcp_read_headers(con, read_flags);
+						}
+					}
+				} else {
+					bytes=tcp_read_headers(con, read_flags);
+				}
+#ifdef READ_WS
+			}
+#endif
 
 			if (unlikely(bytes==-1)){
 				LOG(cfg_get(core, core_cfg, corelog),

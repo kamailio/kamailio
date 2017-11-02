@@ -430,6 +430,7 @@ extern char *default_routename;
 %token TCP_OPT_KEEPCNT
 %token TCP_OPT_CRLF_PING
 %token TCP_OPT_ACCEPT_NO_CL
+%token TCP_OPT_ACCEPT_HEP3
 %token TCP_CLONE_RCVBUF
 %token TCP_REUSE_PORT
 %token DISABLE_TLS
@@ -1202,6 +1203,15 @@ assign_stm:
 		#endif
 	}
 	| TCP_OPT_ACCEPT_NO_CL EQUAL error { yyerror("boolean value expected"); }
+	| TCP_OPT_ACCEPT_HEP3 EQUAL NUMBER {
+		#ifdef USE_TCP
+			ksr_tcp_accept_hep3=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_ACCEPT_HEP3 EQUAL error { yyerror("boolean value expected"); }
+
 	| TCP_CLONE_RCVBUF EQUAL NUMBER {
 		#ifdef USE_TCP
 			tcp_set_clone_rcvbuf($3);

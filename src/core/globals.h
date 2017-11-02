@@ -99,6 +99,7 @@ extern enum poll_types tcp_poll_method;
 extern int tcp_max_connections; /* maximum tcp connections, hard limit */
 extern int tls_max_connections; /* maximum tls connections, hard limit */
 #endif
+extern int ksr_tcp_accept_hep3;
 #ifdef USE_TLS
 extern int tls_disable;
 extern unsigned short tls_port_no;

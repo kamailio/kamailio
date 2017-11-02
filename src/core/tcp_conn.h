@@ -133,7 +133,7 @@ struct tcp_req{
 #ifdef READ_HTTP11
 	int chunk_size;
 #endif
-	unsigned short flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
+	unsigned int flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
 	int bytes_to_go; /* how many bytes we have still to read from the body*/
 	enum tcp_req_errors error;
 	enum tcp_req_states state;
@@ -150,6 +150,7 @@ struct tcp_req{
 #define F_TCP_REQ_MSRP_FRAME  16
 #define F_TCP_REQ_MSRP_BODY   32
 #endif
+#define F_TCP_REQ_HEP3        64
 
 #define TCP_REQ_HAS_CLEN(tr)  ((tr)->flags & F_TCP_REQ_HAS_CLEN)
 #define TCP_REQ_COMPLETE(tr)  ((tr)->flags & F_TCP_REQ_COMPLETE)
