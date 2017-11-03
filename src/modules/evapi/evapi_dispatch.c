@@ -179,10 +179,10 @@ int evapi_close_connection(int cidx)
 	if(cidx<0 || cidx>=EVAPI_MAX_CLIENTS)
 		return -1;
 	if(_evapi_clients[cidx].connected==1
-			&& _evapi_clients[cidx].sock > 0) {
+			&& _evapi_clients[cidx].sock >= 0) {
 		close(_evapi_clients[cidx].sock);
 		_evapi_clients[cidx].connected = 0;
-		_evapi_clients[cidx].sock = 0;
+		_evapi_clients[cidx].sock = -1;
 		return 0;
 	}
 	return -2;
@@ -221,7 +221,7 @@ int evapi_set_tag(sip_msg_t* msg, str* stag)
 		return -1;
 
 	if(!(_evapi_clients[evenv->conidx].connected==1
-			&& _evapi_clients[evenv->conidx].sock > 0)) {
+			&& _evapi_clients[evenv->conidx].sock >= 0)) {
 		LM_ERR("connection not established\n");
 		return -1;
 	}
@@ -246,7 +246,8 @@ int evapi_init_notify_sockets(void)
 		LM_ERR("opening notify stream socket pair\n");
 		return -1;
 	}
-	LM_DBG("inter-process event notification sockets initialized\n");
+	LM_DBG("inter-process event notification sockets initialized: %d ~ %d\n",
+			_evapi_notify_sockets[0], _evapi_notify_sockets[1]);
 	return 0;
 }
 
@@ -281,7 +282,7 @@ int evapi_dispatch_notify(evapi_msg_t *emsg)
 
 	n = 0;
 	for(i=0; i<EVAPI_MAX_CLIENTS; i++) {
-		if(_evapi_clients[i].connected==1 && _evapi_clients[i].sock>0) {
+		if(_evapi_clients[i].connected==1 && _evapi_clients[i].sock>=0) {
 			if(emsg->tag.s==NULL || (emsg->tag.len = _evapi_clients[i].stag.len
 						&& strncmp(_evapi_clients[i].stag.s,
 									emsg->tag.s, emsg->tag.len)==0)) {
@@ -355,7 +356,10 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		evapi_run_cfg_route(&evenv, _evapi_rts.con_closed,
 				&_evapi_rts.con_closed_name);
 		_evapi_clients[i].connected = 0;
-		_evapi_clients[i].sock = 0;
+		if(_evapi_clients[i].sock>=0) {
+			close(_evapi_clients[i].sock);
+		}
+		_evapi_clients[i].sock = -1;
 		_evapi_clients[i].rpos = 0;
 		ev_io_stop(loop, watcher);
 		free(watcher);
@@ -593,11 +597,14 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	struct ev_io io_notify;
 	int yes_true = 1;
 	int fflags = 0;
+	int i;
 
 	LM_DBG("starting dispatcher processing\n");
 
 	memset(_evapi_clients, 0, sizeof(evapi_client_t) * EVAPI_MAX_CLIENTS);
-
+	for(i=0; i<EVAPI_MAX_CLIENTS; i++) {
+		_evapi_clients[i].sock = -1;
+	}
 	loop = ev_default_loop(0);
 
 	if(loop==NULL) {
@@ -871,7 +878,7 @@ int pv_get_evapi(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		return pv_get_null(msg, param, res);
 
 	if(_evapi_clients[evenv->conidx].connected==0
-			&& _evapi_clients[evenv->conidx].sock <= 0)
+			&& _evapi_clients[evenv->conidx].sock < 0)
 		return pv_get_null(msg, param, res);
 
 	switch(param->pvn.u.isname.name.n)
