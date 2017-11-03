@@ -1239,7 +1239,7 @@ static int ws_process_msg(char* tcpbuf, unsigned int len,
 static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
 {
 	int bytes;
-	uint32_t size, mask_present, len;
+	uint32_t size, len;
 	char *p;
 	struct tcp_req *r;
 
