@@ -966,7 +966,7 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 				rpc->fault(c, 500, "Internal error creating rpc");
 				goto error;
 			}
-			if(rpc->struct_add(th, "dd{",
+			if(rpc->struct_add(th, "dd[",
 							"entry", i,
 							"size",  (int)ht->entries[i].esize,
 							"slot",  &ih)<0)
@@ -976,8 +976,7 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 			}
 			while(it)
 			{
-				if(rpc->struct_add(ih, "{",
-							"item", &vh)<0)
+				if(rpc->array_add(ih, "{", &vh)<0)
 				{
 					rpc->fault(c, 500, "Internal error creating rpc");
 					goto error;
