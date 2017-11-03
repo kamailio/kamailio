@@ -52,9 +52,9 @@ static char *_evapi_bind_param = NULL;
 static int   _evapi_netstring_format_param = 1;
 
 str _evapi_event_callback = STR_NULL;
+int _evapi_dispatcher_pid = -1;
 
 static tm_api_t tmb;
-static int   _evapi_dispatcher_pid = -1;
 
 static int  mod_init(void);
 static int  child_init(int);

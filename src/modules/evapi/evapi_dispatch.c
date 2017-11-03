@@ -46,6 +46,7 @@ static int _evapi_notify_sockets[2];
 static int _evapi_netstring_format = 1;
 
 extern str _evapi_event_callback;
+extern int _evapi_dispatcher_pid;
 
 #define EVAPI_IPADDR_SIZE	64
 #define EVAPI_TAG_SIZE	64
@@ -256,6 +257,7 @@ void evapi_close_notify_sockets_child(void)
 {
 	LM_DBG("closing the notification socket used by children\n");
 	close(_evapi_notify_sockets[1]);
+	_evapi_notify_sockets[1] = -1;
 }
 
 /**
@@ -265,6 +267,7 @@ void evapi_close_notify_sockets_parent(void)
 {
 	LM_DBG("closing the notification socket used by parent\n");
 	close(_evapi_notify_sockets[0]);
+	_evapi_notify_sockets[0] = -1;
 }
 
 /**
@@ -730,11 +733,21 @@ int _evapi_relay(str *evdata, str *ctag, int unicast)
 		emsg->unicast = unicast;
 	}
 
-	LM_DBG("sending [%p] [%.*s] (%d)\n", emsg, emsg->data.len, emsg->data.s, emsg->data.len);
-	len = write(_evapi_notify_sockets[1], &emsg, sizeof(evapi_msg_t*));
-	if(len<=0) {
-		LM_ERR("failed to pass the pointer to evapi dispatcher\n");
-		return -1;
+	LM_DBG("sending [%p] [%.*s] (%d)\n", emsg, emsg->data.len, emsg->data.s,
+			emsg->data.len);
+	if(_evapi_notify_sockets[1]!=-1) {
+		len = write(_evapi_notify_sockets[1], &emsg, sizeof(evapi_msg_t*));
+		if(len<=0) {
+			shm_free(emsg);
+			LM_ERR("failed to pass the pointer to evapi dispatcher\n");
+			return -1;
+		}
+	} else {
+		cfg_update();
+		LM_DBG("dispatching [%p] [%.*s] (%d)\n", emsg,
+				emsg->data.len, emsg->data.s, emsg->data.len);
+		evapi_dispatch_notify(emsg);
+		shm_free(emsg);
 	}
 	return 0;
 }
