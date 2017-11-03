@@ -47,6 +47,7 @@ static int _evapi_netstring_format = 1;
 
 extern str _evapi_event_callback;
 extern int _evapi_dispatcher_pid;
+extern int _evapi_max_clients;
 
 #define EVAPI_IPADDR_SIZE	64
 #define EVAPI_TAG_SIZE	64
@@ -75,9 +76,10 @@ typedef struct _evapi_msg {
 	int unicast;
 } evapi_msg_t;
 
-#define EVAPI_MAX_CLIENTS	8
+#define EVAPI_MAX_CLIENTS	_evapi_max_clients
+
 /* last one used for error handling, not a real connected client */
-static evapi_client_t _evapi_clients[EVAPI_MAX_CLIENTS+1];
+static evapi_client_t *_evapi_clients = NULL;
 
 typedef struct _evapi_evroutes {
 	int con_new;
@@ -176,7 +178,7 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt, str *rtname)
  */
 int evapi_close_connection(int cidx)
 {
-	if(cidx<0 || cidx>=EVAPI_MAX_CLIENTS)
+	if(cidx<0 || cidx>=EVAPI_MAX_CLIENTS || _evapi_clients==NULL)
 		return -1;
 	if(_evapi_clients[cidx].connected==1
 			&& _evapi_clients[cidx].sock >= 0) {
@@ -212,7 +214,7 @@ int evapi_set_tag(sip_msg_t* msg, str* stag)
 {
 	evapi_env_t *evenv;
 
-	if(msg==NULL || stag==NULL)
+	if(msg==NULL || stag==NULL || _evapi_clients==NULL)
 		return -1;
 
 	evenv = evapi_get_msg_env(msg);
@@ -280,6 +282,10 @@ int evapi_dispatch_notify(evapi_msg_t *emsg)
 	int n;
 	int wlen;
 
+	if(_evapi_clients==NULL) {
+		return 0;
+	}
+
 	n = 0;
 	for(i=0; i<EVAPI_MAX_CLIENTS; i++) {
 		if(_evapi_clients[i].connected==1 && _evapi_clients[i].sock>=0) {
@@ -319,7 +325,11 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 	char *efp;
 
 	if(EV_ERROR & revents) {
-		perror("received invalid event\n");
+		LM_ERR("received invalid event (%d)\n", revents);
+		return;
+	}
+	if(_evapi_clients==NULL) {
+		LM_ERR("no client structures\n");
 		return;
 	}
 
@@ -479,6 +489,10 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	int i;
 	evapi_env_t evenv;
 
+	if(_evapi_clients==NULL) {
+		LM_ERR("no client structures\n");
+		return;
+	}
 	evapi_client = (struct ev_io*) malloc (sizeof(struct ev_io));
 	if(evapi_client==NULL) {
 		LM_ERR("no more memory\n");
@@ -601,6 +615,12 @@ int evapi_run_dispatcher(char *laddr, int lport)
 
 	LM_DBG("starting dispatcher processing\n");
 
+	_evapi_clients = (evapi_client_t*)malloc(sizeof(evapi_client_t)
+			* (EVAPI_MAX_CLIENTS+1));
+	if(_evapi_clients==NULL) {
+		LM_ERR("failed to allocate client structures\n");
+		exit(-1);
+	}
 	memset(_evapi_clients, 0, sizeof(evapi_client_t) * EVAPI_MAX_CLIENTS);
 	for(i=0; i<EVAPI_MAX_CLIENTS; i++) {
 		_evapi_clients[i].sock = -1;
@@ -872,6 +892,9 @@ int pv_get_evapi(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	if(param==NULL || res==NULL)
 		return -1;
 
+	if(_evapi_clients==NULL) {
+		return pv_get_null(msg, param, res);
+	}
 	evenv = evapi_get_msg_env(msg);
 
 	if(evenv==NULL || evenv->conidx<0 || evenv->conidx>=EVAPI_MAX_CLIENTS)
