@@ -488,6 +488,8 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	struct ev_io *evapi_client;
 	int i;
 	evapi_env_t evenv;
+	int optval;
+	socklen_t optlen;
 
 	if(_evapi_clients==NULL) {
 		LM_ERR("no client structures\n");
@@ -537,6 +539,12 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 					free(evapi_client);
 					return;
 				}
+			}
+			optval = 1;
+			optlen = sizeof(optval);
+			if(setsockopt(csock, SOL_SOCKET, SO_KEEPALIVE,
+						&optval, optlen) < 0) {
+				LM_WARN("failed to enable keepalive on socket %d\n", csock);
 			}
 			_evapi_clients[i].connected = 1;
 			_evapi_clients[i].sock = csock;
