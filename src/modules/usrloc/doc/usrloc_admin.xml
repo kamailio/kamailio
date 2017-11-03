@@ -1046,7 +1046,14 @@ modparam("usrloc", "db_raw_fetch_type", 1)
 		<title><varname>db_insert_null</varname> (int)</title>
 		<para>
 			If set to 1, the insert operation to database will add null values
-			in the sql statement.
+			in the statement. It has to be set to 1 for the database systems
+			that do not have table definitions that create automatically the
+			null fields (e.g., db_mongodb) for each stored record.
+		</para>
+		<para>
+			When set to 0, the fiels that default to null are not
+			added to the DB insert statement if they don't have a different
+			value, making the query smaller.
 		</para>
 		<para>
 		<emphasis>
