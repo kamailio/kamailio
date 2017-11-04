@@ -55,9 +55,9 @@ extern str ah_error;
 
 extern int tls_verify_host;
 extern int tls_verify_peer;
-extern str tls_client_cert;
-extern str tls_client_key;
-extern str tls_ca_path;
+extern char* tls_client_cert;
+extern char* tls_client_key;
+extern char* tls_ca_path;
 
 extern unsigned int default_authmethod;
 
@@ -89,9 +89,9 @@ struct query_params {
 
 	unsigned int timeout;
 	struct header_list headers;
-	str tls_client_cert;
-	str tls_client_key;
-	str tls_ca_path;
+	char* tls_client_cert;
+	char* tls_client_key;
+	char* tls_ca_path;
 	str body;
 
 	unsigned int authmethod;
@@ -143,22 +143,19 @@ static inline void free_async_query(async_query_t *aq)
 		shm_free(aq->query_params.headers.t);
 	}
 
-	if (aq->query_params.tls_client_cert.s && aq->query_params.tls_client_cert.len > 0) {
-		shm_free(aq->query_params.tls_client_cert.s);
-		aq->query_params.tls_client_cert.s = NULL;
-		aq->query_params.tls_client_cert.len = 0;
+	if (aq->query_params.tls_client_cert) {
+		shm_free(aq->query_params.tls_client_cert);
+		aq->query_params.tls_client_cert = NULL;
 	}
 
-	if (aq->query_params.tls_client_key.s && aq->query_params.tls_client_key.len > 0) {
-		shm_free(aq->query_params.tls_client_key.s);
-		aq->query_params.tls_client_key.s = NULL;
-		aq->query_params.tls_client_key.len = 0;
+	if (aq->query_params.tls_client_key) {
+		shm_free(aq->query_params.tls_client_key);
+		aq->query_params.tls_client_key = NULL;
 	}
 
-	if (aq->query_params.tls_ca_path.s && aq->query_params.tls_ca_path.len > 0) {
-		shm_free(aq->query_params.tls_ca_path.s);
-		aq->query_params.tls_ca_path.s = NULL;
-		aq->query_params.tls_ca_path.len = 0;
+	if (aq->query_params.tls_ca_path) {
+		shm_free(aq->query_params.tls_ca_path);
+		aq->query_params.tls_ca_path = NULL;
 	}
 
 	if (aq->query_params.body.s && aq->query_params.body.len > 0) {

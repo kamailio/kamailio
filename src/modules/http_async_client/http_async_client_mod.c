@@ -70,9 +70,9 @@ int tls_version = 0; // Use default SSL version in HTTPS requests (see curl/curl
 int tls_verify_host = 1; // By default verify host in HTTPS requests
 int tls_verify_peer = 1; // By default verify peer in HTTPS requests
 int curl_verbose = 0;
-str tls_client_cert = STR_STATIC_INIT(""); // client SSL certificate path, defaults to NULL
-str tls_client_key = STR_STATIC_INIT(""); // client SSL certificate key path, defaults to NULL
-str tls_ca_path = STR_STATIC_INIT(""); // certificate authority dir path, defaults to NULL
+char* tls_client_cert = ""; // client SSL certificate path, defaults to NULL
+char* tls_client_key = ""; // client SSL certificate key path, defaults to NULL
+char* tls_ca_path = ""; // certificate authority dir path, defaults to NULL
 static char *memory_manager = "shm";
 extern int curl_memory_manager;
 unsigned int default_authmethod = CURLAUTH_BASIC | CURLAUTH_DIGEST;
@@ -138,9 +138,9 @@ static param_export_t params[]={
 	{"tls_verify_host",		INT_PARAM,		&tls_verify_host},
 	{"tls_verify_peer",		INT_PARAM,		&tls_verify_peer},
 	{"curl_verbose",		INT_PARAM,		&curl_verbose},
-	{"tls_client_cert",		PARAM_STR,		&tls_client_cert},
-	{"tls_client_key",		PARAM_STR,		&tls_client_key},
-	{"tls_ca_path",			PARAM_STR,		&tls_ca_path},
+	{"tls_client_cert",		PARAM_STRING,	&tls_client_cert},
+	{"tls_client_key",		PARAM_STRING,	&tls_client_key},
+	{"tls_ca_path",			PARAM_STRING,	&tls_ca_path},
 	{"memory_manager",		PARAM_STRING,	&memory_manager},
 	{"authmethod",			PARAM_INT,		&default_authmethod },
 	{0, 0, 0}
@@ -679,9 +679,7 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 				LM_ERR("invalid value type for $http_req(tls_ca_path)\n");
 				return -1;
 			}
-			set_query_param(&ah_params.tls_ca_path, tval->rs);
-		} else {
-			set_query_param(&ah_params.tls_ca_path, tls_ca_path);
+			set_query_cparam(&ah_params.tls_ca_path, tval->rs);
 		}
 		break;
 	case E_HRN_TLS_CLIENT_KEY:
@@ -690,9 +688,7 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 				LM_ERR("invalid value type for $http_req(tls_client_key)\n");
 				return -1;
 			}
-			set_query_param(&ah_params.tls_client_key, tval->rs);
-		} else {
-			set_query_param(&ah_params.tls_client_key, tls_client_key);
+			set_query_cparam(&ah_params.tls_client_key, tval->rs);
 		}
 		break;
 	case E_HRN_TLS_CLIENT_CERT:
@@ -701,9 +697,7 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 				LM_ERR("invalid value type for $http_req(tls_client_cert)\n");
 				return -1;
 			}
-			set_query_param(&ah_params.tls_client_cert, tval->rs);
-		} else {
-			set_query_param(&ah_params.tls_client_cert, tls_client_cert);
+			set_query_cparam(&ah_params.tls_client_cert, tval->rs);
 		}
 		break;
 	case E_HRN_SUSPEND:
