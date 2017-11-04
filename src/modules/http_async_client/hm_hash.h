@@ -70,9 +70,9 @@ typedef struct hm_params {
 	int tls_verify_peer;
 	struct curl_slist* headers;
 	int method;
-	str tls_client_cert;
-	str tls_client_key;
-	str tls_ca_path;
+	char* tls_client_cert;
+	char* tls_client_key;
+	char* tls_ca_path;
 	str body;
 	
 	unsigned int authmethod;

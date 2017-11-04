@@ -477,16 +477,16 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb, 
 	curl_easy_setopt(cell->easy, CURLOPT_SSL_VERIFYHOST, cell->params.tls_verify_host?2:0);
 	curl_easy_setopt(cell->easy, CURLOPT_SSLVERSION, tls_version);
 
-	if (cell->params.tls_client_cert.s && cell->params.tls_client_cert.len > 0) {
-		curl_easy_setopt(cell->easy, CURLOPT_SSLCERT, cell->params.tls_client_cert.s);
+	if (cell->params.tls_client_cert) {
+		curl_easy_setopt(cell->easy, CURLOPT_SSLCERT, cell->params.tls_client_cert);
 	}
 
-	if (cell->params.tls_client_key.s && cell->params.tls_client_key.len > 0) {
-		curl_easy_setopt(cell->easy, CURLOPT_SSLKEY, cell->params.tls_client_key.s);
+	if (cell->params.tls_client_key) {
+		curl_easy_setopt(cell->easy, CURLOPT_SSLKEY, cell->params.tls_client_key);
 	}
 
-	if (cell->params.tls_ca_path.s && cell->params.tls_ca_path.len > 0) {
-		curl_easy_setopt(cell->easy, CURLOPT_CAPATH, cell->params.tls_ca_path.s);
+	if (cell->params.tls_ca_path) {
+		curl_easy_setopt(cell->easy, CURLOPT_CAPATH, cell->params.tls_ca_path);
 	}
 
 	curl_easy_setopt(cell->easy, CURLOPT_HEADER, 1);
