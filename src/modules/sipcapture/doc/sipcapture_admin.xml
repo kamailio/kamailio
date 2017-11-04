@@ -203,7 +203,7 @@ modparam("sipcapture", "capture_on", 1)
 	</section>
 
 	<section id="sipcapture.p.capture_mode">
-                <title><varname>capture_mode</varname> (integer)</title>
+                <title><varname>capture_mode</varname> (str)</title>
                 <para>
 				This parameter can be used for defining a capture mode which can be used in
 				the sip_capture calls as a parameter. A capture mode has a name and some parameters.
@@ -518,7 +518,7 @@ modparam("sipcapture", "nonsip_hook", 1)
 	<title>Functions</title>
 	<section id="sipcapture.f.sip_capture">
 		<title>
-		<function moreinfo="none">sip_capture([table])</function>
+		<function moreinfo="none">sip_capture([table], [cmode])</function>
 		</title>
 		<para>
 		Store the current processed HEP/IPIP SIP message in database. It is stored in the
@@ -532,10 +532,14 @@ modparam("sipcapture", "nonsip_hook", 1)
 		as an argument of the sip_capture function.
 		</para>
 		</listitem>
+		<listitem>
+		<para><emphasis>cmode</emphasis> - The reference to the capture_mode
+		parameter.
+		</para>
+		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE, BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<emphasis>
 			Default value is "NULL".
@@ -548,12 +552,14 @@ sip_capture();
 ...
 sip_capture("sip_capture_call_20160124");
 ...
+sip_capture("", "cmode");
+...
 </programlisting>
 		</example>
 	</section>
 	<section id="sipcapture.f.report_capture">
 		<title>
-		<function moreinfo="none">report_capture([table],[data])</function>
+		<function moreinfo="none">report_capture([table], [cid], [data])</function>
 		</title>
 		<para>
 		Store the current processed HEP REPORT message in database. 
@@ -563,13 +569,18 @@ sip_capture("sip_capture_call_20160124");
 		<listitem>
 		<para><emphasis>table</emphasis> - The table where REPORT message will be stored.
 		</para>
-		<para><emphasis>data</emphasis> - The custom report data.
+		</listitem>
+		<listitem>
+		<para><emphasis>cid</emphasis> - The correlation id.
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>data</emphasis> - The custom report data in JSON format.
 		</para>
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE, BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<emphasis>
 			Default value is "NULL".
@@ -580,14 +591,32 @@ sip_capture("sip_capture_call_20160124");
 ...
 report_capture();
 ...
-report_capture("report_data");
+report_capture("report_data", "$ci");
 ...
-report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
+report_capture("report_data", "$ci", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 ...
 </programlisting>
 		</example>
 	</section>
-
+	<section id="sipcapture.f.float2int">
+		<title>
+		<function moreinfo="none">float2int(fval, ival)</function>
+		</title>
+		<para>
+		Return the value of atof(fval) * atoi(ival). On case the result is 0,
+		then -1 is returned.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>report_capture()</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(res) = float2int("10.5", "1");
+...
+</programlisting>
+		</example>
 	</section>
 
     <section>
