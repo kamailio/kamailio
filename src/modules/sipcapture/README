@@ -57,12 +57,16 @@ Alexandr Dubovikov
               4.2. report_capture([table], [cid], [data])
               4.3. float2int(fval, ival)
 
-        5. RPC Commands
+        5. Event Routes
 
-              5.1. sipcapture.status param
+              5.1. event_route[sipcapture:request]
 
-        6. Database setup
-        7. Limitations
+        6. RPC Commands
+
+              6.1. sipcapture.status param
+
+        7. Database setup
+        8. Limitations
 
    List of Examples
 
@@ -90,6 +94,7 @@ Alexandr Dubovikov
    1.22. sip_capture() usage
    1.23. report_capture() usage
    1.24. report_capture() usage
+   1.25. event_route[sipcapture:request] usage
 
 Chapter 1. Admin Guide
 
@@ -131,12 +136,16 @@ Chapter 1. Admin Guide
         4.2. report_capture([table], [cid], [data])
         4.3. float2int(fval, ival)
 
-   5. RPC Commands
+   5. Event Routes
 
-        5.1. sipcapture.status param
+        5.1. event_route[sipcapture:request]
 
-   6. Database setup
-   7. Limitations
+   6. RPC Commands
+
+        6.1. sipcapture.status param
+
+   7. Database setup
+   8. Limitations
 
 1. Overview
 
@@ -539,11 +548,46 @@ report_capture("report_data", "$ci", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 $var(res) = float2int("10.5", "1");
 ...
 
-5. RPC Commands
+5. Event Routes
 
-   5.1. sipcapture.status param
+   5.1. event_route[sipcapture:request]
 
-5.1.  sipcapture.status param
+5.1. event_route[sipcapture:request]
+
+   Event route block to be executed when HEP packet is received. It
+   requires module parameter 'nonsip_hook' to be set to 1.
+
+   Example 1.25. event_route[sipcapture:request] usage
+...
+# new event sipcapture socket
+modparam("sipcapture", "nonsip_hook", 1)
+...
+
+event_route[sipcapture:request] {
+
+        xlog("HEP Request!\n");
+        xlog("received sipcapture request from $si:$sp\n");
+        xlog("HEP VERSION $hep(version) request from $si:$sp\n");
+        xlog("HEP CHUNK Source IP $hep(0x002) request from $si:$sp\n");
+
+        # is it SIP ?
+        if($hep(0x00b) == 1) {
+
+                # do parsing internal
+                return 1;
+        } else {
+                # if report lets proceed here with payload
+                xlog("HEP CHUNK PAYLOAD $hep(0x00f) request from $si:$sp\n");
+                return 0;
+        }
+}
+...
+
+6. RPC Commands
+
+   6.1. sipcapture.status param
+
+6.1.  sipcapture.status param
 
    Name: sipcapture.status
 
@@ -561,7 +605,7 @@ kamcmd sipcapture.status off
 kamcmd sipcapture.status check
 ...
 
-6. Database setup
+7. Database setup
 
    Before running Kamailio with the sipcapture module, you have to setup
    the database tables where the module will store the data. For that, if
@@ -571,7 +615,7 @@ kamcmd sipcapture.status check
    find the complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-7. Limitations
+8. Limitations
 
      * 1. Only one capturing mode on RAW socket is supported: IPIP or
        monitoring/mirroring port. Don't activate both at the same time.
