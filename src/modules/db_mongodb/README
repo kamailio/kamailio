@@ -19,12 +19,13 @@ Daniel-Constantin Mierla
 
         1. Overview
         2. Limitations
-        3. Dependencies
+        3. Remarks
+        4. Dependencies
 
-              3.1. Kamailio Modules
-              3.2. External Libraries or Applications
+              4.1. Kamailio Modules
+              4.2. External Libraries or Applications
 
-        4. Usage
+        5. Usage
 
    List of Examples
 
@@ -36,12 +37,13 @@ Chapter 1. Admin Guide
 
    1. Overview
    2. Limitations
-   3. Dependencies
+   3. Remarks
+   4. Dependencies
 
-        3.1. Kamailio Modules
-        3.2. External Libraries or Applications
+        4.1. Kamailio Modules
+        4.2. External Libraries or Applications
 
-   4. Usage
+   5. Usage
 
 1. Overview
 
@@ -63,17 +65,25 @@ Chapter 1. Admin Guide
    this module, use ndb_mongodb for sending any kind of command to a
    MongoDB server.
 
-3. Dependencies
+3. Remarks
 
-   3.1. Kamailio Modules
-   3.2. External Libraries or Applications
+   Using this module as a database dirver may require additional settings
+   for various modules. For example, you have to set module parameter
+   'db_insert_null' to 1 for 'usrloc' module. If the module you are using
+   with 'db_mongodb' fails, check its README for notes about using it with
+   no-SQL databases.
 
-3.1. Kamailio Modules
+4. Dependencies
+
+   4.1. Kamailio Modules
+   4.2. External Libraries or Applications
+
+4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * none.
 
-3.2. External Libraries or Applications
+4.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
@@ -88,7 +98,7 @@ Chapter 1. Admin Guide
        https://github.com/miconda/mongo-c-driver/commit/51d95009de39eaeca4
        8491682a5ffec4f83cde55
 
-4. Usage
+5. Usage
 
    Load the module and set the the DB URL for specific modules to:
    mongodb://username:password@host:port/database. Username, password and
