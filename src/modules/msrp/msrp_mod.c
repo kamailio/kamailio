@@ -69,6 +69,7 @@ int msrp_auth_max_expires = 3600;
 int msrp_timer_interval = 60;
 str msrp_use_path_addr = { 0 };
 int msrp_tls_module_loaded = 0;
+str msrp_event_callback = STR_NULL;
 
 static int msrp_frame_received(sr_event_param_t *evp);
 sip_msg_t *msrp_fake_sipmsg(msrp_frame_t *mf);
@@ -118,6 +119,7 @@ static param_export_t params[]={
 	{"auth_max_expires",  PARAM_INT,   &msrp_auth_max_expires},
 	{"timer_interval",    PARAM_INT,   &msrp_timer_interval},
 	{"use_path_addr",     PARAM_STR,   &msrp_use_path_addr},
+	{"event_callback",    PARAM_STR,   &msrp_event_callback},
 	{0, 0, 0}
 };
 
@@ -504,6 +506,8 @@ static int msrp_frame_received(sr_event_param_t *evp)
 	sip_msg_t *fmsg;
 	struct run_act_ctx ctx;
 	int rtb, rt;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("msrp:frame-in");
 
 	tev = (tcp_event_info_t*)evp->data;
 
@@ -524,24 +528,40 @@ static int msrp_frame_received(sr_event_param_t *evp)
 	}
 	msrp_reset_env();
 	msrp_set_current_frame(&mf);
-	rt = route_get(&event_rt, "msrp:frame-in");
-	if(rt>=0 && event_rt.rlist[rt]!=NULL) {
+	fmsg = msrp_fake_sipmsg(&mf);
+	if(fmsg != NULL)
+		fmsg->rcv = *tev->rcv;
+	rtb = get_route_type();
+	set_route_type(EVENT_ROUTE);
+	if(msrp_event_callback.s == NULL || msrp_event_callback.len <= 0) {
+		/* native cfg script execution */
+		rt = route_get(&event_rt, evname.s);
 		LM_DBG("executing event_route[msrp:frame-in] (%d)\n", rt);
-		fmsg = msrp_fake_sipmsg(&mf);
-		if(fmsg!=NULL)
-			fmsg->rcv = *tev->rcv;
-		rtb = get_route_type();
-		set_route_type(REQUEST_ROUTE);
-		init_run_actions_ctx(&ctx);
-		run_top_route(event_rt.rlist[rt], fmsg, &ctx);
-		if(ctx.run_flags&DROP_R_F)
-		{
-			LM_DBG("exit due to 'drop' in event route\n");
+		if(rt >= 0 && event_rt.rlist[rt] != NULL) {
+			init_run_actions_ctx(&ctx);
+			run_top_route(event_rt.rlist[rt], fmsg, &ctx);
+			if(ctx.run_flags & DROP_R_F) {
+				LM_DBG("exit due to 'drop' in event route\n");
+			}
+		} else {
+			LM_ERR("empty event route block for msrp handling\n");
 		}
-		set_route_type(rtb);
-		if(fmsg!=NULL)
-			free_sip_msg(fmsg);
+	} else {
+		/* kemi script execution */
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			LM_ERR("event callback (%s) set, but no cfg engine\n",
+					msrp_event_callback.s);
+		} else {
+			if(keng->froute(fmsg, EVENT_ROUTE,
+						&msrp_event_callback, &evname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
 	}
+	set_route_type(rtb);
+	if(fmsg != NULL)
+		free_sip_msg(fmsg);
 	msrp_reset_env();
 	msrp_destroy_frame(&mf);
 	return 0;
