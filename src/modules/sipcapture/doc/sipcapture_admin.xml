@@ -40,13 +40,13 @@
 	</para>
 
 	<para>
-	The capturing can be turned on/off using mi or rpc commands. Example:
+	The capturing can be turned on/off using rpc commands. Example:
 	</para>
 	<para>
-	&ctltool; fifo sip_capture on
+	&ctltool; rpc sipcapture.status on
 	</para>
 	<para>
-	&ctltool; fifo sip_capture off
+	&ctltool; rpc sipcapture.status off
 	</para>
 	</section>
 	<section>
