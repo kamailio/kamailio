@@ -246,9 +246,9 @@ int hep_offset = 0;
 str raw_socket_listen = {0, 0};
 str raw_interface = {0, 0};
 char *authkey = NULL, *correlation_id = NULL;
-
 str callid_aleg_headers[MAX_HEADERS];
 int n_callid_aleg_headers = 0;
+str sc_event_callback = STR_NULL;
 
 struct ifreq ifr; /* interface structure */
 
@@ -395,6 +395,7 @@ static param_export_t params[] = {
 	{"table_time_sufix", PARAM_STR, &table_time_sufix},
 	{"topoh_unmask", PARAM_INT, &sc_topoh_unmask},
 	{"nonsip_hook", PARAM_INT, &nonsip_hook},
+	{"event_callback", PARAM_STR, &sc_event_callback},
 	{0, 0, 0}
 };
 
@@ -746,6 +747,7 @@ static int mod_init(void)
 {
 	struct ip_addr *ip = NULL;
 	char *def_params = NULL;
+	sr_kemi_eng_t *keng = NULL;
 
 #ifdef STATISTICS
 	int cnt = 0;
@@ -884,18 +886,28 @@ static int mod_init(void)
 	*capture_on_flag = capture_on;
 
 	if(nonsip_hook) {
-		route_no = route_get(&event_rt, "sipcapture:request");
-		if(route_no == -1) {
-			LM_ERR("failed to find event_route[sipcapture:request]\n");
-			return -1;
-		}
+		if(sc_event_callback.s == NULL || sc_event_callback.len <= 0) {
+			route_no = route_get(&event_rt, "sipcapture:request");
+			if(route_no == -1) {
+				LM_ERR("failed to find event_route[sipcapture:request]\n");
+				return -1;
+			}
 
-		if(event_rt.rlist[route_no] == 0) {
-			LM_ERR("event_route[sipcapture:request] is empty\n");
-			return -1;
-		}
+			if(event_rt.rlist[route_no] == 0) {
+				LM_ERR("event_route[sipcapture:request] is empty\n");
+				return -1;
+			}
 
-		hep_route_no = route_no;
+			hep_route_no = route_no;
+		} else {
+			hep_route_no = -1;
+			keng = sr_kemi_eng_get();
+			if(keng == NULL) {
+				LM_DBG("event callback (%s) set, but no cfg engine\n",
+						sc_event_callback.s);
+				return -1;
+			}
+		}
 
 		if(sr_event_register_cb(SREV_RCV_NOSIP, nosip_hep_msg) < 0) {
 			LM_ERR("failed to register SREV_RCV_NOSIP event\n");
@@ -2880,6 +2892,9 @@ static int nosip_hep_msg(sr_event_param_t *evp)
 	int len = 0;
 	struct run_act_ctx ra_ctx;
 	int ret = 0;
+	int rtb;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("sipcapture:request");
 
 	msg = (sip_msg_t *)evp->data;
 
@@ -2888,12 +2903,37 @@ static int nosip_hep_msg(sr_event_param_t *evp)
 	buf = msg->buf;
 	len = msg->len;
 
-	/* first send to route */
-	init_run_actions_ctx(&ra_ctx);
-	ret = run_actions(&ra_ctx, event_rt.rlist[hep_route_no], msg);
+	rtb = get_route_type();
+	set_route_type(EVENT_ROUTE);
+	if(hep_route_no>=-1) {
+		/* first send to route */
+		init_run_actions_ctx(&ra_ctx);
+		ret = run_actions(&ra_ctx, event_rt.rlist[hep_route_no], msg);
 
-	if(ret != 1)
-		return ret;
+		if(ret != 1) {
+			LM_DBG("return code from event route: %d - skipping\n", ret);
+			set_route_type(rtb);
+			return ret;
+		}
+	} else {
+		if(sc_event_callback.s == NULL || sc_event_callback.len <= 0) {
+			LM_ERR("no kemi callback set\n");
+			set_route_type(rtb);
+			return -1;
+		}
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			LM_ERR("kemi engine not available\n");
+			set_route_type(rtb);
+			return -1;
+		}
+		if(keng->froute(msg, EVENT_ROUTE, &sc_event_callback, &evname) < 0) {
+			LM_ERR("error running event route kemi callback\n");
+			set_route_type(rtb);
+			return -1;
+		}
+	}
+	set_route_type(rtb);
 
 	/* hep_hdr */
 	heph = (struct hep_hdr *)msg->buf;
@@ -2925,7 +2965,6 @@ static int nosip_hep_msg(sr_event_param_t *evp)
 		msg->buf = buf;
 		msg->len = len;
 	} else {
-
 		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: not supported version "
 				"or bad length: v:[%d] l:[%d]\n",
 				heph->hp_v, heph->hp_l);
