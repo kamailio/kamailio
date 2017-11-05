@@ -1273,7 +1273,8 @@ static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
 
 	if(p[0]!='H' || p[1]!='E' || p[2]!='P' || p[3]=='3') {
 		/* not hep3 */
-		LM_DBG("not HEP3 packet header\n");
+		LM_DBG("not HEP3 packet header (%u): %c %c %c %c / %x %x %x %x\n",
+				size, p[0], p[1], p[2], p[3], p[0], p[1], p[2], p[3]);
 		goto skip;
 	}
 	r->flags |= F_TCP_REQ_HEP3;
@@ -1293,7 +1294,7 @@ static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
 	}
 
 	r->flags |= F_TCP_REQ_COMPLETE;
-	r->parsed = &p[len];
+	r->parsed = p + len;
 	LM_DBG("reading of HEP3 packet is complete (%u / %u)\n", len, size);
 
 skip:
