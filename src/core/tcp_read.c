@@ -1271,7 +1271,7 @@ static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
 		goto skip;
 	}
 
-	if(p[0]!='H' || p[1]!='E' || p[2]!='P' || p[3]=='3') {
+	if(p[0]!='H' || p[1]!='E' || p[2]!='P' || p[3]!='3') {
 		/* not hep3 */
 		LM_DBG("not HEP3 packet header (%u): %c %c %c %c / %x %x %x %x\n",
 				size, p[0], p[1], p[2], p[3], p[0], p[1], p[2], p[3]);
