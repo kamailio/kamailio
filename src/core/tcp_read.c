@@ -1245,15 +1245,20 @@ static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
 
 	r=&c->req;
 #ifdef USE_TLS
-	if (unlikely(c->type == PROTO_TLS))
+	if (unlikely(c->type == PROTO_TLS)) {
 		bytes = tls_read(c, read_flags);
-	else
+	} else {
 #endif
 		bytes = tcp_read(c, read_flags);
+#ifdef USE_TLS
+	}
+#endif
 
 	if (bytes <= 0) {
-		if (likely(r->parsed >= r->pos))
+		if (likely(r->parsed >= r->pos)) {
+			LM_DBG("no new bytes to read, but still unparsed content\n");
 			return 0;
+		}
 	}
 
 	size = r->pos - r->parsed;
@@ -1261,13 +1266,17 @@ static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
 	p = r->parsed;
 
 	/* Process first six bytes (HEP3 + 2 bytes the size)*/
-	if (size < 6)
+	if (size < 6) {
+		LM_DBG("not enough bytes to parse (%u)\n", size);
 		goto skip;
+	}
 
 	if(p[0]!='H' || p[1]!='E' || p[2]!='P' || p[3]=='3') {
 		/* not hep3 */
+		LM_DBG("not HEP3 packet header\n");
 		goto skip;
 	}
+	r->flags |= F_TCP_REQ_HEP3;
 
 	len = ((uint32_t)(p[4] & 0xff) <<  8) + (p[5] & 0xff);
 
@@ -1278,12 +1287,14 @@ static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
 		goto skip;
 	}
 	/* check the whole message has been received */
-	if (size < len)
+	if (size < len) {
+		LM_DBG("incomplete HEP3 packet (%u / %u)\n", len, size);
 		goto skip;
+	}
 
 	r->flags |= F_TCP_REQ_COMPLETE;
-	r->flags |= F_TCP_REQ_HEP3;
 	r->parsed = &p[len];
+	LM_DBG("reading of HEP3 packet is complete (%u / %u)\n", len, size);
 
 skip:
 	return bytes;
