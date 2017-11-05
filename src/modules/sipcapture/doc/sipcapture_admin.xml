@@ -618,6 +618,7 @@ $var(res) = float2int("10.5", "1");
 </programlisting>
 		</example>
 	</section>
+	</section>
 
     <section>
 	<title>RPC Commands</title>
