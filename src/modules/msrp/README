@@ -264,7 +264,7 @@ modparam("msrp", "use_path_addr", "msrp.kamailio.org:5061")
 
    Example 1.7. Set event_callback parameter
 ...
-modparam("htable", "event_callback", "ksr_msrp_event")
+modparam("msrp", "event_callback", "ksr_msrp_event")
 ...
 -- event callback function implemented in Lua
 function ksr_msrp_event(evname)
