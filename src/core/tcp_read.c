@@ -70,6 +70,7 @@
 #include "forward.h"
 #include "events.h"
 #include "stun.h"
+#include "nonsip_hooks.h"
 
 #ifdef READ_HTTP11
 #define HTTP11CONTINUE	"HTTP/1.1 100 Continue\r\nContent-Length: 0\r\n\r\n"
@@ -1325,9 +1326,21 @@ static int hep3_process_msg(char* tcpbuf, unsigned int len,
 	evp.data = (void*)(&msg);
 	ret=sr_event_exec(SREV_RCV_NOSIP, &evp);
 	LM_DBG("running hep3 handling event returned %d\n", ret);
+	if(ret == NONSIP_MSG_DROP) {
+		free_sip_msg(&msg);
+		return 0;
+	}
+	if(ret < 0) {
+		LM_ERR("error running hep3 handling event: %d\n", ret);
+		free_sip_msg(&msg);
+		return -1;
+	}
+
+	ret = receive_msg(msg.buf, msg.len, rcv_info);
+	LM_DBG("running hep3-enclosed sip request route returned %d\n", ret);
 	free_sip_msg(&msg);
 
-	return 0;
+	return ret;
 }
 
 /**
