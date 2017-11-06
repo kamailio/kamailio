@@ -323,12 +323,12 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 	static ucontact_info_t ci;
 	srjson_t *it = NULL;
 	unsigned int action, expires, cseq, flags, cflags, q, last_modified,
-				 methods, reg_id;
+				 methods, reg_id, server_id;
 	str aor=STR_NULL, ruid=STR_NULL, received=STR_NULL, instance=STR_NULL;
 	static str c=STR_NULL, callid=STR_NULL, path=STR_NULL, user_agent=STR_NULL;
 
 	action = expires = cseq = flags = cflags = q = last_modified
-		= methods = reg_id = 0;
+		= methods = reg_id = server_id = 0;
 
 	for(it=jdoc_action; it; it = it->next) {
 		if (it->string == NULL) continue;
@@ -375,6 +375,8 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 			methods = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "reg_id")==0) {
 			reg_id = SRJSON_GET_UINT(it);
+                } else if (strcmp(it->string, "server_id")==0) {
+                        server_id = SRJSON_GET_UINT(it);
 		} else {
 			LM_ERR("unrecognized field in json object\n");
 		}
@@ -394,6 +396,7 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 	ci.methods = methods;
 	ci.instance = instance;
 	ci.reg_id = reg_id;
+	ci.server_id = server_id;
 	ci.tcpconn_id = -1;
 	ci.last_modified = last_modified;
 
@@ -646,7 +649,7 @@ int usrloc_dmq_send_multi_contact(ucontact_t* ptr, str aor, int action, dmq_node
 		return -1;
 	}
 	LM_DBG("group size[%d]\n", jdoc_contact_group.size);
-	jdoc_contact_group.size += 188; // json overhead ("":{"action":,"aor":"","ruid":"","c":""...)
+	jdoc_contact_group.size += 201; // json overhead ("":{"action":,"aor":"","ruid":"","c":""...)
 
 	srjson_AddNumberToObject(jdoc, jdoc_contact, "action", action);
 	jdoc_contact_group.size += snprintf(NULL,0,"%d", action);
@@ -683,6 +686,8 @@ int usrloc_dmq_send_multi_contact(ucontact_t* ptr, str aor, int action, dmq_node
 	jdoc_contact_group.size += snprintf(NULL,0,"%u", ptr->methods);
 	srjson_AddNumberToObject(jdoc, jdoc_contact, "reg_id", ptr->reg_id);
 	jdoc_contact_group.size += snprintf(NULL,0,"%d", ptr->reg_id);
+        srjson_AddNumberToObject(jdoc, jdoc_contact, "server_id", ptr->server_id);
+        jdoc_contact_group.size += snprintf(NULL,0,"%d", ptr->server_id);
 
 	char idx[5];
 	jdoc_contact_group.count++;
@@ -729,6 +734,7 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "last_modified", ptr->last_modified);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "methods", ptr->methods);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "reg_id", ptr->reg_id);
+        srjson_AddNumberToObject(&jdoc, jdoc.root, "server_id", ptr->server_id);
 
 	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
 	if(jdoc.buf.s==NULL) {
