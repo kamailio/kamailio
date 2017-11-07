@@ -766,9 +766,6 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 				fi ; \
 			fi ; \
 			: ; done; true
-	@# radius dictionary
-	@$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.$(CFG_NAME)
-	@$(INSTALL_CFG) ../etc/dictionary.$(CFG_NAME) $(cfg_prefix)/$(cfg_dir)
 	@echo "config files installed"
 
 install-cfg-pkg: $(cfg_prefix)/$(cfg_dir)
