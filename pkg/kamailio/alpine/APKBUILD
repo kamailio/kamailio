@@ -2,6 +2,7 @@
 # Contributor: Michael Mason <ms13sp@gmail.com>
 # Contributor: Leonardo Arena <rnalrd@gmail.com>
 # Maintainer: Nathan Angelacos <nangel@alpinelinux.org>
+
 pkgname=kamailio
 pkgver=5.1.0
 pkgrel=0
