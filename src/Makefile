@@ -742,6 +742,20 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 					$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg; \
 			fi; \
 		fi
+	@if [ -f ../misc/examples/sipcapture.cfg ]; then \
+			sed $(foreach m,$(modules_dirs),\
+					-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+					-e "s#/usr/local/etc/$(CFG_NAME)/#$(cfg_target)#g" \
+				< ../misc/examples/sipcapture.cfg \
+				> $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-sipcapture.cfg.sample; \
+			chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-sipcapture.cfg.sample; \
+			if [ -z "${skip_cfg_install}" -a \
+					! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-sipcapture.cfg ]; \
+			then \
+				mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-sipcapture.cfg.sample \
+					$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-sipcapture.cfg; \
+			fi; \
+		fi
 	@# other configs
 	@for r in $(C_INSTALL_CFGS) ""; do \
 			if [ -n "$$r" ]; then \
