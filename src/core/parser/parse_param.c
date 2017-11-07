@@ -348,11 +348,9 @@ static inline int parse_token_param(str *_s, str *_r, char separator)
 		 * mark end of the token
 		 */
 		switch(_s->s[i]) {
-			case ' ':
 			case '\t':
 			case '\r':
 			case '\n':
-			case ',':
 				/* So if you find
 				 * any of them
 				 * stop iterating
