@@ -700,7 +700,7 @@ $(man_prefix)/$(man_dir)/man7:
 $(man_prefix)/$(man_dir)/man5:
 		mkdir -p $(man_prefix)/$(man_dir)/man5
 
-# note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...) 
+# note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...)
 install-cfg: $(cfg_prefix)/$(cfg_dir)
 	@if [ -f ../etc/$(CFG_NAME).cfg ]; then \
 			sed $(foreach m,$(modules_dirs),\
@@ -770,6 +770,22 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 	@$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.$(CFG_NAME)
 	@$(INSTALL_CFG) ../etc/dictionary.$(CFG_NAME) $(cfg_prefix)/$(cfg_dir)
 	@echo "config files installed"
+
+install-cfg-pkg: $(cfg_prefix)/$(cfg_dir)
+	@if [ -f ../misc/examples/pkg/sipcapture.cfg ]; then \
+			sed $(foreach m,$(modules_dirs),\
+					-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+					-e "s#/usr/local/etc/$(CFG_NAME)/#$(cfg_target)#g" \
+				< ../misc/examples/pkg/sipcapture.cfg \
+				> $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-sipcapture.cfg.sample; \
+			chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-sipcapture.cfg.sample; \
+			if [ -z "${skip_cfg_install}" -a \
+					! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-sipcapture.cfg ]; \
+			then \
+				mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-sipcapture.cfg.sample \
+					$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-sipcapture.cfg; \
+			fi; \
+		fi
 
 install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
 	$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)

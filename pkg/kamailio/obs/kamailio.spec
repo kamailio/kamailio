@@ -655,6 +655,15 @@ SCTP transport for Kamailio.
 %endif
 
 
+%package    sipcapture-daemon-config
+Summary:    reference config for sipcapture daemon.
+Group:      System Environment/Daemons
+Requires:   kamailio-sipcapture = %ver
+
+%description    sipcapture-daemon-config
+reference config for sipcapture daemon.
+
+
 %package    smsops
 Summary:    Tools for handling SMS packets in SIP messages
 Group:      System Environment/Daemons
@@ -990,6 +999,8 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %endif
     kxml kxmpp kuuid"
 
+make install-cfg-pkg
+
 %if "%{?_unitdir}" == ""
 # On RedHat 6 like
 mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
@@ -999,17 +1010,23 @@ install -m755 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.init \
 # systemd
 install -d %{buildroot}%{_unitdir}
 install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.service %{buildroot}%{_unitdir}/kamailio.service
+install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.service %{buildroot}%{_unitdir}/sipcapture.service
 install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
+install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.tmpfiles %{buildroot}%{_tmpfilesdir}/sipcapture.conf
 %endif
 
 %if 0%{?suse_version}
 mkdir -p %{buildroot}/var/adm/fillup-templates/
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
         %{buildroot}/var/adm/fillup-templates/sysconfig.kamailio
+install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
+        %{buildroot}/var/adm/fillup-templates/sysconfig.sipcapture
 %else
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
         %{buildroot}%{_sysconfdir}/sysconfig/kamailio
+install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
+        %{buildroot}%{_sysconfdir}/sysconfig/sipcapture
 %endif
 
 %if 0%{?suse_version}
@@ -1042,6 +1059,13 @@ chown kamailio:daemon %{_var}/run/kamailio 2> /dev/null
 %else
 %tmpfiles_create kamailio
 /usr/bin/systemctl -q enable kamailio.service
+%endif
+
+
+%if "%{?_unitdir}" != ""
+%post sipcapture-daemon-config
+%tmpfiles_create sipcapture.conf
+/usr/bin/systemctl -q enable sipcapture.service
 %endif
 
 
@@ -1179,7 +1203,13 @@ fi
 
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
-%config(noreplace) %{_sysconfdir}/kamailio/*
+%config(noreplace) %{_sysconfdir}/kamailio/dictionary.kamailio
+%config(noreplace) %{_sysconfdir}/kamailio/kamailio-advanced.cfg
+%config(noreplace) %{_sysconfdir}/kamailio/kamailio-basic.cfg
+%config(noreplace) %{_sysconfdir}/kamailio/kamailio.cfg
+%config(noreplace) %{_sysconfdir}/kamailio/kamctlrc
+%config(noreplace) %{_sysconfdir}/kamailio/pi_framework.xml
+%config(noreplace) %{_sysconfdir}/kamailio/tls.cfg
 %if 0%{?suse_version}
 /var/adm/fillup-templates/sysconfig.kamailio
 %else
@@ -1672,6 +1702,15 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.rtjson
 %{_libdir}/kamailio/modules/rtjson.so
+
+
+%files      sipcapture-daemon-config
+%defattr(-,root,root)
+%config(noreplace) %{_sysconfdir}/kamailio/kamailio-sipcapture.cfg
+%if "%{?_unitdir}" != ""
+%{_unitdir}/sipcapture.service
+%{_tmpfilesdir}/sipcapture.conf
+%endif
 
 
 %if %{with sctp}
