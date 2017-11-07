@@ -280,10 +280,10 @@ void remove_ts_urecord(ts_urecord_t* _r)
 	if (_r->next)
 		_r->next->prev = _r->prev;
 
-	/* it was the last urecord */
-	if (entry->n == 1) {
-                entry->first = entry->last = NULL;
-	}
+	if (entry->first == _r)
+		entry->first = _r->next;
+	if (entry->last == _r)
+		entry->last = _r->prev;
 
 	update_stat(stored_ruris, -1);
 
