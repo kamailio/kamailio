@@ -21,8 +21,8 @@ install-cfg:
 	@$(call try_err, $(INSTALL_TOUCH) \
 			"$(cfg_prefix)/$(cfg_dir)dictionary.$(CFG_NAME).sample" )
 	@$(call try_err, $(INSTALL_CFG) \
-			"cfg/dictionary.$(CFG_NAME).sample" \
-			"$(cfg_prefix)/$(cfg_dir)" )
+			"cfg/dictionary.$(CFG_NAME)" \
+			"$(cfg_prefix)/$(cfg_dir)dictionary.$(CFG_NAME).sample" )
 	@if [ -z "${skip_cfg_install}" -a \
 			! -f "$(cfg_prefix)/$(cfg_dir)dictionary.$(CFG_NAME)" ]; then \
 		mv -f "$(cfg_prefix)/$(cfg_dir)dictionary.$(CFG_NAME).sample" \
