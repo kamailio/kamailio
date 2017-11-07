@@ -186,6 +186,11 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	str contact;
 	str rr_set;
 
+	if(parse_headers(msg,HDR_EOH_F,0)<0){
+		LM_ERR("failed to parse headers\n");
+		goto error0;
+	}
+
 	dlg->bind_addr[leg] = msg->rcv.bind_address;
 
 	/* extract the cseq number as string */
@@ -207,19 +212,14 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 		goto error0;
 	}
 	if ( parse_contact(msg->contact)<0 ||
-	((contact_body_t *)msg->contact->parsed)->contacts==NULL ||
-	((contact_body_t *)msg->contact->parsed)->contacts->next!=NULL ) {
+			((contact_body_t *)msg->contact->parsed)->contacts==NULL ||
+			((contact_body_t *)msg->contact->parsed)->contacts->next!=NULL ) {
 		LM_ERR("bad Contact HDR\n");
 		goto error0;
 	}
 	contact = ((contact_body_t *)msg->contact->parsed)->contacts->uri;
 
-	/* extract the RR parts */
-	if(!msg->record_route && (parse_headers(msg,HDR_EOH_F,0)<0)  ){
-		LM_ERR("failed to parse record route header\n");
-		goto error0;
-	}
-
+	/* extract the record-route addresses */
 	if (leg==DLG_CALLER_LEG) {
 		skip_recs = 0;
 	} else {
