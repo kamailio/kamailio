@@ -42,7 +42,7 @@
 #include "uac_send.h"
 
 #define MAX_UACH_SIZE 2048
-#define MAX_UACB_SIZE 4086
+#define MAX_UACB_SIZE 32768
 #define MAX_UACD_SIZE 128
 
 /** TM bind */
