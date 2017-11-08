@@ -380,10 +380,10 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 
 	_evapi_clients[i].rbuffer[_evapi_clients[i].rpos+rlen] = '\0';
 
-	LM_NOTICE("{%d} [%s:%d] - received [%.*s] (%d) (%d)\n",
-			i, _evapi_clients[i].src_addr, _evapi_clients[i].src_port,
-			(int)rlen, _evapi_clients[i].rbuffer+_evapi_clients[i].rpos,
-			(int)rlen, (int)_evapi_clients[i].rpos);
+	LM_DBG("{%d} [%s:%d] - received [%.*s] (%d) (%d)\n",
+		i, _evapi_clients[i].src_addr, _evapi_clients[i].src_port,
+		(int)rlen, _evapi_clients[i].rbuffer+_evapi_clients[i].rpos,
+		(int)rlen, (int)_evapi_clients[i].rpos);
 	evenv.conidx = i;
 	evenv.eset = 1;
 	if(_evapi_netstring_format) {
