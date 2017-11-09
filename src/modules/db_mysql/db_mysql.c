@@ -22,7 +22,7 @@
 /** @addtogroup mysql
  *  @{
  */
- 
+
 #include "db_mysql.h"
 #include "km_db_mysql.h"
 
@@ -126,9 +126,9 @@ static int mysql_mod_init(void)
 {
 #if MYSQL_VERSION_ID >= 40101
 	my_client_ver = mysql_get_client_version();
-	if ((my_client_ver >= 50025) || 
-		((my_client_ver >= 40122) && 
-		 (my_client_ver < 50000))) {
+	if ((my_client_ver >= 50025) ||
+		((my_client_ver >= 40122) &&
+			(my_client_ver < 50000))) {
 		if (my_send_to == 0) {
 			my_send_to= DEFAULT_MY_SEND_TO;
 		}
