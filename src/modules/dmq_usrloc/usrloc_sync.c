@@ -318,12 +318,12 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 	static ucontact_info_t ci;
 
 	unsigned int action, expires, cseq, flags, cflags, q, last_modified,
-				 methods, reg_id;
+				 methods, reg_id, server_id;
 	str aor=STR_NULL, ruid=STR_NULL, c=STR_NULL, received=STR_NULL,
 		path=STR_NULL, callid=STR_NULL, user_agent=STR_NULL, instance=STR_NULL;
 
 	action = expires = cseq = flags = cflags = q = last_modified
-		= methods = reg_id = 0;
+		= methods = reg_id = server_id = 0;
 
 	srjson_InitDoc(&jdoc, NULL);
 	if(parse_from_header(msg)<0) {
@@ -412,6 +412,8 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 			methods = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "reg_id")==0) {
 			reg_id = SRJSON_GET_UINT(it);
+		} else if (strcmp(it->string, "server_id")==0) {
+			server_id = SRJSON_GET_UINT(it);
 		} else {
 			LM_ERR("unrecognized field in json object\n");
 		}
@@ -432,6 +434,7 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 	ci.methods = methods;
 	ci.instance = instance;
 	ci.reg_id = reg_id;
+	ci.server_id = server_id;
 	ci.tcpconn_id = -1;
 	ci.last_modified = last_modified;
 
@@ -548,6 +551,7 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "last_modified", ptr->last_modified);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "methods", ptr->methods);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "reg_id", ptr->reg_id);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "server_id", ptr->server_id);
 
 	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
 	if(jdoc.buf.s==NULL) {
