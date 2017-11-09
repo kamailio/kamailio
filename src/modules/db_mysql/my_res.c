@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -37,7 +37,7 @@ void my_res_free(db_res_t* res, struct my_res* payload)
 	mcmd = DB_GET_PAYLOAD(res->cmd);
 
 	if (mcmd->st && mysql_stmt_free_result(mcmd->st)) {
-		ERR("mysql: Error while freeing MySQL result: %d, %s\n", 
+		ERR("mysql: Error while freeing MySQL result: %d, %s\n",
 			mysql_stmt_errno(mcmd->st), mysql_stmt_error(mcmd->st));
 	}
 
@@ -63,8 +63,8 @@ int my_res(db_res_t* res)
 	if (db_drv_init(&mr->gen, my_res_free) < 0) goto error;
 	DB_SET_PAYLOAD(res, mr);
 	return 0;
-	
- error:
+
+error:
 	if (mr) {
 		db_drv_free(&mr->gen);
 		pkg_free(mr);

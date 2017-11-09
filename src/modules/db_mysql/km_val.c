@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2008 1&1 Internet AG
  *
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -59,7 +59,8 @@ int db_mysql_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _le
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
-			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s, VAL_STRING(_v), l);
+			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s,
+					VAL_STRING(_v), l);
 			*_s++ = '\'';
 			*_s = '\0'; /* FIXME */
 			*_len = _s - old_s;
@@ -74,7 +75,8 @@ int db_mysql_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _le
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
-			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s, VAL_STR(_v).s, VAL_STR(_v).len);
+			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s,
+					VAL_STR(_v).s, VAL_STR(_v).len);
 			*_s++ = '\'';
 			*_s = '\0';
 			*_len = _s - old_s;
@@ -95,7 +97,7 @@ int db_mysql_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _le
 			*_s = '\0';
 			*_len = _s - old_s;
 			return 0;
-		}			
+		}
 		break;
 
 	default:

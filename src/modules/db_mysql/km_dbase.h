@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -63,8 +63,8 @@ int db_mysql_free_result(const db1_con_t* _h, db1_res_t* _r);
  * Do a query
  */
 int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
-	     const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-	     const db_key_t _o, db1_res_t** _r);
+		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+		const db_key_t _o, db1_res_t** _r);
 
 
 /*! \brief
@@ -88,13 +88,14 @@ int db_mysql_raw_query_async(const db1_con_t* _h, const str* _s);
 /*! \brief
  * Insert a row into table
  */
-int db_mysql_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n);
+int db_mysql_insert(const db1_con_t* _h, const db_key_t* _k,
+		const db_val_t* _v, const int _n);
 
 
 /*! \brief
  * Delete a row from table
  */
-int db_mysql_delete(const db1_con_t* _h, const db_key_t* _k, const 
+int db_mysql_delete(const db1_con_t* _h, const db_key_t* _k, const
 	db_op_t* _o, const db_val_t* _v, const int _n);
 
 
@@ -142,7 +143,8 @@ int db_mysql_abort_transaction(db1_con_t* _h);
 /*! \brief
  * Insert a row into table, update on duplicate key
  */
-int db_mysql_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+int db_mysql_insert_update(const db1_con_t* _h, const db_key_t* _k,
+		const db_val_t* _v,
 	const int _n);
 
 

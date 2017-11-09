@@ -1,4 +1,4 @@
-/* 
+/*
  * MySQL module interface
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -65,7 +65,7 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-struct kam_module_exports kam_exports = {	
+struct kam_module_exports kam_exports = {
 	"db_mysql",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
