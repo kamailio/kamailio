@@ -53,6 +53,25 @@ int async_task_run(int idx);
 /**
  *
  */
+int async_task_workers_get(void)
+{
+	return _async_task_workers;
+}
+
+/**
+ *
+ */
+int async_task_workers_active(void)
+{
+	if(_async_task_workers<=0)
+		return 0;
+
+	return 1;
+}
+
+/**
+ *
+ */
 int async_task_init_sockets(void)
 {
 	if (socketpair(PF_UNIX, SOCK_DGRAM, 0, _async_task_sockets) < 0) {
@@ -195,8 +214,10 @@ int async_task_push(async_task_t *task)
 {
 	int len;
 
-	if(_async_task_workers<=0)
+	if(_async_task_workers<=0) {
+		LM_WARN("async task pushed, but no async workers - ignoring\n");
 		return 0;
+	}
 
 	len = write(_async_task_sockets[1], &task, sizeof(async_task_t*));
 	if(len<=0) {
