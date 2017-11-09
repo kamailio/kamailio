@@ -1978,8 +1978,10 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				if (unlikely(!totag_retr
 							&& has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
 					LOCK_REPLIES( t );
-					run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb,
-							t->uas.request, relayed_msg, TMCB_NONE_F);
+					if(relayed_msg->REPLY_STATUS==uas_rb->activ_type) {
+						run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb,
+								t->uas.request, relayed_msg, TMCB_NONE_F);
+					}
 					UNLOCK_REPLIES( t );
 				}
 				if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
