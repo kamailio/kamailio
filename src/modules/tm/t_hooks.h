@@ -328,6 +328,7 @@ struct cell;
 	).
 */
 
+#define TMCB_NONE_F 0
 #define TMCB_RETR_F 1
 #define TMCB_LOCAL_F 2
 

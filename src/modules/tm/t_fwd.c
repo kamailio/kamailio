@@ -1585,7 +1585,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 	} else {
 		if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
 			run_trans_callbacks_with_buf(TMCB_REQUEST_SENT, &uac->request,
-					p_msg, 0,0);
+					p_msg, 0, TMCB_NONE_F);
 		/* start retr. only if the send succeeded */
 		if (start_retr( &uac->request )!=0){
 			LM_CRIT("BUG: retransmission already started for: %p\n",
@@ -1754,7 +1754,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 					if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
 						run_trans_callbacks_with_buf( TMCB_REQUEST_OUT,
 								&t->uac[i].request,
-								p_msg, 0, -p_msg->REQ_METHOD);
+								p_msg, 0, TMCB_NONE_F);
 				}
 				else /* new branch added */
 					added_branches |= 1<<branch_ret;
