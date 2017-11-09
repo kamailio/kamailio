@@ -189,7 +189,7 @@ int t_append_branches(void) {
 					if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
 						run_trans_callbacks_with_buf( TMCB_REQUEST_OUT,
 								&t->uac[nr_branches].request,
-								faked_req, 0, -orig_msg->REQ_METHOD);
+								faked_req, 0, TMCB_NONE_F);
 				}
 				else /* new branch added */
 					added_branches |= 1<<branch_ret;
