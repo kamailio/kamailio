@@ -1598,7 +1598,11 @@ event_route[usrloc:contact-expired] {
 				<listitem>
 				<para><emphasis>conid</emphasis> - TCP socket internal connection ID ($null if UDP)
 				</para>
-				</listitem>	  
+				</listitem>
+				<listitem>
+				<para><emphasis>server_id</emphasis> - server_id value
+				</para>
+				</listitem>
 			</itemizedlist>
 			<para>
 				The pseudo-variable accepts positive index value to access
