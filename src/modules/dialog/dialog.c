@@ -109,6 +109,7 @@ static int _dlg_track_cseq_updates = 0;
 int dlg_ka_failed_limit = 1;
 int dlg_early_timeout = 300;
 int dlg_noack_timeout = 60;
+int dlg_end_timeout = 300;
 
 int dlg_enable_dmq = 0;
 
@@ -309,6 +310,7 @@ static param_export_t mod_params[]={
 	{ "event_callback",        PARAM_STR, &dlg_event_callback       },
 	{ "early_timeout",         PARAM_INT, &dlg_early_timeout        },
 	{ "noack_timeout",         PARAM_INT, &dlg_noack_timeout        },
+	{ "end_timeout",           PARAM_INT, &dlg_end_timeout          },
 	{ 0,0,0 }
 };
 

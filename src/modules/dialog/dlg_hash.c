@@ -50,6 +50,7 @@ extern int dlg_enable_dmq;
 
 extern int dlg_early_timeout;
 extern int dlg_noack_timeout;
+extern int dlg_end_timeout;
 
 /*! global dialog table */
 struct dlg_table *d_table = 0;
@@ -249,7 +250,7 @@ int dlg_clean_run(ticks_t ti)
 				tdlg->dflags |= DLG_FLAG_CHANGED;
 			}
 			if(tdlg->state==DLG_STATE_DELETED && tdlg->end_ts>0
-					&& tdlg->end_ts<tm-300) {
+					&& tdlg->end_ts<tm-dlg_end_timeout) {
 				/* dialog in deleted state older than 5min */
 				LM_NOTICE("dialog in delete state is too old (%p ref %d)\n",
 						tdlg, tdlg->ref);
