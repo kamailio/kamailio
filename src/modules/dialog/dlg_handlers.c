@@ -456,6 +456,10 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		event = DLG_EVENT_RPL3xx;
 
 	next_state_dlg( dlg, event, &old_state, &new_state, &unref);
+	if(new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
+		/* set end time */
+		dlg->end_ts = (unsigned int)(time(0));
+	}
 	if(dlg_run_event_route(dlg, (rpl==FAKED_REPLY)?NULL:rpl, old_state,
 			new_state)<0) {
 		/* dialog is gone */
@@ -528,11 +532,6 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		if (unref) dlg_unref(dlg, unref);
 		if_update_stat(dlg_enable_stats, active_dlgs, 1);
 		goto done;
-	}
-
-	if(new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
-		/* set end time */
-		dlg->end_ts = (unsigned int)(time(0));
 	}
 
 	if ( new_state==DLG_STATE_DELETED

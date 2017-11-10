@@ -232,7 +232,7 @@ int dlg_clean_run(ticks_t ti)
 		while (dlg) {
 			tdlg = dlg;
 			dlg = dlg->next;
-			if(tdlg->state==DLG_STATE_UNCONFIRMED
+			if(tdlg->state==DLG_STATE_UNCONFIRMED && tdlg->init_ts>0
 					&& tdlg->init_ts<tm-dlg_early_timeout) {
 				/* dialog in early state older than 5min */
 				LM_NOTICE("dialog in early state is too old (%p ref %d)\n",
@@ -240,7 +240,7 @@ int dlg_clean_run(ticks_t ti)
 				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
 				destroy_dlg(tdlg);
 			}
-			if(tdlg->state==DLG_STATE_CONFIRMED_NA
+			if(tdlg->state==DLG_STATE_CONFIRMED_NA && tdlg->start_ts>0
 					&& tdlg->start_ts<tm-dlg_noack_timeout) {
 				if(update_dlg_timer(&tdlg->tl, 10)<0) {
 					LM_ERR("failed to update dialog lifetime in long non-ack state\n");
@@ -248,7 +248,8 @@ int dlg_clean_run(ticks_t ti)
 				tdlg->lifetime = 10;
 				tdlg->dflags |= DLG_FLAG_CHANGED;
 			}
-			if(tdlg->state==DLG_STATE_DELETED && tdlg->end_ts<tm-300) {
+			if(tdlg->state==DLG_STATE_DELETED && tdlg->end_ts>0
+					&& tdlg->end_ts<tm-300) {
 				/* dialog in deleted state older than 5min */
 				LM_NOTICE("dialog in delete state is too old (%p ref %d)\n",
 						tdlg, tdlg->ref);
