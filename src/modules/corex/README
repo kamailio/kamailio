@@ -51,11 +51,12 @@ Muhammad Shahzad Shafi
 
         5. RPC Commands
 
-              5.1. corex.list_sockets
-              5.2. corex.list_aliases
-              5.3. corex.shm_status
-              5.4. corex.shm_summary
-              5.5. corex.pkg_summary
+              5.1. corex.debug
+              5.2. corex.list_sockets
+              5.3. corex.list_aliases
+              5.4. corex.shm_status
+              5.5. corex.shm_summary
+              5.6. corex.pkg_summary
 
         6. Event Routes
 
@@ -113,11 +114,12 @@ Chapter 1. Admin Guide
 
    5. RPC Commands
 
-        5.1. corex.list_sockets
-        5.2. corex.list_aliases
-        5.3. corex.shm_status
-        5.4. corex.shm_summary
-        5.5. corex.pkg_summary
+        5.1. corex.debug
+        5.2. corex.list_sockets
+        5.3. corex.list_aliases
+        5.4. corex.shm_status
+        5.5. corex.shm_summary
+        5.6. corex.pkg_summary
 
    6. Event Routes
 
@@ -386,41 +388,52 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 
 5. RPC Commands
 
-   5.1. corex.list_sockets
-   5.2. corex.list_aliases
-   5.3. corex.shm_status
-   5.4. corex.shm_summary
-   5.5. corex.pkg_summary
+   5.1. corex.debug
+   5.2. corex.list_sockets
+   5.3. corex.list_aliases
+   5.4. corex.shm_status
+   5.5. corex.shm_summary
+   5.6. corex.pkg_summary
 
-5.1.  corex.list_sockets
+5.1.  corex.debug
+
+   Set or get the global log level (the value for global parameter
+   'debug'). To set the debug, provide an integer parameter. If no
+   parameter is provided, then the current value is returned.
+
+   Example:
+                kamcmd corex.debug
+                kamcmd corex.debug 2
+
+5.2.  corex.list_sockets
 
    Print the list of sockets the application is listening on.
 
    Example:
                 kamcmd corex.list_sockets
 
-5.2.  corex.list_aliases
+5.3.  corex.list_aliases
 
    Print the list of hostname aliases used to match the myself condition.
 
    Example:
                 kamcmd corex.list_aliases
 
-5.3.  corex.shm_status
+5.4.  corex.shm_status
 
    Trigger shm status dump to syslog.
 
    Example:
                 kamcmd corex.shm_status
 
-5.4.  corex.shm_summary
+5.5.  corex.shm_summary
 
    Trigger shm summary dump to syslog.
 
    Example:
                 kamcmd corex.shm_summary
 
-5.5.  corex.pkg_summary
+5.6.  corex.pkg_summary
 
    Trigger pkg summary dump to syslog for a specific pid or process index.
    It has two parameters: first to specify what matching type is desired
