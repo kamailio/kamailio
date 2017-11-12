@@ -191,7 +191,7 @@ public:
         }
         else {
             if(_raiseerror && _ss(_vm)->_compilererrorhandler) {
-                _ss(_vm)->_compilererrorhandler(_vm, _compilererror, type(_sourcename) == OT_STRING?_stringval(_sourcename):_SC("unknown"),
+                _ss(_vm)->_compilererrorhandler(_vm, _compilererror, sq_type(_sourcename) == OT_STRING?_stringval(_sourcename):_SC("unknown"),
                     _lex._currentline, _lex._currentcolumn);
             }
             _vm->_lasterror = SQString::Create(_ss(_vm), _compilererror, -1);
@@ -466,6 +466,7 @@ public:
         INVOKE_EXP(f);
         SQInteger op1 = _fs->PopTarget();SQInteger op2 = _fs->PopTarget();
         _fs->AddInstruction(op, _fs->PushTarget(), op1, op2, op3);
+        _es.etype = EXPR;
     }
     void LogicalOrExp()
     {
@@ -482,6 +483,7 @@ public:
             if(trg != second_exp) _fs->AddInstruction(_OP_MOVE, trg, second_exp);
             _fs->SnoozeOpt();
             _fs->SetIntructionParam(jpos, 1, (_fs->GetCurrentPos() - jpos));
+            _es.etype = EXPR;
             break;
         }else return;
     }
@@ -501,6 +503,7 @@ public:
             if(trg != second_exp) _fs->AddInstruction(_OP_MOVE, trg, second_exp);
             _fs->SnoozeOpt();
             _fs->SetIntructionParam(jpos, 1, (_fs->GetCurrentPos() - jpos));
+            _es.etype = EXPR;
             break;
             }
 
@@ -762,7 +765,7 @@ public:
                     /* Handle named constant */
                     SQObjectPtr constval;
                     SQObject    constid;
-                    if(type(constant) == OT_TABLE) {
+                    if(sq_type(constant) == OT_TABLE) {
                         Expect('.');
                         constid = Expect(TK_IDENTIFIER);
                         if(!_table(constant)->Get(constid, constval)) {
@@ -776,7 +779,7 @@ public:
                     _es.epos = _fs->PushTarget();
 
                     /* generate direct or literal function depending on size */
-                    SQObjectType ctype = type(constval);
+                    SQObjectType ctype = sq_type(constval);
                     switch(ctype) {
                         case OT_INTEGER: EmitLoadConstInt(_integer(constval),_es.epos); break;
                         case OT_FLOAT: EmitLoadConstFloat(_float(constval),_es.epos); break;
@@ -859,6 +862,7 @@ public:
         case TK_TYPEOF : Lex() ;UnaryOP(_OP_TYPEOF); break;
         case TK_RESUME : Lex(); UnaryOP(_OP_RESUME); break;
         case TK_CLONE : Lex(); UnaryOP(_OP_CLONE); break;
+        case TK_RAWCALL: Lex(); Expect('('); FunctionCallArgs(true); break;
         case TK_MINUSMINUS :
         case TK_PLUSPLUS :PrefixIncDec(_token); break;
         case TK_DELETE : DeleteExpr(); break;
@@ -915,7 +919,7 @@ public:
         }
         return (!_es.donot_get || ( _es.donot_get && (_token == _SC('.') || _token == _SC('['))));
     }
-    void FunctionCallArgs()
+    void FunctionCallArgs(bool rawcall = false)
     {
         SQInteger nargs = 1;//this
          while(_token != _SC(')')) {
@@ -928,6 +932,10 @@ public:
              }
          }
          Lex();
+         if (rawcall) {
+             if (nargs < 3) Error(_SC("rawcall requires at least 2 parameters (callee and this)"));
+             nargs -= 2; //removes callee and this from count
+         }
          for(SQInteger i = 0; i < (nargs - 1); i++) _fs->PopTarget();
          SQInteger stackbase = _fs->PopTarget();
          SQInteger closure = _fs->PopTarget();
@@ -1337,11 +1345,11 @@ public:
                     val._unVal.fFloat = -_lex._fvalue;
                 break;
                 default:
-                    Error(_SC("scalar expected : integer,float"));
+                    Error(_SC("scalar expected : integer, float"));
                 }
                 break;
             default:
-                Error(_SC("scalar expected : integer,float or string"));
+                Error(_SC("scalar expected : integer, float, or string"));
         }
         Lex();
         return val;

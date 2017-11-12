@@ -103,10 +103,10 @@ static SQInteger _sqstd_aux_printerror(HSQUIRRELVM v)
         const SQChar *sErr = 0;
         if(sq_gettop(v)>=1) {
             if(SQ_SUCCEEDED(sq_getstring(v,2,&sErr)))   {
-                pf(v,_SC("\nAN ERROR HAS OCCURED [%s]\n"),sErr);
+                pf(v,_SC("\nAN ERROR HAS OCCURRED [%s]\n"),sErr);
             }
             else{
-                pf(v,_SC("\nAN ERROR HAS OCCURED [unknown]\n"));
+                pf(v,_SC("\nAN ERROR HAS OCCURRED [unknown]\n"));
             }
             sqstd_printcallstack(v);
         }
