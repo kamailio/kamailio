@@ -70,6 +70,7 @@ struct SQVM;
 #define TK_STATIC 322
 #define TK_ENUM 323
 #define TK_CONST 324
+#define TK_RAWCALL 325
 
 
 

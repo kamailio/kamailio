@@ -53,7 +53,7 @@ SQClass::~SQClass()
 bool SQClass::NewSlot(SQSharedState *ss,const SQObjectPtr &key,const SQObjectPtr &val,bool bstatic)
 {
     SQObjectPtr temp;
-    bool belongs_to_static_table = type(val) == OT_CLOSURE || type(val) == OT_NATIVECLOSURE || bstatic;
+    bool belongs_to_static_table = sq_type(val) == OT_CLOSURE || sq_type(val) == OT_NATIVECLOSURE || bstatic;
     if(_locked && !belongs_to_static_table)
         return false; //the class already has an instance so cannot be modified
     if(_members->Get(key,temp) && _isfield(temp)) //overrides the default value
@@ -63,18 +63,18 @@ bool SQClass::NewSlot(SQSharedState *ss,const SQObjectPtr &key,const SQObjectPtr
     }
     if(belongs_to_static_table) {
         SQInteger mmidx;
-        if((type(val) == OT_CLOSURE || type(val) == OT_NATIVECLOSURE) &&
+        if((sq_type(val) == OT_CLOSURE || sq_type(val) == OT_NATIVECLOSURE) &&
             (mmidx = ss->GetMetaMethodIdxByName(key)) != -1) {
             _metamethods[mmidx] = val;
         }
         else {
             SQObjectPtr theval = val;
-            if(_base && type(val) == OT_CLOSURE) {
+            if(_base && sq_type(val) == OT_CLOSURE) {
                 theval = _closure(val)->Clone();
                 _closure(theval)->_base = _base;
                 __ObjAddRef(_base); //ref for the closure
             }
-            if(type(temp) == OT_NULL) {
+            if(sq_type(temp) == OT_NULL) {
                 bool isconstructor;
                 SQVM::IsEqual(ss->_constructoridx, key, isconstructor);
                 if(isconstructor) {
@@ -189,9 +189,9 @@ SQInstance::~SQInstance()
     if(_class){ Finalize(); } //if _class is null it was already finalized by the GC
 }
 
-bool SQInstance::GetMetaMethod(SQVM SQ_UNUSED_ARG(*v),SQMetaMethod mm,SQObjectPtr &res)
+bool SQInstance::GetMetaMethod(SQVM* SQ_UNUSED_ARG(v),SQMetaMethod mm,SQObjectPtr &res)
 {
-    if(type(_class->_metamethods[mm]) != OT_NULL) {
+    if(sq_type(_class->_metamethods[mm]) != OT_NULL) {
         res = _class->_metamethods[mm];
         return true;
     }

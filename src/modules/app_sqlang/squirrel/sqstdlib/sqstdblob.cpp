@@ -7,7 +7,7 @@
 #include "sqstdstream.h"
 #include "sqstdblobimpl.h"
 
-#define SQSTD_BLOB_TYPE_TAG (SQSTD_STREAM_TYPE_TAG | 0x00000002)
+#define SQSTD_BLOB_TYPE_TAG ((SQUnsignedInteger)(SQSTD_STREAM_TYPE_TAG | 0x00000002))
 
 //Blob
 

@@ -28,9 +28,6 @@ struct SQExceptionTrap{
 
 #define _INLINE
 
-#define STK(a) _stack._vals[_stackbase+(a)]
-#define TARGET _stack._vals[_stackbase+arg0]
-
 typedef sqvector<SQExceptionTrap> ExceptionsTraps;
 
 struct SQVM : public CHAINABLE_OBJ
