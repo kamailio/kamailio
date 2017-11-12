@@ -273,6 +273,9 @@ int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
 			if (c->sock && (c->sock->proto == PROTO_TCP || c->sock->proto == PROTO_TLS || c->sock->proto == PROTO_WS || c->sock->proto == PROTO_WSS))
 				return pv_get_sintval(msg, param, res, c->tcpconn_id);
 		break;
+		case 22: /* server_id */
+			return pv_get_uintval(msg, param, res, c->server_id);
+		break;
 	}
 
 	return pv_get_null(msg, param, res);
@@ -399,6 +402,10 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 			else if(strncmp(pa.s, "instance", 8)==0)
 				rp->attr = 20;
 			else goto error;
+		break;
+		case 9:
+			if(strncmp(pa.s, "server_id", 9)==0)
+				rp->attr = 22;
 		break;
 		case 10:
 			if(strncmp(pa.s, "user_agent", 10)==0)
