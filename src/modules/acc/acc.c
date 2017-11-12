@@ -35,6 +35,7 @@
 #include "../../core/error.h"
 #include "../../core/mem/mem.h"
 #include "../../core/usr_avp.h"
+#include "../../core/async_task.h"
 #include "../../lib/srdb1/db.h"
 #include "../../core/parser/hf.h"
 #include "../../core/parser/msg_parser.h"
@@ -473,7 +474,8 @@ int acc_db_request( struct sip_msg *rq)
 				LM_ERR("failed to insert delayed into database\n");
 				goto error;
 			}
-		} else if(acc_db_insert_mode==2 && acc_dbf.insert_async!=NULL) {
+		} else if(acc_db_insert_mode==2 && acc_dbf.insert_async!=NULL
+				&& async_task_workers_active()) {
 			if (acc_dbf.insert_async(db_handle, db_keys, db_vals, m) < 0) {
 				LM_ERR("failed to insert async into database\n");
 				goto error;
