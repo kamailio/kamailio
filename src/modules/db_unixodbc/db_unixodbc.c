@@ -99,7 +99,9 @@ int db_unixodbc_bind_api(db_func_t *dbb)
 		dbb->replace      = db_unixodbc_replace;
 	else
 		dbb->replace      = db_unixodbc_update_or_insert;
-
+	dbb->raw_query_async  = db_unixodbc_raw_query_async;
+	dbb->insert_async     = db_unixodbc_insert_async;
+ 
 	return 0;
 }
 
