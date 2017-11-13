@@ -803,14 +803,24 @@ int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
 								" in MODE_ONFAILURE\n", branch);
 						return pv_get_null(msg, param, res);
 					}
-					res->ri = t->uac[branch].branch_flags;
-					res->flags = PV_VAL_INT;
-					LM_DBG("branch flags is [%u]\n", res->ri);
+					break;
+				case TM_ONREPLY_ROUTE:
+					tcx = _tmx_tmb.tm_ctx_get();
+					if(tcx == NULL) {
+						LM_ERR("no reply branch\n");
+						return pv_get_null(msg, param, res);
+					}
+					branch = tcx->branch_index;
 					break;
 				default:
 					LM_ERR("unsupported route_type %d\n", get_route_type());
 					return pv_get_null(msg, param, res);
 			}
+			if(branch<0 || branch>=t->nr_of_outgoings) {
+				return pv_get_null(msg, param, res);
+			}
+			LM_DBG("branch flags is [%u]\n", t->uac[branch].branch_flags);
+			return pv_get_uintval(msg, param, res, t->uac[branch].branch_flags);
 			break;
 		case 6: /* $T_branch(uri) */
 			if (get_route_type() != TM_ONREPLY_ROUTE) {
