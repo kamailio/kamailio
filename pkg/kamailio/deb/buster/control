@@ -64,6 +64,7 @@ Pre-Depends:
  ${misc:Pre-Depends},
 Depends:
  adduser,
+ lsb-base,
  python,
  ${misc:Depends},
  ${shlibs:Depends},
