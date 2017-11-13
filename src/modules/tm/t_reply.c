@@ -1171,17 +1171,19 @@ inline static short int get_prio(unsigned int resp, struct sip_msg *rpl)
 int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 {
 	int best_b, best_s, b;
-	sip_msg_t *rpl;
+	sip_msg_t *rpl, *best_rpl;
 
 	best_b=-1; best_s=0;
+	best_rpl=NULL;
 	for ( b=0; b<t->nr_of_outgoings ; b++ ) {
 		rpl = t->uac[b].reply;
 
 		/* "fake" for the currently processed branch */
 		if (b==inc_branch) {
-			if (get_prio(inc_code, rpl)<get_prio(best_s, rpl)) {
+			if (get_prio(inc_code, rpl)<get_prio(best_s, best_rpl)) {
 				best_b=b;
 				best_s=inc_code;
+				best_rpl=rpl;
 			}
 			continue;
 		}
@@ -1197,9 +1199,10 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 			return -2;
 		/* if reply is null => t_send_branch "faked" reply, skip over it */
 		if ( rpl &&
-				get_prio(t->uac[b].last_received, rpl)<get_prio(best_s, rpl) ) {
+				get_prio(t->uac[b].last_received, rpl)<get_prio(best_s, best_rpl) ) {
 			best_b =b;
 			best_s = t->uac[b].last_received;
+			best_rpl=rpl;
 		}
 	} /* find lowest branch */
 
