@@ -2096,7 +2096,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 			}
 			break;
 		case DS_ALG_RANDOM: /* 6 - random selection */
-			hash = kam_rand() % idx->nr;
+			hash = kam_rand();
 			break;
 		case DS_ALG_HASHPV: /* 7 - hash on PV value */
 			if(ds_hash_pvar(msg, &hash) != 0) {
