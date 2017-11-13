@@ -14,6 +14,10 @@ sed -i 's/libxmlrpc-c3-dev/libxmlrpc-core-c3-dev/' ${DIST}/control
 # old mysql
 sed -i -e 's/default-mysql-client/mysql-client/' \
   -e 's/default-libmysqlclient-dev/libmysqlclient-dev/' ${DIST}/control
+echo "kamailio source: build-depends-on-obsolete-package build-depends: libmysqlclient-dev => default-libmysqlclient-dev" >> \
+	${DIST}/source.lintian-overrides
+echo "kamailio-mysql-modules: depends-on-obsolete-package depends: mysql-client => default-mysql-client" >> \
+	${DIST}/kamailio-mysql-modules.lintian-overrides
 
 # no libssl-dev
 sed -i -e '/libssl-dev/d' ${DIST}/control
