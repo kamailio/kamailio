@@ -132,19 +132,24 @@
 %if 0%{?rhel} == 7 && 0%{?centos_ver} != 7
 %define dist_name rhel
 %define dist_version %{?rhel}
-%bcond_without cnxcc
+%bcond_with cnxcc
 %bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without kazoo
-%bcond_without memcached
+%bcond_with geoip
+%bcond_with http_async_client
+%bcond_with jansson
+%bcond_with json
+%bcond_with kazoo
+%bcond_with memcached
 %bcond_without perl
 %bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
+%bcond_with sctp
+%bcond_with websocket
 %bcond_without xmlrpc
+%endif
+
+# redefine buggy openSUSE Leap _sharedstatedir macro. More info at https://bugzilla.redhat.com/show_bug.cgi?id=183370
+%if 0%{?suse_version} == 1315
+%define _sharedstatedir /var/lib
 %endif
 
 Summary:    Kamailio (former OpenSER) - the Open Source SIP Server
@@ -656,7 +661,7 @@ SCTP transport for Kamailio.
 
 
 %package    sipcapture-daemon-config
-Summary:    reference config for sipcapture daemon.
+Summary:    reference config for sipcapture daemon
 Group:      System Environment/Daemons
 Requires:   kamailio-sipcapture = %ver
 
@@ -1001,9 +1006,12 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 
 make install-cfg-pkg
 
+install -d %{buildroot}%{_sharedstatedir}/kamailio
+
 %if "%{?_unitdir}" == ""
 # On RedHat 6 like
-mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
+install -d %{buildroot}%{_var}/run/kamailio
+install -d %{buildroot}%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.init \
         %{buildroot}%{_sysconfdir}/rc.d/init.d/kamailio
 %else
@@ -1016,13 +1024,13 @@ install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.tmpfiles 
 %endif
 
 %if 0%{?suse_version}
-mkdir -p %{buildroot}/var/adm/fillup-templates/
+install -d %{buildroot}/var/adm/fillup-templates/
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
         %{buildroot}/var/adm/fillup-templates/sysconfig.kamailio
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
         %{buildroot}/var/adm/fillup-templates/sysconfig.sipcapture
 %else
-mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
+install -d %{buildroot}%{_sysconfdir}/sysconfig
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
         %{buildroot}%{_sysconfdir}/sysconfig/kamailio
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
@@ -1053,8 +1061,6 @@ rm -rf %{buildroot}
 
 %post
 %if "%{?_unitdir}" == ""
-mkdir -p %{_var}/run/kamailio 2> /dev/null || :
-chown kamailio:daemon %{_var}/run/kamailio 2> /dev/null
 /sbin/chkconfig --add kamailio
 %else
 %tmpfiles_create kamailio
@@ -1204,19 +1210,19 @@ fi
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/dictionary.kamailio
-%config(noreplace) %{_sysconfdir}/kamailio/kamailio-advanced.cfg
-%config(noreplace) %{_sysconfdir}/kamailio/kamailio-basic.cfg
 %config(noreplace) %{_sysconfdir}/kamailio/kamailio.cfg
 %config(noreplace) %{_sysconfdir}/kamailio/kamctlrc
 %config(noreplace) %{_sysconfdir}/kamailio/pi_framework.xml
 %config(noreplace) %{_sysconfdir}/kamailio/tls.cfg
+%dir %attr(-,kamailio,kamailio) %{_sharedstatedir}/kamailio
 %if 0%{?suse_version}
 /var/adm/fillup-templates/sysconfig.kamailio
 %else
-%config %{_sysconfdir}/sysconfig/*
+%config %{_sysconfdir}/sysconfig/kamailio
 %endif
 %if "%{?_unitdir}" == ""
 %config %{_sysconfdir}/rc.d/init.d/*
+%dir %attr(-,kamailio,kamailio) %{_var}/run/kamailio
 %else
 %{_unitdir}/kamailio.service
 %{_tmpfilesdir}/kamailio.conf
@@ -1707,6 +1713,11 @@ fi
 %files      sipcapture-daemon-config
 %defattr(-,root,root)
 %config(noreplace) %{_sysconfdir}/kamailio/kamailio-sipcapture.cfg
+%if 0%{?suse_version}
+/var/adm/fillup-templates/sysconfig.sipcapture
+%else
+%config(noreplace) %{_sysconfdir}/sysconfig/sipcapture
+%endif
 %if "%{?_unitdir}" != ""
 %{_unitdir}/sipcapture.service
 %{_tmpfilesdir}/sipcapture.conf
