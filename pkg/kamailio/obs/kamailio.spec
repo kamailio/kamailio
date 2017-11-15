@@ -1145,6 +1145,7 @@ fi
 
 %dir %{_docdir}/kamailio/modules
 %doc %{_docdir}/kamailio/modules/README.acc
+%doc %{_docdir}/kamailio/modules/README.acc_diameter
 %doc %{_docdir}/kamailio/modules/README.alias_db
 %doc %{_docdir}/kamailio/modules/README.app_jsdt
 %doc %{_docdir}/kamailio/modules/README.async
@@ -1292,6 +1293,7 @@ fi
 
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/acc.so
+%{_libdir}/kamailio/modules/acc_diameter.so
 %{_libdir}/kamailio/modules/alias_db.so
 %{_libdir}/kamailio/modules/app_jsdt.so
 %{_libdir}/kamailio/modules/async.so
