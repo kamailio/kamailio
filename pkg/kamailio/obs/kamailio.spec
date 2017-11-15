@@ -176,7 +176,7 @@ Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
 Conflicts:  kamailio-python < %ver
 Conflicts:  kamailio-radius < % ver, kamailio-redis < %ver
 Conflicts:  kamailio-regex < %ver, kamailio-sctp < %ver
-Conflicts:  kamailio-snmpstats < %ver, kamailio-sqlite < %ver
+Conflicts:  kamailio-snmpstats < %ver, kamailio-sqlang < %ver, kamailio-sqlite < %ver
 Conflicts:  kamailio-tls < %ver, kamailio-unixodbc < %ver
 Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
 Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
@@ -712,6 +712,16 @@ Requires:   kamailio = %ver
 Send commands to statsd server.
 
 
+%package        sqlang
+Summary:        Squirrel Language (SQLang) for Kamailio
+Group:          System Environment/Daemons
+Requires:       squirrel-libs, kamailio = %version
+BuildRequires:  squirrel-devel gcc-c++
+
+%description    sqlang
+app_sqlang module for Kamailio.
+
+
 %package    sqlite
 Summary:    SQLite database connectivity for Kamailio
 Group:      System Environment/Daemons
@@ -1206,6 +1216,9 @@ fi
 %doc %{_docdir}/kamailio/modules/README.jsonrpcs
 %doc %{_docdir}/kamailio/modules/README.nosip
 %doc %{_docdir}/kamailio/modules/README.tsilo
+%doc %{_docdir}/kamailio/modules/README.call_obj
+%doc %{_docdir}/kamailio/modules/README.evrexec
+%doc %{_docdir}/kamailio/modules/README.keepalive
 
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
@@ -1350,6 +1363,9 @@ fi
 %{_libdir}/kamailio/modules/jsonrpcs.so
 %{_libdir}/kamailio/modules/nosip.so
 %{_libdir}/kamailio/modules/tsilo.so
+%{_libdir}/kamailio/modules/call_obj.so
+%{_libdir}/kamailio/modules/evrexec.so
+%{_libdir}/kamailio/modules/keepalive.so
 
 
 %{_sbindir}/kamailio
@@ -1487,6 +1503,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ims_auth
 %doc %{_docdir}/kamailio/modules/README.ims_charging
 %doc %{_docdir}/kamailio/modules/README.ims_dialog
+%doc %{_docdir}/kamailio/modules/README.ims_diameter_server
 %doc %{_docdir}/kamailio/modules/README.ims_icscf
 %doc %{_docdir}/kamailio/modules/README.ims_isc
 %doc %{_docdir}/kamailio/modules/README.ims_qos
@@ -1503,6 +1520,7 @@ fi
 %{_libdir}/kamailio/modules/ims_auth.so
 %{_libdir}/kamailio/modules/ims_charging.so
 %{_libdir}/kamailio/modules/ims_dialog.so
+%{_libdir}/kamailio/modules/ims_diameter_server.so
 %{_libdir}/kamailio/modules/ims_icscf.so
 %{_libdir}/kamailio/modules/ims_isc.so
 %{_libdir}/kamailio/modules/ims_qos.so
@@ -1694,7 +1712,9 @@ fi
 %files      redis
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.ndb_redis
+%doc %{_docdir}/kamailio/modules/README.topos_redis
 %{_libdir}/kamailio/modules/ndb_redis.so
+%{_libdir}/kamailio/modules/topos_redis.so
 %endif
 
 
@@ -1747,6 +1767,12 @@ fi
 %defattr(-,root,root)
 %{_docdir}/kamailio/modules/README.statsd
 %{_libdir}/kamailio/modules/statsd.so
+
+
+%files          sqlang
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.app_sqlang
+%{_libdir}/kamailio/modules/app_sqlang.so
 
 
 %files      sqlite
@@ -1832,6 +1858,13 @@ fi
   - added packaging for Fedora 26 and openSUSE Leap 42.3
   - removed packaging for Fedora 24 and openSUSE Leap 42.1 as End Of Life
   - rewrited SPEC file to support Fedora, RHEL, CentOS, openSUSE distrs
+* Wed Apr 26 2017 Carsten Bock <carsten@ng-voice.co,>
+  - added ims_diameter_server module
+  - added topos_redis module
+  - added call_obj module
+  - added evrexec module
+  - added keepalive module
+  - added app_sqlang module
 * Thu Mar 09 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
   - added jansson package
 * Sat Feb 04 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
