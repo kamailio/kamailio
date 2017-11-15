@@ -185,6 +185,7 @@ Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
 Conflicts:  kamailio-python < %ver
 Conflicts:  kamailio-radius < % ver, kamailio-redis < %ver
 Conflicts:  kamailio-regex < %ver, kamailio-sctp < %ver
+Conflicts:  kamailio-sipdump < %ver
 Conflicts:  kamailio-snmpstats < %ver, kamailio-sqlang < %ver, kamailio-sqlite < %ver
 Conflicts:  kamailio-tls < %ver, kamailio-unixodbc < %ver
 Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
@@ -688,6 +689,15 @@ Requires:   kamailio-sipcapture = %ver
 
 %description    sipcapture-daemon-config
 reference config for sipcapture daemon.
+
+
+%package    sipdump
+Summary:    This module writes SIP traffic and some associated details into local files
+Group:      System Environment/Daemons
+Requires:   kamailio = %ver
+
+%description    sipdump
+This module writes SIP traffic and some associated details into local files
 
 
 %package    smsops
@@ -1785,6 +1795,12 @@ fi
 %doc %{_docdir}/kamailio/modules/README.sctp
 %{_libdir}/kamailio/modules/sctp.so
 %endif
+
+
+%files      sipdump
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.sipdump
+%{_libdir}/kamailio/modules/sipdump.so
 
 
 %files      snmpstats
