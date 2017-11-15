@@ -75,7 +75,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="xcap_client.p.db_url">
 		<title><varname>db_url</varname>(str)</title>
 		<para>
 		The database url.
@@ -93,7 +93,7 @@ modparam("xcap_client", "db_url", "&exampledb;")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xcap_client.p.xcap_table">
 		<title><varname>xcap_table</varname>(str)</title>
 		<para>
 		The name of the db table where XCAP documents are stored.
@@ -111,7 +111,7 @@ modparam("xcap_client", "xcap_table", "xcaps")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xcap_client.p.peridical_query">
 		<title><varname>periodical_query</varname>(int)</title>
 		<para>
 		A flag to disable periodical query as an update method for
@@ -136,7 +136,7 @@ modparam("xcap_client", "periodical_query", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xcap_client.p.query_period">
 		<title><varname>query_period</varname>(int)</title>
 		<para>
 		Should be set if periodical query is not disabled.
@@ -160,13 +160,6 @@ modparam("xcap_client", "query_period", 50)
 		</example>
 	</section>
 	</section>
-
-<section>
-	<title>Functions</title>
-	<para>
-	None to be used in configuration file.
-	</para>
-</section>
 
 <section>
 	<title>RPC Commands</title>
