@@ -14,6 +14,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_without rebbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -32,6 +33,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_without rebbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -50,6 +52,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_without rebbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -68,6 +71,7 @@
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_with rebbitmq
 %bcond_with redis
 %bcond_without sctp
 %bcond_without websocket
@@ -87,6 +91,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_without rebbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -105,6 +110,7 @@
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_with rebbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -123,6 +129,7 @@
 %bcond_with kazoo
 %bcond_with memcached
 %bcond_with perl
+%bcond_with rebbitmq
 %bcond_with redis
 %bcond_with sctp
 %bcond_with websocket
@@ -141,6 +148,7 @@
 %bcond_with kazoo
 %bcond_with memcached
 %bcond_without perl
+%bcond_without rebbitmq
 %bcond_without redis
 %bcond_with sctp
 %bcond_with websocket
@@ -170,6 +178,7 @@ Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-kazoo < %ver
+Conflicts:  kamailio-rabbitmq < %ver
 Conflicts:  kamailio-memcached < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
@@ -601,6 +610,18 @@ BuildRequires:  python-devel
 Python extensions for Kamailio.
 
 
+%if %{with rabbitmq}
+%package    rabbitmq
+Summary:    RabbitMQ related modules
+Group:      System Environment/Daemons
+Requires:   libuuid, librabbitmq, kamailio = %ver
+BuildRequires:    librabbitmq-devel, libuuid-devel
+
+%description    rabbitmq
+RabbitMQ module for Kamailio.
+%endif
+
+
 %package    radius
 Summary:    RADIUS modules for Kamailio
 Group:      System Environment/Daemons
@@ -921,6 +942,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with kazoo}
     kkazoo \
 %endif
+%if %{with rabbitmq}
+    krabbitmq \
+%endif
     kldap 
 %if %{with lua}
     klua \
@@ -986,6 +1010,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kjsonrpcs \
 %if %{with kazoo}
     kkazoo \
+%endif
+%if %{with rabbitmq}
+    krabbitmq \
 %endif
     kldap \
 %if %{with lua}
@@ -1696,6 +1723,14 @@ fi
 %{_libdir}/kamailio/modules/app_python.so
 
 
+%if %{with rabbitmq}
+%files      rabbitmq
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.rabbitmq
+%{_libdir}/kamailio/modules/rabbitmq.so
+%endif
+
+
 %files      radius
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.acc_radius
@@ -1858,6 +1893,8 @@ fi
   - added packaging for Fedora 26 and openSUSE Leap 42.3
   - removed packaging for Fedora 24 and openSUSE Leap 42.1 as End Of Life
   - rewrited SPEC file to support Fedora, RHEL, CentOS, openSUSE distrs
+* Mon Jul 31 2017 Mititelu Stefan <stefan.mititelu92@gmail.com>
+  - added rabbitmq module
 * Wed Apr 26 2017 Carsten Bock <carsten@ng-voice.co,>
   - added ims_diameter_server module
   - added topos_redis module
