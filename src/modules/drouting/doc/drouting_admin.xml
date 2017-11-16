@@ -368,7 +368,8 @@
 		<emphasis>prefix column</emphasis> 
 	</para>
 	<para>
-	Destination URI must start with prefix value to match the rule.
+	Destination URI must start with prefix value to match the rule. The prefix
+	value can contain only digits (0..9), '+', '*' or '#'.
 	</para>
 	</listitem>
 	<listitem>
