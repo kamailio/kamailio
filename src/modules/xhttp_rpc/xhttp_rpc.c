@@ -564,6 +564,62 @@ err:
 }
 
 
+/** Adds a new member to array.
+ */
+static int rpc_array_add(struct rpc_data_struct* rpc_s, char* fmt, ...)
+{
+	va_list ap;
+	void **void_ptr;
+	rpc_ctx_t *ctx = rpc_s->ctx;
+	struct rpc_data_struct *ds, *s;
+
+	if (!ctx) {
+		LM_ERR("Invalid context\n");
+		return -1;
+	}
+	if (!ctx->data_structs) {
+		LM_ERR("Invalid structs\n");
+		return -1;
+	}
+	s = ds = ctx->data_structs;
+	ctx->struc_depth = 0;
+	while (s) {
+		if (s == rpc_s) {
+			if (s->next) {
+				free_data_struct(s->next);
+				s->next = NULL;
+			}
+			break;
+		}
+		ctx->struc_depth++;
+		ds = s;
+		s = s->next;
+	}
+	if (!s)
+		s = ds;
+	va_start(ap, fmt);
+	while(*fmt) {
+		if (*fmt == '{' || *fmt == '[') {
+			void_ptr = va_arg(ap, void**);
+			ds = new_data_struct(ctx);
+			if (!ds) goto err;
+			s->next = ds;
+			*void_ptr = ds;
+			if (0!=xhttp_rpc_build_content(ctx, NULL, NULL))
+				goto err;
+		} else {
+			if (print_value(ctx, *fmt, &ap, NULL) < 0) goto err;
+		}
+		fmt++;
+	}
+	va_end(ap);
+	return 0;
+err:
+	va_end(ap);
+	return -1;
+}
+
+
 static int rpc_struct_scan(struct rpc_data_struct* rpc_s, char* fmt, ...)
 {
 	LM_ERR("Not implemented\n");
@@ -670,8 +726,7 @@ static int mod_init(void)
 	func_param.scan = (rpc_scan_f)rpc_scan;
 	func_param.rpl_printf = (rpc_rpl_printf_f)rpc_rpl_printf;
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
-	/* use rpc_struct_add for array_add */
-	func_param.array_add = (rpc_struct_add_f)rpc_struct_add;
+	func_param.array_add = (rpc_array_add_f)rpc_array_add;
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;
 	func_param.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
 	func_param.capabilities = (rpc_capabilities_f)rpc_capabilities;
@@ -867,3 +922,4 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 	sr_kemi_modules_add(sr_kemi_xhttp_rpc_exports);
 	return 0;
 }
+
