@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005-2009 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,10 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * History:
- * ---------
- *  2005-02-20  first version (cristian)
- *  2005-02-27  ported to 0.9.0 (bogdan)
  */
 
 
@@ -46,7 +40,7 @@ typedef struct hb_ {
 
 /* routing data is comprised of:
 	- a list of PSTN gw
-	- a hash over routing groups containing 
+	- a hash over routing groups containing
 	pointers to the coresponding prefix trees
 */
 typedef struct rt_data_ {
@@ -83,7 +77,7 @@ add_dst(
 	rt_data_t*,
 	/* id */
 	int ,
-	/* ip address */ 
+	/* ip address */
 	char*,
 	/* strip len */
 	int,
@@ -112,7 +106,7 @@ del_pgw_list(
 		pgw_t *pgw_l
 		);
 
-void 
+void
 free_rt_data(
 		rt_data_t*,
 		int

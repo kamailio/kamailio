@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005-2009 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,10 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * History:
- * ---------
- *  2005-02-20  first version (cristian)
- *  2005-02-27  ported to 0.9.0 (bogdan)
  */
 
 
@@ -41,7 +35,7 @@ extern int unode;
 
 
 
-static inline int 
+static inline int
 check_time(
 		tmrec_t *time_rec
 		)
@@ -84,7 +78,7 @@ internal_check_rt(
 	rg=ptn->rg;
 	for(i=0;(i<rg_pos) && (rg[i].rgid!=rgid);i++);
 	if(i<rg_pos) {
-		LM_DBG("found rgid %d (rule list %p)\n", 
+		LM_DBG("found rgid %d (rule list %p)\n",
 				rgid, rg[i].rtlw);
 		rtlw=rg[i].rtlw;
 		while(rtlw!=NULL) {
@@ -98,7 +92,7 @@ internal_check_rt(
 }
 
 
-rt_info_t* 
+rt_info_t*
 check_rt(
 	ptree_node_t *ptn,
 	unsigned int rgid
@@ -124,7 +118,7 @@ get_prefix(
 	if(NULL == prefix)
 		goto err_exit;
 	tmp = prefix->s;
-	/* go the tree down to the last digit in the 
+	/* go the tree down to the last digit in the
 	 * prefix string or down to a leaf */
 	while(tmp< (prefix->s+prefix->len)) {
 		idx = get_node_index(*tmp);
@@ -181,13 +175,13 @@ err_exit:
 }
 
 
-int 
+int
 add_prefix(
 	ptree_t *ptree,
 	str* prefix,
 	rt_info_t *r,
 	unsigned int rg
-	) 
+	)
 {
 	char* tmp=NULL;
 	int res = 0;
@@ -204,7 +198,7 @@ add_prefix(
 		}
 		if( tmp == (prefix->s+prefix->len-1) ) {
 			/* last symbol in the prefix string */
-			
+
 			LM_DBG("adding info %p, %d at: "
 				"%p (%d)\n", r, rg, &(ptree->ptnode[insert_index]), insert_index);
 			res = add_rt_info(&(ptree->ptnode[insert_index]), r,rg);
@@ -220,14 +214,14 @@ add_prefix(
 			INIT_PTREE_NODE(ptree, ptree->ptnode[insert_index].next);
 			inode+=PTREE_CHILDREN;
 #if 0
-			printf("new tree node: %p (bp: %p)\n", 
+			printf("new tree node: %p (bp: %p)\n",
 					ptree->ptnode[insert_index].next,
 					ptree->ptnode[insert_index].next->bp
 					);
 #endif
 		}
 		ptree = ptree->ptnode[insert_index].next;
-		tmp++; 
+		tmp++;
 	}
 
 ok_exit:
@@ -237,7 +231,7 @@ err_exit:
 	return -1;
 }
 
-int 
+int
 del_tree(
 		ptree_t* t
 		)
