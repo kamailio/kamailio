@@ -32,10 +32,11 @@
 #define RG_INIT_LEN 4;
 
 /* the buckets for the rt_data rg_hash */
-typedef struct hb_ {
+typedef struct hb_
+{
 	int rgid;
 	ptree_t *pt;
-	struct hb_*next;
+	struct hb_ *next;
 } hb_t;
 
 /* routing data is comprised of:
@@ -43,7 +44,8 @@ typedef struct hb_ {
 	- a hash over routing groups containing
 	pointers to the coresponding prefix trees
 */
-typedef struct rt_data_ {
+typedef struct rt_data_
+{
 	/* list of PSTN gw */
 	pgw_t *pgw_l;
 	/* list of IP addr for PSTN gw */
@@ -52,63 +54,50 @@ typedef struct rt_data_ {
 	ptree_node_t noprefix;
 	/* hash table with routing prefixes */
 	ptree_t *pt;
-}rt_data_t;
+} rt_data_t;
 
-typedef struct _dr_group {
+typedef struct _dr_group
+{
 	/* 0 - use grp ; 1 - use AVP */
 	int type;
-	union {
+	union
+	{
 		unsigned int grp_id;
-		struct _avp_id{
+		struct _avp_id
+		{
 			int_str name;
 			unsigned short type;
-		}avp_id;
-	}u;
+		} avp_id;
+	} u;
 } dr_group_t;
 
 /* init new rt_data structure */
-rt_data_t*
-build_rt_data( void );
+rt_data_t *build_rt_data(void);
 
 
 /* add a PSTN gw in the list */
-int
-add_dst(
-	rt_data_t*,
-	/* id */
-	int ,
-	/* ip address */
-	char*,
-	/* strip len */
-	int,
-	/* pri prefix */
-	char*,
-	/* dst type*/
-	int,
-	/* dst attrs*/
-	char*
-	);
+int add_dst(rt_data_t *,
+		/* id */
+		int,
+		/* ip address */
+		char *,
+		/* strip len */
+		int,
+		/* pri prefix */
+		char *,
+		/* dst type*/
+		int,
+		/* dst attrs*/
+		char *);
 
 /* build a routing info list element */
-rt_info_t*
-build_rt_info(
-	int priority,
-	tmrec_t* time,
-	/* ser routing table id */
-	int route_id,
-	/* list of destinations indexes */
-	char* dstlst,
-	pgw_t* pgw_l
-);
+rt_info_t *build_rt_info(int priority, tmrec_t *time,
+		/* ser routing table id */
+		int route_id,
+		/* list of destinations indexes */
+		char *dstlst, pgw_t *pgw_l);
 
-void
-del_pgw_list(
-		pgw_t *pgw_l
-		);
+void del_pgw_list(pgw_t *pgw_l);
 
-void
-free_rt_data(
-		rt_data_t*,
-		int
-		);
+void free_rt_data(rt_data_t *, int);
 #endif

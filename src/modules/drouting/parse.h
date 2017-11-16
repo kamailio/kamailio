@@ -28,11 +28,11 @@
 #define SEP1 ','
 #define SEP_GRP ';'
 
-#define IS_SPACE(s)\
-	((s)==' ' || (s)=='\t' || (s)=='\r' || (s)=='\n')
+#define IS_SPACE(s) ((s) == ' ' || (s) == '\t' || (s) == '\r' || (s) == '\n')
 
-#define EAT_SPACE(s)\
-	while((s) && IS_SPACE(*(s))) (s)++
+#define EAT_SPACE(s)             \
+	while((s) && IS_SPACE(*(s))) \
+	(s)++
 
 
 #endif

@@ -27,7 +27,7 @@
 #include "../../lib/srdb1/db.h"
 #include "routing.h"
 
-rt_data_t* dr_load_routing_info( db_func_t *dr_dbf, db1_con_t* db_hdl,
-							str *drd_table, str *drl_table, str* str_table);
+rt_data_t *dr_load_routing_info(db_func_t *dr_dbf, db1_con_t *db_hdl,
+		str *drd_table, str *drl_table, str *str_table);
 
 #endif
