@@ -295,7 +295,8 @@ Chapter 1. Admin Guide
        Each user must be member of only one routing group. It must be
        specified in user's profile.
     b. prefix column
-       Destination URI must start with prefix value to match the rule.
+       Destination URI must start with prefix value to match the rule. The
+       prefix value can contain only digits (0..9), '+', '*' or '#'.
     c. time rec column
        A date-time expression that defines the time recurrence to match
        for current rule. Time recurrences are based closely on the
