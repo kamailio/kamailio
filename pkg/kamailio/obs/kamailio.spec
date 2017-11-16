@@ -11,6 +11,7 @@
 %bcond_without http_async_client
 %bcond_without jansson
 %bcond_without json
+%bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
@@ -29,6 +30,7 @@
 %bcond_without http_async_client
 %bcond_without jansson
 %bcond_without json
+%bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
@@ -47,6 +49,7 @@
 %bcond_without http_async_client
 %bcond_without jansson
 %bcond_without json
+%bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
@@ -65,6 +68,7 @@
 %bcond_with http_async_client
 %bcond_with jansson
 %bcond_with json
+%bcond_without lua
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_without perl
@@ -84,6 +88,7 @@
 %bcond_without http_async_client
 %bcond_without jansson
 %bcond_without json
+%bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
@@ -102,6 +107,7 @@
 %bcond_without http_async_client
 %bcond_without jansson
 %bcond_without json
+%bcond_without lua
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_without perl
@@ -120,6 +126,7 @@
 %bcond_with http_async_client
 %bcond_with jansson
 %bcond_with json
+%bcond_with lua
 %bcond_with kazoo
 %bcond_with memcached
 %bcond_with perl
@@ -138,6 +145,7 @@
 %bcond_with http_async_client
 %bcond_with jansson
 %bcond_with json
+%bcond_with lua
 %bcond_with kazoo
 %bcond_with memcached
 %bcond_without perl
