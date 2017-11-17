@@ -289,26 +289,16 @@ SELECT_F(select_any_nameaddr)
 	static int
 fixup_fix_sdp(void** param, int param_no)
 {
-	pv_elem_t *model;
-	str s;
-
 	if (param_no==1) {
 		/* flags */
-		return fixup_uint_null( param, param_no);
+		return fixup_igp_null(param, param_no);
 	}
-	/* new IP */
-	model=NULL;
-	s.s = (char*)(*param); s.len = strlen(s.s);
-	if(pv_parse_format(&s,&model)<0) {
-		LM_ERR("wrong format[%s]!\n", (char*)(*param));
-		return E_UNSPEC;
+	if (param_no==2) {
+		/* new IP */
+		return fixup_spve_all(param, param_no);
 	}
-	if (model==NULL) {
-		LM_ERR("empty parameter!\n");
-		return E_UNSPEC;
-	}
-	*param = (void*)model;
-	return 0;
+	LM_ERR("unexpected param no: %d\n", param_no);
+	return -1;
 }
 
 static int fixup_fix_nated_register(void** param, int param_no)
@@ -1570,9 +1560,14 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	int ret;
 	int count = 0;
 
-	level = (int)(long)str1;
-	if (str2 && pv_printf_s( msg, (pv_elem_p)str2, &ip)!=0)
+	if(fixup_get_ivalue(msg, (gparam_t*)str1, &level)!=0) {
+		LM_ERR("failed to get value for first parameter\n");
 		return -1;
+	}
+	if(str2 && fixup_get_svalue(msg, (gparam_t*)str2, &ip)!=0) {
+		LM_ERR("failed to get value for second parameter\n");
+		return -1;
+	}
 
 	if (extract_body(msg, &body) == -1) {
 		LM_ERR("cannot extract body from msg!\n");
