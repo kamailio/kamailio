@@ -1478,8 +1478,16 @@ FixContact(struct sip_msg *msg)
         return -1;
     }
 
-    len = sprintf(buf, "%.*s%s:%d%.*s", before_host.len, before_host.s,
-                  newip.s, newport, after.len, after.s);
+    if (msg->rcv.src_ip.af==AF_INET6)
+    {
+    	len = sprintf(buf, "%.*s[%s]:%d%.*s", before_host.len, before_host.s,
+                  	newip.s, newport, after.len, after.s);
+    }
+    else
+    {
+	 len = sprintf(buf, "%.*s%s:%d%.*s", before_host.len, before_host.s,
+                        newip.s, newport, after.len, after.s);
+    } 
 
     if (insert_new_lump_after(anchor, buf, len, (enum _hdr_types_t)HDR_CONTACT_F) == 0) {
         pkg_free(buf);
