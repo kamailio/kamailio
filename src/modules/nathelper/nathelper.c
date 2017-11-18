@@ -216,7 +216,7 @@ static cmd_export_t cmds[] = {
 		0, 0,
 		REQUEST_ROUTE },
 	{"add_rcv_param",      (cmd_function)add_rcv_param_f,        1,
-		fixup_uint_null, 0,
+		fixup_igp_null, 0,
 		REQUEST_ROUTE },
 	{"is_rfc1918",         (cmd_function)is_rfc1918_f,           1,
 		fixup_spve_null, 0,
@@ -2098,9 +2098,14 @@ static int add_rcv_param_f(struct sip_msg *msg, char *str1, char *str2)
 	struct lump *anchor;
 	char *param;
 	str uri;
-	int hdr_param;
+	int hdr_param = 0;
 
-	hdr_param = str1 ? 0 : 1;
+	if(str1) {
+		if(fixup_get_ivalue(msg, (gparam_t*))str1, &hdr_param)<0) {
+			LM_ERR("failed to get falgs parameter\n");
+			return -1;
+		}
+	}
 
 	if(create_rcv_uri(&uri, msg) < 0) {
 		return -1;
