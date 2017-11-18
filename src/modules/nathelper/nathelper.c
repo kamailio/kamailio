@@ -2097,20 +2097,12 @@ static int create_rcv_uri(str *uri, struct sip_msg *m)
  * Add received parameter to Contacts for further
  * forwarding of the REGISTER requuest
  */
-static int add_rcv_param_f(struct sip_msg *msg, char *str1, char *str2)
+static int ki_add_rcv_param(sip_msg_t *msg, int hdr_param)
 {
 	contact_t *c;
 	struct lump *anchor;
 	char *param;
 	str uri;
-	int hdr_param = 0;
-
-	if(str1) {
-		if(fixup_get_ivalue(msg, (gparam_t*)str1, &hdr_param)<0) {
-			LM_ERR("failed to get falgs parameter\n");
-			return -1;
-		}
-	}
 
 	if(create_rcv_uri(&uri, msg) < 0) {
 		return -1;
@@ -2160,6 +2152,22 @@ static int add_rcv_param_f(struct sip_msg *msg, char *str1, char *str2)
 	return 1;
 }
 
+/*
+ * Add received parameter to Contacts for further
+ * forwarding of the REGISTER requuest
+ */
+static int add_rcv_param_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	int hdr_param = 0;
+
+	if(str1) {
+		if(fixup_get_ivalue(msg, (gparam_t*)str1, &hdr_param)<0) {
+			LM_ERR("failed to get falgs parameter\n");
+			return -1;
+		}
+	}
+	return ki_add_rcv_param(msg, hdr_param);
+}
 
 /*
  * Create an AVP to be used by registrar with the source IP and port
@@ -2397,6 +2405,11 @@ static sr_kemi_t sr_kemi_nathelper_exports[] = {
 	{ str_init("nathelper"), str_init("add_contact_alias_addr"),
 		SR_KEMIP_INT, add_contact_alias_3,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("nathelper"), str_init("add_rcv_param"),
+		SR_KEMIP_INT, ki_add_rcv_param,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
