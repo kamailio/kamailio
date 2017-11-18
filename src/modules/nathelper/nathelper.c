@@ -207,7 +207,7 @@ static cmd_export_t cmds[] = {
 		fixup_fix_sdp, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"nat_uac_test",       (cmd_function)nat_uac_test_f,         1,
-		fixup_uint_null, 0,
+		fixup_igp_null, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"fix_nated_register", (cmd_function)fix_nated_register_f,   0,
 		fixup_fix_nated_register, 0,
@@ -1441,7 +1441,12 @@ static int nat_uac_test(struct sip_msg *msg, int tests)
 
 static int nat_uac_test_f(struct sip_msg *msg, char *str1, char *str2)
 {
-	return nat_uac_test(msg, (int)(long)str1);
+	int tflags = 0;
+	if(fixup_get_ivalue(msg, (gparam_t*)str1, &tflags)<0) {
+		LM_ERR("failed to get the value for flags parameter\n");
+		return -1;
+	}
+	return nat_uac_test(msg, tflags);
 }
 
 static int is_rfc1918(struct sip_msg *msg, str *address)
@@ -2101,7 +2106,7 @@ static int add_rcv_param_f(struct sip_msg *msg, char *str1, char *str2)
 	int hdr_param = 0;
 
 	if(str1) {
-		if(fixup_get_ivalue(msg, (gparam_t*))str1, &hdr_param)<0) {
+		if(fixup_get_ivalue(msg, (gparam_t*)str1, &hdr_param)<0) {
 			LM_ERR("failed to get falgs parameter\n");
 			return -1;
 		}
