@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ---------
- * 2007-04-13   splitted from nathelper.c (ancuta)
-*/
+ */
 
 
 #ifndef _NATHELPER_NATHELPER_H
@@ -29,7 +26,15 @@
 #include "../../core/str.h"
 
 /* Handy macros */
-#define STR2IOVEC(sx, ix)       do {(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;} while(0)
-#define SZ2IOVEC(sx, ix)        do {(ix).iov_base = (sx); (ix).iov_len = strlen(sx);} while(0)
+#define STR2IOVEC(sx, ix)        \
+	do {                         \
+		(ix).iov_base = (sx).s;  \
+		(ix).iov_len = (sx).len; \
+	} while(0)
+#define SZ2IOVEC(sx, ix)           \
+	do {                           \
+		(ix).iov_base = (sx);      \
+		(ix).iov_len = strlen(sx); \
+	} while(0)
 
 #endif
