@@ -561,17 +561,17 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("setbiflag"),
 		SR_KEMIP_BOOL, sr_kemi_core_setbiflag,
-		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init(""), str_init("resetbiflag"),
 		SR_KEMIP_BOOL, sr_kemi_core_resetbiflag,
-		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init(""), str_init("isbiflagset"),
 		SR_KEMIP_BOOL, sr_kemi_core_isbiflagset,
-		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init(""), str_init("setsflag"),
