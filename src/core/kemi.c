@@ -38,6 +38,8 @@
 #include "kemi.h"
 
 
+#define SR_KEMI_HNAME_SIZE 128
+
 /**
  *
  */
@@ -670,7 +672,6 @@ static int sr_kemi_hdr_append_after(sip_msg_t *msg, str *txt, str *hname)
 	hdr_field_t *hf;
 	hdr_field_t hfm;
 	char *hdr;
-#define SR_KEMI_HNAME_SIZE 128
 	char hbuf[SR_KEMI_HNAME_SIZE];
 
 	if(txt==NULL || txt->s==NULL || hname==NULL || hname->s==NULL || msg==NULL)
@@ -731,32 +732,98 @@ static int sr_kemi_hdr_append_after(sip_msg_t *msg, str *txt, str *hname)
 /**
  *
  */
-static int sr_kemi_hdr_remove(sip_msg_t *msg, str *txt)
+static int sr_kemi_hdr_remove(sip_msg_t *msg, str *hname)
 {
 	struct lump* anchor;
-	struct hdr_field *hf;
+	hdr_field_t *hf;
+	hdr_field_t hfm;
+	char hbuf[SR_KEMI_HNAME_SIZE];
 
-	if(txt==NULL || txt->s==NULL || msg==NULL)
+	if(hname==NULL || hname->s==NULL || msg==NULL)
 		return -1;
 
-	LM_DBG("remove hf: %.*s\n", txt->len, txt->s);
+	if(hname->len>SR_KEMI_HNAME_SIZE-4) {
+		LM_ERR("header name too long: %d\n", hname->len);
+		return -1;
+	}
+	memcpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("error while parsing message\n");
 		return -1;
 	}
 
+	LM_DBG("remove hf: %.*s\n", hname->len, hname->s);
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->name.len==txt->len
-				&& strncasecmp(hf->name.s, txt->s, txt->len)==0) {
-			anchor=del_lump(msg,
-					hf->name.s - msg->buf, hf->len, 0);
-			if (anchor==0) {
-				LM_ERR("cannot remove hdr %.*s\n", txt->len, txt->s);
-				return -1;
-			}
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hf->type)
+				continue;
+		} else {
+			if (hf->name.len!=hname->len)
+				continue;
+			if(strncasecmp(hf->name.s, hname->s, hname->len)!=0)
+				continue;
+		}
+		anchor=del_lump(msg, hf->name.s - msg->buf, hf->len, 0);
+		if (anchor==0) {
+			LM_ERR("cannot remove hdr %.*s\n", hname->len, hname->s);
+			return -1;
 		}
 	}
 	return 1;
+}
+
+/**
+ *
+ */
+static int sr_kemi_hdr_is_present(sip_msg_t *msg, str *hname)
+{
+	hdr_field_t *hf;
+	hdr_field_t hfm;
+	char hbuf[SR_KEMI_HNAME_SIZE];
+
+	if(hname==NULL || hname->s==NULL || msg==NULL)
+		return -1;
+
+	if(hname->len>SR_KEMI_HNAME_SIZE-4) {
+		LM_ERR("header name too long: %d\n", hname->len);
+		return -1;
+	}
+	memcpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+
+	LM_DBG("searching hf: %.*s\n", hname->len, hname->s);
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hf->type)
+				continue;
+		} else {
+			if (hf->name.len!=hname->len)
+				continue;
+			if(strncasecmp(hf->name.s, hname->s, hname->len)!=0)
+				continue;
+		}
+		return 1;
+	}
+	return -1;
 }
 
 /**
@@ -796,7 +863,6 @@ static int sr_kemi_hdr_insert_before(sip_msg_t *msg, str *txt, str *hname)
 	hdr_field_t *hf;
 	hdr_field_t hfm;
 	char *hdr;
-#define SR_KEMI_HNAME_SIZE 128
 	char hbuf[SR_KEMI_HNAME_SIZE];
 
 	if(txt==NULL || txt->s==NULL || hname==NULL || hname->s==NULL || msg==NULL)
@@ -898,6 +964,11 @@ static sr_kemi_t _sr_kemi_hdr[] = {
 	},
 	{ str_init("hdr"), str_init("remove"),
 		SR_KEMIP_INT, sr_kemi_hdr_remove,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("is_present"),
+		SR_KEMIP_INT, sr_kemi_hdr_is_present,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
