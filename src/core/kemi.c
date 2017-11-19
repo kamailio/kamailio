@@ -30,8 +30,10 @@
 #include "action.h"
 #include "data_lump.h"
 #include "data_lump_rpl.h"
+#include "strutils.h"
 #include "mem/shm.h"
 #include "parser/parse_uri.h"
+#include "parser/parse_hname2.h"
 
 #include "kemi.h"
 
@@ -651,10 +653,75 @@ static int sr_kemi_hdr_append(sip_msg_t *msg, str *txt)
 		return -1;
 	}
 	memcpy(hdr, txt->s, txt->len);
-	anchor = anchor_lump(msg,
-				hf->name.s + hf->len - msg->buf, 0, 0);
-	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0)
-	{
+	anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
+		LM_ERR("can't insert lump\n");
+		pkg_free(hdr);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int sr_kemi_hdr_append_after(sip_msg_t *msg, str *txt, str *hname)
+{
+	struct lump* anchor;
+	hdr_field_t *hf;
+	hdr_field_t hfm;
+	char *hdr;
+#define SR_KEMI_HNAME_SIZE 128
+	char hbuf[SR_KEMI_HNAME_SIZE];
+
+	if(txt==NULL || txt->s==NULL || hname==NULL || hname->s==NULL || msg==NULL)
+		return -1;
+
+	if(hname->len>SR_KEMI_HNAME_SIZE-4) {
+		LM_ERR("header name too long: %d\n", hname->len);
+		return -1;
+	}
+	memcpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hf->type)
+				continue;
+		} else {
+			if (hf->name.len!=hfm.name.len)
+				continue;
+			if (cmp_hdrname_str(&hf->name, &hfm.name)!=0)
+				continue;
+		}
+	}
+
+	hdr = (char*)pkg_malloc(txt->len);
+	if(hdr==NULL) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(hdr, txt->s, txt->len);
+
+	if(hf==0) { /* after last header */
+		anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+	} else { /* after hf */
+		anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+	}
+
+	LM_DBG("append after [%.*s] the hf: [%.*s]\n", hname->len, hname->s,
+			txt->len, txt->s);
+	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
 		return -1;
@@ -725,6 +792,73 @@ static int sr_kemi_hdr_insert(sip_msg_t *msg, str *txt)
 /**
  *
  */
+static int sr_kemi_hdr_insert_before(sip_msg_t *msg, str *txt, str *hname)
+{
+	struct lump* anchor;
+	hdr_field_t *hf;
+	hdr_field_t hfm;
+	char *hdr;
+#define SR_KEMI_HNAME_SIZE 128
+	char hbuf[SR_KEMI_HNAME_SIZE];
+
+	if(txt==NULL || txt->s==NULL || hname==NULL || hname->s==NULL || msg==NULL)
+		return -1;
+
+	if(hname->len>SR_KEMI_HNAME_SIZE-4) {
+		LM_ERR("header name too long: %d\n", hname->len);
+		return -1;
+	}
+	memcpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hf->type)
+				continue;
+		} else {
+			if (hf->name.len!=hfm.name.len)
+				continue;
+			if (cmp_hdrname_str(&hf->name, &hfm.name)!=0)
+				continue;
+		}
+	}
+
+	hf = msg->headers;
+	hdr = (char*)pkg_malloc(txt->len);
+	if(hdr==NULL) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(hdr, txt->s, txt->len);
+	anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+	if(hf==0) { /* before first header */
+		anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
+	} else { /* before hf */
+		anchor = anchor_lump(msg, hf->name.s - msg->buf, 0, 0);
+	}
+	LM_DBG("insert before [%.*s] the hf: %.*s\n", hname->len, hname->s,
+			txt->len, txt->s);
+	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
+		LM_ERR("can't insert lump\n");
+		pkg_free(hdr);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
 static int sr_kemi_hdr_append_to_reply(sip_msg_t *msg, str *txt)
 {
 	if(txt==NULL || txt->s==NULL || msg==NULL)
@@ -749,9 +883,19 @@ static sr_kemi_t _sr_kemi_hdr[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("hdr"), str_init("append_after"),
+		SR_KEMIP_INT, sr_kemi_hdr_append_after,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("hdr"), str_init("insert"),
 		SR_KEMIP_INT, sr_kemi_hdr_insert,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("insert_before"),
+		SR_KEMIP_INT, sr_kemi_hdr_insert_before,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("hdr"), str_init("remove"),
