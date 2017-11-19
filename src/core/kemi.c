@@ -634,7 +634,6 @@ static sr_kemi_t _sr_kemi_core[] = {
 static int sr_kemi_hdr_append(sip_msg_t *msg, str *txt)
 {
 	struct lump* anchor;
-	struct hdr_field *hf;
 	char *hdr;
 
 	if(txt==NULL || txt->s==NULL || msg==NULL)
@@ -646,14 +645,14 @@ static int sr_kemi_hdr_append(sip_msg_t *msg, str *txt)
 		return -1;
 	}
 
-	hf = msg->last_header;
 	hdr = (char*)pkg_malloc(txt->len);
 	if(hdr==NULL) {
 		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 	memcpy(hdr, txt->s, txt->len);
-	anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+	/* anchor after last header */
+	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
 	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
@@ -766,21 +765,20 @@ static int sr_kemi_hdr_remove(sip_msg_t *msg, str *txt)
 static int sr_kemi_hdr_insert(sip_msg_t *msg, str *txt)
 {
 	struct lump* anchor;
-	struct hdr_field *hf;
 	char *hdr;
 
 	if(txt==NULL || txt->s==NULL || msg==NULL)
 		return -1;
 
 	LM_DBG("insert hf: %.*s\n", txt->len, txt->s);
-	hf = msg->headers;
 	hdr = (char*)pkg_malloc(txt->len);
 	if(hdr==NULL) {
 		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 	memcpy(hdr, txt->s, txt->len);
-	anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+	/* anchor before first header */
+	anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
 	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
