@@ -34,6 +34,7 @@
 #include "mem/shm.h"
 #include "parser/parse_uri.h"
 #include "parser/parse_hname2.h"
+#include "parser/parse_methods.h"
 
 #include "kemi.h"
 
@@ -500,6 +501,204 @@ static int sr_kemi_core_force_rport(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_match_method_id(str *rmethod, str *vmethod, int mid)
+{
+	char mbuf[SR_KEMI_HNAME_SIZE];
+	int i;
+	unsigned int method;
+	str s;
+
+	if(memchr(vmethod->s, '|', vmethod->len)==NULL) {
+		if(rmethod->len!=vmethod->len) {
+			return SR_KEMI_FALSE;
+		}
+		if(strncasecmp(rmethod->s, vmethod->s, vmethod->len)!=0) {
+			return SR_KEMI_FALSE;
+		}
+		return SR_KEMI_TRUE;
+	}
+	if(vmethod->len>=SR_KEMI_HNAME_SIZE-1) {
+		LM_ERR("methods parameter is too long\n");
+		return SR_KEMI_FALSE;
+	}
+	memcpy(mbuf, vmethod->s, vmethod->len);
+	mbuf[vmethod->len] = '\0';
+	for(i=0; i<vmethod->len; i++) {
+		if(mbuf[i]=='|') {
+			mbuf[i] = ',';
+		}
+	}
+	s.s = mbuf;
+	s.len = vmethod->len;
+	if(parse_methods(&s, &method)!=0) {
+		LM_ERR("failed to parse methods string [%.*s]\n", s.len, s.s);
+		return SR_KEMI_FALSE;
+	}
+	if((method==METHOD_UNDEF) || (method&METHOD_OTHER)) {
+		LM_ERR("unknown method in list [%.*s] - use only standard SIP methods\n",
+				s.len, s.s);
+		return SR_KEMI_FALSE;
+	}
+	if((int)method & mid) {
+		return SR_KEMI_TRUE;
+	}
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method(sip_msg_t *msg, str *vmethod)
+{
+	if(msg==NULL || vmethod==NULL || vmethod->s==NULL || vmethod->len<=0) {
+		LM_WARN("invalid parameters\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg->first_line.type==SIP_REQUEST) {
+		if(msg->first_line.u.request.method_value==METHOD_OTHER) {
+			if(msg->first_line.u.request.method.len!=vmethod->len) {
+				return SR_KEMI_FALSE;
+			}
+			if(strncasecmp(msg->first_line.u.request.method.s, vmethod->s,
+						vmethod->len)!=0) {
+				return SR_KEMI_FALSE;
+			}
+			return SR_KEMI_TRUE;
+		}
+		return sr_kemi_core_match_method_id(&msg->first_line.u.request.method,
+				vmethod, msg->first_line.u.request.method_value);
+	}
+
+	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL) {
+		LM_ERR("cannot parse cseq header\n");
+		return SR_KEMI_FALSE;
+	}
+	if(get_cseq(msg)->method_id==METHOD_OTHER) {
+		if(get_cseq(msg)->method.len!=vmethod->len) {
+			return SR_KEMI_FALSE;
+		}
+		if(strncasecmp(get_cseq(msg)->method.s, vmethod->s,
+					vmethod->len)!=0) {
+			return SR_KEMI_FALSE;
+		}
+		return SR_KEMI_TRUE;
+	}
+	return sr_kemi_core_match_method_id(&get_cseq(msg)->method, vmethod,
+			get_cseq(msg)->method_id);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_forward_uri(sip_msg_t *msg, str *vuri)
+{
+	int ret;
+	dest_info_t dst;
+	sip_uri_t *u;
+	sip_uri_t next_hop;
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return -1;
+	}
+
+	init_dest_info(&dst);
+
+	if(vuri==NULL || vuri->s==NULL || vuri->len<=0) {
+		if (msg->dst_uri.len) {
+			ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len, &next_hop);
+			u = &next_hop;
+		} else {
+			ret = parse_sip_msg_uri(msg);
+			u = &msg->parsed_uri;
+		}
+	} else {
+		ret = parse_uri(vuri->s, vuri->len, &next_hop);
+		u = &next_hop;
+	}
+
+	if (ret<0) {
+		LM_ERR("forward - bad_uri dropping packet\n");
+		return -1;
+	}
+
+	dst.proto=u->proto;
+	ret=forward_request(msg, &u->host, u->port_no, &dst);
+	if (ret>=0) {
+		return 1;
+	}
+
+	return -1;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_forward(sip_msg_t *msg)
+{
+	return sr_kemi_core_forward_uri(msg, NULL);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_set_forward_close(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	msg->fwd_send_flags.f |= SND_F_CON_CLOSE;
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_set_forward_no_connect(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	msg->fwd_send_flags.f |= SND_F_FORCE_CON_REUSE;
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_set_reply_close(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	msg->rpl_send_flags.f |= SND_F_CON_CLOSE;
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_set_reply_no_connect(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	msg->rpl_send_flags.f |= SND_F_FORCE_CON_REUSE;
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -613,7 +812,7 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("resetdsturi"),
 		SR_KEMIP_BOOL, sr_kemi_core_resetdsturi,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init(""), str_init("isdsturiset"),
@@ -623,6 +822,41 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("force_rport"),
 		SR_KEMIP_BOOL, sr_kemi_core_force_rport,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_method"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("forward"),
+		SR_KEMIP_INT, sr_kemi_core_forward,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("forward_uri"),
+		SR_KEMIP_INT, sr_kemi_core_forward_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("set_forward_close"),
+		SR_KEMIP_BOOL, sr_kemi_core_set_forward_close,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("set_forward_no_connect"),
+		SR_KEMIP_BOOL, sr_kemi_core_set_forward_no_connect,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("set_reply_close"),
+		SR_KEMIP_BOOL, sr_kemi_core_set_reply_close,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("set_reply_no_connect"),
+		SR_KEMIP_BOOL, sr_kemi_core_set_reply_no_connect,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
