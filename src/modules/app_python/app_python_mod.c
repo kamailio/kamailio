@@ -60,6 +60,7 @@ PyThreadState *myThreadState;
 /** module parameters */
 static param_export_t params[]={
 	{"script_name",        PARAM_STR, &script_name },
+	{"load",               PARAM_STR, &script_name },
 	{"mod_init_function",  PARAM_STR, &mod_init_fname },
 	{"child_init_method",  PARAM_STR, &child_init_mname },
 	{0,0,0}
