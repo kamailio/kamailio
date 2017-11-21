@@ -56,6 +56,11 @@ Daniel-Constantin Mierla
               4.23. failures
               4.24. received_ACKs
 
+        5. Event routes
+
+              5.1. sl:filtered-ack
+              5.2. sl:local-response
+
    List of Examples
 
    1.1. default_code example
@@ -111,6 +116,11 @@ Chapter 1. Admin Guide
         4.23. failures
         4.24. received_ACKs
 
+   5. Event routes
+
+        5.1. sl:filtered-ack
+        5.2. sl:local-response
+
 1. Overview
 
    The SL module allows the SIP server to act as a stateless UA server and
@@ -119,12 +129,12 @@ Chapter 1. Admin Guide
    memory and scale well.
 
    The SL module needs to filter ACKs sent after a local stateless reply
-   to an INVITE was generated. To recognize such ACKs, ser adds a special
-   "signature" in to-tags. This signature is sought for in incoming ACKs,
-   and if included, the ACKs are absorbed.
+   to an INVITE was generated. To recognize such ACKs, Kamailio adds a
+   special "signature" in to-tags. This signature is sought for in
+   incoming ACKs, and if included, the ACKs are absorbed.
 
    To speed up the filtering process, the module uses a timeout mechanism.
-   When a reply is sent, a timer us set. As long as the timer is valid,
+   When a reply is sent, a timer is set. As long as the timer is valid,
    the incoming ACK requests will be checked using TO tag value. Once the
    timer expires, all the ACK messages are let through - a long time
    passed till it sent a reply, so it does not expect any ACK that have to
@@ -135,8 +145,9 @@ Chapter 1. Admin Guide
    processing. Particularly, the problem happens when a UA sends an INVITE
    which already has a to-tag in it (e.g., a re-INVITE) and the server
    want to reply to it. Then, it will keep the current to-tag, which will
-   be mirrored in ACK. SER will not see its signature and forward the ACK
-   downstream. Caused harm is not bad--just a useless ACK is forwarded.
+   be mirrored in ACK. Kamailio will not see its signature and forward the
+   ACK downstream. Caused harm is not bad, just a useless ACK is
+   forwarded.
 
 2. Parameters
 
@@ -385,3 +396,27 @@ if(status=="408")
 4.24. received_ACKs
 
    Number of received ACKs filtered by SL module.
+
+5. Event routes
+
+   5.1. sl:filtered-ack
+   5.2. sl:local-response
+
+5.1. sl:filtered-ack
+
+   Executed when ACK to locally generated reply is recognized and
+   absorbed.
+...
+event_route[sl:filtered-ack] {
+    xlog("sl:filtered-ack ACK to local reply absorbed\n");
+}
+...
+
+5.2. sl:local-response
+
+   Executed after sl module reply function has sent local reply.
+...
+event_route[sl:local-response] {
+    xlog("sl:local-response replied locally\n");
+}
+...

@@ -381,7 +381,7 @@ route{
 3.6. one_time_nonce (boolean)
 
    If set to 1 nonce reuse is disabled: each nonce is allowed only once,
-   in the first reponse to a challenge. All the messages will be
+   in the first response to a challenge. All the messages will be
    challenged, even retransmissions. Stateful mode should be used, to
    catch retransmissions before the authentication checks (using
    t_newtran() before the authentication checks and sending all the
