@@ -74,7 +74,7 @@ typedef struct timer_action {
 /* list of all operations */
 static timer_action_t* timer_actions = 0;
 static timer_action_t* pkg_timer_actions = 0;
-static receive_info_t rcv_info;
+static struct receive_info rcv_info;
 static timer_action_t* timer_executed = 0;
 
 #define eat_spaces(_p) \
