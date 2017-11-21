@@ -138,7 +138,7 @@ static cmd_export_t cmds[] = {
 	{"http_client_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
 		fixup_free_http_query_post,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"http_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
+	{"http_client_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
 		fixup_free_http_query_post_hdr,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_connect", (cmd_function)w_curl_connect, 3, fixup_curl_connect,
