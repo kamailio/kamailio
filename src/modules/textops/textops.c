@@ -1107,12 +1107,11 @@ static int check_multipart(struct sip_msg *msg)
 
 /* Filters multipart/mixed body by leaving out everything else except
  * first body part of given content type. */
-static int filter_body_f(struct sip_msg* msg, char* _content_type,
-		char* ignored)
+static int ki_filter_body(struct sip_msg* msg, str *content_type)
 {
 	char *start;
 	unsigned int len;
-	str *content_type, body;
+	str body;
 	str boundary = {0,0};
 
 	body.s = get_body(msg);
@@ -1133,7 +1132,6 @@ static int filter_body_f(struct sip_msg* msg, char* _content_type,
 	if(get_boundary(msg, &boundary)!=0) {
 		return -1;
 	}
-	content_type = (str *)_content_type;
 	start = body.s;
 	len = body.len;
 
@@ -1196,6 +1194,13 @@ err:
 	return -1;
 }
 
+/* Filters multipart/mixed body by leaving out everything else except
+ * first body part of given content type. */
+static int filter_body_f(struct sip_msg* msg, char* _content_type,
+		char* ignored)
+{
+	return ki_filter_body(msg, (str*)_content_type);
+}
 
 int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 {
@@ -3020,39 +3025,42 @@ int is_privacy_f(struct sip_msg *msg, char *_privacy, char *str2 )
 		return -1;
 
 	return get_privacy_values(msg) & ((unsigned int)(long)_privacy) ? 1 : -1;
+}
 
+int ki_is_privacy(sip_msg_t *msg, str *privacy)
+{
+	unsigned int val;
+
+	if (parse_privacy(msg) == -1)
+		return -1;
+
+	if(privacy==NULL || privacy->s==NULL || privacy->len<=0)
+		return -1;
+
+	if (parse_priv_value(privacy->s, privacy->len, &val) != privacy->len) {
+		LM_ERR("invalid privacy value\n");
+		return -1;
+	}
+
+	return (get_privacy_values(msg) & val) ? 1 : -1;
 }
 
 /*
  * Checks if subject is found in list
  */
-int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
+int ki_in_list(sip_msg_t* _m, str* subject, str* list, str* vsep)
 {
-	str subject, list;
 	int sep;
 	char *at, *past, *next_sep, *s;
 
-	if (fixup_get_svalue(_m, (gparam_p)_subject, &subject) != 0) {
-		LM_ERR("cannot get subject value\n");
+	if(subject==NULL || subject->len<=0 || list==NULL || list->len<=0
+			|| vsep==NULL || vsep->len<=0)
 		return -1;
-	} else {
-		if (subject.len == 0) {
-			LM_ERR("subject cannot be empty string\n");
-			return -1;
-		}
-	}
 
-	if (fixup_get_svalue(_m, (gparam_p)_list, &list) != 0) {
-		LM_ERR("cannot get list value\n");
-		return -1;
-	} else {
-		if (list.len == 0) return -1;
-	}
+	sep = vsep->s[0];
 
-	sep = _sep[0];
-
-	at = list.s;
-	past = list.s + list.len;
+	at = list->s;
+	past = list->s + list->len;
 
 	/* Eat leading white space */
 	while ((at < past) &&
@@ -3071,8 +3079,8 @@ int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
 						|| (*(past-1) == '\r') || (*(past-1) == '\n') )) {
 				past--;
 			}
-			if ((subject.len == (past - at)) &&
-				strncmp(at, subject.s, subject.len) == 0) {
+			if ((subject->len == (past - at)) &&
+				strncmp(at, subject->s, subject->len) == 0) {
 				return 1;
 			} else {
 				return -1;
@@ -3084,8 +3092,8 @@ int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
 						|| (*(s-1) == '\n') )) {
 				s--;
 			}
-			if ((subject.len == (s - at)) &&
-				strncmp(at, subject.s, subject.len) == 0) {
+			if ((subject->len == (s - at)) &&
+				strncmp(at, subject->s, subject->len) == 0) {
 				return 1;
 			} else {
 				at = next_sep + 1;
@@ -3100,6 +3108,34 @@ int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
 	}
 
 	return -1;
+}
+
+/*
+ * Checks if subject is found in list
+ */
+int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
+{
+	str subject, list, sep;
+	if (fixup_get_svalue(_m, (gparam_p)_subject, &subject) != 0) {
+		LM_ERR("cannot get subject value\n");
+		return -1;
+	} else {
+		if (subject.len == 0) {
+			LM_ERR("subject cannot be empty string\n");
+			return -1;
+		}
+	}
+
+	if (fixup_get_svalue(_m, (gparam_p)_list, &list) != 0) {
+		LM_ERR("cannot get list value\n");
+		return -1;
+	} else {
+		if (list.len == 0) return -1;
+	}
+	sep.s = _sep;
+	sep.len = 1;
+
+	return ki_in_list(_m, &subject, &list, &sep);
 }
 
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 )
@@ -3126,6 +3162,18 @@ static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 )
 	return -2;
 }
 
+static int ki_cmp_str(sip_msg_t *msg, str *s1, str *s2 )
+{
+	int ret;
+
+	ret = cmp_str(s1, s2);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
 static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	str s1;
@@ -3143,6 +3191,18 @@ static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2)
 		return -8;
 	}
 	ret = cmpi_str(&s1, &s2);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
+static int ki_cmp_istr(sip_msg_t *msg, str *s1, str *s2 )
+{
+	int ret;
+
+	ret = cmpi_str(s1, s2);
 	if(ret==0)
 		return 1;
 	if(ret>0)
@@ -3175,7 +3235,19 @@ static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 )
 	return -2;
 }
 
-static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 )
+static int ki_starts_with(sip_msg_t *msg, str *s1, str *s2 )
+{
+	int ret;
+	if (s1->len < s2->len) return -1;
+	ret = strncmp(s1->s, s2->s, s2->len);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
+static int ki_is_audio_on_hold(sip_msg_t *msg)
 {
 	int sdp_session_num = 0, sdp_stream_num;
 	sdp_session_cell_t* sdp_session;
@@ -3199,6 +3271,11 @@ static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 )
 		}
 	}
 	return -1;
+}
+
+static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 )
+{
+	return ki_is_audio_on_hold(msg);
 }
 
 int fixup_regexpNL_none(void** param, int param_no)
@@ -3851,6 +3928,41 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	{ str_init("textops"), str_init("has_body_type"),
 		SR_KEMIP_INT, ki_has_body_type,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("filter_body"),
+		SR_KEMIP_INT, ki_filter_body,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("is_privacy"),
+		SR_KEMIP_INT, ki_is_privacy,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("is_list"),
+		SR_KEMIP_INT, ki_in_list,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("cmp_str"),
+		SR_KEMIP_INT, ki_cmp_str,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("cmp_istr"),
+		SR_KEMIP_INT, ki_cmp_istr,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("starts_with"),
+		SR_KEMIP_INT, ki_starts_with,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("is_audio_on_hold"),
+		SR_KEMIP_INT, ki_is_audio_on_hold,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
