@@ -39,7 +39,7 @@ Daniel-Constantin Mierla
               4.2. xcaps_get(uri, path)
               4.3. xcaps_del(uri, path)
 
-        5. Exported pseudo-variables
+        5. Pseudo Variables
         6. Simple XCAP Server Config
 
    List of Examples
@@ -83,7 +83,7 @@ Chapter 1. Admin Guide
         4.2. xcaps_get(uri, path)
         4.3. xcaps_del(uri, path)
 
-   5. Exported pseudo-variables
+   5. Pseudo Variables
    6. Simple XCAP Server Config
 
 1. Overview
@@ -312,7 +312,7 @@ event_route[xhttp:request] {
 }
 ...
 
-5. Exported pseudo-variables
+5. Pseudo Variables
 
      * $xcapuri(name=>key) - name can be any to idenitfy the XCAP uri; key
        can be: data, uri, root, auid, type, tree, xuid, file, node,

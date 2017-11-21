@@ -28,12 +28,11 @@ Anca-Maria Vamanu
               3.3. periodical_query(int)
               3.4. query_period(int)
 
-        4. Functions
-        5. RPC Commands
+        4. RPC Commands
 
-              5.1. xcap_client.refreshXcapDoc
+              4.1. xcap_client.refreshXcapDoc
 
-        6. Remarks
+        5. Remarks
 
    2. Developer Guide
 
@@ -66,12 +65,11 @@ Chapter 1. Admin Guide
         3.3. periodical_query(int)
         3.4. query_period(int)
 
-   4. Functions
-   5. RPC Commands
+   4. RPC Commands
 
-        5.1. xcap_client.refreshXcapDoc
+        4.1. xcap_client.refreshXcapDoc
 
-   6. Remarks
+   5. Remarks
 
 1. Overview
 
@@ -171,15 +169,11 @@ modparam("xcap_client", "periodical_query", 0)
 modparam("xcap_client", "query_period", 50)
 ...
 
-4. Functions
+4. RPC Commands
 
-   None to be used in configuration file.
+   4.1. xcap_client.refreshXcapDoc
 
-5. RPC Commands
-
-   5.1. xcap_client.refreshXcapDoc
-
-5.1.  xcap_client.refreshXcapDoc
+4.1.  xcap_client.refreshXcapDoc
 
    Management command that should be sent by an XCAP server when a stored
    document changes.
@@ -197,7 +191,7 @@ kamcmd xcap_client.refreshXcapDoc
      /xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml 8000
 ...
 
-6. Remarks
+5. Remarks
 
    Note: libcurl leak in CentOS 6 - this module uses libcurl library and
    in case if you are using CentOS 6, be aware that standard
