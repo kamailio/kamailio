@@ -59,6 +59,8 @@ static int _pv_table_set = 0;
 
 static pv_cache_t* _pv_cache[PV_CACHE_SIZE];
 static int _pv_cache_set = 0;
+static int _pv_cache_counter = 0;
+static int _pv_cache_drop_index = 0;
 
 /**
  *
@@ -257,6 +259,67 @@ done:
 /**
  *
  */
+int pv_cache_drop(void)
+{
+	int i;
+	pv_cache_t *pvp;
+	pv_cache_t *pvi;
+
+	if(_pv_cache_set==0) {
+		LM_DBG("PV cache not initialized\n");
+		return 0;
+	}
+	/* round-robin on slots to find a $sht(...) to drop */
+	_pv_cache_drop_index = (_pv_cache_drop_index + 1) % PV_CACHE_SIZE;
+	for(i=_pv_cache_drop_index; i<PV_CACHE_SIZE; i++) {
+		pvi = _pv_cache[i];
+		pvp = NULL;
+		while(pvi) {
+			if(pvi->pvname.len>5 && strncmp(pvi->pvname.s, "$sht(", 5)==0) {
+				LM_DBG("dropping from pv cache [%d]: %.*s\n", i,
+						pvi->pvname.len, pvi->pvname.s);
+				if(pvp) {
+					pvp->next = pvi->next;
+				} else {
+					_pv_cache[i] = pvi->next;
+				}
+				if(pvi->spec.pvp.pvn.nfree) {
+					pvi->spec.pvp.pvn.nfree((void*)(&pvi->spec.pvp.pvn));
+				}
+				pkg_free(pvi);
+				return 1;
+			}
+			pvi = pvi->next;
+		}
+	}
+	for(i=0; i<_pv_cache_drop_index; i++) {
+		pvi = _pv_cache[i];
+		pvp = NULL;
+		while(pvi) {
+			if(pvi->pvname.len>5 && strncmp(pvi->pvname.s, "$sht(", 5)==0) {
+				LM_DBG("dropping from pv cache [%d]: %.*s\n", i,
+						pvi->pvname.len, pvi->pvname.s);
+				if(pvp) {
+					pvp->next = pvi->next;
+				} else {
+					_pv_cache[i] = pvi->next;
+				}
+				if(pvi->spec.pvp.pvn.nfree) {
+					pvi->spec.pvp.pvn.nfree((void*)(&pvi->spec.pvp.pvn));
+				}
+				pkg_free(pvi);
+				return 1;
+			}
+			pvi = pvi->next;
+		}
+	}
+	LM_WARN("no suitable variable found to drop from pv cache\n");
+	return 0;
+}
+
+/**
+ *
+ */
 pv_spec_t* pv_cache_add(str *name)
 {
 	pv_cache_t *pvn;
@@ -267,6 +330,16 @@ pv_spec_t* pv_cache_add(str *name)
 	{
 		LM_DBG("PV cache not initialized, doing it now\n");
 		pv_init_cache();
+	}
+	if(_pv_cache_counter+1>=cfg_get(core, core_cfg, pv_cache_limit)) {
+		if(_pv_cache_counter+1==cfg_get(core, core_cfg, pv_cache_limit)) {
+			LM_WARN("pv cache limit is going to be exceeded"
+					" - pkg memory may get filled with pv declarations\n");
+		} else {
+			if(cfg_get(core, core_cfg, pv_cache_action)==1) {
+				pv_cache_drop();
+			}
+		}
 	}
 	pvid = get_hash1_raw(name->s, name->len);
 	pvn = (pv_cache_t*)pkg_malloc(sizeof(pv_cache_t) + name->len + 1);
