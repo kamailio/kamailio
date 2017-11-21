@@ -40,8 +40,8 @@
 #include "pvapi.h"
 #include "pvar.h"
 
-#define PV_TABLE_SIZE	32  /*!< pseudo-variables table size */
-#define TR_TABLE_SIZE	16  /*!< transformations table size */
+#define PV_TABLE_SIZE	64  /*!< pseudo-variables table size */
+#define TR_TABLE_SIZE	32  /*!< transformations table size */
 
 
 void tr_destroy(trans_t *t);
