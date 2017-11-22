@@ -115,7 +115,7 @@ static int dr_exit(void);
 static int do_routing(struct sip_msg *msg, int grp_id);
 static int do_routing_0(struct sip_msg *msg, char *str1, char *str2);
 static int do_routing_1(struct sip_msg *msg, char *str1, char *str2);
-static int use_next_gw(struct sip_msg *msg);
+static int use_next_gw(struct sip_msg *msg, char *p1, char *p2);
 static int is_from_gw_0(struct sip_msg *msg, char *str1, char *str2);
 static int is_from_gw_1(struct sip_msg *msg, char *str1, char *str2);
 static int is_from_gw_2(struct sip_msg *msg, char *str1, char *str2);
@@ -666,7 +666,7 @@ static int do_routing_1(struct sip_msg *msg, char *str1, char *str2)
 }
 
 
-static int use_next_gw(struct sip_msg *msg)
+static int ki_next_routing(sip_msg_t *msg)
 {
 	struct usr_avp *avp;
 	int_str val;
@@ -697,6 +697,11 @@ static int use_next_gw(struct sip_msg *msg)
 		destroy_avp(avp);
 
 	return 1;
+}
+
+static int use_next_gw(struct sip_msg *msg, char *p1, char *p2)
+{
+	return ki_next_routing(msg);
 }
 
 int dr_already_choosen(rt_info_t *rt_info, int *active_gwlist,
@@ -1158,6 +1163,16 @@ static sr_kemi_t sr_kemi_drouting_exports[] = {
 	{ str_init("drouting"), str_init("do_routing"),
 		SR_KEMIP_INT, do_routing,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("next_routing"),
+		SR_KEMIP_INT, ki_next_routing,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("use_next_gw"),
+		SR_KEMIP_INT, ki_next_routing,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("drouting"), str_init("is_from_gw"),
