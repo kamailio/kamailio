@@ -39,6 +39,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/dset.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/rand/kam_rand.h"
 
@@ -622,7 +623,7 @@ static inline str *build_ruri(
 }
 
 
-static int do_routing_0(struct sip_msg *msg, char *str1, char *str2)
+static int ki_do_routing_furi(sip_msg_t *msg)
 {
 	int grp_id;
 	struct to_body *from;
@@ -647,6 +648,11 @@ static int do_routing_0(struct sip_msg *msg, char *str1, char *str2)
 	}
 
 	return do_routing(msg, grp_id);
+}
+
+static int do_routing_0(struct sip_msg *msg, char *str1, char *str2)
+{
+	return ki_do_routing_furi(msg);
 }
 
 static int do_routing_1(struct sip_msg *msg, char *str1, char *str2)
@@ -1000,7 +1006,7 @@ static int strip_username(struct sip_msg *msg, int strip)
 }
 
 
-static int is_from_gw_0(struct sip_msg *msg, char *str, char *str2)
+static int ki_is_from_gw(sip_msg_t *msg)
 {
 	pgw_addr_t *pgwa = NULL;
 
@@ -1017,19 +1023,17 @@ static int is_from_gw_0(struct sip_msg *msg, char *str, char *str2)
 	return -1;
 }
 
+static int is_from_gw_0(struct sip_msg *msg, char *str, char *str2)
+{
+	return ki_is_from_gw(msg);
+}
 
-static int is_from_gw_1(struct sip_msg *msg, char *str1, char *str2)
+static int ki_is_from_gw_type(sip_msg_t *msg, int type)
 {
 	pgw_addr_t *pgwa = NULL;
-	int type;
 
 	if(rdata == NULL || *rdata == NULL || msg == NULL)
 		return -1;
-
-	if(fixup_get_ivalue(msg, (gparam_t*)str1, &type)<0) {
-		LM_ERR("failed to get parameter value\n");
-		return -1;
-	}
 
 	pgwa = (*rdata)->pgw_addr_l;
 	while(pgwa) {
@@ -1042,23 +1046,24 @@ static int is_from_gw_1(struct sip_msg *msg, char *str1, char *str2)
 	return -1;
 }
 
-static int is_from_gw_2(struct sip_msg *msg, char *str1, char *str2)
+static int is_from_gw_1(struct sip_msg *msg, char *str1, char *str2)
+{
+	int type;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)str1, &type)<0) {
+		LM_ERR("failed to get parameter value\n");
+		return -1;
+	}
+
+	return ki_is_from_gw_type(msg, type);
+}
+
+static int ki_is_from_gw_type_flags(sip_msg_t *msg, int type, int flags)
 {
 	pgw_addr_t *pgwa = NULL;
-	int type;
-	int flags;
 
 	if(rdata == NULL || *rdata == NULL || msg == NULL)
 		return -1;
-
-	if(fixup_get_ivalue(msg, (gparam_t*)str1, &type)<0) {
-		LM_ERR("failed to get type parameter value\n");
-		return -1;
-	}
-	if(fixup_get_ivalue(msg, (gparam_t*)str2, &flags)<0) {
-		LM_ERR("failed to get flags parameter value\n");
-		return -1;
-	}
 
 	pgwa = (*rdata)->pgw_addr_l;
 	while(pgwa) {
@@ -1074,8 +1079,24 @@ static int is_from_gw_2(struct sip_msg *msg, char *str1, char *str2)
 	return -1;
 }
 
+static int is_from_gw_2(struct sip_msg *msg, char *str1, char *str2)
+{
+	int type;
+	int flags;
 
-static int goes_to_gw_helper(struct sip_msg *msg, int type)
+	if(fixup_get_ivalue(msg, (gparam_t*)str1, &type)<0) {
+		LM_ERR("failed to get type parameter value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)str2, &flags)<0) {
+		LM_ERR("failed to get flags parameter value\n");
+		return -1;
+	}
+
+	return ki_is_from_gw_type_flags(msg, type, flags);
+}
+
+static int ki_goes_to_gw_type(struct sip_msg *msg, int type)
 {
 	pgw_addr_t *pgwa = NULL;
 	struct sip_uri puri;
@@ -1111,10 +1132,66 @@ static int goes_to_gw_1(struct sip_msg *msg, char *_type, char *_f2)
 		LM_ERR("failed to get parameter value\n");
 		return -1;
 	}
-	return goes_to_gw_helper(msg, type);
+	return ki_goes_to_gw_type(msg, type);
 }
 
 static int goes_to_gw_0(struct sip_msg *msg, char *_type, char *_f2)
 {
-	return goes_to_gw_helper(msg, -1);
+	return ki_goes_to_gw_type(msg, -1);
+}
+
+static int ki_goes_to_gw(sip_msg_t *msg)
+{
+	return ki_goes_to_gw_type(msg, -1);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_drouting_exports[] = {
+	{ str_init("drouting"), str_init("do_routing_furi"),
+		SR_KEMIP_INT, ki_do_routing_furi,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("do_routing"),
+		SR_KEMIP_INT, do_routing,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("is_from_gw"),
+		SR_KEMIP_INT, ki_is_from_gw,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("is_from_gw_type"),
+		SR_KEMIP_INT, ki_is_from_gw_type,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("is_from_gw_type_flags"),
+		SR_KEMIP_INT, ki_is_from_gw_type_flags,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("goes_to_gw"),
+		SR_KEMIP_INT, ki_goes_to_gw,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("goes_to_gw_type"),
+		SR_KEMIP_INT, ki_goes_to_gw_type,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_drouting_exports);
+	return 0;
 }
