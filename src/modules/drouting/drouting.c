@@ -141,7 +141,7 @@ static cmd_export_t cmds[] = {
 	{"is_from_gw", (cmd_function)is_from_gw_1, 1, fixup_igp_null, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"is_from_gw", (cmd_function)is_from_gw_2, 2, fixup_igp_igp, 0,
-			REQUEST_ROUTE},
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"goes_to_gw", (cmd_function)goes_to_gw_0, 0, 0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"goes_to_gw", (cmd_function)goes_to_gw_1, 1, fixup_igp_null, 0,
