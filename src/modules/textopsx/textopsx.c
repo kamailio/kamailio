@@ -143,39 +143,17 @@ static int mod_init(void)
 /**
  *
  */
-static int ki_msg_apply_changes(sip_msg_t *msg)
+static int ki_msg_update_buffer(sip_msg_t *msg, str *obuf)
 {
-	struct dest_info dst;
-	str obuf;
 	sip_msg_t tmp;
 
-	if(msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
-		LM_ERR("invalid usage - not in request route\n");
+	if(obuf==NULL || obuf->s==NULL || obuf->len<=0) {
+		LM_ERR("invalid buffer parameter\n");
 		return -1;
 	}
 
-	init_dest_info(&dst);
-	dst.proto = PROTO_UDP;
-	if(msg->first_line.type == SIP_REPLY) {
-		obuf.s = generate_res_buf_from_sip_res(
-				msg, (unsigned int *)&obuf.len, BUILD_NO_VIA1_UPDATE);
-	} else {
-		if(msg->msg_flags & FL_RR_ADDED) {
-			LM_ERR("cannot apply msg changes after adding record-route"
-				   " header - it breaks conditional 2nd header\n");
-			return -1;
-		}
-		obuf.s = build_req_buf_from_sip_req(msg, (unsigned int *)&obuf.len,
-				&dst,
-				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
-	}
-	if(obuf.s == NULL) {
-		LM_ERR("couldn't update msg buffer content\n");
-		return -1;
-	}
-	if(obuf.len >= BUF_SIZE) {
-		LM_ERR("new buffer overflow (%d)\n", obuf.len);
-		pkg_free(obuf.s);
+	if(obuf->len >= BUF_SIZE) {
+		LM_ERR("new buffer is too large (%d)\n", obuf->len);
 		return -1;
 	}
 	/* temporary copy */
@@ -210,12 +188,9 @@ static int ki_msg_apply_changes(sip_msg_t *msg)
 	msg->dst_uri = tmp.dst_uri;
 	msg->path_vec = tmp.path_vec;
 
-	memcpy(msg->buf, obuf.s, obuf.len);
-	msg->len = obuf.len;
+	memcpy(msg->buf, obuf->s, obuf->len);
+	msg->len = obuf->len;
 	msg->buf[msg->len] = '\0';
-
-	/* free new buffer - copied in the static buffer from old sip_msg_t */
-	pkg_free(obuf.s);
 
 	/* reparse the message */
 	LM_DBG("SIP message content updated - reparsing\n");
@@ -227,6 +202,59 @@ static int ki_msg_apply_changes(sip_msg_t *msg)
 	}
 
 	return 1;
+}
+
+/**
+ *
+ */
+static int ki_msg_set_buffer(sip_msg_t *msg, str *obuf)
+{
+	if(msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
+		LM_ERR("invalid usage - not in request route or a reply\n");
+		return -1;
+	}
+
+	return ki_msg_update_buffer(msg, obuf);
+}
+
+/**
+ *
+ */
+static int ki_msg_apply_changes(sip_msg_t *msg)
+{
+	int ret;
+	dest_info_t dst;
+	str obuf;
+
+	if(msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
+		LM_ERR("invalid usage - not in request route or a reply\n");
+		return -1;
+	}
+
+	init_dest_info(&dst);
+	dst.proto = PROTO_UDP;
+	if(msg->first_line.type == SIP_REPLY) {
+		obuf.s = generate_res_buf_from_sip_res(
+				msg, (unsigned int *)&obuf.len, BUILD_NO_VIA1_UPDATE);
+	} else {
+		if(msg->msg_flags & FL_RR_ADDED) {
+			LM_ERR("cannot apply msg changes after adding record-route"
+				   " header - it breaks conditional 2nd header\n");
+			return -1;
+		}
+		obuf.s = build_req_buf_from_sip_req(msg, (unsigned int *)&obuf.len,
+				&dst,
+				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
+	}
+	if(obuf.s == NULL) {
+		LM_ERR("couldn't update msg buffer content\n");
+		return -1;
+	}
+	ret = ki_msg_update_buffer(msg, &obuf);
+	/* free new buffer - copied in the static buffer from old sip_msg_t */
+	pkg_free(obuf.s);
+
+	return ret;
 }
 
 /**
@@ -2122,6 +2150,11 @@ static sr_kemi_t sr_kemi_textopsx_exports[] = {
 	{ str_init("textopsx"), str_init("msg_apply_changes"),
 		SR_KEMIP_INT, ki_msg_apply_changes,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("msg_set_buffer"),
+		SR_KEMIP_INT, ki_msg_set_buffer,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textopsx"), str_init("change_reply_status"),
