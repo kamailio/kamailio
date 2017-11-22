@@ -752,6 +752,18 @@ static int fixup_hname_str(void **param, int param_no)
 	return 0;
 }
 
+static int fixup_free_hname_str(void **param, int param_no)
+{
+	if(param_no == 1) {
+		struct hname_data *h;
+		h = (struct hname_data *)(*param);
+		pkg_free(h);
+		return 0;
+	} else if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	}
+	return 0;
+}
 
 static int find_next_hf(
 		struct sip_msg *msg, struct hname_data *hname, struct hdr_field **hf)
@@ -1155,6 +1167,48 @@ static int delete_value_lump(
 	return 1;
 }
 
+static int ki_modify_hf(sip_msg_t *msg, str *hexp, str *val,
+	fixup_function fixf, cmd_function cmdf)
+{
+	int ret;
+	char *s1 = NULL;
+	char *s2 = NULL;
+	void *p1 = NULL;
+	void *p2 = NULL;
+
+	s1 = as_asciiz(hexp);
+	p1 = s1;
+	if(fixf(&p1, 1)!=0) {
+		LM_ERR("failed to fix first parameter\n");
+		p1 = NULL;
+		goto error;
+	}
+	if(val && val->s>=0) {
+		s2 = as_asciiz(val);
+		p2 = s2;
+		if(fixf(&p2, 2)!=0) {
+			LM_ERR("failed to fix second parameter\n");
+			p2 = NULL;
+			goto error;
+		}
+	}
+
+	ret = cmdf(msg, (char*)p1, (char*)p2);
+
+	if(p2!=NULL) fixup_free_hname_str(&p2, 2);
+	fixup_free_hname_str(&p1, 1);
+	if(s2!=NULL) pkg_free(s2);
+	pkg_free(s1);
+	return ret;
+
+error:
+	if(p2!=NULL) fixup_free_hname_str(&p2, 2);
+	if(p1!=NULL) fixup_free_hname_str(&p1, 1);
+	if(s2!=NULL) pkg_free(s2);
+	if(s1!=NULL) pkg_free(s1);
+	return -1;
+}
+
 static int incexc_hf_value_str_f(struct sip_msg *msg, char *_hname, str *_pval)
 {
 	struct hname_data *hname = (void *)_hname;
@@ -1254,6 +1308,24 @@ static int incexc_hf_value_f(struct sip_msg *msg, char *_hname, char *_val)
 INCEXC_HF_VALUE_FIXUP(include_hf_value_fixup, hnoInclude)
 INCEXC_HF_VALUE_FIXUP(exclude_hf_value_fixup, hnoExclude)
 INCEXC_HF_VALUE_FIXUP(hf_value_exists_fixup, hnoIsIncluded)
+
+static int ki_include_hf_value(sip_msg_t *msg, str *hexp, str *val)
+{
+	return ki_modify_hf(msg, hexp, val, include_hf_value_fixup,
+			incexc_hf_value_f);
+}
+
+static int ki_exclude_hf_value(sip_msg_t *msg, str *hexp, str *val)
+{
+	return ki_modify_hf(msg, hexp, val, exclude_hf_value_fixup,
+			incexc_hf_value_f);
+}
+
+static int ki_hf_value_exists(sip_msg_t *msg, str *hexp, str *val)
+{
+	return ki_modify_hf(msg, hexp, val, hf_value_exists_fixup,
+			incexc_hf_value_f);
+}
 
 static void get_uri_and_skip_until_params(str *param_area, str *name, str *uri)
 {
@@ -1625,6 +1697,12 @@ static int append_hf_value_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int ki_append_hf_value(sip_msg_t *msg, str *hexp, str *val)
+{
+	return ki_modify_hf(msg, hexp, val, append_hf_value_fixup,
+			insupddel_hf_value_f);
+}
+
 static int insert_hf_value_fixup(void **param, int param_no)
 {
 	int res = fixup_hname_str(param, param_no);
@@ -1651,6 +1729,12 @@ static int insert_hf_value_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int ki_insert_hf_value(sip_msg_t *msg, str *hexp, str *val)
+{
+	return ki_modify_hf(msg, hexp, val, insert_hf_value_fixup,
+			insupddel_hf_value_f);
+}
+
 static int remove_hf_value_fixup(void **param, int param_no)
 {
 	int res = fixup_hname_str(param, param_no);
@@ -1669,6 +1753,12 @@ static int remove_hf_value_fixup(void **param, int param_no)
 		((struct hname_data *)*param)->oper = hnoRemove;
 	}
 	return 0;
+}
+
+static int ki_remove_hf_value(sip_msg_t *msg, str *hexp)
+{
+	return ki_modify_hf(msg, hexp, NULL, remove_hf_value_fixup,
+			insupddel_hf_value_f);
 }
 
 static int assign_hf_value_fixup(void **param, int param_no)
@@ -1695,6 +1785,12 @@ static int assign_hf_value_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int ki_assign_hf_value(sip_msg_t *msg, str *hexp, str *val)
+{
+	return ki_modify_hf(msg, hexp, val, assign_hf_value_fixup,
+			insupddel_hf_value_f);
+}
+
 static int remove_hf_value2_fixup(void **param, int param_no)
 {
 	int res = remove_hf_value_fixup(param, param_no);
@@ -1704,6 +1800,12 @@ static int remove_hf_value2_fixup(void **param, int param_no)
 		((struct hname_data *)*param)->oper = hnoRemove2;
 	}
 	return 0;
+}
+
+static int ki_remove_hf_value2(sip_msg_t *msg, str *hexp, str *val)
+{
+	return ki_modify_hf(msg, hexp, val, remove_hf_value2_fixup,
+			insupddel_hf_value_f);
 }
 
 static int assign_hf_value2_fixup(void **param, int param_no)
@@ -1717,6 +1819,11 @@ static int assign_hf_value2_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int ki_assign_hf_value2(sip_msg_t *msg, str *hexp, str *val)
+{
+	return ki_modify_hf(msg, hexp, val, assign_hf_value2_fixup,
+			insupddel_hf_value_f);
+}
 
 /* select implementation */
 static int sel_hf_value(str *res, select_t *s, struct sip_msg *msg)
@@ -2185,6 +2292,51 @@ static sr_kemi_t sr_kemi_textopsx_exports[] = {
 	{ str_init("textopsx"), str_init("fnmatch_ex"),
 		SR_KEMIP_INT, ki_fnmatch_ex,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("append_hf_value"),
+		SR_KEMIP_INT, ki_append_hf_value,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("insert_hf_value"),
+		SR_KEMIP_INT, ki_insert_hf_value,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("assign_hf_value"),
+		SR_KEMIP_INT, ki_assign_hf_value,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("assign_hf_value2"),
+		SR_KEMIP_INT, ki_assign_hf_value2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("remove_hf_value"),
+		SR_KEMIP_INT, ki_remove_hf_value,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("remove_hf_value2"),
+		SR_KEMIP_INT, ki_remove_hf_value2,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("include_hf_value"),
+		SR_KEMIP_INT, ki_include_hf_value,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("exclude_hf_value"),
+		SR_KEMIP_INT, ki_exclude_hf_value,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_value_exists"),
+		SR_KEMIP_INT, ki_hf_value_exists,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
