@@ -343,7 +343,7 @@ class kamailio:
     # -- equivalent of branch_route[...]{}
     def ksr_branch_manage(self, msg):
         KSR.dbg("new branch ["+ str(KSR.pv.get("$T_branch_idx"))
-                    + " to "+ KSR.pv.get("$ru") + "\n");
+                    + "] to "+ KSR.pv.get("$ru") + "\n");
         self.ksr_route_natmanage(msg);
         return 1;
 
