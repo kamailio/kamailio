@@ -158,6 +158,54 @@ python_exec("my_python_function", "$rU");
 	</section>
 
     </section>
+	<section>
+        <title>RPC Commands</title>
+        <section id="app_python.r.reload">
+            <title>
+            <function moreinfo="none">app_python.reload</function>
+            </title>
+			<para>
+				IMPORTANT: not implemented yet.
+			</para>
+            <para>
+            Marks the need to reload the js script.
+            The actual reload is done by every working process when the next
+            call to KEMI config is executed.
+            </para>
+            <para>
+            Name: <emphasis>app_python.reload</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_python.reload
+...
+            </programlisting>
+		</section>
+		<section id="app_python.r.api_list">
+            <title>
+            <function moreinfo="none">app_python.api_list</function>
+            </title>
+            <para>
+			List the functions available via Kemi framework.
+            </para>
+            <para>
+            Name: <emphasis>app_python.api_list</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_python.api_list
+...
+            </programlisting>
+        </section>
+	</section>
 
 </chapter>
 
