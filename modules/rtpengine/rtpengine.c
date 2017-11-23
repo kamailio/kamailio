@@ -3185,6 +3185,7 @@ rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more)
 	str body, newbody;
 	struct lump *anchor;
 	pv_value_t pv_val;
+	str cur_body = {0, 0};
 
 	dict = rtpp_function_call_ok(&bencbuf, msg, op, flags, &body);
 	if (!dict)
@@ -3214,7 +3215,12 @@ rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more)
 			pkg_free(newbody.s);
 
 		} else {
-			anchor = del_lump(msg, body.s - msg->buf, body.len, 0);
+			/* get the body from the message as body ptr may have changed */
+			cur_body.len = 0;
+			cur_body.s = get_body(msg);
+			cur_body.len = msg->buf + msg->len - cur_body.s;
+
+			anchor = del_lump(msg, cur_body.s - msg->buf, cur_body.len, 0);
 			if (!anchor) {
 				LM_ERR("del_lump failed\n");
 				goto error_free;
