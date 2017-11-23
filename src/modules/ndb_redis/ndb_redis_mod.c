@@ -35,6 +35,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/trim.h"
+#include "../../core/kemi.h"
 
 #include "redis_client.h"
 #include "api.h"
@@ -922,3 +923,88 @@ int bind_ndb_redis(ndb_redis_api_t *api)
 	return 0;
 }
 
+/**
+ *
+ */
+static int ki_redis_cmd(sip_msg_t *msg, str *srv, str *rcmd, str *sres)
+{
+	return redisc_exec(srv, sres, rcmd);
+}
+
+/**
+ *
+ */
+static int ki_redis_cmd_p1(sip_msg_t *msg, str *srv, str *rcmd, str *p1,
+		str *sres)
+{
+	return redisc_exec(srv, sres, rcmd, p1->s);
+}
+
+/**
+ *
+ */
+static int ki_redis_cmd_p2(sip_msg_t *msg, str *srv, str *rcmd, str *p1,
+		str *p2, str *sres)
+{
+	return redisc_exec(srv, sres, rcmd, p1->s, p2->s);
+}
+
+/**
+ *
+ */
+static int ki_redis_cmd_p3(sip_msg_t *msg, str *srv, str *rcmd, str *p1,
+		str *p2, str *p3, str *sres)
+{
+	return redisc_exec(srv, sres, rcmd, p1->s, p2->s, p3->s);
+}
+
+/**
+ *
+ */
+static int ki_redis_free_reply(sip_msg_t *msg, str *name)
+{
+	if(redisc_free_reply(name)<0)
+		return -1;
+
+	return 1;
+}
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_ndb_redis_exports[] = {
+	{ str_init("ndb_redis"), str_init("redis_cmd"),
+		SR_KEMIP_INT, ki_redis_cmd,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_redis"), str_init("redis_cmd_p1"),
+		SR_KEMIP_INT, ki_redis_cmd_p1,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_redis"), str_init("redis_cmd_p2"),
+		SR_KEMIP_INT, ki_redis_cmd_p2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_redis"), str_init("redis_cmd_p3"),
+		SR_KEMIP_INT, ki_redis_cmd_p3,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
+	},
+	{ str_init("ndb_redis"), str_init("redis_free"),
+		SR_KEMIP_INT, ki_redis_free_reply,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_ndb_redis_exports);
+	return 0;
+}
