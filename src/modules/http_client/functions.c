@@ -276,37 +276,39 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst,
 	if (res != CURLE_OK) {
 		/* http://curl.haxx.se/libcurl/c/libcurl-errors.html */
 		if (res == CURLE_COULDNT_CONNECT) {
-			LM_WARN("failed to connect() to host\n");
+			LM_WARN("failed to connect() to host (url: %s)\n", _url);
 		} else if ( res == CURLE_COULDNT_RESOLVE_HOST ) {
-			LM_WARN("Couldn't resolve host\n");
+			LM_WARN("Couldn't resolve host (url: %s)\n", _url);
 		} else if ( res == CURLE_COULDNT_RESOLVE_PROXY ) {
-			LM_WARN("Couldn't resolve http_proxy host\n");
+			LM_WARN("Couldn't resolve http proxy host (url: %s - proxy: %s)\n",
+				_url, (params && params->http_proxy)?params->http_proxy:"");
 		} else if ( res == CURLE_UNSUPPORTED_PROTOCOL ) {
-			LM_WARN("URL Schema not supported by curl\n");
+			LM_WARN("URL Schema not supported by curl (url: %s)\n", _url);
 		} else if ( res == CURLE_URL_MALFORMAT ) {
-			LM_WARN("Malformed URL used in http_client\n");
+			LM_WARN("Malformed URL used in http client (url: %s)\n", _url);
 		} else if ( res == CURLE_OUT_OF_MEMORY ) {
-			LM_WARN("Curl library out of memory\n");
+			LM_WARN("Curl library out of memory (url: %s)\n", _url);
 		} else if ( res == CURLE_OPERATION_TIMEDOUT ) {
-			LM_WARN("Curl library timed out on request\n");
+			LM_WARN("Curl library timed out on request (url: %s)\n", _url);
 		} else if ( res == CURLE_SSL_CONNECT_ERROR ) {
-			LM_WARN("TLS error in curl connection\n");
+			LM_WARN("TLS error in curl connection (url: %s)\n", _url);
 		} else if ( res == CURLE_SSL_CERTPROBLEM ) {
-			LM_WARN("TLS local certificate error\n");
+			LM_WARN("TLS local certificate error (url: %s)\n", _url);
 		} else if ( res == CURLE_SSL_CIPHER ) {
-			LM_WARN("TLS cipher error\n");
+			LM_WARN("TLS cipher error (url: %s)\n", _url);
 		} else if ( res == CURLE_SSL_CACERT ) {
-			LM_WARN("TLS server certificate validation error (No valid CA cert)\n");
+			LM_WARN("TLS server certificate validation error"
+					" (No valid CA cert) (url: %s)\n", _url);
 		} else if ( res == CURLE_SSL_CACERT_BADFILE ) {
-			LM_WARN("TLS CA certificate read error \n");
+			LM_WARN("TLS CA certificate read error (url: %s)\n", _url);
 		} else if ( res == CURLE_SSL_ISSUER_ERROR ) {
-			LM_WARN("TLS issuer certificate check error \n");
+			LM_WARN("TLS issuer certificate check error (url: %s)\n", _url);
 		} else if ( res == CURLE_PEER_FAILED_VERIFICATION ) {
-			LM_WARN("TLS verification error\n");
+			LM_WARN("TLS verification error (url: %s)\n", _url);
 		} else if ( res == CURLE_TOO_MANY_REDIRECTS ) {
-			LM_WARN("Too many redirects\n");
+			LM_WARN("Too many redirects (url: %s)\n", _url);
 		} else {
-			LM_ERR("failed to perform curl (%d)\n", res);
+			LM_ERR("failed to perform curl (%d) (url: %s)\n", res, _url);
 		}
 
 		if (params->pconn) {
@@ -371,9 +373,13 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst,
 			if (params->oneline) {
 				/* search for line feed */
 				at = memchr(stream.buf, (char)10, download_size);
-				datasize = (double) (at - stream.buf);
-				LM_DBG("  -- curl download size cut to first line: %d \n",
-						(int) datasize);
+				if(at!=NULL) {
+					datasize = (double) (at - stream.buf);
+					LM_DBG("  -- curl download size cut to first line: %d\n",
+							(int) datasize);
+				} else {
+					LM_DBG("no end of line found for one line result type\n");
+				}
 			}
 			if (at == NULL) {
 				if (params->maxdatasize
