@@ -43,7 +43,7 @@
 MODULE_VERSION
 
 
-static str script_name = str_init("/usr/local/etc/" NAME "/handler.py");
+str _sr_python_load_file = str_init("/usr/local/etc/" NAME "/handler.py");
 static str mod_init_fname = str_init("mod_init");
 static str child_init_mname = str_init("child_init");
 
@@ -59,8 +59,8 @@ PyThreadState *myThreadState;
 
 /** module parameters */
 static param_export_t params[]={
-	{"script_name",        PARAM_STR, &script_name },
-	{"load",               PARAM_STR, &script_name },
+	{"script_name",        PARAM_STR, &_sr_python_load_file },
+	{"load",               PARAM_STR, &_sr_python_load_file },
 	{"mod_init_function",  PARAM_STR, &mod_init_fname },
 	{"child_init_method",  PARAM_STR, &child_init_mname },
 	{0,0,0}
@@ -104,8 +104,17 @@ static int mod_init(void)
 	PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
 	PyThreadState *mainThreadState;
 
-	dname_src = as_asciiz(&script_name);
-	bname_src = as_asciiz(&script_name);
+	if(apy_sr_init_mod()<0) {
+		LM_ERR("failed to init the sr mod\n");
+		return -1;
+	}
+	if(app_python_init_rpc()<0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
+	dname_src = as_asciiz(&_sr_python_load_file);
+	bname_src = as_asciiz(&_sr_python_load_file);
 
 	if(dname_src==NULL || bname_src==NULL)
 	{
@@ -142,7 +151,7 @@ static int mod_init(void)
 		bname[i - 3] = '\0';
 	} else {
 		LM_ERR("%s: script_name doesn't look like a python script\n",
-				script_name.s);
+				_sr_python_load_file.s);
 		pkg_free(dname_src);
 		pkg_free(bname_src);
 		return -1;
