@@ -780,13 +780,13 @@ static int add_contact_alias_0(struct sip_msg *msg)
 			&& ((ip = str2ip6(&(uri.host))) == NULL)) {
 		LM_DBG("contact uri host is not an ip address\n");
 	} else {
-		if(ip_addr_cmp(ip, &(msg->rcv.src_ip))
-				&& ((msg->rcv.src_port == uri.port_no)
-						   || ((uri.port.len == 0)
-									  && (msg->rcv.src_port == 5060)))) {
-			LM_DBG("no need to add alias param\n");
-			return 2;
-		}
+		if (ip_addr_cmp(ip, &(msg->rcv.src_ip)) &&
+                    ((msg->rcv.src_port == uri.port_no) ||
+                     ((uri.port.len == 0) && (msg->rcv.src_port == 5060))) &&
+                    (uri.proto == msg->rcv.proto)) {
+                        LM_DBG("no need to add alias param\n");
+                        return 2;
+                }
 	}
 
 	/* Check if function has been called already */
