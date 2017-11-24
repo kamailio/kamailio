@@ -9279,6 +9279,9 @@ PyCFunction sr_apy_kemi_export_associate(sr_kemi_t *ket)
 			_sr_apy_kemi_export_list[i].ket = ket;
 			return _sr_apy_kemi_export_list[i].pfunc;
 		}
+		if(_sr_apy_kemi_export_list[i].ket==ket) {
+			return _sr_apy_kemi_export_list[i].pfunc;
+		}
 	}
 	LM_ERR("no more indexing slots\n");
 	return NULL;
