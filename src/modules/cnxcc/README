@@ -26,11 +26,13 @@ Carlos Ruiz Díaz
 
         4. Functions
 
-              4.1. cnxcc_set_max_credit()
-              4.2. cnxcc_set_max_time()
-              4.3. cnxcc_update_max_time()
-              4.4. cnxcc_set_max_channel()
-              4.5. cnxcc_terminate_all()
+              4.1. cnxcc_set_max_credit(customer, maxcredit, cps, ipulse,
+                      fpulse)
+
+              4.2. cnxcc_set_max_time(customer, maxtime)
+              4.3. cnxcc_update_max_time(customer, maxtime)
+              4.4. cnxcc_set_max_channel(customer, maxchan)
+              4.5. cnxcc_terminate_all(customer)
 
         5. RPC Commands
 
@@ -45,8 +47,8 @@ Carlos Ruiz Díaz
 
    List of Examples
 
-   1.1.
-   1.2. credit_check_period
+   1.1. redis parameter
+   1.2. credit_check_period parameter
    1.3. cnxcc_set_max_credit()
    1.4. cnxcc_set_max_time()
    1.5. cnxcc_update_max_time()
@@ -71,11 +73,13 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. cnxcc_set_max_credit()
-        4.2. cnxcc_set_max_time()
-        4.3. cnxcc_update_max_time()
-        4.4. cnxcc_set_max_channel()
-        4.5. cnxcc_terminate_all()
+        4.1. cnxcc_set_max_credit(customer, maxcredit, cps, ipulse,
+                fpulse)
+
+        4.2. cnxcc_set_max_time(customer, maxtime)
+        4.3. cnxcc_update_max_time(customer, maxtime)
+        4.4. cnxcc_set_max_channel(customer, maxchan)
+        4.5. cnxcc_terminate_all(customer)
 
    5. RPC Commands
 
@@ -142,7 +146,7 @@ Chapter 1. Admin Guide
 
    Redis datasource connection information
 
-   Example 1.1.
+   Example 1.1. redis parameter
 ...
 modparam("cnxcc", "redis", "addr=127.0.0.1;port=6379;db=1")
 ...
@@ -156,24 +160,34 @@ modparam("cnxcc", "redis", "addr=127.0.0.1;port=6379;db=1")
 
    Values greater than 1 leads to precision lost but less CPU consumption.
 
-   Example 1.2. credit_check_period
+   Example 1.2. credit_check_period parameter
 ...
 modparam("cnxcc", "credit_check_period", 1)
 ...
 
 4. Functions
 
-   4.1. cnxcc_set_max_credit()
-   4.2. cnxcc_set_max_time()
-   4.3. cnxcc_update_max_time()
-   4.4. cnxcc_set_max_channel()
-   4.5. cnxcc_terminate_all()
+   4.1. cnxcc_set_max_credit(customer, maxcredit, cps, ipulse, fpulse)
+   4.2. cnxcc_set_max_time(customer, maxtime)
+   4.3. cnxcc_update_max_time(customer, maxtime)
+   4.4. cnxcc_set_max_channel(customer, maxchan)
+   4.5. cnxcc_terminate_all(customer)
 
-4.1.  cnxcc_set_max_credit()
+4.1.  cnxcc_set_max_credit(customer, maxcredit, cps, ipulse, fpulse)
 
-   Specifies the initial pulse, final pulse, max credit and cost per
-   second of a call. The discount is calculated in pulses (30/6, 1/1, etc)
-   and sustracted from the pool of credit.
+   Associates the call with a customer id and sets the max credit, cost
+   per second, initial pulse and final pulse. The discount is calculated
+   in pulses (30/6, 1/1, etc) and sustracted from the pool of credit.
+
+   The customer value can be provided as a string or a variable holding a
+   string.
+
+   The maxcredit and cps can be double (float) or integer values, they
+   have to be provided as static string values of variables holding string
+   values.
+
+   The ipulse and fpulse values are integer values, they can be also given
+   via variables holding integers.
 
    Return code:
      * 1 - successful
@@ -182,19 +196,26 @@ modparam("cnxcc", "credit_check_period", 1)
 
    Example 1.3. cnxcc_set_max_credit()
 ...
-$var(customer) = "john-doe-123-premium";
-$var(credit) = "100";
-$var(cps)   = "2.00";         # cost per second
-$var(initial_p)   = "030";    # intial pulse
-$var(final_p)   = "006";      # final pulse
-
-cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)", "$var(initia
-l_p)", "$var(final_p)");
+cnxcc_set_max_credit("john-doe", "100.5", "0.5", "20", "10");
+...
+$var(customer) = "john-doe-premium"; # customer id
+$var(credit) = "100";       # max credit
+$var(cps)   = "2.00";       # cost per second
+$var(initial_p)   = 30;     # intial pulse
+$var(final_p)     = 6;      # final pulse
+cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)",
+        "$var(initial_p)", "$var(final_p)");
 ...
 
-4.2.  cnxcc_set_max_time()
+4.2.  cnxcc_set_max_time(customer, maxtime)
 
    Specifies the amount of time the call should last at most.
+
+   The customer value can be provided as a string or a variable holding a
+   string.
+
+   The maxtime value is an integer values, it can be also given via a
+   variable holding an integer.
 
    Return code:
      * 1 - successful
@@ -202,18 +223,23 @@ l_p)", "$var(final_p)");
 
    Example 1.4. cnxcc_set_max_time()
 ...
-$var(customer) = "john-doe-123-basic";
+$var(customer) = "john-doe-basic";
 $var(max_time) = 120;
-
 cnxcc_set_max_time("$var(customer)", "$var(max_time)");
 ...
 
-4.3.  cnxcc_update_max_time()
+4.3.  cnxcc_update_max_time(customer, maxtime)
 
    Updates max-time of an established and monitored call. This can be used
    to grant minimum values and to update them every short periods on time
    as a mean to prevent frauds and/or to mimic requested/granted units of
    time of Credit Control Application behavior.
+
+   The customer value can be provided as a string or a variable holding a
+   string.
+
+   The maxtime value is an integer values, it can be also given via a
+   variable holding an integer.
 
    Return code:
      * 1 - successful
@@ -221,20 +247,24 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
 
    Example 1.5. cnxcc_update_max_time()
 ...
-        $var(update_time)  = 5;
-        $var(client)       = "john-doe-123-basic";
+$var(client)       = "john-doe-basic";
+$var(update_time)  = 5;
 
-        if (!cnxcc_update_max_time("$var(client)",
-                                  "$var(update_time)")) {
-                xlog("Error updating max-time");
-                return;
+if (!cnxcc_update_max_time("$var(client)", "$var(update_time)")) {
+        xlog("Error updating max-time");
+        return;
         }
-
 ...
 
-4.4.  cnxcc_set_max_channel()
+4.4.  cnxcc_set_max_channel(customer, maxchan)
 
-   Specifies a limit for the number of simultaneous calls
+   Specifies a limit for the number of simultaneous calls.
+
+   The customer value can be provided as a string or a variable holding a
+   string.
+
+   The maxchan value is an integer values, it can be also given via a
+   variable holding an integer.
 
    Return code:
      * 1 - successful
@@ -265,12 +295,14 @@ if ($var(retcode) < -1) {
 
         exit;
 }
-
 ...
 
-4.5.  cnxcc_terminate_all()
+4.5.  cnxcc_terminate_all(customer)
 
-   Terminates all calls of the specified customer/profile
+   Terminates all calls of the specified customer/profile.
+
+   The customer value can be provided as a string or a variable holding a
+   string.
 
    Return code:
      * 1 - successful
@@ -299,7 +331,9 @@ if (!cnxcc_terminate_all("$var(customer)")) {
    Parameters: none
 
    Example:
-            kamcmd cnxcc.active_clients
+...
+kamcmd cnxcc.active_clients
+...
 
 5.2. cnxcc.check_client
 
@@ -308,7 +342,9 @@ if (!cnxcc_terminate_all("$var(customer)")) {
    Parameters: client/customer identifier
 
    Example:
-            kamcmd cnxcc.check_client john-doe-123-premium
+...
+kamcmd cnxcc.check_client john-doe-premium
+...
 
 5.3. cnxcc.kill_call
 
@@ -317,7 +353,9 @@ if (!cnxcc_terminate_all("$var(customer)")) {
    Parameters: Call-ID
 
    Example:
-            kamcmd cnxcc.kill_call qumojlaahitafih@carlosrdcnx-laptop.site
+....
+kamcmd cnxcc.kill_call test@carlosrdcnx-laptop.site
+...
 
 5.4. cnxcc.stats
 
@@ -326,7 +364,9 @@ if (!cnxcc_terminate_all("$var(customer)")) {
    Parameters: none
 
    Example:
-            kamcmd cnxcc.stats
+...
+kamcmd cnxcc.stats
+...
 
 6. Events
 
@@ -360,25 +400,23 @@ event_route[cnxcc:call-shutdown]
 ...
 route[CNXCC]
 {
-        $var(client)              = "test-client-0-123-01";
+        $var(client)              = "test-client";
         $var(credit)              = "50";
         $var(cost_per_sec)        = "0.5";
-        $var(i_pulse)             = "30";
-        $var(f_pulse)             = "6";
+        $var(i_pulse)             = 30;
+        $var(f_pulse)             = 6;
 
         if (!cnxcc_set_max_credit("$var(client)",
-                          "$var(credit)",
-                          "$var(cost_per_sec)",
-                          "$var(i_pulse)",
-                          "$var(f_pulse)")) {
-                 xlog("Error setting up credit control");
+                        "$var(credit)",
+                        "$var(cost_per_sec)",
+                        "$var(i_pulse)",
+                        "$var(f_pulse)")) {
+                xlog("Error setting up credit control");
         }
 }
 
 event_route[cnxcc:call-shutdown]
 {
         xlog("L_INFO", "[$ci]: call killed");
-
-
 }
 ...
