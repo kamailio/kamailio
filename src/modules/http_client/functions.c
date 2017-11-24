@@ -552,6 +552,7 @@ int curl_con_query_url_f(struct sip_msg* _m, const str *connection,
 	query_params.cacert = default_tls_cacert;
 	query_params.ciphersuites = conn->ciphersuites;
 	query_params.tlsversion = conn->tlsversion;
+	query_params.useragent = conn->useragent;
 	query_params.verify_peer = conn->verify_peer;
 	query_params.verify_host = conn->verify_host;
 	query_params.timeout = conn->timeout;
