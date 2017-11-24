@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2014 Carlos Ruiz Díaz (caruizdiaz.com),
  *                    ConexionGroup (www.conexiongroup.com)
  *
@@ -32,29 +30,37 @@
 #include "../../core/str.h"
 #include "cnxcc_mod.h"
 
-struct redis {
-        int db;
-        short port;
-        char* ip;
-        redisContext *ctxt;
-        redisAsyncContext *async_ctxt;
-        struct event_base *eb;
+struct redis
+{
+	int db;
+	short port;
+	char *ip;
+	redisContext *ctxt;
+	redisAsyncContext *async_ctxt;
+	struct event_base *eb;
 };
 
 struct redis *redis_connect(char *ip, int port, int db);
 struct redis *redis_connect_async(char *ip, int port, int db);
 struct redis *redis_connect_all(char *ip, int port, int db);
-int redis_get_int(credit_data_t *credit_data, const char *instruction, const char *key, int *value);
-int redis_get_str(credit_data_t *credit_data, const char *instruction, const char *key, str *value);
-int redis_get_double(credit_data_t *credit_data, const char *instruction, const char *key, double *value);
+int redis_get_int(credit_data_t *credit_data, const char *instruction,
+		const char *key, int *value);
+int redis_get_str(credit_data_t *credit_data, const char *instruction,
+		const char *key, str *value);
+int redis_get_double(credit_data_t *credit_data, const char *instruction,
+		const char *key, double *value);
 int redis_get_or_create_credit_data(credit_data_t *credit_data);
 int redis_insert_credit_data(credit_data_t *credit_data);
-int redis_insert_int_value(credit_data_t *credit_data, const char* key, int value);
-int redis_insert_double_value(credit_data_t *credit_data, const char* key, double value);
-int redis_insert_str_value(credit_data_t *credit_data, const char* key, str *value);
+int redis_insert_int_value(
+		credit_data_t *credit_data, const char *key, int value);
+int redis_insert_double_value(
+		credit_data_t *credit_data, const char *key, double value);
+int redis_insert_str_value(
+		credit_data_t *credit_data, const char *key, str *value);
 int redis_kill_list_member_exists(credit_data_t *credit_data);
 int redis_incr_by_int(credit_data_t *credit_data, const char *key, int value);
-int redis_incr_by_double(credit_data_t *credit_data, const char *key, double value);
+int redis_incr_by_double(
+		credit_data_t *credit_data, const char *key, double value);
 int redis_clean_up_if_last(credit_data_t *credit_data);
 int redis_remove_kill_list_member(credit_data_t *credit_data);
 int redis_append_kill_list_member(credit_data_t *credit_data);

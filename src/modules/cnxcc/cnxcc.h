@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Carlos Ruiz Díaz (caruizdiaz.com),
  *                    ConexionGroup (www.conexiongroup.com)
  *
@@ -27,8 +25,8 @@
 
 #include "../../core/str.h"
 
-#define DATETIME_SIZE		sizeof("0001-01-01 00:00:00")
-#define DATETIME_LENGTH		DATETIME_SIZE - 1
+#define DATETIME_SIZE sizeof("0001-01-01 00:00:00")
+#define DATETIME_LENGTH DATETIME_SIZE - 1
 
 
 static inline unsigned int get_current_timestamp()
@@ -38,14 +36,14 @@ static inline unsigned int get_current_timestamp()
 
 static inline int timestamp2isodt(str *dest, unsigned int timestamp)
 {
-	time_t  		tim;
-	struct tm 		*tmPtr;
+	time_t tim;
+	struct tm *tmPtr;
 
-	tim 		= timestamp;
-	tmPtr 		= localtime(&tim);
+	tim = timestamp;
+	tmPtr = localtime(&tim);
 
-	strftime( dest->s, DATETIME_SIZE, "%Y-%m-%d %H:%M:%S", tmPtr);
-	dest->len	= DATETIME_LENGTH;
+	strftime(dest->s, DATETIME_SIZE, "%Y-%m-%d %H:%M:%S", tmPtr);
+	dest->len = DATETIME_LENGTH;
 
 	return 0;
 }
