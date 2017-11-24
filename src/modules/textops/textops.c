@@ -3940,7 +3940,7 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("textops"), str_init("is_list"),
+	{ str_init("textops"), str_init("in_list"),
 		SR_KEMIP_INT, ki_in_list,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
