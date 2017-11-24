@@ -673,10 +673,15 @@ static void app_lua_rpc_api_list(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
+
+	/* count the number of exported functions */
 	n = 0;
 	for(i=0; i<SR_KEMI_LUA_EXPORT_SIZE; i++) {
 		ket = sr_kemi_lua_export_get(i);
 		if(ket==NULL) continue;
+		n++;
+	}
+	for(i=0; sr_kemi_app_lua_rpc_exports[i].fname.s!=NULL; i++) {
 		n++;
 	}
 
