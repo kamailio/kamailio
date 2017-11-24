@@ -65,6 +65,7 @@
 #include "../../core/pvar.h"
 #include "../../core/mod_fix.h"
 #include "../../core/rand/kam_rand.h"
+#include "../../core/kemi.h"
 #include "hash.h"
 #include "lcr_rpc.h"
 #include "../../core/rpc_lookup.h"
@@ -2185,61 +2186,28 @@ done:
 /*
  * Load info of matching GWs into gw_uri_avps
  */
-static int load_gws(struct sip_msg *_m, int argc, action_u_t argv[])
+static int ki_load_gws_furi(sip_msg_t *_m, int lcr_id, str *ruri_user,
+		str *from_uri)
 {
-	str ruri_user, from_uri, *request_uri;
-	int i, j, lcr_id;
+	str *request_uri;
+	int i, j;
 	unsigned int gw_index, now, dex;
 	int_str val;
 	struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
 	struct rule_info **rules, *rule, *pl;
 	struct gw_info *gws;
 	struct target *t;
-	char *tmp;
 	struct sip_uri furi;
 	struct usr_avp *avp;
 	struct search_state st;
 
-	/* Get and check parameter values */
-	if(argc < 1) {
-		LM_ERR("lcr_id parameter is missing\n");
-		return -1;
-	}
-	lcr_id = strtol(argv[0].u.string, &tmp, 10);
-	if((tmp == 0) || (*tmp) || (tmp == argv[0].u.string)) {
-		LM_ERR("invalid lcr_id parameter %s\n", argv[0].u.string);
-		return -1;
-	}
-	if((lcr_id < 1) || (lcr_id > lcr_count_param)) {
-		LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
-		return -1;
-	}
-	if(argc > 1) {
-		ruri_user = argv[1].u.str;
-	} else {
-		if((parse_sip_msg_uri(_m) < 0) || (!_m->parsed_uri.user.s)) {
-			LM_ERR("error while parsing R-URI\n");
-			return -1;
-		}
-		ruri_user = _m->parsed_uri.user;
-	}
-	if(argc > 2) {
-		from_uri = argv[2].u.str;
-	} else {
-		from_uri.len = 0;
-		from_uri.s = (char *)0;
-	}
-	if(argc > 3) {
-		LM_ERR("too many parameters\n");
-		return -1;
-	}
-	LM_DBG("load_gws(%u, %.*s, %.*s)\n", lcr_id, ruri_user.len, ruri_user.s,
-			from_uri.len, from_uri.s);
+	LM_DBG("load_gws(%u, %.*s, %.*s)\n", lcr_id, ruri_user->len, ruri_user->s,
+			from_uri->len, from_uri->s);
 
 	request_uri = GET_RURI(_m);
 
-	if((from_uri.len > 0) && mt_pv_values_param) {
-		if(parse_uri(from_uri.s, from_uri.len, &furi) < 0) {
+	if((from_uri->len > 0) && mt_pv_values_param) {
+		if(parse_uri(from_uri->s, from_uri->len, &furi) < 0) {
 			LM_ERR("error while parsing caller_uri\n");
 			return -1;
 		}
@@ -2266,30 +2234,30 @@ static int load_gws(struct sip_msg *_m, int argc, action_u_t argv[])
 
 	/* check prefixes in from longest to shortest */
 	while(pl) {
-		if(ruri_user.len < pl->prefix_len) {
+		if(ruri_user->len < pl->prefix_len) {
 			pl = pl->next;
 			continue;
 		}
-		rule = rule_hash_table_lookup(rules, pl->prefix_len, ruri_user.s);
+		rule = rule_hash_table_lookup(rules, pl->prefix_len, ruri_user->s);
 		while(rule) {
 			/* Match prefix */
 			if((rule->prefix_len != pl->prefix_len)
-					|| (strncmp(rule->prefix, ruri_user.s, pl->prefix_len)))
+					|| (strncmp(rule->prefix, ruri_user->s, pl->prefix_len)))
 				goto next;
 
 			/* Match from uri */
 			if((rule->from_uri_len != 0)
-					&& (pcre_exec(rule->from_uri_re, NULL, from_uri.s,
-								from_uri.len, 0, 0, NULL, 0)
+					&& (pcre_exec(rule->from_uri_re, NULL, from_uri->s,
+								from_uri->len, 0, 0, NULL, 0)
 							   < 0)) {
 				LM_DBG("from uri <%.*s> did not match to from regex <%.*s>\n",
-						from_uri.len, from_uri.s, rule->from_uri_len,
+						from_uri->len, from_uri->s, rule->from_uri_len,
 						rule->from_uri);
 				goto next;
 			}
 
 			/* Match from uri user */
-			if((from_uri.len > 0) && (rule->mt_tvalue_len > 0)) {
+			if((from_uri->len > 0) && (rule->mt_tvalue_len > 0)) {
 				if(mtree_api.mt_match(_m, &mtree_param, &(furi.user), 2)
 						== -1) {
 					LM_DBG("from uri user <%.*s> was not found in mtree\n",
@@ -2372,7 +2340,7 @@ done:
 	}
 
 	/* Add gateways into gw_uris_avp */
-	add_gws_into_avps(gws, matched_gws, gw_index, &ruri_user);
+	add_gws_into_avps(gws, matched_gws, gw_index, ruri_user);
 
 	/* Add lcr_id into AVP */
 	if((defunct_capability_param > 0) || (ping_interval_param > 0)) {
@@ -2388,6 +2356,71 @@ done:
 	}
 }
 
+/*
+ * Load info of matching GWs into gw_uri_avps
+ */
+static int ki_load_gws_ruser(sip_msg_t *_m, int lcr_id, str *ruri_user)
+{
+	str from_uri = STR_NULL;
+
+	return ki_load_gws_furi(_m, lcr_id, ruri_user, &from_uri);
+}
+
+/*
+ * Load info of matching GWs into gw_uri_avps
+ */
+static int ki_load_gws(sip_msg_t *_m, int lcr_id)
+{
+	str ruri_user = STR_NULL;
+	str from_uri = STR_NULL;
+
+	return ki_load_gws_furi(_m, lcr_id, &ruri_user, &from_uri);
+}
+
+/*
+ * Load info of matching GWs into gw_uri_avps
+ */
+static int load_gws(struct sip_msg *_m, int argc, action_u_t argv[])
+{
+	str ruri_user, from_uri;
+	int lcr_id;
+	char *tmp;
+
+	/* Get and check parameter values */
+	if(argc < 1) {
+		LM_ERR("lcr_id parameter is missing\n");
+		return -1;
+	}
+	lcr_id = strtol(argv[0].u.string, &tmp, 10);
+	if((tmp == 0) || (*tmp) || (tmp == argv[0].u.string)) {
+		LM_ERR("invalid lcr_id parameter %s\n", argv[0].u.string);
+		return -1;
+	}
+	if((lcr_id < 1) || (lcr_id > lcr_count_param)) {
+		LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
+		return -1;
+	}
+	if(argc > 1) {
+		ruri_user = argv[1].u.str;
+	} else {
+		if((parse_sip_msg_uri(_m) < 0) || (!_m->parsed_uri.user.s)) {
+			LM_ERR("error while parsing R-URI\n");
+			return -1;
+		}
+		ruri_user = _m->parsed_uri.user;
+	}
+	if(argc > 2) {
+		from_uri = argv[2].u.str;
+	} else {
+		from_uri.len = 0;
+		from_uri.s = (char *)0;
+	}
+	if(argc > 3) {
+		LM_ERR("too many parameters\n");
+		return -1;
+	}
+	return ki_load_gws_furi(_m, lcr_id, &ruri_user, &from_uri);
+}
 
 /* Generate Request-URI and Destination URI */
 static int generate_uris(struct sip_msg *_m, char *r_uri, str *r_uri_user,
@@ -3236,4 +3269,38 @@ static int to_any_gw_2(struct sip_msg *_m, char *_addr, char *_transport)
 		}
 	}
 	return -1;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_lcr_exports[] = {
+	{ str_init("lcr"), str_init("load_gws"),
+		SR_KEMIP_INT, ki_load_gws,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("lcr"), str_init("load_gws_ruser"),
+		SR_KEMIP_INT, ki_load_gws_ruser,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("lcr"), str_init("load_gws_furi"),
+		SR_KEMIP_INT, ki_load_gws_furi,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_lcr_exports);
+	return 0;
 }
