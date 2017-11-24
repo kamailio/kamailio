@@ -729,7 +729,6 @@ static int do_routing(struct sip_msg *msg, int grp_id)
 	struct sip_uri uri;
 	str *ruri;
 	int_str val;
-	struct usr_avp *avp;
 #define DR_MAX_GWLIST 32
 	static int active_gwlist[DR_MAX_GWLIST];
 	static int local_gwlist[DR_MAX_GWLIST];
