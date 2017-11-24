@@ -613,7 +613,8 @@ if(is_rfc1918("$rd")) {
    Adds an “;alias=ip~port~transport” parameter to the contact URI
    containing either received ip, port, and transport protocol or those
    given as parameters. If called without parameters, “;alias” parameter
-   is only added if received ip and port differ from those in contact URI.
+   is only added if received ip, port, or transport protocol differs from
+   that in contact URI.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and LOCAL_ROUTE.
