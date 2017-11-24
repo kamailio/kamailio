@@ -9281,6 +9281,9 @@ lua_CFunction sr_kemi_lua_export_associate(sr_kemi_t *ket)
 			_sr_kemi_lua_export_list[i].ket = ket;
 			return _sr_kemi_lua_export_list[i].pfunc;
 		}
+		if(_sr_kemi_lua_export_list[i].ket==ket) {
+			return _sr_kemi_lua_export_list[i].pfunc;
+		}
 	}
 	LM_ERR("no more indexing slots\n");
 	return NULL;
