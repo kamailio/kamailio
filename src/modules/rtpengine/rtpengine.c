@@ -906,7 +906,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 			p1++;
 		}
 
-		if (p1 != NULL && p1 != '\0') {
+		if (p1 != NULL && p1[0] != '\0') {
 			s1.s = p1;
 			s1.len = strlen(p1);
 			if (str2int(&s1, &port) < 0 || port > 0xFFFF) {
