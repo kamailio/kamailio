@@ -3832,12 +3832,12 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("search_append"),
 		SR_KEMIP_INT, ki_search_append,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textops"), str_init("search_append_body"),
 		SR_KEMIP_INT, ki_search_append_body,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textops"), str_init("is_present_hf"),
