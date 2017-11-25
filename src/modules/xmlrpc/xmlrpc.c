@@ -18,16 +18,28 @@
  * with this program; if not, write to the Free Software Foundation, Inc., 59
  * Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-/*This define breaks on Solaris OS */
+
+/**
+ * make strptime available
+ * use 600 for 'Single UNIX Specification, Version 3'
+ * _XOPEN_SOURCE creates conflict in header definitions in Solaris
+ */
 #ifndef __OS_solaris
-#define _XOPEN_SOURCE 4           /* strptime */
+	#define _XOPEN_SOURCE 600		/* glibc2 on linux, bsd */
+	#define _BSD_SOURCE 1			/* needed on linux to "fix" the effect
+									 * of the above define on
+									 * features.h/unistd.h syscall() */
+	#define _DEFAULT_SOURCE 1		/* _BSD_SOURCE is deprecated */
+	#define _DARWIN_C_SOURCE 1
+
+	#define _SVID_SOURCE 1			/* timegm for old glib */
+#else
+	#define _XOPEN_SOURCE_EXTENDED 1   /* solaris */
 #endif
-#define _XOPEN_SOURCE_EXTENDED 1  /* solaris */
-#define _SVID_SOURCE 1            /* timegm */
-#define _DEFAULT_SOURCE 1         /* _SVID_SOURCE is deprecated */
+
+#include <time.h>
 
 #include <strings.h>
-#include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
