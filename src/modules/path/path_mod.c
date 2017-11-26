@@ -164,7 +164,7 @@ static int mod_init(void)
 static sr_kemi_t sr_kemi_path_exports[] = {
 	{ str_init("path"), str_init("add_path"),
 		SR_KEMIP_INT, ki_add_path,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("path"), str_init("add_path_user"),
@@ -179,7 +179,7 @@ static sr_kemi_t sr_kemi_path_exports[] = {
 	},
 	{ str_init("path"), str_init("add_path_received"),
 		SR_KEMIP_INT, ki_add_path_received,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("path"), str_init("add_path_received_user"),
