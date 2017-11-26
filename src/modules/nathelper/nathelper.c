@@ -2394,7 +2394,7 @@ static sr_kemi_t sr_kemi_nathelper_exports[] = {
 	},
 	{ str_init("nathelper"), str_init("is_rfc1918"),
 		SR_KEMIP_INT, is_rfc1918,
-		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("nathelper"), str_init("add_contact_alias"),
