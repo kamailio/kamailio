@@ -3674,7 +3674,7 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     },
     { str_init("rtpengine"), str_init("set_rtpengine_set2"),
         SR_KEMIP_INT, ki_set_rtpengine_set2,
-        { SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+        { SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
 
