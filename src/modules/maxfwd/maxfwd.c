@@ -223,10 +223,11 @@ int bind_maxfwd(maxfwd_api_t *api)
  *
  */
 static sr_kemi_t sr_kemi_maxfwd_exports[] = {
-		{str_init("maxfwd"), str_init("process_maxfwd"), SR_KEMIP_INT,
-				process_maxfwd_header,
-				{SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{ str_init("maxfwd"), str_init("process_maxfwd"),
+		    SR_KEMIP_INT, process_maxfwd_header,
+			{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			    SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+        },
 
 		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}};
 
