@@ -2321,7 +2321,7 @@ static sr_kemi_t sr_kemi_textopsx_exports[] = {
 	},
 	{ str_init("textopsx"), str_init("remove_hf_value2"),
 		SR_KEMIP_INT, ki_remove_hf_value2,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textopsx"), str_init("include_hf_value"),
