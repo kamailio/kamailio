@@ -3374,7 +3374,7 @@ static sr_kemi_t sr_kemi_lcr_exports[] = {
 	},
 	{ str_init("lcr"), str_init("load_gws_furi"),
 		SR_KEMIP_INT, ki_load_gws_furi,
-		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("lcr"), str_init("next_gw"),
