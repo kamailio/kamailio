@@ -551,9 +551,9 @@ int bind_xhttp(xhttp_api_t* api)
  */
 /* clang-format off */
 static sr_kemi_t sr_kemi_xhttp_exports[] = {
-	{ str_init("xhttp"), str_init("reply"),
+	{ str_init("xhttp"), str_init("xhttp_reply"),
 		SR_KEMIP_INT, xhttp_send_reply,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
