@@ -1826,7 +1826,7 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	},
 	{ str_init("dialog"), str_init("set_dlg_profile_static"),
 		SR_KEMIP_INT, ki_set_dlg_profile_static,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("set_dlg_profile"),
