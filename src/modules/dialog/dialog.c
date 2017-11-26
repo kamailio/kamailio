@@ -1836,7 +1836,7 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	},
 	{ str_init("dialog"), str_init("unset_dlg_profile_static"),
 		SR_KEMIP_INT, ki_unset_dlg_profile_static,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("unset_dlg_profile"),
@@ -1846,7 +1846,7 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	},
 	{ str_init("dialog"), str_init("is_in_profile_static"),
 		SR_KEMIP_INT, ki_is_in_profile_static,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("is_in_profile"),
