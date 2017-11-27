@@ -30,6 +30,11 @@ Maxim Sobolev
 
               4.1. python_exec(method [, args])
 
+        5. RPC Commands
+
+              5.1. app_python.reload
+              5.2. app_python.api_list
+
    List of Examples
 
    1.1. Set load parameter
@@ -57,6 +62,11 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. python_exec(method [, args])
+
+   5. RPC Commands
+
+        5.1. app_python.reload
+        5.2. app_python.api_list
 
 1. Overview
 
@@ -148,4 +158,38 @@ modparam("app_python", "child_init_method", "my_child_init")
 python_exec("my_python_function");
 python_exec("my_python_function", "my_params");
 python_exec("my_python_function", "$rU");
+...
+
+5. RPC Commands
+
+   5.1. app_python.reload
+   5.2. app_python.api_list
+
+5.1.  app_python.reload
+
+   IMPORTANT: not implemented yet.
+
+   Marks the need to reload the js script. The actual reload is done by
+   every working process when the next call to KEMI config is executed.
+
+   Name: app_python.reload
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_python.reload
+...
+
+5.2.  app_python.api_list
+
+   List the functions available via Kemi framework.
+
+   Name: app_python.api_list
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_python.api_list
 ...
