@@ -117,7 +117,7 @@ static int set_multibody_3(struct sip_msg* msg, char*, char *, char *);
 static int append_multibody_2(struct sip_msg* msg, char*, char *);
 static int append_multibody_3(struct sip_msg* msg, char*, char *, char *);
 static int fixup_multibody_f(void** param, int param_no);
-static int remove_multibody_f(struct sip_msg *msg, char *);
+static int remove_multibody_f(struct sip_msg *msg, char *p1, char *p2);
 static int get_body_part_raw_f(sip_msg_t* msg, char* ctype, char* ovar);
 static int get_body_part_f(sip_msg_t* msg, char* ctype, char* ovar);
 static int fixup_get_body_part(void** param, int param_no);
@@ -1883,7 +1883,7 @@ static str* generate_boundary(str *txt, str *content_type,
 	return n;
 }
 
-int ki_set_multibody_helper(sip_msg_t* msg, str* nbody, str* ctype,
+int ki_set_multibody(sip_msg_t* msg, str* nbody, str* ctype,
 		str* boundary)
 {
 	struct lump *anchor;
@@ -2115,6 +2115,30 @@ error:
 	return -1;
 }
 
+int ki_set_multibody_mode(sip_msg_t* msg)
+{
+	str nbody = STR_NULL;
+	str ctype = STR_NULL;
+	str boundary = STR_NULL;
+
+	return ki_set_multibody(msg, &nbody, &ctype, &boundary);
+}
+
+int ki_set_multibody_boundary(sip_msg_t* msg, str* boundary)
+{
+	str nbody = STR_NULL;
+	str ctype = STR_NULL;
+
+	return ki_set_multibody(msg, &nbody, &ctype, boundary);
+}
+
+int ki_set_multibody_content(sip_msg_t* msg, str* nbody, str* ctype)
+{
+	str boundary = STR_NULL;
+
+	return ki_set_multibody(msg, nbody, ctype, &boundary);
+}
+
 int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 {
 	str nbody = STR_NULL;
@@ -2143,7 +2167,7 @@ int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 		}
 	}
 
-	return ki_set_multibody_helper(msg, &nbody, &ctype, &boundary);
+	return ki_set_multibody(msg, &nbody, &ctype, &boundary);
 }
 
 static int set_multibody_0(struct sip_msg* msg, char* p1, char* p2, char* p3)
@@ -2166,50 +2190,24 @@ static int set_multibody_3(struct sip_msg* msg, char* p1, char* p2, char *p3)
 	return set_multibody_helper(msg, p1, p2, p3);
 }
 
-int append_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
+int ki_append_multibody_cd(sip_msg_t* msg, str* txt, str* ct, str* cd)
 {
 	struct lump *l;
 	int off;
 	str body = {0,0};
-	str nc = {0,0};
-	str cd = {0,0};
-	str txt = {0,0};
 	str* nbb = NULL;
 	str delimiter = {0,0};
 
-	if(p1==0 || p2==0)
-	{
-		LM_ERR("invalid parameters\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)p1, &txt)!=0)
-	{
-		LM_ERR("unable to get p1\n");
-		return -1;
-	}
-	if(txt.s==NULL || txt.len==0)
+	if(txt==NULL || txt->s==NULL || txt->len==0)
 	{
 		LM_ERR("invalid body parameter\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_p)p2, &nc)!=0)
-	{
-		LM_ERR("unable to get p2\n");
-		return -1;
-	}
-	if(nc.s==NULL || nc.len==0)
+
+	if(ct==NULL || ct->s==NULL || ct->len==0)
 	{
 		LM_ERR("invalid content-type parameter\n");
 		return -1;
-	}
-	if(p3!=NULL)
-	{
-		if(fixup_get_svalue(msg, (gparam_p)p3, &cd)!=0)
-		{
-			LM_ERR("unable to get p3\n");
-			return -1;
-		}
 	}
 
 	body.s = get_body(msg);
@@ -2234,7 +2232,7 @@ int append_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 		LM_ERR("Cannot get boundary. Is body multipart?\n");
 		return -1;
 	}
-	nbb = generate_boundary(&txt, &nc, &cd, &delimiter, 0);
+	nbb = generate_boundary(txt, ct, cd, &delimiter, 0);
 	if(nbb==NULL)
 	{
 		LM_ERR("couldn't create initial boundary\n");
@@ -2252,6 +2250,47 @@ int append_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 		msg->msg_flags |= FL_BODY_MULTIPART;
 	}
 	return 1;
+}
+
+int ki_append_multibody(sip_msg_t* msg, str* txt, str* ct)
+{
+	str cd = {0,0};
+
+	return ki_append_multibody_cd(msg, txt, ct, &cd);
+}
+
+static int append_multibody_helper(sip_msg_t *msg, char *p1, char *p2, char *p3)
+{
+	str txt = {0,0};
+	str ct = {0,0};
+	str cd = {0,0};
+
+	if(p1==0 || p2==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &txt)!=0)
+	{
+		LM_ERR("unable to get body parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)p2, &ct)!=0)
+	{
+		LM_ERR("unable to get content type parameter\n");
+		return -1;
+	}
+	if(p3!=NULL)
+	{
+		if(fixup_get_svalue(msg, (gparam_p)p3, &cd)!=0)
+		{
+			LM_ERR("unable to get content disposition\n");
+			return -1;
+		}
+	}
+
+	return ki_append_multibody_cd(msg, &txt, &ct, &cd);
 }
 
 static int append_multibody_2(struct sip_msg* msg, char* p1, char* p2)
@@ -2307,24 +2346,12 @@ static inline int get_line(char *s, int len)
 	return 0;
 }
 
-static int remove_multibody_f(struct sip_msg* msg, char* p1)
+static int ki_remove_multibody(sip_msg_t* msg, str* content_type)
 {
 	char *start, *end;
 	unsigned int len, t;
-	str content_type, body;
+	str body;
 	str boundary = {0,0};
-
-	if(p1==0)
-	{
-		LM_ERR("invalid parameters\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)p1, &content_type)!=0)
-	{
-		LM_ERR("unable to get p1\n");
-		return -1;
-	}
 
 	body.s = get_body(msg);
 	if (body.s == 0) {
@@ -2349,21 +2376,20 @@ static int remove_multibody_f(struct sip_msg* msg, char* p1)
 	{
 		end = start + 14;
 		len = len - 14;
-		if (len > (content_type.len + 2)) {
-			if (strncasecmp(end, content_type.s, content_type.len)== 0)
+		if (len > (content_type->len + 2)) {
+			if (strncasecmp(end, content_type->s, content_type->len)== 0)
 			{
 				LM_DBG("found content type %.*s\n",
-					content_type.len, content_type.s);
-				end = end + content_type.len;
+					content_type->len, content_type->s);
+				end = end + content_type->len;
 				if ((*end != 13) || (*(end + 1) != 10))
 				{
 					LM_ERR("no CRLF found after content type\n");
 					goto err;
 				}
 				end = end + 2;
-				len = len - content_type.len - 2;
-				if (find_line_start(boundary.s, boundary.len, &end,
-					&len))
+				len = len - content_type->len - 2;
+				if (find_line_start(boundary.s, boundary.len, &end, &len))
 				{
 					LM_DBG("found boundary %.*s\n", boundary.len, boundary.s);
 					end = end + boundary.len;
@@ -2395,28 +2421,37 @@ err:
 	return -1;
 }
 
-/**
- *
- */
-static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mode)
+static int remove_multibody_f(struct sip_msg* msg, char* p1, char *p2)
 {
-	char *start, *end, *bstart;
-	char *body_headers_end;
-	unsigned int len, t;
-	str content_type, body;
-	str boundary = {0,0};
-	pv_spec_t *dst;
-	pv_value_t val;
+	str content_type;
 
-	if(ctype==0) {
+	if(p1==0)
+	{
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)ctype, &content_type)!=0) {
-		LM_ERR("unable to get content type\n");
+	if(fixup_get_svalue(msg, (gparam_p)p1, &content_type)!=0)
+	{
+		LM_ERR("unable to get p1\n");
 		return -1;
 	}
+
+	return ki_remove_multibody(msg, &content_type);
+}
+
+/**
+ *
+ */
+static int ki_get_body_part_helper(sip_msg_t* msg, str* ctype, pv_spec_t *dst,
+		int mode)
+{
+	char *start, *end, *bstart;
+	char *body_headers_end;
+	unsigned int len, t;
+	str body;
+	str boundary = {0,0};
+	pv_value_t val;
 
 	body.s = get_body(msg);
 	if (body.s == 0) {
@@ -2442,19 +2477,19 @@ static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mod
 	{
 		end = start + 14;
 		len = len - 14;
-		if (len > (content_type.len + 2)) {
-			if (strncasecmp(end, content_type.s, content_type.len)== 0)
+		if (len > (ctype->len + 2)) {
+			if (strncasecmp(end, ctype->s, ctype->len)== 0)
 			{
 				LM_DBG("found content type %.*s\n",
-					content_type.len, content_type.s);
-				end = end + content_type.len;
+					ctype->len, ctype->s);
+				end = end + ctype->len;
 				if ((*end != 13) || (*(end + 1) != 10))
 				{
 					LM_ERR("no CRLF found after content type\n");
 					goto err;
 				}
 				end = end + 2;
-				len = len - content_type.len - 2;
+				len = len - ctype->len - 2;
 				body_headers_end = end;
 				if (find_line_start(boundary.s, boundary.len, &end,
 					&len))
@@ -2480,7 +2515,6 @@ static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mod
 					}
 					LM_DBG("output result: %.*s\n", val.rs.len, val.rs.s);
 					val.flags = PV_VAL_STR;
-					dst = (pv_spec_t *)ovar;
 					dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 					return 1;
 				}
@@ -2496,6 +2530,58 @@ static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mod
 err:
 	if(boundary.s) pkg_free(boundary.s);
 	return -1;
+}
+
+/**
+ *
+ */
+static int ki_get_body_part_raw(sip_msg_t* msg, str* ctype, str *pvname)
+{
+	pv_spec_t *pvd = NULL;
+
+	pvd = pv_cache_get(pvname);
+	if(pvd == NULL) {
+		LM_ERR("failed to get pv spec\n");
+		return -1;
+	}
+
+	return ki_get_body_part_helper(msg, ctype, pvd, 0);
+}
+
+/**
+ *
+ */
+static int ki_get_body_part(sip_msg_t* msg, str* ctype, str *pvname)
+{
+	pv_spec_t *pvd = NULL;
+
+	pvd = pv_cache_get(pvname);
+	if(pvd == NULL) {
+		LM_ERR("failed to get pv spec\n");
+		return -1;
+	}
+
+	return ki_get_body_part_helper(msg, ctype, pvd, 1);
+}
+
+/**
+ *
+ */
+static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mode)
+{
+	str content_type;
+
+	if(ctype==0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)ctype, &content_type)!=0) {
+		LM_ERR("unable to get content type\n");
+		return -1;
+	}
+
+	return ki_get_body_part_helper(msg, &content_type, (pv_spec_t *)ovar, mode);
 }
 
 /**
@@ -3981,6 +4067,51 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	{ str_init("textops"), str_init("is_audio_on_hold"),
 		SR_KEMIP_INT, ki_is_audio_on_hold,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_body_multipart_mode"),
+		SR_KEMIP_INT, ki_set_multibody_mode,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_body_multipart_boundary"),
+		SR_KEMIP_INT, ki_set_multibody_boundary,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_body_multipart_content"),
+		SR_KEMIP_INT, ki_set_multibody_content,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_body_multipart"),
+		SR_KEMIP_INT, ki_set_multibody,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("append_body_part"),
+		SR_KEMIP_INT, ki_append_multibody,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("append_body_part_cd"),
+		SR_KEMIP_INT, ki_append_multibody_cd,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("remove_body_part"),
+		SR_KEMIP_INT, ki_remove_multibody,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("get_body_part"),
+		SR_KEMIP_INT, ki_get_body_part,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("get_body_part_raw"),
+		SR_KEMIP_INT, ki_get_body_part_raw,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
