@@ -36,8 +36,6 @@ BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Mozilla
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
-BreakAfterJavaFieldAnnotations: false
-BreakStringLiterals: true
 ColumnLimit:     80
 CommentPragmas:  '^ IWYU pragma:'
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
@@ -55,12 +53,9 @@ IncludeCategories:
     Priority:        3
   - Regex:           '.*'
     Priority:        1
-IncludeIsMainRegex: '$'
 IndentCaseLabels: true
 IndentWidth:     4
 IndentWrappedFunctionNames: false
-JavaScriptQuotes: Leave
-JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: true
 MacroBlockBegin: ''
 MacroBlockEnd:   ''
