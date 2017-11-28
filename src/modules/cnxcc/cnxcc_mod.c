@@ -1755,7 +1755,6 @@ static int __get_channel_count_helper(sip_msg_t *msg, str *sclient,
 
 static int __get_channel_count(sip_msg_t *msg, char *pclient, char *pcount)
 {
-	pv_spec_t *pvcount = (pv_spec_t *)pcount;
 	str sclient;
 
 	if(fixup_get_svalue(msg, (gparam_t*)pclient, &sclient)<0) {
