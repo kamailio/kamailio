@@ -530,7 +530,7 @@ static inline int _timer_add(ticks_t t, struct timer_ln* tl)
 	ticks_t delta;
 
 #ifdef USE_SLOW_TIMER
-	tl->flags&=~((unsigned short)F_TIMER_ON_SLOW_LIST);
+	tl->flags&=~(F_TIMER_ON_SLOW_LIST);
 	tl->slow_idx=0;
 #endif
 	delta=tl->initial_timeout;
