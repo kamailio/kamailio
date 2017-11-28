@@ -34,19 +34,20 @@
 #include "iniparser.h"
 
 
-struct ld_session {
-	char                    name[256];
-	LDAP*                   handle;
-	char*                   host_name;
-	int                     version;
-	int                     server_search_timeout;
-	struct timeval          client_search_timeout;
-	struct timeval		client_bind_timeout;
-	struct timeval          network_timeout;
-	char*                   bind_dn;
-	char*                   bind_pwd;
-	int                     calculate_ha1;
-	struct ld_session*      next;
+struct ld_session
+{
+	char name[256];
+	LDAP *handle;
+	char *host_name;
+	int version;
+	int server_search_timeout;
+	struct timeval client_search_timeout;
+	struct timeval client_bind_timeout;
+	struct timeval network_timeout;
+	char *bind_dn;
+	char *bind_pwd;
+	int calculate_ha1;
+	struct ld_session *next;
 };
 
 #define CFG_N_LDAP_HOST "ldap_server_url"
@@ -72,11 +73,10 @@ struct ld_session {
 
 #define CFG_LDAP_CLIENT_SEARCH_TIMEOUT_MIN 2000
 
-extern int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d);
-extern struct ld_session* get_ld_session(char* _name);
+extern int add_ld_session(char *_name, LDAP *_ldh, dictionary *_d);
+extern struct ld_session *get_ld_session(char *_name);
 extern int free_ld_sessions(void);
 
-extern char* get_ini_key_name(char* _section, char* _key);
+extern char *get_ini_key_name(char *_section, char *_key);
 
 #endif /* LD_SESSION_H */
-
