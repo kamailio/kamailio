@@ -52,7 +52,7 @@
 #ifdef USE_SLOW_TIMER
 #include <sys/types.h>
 
-typedef unsigned short slow_idx_t; /* type fot the slow index */
+typedef unsigned int slow_idx_t; /* type fot the slow index */
 extern pid_t slow_timer_pid;
 #endif
 
@@ -102,11 +102,9 @@ struct timer_ln{ /* timer_link already used in tm */
 	ticks_t initial_timeout;
 	void* data;
 	timer_handler_f* f;
-	volatile unsigned short flags;
+	volatile unsigned int flags;
 #ifdef USE_SLOW_TIMER
 	volatile slow_idx_t slow_idx;
-#else
-	unsigned short reserved;
 #endif
 #ifdef TIMER_DEBUG
 	unsigned int expires_no; /* timer handler calls */
@@ -144,15 +142,13 @@ void timer_free(struct timer_ln* t);
 /* use for a deleted/expired timer that you want to add again */
 #define timer_reinit(tl) \
 	do{ \
-		(tl)->flags&=~((unsigned short)(F_TIMER_ON_SLOW_LIST | \
-											F_TIMER_ACTIVE));\
+		(tl)->flags&=~(F_TIMER_ON_SLOW_LIST | F_TIMER_ACTIVE);\
 		(tl)->init++; \
 	}while(0)
 #else
 /* use for a deleted/expired timer that you want to add again */
 #define timer_reinit(tl) \
-	(tl)->flags&=~((unsigned short)(F_TIMER_ON_SLOW_LIST | \
-										F_TIMER_ACTIVE))
+	(tl)->flags&=~(F_TIMER_ON_SLOW_LIST | F_TIMER_ACTIVE)
 #endif
 
 #define timer_init(tl, fun, param, flgs) \
