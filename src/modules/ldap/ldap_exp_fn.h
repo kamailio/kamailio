@@ -47,7 +47,7 @@ struct ldap_result_check_params
 	pv_elem_p check_str_elem_p;
 };
 
-int ldap_search_impl(struct sip_msg *_msg, pv_elem_t *_ldap_url);
+int ldap_search_impl(struct sip_msg *_msg, str *ldap_url);
 
 int ldap_write_result(struct sip_msg *_msg, struct ldap_result_params *_lrp,
 		struct subst_expr *_se);
