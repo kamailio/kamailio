@@ -1358,7 +1358,7 @@ __sl_reply_out(sl_cbp_t *slcbp)
 static void
 __tm_reply_in(struct cell *trans, int type, struct tmcb_params *param)
 {
-    time_t expire;
+    time_t expire = 0;
 
     if (param->req==NULL || param->rpl==NULL)
         return;
@@ -1366,9 +1366,30 @@ __tm_reply_in(struct cell *trans, int type, struct tmcb_params *param)
     if (param->code >= 200 && param->code < 300) {
         switch (param->req->REQ_METHOD) {
         case METHOD_SUBSCRIBE:
-            expire = get_expires(param->rpl);
-            if (expire > 0)
+            if(type == TMCB_RESPONSE_SENT) {
+            	char* tmp = pkg_malloc(param->send_buf.len+1);
+            	if(tmp) {
+                	sip_msg_t msg;
+                	strncpy(tmp, param->send_buf.s, param->send_buf.len);
+                	tmp[param->send_buf.len] = '\0';
+                	memset(&msg, 0, sizeof(sip_msg_t));
+                	msg.buf=tmp;
+                	msg.len=param->send_buf.len;
+                	if(parse_msg(tmp, param->send_buf.len, &msg) != 0) {
+                		LM_ERR("ERROR PARSING REPLY\n");
+                	} else {
+                    	expire = get_expires(&msg);
+                	}
+                	free_sip_msg(&msg);
+            	}
+            } else {
+            	expire = get_expires(param->rpl);
+            }
+            if (expire > 0) {
                 keepalive_subscription(param->req, expire);
+            } else {
+            	LM_DBG("expires == 0\n");
+            }
             break;
         case METHOD_REGISTER:
             expire = get_register_expire(param->req, param->rpl);
@@ -1404,7 +1425,7 @@ NAT_Keepalive(struct sip_msg *msg)
         // fallthrough
     case METHOD_SUBSCRIBE:
         msg->msg_flags |= FL_DO_KEEPALIVE;
-        if (tm_api.register_tmcb(msg, 0, TMCB_RESPONSE_IN, __tm_reply_in, 0, 0) <= 0) {
+        if (tm_api.register_tmcb(msg, 0, TMCB_RESPONSE_IN | TMCB_RESPONSE_SENT, __tm_reply_in, 0, 0) <= 0) {
             LM_ERR("cannot register TM callback for incoming replies\n");
             return -1;
         }
