@@ -51,10 +51,10 @@ extern int _mt_allow_duplicates;
 /** structures containing prefix-value pairs */
 static m_tree_t **_ptree = NULL;
 
-/* quick transaltion table */
+/* quick translation table */
 #define MT_CHAR_TABLE_SIZE	256
 #define MT_CHAR_TABLE_NOTSET 255
-unsigned char _mt_char_table[MT_CHAR_TABLE_SIZE];
+static unsigned char _mt_char_table[MT_CHAR_TABLE_SIZE];
 
 /**
  *
@@ -66,12 +66,8 @@ void mt_char_table_init(void)
 		_mt_char_table[i] = MT_CHAR_TABLE_NOTSET;
 	}
 	for(i=0; i<mt_char_list.len; i++) {
-		if((unsigned int)mt_char_list.s[i]>=MT_CHAR_TABLE_SIZE) {
-			LM_ERR("char at position %u in [%.*s] is out of range - skipping\n",
-					i, mt_char_list.len, mt_char_list.s);
-			continue;
-		}
-		_mt_char_table[(unsigned int)mt_char_list.s[i]] = (unsigned char)i;
+		unsigned char ch = mt_char_list.s[i];
+		_mt_char_table[ch] = (unsigned char)i;
 	}
 }
 
@@ -204,6 +200,7 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 	int l, ivalue = 0;
 	mt_node_t *itn, *itn0;
 	mt_is_t *tvalues;
+	unsigned char mtch;
 
 	if(pt==NULL || sp==NULL || sp->s==NULL
 			|| svalue==NULL || svalue->s==NULL)
@@ -241,18 +238,15 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 	}
 
 	itn0 = pt->head;
-	if((unsigned int)sp->s[l]>=MT_CHAR_TABLE_SIZE) {
-		LM_ERR("invalid range for char %d in prefix [%c (0x%x)]\n",
-				l, sp->s[l], sp->s[l]);
-		return -1;
-	}
-	if(_mt_char_table[(unsigned int)sp->s[l]]==MT_CHAR_TABLE_NOTSET)
+
+	mtch = _mt_char_table[(unsigned char)sp->s[l]];
+	if(mtch==MT_CHAR_TABLE_NOTSET)
 	{
-		LM_ERR("invalid char %d in prefix [%c (0x%x)]\n",
-				l, sp->s[l], sp->s[l]);
+		LM_ERR("invalid char at %d in [%.*s] [%c (0x%x)]\n",
+				l, sp->len, sp->s, sp->s[l], sp->s[l]);
 		return -1;
 	}
-	itn = itn0[_mt_char_table[(unsigned int)sp->s[l]]].child;
+	itn = itn0[mtch].child;
 
 	while(l < sp->len-1)
 	{
@@ -267,26 +261,22 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 			memset(itn, 0, MT_NODE_SIZE*sizeof(mt_node_t));
 			pt->nrnodes++;
 			pt->memsize +=  MT_NODE_SIZE*sizeof(mt_node_t);
-			itn0[_mt_char_table[(unsigned int)sp->s[l]]].child = itn;
+			itn0[mtch].child = itn;
 		}
-		l++;
 
-		if((unsigned int)sp->s[l]>=MT_CHAR_TABLE_SIZE) {
-			LM_ERR("invalid range for char %d in prefix [%c (0x%x)]\n",
-					l, sp->s[l], sp->s[l]);
-			return -1;
-		}
-		if(_mt_char_table[(unsigned int)sp->s[l]]==MT_CHAR_TABLE_NOTSET)
+		l++;
+		mtch = _mt_char_table[(unsigned char)sp->s[l]];
+		if(mtch==MT_CHAR_TABLE_NOTSET)
 		{
-			LM_ERR("invalid char %d in prefix [%c (0x%x)]\n",
-					l, sp->s[l], sp->s[l]);
+			LM_ERR("invalid char at %d in [%.*s]\n",
+					l, sp->len, sp->s);
 			return -1;
 		}
 		itn0 = itn;
-		itn = itn0[_mt_char_table[(unsigned int)sp->s[l]]].child;
+		itn = itn0[mtch].child;
 	}
 
-	if(itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalues != NULL) {
+	if(itn0[mtch].tvalues != NULL) {
 		if(_mt_ignore_duplicates != 0) {
 			LM_NOTICE("prefix already allocated [%.*s/%.*s]\n",
 					sp->len, sp->s, svalue->len, svalue->s);
@@ -319,11 +309,9 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 		strncpy(tvalues->tvalue.s.s, svalue->s, svalue->len);
 		tvalues->tvalue.s.s[svalue->len] = '\0';
 	}
-	tvalues->next = itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalues;
-	itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalues = tvalues;
-
-	mt_node_set_payload(&itn0[_mt_char_table[(unsigned int)sp->s[l]]],
-			pt->type);
+	tvalues->next = itn0[mtch].tvalues;
+	itn0[mtch].tvalues = tvalues;
+	mt_node_set_payload(&itn0[mtch], pt->type);
 	return 0;
 }
 
@@ -382,26 +370,22 @@ is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *len)
 
 	while(itn!=NULL && l < tomatch->len && l < MT_MAX_DEPTH)
 	{
-		/* check range */
-		if((unsigned int)tomatch->s[l]>=MT_CHAR_TABLE_SIZE) {
-			LM_DBG("out of range char at %d in [%.*s]\n",
-					l, tomatch->len, tomatch->s);
-			return NULL;
-		}
+		unsigned char mtch = _mt_char_table[(unsigned char)tomatch->s[l]];
+
 		/* check validity */
-		if(_mt_char_table[(unsigned int)tomatch->s[l]]==MT_CHAR_TABLE_NOTSET)
+		if(mtch==MT_CHAR_TABLE_NOTSET)
 		{
 			LM_DBG("not matching char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
 			return NULL;
 		}
 
-		if(itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues!=NULL)
+		if(itn[mtch].tvalues!=NULL)
 		{
-			tvalue = &itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues->tvalue;
+			tvalue = &itn[mtch].tvalues->tvalue;
 		}
 
-		itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
+		itn = itn[mtch].child;
 		l++;
 	}
 
@@ -435,19 +419,15 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 	itn = pt->head;
 
 	while (itn != NULL && l < tomatch->len && l < MT_MAX_DEPTH) {
-		/* check range */
-		if((unsigned int)tomatch->s[l]>=MT_CHAR_TABLE_SIZE) {
-			LM_DBG("out of range char at %d in [%.*s]\n",
-					l, tomatch->len, tomatch->s);
-			return -1;
-		}
+		unsigned char mtch = _mt_char_table[(unsigned char)tomatch->s[l]];
+
 		/* check validity */
-		if(_mt_char_table[(unsigned int)tomatch->s[l]]==MT_CHAR_TABLE_NOTSET) {
+		if(mtch==MT_CHAR_TABLE_NOTSET) {
 			LM_ERR("invalid char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
 			return -1;
 		}
-		tvalues = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues;
+		tvalues = itn[mtch].tvalues;
 		while (tvalues != NULL) {
 			if (pt->type == MT_TREE_IVAL) {
 				val.n = tvalues->tvalue.n;
@@ -465,7 +445,7 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 			tvalues = tvalues->next;
 		}
 
-		itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
+		itn = itn[mtch].child;
 		l++;
 	}
 
@@ -550,23 +530,19 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 
 	while(itn!=NULL && l < tomatch->len && l < MT_MAX_DEPTH)
 	{
-		/* check range */
-		if((unsigned int)tomatch->s[l]>=MT_CHAR_TABLE_SIZE) {
-			LM_DBG("out of range char at %d in [%.*s]\n",
-					l, tomatch->len, tomatch->s);
-			return -1;
-		}
+		unsigned char mtch = _mt_char_table[(unsigned char)tomatch->s[l]];
+
 		/* check validity */
-		if(_mt_char_table[(unsigned int)tomatch->s[l]]==MT_CHAR_TABLE_NOTSET)
+		if(mtch==MT_CHAR_TABLE_NOTSET)
 		{
 			LM_ERR("invalid char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
 			return -1;
 		}
 
-		if(itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues!=NULL)
+		if(itn[mtch].tvalues!=NULL)
 		{
-			dw = (mt_dw_t*)itn[_mt_char_table[(unsigned int)tomatch->s[l]]].data;
+			dw = (mt_dw_t*)itn[mtch].data;
 			while(dw) {
 				tmp_list[2*n]=dw->dstid;
 				tmp_list[2*n+1]=dw->weight;
@@ -580,7 +556,7 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 		if(n==MT_MAX_DST_LIST)
 			break;
 
-		itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
+		itn = itn[mtch].child;
 		l++;
 	}
 
@@ -997,19 +973,15 @@ int mt_rpc_add_tvalues(rpc_t* rpc, void* ctx, m_tree_t *pt, str *tomatch)
 	itn = pt->head;
 
 	while (itn != NULL && l < tomatch->len && l < MT_MAX_DEPTH) {
-		/* check range */
-		if((unsigned int)tomatch->s[l]>=MT_CHAR_TABLE_SIZE) {
-			LM_DBG("out of range char at %d in [%.*s]\n",
-					l, tomatch->len, tomatch->s);
-			return -1;
-		}
+		unsigned char mtch = _mt_char_table[(unsigned char)tomatch->s[l]];
+
 		/* check validity */
-		if(_mt_char_table[(unsigned int)tomatch->s[l]]==MT_CHAR_TABLE_NOTSET) {
+		if(mtch==MT_CHAR_TABLE_NOTSET) {
 			LM_ERR("invalid char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
 			return -1;
 		}
-		tvalues = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues;
+		tvalues = itn[mtch].tvalues;
 		while (tvalues != NULL) {
 			prefix.len = l+1;
 			if (rpc->add(ctx, "{", &vstruct) < 0) {
@@ -1034,7 +1006,7 @@ int mt_rpc_add_tvalues(rpc_t* rpc, void* ctx, m_tree_t *pt, str *tomatch)
 			tvalues = tvalues->next;
 		}
 
-		itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
+		itn = itn[mtch].child;
 		l++;
 	}
 
@@ -1114,23 +1086,19 @@ int mt_rpc_match_prefix(rpc_t* rpc, void* ctx, m_tree_t *it,
 
 	while(itn!=NULL && l < tomatch->len && l < MT_MAX_DEPTH)
 	{
-		/* check range */
-		if((unsigned int)tomatch->s[l]>=MT_CHAR_TABLE_SIZE) {
-			LM_DBG("out of range char at %d in [%.*s]\n",
-					l, tomatch->len, tomatch->s);
-			return -1;
-		}
+		unsigned char mtch = _mt_char_table[(unsigned char)tomatch->s[l]];
+
 		/* check validity */
-		if(_mt_char_table[(unsigned int)tomatch->s[l]]==MT_CHAR_TABLE_NOTSET)
+		if(mtch==MT_CHAR_TABLE_NOTSET)
 		{
 			LM_ERR("invalid char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
 			return -1;
 		}
 
-		if(itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues!=NULL)
+		if(itn[mtch].tvalues!=NULL)
 		{
-			dw = (mt_dw_t*)itn[_mt_char_table[(unsigned int)tomatch->s[l]]].data;
+			dw = (mt_dw_t*)itn[mtch].data;
 			while(dw) {
 				tmp_list[2*n]=dw->dstid;
 				tmp_list[2*n+1]=dw->weight;
@@ -1144,7 +1112,7 @@ int mt_rpc_match_prefix(rpc_t* rpc, void* ctx, m_tree_t *it,
 		if(n==MT_MAX_DST_LIST)
 			break;
 
-		itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
+		itn = itn[mtch].child;
 		l++;
 	}
 
