@@ -177,6 +177,7 @@ static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
 		char* sres)
 {
 	str s[3];
+	int i;
 
 	if(fixup_get_svalue(msg, (gparam_t*)ssrv, &s[0])!=0)
 	{
@@ -187,6 +188,14 @@ static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
 	{
 		LM_ERR("no redis command\n");
 		return -1;
+	}
+	for(i=0; i<s[1].len-1; i++) {
+		if(s[1].s[i]=='%') {
+			if(s[1].s[i+1]=='s' || s[1].s[i+1]=='b') {
+				LM_ERR("command argument specifier found, but no params\n");
+				return -1;
+			}
+		}
 	}
 	if(fixup_get_svalue(msg, (gparam_t*)sres, &s[2])!=0)
 	{
@@ -928,6 +937,19 @@ int bind_ndb_redis(ndb_redis_api_t *api)
  */
 static int ki_redis_cmd(sip_msg_t *msg, str *srv, str *rcmd, str *sres)
 {
+	int i;
+	if(rcmd==NULL || rcmd->s==NULL) {
+		LM_ERR("invalid command\n");
+		return -1;
+	}
+	for(i=0; i<rcmd->len-1; i++) {
+		if(rcmd->s[i]=='%') {
+			if(rcmd->s[i+1]=='s' || rcmd->s[i+1]=='b') {
+				LM_ERR("command argument specifier found, but no params\n");
+				return -1;
+			}
+		}
+	}
 	return redisc_exec(srv, sres, rcmd);
 }
 
