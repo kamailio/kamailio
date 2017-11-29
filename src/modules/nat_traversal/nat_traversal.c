@@ -1363,6 +1363,9 @@ __tm_reply_in(struct cell *trans, int type, struct tmcb_params *param)
     if (param->req==NULL || param->rpl==NULL)
         return;
 
+    if(type == TMCB_RESPONSE_SENT && param->rpl!=FAKED_REPLY)
+	return;
+
     if (param->code >= 200 && param->code < 300) {
         switch (param->req->REQ_METHOD) {
         case METHOD_SUBSCRIBE:
