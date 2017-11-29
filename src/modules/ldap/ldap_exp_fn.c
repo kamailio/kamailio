@@ -52,31 +52,22 @@ static char esc_buf[ESC_BUF_SIZE];
 * exported functions
 */
 
-int ldap_search_impl(struct sip_msg *_msg, pv_elem_t *_ldap_url)
+int ldap_search_impl(struct sip_msg *_msg, str *ldap_url)
 {
-	str ldap_url;
 	int ld_result_count = 0;
 
 	/*
 	* do variable substitution for _ldap_url (pv_printf_s)
 	*/
-	if(_ldap_url == NULL) {
+	if(ldap_url == NULL || ldap_url->s==NULL || ldap_url->len<=0) {
 		LM_ERR("empty ldap_url\n");
 		return -2;
-	}
-	if(_ldap_url->spec != NULL && _ldap_url->spec->getf != NULL) {
-		if(pv_printf_s(_msg, _ldap_url, &ldap_url) != 0 || ldap_url.len <= 0) {
-			LM_ERR("pv_printf_s failed\n");
-			return -2;
-		}
-	} else {
-		ldap_url = _ldap_url->text;
 	}
 
 	/*
 	* perform LDAP search
 	*/
-	if(ldap_url_search(ldap_url.s, &ld_result_count) != 0) {
+	if(ldap_url_search(ldap_url->s, &ld_result_count) != 0) {
 		/* LDAP search error */
 		return -2;
 	}

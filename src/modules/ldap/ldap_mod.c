@@ -33,6 +33,7 @@
 #include "../../core/parser/hf.h"
 #include "../../core/sr_module.h"
 #include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
 #include "../../core/mem/mem.h"
 
 #include "ld_session.h"
@@ -54,7 +55,6 @@ static int child_init(int rank);
 /*
 * fixup functions
 */
-static int ldap_search_fixup(void **param, int param_no);
 static int ldap_result_fixup(void **param, int param_no);
 static int ldap_filter_url_encode_fixup(void **param, int param_no);
 static int ldap_result_check_fixup(void **param, int param_no);
@@ -92,7 +92,7 @@ static dictionary *config_vals = NULL;
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"ldap_search",            (cmd_function)w_ldap_search,            1,
-		ldap_search_fixup, 0,
+		fixup_spve_null, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result",            (cmd_function)w_ldap_result1,           1,
 		ldap_result_fixup, 0,
@@ -246,7 +246,13 @@ static void destroy(void)
 
 static int w_ldap_search(struct sip_msg *msg, char *ldap_url, char *param)
 {
-	return ldap_search_impl(msg, (pv_elem_t *)ldap_url);
+	str ldap_url_val = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)ldap_url, &ldap_url_val)<0) {
+		LM_ERR("failed to get ldap url parameter\n");
+		return -1;
+	}
+	return ldap_search_impl(msg, &ldap_url_val);
 }
 
 static int w_ldap_result1(struct sip_msg *msg, char *src, char *param)
@@ -290,28 +296,6 @@ static int w_ldap_result_check_2(
 /*
 * FIXUP functions
 */
-
-static int ldap_search_fixup(void **param, int param_no)
-{
-	pv_elem_t *model;
-	str s;
-
-	if(param_no == 1) {
-		s.s = (char *)*param;
-		s.len = strlen(s.s);
-		if(s.len == 0) {
-			LM_ERR("ldap url is empty string!\n");
-			return E_CFG;
-		}
-		if(pv_parse_format(&s, &model) || model == NULL) {
-			LM_ERR("wrong format [%s] for ldap url!\n", s.s);
-			return E_CFG;
-		}
-		*param = (void *)model;
-	}
-
-	return 0;
-}
 
 static int ldap_result_fixup(void **param, int param_no)
 {
