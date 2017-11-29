@@ -117,6 +117,17 @@ static int parse_mysql_uri(struct my_uri* res, str* uri)
 	st = ST_SLASH1;
 	begin = uri->s;
 
+	//count number of '@' in URI
+	int no_of_ats = 0;
+	for(int j = 0; j < uri->len; j++) {
+		switch(uri->s[j]) {
+		case '@':
+			no_of_ats++;
+		default:
+			break;
+		}
+	}
+
 	for(i = 0; i < uri->len; i++) {
 		switch(st) {
 		case ST_SLASH1:
@@ -145,9 +156,13 @@ static int parse_mysql_uri(struct my_uri* res, str* uri)
 		case ST_USER_HOST:
 			switch(uri->s[i]) {
 			case '@':
-				st = ST_HOST;
-				if (dupl_string(&res->username, begin, uri->s + i) < 0) goto err;
-				begin = uri->s + i + 1;
+				if (no_of_ats == 1) {
+					st = ST_HOST;
+					if (dupl_string(&res->username, begin, uri->s + i) < 0) goto err;
+					begin = uri->s + i + 1;
+				} else {
+					no_of_ats--;
+				}
 				break;
 
 			case ':':
@@ -166,11 +181,15 @@ static int parse_mysql_uri(struct my_uri* res, str* uri)
 		case ST_PASS_PORT:
 			switch(uri->s[i]) {
 			case '@':
-				st = ST_HOST;
-				res->username = prev_token;
-				prev_token = 0;
-				if (dupl_string(&res->password, begin, uri->s + i) < 0) goto err;
-				begin = uri->s + i + 1;
+				if (no_of_ats == 1) {
+					st = ST_HOST;
+					res->username = prev_token;
+					prev_token = 0;
+					if (dupl_string(&res->password, begin, uri->s + i) < 0) goto err;
+					begin = uri->s + i + 1;
+				} else {
+					no_of_ats--;
+				}
 				break;
 
 			case '/':
