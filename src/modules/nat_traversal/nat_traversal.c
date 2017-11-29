@@ -1381,9 +1381,10 @@ __tm_reply_in(struct cell *trans, int type, struct tmcb_params *param)
                 	if(parse_msg(tmp, param->send_buf.len, &msg) != 0) {
                 		LM_ERR("ERROR PARSING REPLY\n");
                 	} else {
-                    	expire = get_expires(&msg);
+				expire = get_expires(&msg);
                 	}
                 	free_sip_msg(&msg);
+			pkg_free(tmp);
             	}
             } else {
             	expire = get_expires(param->rpl);
