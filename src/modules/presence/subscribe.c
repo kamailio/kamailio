@@ -420,6 +420,13 @@ int update_subs_db(subs_t* subs, int type)
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->updated_winfo;
 		n_update_cols++;
+
+		update_keys[n_update_cols] = &str_contact_col;
+		update_vals[n_update_cols].type = DB1_STR;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.str_val = subs->contact;
+		n_update_cols++;
+
 	}
 	if(type & LOCAL_TYPE)
 	{
