@@ -221,7 +221,7 @@ static inline int t_run_local_req(
 		uac_req_t *uac_r,
 		struct cell *new_cell, struct retr_buf *request)
 {
-	static struct sip_msg lreq;
+	struct sip_msg lreq = {0};
 	struct onsend_info onsnd_info;
 	tm_xlinks_t backup_xd;
 	int sflag_bk;
