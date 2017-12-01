@@ -32,10 +32,10 @@ if [ -z "$DBROOTUSER" ]; then
 	DBROOTUSER="root"
 fi
 
-# Uncomment this to set the database root password if you want to run this 
-# script without any user prompt. This is unsafe, but useful e.g. for 
-# automatic testing.
-#PW=""
+# Set DBROOTPW in kamctlrc or via next line to set the database
+# root password if you want to run this script without any user prompt.
+# This is unsafe, but useful e.g. for automatic testing.
+#DBROOTPW=""
 
 
 if [ -z "$DBPORT" ] ; then
@@ -55,13 +55,13 @@ prompt_pw()
 	savetty=`stty -g`
 	echo -n "MySQL password for $DBROOTUSER: "
 	stty -echo
-	read PW
+	read DBROOTPW
 	stty $savetty
 	echo
-	export PW
+	export DBROOTPW
 }
 
-# execute sql command with optional db name 
+# execute sql command with optional db name
 # and password parameters given
 sql_query()
 {
@@ -72,14 +72,14 @@ sql_query()
 			DB=""
 		fi
 		shift
-		if [ -n "$PW" ]; then
-			$CMD "-p$PW" $DB -e "$@"
+		if [ -n "$DBROOTPW" ]; then
+			$CMD "-p$DBROOTPW" $DB -e "$@"
 		else
 			$CMD $DB -e "$@"
 		fi
 	else
-		if [ -n "$PW" ]; then
-			$CMD "-p$PW" "$@"
+		if [ -n "$DBROOTPW" ]; then
+			$CMD "-p$DBROOTPW" "$@"
 		else
 			$CMD "$@"
 		fi
@@ -106,9 +106,9 @@ kamailio_drop()  # pars: <database name>
 
 db_charset_test()
 {
-	if [ -n "$PW" ]; then
-		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$PW" | $AWK '{print $2}' | $SED -e 1d`
-		ALLCHARSETS=`echo "show character set" | $CMD "-p$PW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv -e "utf8\|ucs2"`
+	if [ -n "$DBROOTPW" ]; then
+		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$DBROOTPW" | $AWK '{print $2}' | $SED -e 1d`
+		ALLCHARSETS=`echo "show character set" | $CMD "-p$DBROOTPW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv -e "utf8\|ucs2"`
 	else
 		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD | $AWK '{print $2}' | $SED -e 1d`
 		ALLCHARSETS=`echo "show character set" | $CMD | $AWK '{print $1}' | $SED -e 1d | $GREP -iv -e "utf8\|ucs2"`
@@ -386,7 +386,7 @@ migrate_table () # 4 paremeters (dst_table, dst_cols, src_table, src_cols)
 
 	if [ $? -ne 0 ] ; then
 		echo $X | $GREP "ERROR 1146" > /dev/null
-		if [ $? -eq 0 ] ; then 
+		if [ $? -eq 0 ] ; then
 			echo " -- Migrating $3 to $1.....SKIPPED (no source)"
 			return 0
 		fi
@@ -540,9 +540,9 @@ fi
 }  #end migrate_db()
 
 
-export PW
-if [ "$#" -ne 0 ] && [ "$PW" = "" ]; then
-	if [ "$PWSKIP" = "" ]; then
+export DBROOTPW
+if [ "$#" -ne 0 ] && [ "$DBROOTPW" = "" ]; then
+	if [ "$DBROOTPWSKIP" = "" ]; then
 		prompt_pw
 	fi
 fi
