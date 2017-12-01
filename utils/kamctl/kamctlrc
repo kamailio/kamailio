@@ -47,6 +47,11 @@
 ## database super user (for ORACLE this is 'scheme-creator' user)
 # DBROOTUSER="root"
 
+## password for database super user
+## - important: this is insecure, targeting the use only for automatic testing
+## - known to work for: mysql
+# DBROOTPW="dbrootpw"
+
 ## database character set (used by MySQL when creating database)
 #CHARSET="latin1"
 
