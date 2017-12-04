@@ -92,6 +92,8 @@ static int siptrace_init_rpc(void);
 static int child_init(int rank);
 static void destroy(void);
 static int sip_trace(struct sip_msg*, struct dest_info*, str *correlation_id_str, char*);
+static int sip_trace0(struct sip_msg *, char *p1, char *p2);
+static int sip_trace1(struct sip_msg *, char *dest, char *p2);
 static int sip_trace2(struct sip_msg *, char *dest, char *correlation_id);
 static int fixup_siptrace(void ** param, int param_no);
 
@@ -181,8 +183,8 @@ db_func_t db_funcs;      		/*!< Database functions */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"sip_trace", (cmd_function)sip_trace, 0, 0, 0, ANY_ROUTE},
-	{"sip_trace", (cmd_function)sip_trace, 1, fixup_siptrace, 0, ANY_ROUTE},
+	{"sip_trace", (cmd_function)sip_trace0, 0, 0, 0, ANY_ROUTE},
+	{"sip_trace", (cmd_function)sip_trace1, 1, fixup_siptrace, 0, ANY_ROUTE},
 	{"sip_trace", (cmd_function)sip_trace2, 2, fixup_spve_spve, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -968,6 +970,17 @@ static int fixup_siptrace(void** param, int param_no) {
 
 	*param = (void*) dst;
 	return 0;
+}
+
+static int sip_trace0(struct sip_msg *msg, char *p1, char *p2)
+{
+	return sip_trace(msg, NULL, NULL, NULL);
+
+}
+
+static int sip_trace1(struct sip_msg *msg, char *dest, char *p2)
+{
+	return sip_trace(msg, (struct dest_info *)dest, NULL, NULL);
 }
 
 static int sip_trace2(struct sip_msg *msg, char *dest, char *correlation_id)
