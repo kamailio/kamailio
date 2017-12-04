@@ -30,7 +30,7 @@
 #include "../../core/error.h"
 #include "../../core/dprint.h"
 #include "../../core/config.h"
-#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
 #include "../misc_radius/radius.h"
 #include "../../core/mem/mem.h"
 #include "auth_radius.h"
@@ -46,8 +46,6 @@ void *rh;
 auth_api_s_t auth_api;
 
 static int mod_init(void); /* Module initialization function */
-static int auth_fixup(void **param, int param_no); /* char* -> str* */
-
 
 /*
  * Module parameter variables
@@ -68,13 +66,13 @@ struct extra_attr *auth_extra = 0;
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"radius_www_authorize", (cmd_function)radius_www_authorize_1,   1,
-			auth_fixup, 0, REQUEST_ROUTE},
+			fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"radius_www_authorize", (cmd_function)radius_www_authorize_2,   2,
-			auth_fixup, 0, REQUEST_ROUTE},
+			fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
 	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_1, 1,
-			auth_fixup, 0, REQUEST_ROUTE},
+			fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_2, 2,
-			auth_fixup, 0, REQUEST_ROUTE},
+			fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -184,54 +182,6 @@ static int mod_init(void)
 	if (service_type != -1) {
 		vals[V_SIP_SESSION].v = service_type;
 	}
-
-	return 0;
-}
-
-
-/*
- * Convert char* parameter to pv_elem_t* parameter
- */
-static int auth_fixup(void** param, int param_no)
-{
-	pv_elem_t *model;
-	str s;
-	pv_spec_t *sp;
-
-	if (param_no == 1) { /* realm (string that may contain pvars) */
-		s.s = (char*)*param;
-		if (s.s==0 || s.s[0]==0) {
-			model = 0;
-		} else {
-			s.len = strlen(s.s);
-			if (pv_parse_format(&s,&model)<0) {
-				LM_ERR("pv_parse_format failed\n");
-				return E_OUT_OF_MEM;
-			}
-		}
-		*param = (void*)model;
-	}
-
-	if (param_no == 2) { /* URI user (a pvar) */
-		sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-		if (sp == 0) {
-			LM_ERR("no pkg memory left\n");
-			return -1;
-		}
-		s.s = (char*)*param;
-		s.len = strlen(s.s);
-		if (pv_parse_spec(&s, sp) == 0) {
-			LM_ERR("parsing of pseudo variable %s failed!\n", (char*)*param);
-			pkg_free(sp);
-			return -1;
-		}
-		if (sp->type == PVT_NULL) {
-			LM_ERR("bad pseudo variable\n");
-			pkg_free(sp);
-			return -1;
-		}
-		*param = (void*)sp;
-	}	
 
 	return 0;
 }

@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -34,7 +34,7 @@
 #include "../../core/parser/parse_to.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
-#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
 #include "../../modules/auth/api.h"
 #include "authorize.h"
 #include "sterman.h"
@@ -70,16 +70,15 @@ static inline int get_uri_user(struct sip_msg *_m, str **_uri_user)
 /*
  * Authorize digest credentials
  */
-static inline int authorize(struct sip_msg *_msg, pv_elem_t *_realm,
-		pv_spec_t *_uri_user, hdr_types_t _hftype)
+static inline int authorize(struct sip_msg *_msg, gparam_t *_realm,
+		gparam_t *_uri_user, hdr_types_t _hftype)
 {
 	int res;
 	auth_cfg_result_t ret;
 	struct hdr_field *h;
 	auth_body_t *cred;
 	str *uri_user;
-	str user, domain;
-	pv_value_t pv_val;
+	str user, puser, domain;
 
 	cred = 0;
 	ret = -1;
@@ -87,8 +86,8 @@ static inline int authorize(struct sip_msg *_msg, pv_elem_t *_realm,
 
 	/* get pre_auth domain from _realm pvar (if exists) */
 	if(_realm) {
-		if(pv_printf_s(_msg, _realm, &domain) != 0) {
-			LM_ERR("pv_printf_s failed\n");
+		if(fixup_get_svalue(_msg, _realm, &domain)<0) {
+			LM_ERR("failed to get realm value\n");
 			return -5;
 		}
 	} else {
@@ -137,20 +136,13 @@ static inline int authorize(struct sip_msg *_msg, pv_elem_t *_realm,
 	/* get uri_user from _uri_user pvap (if exists) or
        from To/From URI */
 	if(_uri_user) {
-		if(pv_get_spec_value(_msg, _uri_user, &pv_val) == 0) {
-			if(pv_val.flags & PV_VAL_STR) {
-				res = radius_authorize_sterman(_msg, &cred->digest,
-						&_msg->first_line.u.request.method, &pv_val.rs);
-			} else {
-				LM_ERR("uri_user pvar value is not string\n");
-				ret = AUTH_ERROR;
-				goto end;
-			}
-		} else {
-			LM_ERR("cannot get uri_user pvar value\n");
+		if(fixup_get_svalue(_msg, _uri_user, &puser)<0) {
+			LM_ERR("cannot get uri user value\n");
 			ret = AUTH_ERROR;
 			goto end;
 		}
+		res = radius_authorize_sterman(_msg, &cred->digest,
+					&_msg->first_line.u.request.method, &puser);
 	} else {
 		if(get_uri_user(_msg, &uri_user) < 0) {
 			LM_ERR("To/From URI not found\n");
@@ -213,7 +205,7 @@ int radius_proxy_authorize_1(struct sip_msg *_msg, char *_realm, char *_s2)
 {
 	/* realm parameter is converted in fixup */
 	return authorize(
-			_msg, (pv_elem_t *)_realm, (pv_spec_t *)0, HDR_PROXYAUTH_T);
+			_msg, (gparam_t *)_realm, (gparam_t *)0, HDR_PROXYAUTH_T);
 }
 
 
@@ -224,7 +216,7 @@ int radius_proxy_authorize_2(
 		struct sip_msg *_msg, char *_realm, char *_uri_user)
 {
 	return authorize(
-			_msg, (pv_elem_t *)_realm, (pv_spec_t *)_uri_user, HDR_PROXYAUTH_T);
+			_msg, (gparam_t *)_realm, (gparam_t *)_uri_user, HDR_PROXYAUTH_T);
 }
 
 
@@ -234,7 +226,7 @@ int radius_proxy_authorize_2(
 int radius_www_authorize_1(struct sip_msg *_msg, char *_realm, char *_s2)
 {
 	return authorize(
-			_msg, (pv_elem_t *)_realm, (pv_spec_t *)0, HDR_AUTHORIZATION_T);
+			_msg, (gparam_t *)_realm, (gparam_t *)0, HDR_AUTHORIZATION_T);
 }
 
 
@@ -243,6 +235,6 @@ int radius_www_authorize_1(struct sip_msg *_msg, char *_realm, char *_s2)
  */
 int radius_www_authorize_2(struct sip_msg *_msg, char *_realm, char *_uri_user)
 {
-	return authorize(_msg, (pv_elem_t *)_realm, (pv_spec_t *)_uri_user,
+	return authorize(_msg, (gparam_t *)_realm, (gparam_t *)_uri_user,
 			HDR_AUTHORIZATION_T);
 }
