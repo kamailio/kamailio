@@ -31,6 +31,7 @@
 #include "../../core/dprint.h"
 #include "../../core/config.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../misc_radius/radius.h"
 #include "../../core/mem/mem.h"
 #include "auth_radius.h"
@@ -183,5 +184,44 @@ static int mod_init(void)
 		vals[V_SIP_SESSION].v = service_type;
 	}
 
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_auth_radius_exports[] = {
+	{ str_init("auth_radius"), str_init("proxy_authorize"),
+		SR_KEMIP_INT, ki_radius_proxy_authorize,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth_radius"), str_init("proxy_authorize_user"),
+		SR_KEMIP_INT, ki_radius_proxy_authorize_user,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth_radius"), str_init("www_authorize"),
+		SR_KEMIP_INT, ki_radius_www_authorize,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth_radius"), str_init("www_authorize_user"),
+		SR_KEMIP_INT, ki_radius_www_authorize_user,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_auth_radius_exports);
 	return 0;
 }

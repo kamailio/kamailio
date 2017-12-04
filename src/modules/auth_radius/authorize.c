@@ -70,26 +70,23 @@ static inline int get_uri_user(struct sip_msg *_m, str **_uri_user)
 /*
  * Authorize digest credentials
  */
-static inline int authorize(struct sip_msg *_msg, gparam_t *_realm,
-		gparam_t *_uri_user, hdr_types_t _hftype)
+static int ki_authorize(sip_msg_t *_msg, str *srealm,
+		str *suser, hdr_types_t _hftype)
 {
 	int res;
 	auth_cfg_result_t ret;
 	struct hdr_field *h;
 	auth_body_t *cred;
 	str *uri_user;
-	str user, puser, domain;
+	str user = STR_NULL, domain;
 
 	cred = 0;
 	ret = -1;
 	user.s = 0;
 
 	/* get pre_auth domain from _realm pvar (if exists) */
-	if(_realm) {
-		if(fixup_get_svalue(_msg, _realm, &domain)<0) {
-			LM_ERR("failed to get realm value\n");
-			return -5;
-		}
+	if(srealm) {
+		domain = *srealm;
 	} else {
 		domain.len = 0;
 		domain.s = 0;
@@ -135,14 +132,9 @@ static inline int authorize(struct sip_msg *_msg, gparam_t *_realm,
 
 	/* get uri_user from _uri_user pvap (if exists) or
        from To/From URI */
-	if(_uri_user) {
-		if(fixup_get_svalue(_msg, _uri_user, &puser)<0) {
-			LM_ERR("cannot get uri user value\n");
-			ret = AUTH_ERROR;
-			goto end;
-		}
+	if(suser != NULL && suser->len > 0) {
 		res = radius_authorize_sterman(_msg, &cred->digest,
-					&_msg->first_line.u.request.method, &puser);
+					&_msg->first_line.u.request.method, suser);
 	} else {
 		if(get_uri_user(_msg, &uri_user) < 0) {
 			LM_ERR("To/From URI not found\n");
@@ -197,6 +189,63 @@ end:
 	return ret;
 }
 
+
+/*
+ * Authorize digest credentials
+ */
+static inline int authorize(struct sip_msg *_msg, gparam_t *_realm,
+		gparam_t *_uri_user, hdr_types_t _hftype)
+{
+	str srealm = STR_NULL;
+	str suser = STR_NULL;
+
+	/* get pre_auth domain from _realm param (if exists) */
+	if(_realm) {
+		if(fixup_get_svalue(_msg, _realm, &srealm)<0) {
+			LM_ERR("failed to get realm value\n");
+			return -5;
+		}
+	}
+	if(_uri_user) {
+		if(fixup_get_svalue(_msg, _uri_user, &suser)<0) {
+			LM_ERR("cannot get uri user value\n");
+			return AUTH_ERROR;
+		}
+	}
+	return ki_authorize(_msg, &srealm, &suser, _hftype);
+}
+
+/**
+ *
+ */
+int ki_radius_proxy_authorize(sip_msg_t *msg, str *srealm)
+{
+	return ki_authorize(msg, srealm, NULL, HDR_PROXYAUTH_T);
+}
+
+/**
+ *
+ */
+int ki_radius_proxy_authorize_user(sip_msg_t *msg, str *srealm, str *suser)
+{
+	return ki_authorize(msg, srealm, suser, HDR_PROXYAUTH_T);
+}
+
+/**
+ *
+ */
+int ki_radius_www_authorize(sip_msg_t *msg, str *srealm)
+{
+	return ki_authorize(msg, srealm, NULL, HDR_AUTHORIZATION_T);
+}
+
+/**
+ *
+ */
+int ki_radius_www_authorize_user(sip_msg_t *msg, str *srealm, str *suser)
+{
+	return ki_authorize(msg, srealm, suser, HDR_AUTHORIZATION_T);
+}
 
 /*
  * Authorize using Proxy-Authorize header field (no URI user parameter given)
