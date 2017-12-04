@@ -1556,11 +1556,11 @@ assign_stm:
 	| MAX_WLOOPS EQUAL error { yyerror("number expected"); }
 	| PVBUFSIZE EQUAL NUMBER { pv_set_buffer_size($3); }
 	| PVBUFSIZE EQUAL error { yyerror("number expected"); }
-	| PVBUFSLOTS EQUAL NUMBER { default_core_cfg.pv_cache_limit=$3; }
+	| PVBUFSLOTS EQUAL NUMBER { pv_set_buffer_slots($3); }
 	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
-	| PVCACHELIMIT EQUAL NUMBER { default_core_cfg.pv_cache_action=$3; }
+	| PVCACHELIMIT EQUAL NUMBER { default_core_cfg.pv_cache_limit=$3; }
 	| PVCACHELIMIT EQUAL error { yyerror("number expected"); }
-	| PVCACHEACTION EQUAL NUMBER { pv_set_buffer_slots($3); }
+	| PVCACHEACTION EQUAL NUMBER { default_core_cfg.pv_cache_action=$3; }
 	| PVCACHEACTION EQUAL error { yyerror("number expected"); }
 	| HTTP_REPLY_PARSE EQUAL NUMBER { http_reply_parse=$3; }
 	| HTTP_REPLY_PARSE EQUAL error { yyerror("boolean value expected"); }
