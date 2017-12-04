@@ -41,6 +41,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/kemi.h"
 #include "../misc_radius/radius.h"
 #include "../../modules/acc/acc_api.h"
 #include "acc_radius_mod.h"
@@ -444,3 +445,84 @@ static int w_acc_radius_request(struct sip_msg *rq, char *comment, char *foo)
 	return accb.exec(rq, &_acc_radius_engine, (acc_param_t*)comment);
 }
 
+static int acc_radius_parse_code(char *p, acc_param_t *param)
+{
+	if (p==NULL||param==NULL)
+		return -1;
+
+	/* any code? */
+	if (param->reason.len>=3 && isdigit((int)p[0])
+	&& isdigit((int)p[1]) && isdigit((int)p[2]) ) {
+		param->code = (p[0]-'0')*100 + (p[1]-'0')*10 + (p[2]-'0');
+		param->code_s.s = p;
+		param->code_s.len = 3;
+		param->reason.s += 3;
+		for( ; isspace((int)param->reason.s[0]) ; param->reason.s++ );
+		param->reason.len = strlen(param->reason.s);
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int acc_radius_param_parse(str *s, acc_param_t *accp)
+{
+	if(s==NULL || s->s==NULL || s->len<=0 || accp==NULL) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	memset(accp, 0, sizeof(acc_param_t));
+	accp->reason.s = s->s;
+	accp->reason.len = s->len;
+	if (strchr(s->s, PV_MARKER)!=NULL) {
+		/* there is a cfg variable - not through kemi */
+		LM_ERR("cfg variable detected - not supported\n");
+		return -1;
+	} else {
+		if(acc_radius_parse_code(s->s, accp)<0) {
+			LM_ERR("failed to parse: [%.*s] (expected [code text])\n",
+					s->len, s->s);
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int ki_acc_radius_request(sip_msg_t *rq, str *comment)
+{
+	acc_param_t accp;
+
+	if(acc_radius_param_parse(comment, &accp)<0) {
+		LM_ERR("failed to parse parameter\n");
+		return -1;
+	}
+	return accb.exec(rq, &_acc_radius_engine, &accp);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_acc_radius_exports[] = {
+	{ str_init("acc_radius"), str_init("request"),
+		SR_KEMIP_INT, ki_acc_radius_request,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_acc_radius_exports);
+	return 0;
+}
