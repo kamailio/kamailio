@@ -29,10 +29,11 @@
 #include "../../core/parser/msg_parser.h"
 #include "../misc_radius/radius.h"
 
-struct extra_attr {
-    str name;
-    pv_spec_t spec;
-    struct extra_attr *next;
+struct extra_attr
+{
+	str name;
+	pv_spec_t spec;
+	struct extra_attr *next;
 };
 
 #define MAX_EXTRA 4

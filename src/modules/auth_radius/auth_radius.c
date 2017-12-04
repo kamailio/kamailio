@@ -39,20 +39,20 @@
 
 MODULE_VERSION
 
-struct attr attrs[A_MAX+MAX_EXTRA];
-struct val vals[V_MAX+MAX_EXTRA];
+struct attr attrs[A_MAX + MAX_EXTRA];
+struct val vals[V_MAX + MAX_EXTRA];
 void *rh;
 
 auth_api_s_t auth_api;
 
-static int mod_init(void);         /* Module initialization function */
-static int auth_fixup(void** param, int param_no); /* char* -> str* */
+static int mod_init(void); /* Module initialization function */
+static int auth_fixup(void **param, int param_no); /* char* -> str* */
 
 
 /*
  * Module parameter variables
  */
-static char* radius_config = DEFAULT_RADIUSCLIENT_CONF;
+static char *radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int service_type = -1;
 
 int use_ruri_flag = -1;
@@ -65,15 +65,16 @@ struct extra_attr *auth_extra = 0;
 /*
  * Exported functions
  */
+/* clang-format off */
 static cmd_export_t cmds[] = {
-	{"radius_www_authorize", (cmd_function)radius_www_authorize_1,   1, auth_fixup,
-			0, REQUEST_ROUTE},
-	{"radius_www_authorize", (cmd_function)radius_www_authorize_2,   2, auth_fixup,
-			0, REQUEST_ROUTE},
-	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_1, 1, auth_fixup,
-			0, REQUEST_ROUTE},
-	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_2, 2, auth_fixup,
-			0, REQUEST_ROUTE},
+	{"radius_www_authorize", (cmd_function)radius_www_authorize_1,   1,
+			auth_fixup, 0, REQUEST_ROUTE},
+	{"radius_www_authorize", (cmd_function)radius_www_authorize_2,   2,
+			auth_fixup, 0, REQUEST_ROUTE},
+	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_1, 1,
+			auth_fixup, 0, REQUEST_ROUTE},
+	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_2, 2,
+			auth_fixup, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -87,7 +88,7 @@ static param_export_t params[] = {
 	{"use_ruri_flag",    INT_PARAM, &use_ruri_flag	},
 	{"auth_extra",       PARAM_STRING, &auth_extra_str	},
 	{"radius_avps_mode",	 INT_PARAM, &ar_radius_avps_mode	},
-	{"append_realm_to_username", INT_PARAM, &append_realm_to_username       },
+	{"append_realm_to_username", INT_PARAM, &append_realm_to_username  },
 	{0, 0, 0}
 };
 
@@ -96,7 +97,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"auth_radius", 
+	"auth_radius",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
@@ -109,6 +110,7 @@ struct module_exports exports = {
 	0,          /* destroy function */
 	0           /* child initialization function */
 };
+/* clang-format off */
 
 
 /*
