@@ -1,3 +1,9 @@
+kamailio (5.1.0~rc3) unstable; urgency=medium
+
+  * version set to 5.1.0~rc3
+
+ -- Victor Seva <vseva@debian.org>  Mon, 04 Dec 2017 11:38:41 +0100
+
 kamailio (5.1.0~rc2) unstable; urgency=medium
 
   * version set to 5.1.0~rc2
