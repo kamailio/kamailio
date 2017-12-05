@@ -66,6 +66,7 @@
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/counters.h"
 #include "../../core/rand/kam_rand.h"
+#include "../../core/kemi.h"
 #include "../dialog/dlg_load.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
@@ -204,9 +205,9 @@ typedef struct Keepalive_Params
 
 // Function prototypes
 //
-static int NAT_Keepalive(struct sip_msg *msg);
-static int FixContact(struct sip_msg *msg);
-static int ClientNatTest(struct sip_msg *msg, unsigned int tests);
+static int w_NAT_Keepalive(struct sip_msg *msg, char *p1, char *p2);
+static int w_FixContact(struct sip_msg *msg, char *p1, char *p2);
+static int w_ClientNatTest(struct sip_msg *msg, char *ptests, char *p2);
 
 static bool test_private_contact(struct sip_msg *msg);
 static bool test_source_address(struct sip_msg *msg);
@@ -270,9 +271,12 @@ static NatTest NAT_Tests[] = {
 sl_api_t slb;
 
 static cmd_export_t commands[] = {
-	{"nat_keepalive", (cmd_function)NAT_Keepalive, 0, NULL, 0, REQUEST_ROUTE},
-	{"fix_contact", (cmd_function)FixContact, 0, NULL, 0, ANY_ROUTE},
-	{"client_nat_test", (cmd_function)ClientNatTest, 1, fixup_uint_null, 0, ANY_ROUTE},
+	{"nat_keepalive", (cmd_function)w_NAT_Keepalive, 0, NULL, 0,
+		REQUEST_ROUTE},
+	{"fix_contact", (cmd_function)w_FixContact, 0, NULL, 0,
+		ANY_ROUTE},
+	{"client_nat_test", (cmd_function)w_ClientNatTest, 1, fixup_igp_null, 0,
+		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -1462,6 +1466,10 @@ static int NAT_Keepalive(struct sip_msg *msg)
 	}
 }
 
+static int w_NAT_Keepalive(struct sip_msg *msg, char *p1, char *p2)
+{
+	return NAT_Keepalive(msg);
+}
 
 // Replace IP:Port in Contact field with the source address of the packet.
 static int FixContact(struct sip_msg *msg)
@@ -1534,8 +1542,12 @@ static int FixContact(struct sip_msg *msg)
 	return 1;
 }
 
+static int w_FixContact(struct sip_msg *msg, char *p1, char *p2)
+{
+	return FixContact(msg);
+}
 
-static int ClientNatTest(struct sip_msg *msg, unsigned int tests)
+static int ClientNatTest(struct sip_msg *msg, int tests)
 {
 	int i;
 
@@ -1548,6 +1560,17 @@ static int ClientNatTest(struct sip_msg *msg, unsigned int tests)
 	return -1; // all failed
 }
 
+static int w_ClientNatTest(struct sip_msg *msg, char *ptests, char *p2)
+{
+	int tests;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)ptests, &tests)<0) {
+		LM_ERR("failed to get tests parameter\n");
+		return -1;
+	}
+
+	return ClientNatTest(msg, tests);
+}
 
 #define FROM_PREFIX "sip:keepalive@"
 #define MAX_BRANCHID 9999999
@@ -2101,5 +2124,36 @@ static int pv_get_source_uri(
 	res->rs.len = strlen(uri);
 	res->flags = PV_VAL_STR;
 
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_nat_traversal_exports[] = {
+	{ str_init("nat_traversal"), str_init("nat_keepalive"),
+		SR_KEMIP_INT, NAT_Keepalive,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("nat_traversal"), str_init("fix_contact"),
+		SR_KEMIP_INT, FixContact,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("nat_traversal"), str_init("client_nat_test"),
+		SR_KEMIP_INT, ClientNatTest,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_nat_traversal_exports);
 	return 0;
 }
