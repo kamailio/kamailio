@@ -406,7 +406,7 @@ static int w_http_async_query(sip_msg_t *msg, char *query, char* rt)
 		return -1;
 	}
 
-	ri = route_get(&main_rt, rn.s);
+	ri = route_lookup(&main_rt, rn.s);
 	if(ri<0)
 	{
 		LM_ERR("unable to find route block [%.*s]\n", rn.len, rn.s);
