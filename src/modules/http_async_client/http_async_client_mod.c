@@ -383,9 +383,7 @@ static void mod_destroy(void)
 static int w_http_async_query(sip_msg_t *msg, char *query, char* rt)
 {
 	str sdata;
-	cfg_action_t *act;
 	str rn;
-	int ri;
 
 	if(msg==NULL)
 		return -1;
@@ -404,21 +402,11 @@ static int w_http_async_query(sip_msg_t *msg, char *query, char* rt)
 		LM_ERR("no route block name\n");
 		return -1;
 	}
-
-	ri = route_lookup(&main_rt, rn.s);
-	if(ri<0)
-	{
-		LM_ERR("unable to find route block [%.*s]\n", rn.len, rn.s);
+	if(rn.s==NULL || rn.len == 0) {
+		LM_ERR("invalid route name parameter\n");
 		return -1;
 	}
-	act = main_rt.rlist[ri];
-	if(act==NULL)
-	{
-		LM_ERR("empty action lists in route block [%.*s]\n", rn.len, rn.s);
-		return -1;
-	}
-
-	return async_send_query(msg, &sdata, act);
+	return async_send_query(msg, &sdata, &rn);
 
 }
 
