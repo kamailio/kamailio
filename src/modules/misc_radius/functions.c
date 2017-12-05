@@ -495,7 +495,7 @@ error:
  * attribute.  If is has zero value, user@host is send in SA_USER_NAME
  * attribute.
  */
-int radius_does_uri_user_host_exist(struct sip_msg *_m, str user, str host)
+int radius_does_uri_user_host_exist(struct sip_msg *_m, str *user, str *host)
 {
 	char *at, *user_host;
 	VALUE_PAIR *send, *received;
@@ -509,37 +509,35 @@ int radius_does_uri_user_host_exist(struct sip_msg *_m, str user, str host)
 	if(!use_sip_uri_host) {
 
 		/* Send user@host in SA_USER_NAME attr */
-		user_host = (char *)pkg_malloc(user.len + host.len + 2);
+		user_host = (char *)pkg_malloc(user->len + host->len + 2);
 		if(!user_host) {
 			LM_ERR("no more pkg memory\n");
 			return -1;
 		}
 		at = user_host;
-		memcpy(at, user.s, user.len);
+		memcpy(at, user->s, user->len);
 		at += user.len;
 		*at = '@';
 		at++;
-		memcpy(at, host.s, host.len);
+		memcpy(at, host->s, host->len);
 		at += host.len;
 		*at = '\0';
 		if(!rc_avpair_add(
-				   rh, &send, uri_attrs[SA_USER_NAME].v, user_host, -1, 0)) {
+					rh, &send, uri_attrs[SA_USER_NAME].v, user_host, -1, 0)) {
 			LM_ERR("in adding SA_USER_NAME\n");
 			pkg_free(user_host);
 			return -1;
 		}
-
 	} else {
-
 		/* Send user in SA_USER_NAME attribute and host in SA_SIP_URI_HOST
 		   attribute */
 		if(!rc_avpair_add(
-				   rh, &send, uri_attrs[SA_USER_NAME].v, user.s, user.len, 0)) {
+				rh, &send, uri_attrs[SA_USER_NAME].v, user->s, user->len, 0)) {
 			LM_ERR("adding User-Name failed\n");
 			return -1;
 		}
-		if(!rc_avpair_add(rh, &send, uri_attrs[SA_SIP_URI_HOST].v, host.s,
-				   host.len, 0)) {
+		if(!rc_avpair_add(rh, &send, uri_attrs[SA_SIP_URI_HOST].v, host->s,
+					host->len, 0)) {
 			LM_ERR("adding SIP-URI-Host failed\n");
 			goto error;
 		}
@@ -547,7 +545,7 @@ int radius_does_uri_user_host_exist(struct sip_msg *_m, str user, str host)
 
 	service = uri_vals[UV_CALL_CHECK].v;
 	if(!rc_avpair_add(
-			   rh, &send, uri_attrs[SA_SERVICE_TYPE].v, &service, -1, 0)) {
+				rh, &send, uri_attrs[SA_SERVICE_TYPE].v, &service, -1, 0)) {
 		LM_ERR("in adding SA_SERVICE_TYPE <%u>\n", service);
 		goto error;
 	}
@@ -619,7 +617,7 @@ int radius_does_uri_exist_0(struct sip_msg *_m, char *_s1, char *_s2)
 	}
 
 	return radius_does_uri_user_host_exist(
-			_m, _m->parsed_uri.user, _m->parsed_uri.host);
+			_m, &_m->parsed_uri.user, &_m->parsed_uri.host);
 }
 
 
@@ -629,34 +627,21 @@ int radius_does_uri_exist_0(struct sip_msg *_m, char *_s1, char *_s2)
  */
 int radius_does_uri_exist_1(struct sip_msg *_m, char *_sp, char *_s2)
 {
-	pv_spec_t *sp;
-	pv_value_t pv_val;
+	str suri;
 	struct sip_uri parsed_uri;
 
-	sp = (pv_spec_t *)_sp;
-
-	if(sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
-		if(pv_val.flags & PV_VAL_STR) {
-			if(pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
-				LM_ERR("pvar argument is empty\n");
-				return -1;
-			}
-		} else {
-			LM_ERR("pvar value is not string\n");
-			return -1;
-		}
-	} else {
-		LM_ERR("cannot get pvar value\n");
+	if(fixup_get_svalue(_m, (gparam_t*)_sp, &suri)<0) {
+		LM_ERR("cannot get uri value\n");
 		return -1;
 	}
 
-	if(parse_uri(pv_val.rs.s, pv_val.rs.len, &parsed_uri) < 0) {
-		LM_ERR("parsing of URI in pvar failed\n");
+	if(parse_uri(suri.s, suri.len, &parsed_uri) < 0) {
+		LM_ERR("parsing of URI in failed: [%.*s]\n", suri.len, suri.s);
 		return -1;
 	}
 
 	return radius_does_uri_user_host_exist(
-			_m, parsed_uri.user, parsed_uri.host);
+			_m, &parsed_uri.user, &parsed_uri.host);
 }
 
 
@@ -664,7 +649,7 @@ int radius_does_uri_exist_1(struct sip_msg *_m, char *_sp, char *_s2)
  * Check from Radius if URI user given as argument belongs to a local user.
  * If so, loads AVPs based on reply items returned from Radius.
  */
-int radius_does_uri_user_exist(struct sip_msg *_m, str user)
+int radius_does_uri_user_exist(struct sip_msg *_m, str *user)
 {
 	static char msg[4096];
 	VALUE_PAIR *send, *received;
@@ -674,7 +659,7 @@ int radius_does_uri_user_exist(struct sip_msg *_m, str user)
 	send = received = 0;
 
 	if(!rc_avpair_add(
-			   rh, &send, uri_attrs[SA_USER_NAME].v, user.s, user.len, 0)) {
+			   rh, &send, uri_attrs[SA_USER_NAME].v, user->s, user->len, 0)) {
 		LM_ERR("in adding SA_USER_NAME\n");
 		return -1;
 	}
@@ -747,7 +732,7 @@ int radius_does_uri_user_exist_0(struct sip_msg *_m, char *_s1, char *_s2)
 		return -1;
 	}
 
-	return radius_does_uri_user_exist(_m, _m->parsed_uri.user);
+	return radius_does_uri_user_exist(_m, &_m->parsed_uri.user);
 }
 
 
@@ -758,25 +743,12 @@ int radius_does_uri_user_exist_0(struct sip_msg *_m, char *_s1, char *_s2)
  */
 int radius_does_uri_user_exist_1(struct sip_msg *_m, char *_sp, char *_s2)
 {
-	pv_spec_t *sp;
-	pv_value_t pv_val;
+	str suser;
 
-	sp = (pv_spec_t *)_sp;
-
-	if(sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
-		if(pv_val.flags & PV_VAL_STR) {
-			if(pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
-				LM_ERR("pvar argument is empty\n");
-				return -1;
-			}
-		} else {
-			LM_ERR("pvar value is not string\n");
-			return -1;
-		}
-	} else {
-		LM_ERR("cannot get pvar value\n");
+	if(fixup_get_svalue(_m, (gparam_t*)_sp, &suser)<0) {
+		LM_ERR("cannot get user value\n");
 		return -1;
 	}
 
-	return radius_does_uri_user_exist(_m, pv_val.rs);
+	return radius_does_uri_user_exist(_m, &suser);
 }
