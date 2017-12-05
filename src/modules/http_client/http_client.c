@@ -61,6 +61,7 @@
 #include "../../core/config.h"
 #include "../../core/lvalue.h"
 #include "../../core/pt.h" /* Process table */
+#include "../../core/kemi.h"
 
 #include "functions.h"
 #include "curlcon.h"
@@ -529,16 +530,57 @@ static int fixup_free_curl_connect(void **param, int param_no)
 /*
  * Wrapper for Curl_connect (GET)
  */
-static int w_curl_connect(
-		struct sip_msg *_m, char *_con, char *_url, char *_result)
+static int ki_curl_connect_helper(sip_msg_t *_m, str *con, str *url,
+		pv_spec_t *dst)
 {
-
-	str con = {NULL, 0};
-	str url = {NULL, 0};
 	str result = {NULL, 0};
-	pv_spec_t *dst;
 	pv_value_t val;
 	int ret = 0;
+
+	ret = curl_con_query_url(_m, con, url, &result, NULL, NULL);
+
+	val.rs = result;
+	val.flags = PV_VAL_STR;
+	if(dst->setf) {
+		dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+	} else {
+		LM_WARN("target pv is not writable\n");
+	}
+
+	if(result.s != NULL)
+		pkg_free(result.s);
+
+	return (ret == 0) ? -1 : ret;
+}
+
+/*
+ * Kemi wrapper for Curl_connect (GET)
+ */
+static int ki_curl_connect(sip_msg_t *_m, str *con, str *url, str *dpv)
+{
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dpv==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+
+	return ki_curl_connect_helper(_m, con, url, dst);
+}
+
+/*
+ * Cfg wrapper for Curl_connect (GET)
+ */
+static int w_curl_connect(sip_msg_t *_m, char *_con, char *_url, char *_result)
+{
+	str con = {NULL, 0};
+	str url = {NULL, 0};
+	pv_spec_t *dst;
 
 	if(_con == NULL || _url == NULL || _result == NULL) {
 		LM_ERR("http_connect: Invalid parameter\n");
@@ -546,7 +588,6 @@ static int w_curl_connect(
 	}
 	con.s = _con;
 	con.len = strlen(con.s);
-
 	if(get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
 		LM_ERR("http_connect: url has no value\n");
 		return -1;
@@ -554,18 +595,56 @@ static int w_curl_connect(
 
 	LM_DBG("**** HTTP_CONNECT Connection %s URL %s Result var %s\n", _con, _url,
 			_result);
+	dst = (pv_spec_t *)_result;
 
-	ret = curl_con_query_url(_m, &con, &url, &result, NULL, NULL);
+	return ki_curl_connect_helper(_m, &con, &url, dst);
+}
+
+/*
+ * Wrapper for Curl_connect (POST)
+ */
+static int ki_curl_connect_post_helper(sip_msg_t *_m, str *con, str *url,
+		str *ctype, str *data, pv_spec_t *dst)
+{
+	str result = {NULL, 0};
+	pv_value_t val;
+	int ret = 0;
+
+	ret = curl_con_query_url(_m, con, url, &result, ctype->s, data);
 
 	val.rs = result;
 	val.flags = PV_VAL_STR;
-	dst = (pv_spec_t *)_result;
-	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+	if(dst->setf) {
+		dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+	} else {
+		LM_WARN("target pv is not writtable\n");
+	}
 
 	if(result.s != NULL)
 		pkg_free(result.s);
 
 	return (ret == 0) ? -1 : ret;
+}
+
+/*
+ * Kemi wrapper for Curl_connect (POST)
+ */
+static int ki_curl_connect_post(sip_msg_t *_m, str *con, str *url,
+		str *ctype, str *data, str *dpv)
+{
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dpv==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+
+	return ki_curl_connect_post_helper(_m, con, url, ctype, data, dst);
 }
 
 /*
@@ -576,13 +655,12 @@ static int w_curl_connect_post(struct sip_msg *_m, char *_con, char *_url,
 {
 	str con = {NULL, 0};
 	str url = {NULL, 0};
+	str ctype = {NULL, 0};
 	str data = {NULL, 0};
-	str result = {NULL, 0};
 	pv_spec_t *dst;
-	pv_value_t val;
-	int ret = 0;
 
-	if(_con == NULL || _url == NULL || _data == NULL || _result == NULL) {
+	if(_con == NULL || _url == NULL || _ctype==NULL || _data == NULL
+			|| _result == NULL) {
 		LM_ERR("http_connect: Invalid parameters\n");
 		return -1;
 	}
@@ -593,6 +671,10 @@ static int w_curl_connect_post(struct sip_msg *_m, char *_con, char *_url,
 		LM_ERR("http_connect: URL has no value\n");
 		return -1;
 	}
+
+	ctype.s = _ctype;
+	ctype.len = strlen(ctype.s);
+
 	if(get_str_fparam(&data, _m, (gparam_p)_data) != 0) {
 		LM_ERR("http_connect: No post data given\n");
 		return -1;
@@ -600,20 +682,10 @@ static int w_curl_connect_post(struct sip_msg *_m, char *_con, char *_url,
 
 	LM_DBG("**** HTTP_CONNECT: Connection %s URL %s Result var %s\n", _con,
 			_url, _result);
-
-	ret = curl_con_query_url(_m, &con, &url, &result, _ctype, &data);
-
-	val.rs = result;
-	val.flags = PV_VAL_STR;
 	dst = (pv_spec_t *)_result;
-	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
 
-	if(result.s != NULL)
-		pkg_free(result.s);
-
-	return (ret == 0) ? -1 : ret;
+	return ki_curl_connect_post_helper(_m, &con, &url, &ctype, &data, dst);
 }
-
 
 /*!
  * Fix http_query params: url (string that may contain pvars) and
@@ -702,18 +774,74 @@ static int fixup_free_http_query_post_hdr(void **param, int param_no)
 }
 
 /*!
- * Wrapper for HTTP-Query function for cfg script
+ * helper for HTTP-Query function
  */
-static int w_http_query_script(
-		sip_msg_t *_m, char *_url, char *_post, char *_hdrs, char *_result)
+static int ki_http_query_helper(sip_msg_t *_m, str *url, str *post, str *hdrs,
+		pv_spec_t *dst)
 {
 	int ret = 0;
+	str result = {NULL, 0};
+	pv_value_t val;
+
+	if(url==NULL || url->s==NULL) {
+		LM_ERR("invalid url parameter\n");
+		return -1;
+	}
+	ret = http_client_query(_m, url->s, &result, (post && post->s)?post->s:NULL,
+			(hdrs && hdrs->s)?hdrs->s:NULL);
+
+	val.rs = result;
+	val.flags = PV_VAL_STR;
+	if(dst->setf) {
+		dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+	} else {
+		LM_WARN("target pv is not writable\n");
+	}
+
+	if(result.s != NULL)
+		pkg_free(result.s);
+
+	return (ret == 0) ? -1 : ret;
+}
+
+static int ki_http_query_post_hdrs(sip_msg_t *_m, str *url, str *post, str *hdrs,
+		str *dpv)
+{
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dpv==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+
+	return ki_http_query_helper(_m, url, post, hdrs, dst);
+}
+
+static int ki_http_query_post(sip_msg_t *_m, str *url, str *post, str *dpv)
+{
+	return ki_http_query_post_hdrs(_m, url, post, NULL, dpv);
+}
+
+static int ki_http_query(sip_msg_t *_m, str *url, str *dpv)
+{
+	return ki_http_query_post_hdrs(_m, url, NULL, NULL, dpv);
+}
+
+/*!
+ * Wrapper for HTTP-Query function for cfg script
+ */
+static int w_http_query_script(sip_msg_t *_m, char *_url, char *_post,
+		char *_hdrs, char *_result)
+{
 	str url = {NULL, 0};
 	str post = {NULL, 0};
 	str hdrs = {NULL, 0};
-	str result = {NULL, 0};
 	pv_spec_t *dst;
-	pv_value_t val;
 
 	if(get_str_fparam(&url, _m, (gparam_p)_url) != 0 || url.len <= 0) {
 		LM_ERR("URL has no value\n");
@@ -735,18 +863,9 @@ static int w_http_query_script(
 			hdrs.s = NULL;
 		}
 	}
-
-	ret = http_client_query(_m, url.s, &result, post.s, hdrs.s);
-
-	val.rs = result;
-	val.flags = PV_VAL_STR;
 	dst = (pv_spec_t *)_result;
-	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
 
-	if(result.s != NULL)
-		pkg_free(result.s);
-
-	return (ret == 0) ? -1 : ret;
+	return ki_http_query_helper(_m, &url, &post, &hdrs, dst);
 }
 
 /*!
@@ -900,4 +1019,45 @@ static int w_curl_get_redirect(struct sip_msg *_m, char *_con, char *_result)
 		pkg_free(result.s);
 
 	return ret;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_http_client_exports[] = {
+	{ str_init("http_client"), str_init("query"),
+		SR_KEMIP_INT, ki_http_query,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("http_client"), str_init("query_post"),
+		SR_KEMIP_INT, ki_http_query_post,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("http_client"), str_init("query_post_hdrs"),
+		SR_KEMIP_INT, ki_http_query_post_hdrs,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("http_client"), str_init("curl_connect"),
+		SR_KEMIP_INT, ki_curl_connect,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("http_client"), str_init("curl_connect_post"),
+		SR_KEMIP_INT, ki_curl_connect_post,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_http_client_exports);
+	return 0;
 }
