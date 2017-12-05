@@ -83,7 +83,6 @@ static void mod_destroy(void);
 
 static int w_http_async_query(sip_msg_t* msg, char* query, char* rt);
 static int set_query_param(str* param, str input);
-static int fixup_http_async_query(void** param, int param_no);
 
 /* pv api binding */
 static int ah_get_reason(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
@@ -125,7 +124,7 @@ enum http_req_name_t {
 };
 
 static cmd_export_t cmds[]={
-	{"http_async_query",  (cmd_function)w_http_async_query, 2, fixup_http_async_query,
+	{"http_async_query",  (cmd_function)w_http_async_query, 2, fixup_spve_spve,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -477,22 +476,6 @@ static int set_query_cparam(char** param, str input)
 	}
 
 	return 1;
-}
-
-/**
- *
- */
-static int fixup_http_async_query(void** param, int param_no)
-{
-	if (param_no == 1) {
-		return fixup_spve_null(param, 1);
-	}
-	if (param_no == 2) {
-		return fixup_var_str_12(param, param_no);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
 }
 
 /* module PVs */
