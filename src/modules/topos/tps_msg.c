@@ -1081,6 +1081,9 @@ int tps_response_sent(sip_msg_t *msg)
 	}
 
 	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
+	if(tps_storage_update_branch(msg, &mtsd, &btsd, TPS_DBU_CONTACT)<0) {
+		goto error;
+	}
 	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
 		goto error1;
 	}
