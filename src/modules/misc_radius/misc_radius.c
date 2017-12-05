@@ -32,6 +32,7 @@
 #include "../../core/config.h"
 #include "radius.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "misc_radius.h"
 #include "functions.h"
 #include "extra.h"
@@ -80,7 +81,7 @@ static cmd_export_t cmds[] = {
 	{"radius_load_callee_avps", (cmd_function)radius_load_callee_avps, 1,
 		fixup_spve_null, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"radius_is_user_in", (cmd_function)radius_is_user_in, 2,
-		fixup_spve_str, 0,
+		fixup_spve_spve, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_0,
 		0, 0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
@@ -243,4 +244,58 @@ static void destroy(void)
 		destroy_extras(group_extra);
 	if(uri_extra)
 		destroy_extras(group_extra);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_misc_radius_exports[] = {
+	{ str_init("misc_radius"), str_init("load_caller_avps"),
+		SR_KEMIP_INT, ki_radius_load_caller_avps,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("misc_radius"), str_init("load_callee_avps"),
+		SR_KEMIP_INT, ki_radius_load_callee_avps,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("misc_radius"), str_init("is_user_in"),
+		SR_KEMIP_INT, ki_radius_is_user_in,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("misc_radius"), str_init("does_uri_exist"),
+		SR_KEMIP_INT, ki_radius_does_uri_exist,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("misc_radius"), str_init("does_uri_exist_uval"),
+		SR_KEMIP_INT, ki_radius_does_uri_exist_uval,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("misc_radius"), str_init("does_uri_user_exist"),
+		SR_KEMIP_INT, ki_radius_does_uri_user_exist,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("misc_radius"), str_init("does_uri_user_exist_uval"),
+		SR_KEMIP_INT, ki_radius_does_uri_user_exist_uval,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_misc_radius_exports);
+	return 0;
 }
