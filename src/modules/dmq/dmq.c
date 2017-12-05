@@ -85,24 +85,22 @@ dmq_peer_t* dmq_notification_peer = NULL;
 static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
-static int handle_dmq_fixup(void** param, int param_no);
-static int send_dmq_fixup(void** param, int param_no);
-static int bcast_dmq_fixup(void** param, int param_no);
 
 static cmd_export_t cmds[] = {
-	{"dmq_handle_message",  (cmd_function)dmq_handle_message, 0, handle_dmq_fixup, 0,
-		REQUEST_ROUTE},
-	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4, send_dmq_fixup, 0,
-		ANY_ROUTE},
-        {"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3, bcast_dmq_fixup, 0,
-                ANY_ROUTE},
-	{"dmq_t_replicate",  (cmd_function)cfg_dmq_t_replicate, 0, 0, 0,
-		REQUEST_ROUTE},
-        {"dmq_t_replicate",  (cmd_function)cfg_dmq_t_replicate, 1, fixup_spve_null, 0,
-                REQUEST_ROUTE},
-        {"dmq_is_from_node",  (cmd_function)cfg_dmq_is_from_node, 0, 0, 0,
-                REQUEST_ROUTE},
-        {"bind_dmq",        (cmd_function)bind_dmq,       0, 0,              0},
+	{"dmq_handle_message", (cmd_function)dmq_handle_message, 0,
+		0, 0, REQUEST_ROUTE},
+	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"dmq_t_replicate", (cmd_function)cfg_dmq_t_replicate, 0,
+		0, 0, REQUEST_ROUTE},
+	{"dmq_t_replicate", (cmd_function)cfg_dmq_t_replicate, 1,
+		fixup_spve_null, 0, REQUEST_ROUTE},
+	{"dmq_is_from_node", (cmd_function)cfg_dmq_is_from_node, 0,
+		0, 0, REQUEST_ROUTE},
+	{"bind_dmq", (cmd_function)bind_dmq, 0,
+		0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -327,21 +325,6 @@ static void destroy(void) {
 	if (dmq_init_callback_done) {
 		shm_free(dmq_init_callback_done);
 	}
-}
-
-static int handle_dmq_fixup(void** param, int param_no)
-{
- 	return 0;
-}
-
-static int send_dmq_fixup(void** param, int param_no)
-{
-	return fixup_spve_null(param, 1);
-}
-
-static int bcast_dmq_fixup(void** param, int param_no)
-{
-        return fixup_spve_null(param, 1);
 }
 
 static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
