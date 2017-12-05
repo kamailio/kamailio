@@ -516,11 +516,11 @@ int radius_does_uri_user_host_exist(struct sip_msg *_m, str *user, str *host)
 		}
 		at = user_host;
 		memcpy(at, user->s, user->len);
-		at += user.len;
+		at += user->len;
 		*at = '@';
 		at++;
 		memcpy(at, host->s, host->len);
-		at += host.len;
+		at += host->len;
 		*at = '\0';
 		if(!rc_avpair_add(
 					rh, &send, uri_attrs[SA_USER_NAME].v, user_host, -1, 0)) {
