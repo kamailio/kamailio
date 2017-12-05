@@ -85,13 +85,13 @@ static cmd_export_t cmds[] = {
 	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_0,
 		0, 0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
 	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_1,
-		1, fixup_pvar_null, fixup_free_pvar_null, REQUEST_ROUTE|LOCAL_ROUTE},
+		1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|LOCAL_ROUTE},
 	{"radius_does_uri_user_exist",
 		(cmd_function)radius_does_uri_user_exist_0,
 		0, 0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
 	{"radius_does_uri_user_exist",
 		(cmd_function)radius_does_uri_user_exist_1,
-		1, fixup_pvar_null, fixup_free_pvar_null, REQUEST_ROUTE|LOCAL_ROUTE},
+		1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
