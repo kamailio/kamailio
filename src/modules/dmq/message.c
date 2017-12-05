@@ -32,38 +32,39 @@
 #include "peer.h"
 #include "message.h"
 
-str dmq_200_rpl  = str_init("OK");
-str dmq_400_rpl  = str_init("Bad request");
-str dmq_500_rpl  = str_init("Server Internal Error");
-str dmq_404_rpl  = str_init("User Not Found");
+str dmq_200_rpl = str_init("OK");
+str dmq_400_rpl = str_init("Bad request");
+str dmq_500_rpl = str_init("Server Internal Error");
+str dmq_404_rpl = str_init("User Not Found");
 
 /**
  * @brief config function to handle dmq messages
  */
-int dmq_handle_message(struct sip_msg* msg, char* str1, char* str2)
+int ki_dmq_handle_message(sip_msg_t *msg)
 {
-	dmq_peer_t* peer;
-	if ((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s)) {
-			LM_ERR("error parsing msg uri\n");
-			goto error;
+	dmq_peer_t *peer;
+	if((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s)) {
+		LM_ERR("error parsing msg uri\n");
+		goto error;
 	}
-	LM_DBG("dmq_handle_message [%.*s %.*s] [%s %s]\n",
-	       msg->first_line.u.request.method.len, msg->first_line.u.request.method.s,
-	       msg->first_line.u.request.uri.len, msg->first_line.u.request.uri.s,
-	       ZSW(str1), ZSW(str2));
+	LM_DBG("dmq_handle_message [%.*s %.*s]\n",
+			msg->first_line.u.request.method.len,
+			msg->first_line.u.request.method.s,
+			msg->first_line.u.request.uri.len, msg->first_line.u.request.uri.s);
 	/* the peer id is given as the userinfo part of the request URI */
 	peer = find_peer(msg->parsed_uri.user);
 	if(!peer) {
-		LM_DBG("no peer found for %.*s\n", msg->parsed_uri.user.len, msg->parsed_uri.user.s);
-		if(slb.freply(msg, 404, &dmq_404_rpl) < 0)
-		{
+		LM_DBG("no peer found for %.*s\n", msg->parsed_uri.user.len,
+				msg->parsed_uri.user.s);
+		if(slb.freply(msg, 404, &dmq_404_rpl) < 0) {
 			LM_ERR("sending reply\n");
 			goto error;
 		}
 		return 0;
 	}
-	LM_DBG("dmq_handle_message peer found: %.*s\n", msg->parsed_uri.user.len, msg->parsed_uri.user.s);
-	if(add_dmq_job(msg, peer)<0) {
+	LM_DBG("dmq_handle_message peer found: %.*s\n", msg->parsed_uri.user.len,
+			msg->parsed_uri.user.s);
+	if(add_dmq_job(msg, peer) < 0) {
 		LM_ERR("failed to add dmq job\n");
 		goto error;
 	}
@@ -72,3 +73,7 @@ error:
 	return -1;
 }
 
+int dmq_handle_message(struct sip_msg *msg, char *str1, char *str2)
+{
+	return ki_dmq_handle_message(msg);
+}

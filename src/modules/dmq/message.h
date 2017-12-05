@@ -24,6 +24,7 @@
 #ifndef _MESSAGE_H_
 #define _MESSAGE_H_
 
-int dmq_handle_message(struct sip_msg*, char* str1, char* str2);
+int dmq_handle_message(struct sip_msg *, char *str1, char *str2);
+int ki_dmq_handle_message(sip_msg_t *msg);
 
 #endif
