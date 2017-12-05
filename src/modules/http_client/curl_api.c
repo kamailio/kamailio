@@ -25,7 +25,7 @@
 
 int bind_httpc_api(httpc_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
