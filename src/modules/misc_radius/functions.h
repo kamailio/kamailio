@@ -24,20 +24,20 @@
 #ifndef _MISC_RADIUS_FUNCTIONS_H_
 #define _MISC_RADIUS_FUNCTIONS_H_
 
-extern int radius_load_caller_avps(struct sip_msg* _m, char* _caller,
-				   char* _s2);
+extern int radius_load_caller_avps(
+		struct sip_msg *_m, char *_caller, char *_s2);
 
-extern int radius_load_callee_avps(struct sip_msg* _m, char* _callee,
-				   char* _s2);
+extern int radius_load_callee_avps(
+		struct sip_msg *_m, char *_callee, char *_s2);
 
-int radius_is_user_in(struct sip_msg* _m, char* _user, char* _group);
+int radius_is_user_in(struct sip_msg *_m, char *_user, char *_group);
 
-int radius_does_uri_exist_0(struct sip_msg* _m, char* _s1, char* _s2);
+int radius_does_uri_exist_0(struct sip_msg *_m, char *_s1, char *_s2);
 
-int radius_does_uri_exist_1(struct sip_msg* _m, char* _sp, char* _s2);
+int radius_does_uri_exist_1(struct sip_msg *_m, char *_sp, char *_s2);
 
-int radius_does_uri_user_exist_0(struct sip_msg* _m, char* _s1, char* _s2);
+int radius_does_uri_user_exist_0(struct sip_msg *_m, char *_s1, char *_s2);
 
-int radius_does_uri_user_exist_1(struct sip_msg* _m, char* _sp, char* _s2);
+int radius_does_uri_user_exist_1(struct sip_msg *_m, char *_sp, char *_s2);
 
 #endif
