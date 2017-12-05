@@ -27,11 +27,11 @@
 /**
  * @brief init peer list
  */
-dmq_peer_list_t* init_peer_list()
+dmq_peer_list_t *init_peer_list()
 {
-	dmq_peer_list_t* peer_list;
+	dmq_peer_list_t *peer_list;
 	peer_list = shm_malloc(sizeof(dmq_peer_list_t));
-	if(peer_list==NULL) {
+	if(peer_list == NULL) {
 		LM_ERR("no more shm\n");
 		return NULL;
 	}
@@ -43,13 +43,13 @@ dmq_peer_list_t* init_peer_list()
 /**
  * @brief search peer list
  */
-dmq_peer_t* search_peer_list(dmq_peer_list_t* peer_list, dmq_peer_t* peer)
+dmq_peer_t *search_peer_list(dmq_peer_list_t *peer_list, dmq_peer_t *peer)
 {
-	dmq_peer_t* crt;
+	dmq_peer_t *crt;
 
 	crt = peer_list->peers;
 	while(crt) {
-		if (STR_EQ(crt->peer_id, peer->peer_id)) {
+		if(STR_EQ(crt->peer_id, peer->peer_id)) {
 			return crt;
 		}
 		crt = crt->next;
@@ -60,19 +60,20 @@ dmq_peer_t* search_peer_list(dmq_peer_list_t* peer_list, dmq_peer_t* peer)
 /**
  * @brief add peer
  */
-dmq_peer_t* add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer)
+dmq_peer_t *add_peer(dmq_peer_list_t *peer_list, dmq_peer_t *peer)
 {
-	dmq_peer_t* new_peer = NULL;
+	dmq_peer_t *new_peer = NULL;
 
-	new_peer = shm_malloc(sizeof(dmq_peer_t) + peer->peer_id.len + peer->description.len);
-	if(new_peer==NULL) {
+	new_peer = shm_malloc(
+			sizeof(dmq_peer_t) + peer->peer_id.len + peer->description.len);
+	if(new_peer == NULL) {
 		LM_ERR("no more shm\n");
 		return NULL;
 	}
 	*new_peer = *peer;
-	
+
 	/* copy the str's */
-	new_peer->peer_id.s = (char*)new_peer + sizeof(dmq_peer_t);
+	new_peer->peer_id.s = (char *)new_peer + sizeof(dmq_peer_t);
 	memcpy(new_peer->peer_id.s, peer->peer_id.s, peer->peer_id.len);
 
 	new_peer->description.s = new_peer->peer_id.s + new_peer->peer_id.len;
@@ -85,7 +86,7 @@ dmq_peer_t* add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer)
 /**
  * @brief find peer by id
  */
-dmq_peer_t* find_peer(str peer_id)
+dmq_peer_t *find_peer(str peer_id)
 {
 	dmq_peer_t foo_peer;
 	foo_peer.peer_id = peer_id;
@@ -95,8 +96,8 @@ dmq_peer_t* find_peer(str peer_id)
 /**
  * @empty callback
  */
-int empty_peer_callback(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq_node)
+int empty_peer_callback(
+		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *dmq_node)
 {
 	return 0;
 }
-
