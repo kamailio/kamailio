@@ -50,6 +50,7 @@
 #include "../../core/pvar.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/pv/pv_api.h"
@@ -206,19 +207,6 @@ struct module_exports exports = {
 	child_init      /* per child init function */
 };
 
-
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	pv_register_api_t pvra;
-
-	pvra = (pv_register_api_t)find_export("pv_register_api", NO_SCRIPT, 0);
-	if (!pvra) {
-		LM_ERR("Cannot import pv functions (pv module must be loaded before this module)\n");
-		return -1;
-	}
-	pvra(&pv_api);
-	return 0;
-}
 
 /**
  * init module function
@@ -407,7 +395,24 @@ static int w_http_async_query(sip_msg_t *msg, char *query, char* rt)
 		return -1;
 	}
 	return async_send_query(msg, &sdata, &rn);
+}
 
+/**
+ *
+ */
+static int ki_http_async_query(sip_msg_t *msg, str *sdata, str *rn)
+{
+	if(msg==NULL)
+		return -1;
+	if(sdata==NULL || sdata->len <= 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+	if(rn->s==NULL || rn->len <= 0) {
+		LM_ERR("invalid route name parameter\n");
+		return -1;
+	}
+	return async_send_query(msg, sdata, rn);
 }
 
 #define _IVALUE_ERROR(NAME) LM_ERR("invalid parameter '" #NAME "' (must be a number)\n")
@@ -723,4 +728,33 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 	}
 
 	return 1;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_http_async_client_exports[] = {
+	{ str_init("http_async_client"), str_init("query"),
+		SR_KEMIP_INT, ki_http_async_query,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	pv_register_api_t pvra;
+
+	pvra = (pv_register_api_t)find_export("pv_register_api", NO_SCRIPT, 0);
+	if (!pvra) {
+		LM_ERR("Cannot import pv functions (pv module must be loaded before this module)\n");
+		return -1;
+	}
+	pvra(&pv_api);
+	sr_kemi_modules_add(sr_kemi_http_async_client_exports);	
+	return 0;
 }
