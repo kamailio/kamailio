@@ -46,6 +46,7 @@
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_http.h"
@@ -56,7 +57,7 @@ extern struct tm_binds tmb;
 struct sip_msg *ah_reply = NULL;
 str ah_error = {NULL, 0};
 
-async_http_worker_t *workers;
+async_http_worker_t *workers = NULL;
 int num_workers = 1;
 
 struct query_params ah_params;
@@ -122,15 +123,18 @@ static inline char *strfindcasestrz(str *haystack, char *needlez)
 
 void async_http_cb(struct http_m_reply *reply, void *param)
 {
-	async_query_t *aq;
-	cfg_action_t *act;
+	async_query_t *aq = NULL;
+	cfg_action_t *act = NULL;
 	int ri;
 	unsigned int tindex;
 	unsigned int tlabel;
 	struct cell *t = NULL;
 	char *p;
 	str newbuf = {0, 0};
-	sip_msg_t *fmsg;
+	sip_msg_t *fmsg = NULL;
+	sr_kemi_eng_t *keng = NULL;
+	str cbname = {0, 0};
+	str evname = str_init("http_async_client:callback");
 
 	aq = param;
 
@@ -139,15 +143,18 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	ah_error.len = 0;
 	memset(ah_reply, 0, sizeof(struct sip_msg));
 
-	ri = route_lookup(&main_rt, aq->cbname);
-	if(ri<0) {
-		LM_ERR("unable to find route block [%s]\n", aq->cbname);
-		goto done;
-	}
-	act = main_rt.rlist[ri];
-	if(act==NULL) {
-		LM_ERR("empty action lists in route block [%s]\n", aq->cbname);
-		goto done;
+	keng = sr_kemi_eng_get();
+	if(keng==NULL) {
+		ri = route_lookup(&main_rt, aq->cbname);
+		if(ri<0) {
+			LM_ERR("unable to find route block [%s]\n", aq->cbname);
+			goto done;
+		}
+		act = main_rt.rlist[ri];
+		if(act==NULL) {
+			LM_ERR("empty action lists in route block [%s]\n", aq->cbname);
+			goto done;
+		}
 	}
 
 	if (reply->result != NULL) {
@@ -232,12 +239,30 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 
 		LM_DBG("resuming transaction (%d:%d)\n", tindex, tlabel);
 
-		if(act!=NULL)
-			tmb.t_continue(tindex, tlabel, act);
+		if(keng==NULL) {
+			if(act!=NULL) {
+				tmb.t_continue(tindex, tlabel, act);
+			}
+		} else {
+			cbname.s = aq->cbname;
+			cbname.len = aq->cbname_len;
+			tmb.t_continue_cb(tindex, tlabel, &cbname, &evname);
+		}
 	} else {
 		fmsg = faked_msg_next();
-		if (run_top_route(act, fmsg, 0)<0)
-			LM_ERR("failure inside run_top_route\n");
+		if(keng==NULL) {
+			if(act!=NULL) {
+				if (run_top_route(act, fmsg, 0)<0) {
+					LM_ERR("failure inside run_top_route\n");
+				}
+			}
+		} else {
+			cbname.s = aq->cbname;
+			cbname.len = aq->cbname_len;
+			if(keng->froute(fmsg, EVENT_ROUTE, &cbname, &evname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
 	}
 
 done:
