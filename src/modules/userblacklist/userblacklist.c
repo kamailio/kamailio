@@ -48,6 +48,7 @@
 #include "../../core/ut.h"
 #include "../../core/mod_fix.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 
 #include "../../lib/trie/dtrie.h"
 #include "db.h"
@@ -210,47 +211,22 @@ static int check_user_blacklist_fixup(void** param, int param_no)
 }
 
 
-static int check_user_list(sip_msg_t *msg, char* puser, char* pdomain,
-		char* pnumber, char* ptable, int listtype)
+static int ki_check_user_list(sip_msg_t *msg, str* suser, str* sdomain,
+		str* snumber, str* stable, int listtype)
 {
-	str user = { .len = 0, .s = NULL };
-	str domain = { .len = 0, .s = NULL};
 	str table = { .len = 0, .s = NULL};
-	str number = { .len = 0, .s = NULL};
 
 	void **nodeflags;
 	char *ptr;
 	char req_number[MAXNUMBERLEN+1];
 
-	/* user */
-	if(fixup_get_svalue(msg, (gparam_t*)puser, &user)!=0) {
-		LM_ERR("cannot print user pseudo-variable\n");
-		return -1;
-	}
-	/* domain */
-	if(fixup_get_svalue(msg, (gparam_t*)pdomain, &domain)!=0) {
-		LM_ERR("cannot print domain pseudo-variable\n");
-		return -1;
-	}
-	/* source number */
-	if(pnumber != NULL) {
-		if(fixup_get_svalue(msg, (gparam_t*)pnumber, &number)!=0) {
-			LM_ERR("cannot print number pseudo-variable\n");
-			return -1;
-		}
-	}
-	/* table name */
-	if(ptable != NULL) {
-		if(fixup_get_svalue(msg, (gparam_t*)ptable, &table)!=0) {
-			LM_ERR("cannot print table pseudo-variable\n");
-			return -1;
-		}
-	}
-
-	if(table.len<=0) {
+	if(stable==NULL || stable->len<=0) {
 		/* use default table name */
 		table.len=userblacklist_table.len;
 		table.s=userblacklist_table.s;
+	} else {
+		table.len = stable->len;
+		table.s = stable->s;
 	}
 
 	if (msg->first_line.type != SIP_REQUEST) {
@@ -258,7 +234,7 @@ static int check_user_list(sip_msg_t *msg, char* puser, char* pdomain,
 		return -1;
 	}
 
-	if(number.s == NULL) {
+	if(snumber==NULL || snumber->s == NULL) {
 		/* use R-URI */
 		if ((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s)
 				|| (msg->parsed_uri.user.len > MAXNUMBERLEN)) {
@@ -268,17 +244,17 @@ static int check_user_list(sip_msg_t *msg, char* puser, char* pdomain,
 		strncpy(req_number, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
 		req_number[msg->parsed_uri.user.len] = '\0';
 	} else {
-		if (number.len > MAXNUMBERLEN) {
+		if (snumber->len > MAXNUMBERLEN) {
 			LM_ERR("number to long\n");
 			return -1;
 		}
-		strncpy(req_number, number.s, number.len);
-		req_number[number.len] = '\0';
+		strncpy(req_number, snumber->s, snumber->len);
+		req_number[snumber->len] = '\0';
 	}
 
 	LM_DBG("check entry %s for user %.*s on domain %.*s in table %.*s\n", req_number,
-		user.len, user.s, domain.len, domain.s, table.len, table.s);
-	if (db_build_userbl_tree(&user, &domain, &table, dtrie_root, use_domain) < 0) {
+		suser->len, suser->s, sdomain->len, sdomain->s, table.len, table.s);
+	if (db_build_userbl_tree(suser, sdomain, &table, dtrie_root, use_domain) < 0) {
 		LM_ERR("cannot build d-tree\n");
 		return -1;
 	}
@@ -308,6 +284,41 @@ static int check_user_list(sip_msg_t *msg, char* puser, char* pdomain,
 	return -1;
 }
 
+static int check_user_list(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber, char* ptable, int listtype)
+{
+	str user = { .len = 0, .s = NULL };
+	str domain = { .len = 0, .s = NULL};
+	str table = { .len = 0, .s = NULL};
+	str number = { .len = 0, .s = NULL};
+
+	/* user */
+	if(fixup_get_svalue(msg, (gparam_t*)puser, &user)!=0) {
+		LM_ERR("cannot print user pseudo-variable\n");
+		return -1;
+	}
+	/* domain */
+	if(fixup_get_svalue(msg, (gparam_t*)pdomain, &domain)!=0) {
+		LM_ERR("cannot print domain pseudo-variable\n");
+		return -1;
+	}
+	/* source number */
+	if(pnumber != NULL) {
+		if(fixup_get_svalue(msg, (gparam_t*)pnumber, &number)!=0) {
+			LM_ERR("cannot print number pseudo-variable\n");
+			return -1;
+		}
+	}
+	/* table name */
+	if(ptable != NULL) {
+		if(fixup_get_svalue(msg, (gparam_t*)ptable, &table)!=0) {
+			LM_ERR("cannot print table pseudo-variable\n");
+			return -1;
+		}
+	}
+
+	return ki_check_user_list(msg, &user, &domain, &number, &table, listtype);
+}
 
 static int check_user_whitelist(sip_msg_t *msg, char* puser,
 		char* pdomain, char* pnumber, char* ptable)
@@ -315,6 +326,11 @@ static int check_user_whitelist(sip_msg_t *msg, char* puser,
 	return check_user_list(msg, puser, pdomain, pnumber, ptable, 1);
 }
 
+static int ki_check_user_whitelist_table(sip_msg_t *msg, str* suser,
+		str* sdomain, str* snumber, str* stable)
+{
+	return ki_check_user_list(msg, suser, sdomain, snumber, stable, 1);
+}
 
 static int check_user_blacklist(sip_msg_t *msg, char* puser,
 		char* pdomain, char* pnumber, char* ptable)
@@ -322,15 +338,30 @@ static int check_user_blacklist(sip_msg_t *msg, char* puser,
 	return check_user_list(msg, puser, pdomain, pnumber, ptable, 0);
 }
 
+static int ki_check_user_blacklist_table(sip_msg_t *msg, str* suser,
+		str* sdomain, str* snumber, str* stable)
+{
+	return ki_check_user_list(msg, suser, sdomain, snumber, stable, 0);
+}
+
 static int check_user_whitelist2(sip_msg_t *msg, char* puser, char* pdomain)
 {
 	return check_user_list(msg, puser, pdomain, NULL, NULL, 1);
 }
 
+static int ki_check_user_whitelist(sip_msg_t *msg, str* suser, str* sdomain)
+{
+	return ki_check_user_list(msg, suser, sdomain, NULL, NULL, 1);
+}
 
 static int check_user_blacklist2(sip_msg_t *msg, char* puser, char* pdomain)
 {
 	return check_user_list(msg, puser, pdomain, NULL, NULL, 0);
+}
+
+static int ki_check_user_blacklist(sip_msg_t *msg, str* suser, str* sdomain)
+{
+	return ki_check_user_list(msg, suser, sdomain, NULL, NULL, 0);
 }
 
 static int check_user_whitelist3(sip_msg_t *msg, char* puser, char* pdomain,
@@ -339,6 +370,11 @@ static int check_user_whitelist3(sip_msg_t *msg, char* puser, char* pdomain,
 	return check_user_list(msg, puser, pdomain, pnumber, NULL, 1);
 }
 
+static int ki_check_user_whitelist_number(sip_msg_t *msg, str* suser,
+		str* sdomain, str* snumber)
+{
+	return ki_check_user_list(msg, suser, sdomain, snumber, NULL, 1);
+}
 
 static int check_user_blacklist3(sip_msg_t *msg, char* puser, char* pdomain,
 		char* pnumber)
@@ -346,6 +382,11 @@ static int check_user_blacklist3(sip_msg_t *msg, char* puser, char* pdomain,
 	return check_user_list(msg, puser, pdomain, pnumber, NULL, 0);
 }
 
+static int ki_check_user_blacklist_number(sip_msg_t *msg, str* suser,
+		str* sdomain, str* snumber)
+{
+	return ki_check_user_list(msg, suser, sdomain, snumber, NULL, 0);
+}
 
 /**
  * Finds d-tree root for given table.
@@ -1149,4 +1190,50 @@ static void mod_destroy(void)
 	destroy_shmlock();
 	userblacklist_db_close();
 	dtrie_destroy(&dtrie_root, NULL, match_mode);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_userblacklist_exports[] = {
+	{ str_init("userblacklist"), str_init("check_user_blacklist"),
+		SR_KEMIP_INT, ki_check_user_blacklist,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("userblacklist"), str_init("check_user_whitelist"),
+		SR_KEMIP_INT, ki_check_user_whitelist,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("userblacklist"), str_init("check_user_blacklist_number"),
+		SR_KEMIP_INT, ki_check_user_blacklist_number,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("userblacklist"), str_init("check_user_whitelist_number"),
+		SR_KEMIP_INT, ki_check_user_whitelist_number,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("userblacklist"), str_init("check_user_blacklist_table"),
+		SR_KEMIP_INT, ki_check_user_blacklist_table,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("userblacklist"), str_init("check_user_whitelist_table"),
+		SR_KEMIP_INT, ki_check_user_whitelist_table,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_userblacklist_exports);
+	return 0;
 }

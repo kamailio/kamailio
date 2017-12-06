@@ -38,6 +38,7 @@
 #include "../../core/ut.h"
 #include "../../core/pvar.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../../lib/srutils/tmrec.h"
 #include "period.h"
 
@@ -153,6 +154,28 @@ static int w_is_leap_year(struct sip_msg* msg, char* t, char* str2)
 	return -1;
 }
 
+static int ki_is_leap_year_now(sip_msg_t* msg)
+{
+	time_t tv;
+	struct tm *tb;
+	int y;
+
+	tv = time(NULL);
+	tb = localtime(&tv);
+	y = 1900 + tb->tm_year;
+
+	if(tr_is_leap_year(y))
+		return 1;
+	return -1;
+}
+
+static int ki_is_leap_year(sip_msg_t* msg, int y)
+{
+	if(tr_is_leap_year(y))
+		return 1;
+	return -1;
+}
+
 static int fixup_is_leap_year(void** param, int param_no)
 {
 	if(param_no==1)
@@ -161,40 +184,25 @@ static int fixup_is_leap_year(void** param, int param_no)
 	return 0;
 }
 
-static int w_tmrec_match(struct sip_msg* msg, char* rec, char* t)
+static int ki_tmrec_match_timestamp(sip_msg_t* msg, str *rv, int ti)
 {
-	str rv;
 	time_t tv;
-	int ti;
 	ac_tm_t act;
 	tmrec_t tmr;
 
 	if(msg==NULL)
 		return -1;
 
-	if(fixup_get_svalue(msg, (gparam_t*)rec, &rv)!=0)
-	{
-		LM_ERR("invalid time recurrence parameter value\n");
-		return -1;
-	}
-
-	if(t!=NULL)
-	{
-		if(fixup_get_ivalue(msg, (gparam_t*)t, &ti)!=0)
-		{
-			LM_ERR("invalid time stamp parameter value\n");
-			return -1;
-		}
+	if(ti!=0) {
 		tv = (time_t)ti;
 	} else {
 		tv = time(NULL);
 	}
-
 	memset(&act, 0, sizeof(act));
 	memset(&tmr, 0, sizeof(tmr));
 
 	/* parse time recurrence definition */
-	if(tr_parse_recurrence_string(&tmr, rv.s, tmrec_separator)<0)
+	if(tr_parse_recurrence_string(&tmr, rv->s, tmrec_separator)<0)
 		return -1;
 
 	/* if there is no dstart, timerec is valid */
@@ -218,6 +226,34 @@ error:
 	tmrec_destroy(&tmr);
 	ac_tm_destroy(&act);
 	return -1;
+}
+
+static int ki_tmrec_match(sip_msg_t* msg, str *rv)
+{
+	return ki_tmrec_match_timestamp(msg, rv, 0);
+}
+
+static int w_tmrec_match(struct sip_msg* msg, char* rec, char* t)
+{
+	str rv;
+	int ti = 0;
+
+	if(fixup_get_svalue(msg, (gparam_t*)rec, &rv)!=0)
+	{
+		LM_ERR("invalid time recurrence parameter value\n");
+		return -1;
+	}
+
+	if(t!=NULL)
+	{
+		if(fixup_get_ivalue(msg, (gparam_t*)t, &ti)!=0)
+		{
+			LM_ERR("invalid time stamp parameter value\n");
+			return -1;
+		}
+	}
+
+	return ki_tmrec_match_timestamp(msg, &rv, ti);
 }
 
 static int fixup_tmrec_match(void** param, int param_no)
@@ -278,4 +314,69 @@ static int w_time_period_match(struct sip_msg* msg, char* period, char* t)
 	if (in_period(tv, rv.s))
 		return 1;
 	return -1;
+}
+
+static int ki_time_period_match_timestamp(sip_msg_t* msg, str* period, int ti)
+{
+	time_t tv;
+
+	if(ti!=0) {
+		tv = (time_t)ti;
+	} else {
+		tv = time(NULL);
+	}
+	if (in_period(tv, period->s))
+		return 1;
+	return -1;
+}
+
+static int ki_time_period_match(sip_msg_t* msg, str* period)
+{
+	return ki_time_period_match_timestamp(msg, period, 0);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_tmrec_exports[] = {
+	{ str_init("tmrec"), str_init("is_leap_year_now"),
+		SR_KEMIP_INT, ki_is_leap_year_now,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmrec"), str_init("is_leap_year"),
+		SR_KEMIP_INT, ki_is_leap_year,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmrec"), str_init("match"),
+		SR_KEMIP_INT, ki_tmrec_match,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmrec"), str_init("match_timestamp"),
+		SR_KEMIP_INT, ki_tmrec_match_timestamp,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmrec"), str_init("time_period_match"),
+		SR_KEMIP_INT, ki_time_period_match,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmrec"), str_init("time_period_match_timestamp"),
+		SR_KEMIP_INT, ki_time_period_match_timestamp,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_tmrec_exports);
+	return 0;
 }
