@@ -156,6 +156,29 @@ modparam("benchmark", "loglevel", 4)
 		</para>
 	</section>
 
+	<section id="benchmark.p.register">
+		<title><varname>register</varname> (str)</title>
+		<para>
+			Register a timer id at startup. Required when using the start/log
+			functions via Kemi framework. This parameter can be set many
+			times to register several timer ids.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NONE</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>register</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("benchmark", "register", "test")
+modparam("benchmark", "register", "auth")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 	<section>
 	<title>Functions</title>
