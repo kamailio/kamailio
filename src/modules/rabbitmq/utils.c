@@ -51,7 +51,7 @@
 
 int log_on_error(int x, char const *context)
 {
-	if (x < 0) {
+	if(x < 0) {
 		LM_ERR("%s: %s\n", context, amqp_error_string2(x));
 		return x;
 	}
@@ -61,7 +61,7 @@ int log_on_error(int x, char const *context)
 
 int log_on_amqp_error(amqp_rpc_reply_t x, char const *context)
 {
-	switch (x.reply_type) {
+	switch(x.reply_type) {
 		case AMQP_RESPONSE_NONE:
 			LM_NOTICE("%s: AMQP_RESPONSE_NONE\n", context);
 			return AMQP_RESPONSE_NONE;
@@ -71,31 +71,40 @@ int log_on_amqp_error(amqp_rpc_reply_t x, char const *context)
 			return AMQP_RESPONSE_NORMAL;
 
 		case AMQP_RESPONSE_LIBRARY_EXCEPTION:
-			LM_ERR("%s: AMQP_RESPONSE_LIBRARY_EXCEPTION: %s\n", context, amqp_error_string2(x.library_error));
+			LM_ERR("%s: AMQP_RESPONSE_LIBRARY_EXCEPTION: %s\n", context,
+					amqp_error_string2(x.library_error));
 			return AMQP_RESPONSE_LIBRARY_EXCEPTION;
 
 		case AMQP_RESPONSE_SERVER_EXCEPTION:
-			switch (x.reply.id) {
+			switch(x.reply.id) {
 				case AMQP_CONNECTION_CLOSE_METHOD: {
-					amqp_connection_close_t *m = (amqp_connection_close_t *) x.reply.decoded;
-					LM_ERR("%s: AMQP_CONNECTION_CLOSE_METHOD: server connection error %uh, message: %.*s\n",
-						context, m->reply_code, (int) m->reply_text.len, (char *) m->reply_text.bytes);
+					amqp_connection_close_t *m =
+							(amqp_connection_close_t *)x.reply.decoded;
+					LM_ERR("%s: AMQP_CONNECTION_CLOSE_METHOD: server "
+						   "connection error %uh, message: %.*s\n",
+							context, m->reply_code, (int)m->reply_text.len,
+							(char *)m->reply_text.bytes);
 					break;
 				}
 
 				case AMQP_CHANNEL_CLOSE_METHOD: {
-					amqp_channel_close_t *m = (amqp_channel_close_t *) x.reply.decoded;
-					LM_ERR("%s: AMQP_CHANNEL_CLOSE_METHOD: server channel error %uh, message: %.*s\n",
-						context, m->reply_code, (int) m->reply_text.len, (char *) m->reply_text.bytes);
+					amqp_channel_close_t *m =
+							(amqp_channel_close_t *)x.reply.decoded;
+					LM_ERR("%s: AMQP_CHANNEL_CLOSE_METHOD: server channel "
+						   "error %uh, message: %.*s\n",
+							context, m->reply_code, (int)m->reply_text.len,
+							(char *)m->reply_text.bytes);
 					break;
 				}
 
 				default:
-					LM_ERR("%s: unknown server error, method id 0x%08X\n", context, x.reply.id);
+					LM_ERR("%s: unknown server error, method id 0x%08X\n",
+							context, x.reply.id);
 					break;
 			}
 
-			LM_ERR("%s: AMQP_RESPONSE_SERVER_EXCEPTION: %s\n", context, amqp_error_string2(x.library_error));
+			LM_ERR("%s: AMQP_RESPONSE_SERVER_EXCEPTION: %s\n", context,
+					amqp_error_string2(x.library_error));
 			return AMQP_RESPONSE_SERVER_EXCEPTION;
 
 		default:
@@ -110,22 +119,22 @@ static void dump_row(long count, int numinrow, int *chs)
 
 	printf("%08lX:", count - numinrow);
 
-	if (numinrow > 0) {
-		for (i = 0; i < numinrow; i++) {
-			if (i == 8) {
+	if(numinrow > 0) {
+		for(i = 0; i < numinrow; i++) {
+			if(i == 8) {
 				printf(" :");
 			}
 			printf(" %02X", chs[i]);
 		}
-		for (i = numinrow; i < 16; i++) {
-			if (i == 8) {
+		for(i = numinrow; i < 16; i++) {
+			if(i == 8) {
 				printf(" :");
 			}
 			printf("	 ");
 		}
 		printf("	");
-		for (i = 0; i < numinrow; i++) {
-			if (isprint(chs[i])) {
+		for(i = 0; i < numinrow; i++) {
+			if(isprint(chs[i])) {
 				printf("%c", chs[i]);
 			} else {
 				printf(".");
@@ -139,8 +148,8 @@ static int rows_eq(int *a, int *b)
 {
 	int i;
 
-	for (i=0; i<16; i++)
-		if (a[i] != b[i]) {
+	for(i = 0; i < 16; i++)
+		if(a[i] != b[i]) {
 			return 0;
 		}
 
@@ -149,7 +158,7 @@ static int rows_eq(int *a, int *b)
 
 void amqp_dump(void const *buffer, size_t len)
 {
-	unsigned char *buf = (unsigned char *) buffer;
+	unsigned char *buf = (unsigned char *)buffer;
 	long count = 0;
 	int numinrow = 0;
 	int chs[16];
@@ -157,23 +166,24 @@ void amqp_dump(void const *buffer, size_t len)
 	int showed_dots = 0;
 	size_t i;
 
-	for (i = 0; i < len; i++) {
+	for(i = 0; i < len; i++) {
 		int ch = buf[i];
 
-		if (numinrow == 16) {
+		if(numinrow == 16) {
 			int j;
 
-			if (rows_eq(oldchs, chs)) {
-				if (!showed_dots) {
+			if(rows_eq(oldchs, chs)) {
+				if(!showed_dots) {
 					showed_dots = 1;
-					printf("					.. .. .. .. .. .. .. .. : .. .. .. .. .. .. .. ..\n");
+					printf("					.. .. .. .. .. .. .. .. : .. .. "
+						   ".. .. .. .. .. ..\n");
 				}
 			} else {
 				showed_dots = 0;
 				dump_row(count, numinrow, chs);
 			}
 
-			for (j=0; j<16; j++) {
+			for(j = 0; j < 16; j++) {
 				oldchs[j] = chs[j];
 			}
 
@@ -186,7 +196,7 @@ void amqp_dump(void const *buffer, size_t len)
 
 	dump_row(count, numinrow, chs);
 
-	if (numinrow != 0) {
+	if(numinrow != 0) {
 		printf("%08lX:\n", count);
 	}
 }
