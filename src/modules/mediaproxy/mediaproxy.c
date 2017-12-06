@@ -48,6 +48,7 @@
 #include "../../core/msg_translator.h"
 #include "../../modules/dialog/dlg_load.h"
 #include "../../modules/dialog/dlg_hash.h"
+#include "../../core/kemi.h"
 
 
 MODULE_VERSION
@@ -173,8 +174,11 @@ typedef struct ice_candidate_data
 
 // Function prototypes
 //
+static int w_EngageMediaProxy(struct sip_msg *msg, char *p1, char *p2);
 static int EngageMediaProxy(struct sip_msg *msg);
+static int w_UseMediaProxy(struct sip_msg *msg, char *p1, char *p2);
 static int UseMediaProxy(struct sip_msg *msg);
+static int w_EndMediaSession(struct sip_msg *msg, char *p1, char *p2);
 static int EndMediaSession(struct sip_msg *msg);
 
 static int mod_init(void);
@@ -209,14 +213,12 @@ static AVP_Param media_relay_avp = {str_init(MEDIA_RELAY_AVP_SPEC), {0}, 0};
 static AVP_Param ice_candidate_avp = {str_init(ICE_CANDIDATE_AVP_SPEC), {0}, 0};
 
 static cmd_export_t commands[] = {
-		{"engage_media_proxy", (cmd_function)EngageMediaProxy, 0, 0, 0,
-				REQUEST_ROUTE},
-		{"use_media_proxy", (cmd_function)UseMediaProxy, 0, 0, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE
-						| LOCAL_ROUTE},
-		{"end_media_session", (cmd_function)EndMediaSession, 0, 0, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE
-						| LOCAL_ROUTE},
+		{"engage_media_proxy", (cmd_function)w_EngageMediaProxy, 0, 0, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE},
+		{"use_media_proxy", (cmd_function)w_UseMediaProxy, 0, 0, 0,
+				ANY_ROUTE},
+		{"end_media_session", (cmd_function)w_EndMediaSession, 0, 0, 0,
+				ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t parameters[] = {
@@ -2016,6 +2018,10 @@ static int EngageMediaProxy(struct sip_msg *msg)
 	return 1;
 }
 
+static int w_EngageMediaProxy(struct sip_msg *msg, char *p1, char *p2)
+{
+	return EngageMediaProxy(msg);
+}
 
 static int UseMediaProxy(struct sip_msg *msg)
 {
@@ -2025,6 +2031,10 @@ static int UseMediaProxy(struct sip_msg *msg)
 	return use_media_proxy(msg, "", NULL);
 }
 
+static int w_UseMediaProxy(struct sip_msg *msg, char *p1, char *p2)
+{
+	return UseMediaProxy(msg);
+}
 
 static int EndMediaSession(struct sip_msg *msg)
 {
@@ -2044,6 +2054,10 @@ static int EndMediaSession(struct sip_msg *msg)
 	return end_media_session(callid, from_tag, to_tag);
 }
 
+static int w_EndMediaSession(struct sip_msg *msg, char *p1, char *p2)
+{
+	return EndMediaSession(msg);
+}
 
 //
 // Module management: initialization/destroy/function-parameter-fixing/...
@@ -2171,5 +2185,36 @@ static int child_init(int rank)
 	if(!mediaproxy_disabled && rank > PROC_MAIN)
 		mediaproxy_connect();
 
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_mediaproxy_exports[] = {
+	{ str_init("mediaproxy"), str_init("engage_media_proxy"),
+		SR_KEMIP_INT, EngageMediaProxy,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("mediaproxy"), str_init("use_media_proxy"),
+		SR_KEMIP_INT, UseMediaProxy,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("mediaproxy"), str_init("end_media_session"),
+		SR_KEMIP_INT, EndMediaSession,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_mediaproxy_exports);
 	return 0;
 }
