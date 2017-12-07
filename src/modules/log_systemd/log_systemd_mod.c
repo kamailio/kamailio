@@ -106,7 +106,7 @@ static int ki_sd_journal_print(sip_msg_t* msg, str* slev, str* stxt)
 	/* one of LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR, LOG_WARNING,
 	 * LOG_NOTICE, LOG_INFO, LOG_DEBUG, as defined in syslog.h, see syslog(3) */
 	ilev = LOG_DEBUG;
-	if(slev->len==9 && strncasecmp(slev->1s, "LOG_EMERG", slev->len)==0) {
+	if(slev->len==9 && strncasecmp(slev->s, "LOG_EMERG", slev->len)==0) {
 		ilev = LOG_EMERG;
 	} else if(slev->len==9 && strncasecmp(slev->s, "LOG_ALERT", slev->len)==0) {
 		ilev = LOG_ALERT;
