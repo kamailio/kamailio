@@ -70,10 +70,10 @@ static int sca_mod_init(void);
 static int sca_child_init(int);
 static void sca_mod_destroy(void);
 static int sca_set_config(sca_mod *);
-static int sca_call_info_update_0_f(sip_msg_t* msg);
-static int sca_call_info_update_1_f(sip_msg_t* msg, char*);
-static int sca_call_info_update_2_f(sip_msg_t* msg, char* , char*);
-static int sca_call_info_update_3_f(sip_msg_t* msg, char* , char*, char *);
+static int sca_call_info_update_0_f(sip_msg_t* msg, char*, char*);
+static int sca_call_info_update_1_f(sip_msg_t* msg, char*, char*);
+static int sca_call_info_update_2_f(sip_msg_t* msg, char*, char*);
+static int sca_call_info_update_3_f(sip_msg_t* msg, char*, char*, char *);
 int fixup_ciu(void **, int);
 int fixup_free_ciu(void **param, int param_no);
 
@@ -418,26 +418,54 @@ void sca_mod_destroy(void)
 	sca_db_disconnect();
 }
 
-static int sca_call_info_update_0_f(sip_msg_t* msg) {
-	return sca_call_info_update(msg, NULL, NULL, NULL);
+static int sca_call_info_update_0_f(sip_msg_t* msg, char* p1, char* p2)
+{
+	return sca_call_info_update(msg, SCA_CALL_INFO_SHARED_BOTH, NULL, NULL);
 }
-static int sca_call_info_update_1_f(sip_msg_t* msg, char* p1) {
-	return sca_call_info_update(msg, p1, NULL, NULL);
+
+static int sca_call_info_update_1_f(sip_msg_t* msg, char* p1, char* p2)
+{
+	int update_mask = SCA_CALL_INFO_SHARED_BOTH;
+
+	if (get_int_fparam(&update_mask, msg, (fparam_t *) p1) < 0) {
+		LM_ERR("sca_call_info_update: argument 1: bad value "
+				"(integer expected)\n");
+		return (-1);
+	}
+
+	return sca_call_info_update(msg, update_mask, NULL, NULL);
 }
-static int sca_call_info_update_2_f(sip_msg_t* msg, char* p1, char* p2) {
+
+static int sca_call_info_update_2_f(sip_msg_t* msg, char* p1, char* p2)
+{
 	str uri_to = STR_NULL;
+	int update_mask = SCA_CALL_INFO_SHARED_BOTH;
+
+	if (get_int_fparam(&update_mask, msg, (fparam_t *) p1) < 0) {
+		LM_ERR("sca_call_info_update: argument 1: bad value "
+				"(integer expected)\n");
+		return (-1);
+	}
 	if(get_str_fparam(&uri_to, msg, (gparam_p)p2)!=0)
 	{
 		LM_ERR("unable to get value from param pvar_to\n");
 		return -1;
 	}
-	return sca_call_info_update(msg, p1, &uri_to, NULL);
+	return sca_call_info_update(msg, update_mask, &uri_to, NULL);
 }
+
 static int sca_call_info_update_3_f(sip_msg_t* msg,
 	char* p1, char* p2, char * p3)
 {
 	str uri_to = STR_NULL;
 	str uri_from = STR_NULL;
+	int update_mask = SCA_CALL_INFO_SHARED_BOTH;
+
+	if (get_int_fparam(&update_mask, msg, (fparam_t *) p1) < 0) {
+		LM_ERR("sca_call_info_update: argument 1: bad value "
+				"(integer expected)\n");
+		return (-1);
+	}
 	if(get_str_fparam(&uri_to, msg, (gparam_p)p2)!=0)
 	{
 		LM_ERR("unable to get value from param pvar_to\n");
@@ -448,7 +476,7 @@ static int sca_call_info_update_3_f(sip_msg_t* msg,
 		LM_ERR("unable to get value from param pvar_from\n");
 		return -1;
 	}
-	return sca_call_info_update(msg, p1, &uri_to, &uri_from);
+	return sca_call_info_update(msg, update_mask, &uri_to, &uri_from);
 }
 
 int fixup_ciu(void **param, int param_no)
