@@ -35,6 +35,7 @@ Bastian Friedrich
               3.1. enable (int)
               3.2. granularity (int)
               3.3. loglevel (int)
+              3.4. register (str)
 
         4. Functions
 
@@ -69,10 +70,11 @@ Bastian Friedrich
    1.1. Set enable parameter
    1.2. Set granularity parameter
    1.3. Set loglevel parameter
-   1.4. bm_start_timer usage
-   1.5. bm_log_timer usage
-   1.6. Enabling a timer
-   1.7. benchmark usage
+   1.4. Set register parameter
+   1.5. bm_start_timer usage
+   1.6. bm_log_timer usage
+   1.7. Enabling a timer
+   1.8. benchmark usage
    2.1. Using the benchmark module's API from another module
 
 Chapter 1. Admin Guide
@@ -90,6 +92,7 @@ Chapter 1. Admin Guide
         3.1. enable (int)
         3.2. granularity (int)
         3.3. loglevel (int)
+        3.4. register (str)
 
    4. Functions
 
@@ -140,6 +143,7 @@ Chapter 1. Admin Guide
    3.1. enable (int)
    3.2. granularity (int)
    3.3. loglevel (int)
+   3.4. register (str)
 
 3.1. enable (int)
 
@@ -193,6 +197,20 @@ modparam("benchmark", "loglevel", 4)
 
    This will set the logging level to L_DBG.
 
+3.4. register (str)
+
+   Register a timer id at startup. Required when using the start/log
+   functions via Kemi framework. This parameter can be set many times to
+   register several timer ids.
+
+   Default value is “NONE”.
+
+   Example 1.4. Set register parameter
+...
+modparam("benchmark", "register", "test")
+modparam("benchmark", "register", "auth")
+...
+
 4. Functions
 
    4.1. bm_start_timer(name)
@@ -202,7 +220,7 @@ modparam("benchmark", "loglevel", 4)
 
    Start timer “name”. A later call to “bm_log_timer()” logs this timer..
 
-   Example 1.4. bm_start_timer usage
+   Example 1.5. bm_start_timer usage
 ...
 bm_start_timer("test");
 ...
@@ -235,7 +253,7 @@ bm_start_timer("test");
 
      * Global avg possibly the most interesting value.
 
-   Example 1.5. bm_log_timer usage
+   Example 1.6. bm_log_timer usage
 ...
 bm_log_timer("test");
 ...
@@ -269,7 +287,7 @@ bm_log_timer("test");
    Enable or disable a single timer. The following example enables timer
    "test" (the second parameter must be 0 to disable):
 
-   Example 1.6. Enabling a timer
+   Example 1.7. Enabling a timer
 ...
 kamcmd benchmark.enable_timer test 1
 ...
@@ -286,7 +304,7 @@ kamcmd benchmark.enable_timer test 1
 
    Measure the duration of user location lookup.
 
-   Example 1.7. benchmark usage
+   Example 1.8. benchmark usage
 ...
 bm_start_timer("usrloc-lookup");
 lookup("location");
