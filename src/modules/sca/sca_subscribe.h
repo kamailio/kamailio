@@ -88,5 +88,6 @@ void sca_subscription_state_to_str(int, str *);
 int sca_subscription_aor_has_subscribers(int, str *);
 int sca_subscription_delete_subscriber_for_event(sca_mod *, str *, str *, str *);
 int sca_subscription_terminate(sca_mod *, str *, int, str *, int, int);
+int ki_sca_handle_subscribe(sip_msg_t *msg);
 
 #endif // SCA_SUBSCRIBE_H
