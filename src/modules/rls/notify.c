@@ -1220,7 +1220,7 @@ int parse_xcap_uri(char *uri, str *host, unsigned short *port, str *path)
 		}
 	}
 
-	while(path->s[path->len] != '\0') path->len++;
+	while(path->s != NULL && path->s[path->len] != '\0') path->len++;
 
 	return 1;
 }
