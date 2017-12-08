@@ -82,33 +82,33 @@ int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen,
 int _ip_is_in_subnet_str(void *ip, enum enum_ip_type type, char *s, int slen);
 int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b,
 		char *e);
-static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg,
+static int _detailed_ip_type(unsigned int _type, sip_msg_t* _msg,
 		char* _s,  char *_dst);
 
 
 /*
  * Script functions
  */
-static int w_is_ip(struct sip_msg*, char*);
-static int w_is_pure_ip(struct sip_msg*, char*);
-static int w_is_ipv4(struct sip_msg*, char*);
-static int w_is_ipv6(struct sip_msg*, char*);
-static int w_is_ipv6_reference(struct sip_msg*, char*);
-static int w_ip_type(struct sip_msg*, char*);
-static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *res);
-static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *res);
-static int w_detailed_ip_type(struct sip_msg* _msg, char* _s,  char *res);
-static int w_compare_ips(struct sip_msg*, char*, char*);
-static int w_compare_pure_ips(struct sip_msg*, char*, char*);
-static int w_is_ip_rfc1918(struct sip_msg*, char*);
-static int w_ip_is_in_subnet(struct sip_msg*, char*, char*);
+static int w_is_ip(sip_msg_t*, char*, char*);
+static int w_is_pure_ip(sip_msg_t*, char*, char*);
+static int w_is_ipv4(sip_msg_t*, char*, char*);
+static int w_is_ipv6(sip_msg_t*, char*, char*);
+static int w_is_ipv6_reference(sip_msg_t*, char*, char*);
+static int w_ip_type(sip_msg_t*, char*, char*);
+static int w_detailed_ipv6_type(sip_msg_t* _msg, char* _s,  char *res);
+static int w_detailed_ipv4_type(sip_msg_t* _msg, char* _s,  char *res);
+static int w_detailed_ip_type(sip_msg_t* _msg, char* _s,  char *res);
+static int w_compare_ips(sip_msg_t*, char*, char*);
+static int w_compare_pure_ips(sip_msg_t*, char*, char*);
+static int w_is_ip_rfc1918(sip_msg_t*, char*, char*);
+static int w_ip_is_in_subnet(sip_msg_t*, char*, char*);
 static int w_dns_sys_match_ip(sip_msg_t*, char*, char*);
 static int w_dns_int_match_ip(sip_msg_t*, char*, char*);
 static int fixup_detailed_ip_type(void** param, int param_no);
 static int fixup_free_detailed_ip_type(void** param, int param_no);
-static int w_dns_query(struct sip_msg* msg, char* str1, char* str2);
-static int w_srv_query(struct sip_msg* msg, char* str1, char* str2);
-static int w_naptr_query(struct sip_msg* msg, char* str1, char* str2);
+static int w_dns_query(sip_msg_t* msg, char* str1, char* str2);
+static int w_srv_query(sip_msg_t* msg, char* str1, char* str2);
+static int w_naptr_query(sip_msg_t* msg, char* str1, char* str2);
 static int mod_init(void);
 
 static pv_export_t mod_pvs[] = {
@@ -507,7 +507,7 @@ int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b,
 
 /*! \brief Return true if the given argument (string or pv) is a valid IPv4,
  * IPv6 or IPv6 reference. */
-static int w_is_ip(struct sip_msg* _msg, char* _s)
+static int w_is_ip(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -531,7 +531,7 @@ static int w_is_ip(struct sip_msg* _msg, char* _s)
 
 /*! \brief Return true if the given argument (string or pv) is a valid
  * IPv4 or IPv6. */
-static int w_is_pure_ip(struct sip_msg* _msg, char* _s)
+static int w_is_pure_ip(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -561,7 +561,7 @@ static int w_is_pure_ip(struct sip_msg* _msg, char* _s)
 
 
 /*! \brief Return true if the given argument (string or pv) is a valid IPv4. */
-static int w_is_ipv4(struct sip_msg* _msg, char* _s)
+static int w_is_ipv4(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -584,7 +584,7 @@ static int w_is_ipv4(struct sip_msg* _msg, char* _s)
 
 
 /*! \brief Return true if the given argument (string or pv) is a valid IPv6. */
-static int w_is_ipv6(struct sip_msg* _msg, char* _s)
+static int w_is_ipv6(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -608,7 +608,7 @@ static int w_is_ipv6(struct sip_msg* _msg, char* _s)
 
 /*! \brief Return true if the given argument (string or pv) is a valid
  * IPv6 reference. */
-static int w_is_ipv6_reference(struct sip_msg* _msg, char* _s)
+static int w_is_ipv6_reference(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -632,7 +632,7 @@ static int w_is_ipv6_reference(struct sip_msg* _msg, char* _s)
 
 /*! \brief Return the IP type of the given argument (string or pv):
  *  1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
-static int w_ip_type(struct sip_msg* _msg, char* _s)
+static int w_ip_type(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -663,23 +663,23 @@ static int w_ip_type(struct sip_msg* _msg, char* _s)
 	}
 }
 
-static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *_dst)
+static int w_detailed_ipv4_type(sip_msg_t* _msg, char* _s,  char *_dst)
 {
 	return _detailed_ip_type(ip_type_ipv4, _msg, _s, _dst);
 }
 
-static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *_dst)
+static int w_detailed_ipv6_type(sip_msg_t* _msg, char* _s,  char *_dst)
 {
 	return _detailed_ip_type(ip_type_ipv6, _msg, _s, _dst);
 }
 
-static int w_detailed_ip_type(struct sip_msg* _msg, char* _s,  char *_dst)
+static int w_detailed_ip_type(sip_msg_t* _msg, char* _s,  char *_dst)
 {
 	/* `ip_type_error` should read `unknown type` */
 	return _detailed_ip_type(ip_type_error, _msg, _s, _dst);
 }
 
-static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg,
+static int _detailed_ip_type(unsigned int _type, sip_msg_t* _msg,
 		char* _s,  char *_dst)
 {
 	str string;
@@ -735,7 +735,7 @@ static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg,
 
 /*! \brief Return true if both IP's (string or pv) are equal.
  * This function also allows comparing an IPv6 with an IPv6 reference. */
-static int w_compare_ips(struct sip_msg* _msg, char* _s1, char* _s2)
+static int w_compare_ips(sip_msg_t* _msg, char* _s1, char* _s2)
 {
 	str string1, string2;
 	enum enum_ip_type ip1_type, ip2_type;
@@ -792,7 +792,7 @@ static int w_compare_ips(struct sip_msg* _msg, char* _s1, char* _s2)
 
 /*! \brief Return true if both pure IP's (string or pv) are equal.
  * IPv6 references not allowed. */
-static int w_compare_pure_ips(struct sip_msg* _msg, char* _s1, char* _s2)
+static int w_compare_pure_ips(sip_msg_t* _msg, char* _s1, char* _s2)
 {
 	str string1, string2;
 	enum enum_ip_type ip1_type, ip2_type;
@@ -846,7 +846,7 @@ static int w_compare_pure_ips(struct sip_msg* _msg, char* _s1, char* _s2)
 /*! \brief Return true if the first IP (string or pv) is within the subnet
  * defined by the second commma-separated IP list in CIDR notation.
  * IPv6 references not allowed. */
-static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
+static int w_ip_is_in_subnet(sip_msg_t* _msg, char* _s1, char* _s2)
 {
 	struct in6_addr ip_addr6;
 	struct in_addr ip_addr;
@@ -912,7 +912,7 @@ static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
 
 /*! \brief Return true if the given argument (string or pv) is a valid
  * RFC 1918 IPv4 (private address). */
-static int w_is_ip_rfc1918(struct sip_msg* _msg, char* _s)
+static int w_is_ip_rfc1918(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -1063,7 +1063,7 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 /**
  *
  */
-static int w_dns_query(struct sip_msg* msg, char* str1, char* str2)
+static int w_dns_query(sip_msg_t* msg, char* str1, char* str2)
 {
 	str hostname;
 	str name;
@@ -1091,7 +1091,7 @@ static int w_dns_query(struct sip_msg* msg, char* str1, char* str2)
 /**
  *
  */
-static int w_srv_query(struct sip_msg* msg, char* str1, char* str2)
+static int w_srv_query(sip_msg_t* msg, char* str1, char* str2)
 {
 	str srvcname;
 	str name;
@@ -1119,7 +1119,7 @@ static int w_srv_query(struct sip_msg* msg, char* str1, char* str2)
 /**
  *
  */
-static int w_naptr_query(struct sip_msg* msg, char* str1, char* str2)
+static int w_naptr_query(sip_msg_t* msg, char* str1, char* str2)
 {
 	str naptrname;
 	str name;
