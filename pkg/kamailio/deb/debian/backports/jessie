@@ -33,6 +33,12 @@ sed -i -e '/libmaxminddb-dev/d' -e '/^Package: kamailio-geoip2-modules/,/^$/d' \
 sed -i -e 's/ geoip2[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ geoip2/' ${DIST}/rules
 
+# No phonenum module
+sed -i -e '/libphonenumber-dev/d' -e '/^Package: kamailio-phonenum-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ phonenum[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ phonenum/' ${DIST}/rules
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
