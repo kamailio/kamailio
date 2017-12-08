@@ -995,6 +995,7 @@ static int ki_t_check_status(sip_msg_t* msg, str *sexp)
 	/* first get the transaction */
 	if (t_check(msg, 0 ) == -1) return -1;
 
+	backup = 0;
 	if ((t = get_t()) == 0) {
 		LM_ERR("cannot check status for a reply"
 				" which has no T-state established\n");
@@ -1010,7 +1011,7 @@ static int ki_t_check_status(sip_msg_t* msg, str *sexp)
 	switch(get_route_type()) {
 		case REQUEST_ROUTE:
 			/* use the status of the last sent reply */
-			status = int2str( t->uas.status, 0);
+			status = int2str(t->uas.status, 0);
 			break;
 
 		case TM_ONREPLY_ROUTE:
@@ -1037,7 +1038,7 @@ static int ki_t_check_status(sip_msg_t* msg, str *sexp)
 						" a final response in FAILURE_ROUTE\n");
 				goto error;
 			}
-			status = int2str( lowest_status , 0);
+			status = int2str(lowest_status, 0);
 			break;
 		case BRANCH_FAILURE_ROUTE:
 			status = int2str(t->uac[get_t_branch()].last_received, 0);
@@ -1052,6 +1053,7 @@ static int ki_t_check_status(sip_msg_t* msg, str *sexp)
 	/* do the checking */
 	n = regexec(&re, status, 1, &pmatch, 0);
 
+	if (backup) status[msg->first_line.u.reply.status.len] = backup;
 	regfree(&re);
 
 	if (unlikely(t && is_route_type(CORE_ONREPLY_ROUTE))){
