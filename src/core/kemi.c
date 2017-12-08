@@ -1139,7 +1139,6 @@ static int sr_kemi_hdr_insert_before(sip_msg_t *msg, str *txt, str *hname)
 		return -1;
 	}
 	memcpy(hdr, txt->s, txt->len);
-	anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
 	if(hf==0) { /* before first header */
 		anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
 	} else { /* before hf */
