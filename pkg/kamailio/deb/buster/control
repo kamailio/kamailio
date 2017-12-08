@@ -51,6 +51,7 @@ Build-Depends:
  unixodbc-dev,
  uuid-dev,
  xsltproc,
+ libmaxminddb-dev,
  zlib1g-dev,
 Standards-Version: 3.9.5
 Homepage: http://www.kamailio.org/
@@ -145,6 +146,24 @@ Description: The geoip module for the Kamailio SIP Server
  .
  This package provides the geoip module, an extension enabling
  usage of the GeoIP API within the Kamailio configuration file.
+
+Package: kamailio-geoip2-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: The geoip2 module for the Kamailio SIP Server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the geoip2 module, an extension enabling
+ real-time queries against the Max Mind GeoIP2 database within the Kamailio
+ configuration file.
 
 Package: kamailio-sqlite-modules
 Architecture: linux-any
