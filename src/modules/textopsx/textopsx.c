@@ -1183,7 +1183,7 @@ static int ki_modify_hf(sip_msg_t *msg, str *hexp, str *val,
 		p1 = NULL;
 		goto error;
 	}
-	if(val && val->s>=0) {
+	if(val && val->s!=0 && val->len>0) {
 		s2 = as_asciiz(val);
 		p2 = s2;
 		if(fixf(&p2, 2)!=0) {
@@ -1202,7 +1202,6 @@ static int ki_modify_hf(sip_msg_t *msg, str *hexp, str *val,
 	return ret;
 
 error:
-	if(p2!=NULL) fixup_free_hname_str(&p2, 2);
 	if(p1!=NULL) fixup_free_hname_str(&p1, 1);
 	if(s2!=NULL) pkg_free(s2);
 	if(s1!=NULL) pkg_free(s1);
