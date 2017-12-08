@@ -213,7 +213,7 @@ static inline int digest_authenticate(struct sip_msg *_m, str *_realm,
 				hdr_types_t _hftype, str *_method)
 {
 	struct hdr_field* h;
-	auth_cfg_result_t ret;
+	auth_cfg_result_t ret = AUTH_ERROR;
 	auth_result_t rauth;
 	struct secret *secret_struct;
 	str username;
