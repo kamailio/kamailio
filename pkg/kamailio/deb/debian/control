@@ -33,7 +33,7 @@ Build-Depends:
  libncurses5-dev,
  libpcre3-dev,
  libperl-dev,
- libphonenumber-dev,
+ libphonenumber-dev (>= 7),
  libpq-dev,
  librabbitmq-dev,
  libradcli-dev,
