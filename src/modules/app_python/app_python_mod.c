@@ -55,6 +55,8 @@ PyObject *_sr_apy_handler_obj;
 
 char *dname = NULL, *bname = NULL;
 
+int _apy_process_rank = 0;
+
 PyThreadState *myThreadState;
 
 /** module parameters */
@@ -93,16 +95,14 @@ struct module_exports exports = {
 	child_init                      /* per-child init function */
 };
 
+
 /**
  *
  */
 static int mod_init(void)
 {
 	char *dname_src, *bname_src;
-
 	int i;
-	PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
-	PyThreadState *mainThreadState;
 
 	if(apy_sr_init_mod()<0) {
 		LM_ERR("failed to init the sr mod\n");
@@ -157,6 +157,48 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(apy_load_script()<0) {
+		pkg_free(dname_src);
+		pkg_free(bname_src);
+		LM_ERR("failed to load python script\n");
+		return -1;
+	}
+
+	pkg_free(dname_src);
+	pkg_free(bname_src);
+	return 0;
+}
+
+/**
+ *
+ */
+static int child_init(int rank)
+{
+	_apy_process_rank = rank;
+	return apy_init_script(rank);
+}
+
+/**
+ *
+ */
+static void mod_destroy(void)
+{
+	if (dname)
+		free(dname);	// dname was strdup'ed
+	if (bname)
+		free(bname);	// bname was strdup'ed
+
+	destroy_mod_Core();
+	destroy_mod_Ranks();
+	destroy_mod_Logger();
+	destroy_mod_Router();
+}
+
+int apy_load_script(void)
+{
+	PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
+	PyThreadState *mainThreadState;
+
 	Py_Initialize();
 	PyEval_InitThreads();
 	mainThreadState = PyThreadState_Get();
@@ -167,8 +209,6 @@ static int mod_init(void)
 	{
 		Py_XDECREF(format_exc_obj);
 		PyEval_ReleaseLock();
-		pkg_free(dname_src);
-		pkg_free(bname_src);
 		return -1;
 	}
 
@@ -181,8 +221,6 @@ static int mod_init(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
-		pkg_free(dname_src);
-		pkg_free(bname_src);
 		return -1;
 	}
 
@@ -194,8 +232,6 @@ static int mod_init(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
-		pkg_free(dname_src);
-		pkg_free(bname_src);
 		return -1;
 	}
 
@@ -208,8 +244,6 @@ static int mod_init(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
-		pkg_free(dname_src);
-		pkg_free(bname_src);
 		return -1;
 	}
 
@@ -220,8 +254,6 @@ static int mod_init(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
-		pkg_free(dname_src);
-		pkg_free(bname_src);
 		return -1;
 	}
 
@@ -232,13 +264,9 @@ static int mod_init(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
-		pkg_free(dname_src);
-		pkg_free(bname_src);
+
 		return -1;
 	}
-
-	pkg_free(dname_src);
-	pkg_free(bname_src);
 
 	pFunc = PyObject_GetAttrString(pModule, mod_init_fname.s);
 	Py_DECREF(pModule);
@@ -322,10 +350,7 @@ static int mod_init(void)
 	return 0;
 }
 
-/**
- *
- */
-static int child_init(int rank)
+int apy_init_script(int rank)
 {
 	PyObject *pFunc, *pArgs, *pValue, *pResult;
 	int rval;
@@ -436,23 +461,6 @@ static int child_init(int rank)
 
 	return rval;
 }
-
-/**
- *
- */
-static void mod_destroy(void)
-{
-	if (dname)
-		free(dname);	// dname was strdup'ed
-	if (bname)
-		free(bname);	// bname was strdup'ed
-
-	destroy_mod_Core();
-	destroy_mod_Ranks();
-	destroy_mod_Logger();
-	destroy_mod_Router();
-}
-
 /**
  *
  */
