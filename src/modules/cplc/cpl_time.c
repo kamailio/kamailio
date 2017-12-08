@@ -328,6 +328,7 @@ int tr_byxxx_init(tr_byxxx_p _bxp, int _nr)
 	if(!_bxp->req)
 	{
 		pkg_free(_bxp->xxx);
+		_bxp->xxx = NULL;
 		return -1;
 	}
 	
