@@ -2201,8 +2201,9 @@ static int ki_load_gws_furi(sip_msg_t *_m, int lcr_id, str *ruri_user,
 	struct usr_avp *avp;
 	struct search_state st;
 
-	LM_DBG("load_gws(%u, %.*s, %.*s)\n", lcr_id, ruri_user->len, ruri_user->s,
-			from_uri->len, from_uri->s);
+	LM_DBG("load_gws(%u, %.*s, %.*s)\n", lcr_id,
+			ruri_user->len, ZSW(ruri_user->s),
+			from_uri->len, ZSW(from_uri->s));
 
 	request_uri = GET_RURI(_m);
 
@@ -2363,6 +2364,10 @@ static int ki_load_gws_ruser(sip_msg_t *_m, int lcr_id, str *ruri_user)
 {
 	str from_uri = STR_NULL;
 
+	if(ruri_user==NULL || ruri_user->s==NULL) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
 	return ki_load_gws_furi(_m, lcr_id, ruri_user, &from_uri);
 }
 
@@ -2371,8 +2376,14 @@ static int ki_load_gws_ruser(sip_msg_t *_m, int lcr_id, str *ruri_user)
  */
 static int ki_load_gws(sip_msg_t *_m, int lcr_id)
 {
-	str ruri_user = STR_NULL;
+	str ruri_user;
 	str from_uri = STR_NULL;
+
+	if ((parse_sip_msg_uri(_m) < 0) || (!_m->parsed_uri.user.s)) {
+	    LM_ERR("error while parsing R-URI\n");
+	    return -1;
+	}
+	ruri_user = _m->parsed_uri.user;
 
 	return ki_load_gws_furi(_m, lcr_id, &ruri_user, &from_uri);
 }
