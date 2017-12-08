@@ -561,7 +561,7 @@ static int ki_curl_connect(sip_msg_t *_m, str *con, str *url, str *dpv)
 	pv_spec_t *dst;
 
 	dst = pv_cache_get(dpv);
-	if(dpv==NULL) {
+	if(dst==NULL) {
 		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
@@ -635,7 +635,7 @@ static int ki_curl_connect_post(sip_msg_t *_m, str *con, str *url,
 	pv_spec_t *dst;
 
 	dst = pv_cache_get(dpv);
-	if(dpv==NULL) {
+	if(dst==NULL) {
 		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
@@ -810,7 +810,7 @@ static int ki_http_query_post_hdrs(sip_msg_t *_m, str *url, str *post, str *hdrs
 	pv_spec_t *dst;
 
 	dst = pv_cache_get(dpv);
-	if(dpv==NULL) {
+	if(dst==NULL) {
 		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
