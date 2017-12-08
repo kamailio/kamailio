@@ -372,8 +372,8 @@ int insert_subs_db(subs_t* s, int type)
 
 int update_subs_db(subs_t* subs, int type)
 {
-	db_key_t query_cols[3], update_keys[8];
-	db_val_t query_vals[3], update_vals[8];
+	db_key_t query_cols[3], update_keys[10];
+	db_val_t query_vals[3], update_vals[10];
 	int n_update_cols= 0;
 	int n_query_cols = 0;
 
