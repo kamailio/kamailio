@@ -198,7 +198,11 @@ static int get_cipher(str* res, sip_msg_t* msg)
 		ERR("Cipher name too long\n");
 		goto err;
 	}
-	memcpy(buf, cipher.s, cipher.len);
+	if(cipher.s!=NULL && cipher.len>0) {
+		memcpy(buf, cipher.s, cipher.len);
+	} else {
+		buf[0] = '\0';
+	}
 	res->s = buf;
 	res->len = cipher.len;
 	tcpconn_put(c);
@@ -298,7 +302,11 @@ static int get_version(str* res, sip_msg_t* msg)
 		ERR("Version string too long\n");
 		goto err;
 	}
-	memcpy(buf, version.s, version.len);
+	if(version.s!=NULL && version.len>0) {
+		memcpy(buf, version.s, version.len);
+	} else {
+		buf[0] = '\0';
+	}
 	res->s = buf;
 	res->len = version.len;
 	tcpconn_put(c);
