@@ -216,7 +216,7 @@ static int ki_crypto_aes_encrypt(sip_msg_t* msg, str *ins, str *keys, str *dpv)
 
 	dst = pv_cache_get(dpv);
 
-	if(dpv==NULL) {
+	if(dst==NULL) {
 		LM_ERR("failed getting pv: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
@@ -330,7 +330,7 @@ static int ki_crypto_aes_decrypt(sip_msg_t* msg, str *ins, str *keys, str *dpv)
 
 	dst = pv_cache_get(dpv);
 
-	if(dpv==NULL) {
+	if(dst==NULL) {
 		LM_ERR("failed getting pv: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
