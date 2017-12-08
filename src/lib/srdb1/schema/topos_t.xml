@@ -232,4 +232,14 @@
         <colref linkend="a_callid"/>
     </index>
 
+    <index>
+        <name>x_vbranch_idx</name>
+        <colref linkend="x_vbranch"/>
+    </index>
+
+    <index>
+        <name>a_uuid_idx</name>
+        <colref linkend="a_uuid"/>
+    </index>
+
 </table>
