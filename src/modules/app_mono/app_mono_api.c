@@ -136,7 +136,7 @@ int mono_sr_init_load(void)
 	}
 	mono_config_parse (NULL);
 	mi = _sr_mono_load_list;
-	if(mi->domain != NULL)
+	if(mi && mi->domain != NULL)
 	{
 		LM_ERR("worker mono environment already initialized\n");
 		return 0;
@@ -769,13 +769,14 @@ static int sr_mono_hdr_append (MonoString *hv)
 	}
 
 	hf = env_M->msg->last_header;
-	hdr = (char*)pkg_malloc(txt.len);
+	hdr = (char*)pkg_malloc(txt.len+1);
 	if(hdr==NULL)
 	{
 		LM_ERR("no pkg memory left\n");
 		goto error;
 	}
 	memcpy(hdr, txt.s, txt.len);
+	hdr[txt.len] = '\0';
 	anchor = anchor_lump(env_M->msg,
 				hf->name.s + hf->len - env_M->msg->buf, 0, 0);
 	if(insert_new_lump_before(anchor, hdr, txt.len, 0) == 0)
@@ -863,13 +864,14 @@ static int sr_mono_hdr_insert (MonoString *hv)
 
 	LM_DBG("insert hf: %s\n", txt.s);
 	hf = env_M->msg->headers;
-	hdr = (char*)pkg_malloc(txt.len);
+	hdr = (char*)pkg_malloc(txt.len+1);
 	if(hdr==NULL)
 	{
 		LM_ERR("no pkg memory left\n");
 		goto error;
 	}
 	memcpy(hdr, txt.s, txt.len);
+	hdr[txt.len] = '\0';
 	anchor = anchor_lump(env_M->msg,
 				hf->name.s + hf->len - env_M->msg->buf, 0, 0);
 	if(insert_new_lump_before(anchor, hdr, txt.len, 0) == 0)
