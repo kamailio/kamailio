@@ -1286,7 +1286,7 @@ ABSTRACT_F(select_dst)
 ABSTRACT_F(select_rcv)
 int select_ip_port(str* res, select_t* s, struct sip_msg* msg)
 {
-	str ip_str=STR_NULL, port_str=STR_NULL, proto_str=STR_NULL;
+	str ip_str=STR_NULL, port_str=STR_NULL, proto_str=str_init("udp");
 	int param, pos;
 	
 
