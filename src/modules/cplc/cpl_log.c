@@ -84,7 +84,7 @@ void compile_logs( str *log)
 		log->len += cpl_logs[i].len;
 
 	/* get a buffer */
-	log->s = (char*)pkg_malloc(log->len);
+	log->s = (char*)pkg_malloc(log->len+1);
 	if (log->s==0) {
 		LM_ERR("no more pkg mem\n");
 		log->len = 0;
@@ -97,6 +97,7 @@ void compile_logs( str *log)
 		memcpy( p, cpl_logs[i].s, cpl_logs[i].len);
 		p += cpl_logs[i].len;
 	}
+	log->s[log->len] = '\0';
 
 	return;
 }
