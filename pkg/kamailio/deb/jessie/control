@@ -32,6 +32,7 @@ Build-Depends:
  libncurses5-dev,
  libpcre3-dev,
  libperl-dev,
+ libphonenumber-dev,
  libpq-dev,
  librabbitmq-dev,
  libfreeradius-client-dev,
@@ -756,6 +757,23 @@ Description: systemd logging modules for the Kamailio SIP server
  .
  This package provides logging to systemd journal directly from the
  Kamailio configuration and routing scripts.
+
+Package: kamailio-phonenum-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: phonenum modules for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides real-time queries against the libphonenumber to be
+ performed directly from the Kamailio configuration and routing scripts.
 
 Package: kamailio-extra-modules
 Architecture: linux-any
