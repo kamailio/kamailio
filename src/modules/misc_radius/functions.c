@@ -664,7 +664,7 @@ int ki_radius_does_uri_exist_uval(struct sip_msg *_m, str *suri)
 			_m, &parsed_uri.user, &parsed_uri.host);
 }
 
-int radius_does_uri_exist(struct sip_msg *_m, char *_sp, char *_s2)
+int radius_does_uri_exist_1(struct sip_msg *_m, char *_sp, char *_s2)
 {
 	str suri;
 
