@@ -35,7 +35,7 @@ CREATE TABLE active_watchers (
     record_route TEXT,
     expires INTEGER NOT NULL,
     status INTEGER DEFAULT 2 NOT NULL,
-    reason VARCHAR(64) NOT NULL,
+    reason VARCHAR(64),
     version INTEGER DEFAULT 0 NOT NULL,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
