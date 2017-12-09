@@ -83,7 +83,7 @@ void init_custom_user(pv_spec_t *custom_user_avp_p)
  * \param custom_user to be returned
  * \return <0 for failure
  */
-inline static int get_custom_user(struct sip_msg *req, str *custom_user) {
+static int get_custom_user(struct sip_msg *req, str *custom_user) {
 	pv_value_t pv_val;
 
 	if (custom_user_avp) {
@@ -121,7 +121,7 @@ void credit_control_session_callback(int event, void* session) {
  * @param func - the name of the calling function, for debugging purposes
  * @returns 1 on success or 0 on failure
  */
-inline int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
+int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
         int flags, int vendorid, int data_do, const char *func) {
     AAA_AVP *avp;
     if (vendorid != 0) flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
@@ -145,7 +145,7 @@ inline int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
     return 1;
 }
 
-inline int Ro_add_cc_request(AAAMessage *msg, unsigned int cc_request_type, unsigned int cc_request_number) {
+int Ro_add_cc_request(AAAMessage *msg, unsigned int cc_request_type, unsigned int cc_request_number) {
     char x[4];
     set_4bytes(x, cc_request_type);
     int success = Ro_add_avp(msg, x, 4, AVP_CC_Request_Type, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
@@ -157,7 +157,7 @@ inline int Ro_add_cc_request(AAAMessage *msg, unsigned int cc_request_type, unsi
 
 }
 
-inline int Ro_add_event_timestamp(AAAMessage *msg, time_t now) {
+int Ro_add_event_timestamp(AAAMessage *msg, time_t now) {
     char x[4];
     str s = {x, 4};
     uint32_t ntime = htonl(now + EPOCH_UNIX_TO_EPOCH_NTP);
@@ -167,7 +167,7 @@ inline int Ro_add_event_timestamp(AAAMessage *msg, time_t now) {
 
 }
 
-inline int Ro_add_user_equipment_info(AAAMessage *msg, unsigned int type, str value) {
+int Ro_add_user_equipment_info(AAAMessage *msg, unsigned int type, str value) {
     AAA_AVP_LIST list;
     str group;
     char x[4];
@@ -187,7 +187,7 @@ inline int Ro_add_user_equipment_info(AAAMessage *msg, unsigned int type, str va
     return Ro_add_avp(msg, group.s, group.len, AVP_User_Equipment_Info, AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
+int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
     char x[4];
     str s = {x, 4};
     uint32_t code = htonl(term_code);
@@ -196,7 +196,7 @@ inline int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
     return Ro_add_avp(msg, s.s, s.len, AVP_Termination_Cause, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_vendor_specific_termination_cause(AAAMessage *msg, unsigned int term_code) {
+int Ro_add_vendor_specific_termination_cause(AAAMessage *msg, unsigned int term_code) {
     char x[4];
     str s = {x, 4};
     uint32_t code = htonl(term_code);
@@ -205,14 +205,14 @@ inline int Ro_add_vendor_specific_termination_cause(AAAMessage *msg, unsigned in
     return Ro_add_avp(msg, s.s, s.len, VS_TERMCODE, AAA_AVP_FLAG_VENDOR_SPECIFIC, 10, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_vendor_specific_termination_reason(AAAMessage *msg, str* reason) {
+int Ro_add_vendor_specific_termination_reason(AAAMessage *msg, str* reason) {
     return Ro_add_avp(msg, reason->s, reason->len, VS_TERMREASON, AAA_AVP_FLAG_VENDOR_SPECIFIC, 10, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
 
 
 /* called only when building stop record AVPS */
-inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used_unit, int active_rating_group, int active_service_identifier) {
+int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used_unit, int active_rating_group, int active_service_identifier) {
     char x[4];
     AAA_AVP_LIST used_list, mscc_list;
     str used_group;
@@ -254,7 +254,7 @@ inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used
     return Ro_add_avp(msg, used_group.s, used_group.len, AVP_Multiple_Services_Credit_Control, AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int requested_unit, int used_unit, int active_rating_group, int active_service_identifier) {
+int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int requested_unit, int used_unit, int active_rating_group, int active_service_identifier) {
     // Add Multiple-Services AVP Indicator
     char x[4];
     set_4bytes(x, 1);
@@ -301,7 +301,7 @@ inline int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int 
     return Ro_add_avp(msg, group.s, group.len, AVP_Multiple_Services_Credit_Control, AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_subscription_id(AAAMessage *msg, unsigned int type, str *subscription_id)//, struct sip_msg* sip_msg)
+int Ro_add_subscription_id(AAAMessage *msg, unsigned int type, str *subscription_id)//, struct sip_msg* sip_msg)
 {
     AAA_AVP_LIST list;
     str group;
@@ -330,7 +330,7 @@ inline int Ro_add_subscription_id(AAAMessage *msg, unsigned int type, str *subsc
  * @param acct_id - the accounting application id
  * @returns 1 on success or 0 on error
  */
-inline int Ro_add_vendor_specific_appid(AAAMessage *msg, unsigned int vendor_id, unsigned int auth_id, unsigned int acct_id) {
+int Ro_add_vendor_specific_appid(AAAMessage *msg, unsigned int vendor_id, unsigned int auth_id, unsigned int acct_id) {
     AAA_AVP_LIST list;
     str group;
     char x[4];
