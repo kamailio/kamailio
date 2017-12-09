@@ -505,7 +505,7 @@ int db_delete_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 }
 
 
-int inline int_to_str_len(int i) {
+int int_to_str_len(int i) {
 	if (i < 0)
 		i = -i;
 	if (i < 10)
