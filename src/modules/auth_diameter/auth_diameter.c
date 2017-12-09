@@ -61,6 +61,7 @@ int diameter_is_user_in(struct sip_msg* _msg, char* group, char* _s2);
 char* diameter_client_host = "localhost";
 int diameter_client_port = 3000;
 int use_domain = 0;
+int sockfd = -1;
 
 rd_buf_t *rb;
 
