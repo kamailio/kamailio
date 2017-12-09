@@ -9,7 +9,7 @@ CXX=g++
 LD=g++
 LIB_DIR = /opt/local/lib
 
-LIBS= -L${LIB_DIR} cphonenumber.o -lphonenumber
+LIBS= -L${LIB_DIR} cphonenumber.o -lphonenumber -lgeocoding
 
 DEFS+= -I/opt/local/include -DKAMAILIO_MOD_INTERFACE
 
