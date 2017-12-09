@@ -465,7 +465,7 @@ int ki_rls_handle_subscribe_uri(sip_msg_t* msg, str *wuri)
 	return rls_handle_subscribe(msg, parsed_wuri.user, parsed_wuri.host);
 }
 
-int w_rls_handle_subscribe(struct sip_msg* msg, char* watcher_uri)
+int w_rls_handle_subscribe1(struct sip_msg* msg, char* watcher_uri, char *p2)
 {
 	str wuri;
 
