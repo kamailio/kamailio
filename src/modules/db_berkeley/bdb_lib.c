@@ -972,7 +972,7 @@ int load_metadata_defaults(bdb_table_p _tp)
 	return 0;
 }
 
-inline int bdb_int2str(int _v, char* _s, int* _l)
+int bdb_int2str(int _v, char* _s, int* _l)
 {
 	int ret;
 
@@ -991,7 +991,7 @@ inline int bdb_int2str(int _v, char* _s, int* _l)
 	return 0;
 }
 
-inline int bdb_double2str(double _v, char* _s, int* _l)
+int bdb_double2str(double _v, char* _s, int* _l)
 {
 	int ret;
 
@@ -1010,7 +1010,7 @@ inline int bdb_double2str(double _v, char* _s, int* _l)
 	return 0;
 }
 
-inline int bdb_time2str(time_t _v, char* _s, int* _l)
+int bdb_time2str(time_t _v, char* _s, int* _l)
 {
 	struct tm* t;
 	int l;
