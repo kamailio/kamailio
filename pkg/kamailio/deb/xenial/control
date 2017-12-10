@@ -21,6 +21,7 @@ Build-Depends:
  libev-dev,
  libevent-dev,
  libexpat1-dev,
+ libgeocoding-dev (>= 7),
  libgeoip-dev (>= 1.4.5),
  libhiredis-dev (>= 0.10.0),
  libjansson-dev,
