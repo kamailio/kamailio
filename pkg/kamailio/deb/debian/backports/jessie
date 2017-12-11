@@ -39,6 +39,12 @@ sed -i -e '/libphonenumber-dev/d' -e '/^Package: kamailio-phonenum-modules/,/^$/
 sed -i -e 's/ phonenum[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ phonenum/' ${DIST}/rules
 
+# Mo mongodb
+sed -i -e '/libmongoc-dev/d' -e '/^Package: kamailio-mongodb-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ mongodb[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mongodb/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
