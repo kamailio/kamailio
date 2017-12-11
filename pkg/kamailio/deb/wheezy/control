@@ -8,7 +8,6 @@ Uploaders:
 Build-Depends:
  bison,
  debhelper (>= 9),
- libmysqlclient-dev,
  docbook-xml,
  dpkg-dev (>= 1.16.1.1),
  erlang-dev,
@@ -28,6 +27,7 @@ Build-Depends:
  liblua5.1-0-dev,
  libmemcached-dev,
  libmono-2.0-dev,
+ libmysqlclient-dev,
  libncurses5-dev,
  libpcre3-dev,
  libperl-dev,
@@ -271,8 +271,8 @@ Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
 Depends:
- mysql-client | virtual-mysql-client,
  kamailio (= ${binary:Version}),
+ mysql-client | virtual-mysql-client,
  ${misc:Depends},
  ${shlibs:Depends},
 Description: MySQL database connectivity module for Kamailio
