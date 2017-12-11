@@ -10,14 +10,14 @@
   Welcome! This is an amazingly flexible, robust and secure SIP server
   built on years of experience in several Open Source projects. It's a merge
   of the SIP Express Router (SER) and the Kamailio (OpenSER) products produced
-  by a joint development team. 
+  by a joint development team.
 
   This memo gives you hints on how to set up the Kamailio quickly.
-  
+
   You can find a similar tutorial and many more on project's web site:
-    - http://www.kamailio.org/w/documentation/
-    - http://www.kamailio.org/wiki/
-  
+    - https://www.kamailio.org/w/documentation/
+    - https://www.kamailio.org/wiki/
+
 
 Table of Contents
 =================
@@ -63,7 +63,7 @@ There are various configuration options defined in the Makefile.
 
 Requirements:
 
-- gcc or clang: 
+- gcc or clang:
      gcc >= 2.9x; 3.[12] recommended (it will work with older version
      but it might require some options tweaking for best performance)
      clang >= version 3.3
@@ -76,10 +76,10 @@ Requirements:
 - GNU install, BSD install or Solaris install if you want "make
   install", "make bin", "make sunpkg" to work
 - libmysqlclient & libz (zlib) if you want MySQL support (the db_mysql module)
-- libxml2 if you want to compile the cpl-c (CPL support) or pa (presence) 
+- libxml2 if you want to compile the cpl-c (CPL support) or pa (presence)
    modules
-- freeradius or libradiusclient-ng (> 5.0) if you need RADIUS support (the auth_radius,
-  group_radius, uri_radius and avp_radius modules)
+- freeradius, radcli or libradiusclient-ng (> 5.0) if you need RADIUS support
+  (the auth_radius, acc_radius and misc_radius modules)
 - libpq if you need PostgreSQL support (the db_postgres module)
 - libexpat if you want the jabber gateway support (the jabber module) or the
   XMPP gateway support
@@ -91,7 +91,7 @@ Requirements:
   DB underlayer
 - libperl - libs and devel headers - if you want the perl connector to support
   perl scripting from your config file (perl module)
-- libsnmp9 - libs and devel headers - if you want SNMP client functionality 
+- libsnmp9 - libs and devel headers - if you want SNMP client functionality
   (SNMP AgentX subagent) for Kamailio
 - libldap libs and devel headers v2.1 or greater - if you want LDAP support
 - libpcre libs and devel headers - if you want to compile the lcr and dialplan
@@ -109,7 +109,7 @@ in the README for the specific module.
 OS Notes:
 
  FreeBSD/OpenBSD/NetBSD: make sure gmake, bison or yacc & flex are installed.
-  
+
   FreeBSD 5.4:
   ------------
   If you want to compile all the modules, you will need the following packages:
@@ -119,10 +119,10 @@ OS Notes:
     libpq
   - expat-1.95.8 (/usr/ports/textproc/expat2) for libexpat
   - libxml2-2.6.18 (/usr/ports/textproc/libxml2) for libxml2
-  - radiusclient-0.4.7 (/usr/ports/net/radiusclient) for libradiusclient-ng 
+  - radiusclient-0.4.7 (/usr/ports/net/radiusclient) for libradiusclient-ng
   NOTE: you'll need to add radiusclient_ng=4 to the gmake command line if you
   use the 0.4.* version.
-  
+
   Compile example (all the modules and SIP server core in a tar.gz):
      gmake bin radiusclient_ng=4 include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
 
@@ -131,10 +131,10 @@ OS Notes:
   - mysql-client-4.0.23 (/usr/ports/databases/mysql) for libmysqlclient
   - expat-1.95.6 (/usr/ports/textproc/expat) for libexpat
   - libxml-2.6.16p0 (/usr/ports/textproc/libxml) for libxml2
-  - radiusclient-ng-0.5.1 from 
+  - radiusclient-ng-0.5.1 from
    http://download.berlios.de/radiusclient-ng/radiusclient-ng-0.5.1.tar.gz
-   (you need to download and install it, since there is no "official" 
-   openbsd port for it) for libradiusclient-ng 
+   (you need to download and install it, since there is no "official"
+   openbsd port for it) for libradiusclient-ng
 
   Compile example (all the modules and SIP server core in a tar.gz):
      gmake bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius pa"
@@ -145,7 +145,7 @@ OS Notes:
   - expat-1.95.8nb2 (/usr/pkgsrc/textproc/expat) for libexpat
   - libxml2-2.6.19 (/usr/pkgsrc/textproc/libxml2) for libxml2
   - radiusclient-ng-0.5.1 (see OpenBSD)
-  
+
   Compile example (all the modules and SIP server in a tar.gz):
      gmake bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius pa"
 
@@ -156,7 +156,7 @@ OS Notes:
   install, just make sure it's in the PATH (it's usually in /usr/sbin) and
   add INSTALL=install either to the environment or to the make command line
   (e.g.: gmake INSTALL=install all).
-  
+
   Compile example (all the modules and SIP server in a tar.gz):
      gmake bin INSTALL=install include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
 
@@ -183,11 +183,11 @@ OS Notes:
  --------------------------------------
  make sure make, bison, flex, minires and minires-devel (needed for the
  resolver functions) are installed.
- 
+
  Only building Kamailio's core and some static modules is supported for now.
  Stuff known not to work:
            - IPv6 (cygwin doesn't support it yet)
-           - TCP (the tcp code heavily depends on file descriptor passing 
+           - TCP (the tcp code heavily depends on file descriptor passing
              between processes, which is not yet supported by cygwin)
            - dynamic modules (non statically linked -- not supported because
              backlinking doesn't work in windows by design)
@@ -224,7 +224,7 @@ tls, run:
   make install
 
 2.2 Details - Installing From Source Code
-.......................................
+.........................................
 
 Build Commands
 
@@ -236,8 +236,8 @@ Build Commands
 	make
 
 Compile modules except some explicitly excepted (see below)
-	make modules  - all modules in the modules/ directory 
-	make modules-all or make every-module  - all the modules 
+	make modules  - all modules in the modules/ directory
+	make modules-all or make every-module  - all the modules
 
 * Compile all:
 	make all
@@ -296,7 +296,7 @@ are grouped based on Debian packaging rules. For example:
   Ex. to make a standard installation with MySQL, use:
 	make group_include="standard mysql" all
 
-  In addition to group_include (or instead), you can use 
+  In addition to group_include (or instead), you can use
 	include_modules="modA modB"
   to specify exactly the modules you want to include, ex.
 	make include_modules="mymodule" modules
@@ -326,18 +326,18 @@ are grouped based on Debian packaging rules. For example:
 	make mode=debug PROFILE=-pg all
   - compile only the print module
 	make modules=modules/print modules
-  - compile by default only the print module, in debuging mode and with 
+  - compile by default only the print module, in debuging mode and with
     profiling:
 	make cfg modules=modules/print mode=debug PROFILE=-pg
 	make all
   - change & save the  modules list without rebuilding the whole config
-    (so that already compiled modules won't be re-compiled by 
+    (so that already compiled modules won't be re-compiled by
     make all/make modules):
 	make modules-cfg include_modules="mysql postgress"
   - change only the compile/build options, without changing the modules list:
 	make cfg-defs CPU=ultrasparc PROFILE=-pg
-  - compile by default all the usual modules + mysql and postgres, optimized 
-     for pentium-m and for space (saves both the build options and the module 
+  - compile by default all the usual modules + mysql and postgres, optimized
+     for pentium-m and for space (saves both the build options and the module
      list)
 	make cfg include_modules="mysql postgres" CPU=pentium-m CC_EXTRA_OPTS=-Os
 	make all
@@ -370,16 +370,16 @@ Make Local Build Config:
 
   * make cfg or make config - force config and module list regeneration
 
-  Example: 
+  Example:
 	make cfg include_modules=mysql mode=debug
 
   All future make invocations will include the mysql module and will build in debug mode
 
-  Note: If config.mak doesn't exist (e.g. initial checkout or after a make 
+  Note: If config.mak doesn't exist (e.g. initial checkout or after a make
   proper) or if Makefile.defs was changed, the config will be re-generated
   automatically by the first make command. For example:
   	make cfg  include_modules=db_mysql; make all
-  is equivalent to 
+  is equivalent to
  	rm config.mak modules.lst; make include_modules=db_mysql.
 
   * make cfg-defs  (force config regeneration, but don't touch the module list)
@@ -400,7 +400,7 @@ Clean:
   * make clean   	- clean the base and modules too
   * make proper  	- clean also the dependencies and the config, but not the module list
   * make distclean 	- the same as proper
-  * make maintainer-clean - clean everything, including make's config, saved 
+  * make maintainer-clean - clean everything, including make's config, saved
   			  module list, auto generated files, tags, *.dbg a.s.o
   * make clean-all	- clean all the modules in modules/*
   * make proper-all 	- like make proper but for all the  modules in modules/*
@@ -427,7 +427,7 @@ Compile:
   * make proper-utils   - like make proper, but only for utils
   * make
      or gmake on non-Linux systems
-  * make modules 
+  * make modules
      or make modules exclude_modules="CVS print" etc.
 
 Other Make Targets:
@@ -473,9 +473,9 @@ Install:
   to use this parameter in previous make commands, i.e. make, make modules,
   or make all. If you fail to do this then Kamailio will look for the default
   configuration file in a wrong directory, because the directory of the
-  default configuration file is hardcoded into Kamailio during compile time. 
-  When you use a different prefix parameter when installing then the 
-  directory hard coded in Kamailio and the directory in which the file will be 
+  default configuration file is hardcoded into Kamailio during compile time.
+  When you use a different prefix parameter when installing then the
+  directory hard coded in Kamailio and the directory in which the file will be
   installed by make install will not match. (You can specify exact location
   of the configuration file using -f parameter of Kamailio).
 
@@ -507,7 +507,7 @@ A) Getting Help
   check the documentation at the Kamailio web site
   http://www.kamailio.org to learn how to configure Kamailio for your site.
 
-  If the documentation does not resolve your problem you may try contacting 
+  If the documentation does not resolve your problem you may try contacting
   our user forum by E-mail at sr-users@lists.sip-router.org -- that is the
   mailing list of the Kamailio community. To participate in the mailing list,
   please subscribe at the following web address:
@@ -515,16 +515,16 @@ A) Getting Help
   https://lists.sip-router.org/cgi-bin/mailman/listinfo
 
 B) Disclaimers
- 
-  Note well the default "quick-start" configuration is very simple in order 
-  to be easily installable. It provides minimum features. Particularly, 
+
+  Note well the default "quick-start" configuration is very simple in order
+  to be easily installable. It provides minimum features. Particularly,
   authentication is by default disabled, which means anyone can register using
-  any name with the server. (This is on purpose to avoid installation 
+  any name with the server. (This is on purpose to avoid installation
   dependencies on a database, which is needed for storing user credentials.)
 
 C) Quick Start
 
-  The following step-by step guide gives you instructions how to install the 
+  The following step-by step guide gives you instructions how to install the
   SQL-free distribution of Kamailio. If you need persistence and
   authentication, then you have to install additional database support --
   proceed to section D) after you are finished with C).
@@ -547,7 +547,7 @@ C) Quick Start
     		dpkg -i <package_name>
 	gentoo:
 		emerge kamailio
-		(or if use only stable packets: 
+		(or if use only stable packets:
 		ACCEPT_KEYWORDS="~x86" emerge kamailio )
 	tar.gz:
     		cd /; tar zxvf <package_name>_os_arch.tar.gz
@@ -557,7 +557,7 @@ C) Quick Start
     		gunzip <package_name>.gz ; pkgadd -d <package_name>
 	*BSD:
     		pkg_add package_name
-    
+
   3) Start the server
 
 	RPM + gentoo:
@@ -572,10 +572,10 @@ C) Quick Start
     		pkg/kamailio/rpm/kamailio.init, pkg/kamailio/deb/debian/kamailio.init, a.s.o.)
     		You can start Kamailio directly with
 			/usr/local/sbin/kamailio.
-    
+
   4) Optionally, watch server's health using the kamctl utility
 
-    - to do so, first set the environment variable SIP_DOMAIN to your domain 
+    - to do so, first set the environment variable SIP_DOMAIN to your domain
       name, e.g., in Bourne shell, call
         export SIP_DOMAIN="myserver.foobar.com"
 	- if you are using other than 'localhost' mysql server for maintaining
@@ -589,7 +589,7 @@ C) Quick Start
 
   5) Connect SIP phones
 
-  Register with the server using your favorite SIP User Agent (phone). 
+  Register with the server using your favorite SIP User Agent (phone).
 
   In most cases, you need to set the following options:
 
@@ -602,10 +602,10 @@ C) Quick Start
 D) Kamailio With Persistent Data Storage
 ------------------------------------------
 
-  The default configuration is very simple and features many simplifications. 
-  In particular, it does not authenticate users and loses User Location database 
-  on reboot. To provide persistence, keep user credentials and remember users' 
-  locations across reboots, Kamailio can be configured to use a database, like MySQL. 
+  The default configuration is very simple and features many simplifications.
+  In particular, it does not authenticate users and loses User Location database
+  on reboot. To provide persistence, keep user credentials and remember users'
+  locations across reboots, Kamailio can be configured to use a database, like MySQL.
 
   Before you proceed, you need to make sure MySQL is installed on your box. Your
   MySQL server must be configured to deal with a large number of
@@ -615,10 +615,10 @@ D) Kamailio With Persistent Data Storage
    set-variable    = max_connections=500
 
   1) Download the package containing mysql support for Kamailio from the links
-     you find on: 
+     you find on:
         https://www.kamailio.org/wiki/
 
-    (rpm and deb provided, most of the binary tar.gz distributions and the 
+    (rpm and deb provided, most of the binary tar.gz distributions and the
      solaris package include it; if it is not present you'll have to rebuild
      from the source).
 	For gentoo please include 'mysql' to your USE variable in /etc/make.conf
@@ -633,9 +633,9 @@ D) Kamailio With Persistent Data Storage
 	(if do not want to put 'mysql' into your USE variable you can type:
 	 USE="mysql" emerge kamailio)
 
-  3) create MySQL tables for Kamailio 
+  3) create MySQL tables for Kamailio
 	- if you have a previously installed Kamailio on your system, use
-    	/usr/local/sbin/kamdbctl reinstall 
+    	/usr/local/sbin/kamdbctl reinstall
 	  to convert your Kamailio database into new structures
 	- otherwise, if this is your very first installation, use
     	/usr/local/sbin/kamdbctl create
@@ -651,16 +651,16 @@ D) Kamailio With Persistent Data Storage
     - modparam("auth", "calculate_ha1", yes)
     - modparam("auth_db", "password_column", "password")
     - if (!www_authorize("example.com", "subscriber")) {
-        www_challenge("example.com", "0"); 
+        www_challenge("example.com", "0");
         break;
       }
 
-  5) be sure to replace realm, the first parameter in www_* actions, 
-     with name of your server; some broken UAC implementations don't 
+  5) be sure to replace realm, the first parameter in www_* actions,
+     with name of your server; some broken UAC implementations don't
      authenticate otherwise; the authentication command in your
      configuration script should look then like this:
         if (!www_authorize("myserver.foobar.com", "subscriber")) {
-            www_challenge("myserver.foobar.com", "0"); 
+            www_challenge("myserver.foobar.com", "0");
             break;
         }
 
@@ -668,25 +668,25 @@ D) Kamailio With Persistent Data Storage
 
       /etc/init.d/kamailio restart
 
-  7) you can now start managing the server using the kamctl utility; 
-     you need to first set the environment variable SIP_DOMAIN to your 
+  7) you can now start managing the server using the kamctl utility;
+     you need to first set the environment variable SIP_DOMAIN to your
      local SIP realm, e.g.,
        export SIP_DOMAIN="myserver.example.com"
 
    	a) watch the server status using 'kamctl moni'
    	b) try to login with your SIP client as user 'admin' with password 'heslo'
-   	c) try adding new users using 
+   	c) try adding new users using
        		'kamctl add <username> <password>'
 
 
 4. Troubleshooting
 ------------------
 
-Q: SIP requests are replied by Kamailio with "483 Too Many Hops" or 
+Q: SIP requests are replied by Kamailio with "483 Too Many Hops" or
    "513 Message Too Large"
 
-A: In both cases, the reason is probably an error in request routing script 
-   which caused an infinite loop. You can easily verify whether this happens 
+A: In both cases, the reason is probably an error in request routing script
+   which caused an infinite loop. You can easily verify whether this happens
    by watching SIP traffic on loopback interface. A typical reason for
    misrouting is a failure to match local domain correctly. If a server
    fails to recognize a request for itself, it will try to forward it to
