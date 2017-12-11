@@ -2,6 +2,24 @@
 
 ===================== Changes Since Version 5.0.0 ===========================
 
+commit cc0ece7af411038afd0340c16ccabea985bbc7ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 11 15:27:43 2017 +0100
+
+    Makefile.defs: version set to 5.1.0
+
+commit 01a3818582bc2c4baf8d94ee88e4a38d7cc10f28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 11 15:16:20 2017 +0100
+
+    pkg: updated version in some old spec files
+
+commit 5e59f021f057d8b72348ab4819262b6b7c92d8c1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 11 14:51:58 2017 +0100
+
+    ChangeLog: imported the commit logs for v5.1.0
+
 commit 604957b93e711c901238a62291a184471f524985
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Mon Dec 11 14:40:44 2017 +0100
