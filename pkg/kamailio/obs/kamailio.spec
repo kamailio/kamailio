@@ -2,26 +2,6 @@
 %define ver 5.1.0
 %define rel 0%{dist}
 
-%if 0%{?fedora} == 24
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without perl
-%bcond_without rebbitmq
-%bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
 %if 0%{?fedora} == 25
 %define dist_name fedora
 %define dist_version %{?fedora}
@@ -43,6 +23,26 @@
 %endif
 
 %if 0%{?fedora} == 26
+%define dist_name fedora
+%define dist_version %{?fedora}
+%bcond_without cnxcc
+%bcond_with dnssec
+%bcond_without geoip
+%bcond_without http_async_client
+%bcond_without jansson
+%bcond_without json
+%bcond_without lua
+%bcond_without kazoo
+%bcond_without memcached
+%bcond_without perl
+%bcond_without rebbitmq
+%bcond_without redis
+%bcond_without sctp
+%bcond_without websocket
+%bcond_without xmlrpc
+%endif
+
+%if 0%{?fedora} == 27
 %define dist_name fedora
 %define dist_version %{?fedora}
 %bcond_without cnxcc
