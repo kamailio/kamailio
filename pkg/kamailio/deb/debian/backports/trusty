@@ -50,6 +50,8 @@ sed -i -e '/libphonenumber-dev/d' -e '/^Package: kamailio-phonenum-modules/,/^$/
 sed -i -e 's/ phonenum[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ phonenum/' ${DIST}/rules
 
+wrap-and-sort -sat -d ${DIST}
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
