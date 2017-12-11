@@ -1,7 +1,5 @@
 #!/bin/bash
 #
-# Hook for automatic backports at buildserver.net
-#
 # Target dist: Debian Stretch
 DIST=stretch
 
@@ -19,6 +17,12 @@ sed -i -e '/libval-dev/d' -e '/^Package: kamailio-dnssec-modules/,/^$/d' \
   ${DIST}/control
 sed -i -e 's/ dnssec[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ dnssec/' ${DIST}/rules
+
+# libbson not in libmongoc
+sed -i 's/libmongoc-dev/libbson-dev,\n libmongoc-dev/' \
+	${DIST}/control
+
+wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
 rm -rf ${DIST}/backports

@@ -15,6 +15,7 @@ Build-Depends:
  erlang-dev,
  flex,
  gcj-jdk,
+ libbson-dev,
  libconfuse-dev,
  libcurl4-openssl-dev,
  libdb-dev (>= 4.6.19),
@@ -28,6 +29,7 @@ Build-Depends:
  libldap2-dev,
  liblua5.1-0-dev,
  libmemcached-dev,
+ libmongoc-dev,
  libmono-2.0-dev,
  libncurses5-dev,
  libpcre3-dev,
@@ -740,6 +742,23 @@ Description: systemd logging modules for the Kamailio SIP server
  .
  This package provides logging to systemd journal directly from the
  Kamailio configuration and routing scripts.
+
+Package: kamailio-mongodb-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: mongodb modules for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the mongodb database driver and non-db connector for
+ Kamailio.
 
 Package: kamailio-extra-modules
 Architecture: linux-any

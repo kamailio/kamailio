@@ -66,6 +66,14 @@ sed -i -e '/librabbitmq-dev/d' \
 sed -i -e 's/ rabbitmq[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ rabbitmq/' ${DIST}/rules
 
+# Mo mongodb
+sed -i -e '/libmongoc-dev/d' -e '/^Package: kamailio-mongodb-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ mongodb[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mongodb/' ${DIST}/rules
+
+wrap-and-sort -sat -d ${DIST}
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
