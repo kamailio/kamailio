@@ -14,6 +14,7 @@ Build-Depends:
  erlang-dev,
  flex,
  gcj-jdk,
+ libbson-dev,
  libconfuse-dev,
  libcurl4-openssl-dev,
  libdb-dev (>= 4.6.19),
