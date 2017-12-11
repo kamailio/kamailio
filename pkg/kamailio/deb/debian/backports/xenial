@@ -24,6 +24,10 @@ sed -i -e '/libssl-dev/d' ${DIST}/control
 sed -i 's/libphonenumber-dev/libgeocoding-dev \(>= 7\),\n libphonenumber-dev/' \
 	${DIST}/control
 
+# libbson not in libmongoc
+sed -i 's/libmongoc-dev/libbson-dev,\n libmongoc-dev/' \
+	${DIST}/control
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
