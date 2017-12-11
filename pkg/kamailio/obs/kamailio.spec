@@ -132,18 +132,18 @@
 %if 0%{?rhel} == 7 && 0%{?centos_ver} != 7
 %define dist_name rhel
 %define dist_version %{?rhel}
-%bcond_without cnxcc
+%bcond_with cnxcc
 %bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without kazoo
-%bcond_without memcached
+%bcond_with geoip
+%bcond_with http_async_client
+%bcond_with jansson
+%bcond_with json
+%bcond_with kazoo
+%bcond_with memcached
 %bcond_without perl
 %bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
+%bcond_with sctp
+%bcond_with websocket
 %bcond_without xmlrpc
 %endif
 
