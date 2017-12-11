@@ -2,6 +2,28 @@
 
 ===================== Changes Since Version 5.0.0 ===========================
 
+commit 0a7156ccfe0baa53f7305f1824b6ddf79d9310b8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 11 16:29:12 2017 +0100
+
+    pkg/kamailio/deb: version set to 5.1.0
+
+commit 99ae8b40ee9df01830d33cdc6daa872eb7650e2b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 11 16:10:02 2017 +0100
+
+    pkg/obs: set v5.1.0 for obs spec
+
+commit 2c169f609322a89d9f346ec598d4cbc12f7ff0c2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 11 15:39:09 2017 +0100
+
+    ChangeLog: content updated for v5.1.0
+
+commit cc0ece7af411038afd0340c16ccabea985bbc7ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 11 15:27:43 2017 +0100
+
 commit cc0ece7af411038afd0340c16ccabea985bbc7ff
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Mon Dec 11 15:27:43 2017 +0100
