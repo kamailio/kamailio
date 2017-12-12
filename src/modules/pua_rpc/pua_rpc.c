@@ -249,7 +249,7 @@ static void pua_rpc_publish(rpc_t* rpc, void* c)
 		return;
 	}
 	publ.cb_param = dctx;
-	publ.source_flag = MI_ASYN_PUBLISH;
+	publ.source_flag = RPC_ASYN_PUBLISH;
 
 	ret = pua_rpc_api.send_publish(&publ);
 	LM_DBG("pua send_publish returned %d\n", ret);
@@ -326,7 +326,7 @@ static void pua_rpc_subscribe(rpc_t* rpc, void* ctx)
 	subs.contact= &watcher_uri;
 
 	subs.expires= vexp;
-	subs.source_flag |= MI_SUBSCRIBE;
+	subs.source_flag |= RPC_SUBSCRIBE;
 	subs.event= get_event_flag(&event);
 	if(subs.event< 0) {
 		LM_ERR("unknown event\n");
@@ -393,7 +393,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (pua_rpc_api.register_puacb(MI_ASYN_PUBLISH, pua_rpc_publish_callback, NULL) < 0) {
+	if (pua_rpc_api.register_puacb(RPC_ASYN_PUBLISH, pua_rpc_publish_callback, NULL) < 0) {
 		LM_ERR("could not register callback\n");
 		return -1;
 	}
