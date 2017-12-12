@@ -24,6 +24,11 @@
     <path project="Fedora:EPEL:6" repository="RHEL"/>
     <arch>x86_64</arch>
   </repository>
+  <repository name="Fedora_27">
+    <path project="Fedora:27" repository="update"/>
+    <path project="Fedora:27" repository="standard"/>
+    <arch>x86_64</arch>
+  </repository>
   <repository name="Fedora_26">
     <path project="Fedora:26" repository="update"/>
     <path project="Fedora:26" repository="standard"/>

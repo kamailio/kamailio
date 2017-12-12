@@ -1,24 +1,6 @@
 %define name    kamailio
 %define ver 5.1.0
-%define rel dev0.0%{dist}
-
-%if 0%{?fedora} == 24
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without perl
-%bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
+%define rel 0%{dist}
 
 %if 0%{?fedora} == 25
 %define dist_name fedora
@@ -29,9 +11,11 @@
 %bcond_without http_async_client
 %bcond_without jansson
 %bcond_without json
+%bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_without rebbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -47,9 +31,31 @@
 %bcond_without http_async_client
 %bcond_without jansson
 %bcond_without json
+%bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_without rebbitmq
+%bcond_without redis
+%bcond_without sctp
+%bcond_without websocket
+%bcond_without xmlrpc
+%endif
+
+%if 0%{?fedora} == 27
+%define dist_name fedora
+%define dist_version %{?fedora}
+%bcond_without cnxcc
+%bcond_with dnssec
+%bcond_without geoip
+%bcond_without http_async_client
+%bcond_without jansson
+%bcond_without json
+%bcond_without lua
+%bcond_without kazoo
+%bcond_without memcached
+%bcond_without perl
+%bcond_without rebbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -65,9 +71,11 @@
 %bcond_with http_async_client
 %bcond_with jansson
 %bcond_with json
+%bcond_without lua
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_with rebbitmq
 %bcond_with redis
 %bcond_without sctp
 %bcond_without websocket
@@ -84,9 +92,11 @@
 %bcond_without http_async_client
 %bcond_without jansson
 %bcond_without json
+%bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_without rebbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -102,9 +112,11 @@
 %bcond_without http_async_client
 %bcond_without jansson
 %bcond_without json
+%bcond_without lua
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_without perl
+%bcond_with rebbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -120,9 +132,11 @@
 %bcond_with http_async_client
 %bcond_with jansson
 %bcond_with json
+%bcond_with lua
 %bcond_with kazoo
 %bcond_with memcached
 %bcond_with perl
+%bcond_with rebbitmq
 %bcond_with redis
 %bcond_with sctp
 %bcond_with websocket
@@ -132,19 +146,26 @@
 %if 0%{?rhel} == 7 && 0%{?centos_ver} != 7
 %define dist_name rhel
 %define dist_version %{?rhel}
-%bcond_without cnxcc
+%bcond_with cnxcc
 %bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without kazoo
-%bcond_without memcached
+%bcond_with geoip
+%bcond_with http_async_client
+%bcond_with jansson
+%bcond_with json
+%bcond_with lua
+%bcond_with kazoo
+%bcond_with memcached
 %bcond_without perl
+%bcond_without rebbitmq
 %bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
+%bcond_with sctp
+%bcond_with websocket
 %bcond_without xmlrpc
+%endif
+
+# redefine buggy openSUSE Leap _sharedstatedir macro. More info at https://bugzilla.redhat.com/show_bug.cgi?id=183370
+%if 0%{?suse_version} == 1315
+%define _sharedstatedir /var/lib
 %endif
 
 Summary:    Kamailio (former OpenSER) - the Open Source SIP Server
@@ -165,13 +186,15 @@ Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-kazoo < %ver
+Conflicts:  kamailio-rabbitmq < %ver
 Conflicts:  kamailio-memcached < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
 Conflicts:  kamailio-python < %ver
 Conflicts:  kamailio-radius < % ver, kamailio-redis < %ver
 Conflicts:  kamailio-regex < %ver, kamailio-sctp < %ver
-Conflicts:  kamailio-snmpstats < %ver, kamailio-sqlite < %ver
+Conflicts:  kamailio-sipdump < %ver
+Conflicts:  kamailio-snmpstats < %ver, kamailio-sqlang < %ver, kamailio-sqlite < %ver
 Conflicts:  kamailio-tls < %ver, kamailio-unixodbc < %ver
 Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
 Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
@@ -596,6 +619,18 @@ BuildRequires:  python-devel
 Python extensions for Kamailio.
 
 
+%if %{with rabbitmq}
+%package    rabbitmq
+Summary:    RabbitMQ related modules
+Group:      System Environment/Daemons
+Requires:   libuuid, librabbitmq, kamailio = %ver
+BuildRequires:    librabbitmq-devel, libuuid-devel
+
+%description    rabbitmq
+RabbitMQ module for Kamailio.
+%endif
+
+
 %package    radius
 Summary:    RADIUS modules for Kamailio
 Group:      System Environment/Daemons
@@ -656,12 +691,21 @@ SCTP transport for Kamailio.
 
 
 %package    sipcapture-daemon-config
-Summary:    reference config for sipcapture daemon.
+Summary:    reference config for sipcapture daemon
 Group:      System Environment/Daemons
 Requires:   kamailio-sipcapture = %ver
 
 %description    sipcapture-daemon-config
 reference config for sipcapture daemon.
+
+
+%package    sipdump
+Summary:    This module writes SIP traffic and some associated details into local files
+Group:      System Environment/Daemons
+Requires:   kamailio = %ver
+
+%description    sipdump
+This module writes SIP traffic and some associated details into local files
 
 
 %package    smsops
@@ -705,6 +749,16 @@ Requires:   kamailio = %ver
 
 %description    statsd
 Send commands to statsd server.
+
+
+%package        sqlang
+Summary:        Squirrel Language (SQLang) for Kamailio
+Group:          System Environment/Daemons
+Requires:       squirrel-libs, kamailio = %version
+BuildRequires:  squirrel-devel gcc-c++
+
+%description    sqlang
+app_sqlang module for Kamailio.
 
 
 %package    sqlite
@@ -906,6 +960,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with kazoo}
     kkazoo \
 %endif
+%if %{with rabbitmq}
+    krabbitmq \
+%endif
     kldap 
 %if %{with lua}
     klua \
@@ -972,6 +1029,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with kazoo}
     kkazoo \
 %endif
+%if %{with rabbitmq}
+    krabbitmq \
+%endif
     kldap \
 %if %{with lua}
     klua \
@@ -1001,9 +1061,12 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 
 make install-cfg-pkg
 
+install -d %{buildroot}%{_sharedstatedir}/kamailio
+
 %if "%{?_unitdir}" == ""
 # On RedHat 6 like
-mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
+install -d %{buildroot}%{_var}/run/kamailio
+install -d %{buildroot}%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.init \
         %{buildroot}%{_sysconfdir}/rc.d/init.d/kamailio
 %else
@@ -1016,13 +1079,13 @@ install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.tmpfiles 
 %endif
 
 %if 0%{?suse_version}
-mkdir -p %{buildroot}/var/adm/fillup-templates/
+install -d %{buildroot}/var/adm/fillup-templates/
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
         %{buildroot}/var/adm/fillup-templates/sysconfig.kamailio
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
         %{buildroot}/var/adm/fillup-templates/sysconfig.sipcapture
 %else
-mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
+install -d %{buildroot}%{_sysconfdir}/sysconfig
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
         %{buildroot}%{_sysconfdir}/sysconfig/kamailio
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
@@ -1053,8 +1116,6 @@ rm -rf %{buildroot}
 
 %post
 %if "%{?_unitdir}" == ""
-mkdir -p %{_var}/run/kamailio 2> /dev/null || :
-chown kamailio:daemon %{_var}/run/kamailio 2> /dev/null
 /sbin/chkconfig --add kamailio
 %else
 %tmpfiles_create kamailio
@@ -1092,6 +1153,7 @@ fi
 
 %dir %{_docdir}/kamailio/modules
 %doc %{_docdir}/kamailio/modules/README.acc
+%doc %{_docdir}/kamailio/modules/README.acc_diameter
 %doc %{_docdir}/kamailio/modules/README.alias_db
 %doc %{_docdir}/kamailio/modules/README.app_jsdt
 %doc %{_docdir}/kamailio/modules/README.async
@@ -1200,23 +1262,26 @@ fi
 %doc %{_docdir}/kamailio/modules/README.jsonrpcs
 %doc %{_docdir}/kamailio/modules/README.nosip
 %doc %{_docdir}/kamailio/modules/README.tsilo
+%doc %{_docdir}/kamailio/modules/README.call_obj
+%doc %{_docdir}/kamailio/modules/README.evrexec
+%doc %{_docdir}/kamailio/modules/README.keepalive
 
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/dictionary.kamailio
-%config(noreplace) %{_sysconfdir}/kamailio/kamailio-advanced.cfg
-%config(noreplace) %{_sysconfdir}/kamailio/kamailio-basic.cfg
 %config(noreplace) %{_sysconfdir}/kamailio/kamailio.cfg
 %config(noreplace) %{_sysconfdir}/kamailio/kamctlrc
 %config(noreplace) %{_sysconfdir}/kamailio/pi_framework.xml
 %config(noreplace) %{_sysconfdir}/kamailio/tls.cfg
+%dir %attr(-,kamailio,kamailio) %{_sharedstatedir}/kamailio
 %if 0%{?suse_version}
 /var/adm/fillup-templates/sysconfig.kamailio
 %else
-%config %{_sysconfdir}/sysconfig/*
+%config %{_sysconfdir}/sysconfig/kamailio
 %endif
 %if "%{?_unitdir}" == ""
 %config %{_sysconfdir}/rc.d/init.d/*
+%dir %attr(-,kamailio,kamailio) %{_var}/run/kamailio
 %else
 %{_unitdir}/kamailio.service
 %{_tmpfilesdir}/kamailio.conf
@@ -1236,6 +1301,7 @@ fi
 
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/acc.so
+%{_libdir}/kamailio/modules/acc_diameter.so
 %{_libdir}/kamailio/modules/alias_db.so
 %{_libdir}/kamailio/modules/app_jsdt.so
 %{_libdir}/kamailio/modules/async.so
@@ -1344,6 +1410,9 @@ fi
 %{_libdir}/kamailio/modules/jsonrpcs.so
 %{_libdir}/kamailio/modules/nosip.so
 %{_libdir}/kamailio/modules/tsilo.so
+%{_libdir}/kamailio/modules/call_obj.so
+%{_libdir}/kamailio/modules/evrexec.so
+%{_libdir}/kamailio/modules/keepalive.so
 
 
 %{_sbindir}/kamailio
@@ -1481,6 +1550,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ims_auth
 %doc %{_docdir}/kamailio/modules/README.ims_charging
 %doc %{_docdir}/kamailio/modules/README.ims_dialog
+%doc %{_docdir}/kamailio/modules/README.ims_diameter_server
 %doc %{_docdir}/kamailio/modules/README.ims_icscf
 %doc %{_docdir}/kamailio/modules/README.ims_isc
 %doc %{_docdir}/kamailio/modules/README.ims_qos
@@ -1497,6 +1567,7 @@ fi
 %{_libdir}/kamailio/modules/ims_auth.so
 %{_libdir}/kamailio/modules/ims_charging.so
 %{_libdir}/kamailio/modules/ims_dialog.so
+%{_libdir}/kamailio/modules/ims_diameter_server.so
 %{_libdir}/kamailio/modules/ims_icscf.so
 %{_libdir}/kamailio/modules/ims_isc.so
 %{_libdir}/kamailio/modules/ims_qos.so
@@ -1672,6 +1743,14 @@ fi
 %{_libdir}/kamailio/modules/app_python.so
 
 
+%if %{with rabbitmq}
+%files      rabbitmq
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.rabbitmq
+%{_libdir}/kamailio/modules/rabbitmq.so
+%endif
+
+
 %files      radius
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.acc_radius
@@ -1688,7 +1767,9 @@ fi
 %files      redis
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.ndb_redis
+%doc %{_docdir}/kamailio/modules/README.topos_redis
 %{_libdir}/kamailio/modules/ndb_redis.so
+%{_libdir}/kamailio/modules/topos_redis.so
 %endif
 
 
@@ -1707,6 +1788,11 @@ fi
 %files      sipcapture-daemon-config
 %defattr(-,root,root)
 %config(noreplace) %{_sysconfdir}/kamailio/kamailio-sipcapture.cfg
+%if 0%{?suse_version}
+/var/adm/fillup-templates/sysconfig.sipcapture
+%else
+%config(noreplace) %{_sysconfdir}/sysconfig/sipcapture
+%endif
 %if "%{?_unitdir}" != ""
 %{_unitdir}/sipcapture.service
 %{_tmpfilesdir}/sipcapture.conf
@@ -1719,6 +1805,12 @@ fi
 %doc %{_docdir}/kamailio/modules/README.sctp
 %{_libdir}/kamailio/modules/sctp.so
 %endif
+
+
+%files      sipdump
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.sipdump
+%{_libdir}/kamailio/modules/sipdump.so
 
 
 %files      snmpstats
@@ -1736,6 +1828,12 @@ fi
 %defattr(-,root,root)
 %{_docdir}/kamailio/modules/README.statsd
 %{_libdir}/kamailio/modules/statsd.so
+
+
+%files          sqlang
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.app_sqlang
+%{_libdir}/kamailio/modules/app_sqlang.so
 
 
 %files      sqlite
@@ -1821,6 +1919,15 @@ fi
   - added packaging for Fedora 26 and openSUSE Leap 42.3
   - removed packaging for Fedora 24 and openSUSE Leap 42.1 as End Of Life
   - rewrited SPEC file to support Fedora, RHEL, CentOS, openSUSE distrs
+* Mon Jul 31 2017 Mititelu Stefan <stefan.mititelu92@gmail.com>
+  - added rabbitmq module
+* Wed Apr 26 2017 Carsten Bock <carsten@ng-voice.co,>
+  - added ims_diameter_server module
+  - added topos_redis module
+  - added call_obj module
+  - added evrexec module
+  - added keepalive module
+  - added app_sqlang module
 * Thu Mar 09 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
   - added jansson package
 * Sat Feb 04 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
