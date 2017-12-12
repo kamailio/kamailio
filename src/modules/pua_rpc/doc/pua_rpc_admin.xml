@@ -74,7 +74,10 @@
 	  <section id="pua_rpc.r.pua.publish">
 		<title>pua.publish</title>
 		<para>
-		  Send a SIP PUBLISH request. Command parameters:
+		Send a SIP PUBLISH request and wait for its response.
+		</para>
+		<para>
+		Command parameters:
 		</para>
 		<itemizedlist>
 		  <listitem>
@@ -213,7 +216,16 @@ Voice-Message: 2/0 (0/0)
                      ]]>
           </programlisting>
         </example>
-      </section>
+	</section>
+	<section id="pua_rpc.r.pua.send_publish">
+		<title>pua.send_publish</title>
+		<para>
+		Send a SIP PUBLISH request without waiting for its response.
+		</para>
+		<para>
+		Command parameters are the same as for pua.publish.
+		</para>
+	</section>
 	<section id="pua_rpc.r.subscribe">
 		<title>pua.subscribe</title>
 		<para>
