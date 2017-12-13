@@ -516,6 +516,26 @@ modparam("usrloc", "keepalive_column", "kalive")
 		</example>
 	</section>
 
+	<section id="usrloc.p.partition_column">
+		<title><varname>partition_column</varname> (string)</title>
+		<para>
+		Name of database table column containing the value for partition id.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>partition</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>partitioncolumn</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "partition_column", "part")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.use_domain">
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
