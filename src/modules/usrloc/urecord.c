@@ -216,7 +216,7 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 	free_ucontact(_c);
 }
 
-static inline int is_valid_tcpconn(ucontact_t *c)
+inline int is_valid_tcpconn(ucontact_t *c)
 {
 	if (c->tcpconn_id == -1)
 		return 0; /* tcpconn_id is not present */
@@ -224,7 +224,7 @@ static inline int is_valid_tcpconn(ucontact_t *c)
 		return 1; /* valid tcpconn_id */
 }
 
-static inline int is_tcp_alive(ucontact_t *c)
+inline int is_tcp_alive(ucontact_t *c)
 {
 	struct tcp_connection *con = NULL;
 	int rc = 0;
