@@ -40,6 +40,7 @@
 #include "usrloc.h"
 #include "utime.h"
 #include "usrloc.h"
+#include "urecord.h"
 
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
@@ -1116,6 +1117,7 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 {
 	unsigned int sl, i, aorhash;
 	urecord_t* r;
+	ucontact_t* ptr = NULL;
 
 	if (db_mode!=DB_ONLY) {
 		/* search in cache */
@@ -1125,7 +1127,18 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 
 		for(i = 0; r!=NULL && i < _d->table[sl].n; i++) {
 			if((r->aorhash==aorhash) && (r->aor.len==_aor->len)
-						&& !memcmp(r->aor.s,_aor->s,_aor->len)){
+						&& !memcmp(r->aor.s,_aor->s,_aor->len))
+			{
+				if (handle_lost_tcp)
+				{
+					for (ptr = r->contacts;ptr;ptr = ptr->next)
+					{
+						if (ptr->expires == UL_EXPIRED_TIME )
+							continue;
+						if (is_valid_tcpconn(ptr) && !is_tcp_alive(ptr))
+							ptr->expires = UL_EXPIRED_TIME;
+					}
+				}
 				*_r = r;
 				return 0;
 			}
