@@ -189,4 +189,8 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path,
 int get_ucontact_by_instance(urecord_t* _r, str* _c, ucontact_info_t* _ci,
 		ucontact_t** _co);
 
+int is_valid_tcpconn(ucontact_t *c);
+
+int is_tcp_alive(ucontact_t *c);
+
 #endif
