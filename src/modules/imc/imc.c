@@ -304,11 +304,6 @@ int add_from_db(void)
 		imc_dbf.free_result(imc_db, r_res);
 		r_res = NULL;
 	}
-	if(m_res)
-	{
-		imc_dbf.free_result(imc_db, m_res);
-		m_res = NULL;
-	}
 
 	return 0;
 

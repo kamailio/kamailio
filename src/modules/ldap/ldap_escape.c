@@ -47,52 +47,47 @@ int ldap_rfc4515_escape(str *sin, str *sout, int url_encode)
 {
 	char *src, *dst;
 
-	if (sin == NULL || sout == NULL || sin->s == NULL || sout->s == NULL
-			|| sin->len <= 0 || sout->len < 3*sin->len+1)
-	{
+	if(sin == NULL || sout == NULL || sin->s == NULL || sout->s == NULL
+			|| sin->len <= 0 || sout->len < 3 * sin->len + 1) {
 		return -1;
 	}
 
 	src = sin->s;
 	dst = sout->s;
 
-	while (src < (sin->s + sin->len))
-	{
-		switch (*src)
-		{
-		case '*':
-			*dst++ = '\\';
-			*dst++ = '2';
-			*dst = 'a';
-			break;
-		case '(':
-			*dst++ = '\\';
-			*dst++ = '2';
-			*dst = '8';
-			break;
-		case ')':
-			*dst++ = '\\';
-			*dst++ = '2';
-			*dst = '9';
-			break;
-		case '\\':
-			*dst++ = '\\';
-			*dst++ = '5';
-			*dst = 'c';
-			break;
-		case '?':
-			if (url_encode)
-			{
-				*dst++ = '%';
-				*dst++ = '3';
-				*dst = 'F';
-			} else
-			{
+	while(src < (sin->s + sin->len)) {
+		switch(*src) {
+			case '*':
+				*dst++ = '\\';
+				*dst++ = '2';
+				*dst = 'a';
+				break;
+			case '(':
+				*dst++ = '\\';
+				*dst++ = '2';
+				*dst = '8';
+				break;
+			case ')':
+				*dst++ = '\\';
+				*dst++ = '2';
+				*dst = '9';
+				break;
+			case '\\':
+				*dst++ = '\\';
+				*dst++ = '5';
+				*dst = 'c';
+				break;
+			case '?':
+				if(url_encode) {
+					*dst++ = '%';
+					*dst++ = '3';
+					*dst = 'F';
+				} else {
+					*dst = *src;
+				}
+				break;
+			default:
 				*dst = *src;
-			}
-			break;
-		default:
-			*dst = *src;
 		}
 
 		src++;

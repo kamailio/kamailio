@@ -30,7 +30,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
-#include "../../core/tls_hooks_init.h" 
+#include "../../core/tls_hooks_init.h"
 #include <string.h>
 #include <time.h>
 #include <netinet/in.h>
@@ -45,25 +45,26 @@
  * \param id database id
  * \return postgres connection structure, 0 on error
  */
-struct pg_con* db_postgres_new_connection(struct db_id* id)
+struct pg_con *db_postgres_new_connection(struct db_id *id)
 {
-	struct pg_con* ptr;
+	struct pg_con *ptr;
 	char *ports;
 	int i = 0;
 	const char *keywords[10], *values[10];
 	char to[16];
 
 	LM_DBG("db_id = %p\n", id);
- 
-	if (!id) {
+
+	if(!id) {
 		LM_ERR("invalid db_id parameter value\n");
 		return 0;
 	}
 
-	ptr = (struct pg_con*)pkg_malloc(sizeof(struct pg_con));
-	if (!ptr) {
+	ptr = (struct pg_con *)pkg_malloc(sizeof(struct pg_con));
+	if(!ptr) {
 		LM_ERR("failed trying to allocated %lu bytes for connection structure."
-				"\n", (unsigned long)sizeof(struct pg_con));
+			   "\n",
+				(unsigned long)sizeof(struct pg_con));
 		return 0;
 	}
 	LM_DBG("%p=pkg_malloc(%lu)\n", ptr, (unsigned long)sizeof(struct pg_con));
@@ -71,20 +72,20 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 	memset(ptr, 0, sizeof(struct pg_con));
 	ptr->ref = 1;
 
-	memset(keywords, 0, (sizeof(char*) * 10));
-	memset(values, 0, (sizeof(char*) * 10));
+	memset(keywords, 0, (sizeof(char *) * 10));
+	memset(values, 0, (sizeof(char *) * 10));
 	memset(to, 0, (sizeof(char) * 16));
 
-	if (id->port) {
+	if(id->port) {
 		ports = int2str(id->port, 0);
 		keywords[i] = "port";
 		values[i++] = ports;
-		LM_DBG("opening connection: postgres://xxxx:xxxx@%s:%d/%s\n", ZSW(id->host),
-			id->port, ZSW(id->database));
+		LM_DBG("opening connection: postgres://xxxx:xxxx@%s:%d/%s\n",
+				ZSW(id->host), id->port, ZSW(id->database));
 	} else {
 		ports = NULL;
-		LM_DBG("opening connection: postgres://xxxx:xxxx@%s/%s\n", ZSW(id->host),
-			ZSW(id->database));
+		LM_DBG("opening connection: postgres://xxxx:xxxx@%s/%s\n",
+				ZSW(id->host), ZSW(id->database));
 	}
 
 	keywords[i] = "host";
@@ -95,8 +96,8 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 	values[i++] = id->username;
 	keywords[i] = "password";
 	values[i++] = id->password;
-	if (pg_timeout > 0) {
-		snprintf(to, sizeof(to)-1, "%d", pg_timeout + 3);
+	if(pg_timeout > 0) {
+		snprintf(to, sizeof(to) - 1, "%d", pg_timeout + 3);
 		keywords[i] = "connect_timeout";
 		values[i++] = to;
 	}
@@ -104,19 +105,19 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 	keywords[i] = values[i] = NULL;
 
 	/* don't attempt to re-init openssl if done already */
-	if(tls_loaded()) PQinitSSL(0);
+	if(tls_loaded())
+		PQinitSSL(0);
 
 	ptr->con = PQconnectdbParams(keywords, values, 1);
 	LM_DBG("PQconnectdbParams(%p)\n", ptr->con);
 
-	if( (ptr->con == 0) || (PQstatus(ptr->con) != CONNECTION_OK) )
-	{
+	if((ptr->con == 0) || (PQstatus(ptr->con) != CONNECTION_OK)) {
 		LM_ERR("%s\n", PQerrorMessage(ptr->con));
 		PQfinish(ptr->con);
 		goto err;
 	}
 
-	if (PQserverVersion(ptr->con) <  90500) {
+	if(PQserverVersion(ptr->con) < 90500) {
 		LM_WARN("server version < 9.5 does not support insert_update\n");
 	}
 
@@ -125,17 +126,25 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 	ptr->id = id;
 
 #if defined(SO_KEEPALIVE) && defined(TCP_KEEPIDLE)
-	if (pg_keepalive) {
+	if(pg_keepalive) {
 		i = 1;
-		setsockopt(PQsocket(ptr->con), SOL_SOCKET, SO_KEEPALIVE, &i, sizeof(i));
-		setsockopt(PQsocket(ptr->con), IPPROTO_TCP, TCP_KEEPIDLE, &pg_keepalive, sizeof(pg_keepalive));
+		if(setsockopt(
+				   PQsocket(ptr->con), SOL_SOCKET, SO_KEEPALIVE, &i, sizeof(i))
+				< 0) {
+			LM_WARN("setsockopt for keepalive failed\n");
+		}
+		if(setsockopt(PQsocket(ptr->con), IPPROTO_TCP, TCP_KEEPIDLE,
+				   &pg_keepalive, sizeof(pg_keepalive))
+				< 0) {
+			LM_WARN("setsockopt for keepidle failed\n");
+		}
 	}
 #endif
 
 	return ptr;
 
- err:
-	if (ptr) {
+err:
+	if(ptr) {
 		LM_ERR("cleaning up %p=pkg_free()\n", ptr);
 		pkg_free(ptr);
 	}
@@ -147,22 +156,24 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
  * \brief Close the connection and release memory
  * \param con connection
  */
-void db_postgres_free_connection(struct pool_con* con)
+void db_postgres_free_connection(struct pool_con *con)
 {
 
-	struct pg_con * _c;
-	
-	if (!con) return;
+	struct pg_con *_c;
 
-	_c = (struct pg_con*)con;
+	if(!con)
+		return;
 
-	if (_c->res) {
+	_c = (struct pg_con *)con;
+
+	if(_c->res) {
 		LM_DBG("PQclear(%p)\n", _c->res);
 		PQclear(_c->res);
 		_c->res = 0;
 	}
-	if (_c->id) free_db_id(_c->id);
-	if (_c->con) {
+	if(_c->id)
+		free_db_id(_c->id);
+	if(_c->con) {
 		LM_DBG("PQfinish(%p)\n", _c->con);
 		PQfinish(_c->con);
 		_c->con = 0;

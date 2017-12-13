@@ -70,6 +70,12 @@ static PyObject *msg_rewrite_ruri(msgobject *self, PyObject *args)
 {
 	str nuri;
 
+	if (self == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
 		Py_INCREF(Py_None);
@@ -98,6 +104,12 @@ static PyObject *msg_rewrite_ruri(msgobject *self, PyObject *args)
 static PyObject *msg_set_dst_uri(msgobject *self, PyObject *args)
 {
 	str ruri;
+
+	if (self == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
@@ -133,6 +145,12 @@ static PyObject *msg_getHeader(msgobject *self, PyObject *args)
 	struct hdr_field *hf;
 	str hname, *hbody;
 
+	if (self == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
 		Py_INCREF(Py_None);
@@ -143,7 +161,9 @@ static PyObject *msg_getHeader(msgobject *self, PyObject *args)
 		return NULL;
 	hname.len = strlen(hname.s);
 
-	parse_headers(self->msg, ~0, 0);
+	if(parse_headers(self->msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("failed to parse msg headers\n");
+	}
 	hbody = NULL;
 	for (hf = self->msg->headers; hf != NULL; hf = hf->next) {
 		if (hname.len == hf->name.len &&
@@ -169,6 +189,12 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 	struct action *act;
 	struct run_act_ctx ra_ctx;
 	unsigned mod_ver;
+
+	if (self == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
@@ -214,6 +240,7 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 			if (rval < 0) {
 				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (2)");
 				Py_INCREF(Py_None);
+				pkg_free(act);
 				return Py_None;
 			}
 			act->val[3].type = MODFIXUP_ST;
@@ -223,6 +250,7 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 			if (rval < 0) {
 				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (1)");
 				Py_INCREF(Py_None);
+				pkg_free(act);
 				return Py_None;
 			}
 			act->val[2].type = MODFIXUP_ST;
@@ -232,6 +260,7 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 			if (rval < 0) {
 				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (0)");
 				Py_INCREF(Py_None);
+				pkg_free(act);
 				return Py_None;
 			}
 		}
@@ -276,6 +305,12 @@ static PyObject *msg_getType(msgobject *self, PyObject *unused)
 {
 	const char *rval;
 
+	if (self == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
 		Py_INCREF(Py_None);
@@ -304,6 +339,12 @@ static PyObject *msg_getMethod(msgobject *self, PyObject *unused)
 {
 	str *rval;
 
+	if (self == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
 		Py_INCREF(Py_None);
@@ -322,6 +363,12 @@ static PyObject *msg_getMethod(msgobject *self, PyObject *unused)
 static PyObject *msg_getStatus(msgobject *self, PyObject *unused)
 {
 	str *rval;
+
+	if (self == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
@@ -343,6 +390,12 @@ static PyObject *msg_getRURI(msgobject *self, PyObject *unused)
 {
 	str *rval;
 
+	if (self == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
 		Py_INCREF(Py_None);
@@ -362,6 +415,12 @@ static PyObject *msg_getRURI(msgobject *self, PyObject *unused)
 static PyObject *msg_get_src_address(msgobject *self, PyObject *unused)
 {
 	PyObject *src_ip, *src_port, *pyRval;
+
+	if (self == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
@@ -396,6 +455,12 @@ static PyObject *msg_get_src_address(msgobject *self, PyObject *unused)
 static PyObject *msg_get_dst_address(msgobject *self, PyObject *unused)
 {
 	PyObject *dst_ip, *dst_port, *pyRval;
+
+	if (self == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");

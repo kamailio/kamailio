@@ -47,34 +47,34 @@
  * \param _l string length
  * \return 0 on success, negative on error
  */
-int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s,
-		const int _l)
+int db_postgres_str2val(
+		const db_type_t _t, db_val_t *_v, const char *_s, const int _l)
 {
 	/* use common function for non BLOB, NULL setting and input
 	 * parameter checking */
-	if ( _t != DB1_BLOB || _s == NULL || _v == NULL) {
+	if(_t != DB1_BLOB || _s == NULL || _v == NULL) {
 		return db_str2val(_t, _v, _s, _l, 1);
 	} else {
-		char * tmp_s = NULL;
+		char *tmp_s = NULL;
 		LM_DBG("converting BLOB [%.*s]\n", _l, _s);
 		/*
 		 * The string is stored in new allocated memory, which we could
 		 * not free later thus we need to copy it to some new memory here.
 		 */
-		tmp_s = (char*)PQunescapeBytea((unsigned char*)_s,
-					(size_t*)(void*)&(VAL_BLOB(_v).len));
-		if(tmp_s==NULL) {
+		tmp_s = (char *)PQunescapeBytea(
+				(unsigned char *)_s, (size_t *)(void *)&(VAL_BLOB(_v).len));
+		if(tmp_s == NULL) {
 			LM_ERR("PQunescapeBytea failed\n");
 			return -7;
 		}
 		VAL_BLOB(_v).s = pkg_malloc(VAL_BLOB(_v).len + 1);
-		if (VAL_BLOB(_v).s == NULL) {
+		if(VAL_BLOB(_v).s == NULL) {
 			LM_ERR("no private memory left\n");
 			PQfreemem(tmp_s);
 			return -8;
 		}
-		LM_DBG("allocate %d+1 bytes memory for BLOB at %p",
-				VAL_BLOB(_v).len, VAL_BLOB(_v).s);
+		LM_DBG("allocate %d+1 bytes memory for BLOB at %p", VAL_BLOB(_v).len,
+				VAL_BLOB(_v).s);
 		memcpy(VAL_BLOB(_v).s, tmp_s, VAL_BLOB(_v).len);
 		PQfreemem(tmp_s);
 
@@ -84,7 +84,6 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s,
 
 		LM_DBG("got blob len %d\n", _l);
 		return 0;
-
 	}
 }
 
@@ -99,99 +98,100 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s,
  * \param _len target string length
  * \return 0 on success, negative on error
  */
-int db_postgres_val2str(const db1_con_t* _con, const db_val_t* _v, char* _s, int* _len)
+int db_postgres_val2str(
+		const db1_con_t *_con, const db_val_t *_v, char *_s, int *_len)
 {
 	int l, ret, tmp;
 	int pgret;
 	char *tmp_s;
 	size_t tmp_len;
-	char* old_s;
+	char *old_s;
 
 	tmp = db_val2str(_con, _v, _s, _len);
-	if (tmp < 1)
+	if(tmp < 1)
 		return tmp;
 
 	switch(VAL_TYPE(_v)) {
-	case DB1_STRING:
-		l = strlen(VAL_STRING(_v));
-		if (*_len < (l * 2 + 3)) {
-			LM_ERR("destination buffer too short for string\n");
-			return -6;
-		} else {
-			old_s = _s;
-			*_s++ = '\'';
-			ret = PQescapeStringConn(CON_CONNECTION(_con), _s, VAL_STRING(_v),
-					l, &pgret);
-			if(pgret!=0)
-			{
-				LM_ERR("PQescapeStringConn failed\n");
+		case DB1_STRING:
+			l = strlen(VAL_STRING(_v));
+			if(*_len < (l * 2 + 3)) {
+				LM_ERR("destination buffer too short for string\n");
 				return -6;
+			} else {
+				old_s = _s;
+				*_s++ = '\'';
+				ret = PQescapeStringConn(
+						CON_CONNECTION(_con), _s, VAL_STRING(_v), l, &pgret);
+				if(pgret != 0) {
+					LM_ERR("PQescapeStringConn failed\n");
+					return -6;
+				}
+				LM_DBG("PQescapeStringConn: in: %d chars,"
+					   " out: %d chars\n",
+						l, ret);
+				_s += ret;
+				*_s++ = '\'';
+				*_s = '\0'; /* FIXME */
+				*_len = _s - old_s;
+				return 0;
 			}
-			LM_DBG("PQescapeStringConn: in: %d chars,"
-				" out: %d chars\n", l, ret);
-			_s += ret;
-			*_s++ = '\'';
-			*_s = '\0'; /* FIXME */
-			*_len = _s - old_s;
-			return 0;
-		}
-		break;
+			break;
 
-	case DB1_STR:
-		l = VAL_STR(_v).len;
-		if (*_len < (l * 2 + 3)) {
-			LM_ERR("destination buffer too short for str\n");
-			return -7;
-		} else {
-			old_s = _s;
-			*_s++ = '\'';
-			ret = PQescapeStringConn(CON_CONNECTION(_con), _s, VAL_STRING(_v),
-					l, &pgret);
-			if(pgret!=0)
-			{
-				LM_ERR("PQescapeStringConn failed \n");
+		case DB1_STR:
+			l = VAL_STR(_v).len;
+			if(*_len < (l * 2 + 3)) {
+				LM_ERR("destination buffer too short for str\n");
 				return -7;
+			} else {
+				old_s = _s;
+				*_s++ = '\'';
+				ret = PQescapeStringConn(
+						CON_CONNECTION(_con), _s, VAL_STRING(_v), l, &pgret);
+				if(pgret != 0) {
+					LM_ERR("PQescapeStringConn failed \n");
+					return -7;
+				}
+				LM_DBG("PQescapeStringConn: in: %d chars, out: %d chars\n", l,
+						ret);
+				_s += ret;
+				*_s++ = '\'';
+				*_s = '\0'; /* FIXME */
+				*_len = _s - old_s;
+				return 0;
 			}
-	        LM_DBG("PQescapeStringConn: in: %d chars, out: %d chars\n", l, ret);
-			_s += ret;
-			*_s++ = '\'';
-			*_s = '\0'; /* FIXME */
-			*_len = _s - old_s;
-			return 0;
-		}
-		break;
+			break;
 
-	case DB1_BLOB:
-		l = VAL_BLOB(_v).len;
-		/* this estimation is not always correct, thus we need to check later again */
-		if (*_len < (l * 2 + 3)) {
-			LM_ERR("destination buffer too short for blob\n");
-			return -9;
-		} else {
-			*_s++ = '\'';
-			tmp_s = (char*)PQescapeByteaConn(CON_CONNECTION(_con), (unsigned char*)VAL_STRING(_v),
-					(size_t)l, (size_t*)&tmp_len);
-			if(tmp_s==NULL)
-			{
-				LM_ERR("PQescapeByteaConn failed\n");
+		case DB1_BLOB:
+			l = VAL_BLOB(_v).len;
+			/* this estimation is not always correct, thus we need to check later again */
+			if(*_len < (l * 2 + 3)) {
+				LM_ERR("destination buffer too short for blob\n");
 				return -9;
+			} else {
+				*_s++ = '\'';
+				tmp_s = (char *)PQescapeByteaConn(CON_CONNECTION(_con),
+						(unsigned char *)VAL_STRING(_v), (size_t)l,
+						(size_t *)&tmp_len);
+				if(tmp_s == NULL) {
+					LM_ERR("PQescapeByteaConn failed\n");
+					return -9;
+				}
+				if(tmp_len > *_len) {
+					LM_ERR("escaped result too long\n");
+					return -9;
+				}
+				memcpy(_s, tmp_s, tmp_len);
+				PQfreemem(tmp_s);
+				tmp_len = strlen(_s);
+				*(_s + tmp_len) = '\'';
+				*(_s + tmp_len + 1) = '\0';
+				*_len = tmp_len + 2;
+				return 0;
 			}
-			if (tmp_len > *_len) {
-				LM_ERR("escaped result too long\n");
-				return -9;
-			}
-			memcpy(_s, tmp_s, tmp_len);
-			PQfreemem(tmp_s);
-			tmp_len = strlen(_s);
-			*(_s + tmp_len) = '\'';
-			*(_s + tmp_len + 1) = '\0';
-			*_len = tmp_len + 2;
-			return 0;
-		}
-		break;
+			break;
 
-	default:
-		LM_DBG("unknown data type\n");
-		return -10;
+		default:
+			LM_DBG("unknown data type\n");
+			return -10;
 	}
 }

@@ -37,6 +37,7 @@ Alex Balashov
               3.4. auth_min_expires (int)
               3.5. auth_max_expires (int)
               3.6. use_path_addr (str)
+              3.7. event_callback (str)
 
         4. Functions
 
@@ -66,17 +67,18 @@ Alex Balashov
    1.4. Set auth_min_expires parameter
    1.5. Set auth_max_expires parameter
    1.6. Set use_path_addr parameter
-   1.7. msrp_relay usage
-   1.8. msrp_reply usage
-   1.9. msrp_is_request usage
-   1.10. msrp_is_reply usage
-   1.11. msrp_set_dst usage
-   1.12. msrp_relay_flags usage
-   1.13. msrp_reply_flags usage
-   1.14. msrp_cmap_save usage
-   1.15. msrp_cmap_lookup usage
-   1.16. Event Route (using htable for MSRP connection tracking)
-   1.17. Event Route (using msrp_cmap_ functions for connection tracking)
+   1.7. Set event_callback parameter
+   1.8. msrp_relay usage
+   1.9. msrp_reply usage
+   1.10. msrp_is_request usage
+   1.11. msrp_is_reply usage
+   1.12. msrp_set_dst usage
+   1.13. msrp_relay_flags usage
+   1.14. msrp_reply_flags usage
+   1.15. msrp_cmap_save usage
+   1.16. msrp_cmap_lookup usage
+   1.17. Event Route (using htable for MSRP connection tracking)
+   1.18. Event Route (using msrp_cmap_ functions for connection tracking)
 
 Chapter 1. Admin Guide
 
@@ -96,6 +98,7 @@ Chapter 1. Admin Guide
         3.4. auth_min_expires (int)
         3.5. auth_max_expires (int)
         3.6. use_path_addr (str)
+        3.7. event_callback (str)
 
    4. Functions
 
@@ -175,6 +178,7 @@ Chapter 1. Admin Guide
    3.4. auth_min_expires (int)
    3.5. auth_max_expires (int)
    3.6. use_path_addr (str)
+   3.7. event_callback (str)
 
 3.1. sipmsg (int)
 
@@ -247,6 +251,28 @@ modparam("msrp", "auth_max_expiresl", 1800)
 modparam("msrp", "use_path_addr", "msrp.kamailio.org:5061")
 ...
 
+3.7. event_callback (str)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event,
+   the values can be: 'msrp:frame-in'.
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.7. Set event_callback parameter
+...
+modparam("msrp", "event_callback", "ksr_msrp_event")
+...
+-- event callback function implemented in Lua
+function ksr_msrp_event(evname)
+        KSR.info("===== msrp module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
 4. Functions
 
    4.1. msrp_relay()
@@ -268,7 +294,7 @@ modparam("msrp", "use_path_addr", "msrp.kamailio.org:5061")
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.7. msrp_relay usage
+   Example 1.8. msrp_relay usage
 ...
 event_route[msrp:frame-in] {
     msrp_relay();
@@ -283,7 +309,7 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.8. msrp_reply usage
+   Example 1.9. msrp_reply usage
 ...
 event_route[msrp:frame-in] {
     msrp_reply("403", "Not allowed");
@@ -296,7 +322,7 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.9. msrp_is_request usage
+   Example 1.10. msrp_is_request usage
 ...
 event_route[msrp:frame-in] {
     if(msrp_is_request())
@@ -313,7 +339,7 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.10. msrp_is_reply usage
+   Example 1.11. msrp_is_reply usage
 ...
 event_route[msrp:frame-in] {
     if(msrp_is_reply())
@@ -333,7 +359,7 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.11. msrp_set_dst usage
+   Example 1.12. msrp_set_dst usage
 ...
 event_route[msrp:frame-in] {
     ...
@@ -352,7 +378,7 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.12. msrp_relay_flags usage
+   Example 1.13. msrp_relay_flags usage
 ...
 event_route[msrp:frame-in] {
     ...
@@ -371,7 +397,7 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.13. msrp_reply_flags usage
+   Example 1.14. msrp_reply_flags usage
 ...
 event_route[msrp:frame-in] {
     ...
@@ -387,7 +413,7 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.14. msrp_cmap_save usage
+   Example 1.15. msrp_cmap_save usage
 ...
 event_route[msrp:frame-in] {
     ...
@@ -402,7 +428,7 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.15. msrp_cmap_lookup usage
+   Example 1.16. msrp_cmap_lookup usage
 ...
 event_route[msrp:frame-in] {
     ...
@@ -510,7 +536,7 @@ Content-Type: text/plain
    Next is an example of configuration file with the routing block for
    MSRP frames. In this config, the SIP traffic is rejected.
 
-   Example 1.16. Event Route (using htable for MSRP connection tracking)
+   Example 1.17. Event Route (using htable for MSRP connection tracking)
 ...
 
 #!KAMAILIO
@@ -669,7 +695,7 @@ event_route[msrp:frame-in] {
 
 ...
 
-   Example 1.17. Event Route (using msrp_cmap_ functions for connection
+   Example 1.18. Event Route (using msrp_cmap_ functions for connection
    tracking)
 ...
 

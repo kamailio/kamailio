@@ -1,5 +1,5 @@
 /*
- * rls db - RLS database support 
+ * rls db - RLS database support
  *
  * Copyright (C) 2011 Crocodile RCS Ltd
  *
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -37,11 +37,11 @@
 
 #define CONT_COPYDB(buf, dest, source)\
 	do{ \
-	dest.s= (char*)buf+ size;\
-	memcpy(dest.s, source, strlen(source));\
-	dest.len= strlen(source);\
-	size+= strlen(source); \
-	} while(0);
+		dest.s= (char*)buf+ size;\
+		memcpy(dest.s, source, strlen(source));\
+		dest.len= strlen(source);\
+		size+= strlen(source); \
+	} while(0)
 
 /* database connection */
 extern db1_con_t *rls_db;
@@ -53,23 +53,23 @@ extern void update_a_sub(subs_t *subs_copy );
 
 shtable_t rls_new_shtable(int hash_size)
 {
-  LM_ERR( "rls_new_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
-  return(NULL);
+	LM_ERR( "rls_new_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
+	return(NULL);
 }
 
 /******************************************************************************/
 
 void rls_destroy_shtable(shtable_t htable, int hash_size)
 {
-  LM_ERR( "rls_destroy_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
+	LM_ERR( "rls_destroy_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
 }
 
 /******************************************************************************/
 
 int rls_insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs)
 {
-  LM_ERR( "rls_insert_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
-  return(-1);
+	LM_ERR( "rls_insert_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
+	return(-1);
 }
 
 /******************************************************************************/
@@ -77,25 +77,25 @@ int rls_insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs)
 subs_t* rls_search_shtable(shtable_t htable,str callid,str to_tag,
 		str from_tag,unsigned int hash_code)
 {
-  LM_ERR( "rls_search_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
-  return(NULL);
+	LM_ERR( "rls_search_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
+	return(NULL);
 }
 
 /******************************************************************************/
 
 int rls_delete_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs)
 {
-  LM_ERR( "rls_delete_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
-  return(-1);
+	LM_ERR( "rls_delete_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
+	return(-1);
 }
 
 /******************************************************************************/
 
-int rls_update_shtable(shtable_t htable,unsigned int hash_code, 
+int rls_update_shtable(shtable_t htable,unsigned int hash_code,
 		subs_t* subs, int type)
 {
-  LM_ERR( "rls_update_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
-  return(-1);
+	LM_ERR( "rls_update_shtable shouldn't be called in RLS_DB_ONLY mode\n" );
+	return(-1);
 }
 
 /******************************************************************************/
@@ -103,7 +103,7 @@ int rls_update_shtable(shtable_t htable,unsigned int hash_code,
 void rls_update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
 {
-  LM_ERR( "rls_update_db_subs_timer shouldn't be called in RLS_DB_ONLY mode\n" );
+	LM_ERR( "rls_update_db_subs_timer shouldn't be called in RLS_DB_ONLY mode\n" );
 }
 
 /******************************************************************************/
@@ -163,7 +163,7 @@ int delete_expired_subs_rlsdb( void )
 		}
 	}
 
-	if(query_fn(rls_db, query_cols, query_ops, query_vals, result_cols, 
+	if(query_fn(rls_db, query_cols, query_ops, query_vals, result_cols,
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
@@ -228,9 +228,11 @@ int delete_expired_subs_rlsdb( void )
 		}
 
 		pkg_free(rlsubs_did.s);
+		rlsubs_did.s = NULL;
 	}
 
 	rls_dbf.free_result(rls_db, result);
+	result = NULL;
 
 	if (rls_dbf.end_transaction)
 	{
@@ -258,10 +260,10 @@ error:
 
 /******************************************************************************/
 
-int delete_rlsdb( str *callid, str *to_tag, str *from_tag ) 
+int delete_rlsdb( str *callid, str *to_tag, str *from_tag )
 
 {
- 	int rval;
+	int rval;
 	db_key_t query_cols[3];
 	db_val_t query_vals[3];
 	int n_query_cols = 0;
@@ -277,7 +279,7 @@ int delete_rlsdb( str *callid, str *to_tag, str *from_tag )
 		LM_ERR("use table failed\n");
 		return(-1);
 	}
-	
+
 	query_cols[n_query_cols] = &str_callid_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -337,7 +339,7 @@ int update_dialog_notify_rlsdb(subs_t *subs)
 
 	subs->local_cseq++;
 	subs->version++;
-	
+
 	query_cols[n_query_cols] = &str_callid_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -375,7 +377,7 @@ int update_dialog_notify_rlsdb(subs_t *subs)
 	n_data_cols++;
 
 	if(rls_dbf.update(rls_db, query_cols, 0, query_vals,
-                    data_cols,data_vals,n_query_cols,n_data_cols) < 0)
+			data_cols,data_vals,n_query_cols,n_data_cols) < 0)
 	{
 		LM_ERR("Failed update db\n");
 		return(-1);
@@ -395,7 +397,7 @@ int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt)
 	int r_pres_uri_col, r_callid_col, r_to_tag_col, r_from_tag_col;
 	int r_event_col, r_expires_col;
 	db1_res_t *result= NULL;
- 	db_val_t *values;
+	db_val_t *values;
 	db_row_t *rows;
 	int nr_rows, size, loop;
 	subs_t *dest;
@@ -412,7 +414,7 @@ int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt)
 		LM_ERR("use table failed\n");
 		return(-1);
 	}
-	
+
 	query_cols[n_query_cols] = &str_watcher_username_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -438,7 +440,7 @@ int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt)
 	result_cols[r_event_col=n_result_cols++] = &str_event_col;
 	result_cols[r_expires_col=n_result_cols++] = &str_expires_col;
 
-	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols, 
+	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
@@ -463,7 +465,7 @@ int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt)
 			+ strlen(VAL_STRING(values+r_callid_col)))*sizeof(char);
 
 		dest= (subs_t*)pkg_malloc(size);
-	
+
 		if(dest== NULL)
 		{
 			LM_ERR( "Can't allocate memory\n" );
@@ -473,10 +475,10 @@ int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt)
 		memset(dest, 0, size);
 		size= sizeof(subs_t);
 
-		CONT_COPYDB(dest, dest->pres_uri, VAL_STRING(values+r_pres_uri_col))
-		CONT_COPYDB(dest, dest->to_tag, VAL_STRING(values+r_to_tag_col))
-		CONT_COPYDB(dest, dest->from_tag, VAL_STRING(values+r_from_tag_col))
-		CONT_COPYDB(dest, dest->callid, VAL_STRING(values+r_callid_col))
+		CONT_COPYDB(dest, dest->pres_uri, VAL_STRING(values+r_pres_uri_col));
+		CONT_COPYDB(dest, dest->to_tag, VAL_STRING(values+r_to_tag_col));
+		CONT_COPYDB(dest, dest->from_tag, VAL_STRING(values+r_from_tag_col));
+		CONT_COPYDB(dest, dest->callid, VAL_STRING(values+r_callid_col));
 
 		dest->event = pres_contains_event(evt, &parsed_event);
 		if(dest->event == NULL)
@@ -494,7 +496,7 @@ int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt)
 	}
 
 	rls_dbf.free_result(rls_db, result);
-	return(1);	
+	return(1);
 }
 
 /******************************************************************************/
@@ -521,7 +523,7 @@ int update_dialog_subscribe_rlsdb(subs_t *subs)
 		LM_ERR("use table failed\n");
 		return(-1);
 	}
-	
+
 	query_cols[n_query_cols] = &str_callid_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -559,12 +561,12 @@ int update_dialog_subscribe_rlsdb(subs_t *subs)
 	n_data_cols++;
 
 	if(rls_dbf.update(rls_db, query_cols, 0, query_vals,
-                    data_cols,data_vals,n_query_cols,n_data_cols) < 0)
+				data_cols,data_vals,n_query_cols,n_data_cols) < 0)
 	{
 		LM_ERR("Failed update db\n");
 		return(-1);
 	}
-	
+
 	return(0);
 }
 
@@ -590,13 +592,13 @@ int insert_rlsdb( subs_t *s )
 		LM_ERR("use table failed\n");
 		return(-1);
 	}
-	
+
 	data_cols[n_data_cols] = &str_presentity_uri_col;
 	data_vals[n_data_cols].type = DB1_STR;
 	data_vals[n_data_cols].nul = 0;
 	data_vals[n_data_cols].val.str_val= s->pres_uri;
 	n_data_cols++;
-	
+
 	data_cols[n_data_cols] = &str_callid_col;
 	data_vals[n_data_cols].type = DB1_STR;
 	data_vals[n_data_cols].nul = 0;
@@ -655,7 +657,7 @@ int insert_rlsdb( subs_t *s )
 	data_vals[n_data_cols].type = DB1_STR;
 	data_vals[n_data_cols].nul = 0;
 	data_vals[n_data_cols].val.str_val = s->event->name;
-	n_data_cols++;	
+	n_data_cols++;
 
 	data_cols[n_data_cols] = &str_event_id_col;
 	data_vals[n_data_cols].type = DB1_STR;
@@ -698,7 +700,7 @@ int insert_rlsdb( subs_t *s )
 	data_vals[n_data_cols].nul = 0;
 	data_vals[n_data_cols].val.str_val = s->record_route;
 	n_data_cols++;
-	
+
 	data_cols[n_data_cols] =&str_contact_col;
 	data_vals[n_data_cols].type = DB1_STR;
 	data_vals[n_data_cols].nul = 0;
@@ -728,7 +730,7 @@ int insert_rlsdb( subs_t *s )
 	data_vals[n_data_cols].nul = 0;
 	data_vals[n_data_cols].val.int_val= s->updated;
 	n_data_cols++;
-	
+
 	if(rls_dbf.insert(rls_db, data_cols, data_vals, n_data_cols) < 0)
 	{
 		LM_ERR("db insert failed\n");
@@ -740,10 +742,10 @@ int insert_rlsdb( subs_t *s )
 
 /******************************************************************************/
 
-int get_dialog_subscribe_rlsdb(subs_t *subs) 
+int get_dialog_subscribe_rlsdb(subs_t *subs)
 
 {
- 	db1_res_t *result= NULL;
+	db1_res_t *result= NULL;
 	db_key_t query_cols[3];
 	db_val_t query_vals[3], *values;
 	db_key_t result_cols[5];
@@ -754,7 +756,7 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 	int r_remote_cseq, r_local_cseq, r_version;
 	char *r_pres_uri, *r_record_route;
 	db_query_f query_fn = rls_dbf.query_lock ? rls_dbf.query_lock : rls_dbf.query;
-	
+
 	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
@@ -772,7 +774,7 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 		LM_ERR("use table failed\n");
 		return(-1);
 	}
-	
+
 	query_cols[n_query_cols] = &str_callid_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -790,14 +792,14 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= subs->from_tag;
 	n_query_cols++;
-	
+
 	result_cols[pres_uri_col = n_result_cols++] = &str_presentity_uri_col;
 	result_cols[rcseq_col = n_result_cols++] = &str_remote_cseq_col;
 	result_cols[lcseq_col = n_result_cols++] = &str_local_cseq_col;
 	result_cols[version_col = n_result_cols++] = &str_version_col;
 	result_cols[rroute_col = n_result_cols++] = &str_record_route_col;
 
-	if(query_fn(rls_db, query_cols, 0, query_vals, result_cols, 
+	if(query_fn(rls_db, query_cols, 0, query_vals, result_cols,
 			n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
@@ -811,7 +813,7 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 
 	if (nr_rows == 0)
 	{
-		/* no match - this error might not be for RLS */ 
+		/* no match - this error might not be for RLS */
 		LM_INFO( "update_subs_rlsdb: NO MATCH\n" );
 		rls_dbf.free_result(rls_db, result);
 		return(-1);
@@ -851,7 +853,7 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 			rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
-		memcpy(subs->pres_uri.s, 
+		memcpy(subs->pres_uri.s,
 			r_pres_uri, strlen(r_pres_uri));
 		subs->pres_uri.len= strlen(r_pres_uri);
 	}
@@ -866,7 +868,7 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 			rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
-		memcpy(subs->record_route.s, 
+		memcpy(subs->record_route.s,
 			r_record_route, strlen(r_record_route));
 		subs->record_route.len= strlen(r_record_route);
 	}
@@ -880,9 +882,9 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 
 /******************************************************************************/
 
-subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag) 
+subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 {
- 	db_key_t query_cols[4];
+	db_key_t query_cols[4];
 	db_val_t query_vals[4];
 	db_key_t result_cols[22];
 	int n_query_cols = 0, n_result_cols=0;
@@ -895,7 +897,7 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	int r_version_col, r_watcher_user_col, r_watcher_domain_col;
 	int r_expires_col;
 	db1_res_t *result= NULL;
- 	db_val_t *values;
+	db_val_t *values;
 	db_row_t *rows;
 	int nr_rows, size;
 	subs_t *dest;
@@ -914,7 +916,7 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 		LM_ERR("use table failed\n");
 		return(NULL);
 	}
-	
+
 	query_cols[n_query_cols] = &str_callid_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -938,7 +940,7 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= NO_UPDATE_TYPE;
 	n_query_cols++;
-	
+
 	result_cols[r_pres_uri_col=n_result_cols++] = &str_presentity_uri_col;
 	result_cols[r_to_user_col=n_result_cols++] = &str_to_user_col;
 	result_cols[r_to_domain_col=n_result_cols++] = &str_to_domain_col;
@@ -962,7 +964,7 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	result_cols[r_version_col=n_result_cols++] = &str_version_col;
 	result_cols[r_expires_col=n_result_cols++] = &str_expires_col;
 
-	if(query_fn(rls_db, query_cols, 0, query_vals, result_cols, 
+	if(query_fn(rls_db, query_cols, 0, query_vals, result_cols,
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
@@ -976,7 +978,7 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 
 	if (nr_rows == 0)
 	{
-		/* no match */ 
+		/* no match */
 		LM_INFO( "get_dialog_rlsdb No matching records\n" );
 		rls_dbf.free_result(rls_db, result);
 		return(NULL);
@@ -1012,7 +1014,7 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 		+ strlen(VAL_STRING(values+r_reason_col)))*sizeof(char);
 
 	dest= (subs_t*)pkg_malloc(size);
-	
+
 	if(dest== NULL)
 	{
 		LM_ERR( "Can't allocate memory\n" );
@@ -1022,26 +1024,26 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	memset(dest, 0, size);
 	size= sizeof(subs_t);
 
-	CONT_COPYDB(dest, dest->pres_uri, VAL_STRING(values+r_pres_uri_col))
-	CONT_COPYDB(dest, dest->to_user, VAL_STRING(values+r_to_user_col))
-	CONT_COPYDB(dest, dest->to_domain, VAL_STRING(values+r_to_domain_col))
-	CONT_COPYDB(dest, dest->from_user, VAL_STRING(values+r_from_user_col))
-	CONT_COPYDB(dest, dest->from_domain, VAL_STRING(values+r_from_domain_col))
-	CONT_COPYDB(dest, dest->watcher_user, VAL_STRING(values+r_watcher_user_col))
-	CONT_COPYDB(dest, dest->watcher_domain, VAL_STRING(values+r_watcher_domain_col))
-	CONT_COPYDB(dest, dest->to_tag, VAL_STRING(values+r_to_tag_col))
-	CONT_COPYDB(dest, dest->from_tag, VAL_STRING(values+r_from_tag_col))
-	CONT_COPYDB(dest, dest->callid, VAL_STRING(values+r_callid_col))
-	CONT_COPYDB(dest, dest->sockinfo_str, VAL_STRING(values+r_socket_info_col))
-	CONT_COPYDB(dest, dest->local_contact, VAL_STRING(values+r_local_contact_col))
-	CONT_COPYDB(dest, dest->contact, VAL_STRING(values+r_contact_col))
-	CONT_COPYDB(dest, dest->record_route, VAL_STRING(values+r_record_route_col))
+	CONT_COPYDB(dest, dest->pres_uri, VAL_STRING(values+r_pres_uri_col));
+	CONT_COPYDB(dest, dest->to_user, VAL_STRING(values+r_to_user_col));
+	CONT_COPYDB(dest, dest->to_domain, VAL_STRING(values+r_to_domain_col));
+	CONT_COPYDB(dest, dest->from_user, VAL_STRING(values+r_from_user_col));
+	CONT_COPYDB(dest, dest->from_domain, VAL_STRING(values+r_from_domain_col));
+	CONT_COPYDB(dest, dest->watcher_user, VAL_STRING(values+r_watcher_user_col));
+	CONT_COPYDB(dest, dest->watcher_domain, VAL_STRING(values+r_watcher_domain_col));
+	CONT_COPYDB(dest, dest->to_tag, VAL_STRING(values+r_to_tag_col));
+	CONT_COPYDB(dest, dest->from_tag, VAL_STRING(values+r_from_tag_col));
+	CONT_COPYDB(dest, dest->callid, VAL_STRING(values+r_callid_col));
+	CONT_COPYDB(dest, dest->sockinfo_str, VAL_STRING(values+r_socket_info_col));
+	CONT_COPYDB(dest, dest->local_contact, VAL_STRING(values+r_local_contact_col));
+	CONT_COPYDB(dest, dest->contact, VAL_STRING(values+r_contact_col));
+	CONT_COPYDB(dest, dest->record_route, VAL_STRING(values+r_record_route_col));
 
 	if(strlen(VAL_STRING(values+r_event_id_col)) > 0)
-		CONT_COPYDB(dest, dest->event_id, VAL_STRING(values+r_event_id_col))
+		CONT_COPYDB(dest, dest->event_id, VAL_STRING(values+r_event_id_col));
 
 	if(strlen(VAL_STRING(values+r_reason_col)) > 0)
-		CONT_COPYDB(dest, dest->reason, VAL_STRING(values+r_reason_col))
+		CONT_COPYDB(dest, dest->reason, VAL_STRING(values+r_reason_col));
 
 	ev_sname.s= (char *)VAL_STRING(values+r_event_col);
 	ev_sname.len= strlen(ev_sname.s);

@@ -45,6 +45,7 @@
 #include "tcp_options.h"
 #include "core_cmd.h"
 #include "cfg_core.h"
+#include "ppcfg.h"
 
 #ifdef USE_DNS_CACHE
 void dns_cache_debug(rpc_t* rpc, void* ctx);
@@ -72,12 +73,12 @@ static const char* dns_cache_mem_info_doc[] = {
 	0                      /* Method signature(s) */
 };
 static const char* dns_cache_debug_doc[] = {
-	"dns debug  info.",    /* Documentation string */
+	"dns debug info.",    /* Documentation string */
 	0                      /* Method signature(s) */
 };
 
 static const char* dns_cache_debug_all_doc[] = {
-	"complete dns debug  dump",    /* Documentation string */
+	"complete dns debug dump",    /* Documentation string */
 	0                              /* Method signature(s) */
 };
 
@@ -196,7 +197,7 @@ static const char* dst_blst_mem_info_doc[] = {
 	0                                    /* Method signature(s) */
 };
 static const char* dst_blst_debug_doc[] = {
-	"dst blacklist  debug  info.",  /* Documentation string */
+	"dst blacklist debug info.",  /* Documentation string */
 	0                               /* Method signature(s) */
 };
 static const char* dst_blst_view_doc[] = {
@@ -269,7 +270,7 @@ static void system_methodHelp(rpc_t* rpc, void* c)
 		rpc->fault(c, 400, "Method Name Expected");
 		return;
 	}
-	
+
 	r=rpc_lookup(name, strlen(name));
 	if (r==0){
 		rpc->fault(c, 400, "command not found");
@@ -446,23 +447,23 @@ static const char* core_pwd_doc[] = {
 
 static void core_pwd(rpc_t* rpc, void* c)
 {
-        char *cwd_buf;
-        int max_len;
+	char *cwd_buf;
+	int max_len;
 
-        max_len = pathmax();
-        cwd_buf = pkg_malloc(max_len);
-        if (!cwd_buf) {
-                ERR("core_pwd: No memory left\n");
-                rpc->fault(c, 500, "Server Ran Out of Memory");
+	max_len = pathmax();
+	cwd_buf = pkg_malloc(max_len);
+	if (!cwd_buf) {
+		ERR("core_pwd: No memory left\n");
+		rpc->fault(c, 500, "Server Ran Out of Memory");
 		return;
-        }
+	}
 
-        if (getcwd(cwd_buf, max_len)) {
+	if (getcwd(cwd_buf, max_len)) {
 		rpc->add(c, "s", cwd_buf);
-        } else {
+	} else {
 		rpc->fault(c, 500, "getcwd Failed");
-        }
-        pkg_free(cwd_buf);
+	}
+	pkg_free(cwd_buf);
 }
 
 
@@ -474,11 +475,11 @@ static const char* core_arg_doc[] = {
 
 static void core_arg(rpc_t* rpc, void* c)
 {
-        int p;
+	int p;
 
-        for (p = 0; p < my_argc; p++) {
+	for (p = 0; p < my_argc; p++) {
 		if (rpc->add(c, "s", my_argv[p]) < 0) return;
-        }
+	}
 }
 
 
@@ -658,7 +659,7 @@ all:
 
 
 static const char* core_sfmalloc_doc[] = {
-	"Returns sfmalloc debugging  info.",  /* Documentation string */
+	"Returns sfmalloc debugging info.",  /* Documentation string */
 	0                                     /* Method signature(s) */
 };
 
@@ -876,14 +877,16 @@ static const char* core_aliases_list_doc[] = {
 static void core_aliases_list(rpc_t* rpc, void* c)
 {
 	void *hr;
+	void *hs;
 	void *ha;
 	struct host_alias* a;
 
 	rpc->add(c, "{", &hr);
 	rpc->struct_add(hr, "s",
 			"myself_callbacks", is_check_self_func_list_set()?"yes":"no");
+	rpc->struct_add(hr, "[", "aliases", &hs);
 	for(a=aliases; a; a=a->next) {
-		rpc->struct_add(hr, "{", "alias", &ha);
+		rpc->struct_add(hs, "{", "alias", &ha);
 		rpc->struct_add(ha, "sS",
 				"proto",  proto2a(a->proto),
 				"address", &a->alias
@@ -918,7 +921,7 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 	unsigned short proto;
 
 	proto=PROTO_UDP;
-	rpc->add(c, "{", &hr);
+	rpc->add(c, "[", &hr);
 	do{
 		list=get_sock_info_list(proto);
 		for(si=list?*list:0; si; si=si->next){
@@ -941,7 +944,7 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 				rpc->struct_add(ha, "ss",
 						"proto", get_proto_name(proto),
 						"address", si->name.s);
-				if (!si->flags & SI_IS_IP)
+				if (!(si->flags & SI_IS_IP))
 					rpc->struct_add(ha, "s",
 						"ipaddress", si->address_str.s);
 				rpc->struct_add(ha, "sss",
@@ -953,9 +956,50 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 	} while((proto=next_proto(proto)));
 }
 
+/**
+ *
+ */
+static const char* core_modules_doc[] = {
+	"List loaded modules",    /* Documentation string */
+	0                               /* Method signature(s) */
+};
+
+/**
+ * list listen sockets for SIP server
+ */
+static void core_modules(rpc_t* rpc, void* c)
+{
+	sr_module_t* t;
+
+	for(t = get_loaded_modules(); t; t = t->next) {
+		if (rpc->add(c, "s", t->exports.name) < 0) return;
+	}
+}
+
+/**
+ *
+ */
+static const char* core_ppdefines_doc[] = {
+	"List preprocessor defines",    /* Documentation string */
+	0                               /* Method signature(s) */
+};
+
+/**
+ * list listen sockets for SIP server
+ */
+static void core_ppdefines(rpc_t* rpc, void* c)
+{
+	str *ppdef;
+	int i=0;
+
+	while((ppdef=pp_get_define_name(i))!=NULL) {
+		if (rpc->add(c, "s", ppdef->s) < 0) return;
+		i++;
+	}
+}
 
 /*
- * RPC Methods exported by this module
+ * RPC Methods exported by core
  */
 static rpc_export_t core_rpc_methods[] = {
 	{"system.listMethods",     system_listMethods,     system_listMethods_doc,     RET_ARRAY},
@@ -988,8 +1032,10 @@ static rpc_export_t core_rpc_methods[] = {
 	{"core.tcp_list",          core_tcp_list,          core_tcp_list_doc,0},
 	{"core.udp4_raw_info",     core_udp4rawinfo,       core_udp4rawinfo_doc,
 		0},
-	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc,   0},
-	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc,   0},
+	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc, 0},
+	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc, 0},
+	{"core.modules",           core_modules,           core_modules_doc,    RET_ARRAY},
+	{"core.ppdefines",         core_ppdefines,         core_ppdefines_doc,  RET_ARRAY},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},
@@ -1067,8 +1113,7 @@ int register_core_rpcs(void)
 		BUG("failed to register core RPCs\n");
 		goto error;
 	}else if (i>0){
-		ERR("%d duplicate RPCs name detected while registering core RPCs\n",
-			 i);
+		ERR("%d duplicate RPCs name detected while registering core RPCs\n", i);
 		goto error;
 	}
 	return 0;

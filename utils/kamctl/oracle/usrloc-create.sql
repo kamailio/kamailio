@@ -3,7 +3,7 @@ CREATE TABLE location (
     ruid VARCHAR2(64) DEFAULT '',
     username VARCHAR2(64) DEFAULT '',
     domain VARCHAR2(64) DEFAULT NULL,
-    contact VARCHAR2(255) DEFAULT '',
+    contact VARCHAR2(512) DEFAULT '',
     received VARCHAR2(128) DEFAULT NULL,
     path VARCHAR2(512) DEFAULT NULL,
     expires DATE DEFAULT to_date('2030-05-28 21:32:15','yyyy-mm-dd hh24:mi:ss'),
@@ -37,7 +37,7 @@ CREATE INDEX location_account_contact_idx  ON location (username, domain, contac
 CREATE INDEX location_expires_idx  ON location (expires);
 CREATE INDEX location_connection_idx  ON location (server_id, connection_id);
 
-INSERT INTO version (table_name, table_version) values ('location','8');
+INSERT INTO version (table_name, table_version) values ('location','9');
 
 CREATE TABLE location_attrs (
     id NUMBER(10) PRIMARY KEY,

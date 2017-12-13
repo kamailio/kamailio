@@ -271,17 +271,17 @@ static int load_pcres(int action)
 			fclose(f);
 			goto err;
 		}
-		memset(patterns[i], '\0', group_max_size);
+		memset(patterns[i], 0, group_max_size);
 	}
 
 	/* Read the file and extract the patterns */
-	memset(line, '\0', FILE_MAX_LINE);
+	memset(line, 0, FILE_MAX_LINE);
 	i = -1;
 	while (fgets(line, FILE_MAX_LINE, f) != NULL) {
 
 		/* Ignore comments and lines starting by space, tab, CR, LF */
 		if(isspace(line[0]) || line[0]=='#') {
-			memset(line, '\0', FILE_MAX_LINE);
+			memset(line, 0, FILE_MAX_LINE);
 			continue;
 		}
 
@@ -303,7 +303,7 @@ static int load_pcres(int action)
 			}
 			/* Start the regular expression with '(' */
 			patterns[i][0] = '(';
-			memset(line, '\0', FILE_MAX_LINE);
+			memset(line, 0, FILE_MAX_LINE);
 			continue;
 		}
 
@@ -329,7 +329,7 @@ static int load_pcres(int action)
 		/* Append the line to the current pattern */
 		memcpy(patterns[i]+strlen(patterns[i]), line, strlen(line));
 
-		memset(line, '\0', FILE_MAX_LINE);
+		memset(line, 0, FILE_MAX_LINE);
 	}
 	num_pcres_tmp = i + 1;
 
@@ -370,7 +370,8 @@ static int load_pcres(int action)
 	/* Log the group patterns */
 	LM_INFO("num groups = %d\n", num_pcres_tmp);
 	for (i=0; i < num_pcres_tmp; i++) {
-		LM_INFO("<group[%d]>%s</group[%d]> (size = %i)\n", i, patterns[i], i, (int)strlen(patterns[i]));
+		LM_INFO("<group[%d]>%s</group[%d]> (size = %i)\n", i, patterns[i],
+				i, (int)strlen(patterns[i]));
 	}
 
 	/* Temporal pointer of pcres */
@@ -385,14 +386,17 @@ static int load_pcres(int action)
 	/* Compile the patters */
 	for (i=0; i<num_pcres_tmp; i++) {
 
-		pcre_tmp = pcre_compile(patterns[i], pcre_options, &pcre_error, &pcre_erroffset, NULL);
+		pcre_tmp = pcre_compile(patterns[i], pcre_options, &pcre_error,
+				&pcre_erroffset, NULL);
 		if (pcre_tmp == NULL) {
-			LM_ERR("pcre_tmp compilation of '%s' failed at offset %d: %s\n", patterns[i], pcre_erroffset, pcre_error);
+			LM_ERR("pcre_tmp compilation of '%s' failed at offset %d: %s\n",
+					patterns[i], pcre_erroffset, pcre_error);
 			goto err;
 		}
 		pcre_rc = pcre_fullinfo(pcre_tmp, NULL, PCRE_INFO_SIZE, &pcre_size);
 		if (pcre_rc) {
-			printf("pcre_fullinfo on compiled pattern[%i] yielded error: %d\n", i, pcre_rc);
+			printf("pcre_fullinfo on compiled pattern[%i] yielded error: %d\n",
+					i, pcre_rc);
 			goto err;
 		}
 
@@ -420,9 +424,7 @@ static int load_pcres(int action)
 		LM_ERR("no more memory for pcres\n");
 		goto err;
 	}
-	for (i=0; i<num_pcres_tmp; i++) {
-		pcres[i] = NULL;
-	}
+	memset(pcres, 0, sizeof(pcre *) * num_pcres_tmp);
 	for (i=0; i<num_pcres_tmp; i++) {
 		pcre_rc = pcre_fullinfo(pcres_tmp[i], NULL, PCRE_INFO_SIZE, &pcre_size);
 		if ((pcres[i] = shm_malloc(pcre_size)) == 0) {
@@ -439,6 +441,10 @@ static int load_pcres(int action)
 		pkg_free(pcres_tmp[i]);
 	}
 	pkg_free(pcres_tmp);
+	/* Free allocated slots for unused patterns */
+	for (i = num_pcres_tmp; i < max_groups; i++) {
+		pkg_free(patterns[i]);
+	}
 	pkg_free(patterns);
 	lock_release(reload_lock);
 

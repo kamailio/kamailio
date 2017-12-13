@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  *
  */
@@ -26,15 +26,16 @@
 #include "../../core/sr_module.h"
 
 /* export not usable from scripts */
-#define NO_SCRIPT	-1
+#define NO_SCRIPT -1
 
 typedef int (*cfgt_process_route_f)(struct sip_msg *msg, struct action *a);
 
-typedef struct cfgt_api {
+typedef struct cfgt_api
+{
 	cfgt_process_route_f cfgt_process_route;
 } cfgt_api_t;
 
 /*! cfgt API export bind function */
-typedef int (*bind_cfgt_t)(cfgt_api_t* api);
+typedef int (*bind_cfgt_t)(cfgt_api_t *api);
 
 #endif

@@ -46,6 +46,7 @@
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_http.h"
@@ -56,7 +57,7 @@ extern struct tm_binds tmb;
 struct sip_msg *ah_reply = NULL;
 str ah_error = {NULL, 0};
 
-async_http_worker_t *workers;
+async_http_worker_t *workers = NULL;
 int num_workers = 1;
 
 struct query_params ah_params;
@@ -70,6 +71,10 @@ int async_http_init_worker(int prank, async_http_worker_t* worker)
 	LM_DBG("base event %p created\n", worker->evbase);
 
 	worker->g = shm_malloc(sizeof(struct http_m_global));
+	if(worker->g==NULL) {
+		LM_ERR("out of shared memory\n");
+		return -1;
+	}
 	memset(worker->g, 0, sizeof(http_m_global_t));
 	LM_DBG("initialized global struct %p\n", worker->g);
 
@@ -118,23 +123,43 @@ static inline char *strfindcasestrz(str *haystack, char *needlez)
 
 void async_http_cb(struct http_m_reply *reply, void *param)
 {
-	async_query_t *aq;
-	cfg_action_t *act;
+	async_query_t *aq = NULL;
+	cfg_action_t *act = NULL;
+	int ri;
 	unsigned int tindex;
 	unsigned int tlabel;
 	struct cell *t = NULL;
 	char *p;
 	str newbuf = {0, 0};
-	sip_msg_t *fmsg;
+	sip_msg_t *fmsg = NULL;
+	sr_kemi_eng_t *keng = NULL;
+	str cbname = {0, 0};
+	str evname = str_init("http_async_client:callback");
 
-	if (reply->result != NULL) {
-		LM_DBG("query result = %.*s [%d]\n", reply->result->len, reply->result->s, reply->result->len);
-	}
+	aq = param;
 
 	/* clean process-local result variables */
 	ah_error.s = NULL;
 	ah_error.len = 0;
 	memset(ah_reply, 0, sizeof(struct sip_msg));
+
+	keng = sr_kemi_eng_get();
+	if(keng==NULL) {
+		ri = route_lookup(&main_rt, aq->cbname);
+		if(ri<0) {
+			LM_ERR("unable to find route block [%s]\n", aq->cbname);
+			goto done;
+		}
+		act = main_rt.rlist[ri];
+		if(act==NULL) {
+			LM_ERR("empty action lists in route block [%s]\n", aq->cbname);
+			goto done;
+		}
+	}
+
+	if (reply->result != NULL) {
+		LM_DBG("query result = %.*s [%d]\n", reply->result->len, reply->result->s, reply->result->len);
+	}
 
 	/* set process-local result variables */
 	if (reply->result == NULL) {
@@ -185,10 +210,11 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 		}
 	}
 
-	aq = param;
 	strncpy(q_id, aq->id, strlen(aq->id));
 	
-	act = (cfg_action_t*)aq->param;
+	q_id[strlen(aq->id)] = '\0';
+
+	cfg_update();
 
 	if (aq->query_params.suspend_transaction) {
 		tindex = aq->tindex;
@@ -213,14 +239,33 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 
 		LM_DBG("resuming transaction (%d:%d)\n", tindex, tlabel);
 
-		if(act!=NULL)
-			tmb.t_continue(tindex, tlabel, act);
+		if(keng==NULL) {
+			if(act!=NULL) {
+				tmb.t_continue(tindex, tlabel, act);
+			}
+		} else {
+			cbname.s = aq->cbname;
+			cbname.len = aq->cbname_len;
+			tmb.t_continue_cb(tindex, tlabel, &cbname, &evname);
+		}
 	} else {
 		fmsg = faked_msg_next();
-		if (run_top_route(act, fmsg, 0)<0)
-			LM_ERR("failure inside run_top_route\n");
+		if(keng==NULL) {
+			if(act!=NULL) {
+				if (run_top_route(act, fmsg, 0)<0) {
+					LM_ERR("failure inside run_top_route\n");
+				}
+			}
+		} else {
+			cbname.s = aq->cbname;
+			cbname.len = aq->cbname_len;
+			if(keng->froute(fmsg, EVENT_ROUTE, &cbname, &evname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
 	}
 
+done:
 	free_sip_msg(ah_reply);
 	free_async_query(aq);
 
@@ -266,25 +311,43 @@ void notification_socket_cb(int fd, short event, void *arg)
 	}
 	query_params.method  = aq->query_params.method;
 
-	if (aq->query_params.tls_client_cert.s && aq->query_params.tls_client_cert.len > 0) {
-		if (shm_str_dup(&query_params.tls_client_cert, &(aq->query_params.tls_client_cert)) < 0) {
+	if (aq->query_params.tls_client_cert) {
+		len = strlen(aq->query_params.tls_client_cert);
+		query_params.tls_client_cert = shm_malloc(len+1);
+
+		if(query_params.tls_client_cert == NULL) {
 			LM_ERR("Error allocating query_params.tls_client_cert\n");
 			goto done;
 		}
+
+		strncpy(query_params.tls_client_cert, aq->query_params.tls_client_cert, len);
+		query_params.tls_client_cert[len] = '\0';
 	}
 
-	if (aq->query_params.tls_client_key.s && aq->query_params.tls_client_key.len > 0) {
-		if (shm_str_dup(&query_params.tls_client_key, &(aq->query_params.tls_client_key)) < 0) {
+	if (aq->query_params.tls_client_key) {
+		len = strlen(aq->query_params.tls_client_key);
+		query_params.tls_client_key = shm_malloc(len+1);
+
+		if(query_params.tls_client_key == NULL) {
 			LM_ERR("Error allocating query_params.tls_client_key\n");
 			goto done;
 		}
+
+		strncpy(query_params.tls_client_key, aq->query_params.tls_client_key, len);
+		query_params.tls_client_key[len] = '\0';
 	}
 
-	if (aq->query_params.tls_ca_path.s && aq->query_params.tls_ca_path.len > 0) {
-		if (shm_str_dup(&query_params.tls_ca_path, &(aq->query_params.tls_ca_path)) < 0) {
+	if (aq->query_params.tls_ca_path) {
+		len = strlen(aq->query_params.tls_ca_path);
+		query_params.tls_ca_path = shm_malloc(len+1);
+
+		if(query_params.tls_ca_path == NULL) {
 			LM_ERR("Error allocating query_params.tls_ca_path\n");
 			goto done;
 		}
+
+		strncpy(query_params.tls_ca_path, aq->query_params.tls_ca_path, len);
+		query_params.tls_ca_path[len] = '\0';
 	}
 
 	if (aq->query_params.body.s && aq->query_params.body.len > 0) {
@@ -328,20 +391,17 @@ void notification_socket_cb(int fd, short event, void *arg)
 	}
 
 done:
-	if (query_params.tls_client_cert.s && query_params.tls_client_cert.len > 0) {
-		shm_free(query_params.tls_client_cert.s);
-		query_params.tls_client_cert.s = NULL;
-		query_params.tls_client_cert.len = 0;
+	if (query_params.tls_client_cert) {
+		shm_free(query_params.tls_client_cert);
+		query_params.tls_client_cert = NULL;
 	}
-	if (query_params.tls_client_key.s && query_params.tls_client_key.len > 0) {
-		shm_free(query_params.tls_client_key.s);
-		query_params.tls_client_key.s = NULL;
-		query_params.tls_client_key.len = 0;
+	if (query_params.tls_client_key) {
+		shm_free(query_params.tls_client_key);
+		query_params.tls_client_key = NULL;
 	}
-	if (query_params.tls_ca_path.s && query_params.tls_ca_path.len > 0) {
-		shm_free(query_params.tls_ca_path.s);
-		query_params.tls_ca_path.s = NULL;
-		query_params.tls_ca_path.len = 0;
+	if (query_params.tls_ca_path) {
+		shm_free(query_params.tls_ca_path);
+		query_params.tls_ca_path = NULL;
 	}
 	if (query_params.body.s && query_params.body.len > 0) {
 		shm_free(query_params.body.s);
@@ -369,7 +429,7 @@ int init_socket(async_http_worker_t *worker)
 	return (0);
 }
 
-int async_send_query(sip_msg_t *msg, str *query, cfg_action_t *act)
+int async_send_query(sip_msg_t *msg, str *query, str *cbname)
 {
 	async_query_t *aq;
 	unsigned int tindex = 0;
@@ -381,6 +441,11 @@ int async_send_query(sip_msg_t *msg, str *query, cfg_action_t *act)
 
 	if(query==0) {
 		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	if(cbname->len>=MAX_CBNAME_LEN-1) {
+		LM_ERR("callback name is too long: %d / %.*s\n", cbname->len,
+				cbname->len, cbname->s);
 		return -1;
 	}
 
@@ -418,7 +483,9 @@ int async_send_query(sip_msg_t *msg, str *query, cfg_action_t *act)
 		goto error;
 	}
 
-	aq->param = act;
+	memcpy(aq->cbname, cbname->s, cbname->len);
+	aq->cbname[cbname->len] = '\0';
+	aq->cbname_len = cbname->len;
 	aq->tindex = tindex;
 	aq->tlabel = tlabel;
 	
@@ -434,31 +501,46 @@ int async_send_query(sip_msg_t *msg, str *query, cfg_action_t *act)
 	snprintf(q_id, MAX_ID_LEN+1, "%u-%u", (unsigned int)getpid(), q_idx);
 	strncpy(aq->id, q_id, strlen(q_id));
 
-	aq->query_params.tls_client_cert.s = NULL;
-	aq->query_params.tls_client_cert.len = 0;
-	if (ah_params.tls_client_cert.s && ah_params.tls_client_cert.len > 0) {
-		if (shm_str_dup(&aq->query_params.tls_client_cert, &(ah_params.tls_client_cert)) < 0) {
+	aq->query_params.tls_client_cert = NULL;
+	if (ah_params.tls_client_cert) {
+		len = strlen(ah_params.tls_client_cert);
+		aq->query_params.tls_client_cert = shm_malloc(len+1);
+
+		if(aq->query_params.tls_client_cert == NULL) {
 			LM_ERR("Error allocating aq->query_params.tls_client_cert\n");
 			goto error;
 		}
+
+		strncpy(aq->query_params.tls_client_cert, ah_params.tls_client_cert, len);
+		aq->query_params.tls_client_cert[len] = '\0';
 	}
 
-	aq->query_params.tls_client_key.s = NULL;
-	aq->query_params.tls_client_key.len = 0;
-	if (ah_params.tls_client_key.s && ah_params.tls_client_key.len > 0) {
-		if (shm_str_dup(&aq->query_params.tls_client_key, &(ah_params.tls_client_key)) < 0) {
+	aq->query_params.tls_client_key = NULL;
+	if (ah_params.tls_client_key) {
+		len = strlen(ah_params.tls_client_key);
+		aq->query_params.tls_client_key = shm_malloc(len+1);
+
+		if(aq->query_params.tls_client_key == NULL) {
 			LM_ERR("Error allocating aq->query_params.tls_client_key\n");
 			goto error;
 		}
+
+		strncpy(aq->query_params.tls_client_key, ah_params.tls_client_key, len);
+		aq->query_params.tls_client_key[len] = '\0';
 	}
 
-	aq->query_params.tls_ca_path.s = NULL;
-	aq->query_params.tls_ca_path.len = 0;
-	if (ah_params.tls_ca_path.s && ah_params.tls_ca_path.len > 0) {
-		if (shm_str_dup(&aq->query_params.tls_ca_path, &(ah_params.tls_ca_path)) < 0) {
+	aq->query_params.tls_ca_path = NULL;
+	if (ah_params.tls_ca_path) {
+		len = strlen(ah_params.tls_ca_path);
+		aq->query_params.tls_ca_path = shm_malloc(len+1);
+
+		if(aq->query_params.tls_ca_path == NULL) {
 			LM_ERR("Error allocating aq->query_params.tls_ca_path\n");
 			goto error;
 		}
+
+		strncpy(aq->query_params.tls_ca_path, ah_params.tls_ca_path, len);
+		aq->query_params.tls_ca_path[len] = '\0';
 	}
 
 	aq->query_params.body.s = NULL;
@@ -548,6 +630,7 @@ void init_query_params(struct query_params *p) {
 }
 
 void set_query_params(struct query_params *p) {
+	int len;
 	p->headers.len = 0;
 	p->headers.t = NULL;
 	p->tls_verify_host = tls_verify_host;
@@ -557,40 +640,55 @@ void set_query_params(struct query_params *p) {
 	p->method = AH_METH_DEFAULT;
 	p->authmethod = default_authmethod;
 
-	if (p->tls_client_cert.s && p->tls_client_cert.len > 0) {
-		shm_free(p->tls_client_cert.s);
-		p->tls_client_cert.s = NULL;
-		p->tls_client_cert.len = 0;
+	if (p->tls_client_cert) {
+		shm_free(p->tls_client_cert);
+		p->tls_client_cert = NULL;
 	}
-	if (tls_client_cert.s && tls_client_cert.len > 0) {
-		if (shm_str_dup(&p->tls_client_cert, &tls_client_cert) < 0) {
+	if (tls_client_cert) {
+		len = strlen(tls_client_cert);
+		p->tls_client_cert = shm_malloc(len+1);
+
+		if (p->tls_client_cert == NULL) {
 			LM_ERR("Error allocating tls_client_cert\n");
 			return;
 		}
+
+		strncpy(p->tls_client_cert, tls_client_cert, len);
+		p->tls_client_cert[len] = '\0';
 	}
 
-	if (p->tls_client_key.s && p->tls_client_key.len > 0) {
-		shm_free(p->tls_client_key.s);
-		p->tls_client_key.s = NULL;
-		p->tls_client_key.len = 0;
+	if (p->tls_client_key) {
+		shm_free(p->tls_client_key);
+		p->tls_client_key = NULL;
 	}
-	if (tls_client_key.s && tls_client_key.len > 0) {
-		if (shm_str_dup(&p->tls_client_key, &tls_client_key) < 0) {
+	if (tls_client_key) {
+		len = strlen(tls_client_key);
+		p->tls_client_key = shm_malloc(len+1);
+
+		if (p->tls_client_key == NULL) {
 			LM_ERR("Error allocating tls_client_key\n");
 			return;
 		}
+
+		strncpy(p->tls_client_key, tls_client_key, len);
+		p->tls_client_key[len] = '\0';
 	}
 
-	if (p->tls_ca_path.s && p->tls_ca_path.len > 0) {
-		shm_free(p->tls_ca_path.s);
-		p->tls_ca_path.s = NULL;
-		p->tls_ca_path.len = 0;
+	if (p->tls_ca_path) {
+		shm_free(p->tls_ca_path);
+		p->tls_ca_path = NULL;
 	}
-	if (tls_ca_path.s && tls_ca_path.len > 0) {
-		if (shm_str_dup(&p->tls_ca_path, &tls_ca_path) < 0) {
+	if (tls_ca_path) {
+		len = strlen(tls_ca_path);
+		p->tls_ca_path = shm_malloc(len+1);
+
+		if (p->tls_ca_path == NULL) {
 			LM_ERR("Error allocating tls_ca_path\n");
 			return;
 		}
+
+		strncpy(p->tls_ca_path, tls_ca_path, len);
+		p->tls_ca_path[len] = '\0';
 	}
 
 	if (p->body.s && p->body.len > 0) {
@@ -614,7 +712,7 @@ int header_list_add(struct header_list *hl, str* hdr) {
 	char *tmp;
 
 	hl->len++;
-	hl->t = shm_realloc(hl->t, hl->len * sizeof(char*));
+	hl->t = shm_reallocxf(hl->t, hl->len * sizeof(char*));
 	if (!hl->t) {
 		LM_ERR("shm memory allocation failure\n");
 		return -1;

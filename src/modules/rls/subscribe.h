@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -27,8 +27,14 @@
 #include <libxml/parser.h>
 #include "../../core/parser/msg_parser.h"
 
-int rls_handle_subscribe0(struct sip_msg* msg);
-int w_rls_handle_subscribe(struct sip_msg* msg, char* watcher_uri);
-int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain);
+int w_rls_handle_subscribe0(sip_msg_t* msg, char *p1, char *p2);
+int w_rls_handle_subscribe1(sip_msg_t* msg, char* watcher_uri, char *p2);
+int rls_handle_subscribe(struct sip_msg* msg, str watcher_user,
+		str watcher_domain);
+int w_rls_update_subs(struct sip_msg *msg, char *puri, char *pevent);
+
+int ki_rls_handle_subscribe(struct sip_msg* msg);
+int ki_rls_handle_subscribe_uri(sip_msg_t* msg, str *wuri);
+int ki_rls_update_subs(struct sip_msg *msg, str *uri, str *event);
 
 #endif

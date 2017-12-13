@@ -122,7 +122,8 @@ inline static int fm_bmp_first_set(struct fm_block* qm, int start)
 				return (start-bit+r);
 		}
 #endif
-		v=qm->free_bitmap[bmp_idx]>>(bit+1);
+		if((bit+1) < 8*sizeof(v)) v=qm->free_bitmap[bmp_idx]>>(bit+1);
+		else v = 0;
 		return start+1+bit_scan_forward((unsigned long)v);
 	}
 	for (r=bmp_idx+1;r<FM_HASH_BMP_SIZE; r++){
@@ -319,11 +320,11 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 
 	/* make address and size multiple of 8*/
 	start=(char*)ROUNDUP((unsigned long) address);
-	DBG("fm_malloc_init: F_OPTIMIZE=%lu, /ROUNDTO=%lu\n",
+	LM_DBG("F_OPTIMIZE=%lu, /ROUNDTO=%lu\n",
 			F_MALLOC_OPTIMIZE, F_MALLOC_OPTIMIZE/ROUNDTO);
-	DBG("fm_malloc_init: F_HASH_SIZE=%lu, fm_block size=%lu\n",
+	LM_DBG("F_HASH_SIZE=%lu, fm_block size=%lu\n",
 			F_HASH_SIZE, (unsigned long)sizeof(struct fm_block));
-	DBG("fm_malloc_init(%p, %lu), start=%p\n", address, (unsigned long)size,
+	LM_DBG("fm_malloc_init(%p, %lu), start=%p\n", address, (unsigned long)size,
 			start);
 
 	if (size<start-address) return 0;
@@ -538,6 +539,34 @@ finish:
 	return (char*)frag+sizeof(struct fm_frag);
 }
 
+/**
+ * \brief Memory manager allocation function, with 0 filling
+ *
+ * Main memory manager allocation function, provide functionality necessary
+ * for pkg_mallocxz
+ * \param qm memory block
+ * \param size memory allocation size
+ * \return address of allocated memory
+ */
+#ifdef DBG_F_MALLOC
+void* fm_mallocxz(void* qmp, size_t size, const char* file,
+		const char* func, unsigned int line, const char* mname)
+#else
+void* fm_mallocxz(void* qmp, size_t size)
+#endif
+{
+	void *p;
+
+#ifdef DBG_F_MALLOC
+	p = fm_malloc(qmp, size, file, func, line, mname);
+#else
+	p = fm_malloc(qmp, size);
+#endif
+
+	if(p) memset(p, 0, size);
+
+	return p;
+}
 
 #ifdef MEM_JOIN_FREE
 /**
@@ -681,7 +710,7 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 #endif
 	f=(struct fm_frag*) ((char*)p-sizeof(struct fm_frag));
 #ifdef DBG_F_MALLOC
-	MDBG("fm_realloc: realloc'ing frag %p alloc'ed from %s: %s(%ld)\n",
+	MDBG("realloc'ing frag %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
 #endif
 	size=ROUNDUP(size);
@@ -689,7 +718,7 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 	if (f->size > size){
 		/* shrink */
 #ifdef DBG_F_MALLOC
-		MDBG("fm_realloc: shrinking from %lu to %lu\n", f->size,
+		MDBG("shrinking from %lu to %lu\n", f->size,
 				(unsigned long)size);
 		fm_split_frag(qm, f, size, file, "frag. from fm_realloc", line, mname);
 #else
@@ -698,7 +727,7 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 	}else if (f->size<size){
 		/* grow */
 #ifdef DBG_F_MALLOC
-		MDBG("fm_realloc: growing from %lu to %lu\n", f->size,
+		MDBG("growing from %lu to %lu\n", f->size,
 				(unsigned long)size);
 #endif
 		diff=size-f->size;
@@ -729,8 +758,14 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 			ptr=fm_malloc(qm, size);
 	#endif
 			if (ptr){
-				/* copy, need by libssl */
+				/* copy old content */
 				memcpy(ptr, p, orig_size);
+				/* free old buffer */
+	#ifdef DBG_F_MALLOC
+				fm_free(qm, p, file, func, line, mname);
+	#else
+				fm_free(qm, p);
+	#endif
 			} else {
 #ifdef DBG_F_MALLOC
 				LM_ERR("fm_realloc(%p, %lu) called from %s: %s(%d),"
@@ -741,27 +776,60 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 						qm, (unsigned long)size);
 #endif
 			}
-	#ifdef DBG_F_MALLOC
-			fm_free(qm, p, file, func, line, mname);
-	#else
-			fm_free(qm, p);
-	#endif
 			p=ptr;
 		}
 	}else{
 		/* do nothing */
 #ifdef DBG_F_MALLOC
-		MDBG("fm_realloc: doing nothing, same size: %lu - %lu\n",
+		MDBG("doing nothing, same size: %lu - %lu\n",
 				f->size, (unsigned long)size);
 #endif
 	}
 #ifdef DBG_F_MALLOC
-	MDBG("fm_realloc: returning %p\n", p);
+	MDBG("returning pointer value %p\n", p);
 #endif
 	if(qm->type==MEM_TYPE_PKG) {
 		sr_event_exec(SREV_PKG_UPDATE_STATS, 0);
 	}
 	return p;
+}
+
+
+/**
+ * \brief Memory manager realloc function, always freeing old buffer
+ *
+ * Main memory manager realloc function, provide functionality for pkg_reallocxf
+ * \param qm memory block
+ * \param p reallocated memory block
+ * \param size
+ * \return reallocated memory block
+ */
+#ifdef DBG_F_MALLOC
+void* fm_reallocxf(void* qmp, void* p, size_t size,
+					const char* file, const char* func, unsigned int line,
+					const char *mname)
+#else
+void* fm_reallocxf(void* qmp, void* p, size_t size)
+#endif
+{
+	void *r;
+
+#ifdef DBG_F_MALLOC
+	r = fm_realloc(qmp, p, size, file, func, line, mname);
+#else
+	r = fm_realloc(qmp, p, size);
+#endif
+
+	if(!r && p) {
+	#ifdef DBG_F_MALLOC
+		fm_free(qmp, p, file, func, line, mname);
+	#else
+		fm_free(qmp, p);
+	#endif
+
+	}
+
+	return r;
 }
 
 
@@ -1085,8 +1153,10 @@ int fm_malloc_init_pkg_manager(void)
 	ma.mem_pool   = _fm_pkg_pool;
 	ma.mem_block  = _fm_pkg_block;
 	ma.xmalloc    = fm_malloc;
+	ma.xmallocxz  = fm_mallocxz;
 	ma.xfree      = fm_free;
 	ma.xrealloc   = fm_realloc;
+	ma.xreallocxf = fm_reallocxf;
 	ma.xstatus    = fm_status;
 	ma.xinfo      = fm_info;
 	ma.xavailable = fm_available;
@@ -1102,6 +1172,65 @@ int fm_malloc_init_pkg_manager(void)
 /* SHM - shared memory API*/
 static void *_fm_shm_pool = 0;
 static struct fm_block *_fm_shm_block = 0;
+static gen_lock_t* _fm_shm_lock = 0;
+
+#define fm_shm_lock()    lock_get(_fm_shm_lock)
+#define fm_shm_unlock()  lock_release(_fm_shm_lock)
+
+/**
+ *
+ */
+void fm_shm_glock(void* qmp)
+{
+	lock_get(_fm_shm_lock);
+}
+
+/**
+ *
+ */
+void fm_shm_gunlock(void* qmp)
+{
+	lock_release(_fm_shm_lock);
+}
+
+/**
+ *
+ */
+void fm_shm_lock_destroy(void)
+{
+	if (_fm_shm_lock){
+		DBG("destroying the shared memory lock\n");
+		lock_destroy(_fm_shm_lock); /* we don't need to dealloc it*/
+	}
+}
+
+/**
+ * init the core lock
+ */
+int fm_shm_lock_init(void)
+{
+	if (_fm_shm_lock) {
+		LM_DBG("shared memory lock initialized\n");
+		return 0;
+	}
+
+#ifdef DBG_F_MALLOC
+	_fm_shm_lock = fm_malloc(_fm_shm_block, sizeof(gen_lock_t),
+					_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_);
+#else
+	_fm_shm_lock = fm_malloc(_fm_shm_block, sizeof(gen_lock_t));
+#endif
+
+	if (_fm_shm_lock==0){
+		LOG(L_CRIT, "could not allocate lock\n");
+		return -1;
+	}
+	if (lock_init(_fm_shm_lock)==0){
+		LOG(L_CRIT, "could not initialize lock\n");
+		return -1;
+	}
+	return 0;
+}
 
 /*SHM wrappers to sync the access to memory block*/
 #ifdef DBG_F_MALLOC
@@ -1109,96 +1238,129 @@ void* fm_shm_malloc(void* qmp, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
-	shm_lock();
+	fm_shm_lock();
 	r = fm_malloc(qmp, size, file, func, line, mname);
-	shm_unlock();
+	fm_shm_unlock();
+	return r;
+}
+void* fm_shm_mallocxz(void* qmp, size_t size,
+					const char* file, const char* func, unsigned int line, const char* mname)
+{
+	void *r;
+	fm_shm_lock();
+	r = fm_mallocxz(qmp, size, file, func, line, mname);
+	fm_shm_unlock();
 	return r;
 }
 void* fm_shm_realloc(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
-	shm_lock();
+	fm_shm_lock();
 	r = fm_realloc(qmp, p, size, file, func, line, mname);
-	shm_unlock();
+	fm_shm_unlock();
+	return r;
+}
+void* fm_shm_reallocxf(void* qmp, void* p, size_t size,
+					const char* file, const char* func, unsigned int line, const char* mname)
+{
+	void *r;
+	fm_shm_lock();
+	r = fm_reallocxf(qmp, p, size, file, func, line, mname);
+	fm_shm_unlock();
 	return r;
 }
 void* fm_shm_resize(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
-	shm_lock();
+	fm_shm_lock();
 	if(p) fm_free(qmp, p, file, func, line, mname);
 	r = fm_malloc(qmp, size, file, func, line, mname);
-	shm_unlock();
+	fm_shm_unlock();
 	return r;
 }
 void fm_shm_free(void* qmp, void* p, const char* file, const char* func,
 				unsigned int line, const char* mname)
 {
-	shm_lock();
+	fm_shm_lock();
 	fm_free(qmp, p, file, func, line, mname);
-	shm_unlock();
+	fm_shm_unlock();
 }
 #else
 void* fm_shm_malloc(void* qmp, size_t size)
 {
 	void *r;
-	shm_lock();
+	fm_shm_lock();
 	r = fm_malloc(qmp, size);
-	shm_unlock();
+	fm_shm_unlock();
+	return r;
+}
+void* fm_shm_mallocxz(void* qmp, size_t size)
+{
+	void *r;
+	fm_shm_lock();
+	r = fm_mallocxz(qmp, size);
+	fm_shm_unlock();
 	return r;
 }
 void* fm_shm_realloc(void* qmp, void* p, size_t size)
 {
 	void *r;
-	shm_lock();
+	fm_shm_lock();
 	r = fm_realloc(qmp, p, size);
-	shm_unlock();
+	fm_shm_unlock();
+	return r;
+}
+void* fm_shm_reallocxf(void* qmp, void* p, size_t size)
+{
+	void *r;
+	fm_shm_lock();
+	r = fm_reallocxf(qmp, p, size);
+	fm_shm_unlock();
 	return r;
 }
 void* fm_shm_resize(void* qmp, void* p, size_t size)
 {
 	void *r;
-	shm_lock();
+	fm_shm_lock();
 	if(p) fm_free(qmp, p);
 	r = fm_malloc(qmp, size);
-	shm_unlock();
+	fm_shm_unlock();
 	return r;
 }
 void fm_shm_free(void* qmp, void* p)
 {
-	shm_lock();
+	fm_shm_lock();
 	fm_free(qmp, p);
-	shm_unlock();
+	fm_shm_unlock();
 }
 #endif
 void fm_shm_status(void* qmp)
 {
-	shm_lock();
+	fm_shm_lock();
 	fm_status(qmp);
-	shm_unlock();
+	fm_shm_unlock();
 }
 void fm_shm_info(void* qmp, struct mem_info* info)
 {
-	shm_lock();
+	fm_shm_lock();
 	fm_info(qmp, info);
-	shm_unlock();
-
+	fm_shm_unlock();
 }
 unsigned long fm_shm_available(void* qmp)
 {
 	unsigned long r;
-	shm_lock();
+	fm_shm_lock();
 	r = fm_available(qmp);
-	shm_unlock();
+	fm_shm_unlock();
 	return r;
 }
 void fm_shm_sums(void* qmp)
 {
-	shm_lock();
+	fm_shm_lock();
 	fm_sums(qmp);
-	shm_unlock();
+	fm_shm_unlock();
 }
 
 
@@ -1207,6 +1369,7 @@ void fm_shm_sums(void* qmp)
  */
 void fm_malloc_destroy_shm_manager(void)
 {
+	fm_shm_lock_destroy();
 	/*shm pool from core - nothing to do*/
 	_fm_shm_pool = 0;
 	_fm_shm_block = 0;
@@ -1233,10 +1396,12 @@ int fm_malloc_init_shm_manager(void)
 	ma.mem_pool       = _fm_shm_pool;
 	ma.mem_block      = _fm_shm_block;
 	ma.xmalloc        = fm_shm_malloc;
+	ma.xmallocxz      = fm_shm_mallocxz;
 	ma.xmalloc_unsafe = fm_malloc;
 	ma.xfree          = fm_shm_free;
 	ma.xfree_unsafe   = fm_free;
 	ma.xrealloc       = fm_shm_realloc;
+	ma.xreallocxf     = fm_shm_reallocxf;
 	ma.xresize        = fm_shm_resize;
 	ma.xstatus        = fm_shm_status;
 	ma.xinfo          = fm_shm_info;
@@ -1245,12 +1410,14 @@ int fm_malloc_init_shm_manager(void)
 	ma.xdestroy       = fm_malloc_destroy_shm_manager;
 	ma.xmodstats      = fm_mod_get_stats;
 	ma.xfmodstats     = fm_mod_free_stats;
+	ma.xglock         = fm_shm_glock;
+	ma.xgunlock       = fm_shm_gunlock;
 
 	if(shm_init_api(&ma)<0) {
 		LM_ERR("cannot initialize the core shm api\n");
 		return -1;
 	}
-	if(shm_core_lock_init()<0) {
+	if(fm_shm_lock_init()<0) {
 		LM_ERR("cannot initialize the core shm lock\n");
 		return -1;
 	}

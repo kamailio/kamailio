@@ -34,7 +34,7 @@ cat > ../apy_kemi_export.h <<EOF
 #define __APY_KEMI_FLIB_H__
 
 #include <Python.h>
-#include "../../kemi.h"
+#include "../../core/kemi.h"
 
 #define SR_APY_KEMI_EXPORT_SIZE	${KEMI_MAX_SIZE}
 
@@ -83,7 +83,7 @@ cat > ../apy_kemi_export.c <<EOF
 
 #include <Python.h>
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 #include "apy_kemi.h"
 #include "apy_kemi_export.h"
@@ -136,6 +136,9 @@ PyCFunction sr_apy_kemi_export_associate(sr_kemi_t *ket)
 	for(i=0; i<SR_APY_KEMI_EXPORT_SIZE; i++) {
 		if(_sr_apy_kemi_export_list[i].ket==NULL) {
 			_sr_apy_kemi_export_list[i].ket = ket;
+			return _sr_apy_kemi_export_list[i].pfunc;
+		}
+		if(_sr_apy_kemi_export_list[i].ket==ket) {
 			return _sr_apy_kemi_export_list[i].pfunc;
 		}
 	}

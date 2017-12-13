@@ -1019,7 +1019,7 @@ modparam("tm", "callid_matching", 1)
 	<section id="tm.p.pass_provisional_replies">
 	<title><varname>pass_provisional_replies</varname> (integer)</title>
 	<para>
-		If set, TMCB_LOCAL_REPONSE_OUT tm registered callbacks will be called
+		If set, TMCB_LOCAL_RESPONSE_OUT tm registered callbacks will be called
 		also for provisional replies.
 	</para>
 	<para>

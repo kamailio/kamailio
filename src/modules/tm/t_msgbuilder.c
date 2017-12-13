@@ -159,7 +159,9 @@ char *build_local(struct cell *Trans,unsigned int branch,
 					reason->u.e2e_cancel &&
 					!(Trans->flags & T_NO_E2E_CANCEL_REASON)) {
 			/* parse the entire cancel, to get all the Reason headers */
-			parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0);
+			if(parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0)<0) {
+				LM_WARN("failed to parse headers\n");
+			}
 			for(hdr=get_hdr(reason->u.e2e_cancel, HDR_REASON_T), reas1=hdr;
 					hdr; hdr=next_sibling_hdr(hdr)) {
 				/* hdr->len includes CRLF */
@@ -313,7 +315,9 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 					reason->u.e2e_cancel &&
 					!(Trans->flags & T_NO_E2E_CANCEL_REASON)) {
 			/* parse the entire cancel, to get all the Reason headers */
-			parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0);
+			if(parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0)<0) {
+				LM_WARN("failed to parse headers\n");
+			}
 			for(hdr=get_hdr(reason->u.e2e_cancel, HDR_REASON_T), reas1=hdr;
 					hdr; hdr=next_sibling_hdr(hdr)) {
 				/* hdr->len includes CRLF */
@@ -908,7 +912,6 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 	int is_req;
 	struct sip_uri puri;
 	static size_t chklen;
-	int ret = -1;
 
 	/* parse the retr. buffer */
 	memset(&orig_inv, 0, sizeof(struct sip_msg));
@@ -927,14 +930,14 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 		/* the bug is at message assembly */
 		LM_BUG("failed to parse INVITE retr. buffer and/or extract 'To' HF:"
 				"\n%.*s\n", (int)orig_inv.len, orig_inv.buf);
-		goto end;
+		goto error;
 	}
 	if (((struct to_body *)orig_inv.to->parsed)->tag_value.len) {
 		LM_DBG("building ACK for in-dialog INVITE (using RS in orig. INV.)\n");
 		if (parse_headers(&orig_inv, HDR_EOH_F, 0) < 0) {
 			LM_BUG("failed to parse INVITE retr. buffer to EOH:"
 					"\n%.*s\n", (int)orig_inv.len, orig_inv.buf);
-			goto end;
+			goto error;
 		}
 		sipmsg = &orig_inv;
 		is_req = 1;
@@ -947,7 +950,7 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 	/* extract the route set */
 	if (get_uac_rs(sipmsg, is_req, &rtset) < 0) {
 		LM_ERR("failed to extract route set.\n");
-		goto end;
+		goto error;
 	}
 
 	if (! rtset) { /* No routes */
@@ -957,7 +960,7 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 		if (parse_uri(rtset->ptr->nameaddr.uri.s, rtset->ptr->nameaddr.uri.len,
 				&puri) < 0) {
 			LM_ERR("failed to parse first route in set.\n");
-			goto end;
+			goto error;
 		}
 
 		if (puri.lr.s) { /* Next hop is loose router */
@@ -989,7 +992,7 @@ eval_flags:
 			} else {
 				LM_ERR("failed to establish what kind of router the next "
 						"hop is.\n");
-				goto end;
+				goto error;
 			}
 			break;
 		case F_RB_NH_LOOSE:
@@ -1000,7 +1003,7 @@ eval_flags:
 			/* find ptr to last route body that contains the (possibly) old
 			 * remote target
 			 */
-			for (t = rtset, prev_t = t; t->next; prev_t = t, t = t->next)
+			for (t = rtset, prev_t = NULL; t->next; prev_t = t, t = t->next)
 				;
 			if ((t->ptr->len == contact->len) &&
 					(memcmp(t->ptr->nameaddr.name.s, contact->s,
@@ -1017,14 +1020,21 @@ eval_flags:
 				chklen = sizeof(struct rte) + sizeof(rr_t);
 				if (! (t = pkg_malloc(chklen))) {
 					ERR("out of pkg memory (%d required)\n", (int)chklen);
-					goto end;
+					/* last element was freed, unlink it */
+					if(prev_t == NULL) {
+						/* there is only one elem in route set: the remote target */
+						rtset = NULL;
+					} else {
+						prev_t->next = NULL;
+					}
+					goto error;
 				}
 				/* this way, .free_rr is also set to 0 (!!!) */
 				memset(t, 0, chklen);
 				((rr_t *)&t[1])->nameaddr.name = *contact;
 				((rr_t *)&t[1])->len = contact->len;
 				/* chain the new route elem in set */
-				if (prev_t == rtset)
+				if (prev_t == NULL)
 					/* there is only one elem in route set: the remote target */
 					rtset = t;
 				else
@@ -1042,19 +1052,21 @@ eval_flags:
 #ifdef EXTRA_DEBUG
 			abort();
 #else
-			goto end;
+			goto error;
 #endif
 		}
 	}
 
 	*list = rtset;
-	/* all went well */
-	ret = 0;
-end:
 	free_sip_msg(&orig_inv);
-	if (ret < 0)
+	/* all went well */
+	return 0;
+
+error:
+	free_sip_msg(&orig_inv);
+	if (rtset)
 		free_rte_list(rtset);
-	return ret;
+	return -1;
 }
 
 /*
@@ -1620,6 +1632,8 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 #ifdef EXTRA_DEBUG
 	assert(w-buf == *len);
 #endif
+
+	memapp(w, "\0", 1);
 
 	pkg_free(via.s);
 	return buf;

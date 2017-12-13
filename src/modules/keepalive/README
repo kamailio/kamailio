@@ -31,11 +31,22 @@ Guillaume Bour
 
                     2.4.1. is_alive(destination)
 
+   2. Developer Guide
+
+        1. Available Functions
+
+              1.1. add_destination(uri, owner, flags, [callback,
+                      [user_attr]])
+
+              1.2. Examples
+
    List of Examples
 
    1.1. Set ping_interval parameter
    1.2. Set destination parameter
    1.3. is_alive() usage
+   2.1. Loading KeepAlive module's API from another module, adding a
+          destination to monitor & registering a callback
 
 Chapter 1. Admin Guide
 
@@ -63,7 +74,7 @@ Chapter 1. Admin Guide
    module (which was the initial source for this module).
 
    As an example of usage by other modules, see drouting, which was
-   enahnced to use this module to monitor its gateways.
+   enhanced to use this module to monitor its gateways.
 
 2. Dependencies
 
@@ -93,7 +104,7 @@ Chapter 1. Admin Guide
 
 2.3.1. ping_interval (integer)
 
-   Interval requests are sent to destinations (in seconds)
+   Define the interval (in seconds) ping requests are sent to destinations
 
    Default value is 30 seconds.
 
@@ -104,7 +115,7 @@ modparam("keepalive", "ping_interval", 10)
 
 2.3.2. destination (string)
 
-   Allows to specify statically destinations you want to monitor
+   Allows to statically define destinations you want to monitor
 
    Example 1.2. Set destination parameter
 ...
@@ -116,16 +127,106 @@ modparam("keepalive", "destination", "sip.provider.com")
 
 2.4.1.  is_alive(destination)
 
-   Get destination status
+   Get destination status.
 
-   Parameter “destination” is destination you want to check status
+   The Parameter destination is destination you want to check status
 
-   Return value: 1 if destination is up, 2 if destination is down, -1 on
-   error.
+   Returned value:
+     * 1 if destination is up
+     * 2 if destination is down
+     * -1 on error
 
    This function can be used from ANY_ROUTE.
 
    Example 1.3. is_alive() usage
 ...
-is_alive("192.168.10.20");
+if(is_alive("192.168.10.20") == 1) {
+  // do stuff
+};
+...
+
+Chapter 2. Developer Guide
+
+   Table of Contents
+
+   1. Available Functions
+
+        1.1. add_destination(uri, owner, flags, [callback, [user_attr]])
+        1.2. Examples
+
+   The KeepAlive module provides an internal API to be used by other
+   Kamailio modules. This API offers support for destinations monitoring.
+
+   For internal (non-script) usage, the KeepAlive module offers to other
+   module the possibility to register callback functions to be executed
+   for each destination's status change.
+
+1. Available Functions
+
+   1.1. add_destination(uri, owner, flags, [callback, [user_attr]])
+   1.2. Examples
+
+1.1.  add_destination(uri, owner, flags, [callback, [user_attr]])
+
+   This function registers a new destination to monitor. Monitoring of the
+   destination starts as soon as it returns with success (0 value).
+
+   Meaning of the parameters is as follows:
+     * uri (string) - address of destination to monitor. Valid format is
+       [proto:]ip[:port], with:
+          + proto being one of sip or sips (SIP over TLS). If omitted, sip
+            is used by default
+          + port being optional (using default standard port, 5060 for sip
+            and 5061 for sips)
+     * owner (string) - module name “owning” the destination (for
+       information purpose)
+     * flags (integer) - destination flags (unused for now, use 0 value)
+     * callback (ka_statechanged_f, optional) - callback function,
+       executed on destination's state change.
+       The callback function is of type void (*ka_statechanged_f)(str
+       *uri, int state, void *user_attr);. Use NULL to set no callback.
+       destination's state value is one of:
+          + 0 - unknown state (this is the destination state at first,
+            waiting first ping replies or timeout)
+          + 1 - destination is UP
+          + 2 - destination is DOWN
+     * user_attr (void * pointer, optional) - If callback function is
+       setup, this parameter will be forwarded to it, as last parameter.
+       Use NULL to set no user_attr parameter.
+
+   Returned values:
+     * 0 if ok
+     * -1 if an error occured
+
+1.2. Examples
+
+   Example 2.1. Loading KeepAlive module's API from another module, adding
+   a destination to monitor & registering a callback
+...
+#include "../keepalive/api.h"
+...
+keepalive_api_t ka_api;
+...
+...
+/* loading keepalive API */
+if (bind_keepalive( &ka_api ) != 0) {
+    LM_ERR("can't load KeepAlive API\n");
+    goto error;
+}
+...
+...
+/* callback function */
+void my_callback(str uri, int state, void *user_attr) {
+
+        printf("%.*s new state is: %d\n", uri.len, uri.str, state)
+}
+
+/* register a new destination */
+str dest  = str_init("sip:192.168.10.21:5060");
+str owner = str_init("mymodule");
+
+if (ka_api.add_destination(dest, owner, 0, my_callback, NULL) != 0) {
+    LM_ERR("can't add destination\n");
+    goto error;
+}
 ...

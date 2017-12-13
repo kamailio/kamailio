@@ -137,7 +137,8 @@ Richard Fuchs
               5.4. rtpengine_delete([flags])
               5.5. rtpengine_query([flags])
               5.6. rtpengine_manage([flags])
-              5.7. start_recording()
+              5.7. start_recording([flags])
+              5.8. stop_recording([flags])
 
         6. Exported Pseudo Variables
 
@@ -231,12 +232,13 @@ Richard Fuchs
    1.74. rtpengine_query usage
    1.75. rtpengine_manage usage
    1.76. start_recording usage
-   1.77. $rtpstat Usage
-   1.78. rtpengine.reload usage
-   1.79. rtpengine.enable usage
-   1.80. rtpengine.show usage
-   1.81. rtpengine.ping usage
-   1.82. rtpengine.get_hash_total usage
+   1.77. stop_recording usage
+   1.78. $rtpstat Usage
+   1.79. rtpengine.reload usage
+   1.80. rtpengine.enable usage
+   1.81. rtpengine.show usage
+   1.82. rtpengine.ping usage
+   1.83. rtpengine.get_hash_total usage
 
 Chapter 1. Admin Guide
 
@@ -328,7 +330,8 @@ Chapter 1. Admin Guide
         5.4. rtpengine_delete([flags])
         5.5. rtpengine_query([flags])
         5.6. rtpengine_manage([flags])
-        5.7. start_recording()
+        5.7. start_recording([flags])
+        5.8. stop_recording([flags])
 
    6. Exported Pseudo Variables
 
@@ -1718,7 +1721,8 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
    5.4. rtpengine_delete([flags])
    5.5. rtpengine_query([flags])
    5.6. rtpengine_manage([flags])
-   5.7. start_recording()
+   5.7. start_recording([flags])
+   5.8. stop_recording([flags])
 
 5.1.  set_rtpengine_set(setid[, setid])
 
@@ -1959,6 +1963,11 @@ rtpengine_offer();
             the Sipwise rtpengine proxy. This is especially useful when
             the first call leg is handled by some rtpengine machine while
             the second call leg is handled by other rtpengine machine.
+          + record-call=on - instructs RTPEngine to record the session.
+            Use it in rtpengine_offer() to start recording immediately and
+            save the call metadata, as alternative to start_recording().
+       Check also the documentation of RTPEngine, these flags are
+       documented there as well: https://github.com/sipwise/rtpengine.
 
    This function can be used from ANY_ROUTE.
 
@@ -2075,16 +2084,42 @@ rtpengine_query();
 rtpengine_manage();
 ...
 
-5.7.  start_recording()
+5.7.  start_recording([flags])
 
-   This function will send a signal to the RTP proxy to record the RTP
-   stream on the RTP proxy.
+   This function will send a signal to the RTP relay to record the RTP
+   stream flowing through it. See also the option “record-call=on” for
+   rtpengine_manage()/rtpengine_offer(), which offers an alternative for
+   call recording, saving also call metadata from SDP.
+
+   It can take the same parameters as rtpengine_manage(). The flags
+   parameter to start_recording can be a configuration variable containing
+   the flags as a string. The call-id flag can be used to start recording
+   for a different call.
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
    Example 1.76. start_recording usage
 ...
 start_recording();
+...
+
+5.8.  stop_recording([flags])
+
+   This function will send a signal to the RTP relay to stop recording the
+   RTP stream flowing through it. See also the option “record-call=off”
+   for rtpengine_manage()/rtpengine_offer(), which offers an alternative
+   for call recording.
+
+   It can take the same parameters as rtpengine_manage(). The flags
+   parameter to start_recording can be a configuration variable containing
+   the flags as a string. The call-id flag can be used to stop recording
+   for a different call.
+
+   This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
+
+   Example 1.77. stop_recording usage
+...
+stop_recording();
 ...
 
 6. Exported Pseudo Variables
@@ -2098,7 +2133,7 @@ start_recording();
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.77. $rtpstat Usage
+   Example 1.78. $rtpstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -2121,7 +2156,7 @@ start_recording();
    is enabled, the sessions are still allowed to finish for the hidden old
    nodes.
 
-   Example 1.78.  rtpengine.reload usage
+   Example 1.79.  rtpengine.reload usage
 ...
 $ kamcmd rtpengine.reload
 ...
@@ -2152,7 +2187,7 @@ $ kamcmd rtpengine.reload
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.79.  rtpengine.enable usage
+   Example 1.80.  rtpengine.enable usage
 ...
 $ kamcmd rtpengine.enable udp:192.168.2.133:8081 0
 $ kamcmd rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
@@ -2175,7 +2210,7 @@ $ kamcmd rtpengine.enable all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.80.  rtpengine.show usage
+   Example 1.81.  rtpengine.show usage
 ...
 $ kamcmd rtpengine.show udp:192.168.2.133:8081
 $ kamcmd rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2195,7 +2230,7 @@ $ kamcmd rtpengine.show all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.81.  rtpengine.ping usage
+   Example 1.82.  rtpengine.ping usage
 ...
 $ kamcmd rtpengine.ping udp:192.168.2.133:8081
 $ kamcmd rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2207,7 +2242,7 @@ $ kamcmd rtpengine.ping all
    Print the total number of hash entries in the hash table at a given
    moment.
 
-   Example 1.82.  rtpengine.get_hash_total usage
+   Example 1.83.  rtpengine.get_hash_total usage
 ...
 $ kamcmd rtpengine.get_hash_total
 ...

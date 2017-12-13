@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Carlos Ruiz Díaz (caruizdiaz.com),
  *                    ConexionGroup (www.conexiongroup.com)
  *
@@ -29,56 +27,63 @@
 #include "../../core/str_hash.h"
 #include "../../core/parser/parse_rr.h"
 
-#define str_shm_free_if_not_null(_var_) if (_var_.s != NULL)  { shm_free(_var_.s); _var_.s = NULL; _var_.len = 0; }
+#define str_shm_free_if_not_null(_var_) \
+	if(_var_.s != NULL) {               \
+		shm_free(_var_.s);              \
+		_var_.s = NULL;                 \
+		_var_.len = 0;                  \
+	}
 
 /*!
  * \brief Init a cnxcc_lock 
  * \param _entry locked entry
  */
 #define cnxcc_lock_init(_entry) \
-	lock_init(&(_entry).lock); \
+	lock_init(&(_entry).lock);  \
 	(_entry).rec_lock_level = 0;
 
 /*!
  * \brief Set a cnxcc lock (re-entrant)
  * \param _entry locked entry
  */
-#define cnxcc_lock(_entry) \
-        do { \
-            int mypid; \
-            mypid = my_pid(); \
-            if (likely(atomic_get( &(_entry).locker_pid) != mypid)) { \
-                lock_get( &(_entry).lock); \
-                atomic_set( &(_entry).locker_pid, mypid); \
-            } else { \
-                /* locked within the same process that executed us */ \
-                (_entry).rec_lock_level++; \
-            } \
-        } while(0)
+#define cnxcc_lock(_entry)                                        \
+	do {                                                          \
+		int mypid;                                                \
+		mypid = my_pid();                                         \
+		if(likely(atomic_get(&(_entry).locker_pid) != mypid)) {   \
+			lock_get(&(_entry).lock);                             \
+			atomic_set(&(_entry).locker_pid, mypid);              \
+		} else {                                                  \
+			/* locked within the same process that executed us */ \
+			(_entry).rec_lock_level++;                            \
+		}                                                         \
+	} while(0)
 
 
 /*!
  * \brief Release a cnxcc lock
  * \param _entry locked entry
  */
-#define cnxcc_unlock(_entry) \
-        do { \
-            if (likely((_entry).rec_lock_level == 0)) { \
-                atomic_set( &(_entry).locker_pid, 0); \
-                lock_release( &(_entry).lock); \
-            } else  { \
-                /* recursive locked => decrease lock count */ \
-                (_entry).rec_lock_level--; \
-            } \
-        } while(0)
+#define cnxcc_unlock(_entry)                              \
+	do {                                                  \
+		if(likely((_entry).rec_lock_level == 0)) {        \
+			atomic_set(&(_entry).locker_pid, 0);          \
+			lock_release(&(_entry).lock);                 \
+		} else {                                          \
+			/* recursive locked => decrease lock count */ \
+			(_entry).rec_lock_level--;                    \
+		}                                                 \
+	} while(0)
 
-typedef struct cnxcc_lock {
+typedef struct cnxcc_lock
+{
 	gen_lock_t lock;
 	atomic_t locker_pid;
 	int rec_lock_level;
 } cnxcc_lock_t;
 
-typedef struct stats {
+typedef struct stats
+{
 	unsigned int total;
 	unsigned int active;
 	unsigned int dropped;
@@ -96,7 +101,8 @@ typedef enum credit_type {
 	CREDIT_CHANNEL
 } credit_type_t;
 
-typedef struct hash_tables {
+typedef struct hash_tables
+{
 	struct str_hash_table *credit_data_by_client;
 	struct str_hash_table *call_data_by_cid;
 
@@ -105,7 +111,8 @@ typedef struct hash_tables {
 
 struct redis;
 
-typedef struct data {
+typedef struct data
+{
 	cnxcc_lock_t lock;
 
 	hash_tables_t time;
@@ -130,7 +137,8 @@ typedef struct data {
 	int check_period;
 
 	str redis_cnn_str;
-	struct {
+	struct
+	{
 		char host[40];
 		int port;
 		int db;
@@ -139,7 +147,8 @@ typedef struct data {
 
 } data_t;
 
-typedef struct sip_data {
+typedef struct sip_data
+{
 	str callid;
 	str from_uri;
 	str from_tag;
@@ -147,7 +156,8 @@ typedef struct sip_data {
 	str to_tag;
 } sip_data_t;
 
-typedef struct money_spec_data {
+typedef struct money_spec_data
+{
 	double cost_per_second;
 	int initial_pulse;
 	int final_pulse;
@@ -155,7 +165,8 @@ typedef struct money_spec_data {
 } money_spec_data_t;
 
 struct call;
-typedef struct call {
+typedef struct call
+{
 	struct call *prev;
 	struct call *next;
 
@@ -176,13 +187,15 @@ typedef struct call {
 	sip_data_t sip_data;
 } call_t;
 
-typedef struct call_array {
+typedef struct call_array
+{
 	call_t *array;
 	int length;
 
 } call_array_t;
 
-typedef struct credit_data {
+typedef struct credit_data
+{
 	cnxcc_lock_t lock;
 
 	double max_amount;
@@ -197,7 +210,7 @@ typedef struct credit_data {
 
 	char *str_id;
 	// flag to mark this instance in the process of being eliminated
-	int deallocating:1;
+	int deallocating : 1;
 } credit_data_t;
 
 

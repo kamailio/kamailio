@@ -291,30 +291,46 @@ static void domain_rpc_dump(rpc_t *rpc, void *ctx)
 	struct domain_list *np;
 	struct attr_list *ap;
 	struct domain_list **ht;
+	void *rt;
+	void *at;
 	void *st;
 
 	if(hash_table == 0 || *hash_table == 0) {
 		rpc->fault(ctx, 404, "Server Domain Cache Empty");
 		return;
 	}
+	if(rpc->add(ctx, "{", &rt) < 0) {
+		rpc->fault(ctx, 500, "Failed to create root struct");
+		return;
+	}
+	if(rpc->struct_add(rt, "[", "domains", &at) < 0) {
+		rpc->fault(ctx, 500, "Failed to create domains struct");
+		return;
+	}
+
 	ht = *hash_table;
 	for(i = 0; i < DOM_HASH_SIZE; i++) {
 		np = ht[i];
 		while(np) {
-			if(rpc->add(ctx, "{", &st) < 0)
+			if(rpc->array_add(at, "{", &st) < 0)
 				return;
 			rpc->struct_add(st, "SS", "domain", &np->domain, "did", &np->did);
 			np = np->next;
 		}
 	}
+	if(rpc->struct_add(rt, "[", "attributes", &at) < 0) {
+		rpc->fault(ctx, 500, "Failed to create attributes struct");
+		return;
+	}
 	np = ht[DOM_HASH_SIZE];
 	while(np) {
-		if(rpc->add(ctx, "{", &st) < 0)
+		if(rpc->array_add(at, "{", &st) < 0)
 			return;
 		rpc->struct_add(st, "S", "did", &np->did);
+		rpc->struct_add(st, "[", "attrs", &st);
 		ap = np->attrs;
 		while(ap) {
-			rpc->struct_add(st, "S", "attr", &ap->name);
+			rpc->array_add(st, "S", &ap->name);
 			ap = ap->next;
 		}
 		np = np->next;
@@ -326,7 +342,8 @@ static void domain_rpc_dump(rpc_t *rpc, void *ctx)
 
 rpc_export_t domain_rpc_list[] = {
 		{"domain.reload", domain_rpc_reload, domain_rpc_reload_doc, 0},
-		{"domain.dump", domain_rpc_dump, domain_rpc_dump_doc, 0}, {0, 0, 0, 0}
+		{"domain.dump", domain_rpc_dump, domain_rpc_dump_doc, 0},
+		{0, 0, 0, 0}
 };
 
 static int domain_init_rpc(void)

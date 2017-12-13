@@ -1,7 +1,5 @@
 /*
- * $Id: notify_body.h 1337 2006-12-07 18:05:05Z bogdan_iancu $
- *
- * presence_dialoginfo module -  
+ * presence_dialoginfo module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  * Copyright (C) 2008 Klaus Darilion, IPCom
@@ -18,17 +16,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2008-08-25  initial version (kd)
  */
 
 /*! \file
- * \brief Kamailio presence dialog-info  :: 
+ * \brief Kamailio presence dialog-info  ::
  * \ref notify_body.c
  * \ingroup presence_dialoginfo
  */

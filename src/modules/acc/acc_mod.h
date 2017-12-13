@@ -53,14 +53,6 @@ extern int cdr_start_on_confirmed;
 extern int cdr_log_facility;
 extern int cdr_expired_dlg_enable;
 
-#ifdef DIAM_ACC
-#include "diam_tcp.h"
-extern rd_buf_t *rb;
-extern int diameter_flag;
-extern int diameter_missed_flag;
-#endif
-
-#ifdef SQL_ACC
 extern int db_flag;
 extern int db_missed_flag;
 
@@ -81,7 +73,6 @@ extern str acc_sipreason_col;
 extern str acc_time_col;
 
 extern int acc_db_insert_mode;
-#endif /* SQL_ACC */
 
 /* time mode */
 extern int acc_time_mode;

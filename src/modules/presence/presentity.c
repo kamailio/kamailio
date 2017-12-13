@@ -425,7 +425,9 @@ int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog
 
 				LM_WARN("Presentity already exists - deleting it\n");
 
-				delete_presentity(&old_presentity);
+				if(delete_presentity(&old_presentity)<0) {
+					LM_ERR("failed to delete presentity\n");
+				}
 
 				pa_dbf.free_result(pa_db, result);
 				result = NULL;
@@ -513,6 +515,7 @@ int get_dialog_state(presentity_t* presentity, char** state)
 		return 0;
 	}
 
+	parse_state_result = 0;
 	// Loop the rows returned from the DB
 	for (i=0; i < result->n; i++)
 	{
@@ -524,15 +527,17 @@ int get_dialog_state(presentity_t* presentity, char** state)
 		parse_state_result = parse_dialog_state_from_body(tmp_db_body,
 				&db_is_dialog, state);
 
-		pa_dbf.free_result(pa_db, result);
-		result = NULL;
-
-		return parse_state_result;
+		if(parse_state_result==0) {
+			/* successful parsing */
+			pa_dbf.free_result(pa_db, result);
+			result = NULL;
+			return parse_state_result;
+		}
 	}
 
 	pa_dbf.free_result(pa_db, result);
 	result = NULL;
-	return 0;
+	return parse_state_result;
 }
 
 int is_dialog_terminated(presentity_t* presentity)
@@ -1148,9 +1153,12 @@ done:
 		if(rules_doc->s)
 			pkg_free(rules_doc->s);
 		pkg_free(rules_doc);
+		rules_doc = NULL;
 	}
-	if(pres_uri.s)
+	if(pres_uri.s) {
 		pkg_free(pres_uri.s);
+		pres_uri.s = NULL;
+	}
 
 	if (pa_dbf.end_transaction)
 	{
@@ -1189,7 +1197,6 @@ error:
 	}
 	if(pres_uri.s) {
 		pkg_free(pres_uri.s);
-		pres_uri.s = NULL;
 	}
 
 	if (pa_dbf.abort_transaction) {

@@ -126,6 +126,7 @@ static const char *command_strings[] = {
 	[OP_START_RECORDING]	= "start recording",
 	[OP_QUERY]		= "query",
 	[OP_PING]		= "ping",
+	[OP_STOP_RECORDING]	= "stop recording",
 };
 
 struct minmax_mos_stats {
@@ -166,6 +167,7 @@ struct minmax_stats_vals {
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
 static int start_recording_f(struct sip_msg *, char *, char *);
+static int stop_recording_f(struct sip_msg *, char *, char *);
 static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
@@ -282,6 +284,15 @@ static cmd_export_t cmds[] = {
 	{"start_recording",	(cmd_function)start_recording_f,	0,
 		0, 0,
 		ANY_ROUTE },
+	{"start_recording",	(cmd_function)start_recording_f,	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"stop_recording",	(cmd_function)stop_recording_f, 	0,
+		0, 0,
+		ANY_ROUTE },
+	{"stop_recording",	(cmd_function)stop_recording_f, 	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	0,
 		0, 0,
 		ANY_ROUTE},
@@ -568,7 +579,10 @@ static int bind_force_send_ip(int sock_idx)
 			memset(&ip4addr, 0, sizeof(ip4addr));
 			ip4addr.sin_family = AF_INET;
 			ip4addr.sin_port = htons(0);
-			inet_pton(AF_INET, force_send_ip_str, &ip4addr.sin_addr);
+			if (inet_pton(AF_INET, force_send_ip_str, &ip4addr.sin_addr) != 1) {
+				LM_ERR("failed to parse IPv4 address %s\n", force_send_ip_str);
+				return -1;
+			}
 
 			if (bind(rtpp_socks[sock_idx], (struct sockaddr*)&ip4addr, sizeof(ip4addr)) < 0) {
 				LM_ERR("can't bind socket to required ipv4 interface\n");
@@ -576,9 +590,12 @@ static int bind_force_send_ip(int sock_idx)
 			}
 
 			memset(&tmp, 0, sizeof(tmp));
-			getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp, &sock_len);
-			inet_ntop(AF_INET, &tmp.sin_addr, str_addr, INET_ADDRSTRLEN);
-			LM_DBG("Binding on %s:%d\n", str_addr, ntohs(tmp.sin_port));
+			if (getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp, &sock_len))
+				LM_ERR("could not determine local socket name\n");
+			else {
+				inet_ntop(AF_INET, &tmp.sin_addr, str_addr, INET_ADDRSTRLEN);
+				LM_DBG("Binding on %s:%d\n", str_addr, ntohs(tmp.sin_port));
+			}
 
 			break;
 
@@ -591,7 +608,10 @@ static int bind_force_send_ip(int sock_idx)
 			ip6addr.sin6_family = AF_INET6;
 			ip6addr.sin6_port = htons(0);
 			ip6addr.sin6_scope_id = scope;
-			inet_pton(AF_INET6, force_send_ip_str, &ip6addr.sin6_addr);
+			if (inet_pton(AF_INET6, force_send_ip_str, &ip6addr.sin6_addr) != 1) {
+				LM_ERR("failed to parse IPv6 address %s\n", force_send_ip_str);
+				return -1;
+			}
 
 			if ((ret = bind(rtpp_socks[sock_idx], (struct sockaddr*)&ip6addr, sizeof(ip6addr))) < 0) {
 				LM_ERR("can't bind socket to required ipv6 interface\n");
@@ -600,9 +620,12 @@ static int bind_force_send_ip(int sock_idx)
 			}
 
 			memset(&tmp6, 0, sizeof(tmp6));
-			getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp6, &sock_len);
-			inet_ntop(AF_INET6, &tmp6.sin6_addr, str_addr6, INET6_ADDRSTRLEN);
-			LM_DBG("Binding on ipv6 %s:%d\n", str_addr6, ntohs(tmp6.sin6_port));
+			if (getsockname(rtpp_socks[sock_idx], (struct sockaddr *) &tmp6, &sock_len))
+				LM_ERR("could not determine local socket name\n");
+			else {
+				inet_ntop(AF_INET6, &tmp6.sin6_addr, str_addr6, INET6_ADDRSTRLEN);
+				LM_DBG("Binding on ipv6 %s:%d\n", str_addr6, ntohs(tmp6.sin6_port));
+			}
 
 			break;
 
@@ -659,7 +682,7 @@ static int rtpengine_set_store(modparam_t type, void * val){
 			return -1;
 		}
 	} else {/*realloc to make room for the current set*/
-		rtpp_strings = (char**)pkg_realloc(rtpp_strings, (rtpp_sets+1)* sizeof(char*));
+		rtpp_strings = (char**)pkg_reallocxf(rtpp_strings, (rtpp_sets+1)* sizeof(char*));
 		if(!rtpp_strings){
 			LM_ERR("no pkg memory left\n");
 			return -1;
@@ -710,11 +733,13 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 	unsigned int my_current_id = 0;
 	int new_list;
 
+#if DEFAULT_RTPP_SET_ID > 0
 	if (set_id < DEFAULT_RTPP_SET_ID )
 	{
 		LM_ERR(" invalid rtpproxy set value [%u]\n", set_id);
 		return NULL;
 	}
+#endif
 
 	my_current_id = set_id;
 	/*search for the current_id*/
@@ -881,7 +906,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 			p1++;
 		}
 
-		if (p1 != NULL && p1 != '\0') {
+		if (p1 != NULL && p1[0] != '\0') {
 			s1.s = p1;
 			s1.len = strlen(p1);
 			if (str2int(&s1, &port) < 0 || port > 0xFFFF) {
@@ -1032,11 +1057,13 @@ static int fixup_set_id(void ** param, int param_no)
 		int_val = pv_locate_name(&s);
 		if(int_val<0 || int_val!=s.len) {
 			LM_ERR("invalid parameter %s\n", s.s);
+			pkg_free(rtpl);
 			return -1;
 		}
 		rtpl->rpv = pv_cache_get(&s);
 		if(rtpl->rpv == NULL) {
 			LM_ERR("invalid pv parameter %s\n", s.s);
+			pkg_free(rtpl);
 			return -1;
 		}
 	} else {
@@ -1045,11 +1072,13 @@ static int fixup_set_id(void ** param, int param_no)
 			pkg_free(*param);
 			if((rtpp_list = select_rtpp_set(set_id)) ==0){
 				LM_ERR("rtpp_proxy set %u not configured\n", set_id);
+				pkg_free(rtpl);
 				return E_CFG;
 			}
 			rtpl->rset = rtpp_list;
 		} else {
 			LM_ERR("bad number <%s>\n",	(char *)(*param));
+			pkg_free(rtpl);
 			return E_CFG;
 		}
 	}
@@ -1590,7 +1619,7 @@ static int build_rtpp_socks() {
 	}
 
 	rtpp_socks_size = current_rtpp_no;
-	rtpp_socks = (int*)pkg_realloc(rtpp_socks, sizeof(int)*(rtpp_socks_size));
+	rtpp_socks = (int*)pkg_reallocxf(rtpp_socks, sizeof(int)*(rtpp_socks_size));
 	if (!rtpp_socks) {
 		LM_ERR("no more pkg memory for rtpp_socks\n");
 		return -1;
@@ -1651,9 +1680,10 @@ static int build_rtpp_socks() {
 			}
 
 #ifdef IP_MTU_DISCOVER
-			setsockopt(rtpp_socks[pnode->idx], IPPROTO_IP,
-				IP_MTU_DISCOVER, &ip_mtu_discover,
-				sizeof(ip_mtu_discover));
+			if (setsockopt(rtpp_socks[pnode->idx], IPPROTO_IP,
+					IP_MTU_DISCOVER, &ip_mtu_discover,
+					sizeof(ip_mtu_discover)))
+				LM_WARN("Failed enable set MTU discovery socket option\n");
 #endif
 
 			if (bind_force_send_ip(pnode->idx) == -1) {
@@ -2455,6 +2485,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		/* Drain input buffer */
 		while ((poll(fds, 1, 0) == 1) &&
 			((fds[0].revents & POLLIN) != 0)) {
+			/* coverity[check_return : FALSE] */
 			recv(rtpp_socks[node->idx], buf, sizeof(buf) - 1, 0);
 			fds[0].revents = 0;
 		}
@@ -3056,8 +3087,12 @@ rtpengine_delete1_f(struct sip_msg* msg, char* str1, char* str2)
 	str flags;
 
 	flags.s = NULL;
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, flags.s, 1);
 }
@@ -3072,8 +3107,12 @@ rtpengine_query1_f(struct sip_msg* msg, char* str1, char* str2)
 	str flags;
 
 	flags.s = NULL;
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, flags.s, 1);
 }
@@ -3227,8 +3266,12 @@ rtpengine_manage1_f(struct sip_msg *msg, char *str1, char *str2)
 	str flags;
 
 	flags.s = NULL;
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, flags.s, 1);
 }
@@ -3243,8 +3286,12 @@ rtpengine_offer1_f(struct sip_msg *msg, char *str1, char *str2)
 	str flags;
 
 	flags.s = NULL;
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_offer_wrap, flags.s, 1);
 }
@@ -3263,8 +3310,12 @@ rtpengine_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 			return -1;
 
 	flags.s = NULL;
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, flags.s, 2);
 }
@@ -3277,6 +3328,7 @@ rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more)
 	str body, newbody;
 	struct lump *anchor;
 	pv_value_t pv_val;
+	str cur_body = {0, 0};
 
 	dict = rtpp_function_call_ok(&bencbuf, msg, op, flags, &body);
 	if (!dict)
@@ -3306,7 +3358,12 @@ rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more)
 			pkg_free(newbody.s);
 
 		} else {
-			anchor = del_lump(msg, body.s - msg->buf, body.len, 0);
+			/* get the body from the message as body ptr may have changed */
+			cur_body.len = 0;
+			cur_body.s = get_body(msg);
+			cur_body.len = msg->buf + msg->len - cur_body.s;
+
+			anchor = del_lump(msg, cur_body.s - msg->buf, cur_body.len, 0);
 			if (!anchor) {
 				LM_ERR("del_lump failed\n");
 				goto error_free;
@@ -3330,13 +3387,41 @@ error:
 
 
 static int rtpengine_start_recording_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_START_RECORDING, NULL);
+	return rtpp_function_call_simple(msg, OP_START_RECORDING, d);
+}
+
+static int rtpengine_stop_recording_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_STOP_RECORDING, d);
 }
 
 static int
-start_recording_f(struct sip_msg* msg, char *foo, char *bar)
+start_recording_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, NULL, 1);
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, flags.s, 1);
+}
+
+static int
+stop_recording_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_recording_wrap, flags.s, 1);
 }
 
 static int rtpengine_rtpstat_wrap(struct sip_msg *msg, void *d, int more) {
@@ -3463,6 +3548,11 @@ static int ki_start_recording(sip_msg_t *msg)
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, NULL, 1);
 }
 
+static int ki_stop_recording(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_recording_wrap, NULL, 1);
+}
+
 static int ki_set_rtpengine_set(sip_msg_t *msg, int r1)
 {
 	rtpp_set_link_t rtpl1;
@@ -3572,6 +3662,11 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
         { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
+    { str_init("rtpengine"), str_init("stop_recording"),
+        SR_KEMIP_INT, ki_stop_recording,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
     { str_init("rtpengine"), str_init("set_rtpengine_set"),
         SR_KEMIP_INT, ki_set_rtpengine_set,
         { SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -3579,7 +3674,7 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     },
     { str_init("rtpengine"), str_init("set_rtpengine_set2"),
         SR_KEMIP_INT, ki_set_rtpengine_set2,
-        { SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+        { SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
 

@@ -224,6 +224,59 @@ static void corex_rpc_pkg_summary(rpc_t* rpc, void* c)
 	}
 }
 
+static const char* corex_rpc_debug_doc[2] = {
+	"Control the global level of debug",
+	0
+};
+
+/*
+ * RPC command to dump shm summary to syslog
+ */
+static void corex_rpc_debug(rpc_t* rpc, void* ctx)
+{
+	int newdbg = 0;
+	int olddbg = 0;
+	int setdbg = 0;
+	str gname = {"core", 4};
+	str vname = {"debug", 5};
+	void *vval = 0;
+	unsigned int vtype;
+	void* th;
+
+	if (rpc->scan(ctx, "*d", &newdbg) == 1) {
+		setdbg = 1;
+	}
+	if(cfg_get_by_name(_cfg_corex_ctx, &gname, NULL /* group id */,
+				&vname, &vval, &vtype)!=0) {
+		rpc->fault(ctx, 500, "Operation failed");
+		return;
+	}
+	olddbg = (int)(long)vval;
+	if(setdbg==1) {
+		cfg_set_now(_cfg_corex_ctx, &gname, NULL /* group id */, &vname,
+				(void *)(long)newdbg, CFG_VAR_INT);
+	}
+	/* add structure node */
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Failed creating response");
+		return;
+	}
+	if(setdbg==1) {
+		if(rpc->struct_add(th, "dd",
+				"old", olddbg,
+				"new", newdbg)<0) {
+			rpc->fault(ctx, 500, "Internal error adding fields");
+			return;
+		}
+	} else {
+		if(rpc->struct_add(th, "d",
+				"debug", olddbg)<0) {
+			rpc->fault(ctx, 500, "Internal error adding fields");
+			return;
+		}
+	}
+}
+
 rpc_export_t corex_rpc_cmds[] = {
 	{"corex.list_sockets", corex_rpc_list_sockets,
 		corex_rpc_list_sockets_doc, RET_ARRAY},
@@ -235,6 +288,8 @@ rpc_export_t corex_rpc_cmds[] = {
 		corex_rpc_shm_summary_doc, 0},
 	{"corex.pkg_summary", corex_rpc_pkg_summary,
 		corex_rpc_pkg_summary_doc, 0},
+	{"corex.debug", corex_rpc_debug,
+		corex_rpc_debug_doc, 0},
 	{0, 0, 0, 0}
 };
 

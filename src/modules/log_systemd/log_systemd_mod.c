@@ -30,6 +30,7 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 
 #include "journal_send.h"
 
@@ -73,19 +74,6 @@ struct module_exports exports = {
 	child_init      /* per child init function */
 };
 
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	if(_km_log_engine_type==0)
-		return 0;
-
-	if(strcasecmp(_km_log_engine_type, "systemd")!=0)
-		return 0;
-
-	km_log_func_set(&_lc_core_log_systemd);
-	_lc_log_systemd = 1;
-	return 0;
-}
-
 /**
  * init module function
  */
@@ -111,11 +99,38 @@ static void mod_destroy(void)
 /**
  *
  */
+static int ki_sd_journal_print(sip_msg_t* msg, str* slev, str* stxt)
+{
+	int ilev;
+
+	/* one of LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR, LOG_WARNING,
+	 * LOG_NOTICE, LOG_INFO, LOG_DEBUG, as defined in syslog.h, see syslog(3) */
+	ilev = LOG_DEBUG;
+	if(slev->len==9 && strncasecmp(slev->s, "LOG_EMERG", slev->len)==0) {
+		ilev = LOG_EMERG;
+	} else if(slev->len==9 && strncasecmp(slev->s, "LOG_ALERT", slev->len)==0) {
+		ilev = LOG_ALERT;
+	} else if(slev->len==8 && strncasecmp(slev->s, "LOG_CRIT", slev->len)==0) {
+		ilev = LOG_CRIT;
+	} else if(slev->len==7 && strncasecmp(slev->s, "LOG_ERR", slev->len)==0) {
+		ilev = LOG_ERR;
+	} else if(slev->len==11 && strncasecmp(slev->s, "LOG_WARNING", slev->len)==0) {
+		ilev = LOG_WARNING;
+	} else if(slev->len==10 && strncasecmp(slev->s, "LOG_NOTICE", slev->len)==0) {
+		ilev = LOG_NOTICE;
+	} else if(slev->len==8 && strncasecmp(slev->s, "LOG_INFO", slev->len)==0) {
+		ilev = LOG_INFO;
+	}
+
+	sd_journal_print(ilev, "%.*s", stxt->len, stxt->s);
+
+	return 1;
+}
+
 static int w_sd_journal_print(struct sip_msg* msg, char* lev, char* txt)
 {
 	str slev;
 	str stxt;
-	int ilev;
 
 	if(fixup_get_svalue(msg, (gparam_t*)lev, &slev)!=0) {
 		LM_ERR("unable to get level parameter\n");
@@ -127,28 +142,7 @@ static int w_sd_journal_print(struct sip_msg* msg, char* lev, char* txt)
 		return -1;
 	}
 
-	/* one of LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR, LOG_WARNING,
-	 * LOG_NOTICE, LOG_INFO, LOG_DEBUG, as defined in syslog.h, see syslog(3) */
-	ilev = LOG_DEBUG;
-	if(slev.len==9 && strncasecmp(slev.s, "LOG_EMERG", slev.len)==0) {
-		ilev = LOG_EMERG;
-	} else if(slev.len==9 && strncasecmp(slev.s, "LOG_ALERT", slev.len)==0) {
-		ilev = LOG_ALERT;
-	} else if(slev.len==8 && strncasecmp(slev.s, "LOG_CRIT", slev.len)==0) {
-		ilev = LOG_CRIT;
-	} else if(slev.len==7 && strncasecmp(slev.s, "LOG_ERR", slev.len)==0) {
-		ilev = LOG_ERR;
-	} else if(slev.len==11 && strncasecmp(slev.s, "LOG_WARNING", slev.len)==0) {
-		ilev = LOG_WARNING;
-	} else if(slev.len==10 && strncasecmp(slev.s, "LOG_NOTICE", slev.len)==0) {
-		ilev = LOG_NOTICE;
-	} else if(slev.len==8 && strncasecmp(slev.s, "LOG_INFO", slev.len)==0) {
-		ilev = LOG_INFO;
-	}
-
-	sd_journal_print(ilev, "%.*s", stxt.len, stxt.s);
-
-	return 1;
+	return ki_sd_journal_print(msg, &slev, &stxt);
 }
 
 #define LC_LOG_MSG_MAX_SIZE	16384
@@ -169,7 +163,8 @@ void _lc_core_log_systemd(int lpriority, const char *format, ...)
 	sd_journal_print(priority, "%.*s", n, obuf);
 }
 
-static int w_sd_journal_send_xavp(struct sip_msg* msg, char* xname, char* foo) {
+static int w_sd_journal_send_xavp(struct sip_msg* msg, char* xname, char* foo)
+{
 	str sxname;
 
 	if(fixup_get_svalue(msg, (gparam_t*)xname, &sxname)!=0) {
@@ -178,4 +173,43 @@ static int w_sd_journal_send_xavp(struct sip_msg* msg, char* xname, char* foo) {
 	}
 
 	return k_sd_journal_send_xavp(&sxname);
+}
+
+static int ki_sd_journal_send_xavp(sip_msg_t* msg, str* xname)
+{
+	return k_sd_journal_send_xavp(xname);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_log_systemd_exports[] = {
+	{ str_init("log_systemd"), str_init("sd_journal_print"),
+		SR_KEMIP_INT, ki_sd_journal_print,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("log_systemd"), str_init("sd_journal_send_xvap"),
+		SR_KEMIP_INT, ki_sd_journal_send_xavp,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	if(_km_log_engine_type==0)
+		return 0;
+
+	if(strcasecmp(_km_log_engine_type, "systemd")!=0)
+		return 0;
+
+	km_log_func_set(&_lc_core_log_systemd);
+	_lc_log_systemd = 1;
+	sr_kemi_modules_add(sr_kemi_log_systemd_exports);
+	return 0;
 }

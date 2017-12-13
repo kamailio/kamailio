@@ -555,7 +555,7 @@ error:
 	return -1;
 }
 
-int pv_xavp_print(struct sip_msg* msg, char* s1, char *s2)
+int pv_xavp_print(sip_msg_t* msg, char* s1, char *s2)
 {
 	xavp_print_list(NULL);
 	return 1;

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -54,7 +54,7 @@
 typedef struct dlg_profile_hash {
 	str value; /*!< hash value */
 	struct dlg_cell *dlg; /*!< dialog cell */
-	char puid[SRUID_SIZE];
+	char puid[SRUID_SIZE+2];
 	int puid_len;
 	time_t expires;
 	int flags;
@@ -141,7 +141,7 @@ int profile_cleanup(sip_msg_t *msg, unsigned int flags, void *param );
 /*!
  * \brief Destroy dialog linkers
  * \param linker dialog linker
- */ 
+ */
 void destroy_linkers(dlg_profile_link_t *linker);
 
 
@@ -216,6 +216,11 @@ struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param );
  * \brief return true if the messages belongs to a tracked dialog
  */
 int is_known_dlg(sip_msg_t *msg);
+
+/*!
+ * \brief set r-uri using contact uri stored in dialog record
+ */
+int dlg_set_ruri(sip_msg_t *msg);
 
 /*!
  * \brief Adjust timeout in all dialogs within a profile.

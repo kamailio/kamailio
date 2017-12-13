@@ -273,6 +273,9 @@ int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
 			if (c->sock && (c->sock->proto == PROTO_TCP || c->sock->proto == PROTO_TLS || c->sock->proto == PROTO_WS || c->sock->proto == PROTO_WSS))
 				return pv_get_sintval(msg, param, res, c->tcpconn_id);
 		break;
+		case 22: /* server_id */
+			return pv_get_uintval(msg, param, res, c->server_id);
+		break;
 	}
 
 	return pv_get_null(msg, param, res);
@@ -288,8 +291,8 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 {
 	str pn;
 	str pa;
-	regpv_name_t *rp;
-	regpv_profile_t *rpp;
+	regpv_name_t *rp = NULL;
+	regpv_profile_t *rpp = NULL;
 
 	if(sp==NULL || in==NULL || in->len<=0)
 		return -1;
@@ -400,6 +403,10 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 				rp->attr = 20;
 			else goto error;
 		break;
+		case 9:
+			if(strncmp(pa.s, "server_id", 9)==0)
+				rp->attr = 22;
+		break;
 		case 10:
 			if(strncmp(pa.s, "user_agent", 10)==0)
 				rp->attr = 12;
@@ -414,6 +421,7 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 	return 0;
 
 error:
+	if(rp) pkg_free(rp);
 	LM_ERR("unknown contact attr name in %.*s\n", in->len, in->s);
 	return -1;
 }
@@ -537,6 +545,7 @@ int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 			c0->instance.len = ptr->instance.len;
 			p += c0->instance.len;
 		}
+		LM_DBG("memory block between %p - %p\n", c0, p);
 		if ((ptr->sock) && (ptr->sock->proto == PROTO_TCP
 				|| ptr->sock->proto == PROTO_TLS || ptr->sock->proto == PROTO_WS
 				|| ptr->sock->proto == PROTO_WSS))

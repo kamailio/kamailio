@@ -41,16 +41,18 @@ struct presentity;
 #define PKG_MEM_STR       "pkg"
 #define SHARE_MEM         "share"
 
-#define ERR_MEM(mem_type)  LM_ERR("No more %s memory\n",mem_type);\
-						goto error
+#define ERR_MEM(mem_type)  do { \
+				LM_ERR("No more %s memory\n",mem_type); \
+				goto error; \
+			} while(0)
 
 #define CONT_COPY(buf, dest, source)\
 	do{ \
-	dest.s= (char*)buf+ size;\
-	memcpy(dest.s, source.s, source.len);\
-	dest.len= source.len;\
-	size+= source.len; \
-	} while(0);
+		dest.s= (char*)buf+ size; \
+		memcpy(dest.s, source.s, source.len); \
+		dest.len= source.len; \
+		size+= source.len; \
+	} while(0)
 
 #define PKG_MEM_TYPE     1<< 1
 #define SHM_MEM_TYPE     1<< 2

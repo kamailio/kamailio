@@ -35,6 +35,7 @@ enum rtpe_operation {
         OP_ANSWER,
         OP_DELETE,
         OP_START_RECORDING,
+        OP_STOP_RECORDING,
         OP_QUERY,
         OP_PING,
 };

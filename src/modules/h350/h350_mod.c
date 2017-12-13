@@ -118,24 +118,23 @@ struct module_exports exports = {
 
 static int child_init(int rank)
 {
-	
+
 	/* don't do anything for non-worker process */
-        if (rank < 1) {
-        	return 0;
+	if(rank < 1) {
+		return 0;
 	}
 
 	h350_search_scope_int = ldap_api.ldap_str2scope(h350_search_scope);
 
-        /*
+	/*
          * initialize h350_exp_fn
          */
-        if (h350_exp_fn_init() != 0)
-        {
-                 LM_ERR("h350_exp_fn_init failed\n");
-                 return -1;
-        }
+	if(h350_exp_fn_init() != 0) {
+		LM_ERR("h350_exp_fn_init failed\n");
+		return -1;
+	}
 
-	
+
 	return 0;
 }
 
@@ -145,105 +144,94 @@ static int mod_init(void)
 	/*
 	 * load the LDAP API
 	 */
-	if (load_ldap_api(&ldap_api) != 0)
-	{
+	if(load_ldap_api(&ldap_api) != 0) {
 		LM_ERR("Unable to load LDAP API - this module requires ldap module\n");
 		return -1;
 	}
 
 	return 0;
-
-	/*
-	 * check module parameters
-	 */
-	if (ldap_api.ldap_str2scope(h350_search_scope) == -1)
-	{
-		LM_ERR("Invalid search_scope [%s]\n", h350_search_scope);
-		return -1;
-	}
-	
 }
 
 
 /*
  * EXPORTED functions
  */
-static int w_h350_sipuri_lookup(struct sip_msg* msg, char* sip_uri, char* s2)
+static int w_h350_sipuri_lookup(struct sip_msg *msg, char *sip_uri, char *s2)
 {
-	return h350_sipuri_lookup(msg, (pv_elem_t*)sip_uri);
+	return h350_sipuri_lookup(msg, (pv_elem_t *)sip_uri);
 }
 
-static int w_h350_auth_lookup(struct sip_msg* msg, char* digest_username, char* avp_specs)
+static int w_h350_auth_lookup(
+		struct sip_msg *msg, char *digest_username, char *avp_specs)
 {
-	return h350_auth_lookup(
-		msg, 
-		(pv_elem_t*)digest_username, 
-		(struct h350_auth_lookup_avp_params*)avp_specs);
+	return h350_auth_lookup(msg, (pv_elem_t *)digest_username,
+			(struct h350_auth_lookup_avp_params *)avp_specs);
 }
 
-static int w_h350_call_preferences(struct sip_msg* msg, char* avp_name_prefix, char* s2)
+static int w_h350_call_preferences(
+		struct sip_msg *msg, char *avp_name_prefix, char *s2)
 {
-	return h350_call_preferences(msg, (pv_elem_t*)avp_name_prefix);
+	return h350_call_preferences(msg, (pv_elem_t *)avp_name_prefix);
 }
 
-static int w_h350_service_level(struct sip_msg* msg, char* avp_name_prefix, char* s2)
+static int w_h350_service_level(
+		struct sip_msg *msg, char *avp_name_prefix, char *s2)
 {
-	return h350_service_level(msg, (pv_elem_t*)avp_name_prefix);
+	return h350_service_level(msg, (pv_elem_t *)avp_name_prefix);
 }
 
 /*
  * FIXUP functions
  */
 
-static int one_str_pv_elem_fixup(void** param, int param_no)
+static int one_str_pv_elem_fixup(void **param, int param_no)
 {
 	pv_elem_t *model;
 	str s;
 
-	if (param_no == 1) {
-		s.s = (char*)*param;
-		if (s.s==0 || s.s[0]==0) {
+	if(param_no == 1) {
+		s.s = (char *)*param;
+		if(s.s == 0 || s.s[0] == 0) {
 			model = 0;
 		} else {
 			s.len = strlen(s.s);
-			if (pv_parse_format(&s,&model)<0) {
+			if(pv_parse_format(&s, &model) < 0) {
 				LM_ERR("pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
-		*param = (void*)model;
+		*param = (void *)model;
 	}
 
 	return 0;
 }
 
-static int h350_auth_lookup_fixup(void** param, int param_no)
+static int h350_auth_lookup_fixup(void **param, int param_no)
 {
 	pv_elem_t *model;
-    char *p, *username_avp_spec_str, *pwd_avp_spec_str;
+	char *p, *username_avp_spec_str, *pwd_avp_spec_str;
 	str s;
 	struct h350_auth_lookup_avp_params *params;
 
-    if (param_no == 1) 
-	{
-		s.s = (char*)*param;
-		if (s.s==0 || s.s[0]==0) {
-            model = 0;
+	if(param_no == 1) {
+		s.s = (char *)*param;
+		if(s.s == 0 || s.s[0] == 0) {
+			model = 0;
 		} else {
-            if (pv_parse_format(&s,&model)<0) {
-                LM_ERR("pv_parse_format failed\n");
-                return E_OUT_OF_MEM;
-            }
-        }
-        *param = (void*)model;
-    } else if (param_no == 2) {
+			s.len = strlen(s.s);
+			if(pv_parse_format(&s, &model) < 0) {
+				LM_ERR("pv_parse_format failed\n");
+				return E_OUT_OF_MEM;
+			}
+		}
+		*param = (void *)model;
+	} else if(param_no == 2) {
 		/*
 		 * parse *param into username_avp_spec_str and pwd_avp_spec_str
 		 */
-		
-		username_avp_spec_str = (char*)*param;
-		if ((pwd_avp_spec_str = strchr(username_avp_spec_str, '/')) == 0)
-		{
+
+		username_avp_spec_str = (char *)*param;
+		if((pwd_avp_spec_str = strchr(username_avp_spec_str, '/')) == 0) {
 			/* no '/' found in username_avp_spec_str */
 			LM_ERR("invalid second argument [%s]\n", username_avp_spec_str);
 			return E_UNSPEC;
@@ -253,45 +241,42 @@ static int h350_auth_lookup_fixup(void** param, int param_no)
 		/*
 		 * parse avp specs into pv_spec_t and store in params
 		 */
-		params = (struct h350_auth_lookup_avp_params*)pkg_malloc
-				(sizeof(struct h350_auth_lookup_avp_params));
-		if (params == NULL)
-		{
+		params = (struct h350_auth_lookup_avp_params *)pkg_malloc(
+				sizeof(struct h350_auth_lookup_avp_params));
+		if(params == NULL) {
 			LM_ERR("no memory\n");
 			return E_OUT_OF_MEM;
 		}
 		memset(params, 0, sizeof(struct h350_auth_lookup_avp_params));
-		s.s = username_avp_spec_str; s.len = strlen(s.s);
+		s.s = username_avp_spec_str;
+		s.len = strlen(s.s);
 		p = pv_parse_spec(&s, &params->username_avp_spec);
-		if (p == 0)
-		{
+		if(p == 0) {
 			pkg_free(params);
 			LM_ERR("parse error for [%s]\n", username_avp_spec_str);
 			return E_UNSPEC;
 		}
-		if (params->username_avp_spec.type != PVT_AVP)
-		{
+		if(params->username_avp_spec.type != PVT_AVP) {
 			pkg_free(params);
 			LM_ERR("invalid AVP specification [%s]\n", username_avp_spec_str);
 			return E_UNSPEC;
 		}
-		s.s = pwd_avp_spec_str; s.len =  strlen(s.s);
+		s.s = pwd_avp_spec_str;
+		s.len = strlen(s.s);
 		p = pv_parse_spec(&s, &params->password_avp_spec);
-                if (p == 0)
-                {
-                        pkg_free(params);
-                        LM_ERR("parse error for [%s]\n", pwd_avp_spec_str);
-                        return E_UNSPEC;
-                }
-                if (params->password_avp_spec.type != PVT_AVP)
-                {
-                        pkg_free(params);
-                        LM_ERR("invalid AVP specification [%s]\n", pwd_avp_spec_str);
-                        return E_UNSPEC;
-                }
+		if(p == 0) {
+			pkg_free(params);
+			LM_ERR("parse error for [%s]\n", pwd_avp_spec_str);
+			return E_UNSPEC;
+		}
+		if(params->password_avp_spec.type != PVT_AVP) {
+			pkg_free(params);
+			LM_ERR("invalid AVP specification [%s]\n", pwd_avp_spec_str);
+			return E_UNSPEC;
+		}
 
-		*param = (void*)params;
+		*param = (void *)params;
 	}
 
-        return 0;
+	return 0;
 }

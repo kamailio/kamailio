@@ -27,7 +27,8 @@ Anca-Maria Vamanu
         4. RPC Commands
 
               4.1. pua.publish
-              4.2. pua.subscribe
+              4.2. pua.send_publish
+              4.3. pua.subscribe
 
    List of Examples
 
@@ -47,7 +48,8 @@ Chapter 1. Admin Guide
    4. RPC Commands
 
         4.1. pua.publish
-        4.2. pua.subscribe
+        4.2. pua.send_publish
+        4.3. pua.subscribe
 
 1. Overview
 
@@ -85,11 +87,14 @@ Chapter 1. Admin Guide
 4. RPC Commands
 
    4.1. pua.publish
-   4.2. pua.subscribe
+   4.2. pua.send_publish
+   4.3. pua.subscribe
 
 4.1. pua.publish
 
-   Send a SIP PUBLISH request. Command parameters:
+   Send a SIP PUBLISH request and wait for its response.
+
+   Command parameters:
      * presentity_uri - e.g. sip:jh@tutpro.com
      * expires - Relative expires time in seconds (e.g. 3600).
      * event package - Event package that is target of published
@@ -174,7 +179,13 @@ Voice-Message: 2/0 (0/0)
  </params>
 </methodCall>
 
-4.2. pua.subscribe
+4.2. pua.send_publish
+
+   Send a SIP PUBLISH request without waiting for its response.
+
+   Command parameters are the same as for pua.publish.
+
+4.3. pua.subscribe
 
    Send a SIP SUBSCRIBE request. Command parameters:
      * presentity_uri - e.g. sip:presentity@kamailio.org

@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -28,26 +28,28 @@
 
 str* normalize_sip_uri(const str *uri)
 {
-        static str normalized_uri;
-        static str null_str = {NULL, 0};
-        static char buf[MAX_URI_SIZE];
+	static str normalized_uri;
+	static str null_str = {NULL, 0};
+	static char buf[MAX_URI_SIZE];
 
-        normalized_uri.s = buf;
-        if (un_escape((str *)uri, &normalized_uri) < 0)
-        {
-                LM_ERR("un-escaping URI\n");
-                return &null_str;
-        }
+	normalized_uri.s = buf;
+	if (un_escape((str *)uri, &normalized_uri) < 0)
+	{
+		LM_ERR("un-escaping URI\n");
+		return &null_str;
+	}
 
-        normalized_uri.s[normalized_uri.len] = '\0';
-        if (strncasecmp(normalized_uri.s, SIP_PREFIX, SIP_PREFIX_LEN) != 0 && strchr(normalized_uri.s, '@') != NULL)
-        {
-                memmove(normalized_uri.s+SIP_PREFIX_LEN, normalized_uri.s, normalized_uri.len+1);
-                memcpy(normalized_uri.s, SIP_PREFIX, SIP_PREFIX_LEN);
-                normalized_uri.len += SIP_PREFIX_LEN;
-        }
+	normalized_uri.s[normalized_uri.len] = '\0';
+	if (strncasecmp(normalized_uri.s, SIP_PREFIX, SIP_PREFIX_LEN) != 0
+			&& strchr(normalized_uri.s, '@') != NULL)
+	{
+		memmove(normalized_uri.s+SIP_PREFIX_LEN, normalized_uri.s,
+				normalized_uri.len+1);
+		memcpy(normalized_uri.s, SIP_PREFIX, SIP_PREFIX_LEN);
+		normalized_uri.len += SIP_PREFIX_LEN;
+	}
 
-        return &normalized_uri;
+	return &normalized_uri;
 }
 
 #undef SIP_PREFIX

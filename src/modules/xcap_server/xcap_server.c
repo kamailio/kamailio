@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * xcap_server module - builtin XCAP server
  *
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
@@ -46,6 +44,7 @@
 #include "../../modules/sl/sl.h"
 #include "../../core/strutils.h"
 #include "../../core/ip_addr.h"
+#include "../../core/kemi.h"
 
 #include "xcap_misc.h"
 
@@ -284,7 +283,7 @@ static int xcaps_send_reply(sip_msg_t *msg, int code, str *reason,
 	}
 	if(body && body->len>0)
 	{
-		if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) < 0)
+		if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) == 0)
 		{
 			LM_ERR("Error while adding reply lump\n");
 			return -1;
@@ -492,59 +491,39 @@ static str xcaps_str_appdrxml	= {"application/vnd.oma.xcap-directory+xml", 38};
 /**
  *
  */
-static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
-		char* pbody)
+static int ki_xcaps_put(sip_msg_t* msg, str* uri, str* path,
+		str* pbody)
 {
 	struct sip_uri turi;
-	str uri;
-	str path;
 	str body = {0, 0};
 	str etag = {0, 0};
 	str etag_hdr = {0, 0};
 	str tbuf;
 	str nbuf = {0, 0};
 	str allow = {0, 0};
-	pv_elem_t *xm;
 	xcap_uri_t xuri;
 
-	if(puri==0 || ppath==0 || pbody==0)
-	{
-		LM_ERR("invalid parameters\n");
-		goto error;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)puri, &uri)!=0)
-	{
-		LM_ERR("unable to get uri\n");
-		goto error;
-	}
-	if(uri.s==NULL || uri.len == 0)
+	if(uri->s==NULL || uri->len == 0)
 	{
 		LM_ERR("invalid uri parameter\n");
 		goto error;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_p)ppath, &path)!=0)
-	{
-		LM_ERR("unable to get path\n");
-		goto error;
-	}
-	if(path.s==NULL || path.len == 0)
+	if(path->s==NULL || path->len == 0)
 	{
 		LM_ERR("invalid path parameter\n");
 		return -1;
 	}
 
-	if(parse_uri(uri.s, uri.len, &turi)!=0)
+	if(parse_uri(uri->s, uri->len, &turi)!=0)
 	{
-		LM_ERR("parsing uri parameter\n");
+		LM_ERR("parsing uri parameter [%.*s]\n", uri->len, uri->s);
 		goto error;
 	}
 
-	if(xcap_parse_uri(&path, &xcaps_root, &xuri)<0)
+	if(xcap_parse_uri(path, &xcaps_root, &xuri)<0)
 	{
-		LM_ERR("cannot parse xcap uri [%.*s]\n",
-				path.len, path.s);
+		LM_ERR("cannot parse xcap uri [%.*s]\n", path->len, path->s);
 		goto error;
 	}
 
@@ -562,25 +541,19 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		xcaps_send_reply(msg, 405, &xcaps_str_notallowed, &allow, NULL, NULL);
 		break;
 	default:
-		xm = (pv_elem_t*)pbody;
-		body.len = xcaps_buf.len - 1;
-		if(pv_printf(msg, xm, xcaps_buf.s, &body.len)<0)
-		{
-			LM_ERR("unable to get body\n");
-			goto error;
-		}
-		if(body.len <= 0)
+		if(pbody->len <= 0)
 		{
 			LM_ERR("invalid body parameter\n");
 			goto error;
 		}
-		body.s = (char*)pkg_malloc(body.len+1);
+		body.s = (char*)pkg_malloc(pbody->len+1);
 		if(body.s==NULL)
 		{
 			LM_ERR("no more pkg\n");
 			goto error;
 		}
-		memcpy(body.s, xcaps_buf.s, body.len);
+		memcpy(body.s, pbody->s, pbody->len);
+		body.len = pbody->len;
 		body.s[body.len] = '\0';
 
 		xcaps_get_db_etag(&turi.user, &turi.host, &xuri, &etag);
@@ -654,6 +627,50 @@ error:
 	xcaps_send_reply(msg, 500, &xcaps_str_srverr, NULL, NULL, NULL);
 	if(body.s!=NULL)
 		pkg_free(body.s);
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
+		char* pbody)
+{
+	str uri;
+	str path;
+	str body = {0, 0};
+	pv_elem_t *xm;
+
+	if(puri==0 || ppath==0 || pbody==0)
+	{
+		LM_ERR("invalid parameters\n");
+		goto error;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)puri, &uri)!=0)
+	{
+		LM_ERR("unable to get uri\n");
+		goto error;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)ppath, &path)!=0)
+	{
+		LM_ERR("unable to get path\n");
+		goto error;
+	}
+
+	xm = (pv_elem_t*)pbody;
+	body.len = xcaps_buf.len - 1;
+	if(pv_printf(msg, xm, xcaps_buf.s, &body.len)<0)
+	{
+		LM_ERR("unable to get body\n");
+		goto error;
+	}
+	body.s = xcaps_buf.s;
+
+	return ki_xcaps_put(msg, &uri, &path, &body);
+
+error:
 	return -1;
 }
 
@@ -893,7 +910,7 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 	qvals[n_qcols].nul = 0;
 	qvals[n_qcols].val.str_val = *user;
 	n_qcols++;
-	
+
 	qcols[n_qcols] = &str_domain_col;
 	qvals[n_qcols].type = DB1_STR;
 	qvals[n_qcols].nul = 0;
@@ -904,7 +921,7 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 	rcols[doc_uri_col = n_rcols++] = &str_doc_uri_col;
 	rcols[etag_col = n_rcols++] = &str_etag_col;
 
-	if (xcaps_dbf.use_table(xcaps_db, &xcaps_db_table) < 0) 
+	if (xcaps_dbf.use_table(xcaps_db, &xcaps_db_table) < 0)
 	{
 		LM_ERR("in use_table-[table]= %.*s\n", xcaps_db_table.len,
 				xcaps_db_table.s);
@@ -1015,7 +1032,7 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 			{
 				directory->len += snprintf(directory->s + directory->len,
 							xcaps_buf.len - directory->len,
-			"%.*s", server_name.len, server_name.s);
+							"%.*s", server_name.len, server_name.s);
 			}
 			else
 			{
@@ -1023,8 +1040,10 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 				server_name.len = ip_addr2sbuf(&msg->rcv.dst_ip, server_name.s, IP6_MAX_STR_SIZE);
 				directory->len += snprintf(directory->s + directory->len,
 							xcaps_buf.len - directory->len,
-			"%.*s:%d", server_name.len, server_name.s, msg->rcv.dst_port);
+							"%.*s:%d", server_name.len, server_name.s, msg->rcv.dst_port);
 				pkg_free(server_name.s);
+				server_name.s = 0;
+				server_name.len = 0;
 			}
 		}
 
@@ -1057,11 +1076,9 @@ error:
 /**
  *
  */
-static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
+static int ki_xcaps_get(sip_msg_t* msg, str* uri, str* path)
 {
 	struct sip_uri turi;
-	str uri;
-	str path;
 	str etag = {0, 0};
 	str body = {0, 0};
 	str new_body = {0, 0};
@@ -1070,44 +1087,27 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 	str *ctype;
 	str allow;
 
-	if(puri==0 || ppath==0)
-	{
-		LM_ERR("invalid parameters\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)puri, &uri)!=0)
-	{
-		LM_ERR("unable to get uri\n");
-		return -1;
-	}
-	if(uri.s==NULL || uri.len == 0)
+	if(uri->s==NULL || uri->len == 0)
 	{
 		LM_ERR("invalid uri parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_p)ppath, &path)!=0)
-	{
-		LM_ERR("unable to get path\n");
-		return -1;
-	}
-	if(path.s==NULL || path.len == 0)
+	if(path->s==NULL || path->len == 0)
 	{
 		LM_ERR("invalid path parameter\n");
 		return -1;
 	}
 
-	if(parse_uri(uri.s, uri.len, &turi)!=0)
+	if(parse_uri(uri->s, uri->len, &turi)!=0)
 	{
-		LM_ERR("parsing uri parameter\n");
+		LM_ERR("parsing uri parameter [%.*s]\n", uri->len, uri->s);
 		goto error;
 	}
 
-	if(xcap_parse_uri(&path, &xcaps_root, &xuri)<0)
+	if(xcap_parse_uri(path, &xcaps_root, &xuri)<0)
 	{
-		LM_ERR("cannot parse xcap uri [%.*s]\n",
-				path.len, path.s);
+		LM_ERR("cannot parse xcap uri [%.*s]\n", path->len, path->s);
 		goto error;
 	}
 
@@ -1240,6 +1240,33 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
+{
+	str uri;
+	str path;
+
+	if(puri==0 || ppath==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)puri, &uri)!=0)
+	{
+		LM_ERR("unable to get uri\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)ppath, &path)!=0)
+	{
+		LM_ERR("unable to get path\n");
+		return -1;
+	}
+	return ki_xcaps_get(msg, &uri, &path);
+}
 
 /**
  *
@@ -1291,11 +1318,9 @@ error:
 /**
  *
  */
-static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
+static int ki_xcaps_del(sip_msg_t* msg, str* uri, str* path)
 {
 	struct sip_uri turi;
-	str uri;
-	str path;
 	xcap_uri_t xuri;
 	str body = {0, 0};
 	str etag_hdr = {0, 0};
@@ -1303,44 +1328,27 @@ static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
 	str tbuf;
 	str allow = {0, 0};
 
-	if(puri==0 || ppath==0)
-	{
-		LM_ERR("invalid parameters\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)puri, &uri)!=0)
-	{
-		LM_ERR("unable to get uri\n");
-		return -1;
-	}
-	if(uri.s==NULL || uri.len == 0)
+	if(uri->s==NULL || uri->len == 0)
 	{
 		LM_ERR("invalid uri parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_p)ppath, &path)!=0)
-	{
-		LM_ERR("unable to get path\n");
-		return -1;
-	}
-	if(path.s==NULL || path.len == 0)
+	if(path->s==NULL || path->len == 0)
 	{
 		LM_ERR("invalid path parameter\n");
 		return -1;
 	}
 
-	if(parse_uri(uri.s, uri.len, &turi)!=0)
+	if(parse_uri(uri->s, uri->len, &turi)!=0)
 	{
-		LM_ERR("parsing uri parameter\n");
+		LM_ERR("parsing uri parameter [%.*s]\n", uri->len, uri->s);
 		goto error;
 	}
 
-	if(xcap_parse_uri(&path, &xcaps_root, &xuri)<0)
+	if(xcap_parse_uri(path, &xcaps_root, &xuri)<0)
 	{
-		LM_ERR("cannot parse xcap uri [%.*s]\n",
-				path.len, path.s);
+		LM_ERR("cannot parse xcap uri [%.*s]\n", path->len, path->s);
 		goto error;
 	}
 
@@ -1438,6 +1446,35 @@ error:
 	if(body.s!=NULL)
 		pkg_free(body.s);
 	return -1;
+}
+
+/**
+ *
+ */
+static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
+{
+	str uri;
+	str path;
+
+	if(puri==0 || ppath==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)puri, &uri)!=0)
+	{
+		LM_ERR("unable to get uri\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)ppath, &path)!=0)
+	{
+		LM_ERR("unable to get path\n");
+		return -1;
+	}
+
+	return ki_xcaps_del(msg, &uri, &path);
 }
 
 /**
@@ -1668,4 +1705,38 @@ static int check_match_header(str body, str *etag)
 	} while (body.len > 0);
 
 	return -1;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_xcap_server_exports[] = {
+	{ str_init("xcap_server"), str_init("xcaps_put"),
+		SR_KEMIP_INT, ki_xcaps_put,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xcap_server"), str_init("xcaps_get"),
+		SR_KEMIP_INT, ki_xcaps_get,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xcap_server"), str_init("xcaps_del"),
+		SR_KEMIP_INT, ki_xcaps_del,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+		},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_xcap_server_exports);
+	return 0;
 }

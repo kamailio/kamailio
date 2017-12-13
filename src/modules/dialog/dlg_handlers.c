@@ -189,6 +189,11 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	str contact;
 	str rr_set;
 
+	if(parse_headers(msg,HDR_EOH_F,0)<0){
+		LM_ERR("failed to parse headers\n");
+		goto error0;
+	}
+
 	dlg->bind_addr[leg] = msg->rcv.bind_address;
 
 	/* extract the cseq number as string */
@@ -210,19 +215,14 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 		goto error0;
 	}
 	if ( parse_contact(msg->contact)<0 ||
-	((contact_body_t *)msg->contact->parsed)->contacts==NULL ||
-	((contact_body_t *)msg->contact->parsed)->contacts->next!=NULL ) {
+			((contact_body_t *)msg->contact->parsed)->contacts==NULL ||
+			((contact_body_t *)msg->contact->parsed)->contacts->next!=NULL ) {
 		LM_ERR("bad Contact HDR\n");
 		goto error0;
 	}
 	contact = ((contact_body_t *)msg->contact->parsed)->contacts->uri;
 
-	/* extract the RR parts */
-	if(!msg->record_route && (parse_headers(msg,HDR_EOH_F,0)<0)  ){
-		LM_ERR("failed to parse record route header\n");
-		goto error0;
-	}
-
+	/* extract the record-route addresses */
 	if (leg==DLG_CALLER_LEG) {
 		skip_recs = 0;
 	} else {
@@ -248,14 +248,15 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	if(leg==DLG_CALLER_LEG)
 		dlg->from_rr_nb = skip_recs;
 
-	LM_DBG("route_set %.*s, contact %.*s, cseq %.*s and bind_addr %.*s\n",
-		rr_set.len, rr_set.s, contact.len, contact.s,
+	LM_DBG("leg(%d) route_set [%.*s], contact [%.*s], cseq [%.*s]"
+			" and bind_addr [%.*s]\n",
+		leg, rr_set.len, rr_set.s, contact.len, contact.s,
 		cseq.len, cseq.s,
 		msg->rcv.bind_address->sock_str.len,
 		msg->rcv.bind_address->sock_str.s);
 
 	if (dlg_set_leg_info( dlg, tag, &rr_set, &contact, &cseq, leg)!=0) {
-		LM_ERR("dlg_set_leg_info failed\n");
+		LM_ERR("dlg_set_leg_info failed (leg %d)\n", leg);
 		if (rr_set.s) pkg_free(rr_set.s);
 		goto error0;
 	}
@@ -455,6 +456,10 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		event = DLG_EVENT_RPL3xx;
 
 	next_state_dlg( dlg, event, &old_state, &new_state, &unref);
+	if(new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
+		/* set end time */
+		dlg->end_ts = (unsigned int)(time(0));
+	}
 	if(dlg_run_event_route(dlg, (rpl==FAKED_REPLY)?NULL:rpl, old_state,
 			new_state)<0) {
 		/* dialog is gone */
@@ -527,11 +532,6 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		if (unref) dlg_unref(dlg, unref);
 		if_update_stat(dlg_enable_stats, active_dlgs, 1);
 		goto done;
-	}
-
-	if(new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
-		/* set end time */
-		dlg->end_ts = (unsigned int)(time(0));
 	}
 
 	if ( new_state==DLG_STATE_DELETED
@@ -1550,6 +1550,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 				if(dlg->toroute>0) {
 					run_top_route(main_rt.rlist[dlg->toroute], fmsg, 0);
 				} else {
+					keng = sr_kemi_eng_get();
 					if(keng!=NULL) {
 						evname.s = "dialog:timeout";
 						evname.len = sizeof("dialog:timeout") - 1;
@@ -1703,22 +1704,28 @@ int dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate)
 	if(dlg_event_callback.s==NULL || dlg_event_callback.len<=0) {
 		if(nstate==DLG_STATE_CONFIRMED_NA) {
 			rt = dlg_event_rt[DLG_EVENTRT_START];
-			evname.s = "dialog:start";
-			evname.len = sizeof("dialog:start") - 1;
 		} else if(nstate==DLG_STATE_DELETED) {
 			if(ostate==DLG_STATE_CONFIRMED || ostate==DLG_STATE_CONFIRMED_NA) {
 				rt = dlg_event_rt[DLG_EVENTRT_END];
-				evname.s = "dialog:end";
-				evname.len = sizeof("dialog:end") - 1;
 			} else if(ostate==DLG_STATE_UNCONFIRMED || ostate==DLG_STATE_EARLY) {
-				evname.s = "dialog:failed";
-				evname.len = sizeof("dialog:failed") - 1;
 				rt = dlg_event_rt[DLG_EVENTRT_FAILED];
 			}
 		}
 		if(rt==-1 || event_rt.rlist[rt]==NULL)
 			return 0;
 	}  else {
+		if(nstate==DLG_STATE_CONFIRMED_NA) {
+			evname.s = "dialog:start";
+			evname.len = sizeof("dialog:start") - 1;
+		} else if(nstate==DLG_STATE_DELETED) {
+			if(ostate==DLG_STATE_CONFIRMED || ostate==DLG_STATE_CONFIRMED_NA) {
+				evname.s = "dialog:end";
+				evname.len = sizeof("dialog:end") - 1;
+			} else if(ostate==DLG_STATE_UNCONFIRMED || ostate==DLG_STATE_EARLY) {
+				evname.s = "dialog:failed";
+				evname.len = sizeof("dialog:failed") - 1;
+			}
+		}
 		keng = sr_kemi_eng_get();
 		if(keng==NULL) {
 			LM_DBG("event callback (%s) set, but no cfg engine\n",

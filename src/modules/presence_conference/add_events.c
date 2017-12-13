@@ -1,6 +1,6 @@
 /*
  * add "conference" event to presence module - mariusbucur
- * 
+ *
  * Copyright (C) 2010 Marius Bucur
  * Copyright (C) 2007 Juha Heinanen
  * Copyright (C) 2008 Klaus Darilion, IPCom
@@ -17,13 +17,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2010-07-12  initial version (mariusbucur)
  */
 
 #include <stdio.h>
@@ -37,7 +34,7 @@
 int conference_add_events(void)
 {
     pres_ev_t event;
-	
+
     /* constructing "conference" event and add it to the list of events packages supported */
     memset(&event, 0, sizeof(pres_ev_t));
     event.name.s = "conference";
@@ -58,12 +55,10 @@ int conference_add_events(void)
     /* modify XML body for each watcher to set the correct "version" */
     event.aux_body_processing = conf_body_setversion;
 
-	
     if (pres_add_event(&event) < 0) {
 		LM_ERR("failed to add event \"conference\"\n");
 		return -1;
     }
-	
+
     return 0;
 }
-

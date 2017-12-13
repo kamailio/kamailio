@@ -558,7 +558,9 @@ int ki_t_next_contacts(struct sip_msg* msg)
 	}
 
 	if (dst_uri.len) {
-		set_dst_uri(msg, &dst_uri);
+		if(set_dst_uri(msg, &dst_uri)<0) {
+			LM_ERR("failed to set dst uri\n");
+		}
 	} else {
 		reset_dst_uri(msg);
 	}

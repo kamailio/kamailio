@@ -71,8 +71,8 @@
 				<emphasis>xcap_client</emphasis>.
 			</para>
 			<para>
-			Only compulsory if not using an integrated xcap server
-			(if 'integrated_xcap_server' parameter is not set).
+			Needed only when not using the integrated xcap server
+			(if 'integrated_xcap_server' parameter is set to 0).
 			</para>
 			</listitem>
 
@@ -98,13 +98,13 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="presence_xml.p.db_url">
 		<title><varname>db_url</varname>(str)</title>
 		<para>
 		The database URL.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>&defaultdb;</quote>.
+		<emphasis>Default value is <quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -116,13 +116,13 @@ modparam("presence_xml", "db_url", "&exampledb;")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence_xml.p.xcap_table">
 		<title><varname>xcap_table</varname>(str)</title>
 		<para>
 		The name of the database table where XCAP documents are stored.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>xcap</quote>.
+		<emphasis>Default value is <quote>xcap</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -135,7 +135,7 @@ modparam("presence_xml", "xcap_table", "xcaps")
 		</example>
 	</section>
 
-	<section>
+	<section id="presence_xml.p.disable_presence">
 		<title><varname>disable_presence</varname>(int)</title>
 		<para>
 		Set this parameter to disable the handling of the "presence" event.
@@ -153,7 +153,7 @@ modparam("presence_xml", "disable_presence", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence_xml.p.disable_winfo">
 		<title><varname>disable_winfo</varname>(int)</title>
 		<para>
 		Set this parameter to disable the handling of the "presence.winfo" event.
@@ -171,7 +171,7 @@ modparam("presence_xml", "disable_winfo", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence_xml.p.disable_bla">
 		<title><varname>disable_bla</varname>(int)</title>
 		<para>
 		Set this parameter to disable the handling of the "dialog;sla" event.
@@ -190,7 +190,7 @@ modparam("presence_xml", "disable_bla", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence_xml.p.force_active">
 		<title><varname>force_active</varname> (int)</title>
 		<para>
 		This parameter is used for permissions when handling Subscribe messages.
@@ -219,14 +219,14 @@ modparam("presence_xml", "force_active", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence_xml.p.integrated_xcap_server">
 		<title><varname>integrated_xcap_server</varname> (int)</title>
 		<para>
 		This parameter is a flag for the type of XCAP servers
 		used. If the XCAP server is integrated with &kamailio; presence_xml
 		module and access the same database tables directly, like the embedded
-		XCAP server implemented in xcap_server module, the parameter should be
-		set to a positive value. Apart from updating in xcap table,
+		XCAP server implemented in xcap_server module, the parameter has to be
+		set to 1. Apart from updating in xcap table,
 		if the integrated server is not running on the same &kamailio; instance,
 		it must send an RPC command presence.refreshWatchers
 		[pres_uri] [event] when a user modifies a rules document, to
@@ -234,7 +234,7 @@ modparam("presence_xml", "force_active", 1)
 		and, if needed, send NOTIFY updates.
 		</para>
 		<para>
-		Otherwise, it uses xcap_client module to fetch documents
+		Otherwise (if set to 0) it uses xcap_client module to fetch documents
 		from the XCAP servers with HTTP requests.</para>
 		<para>
 		<emphasis>Default value is <quote>0</quote>.
@@ -249,7 +249,7 @@ modparam("presence_xml", "integrated_xcap_server", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence_xml.p.xcap_server">
 		<title><varname>xcap_server</varname> (str)</title>
 		<para>
 		The address of the xcap servers used for storage.
@@ -266,7 +266,7 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence_xml.p.passive_mode">
 		<title><varname>passive_mode</varname>(int)</title>
 		<para>
 		If set to 1, module acts in passive mode - no bind to presence module,
@@ -288,7 +288,7 @@ modparam("presence_xml", "passive_mode", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="presence_xml.p.xcapauth_userdel_reason">
 		<title><varname>xcapauth_userdel_reason</varname>(str)</title>
 		<para>
 		This parameter represents the reason that will be included in the
@@ -315,7 +315,7 @@ modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
 </programlisting>
 		</example>
 	</section>
-    <section>
+    <section id="presence_xml.p.force_dummy_presence">
         <title><varname>force_dummy_presence</varname>(int)</title>
         <para>
         Set this parameter to enable simple body notify with status 'open' when presentity info is not available.

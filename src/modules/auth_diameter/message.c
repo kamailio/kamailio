@@ -1,8 +1,4 @@
 /*
- * $Id$
- *
- * 2003-04-07 created by bogdan
- *
  * Copyright (C) 2002-2003 FhG Fokus
  *
  * This file is part of disc, a free diameter server/client.
@@ -297,7 +293,9 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 			goto error;
 
 		/* link the avp into aaa message to the end */
-		AAAAddAVPToMessage( msg, avp, msg->avpList.tail);
+		if(AAAAddAVPToMessage(msg, avp, msg->avpList.tail)!=AAA_ERR_SUCCESS) {
+			LM_ERR("failed to add avp to message\n");
+		}
 
 		ptr += to_32x_len( avp_data_len );
 	}

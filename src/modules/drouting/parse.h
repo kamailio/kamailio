@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005-2009 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,9 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * History:
- * ---------
- *  2005-07-27  first version (bogdan)
  */
 
 
@@ -33,11 +28,11 @@
 #define SEP1 ','
 #define SEP_GRP ';'
 
-#define IS_SPACE(s)\
-	((s)==' ' || (s)=='\t' || (s)=='\r' || (s)=='\n')
+#define IS_SPACE(s) ((s) == ' ' || (s) == '\t' || (s) == '\r' || (s) == '\n')
 
-#define EAT_SPACE(s)\
-	while((s) && IS_SPACE(*(s))) (s)++
+#define EAT_SPACE(s)             \
+	while((s) && IS_SPACE(*(s))) \
+	(s)++
 
 
 #endif

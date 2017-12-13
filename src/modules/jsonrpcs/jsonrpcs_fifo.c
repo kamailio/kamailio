@@ -47,83 +47,7 @@ char *jsonrpc_fifo_gid_s = 0;			/*!< Fifo default Group ID name */
 int  jsonrpc_fifo_mode = S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* Default file mode rw-rw---- */
 
 
-/* FIFO TRANSPORT */
-
-/*! \brief Initialize fifo transport */
-int jsonrpc_init_fifo_file(void)
-{
-	int n;
-	struct stat filestat;
-
-	/* checking the jsonrpc_fifo module param */
-	if (jsonrpc_fifo==NULL || *jsonrpc_fifo == 0) {
-		jsonrpc_fifo=NULL;
-		LM_DBG("No fifo configured\n");
-		return 0;
-	}
-
-	LM_DBG("testing if fifo file exists ...\n");
-	n=stat(jsonrpc_fifo, &filestat);
-	if (n==0) {
-		/* FIFO exist, delete it (safer) if no config check */
-		if(config_check==0) {
-			if (unlink(jsonrpc_fifo)<0){
-				LM_ERR("Cannot delete old fifo (%s): %s\n",
-					jsonrpc_fifo, strerror(errno));
-				return -1;
-			}
-		}
-	} else if (n<0 && errno!=ENOENT){
-		LM_ERR("MI FIFO stat failed: %s\n", strerror(errno));
-		return -1;
-	}
-
-	/* checking the fifo_reply_dir param */
-	if(!jsonrpc_fifo_reply_dir || *jsonrpc_fifo_reply_dir == 0) {
-		LM_ERR("fifo_reply_dir parameter is empty\n");
-		return -1;
-	}
-
-	/* Check if the directory for the reply fifo exists */
-	n = stat(jsonrpc_fifo_reply_dir, &filestat);
-	if(n < 0){
-		LM_ERR("Directory stat for MI Fifo reply failed: %s\n", strerror(errno));
-		return -1;
-	}
-
-	if(S_ISDIR(filestat.st_mode) == 0){
-		LM_ERR("fifo_reply_dir parameter is not a directory\n");
-		return -1;
-	}
-
-	/* check fifo_mode */
-	if(!jsonrpc_fifo_mode){
-		LM_WARN("cannot specify fifo_mode = 0, forcing it to rw-------\n");
-		jsonrpc_fifo_mode = S_IRUSR | S_IWUSR;
-	}
-
-	if (jsonrpc_fifo_uid_s){
-		if (user2uid(&jsonrpc_fifo_uid, &jsonrpc_fifo_gid, jsonrpc_fifo_uid_s)<0){
-			LM_ERR("Bad user name %s\n", jsonrpc_fifo_uid_s);
-			return -1;
-		}
-	}
-
-	if (jsonrpc_fifo_gid_s){
-		if (group2gid(&jsonrpc_fifo_gid, jsonrpc_fifo_gid_s)<0){
-			LM_ERR("Bad group name %s\n", jsonrpc_fifo_gid_s);
-			return -1;
-		}
-	}
-
-	/* add space for one extra process */
-	register_procs(1);
-
-	/* add child to update local config framework structures */
-	cfg_register_child(1);
-
-	return 0;
-}
+static FILE *_jsonrpcs_fifo_stream = NULL;
 
 
 static int  jsonrpc_fifo_read = 0;
@@ -209,6 +133,90 @@ FILE *jsonrpc_init_fifo_server(char *fifo_name, int fifo_mode,
 	jsonrpc_reply_fifo_s[jsonrpc_reply_fifo_len] = '\0';
 
 	return fifo_stream;
+}
+
+/*! \brief Initialize fifo transport */
+int jsonrpc_init_fifo_file(void)
+{
+	int n;
+	struct stat filestat;
+
+	/* checking the jsonrpc_fifo module param */
+	if (jsonrpc_fifo==NULL || *jsonrpc_fifo == 0) {
+		jsonrpc_fifo=NULL;
+		LM_DBG("No fifo configured\n");
+		return 0;
+	}
+
+	LM_DBG("testing if fifo file exists ...\n");
+	n=stat(jsonrpc_fifo, &filestat);
+	if (n==0) {
+		/* FIFO exist, delete it (safer) if no config check */
+		if(config_check==0) {
+			if (unlink(jsonrpc_fifo)<0){
+				LM_ERR("Cannot delete old fifo (%s): %s\n",
+					jsonrpc_fifo, strerror(errno));
+				return -1;
+			}
+		}
+	} else if (n<0 && errno!=ENOENT){
+		LM_ERR("MI FIFO stat failed: %s\n", strerror(errno));
+		return -1;
+	}
+
+	/* checking the fifo_reply_dir param */
+	if(!jsonrpc_fifo_reply_dir || *jsonrpc_fifo_reply_dir == 0) {
+		LM_ERR("fifo_reply_dir parameter is empty\n");
+		return -1;
+	}
+
+	/* Check if the directory for the reply fifo exists */
+	n = stat(jsonrpc_fifo_reply_dir, &filestat);
+	if(n < 0){
+		LM_ERR("Directory stat for MI Fifo reply failed: %s\n", strerror(errno));
+		return -1;
+	}
+
+	if(S_ISDIR(filestat.st_mode) == 0){
+		LM_ERR("fifo_reply_dir parameter is not a directory\n");
+		return -1;
+	}
+
+	/* check fifo_mode */
+	if(!jsonrpc_fifo_mode){
+		LM_WARN("cannot specify fifo_mode = 0, forcing it to rw-------\n");
+		jsonrpc_fifo_mode = S_IRUSR | S_IWUSR;
+	}
+
+	if (jsonrpc_fifo_uid_s){
+		if (user2uid(&jsonrpc_fifo_uid, &jsonrpc_fifo_gid, jsonrpc_fifo_uid_s)<0){
+			LM_ERR("Bad user name %s\n", jsonrpc_fifo_uid_s);
+			return -1;
+		}
+	}
+
+	if (jsonrpc_fifo_gid_s){
+		if (group2gid(&jsonrpc_fifo_gid, jsonrpc_fifo_gid_s)<0){
+			LM_ERR("Bad group name %s\n", jsonrpc_fifo_gid_s);
+			return -1;
+		}
+	}
+
+
+	_jsonrpcs_fifo_stream = jsonrpc_init_fifo_server( jsonrpc_fifo, jsonrpc_fifo_mode,
+		jsonrpc_fifo_uid, jsonrpc_fifo_gid, jsonrpc_fifo_reply_dir);
+	if ( _jsonrpcs_fifo_stream==NULL ) {
+		LM_CRIT("failed to init jsonrpc fifo server file stream\n");
+		return -1;
+	}
+
+	/* add space for one extra process */
+	register_procs(1);
+
+	/* add child to update local config framework structures */
+	cfg_register_child(1);
+
+	return 0;
 }
 
 /*! \brief Read input on fifo */
@@ -479,18 +487,14 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 
 static void jsonrpc_fifo_process(int rank)
 {
-	FILE *fifo_stream;
-
 	LM_DBG("new process with pid = %d created\n",getpid());
 
-	fifo_stream = jsonrpc_init_fifo_server( jsonrpc_fifo, jsonrpc_fifo_mode,
-		jsonrpc_fifo_uid, jsonrpc_fifo_gid, jsonrpc_fifo_reply_dir);
-	if ( fifo_stream==NULL ) {
-		LM_CRIT("failed to init jsonrpc fifo server\n");
+	if ( _jsonrpcs_fifo_stream==NULL ) {
+		LM_CRIT("fifo server stream not initialized\n");
 		exit(-1);
 	}
 
-	jsonrpc_fifo_server( fifo_stream );
+	jsonrpc_fifo_server( _jsonrpcs_fifo_stream );
 
 	LM_CRIT("failed to run jsonrpc fifo server\n");
 	exit(-1);
@@ -550,7 +554,7 @@ int jsonrpc_fifo_child_init(int rank)
 		LM_ERR("invalid fifo file path\n");
 	}
 
-	pid=fork_process(PROC_NOCHLDINIT, "JSONRPC-S FIFO", 1);
+	pid=fork_process(PROC_RPC, "JSONRPCS FIFO", 1);
 	if (pid<0) {
 		return -1; /* error */
 	}
@@ -601,4 +605,3 @@ int jsonrpc_fifo_destroy(void)
 error:
 	return -1;
 }
-

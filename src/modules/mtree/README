@@ -213,11 +213,11 @@ modparam("mtree", "db_table", "mtrees")
        extract a specific column value).
      * type - the type of tree elements (0 = string, 2 = integer). It is
        valid only when the (tprefix, tvalue) pairs are loaded (not for
-       muti-column values).
+       multi-column values).
      * multi - tells if dbtable can contain more than one tree (0 = one
        tree, 1 = more than one tree identified by tname column). It is
        valid only when the (tprefix, tvalue) pairs are loaded (not for
-       muti-column values).
+       multi-column values).
 
    This parameter can be set many times to add more trees in memory.
 

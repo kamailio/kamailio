@@ -201,6 +201,9 @@ static int split_fields(char *part, int *n, struct xlstr **strs) {
 	int i, res;
 	char *c, *fld;
 
+	if(part==NULL || *part=='\0')
+		return -1;
+
 	*n = 0;
 	*strs = 0;
 	c = part;

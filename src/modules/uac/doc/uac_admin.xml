@@ -10,7 +10,7 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
 
 
@@ -302,7 +302,7 @@ modparam("uac","credential","username:domain:password")
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.p.auth-realm-avp-id">
+		<section id="uac.p.auth_realm_avp">
 			<title><varname>auth_realm_avp</varname> (string)</title>
 			<para>
 			The definition of an PV that might contain the realm to be used
@@ -329,7 +329,7 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.p.auth-username-avp-id">
+		<section id="uac.p.auth_username_avp">
 			<title><varname>auth_username_avp</varname> (string)</title>
 			<para>
 			The definition of an AVP that might contain the username to be used
@@ -351,17 +351,17 @@ modparam("uac","auth_username_avp","$avp(i:11)")
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.p.auth-password-avp-id">
+		<section id="uac.p.auth_password_avp">
 			<title><varname>auth_password_avp</varname> (string)</title>
 			<para>
 			The definition of an AVP that might contain the password to be used
 			to perform authentication.
 			</para>
 			<para><emphasis>
-				If you define it, you also need to define 
-				<quote>auth_password_avp</quote> 
-				(<xref linkend="uac.p.auth-password-avp-id"/>) and 
-				<quote>auth_username_avp</quote> 
+				If you define it, you also need to define
+				<quote>auth_password_avp</quote>
+				(<xref linkend="uac.p.auth-password-avp-id"/>) and
+				<quote>auth_username_avp</quote>
 				(<xref linkend="uac.p.auth-password-avp-id"/>).
 			</emphasis></para>
 			<example>
@@ -373,11 +373,13 @@ modparam("uac","auth_password_avp","$avp(i:12)")
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.p.reg-db-url-id">
+		<section id="uac.p.reg_db_url">
 			<title><varname>reg_db_url</varname> (string)</title>
 			<para>
-			DB URL to fetch account profiles for registration.
+			DB URL to fetch account profiles for registration. This parameter
+			must be set in order to enable remote registrations feature.
 			</para>
+			<para>The default value is "" (no value).</para>
 			<example>
 				<title>Set <varname>reg_db_url</varname> parameter</title>
 				<programlisting format="linespecific">
@@ -389,17 +391,17 @@ modparam("uac", "reg_db_url",
 			</example>
 		</section>
 
-		<section id="uac.p.reg-timer-interval-id">
+		<section id="uac.p.reg_timer_interval">
 			<title><varname>reg_timer_interval</varname> (string)</title>
 			<para>
-			Timer interval (in seconds) at which registrations are managed, e.g. renewed as needed.  
+			Timer interval (in seconds) at which registrations are managed, e.g. renewed as needed.
 			</para>
 			<para>
 				<emphasis>
 				The default value is 90 seconds.
 				</emphasis>
 			</para>
-			
+
 			<example>
 				<title>Set <varname>reg_timer_interval</varname> parameter</title>
 				<programlisting format="linespecific">
@@ -410,7 +412,7 @@ modparam("uac", "reg_timer_interval", 60)
 			</example>
 		</section>
 
-		<section id="uac.p.reg-retry-interval-id">
+		<section id="uac.p.reg_retry_interval">
 			<title><varname>reg_retry_interval</varname> (int)</title>
 			<para>
 			Failed registration attempts will be retried after this interval
@@ -429,7 +431,7 @@ modparam("uac", "reg_retry_interval", 300)
 			</example>
 		</section>
 
-		<section id="uac.p.reg-random-delay-id">
+		<section id="uac.p.reg_random_delay">
 			<title><varname>reg_random_delay</varname> (int)</title>
 			<para>
 			Set a random reg_delay for each registration that has
@@ -447,7 +449,7 @@ modparam("uac", "reg_random_delay", 300)
 			</example>
 		</section>
 
-		<section id="uac.p.reg-db-table-id">
+		<section id="uac.p.reg_db_table">
 			<title><varname>reg_db_table</varname> (string)</title>
 			<para>
 			DB table name to fetch user profiles for registration.
@@ -468,7 +470,7 @@ modparam("uac", "reg_db_table", "uacreg")
 			</example>
 		</section>
 
-		<section id="uac.p.reg-contact-addr-id">
+		<section id="uac.p.reg_contact_addr">
 			<title><varname>reg_contact_addr</varname> (string)</title>
 			<para>
 			Address to be used to build contact address. Must be at least
@@ -485,7 +487,7 @@ modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
 			</example>
 		</section>
 
-		<section id="uac.p.reg-keep-callid">
+		<section id="uac.p.reg_keep_callid">
 			<title><varname>reg_keep_callid</varname> (string)</title>
 			<para>
 			If set to 0 (default), a new Call-Id will be generated for each
@@ -566,7 +568,7 @@ uac_replace_from("","");
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.f.uac_replace_from(uri)">
+		<section id="uac.f.uac_replace_from_uri">
 			<title>
 				<function moreinfo="none">uac_replace_from(uri)</function>
 			</title>
@@ -589,7 +591,7 @@ uac_replace_from("sip:batman@gotham.org");
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.f.uac_restore_from()">
+		<section id="uac.f.uac_restore_from">
 			<title>
 				<function moreinfo="none">uac_restore_from()</function>
 			</title>
@@ -610,7 +612,7 @@ uac_restore_from();
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.f.uac_replace_to(display,uri)">
+		<section id="uac.f.uac_replace_to">
 		<title>
 				<function moreinfo="none">uac_replace_to(display,uri)</function>
 			</title>
@@ -646,7 +648,7 @@ uac_replace_to("","");
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.f.uac_replace_to(uri)">
+		<section id="uac.f.uac_replace_to_uri">
 			<title>
 				<function moreinfo="none">uac_replace_to(uri)</function>
 			</title>
@@ -712,7 +714,7 @@ uac_restore_to();
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.f.uac_auth()">
+		<section id="uac.f.uac_auth">
 			<title>
 				<function moreinfo="none">uac_auth()</function>
 			</title>
@@ -757,7 +759,7 @@ failure_route[TRUNKAUTH] {
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.f.uac_req_send()">
+		<section id="uac.f.uac_req_send">
 			<title>
 				<function moreinfo="none">uac_req_send()</function>
 			</title>
@@ -783,7 +785,7 @@ uac_req_send();
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.f.uac_reg_lookup(uuid, dst)">
+		<section id="uac.f.uac_reg_lookup">
 			<title>
 				<function moreinfo="none">uac_reg_lookup(uuid, dst)</function>
 			</title>
@@ -807,7 +809,7 @@ if(uac_reg_lookup("$rU", "$ru"))
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.f.uac_reg_status(uuid)">
+		<section id="uac.f.uac_reg_status">
 			<title>
 				<function moreinfo="none">uac_reg_status(uuid)</function>
 			</title>
@@ -858,7 +860,7 @@ $var(status) = uac_reg_status("$rU");
 				</programlisting>
 			</example>
 		</section>
-		<section id="uac.f.uac_reg_request_to(user, mode)">
+		<section id="uac.f.uac_reg_request_to">
 			<title>
 				<function moreinfo="none">uac_reg_request_to(user, mode)</function>
 			</title>

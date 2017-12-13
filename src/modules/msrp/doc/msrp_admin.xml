@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section id="msrp.overview">
 	<title>Overview</title>
 	<para>
@@ -37,8 +37,8 @@
 	</para>
 	<para>
 		One of the main benefits of this module is the ability to reuse
-		all the other extensions that exist in the SIP server, including 
-	        accounting, authentication, authorization to database connectors, 
+		all the other extensions that exist in the SIP server, including
+	        accounting, authentication, authorization to database connectors,
 		security and DoS attack protections.
 	</para>
 	<para>
@@ -213,6 +213,37 @@ modparam("msrp", "use_path_addr", "msrp.kamailio.org:5061")
 </programlisting>
 		</example>
 	</section>
+	<section id="msrp.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event,
+			the values can be: 'msrp:frame-in'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msrp", "event_callback", "ksr_msrp_event")
+...
+-- event callback function implemented in Lua
+function ksr_msrp_event(evname)
+	KSR.info("===== msrp module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -222,7 +253,7 @@ modparam("msrp", "use_path_addr", "msrp.kamailio.org:5061")
 		<function moreinfo="none">msrp_relay()</function>
 	    </title>
 	    <para>
-			Relay MSRP frame according to the To-Path. This function has to be 
+			Relay MSRP frame according to the To-Path. This function has to be
 			executed for each MSRP request or reply that has to be forwarded. Note
 			that due to nature of the MSRP transport layer, which is reliable
 			(TCP/TLS), there is no retransmission of MSRP frames.

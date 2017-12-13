@@ -578,8 +578,8 @@ descavp)
        contiguous range starting at 1, limited by the configuration
        parameter max_targets. Possible values for hash_source are:
        call_id, from_uri, from_user, to_uri, to_user and rand
-     * decsavp - Name of the AVP where to store the description. This
-       parameter is optional.
+     * decsavp - AVP where to store the description. This parameter is
+       optional.
 
 4.3.  cr_nofallback_route(carrier, domain, prefix_matching, rewrite_user,
 hash_source, descavp)

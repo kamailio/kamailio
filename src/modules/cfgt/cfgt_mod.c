@@ -31,11 +31,11 @@
 
 MODULE_VERSION
 
-static int mod_init(void);        /*!< Module initialization function */
-static void destroy(void);        /*!< Module destroy function */
-static int child_init(int rank);  /*!< Per-child init function */
+static int mod_init(void);		 /*!< Module initialization function */
+static void destroy(void);		 /*!< Module destroy function */
+static int child_init(int rank); /*!< Per-child init function */
 
-extern int bind_cfgt(cfgt_api_t* api);
+extern int bind_cfgt(cfgt_api_t *api);
 
 /*! flag to protect against wrong initialization */
 unsigned int init_flag = 0;
@@ -47,33 +47,28 @@ extern str cfgt_hdr_prefix;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"cfgt_bind_cfgt", (cmd_function)bind_cfgt, 1, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"cfgt_bind_cfgt", (cmd_function)bind_cfgt, 1, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
 /*! \brief
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"basedir",  PARAM_STR, &cfgt_basedir},
-	{"mask", INT_PARAM, &cfgt_mask },
-	{"callid_prefix", PARAM_STR, &cfgt_hdr_prefix },
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"basedir", PARAM_STR, &cfgt_basedir},
+		{"mask", INT_PARAM, &cfgt_mask},
+		{"callid_prefix", PARAM_STR, &cfgt_hdr_prefix}, {0, 0, 0}};
 
 struct module_exports exports = {
-	"cfgt",
-	DEFAULT_DLFLAGS, /*!< dlopen flags */
-	cmds,       /*!< Exported functions */
-	params,     /*!< Export parameters */
-	0,          /*!< exported statistics */
-	0,          /*!< exported MI functions */
-	0,          /*!< exported pseudo-variables */
-	0,          /*!< extra processes */
-	mod_init,   /*!< Module initialization function */
-	0,          /*!< Response function */
-	destroy,    /*!< Destroy function */
-	child_init  /*!< Child initialization function */
+		"cfgt", DEFAULT_DLFLAGS, /*!< dlopen flags */
+		cmds,					 /*!< Exported functions */
+		params,					 /*!< Export parameters */
+		0,						 /*!< exported statistics */
+		0,						 /*!< exported MI functions */
+		0,						 /*!< exported pseudo-variables */
+		0,						 /*!< extra processes */
+		mod_init,				 /*!< Module initialization function */
+		0,						 /*!< Response function */
+		destroy,				 /*!< Destroy function */
+		child_init				 /*!< Child initialization function */
 };
 
 /*! \brief
@@ -81,16 +76,16 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	unsigned int ALL = REQUEST_CB+FAILURE_CB+ONREPLY_CB
-		+BRANCH_CB+ONSEND_CB+ERROR_CB+LOCAL_CB+EVENT_CB+BRANCH_FAILURE_CB;
-	if(cfgt_init()<0) return -1;
-	if (register_script_cb(cfgt_pre, PRE_SCRIPT_CB|ALL, 0) != 0)
-	{
+	unsigned int ALL = REQUEST_CB + FAILURE_CB + ONREPLY_CB + BRANCH_CB
+					   + ONSEND_CB + ERROR_CB + LOCAL_CB + EVENT_CB
+					   + BRANCH_FAILURE_CB;
+	if(cfgt_init() < 0)
+		return -1;
+	if(register_script_cb(cfgt_pre, PRE_SCRIPT_CB | ALL, 0) != 0) {
 		LM_ERR("could not insert PRE_SCRIPT callback");
 		return -1;
 	}
-	if (register_script_cb(cfgt_post, POST_SCRIPT_CB|ALL, 0) != 0)
-	{
+	if(register_script_cb(cfgt_post, POST_SCRIPT_CB | ALL, 0) != 0) {
 		LM_ERR("could not insert POST_SCRIPT callback");
 		return -1;
 	}

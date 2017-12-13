@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
@@ -42,13 +40,18 @@
 #include "../../core/script_cb.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 
 
 MODULE_VERSION
 
+#define RTIMER_ROUTE_NAME_SIZE  64
+
 typedef struct _stm_route {
 	str timer;
 	unsigned int route;
+	char route_name_buf[RTIMER_ROUTE_NAME_SIZE];
+	str route_name;
 	struct _stm_route *next;
 } stm_route_t;
 
@@ -181,6 +184,8 @@ void stm_timer_exec(unsigned int ticks, void *param)
 	stm_timer_t *it;
 	stm_route_t *rt;
 	sip_msg_t *fmsg;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("rtimer");
 
 	if(param==NULL)
 		return;
@@ -194,7 +199,15 @@ void stm_timer_exec(unsigned int ticks, void *param)
 		if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)==0 )
 			continue; /* drop the request */
 		set_route_type(REQUEST_ROUTE);
-		run_top_route(main_rt.rlist[rt->route], fmsg, 0);
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			run_top_route(main_rt.rlist[rt->route], fmsg, 0);
+		} else {
+			if(keng->froute(fmsg, EVENT_ROUTE, &rt->route_name, &evname)<0) {
+				LM_ERR("error running event route kemi callback [%.*s]\n",
+						rt->route_name.len, rt->route_name.s);
+			}
+		}
 		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
 		ksr_msg_env_reset();
 	}
@@ -338,12 +351,20 @@ int stm_e_param(modparam_t type, void *val)
 	}
 	c = s.s[s.len];
 	s.s[s.len] = '\0';
+	if(s.len>=RTIMER_ROUTE_NAME_SIZE-1) {
+		LM_ERR("route block name is too long [%.*s] (%d)\n", s.len, s.s, s.len);
+		free_params(params_list);
+		return -1;
+	}
 	tmp.route = route_get(&main_rt, s.s);
+	memcpy(tmp.route_name_buf, s.s, s.len);
+	tmp.route_name_buf[s.len] = '\0';
+	tmp.route_name.s = tmp.route_name_buf;
+	tmp.route_name.len = s.len;
 	s.s[s.len] = c;
 	if(tmp.route == -1)
 	{
-		LM_ERR("invalid route: %.*s\n",
-				s.len, s.s);
+		LM_ERR("invalid route: %.*s\n", s.len, s.s);
 		free_params(params_list);
 		return -1;
 	}
@@ -356,6 +377,7 @@ int stm_e_param(modparam_t type, void *val)
 		return -1;
 	}
 	memcpy(rt, &tmp, sizeof(stm_route_t));
+	rt->route_name.s = rt->route_name_buf;
 	rt->next = nt->rt;
 	nt->rt = rt;
 	free_params(params_list);

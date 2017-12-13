@@ -1,0 +1,20 @@
+$OpenBSD: patch-src_core_tcp_read_c,v 1.1 2017/07/03 22:14:20 sthen Exp $
+
+Index: a/src/core/tcp_read.c
+--- a/src/core/tcp_read.c.orig
++++ a/src/core/tcp_read.c
+@@ -1497,6 +1497,14 @@ void release_tcpconn(struct tcp_connection* c, long st
+ 				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+ 				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+ 		LM_DBG("extra_data %p\n", c->extra_data);
++
++		/* experimental fix tls crash with libressl */
++		/* add cleanup SSL structure in child process, in parent process SSL structure is empty */
++		if ((c->type==PROTO_TLS || c->type==PROTO_WSS) && (c->extra_data) && c->fd != -1) {
++			tls_close(c, c->fd);
++			tls_tcpconn_clean(c);
++		}
++
+ 		/* release req & signal the parent */
+ 		c->reader_pid=0; /* reset it */
+ 		if (c->fd!=-1){

@@ -1040,7 +1040,7 @@ modparam("usrloc", "close_expired_tcp", 1)
 		<para>
 			If set to 1, &kamailio; expects to deal with BIGINT type on
 			database columns for expires and last modified values. It
-			allows to handle better the daylight time adjustmens. If set
+			allows to handle better the daylight time adjustments. If set
 			to 0, those columns are expected to be on default type
 			'DATETIME'. When it is 1, the database columns types have
 			to be changed manually to 'BIGINT'.
@@ -1088,7 +1088,14 @@ modparam("usrloc", "db_raw_fetch_type", 1)
 		<title><varname>db_insert_null</varname> (int)</title>
 		<para>
 			If set to 1, the insert operation to database will add null values
-			in the sql statement.
+			in the statement. It has to be set to 1 for the database systems
+			that do not have table definitions that create automatically the
+			null fields (e.g., db_mongodb) for each stored record.
+		</para>
+		<para>
+			When set to 0, the fiels that default to null are not
+			added to the DB insert statement if they don't have a different
+			value, making the query smaller.
 		</para>
 		<para>
 		<emphasis>
@@ -1268,7 +1275,8 @@ modparam("usrloc", "db_timer_clean", 1)
 				<emphasis>Q</emphasis> - Q value of the contact
 			</para></listitem>
 			<listitem><para>
-				<emphasis>path</emphasis> value of the contact
+				<emphasis>path</emphasis> value with the Path vector (use '0'
+				or '.' if it should not be set)
 			</para></listitem>
 			<listitem><para>
 				<emphasis>flags</emphasis> - internal USRLOC flags of the
@@ -1282,7 +1290,23 @@ modparam("usrloc", "db_timer_clean", 1)
 				<emphasis>methods</emphasis> - mask with supported requests
 				of the contact
 			</para></listitem>
+			<listitem><para>
+				<emphasis>received</emphasis> (optional) value with the
+				received-from address (source address) (use '0'
+				or '.' if it should not be set). Format:
+				sip:srcip:srcport;transport=abc
+			</para></listitem>
+			<listitem><para>
+				<emphasis>socket</emphasis> (optional) value with the local
+				socket address (use '0' or '.' if it should not be set). Format:
+				proto:localip:localport
+			</para></listitem>
 		</itemizedlist>
+		<para>
+			Note: the position of parameters is relevant, in the case of
+			optional parameters, use '0' or '.' for parameters that should not
+			be set which are positioned before any parameter that has to be set.
+		</para>
 	</section>
 
 	<section id="usrloc.r.db_users">

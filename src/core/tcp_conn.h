@@ -32,10 +32,10 @@
 #include "timer.h"
 
 /* maximum number of port aliases x search wildcard possibilities */
-#define TCP_CON_MAX_ALIASES (4*3) 
+#define TCP_CON_MAX_ALIASES (4*3)
 
-#define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns" 
-							 the connection to the tcp master process */
+#define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns"
+							 * the connection to the tcp master process */
 #define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
 #define TCP_CHILD_SELECT_TIMEOUT 2 /* the same as above but for children */
 
@@ -52,10 +52,11 @@
 #define F_CONN_FORCE_EOF  512 /* act as if an EOF was received */
 #define F_CONN_OOB_DATA  1024 /* out of band data on the connection */
 #define F_CONN_WR_ERROR  2048 /* write error on the fd */
-#define F_CONN_WANTS_RD  4096  /* conn. should be watched for READ */
-#define F_CONN_WANTS_WR  8192  /* conn. should be watched for WRITE */
+#define F_CONN_WANTS_RD  4096 /* conn. should be watched for READ */
+#define F_CONN_WANTS_WR  8192 /* conn. should be watched for WRITE */
 #define F_CONN_PASSIVE  16384 /* conn. created via accept() and not connect()*/
 #define F_CONN_CLOSE_EV 32768 /* explicitely call tcpops ev route when closed */
+#define F_CONN_NOSEND   65536 /* do not send data on this connection */
 
 #ifndef NO_READ_HTTP11
 #define READ_HTTP11
@@ -76,7 +77,7 @@ enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP_EMPTY_CR_FOUND,
 		H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 		H_CONT_LEN1, H_CONT_LEN2, H_CONT_LEN3, H_CONT_LEN4, H_CONT_LEN5,
 		H_CONT_LEN6, H_CONT_LEN7, H_CONT_LEN8, H_CONT_LEN9, H_CONT_LEN10,
-		H_CONT_LEN11, H_CONT_LEN12, H_CONT_LEN13, H_L_COLON, 
+		H_CONT_LEN11, H_CONT_LEN12, H_CONT_LEN13, H_L_COLON,
 		H_CONT_LEN_BODY, H_CONT_LEN_BODY_PARSE,
 		H_STUN_MSG, H_STUN_READ_BODY, H_STUN_FP, H_STUN_END, H_PING_CRLF
 #ifdef READ_HTTP11
@@ -103,17 +104,17 @@ enum conn_cmds {
 	CONN_EOF=-1     /* eof received or conn. closed & auto-dec refcnt */,
 	CONN_NOP=0      /* do-nothing (invalid for tcp_main) */,
 	CONN_RELEASE    /* release a connection from tcp_read back into tcp_main
-					   & auto-dec refcnt */,
+					 * & auto-dec refcnt */,
 	CONN_GET_FD     /* request a fd from tcp_main */,
 	CONN_NEW        /* update/set a fd int a new tcp connection; refcnts are
-					  not touched */,
+					 * not touched */,
 	CONN_QUEUED_WRITE /* new write queue: start watching the fd for write &
-						 auto-dec refcnt */,
+						* auto-dec refcnt */,
 	CONN_NEW_PENDING_WRITE /* like CONN_NEW+CONN_QUEUED_WRITE: set fd and
-							  start watching it for write (write queue
-							  non-empty); refcnts are not touced */,
+							* start watching it for write (write queue
+							* non-empty); refcnts are not touced */,
 	CONN_NEW_COMPLETE  /* like CONN_NEW_PENDING_WRITE, but there is no
-						  pending write (the write queue might be empty) */
+						* pending write (the write queue might be empty) */
 };
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */
@@ -132,7 +133,7 @@ struct tcp_req{
 #ifdef READ_HTTP11
 	int chunk_size;
 #endif
-	unsigned short flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
+	unsigned int flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
 	int bytes_to_go; /* how many bytes we have still to read from the body*/
 	enum tcp_req_errors error;
 	enum tcp_req_states state;
@@ -149,6 +150,7 @@ struct tcp_req{
 #define F_TCP_REQ_MSRP_FRAME  16
 #define F_TCP_REQ_MSRP_BODY   32
 #endif
+#define F_TCP_REQ_HEP3        64
 
 #define TCP_REQ_HAS_CLEN(tr)  ((tr)->flags & F_TCP_REQ_HAS_CLEN)
 #define TCP_REQ_COMPLETE(tr)  ((tr)->flags & F_TCP_REQ_COMPLETE)
@@ -193,13 +195,13 @@ struct tcp_connection{
 	int fd; /* used only by "children", don't modify it! private data! */
 	gen_lock_t write_lock;
 	int id; /* id (unique!) used to retrieve a specific connection when
-	           reply-ing*/
+			 * reply-ing */
 	int reader_pid; /* pid of the active reader process */
 	struct receive_info rcv; /* src & dst ip, ports, proto a.s.o*/
 	struct tcp_req req; /* request data */
 	atomic_t refcnt;
 	enum sip_protos type; /* PROTO_TCP or a protocol over it, e.g. TLS */
-	unsigned short flags; /* connection related flags */
+	unsigned int flags; /* connection related flags */
 	snd_flags_t send_flags; /* special send flags */
 	enum tcp_conn_states state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
@@ -295,7 +297,7 @@ struct tcp_connection{
 #define TCP_ID_HASH_SIZE 1024
 
 /* hash (dst_ip, dst_port, local_ip, local_port) */
-static inline unsigned tcp_addr_hash(	struct ip_addr* ip, 
+static inline unsigned tcp_addr_hash(	struct ip_addr* ip,
 										unsigned short port,
 										struct ip_addr* l_ip,
 										unsigned short l_port)
@@ -304,7 +306,7 @@ static inline unsigned tcp_addr_hash(	struct ip_addr* ip,
 
 	if(ip->len==4)
 		h=(ip->u.addr32[0]^port)^(l_ip->u.addr32[0]^l_port);
-	else if (ip->len==16) 
+	else if (ip->len==16)
 		h= (ip->u.addr32[0]^ip->u.addr32[1]^ip->u.addr32[2]^
 				ip->u.addr32[3]^port) ^
 			(l_ip->u.addr32[0]^l_ip->u.addr32[1]^l_ip->u.addr32[2]^
@@ -356,5 +358,3 @@ typedef struct ws_event_info {
 } ws_event_info_t;
 
 #endif
-
-

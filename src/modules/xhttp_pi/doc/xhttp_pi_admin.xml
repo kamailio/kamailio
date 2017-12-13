@@ -314,7 +314,7 @@ modparam("xhttp_pi", "xhttp_pi_root", "pi")
 		<title>Set <varname>xhttp_pi_buf_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("xhttp", "xhttp_pi_buf_size", 1024)
+modparam("xhttp_pi", "xhttp_pi_buf_size", 1024)
 ...
 </programlisting>
 		</example>
@@ -333,7 +333,7 @@ modparam("xhttp", "xhttp_pi_buf_size", 1024)
 		<title>Set <varname>framework</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("xhttp", "framework", "/usr/local/etc/kamailio/pi_framework.xml")
+modparam("xhttp_pi", "framework", "/usr/local/etc/kamailio/pi_framework.xml")
 ...
 </programlisting>
 		</example>
@@ -359,7 +359,7 @@ loadmodule "sl.so"
 loadmodule "xhttp.so"
 loadmodule "xhttp_pi.so"
 ...
-modparam("xhttp", "framework", "/usr/local/etc/kamailio/pi_framework.xml")
+modparam("xhttp_pi", "framework", "/usr/local/etc/kamailio/pi_framework.xml")
 ...
 event_route[xhttp:request] {
 	$var(xhttp_root) = $(hu{s.substr,0,3});

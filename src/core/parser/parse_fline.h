@@ -18,8 +18,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -68,31 +68,28 @@
 #define REFER_LEN 5
 #define PUBLISH_LEN 7
 
-struct msg_start {
+typedef struct msg_start {
 	short type;					/*!< Type of the message - request/response */
 	short flags;				/*!< First line flags */
 	int len; 					/*!< length including delimiter */
 	union {
 		struct {
-			str method;       /*!< Method string */
-			str uri;          /*!< Request URI */
-			str version;      /*!< SIP version */
+			str method;			/*!< Method string */
+			str uri;			/*!< Request URI */
+			str version;		/*!< SIP version */
 			int method_value;
 		} request;
 		struct {
-			str version;      /*!< SIP version */
-			str status;       /*!< Reply status */
-			str reason;       /*!< Reply reason phrase */
-			unsigned int /*!< statusclass,*/ statuscode;
+			str version;		/*!< SIP version */
+			str status;			/*!< Reply status */
+			str reason;			/*!< Reply reason phrase */
+			unsigned int statuscode;	/*!< Reply status code */
 		} reply;
 	}u;
-};
-
-
+} msg_start_t;
 
 char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl);
 
 char* parse_fline(char* buffer, char* end, struct msg_start* fl);
-
 
 #endif /* PARSE_FLINE_H */

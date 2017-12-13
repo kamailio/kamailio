@@ -44,6 +44,7 @@
 #include "../../core/resolve.h"
 #include "../../core/usr_avp.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -924,6 +925,14 @@ static int m_store_2(struct sip_msg* msg, char* owner, char* s2)
 }
 
 /**
+ * store message
+ */
+static int ki_m_store(sip_msg_t* msg)
+{
+	return m_store(msg, NULL);
+}
+
+/**
  * dump message
  */
 static int m_dump(struct sip_msg* msg, str* owner_s)
@@ -1039,8 +1048,11 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 	}
 
 	if (msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
-			    db_no_cols, ob_key, &db_res) < 0) {
+			    db_no_cols, ob_key, &db_res) < 0 || db_res==NULL) {
 	    LM_ERR("failed to query database\n");
+		if (db_res!=NULL && msilo_dbf.free_result(db_con, db_res) < 0) {
+			LM_ERR("failed to free the query result\n");
+		}
 	    goto error;
 	}
 
@@ -1071,13 +1083,13 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 			(time_t)RES_ROWS(db_res)[i].values[5/*inc time*/].val.int_val;
 		
 		if (ms_extra_hdrs != NULL) {
-		    if (fixup_get_svalue(msg, (gparam_p)*ms_extra_hdrs_sp,
-					 &extra_hdrs_str) != 0) {
-			if (msilo_dbf.free_result(db_con, db_res) < 0)
-				LM_ERR("failed to free the query result\n");
-			LM_ERR("unable to get extra_hdrs value\n");
-			goto error;
-		    }
+			if(fixup_get_svalue(msg, (gparam_p)*ms_extra_hdrs_sp,
+					&extra_hdrs_str) != 0) {
+				if(msilo_dbf.free_result(db_con, db_res) < 0)
+					LM_ERR("failed to free the query result\n");
+				LM_ERR("unable to get extra_hdrs value\n");
+				goto error;
+			}
 		} else {
 		    extra_hdrs_str.len = 0;
 		}
@@ -1153,7 +1165,7 @@ done:
 	 * Free the result because we don't need it
 	 * anymore
 	 */
-	if ((db_res !=NULL) && msilo_dbf.free_result(db_con, db_res) < 0)
+	if (msilo_dbf.free_result(db_con, db_res) < 0)
 		LM_ERR("failed to free result of query\n");
 
 	return 1;
@@ -1176,6 +1188,14 @@ static int m_dump_2(struct sip_msg* msg, char* owner, char* s2)
 		}
 		return m_dump(msg, &owner_s);
 	}
+	return m_dump(msg, NULL);
+}
+
+/**
+ * dump message
+ */
+static int ki_m_dump(sip_msg_t* msg)
+{
 	return m_dump(msg, NULL);
 }
 
@@ -1598,3 +1618,38 @@ int check_message_support(struct sip_msg* msg)
 	return -1;
 }
 
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_msilo_exports[] = {
+	{ str_init("msilo"), str_init("mstore"),
+		SR_KEMIP_INT, ki_m_store,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msilo"), str_init("mstore_uri"),
+		SR_KEMIP_INT, m_store,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msilo"), str_init("mdump"),
+		SR_KEMIP_INT, ki_m_dump,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msilo"), str_init("mdump_uri"),
+		SR_KEMIP_INT, m_dump,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_msilo_exports);
+	return 0;
+}

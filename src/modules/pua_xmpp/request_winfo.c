@@ -38,7 +38,7 @@ int request_winfo(struct sip_msg* msg, char* uri, char* expires)
 {
 	subs_info_t subs;
 	struct sip_uri puri;
-	int printbuf_len;
+	int printbuf_len = 0;
 	char buffer[PRINTBUF_SIZE];
 	str uri_str;
 
@@ -55,13 +55,12 @@ int request_winfo(struct sip_msg* msg, char* uri, char* expires)
 		{
 			LM_ERR("bad owner SIP address!\n");
 			goto error;
-		} else
-		{
+		} else {
 			LM_DBG("using user id [%.*s]\n", printbuf_len,
 					buffer);
 		}
 	} 
-	if(puri.user.len<=0 || puri.user.s==NULL
+	if(printbuf_len == 0 || puri.user.len<=0 || puri.user.s==NULL
 			|| puri.host.len<=0 || puri.host.s==NULL)
 	{
 		LM_ERR("bad owner URI!\n");

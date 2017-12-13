@@ -28,6 +28,7 @@
 #include "../../core/trim.h"
 #include "../../core/sr_module.h"
 #include "../../core/nonsip_hooks.h"
+#include "../../core/kemi.h"
 #include "../../modules/xhttp/api.h"
 #include "xhttp_rpc.h"
 #include "xhttp_rpc_fnc.h"
@@ -85,7 +86,8 @@ int buf_size = 0;
 char error_buf[ERROR_REASON_BUF_LEN];
 
 static cmd_export_t cmds[] = {
-	{"dispatch_xhttp_rpc",(cmd_function)xhttp_rpc_dispatch,0,0,0,REQUEST_ROUTE},
+	{"dispatch_xhttp_rpc",(cmd_function)xhttp_rpc_dispatch,0,0,0,
+			REQUEST_ROUTE|EVENT_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -562,6 +564,62 @@ err:
 }
 
 
+/** Adds a new member to array.
+ */
+static int rpc_array_add(struct rpc_data_struct* rpc_s, char* fmt, ...)
+{
+	va_list ap;
+	void **void_ptr;
+	rpc_ctx_t *ctx = rpc_s->ctx;
+	struct rpc_data_struct *ds, *s;
+
+	if (!ctx) {
+		LM_ERR("Invalid context\n");
+		return -1;
+	}
+	if (!ctx->data_structs) {
+		LM_ERR("Invalid structs\n");
+		return -1;
+	}
+	s = ds = ctx->data_structs;
+	ctx->struc_depth = 0;
+	while (s) {
+		if (s == rpc_s) {
+			if (s->next) {
+				free_data_struct(s->next);
+				s->next = NULL;
+			}
+			break;
+		}
+		ctx->struc_depth++;
+		ds = s;
+		s = s->next;
+	}
+	if (!s)
+		s = ds;
+	va_start(ap, fmt);
+	while(*fmt) {
+		if (*fmt == '{' || *fmt == '[') {
+			void_ptr = va_arg(ap, void**);
+			ds = new_data_struct(ctx);
+			if (!ds) goto err;
+			s->next = ds;
+			*void_ptr = ds;
+			if (0!=xhttp_rpc_build_content(ctx, NULL, NULL))
+				goto err;
+		} else {
+			if (print_value(ctx, *fmt, &ap, NULL) < 0) goto err;
+		}
+		fmt++;
+	}
+	va_end(ap);
+	return 0;
+err:
+	va_end(ap);
+	return -1;
+}
+
+
 static int rpc_struct_scan(struct rpc_data_struct* rpc_s, char* fmt, ...)
 {
 	LM_ERR("Not implemented\n");
@@ -668,8 +726,7 @@ static int mod_init(void)
 	func_param.scan = (rpc_scan_f)rpc_scan;
 	func_param.rpl_printf = (rpc_rpl_printf_f)rpc_rpl_printf;
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
-	/* use rpc_struct_add for array_add */
-	func_param.array_add = (rpc_struct_add_f)rpc_struct_add;
+	func_param.array_add = (rpc_array_add_f)rpc_array_add;
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;
 	func_param.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
 	func_param.capabilities = (rpc_capabilities_f)rpc_capabilities;
@@ -766,7 +823,7 @@ static int child_init(int rank)
 }
 
 
-static int xhttp_rpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
+static int ki_xhttp_rpc_dispatch(sip_msg_t* msg)
 {
 	rpc_export_t* rpc_e;
 	str arg = {NULL, 0};
@@ -834,6 +891,35 @@ send_reply:
 		ret = rpc_send(&ctx);
 	}
 	if (ret < 0) return -1;
+	return 0;
+}
+
+static int xhttp_rpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
+{
+	return ki_xhttp_rpc_dispatch(msg);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_xhttp_rpc_exports[] = {
+	{ str_init("xhttp_rpc"), str_init("dispatch"),
+		SR_KEMIP_INT, ki_xhttp_rpc_dispatch,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_xhttp_rpc_exports);
 	return 0;
 }
 

@@ -30,7 +30,8 @@
 #include "../../core/error.h"
 #include "../../core/dprint.h"
 #include "../../core/config.h"
-#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../misc_radius/radius.h"
 #include "../../core/mem/mem.h"
 #include "auth_radius.h"
@@ -39,20 +40,18 @@
 
 MODULE_VERSION
 
-struct attr attrs[A_MAX+MAX_EXTRA];
-struct val vals[V_MAX+MAX_EXTRA];
+struct attr attrs[A_MAX + MAX_EXTRA];
+struct val vals[V_MAX + MAX_EXTRA];
 void *rh;
 
 auth_api_s_t auth_api;
 
-static int mod_init(void);         /* Module initialization function */
-static int auth_fixup(void** param, int param_no); /* char* -> str* */
-
+static int mod_init(void); /* Module initialization function */
 
 /*
  * Module parameter variables
  */
-static char* radius_config = DEFAULT_RADIUSCLIENT_CONF;
+static char *radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int service_type = -1;
 
 int use_ruri_flag = -1;
@@ -65,15 +64,16 @@ struct extra_attr *auth_extra = 0;
 /*
  * Exported functions
  */
+/* clang-format off */
 static cmd_export_t cmds[] = {
-	{"radius_www_authorize", (cmd_function)radius_www_authorize_1,   1, auth_fixup,
-			0, REQUEST_ROUTE},
-	{"radius_www_authorize", (cmd_function)radius_www_authorize_2,   2, auth_fixup,
-			0, REQUEST_ROUTE},
-	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_1, 1, auth_fixup,
-			0, REQUEST_ROUTE},
-	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_2, 2, auth_fixup,
-			0, REQUEST_ROUTE},
+	{"radius_www_authorize", (cmd_function)radius_www_authorize_1,   1,
+			fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+	{"radius_www_authorize", (cmd_function)radius_www_authorize_2,   2,
+			fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
+	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_1, 1,
+			fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_2, 2,
+			fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -87,7 +87,7 @@ static param_export_t params[] = {
 	{"use_ruri_flag",    INT_PARAM, &use_ruri_flag	},
 	{"auth_extra",       PARAM_STRING, &auth_extra_str	},
 	{"radius_avps_mode",	 INT_PARAM, &ar_radius_avps_mode	},
-	{"append_realm_to_username", INT_PARAM, &append_realm_to_username       },
+	{"append_realm_to_username", INT_PARAM, &append_realm_to_username  },
 	{0, 0, 0}
 };
 
@@ -96,7 +96,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"auth_radius", 
+	"auth_radius",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
@@ -109,6 +109,7 @@ struct module_exports exports = {
 	0,          /* destroy function */
 	0           /* child initialization function */
 };
+/* clang-format off */
 
 
 /*
@@ -186,50 +187,41 @@ static int mod_init(void)
 	return 0;
 }
 
-
-/*
- * Convert char* parameter to pv_elem_t* parameter
+/**
+ *
  */
-static int auth_fixup(void** param, int param_no)
+/* clang-format off */
+static sr_kemi_t sr_kemi_auth_radius_exports[] = {
+	{ str_init("auth_radius"), str_init("proxy_authorize"),
+		SR_KEMIP_INT, ki_radius_proxy_authorize,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth_radius"), str_init("proxy_authorize_user"),
+		SR_KEMIP_INT, ki_radius_proxy_authorize_user,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth_radius"), str_init("www_authorize"),
+		SR_KEMIP_INT, ki_radius_www_authorize,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth_radius"), str_init("www_authorize_user"),
+		SR_KEMIP_INT, ki_radius_www_authorize_user,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	pv_elem_t *model;
-	str s;
-	pv_spec_t *sp;
-
-	if (param_no == 1) { /* realm (string that may contain pvars) */
-		s.s = (char*)*param;
-		if (s.s==0 || s.s[0]==0) {
-			model = 0;
-		} else {
-			s.len = strlen(s.s);
-			if (pv_parse_format(&s,&model)<0) {
-				LM_ERR("pv_parse_format failed\n");
-				return E_OUT_OF_MEM;
-			}
-		}
-		*param = (void*)model;
-	}
-
-	if (param_no == 2) { /* URI user (a pvar) */
-		sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-		if (sp == 0) {
-			LM_ERR("no pkg memory left\n");
-			return -1;
-		}
-		s.s = (char*)*param;
-		s.len = strlen(s.s);
-		if (pv_parse_spec(&s, sp) == 0) {
-			LM_ERR("parsing of pseudo variable %s failed!\n", (char*)*param);
-			pkg_free(sp);
-			return -1;
-		}
-		if (sp->type == PVT_NULL) {
-			LM_ERR("bad pseudo variable\n");
-			pkg_free(sp);
-			return -1;
-		}
-		*param = (void*)sp;
-	}	
-
+	sr_kemi_modules_add(sr_kemi_auth_radius_exports);
 	return 0;
 }

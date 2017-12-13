@@ -107,6 +107,9 @@ int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
 static int _dlg_track_cseq_updates = 0;
 int dlg_ka_failed_limit = 1;
+int dlg_early_timeout = 300;
+int dlg_noack_timeout = 60;
+int dlg_end_timeout = 300;
 
 int dlg_enable_dmq = 0;
 
@@ -176,13 +179,14 @@ static int w_dlg_refer(struct sip_msg*, char*, char*);
 static int w_dlg_bridge(struct sip_msg*, char*, char*, char*);
 static int w_dlg_set_timeout(struct sip_msg*, char*, char*, char*);
 static int w_dlg_set_timeout_by_profile2(struct sip_msg *, char *, char *);
-static int w_dlg_set_timeout_by_profile3(struct sip_msg *, char *, char *, 
+static int w_dlg_set_timeout_by_profile3(struct sip_msg *, char *, char *,
 					char *);
 static int fixup_dlg_bye(void** param, int param_no);
 static int fixup_dlg_refer(void** param, int param_no);
 static int fixup_dlg_bridge(void** param, int param_no);
 static int w_dlg_get(struct sip_msg*, char*, char*, char*);
 static int w_is_known_dlg(struct sip_msg *);
+static int w_dlg_set_ruri(sip_msg_t *, char *, char *);
 
 static int w_dlg_remote_profile(sip_msg_t *msg, char *cmd, char *pname,
 		char *pval, char *puid, char *expires);
@@ -236,6 +240,8 @@ static cmd_export_t cmds[]={
 	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
 			0, ANY_ROUTE },
 	{"dlg_remote_profile", (cmd_function)w_dlg_remote_profile, 5, fixup_dlg_remote_profile,
+			0, ANY_ROUTE },
+	{"dlg_set_ruri",       (cmd_function)w_dlg_set_ruri,  0, NULL,
 			0, ANY_ROUTE },
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
@@ -301,7 +307,10 @@ static param_export_t mod_params[]={
 	{ "db_skip_load",          INT_PARAM, &db_skip_load             },
 	{ "ka_failed_limit",       INT_PARAM, &dlg_ka_failed_limit      },
 	{ "enable_dmq",            INT_PARAM, &dlg_enable_dmq           },
-	{"event_callback",         PARAM_STR, &dlg_event_callback       },
+	{ "event_callback",        PARAM_STR, &dlg_event_callback       },
+	{ "early_timeout",         PARAM_INT, &dlg_early_timeout        },
+	{ "noack_timeout",         PARAM_INT, &dlg_noack_timeout        },
+	{ "end_timeout",           PARAM_INT, &dlg_end_timeout          },
 	{ 0,0,0 }
 };
 
@@ -1817,7 +1826,7 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	},
 	{ str_init("dialog"), str_init("set_dlg_profile_static"),
 		SR_KEMIP_INT, ki_set_dlg_profile_static,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("set_dlg_profile"),
@@ -1827,7 +1836,7 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	},
 	{ str_init("dialog"), str_init("unset_dlg_profile_static"),
 		SR_KEMIP_INT, ki_unset_dlg_profile_static,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("unset_dlg_profile"),
@@ -1837,7 +1846,7 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	},
 	{ str_init("dialog"), str_init("is_in_profile_static"),
 		SR_KEMIP_INT, ki_is_in_profile_static,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("is_in_profile"),
@@ -2092,6 +2101,11 @@ static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_na
 
 static int w_is_known_dlg(sip_msg_t *msg) {
 	return	is_known_dlg(msg);
+}
+
+static int w_dlg_set_ruri(sip_msg_t *msg, char *p1, char *p2)
+{
+	return	dlg_set_ruri(msg);
 }
 
 static const char *rpc_print_dlgs_doc[2] = {

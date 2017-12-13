@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver 5.1.0
-%define rel dev1%{dist}
+%define rel dev6%{dist}
 %bcond_with dnssec
 
 
@@ -23,6 +23,7 @@ Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-kazoo < %ver
+Conflicts:  kamailio-rabbitmq < %ver
 Conflicts:  kamailio-memcached < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
@@ -190,7 +191,6 @@ This module implements protocol functions that use the libcurl to communicate wi
 %package    http_client
 Summary:    HTTP client module for Kamailio.
 Group:      System Environment/Daemons
-Requires:   libcrypto
 
 %description    http_client
 This module implements protocol functions that use the libcurl to communicate with HTTP servers. 
@@ -233,6 +233,16 @@ BuildRequires:  libuuid-devel, librabbitmq-devel, json-c-devel, libevent-devel
 
 %description    kazoo
 Kazoo module for Kamailio.
+
+
+%package    rabbitmq
+Summary:    RabbitMQ related modules
+Group:      System Environment/Daemons
+Requires:   uuid, librabbitmq, kamailio = %ver
+BuildRequires:    librabbitmq-devel, uuid-devel
+
+%description    rabbitmq
+RabbitMQ module for Kamailio.
 
 
 %package    lcr
@@ -573,7 +583,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     kdnssec \
 %endif
     kgeoip kgzcompress khttp_async kims kjansson kjson kjsonrpcs \
-    kkazoo kldap klua kmemcached \
+    kkazoo krabbitmq kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp kuuid"
@@ -593,7 +603,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kdnssec \
 %endif
     kgeoip kgzcompress khttp_async kims kjansson kjson kjsonrpcs \
-    kkazoo kldap klua kmemcached \
+    kkazoo krabbitmq kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp kuuid"
@@ -657,6 +667,7 @@ fi
 
 %dir %{_docdir}/kamailio/modules
 %doc %{_docdir}/kamailio/modules/README.acc
+%doc %{_docdir}/kamailio/modules/README.acc_diameter
 %doc %{_docdir}/kamailio/modules/README.alias_db
 %doc %{_docdir}/kamailio/modules/README.app_jsdt
 %doc %{_docdir}/kamailio/modules/README.async
@@ -799,6 +810,7 @@ fi
 
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/acc.so
+%{_libdir}/kamailio/modules/acc_diameter.so
 %{_libdir}/kamailio/modules/alias_db.so
 %{_libdir}/kamailio/modules/app_jsdt.so
 %{_libdir}/kamailio/modules/async.so
@@ -1088,6 +1100,12 @@ fi
 %{_libdir}/kamailio/modules/kazoo.so
 
 
+%files      rabbitmq
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.rabbitmq
+%{_libdir}/kamailio/modules/rabbitmq.so
+
+
 %files      lcr
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.lcr
@@ -1352,6 +1370,8 @@ fi
 %{_libdir}/kamailio/modules/app_sqlang.so
 
 %changelog
+* Mon Jul 31 2017 Mititelu Stefan <stefan.mititelu92@gmail.com>
+   - added rabbitmq module
 * Wed Apr 26 2017 Carsten Bock <carsten@ng-voice.co,>
   - added ims_diameter_server module
   - added topos_redis module

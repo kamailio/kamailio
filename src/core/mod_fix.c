@@ -207,7 +207,7 @@ struct regex_fixup {
 int fixup_regexp_null(void** param, int param_no)
 {
 	struct regex_fixup* re;
-	
+
 	if (param_no != 1)
 		return E_UNSPEC;
 	if ((re=pkg_malloc(sizeof(*re))) ==0) {
@@ -226,11 +226,15 @@ error:
 	return E_UNSPEC;
 }
 
+int fixup_regexp_regexp(void** param, int param_no)
+{
+	return fixup_regexp_null(param, 1);
+}
 
 int fixup_free_regexp_null(void** param, int param_no)
 {
 	struct regex_fixup* re;
-	
+
 	if (param_no != 1)
 		return E_UNSPEC;
 	if (*param) {
@@ -242,6 +246,11 @@ int fixup_free_regexp_null(void** param, int param_no)
 	return 0;
 }
 
+int fixup_free_regexp_regexp(void** param, int param_no)
+{
+	return fixup_free_regexp_null(param, 1);
+}
+
 /* fixup_pvar_*() has to be written "by hand", since
    it needs to save the original pointer (the fixup users expects
    a pointer to the pv_spec_t in *param and hence the original value
@@ -250,14 +259,14 @@ FIXUP_F1T(pvar_null, 1, 1, FPARAM_PVS)
 FIXUP_F1T(pvar_pvar, 1, 2, FPARAM_PVS)
 */
 
-struct pvs_fixup {
+typedef struct pvs_fixup {
 	pv_spec_t pvs; /* parsed pv spec */
 	void* orig;    /* original pointer */
-};
+} pvs_fixup_t;
 
 int fixup_pvar_all(void** param, int param_no)
 {
-	struct pvs_fixup* pvs_f;
+	pvs_fixup_t* pvs_f;
 	str name;
 	
 	pvs_f = 0;
@@ -287,14 +296,14 @@ error:
 
 int fixup_free_pvar_all(void** param, int param_no)
 {
-	struct pvs_fixup* pvs_f;
+	pvs_fixup_t* pvs_f;
 	
 	if (*param) {
 		pvs_f = *param;
 		*param = pvs_f->orig;
 		/* free only the contents (don't attempt to free &pvs_f->pvs)*/
 		pv_spec_destroy(&pvs_f->pvs);
-		/* free the whole pvs_fixup */
+		/* free the whole pvs_fixup_t */
 		pkg_free(pvs_f);
 	}
 	return 0;
@@ -452,7 +461,6 @@ int fixup_igp_pvar(void** param, int param_no)
 }
 
 
-
 int fixup_free_igp_pvar(void** param, int param_no)
 {
 	if (param_no == 1)
@@ -461,7 +469,6 @@ int fixup_free_igp_pvar(void** param, int param_no)
 		return fixup_free_pvar_all(param, param_no);
 	return E_UNSPEC;
 }
-
 
 
 int fixup_igp_pvar_pvar(void** param, int param_no)
@@ -474,7 +481,6 @@ int fixup_igp_pvar_pvar(void** param, int param_no)
 }
 
 
-
 int fixup_free_igp_pvar_pvar(void** param, int param_no)
 {
 	if (param_no == 1)
@@ -484,6 +490,25 @@ int fixup_free_igp_pvar_pvar(void** param, int param_no)
 	return E_UNSPEC;
 }
 
+
+int fixup_igp_spve(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_igp_null(param, param_no);
+	else if (param_no == 2)
+		return fixup_spve_all(param, param_no);
+	return E_UNSPEC;
+}
+
+
+int fixup_free_igp_spve(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_free_igp_null(param, param_no);
+	else if (param_no == 2)
+		return fixup_free_spve_all(param, param_no);
+	return E_UNSPEC;
+}
 
 
 /** macro for declaring a spve fixup and the corresponding free_fixup

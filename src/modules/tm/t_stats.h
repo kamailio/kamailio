@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -41,7 +41,7 @@ struct t_proc_stats {
 	/* number of UAC transactions (part of transactions) */
 	stat_counter client_transactions;
 	/* number of transactions which completed with this status */
-	stat_counter completed_3xx, completed_4xx, completed_5xx, 
+	stat_counter completed_3xx, completed_4xx, completed_5xx,
 		completed_6xx, completed_2xx;
 	stat_counter rpl_received;
 	stat_counter rpl_generated;
@@ -59,12 +59,12 @@ struct t_proc_stats {
 
 union t_stats{
 	struct t_proc_stats s;
-	char _pad[256]; /* pad at least to cache line size 
-	                    athlon=64, p4=128, some sparcs=256 */
+	char _pad[256]; /* pad at least to cache line size
+					 * athlon=64, p4=128, some sparcs=256 */
 };
 extern union t_stats *tm_stats;
 
-#ifdef TM_MORE_STATS 
+#ifdef TM_MORE_STATS
 inline void static t_stats_created(void)
 {
 	/* keep it in process's piece of shmem */
@@ -149,5 +149,7 @@ void tm_rpc_hash_stats(rpc_t* rpc, void* c);
 
 typedef int (*tm_get_stats_f)(struct t_proc_stats *all);
 int tm_get_stats(struct t_proc_stats *all);
+void tm_rpc_list(rpc_t* rpc, void* c);
+void tm_rpc_clean(rpc_t* rpc, void* c);
 
 #endif

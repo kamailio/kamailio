@@ -35,6 +35,8 @@
 
 #include "memcore.h"
 
+#define SHM_CORE_POOLS_SIZE	4
+
 #define _ROUND2TYPE(s, type) \
 	(((s)+(sizeof(type)-1))&(~(sizeof(type)-1)))
 #define _ROUND_LONG(s) _ROUND2TYPE(s, long)
@@ -43,20 +45,21 @@
 void shm_core_destroy(void);
 
 #ifndef SHM_MMAP
-static int _shm_core_shmid = -1; /*shared memory id*/
+static int _shm_core_shmid[SHM_CORE_POOLS_SIZE] = { -1 }; /*shared memory id*/
 #endif
 
-gen_lock_t* _shm_lock=0;
-
-static void* _shm_core_pool = (void*)-1;
+static void* _shm_core_pools_mem[SHM_CORE_POOLS_SIZE] = { (void*)-1 };
+static int   _shm_core_pools_num = 1;
 
 sr_shm_api_t _shm_root = {0};
 
 /**
  *
  */
-int shm_getmem(void)
+int shm_core_pools_init(void)
 {
+	int i;
+	int pinit;
 
 #ifdef SHM_MMAP
 #ifndef USE_ANON_MMAP
@@ -66,46 +69,65 @@ int shm_getmem(void)
 	struct shmid_ds shm_info;
 #endif
 
+	pinit = 0;
+	for(i = 0; i < _shm_core_pools_num; i++) {
 #ifdef SHM_MMAP
-	if (_shm_core_pool && (_shm_core_pool!=(void*)-1)){
+		if(_shm_core_pools_mem[i] != (void *)-1) {
 #else
-	if ((_shm_core_shmid!=-1)||(_shm_core_pool!=(void*)-1)){
+		if((_shm_core_shmid[i] != -1)||(_shm_core_pools_mem[i] != (void *)-1)) {
 #endif
-		LOG(L_CRIT, "shm already initialized\n");
-		return -1;
+			LM_DBG("shm pool[%d] already initialized\n", i);
+			pinit++;
+		}
 	}
-	
+
+	if(pinit!=0) {
+		if(pinit==_shm_core_pools_num) {
+			LM_DBG("all shm pools initialized\n");
+			return 0;
+		} else {
+			LM_CRIT("partial initialization of shm pools (%d / %d)\n",
+					pinit, _shm_core_pools_num);
+			return -1;
+		}
+	} else {
+		LM_DBG("preparing to initialize shm core pools\n");
+	}
+
+	for(i = 0; i < _shm_core_pools_num; i++) {
 #ifdef SHM_MMAP
 #ifdef USE_ANON_MMAP
-	_shm_core_pool=mmap(0, shm_mem_size, PROT_READ|PROT_WRITE,
-					 MAP_ANON|MAP_SHARED, -1 ,0);
+		_shm_core_pools_mem[i] = mmap(0, shm_mem_size, PROT_READ | PROT_WRITE,
+				MAP_ANON | MAP_SHARED, -1, 0);
 #else
-	fd=open("/dev/zero", O_RDWR);
-	if (fd==-1){
-		LOG(L_CRIT, "could not open /dev/zero: %s\n",
-				strerror(errno));
-		return -1;
-	}
-	_shm_core_pool=mmap(0, shm_mem_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd ,0);
-	/* close /dev/zero */
-	close(fd);
+		fd = open("/dev/zero", O_RDWR);
+		if(fd == -1) {
+			LOG(L_CRIT, "could not open /dev/zero [%d]: %s\n",
+					i, strerror(errno));
+			return -1;
+		}
+		_shm_core_pools_mem[i] = mmap(
+				0, shm_mem_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+		/* close /dev/zero */
+		close(fd);
 #endif /* USE_ANON_MMAP */
 #else
-	
-	_shm_core_shmid=shmget(IPC_PRIVATE, shm_mem_size , 0700);
-	if (_shm_core_shmid==-1){
-		LOG(L_CRIT, "could not allocate shared memory"
-				" segment: %s\n", strerror(errno));
-		return -1;
-	}
-	_shm_core_pool=shmat(_shm_core_shmid, 0, 0);
+
+		_shm_core_shmid[i] = shmget(IPC_PRIVATE, shm_mem_size, 0700);
+		if(_shm_core_shmid[i] == -1) {
+			LOG(L_CRIT, "could not allocate shared memory segment[%d]: %s\n",
+					i, strerror(errno));
+			return -1;
+		}
+		_shm_core_pools_mem[i] = shmat(_shm_core_shmid[i], 0, 0);
 #endif
-	if (_shm_core_pool==(void*)-1){
-		LOG(L_CRIT, "could not attach shared memory"
-				" segment: %s\n", strerror(errno));
-		/* destroy segment*/
-		shm_core_destroy();
-		return -1;
+		if(_shm_core_pools_mem[i] == (void *)-1) {
+			LOG(L_CRIT, "could not attach shared memory segment[%d]: %s\n",
+					i, strerror(errno));
+			/* destroy segment*/
+			shm_core_destroy();
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -119,61 +141,28 @@ void* shm_core_get_pool(void)
 	long sz;
 	long* p;
 	long* end;
-	
-	ret=shm_getmem();
+	int i;
+
+	ret=shm_core_pools_init();
 	if (ret<0)
 		return NULL;
 
-	if (shm_force_alloc){
-		sz=sysconf(_SC_PAGESIZE);
-		DBG("%ld bytes/page\n", sz);
-		if ((sz<sizeof(*p)) || (_ROUND_LONG(sz)!=sz)){
-			LOG(L_WARN, "invalid page size %ld, using 4096\n",
-					sz);
-			sz=4096; /* invalid page size, use 4096 */
+	for(i = 0; i < _shm_core_pools_num; i++) {
+		if(shm_force_alloc) {
+			sz = sysconf(_SC_PAGESIZE);
+			DBG("%ld bytes/page\n", sz);
+			if((sz < sizeof(*p)) || (_ROUND_LONG(sz) != sz)) {
+				LOG(L_WARN, "invalid page size %ld, using 4096\n", sz);
+				sz = 4096; /* invalid page size, use 4096 */
+			}
+			end = _shm_core_pools_mem[i] + shm_mem_size - sizeof(*p);
+			/* touch one word in every page */
+			for(p = (long *)_ROUND_LONG((long)_shm_core_pools_mem[i]); p <= end;
+					p = (long *)((char *)p + sz))
+				*p = 0;
 		}
-		end=_shm_core_pool+shm_mem_size-sizeof(*p);
-		/* touch one word in every page */
-		for(p=(long*)_ROUND_LONG((long)_shm_core_pool); p<=end;
-										p=(long*)((char*)p+sz))
-			*p=0; 
 	}
-	return _shm_core_pool;
-}
-
-/**
- * init the core lock
- */
-int shm_core_lock_init(void)
-{
-	if (_shm_lock) {
-		LM_DBG("shared memory lock initialized\n");
-		return 0;
-	}
-	_shm_lock=shm_malloc_unsafe(sizeof(gen_lock_t)); /* skip lock_alloc, 
-													   race cond*/
-	if (_shm_lock==0){
-		LOG(L_CRIT, "could not allocate lock\n");
-		shm_core_destroy();
-		return -1;
-	}
-	if (lock_init(_shm_lock)==0){
-		LOG(L_CRIT, "could not initialize lock\n");
-		shm_core_destroy();
-		return -1;
-	}
-	return 0;
-}
-
-/**
- *
- */
-void shm_core_lock_destroy(void)
-{
-	if (_shm_lock){
-		DBG("destroying the shared memory lock\n");
-		lock_destroy(_shm_lock); /* we don't need to dealloc it*/
-	}
+	return _shm_core_pools_mem[0];
 }
 
 /**
@@ -181,24 +170,28 @@ void shm_core_lock_destroy(void)
  */
 void shm_core_destroy(void)
 {
+	int i;
+
 #ifndef SHM_MMAP
 	struct shmid_ds shm_info;
 #endif
-	
-	if (_shm_core_pool && (_shm_core_pool!=(void*)-1)) {
+
+	for(i = 0; i < _shm_core_pools_num; i++) {
+		if(_shm_core_pools_mem[i] != (void *)-1) {
 #ifdef SHM_MMAP
-		munmap(_shm_core_pool, /* SHM_MEM_SIZE */ shm_mem_size );
+			munmap(_shm_core_pools_mem[i], /* SHM_MEM_SIZE */ shm_mem_size);
 #else
-		shmdt(_shm_core_pool);
+			shmdt(_shm_core_pools_mem[i]);
 #endif
-		_shm_core_pool=(void*)-1;
-	}
+			_shm_core_pools_mem[i] = (void *)-1;
+		}
 #ifndef SHM_MMAP
-	if (shm_shmid!=-1) {
-		shmctl(shm_shmid, IPC_RMID, &shm_info);
-		shm_shmid=-1;
-	}
+		if(_shm_core_shmid[i] != -1) {
+			shmctl(_shm_core_shmid[i], IPC_RMID, &shm_info);
+			_shm_core_shmid[i] = -1;
+		}
 #endif
+	}
 }
 
 /**
@@ -211,10 +204,12 @@ int shm_init_api(sr_shm_api_t *ap)
 	_shm_root.mem_pool       = ap->mem_pool;
 	_shm_root.mem_block      = ap->mem_block;
 	_shm_root.xmalloc        = ap->xmalloc;
+	_shm_root.xmallocxz      = ap->xmallocxz;
 	_shm_root.xmalloc_unsafe = ap->xmalloc_unsafe;
 	_shm_root.xfree          = ap->xfree;
 	_shm_root.xfree_unsafe   = ap->xfree_unsafe;
 	_shm_root.xrealloc       = ap->xrealloc;
+	_shm_root.xreallocxf     = ap->xreallocxf;
 	_shm_root.xresize        = ap->xresize;
 	_shm_root.xstatus        = ap->xstatus;
 	_shm_root.xinfo          = ap->xinfo;
@@ -223,6 +218,8 @@ int shm_init_api(sr_shm_api_t *ap)
 	_shm_root.xdestroy       = ap->xdestroy;
 	_shm_root.xmodstats      = ap->xmodstats;
 	_shm_root.xfmodstats     = ap->xfmodstats;
+	_shm_root.xglock         = ap->xglock;
+	_shm_root.xgunlock       = ap->xgunlock;
 	return 0;
 
 }
@@ -259,11 +256,10 @@ int shm_init_manager(char *name)
  */
 void shm_destroy_manager(void)
 {
-	shm_core_lock_destroy();
 	if(_shm_root.xdestroy) {
-		_shm_root.xdestroy();
 		LM_DBG("destroying memory manager: %s\n",
 				(_shm_root.mname)?_shm_root.mname:"unknown");
+		_shm_root.xdestroy();
 	}
 	shm_core_destroy();
 }
@@ -274,5 +270,5 @@ void shm_destroy_manager(void)
 void shm_print_manager(void)
 {
 	LM_DBG("shm - using memory manager: %s\n",
-			(_pkg_root.mname)?_pkg_root.mname:"unknown");
+			(_shm_root.mname)?_shm_root.mname:"unknown");
 }

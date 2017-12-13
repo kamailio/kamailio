@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -414,6 +414,23 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 
 	<section>
 	<title>RPC Commands</title>
+	<section id="corex.rpc.debug">
+		<title>
+		<function moreinfo="none">corex.debug</function>
+		</title>
+		<para>
+			Set or get the global log level (the value for global parameter
+			'debug'). To set the debug, provide an integer parameter. If
+			no parameter is provided, then the current value is returned.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&kamcmd; corex.debug
+		&kamcmd; corex.debug 2
+		</programlisting>
+	</section>
 	<section id="corex.rpc.list_sockets">
 		<title>
 		<function moreinfo="none">corex.list_sockets</function>

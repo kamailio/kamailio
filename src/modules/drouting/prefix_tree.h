@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005-2009 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,12 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * History:
- * ---------
- *  2005-02-20  first version (cristian)
- *  2005-02-27  ported to 0.9.0 (bogdan)
  */
-
 
 
 #ifndef prefix_tree_h
@@ -35,32 +28,34 @@
 #include "../keepalive/api.h"
 #include "dr_time.h"
 
-#define PTREE_CHILDREN 13  //decimal digits, '*', '#',  '+'
+#define PTREE_CHILDREN 13 //decimal digits, '*', '#',  '+'
 
 extern int tree_size;
 
-#define INIT_PTREE_NODE(p, n) \
-do {\
-	(n) = (ptree_t*)shm_malloc(sizeof(ptree_t));\
-	if(NULL == (n))\
-		goto err_exit;\
-	tree_size+=sizeof(ptree_t);\
-	memset((n), 0, sizeof(ptree_t));\
-	(n)->bp=(p);\
-}while(0);
+#define INIT_PTREE_NODE(p, n)                         \
+	do {                                              \
+		(n) = (ptree_t *)shm_malloc(sizeof(ptree_t)); \
+		if(NULL == (n))                               \
+			goto err_exit;                            \
+		tree_size += sizeof(ptree_t);                 \
+		memset((n), 0, sizeof(ptree_t));              \
+		(n)->bp = (p);                                \
+	} while(0);
 
 
 /* list of PSTN gw */
-typedef struct pgw_addr_ {
+typedef struct pgw_addr_
+{
 	struct ip_addr ip;
 	unsigned short port;
 	int type;
 	int strip;
 	struct pgw_addr_ *next;
-}pgw_addr_t;
+} pgw_addr_t;
 
 /* list of PSTN gw */
-typedef struct pgw_ {
+typedef struct pgw_
+{
 	/* id matching the one in db */
 	long id;
 	str pri;
@@ -72,16 +67,18 @@ typedef struct pgw_ {
 	ka_state state;
 
 	struct pgw_ *next;
-}pgw_t;
+} pgw_t;
 
 /**/
-typedef struct pgw_list_ {
+typedef struct pgw_list_
+{
 	pgw_t *pgw;
-	int    grpid;
-}pgw_list_t;
+	int grpid;
+} pgw_list_t;
 
 /* element containing routing information */
-typedef struct rt_info_ {
+typedef struct rt_info_
+{
 	unsigned int priority;
 	tmrec_t *time_rec;
 	/* array of pointers into the PSTN gw list */
@@ -94,93 +91,55 @@ typedef struct rt_info_ {
 	int route_idx;
 } rt_info_t;
 
-typedef struct rt_info_wrp_ {
-	rt_info_t     *rtl;
-	struct rt_info_wrp_  *next;
+typedef struct rt_info_wrp_
+{
+	rt_info_t *rtl;
+	struct rt_info_wrp_ *next;
 } rt_info_wrp_t;
 
-typedef struct rg_entry_ {
+typedef struct rg_entry_
+{
 	unsigned int rgid;
 	rt_info_wrp_t *rtlw;
 } rg_entry_t;
 
-typedef struct ptree_node_ {
+typedef struct ptree_node_
+{
 	unsigned int rg_len;
 	unsigned int rg_pos;
 	rg_entry_t *rg;
 	struct ptree_ *next;
 } ptree_node_t;
 
-typedef struct ptree_ {
+typedef struct ptree_
+{
 	/* backpointer */
 	struct ptree_ *bp;
 	ptree_node_t ptnode[PTREE_CHILDREN];
 } ptree_t;
 
-void 
-print_interim(
-		int,
-		int,
-		ptree_t*
-		);
+void print_interim(int, int, ptree_t *);
 
-int
-del_tree(
-	ptree_t *
-	);
+int del_tree(ptree_t *);
 
-int
-add_prefix(
-	ptree_t*,
-	/* prefix */
-	str*,
-	rt_info_t *,
-	unsigned int
-	);
+int add_prefix(ptree_t *,
+		/* prefix */
+		str *, rt_info_t *, unsigned int);
 
-rt_info_t*
-get_prefix(
-	ptree_t *ptree,
-	str* prefix,
-	unsigned int rgid
-	);
+rt_info_t *get_prefix(ptree_t *ptree, str *prefix, unsigned int rgid);
 
-int
-add_rt_info(
-	ptree_node_t*, 
-	rt_info_t*,
-	unsigned int
-	);
+int add_rt_info(ptree_node_t *, rt_info_t *, unsigned int);
 
-pgw_t*
-get_pgw(
-	pgw_t*,
-	long
-	);
+pgw_t *get_pgw(pgw_t *, long);
 
-void
-del_rt_list(
-	rt_info_wrp_t *rl
-	);
+void del_rt_list(rt_info_wrp_t *rl);
 
-void print_rt(
-	rt_info_t*
-	);
+void print_rt(rt_info_t *);
 
-void
-free_rt_info(
-	rt_info_t*
-	);
+void free_rt_info(rt_info_t *);
 
-rt_info_t*
-check_rt(
-	ptree_node_t *ptn,
-	unsigned int rgid
-	);
+rt_info_t *check_rt(ptree_node_t *ptn, unsigned int rgid);
 
-int
-get_node_index(
-	char ch
-	);
+int get_node_index(char ch);
 
 #endif

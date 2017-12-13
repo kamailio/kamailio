@@ -1,0 +1,35 @@
+#!/sbin/openrc-run
+
+daemon=/usr/sbin/kamailio
+pidfile=/var/run/kamailio/kamailio.pid
+
+extra_started_commands="reload"
+
+depend() {
+	need net
+	after firewall
+}
+
+start() {
+	ebegin "Starting Kamailio"
+	checkpath -d -o kamailio:kamailio /var/run/kamailio
+	start-stop-daemon --start --quiet --pidfile $pidfile --exec $daemon \
+		-- \
+		-u ${KAMAILIO_USER:-kamailio} \
+		-g ${KAMAILIO_GROUP:-kamailio} \
+		-P $pidfile \
+		${KAMAILIO_OPTS:-}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping Kamailio"
+	start-stop-daemon --stop --quiet --pidfile $pidfile
+	eend $?
+}
+
+reload() {
+	ebegin "Reloading Kamailio"
+	echo mi_dg dp_reload | kamcmd 2>/dev/null
+	eend $?
+}

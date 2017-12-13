@@ -137,7 +137,7 @@ sqlang_dofile("/usr/local/etc/kamailio/sqlang/myscript.sq");
 			Note: not implemented yet.
 		</para>
 	    <para>
-		Execute the Lua script stored in parameter. The parameter can be
+		Execute the Squirrel script stored in parameter. The parameter can be
 		a string with pseudo-variables.
 	    </para>
 		<example>
@@ -146,7 +146,7 @@ sqlang_dofile("/usr/local/etc/kamailio/sqlang/myscript.sq");
 ...
 if(!sqlang_dostring('KSR.dbg("test message\n")'))
 {
-    xdbg("SCRIPT: failed to execute js script!\n");
+    xdbg("SCRIPT: failed to execute squirrel script!\n");
 }
 ...
 </programlisting>
@@ -158,7 +158,7 @@ if(!sqlang_dostring('KSR.dbg("test message\n")'))
 		<function moreinfo="none">sqlang_run(function [, params])</function>
 	    </title>
 	    <para>
-		Execute the JS function 'func' giving params as parameters. There
+		Execute the Squirrel function 'func' giving params as parameters. There
 		can be up to 3 string parameters. The function must exist in the
 		script loaded at startup via parameter 'load'. Parameters can be
 		strings with pseudo-variables that are evaluated at runtime.
@@ -167,12 +167,12 @@ if(!sqlang_dostring('KSR.dbg("test message\n")'))
 		<title><function>sqlang_run</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(!sqlang_run("js_append_fu_to_reply"))
+if(!sqlang_run("sqlang_append_fu_to_reply"))
 {
-    xdbg("SCRIPT: failed to execute js function!\n");
+    xdbg("SCRIPT: failed to execute squirrel function!\n");
 }
 ...
-sqlang_run("js_funcx", "$rU", "2");
+sqlang_run("sqlang_funcx", "$rU", "2");
 ...
 </programlisting>
 	    </example>
@@ -196,7 +196,7 @@ sqlang_run("js_funcx", "$rU", "2");
 ...
 if(!sqlang_runstring('KSR.dbg("Hello World from $fU\n")'))
 {
-    xdbg("failed to execute js script!\n");
+    xdbg("failed to execute squirrel script!\n");
 }
 ...
 </programlisting>
@@ -277,7 +277,7 @@ request_route {
     ...
     if(!sqlang_run("sr_append_fu_to_reply"))
     {
-        xdbg("SCRIPT: failed to execute js function!\n");
+        xdbg("SCRIPT: failed to execute squirrel function!\n");
     }
     ...
 }

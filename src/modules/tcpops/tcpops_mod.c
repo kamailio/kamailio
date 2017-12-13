@@ -36,6 +36,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/events.h"
+#include "../../core/kemi.h"
 
 #include "tcpops.h"
 
@@ -44,14 +45,17 @@ MODULE_VERSION
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
-static int w_tcp_keepalive_enable4(sip_msg_t* msg, char* con, char* idle, char *cnt, char *intvl);
-static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt, char *intvl);
-static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con);
-static int w_tcp_keepalive_disable0(sip_msg_t* msg);
-static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* con, char* time);
+static int w_tcp_keepalive_enable4(sip_msg_t* msg, char* con, char* idle,
+		char *cnt, char *intvl);
+static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt,
+		char *intvl);
+static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con, char* p2);
+static int w_tcp_keepalive_disable0(sip_msg_t* msg, char* p1, char* p2);
+static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* con,
+		char* time);
 static int w_tcpops_set_connection_lifetime1(sip_msg_t* msg, char* time);
-static int w_tcpops_enable_closed_event1(sip_msg_t* msg, char* con, char* foo);
-static int w_tcpops_enable_closed_event0(sip_msg_t* msg, char* foo);
+static int w_tcpops_enable_closed_event1(sip_msg_t* msg, char* con, char* p2);
+static int w_tcpops_enable_closed_event0(sip_msg_t* msg, char* p1, char* p2);
 static int w_tcp_conid_state(sip_msg_t* msg, char* con, char *p2);
 static int w_tcp_conid_alive(sip_msg_t* msg, char* con, char *p2);
 
@@ -59,26 +63,26 @@ static int fixup_numpv(void** param, int param_no);
 
 
 static cmd_export_t cmds[]={
-	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable4, 4, fixup_numpv,
-		0, ANY_ROUTE},
-	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable3, 3, fixup_numpv,
-		0, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable1, 1, fixup_numpv,
-		0, ANY_ROUTE},
-	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable0, 0, 0,
-		0, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"tcp_set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime2, 2, fixup_numpv,
-		0, ANY_ROUTE},
-	{"tcp_set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime1, 1, fixup_numpv,
-		0, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"tcp_enable_closed_event", (cmd_function)w_tcpops_enable_closed_event1, 1, fixup_numpv,
-		0, ANY_ROUTE},
-	{"tcp_enable_closed_event", (cmd_function)w_tcpops_enable_closed_event0, 0, 0,
-		0, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"tcp_conid_state", (cmd_function)w_tcp_conid_state, 1, fixup_numpv,
-		0, ANY_ROUTE},
-	{"tcp_conid_alive", (cmd_function)w_tcp_conid_alive, 1, fixup_numpv,
-		0, ANY_ROUTE},
+	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable4, 4,
+			fixup_numpv, 0, ANY_ROUTE},
+	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable3, 3,
+			fixup_numpv, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable1, 1,
+			fixup_numpv, 0, ANY_ROUTE},
+	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable0, 0,
+			0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"tcp_set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime2, 2,
+			fixup_numpv, 0, ANY_ROUTE},
+	{"tcp_set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime1, 1,
+			fixup_numpv, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"tcp_enable_closed_event", (cmd_function)w_tcpops_enable_closed_event1, 1,
+			fixup_numpv, 0, ANY_ROUTE},
+	{"tcp_enable_closed_event", (cmd_function)w_tcpops_enable_closed_event0, 0,
+			0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"tcp_conid_state", (cmd_function)w_tcp_conid_state, 1,
+			fixup_numpv, 0, ANY_ROUTE},
+	{"tcp_conid_alive", (cmd_function)w_tcp_conid_alive, 1,
+			fixup_numpv, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -114,7 +118,8 @@ static int mod_init(void)
 	LM_DBG("TCP keepalive module loaded.\n");
 
 	if (tcp_closed_event < 0 || tcp_closed_event > 2) {
-		LM_ERR("invalid \"closed_event\" value: %d, must be 0 (disabled), 1 (enabled) or 2 (manual)\n", tcp_closed_event);
+		LM_ERR("invalid \"closed_event\" value: %d, must be 0 (disabled),"
+				" 1 (enabled) or 2 (manual)\n", tcp_closed_event);
 		return -1;
 	}
 
@@ -163,7 +168,8 @@ if(fixup_get_ivalue(msg, (gparam_t*)NAME, &( i_##NAME))!=0)\
 /**
  *
  */
-static int w_tcp_keepalive_enable4(sip_msg_t* msg, char* con, char* idle, char *cnt, char *intvl)
+static int w_tcp_keepalive_enable4(sip_msg_t* msg, char* con, char* idle,
+		char *cnt, char *intvl)
 {
 	int fd;
 	int closefd = 0;
@@ -189,7 +195,32 @@ static int w_tcp_keepalive_enable4(sip_msg_t* msg, char* con, char* idle, char *
 
 }
 
-static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt, char *intvl)
+/**
+ *
+ */
+static int ki_tcp_keepalive_enable_cid(sip_msg_t* msg, int i_con, int i_idle,
+		int i_cnt, int i_intvl)
+{
+	int fd;
+	int closefd = 0;
+
+	if (msg != NULL && msg->rcv.proto_reserved1 == i_con) {
+		if (!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
+			return -1;
+		}
+	} else {
+		if (!tcpops_acquire_fd_from_tcpmain(i_con, &fd)) {
+			return -1;
+		}
+		closefd = 1;
+	}
+
+	return tcpops_keepalive_enable(fd, i_idle, i_cnt, i_intvl, closefd);
+
+}
+
+static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt,
+		char *intvl)
 {
 	int fd;
 
@@ -197,7 +228,8 @@ static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt, char *
 		return -1;
 	}
 
-	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS && msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
+	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS
+			&& msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
 	{
 		LM_ERR("the current message does not come from a TCP connection\n");
 		return -1;
@@ -214,12 +246,33 @@ static int w_tcp_keepalive_enable3(sip_msg_t* msg, char* idle, char *cnt, char *
 	return tcpops_keepalive_enable(fd, i_idle, i_cnt, i_intvl, 0);
 }
 
-static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con)
+static int ki_tcp_keepalive_enable(sip_msg_t* msg, int i_idle, int i_cnt,
+		int i_intvl)
+{
+	int fd;
+
+	if (unlikely(msg == NULL)) {
+		return -1;
+	}
+
+	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS
+			&& msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
+	{
+		LM_ERR("the current message does not come from a TCP connection\n");
+		return -1;
+	}
+
+	if (!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
+		return -1;
+	}
+
+	return tcpops_keepalive_enable(fd, i_idle, i_cnt, i_intvl, 0);
+}
+
+static int ki_tcp_keepalive_disable_cid(sip_msg_t* msg, int i_con)
 {
 	int fd;
 	int closefd = 0;
-
-	_IVALUE (con)
 
 	if (msg != NULL && msg->rcv.proto_reserved1 == i_con) {
 		if (!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
@@ -235,14 +288,21 @@ static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con)
 	return tcpops_keepalive_disable(fd, closefd);
 }
 
-static int w_tcp_keepalive_disable0(sip_msg_t* msg)
+static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con, char *p2)
+{
+	_IVALUE (con)
+	return ki_tcp_keepalive_disable_cid(msg, i_con);
+}
+
+static int ki_tcp_keepalive_disable(sip_msg_t* msg)
 {
 	int fd;
 
 	if (unlikely(msg == NULL))
 		return -1;
 
-	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS && msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
+	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS
+			&& msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
 	{
 		LM_ERR("the current message does not come from a TCP connection\n");
 		return -1;
@@ -255,13 +315,16 @@ static int w_tcp_keepalive_disable0(sip_msg_t* msg)
 	return tcpops_keepalive_disable(fd, 0);
 }
 
+static int w_tcp_keepalive_disable0(sip_msg_t* msg, char *p1, char *p2)
+{
+	return ki_tcp_keepalive_disable(msg);
+}
+
 /*! \brief Check the state of the TCP connection */
-static int w_tcp_conid_state(sip_msg_t* msg, char* conid, char *p2)
+static int ki_tcp_conid_state(sip_msg_t* msg, int i_conid)
 {
 	struct tcp_connection *s_con;
 	int ret = -1;
-
-	_IVALUE (conid)
 
 	if (unlikely((s_con = tcpconn_get(i_conid, 0, 0, 0, 0)) == NULL)) {
 		LM_DBG("Connection id %d does not exist.\n", i_conid);
@@ -295,13 +358,21 @@ static int w_tcp_conid_state(sip_msg_t* msg, char* conid, char *p2)
 		goto done;
 	}
 	/* Wonder what state we're in here */
-	LM_DBG("Connection id %d is in unexpected state %d - assuming ok.\n", i_conid, s_con->flags);
+	LM_DBG("Connection id %d is in unexpected state %d - assuming ok.\n",
+			i_conid, s_con->flags);
 
 	/* Good connection */
 	ret = 1;
 done:
 	if(s_con) tcpconn_put(s_con);
 	return ret;
+}
+
+static int w_tcp_conid_state(sip_msg_t* msg, char* conid, char *p2)
+{
+	_IVALUE (conid)
+
+	return ki_tcp_conid_state(msg, i_conid);
 }
 
 /*! \brief A simple check to see if a connection is alive or not,
@@ -317,13 +388,21 @@ static int w_tcp_conid_alive(sip_msg_t* msg, char* conid, char *p2)
 	return -1;
 }
 
-static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* conid, char* time)
+static int ki_tcp_conid_alive(sip_msg_t* msg, int i_conid)
+{
+	int ret = ki_tcp_conid_state(msg, i_conid);
+	if (ret >= 1) {
+		return 1;	/* TRUE */
+	} 
+	/* We have some kind of problem */
+	return -1;
+}
+
+static int ki_tcpops_set_connection_lifetime_cid(sip_msg_t* msg, int i_conid,
+		int i_time)
 {
 	struct tcp_connection *s_con;
 	int ret = -1;
-
-	_IVALUE (conid)
-	_IVALUE (time)
 
 	if (unlikely((s_con = tcpconn_get(i_conid, 0, 0, 0, 0)) == NULL)) {
 		LM_ERR("invalid connection id %d, (must be a TCP conid)\n", i_conid);
@@ -335,21 +414,29 @@ static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* conid, char* 
 	return ret;
 }
 
+static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* conid,
+		char* time)
+{
+	_IVALUE (conid)
+	_IVALUE (time)
 
-static int w_tcpops_set_connection_lifetime1(sip_msg_t* msg, char* time)
+	return ki_tcpops_set_connection_lifetime_cid(msg, i_conid, i_time);
+}
+
+static int ki_tcpops_set_connection_lifetime(sip_msg_t* msg, int i_time)
 {
 	struct tcp_connection *s_con;
 	int ret = -1;
 
-	_IVALUE (time)
-
-	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS && msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
+	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS
+				&& msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
 	{
 		LM_ERR("the current message does not come from a TCP connection\n");
 		return -1;
 	}
 
-	if (unlikely((s_con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL)) {
+	if (unlikely((s_con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0))
+				== NULL)) {
 		return -1;
 	} else {
 		ret = tcpops_set_connection_lifetime(s_con, i_time);
@@ -358,11 +445,16 @@ static int w_tcpops_set_connection_lifetime1(sip_msg_t* msg, char* time)
 	return ret;
 }
 
-static int w_tcpops_enable_closed_event1(sip_msg_t* msg, char* conid, char* foo)
+static int w_tcpops_set_connection_lifetime1(sip_msg_t* msg, char* time)
+{
+	_IVALUE (time)
+
+	return ki_tcpops_set_connection_lifetime(msg, i_time);
+}
+
+static int ki_tcpops_enable_closed_event_cid(sip_msg_t* msg, int i_conid)
 {
 	struct tcp_connection *s_con;
-
-	_IVALUE (conid)
 
 	if (unlikely((s_con = tcpconn_get(i_conid, 0, 0, 0, 0)) == NULL)) {
 		LM_ERR("invalid connection id %d, (must be a TCP conid)\n", i_conid);
@@ -374,8 +466,14 @@ static int w_tcpops_enable_closed_event1(sip_msg_t* msg, char* conid, char* foo)
 	return 1;
 }
 
+static int w_tcpops_enable_closed_event1(sip_msg_t* msg, char* conid, char* p2)
+{
+	_IVALUE (conid)
 
-static int w_tcpops_enable_closed_event0(sip_msg_t* msg, char* foo)
+	return ki_tcpops_enable_closed_event_cid(msg, i_conid);
+}
+
+static int ki_tcpops_enable_closed_event(sip_msg_t* msg)
 {
 	struct tcp_connection *s_con;
 
@@ -385,19 +483,26 @@ static int w_tcpops_enable_closed_event0(sip_msg_t* msg, char* foo)
 		return -1;
 	}
 
-	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS && msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
+	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS
+			&& msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
 	{
 		LM_ERR("the current message does not come from a TCP connection\n");
 		return -1;
 	}
 
-	if (unlikely((s_con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL)) {
+	if (unlikely((s_con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0))
+			== NULL)) {
 		return -1;
 	} else {
 		s_con->flags |= F_CONN_CLOSE_EV;
 		tcpconn_put(s_con);
 	}
 	return 1;
+}
+
+static int w_tcpops_enable_closed_event0(sip_msg_t* msg, char* p1, char* p2)
+{
+	return ki_tcpops_enable_closed_event(msg);
 }
 
 /**
@@ -408,4 +513,68 @@ static int fixup_numpv(void** param, int param_no)
 	return fixup_igp_null(param, 1);
 }
 
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_tcpops_exports[] = {
+	{ str_init("tcpops"), str_init("tcp_keepalive_enable"),
+		SR_KEMIP_INT, ki_tcp_keepalive_enable,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_keepalive_enable_cid"),
+		SR_KEMIP_INT, ki_tcp_keepalive_enable_cid,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_keepalive_disable"),
+		SR_KEMIP_INT, ki_tcp_keepalive_disable,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_keepalive_disable_cid"),
+		SR_KEMIP_INT, ki_tcp_keepalive_disable_cid,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_set_connection_lifetime"),
+		SR_KEMIP_INT, ki_tcpops_set_connection_lifetime,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_set_connection_lifetime_cid"),
+		SR_KEMIP_INT, ki_tcpops_set_connection_lifetime_cid,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_enable_closed_event"),
+		SR_KEMIP_INT, ki_tcpops_enable_closed_event,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_enable_closed_event_cid"),
+		SR_KEMIP_INT, ki_tcpops_enable_closed_event_cid,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_conid_alive"),
+		SR_KEMIP_INT, ki_tcp_conid_alive,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_conid_state"),
+		SR_KEMIP_INT, ki_tcp_conid_state,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_tcpops_exports);
+	return 0;
+}

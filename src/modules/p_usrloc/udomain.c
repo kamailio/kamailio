@@ -508,7 +508,7 @@ urecord_t* db_load_urecord_by_ruid(udomain_t* _d, str *_ruid)
 	else
 		order = &q_col;
 
-	if (ul_db_layer_query(_d,  &vals[0].val.str_val,  &vals[1].val.str_val, keys, 0, vals, columns, 1, 18, order,
+	if (ul_db_layer_query(_d,  &vals[0].val.str_val,  NULL, keys, 0, vals, columns, 1, 18, order,
 				&res) < 0) {
 		LM_ERR("db_query failed\n");
 		return 0;

@@ -11,20 +11,20 @@
 <!-- Module User's Guide -->
 
 <chapter>
-  
+
   <title>&adminguide;</title>
-  
+
   <section>
   <title>Overview</title>
     <para>
-      Mediaproxy is an &siprouter; module that is designed to allow automatic 
-      NAT traversal for the majority of existing SIP clients. This means 
-      that there will be no need to configure anything in particular on 
-      the NAT box to allow these clients to work behind NAT when using 
+      Mediaproxy is an &siprouter; module that is designed to allow automatic
+      NAT traversal for the majority of existing SIP clients. This means
+      that there will be no need to configure anything in particular on
+      the NAT box to allow these clients to work behind NAT when using
       the mediaproxy module.
     </para>
   </section>
-  
+
   <section>
   <title>Principle of operation</title>
     <para>
@@ -145,10 +145,10 @@
       </para>
     </section>
   </section>
-  
+
   <section>
-  <title>Exported parameters</title>
-    <section>
+  <title>Parameters</title>
+    <section id="mediaproxy.p.disable">
     <title><varname>disable</varname> (int)</title>
       <para>
         Boolean flag that specifies if mediaproxy should be disabled. This
@@ -174,7 +174,7 @@ modparam("mediaproxy", "disable", 1)
       </example>
     </section>
 
-    <section>
+    <section id="mediaproxy.p.socket">
     <title><varname>mediaproxy_socket</varname> (string)</title>
       <para>
         It is the path to the filesystem socket where the mediaproxy dispatcher
@@ -183,7 +183,7 @@ modparam("mediaproxy", "disable", 1)
 
       <para>
         <emphasis>
-          Default value is 
+          Default value is
             <quote>/var/run/mediaproxy/dispatcher.sock</quote>.
         </emphasis>
       </para>
@@ -198,7 +198,7 @@ modparam("mediaproxy", "mediaproxy_socket", "/var/run/mediaproxy/dispatcher.sock
       </example>
     </section>
 
-    <section>
+    <section id="mediaproxy.p.timeout">
     <title><varname>mediaproxy_timeout</varname> (int)</title>
       <para>
         How much time (in milliseconds) to wait for an answer from the
@@ -221,7 +221,7 @@ modparam("mediaproxy", "mediaproxy_timeout", 500)
       </example>
     </section>
 
-    <section>
+    <section id="mediaproxy.p.signaling_ip">
     <title><varname>signaling_ip_avp</varname> (string)</title>
       <para>
         Specification of the AVP which holds the IP address from where
@@ -255,7 +255,7 @@ modparam("mediaproxy", "signaling_ip_avp", "$avp(nat_ip)")
       </example>
     </section>
 
-    <section>
+    <section id="mediaproxy.p.relay_avp">
     <title><varname>media_relay_avp</varname> (string)</title>
       <para>
         Specification of the AVP which holds an optional application
@@ -281,14 +281,14 @@ modparam("mediaproxy", "media_relay_avp", "$avp(media_relay)")
         </programlisting>
       </example>
     </section>
-    
-    <section>
+
+    <section id="mediaproxy.p.ice_candidate">
     <title><varname>ice_candidate</varname> (string)</title>
       <para>
-        Indicates the type of ICE candidate that will be added to the SDP. 
-        It can take 3 values: 'none', 'low-priority' or 'high-priority'. 
-        If 'none' is selected no candidate will be adeed to the SDP. If 
-        'low-priority' is selected then a low priority candidate will be 
+        Indicates the type of ICE candidate that will be added to the SDP.
+        It can take 3 values: 'none', 'low-priority' or 'high-priority'.
+        If 'none' is selected no candidate will be adeed to the SDP. If
+        'low-priority' is selected then a low priority candidate will be
         added and if 'high-priority' is selected a high priority one.
       </para>
 
@@ -307,12 +307,12 @@ modparam("mediaproxy", "ice_candidate", "low-priority")
         </programlisting>
       </example>
     </section>
-    
-    <section>
+
+    <section id="mediaproxy.p.ice_candidate_avp">
     <title><varname>ice_candidate_avp</varname> (string)</title>
       <para>
-        Specification of the AVP which holds the ICE candidate that will be 
-        inserted in the SDP. The value specified in this AVP will override 
+        Specification of the AVP which holds the ICE candidate that will be
+        inserted in the SDP. The value specified in this AVP will override
         the value in ice_candidate module parameter.  If the AVP
         is not set, the default value will be used.
       </para>
@@ -336,7 +336,7 @@ modparam("mediaproxy", "ice_candidate_avp", "$avp(ice_candidate)")
 
   <section>
   <title>Functions</title>
-    <section>
+    <section id="mediaproxy.f.engage">
     <title><function moreinfo="none">engage_media_proxy()</function></title>
       <para>
         Trigger the use of MediaProxy for all the dialog requests and
@@ -385,7 +385,7 @@ if (method==INVITE &amp;&amp; !has_totag()) {
       </example>
     </section>
 
-    <section>
+    <section id="mediaproxy.p.use">
     <title><function moreinfo="none">use_media_proxy()</function></title>
       <para>
         Will make a call to the dispatcher and replace the IPs and ports
@@ -434,7 +434,7 @@ if (method==INVITE) {
       </example>
     </section>
 
-    <section>
+    <section id="mediaproxy.p.end">
     <title><function moreinfo="none">end_media_session()</function></title>
       <para>
         Will call on the dispatcher to inform the media relay to end the
@@ -450,7 +450,7 @@ if (method==INVITE) {
 
       <para>
         This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
-      </para>    
+      </para>
 
       <example>
       <title>Using the <function>end_media_session</function> function</title>

@@ -134,9 +134,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"rand_event",      (cmd_function)rand_event, 0, 0, 0,
 		ANY_ROUTE},
-	{"sleep",  (cmd_function)m_sleep,  1, fixup_igp_null, 0,
+	{"sleep",  (cmd_function)m_sleep,  1, fixup_igp_null, fixup_free_igp_null,
 		ANY_ROUTE},
-	{"usleep", (cmd_function)m_usleep, 1, fixup_igp_null, 0,
+	{"usleep", (cmd_function)m_usleep, 1, fixup_igp_null, fixup_free_igp_null,
 		ANY_ROUTE},
 	{"abort",      (cmd_function)dbg_abort,        0, 0, 0,
 		ANY_ROUTE},
@@ -162,9 +162,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"core_hash",    (cmd_function)w_core_hash, 3,   fixup_core_hash, 0,
 		ANY_ROUTE},
-	{"check_route_exists",    (cmd_function)w_check_route_exists, 1,   0, 0,
+	{"check_route_exists",    (cmd_function)w_check_route_exists, 1,   fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
-	{"route_if_exists",    (cmd_function)w_route_exists, 1,   0, 0,
+	{"route_if_exists",    (cmd_function)w_route_exists, 1,   fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
 	{"bind_cfgutils", (cmd_function)bind_cfgutils,  0,
 		0, 0, 0},
@@ -622,7 +622,6 @@ static int m_sleep(struct sip_msg *msg, char *time, char *str2)
 		LM_ERR("cannot get time interval value\n");
 		return -1;
 	}
-	LM_DBG("sleep %lu seconds\n", (unsigned long)s);
 	sleep((unsigned int)s);
 	return 1;
 }
@@ -635,7 +634,6 @@ static int m_usleep(struct sip_msg *msg, char *time, char *str2)
 		LM_ERR("cannot get time interval value\n");
 		return -1;
 	}
-	LM_DBG("sleep %lu microseconds\n", (unsigned long)time);
 	sleep_us((unsigned int)s);
 	return 1;
 }
@@ -705,9 +703,15 @@ static int ki_shm_summary(sip_msg_t* msg)
 static int cfg_lock_helper(str *lkey, int mode)
 {
 	unsigned int pos;
+
+	if(_cfg_lock_set==NULL) {
+		LM_ERR("lock set not initialized (attempt to do op: %d on: %.*s)\n",
+				mode, lkey->len, lkey->s);
+		return -1;
+	}
 	pos = core_case_hash(lkey, 0, _cfg_lock_size);
 
-	LM_DBG("cfg_lock mode %d on %u\n", mode, pos);
+	LM_DBG("cfg_lock mode %d on %u (%.*s)\n", mode, pos, lkey->len, lkey->s);
 
 	if(mode==0) {
 		/* Lock */
@@ -749,8 +753,10 @@ static int cfg_trylock(str *lkey)
 static int w_cfg_lock_wrapper(struct sip_msg *msg, gparam_p key, int mode)
 {
 	str s;
-	if(fixup_get_svalue(msg, key, &s)!=0)
-	{
+	if(key==NULL) {
+		return -1;
+	}
+	if(fixup_get_svalue(msg, key, &s)!=0) {
 		LM_ERR("cannot get first parameter\n");
 		return -1;
 	}
@@ -759,22 +765,16 @@ static int w_cfg_lock_wrapper(struct sip_msg *msg, gparam_p key, int mode)
 
 static int w_cfg_lock(struct sip_msg *msg, char *key, char *s2)
 {
-	if(_cfg_lock_set==NULL || key==NULL)
-		return -1;
 	return w_cfg_lock_wrapper(msg, (gparam_p)key, 0);
 }
 
 static int w_cfg_unlock(struct sip_msg *msg, char *key, char *s2)
 {
-	if(_cfg_lock_set==NULL || key==NULL)
-		return -1;
 	return w_cfg_lock_wrapper(msg, (gparam_p)key, 1);
 }
 
 static int w_cfg_trylock(struct sip_msg *msg, char *key, char *s2)
 {
-	if(_cfg_lock_set==NULL || key==NULL)
-		return -1;
 	return w_cfg_lock_wrapper(msg, (gparam_p)key, 2);
 }
 
@@ -782,7 +782,14 @@ static int w_cfg_trylock(struct sip_msg *msg, char *key, char *s2)
  */
 static int w_check_route_exists(struct sip_msg *msg, char *route)
 {
-	if (route_lookup(&main_rt, route)<0) {
+	str s;
+
+	if (fixup_get_svalue(msg, (gparam_p) route, &s) != 0)
+	{
+			LM_ERR("invalid route parameter\n");
+			return -1;
+	}
+	if (route_lookup(&main_rt, s.s)<0) {
 		/* not found */
 		return -1;
 	}
@@ -795,16 +802,27 @@ static int w_route_exists(struct sip_msg *msg, char *route)
 {
 	struct run_act_ctx ctx;
 	int newroute, backup_rt, ret;
+	str s;
 
-	newroute = route_lookup(&main_rt, route);
+	if (fixup_get_svalue(msg, (gparam_p) route, &s) != 0)
+	{
+			LM_ERR("invalid route parameter\n");
+			return -1;
+	}
+
+	newroute = route_lookup(&main_rt, s.s);
 	if (newroute<0) {
 		return -1;
 	}
 	backup_rt = get_route_type();
 	set_route_type(REQUEST_ROUTE);
+
 	init_run_actions_ctx(&ctx);
 	ret = run_top_route(main_rt.rlist[newroute], msg, &ctx);
 	set_route_type(backup_rt);
+	if (ctx.run_flags & EXIT_R_F) {
+		return 0;
+	}
 	return ret;
 }
 
@@ -856,12 +874,15 @@ static int mod_init(void)
 		lock_dealloc(gflags_lock);
 		return -1;
 	}
-	if(_cfg_lock_size>0 && _cfg_lock_size<=10)
-	{
+	if(_cfg_lock_size>0) {
+		if(_cfg_lock_size>14) {
+			LM_WARN("lock set size too large (%d), making it 14\n",
+					_cfg_lock_size);
+			_cfg_lock_size = 14;
+		}
 		_cfg_lock_size = 1<<_cfg_lock_size;
 		_cfg_lock_set = lock_set_alloc(_cfg_lock_size);
-		if(_cfg_lock_set==NULL || lock_set_init(_cfg_lock_set)==NULL)
-		{
+		if(_cfg_lock_set==NULL || lock_set_init(_cfg_lock_set)==NULL) {
 			LM_ERR("cannot initiate lock set\n");
 			return -1;
 		}

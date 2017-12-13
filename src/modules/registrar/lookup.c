@@ -277,10 +277,15 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 			return -1;
 		}
 		aor = *ptr->aor;
-		/* test if un-expired and suported contact */
-		if( (ptr) && !(VALID_CONTACT(ptr,act_time)
-					&& (ret=-2) && allowed_method(_m,ptr)))
-			goto done;
+		/* test if not expired and contact with suported method */
+		if(ptr) {
+			if(!(VALID_CONTACT(ptr,act_time))) {
+				goto done;
+			} else if(!allowed_method(_m,ptr)) {
+				ret=-2;
+				goto done;
+			}
+		}
 		LM_DBG("contact for [%.*s] found by temp gruu [%.*s / %u]\n",
 							aor.len, ZSW(aor.s), inst.len, inst.s, ahash);
 	}

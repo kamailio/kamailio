@@ -50,7 +50,7 @@ Dan Pascu
               6.3. subscribed_endpoints
               6.4. dialog_endpoints
 
-        7. Exported pseudo-variables
+        7. Pseudo Variables
 
               7.1. $keepalive.socket(nat_endpoint)
               7.2. $source_uri
@@ -113,7 +113,7 @@ Chapter 1. Admin Guide
         6.3. subscribed_endpoints
         6.4. dialog_endpoints
 
-   7. Exported pseudo-variables
+   7. Pseudo Variables
 
         7.1. $keepalive.socket(nat_endpoint)
         7.2. $source_uri
@@ -605,7 +605,7 @@ if ((method=="REGISTER" || method=="SUBSCRIBE" ||
    Indicates how many of the NAT endpoints are kept alive for taking part
    in an INVITE dialog.
 
-7. Exported pseudo-variables
+7. Pseudo Variables
 
    7.1. $keepalive.socket(nat_endpoint)
    7.2. $source_uri

@@ -547,9 +547,11 @@ static int w_dbg_sip_msg(struct sip_msg* msg, char *level, char *facility)
 	}
 
 	/* skip original uri */
-	if (msg->new_uri.s){
-		orig_offs=msg->first_line.u.request.uri.s - msg->buf;
-		orig_offs=msg->first_line.u.request.uri.len;
+	if(msg->first_line.type == SIP_REQUEST) {
+		if(msg->new_uri.s) {
+			orig_offs = msg->first_line.u.request.uri.s - msg->buf;
+			orig_offs += msg->first_line.u.request.uri.len;
+		}
 	}
 
 	/* alloc private mem and copy lumps */
@@ -593,16 +595,16 @@ static int w_dbg_sip_msg(struct sip_msg* msg, char *level, char *facility)
 }
 
 /**
- * dump pv_cache contents as json
+ * dump pv_cache contents as json with default parameters
  */
-static int ki_dbg_pv_dump(sip_msg_t* msg, char* mask, char* level)
+static int ki_dbg_pv_dump(sip_msg_t* msg)
 {
-	dbg_dump_json(msg, DBG_DP_ALL, DBG_DP_ALL);
+	dbg_dump_json(msg, DBG_DP_ALL, L_DBG);
 	return 1;
 }
 
 /**
- * dump pv_cache contents as json
+ * dump pv_cache contents as json with explicit parameters
  */
 static int ki_dbg_pv_dump_ex(sip_msg_t* msg, int mask, int level)
 {

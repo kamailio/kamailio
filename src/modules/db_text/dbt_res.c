@@ -721,7 +721,7 @@ int dbt_mangle_columnselection(int **_lres, int *_nc, int *_o_nc, int *_o_l, int
 		return 0; /* all order-by columns also selected, we're fine */
 
 	/* make _lres bigger */
-	*_lres = pkg_realloc(*_lres, sizeof(int) * (*_nc + *_o_nc));
+	*_lres = pkg_reallocxf(*_lres, sizeof(int) * (*_nc + *_o_nc));
 	if (! *_lres)
 		return -1;
 

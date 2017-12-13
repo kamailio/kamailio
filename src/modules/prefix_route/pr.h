@@ -25,8 +25,9 @@
  * \ingroup prefix_route
  */
 
-
+#ifndef __PR_H__
+#define __PR_H__
 extern rpc_export_t pr_rpc[];
 
-
 int pr_db_load(void);
+#endif

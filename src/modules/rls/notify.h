@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -36,14 +36,14 @@
 
 #define REALLOC_BUF\
 		size+= BUF_REALLOC_SIZE;\
-		buf= (char*)pkg_realloc(buf, size);\
+		buf= (char*)pkg_reallocxf(buf, size);\
 		if(buf== NULL) \
 		{	ERR_MEM("constr_multipart_body");}
 
-int send_full_notify(subs_t* subs, xmlNodePtr rl_node, 
-                     str* rl_uri, unsigned int hash_code);
+int send_full_notify(subs_t* subs, xmlNodePtr rl_node,
+			str* rl_uri, unsigned int hash_code);
 
-typedef int (*list_func_t)(char* uri, void* param); 
+typedef int (*list_func_t)(char* uri, void* param);
 
 int process_list_and_exec(xmlNodePtr list, str username, str domain,
 		list_func_t function, void* param);
@@ -52,8 +52,10 @@ char* generate_cid(char* uri, int uri_len);
 char* get_auth_string(int flag);
 int agg_body_sendn_update(str* rl_uri, char* boundary_string, str* rlmi_body,
 		str* multipart_body, subs_t* subs, unsigned int hash_code);
-int rls_send_notify(subs_t* subs,str* body,char* start_cid,char* boundary_string);
-int create_empty_rlmi_doc(xmlDocPtr *rlmi_doc, xmlNodePtr *list_node, str *uri, int version, int full_state);
+int rls_send_notify(subs_t* subs,str* body,char* start_cid,
+		char* boundary_string);
+int create_empty_rlmi_doc(xmlDocPtr *rlmi_doc, xmlNodePtr *list_node, str *uri,
+		int version, int full_state);
 
 extern char *instance_id;
 #endif

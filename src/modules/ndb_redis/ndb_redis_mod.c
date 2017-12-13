@@ -35,6 +35,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/trim.h"
+#include "../../core/kemi.h"
 
 #include "redis_client.h"
 #include "api.h"
@@ -176,6 +177,7 @@ static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
 		char* sres)
 {
 	str s[3];
+	int i;
 
 	if(fixup_get_svalue(msg, (gparam_t*)ssrv, &s[0])!=0)
 	{
@@ -186,6 +188,14 @@ static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
 	{
 		LM_ERR("no redis command\n");
 		return -1;
+	}
+	for(i=0; i<s[1].len-1; i++) {
+		if(s[1].s[i]=='%') {
+			if(s[1].s[i+1]=='s' || s[1].s[i+1]=='b') {
+				LM_ERR("command argument specifier found, but no params\n");
+				return -1;
+			}
+		}
 	}
 	if(fixup_get_svalue(msg, (gparam_t*)sres, &s[2])!=0)
 	{
@@ -618,7 +628,6 @@ int redis_parse_index(str *in, gparam_t *gp)
 		if (gp->v.pvs == NULL)
 		{
 			LM_ERR("no pkg memory left for pv_spec_t\n");
-			pkg_free(gp);
 			return -1;
 		}
 
@@ -626,7 +635,6 @@ int redis_parse_index(str *in, gparam_t *gp)
 		{
 			LM_ERR("invalid PV identifier\n");
 			pkg_free(gp->v.pvs);
-			pkg_free(gp);
 			return -1;
 		}
 	} else {
@@ -924,3 +932,101 @@ int bind_ndb_redis(ndb_redis_api_t *api)
 	return 0;
 }
 
+/**
+ *
+ */
+static int ki_redis_cmd(sip_msg_t *msg, str *srv, str *rcmd, str *sres)
+{
+	int i;
+	if(rcmd==NULL || rcmd->s==NULL) {
+		LM_ERR("invalid command\n");
+		return -1;
+	}
+	for(i=0; i<rcmd->len-1; i++) {
+		if(rcmd->s[i]=='%') {
+			if(rcmd->s[i+1]=='s' || rcmd->s[i+1]=='b') {
+				LM_ERR("command argument specifier found, but no params\n");
+				return -1;
+			}
+		}
+	}
+	return redisc_exec(srv, sres, rcmd);
+}
+
+/**
+ *
+ */
+static int ki_redis_cmd_p1(sip_msg_t *msg, str *srv, str *rcmd, str *p1,
+		str *sres)
+{
+	return redisc_exec(srv, sres, rcmd, p1->s);
+}
+
+/**
+ *
+ */
+static int ki_redis_cmd_p2(sip_msg_t *msg, str *srv, str *rcmd, str *p1,
+		str *p2, str *sres)
+{
+	return redisc_exec(srv, sres, rcmd, p1->s, p2->s);
+}
+
+/**
+ *
+ */
+static int ki_redis_cmd_p3(sip_msg_t *msg, str *srv, str *rcmd, str *p1,
+		str *p2, str *p3, str *sres)
+{
+	return redisc_exec(srv, sres, rcmd, p1->s, p2->s, p3->s);
+}
+
+/**
+ *
+ */
+static int ki_redis_free_reply(sip_msg_t *msg, str *name)
+{
+	if(redisc_free_reply(name)<0)
+		return -1;
+
+	return 1;
+}
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_ndb_redis_exports[] = {
+	{ str_init("ndb_redis"), str_init("redis_cmd"),
+		SR_KEMIP_INT, ki_redis_cmd,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_redis"), str_init("redis_cmd_p1"),
+		SR_KEMIP_INT, ki_redis_cmd_p1,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_redis"), str_init("redis_cmd_p2"),
+		SR_KEMIP_INT, ki_redis_cmd_p2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_redis"), str_init("redis_cmd_p3"),
+		SR_KEMIP_INT, ki_redis_cmd_p3,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
+	},
+	{ str_init("ndb_redis"), str_init("redis_free"),
+		SR_KEMIP_INT, ki_redis_free_reply,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_ndb_redis_exports);
+	return 0;
+}

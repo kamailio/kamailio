@@ -471,6 +471,8 @@ int child_rank = 0;
 /* how much to wait for children to terminate, before taking extreme measures*/
 int ser_kill_timeout=DEFAULT_SER_KILL_TIMEOUT;
 
+int ksr_verbose_startup = 0;
+
 /* cfg parsing */
 int cfg_errors=0;
 int cfg_warnings=0;
@@ -516,10 +518,11 @@ void cleanup(int show_status)
 
 	/*clean-up*/
 #ifndef SHM_SAFE_MALLOC
-	if (_shm_lock)
-		shm_unlock(); /* hack: force-unlock the shared memory lock in case
-					 some process crashed and let it locked; this will
-					 allow an almost gracious shutdown */
+	if(shm_initialized()) {
+		/* force-unlock the shared memory lock in case some process crashed
+		 * and let it locked; this will allow an almost gracious shutdown */
+		shm_global_unlock();
+	}
 #endif
 	destroy_rpcs();
 	destroy_modules();
@@ -1324,13 +1327,12 @@ int main_loop(void)
 			LM_CRIT("could not initialize shared configuration\n");
 			goto error;
 		}
-	
+
 		/* Register the children that will keep updating their
 		 * local configuration */
 		cfg_register_child(
 				1   /* main = udp listener */
 				+ 1 /* timer */
-				+ 1 /* wtimer */
 #ifdef USE_SLOW_TIMER
 				+ 1 /* slow timer */
 #endif
@@ -1433,7 +1435,6 @@ int main_loop(void)
 		 * will be added later.) */
 		cfg_register_child(
 				1   /* timer */
-				+ 1   /* wtimer */
 #ifdef USE_SLOW_TIMER
 				+ 1 /* slow timer */
 #endif
@@ -1824,7 +1825,6 @@ static int calc_proc_no(void)
 #ifdef USE_SLOW_TIMER
 		+ 1 /* slow timer process */
 #endif
-		+ 1 /* wtimer process */
 #ifdef USE_TCP
 		+((!tcp_disable)?( 1/* tcp main */ + tcp_listeners ):0)
 #endif

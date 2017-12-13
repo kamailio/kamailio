@@ -1,3 +1,25 @@
+/*
+ * rls db - RLS database support
+ *
+ * Copyright (C) 2011 Crocodile RCS Ltd
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #ifndef _LIST_H
 #define _LIST_H
 
@@ -83,14 +105,13 @@ static inline list_entry_t *list_remove(str strng, list_entry_t *list)
 	{
 		if (strncmp(p->strng->s, strng.s, strng.len) == 0)
 		{
+			list = list->next;
 			pkg_free(p->strng->s);
 			pkg_free(p->strng);
 			pkg_free(p);
-			return list->next;
-		}
-		else
-		{
-			list_entry_t *p = list, *q;
+			return list;
+		} else {
+			list_entry_t *q;
 
 			while (p->next != NULL && (cmp = strncmp(p->next->strng->s, strng.s, strng.len)) < 0)
 				p = p->next;

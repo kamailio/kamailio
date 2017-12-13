@@ -30,11 +30,16 @@
 #include "action.h"
 #include "data_lump.h"
 #include "data_lump_rpl.h"
+#include "strutils.h"
 #include "mem/shm.h"
 #include "parser/parse_uri.h"
+#include "parser/parse_hname2.h"
+#include "parser/parse_methods.h"
 
 #include "kemi.h"
 
+
+#define SR_KEMI_HNAME_SIZE 128
 
 /**
  *
@@ -496,6 +501,204 @@ static int sr_kemi_core_force_rport(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_match_method_id(str *rmethod, str *vmethod, int mid)
+{
+	char mbuf[SR_KEMI_HNAME_SIZE];
+	int i;
+	unsigned int method;
+	str s;
+
+	if(memchr(vmethod->s, '|', vmethod->len)==NULL) {
+		if(rmethod->len!=vmethod->len) {
+			return SR_KEMI_FALSE;
+		}
+		if(strncasecmp(rmethod->s, vmethod->s, vmethod->len)!=0) {
+			return SR_KEMI_FALSE;
+		}
+		return SR_KEMI_TRUE;
+	}
+	if(vmethod->len>=SR_KEMI_HNAME_SIZE-1) {
+		LM_ERR("methods parameter is too long\n");
+		return SR_KEMI_FALSE;
+	}
+	memcpy(mbuf, vmethod->s, vmethod->len);
+	mbuf[vmethod->len] = '\0';
+	for(i=0; i<vmethod->len; i++) {
+		if(mbuf[i]=='|') {
+			mbuf[i] = ',';
+		}
+	}
+	s.s = mbuf;
+	s.len = vmethod->len;
+	if(parse_methods(&s, &method)!=0) {
+		LM_ERR("failed to parse methods string [%.*s]\n", s.len, s.s);
+		return SR_KEMI_FALSE;
+	}
+	if((method==METHOD_UNDEF) || (method&METHOD_OTHER)) {
+		LM_ERR("unknown method in list [%.*s] - use only standard SIP methods\n",
+				s.len, s.s);
+		return SR_KEMI_FALSE;
+	}
+	if((int)method & mid) {
+		return SR_KEMI_TRUE;
+	}
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method(sip_msg_t *msg, str *vmethod)
+{
+	if(msg==NULL || vmethod==NULL || vmethod->s==NULL || vmethod->len<=0) {
+		LM_WARN("invalid parameters\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg->first_line.type==SIP_REQUEST) {
+		if(msg->first_line.u.request.method_value==METHOD_OTHER) {
+			if(msg->first_line.u.request.method.len!=vmethod->len) {
+				return SR_KEMI_FALSE;
+			}
+			if(strncasecmp(msg->first_line.u.request.method.s, vmethod->s,
+						vmethod->len)!=0) {
+				return SR_KEMI_FALSE;
+			}
+			return SR_KEMI_TRUE;
+		}
+		return sr_kemi_core_match_method_id(&msg->first_line.u.request.method,
+				vmethod, msg->first_line.u.request.method_value);
+	}
+
+	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL) {
+		LM_ERR("cannot parse cseq header\n");
+		return SR_KEMI_FALSE;
+	}
+	if(get_cseq(msg)->method_id==METHOD_OTHER) {
+		if(get_cseq(msg)->method.len!=vmethod->len) {
+			return SR_KEMI_FALSE;
+		}
+		if(strncasecmp(get_cseq(msg)->method.s, vmethod->s,
+					vmethod->len)!=0) {
+			return SR_KEMI_FALSE;
+		}
+		return SR_KEMI_TRUE;
+	}
+	return sr_kemi_core_match_method_id(&get_cseq(msg)->method, vmethod,
+			get_cseq(msg)->method_id);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_forward_uri(sip_msg_t *msg, str *vuri)
+{
+	int ret;
+	dest_info_t dst;
+	sip_uri_t *u;
+	sip_uri_t next_hop;
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return -1;
+	}
+
+	init_dest_info(&dst);
+
+	if(vuri==NULL || vuri->s==NULL || vuri->len<=0) {
+		if (msg->dst_uri.len) {
+			ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len, &next_hop);
+			u = &next_hop;
+		} else {
+			ret = parse_sip_msg_uri(msg);
+			u = &msg->parsed_uri;
+		}
+	} else {
+		ret = parse_uri(vuri->s, vuri->len, &next_hop);
+		u = &next_hop;
+	}
+
+	if (ret<0) {
+		LM_ERR("forward - bad_uri dropping packet\n");
+		return -1;
+	}
+
+	dst.proto=u->proto;
+	ret=forward_request(msg, &u->host, u->port_no, &dst);
+	if (ret>=0) {
+		return 1;
+	}
+
+	return -1;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_forward(sip_msg_t *msg)
+{
+	return sr_kemi_core_forward_uri(msg, NULL);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_set_forward_close(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	msg->fwd_send_flags.f |= SND_F_CON_CLOSE;
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_set_forward_no_connect(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	msg->fwd_send_flags.f |= SND_F_FORCE_CON_REUSE;
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_set_reply_close(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	msg->rpl_send_flags.f |= SND_F_CON_CLOSE;
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_set_reply_no_connect(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	msg->rpl_send_flags.f |= SND_F_FORCE_CON_REUSE;
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -559,17 +762,17 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("setbiflag"),
 		SR_KEMIP_BOOL, sr_kemi_core_setbiflag,
-		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init(""), str_init("resetbiflag"),
 		SR_KEMIP_BOOL, sr_kemi_core_resetbiflag,
-		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init(""), str_init("isbiflagset"),
 		SR_KEMIP_BOOL, sr_kemi_core_isbiflagset,
-		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init(""), str_init("setsflag"),
@@ -609,7 +812,7 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("resetdsturi"),
 		SR_KEMIP_BOOL, sr_kemi_core_resetdsturi,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init(""), str_init("isdsturiset"),
@@ -619,6 +822,41 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("force_rport"),
 		SR_KEMIP_BOOL, sr_kemi_core_force_rport,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_method"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("forward"),
+		SR_KEMIP_INT, sr_kemi_core_forward,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("forward_uri"),
+		SR_KEMIP_INT, sr_kemi_core_forward_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("set_forward_close"),
+		SR_KEMIP_BOOL, sr_kemi_core_set_forward_close,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("set_forward_no_connect"),
+		SR_KEMIP_BOOL, sr_kemi_core_set_forward_no_connect,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("set_reply_close"),
+		SR_KEMIP_BOOL, sr_kemi_core_set_reply_close,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("set_reply_no_connect"),
+		SR_KEMIP_BOOL, sr_kemi_core_set_reply_no_connect,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -632,7 +870,6 @@ static sr_kemi_t _sr_kemi_core[] = {
 static int sr_kemi_hdr_append(sip_msg_t *msg, str *txt)
 {
 	struct lump* anchor;
-	struct hdr_field *hf;
 	char *hdr;
 
 	if(txt==NULL || txt->s==NULL || msg==NULL)
@@ -644,17 +881,15 @@ static int sr_kemi_hdr_append(sip_msg_t *msg, str *txt)
 		return -1;
 	}
 
-	hf = msg->last_header;
 	hdr = (char*)pkg_malloc(txt->len);
 	if(hdr==NULL) {
 		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 	memcpy(hdr, txt->s, txt->len);
-	anchor = anchor_lump(msg,
-				hf->name.s + hf->len - msg->buf, 0, 0);
-	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0)
-	{
+	/* anchor after last header */
+	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
 		return -1;
@@ -665,29 +900,116 @@ static int sr_kemi_hdr_append(sip_msg_t *msg, str *txt)
 /**
  *
  */
-static int sr_kemi_hdr_remove(sip_msg_t *msg, str *txt)
+static int sr_kemi_hdr_append_after(sip_msg_t *msg, str *txt, str *hname)
 {
 	struct lump* anchor;
-	struct hdr_field *hf;
+	hdr_field_t *hf;
+	hdr_field_t hfm;
+	char *hdr;
+	char hbuf[SR_KEMI_HNAME_SIZE];
 
-	if(txt==NULL || txt->s==NULL || msg==NULL)
+	if(txt==NULL || txt->s==NULL || hname==NULL || hname->s==NULL || msg==NULL)
 		return -1;
 
-	LM_DBG("remove hf: %.*s\n", txt->len, txt->s);
+	if(hname->len>SR_KEMI_HNAME_SIZE-4) {
+		LM_ERR("header name too long: %d\n", hname->len);
+		return -1;
+	}
+	memcpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hf->type)
+				continue;
+		} else {
+			if (hf->name.len!=hfm.name.len)
+				continue;
+			if (cmp_hdrname_str(&hf->name, &hfm.name)!=0)
+				continue;
+		}
+		break;
+	}
+
+	hdr = (char*)pkg_malloc(txt->len);
+	if(hdr==NULL) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(hdr, txt->s, txt->len);
+
+	if(hf==0) { /* after last header */
+		anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+	} else { /* after hf */
+		anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+	}
+
+	LM_DBG("append after [%.*s] the hf: [%.*s]\n", hname->len, hname->s,
+			txt->len, txt->s);
+	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
+		LM_ERR("can't insert lump\n");
+		pkg_free(hdr);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int sr_kemi_hdr_remove(sip_msg_t *msg, str *hname)
+{
+	struct lump* anchor;
+	hdr_field_t *hf;
+	hdr_field_t hfm;
+	char hbuf[SR_KEMI_HNAME_SIZE];
+
+	if(hname==NULL || hname->s==NULL || msg==NULL)
+		return -1;
+
+	if(hname->len>SR_KEMI_HNAME_SIZE-4) {
+		LM_ERR("header name too long: %d\n", hname->len);
+		return -1;
+	}
+	memcpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("error while parsing message\n");
 		return -1;
 	}
 
+	LM_DBG("remove hf: %.*s\n", hname->len, hname->s);
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->name.len==txt->len
-				&& strncasecmp(hf->name.s, txt->s, txt->len)==0) {
-			anchor=del_lump(msg,
-					hf->name.s - msg->buf, hf->len, 0);
-			if (anchor==0) {
-				LM_ERR("cannot remove hdr %.*s\n", txt->len, txt->s);
-				return -1;
-			}
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hf->type)
+				continue;
+		} else {
+			if (hf->name.len!=hname->len)
+				continue;
+			if(strncasecmp(hf->name.s, hname->s, hname->len)!=0)
+				continue;
+		}
+		anchor=del_lump(msg, hf->name.s - msg->buf, hf->len, 0);
+		if (anchor==0) {
+			LM_ERR("cannot remove hdr %.*s\n", hname->len, hname->s);
+			return -1;
 		}
 	}
 	return 1;
@@ -696,24 +1018,134 @@ static int sr_kemi_hdr_remove(sip_msg_t *msg, str *txt)
 /**
  *
  */
+static int sr_kemi_hdr_is_present(sip_msg_t *msg, str *hname)
+{
+	hdr_field_t *hf;
+	hdr_field_t hfm;
+	char hbuf[SR_KEMI_HNAME_SIZE];
+
+	if(hname==NULL || hname->s==NULL || msg==NULL)
+		return -1;
+
+	if(hname->len>SR_KEMI_HNAME_SIZE-4) {
+		LM_ERR("header name too long: %d\n", hname->len);
+		return -1;
+	}
+	memcpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+
+	LM_DBG("searching hf: %.*s\n", hname->len, hname->s);
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hf->type)
+				continue;
+		} else {
+			if (hf->name.len!=hname->len)
+				continue;
+			if(strncasecmp(hf->name.s, hname->s, hname->len)!=0)
+				continue;
+		}
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
 static int sr_kemi_hdr_insert(sip_msg_t *msg, str *txt)
 {
 	struct lump* anchor;
-	struct hdr_field *hf;
 	char *hdr;
 
 	if(txt==NULL || txt->s==NULL || msg==NULL)
 		return -1;
 
 	LM_DBG("insert hf: %.*s\n", txt->len, txt->s);
-	hf = msg->headers;
 	hdr = (char*)pkg_malloc(txt->len);
 	if(hdr==NULL) {
 		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 	memcpy(hdr, txt->s, txt->len);
-	anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+	/* anchor before first header */
+	anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
+	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
+		LM_ERR("can't insert lump\n");
+		pkg_free(hdr);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int sr_kemi_hdr_insert_before(sip_msg_t *msg, str *txt, str *hname)
+{
+	struct lump* anchor;
+	hdr_field_t *hf;
+	hdr_field_t hfm;
+	char *hdr;
+	char hbuf[SR_KEMI_HNAME_SIZE];
+
+	if(txt==NULL || txt->s==NULL || hname==NULL || hname->s==NULL || msg==NULL)
+		return -1;
+
+	if(hname->len>SR_KEMI_HNAME_SIZE-4) {
+		LM_ERR("header name too long: %d\n", hname->len);
+		return -1;
+	}
+	memcpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hf->type)
+				continue;
+		} else {
+			if (hf->name.len!=hfm.name.len)
+				continue;
+			if (cmp_hdrname_str(&hf->name, &hfm.name)!=0)
+				continue;
+		}
+		break;
+	}
+
+	hdr = (char*)pkg_malloc(txt->len);
+	if(hdr==NULL) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(hdr, txt->s, txt->len);
+	if(hf==0) { /* before first header */
+		anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
+	} else { /* before hf */
+		anchor = anchor_lump(msg, hf->name.s - msg->buf, 0, 0);
+	}
+	LM_DBG("insert before [%.*s] the hf: %.*s\n", hname->len, hname->s,
+			txt->len, txt->s);
 	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
@@ -749,13 +1181,28 @@ static sr_kemi_t _sr_kemi_hdr[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("hdr"), str_init("append_after"),
+		SR_KEMIP_INT, sr_kemi_hdr_append_after,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("hdr"), str_init("insert"),
 		SR_KEMIP_INT, sr_kemi_hdr_insert,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("hdr"), str_init("insert_before"),
+		SR_KEMIP_INT, sr_kemi_hdr_insert_before,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("hdr"), str_init("remove"),
 		SR_KEMIP_INT, sr_kemi_hdr_remove,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("is_present"),
+		SR_KEMIP_INT, sr_kemi_hdr_is_present,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -1128,22 +1575,42 @@ str *sr_kemi_param_map_get_name(int ptype)
 str *sr_kemi_param_map_get_params(int *ptypes)
 {
 	int i;
-	static char pbuf[64];
+	int l;
+#define KEMI_PARAM_MAP_SIZE 72
+	static char pbuf[KEMI_PARAM_MAP_SIZE];
 	static str sret = STR_NULL;
 	str *pn;
 
 	pbuf[0] = '\0';
-	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
-		if(ptypes[i]==SR_KEMIP_NONE) break;
-		if(i>0) strcat(pbuf, ", ");
+	l = 0;
+	for(i = 0; i < SR_KEMI_PARAMS_MAX; i++) {
+		if(ptypes[i] == SR_KEMIP_NONE)
+			break;
+		if(i > 0) {
+			l += 2;
+			if(l >= KEMI_PARAM_MAP_SIZE - 8) {
+				strcat(pbuf, ", ...");
+				goto done;
+			}
+			strcat(pbuf, ", ");
+		}
 		pn = sr_kemi_param_map_get_name(ptypes[i]);
-		if(pn==NULL) return NULL;
+		if(pn == NULL)
+			return NULL;
+		l += pn->len;
+		if(l >= KEMI_PARAM_MAP_SIZE - 8) {
+			strcat(pbuf, ", ...");
+			goto done;
+		}
 		strcat(pbuf, pn->s);
 	}
 	if(pbuf[0]=='\0') {
 		pn = sr_kemi_param_map_get_name(SR_KEMIP_NONE);
-		strcat(pbuf, pn->s);
+		if(pn == NULL)
+			return NULL;
+		if(pn->len<KEMI_PARAM_MAP_SIZE-1) strncat(pbuf, pn->s, pn->len);
 	}
+done:
 	sret.s = pbuf;
 	sret.len = strlen(sret.s);
 	return &sret;

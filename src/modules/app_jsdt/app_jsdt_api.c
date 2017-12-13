@@ -1145,7 +1145,6 @@ int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket)
 					fname->len, fname->s);
 			return app_jsdt_return_false(J);
 	}
-	return app_jsdt_return_false(J);
 }
 
 /**

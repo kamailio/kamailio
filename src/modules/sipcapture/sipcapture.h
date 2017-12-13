@@ -24,7 +24,8 @@
 #ifndef _sipcapture_h
 #define _sipcapture_h
 
-struct _sipcapture_object {
+struct _sipcapture_object
+{
 	str method;
 	str reply_reason;
 	str ruri;
@@ -75,6 +76,7 @@ struct _sipcapture_object {
 
 
 struct hep_generic_recv;
-int receive_logging_json_msg(char * buf, unsigned int len, struct hep_generic_recv *hg, char *log_table);
+int receive_logging_json_msg(char *buf, unsigned int len,
+		struct hep_generic_recv *hg, char *log_table);
 
 #endif /* _sipcapture_h */

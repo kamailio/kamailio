@@ -26,7 +26,9 @@
  * Module: \ref core
  */
 
+#include <string.h>
 
+#include "dprint.h"
 #include "basex.h"
 
 #ifdef BASE16_LOOKUP_TABLE
@@ -227,4 +229,161 @@ int init_basex()
 #endif
 #endif
 	return 0;
+}
+
+/* base58 implementation */
+/* adapted from https://github.com/luke-jr/libbase58
+ * (Copyright 2014 Luke Dashjr - MIT License) */
+static const int8_t _sr_b58map[] = {
+	-1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+	-1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+	-1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+	-1, 0, 1, 2, 3, 4, 5, 6,  7, 8,-1,-1,-1,-1,-1,-1,
+	-1, 9,10,11,12,13,14,15, 16,-1,17,18,19,20,21,-1,
+	22,23,24,25,26,27,28,29, 30,31,32,-1,-1,-1,-1,-1,
+	-1,33,34,35,36,37,38,39, 40,41,42,43,-1,44,45,46,
+	47,48,49,50,51,52,53,54, 55,56,57,-1,-1,-1,-1,-1,
+};
+
+static const char _sr_b58digits[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+/**
+ * decode base58 string stored in b58 (of size b58sz) and store result in outb
+ *   - *outbszp provides the size of outb buffer
+ *   - *outbszp is updated to the length of decoded data
+ *   - returns NULL in case of failure, or the pointer inside outb from where
+ *   the decoded data starts (it is 0-terminated)
+ */
+char* b58_decode(char *outb, int *outbszp, char *b58, int b58sz)
+{
+	size_t outbsz = *outbszp - 1 /* save space for ending 0 */;
+	const unsigned char *b58u = (void*)b58;
+	unsigned char *outu = (void*)outb;
+	size_t outisz = (outbsz + 3) / 4;
+	uint32_t outi[outisz];
+	uint64_t t;
+	uint32_t c;
+	size_t i, j;
+	uint8_t bytesleft = outbsz % 4;
+	uint32_t zeromask = bytesleft ? (0xffffffff << (bytesleft * 8)) : 0;
+	unsigned zerocount = 0;
+
+	if (!b58sz)
+		b58sz = strlen(b58);
+
+	outb[outbsz-1] = '\0';
+	memset(outi, 0, outisz * sizeof(*outi));
+
+	/* leading zeros, just count */
+	for (i = 0; i < b58sz && b58u[i] == '1'; ++i)
+		++zerocount;
+
+	for ( ; i < b58sz; ++i)
+	{
+		if (b58u[i] & 0x80) {
+			LM_ERR("high-bit set on invalid digit\n");
+			return NULL;
+		}
+		if (_sr_b58map[b58u[i]] == -1) {
+			LM_ERR("invalid base58 digit\n");
+			return NULL;
+		}
+		c = (unsigned)_sr_b58map[b58u[i]];
+		for (j = outisz; j--; )
+		{
+			t = ((uint64_t)outi[j]) * 58 + c;
+			c = (t & 0x3f00000000) >> 32;
+			outi[j] = t & 0xffffffff;
+		}
+		if (c) {
+			LM_ERR("output number too big (carry to the next int32)\n");
+			return NULL;
+		}
+		if (outi[0] & zeromask) {
+			LM_ERR("output number too big (last int32 filled too far)\n");
+			return NULL;
+		}
+	}
+
+	j = 0;
+	switch (bytesleft) {
+		case 3:
+			*(outu++) = (outi[0] &   0xff0000) >> 16;
+		case 2:
+			*(outu++) = (outi[0] &     0xff00) >>  8;
+		case 1:
+			*(outu++) = (outi[0] &       0xff);
+			++j;
+		default:
+			break;
+	}
+
+	for (; j < outisz; ++j)
+	{
+		*(outu++) = (outi[j] >> 0x18) & 0xff;
+		*(outu++) = (outi[j] >> 0x10) & 0xff;
+		*(outu++) = (outi[j] >>    8) & 0xff;
+		*(outu++) = (outi[j] >>    0) & 0xff;
+	}
+
+	/* count canonical base58 byte count */
+	outu = (void*)outb;
+	for (i = 0; i < outbsz; ++i)
+	{
+		if (outu[i])
+			break;
+		--*outbszp;
+	}
+	*outbszp += zerocount;
+
+	return outb + outbsz - (*outbszp);
+}
+
+/**
+ * encode raw data (of size binsz) into base58 format stored in b58
+ *   - *b58sz gives the size of b58 buffer
+ *   - *b58sz is updated to the lenght of result
+ *   - b58 is 0-terminated
+ *   - return NULL on failure or b58
+ */
+char* b58_encode(char *b58, int *b58sz, char *data, int binsz)
+{
+	const uint8_t *bin = (void*)data;
+	int carry;
+	ssize_t i, j, high, zcount = 0;
+	size_t size;
+
+	while (zcount < binsz && !bin[zcount])
+		++zcount;
+
+	size = (binsz - zcount) * 138 / 100 + 1;
+	uint8_t buf[size];
+	memset(buf, 0, size);
+
+	for (i = zcount, high = size - 1; i < binsz; ++i, high = j)
+	{
+		for (carry = bin[i], j = size - 1; (j > high) || carry; --j)
+		{
+			carry += 256 * buf[j];
+			buf[j] = carry % 58;
+			carry /= 58;
+		}
+	}
+
+	for (j = 0; j < size && !buf[j]; ++j);
+
+	if (*b58sz <= zcount + size - j)
+	{
+		*b58sz = zcount + size - j + 1;
+		return NULL;
+	}
+
+	if (zcount)
+		memset(b58, '1', zcount);
+	for (i = zcount; j < size; ++i, ++j)
+		b58[i] = _sr_b58digits[buf[j]];
+	b58[i] = '\0';
+	*b58sz = i;
+
+	return b58;
 }

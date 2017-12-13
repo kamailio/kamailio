@@ -948,14 +948,14 @@ modparam("registrar", "flow_timer", 25)
 		</para>
 		<para>
 		<emphasis>
-			Default value is 255.
+			Default value is 512.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>contact_max_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("registrar", "contact_max_size", 500)
+modparam("registrar", "contact_max_size", 1024)
 ...
 		</programlisting>
 		</example>
@@ -1477,7 +1477,7 @@ event_route[usrloc:contact-expired] {
 		</para>
 	</section>
 	<section>
-		<title><varname>defaults_expires</varname></title>
+		<title><varname>default_expires</varname></title>
 		<para>
 		The value of default_expires parameter.
 		</para>
@@ -1598,7 +1598,11 @@ event_route[usrloc:contact-expired] {
 				<listitem>
 				<para><emphasis>conid</emphasis> - TCP socket internal connection ID ($null if UDP)
 				</para>
-				</listitem>	  
+				</listitem>
+				<listitem>
+				<para><emphasis>server_id</emphasis> - server_id value
+				</para>
+				</listitem>
 			</itemizedlist>
 			<para>
 				The pseudo-variable accepts positive index value to access

@@ -686,6 +686,9 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 	ac_tm_t att;
 	tmrec_t trt;
 
+	memset(&att, 0, sizeof(ac_tm_t));
+	memset(&trt, 0, sizeof(tmrec_t));
+
 	LM_DBG("checking recv. time stamp <%d>\n",
 		intr->recv_time);
 	switch (NR_OF_ATTR(intr->ip)) {
@@ -870,6 +873,12 @@ inline static int is_lang_tag_matching(str *range,str *cpl_tag,str *cpl_subtag)
 	str tag = {0,0};
 	str subtag = {0,0};
 
+	if(range==NULL || cpl_tag==NULL || cpl_subtag==NULL) {
+		return -1;
+	}
+	if(range->s==NULL || cpl_tag->s==NULL || cpl_subtag->s==NULL) {
+		return -1;
+	}
 	c = range->s;
 	end = range->s + range->len;
 

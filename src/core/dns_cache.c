@@ -2333,19 +2333,30 @@ retry:
 	 * extra checks */
 	for (i=0; (i<idx) && (r_sums[i].r_sum<rand_w); i++);
 found:
+	if(i<MAX_SRV_GRP_IDX) {
 #ifdef DNS_CACHE_DEBUG
-	LM_DBG("(%p, %lx, %d, %u): selected %d/%d in grp. %d"
-			" (rand_w=%d, rr=%p rd=%p p=%d w=%d rsum=%d)\n",
-		e, (unsigned long)*tried, *no, now, i, idx, n, rand_w, r_sums[i].rr,
-		(r_sums[i].rr)?r_sums[i].rr->rdata:0,
-		(r_sums[i].rr&&r_sums[i].rr->rdata)?((struct srv_rdata*)r_sums[i].rr->rdata)->priority:0,
-		(r_sums[i].rr&&r_sums[i].rr->rdata)?((struct srv_rdata*)r_sums[i].rr->rdata)->weight:0,
-		r_sums[i].r_sum);
+		LM_DBG("(%p, %lx, %d, %u): selected %d/%d in grp. %d"
+			   " (rand_w=%d, rr=%p rd=%p p=%d w=%d rsum=%d)\n",
+				e, (unsigned long)*tried, *no, now, i, idx, n, rand_w,
+				r_sums[i].rr, (r_sums[i].rr) ? r_sums[i].rr->rdata : 0,
+				(r_sums[i].rr && r_sums[i].rr->rdata)
+						? ((struct srv_rdata *)r_sums[i].rr->rdata)->priority
+						: 0,
+				(r_sums[i].rr && r_sums[i].rr->rdata)
+						? ((struct srv_rdata *)r_sums[i].rr->rdata)->weight
+						: 0,
+				r_sums[i].r_sum);
 #endif
-	/* i is the winner */
-	*no=n; /* grp. start */
-	srv_mark_tried(tried, i); /* mark it */
-	return r_sums[i].rr;
+		/* i is the winner */
+		*no = n; /* grp. start */
+		if(i < 8 * sizeof(*tried))
+			srv_mark_tried(tried, i); /* mark it */
+		return r_sums[i].rr;
+	} else {
+		LM_WARN("index out of bounds\n");
+		*no=n;
+		return 0;
+	}
 no_more_rrs:
 	*no=n;
 	return 0;
@@ -2560,7 +2571,7 @@ struct hostent* dns_srv_get_he(str* name, unsigned short* port, int flags)
 		rr_name.len=((struct srv_rdata*)rr->rdata)->name_len;
 		if ((he=dns_get_he(&rr_name, flags))!=0){
 				/* success, at least one good ip found */
-				*port=((struct srv_rdata*)rr->rdata)->port;
+				if(port) *port=((struct srv_rdata*)rr->rdata)->port;
 				goto end;
 		}
 		rr_no++; /* try from the next record, the current one was not good */
@@ -2668,7 +2679,7 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 				return ip_addr2he(name,ip);
 			}
 
-			if(srv_proto==PROTO_WS || srv_proto==PROTO_WS) {
+			if(srv_proto==PROTO_WS || srv_proto==PROTO_WSS) {
 				/* no srv records for web sockets */
 				return 0;
 			}
@@ -2929,7 +2940,6 @@ inline static int dns_a_resolve( struct dns_hash_entry** e,
 			goto error;
 		/* found */
 		*rr_no=0;
-		ret=-E_DNS_BAD_IP_ENTRY;
 	}
 	now=get_ticks_raw();
 	/* if the entry has already expired use the time at the end of lifetime */
@@ -2978,7 +2988,6 @@ inline static int dns_aaaa_resolve( struct dns_hash_entry** e,
 			goto error;
 		/* found */
 		*rr_no=0;
-		ret=-E_DNS_BAD_IP_ENTRY;
 	}
 	now=get_ticks_raw();
 	/* if the entry has already expired use the time at the end of lifetime */
@@ -3112,7 +3121,6 @@ inline static int dns_srv_resolve_nxt(struct dns_hash_entry** e,
 		if (tried)
 			srv_reset_tried(tried);
 #endif
-		ret=-E_DNS_BAD_SRV_ENTRY;
 	}
 	now=get_ticks_raw();
 	/* if the entry has already expired use the time at the end of lifetime */
@@ -3213,9 +3221,9 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 	int ret;
 	struct hostent* he;
 	size_t i,list_len;
-	char origproto;
+	char origproto = 0;
 
-	origproto = *proto;
+	if(proto) origproto = *proto;
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LM_WARN("called before dns cache initialization\n");
 		h->srv=h->a=0;
@@ -3227,12 +3235,16 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 		return -E_DNS_NO_SRV;
 	}
 	if ((h->srv==0) && (h->a==0)){ /* first call */
-		if (proto && *proto==0){ /* makes sure we have a protocol set*/
-			*proto=PROTO_UDP; /* default */
-		}
-		h->port=(*proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
+		if (proto) {
+			if(*proto==0) { /* makes sure we have a protocol set*/
+				*proto=PROTO_UDP; /* default */
+			}
+			h->port=(*proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
 														don't find another */
-		h->proto=*proto; /* store initial protocol */
+			h->proto=*proto; /* store initial protocol */
+		} else {
+			h->proto=PROTO_UDP; /* default */
+		}
 		if (port){
 			if (*port==0){
 				/* try SRV if initial call & no port specified
@@ -3274,7 +3286,8 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 						srv_name.len=strlen(tmp);
 						if ((ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags))>=0)
 						{
-							h->proto = *proto = srv_proto_list[i].proto;
+							h->proto = srv_proto_list[i].proto;
+							if(proto) *proto = h->proto;
 #ifdef DNS_CACHE_DEBUG
 							LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n",
 								name->len, name->s, h->srv_no, h->ip_no, ret);
@@ -3344,7 +3357,7 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 	int ret;
 
 	ret=-E_DNS_NO_NAPTR;
-	origproto=*proto;
+	if(proto) origproto=*proto;
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LM_WARN("called before dns cache initialization\n");
 		h->srv=h->a=0;
@@ -3399,7 +3412,7 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 								from previous dns_srv_sip_resolve calls */
 	}
 naptr_not_found:
-	*proto=origproto;
+	if(proto) *proto=origproto;
 	return dns_srv_sip_resolve(h, name, ip, port, proto, flags);
 }
 #endif /* USE_NAPTR */
@@ -4345,11 +4358,12 @@ int dns_cache_add_record(unsigned short type,
 						break; /* insert here */
 				}
 
-				if (!rr_p)
+				if (!rr_p) {
 					for (	rr_p = rr_iter;
 						*rr_p && (*rr_p != new_rr);
 						rr_p = &((*rr_p)->next)
 					);
+				}
 				if (!rr_p) {
 					LM_ERR("Failed to correct the orderd list of SRV resource records\n");
 					goto error;

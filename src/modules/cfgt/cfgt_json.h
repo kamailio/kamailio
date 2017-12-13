@@ -16,23 +16,23 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  */
 
 #ifndef _CFGT_JSON_H
 #define _CFGT_JSON_H
 
-#include "../../lib/srutils/srjson.h"
 #include "../../core/route_struct.h"
+#include "../../lib/srutils/srjson.h"
 
-#define CFGT_DP_NULL       1
-#define CFGT_DP_AVP        2
-#define CFGT_DP_SCRIPTVAR  4
-#define CFGT_DP_XAVP       8
-#define CFGT_DP_OTHER     16
-#define CFGT_DP_ALL       31
+#define CFGT_DP_NULL 1
+#define CFGT_DP_AVP 2
+#define CFGT_DP_SCRIPTVAR 4
+#define CFGT_DP_XAVP 8
+#define CFGT_DP_OTHER 16
+#define CFGT_DP_ALL 31
 
-int cfgt_get_json(struct sip_msg* msg, unsigned int mask, srjson_doc_t *jdoc,
-	srjson_t *head);
+int cfgt_get_json(struct sip_msg *msg, unsigned int mask, srjson_doc_t *jdoc,
+		srjson_t *head);
 #endif

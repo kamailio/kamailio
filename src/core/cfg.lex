@@ -210,9 +210,9 @@ MAX_LEN			"max_len"
 /* condition keywords */
 METHOD	method
 /* hack -- the second element in first line is referable
-   as either uri or status; it only would makes sense to
-   call it "uri" from route{} and status from onreply_route{}
-*/
+ * as either uri or status; it only would makes sense to
+ * call it "uri" from route{} and status from onreply_route{}
+ */
 URI		"uri"|"status"
 FROM_URI	"from_uri"
 TO_URI		"to_uri"
@@ -395,6 +395,7 @@ TCP_OPT_KEEPINTVL	"tcp_keepintvl"
 TCP_OPT_KEEPCNT		"tcp_keepcnt"
 TCP_OPT_CRLF_PING	"tcp_crlf_ping"
 TCP_OPT_ACCEPT_NO_CL	"tcp_accept_no_cl"
+TCP_OPT_ACCEPT_HEP3	"tcp_accept_hep3"
 TCP_CLONE_RCVBUF	"tcp_clone_rcvbuf"
 TCP_REUSE_PORT		"tcp_reuse_port"
 DISABLE_TLS		"disable_tls"|"tls_disable"
@@ -436,8 +437,11 @@ KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
 MAX_WLOOPS		"max_while_loops"
 PVBUFSIZE		"pv_buffer_size"
 PVBUFSLOTS		"pv_buffer_slots"
-HTTP_REPLY_PARSE		"http_reply_hack"|"http_reply_parse"
-VERSION_TABLE_CFG		"version_table"
+PVCACHELIMIT	"pv_cache_limit"
+PVCACHEACTION	"pv_cache_action"
+HTTP_REPLY_PARSE	"http_reply_hack"|"http_reply_parse"
+VERSION_TABLE_CFG	"version_table"
+VERBOSE_STARTUP		"verbose_startup"
 
 SERVER_ID     "server_id"
 
@@ -838,6 +842,8 @@ IMPORTFILE      "import_file"
 									return TCP_OPT_CRLF_PING; }
 <INITIAL>{TCP_OPT_ACCEPT_NO_CL}	{ count(); yylval.strval=yytext;
 									return TCP_OPT_ACCEPT_NO_CL; }
+<INITIAL>{TCP_OPT_ACCEPT_HEP3}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_ACCEPT_HEP3; }
 <INITIAL>{TCP_CLONE_RCVBUF}		{ count(); yylval.strval=yytext;
 									return TCP_CLONE_RCVBUF; }
 <INITIAL>{TCP_REUSE_PORT}	{ count(); yylval.strval=yytext; return TCP_REUSE_PORT; }
@@ -913,9 +919,15 @@ IMPORTFILE      "import_file"
 									return PVBUFSIZE; }
 <INITIAL>{PVBUFSLOTS}			{	count(); yylval.strval=yytext;
 									return PVBUFSLOTS; }
+<INITIAL>{PVCACHELIMIT}			{	count(); yylval.strval=yytext;
+									return PVCACHELIMIT; }
+<INITIAL>{PVCACHEACTION}		{	count(); yylval.strval=yytext;
+									return PVCACHEACTION; }
 <INITIAL>{HTTP_REPLY_PARSE}		{	count(); yylval.strval=yytext;
 									return HTTP_REPLY_PARSE; }
 <INITIAL>{VERSION_TABLE_CFG}  { count(); yylval.strval=yytext; return VERSION_TABLE_CFG;}
+<INITIAL>{VERBOSE_STARTUP}		{	count(); yylval.strval=yytext;
+									return VERBOSE_STARTUP; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{MAX_RECURSIVE_LEVEL}  { count(); yylval.strval=yytext; return MAX_RECURSIVE_LEVEL;}
 <INITIAL>{MAX_BRANCHES_PARAM}  { count(); yylval.strval=yytext; return MAX_BRANCHES_PARAM;}
@@ -964,10 +976,10 @@ IMPORTFILE      "import_file"
 
 <INITIAL>{SELECT_MARK}  { count(); state = SELECT_S; BEGIN(SELECT); return SELECT_MARK; }
 <SELECT>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);
-                          yylval.strval=s_buf.s;
-                          memset(&s_buf, 0, sizeof(s_buf));
-                          return ID;
-                        }
+						yylval.strval=s_buf.s;
+						memset(&s_buf, 0, sizeof(s_buf));
+						return ID;
+					}
 <SELECT>{DOT}           { count(); return DOT; }
 <SELECT>{LBRACK}        { count(); return LBRACK; }
 <SELECT>{RBRACK}        { count(); return RBRACK; }
@@ -1023,7 +1035,7 @@ IMPORTFILE      "import_file"
 								}
 							}
 	/* eat everything between 2 () and return PVAR token and a string
-	   containing everything (including $ and ()) */
+	 * containing everything (including $ and ()) */
 <PVAR_P>{RPAREN}			{	p_nest--;
 								if (p_nest==0){
 									count();
@@ -1078,7 +1090,7 @@ IMPORTFILE      "import_file"
 	/* avp prefix detected -> go to avp mode */
 <AVP_PVAR>{AVP_PREF}		|
 <AVP_PVAR>{ID}{LBRACK}		{ state = ATTR_S; BEGIN(ATTR); yyless(1); count();
-							  return ATTR_MARK; }
+								return ATTR_MARK; }
 <AVP_PVAR>{ID}{LPAREN}		{ state = PVAR_P_S; p_nest=1; BEGIN(PVAR_P);
 								yymore(); }
 <AVP_PVAR>{ID}				{	count(); addstr(&s_buf, yytext, yyleng);
@@ -1166,8 +1178,8 @@ IMPORTFILE      "import_file"
 <STRING1>\\\\		{ count_more(); addchar(&s_buf, '\\'); }
 <STRING1>\\x{HEX}{1,2}	{ count_more(); addchar(&s_buf,
 											(char)strtol(yytext+2, 0, 16)); }
- /* don't allow \[0-7]{1}, it will eat the backreferences from
-    subst_uri if allowed (although everybody should use '' in subt_uri) */
+	/* don't allow \[0-7]{1}, it will eat the backreferences from
+	 * subst_uri if allowed (although everybody should use '' in subt_uri) */
 <STRING1>\\[0-7]{2,3}	{ count_more(); addchar(&s_buf,
 											(char)strtol(yytext+1, 0, 8));  }
 <STRING1>\\{CR}		{ count_more(); } /* eat escaped CRs */
@@ -1175,11 +1187,11 @@ IMPORTFILE      "import_file"
 
 <STR_BETWEEN>{EAT_ABLE}|{CR}	{ count_ignore(); }
 <STR_BETWEEN>{QUOTES}			{ count_more(); state=STRING_S;
-								  BEGIN(STRING1);}
+									BEGIN(STRING1);}
 <STR_BETWEEN>.					{
 									yyless(0); /* reparse it */
 									/* ignore the whitespace now that is
-									  counted, return saved string value */
+									 * counted, return saved string value */
 									state=old_state; BEGIN(old_initial);
 									r = pp_subst_run(&s_buf.s);
 									yylval.strval=s_buf.s;
@@ -1250,8 +1262,8 @@ IMPORTFILE      "import_file"
 									exit(-1);
 								}
 <IFDEF_ID>{ID}                { count();
-                                pp_ifdef_var(yyleng, yytext);
-                                state = IFDEF_EOL_S; BEGIN(IFDEF_EOL); }
+								pp_ifdef_var(yyleng, yytext);
+								state = IFDEF_EOL_S; BEGIN(IFDEF_EOL); }
 <IFDEF_EOL>{EAT_ABLE}*{CR}    { count(); pp_ifdef(); }
 
 <INITIAL,IFDEF_SKIP>{PREP_START}{ELSE}{EAT_ABLE}*{CR}    { count(); pp_else(); }
@@ -1259,10 +1271,10 @@ IMPORTFILE      "import_file"
 <INITIAL,IFDEF_SKIP>{PREP_START}{ENDIF}{EAT_ABLE}*{CR}    { count();
 															pp_endif(); }
 
- /* we're in an ifdef that evaluated to false -- throw it away */
+	/* we're in an ifdef that evaluated to false -- throw it away */
 <IFDEF_SKIP>.|{CR}    { count(); }
 
- /* this is split so the shebangs match more, giving them priority */
+	/* this is split so the shebangs match more, giving them priority */
 <INITIAL>{COM_LINE}        { count(); state = LINECOMMENT_S;
 								BEGIN(LINECOMMENT); }
 <LINECOMMENT>.*{CR}        { count(); state = INITIAL_S; BEGIN(INITIAL); }
@@ -1283,7 +1295,8 @@ IMPORTFILE      "import_file"
 									memset(&s_buf, 0, sizeof(s_buf));
 									return NUM_ID; }
 
-<SELECT>.               { unput(yytext[0]); state = INITIAL_S; BEGIN(INITIAL); } /* Rescan the token in INITIAL state */
+<SELECT>.               { unput(yytext[0]); state = INITIAL_S; BEGIN(INITIAL); }
+							/* Rescan the token in INITIAL state */
 
 <INCLF>[ \t]*      /* eat the whitespace */
 <INCLF>[^ \t\r\n]+   { /* get the include file name */
@@ -1460,7 +1473,7 @@ static void count()
 
 
 /** record discarded stuff (not contained in the token) so that
-    the next token position can be adjusted properly*/
+ * the next token position can be adjusted properly */
 static void count_ignore()
 {
 	count_lc(&ign_lines, &ign_columns);
@@ -1691,6 +1704,13 @@ static int pp_define_index = -1;
 static int pp_ifdef_stack[MAX_IFDEFS];
 static int pp_sptr = 0; /* stack pointer */
 
+str* pp_get_define_name(int idx)
+{
+	if(idx<0 || idx>=pp_num_defines)
+		return NULL;
+	return &pp_defines[idx][0];
+}
+
 static int pp_lookup(int len, const char * text)
 {
 	str var = {(char *)text, len};
@@ -1749,6 +1769,7 @@ int pp_define(int len, const char * text)
 		return -1;
 	}
 	memcpy(pp_defines[pp_num_defines][0].s, text, len);
+	pp_defines[pp_num_defines][0].s[len] = '\0';
 	pp_defines[pp_num_defines][1].len = 0;
 	pp_defines[pp_num_defines][1].s = NULL;
 	pp_define_index = pp_num_defines;

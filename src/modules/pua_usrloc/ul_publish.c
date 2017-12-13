@@ -211,6 +211,8 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	str content_type;
 	int error;
 
+	if(destroy_modules_phase()) return;
+
 	content_type.s= "application/pidf+xml";
 	content_type.len= 20;
 

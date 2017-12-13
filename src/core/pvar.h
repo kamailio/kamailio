@@ -201,6 +201,7 @@ typedef struct pv_spec_list {
 } pv_spec_list_t, *pv_spec_list_p;
 
 pvname_list_t* parse_pvname_list(str *in, unsigned int type);
+void free_pvname_list(pvname_list_t* head);
 
 int register_pvars_mod(char *mod_name, pv_export_t *items);
 int pv_free_extra_list(void);
@@ -239,7 +240,7 @@ typedef struct _pv_cache
 	struct _pv_cache *next;
 } pv_cache_t;
 
-#define PV_CACHE_SIZE	32  /*!< pseudo-variables cache table size */
+#define PV_CACHE_SIZE	64  /*!< pseudo-variables cache table size */
 
 pv_cache_t **pv_cache_get_table(void);
 

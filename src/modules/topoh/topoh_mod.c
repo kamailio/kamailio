@@ -26,7 +26,7 @@
 /*! \defgroup topoh Kamailio :: Topology hiding
  *
  * This module hides the SIP routing headers that show topology details.
- * It it is not affected by the server being transaction stateless or
+ * It is not affected by the server being transaction stateless or
  * stateful. The script interpreter gets the SIP messages decoded, so all
  * existing functionality is preserved.
  */

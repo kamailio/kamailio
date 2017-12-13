@@ -29,6 +29,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/trim.h"
+#include "../../core/kemi.h"
 
 #include "mongodb_client.h"
 #include "api.h"
@@ -180,6 +181,42 @@ static int w_mongodb_do_cmd(sip_msg_t* msg, char* ssrv, char *sdname, char *scna
 /**
  *
  */
+static int ki_mongodbc_exec_simple(sip_msg_t* msg, str* ssrv, str *sdname,
+		str *scname, str* scmd, str* sres)
+{
+	return mongodbc_exec_simple(ssrv, sdname, scname, scmd, sres);
+}
+
+/**
+ *
+ */
+static int ki_mongodbc_exec(sip_msg_t* msg, str* ssrv, str *sdname,
+		str *scname, str* scmd, str* sres)
+{
+	return mongodbc_exec(ssrv, sdname, scname, scmd, sres);
+}
+
+/**
+ *
+ */
+static int ki_mongodbc_find(sip_msg_t* msg, str* ssrv, str *sdname,
+		str *scname, str* scmd, str* sres)
+{
+	return mongodbc_find(ssrv, sdname, scname, scmd, sres);
+}
+
+/**
+ *
+ */
+static int ki_mongodbc_find_one(sip_msg_t* msg, str* ssrv, str *sdname,
+		str *scname, str* scmd, str* sres)
+{
+	return mongodbc_find_one(ssrv, sdname, scname, scmd, sres);
+}
+
+/**
+ *
+ */
 static int w_mongodb_cmd_simple(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
 		char* scmd, char* sres)
 {
@@ -242,6 +279,16 @@ static int w_mongodb_free_reply(struct sip_msg* msg, char* res)
 /**
  *
  */
+static int ki_mongodbc_free_reply(struct sip_msg* msg, str* name)
+{
+	if(mongodbc_free_reply(name)<0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
 static int w_mongodb_next_reply(struct sip_msg* msg, char* res)
 {
 	str name;
@@ -253,6 +300,16 @@ static int w_mongodb_next_reply(struct sip_msg* msg, char* res)
 	}
 
 	if(mongodbc_next_reply(&name)<0)
+		return -1;
+	return 1;;
+}
+
+/**
+ *
+ */
+static int ki_mongodbc_next_reply(struct sip_msg* msg, str* name)
+{
+	if(mongodbc_next_reply(name)<0)
 		return -1;
 	return 1;;
 }
@@ -381,4 +438,50 @@ static int pv_get_mongodb(struct sip_msg *msg,  pv_param_t *param,
 			/* We do nothing. */
 			return pv_get_null(msg, param, res);
 	}
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_ndb_mongodb_exports[] = {
+	{ str_init("ndb_mongodb"), str_init("exec_simple"),
+		SR_KEMIP_INT, ki_mongodbc_exec_simple,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_mongodb"), str_init("exec"),
+		SR_KEMIP_INT, ki_mongodbc_exec,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_mongodb"), str_init("find"),
+		SR_KEMIP_INT, ki_mongodbc_find,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_mongodb"), str_init("find_one"),
+		SR_KEMIP_INT, ki_mongodbc_find_one,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_mongodb"), str_init("free_reply"),
+		SR_KEMIP_INT, ki_mongodbc_free_reply,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ndb_mongodb"), str_init("next_reply"),
+		SR_KEMIP_INT, ki_mongodbc_next_reply,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_ndb_mongodb_exports);
+	return 0;
 }

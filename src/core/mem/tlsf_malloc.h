@@ -48,13 +48,19 @@ void tlsf_remove_pool(tlsf_t tlsf, pool_t pool);
 #ifdef DBG_TLSF_MALLOC
 void* tlsf_malloc(tlsf_t tlsf, size_t size,
 		const char *file, const char *function, unsigned int line, const char *mname);
+void* tlsf_mallocxz(tlsf_t tlsf, size_t size,
+		const char *file, const char *function, unsigned int line, const char *mname);
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size,
+		const char *file, const char *function, unsigned int line, const char *mname);
+void* tlsf_reallocxf(tlsf_t tlsf, void* ptr, size_t size,
 		const char *file, const char *function, unsigned int line, const char *mname);
 void tlsf_free(tlsf_t tlsf, void* ptr,
 		const char *file, const char *function, unsigned int line, const char *mname);
 #else
 void* tlsf_malloc(tlsf_t tlsf, size_t bytes);
+void* tlsf_mallocxz(tlsf_t tlsf, size_t bytes);
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size);
+void* tlsf_reallocxf(tlsf_t tlsf, void* ptr, size_t size);
 void tlsf_free(tlsf_t tlsf, void* ptr);
 #endif
 

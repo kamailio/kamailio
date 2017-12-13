@@ -1074,14 +1074,19 @@ static int cr_rpc_dump_tree_recursor (rpc_t* rpc, void* ctx, void *gh,
 	char s[256];
 	char rbuf[1024];
 	char *p;
-	int i;
+	int i,len;
 	struct route_flags *rf;
 	struct route_rule *rr;
 	struct route_rule_p_list * rl;
 	double prob;
 
+	len=strlen(prefix);
+	if (len > 254) {
+		LM_ERR("prefix too large");
+		return -1;
+	}
 	strcpy (s, prefix);
-	p = s + strlen (s);
+	p = s + len;
 	p[1] = '\0';
 	for (i = 0; i < cr_match_mode; ++i) {
 		if (node->child[i] != NULL) {
@@ -1101,7 +1106,7 @@ static int cr_rpc_dump_tree_recursor (rpc_t* rpc, void* ctx, void *gh,
 			}
 			snprintf(rbuf, 1024,
 					"%10s: %0.3f %%, '%.*s': %s, '%i', '%.*s', '%.*s', '%.*s'",
-					strlen(prefix) > 0 ? prefix : "NULL", prob * 100,
+					len > 0 ? prefix : "NULL", prob * 100,
 					rr->host.len, rr->host.s,
 					(rr->status ? "ON" : "OFF"), rr->strip,
 					rr->local_prefix.len, rr->local_prefix.s,

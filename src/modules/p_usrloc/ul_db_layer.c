@@ -218,27 +218,26 @@ int ul_add_domain_db(str * d, int t, str * url) {
 		return -1;
 	}
 	memset(new_d, 0, sizeof(ul_domain_db_list_t));
-	if(!d){
-		return -1;
-	}
-	if(!d->s){
-		return -1;		
-	}
+
+	if(!d || !d->s) goto error;
+
 	if((new_d->domain.name.s = pkg_malloc(d->len + 1)) == NULL) {
-		return -1;
+		goto error;
 	}
+
 	if(t == DB_TYPE_SINGLE) {
 		if(url) {
 			LM_DBG("url: %.*s", url->len, url->s);
 			if((new_d->domain.url.s = pkg_malloc(url->len + 1)) == NULL) {
-				return -1;
+				goto error;
 			}
+
 			strncpy(new_d->domain.url.s, url->s, url->len);
                        new_d->domain.url.s[url->len] = '\0';
 			new_d->domain.url.len = url->len;
 		} else {
 			if((new_d->domain.url.s = pkg_malloc(default_db_url.len + 1)) == NULL) {
-				return -1;
+				goto error;
 			}
 			strcpy(new_d->domain.url.s, default_db_url.s);
 			new_d->domain.url.len = default_db_url.len;
@@ -250,6 +249,9 @@ int ul_add_domain_db(str * d, int t, str * url) {
 	new_d->next = domain_db_list;
 	domain_db_list = new_d;
 	return 1;
+error:
+	pkg_free(new_d);
+	return -1;
 }
 
 ul_domain_db_t * ul_find_domain(const char * s) {

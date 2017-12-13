@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -77,17 +77,15 @@ int  acc_log_request( struct sip_msg *req);
 
 int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals);
 
-#ifdef SQL_ACC
+int acc_is_db_ready(void);
+
 int  acc_db_init(const str* db_url);
 int  acc_db_init_child(const str* db_url);
 void acc_db_close(void);
 int  acc_db_request( struct sip_msg *req);
-int acc_get_db_handlers(void **vf, void **vh);
-#endif
+int  acc_get_db_handlers(void **vf, void **vh);
 
-#ifdef DIAM_ACC
-int  acc_diam_init(void);
-int  acc_diam_request( struct sip_msg *req );
-#endif
+int  is_eng_acc_on(sip_msg_t *msg);
+int  is_eng_mc_on(sip_msg_t *msg);
 
 #endif

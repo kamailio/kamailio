@@ -7,6 +7,21 @@
     </sectioninfo>
 	<title>RPC Commands</title>
 
+	<section id="tm.rpc.list">
+		<title>
+		<function moreinfo="none">tm.list</function>
+		</title>
+		<para>
+		List details of transactions.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
 	<section id="tm.rpc.t_uac_start">
 		<title>
 		<function moreinfo="none">tm.t_uac_start</function>
@@ -50,7 +65,7 @@
 		<function moreinfo="none">tm.t_uac_wait</function>
 		</title>
 		<para>
-		Similar to rm.t_uac_start, but waits for the SIP reponse and tries to
+		Similar to tm.t_uac_start, but waits for the SIP response and tries to
 		provide its details via RPC response.
 		</para>
 	</section>
@@ -159,6 +174,35 @@
 				reply body (if present, requires the
 				<quote>Content-Type</quote> and <quote>Content-length</quote>
 				headers)
+			</para></listitem>
+		</itemizedlist>
+	</section>
+	<section id="tm.rpc.clean">
+		<title>
+		<function moreinfo="none">tm.clean</function>
+		</title>
+		<para>
+		Trigger an hard clean of expired transactions.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section id="tm.stats">
+		<title>
+		<function moreinfo="none">tm.stats</function>
+		</title>
+		<para>
+		Gets information about current and past TM transaction handling.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
 			</para></listitem>
 		</itemizedlist>
 	</section>

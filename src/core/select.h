@@ -140,12 +140,12 @@ typedef struct select_table {
   struct select_table *next;
 } select_table_t;
 
-/* the level of the select call that is beeing evaluated
+/* the level of the select call that is being evaluated
  * by the child process
  */
 extern int select_level;
 
-/* pointer to the SIP uri beeing processed.
+/* pointer to the SIP uri being processed.
  * Nested function calls can pass information to each
  * other using this pointer. Only for performace reasons.
  * (Miklos)
@@ -198,7 +198,7 @@ void free_select(select_t *s);
  * Select parser, result is stored in SHARED memory
  *
  * If you call this, you must ensure, that the string which
- * is beeing parsed MUST be at the same place for all child
+ * is being parsed MUST be at the same place for all child
  * processes, e.g. allocated in the shared memory as well
  *
  * parameters and results same as parse_select

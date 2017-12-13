@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -26,8 +26,10 @@
 
 #include "../../core/parser/msg_parser.h"
 
-int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2);
+int w_rls_handle_notify(struct sip_msg* msg, char* c1, char* c2);
 void timer_send_notify(unsigned int ticks,void *param);
 void rls_presentity_clean(unsigned int ticks,void *param);
+
+int ki_rls_handle_notify(sip_msg_t* msg);
 
 #endif

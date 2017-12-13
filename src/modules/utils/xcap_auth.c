@@ -465,6 +465,12 @@ int ki_xcap_auth_status(sip_msg_t* _msg, str* watcher_uri, str* presentity_uri)
 	res = get_rules_doc(&uri.user, &uri.host, PRES_RULES, &rules_doc);
 	if ((res < 0) || (rules_doc == NULL) || (rules_doc->s == NULL)) {
 		LM_DBG("no xcap rules doc found for presentity uri\n");
+		if(rules_doc) {
+			if(rules_doc->s) {
+				pkg_free(rules_doc->s);
+			}
+			pkg_free(rules_doc);
+		}
 		return PENDING_STATUS;
 	}
 

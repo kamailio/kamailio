@@ -133,12 +133,15 @@ Daniel-Constantin Mierla
 
         5. RPC Commands
 
-              5.1. tm.t_uac_start
-              5.2. tm.t_uac_wait
-              5.3. tm.cancel
-              5.4. tm.hash_stats
-              5.5. tm.reply
-              5.6. tm.reply_callid
+              5.1. tm.list
+              5.2. tm.t_uac_start
+              5.3. tm.t_uac_wait
+              5.4. tm.cancel
+              5.5. tm.hash_stats
+              5.6. tm.reply
+              5.7. tm.reply_callid
+              5.8. tm.clean
+              5.9. tm.stats
 
         6. Event Routes
 
@@ -371,12 +374,15 @@ Chapter 1. Admin Guide
 
    5. RPC Commands
 
-        5.1. tm.t_uac_start
-        5.2. tm.t_uac_wait
-        5.3. tm.cancel
-        5.4. tm.hash_stats
-        5.5. tm.reply
-        5.6. tm.reply_callid
+        5.1. tm.list
+        5.2. tm.t_uac_start
+        5.3. tm.t_uac_wait
+        5.4. tm.cancel
+        5.5. tm.hash_stats
+        5.6. tm.reply
+        5.7. tm.reply_callid
+        5.8. tm.clean
+        5.9. tm.stats
 
    6. Event Routes
 
@@ -453,8 +459,7 @@ Chapter 1. Admin Guide
 Note
 
    Several Kamailio TM module functions are now implemented in the TMX
-   module: “modules_k/tmx”. Check it to see if what you are looking for is
-   there.
+   module. Check it to see if what you are looking for is there.
 
 2. Serial Forking Based on Q Value
 
@@ -1344,7 +1349,7 @@ modparam("tm", "callid_matching", 1)
 
 3.34. pass_provisional_replies (integer)
 
-   If set, TMCB_LOCAL_REPONSE_OUT tm registered callbacks will be called
+   If set, TMCB_LOCAL_RESPONSE_OUT tm registered callbacks will be called
    also for provisional replies.
 
    Default value is 0 (off).
@@ -1773,8 +1778,8 @@ failure_route[1] {
 }
 ...
 
-   See test/onr.cfg for a more complex example of combination of serial
-   with parallel forking.
+   See misc/examples/mixed/onr.cfg for a more complex example of
+   combination of serial with parallel forking.
 
 4.7.  t_on_branch_failure(branch_failure_route)
 
@@ -1877,7 +1882,7 @@ if (t_newtran()) {
 } else sl_reply_error();
 ...
 
-   See test/uas.cfg for more examples.
+   See misc/examples/mixed/uas.cfg for more examples.
 
 4.11.  t_reply(code, reason_phrase)
 
@@ -2797,14 +2802,24 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
 
 5. RPC Commands
 
-   5.1. tm.t_uac_start
-   5.2. tm.t_uac_wait
-   5.3. tm.cancel
-   5.4. tm.hash_stats
-   5.5. tm.reply
-   5.6. tm.reply_callid
+   5.1. tm.list
+   5.2. tm.t_uac_start
+   5.3. tm.t_uac_wait
+   5.4. tm.cancel
+   5.5. tm.hash_stats
+   5.6. tm.reply
+   5.7. tm.reply_callid
+   5.8. tm.clean
+   5.9. tm.stats
 
-5.1.  tm.t_uac_start
+5.1.  tm.list
+
+   List details of transactions.
+
+   Parameters:
+     * none
+
+5.2.  tm.t_uac_start
 
    Generates and sends a local SIP request.
 
@@ -2819,12 +2834,12 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
      * body - (optional, may not be present) request body (if present,
        requires the “Content-Type” and “Content-length” headers)
 
-5.2.  tm.t_uac_wait
+5.3.  tm.t_uac_wait
 
-   Similar to rm.t_uac_start, but waits for the SIP reponse and tries to
+   Similar to tm.t_uac_start, but waits for the SIP response and tries to
    provide its details via RPC response.
 
-5.3.  tm.cancel
+5.4.  tm.cancel
 
    Generates and sends a CANCEL for an existing local SIP request.
 
@@ -2832,14 +2847,14 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
      * callid - callid of the INVITE request to be cancelled.
      * cseq - cseq of the INVITE request to be cancelled.
 
-5.4.  tm.hash_stats
+5.5.  tm.hash_stats
 
    Gets information about the load of TM internal hash table.
 
    Parameters:
      * none
 
-5.5.  tm.reply
+5.6.  tm.reply
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -2853,7 +2868,7 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
      * body - (optional, may not be present) reply body (if present,
        requires the “Content-Type” and “Content-length” headers)
 
-5.6.  tm.reply_callid
+5.7.  tm.reply_callid
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -2867,6 +2882,20 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
        (“.”) char only if there are no headers;
      * body - (optional, may not be present) reply body (if present,
        requires the “Content-Type” and “Content-length” headers)
+
+5.8.  tm.clean
+
+   Trigger an hard clean of expired transactions.
+
+   Parameters:
+     * none
+
+5.9.  tm.stats
+
+   Gets information about current and past TM transaction handling.
+
+   Parameters:
+     * none
 
 6. Event Routes
 

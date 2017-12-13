@@ -105,9 +105,9 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 
 # version number
 VERSION = 5
-PATCHLEVEL = 1
+PATCHLEVEL = 2
 SUBLEVEL =  0
-EXTRAVERSION = -dev4
+EXTRAVERSION = -dev1
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
@@ -251,8 +251,10 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 					-e 's/5\.[0-9]\..*/5.0+/' \
 					-e 's/5\.[0-9]$$/5.0+/' \
 					-e 's/6\.[0-9]\..*/6.0+/' \
-					-e 's/6\.[0-9]$$/6.0+/')
-ifeq (,$(strip $(filter-out 3.0 3.4 4.x 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+					-e 's/6\.[0-9]$$/6.0+/' \
+					-e 's/7\.[0-9]\..*/7.0+/' \
+					-e 's/7\.[0-9]$$/7.0+/')
+ifeq (,$(strip $(filter-out 3.0 3.4 4.x 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 	# dependencies can be generated on-the-fly while compiling *.c
 	CC_MKDEP_OPTS=-MMD -MP
 endif # 3.0 <= $(CC_SHORTVER) <= 4.x
@@ -880,8 +882,8 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g $(CC_OPT) -funroll-loops  -Wcast-align $(PROFILE)
-			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+			#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,athlon64)
 					CFLAGS+=-m32 -minline-all-stringops \
 							-falign-loops \
@@ -930,7 +932,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			# CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), clang)
@@ -964,7 +966,7 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS=-g $(CC_OPT) -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.5+
 			# don't add '-mtune=$(CPUTYPE)' - gcc failure
-ifeq			($(CC_SHORTVER),$(filter $(CC_SHORTVER),4.5+ 5.0+ 6.0+))
+ifeq			($(CC_SHORTVER),$(filter $(CC_SHORTVER),4.5+ 5.0+ 6.0+ 7.0+))
 $(call				set_if_empty,CPUTYPE,opteron)
 					CFLAGS+=-m64 -minline-all-stringops \
 							-falign-loops \
@@ -1023,7 +1025,7 @@ endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
 endif			# CC_SHORTVER, 4.2+
-endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+
+endif			# CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+
 
 else		# CC_NAME, gcc
 ifeq            ($(CC_NAME), clang)
@@ -1058,8 +1060,8 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS=-g $(CC_OPT) -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
 					#-Wmissing-prototypes
-				#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+				#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,ultrasparc)
 					#use 32bit for now
 					CFLAGS+=-m64 -mcpu=ultrasparc  \
@@ -1125,7 +1127,7 @@ endif			#CC_SHORTVER, 2.9x
 endif			#CC_SHORTVER, 3.0
 endif			#CC_SHORTVER, 3.4
 endif			#CC_SHORTVER, 4.x
-endif			#CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			#CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
@@ -1153,7 +1155,7 @@ ifeq		($(CC_NAME), gcc)
 					#-Wcast-align \
 					#-Wmissing-prototypes
 				#if gcc 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,v8)
 					#use 32bit for now
 					CFLAGS+= -mtune=$(CPUTYPE) \
@@ -1194,7 +1196,7 @@ endif			#CC_SHORTVER, 2.9x
 endif			#CC_SHORTVER, 3.0
 endif			#CC_SHORTVER, 3.4
 endif			#CC_SHORTVER, 4.x
-endif			#CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			#CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
@@ -1218,7 +1220,7 @@ ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-marm -march=armv5t $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 					CFLAGS+= -ftree-vectorize -fno-strict-overflow
 					# not supported on arm: -minline-all-stringops
 else
@@ -1250,7 +1252,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			# CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
 				#other compilers
@@ -1266,8 +1268,8 @@ ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-march=armv6 $(CC_OPT) -funroll-loops -fsigned-char \
 						$(PROFILE)
-			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+			#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 					CFLAGS+= -ftree-vectorize -fno-strict-overflow
 else
 			#if gcc 4.x+
@@ -1297,7 +1299,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			# CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
 				#other compilers
@@ -1312,8 +1314,8 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=$(CC_OPT) -funroll-loops  $(PROFILE)
-			#if gcc 6.0, 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+			#if gcc 7.0+, 6.0, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 					CFLAGS+=-mfp32 -march=r3000 \
 							-ftree-vectorize -fno-strict-overflow
 			# not supported on mips: -minline-all-stringops
@@ -1346,7 +1348,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			# CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
 				#other compilers
@@ -1361,8 +1363,8 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -mips2 $(CC_OPT) -funroll-loops $(PROFILE)
-			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+			#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 					CFLAGS+=-ftree-vectorize -fno-strict-overflow
 			# not supported on mips: -minline-all-stringops
 else
@@ -1392,7 +1394,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			# CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
 				#other compilers
@@ -1407,8 +1409,8 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -mips64 $(CC_OPT) -funroll-loops $(PROFILE)
-			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+			#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 					CFLAGS+=-ftree-vectorize -fno-strict-overflow
 			# not supported on mips: -minline-all-stringops
 
@@ -1439,7 +1441,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			# CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
 				#other compilers
@@ -1455,7 +1457,7 @@ ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS= $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 5.0+, 4.5 or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 					CFLAGS+= -fno-strict-overflow
 					# not supported: -minline-all-stringops
 else
@@ -1485,7 +1487,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			# CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
 				#other compilers
@@ -1500,8 +1502,8 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=
-			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+			#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,powerpc)
 ifeq 				($(NOALTIVEC),)
 						CFLAGS += $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
@@ -1542,7 +1544,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			# CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
 				#other compilers
@@ -1557,8 +1559,8 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
-			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
+			#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,powerpc64)
 					CFLAGS+=-ftree-vectorize \
 							-fno-strict-overflow \
@@ -1591,7 +1593,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+endif			# CC_SHORTVER, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
 				#other compilers

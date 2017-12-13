@@ -31,7 +31,7 @@ Daniel-Constantin Mierla
 
         4. RPC Commands
 
-              4.1. statsc.exec
+              4.1. statsc.report
 
    List of Examples
 
@@ -57,7 +57,7 @@ Chapter 1. Admin Guide
 
    4. RPC Commands
 
-        4.1. statsc.exec
+        4.1. statsc.report
 
 1. Overview
 
@@ -73,8 +73,8 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded along this module:
-     * various - for getting access to the statistics exported by these
-       modules.
+     * various - (optional, e.g., sl, tm, usrloc) for getting access to
+       the statistics exported by these modules.
 
 2.2. External Libraries or Applications
 
@@ -135,9 +135,9 @@ modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies"
 
 4. RPC Commands
 
-   4.1. statsc.exec
+   4.1. statsc.report
 
-4.1.  statsc.exec
+4.1.  statsc.report
 
    Get the report of recorded statistics.
 

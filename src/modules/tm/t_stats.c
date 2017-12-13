@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -29,21 +29,19 @@
 #include "../../core/dprint.h"
 #include "../../core/config.h"
 #include "../../core/pt.h"
-#ifdef TM_HASH_STATS
 #include "h_table.h"
-#endif
 
 union t_stats *tm_stats=0;
 
 int init_tm_stats(void)
 {
-	     /* Delay initialization of tm_stats  to
-	      * init_tm_stats_child which gets called from child_init,
-	      * in mod_init function other modules can increase the value of
-	      * estimated_process_count and thus we do not know about processes created
-	      * from modules which get loaded after tm and thus their mod_init
-	      * functions will be called after tm mod_init function finishes
-	      */
+	/* Delay initialization of tm_stats  to
+	 * init_tm_stats_child which gets called from child_init,
+	 * in mod_init function other modules can increase the value of
+	 * estimated_process_count and thus we do not know about processes created
+	 * from modules which get loaded after tm and thus their mod_init
+	 * functions will be called after tm mod_init function finishes
+	 */
 	return 0;
 }
 
@@ -64,7 +62,7 @@ int init_tm_stats_child(void)
 		}
 		memset(tm_stats, 0, size);
 	}
-	
+
 	return 0;
 error:
 	return -1;
@@ -115,7 +113,7 @@ void free_tm_stats()
 
 
 /* we don't worry about locking data during reads (unlike
- * setting values which always happens from some locks) 
+ * setting values which always happens from some locks)
  */
 void tm_rpc_stats(rpc_t* rpc, void* c)
 {
@@ -135,19 +133,19 @@ void tm_rpc_stats(rpc_t* rpc, void* c)
 	if (rpc->add(c, "{", &st) < 0) return;
 
 	rpc->struct_add(st, "dd", "current", (unsigned) current, "waiting",
-										 (unsigned) waiting);
+									(unsigned) waiting);
 	rpc->struct_add(st, "d", "total", (unsigned) all.transactions);
 	rpc->struct_add(st, "d", "total_local", (unsigned)all.client_transactions);
 	rpc->struct_add(st, "d", "rpl_received", (unsigned)all.rpl_received);
 	rpc->struct_add(st, "d", "rpl_generated", (unsigned)all.rpl_generated);
 	rpc->struct_add(st, "d", "rpl_sent", (unsigned)all.rpl_sent);
-	rpc->struct_add(st, "ddddd", 
+	rpc->struct_add(st, "ddddd",
 			"6xx", (unsigned int)all.completed_6xx,
 			"5xx", (unsigned int)all.completed_5xx,
 			"4xx", (unsigned int)all.completed_4xx,
 			"3xx", (unsigned int)all.completed_3xx,
 			"2xx", (unsigned int)all.completed_2xx);
-#ifdef TM_MORE_STATS 
+#ifdef TM_MORE_STATS
 	rpc->struct_add(st, "dd", "created", (unsigned int)all.t_created, "freed",
 						(unsigned int)all.t_freed);
 	rpc->struct_add(st, "d", "delayed_free", (unsigned int)all.delayed_free);
@@ -182,7 +180,7 @@ void tm_rpc_hash_stats(rpc_t* rpc, void* c)
 	double crt_average, crt_dev, crt_d;
 	unsigned long acc, crt;
 	int r;
-	
+
 	acc_count=0;
 	acc_min=(unsigned long)(-1);
 	acc_max=0;
@@ -198,12 +196,12 @@ void tm_rpc_hash_stats(rpc_t* rpc, void* c)
 	for (r=0; r<TABLE_ENTRIES; r++){
 		acc=_tm_table->entries[r].acc_entries;
 		crt=_tm_table->entries[r].cur_entries;
-		
+
 		acc_count+=acc;
 		if (acc<acc_min) acc_min=acc;
 		if (acc>acc_max) acc_max=acc;
 		if (acc==0) acc_zeroes++;
-		
+
 		crt_count+=crt;
 		if (crt<crt_min) crt_min=crt;
 		if (crt>crt_max) crt_max=crt;
@@ -211,11 +209,11 @@ void tm_rpc_hash_stats(rpc_t* rpc, void* c)
 	}
 	acc_average=acc_count/(double)TABLE_ENTRIES;
 	crt_average=crt_count/(double)TABLE_ENTRIES;
-	
+
 	for (r=0; r<TABLE_ENTRIES; r++){
 		acc=_tm_table->entries[r].acc_entries;
 		crt=_tm_table->entries[r].cur_entries;
-		
+
 		acc_d=acc-acc_average;
 		/* instead of fabs() which requires -lm */
 		if (acc_d<0) acc_d=-acc_d;
@@ -227,14 +225,14 @@ void tm_rpc_hash_stats(rpc_t* rpc, void* c)
 		if (crt_d>1) crt_dev_no++;
 		crt_dev+=crt_d*crt_d;
 	}
-	
+
 	if (rpc->add(c, "{", &st) < 0) return;
 	rpc->struct_add(st, "d", "hash_size", (unsigned) TABLE_ENTRIES);
 	rpc->struct_add(st, "d", "crt_transactions", (unsigned)crt_count);
 	rpc->struct_add(st, "f", "crt_target_per_cell", crt_average);
 	rpc->struct_add(st, "dd", "crt_min", (unsigned)crt_min,
-							  "crt_max", (unsigned) crt_max);
-	rpc->struct_add(st, "d", "crt_worst_case_extra_cells", 
+							"crt_max", (unsigned) crt_max);
+	rpc->struct_add(st, "d", "crt_worst_case_extra_cells",
 							(unsigned)(crt_max-(unsigned)crt_average));
 	rpc->struct_add(st, "d", "crt_no_zero_cells", (unsigned)crt_zeroes);
 	rpc->struct_add(st, "d", "crt_no_deviating_cells", crt_dev_no);
@@ -242,8 +240,8 @@ void tm_rpc_hash_stats(rpc_t* rpc, void* c)
 	rpc->struct_add(st, "d", "acc_transactions", (unsigned)acc_count);
 	rpc->struct_add(st, "f", "acc_target_per_cell", acc_average);
 	rpc->struct_add(st, "dd", "acc_min", (unsigned)acc_min,
-							  "acc_max", (unsigned) acc_max);
-	rpc->struct_add(st, "d", "acc_worst_case_extra_cells", 
+							"acc_max", (unsigned) acc_max);
+	rpc->struct_add(st, "d", "acc_worst_case_extra_cells",
 							(unsigned)(acc_max-(unsigned)acc_average));
 	rpc->struct_add(st, "d", "acc_no_zero_cells", (unsigned)acc_zeroes);
 	rpc->struct_add(st, "d", "acc_no_deviating_cells", acc_dev_no);
@@ -252,4 +250,57 @@ void tm_rpc_hash_stats(rpc_t* rpc, void* c)
 	rpc->fault(c, 500, "Hash statistics not supported (try"
 				"recompiling with -DTM_HASH_STATS)");
 #endif /* TM_HASH_STATS */
+}
+
+/* list active transactions */
+void tm_rpc_list(rpc_t* rpc, void* c)
+{
+	int r;
+	void* h;
+	tm_cell_t *tcell;
+	char pbuf[32];
+
+	for (r=0; r<TABLE_ENTRIES; r++) {
+		lock_hash(r);
+		if(clist_empty(&_tm_table->entries[r], next_c)) {
+			unlock_hash(r);
+			continue;
+		}
+		if (rpc->add(c, "{", &h) < 0) {
+			LM_ERR("failed to add transaction structure\n");
+			unlock_hash(r);
+			return;
+		}
+		clist_foreach(&_tm_table->entries[r], tcell, next_c)
+		{
+			snprintf(pbuf, 31, "%p", (void*)tcell);
+			rpc->struct_add(h, "sddSSSSSsdddd",
+					"cell", pbuf,
+					"tindex", (unsigned)tcell->hash_index,
+					"tlabel", (unsigned)tcell->label,
+					"method", &tcell->method,
+					"from", &tcell->from,
+					"to", &tcell->to,
+					"callid", &tcell->callid,
+					"cseq", &tcell->cseq_n,
+					"uas_request", (tcell->uas.request)?"yes":"no",
+					"tflags", (unsigned)tcell->flags,
+					"outgoings", (unsigned)tcell->nr_of_outgoings,
+#ifdef TM_DEL_UNREF
+					"ref_count", (unsigned)atomic_get(&tcell->ref_count),
+#else
+					"ref_count", tcell->ref_count,
+#endif
+					"lifetime", (unsigned)TICKS_TO_S(tcell->end_of_life)
+					);
+		}
+		unlock_hash(r);
+	}
+}
+
+
+/* rpc command to clean active but very old transactions */
+void tm_rpc_clean(rpc_t* rpc, void* c)
+{
+	tm_clean_lifetime();
 }

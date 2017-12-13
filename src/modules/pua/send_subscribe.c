@@ -803,7 +803,7 @@ ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 	hentity->contact.len= subs->contact->len;
 	size+= subs->contact->len;
 
-	if(subs->outbound_proxy)
+	if(subs->outbound_proxy && subs->outbound_proxy->s)
 	{
 		hentity->outbound_proxy= (str*)((char*)hentity+ size);
 		size+= sizeof(str);
@@ -819,9 +819,9 @@ ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 
 	if(subs->id.s)
 	{
-		CONT_COPY(hentity, hentity->id, subs->id)
+		CONT_COPY(hentity, hentity->id, subs->id);
 	}
-	if(subs->extra_headers)
+	if(subs->extra_headers && hentity->extra_headers->s)
 	{
 		hentity->extra_headers= (str*)((char*)hentity+ size);
 		size+= sizeof(str);
@@ -885,7 +885,7 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 	hentity->watcher_uri->len= subs->watcher_uri->len;
 	size+= subs->watcher_uri->len;
 
-	CONT_COPY(hentity, hentity->contact, subs->contact)
+	CONT_COPY(hentity, hentity->contact, subs->contact);
 
 	if(subs->outbound_proxy && subs->outbound_proxy->len && subs->outbound_proxy->s)
 	{
@@ -899,12 +899,12 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 
 	if(subs->id.s)
 	{
-		CONT_COPY(hentity, hentity->id, subs->id)
+		CONT_COPY(hentity, hentity->id, subs->id);
 	}
 
 	if(subs->remote_contact.s)
 	{
-		CONT_COPY(hentity, hentity->remote_contact, subs->remote_contact)
+		CONT_COPY(hentity, hentity->remote_contact, subs->remote_contact);
 	}
 
 	if(subs->extra_headers && subs->extra_headers->s)
@@ -919,9 +919,9 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 	}
 	/* copy dialog information */
 
-	CONT_COPY(hentity, hentity->to_tag, subs->to_tag)
-	CONT_COPY(hentity, hentity->from_tag, subs->from_tag)
-	CONT_COPY(hentity, hentity->call_id, subs->call_id)
+	CONT_COPY(hentity, hentity->to_tag, subs->to_tag);
+	CONT_COPY(hentity, hentity->from_tag, subs->from_tag);
+	CONT_COPY(hentity, hentity->call_id, subs->call_id);
 
 	if(expires< 0)
 		hentity->desired_expires= 0;
@@ -980,6 +980,7 @@ int send_subscribe(subs_info_t* subs)
 	if(str_hdr== NULL || str_hdr->s== NULL)
 	{
 		LM_ERR("while building extra headers\n");
+		if(str_hdr) pkg_free(str_hdr);
 		return -1;
 	}
 

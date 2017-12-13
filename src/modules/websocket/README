@@ -33,6 +33,7 @@ Peter Dunkley
               4.6. sub_protocols (integer)
               4.7. cors_mode (integer)
               4.8. verbose_list (int)
+              4.9. event_callback (str)
 
         5. Functions
 
@@ -68,10 +69,11 @@ Peter Dunkley
    1.8. Set sub_protocols parameter
    1.9. Set cors_mode parameter
    1.10. Set verbose_list parameter
-   1.11. ws_handle_handshake usage
-   1.12. ws_close usage
-   1.13. event_route[websocket:closed] usage
-   1.14. $ws_conid usage
+   1.11. Set event_callback parameter
+   1.12. ws_handle_handshake usage
+   1.13. ws_close usage
+   1.14. event_route[websocket:closed] usage
+   1.15. $ws_conid usage
 
 Chapter 1. Admin Guide
 
@@ -99,6 +101,7 @@ Chapter 1. Admin Guide
         4.6. sub_protocols (integer)
         4.7. cors_mode (integer)
         4.8. verbose_list (int)
+        4.9. event_callback (str)
 
    5. Functions
 
@@ -341,6 +344,7 @@ onreply_route[WS_REPLY] {
    4.6. sub_protocols (integer)
    4.7. cors_mode (integer)
    4.8. verbose_list (int)
+   4.9. event_callback (str)
 
 4.1. keepalive_mechanism (integer)
 
@@ -457,6 +461,28 @@ modparam("websocket", "cors_mode", 2)
 modparam("websocket", "verbose_list", 1)
 ...
 
+4.9. event_callback (str)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks specific for websocket module.
+
+   The function has one string parameter, the value is the name of the
+   event_route block, respectively "websocket:closed".
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.11. Set event_callback parameter
+...
+modparam("websocket", "event_callback", "ksr_websocket_event")
+...
+-- event callback function implemented in Lua
+function ksr_websocket_event(evname)
+        KSR.info("===== websocket module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
 5. Functions
 
    5.1. ws_handle_handshake()
@@ -476,7 +502,7 @@ Note
    This function returns 0, stopping all further processing of the
    request, when there is a problem.
 
-   Example 1.11. ws_handle_handshake usage
+   Example 1.12. ws_handle_handshake usage
 ...
 ws_handle_handshake();
 ...
@@ -501,7 +527,7 @@ Note
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. ws_close usage
+   Example 1.13. ws_close usage
 ...
 ws_close(4000, "Because I say so");
 ...
@@ -615,7 +641,7 @@ kamcmd ws.enable
    connection closes. The connection may be identified using the the $si
    and $sp pseudo-variables.
 
-   Example 1.13. event_route[websocket:closed] usage
+   Example 1.14. event_route[websocket:closed] usage
 ...
 event_route[websocket:closed] {
         xlog("L_INFO", "WebSocket connection from $si:$sp has closed\n");
@@ -631,7 +657,7 @@ event_route[websocket:closed] {
    Connection id of closed websocket connection. Can only be used in
    websocket:closed event route.
 
-   Example 1.14. $ws_conid usage
+   Example 1.15. $ws_conid usage
 ...
 event_route[websocket:closed] {
         xlog("L_INFO", "WebSocket connection with id $ws_conid has closed\n");

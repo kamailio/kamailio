@@ -17,6 +17,13 @@ Alex Balashov
    Evariste Systems
    <abalashov@evaristesys.com>
 
+Edited by
+
+Ovidiu Sas
+
+   VoIP Embedded, Inc.
+   <osas@voipembedded.com>
+
    Copyright © 2010 Elena-Ramona Modroiu (asipto.com)
      __________________________________________________________________
 
@@ -118,10 +125,13 @@ Chapter 1. Admin Guide
 
    Default value is “none”.
 
-   Value must be a list of parameters: attr=value;... The attribute 'name'
-   is mandatory, defining the name of the queue. Optional attribute 'size'
-   specifies the maximum number of items in queue, if it is execeeded the
-   oldest one is removed.
+   Value must be a list of parameters: attr=value;...
+     * Mandatory attributes:
+          + name: name of the queue.
+     * Optional attributes:
+          + size: size of the queue. Specifies the maximum number of items
+            in queue. If execeeded the oldest one is removed. If not set
+            the queue will be limitless.
 
    The parameter can be set many times, each holding the definition of one
    queue.

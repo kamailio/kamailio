@@ -1,4 +1,4 @@
-/* 
+/*
  * MySQL module interface
  *
  * Copyright (C) 2001-2003 FhG FOKUS
@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -79,7 +79,7 @@ static int dupl_string(char** dst, const char* begin, const char* end)
 
 
 /*
- * Parse mysql URI of form 
+ * Parse mysql URI of form
  * //[username[:password]@]hostname[:port]/database
  *
  * Returns 0 if parsing was successful and -1 otherwise
@@ -109,11 +109,11 @@ static int parse_mysql_uri(struct my_uri* res, str* uri)
 	if (!res || !uri) {
 		goto err;
 	}
-	
+
 	if (uri->len < SHORTEST_DB_URL_LEN) {
 		goto err;
 	}
-	
+
 	st = ST_SLASH1;
 	begin = uri->s;
 
@@ -136,7 +136,7 @@ static int parse_mysql_uri(struct my_uri* res, str* uri)
 				st = ST_USER_HOST;
 				begin = uri->s + i + 1;
 				break;
-				
+
 			default:
 				goto err;
 			}
@@ -205,7 +205,7 @@ static int parse_mysql_uri(struct my_uri* res, str* uri)
 				return 0;
 			}
 			break;
-			
+
 		case ST_DB:
 			break;
 		}
@@ -214,7 +214,7 @@ static int parse_mysql_uri(struct my_uri* res, str* uri)
 	if (st != ST_DB) goto err;
 	return 0;
 
- err:
+err:
 	if (prev_token) pkg_free(prev_token);
 	if (res == NULL) return -1;
 	if (res->username) {
@@ -267,7 +267,7 @@ int my_uri(db_uri_t* uri)
 	uri->cmp = my_uri_cmp;
 	return 0;
 
- error:
+error:
 	if (res) {
 		db_drv_free(&res->drv);
 		if (res) pkg_free(res);

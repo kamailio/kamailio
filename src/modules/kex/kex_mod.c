@@ -88,8 +88,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE },
 	{"isbflagset", (cmd_function)w_isbflagset,      2,fixup_igp_igp,
 		0, ANY_ROUTE },
-	{"setdsturi", (cmd_function)w_setdsturi,     1, 0,
-		0, ANY_ROUTE },
+	{"setdsturi", (cmd_function)w_setdsturi,     1, fixup_spve_null,
+		fixup_free_spve_null, ANY_ROUTE },
 	{"resetdsturi", (cmd_function)w_resetdsturi, 0, 0,
 		0, ANY_ROUTE },
 	{"isdsturiset", (cmd_function)w_isdsturiset, 0, 0,
@@ -264,7 +264,7 @@ static sr_kemi_t sr_kemi_kex_exports[] = {
 	},
 	{ str_init("kex"), str_init("resetdebug"),
 		SR_KEMIP_INT, ki_kex_resetdebug,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

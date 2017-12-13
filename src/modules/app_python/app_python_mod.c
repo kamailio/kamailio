@@ -43,7 +43,7 @@
 MODULE_VERSION
 
 
-static str script_name = str_init("/usr/local/etc/" NAME "/handler.py");
+str _sr_python_load_file = str_init("/usr/local/etc/" NAME "/handler.py");
 static str mod_init_fname = str_init("mod_init");
 static str child_init_mname = str_init("child_init");
 
@@ -55,11 +55,14 @@ PyObject *_sr_apy_handler_obj;
 
 char *dname = NULL, *bname = NULL;
 
+int _apy_process_rank = 0;
+
 PyThreadState *myThreadState;
 
 /** module parameters */
 static param_export_t params[]={
-	{"script_name",        PARAM_STR, &script_name },
+	{"script_name",        PARAM_STR, &_sr_python_load_file },
+	{"load",               PARAM_STR, &_sr_python_load_file },
 	{"mod_init_function",  PARAM_STR, &mod_init_fname },
 	{"child_init_method",  PARAM_STR, &child_init_mname },
 	{0,0,0}
@@ -92,29 +95,40 @@ struct module_exports exports = {
 	child_init                      /* per-child init function */
 };
 
+
 /**
  *
  */
 static int mod_init(void)
 {
 	char *dname_src, *bname_src;
-
 	int i;
-	PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
-	PyThreadState *mainThreadState;
 
-	dname_src = as_asciiz(&script_name);
-	bname_src = as_asciiz(&script_name);
+	if(apy_sr_init_mod()<0) {
+		LM_ERR("failed to init the sr mod\n");
+		return -1;
+	}
+	if(app_python_init_rpc()<0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
+	dname_src = as_asciiz(&_sr_python_load_file);
+	bname_src = as_asciiz(&_sr_python_load_file);
 
 	if(dname_src==NULL || bname_src==NULL)
 	{
 		LM_ERR("no more pkg memory\n");
+		if(dname_src) pkg_free(dname_src);
+		if(bname_src) pkg_free(bname_src);
 		return -1;
 	}
 
 	dname = strdup(dirname(dname_src));
 	if(dname==NULL) {
 		LM_ERR("no more system memory\n");
+		pkg_free(dname_src);
+		pkg_free(bname_src);
 		return -1;
 	}
 	if (strlen(dname) == 0) {
@@ -122,6 +136,8 @@ static int mod_init(void)
 		dname = malloc(2);
 		if(dname==NULL) {
 			LM_ERR("no more system memory\n");
+			pkg_free(dname_src);
+			pkg_free(bname_src);
 			return -1;
 		}
 		dname[0] = '.';
@@ -135,9 +151,53 @@ static int mod_init(void)
 		bname[i - 3] = '\0';
 	} else {
 		LM_ERR("%s: script_name doesn't look like a python script\n",
-				script_name.s);
+				_sr_python_load_file.s);
+		pkg_free(dname_src);
+		pkg_free(bname_src);
 		return -1;
 	}
+
+	if(apy_load_script()<0) {
+		pkg_free(dname_src);
+		pkg_free(bname_src);
+		LM_ERR("failed to load python script\n");
+		return -1;
+	}
+
+	pkg_free(dname_src);
+	pkg_free(bname_src);
+	return 0;
+}
+
+/**
+ *
+ */
+static int child_init(int rank)
+{
+	_apy_process_rank = rank;
+	return apy_init_script(rank);
+}
+
+/**
+ *
+ */
+static void mod_destroy(void)
+{
+	if (dname)
+		free(dname);	// dname was strdup'ed
+	if (bname)
+		free(bname);	// bname was strdup'ed
+
+	destroy_mod_Core();
+	destroy_mod_Ranks();
+	destroy_mod_Logger();
+	destroy_mod_Router();
+}
+
+int apy_load_script(void)
+{
+	PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
+	PyThreadState *mainThreadState;
 
 	Py_Initialize();
 	PyEval_InitThreads();
@@ -156,7 +216,8 @@ static int mod_init(void)
 	/* PySys_GetObject doesn't pass reference! No need to DEREF */
 	if (sys_path == NULL) {
 		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_AttributeError, "'module' object 'sys' has no attribute 'path'");
+			PyErr_Format(PyExc_AttributeError,
+					"'module' object 'sys' has no attribute 'path'");
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
@@ -166,7 +227,8 @@ static int mod_init(void)
 	pDir = PyString_FromString(dname);
 	if (pDir == NULL) {
 		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_AttributeError, "PyString_FromString() has failed");
+			PyErr_Format(PyExc_AttributeError,
+					"PyString_FromString() has failed");
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
@@ -187,7 +249,8 @@ static int mod_init(void)
 
 	if (python_msgobj_init() != 0) {
 		if (!PyErr_Occurred())
-			PyErr_SetString(PyExc_AttributeError, "python_msgobj_init() has failed");
+			PyErr_SetString(PyExc_AttributeError,
+					"python_msgobj_init() has failed");
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
@@ -201,11 +264,9 @@ static int mod_init(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
+
 		return -1;
 	}
-
-	pkg_free(dname_src);
-	pkg_free(bname_src);
 
 	pFunc = PyObject_GetAttrString(pModule, mod_init_fname.s);
 	Py_DECREF(pModule);
@@ -214,7 +275,9 @@ static int mod_init(void)
 
 	if (pFunc == NULL) {
 		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_AttributeError, "'module' object '%s' has no attribute '%s'",  bname, mod_init_fname.s);
+			PyErr_Format(PyExc_AttributeError,
+					"'module' object '%s' has no attribute '%s'",
+					bname, mod_init_fname.s);
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
@@ -224,7 +287,9 @@ static int mod_init(void)
 
 	if (!PyCallable_Check(pFunc)) {
 		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_AttributeError, "module object '%s' has is not callable attribute '%s'", bname, mod_init_fname.s);
+			PyErr_Format(PyExc_AttributeError,
+					"module object '%s' has is not callable attribute '%s'",
+					bname, mod_init_fname.s);
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
@@ -249,7 +314,9 @@ static int mod_init(void)
 
 	if (_sr_apy_handler_obj == Py_None) {
 		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_TypeError, "Function '%s' of module '%s' has returned None. Should be a class instance.", mod_init_fname.s, bname);
+			PyErr_Format(PyExc_TypeError,
+					"Function '%s' of module '%s' has returned None."
+					" Should be a class instance.", mod_init_fname.s, bname);
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
@@ -267,7 +334,10 @@ static int mod_init(void)
 	if (_sr_apy_handler_obj == NULL) {
 		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
 		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_TypeError, "Function '%s' of module '%s' has returned not returned object. Should be a class instance.", mod_init_fname.s, bname);
+			PyErr_Format(PyExc_TypeError,
+					"Function '%s' of module '%s' has returned not returned"
+					" object. Should be a class instance.",
+					mod_init_fname.s, bname);
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
@@ -280,10 +350,7 @@ static int mod_init(void)
 	return 0;
 }
 
-/**
- *
- */
-static int child_init(int rank)
+int apy_init_script(int rank)
 {
 	PyObject *pFunc, *pArgs, *pValue, *pResult;
 	int rval;
@@ -297,7 +364,8 @@ static int child_init(int rank)
 	if (classname == NULL)
 	{
 		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_AttributeError, "'module' instance has no class name");
+			PyErr_Format(PyExc_AttributeError,
+					"'module' instance has no class name");
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		PyThreadState_Swap(NULL);
@@ -318,7 +386,9 @@ static int child_init(int rank)
 
 	if (!PyCallable_Check(pFunc)) {
 		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_AttributeError, "class object '%s' has is not callable attribute '%s'", !classname ? "None" : classname, mod_init_fname.s);
+			PyErr_Format(PyExc_AttributeError,
+					"class object '%s' has is not callable attribute '%s'",
+					classname, mod_init_fname.s);
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
@@ -354,9 +424,6 @@ static int child_init(int rank)
 	Py_DECREF(pFunc);
 	Py_DECREF(pArgs);
 
-
-
-
 	if (PyErr_Occurred()) {
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
@@ -376,7 +443,9 @@ static int child_init(int rank)
 	if (!PyInt_Check(pResult))
 	{
 		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_TypeError, "method '%s' of class '%s' should return 'int' type", child_init_mname.s, !classname ? "None" : classname);
+			PyErr_Format(PyExc_TypeError,
+					"method '%s' of class '%s' should return 'int' type",
+					child_init_mname.s, classname);
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pResult);
@@ -385,7 +454,6 @@ static int child_init(int rank)
 		return -1;
 	}
 
-
 	rval = PyInt_AsLong(pResult);
 	Py_DECREF(pResult);
 	PyThreadState_Swap(NULL);
@@ -393,23 +461,6 @@ static int child_init(int rank)
 
 	return rval;
 }
-
-/**
- *
- */
-static void mod_destroy(void)
-{
-	if (dname)
-		free(dname);	// dname was strdup'ed
-	if (bname)
-		free(bname);	// bname was strdup'ed
-
-	destroy_mod_Core();
-	destroy_mod_Ranks();
-	destroy_mod_Logger();
-	destroy_mod_Router();
-}
-
 /**
  *
  */

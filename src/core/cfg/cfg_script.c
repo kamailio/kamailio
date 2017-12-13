@@ -38,10 +38,10 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 	cfg_script_var_t	*var;
 	int	gname_len, vname_len, descr_len;
 
-	LOG(L_DBG, "DEBUG: new_cfg_script_var(): declaring %s.%s\n", gname, vname);
+	LM_DBG("declaring %s.%s\n", gname, vname);
 
 	if (cfg_shmized) {
-		LOG(L_ERR, "ERROR: new_cfg_script_var(): too late variable declaration, "
+		LM_ERR("too late variable declaration, "
 			"the config has been already shmized\n");
 		return NULL;
 	}
@@ -53,8 +53,7 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 	if (group) {
 		if (group->dynamic == CFG_GROUP_STATIC) {
 			/* the group has been already declared by a module or by the core */
-			LOG(L_ERR, "ERROR: new_cfg_script_var(): "
-				"configuration group has been already declared: %s\n",
+			LM_ERR("configuration group has been already declared: %s\n",
 				gname);
 			return NULL;
 		}
@@ -66,8 +65,7 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 		) {
 			if ((var->name_len == vname_len) &&
 			(memcmp(var->name, vname, vname_len) == 0)) {
-				LOG(L_ERR, "ERROR: new_cfg_script_var(): variable already exists: %s.%s\n",
-						gname, vname);
+				LM_ERR("variable already exists: %s.%s\n", gname, vname);
 				return NULL;
 			}
 		}
@@ -80,7 +78,6 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 		group = cfg_new_group(gname, gname_len,
 					0 /* num */, NULL /* mapping */,
 					NULL /* vars */, 0 /* size */, NULL /* handle */);
-					
 		if (!group) goto error;
 		group->dynamic = CFG_GROUP_DYNAMIC;
 	}
@@ -97,15 +94,15 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 		break;
 
 	default:
-		LOG(L_ERR, "ERROR: new_cfg_script_var(): unsupported variable type\n");
+		LM_ERR("unsupported variable type\n");
 		return NULL;
 	}
 
 	group->num++;
 	if (group->num > CFG_MAX_VAR_NUM) {
-		LOG(L_ERR, "ERROR: new_cfg_script_var(): too many variables (%d) within a single group,"
-			" the limit is %d. Increase CFG_MAX_VAR_NUM, or split the group into multiple"
-			" definitions.\n",
+		LM_ERR("too many variables (%d) within a single group,"
+				" the limit is %d. Increase CFG_MAX_VAR_NUM, or split the group"
+				" into multiple definitions.\n",
 			group->num, CFG_MAX_VAR_NUM);
 		return NULL;
 	}
@@ -136,7 +133,7 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 	return var;
 
 error:
-	LOG(L_ERR, "ERROR: new_cfg_script_var(): not enough memory\n");
+	LM_ERR("not enough memory\n");
 	return NULL;
 }
 
@@ -154,7 +151,7 @@ int cfg_set_script_var(cfg_group_t *group, str *var_name,
 	str	s;
 
 	if (cfg_shmized || (group->dynamic != CFG_GROUP_DYNAMIC)) {
-		LOG(L_ERR, "BUG: cfg_set_script_var(): Not a dynamic group before forking\n");
+		LM_ERR("not a dynamic group before forking\n");
 		return -1;
 	}
 
@@ -172,7 +169,7 @@ int cfg_set_script_var(cfg_group_t *group, str *var_name,
 				if ((var->min || var->max)
 					&& ((var->min > (int)(long)v) || (var->max < (int)(long)v))
 				) {
-					LOG(L_ERR, "ERROR: cfg_set_script_var(): integer value is out of range\n");
+					LM_ERR("integer value is out of range\n");
 					goto error;
 				}
 				var->val.i = (int)(long)v;
@@ -185,7 +182,7 @@ int cfg_set_script_var(cfg_group_t *group, str *var_name,
 					s.len = ((str *)v)->len;
 					s.s = pkg_malloc(sizeof(char) * (s.len + 1));
 					if (!s.s) {
-						LOG(L_ERR, "ERROR: cfg_set_script_var(): not enough memory\n");
+						LM_ERR("not enough memory\n");
 						goto error;
 					}
 					memcpy(s.s, ((str *)v)->s, s.len);
@@ -200,7 +197,7 @@ int cfg_set_script_var(cfg_group_t *group, str *var_name,
 				break;
 
 			default:
-				LOG(L_ERR, "ERROR: cfg_set_script_var(): unsupported variable type\n");
+				LM_ERR("unsupported variable type\n");
 				goto error;
 			}
 
@@ -212,7 +209,7 @@ int cfg_set_script_var(cfg_group_t *group, str *var_name,
 	return 1;
 
 error:
-	LOG(L_ERR, "ERROR: cfg_set_script_var(): failed to set the script variable: %.*s.%.*s\n",
+	LM_ERR("failed to set the script variable: %.*s.%.*s\n",
 			group->name_len, group->name,
 			var_name->len, var_name->s);
 	return -1;
@@ -231,6 +228,10 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 	cfg_script_var_t	*script_var, *script_var2;
 	str			s;
 
+	if(group==NULL || group->vars==NULL) {
+		LM_ERR("invalid group parameter: %p\n", group);
+		return -1;
+	}
 	mapping = (cfg_mapping_t *)pkg_malloc(sizeof(cfg_mapping_t)*group->num);
 	if (!mapping) goto error;
 	memset(mapping, 0, sizeof(cfg_mapping_t)*group->num);
@@ -310,7 +311,7 @@ error:
 	if (def) pkg_free(def);
 	if (handle) pkg_free(handle);
 
-	LOG(L_ERR, "ERROR: cfg_script_fixup(): not enough memory\n");
+	LM_ERR("not enough memory\n");
 	return -1;
 }
 
@@ -337,7 +338,7 @@ void cfg_script_destroy(cfg_group_t *group)
 	script_var = (cfg_script_var_t *)group->vars;
 	while (script_var) {
 		script_var2 = script_var->next;
-		if ((script_var->type == CFG_VAR_STR) && script_var->val.s.s) 
+		if ((script_var->type == CFG_VAR_STR) && script_var->val.s.s)
 			pkg_free(script_var->val.s.s);
 		pkg_free(script_var);
 		script_var = script_var2;

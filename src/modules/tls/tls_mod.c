@@ -83,6 +83,7 @@ static int w_is_peer_verified(struct sip_msg* msg, char* p1, char* p2);
 MODULE_VERSION
 
 
+extern str sr_tls_event_callback;
 str sr_tls_xavp_cfg = {0, 0};
 /*
  * Default settings when modparams are used
@@ -209,6 +210,7 @@ static param_export_t params[] = {
 	{"low_mem_threshold2",  PARAM_INT,    &default_tls_cfg.low_mem_threshold2},
 	{"renegotiation",       PARAM_INT,    &sr_tls_renegotiation},
 	{"xavp_cfg",            PARAM_STR,    &sr_tls_xavp_cfg},
+	{"event_callback",      PARAM_STR,    &sr_tls_event_callback},
 	{0, 0, 0}
 };
 
@@ -268,24 +270,24 @@ static int mod_init(void)
 	int method;
 
 	if (tls_disable){
-		LOG(L_WARN, "tls support is disabled "
+		LM_WARN("tls support is disabled "
 				"(set enable_tls=1 in the config to enable it)\n");
 		return 0;
 	}
 	if (fix_tls_cfg(&default_tls_cfg) < 0 ) {
-		ERR("initial tls configuration fixup failed\n");
+		LM_ERR("initial tls configuration fixup failed\n");
 		return -1;
 	}
 	/* declare configuration */
 	if (cfg_declare("tls", tls_cfg_def, &default_tls_cfg,
 							cfg_sizeof(tls), (void **)&tls_cfg)) {
-		ERR("failed to register the configuration\n");
+		LM_ERR("failed to register the configuration\n");
 		return -1;
 	}
 	/* Convert tls_method parameter to integer */
 	method = tls_parse_method(&cfg_get(tls, tls_cfg, method));
 	if (method < 0) {
-		ERR("Invalid tls_method parameter value\n");
+		LM_ERR("Invalid tls_method parameter value\n");
 		return -1;
 	}
 	/* fill mod_params */
@@ -303,7 +305,7 @@ static int mod_init(void)
 	tls_domains_cfg =
 			(tls_domains_cfg_t**)shm_malloc(sizeof(tls_domains_cfg_t*));
 	if (!tls_domains_cfg) {
-		ERR("Not enough shared memory left\n");
+		LM_ERR("Not enough shared memory left\n");
 		goto error;
 	}
 	*tls_domains_cfg = NULL;
@@ -311,7 +313,7 @@ static int mod_init(void)
 	register_select_table(tls_sel);
 	/* register the rpc interface */
 	if (rpc_register_array(tls_rpc)!=0) {
-		LOG(L_ERR, "failed to register RPC commands\n");
+		LM_ERR("failed to register RPC commands\n");
 		goto error;
 	}
 
@@ -319,7 +321,7 @@ static int mod_init(void)
 
 	tls_domains_cfg_lock = lock_alloc();
 	if (tls_domains_cfg_lock == 0) {
-		ERR("Unable to create TLS configuration lock\n");
+		LM_ERR("Unable to create TLS configuration lock\n");
 		goto error;
 	}
 	if (lock_init(tls_domains_cfg_lock) == 0) {
@@ -328,7 +330,7 @@ static int mod_init(void)
 		goto error;
 	}
 	if (tls_ct_wq_init() < 0) {
-		ERR("Unable to initialize TLS buffering\n");
+		LM_ERR("Unable to initialize TLS buffering\n");
 		goto error;
 	}
 	if (cfg_get(tls, tls_cfg, config_file).s) {
@@ -349,7 +351,9 @@ static int mod_init(void)
 #ifndef OPENSSL_NO_DH
 	LM_INFO("With Diffie Hellman\n");
 #endif
-	tls_lookup_event_routes();
+	if(sr_tls_event_callback.s==NULL || sr_tls_event_callback.len<=0) {
+		tls_lookup_event_routes();
+	}
 	return 0;
 error:
 	destroy_tls_h();
@@ -392,23 +396,23 @@ static int ki_is_peer_verified(sip_msg_t* msg)
 	long ssl_verify;
 	X509 *x509_cert;
 
-	DBG("started...\n");
+	LM_DBG("started...\n");
 	if (msg->rcv.proto != PROTO_TLS) {
-		ERR("proto != TLS --> peer can't be verified, return -1\n");
+		LM_ERR("proto != TLS --> peer can't be verified, return -1\n");
 		return -1;
 	}
 
-	DBG("trying to find TCP connection of received message...\n");
+	LM_DBG("trying to find TCP connection of received message...\n");
 
 	c = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0,
 					cfg_get(tls, tls_cfg, con_lifetime));
 	if (!c) {
-		ERR("connection no longer exits\n");
+		LM_ERR("connection no longer exits\n");
 		return -1;
 	}
 
 	if(c->type != PROTO_TLS) {
-		ERR("Connection found but is not TLS\n");
+		LM_ERR("Connection found but is not TLS\n");
 		tcpconn_put(c);
 		return -1;
 	}
@@ -475,7 +479,7 @@ static sr_kemi_t sr_kemi_tls_exports[] = {
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	if (tls_disable) {
-		LOG(L_WARN, "tls support is disabled "
+		LM_WARN("tls support is disabled "
 				"(set enable_tls=1 in the config to enable it)\n");
 		return 0;
 	}

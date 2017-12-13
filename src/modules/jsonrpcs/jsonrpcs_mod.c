@@ -299,13 +299,23 @@ static void jsonrpc_fault(jsonrpc_ctx_t* ctx, int code, char* fmt, ...)
 
 	jsonrpc_delayed_reply_ctx_init(ctx);
 
-	ctx->http_code = code;
+	if(code <= 100) {
+		ctx->http_code = 500;
+	} else {
+		ctx->http_code = code;
+	}
 	va_start(ap, fmt);
 	vsnprintf(jsonrpc_error_buf, JSONRPC_ERROR_REASON_BUF_LEN, fmt, ap);
 	va_end(ap);
-	ctx->http_text.len = strlen(jsonrpc_error_buf);
+	ctx->error_text.len = strlen(jsonrpc_error_buf);
+	ctx->error_text.s = jsonrpc_error_buf;
+	ctx->http_text.len = ctx->error_text.len;
 	ctx->http_text.s = jsonrpc_error_buf;
-	if(ctx->error_code == 0) ctx->error_code = -32000;
+	if(code == 0) {
+		ctx->error_code = -32000;
+	} else {
+		ctx->error_code = code;
+	}
 
 	return;
 }
@@ -348,8 +358,14 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 					_jsonrpc_error_table[i].text.s,
 					_jsonrpc_error_table[i].text.len);
 			} else {
-				srjson_AddStrStrToObject(ctx->jrpl, nj,
-					"message", 7, "Unexpected Error", 16);
+				if(ctx->error_text.len>0) {
+					srjson_AddStrStrToObject(ctx->jrpl, nj,
+							"message", 7,
+							ctx->error_text.s, ctx->error_text.len);
+				} else {
+					srjson_AddStrStrToObject(ctx->jrpl, nj,
+							"message", 7, "Unexpected Error", 16);
+				}
 			}
 			srjson_AddItemToObject(ctx->jrpl, ctx->jrpl->root, "error", nj);
 		}
@@ -649,7 +665,7 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 		ctx->req_node = ctx->req_node->next;
 	}
 	/* error if there is still a scan char type and it is not optional */
-	if(*fmt && mandatory_param==1)
+	if(*fmt && *fmt!='*' && mandatory_param==1)
 		goto error;
 
 	va_end(ap);
@@ -756,6 +772,7 @@ static int jsonrpc_struct_add(srjson_t *jnode, char* fmt, ...)
 	while(*fmt) {
 		mname.s = va_arg(ap, char*);
 		mname.len = (mname.s?strlen(mname.s):0);
+		if(mname.s==NULL) mname.s = "";
 
 		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);

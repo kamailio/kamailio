@@ -46,7 +46,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 	/* Make a temporary copy of the string pointer */
 	if(buf==0 || len<=0)
 	{
-		DBG("No body for record-route\n");
+		LM_DBG("No body for record-route\n");
 		*head = 0;
 		return -2;
 	}
@@ -67,14 +67,14 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 		/* Allocate and clear rr structure */
 		r = (rr_t*)pkg_malloc(sizeof(rr_t));
 		if (!r) {
-			LOG(L_ERR, "No memory left\n");
+			LM_ERR("No memory left\n");
 			goto error;
 		}
 		memset(r, 0, sizeof(rr_t));
 
 		/* Parse name-addr part of the header */
 		if (parse_nameaddr(&s, &r->nameaddr) < 0) {
-			LOG(L_ERR, "Error while parsing name-addr (%.*s)\n",
+			LM_ERR("Failed parsing name-addr (%.*s)\n",
 					s.len, ZSW(s.s));
 			goto error;
 		}
@@ -94,13 +94,13 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 			trim_leading(&s);
 
 			if (s.len == 0) {
-				LOG(L_ERR, "Error while parsing params\n");
+				LM_ERR("Error while parsing params\n");
 				goto error;
 			}
 
 			/* Parse all parameters */
 			if (parse_params(&s, CLASS_ANY, &hooks, &r->params) < 0) {
-				LOG(L_ERR, "Error while parsing params\n");
+				LM_ERR("Error while parsing params\n");
 				goto error;
 			}
 			r->len = r->params->name.s + r->params->len - r->nameaddr.name.s;
@@ -113,7 +113,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 		}
 
 		if (s.s[0] != ',') {
-			LOG(L_ERR, "Invalid character '%c', comma expected\n", s.s[0]);
+			LM_ERR("Invalid character '%c', comma expected\n", s.s[0]);
 			goto error;
 		}
 
@@ -123,7 +123,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 		trim_leading(&s);
 
 		if (s.len == 0) {
-			LOG(L_ERR, "Text after comma missing\n");
+			LM_ERR("Text after comma missing\n");
 			goto error;
 		}
 
@@ -162,7 +162,7 @@ int parse_rr(struct hdr_field* _h)
 	rr_t* r = NULL;
 
 	if (!_h) {
-		LOG(L_ERR, "Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -250,13 +250,16 @@ void print_rr(FILE* _o, rr_t* _r)
 static inline void xlate_pointers(rr_t* _orig, rr_t* _r)
 {
 	param_t* ptr;
-	_r->nameaddr.uri.s = translate_pointer(_r->nameaddr.name.s, _orig->nameaddr.name.s, _r->nameaddr.uri.s);
+	_r->nameaddr.uri.s = translate_pointer(_r->nameaddr.name.s,
+			_orig->nameaddr.name.s, _r->nameaddr.uri.s);
 
 	ptr = _r->params;
 	while(ptr) {
 		/*		if (ptr->type == P_R2) _r->r2 = ptr; */
-		ptr->name.s = translate_pointer(_r->nameaddr.name.s, _orig->nameaddr.name.s, ptr->name.s);
-		ptr->body.s = translate_pointer(_r->nameaddr.name.s, _orig->nameaddr.name.s, ptr->body.s);
+		ptr->name.s = translate_pointer(_r->nameaddr.name.s,
+				_orig->nameaddr.name.s, ptr->name.s);
+		ptr->body.s = translate_pointer(_r->nameaddr.name.s,
+				_orig->nameaddr.name.s, ptr->body.s);
 		ptr = ptr->next;
 	}
 }
@@ -271,7 +274,7 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 	rr_t* res, *prev, *it;
 
 	if (!_new || !_r) {
-		LOG(L_ERR, "Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 	prev  = NULL;
@@ -288,7 +291,7 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 		if (_shm) res = shm_malloc(sizeof(rr_t) + len);
 		else res = pkg_malloc(sizeof(rr_t) + len);
 		if (!res) {
-			LOG(L_ERR, "No memory left\n");
+			LM_ERR("No memory left\n");
 			return -2;
 		}
 		memcpy(res, it, sizeof(rr_t));
@@ -303,7 +306,7 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 		}
 
 		if (ret < 0) {
-			LOG(L_ERR, "Error while duplicating parameters\n");
+			LM_ERR("Error while duplicating parameters\n");
 			if (_shm) shm_free(res);
 			else pkg_free(res);
 			return -3;

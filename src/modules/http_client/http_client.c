@@ -60,7 +60,8 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/config.h"
 #include "../../core/lvalue.h"
-#include "../../core/pt.h"		/* Process table */
+#include "../../core/pt.h" /* Process table */
+#include "../../core/kemi.h"
 
 #include "functions.h"
 #include "curlcon.h"
@@ -69,27 +70,37 @@
 
 MODULE_VERSION
 
-#define CURL_USER_AGENT  NAME  " (" VERSION " (" ARCH "/" OS_QUOTED "))"
-#define CURL_USER_AGENT_LEN (sizeof(CURL_USER_AGENT)-1)
+#define CURL_USER_AGENT NAME " (" VERSION " (" ARCH "/" OS_QUOTED "))"
+#define CURL_USER_AGENT_LEN (sizeof(CURL_USER_AGENT) - 1)
 
 /* Module parameter variables */
-unsigned int	default_connection_timeout = 4;
-char		*default_tls_cacert = NULL;		/*!< File name: Default CA cert to use for curl TLS connection */
-str		default_tls_clientcert = STR_NULL;	/*!< File name: Default client certificate to use for curl TLS connection */
-str		default_tls_clientkey = STR_NULL;	/*!< File name: Key in PEM format that belongs to client cert */
-str		default_cipher_suite_list = STR_NULL;	/*!< List of allowed cipher suites */
-unsigned int	default_tls_version = 0;		/*!< 0 = Use libcurl default */
-unsigned int	default_tls_verify_peer = 1;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
-unsigned int	default_tls_verify_host = 2;		/*!< 0 = Do not verify TLS server CN/SAN  2 = Verify TLS server CN/SAN (default) */
-str 		default_http_proxy = STR_NULL;		/*!< Default HTTP proxy to use */
-unsigned int	default_http_proxy_port = 0;		/*!< Default HTTP proxy port to use */
-unsigned int	default_http_follow_redirect = 0;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
-unsigned int	default_keep_connections = 0;		/*!< Keep http connections open for reuse */
-str 		default_useragent = { CURL_USER_AGENT, CURL_USER_AGENT_LEN };	/*!< Default CURL useragent. Default "Kamailio Curl " */
-unsigned int	default_maxdatasize = 0;		/*!< Default download size. 0=disabled */
-unsigned int 	default_authmethod = CURLAUTH_BASIC | CURLAUTH_DIGEST;		/*!< authentication method - Basic, Digest or both */
+unsigned int default_connection_timeout = 4;
+char *default_tls_cacert =
+		NULL; /*!< File name: Default CA cert to use for curl TLS connection */
+str default_tls_clientcert =
+		STR_NULL; /*!< File name: Default client certificate to use for curl TLS connection */
+str default_tls_clientkey =
+		STR_NULL; /*!< File name: Key in PEM format that belongs to client cert */
+str default_cipher_suite_list = STR_NULL; /*!< List of allowed cipher suites */
+unsigned int default_tls_version = 0;	 /*!< 0 = Use libcurl default */
+unsigned int default_tls_verify_peer =
+		1; /*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
+unsigned int default_tls_verify_host =
+		2;								  /*!< 0 = Do not verify TLS server CN/SAN  2 = Verify TLS server CN/SAN (default) */
+str default_http_proxy = STR_NULL;		  /*!< Default HTTP proxy to use */
+unsigned int default_http_proxy_port = 0; /*!< Default HTTP proxy port to use */
+unsigned int default_http_follow_redirect =
+		0; /*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
+unsigned int default_keep_connections =
+		0; /*!< Keep http connections open for reuse */
+str default_useragent = {CURL_USER_AGENT,
+		CURL_USER_AGENT_LEN}; /*!< Default CURL useragent. Default "Kamailio Curl " */
+unsigned int default_maxdatasize = 0; /*!< Default download size. 0=disabled */
+unsigned int default_authmethod =
+		CURLAUTH_BASIC
+		| CURLAUTH_DIGEST; /*!< authentication method - Basic, Digest or both */
 
-str		http_client_config_file = STR_NULL;
+str http_client_config_file = STR_NULL;
 
 static curl_version_info_data *curl_info;
 
@@ -99,37 +110,40 @@ static int child_init(int);
 static void destroy(void);
 
 /* Fixup functions to be defined later */
-static int fixup_http_query_get(void** param, int param_no);
-static int fixup_free_http_query_get(void** param, int param_no);
-static int fixup_http_query_post(void** param, int param_no);
-static int fixup_free_http_query_post(void** param, int param_no);
-static int fixup_http_query_post_hdr(void** param, int param_no);
-static int fixup_free_http_query_post_hdr(void** param, int param_no);
+static int fixup_http_query_get(void **param, int param_no);
+static int fixup_free_http_query_get(void **param, int param_no);
+static int fixup_http_query_post(void **param, int param_no);
+static int fixup_free_http_query_post(void **param, int param_no);
+static int fixup_http_query_post_hdr(void **param, int param_no);
+static int fixup_free_http_query_post_hdr(void **param, int param_no);
 
-static int fixup_curl_connect(void** param, int param_no);
-static int fixup_free_curl_connect(void** param, int param_no);
-static int fixup_curl_connect_post(void** param, int param_no);
-static int fixup_free_curl_connect_post(void** param, int param_no);
-static int w_curl_connect_post(struct sip_msg* _m, char* _con, char * _url,
-		char* _result, char* _ctype, char* _data);
+static int fixup_curl_connect(void **param, int param_no);
+static int fixup_free_curl_connect(void **param, int param_no);
+static int fixup_curl_connect_post(void **param, int param_no);
+static int fixup_free_curl_connect_post(void **param, int param_no);
+static int w_curl_connect_post(struct sip_msg *_m, char *_con, char *_url,
+		char *_result, char *_ctype, char *_data);
 
-static int fixup_curl_get_redirect(void** param, int param_no);
-static int fixup_free_curl_get_redirect(void** param, int param_no);
-static int w_curl_get_redirect(struct sip_msg* _m, char* _con, char* _result);
+static int fixup_curl_get_redirect(void **param, int param_no);
+static int fixup_free_curl_get_redirect(void **param, int param_no);
+static int w_curl_get_redirect(struct sip_msg *_m, char *_con, char *_result);
 
 /* Wrappers for http_query to be defined later */
-static int w_http_query(struct sip_msg* _m, char* _url, char* _result);
-static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post,
-		char* _result);
-static int w_http_query_post_hdr(struct sip_msg* _m, char* _url, char* _post,
-		char* _hdrs, char* _result);
-static int w_curl_connect(struct sip_msg* _m, char* _con, char * _url, char* _result);
+static int w_http_query(struct sip_msg *_m, char *_url, char *_result);
+static int w_http_query_post(
+		struct sip_msg *_m, char *_url, char *_post, char *_result);
+static int w_http_query_post_hdr(struct sip_msg *_m, char *_url, char *_post,
+		char *_hdrs, char *_result);
+static int w_curl_connect(
+		struct sip_msg *_m, char *_con, char *_url, char *_result);
 
 /* forward function */
-static int curl_con_param(modparam_t type, void* val);
+static int curl_con_param(modparam_t type, void *val);
 static int pv_parse_curlerror(pv_spec_p sp, str *in);
-static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int pv_get_curlerror(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
+/* clang-format off */
 /* Exported functions */
 static cmd_export_t cmds[] = {
 	{"http_client_query", (cmd_function)w_http_query, 2, fixup_http_query_get,
@@ -138,7 +152,7 @@ static cmd_export_t cmds[] = {
 	{"http_client_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
 		fixup_free_http_query_post,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"http_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
+	{"http_client_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
 		fixup_free_http_query_post_hdr,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_connect", (cmd_function)w_curl_connect, 3, fixup_curl_connect,
@@ -183,7 +197,7 @@ static param_export_t params[] = {
  */
 static pv_export_t mod_pvs[] = {
 	{{"curlerror", (sizeof("curlerror")-1)}, /* Curl error codes */
-	PVT_OTHER, pv_get_curlerror, 0, pv_parse_curlerror, 0, 0, 0},
+		PVT_OTHER, pv_get_curlerror, 0, pv_parse_curlerror, 0, 0, 0},
 
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
@@ -203,11 +217,11 @@ struct module_exports exports = {
 	destroy,   /* destroy function */
 	child_init /* per-child init function */
 };
+/* clang-format on */
 
-counter_handle_t connections;	/* Number of connection definitions */
-counter_handle_t connok;	/* Successful Connection attempts */
+counter_handle_t connections; /* Number of connection definitions */
+counter_handle_t connok;	  /* Successful Connection attempts */
 counter_handle_t connfail;	/* Failed Connection attempts */
-
 
 
 static int init_shmlock(void)
@@ -224,32 +238,34 @@ static void destroy_shmlock(void)
 /* Init counters */
 static void curl_counter_init()
 {
-	counter_register(&connections, "httpclient", "connections", 0, 0, 0, "Counter of connection definitions (httpcon)", 0);
-	counter_register(&connok, "httpclient", "connok", 0, 0, 0, "Counter of successful connections (200 OK)", 0);
-	counter_register(&connfail, "httpclient", "connfail", 0, 0, 0, "Counter of failed connections (not 200 OK)", 0);
+	counter_register(&connections, "httpclient", "connections", 0, 0, 0,
+			"Counter of connection definitions (httpcon)", 0);
+	counter_register(&connok, "httpclient", "connok", 0, 0, 0,
+			"Counter of successful connections (200 OK)", 0);
+	counter_register(&connfail, "httpclient", "connfail", 0, 0, 0,
+			"Counter of failed connections (not 200 OK)", 0);
 }
 
 
 /* Module initialization function */
 static int mod_init(void)
 {
-	
+
 	LM_DBG("init curl module\n");
 
 	/* Initialize curl */
-	if (curl_global_init(CURL_GLOBAL_ALL)) {
+	if(curl_global_init(CURL_GLOBAL_ALL)) {
 		LM_ERR("curl_global_init failed\n");
 		return -1;
 	}
 	curl_info = curl_version_info(CURLVERSION_NOW);
 
-	if(curl_init_rpc() < 0)
-	{
+	if(curl_init_rpc() < 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
-	if (init_shmlock() != 0) {
+	if(init_shmlock() != 0) {
 		LM_CRIT("cannot initialize shared memory lock.\n");
 		return -1;
 	}
@@ -257,46 +273,55 @@ static int mod_init(void)
 	curl_counter_init();
 	counter_add(connections, curl_connection_count());
 
-	if (default_tls_version >= CURL_SSLVERSION_LAST) {
-		LM_WARN("tlsversion %d unsupported value. Using libcurl default\n", default_tls_version);
+	if(default_tls_version >= CURL_SSLVERSION_LAST) {
+		LM_WARN("tlsversion %d unsupported value. Using libcurl default\n",
+				default_tls_version);
 		default_tls_version = CURL_SSLVERSION_DEFAULT;
 	}
-	if (http_client_config_file.s != NULL)
-	{
-		if (http_client_load_config(&http_client_config_file) < 0)
-		{
-			LM_ERR("Failed to load http_client connections from [%.*s]\n", http_client_config_file.len, http_client_config_file.s);
+	if(http_client_config_file.s != NULL) {
+		if(http_client_load_config(&http_client_config_file) < 0) {
+			LM_ERR("Failed to load http_client connections from [%.*s]\n",
+					http_client_config_file.len, http_client_config_file.s);
 			return -1;
 		}
 	}
 
-	if (default_connection_timeout == 0) {
+	if(default_connection_timeout == 0) {
 		LM_ERR("CURL connection timeout set to zero. Using default 4 secs\n");
 		default_connection_timeout = 4;
 	}
-	if (default_http_proxy_port == 0) {
+	if(default_http_proxy_port == 0) {
 		LM_INFO("HTTP proxy port set to 0. Disabling HTTP proxy\n");
 	}
 
-
-	LM_DBG("**** init http_client module done. Curl version: %s SSL %s\n", curl_info->version, curl_info->ssl_version);
-	LM_DBG("**** init http_client: Number of connection objects: %d \n", curl_connection_count());
-	LM_DBG("**** init http_client: User Agent: %.*s \n", default_useragent.len, default_useragent.s);
-	LM_DBG("**** init http_client: HTTPredirect: %d \n", default_http_follow_redirect);
-	LM_DBG("**** init http_client: Client Cert: %.*s Key %.*s\n", default_tls_clientcert.len, default_tls_clientcert.s, default_tls_clientkey.len, default_tls_clientkey.s);
+	LM_DBG("**** init http_client module done. Curl version: %s SSL %s\n",
+			curl_info->version, curl_info->ssl_version);
+	LM_DBG("**** init http_client: Number of connection objects: %d \n",
+			curl_connection_count());
+	LM_DBG("**** init http_client: User Agent: %.*s \n", default_useragent.len,
+			default_useragent.s);
+	LM_DBG("**** init http_client: HTTPredirect: %d \n",
+			default_http_follow_redirect);
+	LM_DBG("**** init http_client: Client Cert: %.*s Key %.*s\n",
+			default_tls_clientcert.len, default_tls_clientcert.s,
+			default_tls_clientkey.len, default_tls_clientkey.s);
 	LM_DBG("**** init http_client: CA Cert: %s \n", default_tls_cacert);
-	LM_DBG("**** init http_client: Cipher Suites: %.*s \n", default_cipher_suite_list.len, default_cipher_suite_list.s);
+	LM_DBG("**** init http_client: Cipher Suites: %.*s \n",
+			default_cipher_suite_list.len, default_cipher_suite_list.s);
 	LM_DBG("**** init http_client: SSL Version: %d \n", default_tls_version);
-	LM_DBG("**** init http_client: verifypeer: %d verifyhost: %d\n", default_tls_verify_peer, default_tls_verify_host);
-	LM_DBG("**** init http_client: HTTP Proxy: %.*s Port %d\n", default_http_proxy.len, default_http_proxy.s, default_http_proxy_port);
+	LM_DBG("**** init http_client: verifypeer: %d verifyhost: %d\n",
+			default_tls_verify_peer, default_tls_verify_host);
+	LM_DBG("**** init http_client: HTTP Proxy: %.*s Port %d\n",
+			default_http_proxy.len, default_http_proxy.s,
+			default_http_proxy_port);
 	LM_DBG("**** init http_client: Auth method: %d \n", default_authmethod);
-	LM_DBG("**** init http_client: Keep Connections open: %d \n", default_keep_connections);
+	LM_DBG("**** init http_client: Keep Connections open: %d \n",
+			default_keep_connections);
 
 	LM_DBG("**** Extra: Curl supports %s %s %s \n",
 			(curl_info->features & CURL_VERSION_SSL ? "TLS" : ""),
 			(curl_info->features & CURL_VERSION_IPV6 ? "IPv6" : ""),
-			(curl_info->features & CURL_VERSION_IDN ? "IDN" : "")
-		 );
+			(curl_info->features & CURL_VERSION_IDN ? "IDN" : ""));
 	return 0;
 }
 
@@ -315,10 +340,10 @@ int curl_support_ipv6()
 
 /* Child initialization function */
 static int child_init(int rank)
-{	
+{
 	int i = my_pid();
 
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN) {
+	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN) {
 		return 0; /* do nothing for the main process */
 	}
 	LM_DBG("*** http_client module initializing process %d\n", i);
@@ -335,7 +360,6 @@ static void destroy(void)
 }
 
 
-
 /**
  * parse httpcon module parameter
  */
@@ -346,10 +370,9 @@ int curl_con_param(modparam_t type, void *val)
 	}
 
 	LM_DBG("**** HTTP_CLIENT got modparam httpcon \n");
-	return curl_parse_param((char*)val);
+	return curl_parse_param((char *)val);
 error:
 	return -1;
-
 }
 
 /* Fixup functions */
@@ -358,18 +381,18 @@ error:
  * Fix http_query params: url (string that may contain pvars) and
  * result (writable pvar).
  */
-static int fixup_http_query_get(void** param, int param_no)
+static int fixup_http_query_get(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return fixup_spve_null(param, 1);
 	}
 
-	if (param_no == 2) {
-		if (fixup_pvar_null(param, 1) != 0) {
+	if(param_no == 2) {
+		if(fixup_pvar_null(param, 1) != 0) {
 			LM_ERR("http_query: failed to fixup result pvar\n");
 			return -1;
 		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
+		if(((pv_spec_t *)(*param))->setf == NULL) {
 			LM_ERR("http_query: result pvar is not writeble\n");
 			return -1;
 		}
@@ -383,14 +406,14 @@ static int fixup_http_query_get(void** param, int param_no)
 /*
  * Free http_query params.
  */
-static int fixup_free_http_query_get(void** param, int param_no)
+static int fixup_free_http_query_get(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return fixup_free_spve_null(param, 1);
 	}
 
-	if (param_no == 2) {
-	return fixup_free_pvar_null(param, 1);
+	if(param_no == 2) {
+		return fixup_free_pvar_null(param, 1);
 	}
 
 	LM_ERR("http_query: invalid parameter number <%d>\n", param_no);
@@ -402,23 +425,23 @@ static int fixup_free_http_query_get(void** param, int param_no)
  * Fix curl_connect params: connection(string/pvar) url (string that may contain pvars) and
  * result (writable pvar).
  */
-static int fixup_curl_connect(void** param, int param_no)
+static int fixup_curl_connect(void **param, int param_no)
 {
 
-	if (param_no == 1) {
-	/* We want char * strings */
+	if(param_no == 1) {
+		/* We want char * strings */
 		return 0;
 	}
 	/* URL and data may contain pvar */
-	if (param_no == 2) {
+	if(param_no == 2) {
 		return fixup_spve_null(param, 1);
 	}
-	if (param_no == 3) {
-		if (fixup_pvar_null(param, 1) != 0) {
+	if(param_no == 3) {
+		if(fixup_pvar_null(param, 1) != 0) {
 			LM_ERR("failed to fixup result pvar\n");
 			return -1;
 		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
+		if(((pv_spec_t *)(*param))->setf == NULL) {
 			LM_ERR("result pvar is not writeble\n");
 			return -1;
 		}
@@ -434,23 +457,23 @@ static int fixup_curl_connect(void** param, int param_no)
  *	connection (string/pvar), url (string with pvars), content-type, 
  *      data (string/pvar, pvar)
  */
-static int fixup_curl_connect_post(void** param, int param_no)
+static int fixup_curl_connect_post(void **param, int param_no)
 {
 
-	if (param_no == 1 || param_no == 3) {
+	if(param_no == 1 || param_no == 3) {
 		/* We want char * strings */
 		return 0;
 	}
 	/* URL and data may contain pvar */
-	if (param_no == 2 || param_no == 4) {
+	if(param_no == 2 || param_no == 4) {
 		return fixup_spve_null(param, 1);
 	}
-	if (param_no == 5) {
-		if (fixup_pvar_null(param, 1) != 0) {
+	if(param_no == 5) {
+		if(fixup_pvar_null(param, 1) != 0) {
 			LM_ERR("failed to fixup result pseudo variable\n");
 			return -1;
 		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
+		if(((pv_spec_t *)(*param))->setf == NULL) {
 			LM_ERR("result pvar is not writeable\n");
 			return -1;
 		}
@@ -465,20 +488,20 @@ static int fixup_curl_connect_post(void** param, int param_no)
 /*
  * Free curl_connect params.
  */
-static int fixup_free_curl_connect_post(void** param, int param_no)
+static int fixup_free_curl_connect_post(void **param, int param_no)
 {
-	if (param_no == 1 || param_no == 3) {
+	if(param_no == 1 || param_no == 3) {
 		/* Char strings don't need freeing */
 		return 0;
 	}
-	if (param_no == 2 || param_no == 4) {
+	if(param_no == 2 || param_no == 4) {
 		return fixup_free_spve_null(param, 1);
 	}
 
-	if (param_no == 5) {
+	if(param_no == 5) {
 		return fixup_free_pvar_null(param, 1);
 	}
-	
+
 	LM_ERR("invalid parameter number <%d>\n", param_no);
 	return -1;
 }
@@ -486,20 +509,20 @@ static int fixup_free_curl_connect_post(void** param, int param_no)
 /*
  * Free curl_connect params.
  */
-static int fixup_free_curl_connect(void** param, int param_no)
+static int fixup_free_curl_connect(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		/* Char strings don't need freeing */
 		return 0;
 	}
-	if (param_no == 2) {
+	if(param_no == 2) {
 		return fixup_free_spve_null(param, 1);
 	}
 
-	if (param_no == 3) {
+	if(param_no == 3) {
 		return fixup_free_pvar_null(param, 1);
 	}
-	
+
 	LM_ERR("invalid parameter number <%d>\n", param_no);
 	return -1;
 }
@@ -507,104 +530,181 @@ static int fixup_free_curl_connect(void** param, int param_no)
 /*
  * Wrapper for Curl_connect (GET)
  */
-static int w_curl_connect(struct sip_msg* _m, char* _con, char * _url, char* _result) {
-
-	str con = {NULL,0};
-	str url = {NULL,0};
-	str result = {NULL,0};
-	pv_spec_t *dst;
+static int ki_curl_connect_helper(sip_msg_t *_m, str *con, str *url,
+		pv_spec_t *dst)
+{
+	str result = {NULL, 0};
 	pv_value_t val;
 	int ret = 0;
 
-	if (_con == NULL || _url == NULL || _result == NULL) {
+	ret = curl_con_query_url(_m, con, url, &result, NULL, NULL);
+
+	val.rs = result;
+	val.flags = PV_VAL_STR;
+	if(dst->setf) {
+		dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+	} else {
+		LM_WARN("target pv is not writable\n");
+	}
+
+	if(result.s != NULL)
+		pkg_free(result.s);
+
+	return (ret == 0) ? -1 : ret;
+}
+
+/*
+ * Kemi wrapper for Curl_connect (GET)
+ */
+static int ki_curl_connect(sip_msg_t *_m, str *con, str *url, str *dpv)
+{
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dst==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+
+	return ki_curl_connect_helper(_m, con, url, dst);
+}
+
+/*
+ * Cfg wrapper for Curl_connect (GET)
+ */
+static int w_curl_connect(sip_msg_t *_m, char *_con, char *_url, char *_result)
+{
+	str con = {NULL, 0};
+	str url = {NULL, 0};
+	pv_spec_t *dst;
+
+	if(_con == NULL || _url == NULL || _result == NULL) {
 		LM_ERR("http_connect: Invalid parameter\n");
 		return -1;
 	}
 	con.s = _con;
 	con.len = strlen(con.s);
-
-	if (get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
+	if(get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
 		LM_ERR("http_connect: url has no value\n");
 		return -1;
 	}
 
-	LM_DBG("**** HTTP_CONNECT Connection %s URL %s Result var %s\n", _con, _url, _result);
-
-	ret = curl_con_query_url(_m, &con, &url, &result, NULL, NULL);
-
-	val.rs = result;
-	val.flags = PV_VAL_STR;
+	LM_DBG("**** HTTP_CONNECT Connection %s URL %s Result var %s\n", _con, _url,
+			_result);
 	dst = (pv_spec_t *)_result;
-	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
 
-	if (result.s != NULL)
-		pkg_free(result.s);
-
-	return (ret==0)?-1:ret;
+	return ki_curl_connect_helper(_m, &con, &url, dst);
 }
 
 /*
  * Wrapper for Curl_connect (POST)
  */
-static int w_curl_connect_post(struct sip_msg* _m, char* _con, char * _url, char* _ctype, char* _data, char *_result) {
-	str con = {NULL,0};
-	str url = {NULL,0};
-	str data = {NULL, 0};
-	str result = {NULL,0};
-	pv_spec_t *dst;
+static int ki_curl_connect_post_helper(sip_msg_t *_m, str *con, str *url,
+		str *ctype, str *data, pv_spec_t *dst)
+{
+	str result = {NULL, 0};
 	pv_value_t val;
 	int ret = 0;
 
-	if (_con == NULL || _url == NULL || _data == NULL || _result == NULL) {
+	ret = curl_con_query_url(_m, con, url, &result, ctype->s, data);
+
+	val.rs = result;
+	val.flags = PV_VAL_STR;
+	if(dst->setf) {
+		dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+	} else {
+		LM_WARN("target pv is not writtable\n");
+	}
+
+	if(result.s != NULL)
+		pkg_free(result.s);
+
+	return (ret == 0) ? -1 : ret;
+}
+
+/*
+ * Kemi wrapper for Curl_connect (POST)
+ */
+static int ki_curl_connect_post(sip_msg_t *_m, str *con, str *url,
+		str *ctype, str *data, str *dpv)
+{
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dst==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+
+	return ki_curl_connect_post_helper(_m, con, url, ctype, data, dst);
+}
+
+/*
+ * Wrapper for Curl_connect (POST)
+ */
+static int w_curl_connect_post(struct sip_msg *_m, char *_con, char *_url,
+		char *_ctype, char *_data, char *_result)
+{
+	str con = {NULL, 0};
+	str url = {NULL, 0};
+	str ctype = {NULL, 0};
+	str data = {NULL, 0};
+	pv_spec_t *dst;
+
+	if(_con == NULL || _url == NULL || _ctype==NULL || _data == NULL
+			|| _result == NULL) {
 		LM_ERR("http_connect: Invalid parameters\n");
 		return -1;
 	}
 	con.s = _con;
 	con.len = strlen(con.s);
 
-	if (get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
+	if(get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
 		LM_ERR("http_connect: URL has no value\n");
 		return -1;
 	}
-	if (get_str_fparam(&data, _m, (gparam_p)_data) != 0) {
+
+	ctype.s = _ctype;
+	ctype.len = strlen(ctype.s);
+
+	if(get_str_fparam(&data, _m, (gparam_p)_data) != 0) {
 		LM_ERR("http_connect: No post data given\n");
 		return -1;
 	}
 
-	LM_DBG("**** HTTP_CONNECT: Connection %s URL %s Result var %s\n", _con, _url, _result);
-
-	ret = curl_con_query_url(_m, &con, &url, &result, _ctype, &data);
-
-	val.rs = result;
-	val.flags = PV_VAL_STR;
+	LM_DBG("**** HTTP_CONNECT: Connection %s URL %s Result var %s\n", _con,
+			_url, _result);
 	dst = (pv_spec_t *)_result;
-	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
 
-	if (result.s != NULL)
-		pkg_free(result.s);
-
-	return (ret==0)?-1:ret;
+	return ki_curl_connect_post_helper(_m, &con, &url, &ctype, &data, dst);
 }
-
 
 /*!
  * Fix http_query params: url (string that may contain pvars) and
  * result (writable pvar).
  */
-static int fixup_http_query_post(void** param, int param_no)
+static int fixup_http_query_post(void **param, int param_no)
 {
-	if ((param_no == 1) || (param_no == 2)) {
+	if((param_no == 1) || (param_no == 2)) {
 		return fixup_spve_null(param, 1);
 	}
 
-	if (param_no == 3) {
-		if (fixup_pvar_null(param, 1) != 0) {
-	    		LM_ERR("failed to fixup result pvar\n");
-	    		return -1;
+	if(param_no == 3) {
+		if(fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
 		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
-	    		LM_ERR("result pvar is not writeble\n");
-	    		return -1;
+		if(((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
 		}
 		return 0;
 	}
@@ -616,13 +716,13 @@ static int fixup_http_query_post(void** param, int param_no)
 /*!
  * Free http_query params.
  */
-static int fixup_free_http_query_post(void** param, int param_no)
+static int fixup_free_http_query_post(void **param, int param_no)
 {
-	if ((param_no == 1) || (param_no == 2)) {
+	if((param_no == 1) || (param_no == 2)) {
 		return fixup_free_spve_null(param, 1);
 	}
 
-	if (param_no == 3) {
+	if(param_no == 3) {
 		return fixup_free_pvar_null(param, 1);
 	}
 
@@ -634,18 +734,18 @@ static int fixup_free_http_query_post(void** param, int param_no)
  * Fix http_query params: url (string that may contain pvars) and
  * result (writable pvar).
  */
-static int fixup_http_query_post_hdr(void** param, int param_no)
+static int fixup_http_query_post_hdr(void **param, int param_no)
 {
-	if ((param_no >= 1) && (param_no <= 3)) {
+	if((param_no >= 1) && (param_no <= 3)) {
 		return fixup_spve_null(param, 1);
 	}
 
-	if (param_no == 4) {
-		if (fixup_pvar_null(param, 1) != 0) {
+	if(param_no == 4) {
+		if(fixup_pvar_null(param, 1) != 0) {
 			LM_ERR("failed to fixup result pvar\n");
 			return -1;
 		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
+		if(((pv_spec_t *)(*param))->setf == NULL) {
 			LM_ERR("result pvar is not writeble\n");
 			return -1;
 		}
@@ -659,13 +759,13 @@ static int fixup_http_query_post_hdr(void** param, int param_no)
 /*
  * Free http_query params.
  */
-static int fixup_free_http_query_post_hdr(void** param, int param_no)
+static int fixup_free_http_query_post_hdr(void **param, int param_no)
 {
-	if ((param_no >= 1) && (param_no <= 3)) {
+	if((param_no >= 1) && (param_no <= 3)) {
 		return fixup_free_spve_null(param, 1);
 	}
 
-	if (param_no == 4) {
+	if(param_no == 4) {
 		return fixup_free_pvar_null(param, 1);
 	}
 
@@ -674,57 +774,104 @@ static int fixup_free_http_query_post_hdr(void** param, int param_no)
 }
 
 /*!
- * Wrapper for HTTP-Query function for cfg script
+ * helper for HTTP-Query function
  */
-static int w_http_query_script(sip_msg_t* _m, char* _url, char* _post,
-		char* _hdrs, char* _result)
+static int ki_http_query_helper(sip_msg_t *_m, str *url, str *post, str *hdrs,
+		pv_spec_t *dst)
 {
 	int ret = 0;
-	str url = {NULL, 0};
-	str post = {NULL, 0};
-	str hdrs = {NULL, 0};
 	str result = {NULL, 0};
-	pv_spec_t *dst;
 	pv_value_t val;
 
-	if (get_str_fparam(&url, _m, (gparam_p)_url) != 0 || url.len<=0) {
-		LM_ERR("URL has no value\n");
+	if(url==NULL || url->s==NULL) {
+		LM_ERR("invalid url parameter\n");
 		return -1;
 	}
-	if (_post && get_str_fparam(&post, _m, (gparam_p)_post) != 0) {
-		LM_ERR("DATA has no value\n");
-		return -1;
-	} else {
-		if(post.len==0) {
-			post.s = NULL;
-		}
-	}
-	if (_hdrs && get_str_fparam(&hdrs, _m, (gparam_p)_hdrs) != 0) {
-		LM_ERR("HDRS has no value\n");
-		return -1;
-	} else {
-		if(hdrs.len==0) {
-			hdrs.s = NULL;
-		}
-	}
-
-	ret = http_client_query(_m, url.s, &result, post.s, hdrs.s);
+	ret = http_client_query(_m, url->s, &result, (post && post->s)?post->s:NULL,
+			(hdrs && hdrs->s)?hdrs->s:NULL);
 
 	val.rs = result;
 	val.flags = PV_VAL_STR;
-	dst = (pv_spec_t *)_result;
-	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+	if(dst->setf) {
+		dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+	} else {
+		LM_WARN("target pv is not writable\n");
+	}
 
-	if (result.s != NULL)
+	if(result.s != NULL)
 		pkg_free(result.s);
 
-	return (ret==0)?-1:ret;
+	return (ret == 0) ? -1 : ret;
+}
+
+static int ki_http_query_post_hdrs(sip_msg_t *_m, str *url, str *post, str *hdrs,
+		str *dpv)
+{
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dst==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+
+	return ki_http_query_helper(_m, url, post, hdrs, dst);
+}
+
+static int ki_http_query_post(sip_msg_t *_m, str *url, str *post, str *dpv)
+{
+	return ki_http_query_post_hdrs(_m, url, post, NULL, dpv);
+}
+
+static int ki_http_query(sip_msg_t *_m, str *url, str *dpv)
+{
+	return ki_http_query_post_hdrs(_m, url, NULL, NULL, dpv);
+}
+
+/*!
+ * Wrapper for HTTP-Query function for cfg script
+ */
+static int w_http_query_script(sip_msg_t *_m, char *_url, char *_post,
+		char *_hdrs, char *_result)
+{
+	str url = {NULL, 0};
+	str post = {NULL, 0};
+	str hdrs = {NULL, 0};
+	pv_spec_t *dst;
+
+	if(get_str_fparam(&url, _m, (gparam_p)_url) != 0 || url.len <= 0) {
+		LM_ERR("URL has no value\n");
+		return -1;
+	}
+	if(_post && get_str_fparam(&post, _m, (gparam_p)_post) != 0) {
+		LM_ERR("DATA has no value\n");
+		return -1;
+	} else {
+		if(post.len == 0) {
+			post.s = NULL;
+		}
+	}
+	if(_hdrs && get_str_fparam(&hdrs, _m, (gparam_p)_hdrs) != 0) {
+		LM_ERR("HDRS has no value\n");
+		return -1;
+	} else {
+		if(hdrs.len == 0) {
+			hdrs.s = NULL;
+		}
+	}
+	dst = (pv_spec_t *)_result;
+
+	return ki_http_query_helper(_m, &url, &post, &hdrs, dst);
 }
 
 /*!
  * Wrapper for HTTP-Query (GET)
  */
-static int w_http_query(struct sip_msg* _m, char* _url, char* _result)
+static int w_http_query(struct sip_msg *_m, char *_url, char *_result)
 {
 	return w_http_query_script(_m, _url, NULL, NULL, _result);
 }
@@ -732,8 +879,8 @@ static int w_http_query(struct sip_msg* _m, char* _url, char* _result)
 /*!
  * Wrapper for HTTP-Query (POST-Variant)
  */
-static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post,
-		char* _result)
+static int w_http_query_post(
+		struct sip_msg *_m, char *_url, char *_post, char *_result)
 {
 	return w_http_query_script(_m, _url, _post, NULL, _result);
 }
@@ -741,8 +888,8 @@ static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post,
 /*!
  * Wrapper for HTTP-Query (HDRS-Variant)
  */
-static int w_http_query_post_hdr(struct sip_msg* _m, char* _url, char* _post,
-		char* _hdrs, char* _result)
+static int w_http_query_post_hdr(
+		struct sip_msg *_m, char *_url, char *_post, char *_hdrs, char *_result)
 {
 	return w_http_query_script(_m, _url, _post, _hdrs, _result);
 }
@@ -752,8 +899,8 @@ static int w_http_query_post_hdr(struct sip_msg* _m, char* _url, char* _post,
  */
 static int pv_parse_curlerror(pv_spec_p sp, str *in)
 {
-	int cerr  = 0;
-	if(sp==NULL || in==NULL || in->len<=0)
+	int cerr = 0;
+	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 
 	cerr = atoi(in->s);
@@ -769,24 +916,25 @@ static int pv_parse_curlerror(pv_spec_p sp, str *in)
 /*
  * PV - return curl error explanation as string
  */
-static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+static int pv_get_curlerror(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str curlerr;
 	char *err = NULL;
 
-	if(param==NULL) {
+	if(param == NULL) {
 		return -1;
 	}
 
 	/* cURL error codes does not collide with HTTP codes */
-	if (param->pvn.u.isname.name.n < 0 || param->pvn.u.isname.name.n > 999 ) {
+	if(param->pvn.u.isname.name.n < 0 || param->pvn.u.isname.name.n > 999) {
 		err = "Bad CURL error code";
 	}
-	if (param->pvn.u.isname.name.n > 99) {
+	if(param->pvn.u.isname.name.n > 99) {
 		err = "HTTP result code";
 	}
-	if (err == NULL) {
-		err = (char *) curl_easy_strerror(param->pvn.u.isname.name.n);
+	if(err == NULL) {
+		err = (char *)curl_easy_strerror(param->pvn.u.isname.name.n);
 	}
 	curlerr.s = err;
 	curlerr.len = strlen(err);
@@ -799,20 +947,20 @@ static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *
  * Fix curl_get_redirect params: connection(string/pvar) url (string that may contain pvars) and
  * result (writable pvar).
  */
-static int fixup_curl_get_redirect(void** param, int param_no)
+static int fixup_curl_get_redirect(void **param, int param_no)
 {
-	if (param_no == 1) {	/* Connection name */
+	if(param_no == 1) { /* Connection name */
 		/* We want char * strings */
 		return 0;
 	}
-	if (param_no == 2) {	/* PVAR to store result in */
-		if (fixup_pvar_null(param, 1) != 0) {
-	    		LM_ERR("failed to fixup result pseudo variable\n");
-	    		return -1;
+	if(param_no == 2) { /* PVAR to store result in */
+		if(fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pseudo variable\n");
+			return -1;
 		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
-	    		LM_ERR("result pseudovariable is not writeable\n");
-	    		return -1;
+		if(((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pseudovariable is not writeable\n");
+			return -1;
 		}
 		return 0;
 	}
@@ -824,13 +972,13 @@ static int fixup_curl_get_redirect(void** param, int param_no)
 /*
  * Free curl_get_redirect params.
  */
-static int fixup_free_curl_get_redirect(void** param, int param_no)
+static int fixup_free_curl_get_redirect(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		/* Char strings don't need freeing */
 		return 0;
 	}
-	if (param_no == 2) {
+	if(param_no == 2) {
 		return fixup_free_spve_null(param, 1);
 	}
 
@@ -841,33 +989,75 @@ static int fixup_free_curl_get_redirect(void** param, int param_no)
 /*
  * Wrapper for Curl_redirect
  */
-static int w_curl_get_redirect(struct sip_msg* _m, char* _con, char* _result) {
+static int w_curl_get_redirect(struct sip_msg *_m, char *_con, char *_result)
+{
 
-	str con = {NULL,0};
-	str result = {NULL,0};
+	str con = {NULL, 0};
+	str result = {NULL, 0};
 	pv_spec_t *dst;
 	pv_value_t val;
 	int ret = 0;
 
-	if (_con == NULL || _result == NULL) {
+	if(_con == NULL || _result == NULL) {
 		LM_ERR("Invalid or missing parameter\n");
 		return -1;
 	}
 	con.s = _con;
 	con.len = strlen(con.s);
 
-	LM_DBG("**** http_client get_redirect Connection %s Result var %s\n", _con, _result);
+	LM_DBG("**** http_client get_redirect Connection %s Result var %s\n", _con,
+			_result);
 
-	ret = curl_get_redirect(_m, &con,  &result);
+	ret = curl_get_redirect(_m, &con, &result);
 
 	val.rs = result;
 	val.flags = PV_VAL_STR;
 	dst = (pv_spec_t *)_result;
 	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
 
-	if (result.s != NULL)
+	if(result.s != NULL)
 		pkg_free(result.s);
 
 	return ret;
 }
 
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_http_client_exports[] = {
+	{ str_init("http_client"), str_init("query"),
+		SR_KEMIP_INT, ki_http_query,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("http_client"), str_init("query_post"),
+		SR_KEMIP_INT, ki_http_query_post,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("http_client"), str_init("query_post_hdrs"),
+		SR_KEMIP_INT, ki_http_query_post_hdrs,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("http_client"), str_init("curl_connect"),
+		SR_KEMIP_INT, ki_curl_connect,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("http_client"), str_init("curl_connect_post"),
+		SR_KEMIP_INT, ki_curl_connect_post,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_http_client_exports);
+	return 0;
+}

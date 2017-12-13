@@ -11,7 +11,7 @@
 
 #define SETUP_STREAM(v) \
     SQStream *self = NULL; \
-    if(SQ_FAILED(sq_getinstanceup(v,1,(SQUserPointer*)&self,(SQUserPointer)SQSTD_STREAM_TYPE_TAG))) \
+    if(SQ_FAILED(sq_getinstanceup(v,1,(SQUserPointer*)&self,(SQUserPointer)((SQUnsignedInteger)SQSTD_STREAM_TYPE_TAG)))) \
         return sq_throwerror(v,_SC("invalid type tag")); \
     if(!self || !self->IsValid())  \
         return sq_throwerror(v,_SC("the stream is invalid"));
@@ -259,7 +259,7 @@ void init_streamclass(HSQUIRRELVM v)
     if(SQ_FAILED(sq_get(v,-2))) {
         sq_pushstring(v,_SC("std_stream"),-1);
         sq_newclass(v,SQFalse);
-        sq_settypetag(v,-1,(SQUserPointer)SQSTD_STREAM_TYPE_TAG);
+        sq_settypetag(v,-1,(SQUserPointer)((SQUnsignedInteger)SQSTD_STREAM_TYPE_TAG));
         SQInteger i = 0;
         while(_stream_methods[i].name != 0) {
             const SQRegFunction &f = _stream_methods[i];

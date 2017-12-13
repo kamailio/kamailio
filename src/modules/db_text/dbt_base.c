@@ -52,6 +52,7 @@ db1_con_t* dbt_init(const str* _sqlurl)
 		LM_ERR("invalid parameter value\n");
 		return NULL;
 	}
+	LM_DBG("initializing for db url: [%.*s]\n", _sqlurl->len, _sqlurl->s);
 	_s.s = _sqlurl->s;
 	_s.len = _sqlurl->len;
 	if(_s.len <= DBT_ID_LEN || strncmp(_s.s, DBT_ID, DBT_ID_LEN)!=0)
@@ -68,16 +69,22 @@ db1_con_t* dbt_init(const str* _sqlurl)
 	_s.len -= DBT_ID_LEN;
 	if(_s.s[0]!='/')
 	{
-		if(sizeof(CFG_DIR)+_s.len+2 > DBT_PATH_LEN)
+		if(sizeof(CFG_DIR)+_s.len+2 >= DBT_PATH_LEN)
 		{
 			LM_ERR("path to database is too long\n");
 			return NULL;
 		}
 		strcpy(dbt_path, CFG_DIR);
-		dbt_path[sizeof(CFG_DIR)] = '/';
-		strncpy(&dbt_path[sizeof(CFG_DIR)+1], _s.s, _s.len);
-		_s.len += sizeof(CFG_DIR);
+		if(dbt_path[sizeof(CFG_DIR)-2]!='/') {
+			dbt_path[sizeof(CFG_DIR)-1] = '/';
+			strncpy(&dbt_path[sizeof(CFG_DIR)], _s.s, _s.len);
+			_s.len += sizeof(CFG_DIR);
+		} else {
+			strncpy(&dbt_path[sizeof(CFG_DIR)-1], _s.s, _s.len);
+			_s.len += sizeof(CFG_DIR) - 1;
+		}
 		_s.s = dbt_path;
+		LM_DBG("updated db url: [%.*s]\n", _s.len, _s.s);
 	}
 
 	_res = pkg_malloc(sizeof(db1_con_t)+sizeof(dbt_con_t));
@@ -197,6 +204,7 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	if(!_tbc_temp)
 	{
 		LM_ERR("unable to allocate temp table\n");
+		if(_o_op) pkg_free(_o_op);
 		return -1;
 	}
 
@@ -206,13 +214,15 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	{
 		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 		dbt_db_del_table(DBT_CON_CONNECTION(_h), &_tbc_temp->name, 0);
+		if(_o_op) pkg_free(_o_op);
 		return -1;
 	}
 
 
-	if(!_tbc || _tbc->nrcols < _nc)
+	if(_tbc->nrcols < _nc)
 	{
-		LM_ERR("table %s not loaded! (too few columns)\n", CON_TABLE(_h)->s);
+		LM_ERR("table %s - too few columns (%d < %d)\n", CON_TABLE(_h)->s,
+				_tbc->nrcols, _nc);
 		goto error;
 	}
 	if(_k)

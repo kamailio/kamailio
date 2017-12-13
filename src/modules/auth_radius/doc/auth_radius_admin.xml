@@ -8,22 +8,22 @@
 ]>
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-		This module contains functions that are used to perform authentication 
-		using a Radius server. Basically the proxy will pass along the 
-		credentials to the radius server which will in turn send a reply 
+		This module contains functions that are used to perform authentication
+		using a Radius server. Basically the proxy will pass along the
+		credentials to the radius server which will in turn send a reply
 		containing result of the authentication. So basically the whole
-		authentication is done in the Radius server. Before sending the request 
-		to the radius server we perform some sanity checks over the 
-		credentials to make sure that only well formed credentials will get to 
-		the server. We have implemented radius authentication according to 
+		authentication is done in the Radius server. Before sending the request
+		to the radius server we perform some sanity checks over the
+		credentials to make sure that only well formed credentials will get to
+		the server. We have implemented radius authentication according to
 		draft-sterman-aaa-sip-00. This module requires the radiusclient-ng
-		library version 0.5.0 or higheer or freeradius-client which is available from 
+		library version 0.5.0 or higheer or freeradius-client which is available from
 		<ulink url='https://github.com/FreeRADIUS/freeradius-client/'>
 		https://github.com/FreeRADIUS/freeradius-client/</ulink>.
 		You can also install this library from distribution repositories.
@@ -38,7 +38,7 @@
 		extra queries.
 	</para>
 	<para>
-		The additional credentials are embedded in the RADIUS reply as AVPs 
+		The additional credentials are embedded in the RADIUS reply as AVPs
 		<quote>SIP-AVP</quote>. The syntax of the value is:
 		<itemizedlist>
 			<listitem><para><emphasis>
@@ -81,7 +81,7 @@
 		<section>
 			<title>Modules</title>
 			<para>
-			The module depends on the following modules (in the other words 
+			The module depends on the following modules (in the other words
 			the listed modules must be loaded before this module):
 			<itemizedlist>
 				<listitem>
@@ -95,7 +95,7 @@
 		<section>
 			<title>External Libraries or Applications</title>
 			<para>
-			The following libraries or applications must be installed 
+			The following libraries or applications must be installed
 			before compilling &kamailio; with this module loaded:
 			</para>
 			<itemizedlist>
@@ -104,14 +104,14 @@
 				freeradius-client.</para>
 				<listitem>
 				<para>
-				<emphasis>freeradius-client</emphasis>  available from 
+				<emphasis>freeradius-client</emphasis>  available from
 				<ulink url='https://github.com/FreeRADIUS/freeradius-client/'>
 				https://github.com/FreeRADIUS/freeradius-client/</ulink>.
 				</para>
 				</listitem>
 				<listitem>
-				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher -- 
-				library and development files. See <ulink 
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher --
+				library and development files. See <ulink
 				url='http://developer.berlios.de/projects/radiusclient-ng/'>
 				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
 				</para>
@@ -122,14 +122,14 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="auth_radius.p.radius_config">
 		<title><varname>radius_config</varname> (string)</title>
 		<para>
-		This is the location of the configuration file of radius client 
+		This is the location of the configuration file of radius client
 		libraries.
 		</para>
 		<para>
-		Default value is 
+		Default value is
 			<quote>/usr/local/etc/radiusclient-ng/radiusclient.conf</quote>.
 		</para>
 		<example>
@@ -139,12 +139,12 @@ modparam("auth_radius", "radius_config", "/etc/radiusclient.conf")
 		</programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="auth_radius.p.service_type">
 		<title><varname>service_type</varname> (integer)</title>
 		<para>
-		This is the value of the Service-Type radius attribute to be used. 
-		The default should be fine for most people. See your radius client 
-		include files for numbers to be put in this parameter if you need 
+		This is the value of the Service-Type radius attribute to be used.
+		The default should be fine for most people. See your radius client
+		include files for numbers to be put in this parameter if you need
 		to change it.
 		</para>
 		<para>
@@ -157,13 +157,13 @@ modparam("auth_radius", "service_type", 15)
 		</programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="auth_radius.p.auth_extra">
 		<title><varname>auth_extra</varname> (string)</title>
 		<para>
 		Semi-colon separated list of extra RADIUS attribute
 		name=pseudo variable pairs. When radius_www_authorize() or
 		radius_proxy_authorize() function is called, listed extra
-		attributes are included in RADIUS request with 
+		attributes are included in RADIUS request with
 		current values of corresponding pseudo variables.
 		</para>
 		<para>
@@ -177,7 +177,7 @@ modparam("auth_radius", "auth_extra", "Acct-Session-Id=$ci")
 		</programlisting>
 		</example>
 	</section>
-        <section>
+        <section id="auth_radius.p.use_ruri_flag">
                 <title><varname>use_ruri_flag</varname> (integer)</title>
                 <para>
                 When this parameter is set to the value other than "-1" and the
@@ -237,17 +237,17 @@ modparam("auth_radius", "append_realm_to_username", 0)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="auth_radius.f.radius_www_authorize">
 		<title><function moreinfo="none">radius_www_authorize(realm [, uri_user])</function></title>
 		<para>
-		The function verifies credentials according to 
-		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If 
-		the credentials are verified successfully then the function will 
-		succeed and mark the credentials as authorized (marked credentials can 
+		The function verifies credentials according to
+		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If
+		the credentials are verified successfully then the function will
+		succeed and mark the credentials as authorized (marked credentials can
 		be later used by some other functions).
 		</para>
 		<para>
-		If the function	was unable to  
+		If the function	was unable to
 		verify the credentials for some reason, it fails and
 		assigns a WWW-Authorize header containing a new
 	challenge to digest_challenge AVP (see modules/auth).
@@ -271,7 +271,8 @@ modparam("auth_radius", "append_realm_to_username", 0)
 			<emphasis>-4 (stale nonce)</emphasis> - stale nonce;
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-2 (authorization failed)</emphasis> - RADIUS responded with Access Reject which may be, for example, due to user not found or wrong password;
+			<emphasis>-2 (authorization failed)</emphasis> - RADIUS responded
+			with Access Reject which may be, for example, due to user not found or wrong password;
 			</para></listitem>
 			<listitem><para>
 			<emphasis>-1 (error)</emphasis> - some error occurred during authorization (see syslog);
@@ -279,18 +280,18 @@ modparam("auth_radius", "append_realm_to_username", 0)
 		</itemizedlist>
 		<para>
 		This function will perform sanity checks over
-	the received  
+	the received
 		credentials and then pass them along to RADIUS
-	server which will  
+	server which will
 		verify the credentials and return whether they are valid or not.
 		</para>
 		<para>Meaning of the parameter is as follows:</para>
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>realm</emphasis> - Realm is a
-	opaque string that  
+	opaque string that
 			the user agent should present to the user so he
-	can decide what  
+	can decide what
 			username and password to use.  In case of
 	REGISTER requests it is usually hostpart of To URI.
 			</para>
@@ -304,7 +305,7 @@ modparam("auth_radius", "append_realm_to_username", 0)
 			present, will be given to Radius server as value of
 			SIP-URI-User check item.
 			If uri_user pseudo variable parameter is not
-			present, the server will generate 
+			present, the server will generate
                         SIP-URI-User check item value from user part of
 			To/From URI.
 			</para>
@@ -339,17 +340,17 @@ modparam("auth_radius", "append_realm_to_username", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="auth_radius.f.radius_proxy_authorize">
 		<title><function
 		moreinfo="none">radius_proxy_authorize(realm [, uri_user])</function></title>
 		<para>
-		The function verifies credentials according to 
-		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If 
-		the credentials are verified successfully then the function will 
-		succeed and mark the credentials as authorized (marked credentials can 
-		be later used by some other functions).  
+		The function verifies credentials according to
+		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If
+		the credentials are verified successfully then the function will
+		succeed and mark the credentials as authorized (marked credentials can
+		be later used by some other functions).
 		</para>
-		<para>If the function was unable to  
+		<para>If the function was unable to
 		verify the credentials for some reason, it fails and
 		assigns a Proxy-Authorize header containing a new
 	challenge to digest_challenge AVP.  The script should
@@ -358,15 +359,15 @@ modparam("auth_radius", "append_realm_to_username", 0)
 		For negative result codes, see the above function.
 		</para>
 		<para>
-		This function will perform sanity checks over the received 
-		credentials and then pass them along to RADIUS server which will 
+		This function will perform sanity checks over the received
+		credentials and then pass them along to RADIUS server which will
 		verify the credentials and return whether they are valid or not.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that 
-			the user agent should present to the user so he can decide what 
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			the user agent should present to the user so he can decide what
 			username and password to use.  In case of
 	non-REGISTER requests it is usually hostpart of From or
 		P-Preferred-Identity URI.
@@ -381,7 +382,7 @@ modparam("auth_radius", "append_realm_to_username", 0)
 			present, will be given to Radius server as value of
 			SIP-URI-User check item.
 			If uri_user pseudo variable parameter is not
-			present, the server will generate 
+			present, the server will generate
                         SIP-URI-User check item value from user part of
 			To/From URI.
 			</para>

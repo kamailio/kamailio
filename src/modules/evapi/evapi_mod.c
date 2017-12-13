@@ -52,9 +52,10 @@ static char *_evapi_bind_param = NULL;
 static int   _evapi_netstring_format_param = 1;
 
 str _evapi_event_callback = STR_NULL;
+int _evapi_dispatcher_pid = -1;
+int _evapi_max_clients = 8;
 
 static tm_api_t tmb;
-static int   _evapi_dispatcher_pid = -1;
 
 static int  mod_init(void);
 static int  child_init(int);
@@ -98,6 +99,7 @@ static param_export_t params[]={
 	{"bind_addr",         PARAM_STRING,   &_evapi_bind_param},
 	{"netstring_format",  INT_PARAM,   &_evapi_netstring_format_param},
 	{"event_callback",    PARAM_STR,   &_evapi_event_callback},
+	{"max_clients",       PARAM_INT,   &_evapi_max_clients},
 	{0, 0, 0}
 };
 

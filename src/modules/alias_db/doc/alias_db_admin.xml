@@ -63,7 +63,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="alias_db.p.db_url">
 		<title><varname>db_url</varname> (str)</title>
 		<para>
 		Database URL.
@@ -83,7 +83,7 @@ modparam("alias_db", "db_url", "&exampledb;")
 		</example>
 	</section>
 
-	<section>
+	<section id="alias_db.p.user_column">
 		<title><varname>user_column</varname> (str)</title>
 		<para>
 		Name of the column storing username.
@@ -103,7 +103,7 @@ modparam("alias_db", "user_column", "susername")
 		</example>
 	</section>
 
-	<section>
+	<section id="alias_db.p.domain_column">
 		<title><varname>domain_column</varname> (str)</title>
 		<para>
 		Name of the column storing user's domain.
@@ -123,7 +123,7 @@ modparam("alias_db", "domain_column", "sdomain")
 		</example>
 	</section>
 
-	<section>
+	<section id="alias_db.p.alias_user_column">
 		<title><varname>alias_user_column</varname> (str)</title>
 		<para>
 		Name of the column storing alias username.
@@ -143,7 +143,7 @@ modparam("alias_db", "alias_user_column", "auser")
 		</example>
 	</section>
 
-	<section>
+	<section id="alias_db.p.alias_domain_column">
 		<title><varname>alias_domain_column</varname> (str)</title>
 		<para>
 		Name of the column storing alias domain.
@@ -163,7 +163,7 @@ modparam("alias_db", "alias_domain_column", "adomain")
 		</example>
 	</section>
 
-	<section>
+	<section id="alias_db.p.use_domain">
 		<title><varname>use_domain</varname> (int)</title>
 		<para>
 		Specifies whether to use or not the domain from R-URI when searching
@@ -185,7 +185,7 @@ modparam("alias_db", "use_domain", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="alias_db.p.domain_prefix">
 		<title><varname>domain_prefix</varname> (str)</title>
 		<para>
 		Specifies the prefix to be stripped from the domain in R-URI before
@@ -206,7 +206,7 @@ modparam("alias_db", "domain_prefix", "sip.")
 		</example>
 	</section>
 
-	<section>
+	<section id="alias_db.p.append_branches">
 		<title><varname>append_branches</varname> (int)</title>
 		<para>
 			If the alias resolves to many SIP IDs, the first is replacing
@@ -231,7 +231,7 @@ modparam("alias_db", "append_branches", 1)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="alias_db.f.alias_db_lookup">
 		<title>
 		<function moreinfo="none">alias_db_lookup(table_name [,flags])</function>
 		</title>
@@ -290,7 +290,7 @@ alias_db_lookup("dba_$(rU{s.substr,0,1})");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="alias_db.p.alias_db_find">
 		<title>
 		<function moreinfo="none">alias_db_find( table_name , input, output [,flags] )</function>
 		</title>

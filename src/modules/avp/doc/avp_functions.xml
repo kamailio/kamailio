@@ -266,7 +266,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
 	<section id="avp.f.insert_attr_hf_1">
 	<title><function>insert_attr_hf(name)</function></title>
 	<para>
-		Inserts new header into the request, which is beeing forwarded. The AVP name is the name of the header field.
+		Inserts new header into the request, which is being forwarded. The AVP name is the name of the header field.
 		If you need to insert header with name which differs from the AVP name use <function>insert_attr_hf(header_name, $avp_name)</function> instead.
 	</para>
 	<para>
@@ -287,7 +287,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
 	<section id="avp.f.insert_attr_hf_2">
 	<title><function>insert_attr_hf(header_name, $avp_name)</function></title>
 	<para>
-		Inserts new header into the request, which is beeing forwarded. 
+		Inserts new header into the request, which is being forwarded.
 	</para>
 	<para>
 		Inserting means putting the header to the beginning of the request, before any others.
@@ -321,7 +321,7 @@ insert_attr_hf("Route", "$my_route");
 	<section id="avp.f.append_attr_hf_1">
 	<title><function>append_attr_hf(name)</function></title>
 	<para>
-		Appends new header into the request, which is beeing forwarded. The AVP name is the name of the header field.
+		Appends new header into the request, which is being forwarded. The AVP name is the name of the header field.
 		If you need to append header with name which differs from the AVP name use <function>append_attr_hf(header_name, $avp_name)</function> instead.
 	</para>
 	<para>
@@ -342,7 +342,7 @@ insert_attr_hf("Route", "$my_route");
 	<section id="avp.f.append_attr_hf_2">
 	<title><function>append_attr_hf(header_name, $avp_name)</function></title>
 	<para>
-		Appends new header into the request, which is beeing forwarded. 
+		Appends new header into the request, which is being forwarded.
 	</para>
 	<para>
 		Appending means putting the header to the end of the request, after any others.
@@ -367,7 +367,7 @@ insert_attr_hf("Route", "$my_route");
 	<section id="avp.f.replace_attr_hf_1">
 	<title><function>replace_attr_hf(name)</function></title>
 	<para>
-		Replaces header in the request, which is beeing forwarded. The AVP name is the same as the name of the header field.
+		Replaces header in the request, which is being forwarded. The AVP name is the same as the name of the header field.
 		If you need to replace header with name which differs from the AVP name use <function>replace_attr_hf(header_name, $avp_name)</function> instead.
 	</para>
 	<para>
@@ -388,7 +388,7 @@ insert_attr_hf("Route", "$my_route");
 	<section id="avp.f.replace_attr_hf_2">
 	<title><function>replace_attr_hf(header_name, $avp_name)</function></title>
 	<para>
-		Replaces header in the request, which is beeing forwarded. 
+		Replaces header in the request, which is being forwarded.
 	</para>
 	<para>
 		Replacing means removing all the headers with specified name and appending new one at the end, with the value from AVP.

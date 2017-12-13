@@ -1,4 +1,4 @@
-/* 
+/*
  * MySQL module core functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -68,7 +68,7 @@ static char *mysql_sql_buf;
  * \return zero on success, negative value on failure
  */
 static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
-{	
+{
 	time_t t;
 	int i, code;
 
@@ -137,9 +137,9 @@ void db_mysql_async_exec_task(void *param)
 {
 	str *p;
 	db1_con_t* dbc;
-	
+
 	p = (str*)param;
-	
+
 	dbc = db_mysql_init(&p[0]);
 
 	if(dbc==NULL) {
@@ -148,7 +148,7 @@ void db_mysql_async_exec_task(void *param)
 	}
 	if(db_mysql_submit_query(dbc, &p[1])<0) {
 		LM_ERR("failed to execute query [%.*s] on async worker\n",
-		       (p[1].len>100)?100:p[1].len, p[1].s);
+				(p[1].len>100)?100:p[1].len, p[1].s);
 	}
 	db_mysql_close(dbc);
 }
@@ -295,20 +295,20 @@ done:
  */
 int db_mysql_free_result(const db1_con_t* _h, db1_res_t* _r)
 {
-     if ((!_h) || (!_r)) {
-	     LM_ERR("invalid parameter value\n");
-	     return -1;
-     }
+	if ((!_h) || (!_r)) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
 
-     mysql_free_result(RES_RESULT(_r));
-     RES_RESULT(_r) = 0;
-     pkg_free(RES_PTR(_r));
+	mysql_free_result(RES_RESULT(_r));
+	RES_RESULT(_r) = 0;
+	pkg_free(RES_PTR(_r));
 
-     if (db_free_result(_r) < 0) {
-	     LM_ERR("unable to free result structure\n");
-	     return -1;
-     }
-     return 0;
+	if (db_free_result(_r) < 0) {
+		LM_ERR("unable to free result structure\n");
+		return -1;
+	}
+	return 0;
 }
 
 
@@ -326,8 +326,8 @@ int db_mysql_free_result(const db1_con_t* _h, db1_res_t* _r)
  * \return zero on success, negative value on failure
  */
 int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
-	     const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-	     const db_key_t _o, db1_res_t** _r)
+		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+		const db_key_t _o, db1_res_t** _r)
 {
 	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r,
 	db_mysql_val2str, db_mysql_submit_query, db_mysql_store_result);
@@ -526,8 +526,8 @@ int db_mysql_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * \param _un number of columns to update
  * \return zero on success, negative value on failure
  */
-int db_mysql_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o, 
-	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n, 
+int db_mysql_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
 	const int _un)
 {
 	return db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_mysql_val2str,
@@ -716,8 +716,8 @@ int db_mysql_end_transaction(db1_con_t* _h)
 	}
 
 	/* Only _end_ the transaction after the raw_query.  That way, if the
- 	   raw_query fails, and the calling module does an abort_transaction()
-	   to clean-up, a ROLLBACK will be sent to the DB. */
+	 * raw_query fails, and the calling module does an abort_transaction()
+	 * to clean-up, a ROLLBACK will be sent to the DB. */
 	CON_TRANSACTION(_h) = 0;
 
 	if(db_mysql_unlock_tables(_h)<0)
@@ -749,7 +749,7 @@ int db_mysql_abort_transaction(db1_con_t* _h)
 	}
 
 	/* Whether the rollback succeeds or not we need to _end_ the
- 	   transaction now or all future starts will fail */
+	 * transaction now or all future starts will fail */
 	CON_TRANSACTION(_h) = 0;
 
 	if (db_mysql_raw_query(_h, &rollback_query_str, NULL) < 0)
@@ -775,23 +775,23 @@ done:
 
 
 /**
-  * Insert a row into a specified table, update on duplicate key.
-  * \param _h structure representing database connection
-  * \param _k key names
-  * \param _v values of the keys
-  * \param _n number of key=value pairs
+ * Insert a row into a specified table, update on duplicate key.
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _v values of the keys
+ * \param _n number of key=value pairs
  */
- int db_mysql_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+int db_mysql_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	const int _n)
- {
+{
 	int off, ret;
 	static str  sql_str;
- 
+
 	if ((!_h) || (!_k) || (!_v) || (!_n)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
- 
+
 	ret = snprintf(mysql_sql_buf, sql_buffer_size, "insert into %s%.*s%s (",
 			CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
 	if (ret < 0 || ret >= sql_buffer_size) goto error;
@@ -809,18 +809,18 @@ done:
 	off += ret;
 
 	*(mysql_sql_buf + off++) = ')';
-	
+
 	ret = snprintf(mysql_sql_buf + off, sql_buffer_size - off, " on duplicate key update ");
 	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 	off += ret;
-	
+
 	ret = db_print_set(_h, mysql_sql_buf + off, sql_buffer_size - off, _k, _v, _n, db_mysql_val2str);
 	if (ret < 0) return -1;
 	off += ret;
-	
+
 	sql_str.s = mysql_sql_buf;
 	sql_str.len = off;
- 
+
 	if (db_mysql_submit_query(_h, &sql_str) < 0) {
 		LM_ERR("error while submitting query\n");
 		return -2;
@@ -841,7 +841,8 @@ error:
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k,
+		const db_val_t* _v, const int _n)
 {
 	return db_do_insert_delayed(_h, _k, _v, _n, db_mysql_val2str,
 	db_mysql_submit_query);
@@ -855,7 +856,8 @@ int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k, const db_va
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_insert_async(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_mysql_insert_async(const db1_con_t* _h, const db_key_t* _k,
+		const db_val_t* _v, const int _n)
 {
 	return db_do_insert(_h, _k, _v, _n, db_mysql_val2str,
 	db_mysql_submit_query_async);
@@ -882,15 +884,15 @@ int db_mysql_use_table(db1_con_t* _h, const str* _t)
  */
 int db_mysql_alloc_buffer(void)
 {
-    if (db_api_init())
-    {
-        LM_ERR("Failed to initialise db api\n");
+	if (db_api_init())
+	{
+		LM_ERR("Failed to initialise db api\n");
 		return -1;
-    }
+	}
 
-    mysql_sql_buf = (char*)malloc(sql_buffer_size);
-    if (mysql_sql_buf == NULL)
-        return -1;
-    else
-        return 0;
+	mysql_sql_buf = (char*)malloc(sql_buffer_size);
+	if (mysql_sql_buf == NULL)
+		return -1;
+	else
+		return 0;
 }

@@ -35,6 +35,7 @@
 #include "../../core/tcp_conn.h"
 #include "../../core/pvar.h"
 #include "../../core/timer_proc.h" /* register_sync_timer */
+#include "../../core/kemi.h"
 
 #include "msrp_parser.h"
 #include "msrp_netio.h"
@@ -68,6 +69,7 @@ int msrp_auth_max_expires = 3600;
 int msrp_timer_interval = 60;
 str msrp_use_path_addr = { 0 };
 int msrp_tls_module_loaded = 0;
+str msrp_event_callback = STR_NULL;
 
 static int msrp_frame_received(sr_event_param_t *evp);
 sip_msg_t *msrp_fake_sipmsg(msrp_frame_t *mf);
@@ -117,6 +119,7 @@ static param_export_t params[]={
 	{"auth_max_expires",  PARAM_INT,   &msrp_auth_max_expires},
 	{"timer_interval",    PARAM_INT,   &msrp_timer_interval},
 	{"use_path_addr",     PARAM_STR,   &msrp_use_path_addr},
+	{"event_callback",    PARAM_STR,   &msrp_event_callback},
 	{0, 0, 0}
 };
 
@@ -211,15 +214,7 @@ static void mod_destroy(void)
 /**
  *
  */
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	return register_trans_mod(path, mod_trans);
-}
-
-/**
- *
- */
-static int w_msrp_relay(sip_msg_t* msg, char* str1, char* str2)
+static int ki_msrp_relay(sip_msg_t* msg)
 {
 	msrp_frame_t *mf;
 	int ret;
@@ -233,44 +228,57 @@ static int w_msrp_relay(sip_msg_t* msg, char* str1, char* str2)
 	return ret;
 }
 
+/**
+ *
+ */
+static int w_msrp_relay(sip_msg_t* msg, char* str1, char* str2)
+{
+	return ki_msrp_relay(msg);
+}
 
 /**
  *
  */
-static int w_msrp_reply(struct sip_msg* msg, char* code, char* text,
-		char *hdrs)
+static int ki_msrp_reply(sip_msg_t* msg, str* rcode, str* rtext,
+		str *rhdrs)
 {
-	str rcode;
-	str rtext;
-	str rhdrs;
 	msrp_frame_t *mf;
 	int ret;
-
-	if(fixup_get_svalue(msg, (gparam_t*)code, &rcode)!=0)
-	{
-		LM_ERR("no reply status code\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_t*)text, &rtext)!=0)
-	{
-		LM_ERR("no reply status phrase\n");
-		return -1;
-	}
-
-	if(hdrs!=NULL && fixup_get_svalue(msg, (gparam_t*)hdrs, &rhdrs)!=0)
-	{
-		LM_ERR("invalid extra headers\n");
-		return -1;
-	}
 
 	mf = msrp_get_current_frame();
 	if(mf==NULL)
 		return -1;
 
-	ret = msrp_reply(mf, &rcode, &rtext, (hdrs!=NULL)?&rhdrs:NULL);
+	ret = msrp_reply(mf, rcode, rtext,
+			(rhdrs!=NULL && rhdrs->len>0)?rhdrs:NULL);
 	if(ret==0) ret = 1;
 	return ret;
+}
+
+/**
+ *
+ */
+static int w_msrp_reply(sip_msg_t *msg, char *code, char *text, char *hdrs)
+{
+	str rcode = STR_NULL;
+	str rtext = STR_NULL;
+	str rhdrs = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)code, &rcode) != 0) {
+		LM_ERR("no reply status code\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)text, &rtext) != 0) {
+		LM_ERR("no reply status phrase\n");
+		return -1;
+	}
+
+	if(hdrs != NULL && fixup_get_svalue(msg, (gparam_t *)hdrs, &rhdrs) != 0) {
+		LM_ERR("invalid extra headers\n");
+		return -1;
+	}
+	return ki_msrp_reply(msg, &rcode, &rtext, (hdrs!=NULL)?&rhdrs:NULL);
 }
 
 /**
@@ -293,9 +301,10 @@ static int w_msrp_reply3(sip_msg_t* msg, char* code, char* text,
 /**
  *
  */
-static int w_msrp_is_request(sip_msg_t* msg, char* str1, char* str2)
+static int ki_msrp_is_request(sip_msg_t* msg)
 {
 	msrp_frame_t *mf;
+
 	mf = msrp_get_current_frame();
 	if(mf==NULL)
 		return -1;
@@ -307,9 +316,18 @@ static int w_msrp_is_request(sip_msg_t* msg, char* str1, char* str2)
 /**
  *
  */
-static int w_msrp_is_reply(sip_msg_t* msg, char* str1, char* str2)
+static int w_msrp_is_request(sip_msg_t* msg, char* str1, char* str2)
+{
+	return ki_msrp_is_request(msg);
+}
+
+/**
+ *
+ */
+static int ki_msrp_is_reply(sip_msg_t* msg)
 {
 	msrp_frame_t *mf;
+
 	mf = msrp_get_current_frame();
 	if(mf==NULL)
 		return -1;
@@ -321,12 +339,35 @@ static int w_msrp_is_reply(sip_msg_t* msg, char* str1, char* str2)
 /**
  *
  */
+static int w_msrp_is_reply(sip_msg_t* msg, char* str1, char* str2)
+{
+	return ki_msrp_is_reply(msg);
+}
+
+/**
+ *
+ */
+static int ki_msrp_set_dst(sip_msg_t* msg, str* rtaddr, str* rfsock)
+{
+	msrp_frame_t *mf;
+	int ret;
+
+	mf = msrp_get_current_frame();
+	if(mf==NULL)
+		return -1;
+
+	ret = msrp_env_set_dstinfo(mf, rtaddr, rfsock, 0);
+	if(ret==0) ret = 1;
+	return ret;
+}
+
+/**
+ *
+ */
 static int w_msrp_set_dst(sip_msg_t* msg, char* taddr, char* fsock)
 {
 	str rtaddr  = {0};
 	str rfsock = {0};
-	msrp_frame_t *mf;
-	int ret;
 
 	if(fixup_get_svalue(msg, (gparam_t*)taddr, &rtaddr)!=0)
 	{
@@ -339,30 +380,16 @@ static int w_msrp_set_dst(sip_msg_t* msg, char* taddr, char* fsock)
 		LM_ERR("invalid local socket parameter\n");
 		return -1;
 	}
-
-
-	mf = msrp_get_current_frame();
-	if(mf==NULL)
-		return -1;
-
-	ret = msrp_env_set_dstinfo(mf, &rtaddr, &rfsock, 0);
-	if(ret==0) ret = 1;
-	return ret;
+	return ki_msrp_set_dst(msg, &rtaddr, &rfsock);
 }
 
 /**
  *
  */
-static int w_msrp_relay_flags(sip_msg_t* msg, char *tflags, char* str2)
+static int ki_msrp_relay_flags(sip_msg_t* msg, int rtflags)
 {
-	int rtflags = 0;
 	msrp_frame_t *mf;
 	int ret;
-	if(fixup_get_ivalue(msg, (gparam_t*)tflags, &rtflags)!=0)
-	{
-		LM_ERR("invalid send flags parameter\n");
-		return -1;
-	}
 
 	mf = msrp_get_current_frame();
 	if(mf==NULL)
@@ -376,16 +403,25 @@ static int w_msrp_relay_flags(sip_msg_t* msg, char *tflags, char* str2)
 /**
  *
  */
-static int w_msrp_reply_flags(sip_msg_t* msg, char *tflags, char* str2)
+static int w_msrp_relay_flags(sip_msg_t* msg, char *tflags, char* str2)
 {
 	int rtflags = 0;
-	msrp_frame_t *mf;
-	int ret;
-	if(fixup_get_ivalue(msg, (gparam_t*)tflags, &rtflags)!=0)
-	{
+
+	if(fixup_get_ivalue(msg, (gparam_t *)tflags, &rtflags) != 0) {
 		LM_ERR("invalid send flags parameter\n");
 		return -1;
 	}
+
+	return ki_msrp_relay_flags(msg, rtflags);
+}
+
+/**
+ *
+ */
+static int ki_msrp_reply_flags(sip_msg_t *msg, int rtflags)
+{
+	msrp_frame_t *mf;
+	int ret;
 
 	mf = msrp_get_current_frame();
 	if(mf==NULL)
@@ -396,11 +432,24 @@ static int w_msrp_reply_flags(sip_msg_t* msg, char *tflags, char* str2)
 	return ret;
 }
 
+/**
+ *
+ */
+static int w_msrp_reply_flags(sip_msg_t *msg, char *tflags, char *str2)
+{
+	int rtflags = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)tflags, &rtflags) != 0) {
+		LM_ERR("invalid send flags parameter\n");
+		return -1;
+	}
+	return ki_msrp_reply_flags(msg, rtflags);
+}
 
 /**
  *
  */
-static int w_msrp_cmap_save(sip_msg_t* msg, char* str1, char* str2)
+static int ki_msrp_cmap_save(sip_msg_t* msg)
 {
 	msrp_frame_t *mf;
 	int ret;
@@ -414,11 +463,18 @@ static int w_msrp_cmap_save(sip_msg_t* msg, char* str1, char* str2)
 	return ret;
 }
 
+/**
+ *
+ */
+static int w_msrp_cmap_save(sip_msg_t* msg, char* str1, char* str2)
+{
+	return ki_msrp_cmap_save(msg);
+}
 
 /**
  *
  */
-static int w_msrp_cmap_lookup(sip_msg_t* msg, char* str1, char* str2)
+static int ki_msrp_cmap_lookup(sip_msg_t* msg)
 {
 	msrp_frame_t *mf;
 	int ret;
@@ -435,6 +491,14 @@ static int w_msrp_cmap_lookup(sip_msg_t* msg, char* str1, char* str2)
 /**
  *
  */
+static int w_msrp_cmap_lookup(sip_msg_t* msg, char* str1, char* str2)
+{
+	return ki_msrp_cmap_lookup(msg);
+}
+
+/**
+ *
+ */
 static int msrp_frame_received(sr_event_param_t *evp)
 {
 	tcp_event_info_t *tev;
@@ -442,7 +506,8 @@ static int msrp_frame_received(sr_event_param_t *evp)
 	sip_msg_t *fmsg;
 	struct run_act_ctx ctx;
 	int rtb, rt;
-
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("msrp:frame-in");
 
 	tev = (tcp_event_info_t*)evp->data;
 
@@ -463,24 +528,40 @@ static int msrp_frame_received(sr_event_param_t *evp)
 	}
 	msrp_reset_env();
 	msrp_set_current_frame(&mf);
-	rt = route_get(&event_rt, "msrp:frame-in");
-	if(rt>=0 && event_rt.rlist[rt]!=NULL) {
+	fmsg = msrp_fake_sipmsg(&mf);
+	if(fmsg != NULL)
+		fmsg->rcv = *tev->rcv;
+	rtb = get_route_type();
+	set_route_type(EVENT_ROUTE);
+	if(msrp_event_callback.s == NULL || msrp_event_callback.len <= 0) {
+		/* native cfg script execution */
+		rt = route_get(&event_rt, evname.s);
 		LM_DBG("executing event_route[msrp:frame-in] (%d)\n", rt);
-		fmsg = msrp_fake_sipmsg(&mf);
-		if(fmsg!=NULL)
-			fmsg->rcv = *tev->rcv;
-		rtb = get_route_type();
-		set_route_type(REQUEST_ROUTE);
-		init_run_actions_ctx(&ctx);
-		run_top_route(event_rt.rlist[rt], fmsg, &ctx);
-		if(ctx.run_flags&DROP_R_F)
-		{
-			LM_DBG("exit due to 'drop' in event route\n");
+		if(rt >= 0 && event_rt.rlist[rt] != NULL) {
+			init_run_actions_ctx(&ctx);
+			run_top_route(event_rt.rlist[rt], fmsg, &ctx);
+			if(ctx.run_flags & DROP_R_F) {
+				LM_DBG("exit due to 'drop' in event route\n");
+			}
+		} else {
+			LM_ERR("empty event route block for msrp handling\n");
 		}
-		set_route_type(rtb);
-		if(fmsg!=NULL)
-			free_sip_msg(fmsg);
+	} else {
+		/* kemi script execution */
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			LM_ERR("event callback (%s) set, but no cfg engine\n",
+					msrp_event_callback.s);
+		} else {
+			if(keng->froute(fmsg, EVENT_ROUTE,
+						&msrp_event_callback, &evname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
 	}
+	set_route_type(rtb);
+	if(fmsg != NULL)
+		free_sip_msg(fmsg);
 	msrp_reset_env();
 	msrp_destroy_frame(&mf);
 	return 0;
@@ -492,4 +573,68 @@ static int msrp_frame_received(sr_event_param_t *evp)
 static void msrp_local_timer(unsigned int ticks, void* param)
 {
 	msrp_cmap_clean();
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_msrp_exports[] = {
+	{ str_init("msrp"), str_init("relay"),
+		SR_KEMIP_INT, ki_msrp_relay,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msrp"), str_init("reply"),
+		SR_KEMIP_INT, ki_msrp_reply,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msrp"), str_init("is_request"),
+		SR_KEMIP_INT, ki_msrp_is_request,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msrp"), str_init("is_reply"),
+		SR_KEMIP_INT, ki_msrp_is_reply,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msrp"), str_init("set_dst"),
+		SR_KEMIP_INT, ki_msrp_set_dst,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msrp"), str_init("relay_flags"),
+		SR_KEMIP_INT, ki_msrp_relay_flags,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msrp"), str_init("reply_flags"),
+		SR_KEMIP_INT, ki_msrp_reply_flags,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msrp"), str_init("cmap_save"),
+		SR_KEMIP_INT, ki_msrp_cmap_save,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msrp"), str_init("cmap_lookup"),
+		SR_KEMIP_INT, ki_msrp_cmap_lookup,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_msrp_exports);
+	return register_trans_mod(path, mod_trans);
 }

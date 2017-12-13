@@ -852,7 +852,6 @@ static int child_init(int rank)
 }
 
 
-
 /**************************** wrapper functions ***************************/
 static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 {
@@ -862,6 +861,7 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 	char backup;
 	int lowest_status, n, ret;
 	fparam_t* fp;
+	regex_t* re0 = NULL;
 	regex_t* re = NULL;
 	str tmp;
 
@@ -892,17 +892,18 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 			memcpy(s, tmp.s, tmp.len);
 			s[tmp.len] = '\0';
 
-			if ((re = pkg_malloc(sizeof(regex_t))) == 0) {
+			if ((re0 = pkg_malloc(sizeof(regex_t))) == 0) {
 				LM_ERR("No memory left\n");
 				goto error;
 			}
 
-			if (regcomp(re, s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+			if (regcomp(re0, s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
 				LM_ERR("Bad regular expression '%s'\n", s);
-				pkg_free(re);
-				re = NULL;
+				pkg_free(re0);
+				re0 = NULL;
 				goto error;
 			}
+			re = re0;
 			break;
 	}
 
@@ -953,9 +954,9 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 
 	if (backup) status[msg->first_line.u.reply.status.len] = backup;
 	if (s) pkg_free(s);
-	if ((fp->type != FPARAM_REGEX) && re) {
-		regfree(re);
-		pkg_free(re);
+	if (re0) {
+		regfree(re0);
+		pkg_free(re0);
 	}
 
 	if (unlikely(t && is_route_type(CORE_ONREPLY_ROUTE))){
@@ -975,13 +976,107 @@ error:
 		set_t(T_UNDEFINED, T_BR_UNDEFINED);
 	}
 	if (s) pkg_free(s);
-	if ((fp->type != FPARAM_REGEX) && re) {
-		regfree(re);
-		pkg_free(re);
+	if (re0) {
+		regfree(re0);
+		pkg_free(re0);
 	}
 	return -1;
 }
 
+static int ki_t_check_status(sip_msg_t* msg, str *sexp)
+{
+	regmatch_t pmatch;
+	struct cell *t;
+	char *status, *s = NULL;
+	char backup;
+	int lowest_status, n, ret;
+	regex_t re;
+
+	/* first get the transaction */
+	if (t_check(msg, 0 ) == -1) return -1;
+
+	backup = 0;
+	if ((t = get_t()) == 0) {
+		LM_ERR("cannot check status for a reply"
+				" which has no T-state established\n");
+		goto error0;
+	}
+
+	memset(&re, 0, sizeof(regex_t));
+	if (regcomp(&re, sexp->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+		LM_ERR("Bad regular expression '%s'\n", s);
+		goto error0;
+	}
+
+	switch(get_route_type()) {
+		case REQUEST_ROUTE:
+			/* use the status of the last sent reply */
+			status = int2str(t->uas.status, 0);
+			break;
+
+		case TM_ONREPLY_ROUTE:
+		case CORE_ONREPLY_ROUTE:
+			/* use the status of the current reply */
+			status = msg->first_line.u.reply.status.s;
+			backup = status[msg->first_line.u.reply.status.len];
+			status[msg->first_line.u.reply.status.len] = 0;
+			break;
+
+		case FAILURE_ROUTE:
+			/* use the status of the winning reply */
+			ret = t_pick_branch( -1, 0, t, &lowest_status);
+			if (ret == -1) {
+				/* t_pick_branch() retuns error also when there are only
+				 * blind UACs. Let us give it another chance including the
+				 * blind branches. */
+				LM_DBG("t_pick_branch returned error,"
+						" trying t_pick_branch_blind\n");
+				ret = t_pick_branch_blind(t, &lowest_status);
+			}
+			if (ret < 0) {
+				LM_CRIT("BUG: t_pick_branch failed to get"
+						" a final response in FAILURE_ROUTE\n");
+				goto error;
+			}
+			status = int2str(lowest_status, 0);
+			break;
+		case BRANCH_FAILURE_ROUTE:
+			status = int2str(t->uac[get_t_branch()].last_received, 0);
+			break;
+		default:
+			LM_ERR("unsupported route type %d\n",
+					get_route_type());
+			goto error;
+	}
+
+	LM_DBG("checked status is <%s>\n",status);
+	/* do the checking */
+	n = regexec(&re, status, 1, &pmatch, 0);
+
+	if (backup) status[msg->first_line.u.reply.status.len] = backup;
+	regfree(&re);
+
+	if (unlikely(t && is_route_type(CORE_ONREPLY_ROUTE))){
+		/* t_check() above has the side effect of setting T and
+		 * REFerencing T => we must unref and unset it.  */
+		UNREF( t );
+		set_t(T_UNDEFINED, T_BR_UNDEFINED);
+	}
+	if (n!=0) return -1;
+	return 1;
+
+error:
+	regfree(&re);
+error0:
+	if (unlikely(t && is_route_type(CORE_ONREPLY_ROUTE))){
+		/* t_check() above has the side effect of setting T and
+		 * REFerencing T => we must unref and unset it.  */
+		UNREF( t );
+		set_t(T_UNDEFINED, T_BR_UNDEFINED);
+	}
+
+	return -1;
+}
 
 inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 {
@@ -1026,7 +1121,7 @@ inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 	int i = 0;
 
 	if(str) {
-		get_int_fparam(&i, msg, (fparam_t*)str);
+		if(get_int_fparam(&i, msg, (fparam_t*)str)<0) return -1;
 	}
 	return ki_t_lookup_cancel_flags(msg, i);
 }
@@ -2514,6 +2609,16 @@ static const char* rpc_t_uac_wait_doc[2] = {
 	0
 };
 
+static const char* tm_rpc_list_doc[2] = {
+	"List transactions.",
+	0
+};
+
+static const char* tm_rpc_clean_doc[2] = {
+	"Clean expired (lifetime exceeded) transactions.",
+	0
+};
+
 
 /* rpc exports */
 static rpc_export_t tm_rpc[] = {
@@ -2524,6 +2629,8 @@ static rpc_export_t tm_rpc[] = {
 	{"tm.hash_stats",  tm_rpc_hash_stats, tm_rpc_hash_stats_doc, 0},
 	{"tm.t_uac_start", rpc_t_uac_start, rpc_t_uac_start_doc, 0 },
 	{"tm.t_uac_wait",  rpc_t_uac_wait,  rpc_t_uac_wait_doc, RET_ARRAY},
+	{"tm.list",  tm_rpc_list,  tm_rpc_list_doc, RET_ARRAY},
+	{"tm.clean", tm_rpc_clean,  tm_rpc_clean_doc, 0},
 	{0, 0, 0, 0}
 };
 
@@ -2802,6 +2909,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 	{ str_init("tm"), str_init("t_is_expired"),
 		SR_KEMIP_INT, t_is_expired,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_check_status"),
+		SR_KEMIP_INT, ki_t_check_status,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tm"), str_init("t_grep_status"),

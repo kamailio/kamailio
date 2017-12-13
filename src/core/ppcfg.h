@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -22,6 +22,10 @@
 
 #ifndef _PPCFG_H_
 #define _PPCFG_H_
+
+#include "str.h"
+
+str* pp_get_define_name(int idx);
 
 int pp_subst_add(char *data);
 int pp_substdef_add(char *data, int mode);

@@ -53,6 +53,10 @@
 
 struct tm_binds tmb;
 
+/* event bases */
+struct event_base* global_ev_base = NULL;
+struct evdns_base* global_evdns_base = NULL;
+
 void cmd_pipe_cb(int fd, short event, void *arg);
 void io_shutdown(int sig);
 
@@ -231,8 +235,10 @@ no_route:
 
 end:
 	if(freeme) free(freeme);
-	free_req_cmd(req->cmd);
-	free_request(req);
+	if(req) {
+		if(req->cmd) free_req_cmd(req->cmd);
+		free_request(req);
+	}
 }
 
 void timeout_cb(int fd, short event, void *arg)
@@ -354,13 +360,18 @@ void loadbalance_by_weight(jsonrpc_server_t** s,
 
 int jsonrpc_send(str conn, jsonrpc_request_t* req, bool notify_only)
 {
-	char* json = (char*)json_dumps(req->payload, JSON_COMPACT);
-
-	char* ns;
+	char* json = NULL;
+	bool sent = false;
+	char* ns = NULL;
 	size_t bytes;
+
+	json = (char*)json_dumps(req->payload, JSON_COMPACT);
+	if(json==NULL) {
+		LM_ERR("failed to do json dump for request payload\n");
+		return -1;
+	}
 	bytes = netstring_encode_new(&ns, json, (size_t)strlen(json));
 
-	bool sent = false;
 	jsonrpc_server_group_t* c_grp = NULL;
 	if(global_server_group != NULL)
 		c_grp = *global_server_group;
@@ -426,7 +437,7 @@ int jsonrpc_send(str conn, jsonrpc_request_t* req, bool notify_only)
 
 	free_server_list(tried_servers);
 	if(ns) pkg_free(ns);
-	if(json) free(json);
+	free(json);
 
 	if (sent) {
 		if (notify_only == true) { // free the request if using janssonrpc_notification function
@@ -520,6 +531,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 		if(freeme) free(freeme);
 		if(error) json_decref(error);
 		free_req_cmd(req_cmd);
+		if(req) pkg_free(req);
 		goto end;
 	}
 
@@ -739,9 +751,6 @@ void bev_read_cb(struct bufferevent* bev, void* arg)
 				break;
 			case NETSTRING_ERROR_NO_LENGTH:
 				msg = "missing length field";
-				break;
-			case NETSTRING_INCOMPLETE:
-				msg = "incomplete";
 				break;
 			default:
 				ERR("bad netstring: unknown error (%d)\n", retval);

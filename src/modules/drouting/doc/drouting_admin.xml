@@ -11,7 +11,7 @@
 
 <chapter>
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<section>
@@ -20,7 +20,7 @@
 	<para>Dynamic Routing is a module for selecting (based on multiple
 	criteria) the the best gateway/destination to be used for delivering a
 	certain call. Least Cost Routing (LCR) is a special case of dynamic
-	routing - when the rules are ordered based on costs. Dynamic Routing 
+	routing - when the rules are ordered based on costs. Dynamic Routing
 	comes with many features regarding routing rule selection:
 	</para>
 	<itemizedlist>
@@ -74,17 +74,17 @@
 	speed/time and memory consumption penalties
 	</para>
 	</listitem>
-	
+
 	<listitem>
 	<para>
 	script integration - Pseudo variables support in functions; scripting
 	route triggering when rules are matched
 	</para>
 	</listitem>
-	
+
 	<listitem>
 	<para>
-	bidirectional behavior - inbound and outbound processing (strip and 
+	bidirectional behavior - inbound and outbound processing (strip and
 	prefixing when sending and receiving from a destination/GW)
 	</para>
 	</listitem>
@@ -108,13 +108,13 @@
 	</itemizedlist>
 	<para>
 	The time to load was varying between 4 seconds and 8 seconds, depending of
-	the caching of the DB client - the first load was the slowest (as the DB 
-	query hits the disk drive); the following are faster as data is already 
+	the caching of the DB client - the first load was the slowest (as the DB
+	query hits the disk drive); the following are faster as data is already
 	cached in the DB client. So technically speaking, the time to load (without
 	the time to query which is DB type dependent) is ~4 seconds
 	</para>
 	<para>
-	After loading the data into shared memory ~ 96M of memory were used 
+	After loading the data into shared memory ~ 96M of memory were used
 	exclusively for the DR data.
 	</para>
 	</section>
@@ -147,7 +147,7 @@
 	<section>
 	<title>Gateway Addresses</title>
 	<para>
-	Default name for the table storing gateway addresses is 
+	Default name for the table storing gateway addresses is
 	<quote>dr_gateways</quote>.
 	Gateway addresses are stored in a separate table because of need to
 	access them independent of Dynamic Routing processing (e.g., adding/
@@ -205,13 +205,13 @@
 	</row>
 	</tbody>
 	</tgroup>
-	</table> 
-	
+	</table>
+
 	</para>
 	<para>
 	Once a rule is matched, the STRIP number of digits are removed from the
-	username part of the RURI and then the PRI prefix has to be added to the 
-	request URI before forwarding the call to the gateway. 
+	username part of the RURI and then the PRI prefix has to be added to the
+	request URI before forwarding the call to the gateway.
 	</para>
 
 	<para>
@@ -255,7 +255,7 @@
 	</row>
 	</tbody>
 	</tgroup>
-	</table> 
+	</table>
 	</para>
 	</section>
 
@@ -270,10 +270,10 @@
 	<para>
 	Also the module allows the usage of groups in the destination lists. A
 	group of destinations is delimited by semi-colon char. inside the whole
-	destination list ( like: 2,4;5,78,23;4;7;2 ). The destinations from 
-	within a group may be act differently (like load-balancing, random 
-	selection, etc), depending of the <quote>sort_order</quote> module 
-	parameter - more about this is available under the module paramters 
+	destination list ( like: 2,4;5,78,23;4;7;2 ). The destinations from
+	within a group may be act differently (like load-balancing, random
+	selection, etc), depending of the <quote>sort_order</quote> module
+	parameter - more about this is available under the module paramters
 	section.
 	</para>
 	</section>
@@ -282,7 +282,7 @@
 	<section>
 	<title>Routing Rules</title>
 	<para>
-	Default name for the table storing rule definitions is 
+	Default name for the table storing rule definitions is
 	<quote>dr_rules</quote>.
 	</para>
 
@@ -349,31 +349,32 @@
 	</row>
 	</tbody>
 	</tgroup>
-	</table> 
+	</table>
 	</para>
 
 	<para>
 	<orderedlist numeration="loweralpha">
 	<listitem>
 	<para>
-		<emphasis>groupid column</emphasis> 
+		<emphasis>groupid column</emphasis>
 	</para>
 	<para>
-	Each user must be member of only one routing group. It must be 
+	Each user must be member of only one routing group. It must be
 	specified in user's profile.
 	</para>
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>prefix column</emphasis> 
+		<emphasis>prefix column</emphasis>
 	</para>
 	<para>
-	Destination URI must start with prefix value to match the rule.
+	Destination URI must start with prefix value to match the rule. The prefix
+	value can contain only digits (0..9), '+', '*' or '#'.
 	</para>
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>time rec column</emphasis> 
+		<emphasis>time rec column</emphasis>
 	</para>
 	<para>
 	A date-time expression that defines the time recurrence to match for
@@ -458,7 +459,7 @@
 	<itemizedlist>
 	<listitem>
 	<para>
-		<emphasis>dtstart</emphasis> - specifies the beginning of the first 
+		<emphasis>dtstart</emphasis> - specifies the beginning of the first
 		period.
 	</para>
 	</listitem>
@@ -466,9 +467,9 @@
 	<para>
 		<emphasis>duration</emphasis> - specifies the duration of the period.
 		For a recurring interval, the <quote>duration</quote> parameter MUST
-		be small enough such that subsequent intervals do not overlap. 
-		For non-recurring intervals, durations of any positive length are 
-		permitted, zero-length duration means <quote>forever</quote>. 
+		be small enough such that subsequent intervals do not overlap.
+		For non-recurring intervals, durations of any positive length are
+		permitted, zero-length duration means <quote>forever</quote>.
 		Negative-length durations are not allowed. In the common case of
 		a duration less than one day, the value starts with 'PT' followed by
 		number of hours, minutes and seconds, e.g., a duration of 8 hours
@@ -478,12 +479,12 @@
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>freq</emphasis> - takes one of the following values: 
+		<emphasis>freq</emphasis> - takes one of the following values:
 		<quote>daily</quote>,
 		to specify repeating periods based on an interval of a day or more;
-		<quote>weekly</quote>, to specify repeating periods based on an 
-		interval of a week or more; <quote>monthly</quote>, to specify 
-		repeating periods based on an interval of a month or more; and 
+		<quote>weekly</quote>, to specify repeating periods based on an
+		interval of a week or more; <quote>monthly</quote>, to specify
+		repeating periods based on an interval of a month or more; and
 		<quote>yearly</quote>, to specify repeating periods based
 		on an interval of a year or more. These values are not case-sensitive.
 	</para>
@@ -492,16 +493,16 @@
 	<para>
 		<emphasis>until</emphasis> - defines an iCalendar COS DATE or DATE-TIME
 		value which bounds the recurrence rule in an inclusive manner. If the
-		value specified by <quote>until</quote> is synchronized with the 
-		specified 
-		recurrence, this date or date-time becomes the last instance of the 
-		recurrence. If not present, the recurrence is considered to repeat 
+		value specified by <quote>until</quote> is synchronized with the
+		specified
+		recurrence, this date or date-time becomes the last instance of the
+		recurrence. If not present, the recurrence is considered to repeat
 		forever.
 	</para>
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>interval</emphasis> - contains a positive integer 
+		<emphasis>interval</emphasis> - contains a positive integer
 		representing how often the recurrence rule repeats. The default value
 		is <quote>1</quote>, meaning every day for a <quote>daily</quote> rule,
 		every week for a <quote>weekly</quote>
@@ -511,55 +512,55 @@
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>interval</emphasis> - contains a positive integer 
-		representing how often the recurrence rule repeats. The default value 
+		<emphasis>interval</emphasis> - contains a positive integer
+		representing how often the recurrence rule repeats. The default value
 		is <quote>1</quote>, meaning every day for a <quote>daily</quote> rule,
 		every week for a <quote>weekly</quote> rule, every
-		month for a <quote>monthly</quote> rule and every year for a 
+		month for a <quote>monthly</quote> rule and every year for a
 		<quote>yearly</quote> rule.
 	</para>
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>byday</emphasis> - specifies a comma-separated list of days 
-		of the week. <quote>MO</quote> indicates Monday; <quote>TU</quote> 
-		indicates Tuesday; <quote>WE</quote> indicates Wednesday; 
-		<quote>TH</quote> indicates Thursday; <quote>FR</quote> indicates 
-		Friday; <quote>SA</quote> indicates Saturday; <quote>SU</quote> 
+		<emphasis>byday</emphasis> - specifies a comma-separated list of days
+		of the week. <quote>MO</quote> indicates Monday; <quote>TU</quote>
+		indicates Tuesday; <quote>WE</quote> indicates Wednesday;
+		<quote>TH</quote> indicates Thursday; <quote>FR</quote> indicates
+		Friday; <quote>SA</quote> indicates Saturday; <quote>SU</quote>
 		indicates Sunday. These values are not case-sensitive.
 	</para>
 	<para>
-		Each <quote>byday</quote> value can also be preceded by a positive 
-		(+n) or negative (-n) integer. If present, this indicates the nth 
-		occurrence of the specific day within the <quote>monthly</quote> or 
-		<quote>yearly</quote> recurrence. For example, within a 
-		<quote>monthly</quote> rule, +1MO (or simply 1MO) represents the first 
+		Each <quote>byday</quote> value can also be preceded by a positive
+		(+n) or negative (-n) integer. If present, this indicates the nth
+		occurrence of the specific day within the <quote>monthly</quote> or
+		<quote>yearly</quote> recurrence. For example, within a
+		<quote>monthly</quote> rule, +1MO (or simply 1MO) represents the first
 		Monday within the month, whereas -1MO represents the last Monday of
 		the month. If an integer modifier is not present, it means all days
-		of this type within the specified frequency. For example, within a 
+		of this type within the specified frequency. For example, within a
 		<quote>monthly</quote> rule, MO represents all Mondays within the month.
 	</para>
 	</listitem>
 	<listitem>
 	<para>
 		<emphasis>bymonthday</emphasis> - parameter specifies a comma-separated
-		list of days of the month. Valid values are 1 to 31 or -31 to -1. For 
+		list of days of the month. Valid values are 1 to 31 or -31 to -1. For
 		example, -10 represents the tenth to the last day of the month.
 	</para>
 	</listitem>
 
 	<listitem>
 	<para>
-		<emphasis>byyearday</emphasis> - specifies a comma-separated list of 
+		<emphasis>byyearday</emphasis> - specifies a comma-separated list of
 		days of the year. Valid values are 1 to 366 or -366 to -1. For example,
-		-1 represents the last day of the year (December 31st) and -306 
+		-1 represents the last day of the year (December 31st) and -306
 		represents the 306th to the last day of the year (March 1st).
 	</para>
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>byweekno</emphasis> - specifies a comma-separated list of 
-		ordinals specifying weeks of the year. Valid values are 1 to 53 or 
+		<emphasis>byweekno</emphasis> - specifies a comma-separated list of
+		ordinals specifying weeks of the year. Valid values are 1 to 53 or
 		-53 to -1.
 	</para>
 	</listitem>
@@ -575,41 +576,41 @@
 </para>
 	<para></para>
 	<para>
-		A recurrence is specified by including the <quote>freq</quote> 
-		parameter, which indicates the type of recurrence rule. Parameters 
+		A recurrence is specified by including the <quote>freq</quote>
+		parameter, which indicates the type of recurrence rule. Parameters
 		other than <quote>dtstart</quote>
-		and <quote>duration</quote> SHOULD NOT be specified unless 
+		and <quote>duration</quote> SHOULD NOT be specified unless
 		<quote>freq</quote> is present.
 	</para>
 	<para></para>
 	<para>
-		If byxxx parameter values are found which are beyond the available 
+		If byxxx parameter values are found which are beyond the available
 		scope (ie, bymonthday=<quote>30</quote> in February), they are simply
-		ignored. 
+		ignored.
 	</para>
 	<sbr></sbr>
 	<para></para>
 	<para>
-		Byxxx parameters modify the recurrence in some manner. Byxxx rule 
-		parts for a period of time which is the same or greater than the 
-		frequency generally reduce or limit the number of occurrences of the 
-		recurrence generated. For example, freq=<quote>daily</quote> 
+		Byxxx parameters modify the recurrence in some manner. Byxxx rule
+		parts for a period of time which is the same or greater than the
+		frequency generally reduce or limit the number of occurrences of the
+		recurrence generated. For example, freq=<quote>daily</quote>
 		bymonth=<quote>1</quote> reduces the number of
-		recurrence instances from all days (if the <quote>bymonth</quote> 
-		parameter is not present) to all days in January. Byxxx parameters for 
-		a period of time less than the frequency generally increase or expand 
-		the number of occurrences of the recurrence. For example, 
+		recurrence instances from all days (if the <quote>bymonth</quote>
+		parameter is not present) to all days in January. Byxxx parameters for
+		a period of time less than the frequency generally increase or expand
+		the number of occurrences of the recurrence. For example,
 		freq=<quote>yearly</quote> bymonth=<quote>1,2</quote>
-		increases the number of days within the yearly recurrence set from 1 
+		increases the number of days within the yearly recurrence set from 1
 		(if <quote>bymonth</quote> parameter is not present) to 2.
 	</para>
 	<para>
 		If multiple Byxxx parameters are specified, then after evaluating the
 		specified <quote>freq</quote> and <quote>interval</quote> parameters,
-		the Byxxx parameters are 
+		the Byxxx parameters are
 		applied to the current set of evaluated occurrences in the following
-		order: <quote>bymonth</quote>, <quote>byweekno</quote>, 
-		<quote>byyearday</quote>, <quote>bymonthday</quote>, 
+		order: <quote>bymonth</quote>, <quote>byweekno</quote>,
+		<quote>byyearday</quote>, <quote>bymonthday</quote>,
 		<quote>byday</quote>; then <quote>until</quote> is  evaluated.
 	</para>
 	<para>
@@ -617,24 +618,24 @@
 	</para>
 	<para>
 		dtstart=<quote>19970105T083000</quote> duration=<quote>PT10M</quote>
-		freq=<quote>yearly</quote> interval=<quote>2</quote> 
+		freq=<quote>yearly</quote> interval=<quote>2</quote>
 		bymonth=<quote>1</quote> byday=<quote>SU</quote>
 	</para>
 	<para>
-		First, the interval=<quote>2</quote> would be applied to 
+		First, the interval=<quote>2</quote> would be applied to
 		freq=<quote>yearly</quote> to arrive at <quote>every other year</quote>
-		. Then, bymonth=<quote>1</quote> would be applied to arrive at 
+		. Then, bymonth=<quote>1</quote> would be applied to arrive at
 		<quote>every January, every other year</quote>. Then,
-		byday=<quote>SU</quote> would be applied to arrive at <quote>every 
-		Sunday in January, 
-		every other year, from 8:30 to 8:40 </quote>. The appropriate minutes 
-		and hours have been retrieved from the <quote>dtstart</quote> and 
+		byday=<quote>SU</quote> would be applied to arrive at <quote>every
+		Sunday in January,
+		every other year, from 8:30 to 8:40 </quote>. The appropriate minutes
+		and hours have been retrieved from the <quote>dtstart</quote> and
 		<quote>duration</quote> parameters.
 	</para>
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>priority column</emphasis> 
+		<emphasis>priority column</emphasis>
 	</para>
 	<para>
 	If many rules are eligible, choose the one with highest priority.
@@ -642,7 +643,7 @@
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>routeid column</emphasis> 
+		<emphasis>routeid column</emphasis>
 	</para>
 	<para>
 	If different than 0, then execute the route with the specified ID.
@@ -653,22 +654,22 @@
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>gwlist column</emphasis> 
+		<emphasis>gwlist column</emphasis>
 	</para>
 	<para>
-	A comma separated list of gateway identifiers corresponding to a row in 
+	A comma separated list of gateway identifiers corresponding to a row in
 	table <quote>dr_gateways</quote>. You can use a predefined list from the
 	table <quote>dr_gw_lists</quote> preceded by the character
 	<quote>#</quote>. The first gateway is tried first and if routing to it
-	fails, then the second one, and so one. If no gateway is left a negative 
+	fails, then the second one, and so one. If no gateway is left a negative
 	response is sent back to caller.
 	</para>
 	</listitem>
 	<listitem>
 	<para>
-		<emphasis>Routing Rules Examples</emphasis> 
+		<emphasis>Routing Rules Examples</emphasis>
 	</para>
-	
+
 	<para>
 	<table align="center" frame= "all" pgwide="1">
 	<title>Sample dr_rules records</title>
@@ -740,15 +741,15 @@
 	<itemizedlist mark='bullet'>
 	<listitem>
 	<para>
-	the module discovers the routing group of the originating user. This 
+	the module discovers the routing group of the originating user. This
 	step is skipped if a routing group is passed from the script as parameter.
 	</para>
 	</listitem>
 	<listitem>
 	<para>
-	once the group is known, in the subset of the rules for this group the 
+	once the group is known, in the subset of the rules for this group the
 	module looks for the one that matches the destination based on "prefix"
-	column. The set of rules with the longest prefix is chosen. If no digit 
+	column. The set of rules with the longest prefix is chosen. If no digit
 	from the prefix matches, the default rules are used (rules with no prefix)
 	</para>
 	</listitem>
@@ -761,14 +762,14 @@
 	</listitem>
 	<listitem>
 	<para>
-	Once found the rule, it may contain a route ID to execute. If a certain 
+	Once found the rule, it may contain a route ID to execute. If a certain
 	flag is set, then the processing is stopped after executing the route
 	block.
 	</para>
 	</listitem>
 	<listitem>
 	<para>
-	The rule must contain a gateway chain. The module will execute serial 
+	The rule must contain a gateway chain. The module will execute serial
 	forking for each address in chain. The next address in chain is used only
 	if the previously has failed.
 	</para>
@@ -783,7 +784,7 @@
 	</para>
 	<para>
 	If no rule is found to match the selection criteria an default action must
-	be taken (e.g., error response sent back). If the gateway in the chain has 
+	be taken (e.g., error response sent back). If the gateway in the chain has
 	no prefix the request is forwarded without adding any prefix to the request
 	URI.
 	</para>
@@ -821,7 +822,7 @@
 
 		</section>
 	</section>
-	
+
 	<section>
 	<title>Parameters</title>
 	<section>
@@ -830,14 +831,14 @@
 		The database url.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>NULL</quote>.	
+		<emphasis>	Default value is <quote>NULL</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("drouting", "db_url", 
+modparam("drouting", "db_url",
 	"&defaultdb;")
 ...
 </programlisting>
@@ -902,7 +903,7 @@ modparam("drouting", "drg_table", "groups")
 	<section>
 		<title><varname>drl_table</varname>(str)</title>
 		<para>
-		The name of the db table storing definitions of destination lists (to 
+		The name of the db table storing definitions of destination lists (to
 		be used directly by the routing rules).
 		You will have a identifier to a group of gateways instead of having all the
 		members of the group as a individual elements.
@@ -930,20 +931,20 @@ modparam("drouting", "drl_table", "my_gw_lists")
 		<itemizedlist>
 		<listitem>
 			<emphasis>0</emphasis> - destination groups are ignored and all the
-			destinations are tried in the given order; 
-			Ex: list 1,2;3,4,5;6 will lead to usage as 1,2,3,4,5,6 
+			destinations are tried in the given order;
+			Ex: list 1,2;3,4,5;6 will lead to usage as 1,2,3,4,5,6
 		</listitem>
 		<listitem>
 			<emphasis>1</emphasis> - the destinations from each group are
-			randomly arranged (only the two elements are randomly selected);
-			groups do maintain their order (as given); the resulting list is 
+			randomly arranged (only the two first elements are randomly selected);
+			groups do maintain their order (as given); the resulting list is
 			used (with all the defined destinations).
-			Ex: 1,2;3,4,5;6 -> randomizer -> 
+			Ex: 1,2;3,4,5;6 -> randomizer ->
 			(A) 2,1;4,3,5;6  -> usage 2,1,4,3,5,6
 			(B) 1,2;3,5,4;6  -> usage 1,2,3,5,4,6
 		</listitem>
 		<listitem>
-			<emphasis>2</emphasis> - from each destination group, only a 
+			<emphasis>2</emphasis> - from each destination group, only a
 			single destination is randomly selected; groups do maintain their
 			order (as given);
 			<para>
@@ -984,7 +985,7 @@ modparam("drouting", "sort_order", 2)
 <section>
 		<title><varname>ruri_avp</varname> (str)</title>
 		<para>
-		The name of the avp for storing Request URIs to be later used 
+		The name of the avp for storing Request URIs to be later used
 		(alternative destinations for the current one).
 		</para>
 		<para>
@@ -1006,7 +1007,7 @@ modparam("drouting", "ruri_avp", '$avp(i:33)')
 		<title><varname>attrs_avp</varname> (str)</title>
 		<para>
 		The name of the avp for storing the attribute of the current selected
-		destination - once a new destination is selected (via the 
+		destination - once a new destination is selected (via the
 		use_next_gw() function), the AVP will be updated with the attrs of the
 		new used destination.
 		</para>
@@ -1124,8 +1125,8 @@ modparam("drouting", "fetch_rows", 1500)
 	<section>
 		<title><varname>force_dns</varname> (int)</title>
 		<para>
-		Force DNS resolving of GW/destination names (if not IPs) during 
-		startup. If not enabled, the GW name will be blindly used during 
+		Force DNS resolving of GW/destination names (if not IPs) during
+		startup. If not enabled, the GW name will be blindly used during
 		routing.
 		</para>
 		<para>
@@ -1147,11 +1148,8 @@ modparam("drouting", "force_dns", 0)
 		<para>
 		Enable monitoring of GW/destinations using keepalive module.
 		Destinations found unavailable will not be used on do_routing() call.
-		</para>
-		<para>
-		NOTE: this option is only compatible with <em>sort_order</em> 0 currently.
-		With sort_order value of 1 or 2, destinations status will simply be ignored.
-		</para>
+	    </para>
+
 		<para>
 		<emphasis>Default value is <quote>0 (disabled)</quote>.
 		</emphasis>
@@ -1172,20 +1170,21 @@ modparam("drouting", "enable_keepalive", 1)
 	<title>Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">do_routing("[groupID]")</function>
+		<function moreinfo="none">do_routing([groupID])</function>
 		</title>
 		<para>
-		Function to trigger routing of the message according to the 
+		Function to trigger routing of the message according to the
 		rules in the database table and the configured parameters.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 		</para>
 		<para>
-		The module can take one optional parameter: the routing group the 
-		caller belongs to - this may be a static numerical value or an AVP
-		specification. If none specified, the function will automatically
-		try to query the dr_group table to get this information.
+		The module can take one optional parameter: the routing group the
+		caller belongs to - this may be a static int value or a variable
+		holding an int. If none specified, the function will automatically
+		try to query the dr_group table to get the group id associated with
+		the user in From URI.
 		</para>
 		<example>
 		<title><function>do_routing</function> usage</title>
@@ -1202,15 +1201,15 @@ do_routing("$avp(i:10)");
 
 	<section>
 		<title>
-		<function moreinfo="none">use_next_gw()/next_routing()</function>
+		<function moreinfo="none">next_routing()</function>
 		</title>
 		<para>
-		The function takes the next available destination (set by do_routing, 
-		as alternative destinations) and push it into RURI. Note that the 
+		The function takes the next available destination (set by do_routing,
+		as alternative destinations) and push it into RURI. Note that the
 		function just sets the RURI (nothing more).
 		</para>
 		<para>
-		If a new RURI is set, the used destination is removed from the 
+		If a new RURI is set, the used destination is removed from the
 		pending set of alternative destinations.
 		</para>
 		<para>
@@ -1222,10 +1221,10 @@ do_routing("$avp(i:10)");
 		of internal processing error.
 		</para>
 		<example>
-		<title><function>use_next_gw</function> usage</title>
+		<title><function>next_routing</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (use_next_gw()) {
+if (next_routing()) {
 	t_relay();
 	exit;
 }
@@ -1236,24 +1235,33 @@ if (use_next_gw()) {
 
 	<section>
 		<title>
+		<function moreinfo="none">use_next_gw()</function>
+		</title>
+		<para>
+			Same as next_routing().
+		</para>
+	</section>
+	<section>
+		<title>
 		<function moreinfo="none">goes_to_gw([type])</function>
 		</title>
 		<para>
-		Function returns true if the destination of the current request 
+		Function returns true if the destination of the current request
 		(destination URI or Request URI) points (as IP) to one of the gateways.
-		There no DNS lookups done if the domain part of the URI is not an IP.
+		There is no DNS lookups done if the domain part of the URI is not an IP.
 		</para>
 		<para>
 		This function does not change anything in the message.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and
+			ONREPLY_ROUTE.
 		</para>
 		<para>
-			The function can take one optional parameter:
+			The function can take two optional parameters:
 			<itemizedlist>
 				<listitem>
-					<emphasis>type</emphasis> (optional) - GW/destination 
+					<emphasis>type</emphasis> - GW/destination
 					type to be checked
 				</listitem>
 			</itemizedlist>
@@ -1271,53 +1279,17 @@ if (goes_to_gw("1")) {
 		</example>
 	</section>
 
-
 	<section>
 		<title>
-		<function moreinfo="none">is_from_gw([type])</function>
+		<function moreinfo="none">is_from_gw([ type, [flag] ])</function>
 		</title>
 		<para>
 		The function checks if the sender of the message is a gateway
-		from a certain group.
+		from a group in drouting rules.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and 
-		ONREPLY_ROUTE
-		</para>
-		<para>
-			The function can take one optional parameter:
-			<itemizedlist>
-				<listitem>
-					<emphasis>type</emphasis> (optional) - GW/destination type
-					to be checked
-				</listitem>
-				<listitem>
-					<emphasis>flags</emphasis> - if message is a request and
-					the GW has a STRIP defined, then apply it if GW is source.
-				</listitem>
-			</itemizedlist>
-		</para>
-		<example>
-		<title><function>is_from_gw</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (is_from_gw("1") {
-}
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">is_from_gw( type, [flag])</function>
-		</title>
-		<para>
-		The function checks if the sender of the message is a gateway
-		from a certain group.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and
+			ONREPLY_ROUTE.
 		</para>
 		<para>
 			The function can take two parameters:
@@ -1327,8 +1299,8 @@ if (is_from_gw("1") {
 					type to be checked
 				</listitem>
 				<listitem>
-					<emphasis>flags</emphasis> (optional) - if message is a 
-					request and the GW has a STRIP defined, then apply it 
+					<emphasis>flags</emphasis> (optional) - if message is a
+					request and the GW has a STRIP defined, then apply it
 					if GW is source.
 				</listitem>
 			</itemizedlist>
@@ -1336,6 +1308,9 @@ if (is_from_gw("1") {
 		<example>
 		<title><function>is_from_gw</function> usage</title>
 		<programlisting format="linespecific">
+...
+if (is_from_gw("1") {
+}
 ...
 if (is_from_gw("3","1") {
 }

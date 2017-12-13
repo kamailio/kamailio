@@ -153,6 +153,7 @@
         <name>reason</name>
         <type>string</type>
         <size>&user_len;</size>
+        <null/>
         <description>Reason</description>
     </column>
 

@@ -30,6 +30,7 @@
 #include "ul_db_del.h"
 #include "ul_db_query.h"
 #include "ul_check.h"
+#include "config.h"
 #include <unistd.h>
 
 ul_db_handle_t dbh_tmp;
@@ -163,7 +164,7 @@ int db_handle_error(ul_db_handle_t * handle, int no) {
 		return -1;
 	}
 
-	if (db->errors < db_error_threshold) {
+	if (db->errors < cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold)) {
 		if (sprintf(query, "UPDATE %.*s "
 						"SET %.*s=%.*s+1 "
 						"WHERE %.*s=%i "
@@ -199,8 +200,8 @@ int db_handle_error(ul_db_handle_t * handle, int no) {
 	refresh_handle(handle, &dbh_tmp, 0);
 	LM_ERR("error on id %i, db %i, "
 		    "errors occurred: %i, threshold: %i\n",
-		handle->id, db->no, db->errors, db_error_threshold);
-	if(db->errors >= db_error_threshold) {
+		handle->id, db->no, db->errors, cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold));
+	if(db->errors >= cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold)) {
 		LM_DBG("db_handle_error: now doing failover");
 		if((db_failover(&mdb.write.dbf, mdb.write.dbh, handle, no)) < 0) {
 			LM_ERR("error in doing failover.\n");

@@ -2082,7 +2082,7 @@ static int fix_rl(struct route_list* rt)
 {
 	int i;
 	int ret;
-	
+
 	for(i=0;i<rt->idx; i++){
 		if(rt->rlist[i]){
 			if ((ret=fix_actions(rt->rlist[i]))!=0){
@@ -2100,7 +2100,7 @@ static int fix_rl(struct route_list* rt)
 int fix_rls()
 {
 	int ret;
-	
+
 	if ((ret=fix_rl(&main_rt))!=0)
 		return ret;
 	if ((ret=fix_rl(&onreply_rt))!=0)
@@ -2122,7 +2122,7 @@ int fix_rls()
 static void print_rl(struct route_list* rt, char* name)
 {
 	int j;
-	
+
 	for(j=0; j<rt->entries; j++){
 		if (rt->rlist[j]==0){
 			if ((j==0) && (rt==&main_rt))
@@ -2139,6 +2139,7 @@ static void print_rl(struct route_list* rt, char* name)
 /* debug function, prints routing tables */
 void print_rls()
 {
+	if(!ksr_verbose_startup) return;
 	print_rl(&main_rt, "");
 	print_rl(&onreply_rt, "onreply");
 	print_rl(&failure_rt, "failure");

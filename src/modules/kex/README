@@ -55,17 +55,36 @@ Ovidiu Sas
 
         4. RPC Commands
 
-              4.1. core.arg
-              4.2. core.kill
-              4.3. core.pwd
-              4.4. core.uptime
-              4.5. version
-              4.6. system.listMethods
-              4.7. pkg.stats
-              4.8. stats.get_statistics
-              4.9. stats.reset_statistics
-              4.10. stats.clear_statistics
-              4.11. mod.stats module_name/all pkg/shm/all
+              4.1. core.aliases_list
+              4.2. core.arg
+              4.3. core.echo
+              4.4. core.flags
+              4.5. core.info
+              4.6. core.kill
+              4.7. core.printi
+              4.8. core.prints
+              4.9. core.ps
+              4.10. core.psx
+              4.11. core.pwd
+              4.12. core.shmem
+              4.13. core.sockets_list
+              4.14. core.tcp_info
+              4.15. core.tcp_list
+              4.16. core.tcp_options
+              4.17. core.udp4_raw_info
+              4.18. core.uptime
+              4.19. core.version
+              4.20. core.ppdefines
+              4.21. core.modules
+              4.22. pkg.stats
+              4.23. stats.get_statistics
+              4.24. stats.fetch
+              4.25. stats.reset_statistics
+              4.26. stats.clear_statistics
+              4.27. system.listMethods
+              4.28. system.methodHelp
+              4.29. system.methodSignature
+              4.30. mod.stats module_name/all pkg/shm/all
 
    List of Examples
 
@@ -112,23 +131,42 @@ Chapter 1. Admin Guide
 
    4. RPC Commands
 
-        4.1. core.arg
-        4.2. core.kill
-        4.3. core.pwd
-        4.4. core.uptime
-        4.5. version
-        4.6. system.listMethods
-        4.7. pkg.stats
-        4.8. stats.get_statistics
-        4.9. stats.reset_statistics
-        4.10. stats.clear_statistics
-        4.11. mod.stats module_name/all pkg/shm/all
+        4.1. core.aliases_list
+        4.2. core.arg
+        4.3. core.echo
+        4.4. core.flags
+        4.5. core.info
+        4.6. core.kill
+        4.7. core.printi
+        4.8. core.prints
+        4.9. core.ps
+        4.10. core.psx
+        4.11. core.pwd
+        4.12. core.shmem
+        4.13. core.sockets_list
+        4.14. core.tcp_info
+        4.15. core.tcp_list
+        4.16. core.tcp_options
+        4.17. core.udp4_raw_info
+        4.18. core.uptime
+        4.19. core.version
+        4.20. core.ppdefines
+        4.21. core.modules
+        4.22. pkg.stats
+        4.23. stats.get_statistics
+        4.24. stats.fetch
+        4.25. stats.reset_statistics
+        4.26. stats.clear_statistics
+        4.27. system.listMethods
+        4.28. system.methodHelp
+        4.29. system.methodSignature
+        4.30. mod.stats module_name/all pkg/shm/all
 
 1. Overview
 
    This module collects extensions from Kamailio core.
 
-   Kamailio Core CookBook is available at: http://kamailio.org/dokuwiki/
+   Kamailio Core Cookbook is available at: https://www.kamailio.org/wiki/
 
 2. Dependencies
 
@@ -391,19 +429,42 @@ resetdebug();
 
 4. RPC Commands
 
-   4.1. core.arg
-   4.2. core.kill
-   4.3. core.pwd
-   4.4. core.uptime
-   4.5. version
-   4.6. system.listMethods
-   4.7. pkg.stats
-   4.8. stats.get_statistics
-   4.9. stats.reset_statistics
-   4.10. stats.clear_statistics
-   4.11. mod.stats module_name/all pkg/shm/all
+   4.1. core.aliases_list
+   4.2. core.arg
+   4.3. core.echo
+   4.4. core.flags
+   4.5. core.info
+   4.6. core.kill
+   4.7. core.printi
+   4.8. core.prints
+   4.9. core.ps
+   4.10. core.psx
+   4.11. core.pwd
+   4.12. core.shmem
+   4.13. core.sockets_list
+   4.14. core.tcp_info
+   4.15. core.tcp_list
+   4.16. core.tcp_options
+   4.17. core.udp4_raw_info
+   4.18. core.uptime
+   4.19. core.version
+   4.20. core.ppdefines
+   4.21. core.modules
+   4.22. pkg.stats
+   4.23. stats.get_statistics
+   4.24. stats.fetch
+   4.25. stats.reset_statistics
+   4.26. stats.clear_statistics
+   4.27. system.listMethods
+   4.28. system.methodHelp
+   4.29. system.methodSignature
+   4.30. mod.stats module_name/all pkg/shm/all
 
-4.1.  core.arg
+4.1.  core.aliases_list
+
+   Returns the list of local SIP server host aliases.
+
+4.2.  core.arg
 
    Print command line arguments.
 
@@ -416,7 +477,20 @@ resetdebug();
 kamcmd core.arg
 ...
 
-4.2.  core.kill
+4.3.  core.echo
+
+   Returns back its parameters.
+
+4.4.  core.flags
+
+   Returns the compile flags.
+
+4.5.  core.info
+
+   Verbose info, including version number, compile flags, compiler,
+   repository, hash
+
+4.6.  core.kill
 
    Kill the application.
 
@@ -429,7 +503,23 @@ kamcmd core.arg
 kamcmd core.kill
 ...
 
-4.3.  core.pwd
+4.7.  core.printi
+
+   Returns the integers given as parameters.
+
+4.8.  core.prints
+
+   Returns the strings given as parameters.
+
+4.9.  core.ps
+
+   Returns the description of running processes.
+
+4.10.  core.psx
+
+   Returns the detailed description of running processes.
+
+4.11.  core.pwd
 
    Print working directory.
 
@@ -442,7 +532,34 @@ kamcmd core.kill
 kamcmd core.pwd
 ...
 
-4.4.  core.uptime
+4.12.  core.shmem
+
+   Returns shared memory info. It has an optional parameter that specifies
+   the measuring unit: b - bytes (default), k or kb, m or mb, g or gb.
+   Note: when using something different from bytes, the value is
+   truncated.
+
+4.13.  core.sockets_list
+
+   Returns the list of local SIP server listen sockets.
+
+4.14.  core.tcp_info
+
+   Returns TCP related info.
+
+4.15.  core.tcp_list
+
+   Returns TCP connections details.
+
+4.16.  core.tcp_options
+
+   Returns active TCP options.
+
+4.17.  core.udp4_raw_info
+
+   Returns udp4_raw mode related info.
+
+4.18.  core.uptime
 
    Print uptime.
 
@@ -455,7 +572,7 @@ kamcmd core.pwd
 kamcmd core.uptime
 ...
 
-4.5.  version
+4.19.  core.version
 
    Print version information.
 
@@ -468,20 +585,33 @@ kamcmd core.uptime
 kamcmd core.version
 ...
 
-4.6.  system.listMethods
+4.20.  core.ppdefines
 
-   Print list of available RPC commands.
+   List preprocessor defines enabled in config.
 
-   Name: system.listMethods
+   Name: core.ppdefines
 
    Parameters: none.
 
    RPC Command Format:
 ...
-kamcmd system.listMethods
+kamcmd core.ppdefines
 ...
 
-4.7.  pkg.stats
+4.21.  core.modules
+
+   List loaded modules in config.
+
+   Name: core.modules
+
+   Parameters: none.
+
+   RPC Command Format:
+...
+kamcmd core.modules
+...
+
+4.22.  pkg.stats
 
    Print private memory (pkg) usage statistics per process. It can take
    optinally a filter to print statistics only for a specific process or
@@ -499,7 +629,7 @@ kamcmd system.listMethods
                 kamcmd pkg.stats rank 1
                 kamcmd pkg.stats index 10
 
-4.8.  stats.get_statistics
+4.23.  stats.get_statistics
 
    Print the list of available internal statistics.
 
@@ -514,7 +644,27 @@ kamcmd system.listMethods
                 kamcmd stats.get_statistics unsupported_methods
                 kamcmd stats.get_statistics shmem: fwd_requests fwd_replies
 
-4.9.  stats.reset_statistics
+4.24.  stats.fetch
+
+   Print the list of available internal statistics with a more json
+   friendly output. Each printed statistic is a field in the output
+   structure: {"statsgroup.statsname" : "statsvalue"}. The value is
+   represented as string to accomodate large numbers.
+
+   Parameters: statsid - which statistics to be printed. If set to 'all'
+   then all statistics are printed; if set to 'statsgroup:' then all
+   statistics in the group are printed; if set to 'statsname' then the
+   statistics identified by the name is printed (can be also
+   'statsgroup.stastname' or 'statsgroup:statsname').
+
+   Examples:
+                kamcmd stats.fetch all
+                kamcmd stats.fetch core:
+                kamcmd stats.fetch unsupported_methods
+                kamcmd stats.fetch shmem.free_size
+                kamcmd stats.fetch shmem: fwd_requests fwd_replies
+
+4.25.  stats.reset_statistics
 
    Reset internal statistics.
 
@@ -526,7 +676,7 @@ kamcmd system.listMethods
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-4.10.  stats.clear_statistics
+4.26.  stats.clear_statistics
 
    Return statistics and reset their value in one command.
 
@@ -538,7 +688,28 @@ kamcmd system.listMethods
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-4.11.  mod.stats module_name/all pkg/shm/all
+4.27.  system.listMethods
+
+   Print list of available RPC commands.
+
+   Name: system.listMethods
+
+   Parameters: none.
+
+   RPC Command Format:
+...
+kamcmd system.listMethods
+...
+
+4.28.  system.methodHelp
+
+   Print the help string for given method.
+
+4.29.  system.methodSignature
+
+   Returns signature of given method.
+
+4.30.  mod.stats module_name/all pkg/shm/all
 
    Print private(pkg) or shared(shm) memory currently allocated a given
    module or by all modules.

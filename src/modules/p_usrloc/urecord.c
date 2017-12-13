@@ -38,6 +38,7 @@
 #include "../usrloc/ul_callback.h"
 
 #include "ul_db_layer.h"
+#include "config.h"
 
 
 /*! contact matching mode */
@@ -348,7 +349,7 @@ static inline void wb_timer(urecord_t* _r)
 				break;
 
 			case 2: /* update */
-				if (ul_db_update_as_insert)
+                if (cfg_get(p_usrloc,p_usrloc_cfg,db_update_as_insert))
 				    res = db_insert_ucontact(ptr);
                 else
                     res = db_update_ucontact(ptr);

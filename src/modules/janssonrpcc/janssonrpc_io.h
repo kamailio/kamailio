@@ -33,8 +33,8 @@
 #include "janssonrpc.h"
 
 /* event bases */
-struct event_base* global_ev_base;
-struct evdns_base* global_evdns_base;
+extern struct event_base* global_ev_base;
+extern struct evdns_base* global_evdns_base;
 
 typedef enum
 { CMD_CONNECT = 1000

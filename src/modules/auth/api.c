@@ -71,10 +71,10 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	strip_realm(realm);
 	ret = find_credentials(msg, realm, hftype, hdr);
 	if (ret < 0) {
-		LOG(L_ERR, "auth:pre_auth: Error while looking for credentials\n");
+		LM_ERR("Error while looking for credentials\n");
 		return ERROR;
 	} else if (ret > 0) {
-		DBG("auth:pre_auth: Credentials with realm '%.*s' not found\n",
+		LM_DBG("Credentials with realm '%.*s' not found\n",
 				realm->len, ZSW(realm->s));
 		return NO_CREDENTIALS;
 	}
@@ -83,12 +83,12 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	c = (auth_body_t*)((*hdr)->parsed);
 
 	/* digest headers are in c->digest */
-	DBG("auth: digest-algo: %.*s parsed value: %d\n",
+	LM_DBG("digest-algo: %.*s parsed value: %d\n",
 			c->digest.alg.alg_str.len, c->digest.alg.alg_str.s,
 			c->digest.alg.alg_parsed);
 
 	if (mark_authorized_cred(msg, *hdr) < 0) {
-		LOG(L_ERR, "auth:pre_auth: Error while marking parsed credentials\n");
+		LM_ERR("Error while marking parsed credentials\n");
 		return ERROR;
 	}
 
@@ -120,7 +120,7 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
 
 	/* Check credentials correctness here */
 	if (check_dig_cred(&auth->digest) != E_DIG_OK) {
-		LOG(L_ERR, "auth:pre_auth: Credentials are not filled properly\n");
+		LM_ERR("Credentials are not filled properly\n");
 		*auth_res = BAD_CREDENTIALS;
 		return 0;
 	}
@@ -137,7 +137,7 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
 			*auth_res = NONCE_REUSED;
 			return 0;
 		} else {
-			DBG("auth:pre_auth: Invalid nonce value received (ret %d)\n", ret);
+			LM_DBG("Invalid nonce value received (ret %d)\n", ret);
 			*auth_res = NOT_AUTHENTICATED;
 			return 0;
 		}
@@ -154,17 +154,17 @@ static int add_authinfo_resp_hdr(struct sip_msg *msg, char* next_nonce, int nonc
 {
 	str authinfo_hdr;
 	static const char authinfo_fmt[] = "Authentication-Info: "
-			"nextnonce=\"%.*s\", "
-			"qop=%.*s, "
-			"rspauth=\"%.*s\", "
-			"cnonce=\"%.*s\", "
-			"nc=%.*s\r\n";
+		"nextnonce=\"%.*s\", "
+		"qop=%.*s, "
+		"rspauth=\"%.*s\", "
+		"cnonce=\"%.*s\", "
+		"nc=%.*s\r\n";
 
 	authinfo_hdr.len = sizeof (authinfo_fmt) + nonce_len + qop.len + hash_hex_len + cnonce.len + nc.len - 20 /* format string parameters */ - 1 /* trailing \0 */;
 	authinfo_hdr.s = pkg_malloc(authinfo_hdr.len + 1);
 
 	if (!authinfo_hdr.s) {
-		LM_ERR("add_authinfo_resp_hdr: Error allocating %d bytes\n", authinfo_hdr.len);
+		LM_ERR("Error allocating %d bytes\n", authinfo_hdr.len);
 		goto error;
 	}
 	snprintf(authinfo_hdr.s, authinfo_hdr.len + 1, authinfo_fmt,
@@ -219,7 +219,7 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr, char* ha1)
 	else if (add_authinfo_hdr) {
 		if (unlikely(!ha1)) {
 			LM_ERR("add_authinfo_hdr is configured but the auth_* module "
-					"you are using does not provide the ha1 value to post_auth\n");
+				"you are using does not provide the ha1 value to post_auth\n");
 		}
 		else {
 			d = &c->digest;
@@ -241,18 +241,22 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr, char* ha1)
 			if (otn_enabled) {
 				cfg = get_auth_checks(msg);
 				nonce_len = sizeof(next_nonce);
-				if (unlikely(calc_new_nonce(next_nonce, &nonce_len, cfg, msg) != 0)) {
-					LM_ERR("auth: calc_nonce failed (len %d, needed %d). authinfo hdr is not added.\n",
+				if (unlikely(calc_new_nonce(next_nonce, &nonce_len,
+								cfg, msg) != 0)) {
+					LM_ERR("calc nonce failed (len %d, needed %d)."
+							" authinfo hdr is not added.\n",
 							(int) sizeof(next_nonce), nonce_len);
 				}
 				else {
-					add_authinfo_resp_hdr(msg, next_nonce, nonce_len, d->qop.qop_str, rspauth, d->cnonce, d->nc);
+					add_authinfo_resp_hdr(msg, next_nonce, nonce_len,
+							d->qop.qop_str, rspauth, d->cnonce, d->nc);
 				}
 			}
 			else
 #endif
-			/* use current nonce as next nonce */
-			add_authinfo_resp_hdr(msg, d->nonce.s, d->nonce.len, d->qop.qop_str, rspauth, d->cnonce, d->nc);
+				/* use current nonce as next nonce */
+				add_authinfo_resp_hdr(msg, d->nonce.s, d->nonce.len,
+						d->qop.qop_str, rspauth, d->cnonce, d->nc);
 		}
 	}
 
@@ -272,7 +276,7 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 	 * the same length as responses created by us
 	 */
 	if (cred->response.len != hash_hex_len) {
-		DBG("check_response: Receive response len != %d\n", hash_hex_len);
+		LM_DBG("Receive response len != %d\n", hash_hex_len);
 		return BAD_CREDENTIALS;
 	}
 
@@ -285,17 +289,17 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 			&(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
 			method, &(cred->uri), hent, resp);
 
-	DBG("check_response: Our result = \'%s\'\n", resp);
+	LM_DBG("Our result = \'%s\'\n", resp);
 
 	/*
 	 * And simply compare the strings, the user is
 	 * authorized if they match
 	 */
 	if (!memcmp(resp, cred->response.s, hash_hex_len)) {
-		DBG("check_response: Authorization is OK\n");
+		LM_DBG("Authorization is OK\n");
 		return AUTHENTICATED;
 	} else {
-		DBG("check_response: Authorization failed\n");
+		LM_DBG("Authorization failed\n");
 		return NOT_AUTHENTICATED;
 	}
 }
@@ -304,7 +308,7 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 int bind_auth_s(auth_api_s_t* api)
 {
 	if (!api) {
-		LOG(L_ERR, "bind_auth: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 

@@ -31,7 +31,7 @@
  * headers, such as Via. This allows SER to process such HTTP requests
  * and extract the body of the request, which contains the XML-RPC
  * document.
- */ 
+ */
 
 #include "http.h"
 #include "../../core/mem/mem.h"
@@ -64,7 +64,7 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 	via_cnt++;
 	vb = pkg_malloc(sizeof(struct via_body));
 	if (vb == 0){
-	        ERR("insert_fake_via: Out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		goto error;
 	}
 
@@ -76,9 +76,9 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 	memset(msg->h_via1, 0, sizeof(hdr_field_t));
 	memset(vb, 0, sizeof(struct via_body));
 
-	     /* FIXME: The code below would break if the VIA prefix
-	      * gets changed in config.h
-	      */
+	/* FIXME: The code below would break if the VIA prefix
+	 * gets changed in config.h
+	 */
 	msg->h_via1->name.s = via;
 	msg->h_via1->name.len = 3;
 	msg->h_via1->body.s = via + 5;
@@ -93,18 +93,18 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 	 */
 	vb->hdr.s = msg->headers->name.s;
 	vb->hdr.len = 0;
-	
+
 	msg->via1 = vb;
-	
-	     /* We have to replace the zero terminating character right behind
-	      * CRLF because otherwise the parser will return an error.
-	      * It expects that there is either a next header field or another
-	      * CRLF delimiter
-	      */
+
+	/* We have to replace the zero terminating character right behind
+	 * CRLF because otherwise the parser will return an error.
+	 * It expects that there is either a next header field or another
+	 * CRLF delimiter
+	 */
 	via[via_len] = 'a';
 	parse_via(via + 5, via + via_len + 1, vb);
 	if (vb->error == PARSE_ERROR){
-	        ERR("Bad via\n");
+		ERR("Bad via\n");
 		goto error;
 	}
 
@@ -118,7 +118,7 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 
 	return 0;
 
- error:
+error:
 	if (vb) {
 		free_via_list(vb);
 		pkg_free(vb);
@@ -132,7 +132,7 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 static int insert_via_lump(sip_msg_t* msg, char* via, int via_len)
 {
 	struct lump* anchor;
-	
+
 	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, HDR_VIA_T);
 	if (anchor == 0) {
 		ERR("Unable to create anchor\n");
@@ -144,12 +144,12 @@ static int insert_via_lump(sip_msg_t* msg, char* via, int via_len)
 		return -1;
 	}
 
-	return 0;	
+	return 0;
 }
 
 
 /** Create a fake Via header field.
- * 
+ *
  * This function creates a fake Via header field and inserts
  * the fake header field into the header of the HTTP request.
  * The fake Via header field contains the source IP address

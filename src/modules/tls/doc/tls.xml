@@ -275,6 +275,31 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 	<xi:include href="functions.xml"/>
 	<xi:include href="rpc.xml"/>
 	<xi:include href="history.xml"/>
+
+	<section id="tls.event_routes">
+		<title>Event Routes</title>
+		<section id="tls.evrt.connection_out">
+		<title>event_route[tls:connection-out]</title>
+		<para>
+			Event route to be executed when a TLS connection is opened by
+			&kamailio;. If drop() is executed in the event route, then the
+			data is no longer sent over the connection.
+		</para>
+	<example>
+	    <title>Use of <varname>event_route[tls:connection-out]</varname></title>
+	    <programlisting>
+...
+event_route[tls:connection-out] {
+  if($sndto(ip)=="1.2.3.4") {
+    drop;
+  }
+}
+...
+	    </programlisting>
+	</example>
+
+		</section>
+	</section>
 	</chapter>
 </book>
 

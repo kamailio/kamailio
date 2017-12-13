@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,13 +15,6 @@
  */
 /* 
  * sctp one to many 
- */
-/*
- * History:
- * --------
- *  2008-08-07  initial version (andrei)
- *  2009-02-27  blacklist support (andrei)
- *  2009-04-28  sctp stats & events macros (andrei)
  */
 
 /*!

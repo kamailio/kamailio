@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005-2009 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,9 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * History:
- * ---------
- *  2005-02-27  ported to 0.9.0 (bogdan)
  */
 
 
@@ -40,14 +35,15 @@
 */
 
 #ifndef USE_YWEEK_U
-# ifndef USE_YWEEK_V
-#  ifndef USE_YWEEK_W
-#   define USE_YWEEK_W
-#  endif
-# endif
+#ifndef USE_YWEEK_V
+#ifndef USE_YWEEK_W
+#define USE_YWEEK_W
+#endif
+#endif
 #endif
 
-#define is_leap_year(yyyy) ((((yyyy)%400))?(((yyyy)%100)?(((yyyy)%4)?0:1):0):1)
+#define is_leap_year(yyyy) \
+	((((yyyy) % 400)) ? (((yyyy) % 100) ? (((yyyy) % 4) ? 0 : 1) : 0) : 1)
 
 
 typedef struct _ac_maxval
@@ -78,24 +74,22 @@ int ac_tm_set_time(ac_tm_p, time_t);
 int ac_tm_reset(ac_tm_p);
 int ac_tm_free(ac_tm_p);
 
-int ac_get_mweek(struct tm*);
-int ac_get_yweek(struct tm*);
+int ac_get_mweek(struct tm *);
+int ac_get_yweek(struct tm *);
 ac_maxval_p ac_get_maxval(ac_tm_p);
 int ac_get_wkst();
 
 int ac_print(ac_tm_p);
 
 
-
-
 /************************ imported from "tmrec.h"  ***************************/
 
 
-#define FREQ_NOFREQ  0
-#define FREQ_YEARLY  1
+#define FREQ_NOFREQ 0
+#define FREQ_YEARLY 1
 #define FREQ_MONTHLY 2
-#define FREQ_WEEKLY  3
-#define FREQ_DAILY   4
+#define FREQ_WEEKLY 3
+#define FREQ_DAILY 4
 
 #define WDAY_SU 0
 #define WDAY_MO 1
@@ -106,8 +100,8 @@ int ac_print(ac_tm_p);
 #define WDAY_SA 6
 #define WDAY_NU 7
 
-#define TSW_TSET	1
-#define TSW_RSET	2
+#define TSW_TSET 1
+#define TSW_RSET 2
 
 typedef struct _tr_byxxx
 {
@@ -146,29 +140,28 @@ int tr_byxxx_free(tr_byxxx_p);
 tmrec_p tmrec_new();
 int tmrec_free(tmrec_p);
 
-int tr_parse_dtstart(tmrec_p, char*);
-int tr_parse_dtend(tmrec_p, char*);
-int tr_parse_duration(tmrec_p, char*);
-int tr_parse_until(tmrec_p, char*);
-int tr_parse_freq(tmrec_p, char*);
-int tr_parse_interval(tmrec_p, char*);
-int tr_parse_byday(tmrec_p, char*);
-int tr_parse_bymday(tmrec_p, char*);
-int tr_parse_byyday(tmrec_p, char*);
-int tr_parse_bymonth(tmrec_p, char*);
-int tr_parse_byweekno(tmrec_p, char*);
-int tr_parse_wkst(tmrec_p, char*);
+int tr_parse_dtstart(tmrec_p, char *);
+int tr_parse_dtend(tmrec_p, char *);
+int tr_parse_duration(tmrec_p, char *);
+int tr_parse_until(tmrec_p, char *);
+int tr_parse_freq(tmrec_p, char *);
+int tr_parse_interval(tmrec_p, char *);
+int tr_parse_byday(tmrec_p, char *);
+int tr_parse_bymday(tmrec_p, char *);
+int tr_parse_byyday(tmrec_p, char *);
+int tr_parse_bymonth(tmrec_p, char *);
+int tr_parse_byweekno(tmrec_p, char *);
+int tr_parse_wkst(tmrec_p, char *);
 
 int tr_print(tmrec_p);
-time_t ic_parse_datetime(char*,struct tm*);
-time_t ic_parse_duration(char*);
+time_t ic_parse_datetime(char *, struct tm *);
+time_t ic_parse_duration(char *);
 
-tr_byxxx_p ic_parse_byday(char*);
-tr_byxxx_p ic_parse_byxxx(char*);
-int ic_parse_wkst(char*);
+tr_byxxx_p ic_parse_byday(char *);
+tr_byxxx_p ic_parse_byxxx(char *);
+int ic_parse_wkst(char *);
 
 int check_tmrec(tmrec_p, ac_tm_p, tr_res_p);
 
 
 #endif
-

@@ -182,7 +182,20 @@ int flat_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
 			break;
 
 		case DB1_STR:
-			fprintf(f, "%.*s", VAL_STR(v + i).len, VAL_STR(v + i).s);
+			if (!encode_delimiter) {
+				fprintf(f, "%.*s", VAL_STR(v + i).len, VAL_STR(v + i).s);
+			} else {
+				s = VAL_STR(v + i).s;
+				l = VAL_STR(v + i).len;
+				while (l--) {
+					if (*s == *flat_delimiter.s) {
+						fprintf(f, "%%%02X", (*s & 0xff) );
+					} else {
+						fprintf(f, "%c", *s);
+					}
+					++s;
+				}
+			}
 			break;
 
 		case DB1_DATETIME:

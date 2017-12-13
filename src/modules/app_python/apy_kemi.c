@@ -30,12 +30,43 @@
 #include "../../core/kemi.h"
 #include "../../core/pvar.h"
 #include "../../core/mem/pkg.h"
+#include "../../core/mem/shm.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 #include "msgobj_struct.h"
 #include "python_exec.h"
 #include "apy_kemi_export.h"
 #include "apy_kemi.h"
 
+static int *_sr_python_reload_version = NULL;
+static int _sr_python_local_version = 0;
+extern str _sr_python_load_file;
+extern int _apy_process_rank;
+
+/**
+ * 
+ */
+
+int apy_reload_script(void)
+{
+	if(_sr_python_reload_version == NULL) {
+		return 0;
+	}
+	if(*_sr_python_reload_version == _sr_python_local_version) {
+		return 0;
+	}
+	if(apy_load_script()<0) {
+		LM_ERR("failed to load script file\n");
+		return -1;
+	}
+	if(apy_init_script(_apy_process_rank)<0) {
+		LM_ERR("failed to init script\n");
+		return -1;
+	}
+	_sr_python_local_version = *_sr_python_reload_version;
+	return 0;
+}
 /**
  *
  */
@@ -350,12 +381,61 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 		}
 	} else if(ket->ptypes[5]==SR_KEMIP_NONE) {
 		i = 5;
-		LM_ERR("not implemented yet\n");
-		return sr_kemi_apy_return_false();
+		if(ket->ptypes[0]==SR_KEMIP_STR
+				|| ket->ptypes[1]==SR_KEMIP_STR
+				|| ket->ptypes[2]==SR_KEMIP_STR
+				|| ket->ptypes[3]==SR_KEMIP_STR
+				|| ket->ptypes[4]==SR_KEMIP_STR) {
+			if(!PyArg_ParseTuple(args, "sssss:kemi-param-sssss",
+						&vps[0].s.s, &vps[1].s.s, &vps[2].s.s, &vps[3].s.s,
+						&vps[4].s.s)) {
+				LM_ERR("unable to retrieve str-str-str-str params %d\n", i);
+				return sr_kemi_apy_return_false();
+			}
+			vps[0].s.len = strlen(vps[0].s.s);
+			vps[1].s.len = strlen(vps[1].s.s);
+			vps[2].s.len = strlen(vps[2].s.s);
+			vps[3].s.len = strlen(vps[3].s.s);
+			vps[4].s.len = strlen(vps[4].s.s);
+			LM_DBG("params[%d] for: %.*s are str: [%.*s] [%.*s]"
+					" [%.*s] [%.*s] [%.*s]\n", i,
+				fname.len, fname.s, vps[0].s.len, vps[0].s.s,
+				vps[1].s.len, vps[1].s.s, vps[2].s.len, vps[2].s.s,
+				vps[3].s.len, vps[3].s.s, vps[4].s.len, vps[4].s.s);
+		} else {
+			LM_ERR("not implemented yet\n");
+			return sr_kemi_apy_return_false();
+		}
 	} else {
 		i = 6;
-		LM_ERR("not implemented yet\n");
-		return sr_kemi_apy_return_false();
+		if(ket->ptypes[0]==SR_KEMIP_STR
+				|| ket->ptypes[1]==SR_KEMIP_STR
+				|| ket->ptypes[2]==SR_KEMIP_STR
+				|| ket->ptypes[3]==SR_KEMIP_STR
+				|| ket->ptypes[4]==SR_KEMIP_STR
+				|| ket->ptypes[5]==SR_KEMIP_STR) {
+			if(!PyArg_ParseTuple(args, "ssssss:kemi-param-ssssss",
+						&vps[0].s.s, &vps[1].s.s, &vps[2].s.s, &vps[3].s.s,
+						&vps[4].s.s, &vps[5].s.s)) {
+				LM_ERR("unable to retrieve str-str-str-str params %d\n", i);
+				return sr_kemi_apy_return_false();
+			}
+			vps[0].s.len = strlen(vps[0].s.s);
+			vps[1].s.len = strlen(vps[1].s.s);
+			vps[2].s.len = strlen(vps[2].s.s);
+			vps[3].s.len = strlen(vps[3].s.s);
+			vps[4].s.len = strlen(vps[4].s.s);
+			vps[5].s.len = strlen(vps[5].s.s);
+			LM_DBG("params[%d] for: %.*s are str: [%.*s] [%.*s]"
+					" [%.*s] [%.*s] [%.*s] [%.*s]\n", i,
+				fname.len, fname.s, vps[0].s.len, vps[0].s.s,
+				vps[1].s.len, vps[1].s.s, vps[2].s.len, vps[2].s.s,
+				vps[3].s.len, vps[3].s.s, vps[4].s.len, vps[4].s.s,
+				vps[5].s.len, vps[5].s.s);
+		} else {
+			LM_ERR("not implemented yet\n");
+			return sr_kemi_apy_return_false();
+		}
 	}
 
 	switch(i) {
@@ -1036,4 +1116,137 @@ void sr_apy_destroy_ksr(void)
 	}
 
 	LM_DBG("module 'KSR' has been destroyed\n");
+}
+
+/**
+ *
+ */
+int apy_sr_init_mod(void)
+{
+	if(_sr_python_reload_version == NULL) {
+		_sr_python_reload_version = (int*)shm_malloc(sizeof(int));
+		if(_sr_python_reload_version == NULL) {
+			LM_ERR("failed to allocated reload version\n");
+			return -1;
+		}
+		*_sr_python_reload_version = 0;
+	}
+
+	return 0;
+}
+
+static const char* app_python_rpc_reload_doc[2] = {
+	"Reload python file",
+	0
+};
+
+
+static void app_python_rpc_reload(rpc_t* rpc, void* ctx)
+{
+	int v;
+	void *vh;
+
+	if(_sr_python_load_file.s == NULL && _sr_python_load_file.len<=0) {
+		LM_WARN("script file path not provided\n");
+		rpc->fault(ctx, 500, "No script file");
+		return;
+	}
+	if(_sr_python_reload_version == NULL) {
+		LM_WARN("reload not enabled\n");
+		rpc->fault(ctx, 500, "Reload not enabled");
+		return;
+	}
+
+	v = *_sr_python_reload_version;
+	LM_INFO("marking for reload js script file: %.*s (%d => %d)\n",
+				_sr_python_load_file.len, _sr_python_load_file.s,
+				_sr_python_local_version, v);
+	*_sr_python_reload_version += 1;
+
+	if(apy_reload_script()<0) {
+		rpc->fault(ctx, 500, "Reload failed");
+		return;	
+	}
+
+	if (rpc->add(ctx, "{", &vh) < 0) {
+		rpc->fault(ctx, 500, "Server error");
+		return;
+	}
+	rpc->struct_add(vh, "dd",
+			"old", v,
+			"new", *_sr_python_reload_version);
+
+	return;
+}
+
+static const char* app_python_rpc_api_list_doc[2] = {
+	"List kemi exports to javascript",
+	0
+};
+
+static void app_python_rpc_api_list(rpc_t* rpc, void* ctx)
+{
+	int i;
+	int n;
+	sr_kemi_t *ket;
+	void* th;
+	void* sh;
+	void* ih;
+
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+	n = 0;
+	for(i=0; i<SR_APY_KSR_METHODS_SIZE ; i++) {
+		ket = sr_apy_kemi_export_get(i);
+		if(ket==NULL) continue;
+		n++;
+	}
+
+	if(rpc->struct_add(th, "d[",
+				"msize", n,
+				"methods",  &ih)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error array structure");
+		return;
+	}
+	for(i=0; i<SR_APY_KSR_METHODS_SIZE; i++) {
+		ket = sr_apy_kemi_export_get(i);
+		if(ket==NULL) continue;
+		if(rpc->struct_add(ih, "{", "func", &sh)<0) {
+			rpc->fault(ctx, 500, "Internal error internal structure");
+			return;
+		}
+		if(rpc->struct_add(sh, "SSSS",
+				"ret", sr_kemi_param_map_get_name(ket->rtype),
+				"module", &ket->mname,
+				"name", &ket->fname,
+				"params", sr_kemi_param_map_get_params(ket->ptypes))<0) {
+			LM_ERR("failed to add the structure with attributes (%d)\n", i);
+			rpc->fault(ctx, 500, "Internal error creating dest struct");
+			return;
+		}
+	}
+}
+
+rpc_export_t app_python_rpc_cmds[] = {
+	{"app_python.reload", app_python_rpc_reload,
+		app_python_rpc_reload_doc, 0},
+	{"app_python.api_list", app_python_rpc_api_list,
+		app_python_rpc_api_list_doc, 0},
+	{0, 0, 0, 0}
+};
+
+/**
+ * register RPC commands
+ */
+int app_python_init_rpc(void)
+{
+	if (rpc_register_array(app_python_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }

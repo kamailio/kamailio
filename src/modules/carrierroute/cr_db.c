@@ -265,6 +265,7 @@ int load_user_carrier(str * user, str * domain) {
  */
 int load_route_data_db(struct route_data_t * rd) {
 	db1_res_t * res = NULL;
+	db1_res_t * prob_res = NULL;
 	db_row_t * row = NULL;
 	int i, ret;
 	struct carrier_data_t * tmp_carrier_data;
@@ -280,15 +281,17 @@ int load_route_data_db(struct route_data_t * rd) {
 		return -1;
 	}
 
-	if((rd->carrier_num = load_carrier_map(rd)) <= 0){
+	if((ret = load_carrier_map(rd)) <= 0){
 		LM_ERR("error while retrieving carriers\n");
 		goto errout;
 	}
+	rd->carrier_num = (size_t)ret;
 
-	if((rd->domain_num = load_domain_map(rd)) <= 0){
+	if((ret = load_domain_map(rd)) <= 0){
 		LM_ERR("error while retrieving domains\n");
 		goto errout;
 	}
+	rd->domain_num = (size_t)ret;
 
 	if ((rd->carriers = shm_malloc(sizeof(struct carrier_data_t *) * rd->carrier_num)) == NULL) {
 		SHM_MEM_ERROR;
@@ -350,6 +353,7 @@ int load_route_data_db(struct route_data_t * rd) {
 		}
 	}
 	int n = 0;
+	boolean query_done = false;
 	do {
 		LM_DBG("loading, cycle %d", n++);
 		for (i = 0; i < RES_ROW_N(res); ++i) {
@@ -394,6 +398,35 @@ int load_route_data_db(struct route_data_t * rd) {
 					p_tmp_comment) == -1) {
 				goto errout;
 			}
+			if (row->values[COL_PROB].val.double_val == 0 && !query_done) {
+				int ret_tmp;
+				char query_tmp[QUERY_LEN];
+				str query_tmp_str;
+
+				memset(query_tmp, 0, QUERY_LEN);
+				ret_tmp = snprintf(query_tmp, QUERY_LEN, "SELECT * FROM %.*s WHERE %.*s=%d and %.*s=%d and %.*s>%d",
+						carrierroute_table.len, carrierroute_table.s, columns[COL_CARRIER]->len, columns[COL_CARRIER]->s, row->values[COL_CARRIER].val.int_val,
+						columns[COL_DOMAIN]->len, columns[COL_DOMAIN]->s, row->values[COL_DOMAIN].val.int_val, columns[COL_PROB]->len, columns[COL_PROB]->s, 0);
+
+				if (ret_tmp < 0) {
+					LM_ERR("error in snprintf while querying prob column");
+					goto errout;
+				}
+				query_tmp_str.s = query_tmp;
+				query_tmp_str.len = ret_tmp;
+
+				if (carrierroute_dbf.raw_query(carrierroute_dbh, &query_tmp_str, &prob_res) < 0) {
+					LM_ERR("Failed to query carrierroute db table based on prob column.\n");
+					goto errout;
+				}
+				if(RES_ROW_N(prob_res) == 0) {
+					LM_ERR("Carrierroute db table contains route(s) with only 0 probability.\n");
+					query_done = true;
+				}
+				carrierroute_dbf.free_result(carrierroute_dbh, prob_res);
+				prob_res = NULL;
+			}
+
 		}
 		if (DB_CAPABILITY(carrierroute_dbf, DB_CAP_FETCH)) {
 			if(carrierroute_dbf.fetch_result(carrierroute_dbh, &res,  cfg_get(carrierroute, carrierroute_cfg, fetch_rows)) < 0) {
@@ -459,6 +492,9 @@ int load_route_data_db(struct route_data_t * rd) {
 errout:
 	if (res) {
 		carrierroute_dbf.free_result(carrierroute_dbh, res);
+	}
+	if (prob_res) {
+		carrierroute_dbf.free_result(carrierroute_dbh, prob_res);
 	}
 	return -1;
 }

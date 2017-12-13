@@ -94,14 +94,15 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 
 	enum {DBT_FLINE_ST, DBT_NLINE_ST, DBT_DATA_ST} state;
 
-	LM_DBG("request for table [%.*s]\n", tbn->len, tbn->s);
-
 	if(!tbn || !tbn->s || tbn->len<=0 || tbn->len>=255)
 		return NULL;
+
+	LM_DBG("request for table [%.*s] (len: %d)\n", tbn->len, tbn->s, tbn->len);
+
 	path[0] = 0;
 	if(dbn && dbn->s && dbn->len>0)
 	{
-		LM_DBG("db is [%.*s]\n", dbn->len, dbn->s);
+		LM_DBG("db is [%.*s] (len: %d)\n", dbn->len, dbn->s, dbn->len);
 		if(dbn->len+tbn->len<511)
 		{
 			strncpy(path, dbn->s, dbn->len);
@@ -118,8 +119,10 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 
 	LM_DBG("loading file [%s]\n", path);
 	fin = fopen(path, "rt");
-	if(!fin)
+	if(!fin) {
+		LM_ERR("failed to open file [%s]\n", path);
 		return NULL;
+	}
 
 	buf = pkg_malloc(_db_text_read_buffer_size);
 	if(!buf) {

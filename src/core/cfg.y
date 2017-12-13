@@ -430,6 +430,7 @@ extern char *default_routename;
 %token TCP_OPT_KEEPCNT
 %token TCP_OPT_CRLF_PING
 %token TCP_OPT_ACCEPT_NO_CL
+%token TCP_OPT_ACCEPT_HEP3
 %token TCP_CLONE_RCVBUF
 %token TCP_REUSE_PORT
 %token DISABLE_TLS
@@ -474,8 +475,11 @@ extern char *default_routename;
 %token MAX_WLOOPS
 %token PVBUFSIZE
 %token PVBUFSLOTS
+%token PVCACHELIMIT
+%token PVCACHEACTION
 %token HTTP_REPLY_PARSE
 %token VERSION_TABLE_CFG
+%token VERBOSE_STARTUP
 %token CFG_DESCRIPTION
 %token SERVER_ID
 %token MAX_RECURSIVE_LEVEL
@@ -1201,6 +1205,15 @@ assign_stm:
 		#endif
 	}
 	| TCP_OPT_ACCEPT_NO_CL EQUAL error { yyerror("boolean value expected"); }
+	| TCP_OPT_ACCEPT_HEP3 EQUAL NUMBER {
+		#ifdef USE_TCP
+			ksr_tcp_accept_hep3=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_ACCEPT_HEP3 EQUAL error { yyerror("boolean value expected"); }
+
 	| TCP_CLONE_RCVBUF EQUAL NUMBER {
 		#ifdef USE_TCP
 			tcp_set_clone_rcvbuf($3);
@@ -1545,9 +1558,16 @@ assign_stm:
 	| PVBUFSIZE EQUAL error { yyerror("number expected"); }
 	| PVBUFSLOTS EQUAL NUMBER { pv_set_buffer_slots($3); }
 	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
+	| PVCACHELIMIT EQUAL NUMBER { default_core_cfg.pv_cache_limit=$3; }
+	| PVCACHELIMIT EQUAL error { yyerror("number expected"); }
+	| PVCACHEACTION EQUAL NUMBER { default_core_cfg.pv_cache_action=$3; }
+	| PVCACHEACTION EQUAL error { yyerror("number expected"); }
 	| HTTP_REPLY_PARSE EQUAL NUMBER { http_reply_parse=$3; }
 	| HTTP_REPLY_PARSE EQUAL error { yyerror("boolean value expected"); }
+	| VERBOSE_STARTUP EQUAL NUMBER { ksr_verbose_startup=$3; }
+	| VERBOSE_STARTUP EQUAL error { yyerror("boolean value expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
+	| SERVER_ID EQUAL error  { yyerror("number  expected"); }
     | MAX_RECURSIVE_LEVEL EQUAL NUMBER { set_max_recursive_level($3); }
     | MAX_BRANCHES_PARAM EQUAL NUMBER { sr_dst_max_branches = $3; }
     | LATENCY_LOG EQUAL intno { default_core_cfg.latency_log=$3; }
@@ -2389,7 +2409,7 @@ single_case:
 		}
 	}
 	| DEFAULT COLON actions {
-		if ((($$=mk_case_stm(0, 0, $3, &i_tmp))==0) && (i_tmp=-10)){
+		if ((($$=mk_case_stm(0, 0, $3, &i_tmp))==0) && (i_tmp==-10)){
 				YYABORT;
 		}
 	}

@@ -40,27 +40,29 @@
 #include "../../lib/srdb2/db_fld.h"
 #include <libpq-fe.h>
 
-struct pg_fld {
+struct pg_fld
+{
 	db_drv_t gen;
 
-	char* name;
+	char *name;
 	/**
 	 * A union of varius data types from db_fld, postgres expects binary
 	 * data in network byte order so we use these variables as temporary
 	 * buffer to store values after the conversion.
 	 */
-	union {
-		int          int4[2]; /**< Integer value in network byte order */
-		short        int2[4];
-		float        flt;     /**< Float value in network byte order */
-		double       dbl;     /**< Double value in network byte order */
-		time_t       time;    /**< Unix timestamp in network byte order */
-		unsigned int bitmap;  /**< Bitmap value in network byte order */ 
-		long long    int8;    /**< 8-byte integer value in network byte order */
-		char         byte[8];
+	union
+	{
+		int int4[2]; /**< Integer value in network byte order */
+		short int2[4];
+		float flt;			 /**< Float value in network byte order */
+		double dbl;			 /**< Double value in network byte order */
+		time_t time;		 /**< Unix timestamp in network byte order */
+		unsigned int bitmap; /**< Bitmap value in network byte order */
+		long long int8;		 /**< 8-byte integer value in network byte order */
+		char byte[8];
 	} v;
 	char buf[INT2STR_MAX_LEN]; /**< Buffer for int2str conversions */
-	Oid oid;                   /**< Type of the field on the server */
+	Oid oid;				   /**< Type of the field on the server */
 };
 
 
@@ -71,12 +73,12 @@ struct pg_fld {
  * @param table Name of the table on the server.
  * @return 0 on success, negative number on error.
  */
-int pg_fld(db_fld_t* fld, char* table);
+int pg_fld(db_fld_t *fld, char *table);
 
-int pg_resolve_param_oids(db_fld_t* vals, db_fld_t* match, 
-						  int n1, int n2, PGresult* res);
+int pg_resolve_param_oids(
+		db_fld_t *vals, db_fld_t *match, int n1, int n2, PGresult *res);
 
-int pg_resolve_result_oids(db_fld_t* fld, int n, PGresult* res);
+int pg_resolve_result_oids(db_fld_t *fld, int n, PGresult *res);
 
 
 /** Converts arrays of db_fld fields to PostgreSQL parameters.
@@ -94,8 +96,8 @@ int pg_resolve_result_oids(db_fld_t* fld, int n, PGresult* res);
  * @todo Support for DB_NONE in pg_pg2fld and pg_check_pg2fld
  * @todo local->UTC conversion (also check the SQL command in ser-oob)
  */
-int pg_fld2pg(struct pg_params* dst, int off, pg_type_t* types, 
-			  db_fld_t* src, unsigned int flags);
+int pg_fld2pg(struct pg_params *dst, int off, pg_type_t *types, db_fld_t *src,
+		unsigned int flags);
 
 
 /** Converts fields from result in PGresult format into SER format.
@@ -112,8 +114,8 @@ int pg_fld2pg(struct pg_params* dst, int off, pg_type_t* types,
  * @retval A negative number on error.
  * @todo UTC->local conversion
  */
-int pg_pg2fld(db_fld_t* dst, PGresult* src, int row, pg_type_t* types, 
-			  unsigned int flags);
+int pg_pg2fld(db_fld_t *dst, PGresult *src, int row, pg_type_t *types,
+		unsigned int flags);
 
 
 /** Checks if all db_fld fields have types compatible with corresponding field 
@@ -125,7 +127,7 @@ int pg_pg2fld(db_fld_t* dst, PGresult* src, int row, pg_type_t* types,
  * @retval 0 on success
  * @retval A negative number on error.
  */
-int pg_check_fld2pg(db_fld_t* fld, pg_type_t* types);
+int pg_check_fld2pg(db_fld_t *fld, pg_type_t *types);
 
 /** Checks if all db_fld fields have types compatible with corresponding field 
  * types on the server.
@@ -136,7 +138,7 @@ int pg_check_fld2pg(db_fld_t* fld, pg_type_t* types);
  * @retval 0 on success
  * @retval A negative number on error.
  */
-int pg_check_pg2fld(db_fld_t* fld, pg_type_t* types);
+int pg_check_pg2fld(db_fld_t *fld, pg_type_t *types);
 
 
 #endif /* _PG_FLD_H */

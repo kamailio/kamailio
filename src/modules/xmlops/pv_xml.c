@@ -331,7 +331,6 @@ int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
 		default:
 			return pv_get_null(msg, param, res);
 	}
-	return pv_get_null(msg, param, res);
 }
 
 int pv_set_xml(struct sip_msg* msg, pv_param_t *param,

@@ -344,7 +344,7 @@ static int mod_child(int rank)
 	if (rank!=PROC_RPC || !rpc_handler){
 		/* close all the opened fds, we don't need them here */
 		for (cs=ctrl_sock_lst; cs; cs=cs->next){
-			close(cs->fd);
+			if(cs->fd>=0) close(cs->fd);
 			cs->fd=-1;
 			if (cs->write_fd!=-1){
 				close(cs->write_fd);
@@ -376,7 +376,7 @@ static void mod_destroy(void)
 		switch(cs->transport){
 			case UNIXS_SOCK:
 			case UNIXD_SOCK:
-				close(cs->fd);
+				if(cs->fd>=0) close(cs->fd);
 				cs->fd=-1;
 				if (cs->write_fd!=-1){
 					close(cs->write_fd);
@@ -396,7 +396,7 @@ static void mod_destroy(void)
 				break;
 #endif
 			default:
-				close(cs->fd);
+				if(cs->fd>=0) close(cs->fd);
 				cs->fd=-1;
 				if (cs->write_fd!=-1){
 					close(cs->write_fd);

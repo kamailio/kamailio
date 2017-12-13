@@ -29,14 +29,14 @@
 		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded along this module:
-			<itemizedlist>
-			<listitem>
-			<para>
-				<emphasis>various</emphasis> - for getting access
-				to the statistics exported by these modules.
-			</para>
-			</listitem>
-			</itemizedlist>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>various</emphasis> - (optional, e.g., sl, tm, usrloc)
+			for getting access to the statistics exported by these modules.
+		</para>
+		</listitem>
+		</itemizedlist>
 		</para>
 	</section>
 	<section>
@@ -60,7 +60,7 @@
 	<section id="statsc.p.interval">
 		<title><varname>interval</varname> (int)</title>
 		<para>
-			Timer interval when to record the value for statistics. 
+			Timer interval when to record the value for statistics.
 		</para>
 		<para>
 		<emphasis>
@@ -79,7 +79,7 @@ modparam("statsc", "interval", 300)
 	<section id="statsc.p.items">
 		<title><varname>items</varname> (int)</title>
 		<para>
-			How many items to store for each statistic. 
+			How many items to store for each statistic.
 		</para>
 		<para>
 		<emphasis>
@@ -149,9 +149,9 @@ modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies"
 
 	<section>
 	<title>RPC Commands</title>
-	<section id="statsc.rpc.exec">
+	<section id="statsc.rpc.report">
 		<title>
-		<function moreinfo="none">statsc.exec</function>
+		<function moreinfo="none">statsc.report</function>
 		</title>
 		<para>
 		Get the report of recorded statistics.

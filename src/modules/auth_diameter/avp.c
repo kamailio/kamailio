@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2002-2003 FhG Fokus
  *
  * This file is part of disc, a free diameter server/client.
@@ -39,7 +37,7 @@
  * All this default values (for flags and data-type) are correct/set by this
  * function.
  */
-inline void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
+void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
 {
 	switch (code) {
 		case   1: /*AVP_User_Name*/
@@ -104,7 +102,7 @@ AAA_AVP*  AAACreateAVP(
 	unsigned int length,
 	AVPDataStatus data_status)
 {
-	AAA_AVP *avp;
+	AAA_AVP *avp = NULL;
 
 	/* first check the params */
 	if( data==0 || length==0) {
@@ -144,6 +142,7 @@ AAA_AVP*  AAACreateAVP(
 	return avp;
 error:
 	LM_ERR("no more pkg memory left!\n");
+	if(avp) ad_free(avp);
 	return 0;
 }
 

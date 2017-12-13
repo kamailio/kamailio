@@ -1597,7 +1597,7 @@ struct hostent* naptr_sip_resolvehost(str* name,  unsigned short* port,
 	naptr_bmp_t tried_bmp; /* tried bitmap */
 	char origproto;
 
-	origproto = *proto;
+	if(proto) origproto = *proto;
 	naptr_head=0;
 	he=0;
 	if (name->len >= MAX_DNS_NAME) {
@@ -1634,7 +1634,7 @@ struct hostent* naptr_sip_resolvehost(str* name,  unsigned short* port,
 #endif
 	}
 	/* fallback to srv lookup */
-	*proto = origproto;
+	if(proto) *proto = origproto;
 	he=no_naptr_srv_sip_resolvehost(name,port,proto);
 	/* fallback all the way down to A/AAAA */
 	if (he==0) {

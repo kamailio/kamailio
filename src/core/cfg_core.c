@@ -113,14 +113,16 @@ struct cfg_group_core default_core_cfg = {
 	L_DBG+1, /*!< memlog */
 	3, /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
 		4 pkg_sums, 8 shm_sums, 16 short_status */
-	0, /*!< mem_safety - 0 disabled */
+	1, /*!< mem_safety - 0 disabled; 1 enabled */
 	0, /*!< mem_join - 0 disabled */
 	0, /*!< mem_status_mode - 0 only free fragments, 1 all fragements */
 	L_ERR, /*!< corelog */
 	L_DBG, /*!< latency cfg log */
 	L_ERR, /*!< latency log */
 	0, /*!< latency limit db */
-	0 /*!< latency limit action */
+	0, /*!< latency limit action */
+	2048,  /*!< pv_cache_limit */
+	0  /*!< pv_cache_action */
 };
 
 void	*core_cfg = &default_core_cfg;
@@ -323,8 +325,12 @@ cfg_def_t core_cfg_def[] = {
 	{"latency_log",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for latency limits alert messages"},
 	{"latency_limit_db",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
-		"limit is ms for alerting on time consuming db commands"},
+		"limit in ms for alerting on time consuming db commands"},
 	{"latency_limit_action",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
-		"limit is ms for alerting on time consuming config actions"},
+		"limit in ms for alerting on time consuming config actions"},
+	{"pv_cache_limit",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"limit to alert if too many vars in pv cache"},
+	{"pv_cache_action",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"action to do if too many vars in pv cache"},
 	{0, 0, 0, 0, 0, 0}
 };

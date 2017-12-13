@@ -275,6 +275,8 @@ static int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
 {
 	char* start;
 	char* end;
+	char tbuf[TIME_LEN+1];
+	char dbuf[DATE_LEN+1];
 
 	/* the text is after the \r */
 	for( start=source ; *start && *start!='\r' ; start++ );
@@ -312,12 +314,14 @@ static int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
 	}
 	/* Get the date */
 	start=end+3;
-	sprintf(sms->date,"%c%c-%c%c-%c%c",start[3],start[4],start[0],start[1],
+	sprintf(dbuf,"%c%c-%c%c-%c%c",start[3],start[4],start[0],start[1],
 		start[6],start[7]);
+	memcpy(sms->date, dbuf, DATE_LEN);
 	/* Get the time */
 	start+=9;
-	sprintf(sms->time,"%c%c:%c%c:%c%c",start[0],start[1],start[3],start[4],
+	sprintf(tbuf,"%c%c:%c%c:%c%c",start[0],start[1],start[3],start[4],
 		start[7],start[7]);
+	memcpy(sms->time, tbuf, TIME_LEN);
 	sms->userdatalength=strlen(sms->ascii);
 	return 1;
 }
@@ -418,9 +422,13 @@ static int splitpdu(struct modem *mdm, char* pdu, struct incame_sms *sms)
 		if (end!=0) {
 			memcpy(sms->name,start,end-start);
 			sms->name[end-start]=0;
+		} else {
+			/*Unsupported type*/
+			return -1;
 		}
-	} else
+	} else {
 		end=pdu;
+	}
 
 	/* the pdu is after the first \r */
 	for( start=end+1 ; *start && *start!='\r' ; start++ );

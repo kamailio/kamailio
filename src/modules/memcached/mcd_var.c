@@ -442,6 +442,7 @@ int pv_parse_mcd_name(pv_spec_p sp, str *in) {
 
 	if(pv_parse_format(in, &tmp) || tmp==NULL) {
 		LM_ERR("wrong format [%.*s]\n", in->len, in->s);
+		if(tmp) pkg_free(tmp);
 		return -1;
 	}
 

@@ -102,7 +102,7 @@ function ksr_route_relay()
 
 	if (METHOD=="INVITE") {
 		if (KSR.tm.t_is_set("failure_route")<0) {
-			KSR.tm.t_on_failure("MANAGE_FAILURE");
+			KSR.tm.t_on_failure("ksr_failure_manage");
 		}
 	}
 
@@ -342,8 +342,8 @@ function ksr_route_sipout()
 // equivalent of branch_route[...]{}
 function ksr_branch_manage()
 {
-	KSR.dbg("new branch [" + KSR.pv.get("$T_branch_idx]")
-				+ " to " + KSR.pv.get("$ru") + "\n");
+	KSR.dbg("new branch [" + KSR.pv.get("$T_branch_idx")
+				+ "] to " + KSR.pv.get("$ru") + "\n");
 	ksr_route_natmanage();
 	return;
 }

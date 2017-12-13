@@ -46,7 +46,7 @@ static int w_geoip_match(struct sip_msg* msg, char* str1, char* str2);
 static int geoip_match(sip_msg_t *msg, str *tomatch, str *pvclass);
 
 static pv_export_t mod_pvs[] = {
-	{ {"gip", sizeof("git")-1}, PVT_OTHER, pv_get_geoip, 0,
+	{ {"gip", sizeof("gip")-1}, PVT_OTHER, pv_get_geoip, 0,
 		pv_parse_geoip_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

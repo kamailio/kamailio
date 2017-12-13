@@ -42,6 +42,7 @@
 
 typedef struct sr_event_param {
 	void *data;
+	receive_info_t* rcv;
 	dest_info_t *dst;
 } sr_event_param_t;
 

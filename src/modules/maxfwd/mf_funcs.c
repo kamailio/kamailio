@@ -34,52 +34,49 @@
 /* do a tricky thing and keep the parsed value of MAXFWD hdr incremented
  * by one in order to make difference between 0 (not set)
  * and 0 (zero value) - bogdan */
-#define IS_MAXWD_STORED(_msg_) \
-	((_msg_)->maxforwards->parsed)
-#define STORE_MAXWD_VAL(_msg_,_val_) \
-	(_msg_)->maxforwards->parsed = ((void*)(long)((_val_)+1))
-#define FETCH_MAXWD_VAL(_msg_) \
-	(((int)(long)(_msg_)->maxforwards->parsed)-1)
+#define IS_MAXWD_STORED(_msg_) ((_msg_)->maxforwards->parsed)
+#define STORE_MAXWD_VAL(_msg_, _val_) \
+	(_msg_)->maxforwards->parsed = ((void *)(long)((_val_) + 1))
+#define FETCH_MAXWD_VAL(_msg_) (((int)(long)(_msg_)->maxforwards->parsed) - 1)
 
 /* looks for the MAX FORWARDS header
 	* returns its value, -1 if is not present or -2 for error */
-int is_maxfwd_present( struct sip_msg* msg , str *foo)
+int is_maxfwd_present(struct sip_msg *msg, str *foo)
 {
 	int x, err;
 
 	/* lookup into the message for MAX FORWARDS header*/
-	if ( !msg->maxforwards ) {
-		if  ( parse_headers( msg , HDR_MAXFORWARDS_F, 0 )==-1 ){
+	if(!msg->maxforwards) {
+		if(parse_headers(msg, HDR_MAXFORWARDS_F, 0) == -1) {
 			LM_ERR("parsing MAX_FORWARD header failed!\n");
 			return -2;
 		}
-		if (!msg->maxforwards) {
+		if(!msg->maxforwards) {
 			LM_DBG("max_forwards header not found!\n");
 			return -1;
 		}
-	} else if (IS_MAXWD_STORED(msg)) {
-		trim_len( foo->len , foo->s , msg->maxforwards->body );
+	} else if(IS_MAXWD_STORED(msg)) {
+		trim_len(foo->len, foo->s, msg->maxforwards->body);
 		return FETCH_MAXWD_VAL(msg);
 	}
 
 	/* if header is present, trim to get only the string containing numbers */
-	trim_len( foo->len , foo->s , msg->maxforwards->body );
+	trim_len(foo->len, foo->s, msg->maxforwards->body);
 
 	/* convert from string to number */
-	x = str2s( foo->s,foo->len,&err);
-	if (err){
+	x = str2s(foo->s, foo->len, &err);
+	if(err) {
 		LM_ERR("unable to parse the max forwards number\n");
 		return -2;
 	}
 	/* store the parsed values */
 	STORE_MAXWD_VAL(msg, x);
-	LM_DBG("value = %d \n",x);
+	LM_DBG("value = %d \n", x);
 	return x;
 }
 
 
-
-int decrement_maxfwd( struct sip_msg* msg , int x, str *s)
+int decrement_maxfwd(struct sip_msg *msg, int x, str *s)
 {
 	int i;
 
@@ -93,51 +90,53 @@ int decrement_maxfwd( struct sip_msg* msg , int x, str *s)
 	for(i = s->len - 1; i >= 0; i--) {
 		s->s[i] = (x % 10) + '0';
 		x /= 10;
-		if (x==0) {
+		if(x == 0) {
 			i = i - 1;
 			break;
 		}
 	}
-	while(i >= 0) s->s[i--] = ' ';
+	while(i >= 0)
+		s->s[i--] = ' ';
 
 	return 0;
 }
 
-int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
+int add_maxfwd_header(struct sip_msg *msg, unsigned int val)
 {
-	unsigned int  len;
-	char          *buf;
-	struct lump*  anchor;
+	unsigned int len;
+	char *buf;
+	struct lump *anchor;
 
 	/* constructing the header */
-	len = MF_HDR_LEN /*"MAX-FORWARDS: "*/+ CRLF_LEN + 3/*val max on 3 digits*/;
+	len = MF_HDR_LEN /*"MAX-FORWARDS: "*/ + CRLF_LEN
+		  + 3 /*val max on 3 digits*/;
 
-	buf = (char*)pkg_malloc( len );
-	if (!buf) {
+	buf = (char *)pkg_malloc(len);
+	if(!buf) {
 		LM_ERR("add_maxfwd_header: no more pkg memory\n");
 		goto error;
 	}
-	memcpy( buf , MF_HDR, MF_HDR_LEN );
-	len = MF_HDR_LEN ;
-	len += btostr( buf+len , val );
-	memcpy( buf+len , CRLF , CRLF_LEN );
-	len +=CRLF_LEN;
+	memcpy(buf, MF_HDR, MF_HDR_LEN);
+	len = MF_HDR_LEN;
+	len += btostr(buf + len, val);
+	memcpy(buf + len, CRLF, CRLF_LEN);
+	len += CRLF_LEN;
 
 	/*inserts the header at the beginning of the message*/
-	anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0 , 0);
-	if (anchor == 0) {
+	anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
+	if(anchor == 0) {
 		LM_ERR("add_maxfwd_header: failed to get anchor\n");
 		goto error1;
 	}
 
-	if (insert_new_lump_before(anchor, buf, len, 0) == 0) {
+	if(insert_new_lump_before(anchor, buf, len, 0) == 0) {
 		LM_ERR("add_maxfwd_header: failed to insert MAX-FORWARDS lump\n");
 		goto error1;
 	}
 
 	return 0;
 error1:
-	pkg_free( buf );
+	pkg_free(buf);
 error:
 	return -1;
 }

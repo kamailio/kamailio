@@ -16,13 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2008-08-25  initial version (kd)
  */
 
 #include <stdio.h>
@@ -56,7 +53,7 @@ int force_dummy_dialog = 0;
 /* module exported commands */
 static cmd_export_t cmds[] =
 {
-    {0,	0, 0, 0, 0, 0}
+	{0,	0, 0, 0, 0, 0}
 };
 
 /* module exported paramaters */
@@ -68,20 +65,20 @@ static param_export_t params[] = {
 
 /* module exports */
 struct module_exports exports= {
-    "presence_dialoginfo",		/* module name */
-    DEFAULT_DLFLAGS,			/* dlopen flags */
-    cmds,						/* exported functions */
-    params,						/* exported parameters */
-    0,							/* exported statistics */
-    0,							/* exported MI functions */
-    0,							/* exported pseudo-variables */
-    0,							/* extra processes */
-    mod_init,					/* module initialization function */
-    0,							/* response handling function */
-    0,							/* destroy function */
-    0							/* per-child init function */
+	"presence_dialoginfo",		/* module name */
+	DEFAULT_DLFLAGS,			/* dlopen flags */
+	cmds,						/* exported functions */
+	params,						/* exported parameters */
+	0,							/* exported statistics */
+	0,							/* exported MI functions */
+	0,							/* exported pseudo-variables */
+	0,							/* extra processes */
+	mod_init,					/* module initialization function */
+	0,							/* response handling function */
+	0,							/* destroy function */
+	0							/* per-child init function */
 };
-	
+
 /*
  * init module function
  */
@@ -107,8 +104,8 @@ static int mod_init(void)
 	}
 	if(dlginfo_add_events() < 0) {
 		LM_ERR("failed to add dialog-info events\n");
-		return -1;		
-	}	
-    
-    return 0;
+		return -1;
+	}
+
+	return 0;
 }

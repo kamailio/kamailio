@@ -35,7 +35,7 @@
 #include "resource_notify.h"
 
 /* how to relate resource oriented dialogs to list_uri */
-/* sol1: use the same callid in Subscribe requests 
+/* sol1: use the same callid in Subscribe requests
  * sol2: include an extra header
  * sol3: put the list_uri as the id of the record stored in
  * pua and write a function to return that id
@@ -54,25 +54,25 @@ int parse_rlsubs_did(char* str_did, str* callid, str* from_tag, str* to_tag)
 	char* smc= NULL;
 
 	smc= strstr(str_did, RLS_DID_SEP);
-    if(smc== NULL)
-    {
-        LM_ERR("bad format for resource list Subscribe dialog"
-            " indentifier[rlsubs did]= %s\n", str_did);
-        return -1;
-    }
+	if(smc== NULL)
+	{
+		LM_ERR("bad format for resource list Subscribe dialog"
+				" indentifier[rlsubs did]= %s\n", str_did);
+		return -1;
+	}
 	callid->s= str_did;
 	callid->len= smc- str_did;
-			
+
 	from_tag->s= smc+ RLS_DID_SEP_LEN;
 	smc= strstr(from_tag->s, RLS_DID_SEP);
 	if(smc== NULL)
-    {
-        LM_ERR("bad format for resource list Subscribe dialog"
-            " indentifier(rlsubs did)= %s\n", str_did);
-        return -1;
-    }
+	{
+		LM_ERR("bad format for resource list Subscribe dialog"
+				" indentifier(rlsubs did)= %s\n", str_did);
+		return -1;
+	}
 	from_tag->len= smc- from_tag->s;
-		
+
 	to_tag->s= smc+ RLS_DID_SEP_LEN;
 	to_tag->len= strlen(str_did)- 2* RLS_DID_SEP_LEN- callid->len- from_tag->len;
 
@@ -87,11 +87,11 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
 
 	*dialog= NULL;
 
-	/* search the subscription in rlsubs_table*/		
+	/* search the subscription in rlsubs_table*/
 	if( parse_rlsubs_did(did, &callid, &from_tag, &to_tag)< 0)
 	{
 		LM_ERR("bad format for resource list Subscribe dialog "
-			"indentifier(rlsubs did)\n");
+				"indentifier(rlsubs did)\n");
 		return;
 	}
 
@@ -140,40 +140,40 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
 
 }
 
-int send_notify(xmlDocPtr * rlmi_doc, char * buf, int buf_len, 
-                 const str bstr, subs_t * dialog, unsigned int hash_code)
+int send_notify(xmlDocPtr * rlmi_doc, char * buf, int buf_len,
+		const str bstr, subs_t * dialog, unsigned int hash_code)
 {
-    int result = 0;
-    str rlmi_cont= {0, 0}, multi_cont;
+	int result = 0;
+	str rlmi_cont= {0, 0}, multi_cont;
 
-    xmlDocDumpFormatMemory(*rlmi_doc,(xmlChar**)(void*)&rlmi_cont.s,
-				&rlmi_cont.len, 0);
-		
-    multi_cont.s= buf;
-    multi_cont.len= buf_len;
+	xmlDocDumpFormatMemory(*rlmi_doc,(xmlChar**)(void*)&rlmi_cont.s,
+			&rlmi_cont.len, 0);
 
-    result =agg_body_sendn_update(&dialog->pres_uri, bstr.s, &rlmi_cont, 
-                 (buf_len==0)?NULL:&multi_cont, dialog, hash_code);
-    xmlFree(rlmi_cont.s);
-    xmlFreeDoc(*rlmi_doc);
-    *rlmi_doc= NULL;
-    return result;
+	multi_cont.s= buf;
+	multi_cont.len= buf_len;
+
+	result =agg_body_sendn_update(&dialog->pres_uri, bstr.s, &rlmi_cont,
+			(buf_len==0)?NULL:&multi_cont, dialog, hash_code);
+	xmlFree(rlmi_cont.s);
+	xmlFreeDoc(*rlmi_doc);
+	*rlmi_doc= NULL;
+	return result;
 }
 
 
 static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int auth_state_col, int reason_col,
-                   int pres_state_col, int content_type_col)
+		int pres_state_col, int content_type_col)
 {
 	int i;
 	char* prev_did= NULL, * curr_did= NULL;
-	db_row_t *row;	
+	db_row_t *row;
 	db_val_t *row_vals;
 	char* resource_uri;
 	str pres_state = {0, 0};
 	xmlDocPtr rlmi_doc= NULL;
 	xmlNodePtr list_node= NULL, instance_node= NULL, resource_node;
 	unsigned int hash_code= 0;
-	int size= BUF_REALLOC_SIZE, buf_len= 0;	
+	int size= BUF_REALLOC_SIZE, buf_len= 0;
 	char* buf= NULL, *auth_state= NULL, *boundary_string= NULL;
 	str cid = {0,0};
 	str content_type= {0, 0};
@@ -217,20 +217,20 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 	{
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);
-		
+
 		curr_did=     (char*)row_vals[did_col].val.string_val;
 		resource_uri= (char*)row_vals[resource_uri_col].val.string_val;
 		auth_state_flag=     row_vals[auth_state_col].val.int_val;
 		pres_state.s=   (char*)row_vals[pres_state_col].val.string_val;
 		pres_state.len = strlen(pres_state.s);
 		trim(&pres_state);
-		
-		/* If we have moved onto a new resource list Subscribe dialog indentifier, 
-		   send a NOTIFY for the previous ID and then drop the existing documents. */
-		if(prev_did!= NULL && strcmp(prev_did, curr_did)) 
+
+		/* If we have moved onto a new resource list Subscribe dialog indentifier,
+		 * send a NOTIFY for the previous ID and then drop the existing documents. */
+		if(prev_did!= NULL && strcmp(prev_did, curr_did))
 		{
 			if (send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code))
-			{  
+			{
 				LM_ERR("in send_notify\n");
 				goto error;
 			}
@@ -250,19 +250,19 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 				LM_INFO("Dialog is NULL\n");
 				continue;
 			}
-		
+
 			len_est = create_empty_rlmi_doc(&rlmi_doc, &list_node, &dialog->pres_uri, dialog->version, 0);
 			len_est += 2*strlen(boundary_string)+4+102+2+50+strlen(resource_uri)+20;
 			buf_len= 0;
 			resource_added = 0;
 
-			/* !!!! for now I will include the auth state without checking if 
-			 * it has changed - > in future chech if it works */		
+			/* !!!! for now I will include the auth state without checking if
+			 * it has changed - > in future chech if it works */
 		}
 
-		/* add a node in rlmi_doc and if any presence state registered add 
+		/* add a node in rlmi_doc and if any presence state registered add
 		 * it in the buffer */
-		
+
 		resource_node= xmlNewChild(list_node,NULL,BAD_CAST "resource", NULL);
 		if(resource_node== NULL)
 		{
@@ -275,18 +275,18 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 
 		/* there might be more records with the same uri- more instances-
 		 * search and add them all */
-		
+
 		while(1)
 		{
 			cid.s= NULL;
 			cid.len= 0;
-			
+
 			auth_state= get_auth_string(auth_state_flag);
 			if(auth_state== NULL)
 			{
 				LM_ERR("bad authorization status flag\n");
 				goto error;
-			}	
+			}
 			len_est += strlen(auth_state) + 38; /* <instance id="12345678" state="[auth_state]" />r/n */
 
 			if(auth_state_flag & ACTIVE_STATE)
@@ -297,18 +297,18 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 				content_type.s = (char*)row_vals[content_type_col].val.string_val;
 				content_type.len = strlen(content_type.s);
 				chunk_len = 4 + bstr.len
-							+ 35
-							+ 16 + cid.len
-							+ 18 + content_type.len
-							+ 4 + pres_state.len + 8;
+					+ 35
+					+ 16 + cid.len
+					+ 18 + content_type.len
+					+ 4 + pres_state.len + 8;
 				len_est += chunk_len;
 			}
 			else
-			if(auth_state_flag & TERMINATED_STATE)
-			{
-				len_est += strlen(row_vals[resource_uri_col].val.string_val) + 10; /* reason="[resaon]" */
-			}
-            
+				if(auth_state_flag & TERMINATED_STATE)
+				{
+					len_est += strlen(row_vals[resource_uri_col].val.string_val) + 10; /* reason="[resaon]" */
+				}
+
 			if (rls_max_notify_body_len > 0 && len_est > rls_max_notify_body_len)
 			{
 				/* We have a limit on body length set, and we were about to exceed it */
@@ -341,36 +341,36 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 			{
 				LM_ERR("while adding instance child\n");
 				goto error;
-			}	
+			}
 
 			/* Instance ID should be unique for each instance node
- 			   within a resource node.  The same instance ID can be
-			   used in different resource nodes.  Instance ID needs
-			   to remain the same for each resource instance in
-			   future updates.  We can just use a common string
-			   here because you will only get multiple instances
-			   for a resource when the back-end SUBSCRIBE is forked
-			   and pua does not support this.  If/when pua supports
-			   forking of the SUBSCRIBEs it sends this will need to
-			   be fixed properly. */
-			xmlNewProp(instance_node, BAD_CAST "id", 
+			 * within a resource node.  The same instance ID can be
+			 * used in different resource nodes.  Instance ID needs
+			 * to remain the same for each resource instance in
+			 * future updates.  We can just use a common string
+			 * here because you will only get multiple instances
+			 * for a resource when the back-end SUBSCRIBE is forked
+			 * and pua does not support this.  If/when pua supports
+			 * forking of the SUBSCRIBEs it sends this will need to
+			 * be fixed properly. */
+			xmlNewProp(instance_node, BAD_CAST "id",
 					BAD_CAST instance_id);
 			if(auth_state_flag & ACTIVE_STATE)
 			{
 				xmlNewProp(instance_node, BAD_CAST "state", BAD_CAST auth_state);
 			}
 			else
-			if(auth_state_flag & TERMINATED_STATE)
-			{
-				xmlNewProp(instance_node, BAD_CAST "reason",
-						BAD_CAST row_vals[resource_uri_col].val.string_val);
-			}
+				if(auth_state_flag & TERMINATED_STATE)
+				{
+					xmlNewProp(instance_node, BAD_CAST "reason",
+							BAD_CAST row_vals[resource_uri_col].val.string_val);
+				}
 			xmlNewProp(instance_node, BAD_CAST "cid", BAD_CAST cid.s);
 
 			/* add in the multipart buffer */
 			if(cid.s)
 			{
-	
+
 				while(buf_len + chunk_len >= size)
 				{
 					REALLOC_BUF
@@ -393,14 +393,14 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 				i--;
 				break;
 			}
-	
+
 			row = &result->rows[i];
 			row_vals = ROW_VALUES(row);
 
 			if(strncmp(resource_uri, row_vals[resource_uri_col].val.string_val,
-					strlen(resource_uri))
-				|| strncmp(curr_did, row_vals[did_col].val.string_val,
-					strlen(curr_did)))
+						strlen(resource_uri))
+					|| strncmp(curr_did, row_vals[did_col].val.string_val,
+						strlen(curr_did)))
 			{
 				i--;
 				break;
@@ -468,7 +468,7 @@ int parse_subs_state(str auth_state, str *reason, int *expires)
 		flag= ACTIVE_STATE;
 
 	if (strncmp(auth_state.s, "pending", 7)== 0)
-		flag= PENDING_STATE; 
+		flag= PENDING_STATE;
 
 	if (strncmp(auth_state.s, "terminated", 10)== 0)
 	{
@@ -482,7 +482,7 @@ int parse_subs_state(str auth_state, str *reason, int *expires)
 		{
 			LM_ERR("terminated state and no reason found");
 			return -1;
-        	}
+		}
 		len=  auth_state.len- 10- 1- 7;
 		reason->s = (char*) pkg_malloc(len* sizeof(char));
 		if (reason->s== NULL)
@@ -493,7 +493,7 @@ int parse_subs_state(str auth_state, str *reason, int *expires)
 		reason->len= len;
 		return TERMINATED_STATE;
 	}
-	
+
 	if(flag> 0)
 	{
 		smc= strchr(auth_state.s, ';');
@@ -501,7 +501,7 @@ int parse_subs_state(str auth_state, str *reason, int *expires)
 		{
 			LM_ERR("active or pending state and no expires parameter found");
 			return -1;
-		}	
+		}
 		if(strncmp(smc+1, "expires=", 8))
 		{
 			LM_ERR("active or pending state and no expires parameter found");
@@ -516,7 +516,7 @@ int parse_subs_state(str auth_state, str *reason, int *expires)
 			return -1;
 		}
 		return flag;
-	
+
 	}
 
 error:
@@ -524,7 +524,7 @@ error:
 	return -1;
 }
 
-int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
+int ki_rls_handle_notify(sip_msg_t* msg)
 {
 	struct to_body *pto, TO = {0}, *pfrom = NULL;
 	str body= {0, 0};
@@ -544,7 +544,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	str reply_str = pu_500_rpl;
 
 	LM_DBG("start\n");
-	/* extract the dialog information and check if an existing dialog*/	
+	/* extract the dialog information and check if an existing dialog*/
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("parsing headers\n");
@@ -570,12 +570,12 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	{
 		pto = (struct to_body*)msg->to->parsed;
 		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",
-				pto->uri.len, pto->uri.s );	
+				pto->uri.len, pto->uri.s );
 	}
 	else
 	{
 		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
-		if(TO.uri.len <= 0) 
+		if(TO.uri.len <= 0)
 		{
 			LM_ERR(" 'To' header NOT parsed\n");
 			reply_code = 400;
@@ -614,7 +614,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	{
 		LM_DBG("'From' header not parsed\n");
 		/* parsing from header */
-		if ( parse_from_header( msg )<0 ) 
+		if ( parse_from_header( msg )<0 )
 		{
 			LM_ERR("cannot parse From header\n");
 			reply_code = 400;
@@ -648,7 +648,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	hdr = msg->headers;
 	while (hdr!= NULL)
 	{
-		if(cmp_hdrname_strzn(&hdr->name, "Subscription-State", 18)==0)  
+		if(cmp_hdrname_strzn(&hdr->name, "Subscription-State", 18)==0)
 		{
 			found = 1;
 			break;
@@ -684,24 +684,24 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		if(auth_flag==TERMINATED_STATE)
 			goto done;
 		LM_INFO("no presence dialog record for non-TERMINATED state uri pres_uri = %.*s watcher_uri = %.*s\n",
-                dialog.pres_uri->len, dialog.pres_uri->s, dialog.watcher_uri->len, dialog.watcher_uri->s);
+				dialog.pres_uri->len, dialog.pres_uri->s, dialog.watcher_uri->len, dialog.watcher_uri->s);
 		reply_code = 481;
 		reply_str = pu_481_rpl;
 		goto error;
 	}
-		
+
 	if(msg->content_type== NULL || msg->content_type->body.s== NULL)
 	{
 		LM_DBG("cannot find content type header header\n");
 	}
 	else
 		content_type= msg->content_type->body;
-					
+
 	/*constructing the xml body*/
 	if(get_content_length(msg) == 0 )
-	{	
+	{
 		goto done;
-	}	
+	}
 	else
 	{
 		if(content_type.s== 0)
@@ -710,7 +710,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 			goto error;
 		}
 		body.s=get_body(msg);
-		if (body.s== NULL) 
+		if (body.s== NULL)
 		{
 			LM_ERR("cannot extract body from msg\n");
 			goto error;
@@ -725,13 +725,13 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_cols[n_query_cols]= &str_rlsubs_did_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val= *res_id; 
+	query_vals[n_query_cols].val.str_val= *res_id;
 	n_query_cols++;
 
 	query_cols[n_query_cols]= &str_resource_uri_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val= *dialog.pres_uri; 
+	query_vals[n_query_cols].val.str_val= *dialog.pres_uri;
 	n_query_cols++;
 
 	query_cols[n_query_cols]= &str_updated_col;
@@ -740,16 +740,16 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	if (dbmode == RLS_DB_ONLY)
 		query_vals[n_query_cols].val.int_val=
 			core_hash(res_id, NULL, 0) %
-				(waitn_time * rls_notifier_poll_rate
-					* rls_notifier_processes);
+			(waitn_time * rls_notifier_poll_rate
+			 * rls_notifier_processes);
 	else
 		query_vals[n_query_cols].val.int_val = UPDATED_TYPE;
 	n_query_cols++;
-		
+
 	query_cols[n_query_cols]= &str_auth_state_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val= auth_flag; 
+	query_vals[n_query_cols].val.int_val= auth_flag;
 	n_query_cols++;
 
 	query_cols[n_query_cols]= &str_reason_col;
@@ -759,7 +759,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	{
 		query_vals[n_query_cols].val.str_val.s= reason.s;
 		query_vals[n_query_cols].val.str_val.len= reason.len;
-	}	
+	}
 	else
 	{
 		query_vals[n_query_cols].val.str_val.s = "";
@@ -772,20 +772,20 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= content_type;
 	n_query_cols++;
-			
+
 	query_cols[n_query_cols]= &str_presence_state_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= body;
 	n_query_cols++;
-		
+
 	query_cols[n_query_cols]= &str_expires_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= expires+ (int)time(NULL);
 	n_query_cols++;
 
-	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
+	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0)
 	{
 		LM_ERR("in use_table\n");
 		goto error;
@@ -813,7 +813,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	else
 	{
 		if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals, query_cols+2,
-						query_vals+2, 2, n_query_cols-2)< 0)
+					query_vals+2, 2, n_query_cols-2)< 0)
 		{
 			LM_ERR("in sql update\n");
 			goto error;
@@ -839,7 +839,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		}
 	}
 
-	LM_DBG("Updated rlpres_table\n");	
+	LM_DBG("Updated rlpres_table\n");
 	/* reply 200OK */
 done:
 	if(slb.freply(msg, 200, &su_200_rpl) < 0)
@@ -883,11 +883,16 @@ error:
 	return -1;
 }
 
+int w_rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
+{
+	return ki_rls_handle_notify(msg);
+}
+
 #define EXTRACT_STRING(strng, chars)\
-			do {\
-			strng.s = (char *) chars;\
-			strng.len = strlen(strng.s);\
-			} while(0);
+	do {\
+		strng.s = (char *) chars;\
+		strng.len = strlen(strng.s);\
+	} while(0);
 
 static void timer_send_full_state_notifies(int round)
 {
@@ -968,9 +973,9 @@ static void timer_send_full_state_notifies(int round)
 		goto done;
 
 	/* Step 2: Reset the update flag so we do not full-state notify
- 	   these watchers again */
+	 * these watchers again */
 	if(rls_dbf.update(rls_db, query_cols, 0, query_vals, update_cols,
-					update_vals, 1, 1)< 0)
+				update_vals, 1, 1)< 0)
 	{
 		LM_ERR("in sql update\n");
 		goto done;
@@ -1024,7 +1029,7 @@ static void timer_send_full_state_notifies(int round)
 			sub.expires = VAL_INT(&values[expires_col]) - now;
 
 			if (rls_get_service_list(&sub.pres_uri, &sub.watcher_user,
-				&sub.watcher_domain, &service_node, &doc) < 0)
+						&sub.watcher_domain, &service_node, &doc) < 0)
 			{
 				LM_ERR("failed getting resource list\n");
 				goto done;
@@ -1032,7 +1037,7 @@ static void timer_send_full_state_notifies(int round)
 			if (doc == NULL)
 			{
 				LM_WARN("no document returned for uri <%.*s>\n",
-					sub.pres_uri.len, sub.pres_uri.s);
+						sub.pres_uri.len, sub.pres_uri.s);
 				goto done;
 			}
 
@@ -1089,12 +1094,12 @@ static void timer_send_update_notifies(int round)
 	update_cols[0]= &str_updated_col;
 	update_vals[0].type = DB1_INT;
 	update_vals[0].nul = 0;
-	update_vals[0].val.int_val= NO_UPDATE_TYPE; 
+	update_vals[0].val.int_val= NO_UPDATE_TYPE;
 
-	/* query in alphabetical order after rlsusbs_did 
+	/* query in alphabetical order after rlsusbs_did
 	 * (resource list Subscribe dialog indentifier)*/
-	
-	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
+
+	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0)
 	{
 		LM_ERR("in use_table\n");
 		goto done;
@@ -1110,7 +1115,7 @@ static void timer_send_update_notifies(int round)
 	}
 
 	if(query_fn(rlpres_db, query_cols, 0, query_vals, result_cols,
-					1, n_result_cols, &str_rlsubs_did_col, &result)< 0)
+				1, n_result_cols, &str_rlsubs_did_col, &result)< 0)
 	{
 		LM_ERR("in sql query\n");
 		goto done;
@@ -1119,7 +1124,7 @@ static void timer_send_update_notifies(int round)
 		goto done;
 
 	if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals, update_cols,
-					update_vals, 1, 1)< 0)
+				update_vals, 1, 1)< 0)
 	{
 		LM_ERR("in sql update\n");
 		goto done;
@@ -1135,7 +1140,7 @@ static void timer_send_update_notifies(int round)
 	}
 
 	send_notifies(result, did_col, resource_uri_col, auth_state_col, reason_col,
-                  pres_state_col, content_type_col);
+			pres_state_col, content_type_col);
 done:
 	if(result)
 		rlpres_dbf.free_result(rlpres_db, result);
@@ -1177,7 +1182,7 @@ void rls_presentity_clean(unsigned int ticks,void *param)
 	query_vals[0].type= DB1_INT;
 	query_vals[0].val.int_val= (int)time(NULL) - rls_expires_offset;
 
-	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
+	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0)
 	{
 		LM_ERR("in use_table\n");
 		return ;

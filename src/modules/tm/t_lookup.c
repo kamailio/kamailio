@@ -259,17 +259,35 @@ static inline int via_matching( struct via_body *inv_via,
 	 * different senders generating the same tid
 	 */
 	if (inv_via->host.len!=ack_via->host.len)
-		return 0;;
+		return 0;
 	if (memcmp(inv_via->host.s, ack_via->host.s,
 				ack_via->host.len)!=0)
 		return 0;
-	if (inv_via->port!=ack_via->port)
-		return 0;
+	if (inv_via->port!=ack_via->port) {
+		if(inv_via->port==0
+				&& ack_via->port!=SIP_PORT && ack_via->port!=SIPS_PORT)
+			return 0;
+		if(ack_via->port==0
+				&& inv_via->port!=SIP_PORT && inv_via->port!=SIPS_PORT)
+			return 0;
+	}
 	if (inv_via->transport.len!=ack_via->transport.len)
 		return 0;
 	if (memcmp(inv_via->transport.s, ack_via->transport.s,
 				ack_via->transport.len)!=0)
 		return 0;
+
+	if (inv_via->port!=ack_via->port
+			&& (inv_via->port==0 || ack_via->port==0)) {
+		/* test SIPS_PORT (5061) is used with TLS transport */
+		if(inv_via->port==SIPS_PORT || ack_via->port==SIPS_PORT) {
+			if(inv_via->transport.len!=3
+					|| memcmp(inv_via->transport.s, "TLS", 3)!=0) {
+				return 0;
+			}
+		}
+	}
+
 	/* everything matched -- we found it */
 	return 1;
 }
@@ -930,7 +948,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		*p_branch =(int) branch_id;
 		REF_UNSAFE( T );
 		UNLOCK_HASH(hash_index);
-		LM_DBG("reply matched (T=%p)!\n",T);
+		LM_DBG("reply (%p) matched an active transaction (T=%p)!\n", p_msg, T);
 		if(likely(!(p_msg->msg_flags&FL_TM_RPL_MATCHED))) {
 			/* if this is a 200 for INVITE, we will wish to store to-tags to be
 			 * able to distinguish retransmissions later and not to call
@@ -997,8 +1015,8 @@ int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 
 	ret=0;
 	/* is T still up-to-date ? */
-	LM_DBG("msg id=%d global id=%d T start=%p\n",
-			p_msg->id,global_msg_id,T);
+	LM_DBG("msg (%p) id=%d global id=%d T start=%p\n",
+			p_msg,p_msg->id,global_msg_id,T);
 	if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
 	{
 		global_msg_id = p_msg->id;
@@ -1063,17 +1081,17 @@ int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 		if ( T && T!=T_UNDEFINED && T->flags & (T_IN_AGONY)) {
 			LM_WARN("transaction %p scheduled for deletion "
 					"and called from t_check_msg (flags=%x) (but it might be ok)"
-					"\n", T, T->flags);
+					" (msg %p)\n", T, T->flags, p_msg);
 		}
 #endif
-		LM_DBG("msg id=%d global id=%d T end=%p\n",
-				p_msg->id,global_msg_id,T);
+		LM_DBG("msg (%p) id=%d global id=%d T end=%p\n",
+				p_msg,p_msg->id,global_msg_id,T);
 	} else { /*  ( p_msg->id == global_msg_id && T!=T_UNDEFINED ) */
 		if (T){
-			LM_DBG("T already found!\n");
+			LM_DBG("T (%p) already found for msg (%p)!\n", T, p_msg);
 			ret=1;
 		}else{
-			LM_DBG("T previously sought and not found\n");
+			LM_DBG("T previously sought and not found for msg (%p)\n", p_msg);
 			ret=-1;
 		}
 		if (likely(param_branch))
@@ -1344,6 +1362,10 @@ int t_newtran( struct sip_msg* p_msg )
 
 	/* transaction found, it's a retransmission  */
 	if (lret>0) {
+		if ( T==NULL || T==T_UNDEFINED  ) {
+			LM_ERR("BUG: transaction is gone\n");
+			return 0;
+		}
 		if (p_msg->REQ_METHOD==METHOD_ACK) {
 			if (unlikely(has_tran_tmcbs(T, TMCB_ACK_NEG_IN)))
 				run_trans_callbacks(TMCB_ACK_NEG_IN, T, p_msg, 0,

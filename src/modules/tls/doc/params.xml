@@ -1164,5 +1164,36 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 	    </programlisting>
 	</example>
 	</section>
+	<section id="tls.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks specific for tls module.
+		</para>
+		<para>
+			The function has one string parameter, the value is the name of
+			the event_route block, respectively "tls:connection-out".
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tls", "event_callback", "ksr_tls_event")
+...
+-- event callback function implemented in Lua
+function ksr_tls_event(evname)
+	KSR.info("===== tls module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+	    </example>
+	</section>
 
 </section>

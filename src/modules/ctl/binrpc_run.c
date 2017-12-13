@@ -881,7 +881,7 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_STR;
 				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s, 
 												ctx->in.end, &v, 0, &err);
-				if (err<0 || ((s=binrpc_val_conv_str(ctx, &v, &err))==0 &&
+				if (err<0 || ((s=binrpc_val_conv_str(ctx, &v, &err))==0 ||
 							err<0)){
 					v.u.strval.s="if you get this string, you don't"
 								"check rpc_scan return code !!! (very bad)";

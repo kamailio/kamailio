@@ -70,6 +70,7 @@
 #include "forward.h"
 #include "events.h"
 #include "stun.h"
+#include "nonsip_hooks.h"
 
 #ifdef READ_HTTP11
 #define HTTP11CONTINUE	"HTTP/1.1 100 Continue\r\nContent-Length: 0\r\n\r\n"
@@ -91,6 +92,7 @@ static ticks_t tcp_reader_prev_ticks;
 
 int is_msg_complete(struct tcp_req* r);
 
+int ksr_tcp_accept_hep3=0;
 /**
  * control cloning of TCP receive buffer
  * - needed for operations working directly inside the buffer
@@ -193,7 +195,7 @@ static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_rea
 	sr_event_param_t evp = {0};
 
 	ret = 0;
-	LM_DBG("TCP closed event creation triggered\n");
+	LM_DBG("TCP closed event creation triggered (reason: %d)\n", reason);
 	if(likely(sr_event_enabled(SREV_TCP_CLOSED))) {
 		memset(&tev, 0, sizeof(tcp_closed_event_info_t));
 		tev.reason = reason;
@@ -201,7 +203,7 @@ static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_rea
 		evp.data = (void*)(&tev);
 		ret = sr_event_exec(SREV_TCP_CLOSED, &evp);
 	} else {
-		LM_DBG("no callback registering for handling TCP closed event - dropping!\n");
+		LM_DBG("no callback registering for handling TCP closed event\n");
 	}
 	return ret;
 }
@@ -278,6 +280,12 @@ again:
 						switch(errno){
 							case ECONNRESET:
 								TCP_STATS_CON_RESET();
+#ifdef USE_DST_BLACKLIST
+								dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto,
+													&c->rcv.src_su,
+													&c->send_flags, 0);
+#endif /* USE_DST_BLACKLIST */
+								break;
 							case ETIMEDOUT:
 #ifdef USE_DST_BLACKLIST
 								dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto,
@@ -424,7 +432,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 							r->state=(newstate); break; \
 						crlf_default_skip_case; \
 					}
-	
+
 	#define change_state_case(state0, upper, lower, newstate)\
 					case state0: \
 							  change_state(upper, lower, newstate); \
@@ -433,6 +441,22 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 
 
 	r=&c->req;
+	if(r->parsed<r->buf || r->parsed>r->buf+r->b_size) {
+		if(r->parsed<r->buf && (unsigned char)r->state==H_SKIP_EMPTY) {
+			/* give it a chance to parse from beginning */
+			LM_WARN("resetting parsed pointer (buf:%p parsed:%p bsize:%u)\n",
+				r->buf, r->parsed, r->b_size);
+			r->parsed = r->buf;
+		} else {
+			LM_ERR("out of bounds parsed pointer (buf:%p parsed:%p bsize:%u)\n",
+				r->buf, r->parsed, r->b_size);
+			r->parsed = r->buf;
+			r->content_len=0;
+			r->error=TCP_REQ_BAD_LEN;
+			r->state=H_SKIP; /* skip state now */
+			return -1;
+		}
+	}
 	/* if we still have some unparsed part, parse it first, don't do the read*/
 	if (unlikely(r->parsed<r->pos)){
 		bytes=0;
@@ -459,7 +483,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					goto skip;
 				}
 				break;
-				
+
 			case H_SKIP:
 				/* find lf, we are in this state if we are not interested
 				 * in anything till end of line*/
@@ -652,10 +676,10 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 						r->start=p;
 						break;
 					default:
-						/* stun test */						
+						/* stun test */
 						if (unlikely(sr_event_enabled(SREV_STUN_IN)) && (unsigned char)*p == 0x00) {
 							r->state=H_STUN_MSG;
-						/* body will used as pointer to the last used byte */
+							/* body is used as pointer to the last used byte */
 							r->body=p;
 							r->content_len = 0;
 							LM_DBG("stun msg detected\n");
@@ -1077,8 +1101,8 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 #ifdef READ_WS
 static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 {
-	int bytes, size, pos, mask_present;
-	unsigned int len;
+	int bytes;
+	uint32_t size, pos, mask_present, len;
 	char *p;
 	struct tcp_req *r;
 
@@ -1135,22 +1159,27 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 	/* Work out real length */
 	if (len == 126)
 	{
+		/* 2 bytes store the payload size */
 		if (size < pos + 2)
 			goto skip;
 
-		len =	  ((p[pos + 0] & 0xff) <<  8)
-			| ((p[pos + 1] & 0xff) <<  0);
+		len = ((p[pos + 0] & 0xff) <<  8) | ((p[pos + 1] & 0xff) <<  0);
 		pos += 2;
-	}
-	else if (len == 127)
-	{
-		if (size < pos + 8)
+	} else if (len == 127) {
+		/* 8 bytes store the payload size */
+		if (size < pos + 8) {
 			goto skip;
+		}
 
 		/* Only decoding the last four bytes of the length...
 		   This limits the size of WebSocket messages that can be
 		   handled to 2^32 - which should be plenty for SIP! */
-		len =	  ((p[pos + 4] & 0xff) << 24)
+		if((p[pos] & 0xff)!=0 || (p[pos + 1] & 0xff)!=0
+				|| (p[pos + 2] & 0xff)!=0 || (p[pos + 3] & 0xff)!=0) {
+			LM_WARN("advertised lenght is too large (more than 2^32)\n");
+			goto skip;
+		}
+		len = ((p[pos + 4] & 0xff) << 24)
 			| ((p[pos + 5] & 0xff) << 16)
 			| ((p[pos + 6] & 0xff) <<  8)
 			| ((p[pos + 7] & 0xff) <<  0);
@@ -1165,6 +1194,12 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 		pos += 4;
 	}
 
+	/* check if advertised lenght fits in read buffer */
+	if(len>=r->b_size) {
+		LM_WARN("advertised lenght (%u) greater than buffer size (%u)\n",
+				len, r->b_size);
+		goto skip;
+	}
 	/* Now check the whole message has been received */
 	if (size < pos + len)
 		goto skip;
@@ -1202,6 +1237,112 @@ static int ws_process_msg(char* tcpbuf, unsigned int len,
 }
 #endif
 
+static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
+{
+	int bytes;
+	uint32_t size, len;
+	char *p;
+	struct tcp_req *r;
+
+	r=&c->req;
+#ifdef USE_TLS
+	if (unlikely(c->type == PROTO_TLS)) {
+		bytes = tls_read(c, read_flags);
+	} else {
+#endif
+		bytes = tcp_read(c, read_flags);
+#ifdef USE_TLS
+	}
+#endif
+
+	if (bytes <= 0) {
+		if (likely(r->parsed >= r->pos)) {
+			LM_DBG("no new bytes to read, but still unparsed content\n");
+			return 0;
+		}
+	}
+
+	size = r->pos - r->parsed;
+
+	p = r->parsed;
+
+	/* Process first six bytes (HEP3 + 2 bytes the size)*/
+	if (size < 6) {
+		LM_DBG("not enough bytes to parse (%u)\n", size);
+		goto skip;
+	}
+
+	if(p[0]!='H' || p[1]!='E' || p[2]!='P' || p[3]!='3') {
+		/* not hep3 */
+		LM_DBG("not HEP3 packet header (%u): %c %c %c %c / %x %x %x %x\n",
+				size, p[0], p[1], p[2], p[3], p[0], p[1], p[2], p[3]);
+		goto skip;
+	}
+	r->flags |= F_TCP_REQ_HEP3;
+
+	len = ((uint32_t)(p[4] & 0xff) <<  8) + (p[5] & 0xff);
+
+	/* check if advertised lenght fits in read buffer */
+	if(len>=r->b_size) {
+		LM_WARN("advertised lenght (%u) greater than buffer size (%u)\n",
+				len, r->b_size);
+		goto skip;
+	}
+	/* check the whole message has been received */
+	if (size < len) {
+		LM_DBG("incomplete HEP3 packet (%u / %u)\n", len, size);
+		goto skip;
+	}
+
+	r->flags |= F_TCP_REQ_COMPLETE;
+	r->parsed = p + len;
+	LM_DBG("reading of HEP3 packet is complete (%u / %u)\n", len, size);
+
+skip:
+	return bytes;
+}
+
+static int hep3_process_msg(char* tcpbuf, unsigned int len,
+		struct receive_info* rcv_info, struct tcp_connection* con)
+{
+	sip_msg_t msg;
+	int ret;
+	sr_event_param_t evp = {0};
+
+	memset(&msg, 0, sizeof(sip_msg_t)); /* init everything to 0 */
+	/* fill in msg */
+	msg.buf=tcpbuf;
+	msg.len=len;
+	/* zero termination (termination of orig message bellow not that
+	 * useful as most of the work is done with scratch-pad; -jiri  */
+	/* buf[len]=0; */ /* WARNING: zero term removed! */
+	msg.rcv=*rcv_info;
+	msg.id=msg_no;
+	msg.pid=my_pid();
+	msg.set_global_address=default_global_address;
+	msg.set_global_port=default_global_port;
+
+	if(likely(sr_msg_time==1)) msg_set_time(&msg);
+	evp.data = (void*)(&msg);
+	ret=sr_event_exec(SREV_RCV_NOSIP, &evp);
+	LM_DBG("running hep3 handling event returned %d\n", ret);
+	if(ret == NONSIP_MSG_DROP) {
+		free_sip_msg(&msg);
+		return 0;
+	}
+	if(ret < 0) {
+		LM_ERR("error running hep3 handling event: %d\n", ret);
+		free_sip_msg(&msg);
+		return -1;
+	}
+
+	ret = receive_msg(msg.buf, msg.len, rcv_info);
+	LM_DBG("running hep3-enclosed sip request route returned %d\n", ret);
+	free_sip_msg(&msg);
+
+	return ret;
+}
+
 /**
  * @brief wrapper around receive_msg() to clone the tcpbuf content
  *
@@ -1232,6 +1373,8 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 			return ws_process_msg(tcpbuf, len, rcv_info, con);
 #endif
+		if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
+			return hep3_process_msg(tcpbuf, len, rcv_info, con);
 
 		return receive_msg(tcpbuf, len, rcv_info);
 	}
@@ -1280,6 +1423,8 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 	if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 		return ws_process_msg(buf, len, rcv_info, con);
 #endif
+	if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
+		return hep3_process_msg(tcpbuf, len, rcv_info, con);
 	return receive_msg(buf, len, rcv_info);
 #else /* TCP_CLONE_RCVBUF */
 #ifdef READ_MSRP
@@ -1290,6 +1435,8 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 	if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 		return ws_process_msg(tcpbuf, len, rcv_info, con);
 #endif
+	if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
+		return hep3_process_msg(tcpbuf, len, rcv_info, con);
 	return receive_msg(tcpbuf, len, rcv_info);
 #endif /* TCP_CLONE_RCVBUF */
 }
@@ -1313,11 +1460,24 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 again:
 		if (likely(req->error==TCP_REQ_OK)){
 #ifdef READ_WS
-			if (unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
+			if (unlikely(con->type == PROTO_WS || con->type == PROTO_WSS)) {
 				bytes=tcp_read_ws(con, read_flags);
-			else
+			} else {
 #endif
-				bytes=tcp_read_headers(con, read_flags);
+				if(unlikely(ksr_tcp_accept_hep3!=0)) {
+					bytes=tcp_read_hep3(con, read_flags);
+					if (bytes>=0) {
+						if(!(con->req.flags & F_TCP_REQ_HEP3)) {
+							/* not hep3, try to read headers */
+							bytes=tcp_read_headers(con, read_flags);
+						}
+					}
+				} else {
+					bytes=tcp_read_headers(con, read_flags);
+				}
+#ifdef READ_WS
+			}
+#endif
 
 			if (unlikely(bytes==-1)){
 				LOG(cfg_get(core, core_cfg, corelog),

@@ -687,7 +687,7 @@ int ki_pres_refresh_watchers_file(sip_msg_t *msg, str *pres, str *event,
 	return pres_refresh_watchers(pres, event, type, file_uri, filename);
 }
 
-int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
+int pres_update_status(subs_t *subs, str reason, db_key_t* query_cols,
 		db_val_t* query_vals, int n_query_cols, subs_t** subs_array)
 {
 	db_key_t update_cols[5];
@@ -715,29 +715,29 @@ int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 	update_vals[u_reason_col].type= DB1_STR;
 	n_update_cols++;
 
-	status= subs.status;
-	if(subs.event->get_auth_status(&subs)< 0)
+	status= subs->status;
+	if(subs->event->get_auth_status(subs)< 0)
 	{
 		LM_ERR( "getting status from rules document\n");
 		return -1;
 	}
-	LM_DBG("subs.status= %d\n", subs.status);
-	if(get_status_str(subs.status)== NULL)
+	LM_DBG("subs.status= %d\n", subs->status);
+	if(get_status_str(subs->status)== NULL)
 	{
-		LM_ERR("wrong status: %d\n", subs.status);
+		LM_ERR("wrong status: %d\n", subs->status);
 		return -1;
 	}
 
-	if(subs.status!= status || reason.len!= subs.reason.len ||
-			(reason.s && subs.reason.s && strncmp(reason.s, subs.reason.s,
+	if(subs->status!= status || reason.len!= subs->reason.len ||
+			(reason.s && subs->reason.s && strncmp(reason.s, subs->reason.s,
 				reason.len)))
 	{
 		/* update in watchers_table */
-		query_vals[q_wuser_col].val.str_val= subs.watcher_user;
-		query_vals[q_wdomain_col].val.str_val= subs.watcher_domain;
+		query_vals[q_wuser_col].val.str_val= subs->watcher_user;
+		query_vals[q_wdomain_col].val.str_val= subs->watcher_domain;
 
-		update_vals[u_status_col].val.int_val= subs.status;
-		update_vals[u_reason_col].val.str_val= subs.reason;
+		update_vals[u_status_col].val.int_val= subs->status;
+		update_vals[u_reason_col].val.str_val= subs->reason;
 
 		if (pa_dbf.use_table(pa_db, &watchers_table) < 0)
 		{
@@ -753,12 +753,12 @@ int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 		}
 		/* save in the list all affected dialogs */
 		/* if status switches to terminated -> delete dialog */
-		if(update_pw_dialogs(&subs, subs.db_flag, subs_array)< 0)
+		if(update_pw_dialogs(subs, subs->db_flag, subs_array)< 0)
 		{
 			LM_ERR( "extracting dialogs from [watcher]=%.*s@%.*s to"
-					" [presentity]=%.*s\n",	subs.watcher_user.len, subs.watcher_user.s,
-					subs.watcher_domain.len, subs.watcher_domain.s, subs.pres_uri.len,
-					subs.pres_uri.s);
+					" [presentity]=%.*s\n",	subs->watcher_user.len, subs->watcher_user.s,
+					subs->watcher_domain.len, subs->watcher_domain.s, subs->pres_uri.len,
+					subs->pres_uri.s);
 			return -1;
 		}
 	}
@@ -828,13 +828,13 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	int err_ret= -1;
 	int n= 0;
 
-	typedef struct ws
-	{
+	typedef struct ws {
 		int status;
 		str reason;
 		str w_user;
 		str w_domain;
-	}ws_t;
+	} ws_t;
+
 	ws_t* ws_list= NULL;
 
 	LM_DBG("start\n");
@@ -897,7 +897,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	hash_code= core_case_hash(&pres_uri, &ev->name, shtable_size);
 	subs.db_flag= hash_code;
 
-	/*must do a copy as sphere_check requires database queries */
+	/* must do a copy as sphere_check requires database queries */
 	if(sphere_enable)
 	{
 		n= result->n;
@@ -971,7 +971,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			subs.status = ws_list[i].status;
 			memset(&subs.reason, 0, sizeof(str));
 
-			if( pres_update_status(subs, reason, query_cols, query_vals,
+			if( pres_update_status(&subs, reason, query_cols, query_vals,
 						n_query_cols, &subs_array)< 0)
 			{
 				LM_ERR("failed to update watcher status\n");
@@ -987,6 +987,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			if(ws_list[i].reason.s)
 				pkg_free(ws_list[i].reason.s);
 		}
+		pkg_free(ws_list);
 		ws_list= NULL;
 
 		goto send_notify;
@@ -1013,7 +1014,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		subs.status= status;
 		memset(&subs.reason, 0, sizeof(str));
 
-		if( pres_update_status(subs,reason, query_cols, query_vals,
+		if( pres_update_status(&subs,reason, query_cols, query_vals,
 					n_query_cols, &subs_array)< 0)
 		{
 			LM_ERR("failed to update watcher status\n");
@@ -1066,13 +1067,12 @@ done:
 		{
 			if(ws_list[i].w_user.s)
 				pkg_free(ws_list[i].w_user.s);
-			else
-				break;
 			if(ws_list[i].w_domain.s)
 				pkg_free(ws_list[i].w_domain.s);
 			if(ws_list[i].reason.s)
 				pkg_free(ws_list[i].reason.s);
 		}
+		pkg_free(ws_list);
 	}
 	return err_ret;
 }

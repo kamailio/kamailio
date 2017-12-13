@@ -40,13 +40,13 @@
 	</para>
 
 	<para>
-	The capturing can be turned on/off using mi or rpc commands. Example:
+	The capturing can be turned on/off using rpc commands. Example:
 	</para>
 	<para>
-	&ctltool; fifo sip_capture on
+	&ctltool; rpc sipcapture.status on
 	</para>
 	<para>
-	&ctltool; fifo sip_capture off
+	&ctltool; rpc sipcapture.status off
 	</para>
 	</section>
 	<section>
@@ -185,7 +185,7 @@ modparam("sipcapture", "db_insert_mode", 1)
 	<section id="sipcapture.p.capture_on">
 		<title><varname>capture_on</varname> (integer)</title>
 		<para>
-		Parameter to enable/disable capture globaly (on(1)/off(0))
+		Parameter to enable/disable capture globally (on(1)/off(0))
 		</para>
 		<para>
 		<emphasis>
@@ -203,7 +203,7 @@ modparam("sipcapture", "capture_on", 1)
 	</section>
 
 	<section id="sipcapture.p.capture_mode">
-                <title><varname>capture_mode</varname> (integer)</title>
+                <title><varname>capture_mode</varname> (str)</title>
                 <para>
 				This parameter can be used for defining a capture mode which can be used in
 				the sip_capture calls as a parameter. A capture mode has a name and some parameters.
@@ -493,12 +493,65 @@ modparam("sipcapture", "topoh_unmask", 1)
 			</programlisting>
 		</example>
 	</section>
-</section>	
+
+	<section id="sipcapture.p.nonsip_hook">
+		<title><varname>nonsip_hook</varname> (int)</title>
+		<para>
+		If set to 1, event route <emphasis>sipcapture:siprequest</emphasis> is
+		run when HEP message is received.
+		</para>
+		<para>
+			Default value is <emphasis>0</emphasis>.
+		</para>
+		<example>
+			<title>Set <varname>nonsip_hook</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "nonsip_hook", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="sipcapture.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event,
+			the values can be: 'sipcapture:request'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "event_callback", "ksr_sipcapture_event")
+...
+-- event callback function implemented in Lua
+function ksr_sipcapture_event(evname)
+	KSR.info("===== sipcapture module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
+
+</section>
+
 <section>
 	<title>Functions</title>
 	<section id="sipcapture.f.sip_capture">
 		<title>
-		<function moreinfo="none">sip_capture([table])</function>
+		<function moreinfo="none">sip_capture([table], [cmode])</function>
 		</title>
 		<para>
 		Store the current processed HEP/IPIP SIP message in database. It is stored in the
@@ -512,10 +565,14 @@ modparam("sipcapture", "topoh_unmask", 1)
 		as an argument of the sip_capture function.
 		</para>
 		</listitem>
+		<listitem>
+		<para><emphasis>cmode</emphasis> - The reference to the capture_mode
+		parameter.
+		</para>
+		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE, BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<emphasis>
 			Default value is "NULL".
@@ -528,12 +585,14 @@ sip_capture();
 ...
 sip_capture("sip_capture_call_20160124");
 ...
+sip_capture("", "cmode");
+...
 </programlisting>
 		</example>
 	</section>
 	<section id="sipcapture.f.report_capture">
 		<title>
-		<function moreinfo="none">report_capture([table],[data])</function>
+		<function moreinfo="none">report_capture([table], [cid], [data])</function>
 		</title>
 		<para>
 		Store the current processed HEP REPORT message in database. 
@@ -543,13 +602,18 @@ sip_capture("sip_capture_call_20160124");
 		<listitem>
 		<para><emphasis>table</emphasis> - The table where REPORT message will be stored.
 		</para>
-		<para><emphasis>data</emphasis> - The custom report data.
+		</listitem>
+		<listitem>
+		<para><emphasis>cid</emphasis> - The correlation id.
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>data</emphasis> - The custom report data in JSON format.
 		</para>
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE, BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<emphasis>
 			Default value is "NULL".
@@ -560,14 +624,73 @@ sip_capture("sip_capture_call_20160124");
 ...
 report_capture();
 ...
-report_capture("report_data");
+report_capture("report_data", "$ci");
 ...
-report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
+report_capture("report_data", "$ci", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 ...
 </programlisting>
 		</example>
 	</section>
+	<section id="sipcapture.f.float2int">
+		<title>
+		<function moreinfo="none">float2int(fval, ival)</function>
+		</title>
+		<para>
+		Return the value of atof(fval) * atoi(ival). On case the result is 0,
+		then -1 is returned.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>report_capture()</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(res) = float2int("10.5", "1");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
 
+    <section>
+	<title>Event Routes</title>
+	<section id="sipcapture.ev.request">
+		<title>event_route[sipcapture:request]</title>
+		<para>
+			Event route block to be executed when HEP packet is received. It
+			requires module parameter 'nonsip_hook' to be set to 1.
+		</para>
+		<example>
+		<title>event_route[sipcapture:request] usage</title>
+		<programlisting format="linespecific">
+...
+# new event sipcapture socket
+modparam("sipcapture", "nonsip_hook", 1)
+...
+
+event_route[sipcapture:request] {
+
+	xlog("HEP Request!\n");
+	xlog("received sipcapture request from $si:$sp\n");
+	xlog("HEP VERSION $hep(version) request from $si:$sp\n");
+	xlog("HEP CHUNK Source IP $hep(0x002) request from $si:$sp\n");
+
+	# is it SIP ?
+	if($hep(0x00b) == 1) {
+
+		# do parsing internal
+		return 1;
+	} else {
+		# if report lets proceed here with payload
+		xlog("HEP CHUNK PAYLOAD $hep(0x00f) request from $si:$sp\n");
+		return 0;
+	}
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
     <section>

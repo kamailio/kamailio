@@ -861,5 +861,7 @@ inline static int q_base64_dec(unsigned char* src, int slen,
 /*! \brief inits internal lookup tables */
 int init_basex(void);
 
+char* b58_encode(char *b58, int *b58sz, char *data, int binsz);
+char* b58_decode(char *outb, int *outbszp, char *b58, int b58sz);
 
 #endif /* _basex_h */

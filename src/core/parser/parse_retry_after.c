@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2007 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
@@ -13,10 +13,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 /*! \file
@@ -24,7 +24,7 @@
  *
  * \ingroup parser
  */
- 
+
 
 #include "../comp_defs.h"
 #include "parse_retry_after.h"
@@ -34,15 +34,16 @@
 #include "../mem/mem.h"
 
 /*! \brief Parse the Retry-after header field */
-char* parse_retry_after(char* const buf, const char* const end, unsigned* const after, int* const err)
+char* parse_retry_after(char* const buf, const char* const end,
+		unsigned* const after, int* const err)
 {
 	char *t;
 	int i;
 	unsigned val;
-	
+
 	val=0;
 	t=buf;
-	
+
 	t=eat_lws_end(t, end);
 	if (t>=end) goto error;
 	for (i=0; t<end; i++,t++){
@@ -81,10 +82,10 @@ found:
 		}
 	}
 error_nocrlf:
-	LOG(L_ERR, "ERROR: parse_retry_after: strange EoHF\n");
+	LM_ERR("strange EoHF\n");
 	goto error;
 error:
-	LOG(L_ERR, "ERROR: parse_retry_after: bad Retry-After header \n");
+	LM_ERR("bad Retry-After header \n");
 	*err=1;
 	return t;
 }

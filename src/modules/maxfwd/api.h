@@ -30,11 +30,12 @@ typedef int (*process_maxfwd_f)(struct sip_msg *msg, int limit);
 /**
  * @brief MAXFWD API structure
  */
-typedef struct maxfwd_api {
+typedef struct maxfwd_api
+{
 	process_maxfwd_f process_maxfwd;
 } maxfwd_api_t;
 
-typedef int (*bind_maxfwd_f)(maxfwd_api_t* api);
+typedef int (*bind_maxfwd_f)(maxfwd_api_t *api);
 
 /**
  * @brief Load the MAXFWD API
@@ -48,8 +49,7 @@ static inline int maxfwd_load_api(maxfwd_api_t *api)
 		LM_ERR("cannot find bind_maxfwd\n");
 		return -1;
 	}
-	if (bindmaxfwd(api)==-1)
-	{
+	if(bindmaxfwd(api) == -1) {
 		LM_ERR("cannot bind maxfwd api\n");
 		return -1;
 	}
@@ -57,4 +57,3 @@ static inline int maxfwd_load_api(maxfwd_api_t *api)
 }
 
 #endif
-

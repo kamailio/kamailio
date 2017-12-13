@@ -112,7 +112,7 @@
 	</para>
 	<note>
 		<para>Several Kamailio TM module functions are now
-		implemented in the TMX module: <quote>modules_k/tmx</quote>. Check
+		implemented in the TMX module. Check
 		it to see if what you are looking for is there.</para>
 	</note>
     </section>

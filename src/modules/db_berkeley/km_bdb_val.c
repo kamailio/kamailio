@@ -48,7 +48,7 @@
  * should be done in the val2str function, as some databases
  * like db_berkeley don't need or like this at all.
  */
-inline int km_bdb_time2str(time_t _v, char* _s, int* _l)
+int km_bdb_time2str(time_t _v, char* _s, int* _l)
 {
 	struct tm* t;
 	int l;

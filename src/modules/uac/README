@@ -380,9 +380,8 @@ modparam("uac","credential","username:domain:password")
    This can be used if the realm upstream will be using is not known in
    advance.
 
-   If you define it, you also need to define “auth_username_avp”
-   (Section 3.10, “auth_username_avp (string)”) and “auth_username_avp”
-   (Section 3.11, “auth_password_avp (string)”).
+   If you define it, you also need to define “auth_username_avp” (???) and
+   “auth_username_avp” (???).
 
    Example 1.9. Set auth_realm_avp parameter
 ...
@@ -394,9 +393,8 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
    The definition of an AVP that might contain the username to be used to
    perform authentication.
 
-   If you define it, you also need to define “auth_realm_avp”
-   (Section 3.9, “auth_realm_avp (string)”) and “auth_username_avp”
-   (Section 3.11, “auth_password_avp (string)”).
+   If you define it, you also need to define “auth_realm_avp” (???) and
+   “auth_username_avp” (???).
 
    Example 1.10. Set auth_username_avp parameter
 ...
@@ -408,9 +406,8 @@ modparam("uac","auth_username_avp","$avp(i:11)")
    The definition of an AVP that might contain the password to be used to
    perform authentication.
 
-   If you define it, you also need to define “auth_password_avp”
-   (Section 3.11, “auth_password_avp (string)”) and “auth_username_avp”
-   (Section 3.11, “auth_password_avp (string)”).
+   If you define it, you also need to define “auth_password_avp” (???) and
+   “auth_username_avp” (???).
 
    Example 1.11. Set auth_password_avp parameter
 ...
@@ -419,7 +416,10 @@ modparam("uac","auth_password_avp","$avp(i:12)")
 
 3.12. reg_db_url (string)
 
-   DB URL to fetch account profiles for registration.
+   DB URL to fetch account profiles for registration. This parameter must
+   be set in order to enable remote registrations feature.
+
+   The default value is "" (no value).
 
    Example 1.12. Set reg_db_url parameter
 ...

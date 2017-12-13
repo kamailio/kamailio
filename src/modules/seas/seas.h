@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright (C) 2006-2007 VozTelecom Sistemas S.L
  *
  * This file is part of Kamailio, a free SIP server.
@@ -14,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -67,9 +66,9 @@
 #define SPIRAL_FLAG 0x00000001
 
 #define net2hostL(dst,from,index) do{ \
-   memcpy(&(dst),(from)+(index),4); \
-   dst=ntohl(dst); \
-   (index)+=4; \
+	memcpy(&(dst),(from)+(index),4); \
+	dst=ntohl(dst); \
+	(index)+=4; \
 }while(0);
 
 
@@ -94,32 +93,32 @@ extern int servlet_pings_lost;
 extern struct as_entry *as_table;
 
 struct seas_functions{
-   struct tm_binds tmb;
-   cmd_function t_check_orig_trans;
+	struct tm_binds tmb;
+	cmd_function t_check_orig_trans;
 };
 
 /*TODO listen_points should be dynamically allocated ?*/
 typedef struct app_server {
-   int event_fd;
-   int action_fd;
-   str name;
-   pid_t action_pid;
-   struct socket_info *binds[MAX_BINDS];
-   char bound_processor[MAX_BINDS];
-   int num_binds;
-   str ev_buffer;
-   str ac_buffer;
-   struct ha jain_pings;
-   struct ha servlet_pings;
-   struct cluster *cluster;
+	int event_fd;
+	int action_fd;
+	str name;
+	pid_t action_pid;
+	struct socket_info *binds[MAX_BINDS];
+	char bound_processor[MAX_BINDS];
+	int num_binds;
+	str ev_buffer;
+	str ac_buffer;
+	struct ha jain_pings;
+	struct ha servlet_pings;
+	struct cluster *cluster;
 }as_t, *as_p;
 
 struct cluster{
-   str name;
-   int num;
-   int registered;
-   str as_names[MAX_AS_PER_CLUSTER];
-   as_p servers[MAX_AS_PER_CLUSTER];
+	str name;
+	int num;
+	int registered;
+	str as_names[MAX_AS_PER_CLUSTER];
+	as_p servers[MAX_AS_PER_CLUSTER];
 };
 
 /**
@@ -127,32 +126,32 @@ struct cluster{
  * when one matches, they will put the as pointer inside the event that should process
  * that event.
  * If eventually the as becomes unavailable, the dispatcher will set valid=false, which should be
- * atomic operation. This way, we prevent having to put a mutex on the array, which would make 
+ * atomic operation. This way, we prevent having to put a mutex on the array, which would make
  * it slower , as only one process could be accessing it at a time.
  */
 struct as_entry{
-   str name;
-   int type;
-   int connected;
-   union{
-      struct app_server as;
-      struct cluster cs;
-   }u;
-   struct as_entry *next;
+	str name;
+	int type;
+	int connected;
+	union{
+		struct app_server as;
+		struct cluster cs;
+	}u;
+	struct as_entry *next;
 };
 
 
 extern struct as_entry *my_as;
-extern struct seas_functions seas_f; 
+extern struct seas_functions seas_f;
 extern struct as_entry *as_list;
 
 typedef struct as_msg {
-   struct cell *transaction;
-   char *msg;
-   int len;
-   int type;
-   int id;
-   struct as_entry *as;
+	struct cell *transaction;
+	char *msg;
+	int len;
+	int type;
+	int id;
+	struct as_entry *as;
 }as_msg_t,*as_msg_p;
 
 char get_processor_id(struct receive_info *rcv,as_p as);
@@ -162,17 +161,17 @@ char* create_as_event_sl(struct sip_msg *msg,char processor_id,int *evt_len,int 
 
 static inline void print_ip_buf(struct ip_addr* ip, char *where,int len)
 {
-   switch(ip->af){
-      case AF_INET:
-	 snprintf(where,len,"%d.%d.%d.%d", ip->u.addr[0], ip->u.addr[1], ip->u.addr[2], ip->u.addr[3]);
-	 break;
-      case AF_INET6:
-	 snprintf(where,len,"%x:%x:%x:%x:%x:%x:%x:%x",htons(ip->u.addr16[0]),htons(ip->u.addr16[1]),htons(ip->u.addr16[2]),
-	       htons(ip->u.addr16[3]), htons(ip->u.addr16[4]), htons(ip->u.addr16[5]), htons(ip->u.addr16[6]),
-	       htons(ip->u.addr16[7]));
-	 break;
-      default:
-	 break;
-   }
+	switch(ip->af){
+		case AF_INET:
+			snprintf(where,len,"%d.%d.%d.%d", ip->u.addr[0], ip->u.addr[1], ip->u.addr[2], ip->u.addr[3]);
+			break;
+		case AF_INET6:
+			snprintf(where,len,"%x:%x:%x:%x:%x:%x:%x:%x",htons(ip->u.addr16[0]),htons(ip->u.addr16[1]),htons(ip->u.addr16[2]),
+					htons(ip->u.addr16[3]), htons(ip->u.addr16[4]), htons(ip->u.addr16[5]), htons(ip->u.addr16[6]),
+					htons(ip->u.addr16[7]));
+			break;
+		default:
+			break;
+	}
 }
 #endif

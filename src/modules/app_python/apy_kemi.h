@@ -32,4 +32,9 @@ int sr_kemi_config_engine_python(sip_msg_t *msg, int rtype, str *rname,
 
 PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx);
 
+int apy_sr_init_mod(void);
+int app_python_init_rpc(void);
+int apy_load_script(void);
+int apy_init_script(int rank);
+
 #endif

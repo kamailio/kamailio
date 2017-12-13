@@ -306,10 +306,8 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 		}
 	}
 	/* that's a new to-tag -- record it */
-	shm_lock();
-	n=(struct totag_elem*) shm_malloc_unsafe(sizeof(struct totag_elem));
-	s=(char *)shm_malloc_unsafe(tag->len);
-	shm_unlock();
+	n=(struct totag_elem*) shm_malloc(sizeof(struct totag_elem));
+	s=(char *)shm_malloc(tag->len);
 	if (!s || !n) {
 		LM_ERR("no more shm memory \n");
 		if (n) shm_free(n);
@@ -517,7 +515,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		} else {
 			if(unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_READY))) {
 				run_trans_callbacks_with_buf(TMCB_RESPONSE_READY, rb,
-					trans->uas.request, FAKED_REPLY, code);
+					trans->uas.request, FAKED_REPLY, TMCB_NONE_F);
 			}
 		}
 		cleanup_uac_timers( trans );
@@ -534,7 +532,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	if (code==100) {
 		if(unlikely(has_tran_tmcbs(trans, TMCB_REQUEST_PENDING)))
 			run_trans_callbacks_with_buf(TMCB_REQUEST_PENDING, rb,
-					trans->uas.request, FAKED_REPLY, code);
+					trans->uas.request, FAKED_REPLY, TMCB_NONE_F);
 	}
 
 	/* send it out */
@@ -1117,8 +1115,8 @@ inline static short int get_4xx_prio(unsigned char xx)
 /* returns response priority, lower number => highest prio
  *
  * responses                    priority val
- *  0-99                        32000+reponse         (special)
- *  1xx                         11000+reponse         (special)
+ *  0-99                        32000+response        (special)
+ *  1xx                         11000+response        (special)
  *  700-999                     10000+response        (very low)
  *  5xx                          5000+xx              (low)
  *  4xx                          4000+xx
@@ -1579,7 +1577,9 @@ int t_retransmit_reply( struct cell *t )
 	}
 	memcpy( b, t->uas.response.buffer, len );
 	UNLOCK_REPLIES( t );
-	SEND_PR_BUFFER( & t->uas.response, b, len );
+	if(SEND_PR_BUFFER( & t->uas.response, b, len )<0) {
+		LM_WARN("send pr buffer failed\n");
+	}
 	if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
 		/* we don't know if it's a retransmission of a local reply or a
 		 * forwarded reply */
@@ -1946,7 +1946,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	if (relay >= 0) {
 		if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_READY))){
 			run_trans_callbacks_with_buf(TMCB_RESPONSE_READY, uas_rb,
-					t->uas.request, relayed_msg, relayed_code);
+					t->uas.request, relayed_msg, TMCB_NONE_F);
 		}
 		/* Set retransmission timer before the reply is sent out to avoid
 		* race conditions
@@ -1978,8 +1978,10 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				if (unlikely(!totag_retr
 							&& has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
 					LOCK_REPLIES( t );
-					run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb,
-							t->uas.request, relayed_msg, relayed_code);
+					if(relayed_code==uas_rb->activ_type) {
+						run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb,
+								t->uas.request, relayed_msg, TMCB_NONE_F);
+					}
 					UNLOCK_REPLIES( t );
 				}
 				if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
@@ -2175,18 +2177,25 @@ int reply_received( struct sip_msg  *p_msg )
 	sr_kemi_eng_t *keng = NULL;
 
 	/* make sure we know the associated transaction ... */
-	if (t_check( p_msg  , &branch )==-1)
+	branch = T_BR_UNDEFINED;
+	if (t_check(p_msg , &branch)==-1)
 		goto trans_not_found;
 	/*... if there is none, tell the core router to fwd statelessly */
 	t=get_t();
-	if ( (t==0)||(t==T_UNDEFINED))
+	if ( (t==0)||(t==T_UNDEFINED)) {
+		LM_DBG("transaction not found - (branch %d)\n", branch);
 		goto trans_not_found;
+	}
+	if (unlikely(branch==T_BR_UNDEFINED)) {
+		LM_CRIT("BUG: transaction found, but no branch matched\n");
+		/* t_check() referenced the transaction */
+		t_unref(p_msg);
+		goto trans_not_found;
+	}
 
 	/* if transaction found, increment the rpl_received counter */
 	t_stats_rpl_received();
 
-	if (unlikely(branch==T_BR_UNDEFINED))
-		LM_CRIT("BUG: invalid branch - report to developers\n");
 	tm_ctx_set_branch_index(branch);
 	init_cancel_info(&cancel_data);
 	msg_status=p_msg->REPLY_STATUS;
@@ -2497,6 +2506,7 @@ int reply_received( struct sip_msg  *p_msg )
 		replies_locked=1;
 	}
 	if ( is_local(t) ) {
+		/* local_reply() does UNLOCK_REPLIES( t ) */
 		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_data );
 		replies_locked=0;
 		if (reply_status == RPS_COMPLETED) {
@@ -2514,6 +2524,7 @@ int reply_received( struct sip_msg  *p_msg )
 			cancel_uacs(t, &cancel_data, cfg_get(tm,tm_cfg, cancel_b_flags));
 		}
 	} else {
+		/* relay_reply() does UNLOCK_REPLIES( t ) */
 		reply_status=relay_reply( t, p_msg, branch, msg_status,
 									&cancel_data, 1 );
 		replies_locked=0;

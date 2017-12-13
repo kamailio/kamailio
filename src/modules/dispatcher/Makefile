@@ -9,7 +9,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=dispatcher.so
 
-LIBS=
+LIBS=-lm
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 

@@ -219,6 +219,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 		if (timerfd_settime(timerfd, 0, itime, NULL) == -1) 
 		{
 			LM_ERR("Could not set timer.");
+			pkg_free(itime);
 			goto error;
 		}
 		pkg_free(itime);

@@ -345,6 +345,12 @@ modparam("p_usrloc", "risk_group_column", "rg")
 		    Default value is <quote>3600</quote>.
 		</emphasis>
 	    </para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int p_usrloc expire_time 7200
+			</programlisting>
+		</para>
 	    <example>
 		<title>Set <varname>expire_time</varname> parameter</title>
 		<programlisting format="linespecific">
@@ -364,6 +370,12 @@ modparam("p_usrloc", "expire_time", "3600")
 		    Default value is <quote>50</quote>.
 		</emphasis>
 	    </para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int p_usrloc db_err_threshold 20
+			</programlisting>
+		</para>
 	    <example>
 		<title>Set <varname>db_err_threshold</varname> parameter</title>
 		<programlisting format="linespecific">
@@ -392,6 +404,12 @@ modparam("p_usrloc", "db_err_threshold", "50")
 		    Default value is <quote>1</quote>.
 		</emphasis>
 	    </para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int p_usrloc failover_level 2
+			</programlisting>
+		</para>
 	    <example>
 		<title>Set <varname>failover_level</varname> parameter</title>
 		<programlisting format="linespecific">
@@ -594,8 +612,14 @@ modparam("p_usrloc", "default_db_type", "cluster")
 	</para>
 	<para>
 	<emphasis>
-		Default value is <quote>1</quote>.
+		Default value is <quote>0</quote>.
 	</emphasis>
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+		$ &sercmd; cfg.set_now_int p_usrloc db_ops_ruid 1
+		</programlisting>
 	</para>
 	<example>
 	<title>Set <varname>db_ops_ruid</varname> parameter</title>
@@ -616,8 +640,14 @@ modparam("p_usrloc", "db_ops_ruid", 0)
         </para>
         <para>
         <emphasis>
-             Default value is <quote>0</quote>.
+             Default value is <quote>1</quote>.
         </emphasis>
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+		$ &sercmd; cfg.set_now_int p_usrloc db_update_as_insert 1
+		</programlisting>
 	</para>
 	<example>
 	<title>Set <varname>db_update_as_insert</varname> parameter</title>

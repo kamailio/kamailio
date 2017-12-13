@@ -50,6 +50,9 @@
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/timer_proc.h"
+#include "../../core/fmsg.h"
+#include "../../core/onsend.h"
+#include "../../core/kemi.h"
 
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srutils/sruid.h"
@@ -81,10 +84,16 @@ extern int _tps_dialog_expire;
 
 int _tps_clean_interval = 60;
 
+static int _tps_eventrt_outgoing = -1;
+static str _tps_eventrt_callback = STR_NULL;
+static str _tps_eventrt_name = str_init("topos:msg-outgoing");
+
 sanity_api_t scb;
 
 int tps_msg_received(sr_event_param_t *evp);
 int tps_msg_sent(sr_event_param_t *evp);
+
+static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp);
 
 /** module functions */
 /* Module init function prototype */
@@ -111,6 +120,7 @@ static param_export_t params[]={
 	{"branch_expire",	PARAM_INT, &_tps_branch_expire},
 	{"dialog_expire",	PARAM_INT, &_tps_dialog_expire},
 	{"clean_interval",	PARAM_INT, &_tps_clean_interval},
+	{"event_callback",	PARAM_STR, &_tps_eventrt_callback},
 	{0,0,0}
 };
 
@@ -136,6 +146,17 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	_tps_eventrt_outgoing = route_lookup(&event_rt, _tps_eventrt_name.s);
+	if(_tps_eventrt_outgoing<0
+			|| event_rt.rlist[_tps_eventrt_outgoing]==NULL) {
+		_tps_eventrt_outgoing = -1;
+	}
+
+	if(faked_msg_init()<0) {
+		LM_ERR("failed to init fmsg\n");
+		return -1;
+	}
+
 	if(_tps_storage.len==2 && strncmp(_tps_storage.s, "db", 2)==0) {
 		/* Find a database module */
 		if (db_bind_mod(&_tps_db_url, &_tpsdbf)) {
@@ -240,17 +261,19 @@ int tps_prepare_msg(sip_msg_t *msg)
 		return 1;
 	}
 
-	if (parse_headers(msg, HDR_EOH_F, 0)==-1) {
-		LM_DBG("parsing headers failed [[%.*s]]\n",
-				msg->len, msg->buf);
-		return 2;
+	if(parse_headers(msg, HDR_VIA2_F, 0)<0) {
+		LM_DBG("no via2 has been parsed\n");
 	}
-
-	parse_headers(msg, HDR_VIA2_F, 0);
 
 	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL) {
 		LM_ERR("cannot parse cseq header\n");
 		return -1;
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0)==-1) {
+		LM_DBG("parsing headers failed [[%.*s]]\n",
+				msg->len, msg->buf);
+		return 2;
 	}
 
 	if(parse_from_header(msg)<0) {
@@ -350,6 +373,11 @@ int tps_msg_sent(sr_event_param_t *evp)
 	int local;
 
 	obuf = (str*)evp->data;
+
+	if(tps_execute_event_route(NULL, evp)==1) {
+		return 0;
+	}
+
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
@@ -401,6 +429,76 @@ int tps_get_dialog_expire(void)
 int tps_get_branch_expire(void)
 {
 	return _tps_branch_expire;
+}
+
+/**
+ *
+ */
+static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
+{
+	struct sip_msg *fmsg;
+	struct run_act_ctx ctx;
+	int rtb;
+	sr_kemi_eng_t *keng = NULL;
+	struct onsend_info onsnd_info = {0};
+
+	if(_tps_eventrt_outgoing<0) {
+		if(_tps_eventrt_callback.s!=NULL || _tps_eventrt_callback.len>0) {
+			keng = sr_kemi_eng_get();
+			if(keng==NULL) {
+				LM_DBG("event callback (%s) set, but no cfg engine\n",
+						_tps_eventrt_callback.s);
+				goto done;
+			}
+		}
+	}
+
+	if(_tps_eventrt_outgoing<0 && keng==NULL) {
+		return 0;
+	}
+
+	LM_DBG("executing event_route[topos:...] (%d)\n",
+			_tps_eventrt_outgoing);
+	fmsg = faked_msg_next();
+
+	onsnd_info.to = &evp->dst->to;
+	onsnd_info.send_sock = evp->dst->send_sock;
+	if(msg!=NULL) {
+		onsnd_info.buf = msg->buf;
+		onsnd_info.len = msg->len;
+		onsnd_info.msg = msg;
+	} else {
+		onsnd_info.buf = fmsg->buf;
+		onsnd_info.len = fmsg->len;
+		onsnd_info.msg = fmsg;
+	}
+	p_onsend = &onsnd_info;
+
+	rtb = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	if(_tps_eventrt_outgoing>=0) {
+		run_top_route(event_rt.rlist[_tps_eventrt_outgoing], fmsg, &ctx);
+	} else {
+		if(keng!=NULL) {
+			if(keng->froute(fmsg, EVENT_ROUTE,
+						&_tps_eventrt_callback, &_tps_eventrt_name)<0) {
+				LM_ERR("error running event route kemi callback\n");
+				p_onsend=NULL;
+				return -1;
+			}
+		}
+	}
+	set_route_type(rtb);
+	if(ctx.run_flags&DROP_R_F) {
+		LM_DBG("exit due to 'drop' in event route\n");
+		p_onsend=NULL;
+		return 1;
+	}
+
+done:
+	p_onsend=NULL;
+	return 0;
 }
 
 /**

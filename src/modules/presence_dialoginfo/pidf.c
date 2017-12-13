@@ -1,6 +1,4 @@
 /*
- * $Id: pidf.c 1953 2007-04-04 08:50:33Z anca_vamanu $
- *
  * presence module - presence server implementation
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -17,13 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2007-04-14  initial version (anca)
  */
 
 /*! \file
@@ -39,8 +34,8 @@
 #ifdef __OS_linux
 	#define _XOPEN_SOURCE 600          /* glibc2 on linux */
 	#define _BSD_SOURCE 1				/* needed on linux to "fix" the effect
-										  of the above define on
-										  features.h/unistd.h syscall() */
+										 * of the above define on
+										 * features.h/unistd.h syscall() */
 	#define _DEFAULT_SOURCE 1			/* _BSD_SOURCE is deprecated */
 #elif defined __OS_solaris
 	#define _XOPEN_SOURCE_EXTENDED 1   /* solaris */
@@ -124,7 +119,7 @@ xmlNodePtr xmlDocGetNodeByName(xmlDocPtr doc, const char *name, const char *ns)
 	return xmlNodeGetNodeByName(cur, name, ns);
 }
 
-char *xmlDocGetNodeContentByName(xmlDocPtr doc, const char *name, 
+char *xmlDocGetNodeContentByName(xmlDocPtr doc, const char *name,
 		const char *ns)
 {
 	xmlNodePtr node = xmlDocGetNodeByName(doc, name, ns);
@@ -156,7 +151,7 @@ time_t xml_parse_dateTime(char* xml_time_str)
 		printf("error: failed to parse time\n");
 		return 0;
 	}
-	
+
 	if(*p== '\0')
 		goto done;
 
@@ -173,9 +168,7 @@ time_t xml_parse_dateTime(char* xml_time_str)
 	if(*p== '\0')
 		goto done;
 
-	
 	/* read time zone */
-
 	if(*p== 'Z')
 	{
 		goto done;
@@ -190,14 +183,12 @@ time_t xml_parse_dateTime(char* xml_time_str)
 		printf("error: failed to parse time\n");
 		return 0;
 	}
-	
+
 	h= (h1- '0')*10+ h2- '0';
 	m= (m1- '0')*10+ m2- '0';
 
 	timezone_diff= sign* ((m+ h* 60)* 60);
 
 done:
-	return (mktime(&tm) + timezone_diff);	
+	return (mktime(&tm) + timezone_diff);
 }
-
-

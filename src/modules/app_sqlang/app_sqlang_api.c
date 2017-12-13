@@ -1357,7 +1357,6 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 					fname->len, fname->s);
 			return app_sqlang_return_false(J);
 	}
-	return app_sqlang_return_false(J);
 }
 
 /**

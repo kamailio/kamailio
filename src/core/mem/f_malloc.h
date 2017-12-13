@@ -36,7 +36,7 @@
 
 /**
  * Use a bitmap to quickly find free fragments, should speed up
- * especially startup (non-warmed-up malloc) 
+ * especially startup (non-warmed-up malloc)
  */
 #define F_MALLOC_HASH_BITMAP
 
@@ -48,7 +48,7 @@
 	#define ROUNDTO		sizeof(long long)
 #else
 	#define ROUNDTO		sizeof(void*) /* size we round to, must be = 2^n, and
-                      sizeof(fm_frag) must be multiple of ROUNDTO !*/
+							* sizeof(fm_frag) must be multiple of ROUNDTO !*/
 #endif
 #else /* DBG_F_MALLOC */
 	#define ROUNDTO 8UL
@@ -108,7 +108,7 @@ struct fm_block{
 	unsigned long real_used; /** used + malloc overhead */
 	unsigned long max_real_used;
 	unsigned long ffrags;
-	
+
 	struct fm_frag* first_frag;
 	struct fm_frag* last_frag;
 #ifdef F_MALLOC_HASH_BITMAP
@@ -143,8 +143,23 @@ void* fm_malloc(void* qmp, size_t size);
 
 
 /**
+ * \brief Memory manager allocation function, filling the result with 0
+ * \param qm memory block
+ * \param size memory allocation size
+ * \return address of allocated memory
+ */
+#ifdef DBG_F_MALLOC
+void* fm_mallocxz(void* qmp, size_t size,
+					const char* file, const char* func, unsigned int line,
+					const char* mname);
+#else
+void* fm_mallocxz(void* qmp, size_t size);
+#endif
+
+
+/**
  * \brief Main memory manager free function
- * 
+ *
  * Main memory manager free function, provide functionality necessary for pkg_free
  * \param qm memory block
  * \param p freed memory
@@ -159,8 +174,25 @@ void  fm_free(void* qmp, void* p);
 
 /**
  * \brief Main memory manager realloc function
- * 
+ *
  * Main memory manager realloc function, provide functionality for pkg_realloc
+ * \param qm memory block
+ * \param p reallocated memory block
+ * \param size
+ * \return reallocated memory block
+ */
+#ifdef DBG_F_MALLOC
+void* fm_realloc(void* qmp, void* p, size_t size,
+					const char* file, const char* func, unsigned int line, const char *mname);
+#else
+void*  fm_realloc(void* qmp, void* p, size_t size);
+#endif
+
+
+/**
+ * \brief Memory manager realloc function, always freeing old pointer
+ *
+ * Main memory manager realloc function, provide functionality for pkg_reallocxf
  * \param qm memory block
  * \param p reallocated memory block
  * \param size

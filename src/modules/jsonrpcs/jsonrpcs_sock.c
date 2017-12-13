@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -63,7 +64,7 @@ typedef struct{
 } jsonrpc_dgram_address_t;
 
 typedef struct jsonrpc_dgram_rx_tx {
-	int rx_sock, tx_sock;
+	int rx_sock;
 } jsonrpc_dgram_rx_tx_t;
 
 /* dgram variables */
@@ -71,7 +72,7 @@ static int jsonrpc_dgram_socket_domain =  AF_LOCAL;
 static jsonrpc_dgram_sockaddr_t jsonrpc_dgram_addr;
 
 /* dgram socket definition parameter */
-static jsonrpc_dgram_rx_tx_t jsonrpc_dgram_sockets;
+static jsonrpc_dgram_rx_tx_t jsonrpc_dgram_sockets = { -1 };
 
 /* dgram unixsock specific parameters */
 char *jsonrpc_dgram_socket = NAME "_rpc.sock";
@@ -89,8 +90,8 @@ int jsonrpc_dgram_child_init(int rank);
 int jsonrpc_dgram_destroy(void);
 
 
-void jsonrpc_dgram_server(int rx_sock, int tx_sock);
-static int jsonrpc_dgram_pre_process(void);
+void jsonrpc_dgram_server(int rx_sock);
+static int jsonrpc_dgram_init_socks(void);
 static int jsonrpc_dgram_post_process(void);
 
 int jsonrpc_dgram_mod_init(void)
@@ -241,6 +242,11 @@ int jsonrpc_dgram_mod_init(void)
 			jsonrpc_dgram_socket, strlen(jsonrpc_dgram_socket));
 
 done:
+	if(jsonrpc_dgram_init_socks()!=0) {
+		LM_ERR("init datagram sockets function failed\n");
+		return -1;
+	}
+
 	/* add space for extra processes */
 	register_procs(jsonrpc_dgram_workers);
 	/* add child to update local config framework structures */
@@ -358,7 +364,7 @@ int jsonrpc_dgram_init_server(jsonrpc_dgram_sockaddr_t *addr,
 
 	case AF_INET:
 			if (bind(socks->rx_sock, &addr->udp_addr.s,
-			sockaddru_len(addr->udp_addr))< 0) {
+						sockaddru_len(addr->udp_addr))< 0) {
 				LM_ERR("bind: %s\n", strerror(errno));
 				goto err_rx;
 			}
@@ -372,13 +378,12 @@ int jsonrpc_dgram_init_server(jsonrpc_dgram_sockaddr_t *addr,
 			break;
 	default:
 			LM_ERR("domain not supported\n");
-			goto err_both;
+			goto err_rx;
 
 	}
-	jsonrpc_dgram_create_reply_socket(socks->tx_sock, socket_domain, err_both);
 
 	optval = 64 * 1024;
-	if (setsockopt(socks->tx_sock, SOL_SOCKET, SO_SNDBUF,
+	if (setsockopt(socks->rx_sock, SOL_SOCKET, SO_SNDBUF,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LM_ERR("failed to increse send buffer size via setsockopt "
 				" SO_SNDBUF (%d) - %d: %s\n", optval,
@@ -386,16 +391,25 @@ int jsonrpc_dgram_init_server(jsonrpc_dgram_sockaddr_t *addr,
 		/* continue, non-critical */
 	}
 
+	/* Turn non-blocking mode on for tx*/
+	flags = fcntl(socks->rx_sock, F_GETFL);
+	if (flags == -1){
+		LM_ERR("fcntl failed: %s\n", strerror(errno));
+		goto err_rx;
+	}
+	if (fcntl(socks->rx_sock, F_SETFL, flags | O_NONBLOCK) == -1) {
+		LM_ERR("fcntl: set non-blocking failed: %s\n", strerror(errno));
+		goto err_rx;
+	}
 	return 0;
-err_both:
-	close(socks->tx_sock);
+
 err_rx:
-	close(socks->rx_sock);
+	if(socks->rx_sock>=0) close(socks->rx_sock);
 	return -1;
 }
 
 
-static int jsonrpc_dgram_pre_process(void)
+static int jsonrpc_dgram_init_socks(void)
 {
 	int res;
 
@@ -435,8 +449,7 @@ static void jsonrpc_dgram_process(int rank)
 
 	jsonrpc_dgram_write_buffer_len = JSONRPC_DGRAM_BUF_SIZE ;
 
-	jsonrpc_dgram_server(jsonrpc_dgram_sockets.rx_sock,
-			jsonrpc_dgram_sockets.tx_sock);
+	jsonrpc_dgram_server(jsonrpc_dgram_sockets.rx_sock);
 
 	exit(-1);
 }
@@ -448,12 +461,8 @@ int jsonrpc_dgram_child_init(int rank)
 	int pid;
 
 	if (rank==PROC_MAIN) {
-		if(jsonrpc_dgram_pre_process()!=0) {
-			LM_ERR("pre-fork function failed\n");
-			return -1;
-		}
 		for(i=0; i<jsonrpc_dgram_workers; i++) {
-			pid=fork_process(PROC_NOCHLDINIT, "JSONRPC-S DATAGRAM", 1);
+			pid=fork_process(PROC_RPC, "JSONRPCS DATAGRAM", 1);
 			if (pid<0)
 				return -1; /* error */
 			if(pid==0) {
@@ -479,8 +488,7 @@ int jsonrpc_dgram_child_init(int rank)
 static int jsonrpc_dgram_post_process(void)
 {
 	/* close the sockets */
-	close(jsonrpc_dgram_sockets.rx_sock);
-	close(jsonrpc_dgram_sockets.tx_sock);
+	if(jsonrpc_dgram_sockets.rx_sock>=0) close(jsonrpc_dgram_sockets.rx_sock);
 	return 0;
 }
 
@@ -528,7 +536,7 @@ static int jsonrpc_dgram_send_data(int fd, char* buf, unsigned int len,
 {
 	int n;
 	unsigned int optlen = sizeof(int);
-	int optval;
+	int optval = 0;
 
 	if(len == 0 || tolen ==0)
 		return -1;
@@ -536,7 +544,9 @@ static int jsonrpc_dgram_send_data(int fd, char* buf, unsigned int len,
 	/*LM_DBG("destination address length is %i\n", tolen);*/
 	n=sendto(fd, buf, len, 0, to, tolen);
 	if(n!=len) {
-		getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (int*)&optval, &optlen);
+		if(getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (int*)&optval, &optlen)==-1) {
+			LM_ERR("getsockopt failed\n");
+		}
 		LM_ERR("failed to send the response - ret: %d, len: %d (%d),"
 				" err: %d - %s)\n",
 				n, len, optval, errno, strerror(errno));
@@ -546,20 +556,33 @@ static int jsonrpc_dgram_send_data(int fd, char* buf, unsigned int len,
 	return n;
 }
 
-void jsonrpc_dgram_server(int rx_sock, int tx_sock)
+void jsonrpc_dgram_server(int rx_sock)
 {
 	int ret;
 	str scmd;
 	jsonrpc_plain_reply_t* jr = NULL;
+	fd_set readfds;
+	int n;
 
 	ret = 0;
 
 	while(1) { /*read the datagram*/
 		/* update the local config framework structures */
 		cfg_update();
-
 		memset(jsonrpc_dgram_buf, 0, JSONRPC_DGRAM_BUF_SIZE);
 		jsonrpc_dgram_reply_addr_len = sizeof(jsonrpc_dgram_reply_addr);
+
+		FD_ZERO(&readfds);
+		FD_SET(rx_sock, &readfds);
+		n = select(rx_sock+1, &readfds, 0, 0, 0);
+		if(n < 0) {
+			LM_ERR("failure in select: (%d) %s\n", errno, strerror(errno));
+			continue;
+		}
+		if(!FD_ISSET(rx_sock, &readfds)) {
+			/* no data on udp socket */
+			continue;
+		}
 
 		/* get the client's address */
 		ret = recvfrom(rx_sock, jsonrpc_dgram_buf, JSONRPC_DGRAM_BUF_SIZE, 0,
@@ -605,7 +628,7 @@ void jsonrpc_dgram_server(int rx_sock, int tx_sock)
 				jr->rcode, jr->rbody.s,
 				jr->rbody.len, jr->rbody.s);
 
-		jsonrpc_dgram_send_data(tx_sock, jr->rbody.s, jr->rbody.len,
+		jsonrpc_dgram_send_data(rx_sock, jr->rbody.s, jr->rbody.len,
 						  (struct sockaddr*)&jsonrpc_dgram_reply_addr,
 						  jsonrpc_dgram_reply_addr_len,
 						  jsonrpc_dgram_timeout);

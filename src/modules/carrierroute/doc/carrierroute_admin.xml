@@ -514,7 +514,7 @@ cr_tree_rewrite_uri(tree, domain)
   		    </para>
         </listitem>
         <listitem>
-		      <para><emphasis>decsavp</emphasis> - Name of the AVP where to store the description.
+		      <para><emphasis>decsavp</emphasis> - AVP where to store the description.
 			This parameter is optional.
   		    </para>
         </listitem>

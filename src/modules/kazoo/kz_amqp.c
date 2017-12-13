@@ -679,7 +679,7 @@ void kz_amqp_destroy() {
 	kz_hash_destroy();
 }
 
-#define KZ_URL_MAX_SIZE 100
+#define KZ_URL_MAX_SIZE 512
 static char* KZ_URL_ROOT = "/";
 
 int kz_amqp_add_connection(modparam_t type, void* val)
@@ -2848,9 +2848,13 @@ char* maybe_add_consumer_key(int server_id, amqp_bytes_t body)
     }
     char buffer[100];
     const char* server_id_str = json_object_get_string(server_id_obj);
-    sprintf(buffer, "consumer://%d/%s", server_id, server_id_str);
-    json_object_object_del(json_obj, BLF_JSON_SERVERID);
-    json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+    if(server_id_str && strlen(server_id_str) > 0) {
+    	sprintf(buffer, "consumer://%d/%s", server_id, server_id_str);
+        json_object_object_del(json_obj, BLF_JSON_SERVERID);
+    	json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+    } else {
+        json_object_object_del(json_obj, BLF_JSON_SERVERID);
+    }
     shm_free(payload);
     payload = kz_amqp_bytes_dup(amqp_cstring_bytes((char*)json_object_to_json_string(json_obj)));
    	json_object_put(json_obj);
@@ -2894,9 +2898,13 @@ void kz_send_targeted_cmd(int server_id, amqp_bytes_t body)
     JObj = kz_json_get_object(json_obj, BLF_JSON_SERVERID);
     if(JObj != NULL) {
     	server_id_str = (char*) json_object_get_string(JObj);
-        sprintf(buffer, "consumer://%d/%s", server_id, server_id_str);
-        json_object_object_del(json_obj, BLF_JSON_SERVERID);
-        json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+        if(server_id_str && strlen(server_id_str) > 0) {
+        	sprintf(buffer, "consumer://%d/%s", server_id, server_id_str);
+            json_object_object_del(json_obj, BLF_JSON_SERVERID);
+        	json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+        } else {
+            json_object_object_del(json_obj, BLF_JSON_SERVERID);
+        }
     }
 
     cmd->return_payload = kz_amqp_string_dup((char*)json_object_to_json_string(json_obj));
@@ -2957,9 +2965,13 @@ void kz_amqp_send_worker_event(kz_amqp_server_ptr server_ptr, amqp_envelope_t* e
     JObj = kz_json_get_object(json_obj, BLF_JSON_SERVERID);
     if(JObj != NULL) {
         const char* _kz_server_id_str = json_object_get_string(JObj);
-        sprintf(buffer, "consumer://%d/%s", _kz_server_id, _kz_server_id_str);
-        json_object_object_del(json_obj, BLF_JSON_SERVERID);
-        json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+        if(_kz_server_id_str && strlen(_kz_server_id_str) > 0) {
+        	sprintf(buffer, "consumer://%d/%s", _kz_server_id, _kz_server_id_str);
+            json_object_object_del(json_obj, BLF_JSON_SERVERID);
+        	json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
+        } else {
+            json_object_object_del(json_obj, BLF_JSON_SERVERID);
+        }
     }
 
     json_object_object_add(json_obj, BLF_JSON_BROKER_ZONE, json_object_new_string(server_ptr->zone->zone));

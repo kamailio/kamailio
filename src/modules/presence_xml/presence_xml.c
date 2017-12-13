@@ -242,7 +242,7 @@ static int mod_init(void)
 			xcap_GetNewDoc= xcap_api.getNewDoc;
 			if(xcap_GetNewDoc== NULL)
 			{
-				LM_ERR("can't import get_elem from xcap_client module\n");
+				LM_ERR("can't import getNewDoc from xcap_client module\n");
 				return -1;
 			}
 
