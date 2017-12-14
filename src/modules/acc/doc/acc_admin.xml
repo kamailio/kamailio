@@ -1306,12 +1306,12 @@ modparam("acc", "cdrs_table", "acc_cdrs")
 		</listitem>
 		<listitem>
 			<para><emphasis>3</emphasis> - save formatted time according
-				to time_format parameter, using the output of localtime().
+				to time_format parameter, using the output of localtime(). Used for cdr entries too.
 			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>4</emphasis> - save formatted time according
-				to time_format parameter, using the output of gmtime().
+				to time_format parameter, using the output of gmtime(). Used for cdr entries too.
 			</para>
 		</listitem>
 		</itemizedlist>
