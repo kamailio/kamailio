@@ -158,8 +158,19 @@ int is_user_in_helper(sip_msg_t* _msg, str *user, str *domain, str *grp)
 
 	VAL_STR(vals) = *user;
 
-	if(domain) {
-		VAL_STR(vals + 2) = *domain;
+	if(use_domain) {
+		if(domain && domain->s) {
+			VAL_STR(vals + 2) = *domain;
+		} else {
+			LM_ERR("no domain\n");
+			return -1;
+		}
+		LM_DBG("checking if '%.*s@%.*s' is in '%.*s'\n",
+				user->len, user->s, domain->len, domain->s,
+				grp->len, grp->s);
+	} else {
+		LM_DBG("checking if '%.*s' is in '%.*s'\n",
+				user->len, user->s, grp->len, grp->s);
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB1_STR;
@@ -200,9 +211,8 @@ int is_user_in(sip_msg_t* _msg, char* _hf, char* _grp)
 {
 	str user = STR_NULL;
 	str domain = STR_NULL;
-	str group = STR_NULL;
 
-	if ( get_username_domain( _msg, (group_check_p)_hf, &user,  &group)!=0) {
+	if ( get_username_domain( _msg, (group_check_p)_hf, &user, &domain)!=0) {
 		LM_ERR("failed to get username@domain\n");
 		return -1;
 	}
