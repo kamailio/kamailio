@@ -221,7 +221,7 @@ int sr_event_exec(int type, sr_event_param_t *evp)
 				if(unlikely(_sr_events_list.net_data_out[SREV_CB_LIST_SIZE-1]!=0))
 				{
 #ifdef EXTRA_DEBUG
-					p = (str*)data;
+					p = (str*)evp->data;
 					LM_DBG("PRE-OUT ++++++++++++++++++++\n"
 							"%.*s\n+++++++++++++++++++\n", p->len, p->s);
 #endif /* EXTRA_DEBUG */
