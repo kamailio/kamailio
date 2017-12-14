@@ -311,14 +311,16 @@ acl() {
 	case $1 in
 		show)
 			if [ $# -eq 2 ] ; then
-				is_user $2
-				if [ $? -ne 0 ] ; then
-					mecho "Non-existent user '$2'. Still proceeding? [Y|N] "
-					read answer
-					if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
-						minfo "Proceeding with non-local user"
-					else
-						exit 1
+				if [ $VERIFY_USER -eq 1 ] ; then
+					is_user $2
+					if [ $? -ne 0 ] ; then
+						mecho "Non-existent user '$2'. Still proceeding? [Y|N] "
+						read answer
+						if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+							minfo "Proceeding with non-local user"
+						else
+							exit 1
+						fi
 					fi
 				fi
 				set_user $2
@@ -338,14 +340,16 @@ acl() {
 				usage
 				exit 1
 			fi
-			is_user $2
-			if [ $? -ne 0 ] ; then
-				mecho "Non-existent user '$2'. Still proceeding? [Y|N] "
-				read answer
-				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
-					minfo "Proceeding with non-local user"
-				else
-					exit 1
+			if [ $VERIFY_USER -eq 1 ] ; then
+				is_user $2
+				if [ $? -ne 0 ] ; then
+					mecho "Non-existent user '$2'. Still proceeding? [Y|N] "
+					read answer
+					if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+						minfo "Proceeding with non-local user"
+					else
+						exit 1
+					fi
 				fi
 			fi
 			set_user $2
