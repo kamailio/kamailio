@@ -980,7 +980,8 @@ if (registered("location","$rz:$Au", 2)) {
    This makes sense only in multiple replicated servers scenarios.
 
    Meaning of the parameters is as follows:
-     * hdr_name - header name to be used.
+     * hdr_name - header name to be used, it can be a static string or
+       contain variables.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -1140,6 +1141,7 @@ event_route[usrloc:contact-expired] {
      * regid - reg-id value
      * instance - instance value
      * conid - TCP socket internal connection ID ($null if UDP)
+     * server_id - server_id value
 
    The pseudo-variable accepts positive index value to access a specific
    contact record.
