@@ -499,7 +499,7 @@ int reg_ht_add_byuser(reg_uac_t *reg)
 			strncpy((dst)->s, (src)->s, (src)->len); \
 			(dst)->len = (src)->len; \
 			(dst)->s[(dst)->len] = '\0'; \
-			p = p + ((bsize)?(bsize):(dst)->len) + 1; \
+			p = p + ((bsize)!=0?(bsize):(dst)->len) + 1; \
 		} \
 	} while(0);
 
