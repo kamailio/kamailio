@@ -21,6 +21,8 @@
  */
 #include <stdio.h>
 #include <sys/stat.h>
+#include <string.h>
+#include <errno.h>
 
 #include "../../core/events.h"
 #include "../../core/strutils.h"
@@ -334,7 +336,7 @@ void cfgt_save_node(cfgt_node_p node)
 	}
 	LM_DBG("dir [%s]\n", dest.s);
 	if(mkdir(dest.s, S_IRWXO | S_IXGRP | S_IRWXU) < 0) {
-		LM_ERR("failed to make directory (%d)\n", errno);
+		LM_ERR("failed to make directory: %s\n", strerror(errno));
 		return;
 	}
 	dest.s[dir] = '/';
@@ -349,7 +351,7 @@ void cfgt_save_node(cfgt_node_p node)
 			return;
 		}
 		if(fputs(dest.s, fp) < 0) {
-			LM_ERR("failed writing to file\n");
+			LM_ERR("failed writing to file: %s\n", strerror(errno));
 		}
 		fclose(fp);
 		node->jdoc.free_fn(dest.s);
