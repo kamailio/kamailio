@@ -23,7 +23,6 @@
 		object 'KSR' (a table object).
 	</para>
 	<para>
-		It includes the Squirrel Language engine (http://www.squirrel-lang.org).
 		Exported API from SIP router to SQLang is documented in the dokuwiki.
 	</para>
 	<para>
@@ -72,7 +71,7 @@
 	    	<itemizedlist>
 		    <listitem>
 			<para>
-				<emphasis>none</emphasis>
+				<emphasis>squirrel 3.1</emphasis>
 			</para>
 		    </listitem>
 	    	</itemizedlist>
