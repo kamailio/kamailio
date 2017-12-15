@@ -919,10 +919,14 @@ int db_mongodb_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op
 		}
 		mgcon->nrcols = _nc;
 	}
+	#if MONGOC_CHECK_VERSION(1, 5, 0)
+	mgcon->cursor = mongoc_collection_find_with_opts (mgcon->collection,
+						seldoc, mgcon->colsdoc, NULL);
+	#else
 	mgcon->cursor = mongoc_collection_find (mgcon->collection,
 						MONGOC_QUERY_NONE, 0, 0, 0,
 						seldoc, mgcon->colsdoc, NULL);
-
+	#endif
 	if(!_r) {
 		goto done;
 	}
