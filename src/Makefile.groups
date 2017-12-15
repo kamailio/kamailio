@@ -21,7 +21,7 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
 			     pdb qos sca seas sms sst timer tmrec uac_redirect xhttp \
 				 xhttp_rpc xprint jsonrpcs nosip dmq_usrloc statsd rtjson \
-				 log_custom keepalive ss7ops app_sqlang acc_diameter evrexec
+				 log_custom keepalive ss7ops acc_diameter evrexec
 
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
@@ -128,6 +128,9 @@ mod_list_python=app_python
 # - modules depending on libm (math library - standard system library)
 mod_list_jsdt=app_jsdt
 
+# - modules depending on squirrel library
+mod_list_sqlang=app_sqlang
+
 # - modules depending on geoip library
 mod_list_geoip=geoip
 
@@ -219,7 +222,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_lua) $(mod_list_python) \
 			   $(mod_list_geoip) $(mod_list_sqlite) \
 			   $(mod_list_json) $(mod_list_json_event) \
-			   $(mod_list_redis) \
+			   $(mod_list_redis) $(mod_list_sqlang) \
 			   $(mod_list_mono) $(mod_list_ims) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
 			   $(mod_list_outbound) $(mod_list_osp) \
@@ -443,6 +446,9 @@ module_group_krabbitmq=$(mod_list_rabbitmq)
 
 # K phonenumber modules
 module_group_kphonenum=$(mod_list_phonenum)
+
+# K squirrel modules
+module_group_ksqlang=$(mod_list_sqlang)
 
 # list of static modules
 #
