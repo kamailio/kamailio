@@ -28,6 +28,12 @@ sed -i 's/libphonenumber-dev/libgeocoding-dev \(>= 7\),\n libphonenumber-dev/' \
 sed -i 's/libmongoc-dev/libbson-dev,\n libmongoc-dev/' \
 	${DIST}/control
 
+# No squirrel
+sed -i -e '/libsquirrel-dev/d' -e '/^Package: kamailio-sqlang-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ sqlang[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ sqlang/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
