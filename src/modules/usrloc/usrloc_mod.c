@@ -218,6 +218,7 @@ static param_export_t params[] = {
 	{"server_id_column",    PARAM_STR, &srv_id_col    },
 	{"connection_id_column",PARAM_STR, &con_id_col    },
 	{"keepalive_column",    PARAM_STR, &keepalive_col },
+	{"partition_column",    PARAM_STR, &partition_col },
 	{"matching_mode",       INT_PARAM, &matching_mode   },
 	{"cseq_delay",          INT_PARAM, &cseq_delay      },
 	{"fetch_rows",          INT_PARAM, &ul_fetch_rows   },
