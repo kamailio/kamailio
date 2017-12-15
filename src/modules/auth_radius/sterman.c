@@ -75,7 +75,7 @@ static inline int extract_avp(
 	if(vp->attribute == attrs[A_SIP_AVP].v && vp->type == PW_TYPE_STRING) {
 		p = strchr(vp->strvalue, '#');
 		q = strchr(vp->strvalue, ':');
-		if(!q && p == vp->strvalue && vp->strvalue + sizeof(char) != '\0') {
+		if(!q && p == vp->strvalue && *(vp->strvalue + sizeof(char)) != '\0') {
 			r = p;
 			r = strchr(r++, '#');
 		} else
