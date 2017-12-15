@@ -112,7 +112,7 @@ int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 			return -1;
 		}
 		else
-			return 0;
+			return 1;
 	} else {
 		pkg_free(rpl_hf.s);
 		LM_ERR("add_lump_rpl failed\n");
@@ -124,6 +124,6 @@ error:
 		return -1;
 	}
 	else
-		return 0;
+		return 1;
 }
 
