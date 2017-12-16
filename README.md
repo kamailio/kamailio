@@ -1,6 +1,7 @@
 # Kamailio - The Open Source SIP Server
 
 [![Build Status](https://travis-ci.org/kamailio/kamailio.svg?branch=master)](https://travis-ci.org/kamailio/kamailio)
+[![Coverity Build Status](https://scan.coverity.com/projects/3756/badge.svg)](https://scan.coverity.com/projects/kamailio-kamailio)
 
 Project Website:
 

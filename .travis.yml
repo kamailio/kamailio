@@ -4,25 +4,30 @@ compiler:
   - gcc
   - clang
 env:
-  - DIST=stretch
-  - DIST=sid
+  global:
+    # The next declration is the encrypted COVERITY_SCAN_TOKEN, created
+    #   via the "travis encrypt" command using the project repo's public key
+    - secure: "Ip3DKyAVmw/aCDdJNbJEGQ1kCBrbYbpjTb6FF6fEHXEbpEofUMx0oRfWQfnTOQN+NigVZ+s0/wDFyB5EPZkkgRC21S07UmyeQWeMdMofrlfOLUufkquyO998Ns9v8mkW/WwUp1rXLNJJp47xrrcAUy0oEdw4WiHUIS8rJ2wYw/0="
+  matrix:
+    - DIST=stretch
+    - DIST=sid
 services:
   - docker
-before_install:
-  - docker pull kamailio/pkg-kamailio-docker:dev-$DIST
-script: docker run -v $TRAVIS_BUILD_DIR:/code:rw kamailio/pkg-kamailio-docker:dev-$DIST /bin/bash -c "cd /code; CC=$CC DIST=$DIST ./test/travis/build_travis.sh"
+script:
+  - ./test/travis/run.sh
 branches:
   only:
     - 'master'
+    - 'coverity_scan'
     - '/^5\.[0-9]+$/'
-notifications:
-  irc:
-    channels:
-      - "chat.freenode.net#kamailio-dev"
-    on_success: never
-    on_failure: always
-  email:
-    recipients:
-      - sr-dev@lists.kamailio.org
-    on_success: never
-    on_failure: always
+# notifications:
+#   irc:
+#     channels:
+#       - "chat.freenode.net#kamailio-dev"
+#     on_success: never
+#     on_failure: always
+#   email:
+#     recipients:
+#       - sr-dev@lists.kamailio.org
+#     on_success: never
+#     on_failure: always
