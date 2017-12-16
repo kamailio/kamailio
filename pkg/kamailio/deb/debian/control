@@ -29,6 +29,7 @@ Build-Depends:
  liblua5.1-0-dev,
  libmaxminddb-dev,
  libmemcached-dev,
+ libmongoc-dev,
  libmono-2.0-dev,
  libncurses5-dev,
  libpcre3-dev,
@@ -42,13 +43,13 @@ Build-Depends:
  libsctp-dev,
  libsnmp-dev,
  libsqlite3-dev,
+ libsquirrel-dev,
  libssl-dev,
  libsystemd-dev,
  libunistring-dev,
  libval-dev,
  libxml2-dev,
  libxmlrpc-c3-dev,
- libmongoc-dev,
  openssl,
  pkg-config,
  python,
@@ -241,6 +242,23 @@ Description: The app_lua module for Kamailio Lua support
  execute embedded Lua applications within the configuration file as
  well as writing the entire configuration file in Lua.
 
+Package: kamailio-sqlang-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: The app_sqlang module for Kamailio Squirrel support
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the app_sqlang module, an extension allowing to
+ execute embedded Squirrel applications within the configuration file.
+
 Package: kamailio-mono-modules
 Architecture: linux-any
 Multi-Arch: same
@@ -346,8 +364,10 @@ Description: CPL module (CPL interpreter engine) for the Kamailio SIP server
 Package: kamailio-radius-modules
 Architecture: linux-any
 Multi-Arch: same
-Breaks: kamailio (<<5.1)
-Replaces: kamailio (<<5.1)
+Breaks:
+ kamailio (<<5.1),
+Replaces:
+ kamailio (<<5.1),
 Pre-Depends:
  ${misc:Pre-Depends},
 Depends:

@@ -76,11 +76,17 @@ sed -i -e '/libphonenumber-dev/d' -e '/^Package: kamailio-phonenum-modules/,/^$/
 sed -i -e 's/ phonenum[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ phonenum/' ${DIST}/rules
 
-# Mo mongodb
+# No mongodb
 sed -i -e '/libmongoc-dev/d' -e '/^Package: kamailio-mongodb-modules/,/^$/d' \
 	${DIST}/control
 sed -i -e 's/ mongodb[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mongodb/' ${DIST}/rules
+
+# No squirrel
+sed -i -e '/libsquirrel-dev/d' -e '/^Package: kamailio-sqlang-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ sqlang[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ sqlang/' ${DIST}/rules
 
 wrap-and-sort -sat -d ${DIST}
 

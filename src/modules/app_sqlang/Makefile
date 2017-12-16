@@ -7,24 +7,15 @@ include ../../Makefile.defs
 auto_gen=
 NAME=app_sqlang.so
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE -I./squirrel/include
-LIBS += -L. -lsquirrel -lsqstdlib -lstdc++
-
-MKSQLANG=
-
-SQLANGARCHBSZ= $(shell echo $(ARCH) | sed -e 's/.*64.*/64b/')
-ifeq ($(SQLANGARCHBSZ),64b)
-	MKSQLANG=sq64
+BUILDER = $(shell which pkg-config)
+ifeq ($(BUILDER),)
+	DEFS+=-I/usr/squirrel/include
+	LIBS+=-lsquirrel -lsqstdlib -lstdc++
+else
+	DEFS+= $(shell pkg-config --cflags squirrel3)
+	LIBS = $(shell pkg-config --libs squirrel3)
 endif
 
+DEFS+=-DKAMAILIO_MOD_INTERFACE
+
 include ../../Makefile.modules
-
-libsquirrel.a:
-	$(MAKE) -C ./squirrel/squirrel CC_EXTRA_FLAGS="-fPIC" \
-		OUT="../../libsquirrel.a" $(MKSQLANG)
-
-libsqstdlib.a:
-	$(MAKE) -C ./squirrel/sqstdlib CC_EXTRA_FLAGS="-fPIC" \
-		OUT="../../libsqstdlib.a" $(MKSQLANG)
-
-app_sqlang.so: libsquirrel.a libsqstdlib.a
