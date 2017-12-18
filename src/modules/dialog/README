@@ -1321,16 +1321,16 @@ unset_dlg_profile("caller","$fu");
 
 7.3.  is_in_profile(profile,[value])
 
-   Checks if the current dialog belongs to a profile. If the profile
-   supports values, the check can be reinforced to take into account a
-   specific value, if the dialog was inserted into the profile for a
-   specific value. If no value is passed, only the membership of the
-   dialog in the profile per se is checked. Note that if the profile does
-   not support values, the value parameter will be silently discarded.
+   Checks if the current dialog belongs to a profile. If the profile is
+   defined with values, then the check is also matching with the specific
+   value provided as parameter.
+
+   Note that if the profile is not defined with support for values, the
+   value parameter will be silently discarded.
 
    Meaning of the parameters is as follows:
      * profile - name of the profile to be checked against;
-     * value (optional) - string value to further restrict the check.
+     * value (optional) - string value to be matched during the check.
        Pseudo-variables are supported.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
