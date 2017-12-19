@@ -46,6 +46,8 @@ static int child_init(int rank);
 static void mod_destroy(void);
 
 
+int force_cmd_exec = 0;
+
 /** module parameters */
 static param_export_t params[] = {
     {"class_name",         PARAM_STRING, &class_name },
