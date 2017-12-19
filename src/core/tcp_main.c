@@ -611,7 +611,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, const char* data,
 	
 	q=&c->wbuf_q;
 	t=get_ticks_raw();
-	if (unlikely(	((q->queued+size)>cfg_get(tcp, tcp_cfg, tcpconn_wq_max)) ||
+	if (unlikely(	(q->queued>cfg_get(tcp, tcp_cfg, tcpconn_wq_max)) ||
 					((*tcp_total_wq+size)>cfg_get(tcp, tcp_cfg, tcp_wq_max)) ||
 					(q->first &&
 					TICKS_LT(q->wr_timeout, t)) )){
