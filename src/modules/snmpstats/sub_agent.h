@@ -35,7 +35,7 @@
 #ifndef _SNMPSTATS_SUB_AGENT_
 #define _SNMPSTATS_SUB_AGENT_
 
-#define AGENT_PROCESS_NAME   "snmpstats_sub_agent"
+#define AGENT_PROCESS_NAME "snmpstats_sub_agent"
 
 /*! Run the AgentX sub-agent as a separate process.  The child will
  * insulate itself from the rest of Kamailio by overriding most of signal

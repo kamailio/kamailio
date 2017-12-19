@@ -41,8 +41,8 @@
  *  - kamailioMsgQueueMinorThreshold = minorThreshold
  *
  */
-int send_kamailioMsgQueueDepthMinorEvent_trap(int msgQueueDepth, 
-		int minorThreshold);
+int send_kamailioMsgQueueDepthMinorEvent_trap(
+		int msgQueueDepth, int minorThreshold);
 
 /*
  * Sends off an kamailioMsgQueueDepthMajorEvent trap to the master agent,
@@ -52,8 +52,8 @@ int send_kamailioMsgQueueDepthMinorEvent_trap(int msgQueueDepth,
  *  - kamailioMsgQueueMajorThreshold = majorThreshold
  *
  */
-int send_kamailioMsgQueueDepthMajorEvent_trap(int msgQueueDepth, 
-		int majorThreshold);
+int send_kamailioMsgQueueDepthMajorEvent_trap(
+		int msgQueueDepth, int majorThreshold);
 
 /*
  * Sends off an kamailioDialogLimitMinorEvent trap to the master agent,
