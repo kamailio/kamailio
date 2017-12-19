@@ -20,7 +20,7 @@
  */
 
 #ifndef __GLOBAL_H__
-#define	__GLOBAL_H__
+#define __GLOBAL_H__
 
 #include "../../core/str.h"
 #include "../../core/sr_module.h"
@@ -32,7 +32,7 @@
 
 #include <jni.h>
 
-#define	APP_NAME	"app_java"
+#define APP_NAME "app_java"
 
 extern JavaVM *_aj_jvm;
 extern JNIEnv *_aj_env;

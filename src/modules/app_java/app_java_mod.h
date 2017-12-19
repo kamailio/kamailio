@@ -20,7 +20,7 @@
  */
 
 #ifndef __JAVA_MOD_H__
-#define	__JAVA_MOD_H__
+#define __JAVA_MOD_H__
 
 extern int force_cmd_exec;
 
