@@ -36,8 +36,7 @@
 #include "../../lib/srdb1/db_res.h"
 #include "../../lib/srdb1/db_con.h"
 
-int km_bdb_val2str(db_val_t* _v, char* _s, int* _len);
-int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l);
+int km_bdb_val2str(db_val_t *_v, char *_s, int *_len);
+int bdb_str2val(db_type_t _t, db_val_t *_v, char *_s, int _l);
 
 #endif
-

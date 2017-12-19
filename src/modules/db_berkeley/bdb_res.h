@@ -32,10 +32,11 @@
 #include "../../lib/srdb2/db_drv.h"
 #include "../../lib/srdb2/db_res.h"
 
-typedef struct _bdb_res {
+typedef struct _bdb_res
+{
 	db_drv_t gen;
 } bdb_res_t;
 
-int bdb_res(db_res_t* cmd);
+int bdb_res(db_res_t *cmd);
 
 #endif /* _BDB_RES_H_ */
