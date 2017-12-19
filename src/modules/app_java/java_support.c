@@ -49,40 +49,40 @@ static char *_append_exception_trace_messages(char *msg_str, jthrowable a_except
     const char *tmpbuf;
 
     // Get the array of StackTraceElements.
-    frames = (jobjectArray) (*env)->CallObjectMethod(env, a_exception, a_mid_throwable_getStackTrace);
+    frames = (jobjectArray) (*_aj_env)->CallObjectMethod(_aj_env, a_exception, a_mid_throwable_getStackTrace);
     if (!frames)
     {
-        exClass = (*env)->GetObjectClass(env, a_exception);
-        mid = (*env)->GetMethodID(env, exClass, "toString", "()Ljava/lang/String;");
-        msg_obj = (jstring) (*env)->CallObjectMethod(env, a_exception, mid);
+        exClass = (*_aj_env)->GetObjectClass(_aj_env, a_exception);
+        mid = (*_aj_env)->GetMethodID(_aj_env, exClass, "toString", "()Ljava/lang/String;");
+        msg_obj = (jstring) (*_aj_env)->CallObjectMethod(_aj_env, a_exception, mid);
 
         isCopy = JNI_FALSE;
-	tmpbuf = (*env)->GetStringUTFChars(env, msg_obj, &isCopy);
+	tmpbuf = (*_aj_env)->GetStringUTFChars(_aj_env, msg_obj, &isCopy);
 
 	strcat(msg_str, tmpbuf);
 	strcat(msg_str, "\n    <<No stacktrace available>>");
 
-        (*env)->ReleaseStringUTFChars(env, msg_obj, tmpbuf);
-        (*env)->DeleteLocalRef(env, msg_obj);
+        (*_aj_env)->ReleaseStringUTFChars(_aj_env, msg_obj, tmpbuf);
+        (*_aj_env)->DeleteLocalRef(_aj_env, msg_obj);
 
 	return msg_str;
     }
     else
     {
-	frames_length = (*env)->GetArrayLength(env, frames);
+	frames_length = (*_aj_env)->GetArrayLength(_aj_env, frames);
     }
 
     // Add Throwable.toString() before descending stack trace messages.
     if (frames != 0)
     {
-        msg_obj = (jstring) (*env)->CallObjectMethod(env, a_exception, a_mid_throwable_toString);
-	tmpbuf = (*env)->GetStringUTFChars(env, msg_obj, 0);
+        msg_obj = (jstring) (*_aj_env)->CallObjectMethod(_aj_env, a_exception, a_mid_throwable_toString);
+	tmpbuf = (*_aj_env)->GetStringUTFChars(_aj_env, msg_obj, 0);
 	
 	strcat(msg_str, "Exception in thread \"main\" ");
 	strcat(msg_str, tmpbuf);
 
-        (*env)->ReleaseStringUTFChars(env, msg_obj, tmpbuf);
-        (*env)->DeleteLocalRef(env, msg_obj);
+        (*_aj_env)->ReleaseStringUTFChars(_aj_env, msg_obj, tmpbuf);
+        (*_aj_env)->DeleteLocalRef(_aj_env, msg_obj);
     }
 
 
@@ -94,17 +94,17 @@ static char *_append_exception_trace_messages(char *msg_str, jthrowable a_except
             // Get the string returned from the 'toString()'
             // method of the next frame and append it to
             // the error message.
-            frame = (*env)->GetObjectArrayElement(env, frames, i);
-            msg_obj = (jstring) (*env)->CallObjectMethod(env, frame, a_mid_frame_toString);
+            frame = (*_aj_env)->GetObjectArrayElement(_aj_env, frames, i);
+            msg_obj = (jstring) (*_aj_env)->CallObjectMethod(_aj_env, frame, a_mid_frame_toString);
 
-            tmpbuf = (*env)->GetStringUTFChars(env, msg_obj, 0);
+            tmpbuf = (*_aj_env)->GetStringUTFChars(_aj_env, msg_obj, 0);
 
 	    strcat(msg_str, "\n    at ");
 	    strcat(msg_str, tmpbuf);
 
-            (*env)->ReleaseStringUTFChars(env, msg_obj, tmpbuf);
-            (*env)->DeleteLocalRef(env, msg_obj);
-            (*env)->DeleteLocalRef(env, frame);
+            (*_aj_env)->ReleaseStringUTFChars(_aj_env, msg_obj, tmpbuf);
+            (*_aj_env)->DeleteLocalRef(_aj_env, msg_obj);
+            (*_aj_env)->DeleteLocalRef(_aj_env, frame);
         }
     }
     else
@@ -117,7 +117,7 @@ static char *_append_exception_trace_messages(char *msg_str, jthrowable a_except
     // stack trace messages from the cause.
     if (frames != 0)
     {
-        cause = (jthrowable) (*env)->CallObjectMethod(env, a_exception, a_mid_throwable_getCause);
+        cause = (jthrowable) (*_aj_env)->CallObjectMethod(_aj_env, a_exception, a_mid_throwable_getCause);
         if (cause != 0)
         {
             tmpbuf = _append_exception_trace_messages(msg_str, cause, a_mid_throwable_getCause, a_mid_throwable_getStackTrace, a_mid_throwable_toString, a_mid_frame_toString);
@@ -141,39 +141,39 @@ void handle_exception(void)
     jmethodID mid_throwable_getCause, mid_throwable_getStackTrace;
     jmethodID mid_throwable_toString, mid_frame_toString;
 
-    if (!(*env)->ExceptionCheck(env))
+    if (!(*_aj_env)->ExceptionCheck(_aj_env))
 	return;
 
     memset(&msg_str, 0, sizeof(msg_str));
 
     // Get the exception and clear as no
     // JNI calls can be made while an exception exists.
-    exception = (*env)->ExceptionOccurred(env);
+    exception = (*_aj_env)->ExceptionOccurred(_aj_env);
     if (exception)
     {
-//	(*env)->ExceptionDescribe(env);
-	(*env)->ExceptionClear(env);
+//	(*_aj_env)->ExceptionDescribe(_aj_env);
+	(*_aj_env)->ExceptionClear(_aj_env);
 
-	throwable_class = (*env)->FindClass(env, "java/lang/Throwable");
+	throwable_class = (*_aj_env)->FindClass(_aj_env, "java/lang/Throwable");
 
-	mid_throwable_getCause = (*env)->GetMethodID(env, throwable_class, "getCause", "()Ljava/lang/Throwable;");
-        mid_throwable_getStackTrace =  (*env)->GetMethodID(env, throwable_class, "getStackTrace",  "()[Ljava/lang/StackTraceElement;");
-	mid_throwable_toString = (*env)->GetMethodID(env, throwable_class, "toString", "()Ljava/lang/String;");
+	mid_throwable_getCause = (*_aj_env)->GetMethodID(_aj_env, throwable_class, "getCause", "()Ljava/lang/Throwable;");
+        mid_throwable_getStackTrace =  (*_aj_env)->GetMethodID(_aj_env, throwable_class, "getStackTrace",  "()[Ljava/lang/StackTraceElement;");
+	mid_throwable_toString = (*_aj_env)->GetMethodID(_aj_env, throwable_class, "toString", "()Ljava/lang/String;");
 
-        frame_class = (*env)->FindClass(env, "java/lang/StackTraceElement");
-	mid_frame_toString = (*env)->GetMethodID(env, frame_class, "toString", "()Ljava/lang/String;");
+        frame_class = (*_aj_env)->FindClass(_aj_env, "java/lang/StackTraceElement");
+	mid_frame_toString = (*_aj_env)->GetMethodID(_aj_env, frame_class, "toString", "()Ljava/lang/String;");
 
         error_msg = _append_exception_trace_messages(msg_str, exception, mid_throwable_getCause, mid_throwable_getStackTrace, mid_throwable_toString, mid_frame_toString);    
 
 
-	(*env)->DeleteLocalRef(env, exception);
+	(*_aj_env)->DeleteLocalRef(_aj_env, exception);
     }
 
     LM_ERR("%s: Exception:\n%s\n", APP_NAME, error_msg == NULL ? "(no info)" : error_msg);
 
 }
 
-void ThrowNewException(JNIEnv *env, char *fmt, ...)
+void ThrowNewException(JNIEnv *_aj_env, char *fmt, ...)
 {
     va_list ap;
     char buf[1024];
@@ -184,7 +184,7 @@ void ThrowNewException(JNIEnv *env, char *fmt, ...)
     vsnprintf(buf, 1024, fmt, ap);
     va_end(ap);
 
-    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), buf);
+    (*_aj_env)->ThrowNew(_aj_env, (*_aj_env)->FindClass(_aj_env, "java/lang/Exception"), buf);
 }
 
 void handle_VM_init_failure(int res)

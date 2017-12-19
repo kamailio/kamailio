@@ -361,7 +361,7 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
     struct run_act_ctx ra_ctx;
     int i;
 
-    if (!msg)
+    if (!_aj_msg)
 	return -1;
 
     fexport = find_export_record(fname, argc, 0, &mod_ver);
@@ -443,7 +443,7 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
     }
 
     init_run_actions_ctx(&ra_ctx);
-    rval = do_action(&ra_ctx, act, msg);
+    rval = do_action(&ra_ctx, act, _aj_msg);
 
     /* free fixups */
     if (fexport->free_fixup)
@@ -472,10 +472,10 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
 */
 JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_ParseSipMsg(JNIEnv *jenv, jobject this)
 {
-    if (!msg)
+    if (!_aj_msg)
 	return NULL;
 
-    return fill_sipmsg_object(jenv, msg);
+    return fill_sipmsg_object(jenv, _aj_msg);
 }
 
 
@@ -491,10 +491,10 @@ JNIEXPORT jstring JNICALL Java_org_siprouter_SipMsg_getMsgType(JNIEnv *jenv, job
     char *cs;
     jstring js;
 
-    if (!msg)
+    if (!_aj_msg)
 	return NULL;
 
-    switch ((msg->first_line).type)
+    switch ((_aj_msg->first_line).type)
     {
         case SIP_REQUEST:
             cs = "SIP_REQUEST";
@@ -531,16 +531,16 @@ JNIEXPORT jstring JNICALL Java_org_siprouter_SipMsg_getStatus(JNIEnv *jenv, jobj
     str *cs;
     jstring js;
 
-    if (!msg)
+    if (!_aj_msg)
 	return NULL;
 
-    if ((msg->first_line).type != SIP_REQUEST)
+    if ((_aj_msg->first_line).type != SIP_REQUEST)
     {
 	LM_ERR("%s: getStatus(): Unable to fetch status. Error: Not a request message - no method available.\n", APP_NAME);
         return NULL;
     }
 
-    cs = &((msg->first_line).u.request.method);
+    cs = &((_aj_msg->first_line).u.request.method);
 
     js = (*jenv)->NewStringUTF(jenv, (cs && cs->s && cs->len > 0) ? cs->s : "");
     if ((*jenv)->ExceptionCheck(jenv))
@@ -564,16 +564,16 @@ JNIEXPORT jstring JNICALL Java_org_siprouter_SipMsg_getRURI(JNIEnv *jenv, jobjec
     str *cs;
     jstring js;
 
-    if (!msg)
+    if (!_aj_msg)
 	return NULL;
 
-    if ((msg->first_line).type != SIP_REQUEST)
+    if ((_aj_msg->first_line).type != SIP_REQUEST)
     {
 	LM_ERR("%s: getRURI(): Unable to fetch ruri. Error: Not a request message - no method available.\n", APP_NAME);
         return NULL;
     }
 
-    cs = &((msg->first_line).u.request.uri);
+    cs = &((_aj_msg->first_line).u.request.uri);
 
     js = (*jenv)->NewStringUTF(jenv, (cs && cs->s && cs->len > 0) ? cs->s : "");
     if ((*jenv)->ExceptionCheck(jenv))
@@ -602,7 +602,7 @@ JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_getSrcAddress(JNIEnv *jenv, 
     jstring jip;
     int port;
 
-    if (!msg)
+    if (!_aj_msg)
 	return NULL;
 
     ippair_cls = (*jenv)->FindClass(jenv, "org/siprouter/IPPair");
@@ -619,7 +619,7 @@ JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_getSrcAddress(JNIEnv *jenv, 
         return NULL;
     }
 
-    ip = ip_addr2a(&msg->rcv.src_ip);
+    ip = ip_addr2a(&_aj_msg->rcv.src_ip);
     if (!ip)
     {
 	LM_ERR("%s: getSrcAddress(): Unable to fetch src ip address.\n", APP_NAME);
@@ -632,7 +632,7 @@ JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_getSrcAddress(JNIEnv *jenv, 
         return NULL;
     }
 
-    port = msg->rcv.src_port;
+    port = _aj_msg->rcv.src_port;
     if (port == 0x0)
     {
 	LM_ERR("%s: getSrcAddress(): Unable to fetch src port.\n", APP_NAME);
@@ -667,7 +667,7 @@ JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_getDstAddress(JNIEnv *jenv, 
     jstring jip;
     int port;
 
-    if (!msg)
+    if (!_aj_msg)
 	return NULL;
 
     ippair_cls = (*jenv)->FindClass(jenv, "org/siprouter/IPPair");
@@ -684,7 +684,7 @@ JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_getDstAddress(JNIEnv *jenv, 
         return NULL;
     }
 
-    ip = ip_addr2a(&msg->rcv.dst_ip);
+    ip = ip_addr2a(&_aj_msg->rcv.dst_ip);
     if (!ip)
     {
 	LM_ERR("%s: getDstAddress(): Unable to fetch src ip address.\n", APP_NAME);
@@ -697,7 +697,7 @@ JNIEXPORT jobject JNICALL Java_org_siprouter_SipMsg_getDstAddress(JNIEnv *jenv, 
         return NULL;
     }
 
-    port = msg->rcv.dst_port;
+    port = _aj_msg->rcv.dst_port;
     if (port == 0x0)
     {
 	LM_ERR("%s: getDstAddress(): Unable to fetch src port.\n", APP_NAME);
@@ -726,16 +726,16 @@ JNIEXPORT jstring JNICALL Java_org_siprouter_SipMsg_getBuffer(JNIEnv *jenv, jobj
 {
     jstring js;
 
-    if (!msg)
+    if (!_aj_msg)
 	return NULL;
 
-    if ((msg->first_line).type != SIP_REQUEST)
+    if ((_aj_msg->first_line).type != SIP_REQUEST)
     {
 	LM_ERR("%s: getRURI(): Unable to fetch ruri. Error: Not a request message - no method available.\n", APP_NAME);
         return NULL;
     }
 
-    js = (*jenv)->NewStringUTF(jenv, msg->buf ? msg->buf : "");
+    js = (*jenv)->NewStringUTF(jenv, _aj_msg->buf ? _aj_msg->buf : "");
     if ((*jenv)->ExceptionCheck(jenv))
     {
         handle_exception();
@@ -788,9 +788,9 @@ jint cf_seturi(JNIEnv *jenv, jobject this, jstring juri, char *fname)
     jboolean is_copy;
     char *curi;
 
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: %s: Can't process, msg=NULL\n", APP_NAME, fname);
+	LM_ERR("%s: %s: Can't process, _aj_msg=NULL\n", APP_NAME, fname);
 	return -1;
     }
 
@@ -807,7 +807,7 @@ jint cf_seturi(JNIEnv *jenv, jobject this, jstring juri, char *fname)
     act.val[0].u.str.s = curi;
     act.val[0].u.str.len = strlen(curi);
     init_run_actions_ctx(&ra_ctx);
-    retval = do_action(&ra_ctx, &act, msg);
+    retval = do_action(&ra_ctx, &act, _aj_msg);
     (*jenv)->ReleaseStringUTFChars(jenv, juri, curi);
     return (jint)retval;
 }
@@ -829,16 +829,16 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_add_1local_1rport(JNIEnv *
     struct run_act_ctx ra_ctx;
     int retval;
 
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: add_local_rport: Can't process, msg=NULL\n", APP_NAME);
+	LM_ERR("%s: add_local_rport: Can't process, _aj_msg=NULL\n", APP_NAME);
 	return -1;
     }
 
     memset(&act, 0, sizeof(act));
     act.type = ADD_LOCAL_RPORT_T;
     init_run_actions_ctx(&ra_ctx);
-    retval = do_action(&ra_ctx, &act, msg);
+    retval = do_action(&ra_ctx, &act, _aj_msg);
     return (jint)retval;
 }
 
@@ -859,9 +859,9 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_append_1branch(JNIEnv *jen
     jboolean is_copy;
     char *cbranch;
 
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: append_branch: Can't process, msg=NULL\n", APP_NAME);
+	LM_ERR("%s: append_branch: Can't process, _aj_msg=NULL\n", APP_NAME);
 	return -1;
     }
 
@@ -885,7 +885,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_append_1branch(JNIEnv *jen
     }
 
     init_run_actions_ctx(&ra_ctx);
-    retval = do_action(&ra_ctx, &act, msg);
+    retval = do_action(&ra_ctx, &act, _aj_msg);
 
     if (cbranch)
     {
@@ -912,9 +912,9 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_drop(JNIEnv *jenv, jobject
     struct run_act_ctx ra_ctx;
     int retval;
 
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: drop: Can't process, msg=NULL\n", APP_NAME);
+	LM_ERR("%s: drop: Can't process, _aj_msg=NULL\n", APP_NAME);
 	return -1;
     }
 
@@ -923,7 +923,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_drop(JNIEnv *jenv, jobject
     act.val[0].type = NUMBER_ST;
     act.val[0].u.number = 0;
     init_run_actions_ctx(&ra_ctx);
-    retval = do_action(&ra_ctx, &act, msg);
+    retval = do_action(&ra_ctx, &act, _aj_msg);
     return (jint)retval;
 }
 
@@ -958,16 +958,16 @@ jint cf_force_rport(JNIEnv *jenv, jobject this, char *fname)
     struct run_act_ctx ra_ctx;
     int retval;
 
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: %s: Can't process, msg=NULL\n", APP_NAME, fname);
+	LM_ERR("%s: %s: Can't process, _aj_msg=NULL\n", APP_NAME, fname);
 	return -1;
     }
 
     memset(&act, 0, sizeof(act));
     act.type = FORCE_RPORT_T;
     init_run_actions_ctx(&ra_ctx);
-    retval = do_action(&ra_ctx, &act, msg);
+    retval = do_action(&ra_ctx, &act, _aj_msg);
     return (jint)retval;
 }
 
@@ -988,9 +988,9 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_force_1send_1socket(JNIEnv
     struct socket_id *si;
     struct name_lst *nl;
 
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: force_send_socket: Can't process, msg=NULL\n", APP_NAME);
+	LM_ERR("%s: force_send_socket: Can't process, _aj_msg=NULL\n", APP_NAME);
 	return -1;
     }
 
@@ -1030,7 +1030,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_force_1send_1socket(JNIEnv
     act.val[0].u.data = si;
 
     init_run_actions_ctx(&ra_ctx);
-    retval = do_action(&ra_ctx, &act, msg);
+    retval = do_action(&ra_ctx, &act, _aj_msg);
 
     (*jenv)->ReleaseStringUTFChars(jenv, jsrchost, nl->name);
     pkg_free(nl);
@@ -1056,9 +1056,9 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_forward(JNIEnv *jenv, jobj
     jboolean is_copy;
     char *crurihost;
 
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: forward: Can't process, msg=NULL\n", APP_NAME);
+	LM_ERR("%s: forward: Can't process, _aj_msg=NULL\n", APP_NAME);
 	return -1;
     }
 
@@ -1085,7 +1085,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_forward(JNIEnv *jenv, jobj
     }
 
     init_run_actions_ctx(&ra_ctx);
-    retval = do_action(&ra_ctx, &act, msg);
+    retval = do_action(&ra_ctx, &act, _aj_msg);
 
     if (crurihost)
     {
@@ -1104,13 +1104,13 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_forward(JNIEnv *jenv, jobj
 */
 JNIEXPORT jboolean JNICALL Java_org_siprouter_CoreMethods_isflagset(JNIEnv *jenv, jobject this, jint jflag)
 {
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: isflagset: Can't process, msg=NULL\n", APP_NAME);
+	LM_ERR("%s: isflagset: Can't process, _aj_msg=NULL\n", APP_NAME);
 	return -1;
     }
 
-    return isflagset(msg, (int)jflag) == 1 ? JNI_TRUE : JNI_FALSE;
+    return isflagset(_aj_msg, (int)jflag) == 1 ? JNI_TRUE : JNI_FALSE;
 }
 
 /*
@@ -1122,13 +1122,13 @@ JNIEXPORT jboolean JNICALL Java_org_siprouter_CoreMethods_isflagset(JNIEnv *jenv
 */
 JNIEXPORT void JNICALL Java_org_siprouter_CoreMethods_setflag(JNIEnv *jenv, jobject this, jint jflag)
 {
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: setflag: Can't process, msg=NULL\n", APP_NAME);
+	LM_ERR("%s: setflag: Can't process, _aj_msg=NULL\n", APP_NAME);
 	return;
     }
 
-    setflag(msg, (int)jflag);
+    setflag(_aj_msg, (int)jflag);
 }
 
 /*
@@ -1140,13 +1140,13 @@ JNIEXPORT void JNICALL Java_org_siprouter_CoreMethods_setflag(JNIEnv *jenv, jobj
 */
 JNIEXPORT void JNICALL Java_org_siprouter_CoreMethods_resetflag(JNIEnv *jenv, jobject this, jint jflag)
 {
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: resetflag: Can't process, msg=NULL\n", APP_NAME);
+	LM_ERR("%s: resetflag: Can't process, _aj_msg=NULL\n", APP_NAME);
 	return;
     }
 
-    resetflag(msg, (int)jflag);
+    resetflag(_aj_msg, (int)jflag);
 }
 
 
@@ -1163,16 +1163,16 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_revert_1uri(JNIEnv *jenv, 
     struct run_act_ctx ra_ctx;
     int retval;
 
-    if (!msg)
+    if (!_aj_msg)
     {
-	LM_ERR("%s: revert_uri: Can't process, msg=NULL\n", APP_NAME);
+	LM_ERR("%s: revert_uri: Can't process, _aj_msg=NULL\n", APP_NAME);
 	return -1;
     }
 
     memset(&act, 0, sizeof(act));
     act.type = REVERT_URI_T;
     init_run_actions_ctx(&ra_ctx);
-    retval = do_action(&ra_ctx, &act, msg);
+    retval = do_action(&ra_ctx, &act, _aj_msg);
     return (jint)retval;
 }
 
@@ -1212,7 +1212,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_route(JNIEnv *jenv, jobjec
     act.val[0].u.number = retval;
 
     init_run_actions_ctx(&ra_ctx);
-    retval = do_action(&ra_ctx, &act, msg);
+    retval = do_action(&ra_ctx, &act, _aj_msg);
 
     (*jenv)->ReleaseStringUTFChars(jenv, jtarget, ctarget);
 

@@ -152,50 +152,50 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized, char *me
     cs[cslen] = '\0';
 
     // attach to current thread
-    (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
-    if ((*env)->ExceptionCheck(env))
+    (*_aj_jvm)->AttachCurrentThread(_aj_jvm, (void **)&_aj_env, NULL);
+    if ((*_aj_env)->ExceptionCheck(_aj_env))
     {
         handle_exception();
         return -1;
     }
 
-    cls = (*env)->GetObjectClass(env, KamailioClassInstance);
-    if ((*env)->ExceptionCheck(env))
+    cls = (*_aj_env)->GetObjectClass(_aj_env, KamailioClassInstance);
+    if ((*_aj_env)->ExceptionCheck(_aj_env))
     {
         handle_exception();
-	(*jvm)->DetachCurrentThread(jvm);
+	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
         return -1;
     }
-    fid = (*env)->GetFieldID(env, cls, "mop", "I");
+    fid = (*_aj_env)->GetFieldID(_aj_env, cls, "mop", "I");
     if (!fid)
     {
         handle_exception();
-	(*jvm)->DetachCurrentThread(jvm);
+	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
         return -1;
     }
 
-    msg = msgp;
+    _aj_msg = msgp;
 
     // find a method by signature
     invk_method = is_static ? 
-		    (*env)->GetStaticMethodID(env, KamailioClassRef, method_name, cs) : 
-		    (*env)->GetMethodID(env, KamailioClassRef, method_name, cs);
-    if (!invk_method || (*env)->ExceptionCheck(env))
+		    (*_aj_env)->GetStaticMethodID(_aj_env, KamailioClassRef, method_name, cs) : 
+		    (*_aj_env)->GetMethodID(_aj_env, KamailioClassRef, method_name, cs);
+    if (!invk_method || (*_aj_env)->ExceptionCheck(_aj_env))
     {
 	handle_exception();
-    	(*jvm)->DetachCurrentThread(jvm);
+    	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 	return -1;
     }
 
     pkg_free(cs);
 
     // keep local reference to method
-    invk_method_ref = (*env)->NewLocalRef(env, invk_method);
-    if (!invk_method_ref || (*env)->ExceptionCheck(env))
+    invk_method_ref = (*_aj_env)->NewLocalRef(_aj_env, invk_method);
+    if (!invk_method_ref || (*_aj_env)->ExceptionCheck(_aj_env))
     {
         handle_exception();
-	(*env)->DeleteLocalRef(env, invk_method_ref);
-	(*jvm)->DetachCurrentThread(jvm);
+	(*_aj_env)->DeleteLocalRef(_aj_env, invk_method_ref);
+	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
         return -1;
     }
 
@@ -203,7 +203,7 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized, char *me
 
     if (is_synchronized)
     {
-	if ((*env)->MonitorEnter(env, invk_method_ref) != JNI_OK)
+	if ((*_aj_env)->MonitorEnter(_aj_env, invk_method_ref) != JNI_OK)
         {
 	    locked = 0;
 	    LM_ERR("%s: MonitorEnter() has failed! Can't synchronize!\n", APP_NAME);
@@ -217,26 +217,26 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized, char *me
     if (param == NULL)
     {
 	retval = is_static ?
-		    (int)(*env)->CallStaticIntMethod(env, KamailioClassRef, invk_method_ref) :
-		    (int)(*env)->CallIntMethod(env, KamailioClassInstanceRef, invk_method_ref);
+		    (int)(*_aj_env)->CallStaticIntMethod(_aj_env, KamailioClassRef, invk_method_ref) :
+		    (int)(*_aj_env)->CallIntMethod(_aj_env, KamailioClassInstanceRef, invk_method_ref);
     }
     else
     {
 	jparam = get_value_by_sig_type(signature, param);
 	if (jparam == NULL)
 	{
-	    (*env)->DeleteLocalRef(env, invk_method_ref);
-	    (*env)->DeleteLocalRef(env, invk_method);
-    	    (*jvm)->DetachCurrentThread(jvm);
+	    (*_aj_env)->DeleteLocalRef(_aj_env, invk_method_ref);
+	    (*_aj_env)->DeleteLocalRef(_aj_env, invk_method);
+    	    (*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 	    return -1;
 	}
 
 	retval = is_static ?
-		    (int)(*env)->CallStaticIntMethod(env, KamailioClassRef, invk_method_ref, *jparam) :
-		    (int)(*env)->CallIntMethod(env, KamailioClassInstanceRef, invk_method_ref, *jparam);
+		    (int)(*_aj_env)->CallStaticIntMethod(_aj_env, KamailioClassRef, invk_method_ref, *jparam) :
+		    (int)(*_aj_env)->CallIntMethod(_aj_env, KamailioClassInstanceRef, invk_method_ref, *jparam);
     }
 
-    if ((*env)->ExceptionCheck(env))
+    if ((*_aj_env)->ExceptionCheck(_aj_env))
     {
         LM_ERR("%s: %s(): %s() has failed. See exception below.\n", APP_NAME,
 		(is_static ? 
@@ -248,24 +248,24 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized, char *me
 
         handle_exception();
 
-	(*env)->DeleteLocalRef(env, invk_method_ref);
-	(*env)->DeleteLocalRef(env, invk_method);
-        (*jvm)->DetachCurrentThread(jvm);
+	(*_aj_env)->DeleteLocalRef(_aj_env, invk_method_ref);
+	(*_aj_env)->DeleteLocalRef(_aj_env, invk_method);
+        (*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 
         return -1;
     }
 
     if (is_synchronized && locked)
     {
-	if ((*env)->MonitorExit(env, invk_method_ref) != JNI_OK)
+	if ((*_aj_env)->MonitorExit(_aj_env, invk_method_ref) != JNI_OK)
 	{
 	    LM_ERR("%s: MonitorExit() has failed! Can't synchronize!\n", APP_NAME);
 	}
     }
 
-    (*env)->DeleteLocalRef(env, invk_method_ref);
-    (*env)->DeleteLocalRef(env, invk_method);
-    (*jvm)->DetachCurrentThread(jvm);
+    (*_aj_env)->DeleteLocalRef(_aj_env, invk_method_ref);
+    (*_aj_env)->DeleteLocalRef(_aj_env, invk_method);
+    (*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 
     return retval;
 }
