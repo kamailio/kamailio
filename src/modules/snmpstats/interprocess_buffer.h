@@ -59,15 +59,14 @@
 #include "../usrloc/ucontact.h"
 
 /* Represents an element of the interprocess buffer. */
-typedef struct interprocessBuffer 
+typedef struct interprocessBuffer
 {
-	char  *stringName;
-	char  *stringContact;
-	int   callbackType;
+	char *stringName;
+	char *stringContact;
+	int callbackType;
 	struct interprocessBuffer *next;
 
 	ucontact_t *contactInfo;
-
 } interprocessBuffer_t;
 
 /* Both of these will be used to reference in the interprocess buffer */
@@ -77,14 +76,14 @@ extern interprocessBuffer_t *endRegUserTableBuffer;
 /* A request to consume the interprocess buffer could occur at the same time
  * there is a request to add to the interprocess buffer. (Or vice-versa).  This
  * lock is used to prevent these race conditions. */
-extern gen_lock_t           *interprocessCBLock;
-extern hashSlot_t           *hashTable;
+extern gen_lock_t *interprocessCBLock;
+extern hashSlot_t *hashTable;
 
 /*
  * Initialize shared memory used to buffer communication between the usrloc
  * module and the SNMPStats module.  (Specifically, the user and contact tables)
  */
-int  initInterprocessBuffers(void);
+int initInterprocessBuffers(void);
 
 /* USRLOC Callback Handler:
  *
