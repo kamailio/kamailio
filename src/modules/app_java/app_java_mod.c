@@ -47,6 +47,14 @@ static void mod_destroy(void);
 
 
 int force_cmd_exec = 0;
+JavaVM *_aj_jvm = NULL;
+JNIEnv *_aj_env = NULL;
+jclass KamailioClass;
+jclass KamailioClassRef;
+jclass KamailioClassInstanceRef;
+jobject KamailioClassInstance;
+jmethodID KamailioID;
+sip_msg_t *_aj_msg = NULL;
 
 /** module parameters */
 static param_export_t params[] = {
@@ -133,7 +141,7 @@ static int mod_init(void)
     vm_args.ignoreUnrecognized = JNI_FALSE;
     vm_args.options = options;
 
-    res = JNI_CreateJavaVM(&jvm, (void **)&env, &vm_args);
+    res = JNI_CreateJavaVM(&_aj_jvm, (void **)&_aj_env, &vm_args);
     if (res < 0)
     {
 	handle_VM_init_failure(res);
@@ -143,59 +151,59 @@ static int mod_init(void)
     LM_INFO("%s: Java VM initialization OK\n", APP_NAME);
 
     // attach to current thread
-    (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
-    if ((*env)->ExceptionCheck(env))
+    (*_aj_jvm)->AttachCurrentThread(_aj_jvm, (void **)&_aj_env, NULL);
+    if ((*_aj_env)->ExceptionCheck(_aj_env))
     {
 	handle_exception();
 	return -1;
     }
 
-    KamailioClass = (*env)->FindClass(env, class_name);
-    if (!KamailioClass || (*env)->ExceptionCheck(env))
+    KamailioClass = (*_aj_env)->FindClass(_aj_env, class_name);
+    if (!KamailioClass || (*_aj_env)->ExceptionCheck(_aj_env))
     {
 	handle_exception();
-	(*jvm)->DetachCurrentThread(jvm);
+	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 	return -1;
     }
 
-    KamailioClassRef = (*env)->NewGlobalRef(env, KamailioClass);
-    if (!KamailioClassRef || (*env)->ExceptionCheck(env))
+    KamailioClassRef = (*_aj_env)->NewGlobalRef(_aj_env, KamailioClass);
+    if (!KamailioClassRef || (*_aj_env)->ExceptionCheck(_aj_env))
     {
 	handle_exception();
-	(*jvm)->DetachCurrentThread(jvm);
+	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 	return -1;
     }
 
-    KamailioID = (*env)->GetMethodID(env, KamailioClass, "<init>", "()V");
-    if (!KamailioID || (*env)->ExceptionCheck(env))
+    KamailioID = (*_aj_env)->GetMethodID(_aj_env, KamailioClass, "<init>", "()V");
+    if (!KamailioID || (*_aj_env)->ExceptionCheck(_aj_env))
     {
 	handle_exception();
-	(*jvm)->DetachCurrentThread(jvm);
+	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 	return -1;
     }
 
     // calling constructor
-    KamailioClassInstance = (*env)->NewObject(env, KamailioClass, KamailioID);
-    if (!KamailioClassInstance || (*env)->ExceptionCheck(env))
+    KamailioClassInstance = (*_aj_env)->NewObject(_aj_env, KamailioClass, KamailioID);
+    if (!KamailioClassInstance || (*_aj_env)->ExceptionCheck(_aj_env))
     {
 	handle_exception();
-	(*jvm)->DetachCurrentThread(jvm);
+	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 	return -1;
     }
 
     // keep a reference to kamailio class instance
-    KamailioClassInstanceRef = (*env)->NewGlobalRef(env, KamailioClassInstance);
-    if (!KamailioClassInstanceRef || (*env)->ExceptionCheck(env))
+    KamailioClassInstanceRef = (*_aj_env)->NewGlobalRef(_aj_env, KamailioClassInstance);
+    if (!KamailioClassInstanceRef || (*_aj_env)->ExceptionCheck(_aj_env))
     {
 	handle_exception();
-	(*jvm)->DetachCurrentThread(jvm);
+	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 	return -1;
     }
 
     LM_INFO("%s: module initialization OK\n", APP_NAME);
 
-    if (jvm != NULL)
-        (*jvm)->DetachCurrentThread(jvm);
+    if (_aj_jvm != NULL)
+        (*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 
     return 0;
 }
@@ -206,54 +214,54 @@ static int child_init(int rank)
     jmethodID child_init_id;
 
     // attach to current thread
-    (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
-    if ((*env)->ExceptionCheck(env))
+    (*_aj_jvm)->AttachCurrentThread(_aj_jvm, (void **)&_aj_env, NULL);
+    if ((*_aj_env)->ExceptionCheck(_aj_env))
     {
         handle_exception();
         return -1;
     }
 
-    child_init_id = (*env)->GetMethodID(env, KamailioClass, "child_init", "(I)I");
-    if ((*env)->ExceptionCheck(env))
+    child_init_id = (*_aj_env)->GetMethodID(_aj_env, KamailioClass, "child_init", "(I)I");
+    if ((*_aj_env)->ExceptionCheck(_aj_env))
     {
 	handle_exception();
-    	(*jvm)->DetachCurrentThread(jvm);
+    	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 	return -1;
     }
 
-    retval = (int)(*env)->CallIntMethod(env, KamailioClassInstanceRef, child_init_id, rank);
-    if ((*env)->ExceptionCheck(env))
+    retval = (int)(*_aj_env)->CallIntMethod(_aj_env, KamailioClassInstanceRef, child_init_id, rank);
+    if ((*_aj_env)->ExceptionCheck(_aj_env))
     {
 	handle_exception();
-    	(*jvm)->DetachCurrentThread(jvm);
+    	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 	return -1;
     }
 
-    (*env)->DeleteLocalRef(env, child_init_id);
-    (*jvm)->DetachCurrentThread(jvm);
+    (*_aj_env)->DeleteLocalRef(_aj_env, child_init_id);
+    (*_aj_jvm)->DetachCurrentThread(_aj_jvm);
 
-    msg = NULL;
+    _aj_msg = NULL;
 
     return retval;
 }
 
 static void mod_destroy(void)
 {
-    if (env != NULL)
+    if (_aj_env != NULL)
     {
-	(*env)->DeleteGlobalRef(env, KamailioClassInstanceRef);
-	(*env)->DeleteGlobalRef(env, KamailioClassRef);
+	(*_aj_env)->DeleteGlobalRef(_aj_env, KamailioClassInstanceRef);
+	(*_aj_env)->DeleteGlobalRef(_aj_env, KamailioClassRef);
     }
 
-    if (jvm != NULL)
+    if (_aj_jvm != NULL)
     {
-	(*jvm)->DetachCurrentThread(jvm);
-	(*jvm)->DestroyJavaVM(jvm);
+	(*_aj_jvm)->DetachCurrentThread(_aj_jvm);
+	(*_aj_jvm)->DestroyJavaVM(_aj_jvm);
     }
 
-    if (msg)
+    if (_aj_msg)
     {
-	pkg_free(msg);
+	pkg_free(_aj_msg);
     }
 
 }

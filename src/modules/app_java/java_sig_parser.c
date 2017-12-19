@@ -398,8 +398,8 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
     else
     if (!strcmp(sig, "Ljava/lang/String;"))
     {
-	    sjptr = (*env)->NewStringUTF(env, pval);
-	    if ((*env)->ExceptionCheck(env))
+	    sjptr = (*_aj_env)->NewStringUTF(_aj_env, pval);
+	    if ((*_aj_env)->ExceptionCheck(_aj_env))
 	    {
 		pkg_free(ret);
 		handle_exception();
