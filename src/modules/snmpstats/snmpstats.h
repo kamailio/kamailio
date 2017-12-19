@@ -60,7 +60,6 @@
 #define _SNMP_STATS_
 
 #define SNMPSTATS_MODULE_NAME "snmpstats"
-#define SYSUPTIME_OID         ".1.3.6.1.2.1.1.3.0"
-
+#define SYSUPTIME_OID ".1.3.6.1.2.1.1.3.0"
 
 #endif

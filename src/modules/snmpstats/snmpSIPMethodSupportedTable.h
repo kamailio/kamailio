@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-    
+
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/library/container.h>
 #include <net-snmp/agent/table_array.h>
@@ -43,7 +43,8 @@ extern "C" {
  * This strucutre represents a single row in the SNMP table, and is mostly
  * auto-generated. 
  */
-typedef struct kamailioSIPMethodSupportedTable_context_s {
+typedef struct kamailioSIPMethodSupportedTable_context_s
+{
 
 	netsnmp_index index;
 
@@ -52,10 +53,10 @@ typedef struct kamailioSIPMethodSupportedTable_context_s {
 
 	/** SnmpAdminString = ASN_OCTET_STR */
 	unsigned char *kamailioSIPMethodName;
-	
+
 	long kamailioSIPMethodName_len;
 
-	void * data;
+	void *data;
 
 } kamailioSIPMethodSupportedTable_context;
 
@@ -73,29 +74,28 @@ void initialize_table_kamailioSIPMethodSupportedTable(void);
  *
  * The function is pretty much left as is from the auto-generated code. 
  */
-int kamailioSIPMethodSupportedTable_get_value(netsnmp_request_info *, 
-		netsnmp_index *, netsnmp_table_request_info *);
+int kamailioSIPMethodSupportedTable_get_value(
+		netsnmp_request_info *, netsnmp_index *, netsnmp_table_request_info *);
 
-const kamailioSIPMethodSupportedTable_context * 
-	kamailioSIPMethodSupportedTable_get_by_idx(netsnmp_index *);
+const kamailioSIPMethodSupportedTable_context *
+kamailioSIPMethodSupportedTable_get_by_idx(netsnmp_index *);
 
-const kamailioSIPMethodSupportedTable_context * 
-	kamailioSIPMethodSupportedTable_get_by_idx_rs(netsnmp_index *,
-			int row_status);
+const kamailioSIPMethodSupportedTable_context *
+kamailioSIPMethodSupportedTable_get_by_idx_rs(netsnmp_index *, int row_status);
 
 /*
  * oid declarations
  */
-extern oid    kamailioSIPMethodSupportedTable_oid[];
+extern oid kamailioSIPMethodSupportedTable_oid[];
 extern size_t kamailioSIPMethodSupportedTable_oid_len;
 
-#define kamailioSIPMethodSupportedTable_TABLE_OID KAMAILIO_OID,3,1,1,1,1,7
-    
+#define kamailioSIPMethodSupportedTable_TABLE_OID KAMAILIO_OID, 3, 1, 1, 1, 1, 7
+
 /*
  * column number definitions for table kamailioSIPMethodSupportedTable
  */
-#define COLUMN_KAMAILIOSIPMETHODSUPPORTEDINDEX  1
-#define COLUMN_KAMAILIOSIPMETHODNAME            2
+#define COLUMN_KAMAILIOSIPMETHODSUPPORTEDINDEX 1
+#define COLUMN_KAMAILIOSIPMETHODNAME 2
 
 #define kamailioSIPMethodSupportedTable_COL_MIN 2
 #define kamailioSIPMethodSupportedTable_COL_MAX 2

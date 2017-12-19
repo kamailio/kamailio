@@ -56,7 +56,7 @@
  * Used to map between a 'contact' name (Kamailio's index) and a contact index.
  * (SNMPStats Index) 
  */
-typedef struct contactToIndexStruct 
+typedef struct contactToIndexStruct
 {
 	char *contactName;
 
@@ -72,11 +72,11 @@ typedef struct contactToIndexStruct
  * index).  Since each user can have multiple contacts, the structure also has a
  * 'contactIndex', and a reference to the contactToIndexStruct list. 
  */
-typedef struct aorToIndexStruct 
+typedef struct aorToIndexStruct
 {
 	/* Pointer to the actual address record in the given SNMP row. */
 	char *aor;
-	int  aorLength;
+	int aorLength;
 
 	/* Points to the user index, which is used to uniquely identify each
 	 * SNMP row in a table. */
@@ -105,20 +105,20 @@ typedef struct aorToIndexStruct
 } aorToIndexStruct_t;
 
 
-typedef struct hashSlot 
+typedef struct hashSlot
 {
 	/*! Number of elements in this list. */
 	int numberOfElements;
 
 	/*! First element in the list. */
-	struct aorToIndexStruct* first; 
+	struct aorToIndexStruct *first;
 
 	/*! Last element in the list.  This is here for optimization purposes.
 	 * It stands to reason that things added later will need to be deleted
 	 * later.  So they should be added to the end of the list.  This way,
 	 * things that are to be deleted sooner will be at the front of the
 	 * list. */
-	struct aorToIndexStruct* last; 
+	struct aorToIndexStruct *last;
 
 } hashSlot_t;
 
@@ -140,7 +140,7 @@ aorToIndexStruct_t *createHashRecord(int userIndex, char *aor);
 /*! Returns a chunk of memory large enough to store 'size' hashSlot's.  The
  * table will contain mappings between Kamailio's "aor" user/contact indexing
  * scheme, and SNMPStats integer indexing scheme */
-hashSlot_t  *createHashTable(int size);
+hashSlot_t *createHashTable(int size);
 
 
 /*! Calculates and returns a hash index to a hash table.  The index is calculated
@@ -164,7 +164,8 @@ aorToIndexStruct_t *findHashRecord(hashSlot_t *theTable, char *aor, int size);
 
 
 /*! Inserts theRecord into an appropriate place in theTable, when size is given. */
-void insertHashRecord(hashSlot_t *theTable, aorToIndexStruct_t *theRecord, int size); 
+void insertHashRecord(
+		hashSlot_t *theTable, aorToIndexStruct_t *theRecord, int size);
 
 
 /*! Debugging function.  Prints off an entire hash slot. */
@@ -173,7 +174,7 @@ void printHashSlot(hashSlot_t *theTable, int index);
 
 /*! If a record is found with string aor in theTable, it is deleted and its
  * SNMPStats user integer index is returned. */
-int deleteHashRecord(hashSlot_t *theTable, char *aor, int hashTableSize); 
+int deleteHashRecord(hashSlot_t *theTable, char *aor, int hashTableSize);
 
 /*!
  * This function will search the provided hash table for an entry indexed by

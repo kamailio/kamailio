@@ -35,7 +35,7 @@
 
 #include "../../core/sr_module.h"
 
-#define KAMAILIO_OID            1,3,6,1,4,1,34352
+#define KAMAILIO_OID 1, 3, 6, 1, 4, 1, 34352
 
 /***************************************************************
  * Textual Conventions for BITS types - begins
@@ -53,81 +53,80 @@
  *
  * 	currentAlarmStatus &= ~TC_ALARM_STATUS_MINOR
  */
-#define TC_SIP_TRANSPORT_PROTOCOL_OTHER (128>>0)
-#define TC_SIP_TRANSPORT_PROTOCOL_UDP   (128>>1)
-#define TC_SIP_TRANSPORT_PROTOCOL_TCP   (128>>2)
-#define TC_SIP_TRANSPORT_PROTOCOL_SCTP  (128>>3)
-#define TC_SIP_TRANSPORT_PROTOCOL_TLS   (128>>4)
-#define TC_SIP_TRANSPORT_PROTOCOL_SCTP_TLS   (128>>5)
-#define TC_SIP_TRANSPORT_PROTOCOL_WS    (128 >> 6)
-#define TC_SIP_TRANSPORT_PROTOCOL_WSS   (128 >> 7)
+#define TC_SIP_TRANSPORT_PROTOCOL_OTHER (128 >> 0)
+#define TC_SIP_TRANSPORT_PROTOCOL_UDP (128 >> 1)
+#define TC_SIP_TRANSPORT_PROTOCOL_TCP (128 >> 2)
+#define TC_SIP_TRANSPORT_PROTOCOL_SCTP (128 >> 3)
+#define TC_SIP_TRANSPORT_PROTOCOL_TLS (128 >> 4)
+#define TC_SIP_TRANSPORT_PROTOCOL_SCTP_TLS (128 >> 5)
+#define TC_SIP_TRANSPORT_PROTOCOL_WS (128 >> 6)
+#define TC_SIP_TRANSPORT_PROTOCOL_WSS (128 >> 7)
 
-#define TC_SIP_ENTITY_ROLE_OTHER            (128 >> 0)
-#define TC_SIP_ENTITY_ROLE_USER_AGENT       (128 >> 1)
-#define TC_SIP_ENTITY_ROLE_PROXY_SERVER     (128 >> 2)
-#define TC_SIP_ENTITY_ROLE_REDIRECT_SERVER  (128 >> 3)
+#define TC_SIP_ENTITY_ROLE_OTHER (128 >> 0)
+#define TC_SIP_ENTITY_ROLE_USER_AGENT (128 >> 1)
+#define TC_SIP_ENTITY_ROLE_PROXY_SERVER (128 >> 2)
+#define TC_SIP_ENTITY_ROLE_REDIRECT_SERVER (128 >> 3)
 #define TC_SIP_ENTITY_ROLE_REGISTRAR_SERVER (128 >> 4)
 #define TC_SIP_ENTITY_ROLE_EDGEPROXY_SERVER (128 >> 5)
 #define TC_SIP_ENTITY_ROLE_SIPCAPTURE_SERVER (128 >> 6)
 
-#define TC_SIP_OPTION_TAG_REQUIRE       (128 >> 0)
+#define TC_SIP_OPTION_TAG_REQUIRE (128 >> 0)
 #define TC_SIP_OPTION_TAG_PROXY_REQUIRE (128 >> 1)
-#define TC_SIP_OPTION_TAG_SUPPORTED     (128 >> 2)
-#define TC_SIP_OPTION_TAG_UNSUPPORTED   (128 >> 3)
+#define TC_SIP_OPTION_TAG_SUPPORTED (128 >> 2)
+#define TC_SIP_OPTION_TAG_UNSUPPORTED (128 >> 3)
 
-#define TC_ALARM_STATUS_UNDER_REPAIR      (128 >> 0)
-#define TC_ALARM_STATUS_CRITICAL          (128 >> 1)
-#define TC_ALARM_STATUS_MAJOR             (128 >> 2)
-#define TC_ALARM_STATUS_MINOR             (128 >> 3)
+#define TC_ALARM_STATUS_UNDER_REPAIR (128 >> 0)
+#define TC_ALARM_STATUS_CRITICAL (128 >> 1)
+#define TC_ALARM_STATUS_MAJOR (128 >> 2)
+#define TC_ALARM_STATUS_MINOR (128 >> 3)
 #define TC_ALARM_STATUS_ALARM_OUTSTANDING (128 >> 4)
-#define TC_ALARM_STATUS_UNKNOWN           (128 >> 5)
+#define TC_ALARM_STATUS_UNKNOWN (128 >> 5)
 
 #define TC_TRANSPORT_PROTOCOL_OTHER (128 >> 0)
-#define TC_TRANSPORT_PROTOCOL_UDP   (128 >> 1)
-#define TC_TRANSPORT_PROTOCOL_TCP   (128 >> 2)
-#define TC_TRANSPORT_PROTOCOL_SCTP  (128 >> 3)
-#define TC_TRANSPORT_PROTOCOL_TLS   (128 >> 4)
-#define TC_TRANSPORT_PROTOCOL_SCRTP_TLS   (128 >> 5)
-#define TC_TRANSPORT_PROTOCOL_WS    (128 >> 6)
-#define TC_TRANSPORT_PROTOCOL_WSS   (128 >> 7)
+#define TC_TRANSPORT_PROTOCOL_UDP (128 >> 1)
+#define TC_TRANSPORT_PROTOCOL_TCP (128 >> 2)
+#define TC_TRANSPORT_PROTOCOL_SCTP (128 >> 3)
+#define TC_TRANSPORT_PROTOCOL_TLS (128 >> 4)
+#define TC_TRANSPORT_PROTOCOL_SCRTP_TLS (128 >> 5)
+#define TC_TRANSPORT_PROTOCOL_WS (128 >> 6)
+#define TC_TRANSPORT_PROTOCOL_WSS (128 >> 7)
 
 /*
  * Textual Conventions for BITS types - ends
  *************************************************************/
 
 
-
 /***************************************************************
  * Textual Conventions for INTEGER types - begins
  */
-#define TC_ALARM_STATE_CLEAR    0
+#define TC_ALARM_STATE_CLEAR 0
 #define TC_ALARM_STATE_CRITICAL 1
-#define TC_ALARM_STATE_MAJOR    2
-#define TC_ALARM_STATE_MINOR    3
-#define TC_ALARM_STATE_UNKNOWN  4
+#define TC_ALARM_STATE_MAJOR 2
+#define TC_ALARM_STATE_MINOR 3
+#define TC_ALARM_STATE_UNKNOWN 4
 
-#define TC_USAGE_STATE_IDLE    0
-#define TC_USAGE_STATE_ACTIVE  1
-#define TC_USAGE_STATE_BUSY    2
+#define TC_USAGE_STATE_IDLE 0
+#define TC_USAGE_STATE_ACTIVE 1
+#define TC_USAGE_STATE_BUSY 2
 #define TC_USAGE_STATE_UNKNOWN 3
 
-#define TC_ROWSTATUS_ACTIVE        1
-#define TC_ROWSTATUS_NOTINSERVICE  2
-#define TC_ROWSTATUS_NOTREADY      3
-#define TC_ROWSTATUS_CREATEANDGO   4
-#define TC_ROWSTATUS_CREATEANDWAIT 5 
-#define TC_ROWSTATUS_DESTROY       6
+#define TC_ROWSTATUS_ACTIVE 1
+#define TC_ROWSTATUS_NOTINSERVICE 2
+#define TC_ROWSTATUS_NOTREADY 3
+#define TC_ROWSTATUS_CREATEANDGO 4
+#define TC_ROWSTATUS_CREATEANDWAIT 5
+#define TC_ROWSTATUS_DESTROY 6
 /*
  * Textual Conventions for INTEGER types - ends
  *************************************************************/
 
 
-#define TC_TRUE  1
+#define TC_TRUE 1
 #define TC_FALSE 2
 
 #define SNMPGET_TEMP_FILE "/tmp/kamailio_SNMPAgent.txt"
 #define SNMPGET_MAX_BUFFER 80
-#define MAX_PROC_BUFFER    256
+#define MAX_PROC_BUFFER 256
 
 #define MAX_USER_LOOKUP_COUNTER 255
 
@@ -140,7 +139,7 @@ extern unsigned int global_UserLookupCounter;
  */
 
 /*! Handles setting of the sip entity type parameter. */
-int handleSipEntityType( modparam_t type, void* val);
+int handleSipEntityType(modparam_t type, void *val);
 
 /*! Handles setting of the Msg Queue Depth Minor Threshold */
 int set_queue_minor_threshold(modparam_t type, void *val);
@@ -155,10 +154,9 @@ int set_dlg_minor_threshold(modparam_t type, void *val);
 int set_dlg_major_threshold(modparam_t type, void *val);
 
 /*! Handles setting of the path to the snmpget binary. */
-int set_snmpget_path( modparam_t type, void *val);
+int set_snmpget_path(modparam_t type, void *val);
 
 /*! Handles setting of the snmp community string. */
-int set_snmp_community( modparam_t type, void *val);
-
+int set_snmp_community(modparam_t type, void *val);
 
 #endif
