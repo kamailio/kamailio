@@ -120,6 +120,7 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized,
 	jclass cls;
 	jmethodID invk_method, invk_method_ref;
 	jvalue *jparam;
+	int r;
 
 	if(signature == NULL || !strcmp(signature, "")) {
 		LM_ERR("%s: java_method_exec(): signature is empty or invalid.\n",
@@ -149,14 +150,19 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized,
 
 	cslen = strlen(signature) + 2 + 1
 			+ 1; // '(' + 'signature' + ')' + 'return signature' + null terminator
-	cs = (char *)pkg_malloc(cslen * sizeof(char));
+	cs = (char *)pkg_malloc((cslen+1) * sizeof(char));
 	if(!cs) {
 		LM_ERR("%s: pkg_malloc() has failed. Can't allocate %lu bytes. Not "
 			   "enough memory!\n",
 				APP_NAME, (unsigned long)cslen);
 		return -1;
 	}
-	snprintf(cs, cslen, "(%s)%s", signature, retval_sig);
+	r = snprintf(cs, cslen, "(%s)%s", signature, retval_sig);
+	if(r<0 || r>cslen) {
+		LM_ERR("building cs value failed\n");
+		pkg_free(cs);
+		return -1;
+	}
 	cs[cslen] = '\0';
 
 	// attach to current thread
