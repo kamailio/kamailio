@@ -44,9 +44,10 @@
  * to generic db_uri structures in the database API in SER. The
  * structure contains parsed elements of the ldap: URI.
  */
-typedef struct bdb_uri {
+typedef struct bdb_uri
+{
 	db_drv_t drv;
-	char* uri;             /**< The whole URI, including scheme */
+	char *uri; /**< The whole URI, including scheme */
 	str path;
 } bdb_uri_t, *bdb_uri_p;
 
@@ -58,7 +59,7 @@ typedef struct bdb_uri {
  * @retval 0 on success
  * @retval A negative number on error.
  */
-int bdb_uri(db_uri_t* uri);
+int bdb_uri(db_uri_t *uri);
 
 
 /** @} */

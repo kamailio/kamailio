@@ -47,15 +47,16 @@
  * @param con A generic db_con connection structure.
  * @param payload BDB specific payload to be freed.
  */
-static void bdb_con_free(db_con_t* con, bdb_con_t *payload)
+static void bdb_con_free(db_con_t *con, bdb_con_t *payload)
 {
-	if (!payload)
+	if(!payload)
 		return;
 
 	/* Delete the structure only if there are no more references
 	 * to it in the connection pool
 	 */
-	if (db_pool_remove((db_pool_entry_t*)payload) == 0) return;
+	if(db_pool_remove((db_pool_entry_t *)payload) == 0)
+		return;
 
 	db_pool_entry_free(&payload->gen);
 
@@ -64,41 +65,40 @@ static void bdb_con_free(db_con_t* con, bdb_con_t *payload)
 }
 
 
-int bdb_con(db_con_t* con)
+int bdb_con(db_con_t *con)
 {
-	bdb_con_t* bcon;
-	bdb_uri_t* buri;
+	bdb_con_t *bcon;
+	bdb_uri_t *buri;
 
 	buri = DB_GET_PAYLOAD(con->uri);
 
 	/* First try to lookup the connection in the connection pool and
 	 * re-use it if a match is found
 	 */
-	bcon = (bdb_con_t*)db_pool_get(con->uri);
-	if (bcon) {
-		DBG("bdb: Connection to %s found in connection pool\n",
-			buri->uri);
+	bcon = (bdb_con_t *)db_pool_get(con->uri);
+	if(bcon) {
+		DBG("bdb: Connection to %s found in connection pool\n", buri->uri);
 		goto found;
 	}
 
-	bcon = (bdb_con_t*)pkg_malloc(sizeof(bdb_con_t));
-	if (!bcon) {
+	bcon = (bdb_con_t *)pkg_malloc(sizeof(bdb_con_t));
+	if(!bcon) {
 		ERR("bdb: No memory left\n");
 		goto error;
 	}
 	memset(bcon, '\0', sizeof(bdb_con_t));
-	if (db_pool_entry_init(&bcon->gen, bdb_con_free, con->uri) < 0) goto error;
+	if(db_pool_entry_init(&bcon->gen, bdb_con_free, con->uri) < 0)
+		goto error;
 
 	DBG("bdb: Preparing new connection to %s\n", buri->uri);
-	if(bdb_is_database(buri->path.s)!=0)
-	{	
-		ERR("bdb: database [%.*s] does not exists!\n",
-				buri->path.len, buri->path.s);
+	if(bdb_is_database(buri->path.s) != 0) {
+		ERR("bdb: database [%.*s] does not exists!\n", buri->path.len,
+				buri->path.s);
 		goto error;
 	}
 
 	/* Put the newly created BDB connection into the pool */
-	db_pool_put((struct db_pool_entry*)bcon);
+	db_pool_put((struct db_pool_entry *)bcon);
 	DBG("bdb: Connection stored in connection pool\n");
 
 found:
@@ -111,7 +111,7 @@ found:
 	return 0;
 
 error:
-	if (bcon) {
+	if(bcon) {
 		db_pool_entry_free(&bcon->gen);
 		pkg_free(bcon);
 	}
@@ -119,8 +119,7 @@ error:
 }
 
 
-
-int bdb_con_connect(db_con_t* con)
+int bdb_con_connect(db_con_t *con)
 {
 	bdb_con_t *bcon;
 	bdb_uri_t *buri;
@@ -129,14 +128,14 @@ int bdb_con_connect(db_con_t* con)
 	buri = DB_GET_PAYLOAD(con->uri);
 
 	/* Do not reconnect already connected connections */
-	if (bcon->flags & BDB_CONNECTED) return 0;
+	if(bcon->flags & BDB_CONNECTED)
+		return 0;
 
 	DBG("bdb: Connecting to %s\n", buri->uri);
 
 	/* create BDB environment */
 	bcon->dbp = bdblib_get_db(&buri->path);
-	if(bcon->dbp == NULL)
-	{
+	if(bcon->dbp == NULL) {
 		ERR("bdb: error binding to DB %s\n", buri->uri);
 		return -1;
 	}
@@ -144,11 +143,10 @@ int bdb_con_connect(db_con_t* con)
 	DBG("bdb: Successfully bound to %s\n", buri->uri);
 	bcon->flags |= BDB_CONNECTED;
 	return 0;
-
 }
 
 
-void bdb_con_disconnect(db_con_t* con)
+void bdb_con_disconnect(db_con_t *con)
 {
 	bdb_con_t *bcon;
 	bdb_uri_t *buri;
@@ -156,11 +154,11 @@ void bdb_con_disconnect(db_con_t* con)
 	bcon = DB_GET_PAYLOAD(con);
 	buri = DB_GET_PAYLOAD(con->uri);
 
-	if ((bcon->flags & BDB_CONNECTED) == 0) return;
+	if((bcon->flags & BDB_CONNECTED) == 0)
+		return;
 
 	DBG("bdb: Unbinding from %s\n", buri->uri);
-	if(bcon->dbp==NULL)
-	{
+	if(bcon->dbp == NULL) {
 		bcon->flags &= ~BDB_CONNECTED;
 		return;
 	}

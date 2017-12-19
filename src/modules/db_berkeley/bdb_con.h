@@ -45,8 +45,10 @@
 /** 
  * Per-connection flags for BDB connections.
  */
-enum bdb_con_flags {
-	BDB_CONNECTED      = (1 << 0), /**< The connection has been connected successfully */
+enum bdb_con_flags
+{
+	BDB_CONNECTED =
+			(1 << 0), /**< The connection has been connected successfully */
 };
 
 
@@ -55,10 +57,11 @@ enum bdb_con_flags {
  * BDB specific per-connection data, 
  */
 
-typedef struct _bdb_con {
+typedef struct _bdb_con
+{
 	db_pool_entry_t gen; /**< Generic part of the structure */
-	bdb_db_t	*dbp;	 /**< DB structure handle */
-	unsigned int flags;	 /**< Flags */
+	bdb_db_t *dbp;		 /**< DB structure handle */
+	unsigned int flags;  /**< Flags */
 } bdb_con_t, *bdb_con_p;
 
 /** Create a new bdb_con structure.
@@ -68,7 +71,7 @@ typedef struct _bdb_con {
  * @retval 0 on success
  * @retval A negative number on error
  */
-int bdb_con(db_con_t* con);
+int bdb_con(db_con_t *con);
 
 
 /** Establish a new connection to server.  
@@ -78,14 +81,14 @@ int bdb_con(db_con_t* con);
  * @retval 0 on success.
  * @retval A negative number on error.
  */
-int bdb_con_connect(db_con_t* con);
+int bdb_con_connect(db_con_t *con);
 
 
 /** Disconnected from BDB.
  * Disconnects a previously connected connection to BDB.
  * @param con A structure representing the connection to be disconnected.
  */
-void bdb_con_disconnect(db_con_t* con);
+void bdb_con_disconnect(db_con_t *con);
 
 /** @} */
 

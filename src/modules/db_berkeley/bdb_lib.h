@@ -29,7 +29,6 @@
  */
 
 
-
 #ifndef _BDB_LIB_H_
 #define _BDB_LIB_H_
 
@@ -59,36 +58,38 @@
 #define METADATA_DEFAULTS "METADATA_DEFAULTS"
 
 /*journal logging flag masks */
-#define JLOG_NONE   0
+#define JLOG_NONE 0
 #define JLOG_INSERT 1
 #define JLOG_DELETE 2
 #define JLOG_UPDATE 4
-#define JLOG_FILE   8
+#define JLOG_FILE 8
 #define JLOG_STDOUT 16
 #define JLOG_SYSLOG 32
 
 #define DELIM "|"
-#define DELIM_LEN (sizeof(DELIM)-1)
+#define DELIM_LEN (sizeof(DELIM) - 1)
 
 #define BDB_VALUE 0
-#define BDB_KEY   1
+#define BDB_KEY 1
 
 typedef enum db_fld_type bdb_type_t;
 
-typedef struct {
+typedef struct
+{
 	bdb_type_t type; /**< Type of the value                              */
-	int nul;		/**< Means that the column in database has no value */
-	int free;		/**< Means that the value should be freed */
+	int nul;		 /**< Means that the column in database has no value */
+	int free;		 /**< Means that the value should be freed */
 	/** Column value structure that holds the actual data in a union.  */
-	union {
-		int           int_val;    /**< integer value              */
-		long long     ll_val;     /**< long long value            */
-		double        double_val; /**< double value               */
-		time_t        time_val;   /**< unix time_t value          */
-		const char*   string_val; /**< zero terminated string     */
-		str           str_val;    /**< str type string value      */
-		str           blob_val;   /**< binary object data         */
-		unsigned int  bitmap_val; /**< Bitmap data type           */
+	union
+	{
+		int int_val;			 /**< integer value              */
+		long long ll_val;		 /**< long long value            */
+		double double_val;		 /**< double value               */
+		time_t time_val;		 /**< unix time_t value          */
+		const char *string_val;  /**< zero terminated string     */
+		str str_val;			 /**< str type string value      */
+		str blob_val;			 /**< binary object data         */
+		unsigned int bitmap_val; /**< Bitmap data type           */
 	} val;
 } bdb_val_t, *bdb_val_p;
 
@@ -104,7 +105,7 @@ typedef struct _bdb_row
 typedef struct _bdb_col
 {
 	str name;
-	str dv;     /* default value */
+	str dv; /* default value */
 	int type;
 	int flag;
 } bdb_col_t, *bdb_col_p;
@@ -113,13 +114,13 @@ typedef struct _bdb_table
 {
 	str name;
 	DB *db;
-	bdb_col_p colp [MAX_NUM_COLS];
+	bdb_col_p colp[MAX_NUM_COLS];
 	int ncols;
 	int nkeys;
-	int ro;       /*db readonly flag*/
+	int ro;		  /*db readonly flag*/
 	int logflags; /*flags indication what-where to journal log */
-	FILE* fp;     /*jlog file pointer */
-	time_t t;     /*jlog creation time */
+	FILE *fp;	 /*jlog file pointer */
+	time_t t;	 /*jlog creation time */
 	ino_t ino;
 } bdb_table_t, *bdb_table_p;
 
@@ -148,15 +149,15 @@ typedef struct _bdb_params
 
 int bdblib_init(bdb_params_p _parms);
 int bdblib_destroy(void);
-int bdblib_close(bdb_db_p _db_p, str* _n);
-int bdblib_reopen(bdb_db_p _db_p, str* _n);
+int bdblib_close(bdb_db_p _db_p, str *_n);
+int bdblib_reopen(bdb_db_p _db_p, str *_n);
 int bdblib_recover(bdb_table_p _tp, int error_code);
-void bdblib_log(int op, bdb_db_p _db, bdb_table_p _tp, char* _msg, int len);
-int bdblib_create_dbenv(DB_ENV **dbenv, char* home);
+void bdblib_log(int op, bdb_db_p _db, bdb_table_p _tp, char *_msg, int len);
+int bdblib_create_dbenv(DB_ENV **dbenv, char *home);
 int bdblib_create_journal(bdb_db_p _db_p, bdb_table_p _tp);
-bdb_db_p  	bdblib_get_db(str *_s);
-bdb_tcache_p 	bdblib_get_table(bdb_db_t *_db, str *_s);
-bdb_table_p 	bdblib_create_table(bdb_db_t *_db, str *_s);
+bdb_db_p bdblib_get_db(str *_s);
+bdb_tcache_p bdblib_get_table(bdb_db_t *_db, str *_s);
+bdb_table_p bdblib_create_table(bdb_db_t *_db, str *_s);
 
 int bdb_db_free(bdb_db_p _dbp);
 int bdb_tcache_free(bdb_tcache_p _tbc);

@@ -53,59 +53,53 @@
 MODULE_VERSION
 
 int auto_reload = 0;
-int log_enable  = 0;
+int log_enable = 0;
 int journal_roll_interval = 0;
 
-static int  bdb_mod_init(void);
+static int bdb_mod_init(void);
 static void bdb_mod_destroy(void);
 
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {
-	{"db_ctx",    (cmd_function)NULL,          0, 0, 0},
-	{"db_con",    (cmd_function)bdb_con,       0, 0, 0},
-	{"db_uri",    (cmd_function)bdb_uri,       0, 0, 0},
-	{"db_cmd",    (cmd_function)bdb_cmd,       0, 0, 0},
-	{"db_put",    (cmd_function)bdb_cmd_exec,  0, 0, 0},
-	{"db_del",    (cmd_function)bdb_cmd_exec,  0, 0, 0},
-	{"db_get",    (cmd_function)bdb_cmd_exec,  0, 0, 0},
-	{"db_upd",    (cmd_function)bdb_cmd_exec,  0, 0, 0},
-	{"db_sql",    (cmd_function)bdb_cmd_exec,  0, 0, 0},
-	{"db_first",  (cmd_function)bdb_cmd_first, 0, 0, 0},
-	{"db_next",   (cmd_function)bdb_cmd_next,  0, 0, 0},
-	{"db_res",    (cmd_function)bdb_res,       0, 0, 0},
-	{"db_fld",    (cmd_function)bdb_fld,       0, 0, 0},
-	{"db_bind_api", (cmd_function)bdb_bind_api, 0, 0, 0},
-	{0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"db_ctx", (cmd_function)NULL, 0, 0, 0},
+		{"db_con", (cmd_function)bdb_con, 0, 0, 0},
+		{"db_uri", (cmd_function)bdb_uri, 0, 0, 0},
+		{"db_cmd", (cmd_function)bdb_cmd, 0, 0, 0},
+		{"db_put", (cmd_function)bdb_cmd_exec, 0, 0, 0},
+		{"db_del", (cmd_function)bdb_cmd_exec, 0, 0, 0},
+		{"db_get", (cmd_function)bdb_cmd_exec, 0, 0, 0},
+		{"db_upd", (cmd_function)bdb_cmd_exec, 0, 0, 0},
+		{"db_sql", (cmd_function)bdb_cmd_exec, 0, 0, 0},
+		{"db_first", (cmd_function)bdb_cmd_first, 0, 0, 0},
+		{"db_next", (cmd_function)bdb_cmd_next, 0, 0, 0},
+		{"db_res", (cmd_function)bdb_res, 0, 0, 0},
+		{"db_fld", (cmd_function)bdb_fld, 0, 0, 0},
+		{"db_bind_api", (cmd_function)bdb_bind_api, 0, 0, 0}, {0, 0, 0, 0, 0}};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"auto_reload",        INT_PARAM, &auto_reload },
-	{"log_enable",         INT_PARAM, &log_enable  },
-	{"journal_roll_interval", INT_PARAM, &journal_roll_interval  },
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"auto_reload", INT_PARAM, &auto_reload},
+		{"log_enable", INT_PARAM, &log_enable},
+		{"journal_roll_interval", INT_PARAM, &journal_roll_interval},
+		{0, 0, 0}};
 
-struct module_exports exports = {	
-	"db_berkeley",
-	cmds,     /* Exported functions */
-	0,        /* RPC method */
-	params,   /* Exported parameters */
-	bdb_mod_init,     /* module initialization function */
-	0,        /* response function*/
-	bdb_mod_destroy,  /* destroy function */
-	0,        /* oncancel function */
-	0         /* per-child init function */
+struct module_exports exports = {
+		"db_berkeley", cmds, /* Exported functions */
+		0,					 /* RPC method */
+		params,				 /* Exported parameters */
+		bdb_mod_init,		 /* module initialization function */
+		0,					 /* response function*/
+		bdb_mod_destroy,	 /* destroy function */
+		0,					 /* oncancel function */
+		0					 /* per-child init function */
 };
 
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	if(db_api_init()<0)
+	if(db_api_init() < 0)
 		return -1;
 	return 0;
 }
@@ -113,12 +107,12 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 static int bdb_mod_init(void)
 {
 	bdb_params_t p;
-	
+
 	p.auto_reload = auto_reload;
 	p.log_enable = log_enable;
-	p.cache_size  = (4 * 1024 * 1024); //4Mb
+	p.cache_size = (4 * 1024 * 1024); //4Mb
 	p.journal_roll_interval = journal_roll_interval;
-	
+
 	if(bdblib_init(&p))
 		return -1;
 
@@ -130,4 +124,3 @@ static void bdb_mod_destroy(void)
 	km_destroy();
 	bdblib_destroy();
 }
-
