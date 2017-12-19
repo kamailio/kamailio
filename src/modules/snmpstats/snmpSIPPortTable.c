@@ -214,6 +214,16 @@ static void createRowsFromIPList(int *theList, int listSize, int protocol,
 	}
 }
 
+static int *_sr_snmp_UDPList = NULL;
+static int *_sr_snmp_TCPList = NULL;
+static int *_sr_snmp_TLSList = NULL;
+static int *_sr_snmp_SCTPList = NULL;
+
+static int *_sr_snmp_UDP6List = NULL;
+static int *_sr_snmp_TCP6List = NULL;
+static int *_sr_snmp_TLS6List = NULL;
+static int *_sr_snmp_SCTP6List = NULL;
+
 /*
  * Initializes the kamailioSIPPortTable module.  
  *
@@ -227,16 +237,6 @@ void init_kamailioSIPPortTable(void)
 
 	initialize_table_kamailioSIPPortTable();
 
-	int *UDPList = NULL;
-	int *TCPList = NULL;
-	int *TLSList = NULL;
-	int *SCTPList = NULL;
-
-	int *UDP6List = NULL;
-	int *TCP6List = NULL;
-	int *TLS6List = NULL;
-	int *SCTP6List = NULL;
-
 	int numUDPSockets;
 	int numTCPSockets; 
 	int numTLSSockets;
@@ -248,37 +248,37 @@ void init_kamailioSIPPortTable(void)
 	int numSCTP6Sockets;
 	
 	/* Retrieve the list of the number of UDP and TCP sockets. */
-	numUDPSockets = get_socket_list_from_proto_and_family(&UDPList, PROTO_UDP, AF_INET);
-	numUDP6Sockets = get_socket_list_from_proto_and_family(&UDP6List, PROTO_UDP, AF_INET6);
-	numTCPSockets = get_socket_list_from_proto_and_family(&TCPList, PROTO_TCP, AF_INET);
-	numTCP6Sockets = get_socket_list_from_proto_and_family(&TCP6List, PROTO_TCP, AF_INET6);
-	numTLSSockets = get_socket_list_from_proto_and_family(&TLSList, PROTO_TLS, AF_INET);
-	numTLS6Sockets = get_socket_list_from_proto_and_family(&TLS6List, PROTO_TLS, AF_INET6);
-	numSCTPSockets = get_socket_list_from_proto_and_family(&SCTPList, PROTO_SCTP, AF_INET);
-	numSCTP6Sockets = get_socket_list_from_proto_and_family(&SCTP6List, PROTO_SCTP, AF_INET6);
+	numUDPSockets = get_socket_list_from_proto_and_family(&_sr_snmp_UDPList, PROTO_UDP, AF_INET);
+	numUDP6Sockets = get_socket_list_from_proto_and_family(&_sr_snmp_UDP6List, PROTO_UDP, AF_INET6);
+	numTCPSockets = get_socket_list_from_proto_and_family(&_sr_snmp_TCPList, PROTO_TCP, AF_INET);
+	numTCP6Sockets = get_socket_list_from_proto_and_family(&_sr_snmp_TCP6List, PROTO_TCP, AF_INET6);
+	numTLSSockets = get_socket_list_from_proto_and_family(&_sr_snmp_TLSList, PROTO_TLS, AF_INET);
+	numTLS6Sockets = get_socket_list_from_proto_and_family(&_sr_snmp_TLS6List, PROTO_TLS, AF_INET6);
+	numSCTPSockets = get_socket_list_from_proto_and_family(&_sr_snmp_SCTPList, PROTO_SCTP, AF_INET);
+	numSCTP6Sockets = get_socket_list_from_proto_and_family(&_sr_snmp_SCTP6List, PROTO_SCTP, AF_INET6);
 
 	LM_DBG("-----> Sockets UDP %d UDP6 %d TCP %d TCP6 %d TLS %d TLS6 %d SCTP %d SCTP6 %d\n",
 		numUDPSockets, numUDP6Sockets, numTCPSockets, numTCP6Sockets, numTLSSockets, numTLS6Sockets, numSCTPSockets, numSCTP6Sockets);
 
 	/* Generate all rows, using all retrieved interfaces. */
-	createRowsFromIPList(UDPList, numUDPSockets, PROTO_UDP, &curSNMPIndex, AF_INET);
+	createRowsFromIPList(_sr_snmp_UDPList, numUDPSockets, PROTO_UDP, &curSNMPIndex, AF_INET);
 	curSNMPIndex = 0;
-	createRowsFromIPList(UDP6List, numUDP6Sockets, PROTO_UDP, &curSNMPIndex, AF_INET6);
+	createRowsFromIPList(_sr_snmp_UDP6List, numUDP6Sockets, PROTO_UDP, &curSNMPIndex, AF_INET6);
 
 	curSNMPIndex = 0;
-	createRowsFromIPList(TCPList, numTCPSockets, PROTO_TCP, &curSNMPIndex, AF_INET);
+	createRowsFromIPList(_sr_snmp_TCPList, numTCPSockets, PROTO_TCP, &curSNMPIndex, AF_INET);
 	curSNMPIndex = 0;
-	createRowsFromIPList(TCP6List, numTCP6Sockets, PROTO_TCP, &curSNMPIndex, AF_INET6);
+	createRowsFromIPList(_sr_snmp_TCP6List, numTCP6Sockets, PROTO_TCP, &curSNMPIndex, AF_INET6);
 
 	curSNMPIndex = 0;
-	createRowsFromIPList(TLSList, numTLSSockets, PROTO_TLS, &curSNMPIndex, AF_INET);
+	createRowsFromIPList(_sr_snmp_TLSList, numTLSSockets, PROTO_TLS, &curSNMPIndex, AF_INET);
 	curSNMPIndex = 0;
-	createRowsFromIPList(TLS6List, numTLS6Sockets, PROTO_TLS, &curSNMPIndex, AF_INET6);
+	createRowsFromIPList(_sr_snmp_TLS6List, numTLS6Sockets, PROTO_TLS, &curSNMPIndex, AF_INET6);
 
 	curSNMPIndex = 0;
-	createRowsFromIPList(SCTPList, numSCTPSockets, PROTO_SCTP, &curSNMPIndex, AF_INET);
+	createRowsFromIPList(_sr_snmp_SCTPList, numSCTPSockets, PROTO_SCTP, &curSNMPIndex, AF_INET);
 	curSNMPIndex = 0;
-	createRowsFromIPList(SCTP6List, numSCTP6Sockets, PROTO_SCTP, &curSNMPIndex, AF_INET6);
+	createRowsFromIPList(_sr_snmp_SCTP6List, numSCTP6Sockets, PROTO_SCTP, &curSNMPIndex, AF_INET6);
 }
 
  

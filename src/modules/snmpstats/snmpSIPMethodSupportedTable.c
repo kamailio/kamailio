@@ -83,6 +83,8 @@ void createRow(int index, char *stringToRegister) {
 	copiedString = pkg_malloc((stringLength + 1) * sizeof(char));
 
 	if (copiedString == NULL) {
+		free(theRow);
+		free(OIDIndex);
 		LM_ERR("failed to create a row for kamailioSIPMethodSupportedTable\n");
 		return;
 	}
