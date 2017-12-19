@@ -22,6 +22,6 @@
 #ifndef __JAVA_MOD_H__
 #define	__JAVA_MOD_H__
 
-int force_cmd_exec;
+extern int force_cmd_exec;
 
 #endif
