@@ -23,3 +23,10 @@ cphonenumber.o: cphonenumber.cpp cphonenumber.h
 	$(CXX) $(CXXFLAGS) $(CFLAGS) $(C_DEFS) $(DEFS) -c $< -o $@
 
 phonenum.so: cphonenumber.o
+
+modclean:
+	-@rm -f cphonenumber.o
+
+clean clean-modules: modclean
+
+proper realclean distclean maintainer-clean: modclean
