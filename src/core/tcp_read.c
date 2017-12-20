@@ -1336,7 +1336,7 @@ static int hep3_process_msg(char* tcpbuf, unsigned int len,
 		return -1;
 	}
 
-	ret = receive_msg(msg.buf, msg.len, rcv_info);
+	ret = receive_msg(msg.buf, msg.len, &msg.rcv);
 	LM_DBG("running hep3-enclosed sip request route returned %d\n", ret);
 	free_sip_msg(&msg);
 
