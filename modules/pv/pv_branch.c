@@ -730,19 +730,19 @@ int sbranch_append(sip_msg_t *msg)
 	uri.s = br->uri;
 	uri.len = br->len;
 
-	if(br->dst_uri_len==0) {
+	if(br->dst_uri_len) {
 		duri.s = br->dst_uri;
 		duri.len = br->dst_uri_len;
 	}
-	if(br->path_len==0) {
+	if(br->path_len) {
 		path.s = br->path;
 		path.len = br->path_len;
 	}
-	if(br->ruid_len==0) {
+	if(br->ruid_len) {
 		ruid.s = br->ruid;
 		ruid.len = br->ruid_len;
 	}
-	if(br->location_ua_len==0) {
+	if(br->location_ua_len) {
 		location_ua.s = br->location_ua;
 		location_ua.len = br->location_ua_len;
 	}
