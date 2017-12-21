@@ -737,7 +737,7 @@ Description: extra modules for Kamailio
  proxy server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides: gzcompress uuid evapi jansson janssonrpcc http_async_client
+ This package provides: gzcompress uuid evapi jansson janssonrpc-c http_async_client
 
 Package: kamailio-nth
 Architecture: any
