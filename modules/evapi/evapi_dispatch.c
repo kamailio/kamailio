@@ -444,7 +444,7 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 			break;
 		}
 	}
-	if(i==EVAPI_MAX_CLIENTS) {
+	if(i>=EVAPI_MAX_CLIENTS) {
 		LM_ERR("too many clients\n");
 		close(csock);
 		free(evapi_client);
