@@ -686,7 +686,7 @@ Description: Extra modules for the Kamailio SIP Server
  .
  This package provides a set of modules for compression of SIP attachments,
  UUID usage, JSON data structure support, HTTP restful API asynchronous
- access and a few more functions: gzcompress uuid ev jansson janssonrpc-c http_async
+ access and a few more functions: gzcompress uuid evapi jansson janssonrpcc http_async_client
 
 Package: kamailio-nth
 Architecture: any
