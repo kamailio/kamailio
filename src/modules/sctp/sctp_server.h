@@ -22,7 +22,8 @@
 
 #include "../../core/ip_addr.h"
 
-struct sctp_gen_info{
+struct sctp_gen_info
+{
 	int sctp_connections_no;
 	int sctp_tracked_no;
 	int sctp_total_connections;
@@ -30,19 +31,19 @@ struct sctp_gen_info{
 
 int init_sctp(void);
 void destroy_sctp(void);
-int sctp_check_compiled_sockopts(char* buf, int size);
+int sctp_check_compiled_sockopts(char *buf, int size);
 int sctp_check_support(void);
-int sctp_init_sock(struct socket_info* sock_info);
+int sctp_init_sock(struct socket_info *sock_info);
 int sctp_rcv_loop(void);
-int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len);
+int sctp_msg_send(struct dest_info *dst, char *buf, unsigned len);
 
 /* generic sctp information (stats a.s.o) */
-void sctp_get_info(struct sctp_gen_info* sinf);
+void sctp_get_info(struct sctp_gen_info *sinf);
 
 void destroy_sctp(void);
 
-int sctp_setsockopt(int s, int level, int optname,
-					void* optval, socklen_t optlen, char* err_prefix);
+int sctp_setsockopt(int s, int level, int optname, void *optval,
+		socklen_t optlen, char *err_prefix);
 
 void sctp_con_tracking_flush(void);
 #endif /* _sctp_server_h */
