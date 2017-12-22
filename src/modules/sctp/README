@@ -120,6 +120,9 @@ Chapter 1. Admin Guide
    not changed and SCTP variable is not overwritten from command line,
    then the SCTP support in core is enabled.
 
+   Note: it is recommended to use recent versions of libsctp (>1.0.10) and
+   kernel (>4.0.0) when enabling SCTP transport.
+
 2. Dependencies
 
    2.1. Kamailio Modules
