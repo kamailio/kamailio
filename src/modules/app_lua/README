@@ -46,13 +46,14 @@ Daniel-Constantin Mierla
 
    List of Examples
 
-   1.1. Set load parameter
-   1.2. Set register parameter
-   1.3. Set reload parameter
-   1.4. lua_dofile usage
-   1.5. lua_dostring usage
-   1.6. lua_run usage
-   1.7. lua_runstring usage
+   1.1. Build against LuaJIT libraries
+   1.2. Set load parameter
+   1.3. Set register parameter
+   1.4. Set reload parameter
+   1.5. lua_dofile usage
+   1.6. lua_dostring usage
+   1.7. lua_run usage
+   1.8. lua_runstring usage
 
 Chapter 1. Admin Guide
 
@@ -120,6 +121,18 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * liblua5.1-dev - Lua devel library.
 
+   This module can be compiled against LuaJIT compiler (instead of
+   standard Lua). Then this library is needed:
+     * libluajit-5.1-dev - LuaJIT devel library.
+
+   To enable that, LUAJIT variable has to be set.
+
+   Example 1.1. Build against LuaJIT libraries
+   E.g: $ LUAJIT="yes" make modules modules=modules/app_lua
+
+   (Warning: LuaJIT version is 5.1, so scripts prepared for higher Lua
+   versions may not work with LuaJIT)
+
 3. Parameters
 
    3.1. load (string)
@@ -134,7 +147,7 @@ Chapter 1. Admin Guide
 
    Default value is “null”.
 
-   Example 1.1. Set load parameter
+   Example 1.2. Set load parameter
 ...
 modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 ...
@@ -178,7 +191,7 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 
    Default value is “null”.
 
-   Example 1.2. Set register parameter
+   Example 1.3. Set register parameter
 ...
 modparam("app_lua", "register", "sl")
 ...
@@ -190,7 +203,7 @@ modparam("app_lua", "register", "sl")
 
    Default value is “0 (off)”.
 
-   Example 1.3. Set reload parameter
+   Example 1.4. Set reload parameter
 ...
 modparam("app_lua", "reload", 1)
 ...
@@ -207,7 +220,7 @@ modparam("app_lua", "reload", 1)
    Execute the Lua script stored in 'path'. The parameter can be a string
    with pseudo-variables evaluated at runtime.
 
-   Example 1.4. lua_dofile usage
+   Example 1.5. lua_dofile usage
 ...
 lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 ...
@@ -217,7 +230,7 @@ lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
    Execute the Lua script stored in parameter. The parameter can be a
    string with pseudo-variables.
 
-   Example 1.5. lua_dostring usage
+   Example 1.6. lua_dostring usage
 ...
 if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
@@ -232,7 +245,7 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
    loaded at startup via parameter 'load'. Parameters can be strings with
    pseudo-variables that are evaluated at runtime.
 
-   Example 1.6. lua_run usage
+   Example 1.7. lua_run usage
 ...
 if(!lua_run("sr_append_fu_to_reply"))
 {
@@ -248,7 +261,7 @@ lua_run("lua_funcx", "$rU", "2");
    string with pseudo-variables. The script is executed in Lua context
    specific to loaded Lua files at startup.
 
-   Example 1.7. lua_runstring usage
+   Example 1.8. lua_runstring usage
 ...
 if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
