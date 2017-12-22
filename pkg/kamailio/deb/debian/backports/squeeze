@@ -96,6 +96,11 @@ sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ jansson/' ${DIST}/rules
 sed -i -e 's/ jansson[ ,$]*//' ${DIST}/control
 sed -i -e 's/janssonrpc-c//'  ${DIST}/control
 
+# no http_async_client module needs libevent 2
+sed -i -e 's/ http_async_client//' ${DIST}/control
+sed -i -e 's/ http_async[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ http_async/' ${DIST}/rules
+
 # old mysql
 sed -i -e 's/default-mysql-client/mysql-client/' \
   -e 's/default-libmysqlclient-dev/libmysqlclient-dev/' ${DIST}/control
