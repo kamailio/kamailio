@@ -70,9 +70,9 @@ int tls_version = 0; // Use default SSL version in HTTPS requests (see curl/curl
 int tls_verify_host = 1; // By default verify host in HTTPS requests
 int tls_verify_peer = 1; // By default verify peer in HTTPS requests
 int curl_verbose = 0;
-char* tls_client_cert = ""; // client SSL certificate path, defaults to NULL
-char* tls_client_key = ""; // client SSL certificate key path, defaults to NULL
-char* tls_ca_path = ""; // certificate authority dir path, defaults to NULL
+char* tls_client_cert = NULL; // client SSL certificate path, defaults to NULL
+char* tls_client_key = NULL; // client SSL certificate key path, defaults to NULL
+char* tls_ca_path = NULL; // certificate authority dir path, defaults to NULL
 static char *memory_manager = "shm";
 extern int curl_memory_manager;
 unsigned int default_authmethod = CURLAUTH_BASIC | CURLAUTH_DIGEST;
