@@ -766,28 +766,8 @@ static int sctp_init_sock_opt_common(int s, int af)
 	/* enable the SCTP_EVENTS */
 #ifdef SCTP_EVENTS
 	if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, ev_s, sizeof(*ev_s))==-1){
-		/* on linux the checks for the struct sctp_event_subscribe size
-		   are too strict, making certain lksctp/kernel combination
-		   unworkable => since we don't use the extra information
-		   (sctp_authentication_event) added in newer version, we can
-		   try with different sizes) */
-#ifdef __OS_linux
-		/* 1. lksctp 1.0.9 with kernel < 2.6.26 -> kernel expects 
-		      the structure without the authentication event member */
-		if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, ev_s, sizeof(*ev_s)-1)==0)
-			goto ev_success;
-		/* 2. lksctp < 1.0.9? with kernel >= 2.6.26: the sctp.h structure
-		   does not have the authentication member, but the newer kernels 
-		   check only for optlen > sizeof(...) => we should never reach
-		   this point. */
-		/* 3. just to be foolproof if we reached this point, try
-		    with a bigger size before giving up  (out of desperation) */
-		if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, ev_s, sizeof(es))==0)
-			goto ev_success;
-
-#endif
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
-				"SCTP_EVENTS: %s\n", strerror(errno));
+				"SCTP_EVENTS: %s (%d)\n", strerror(errno), errno);
 		sctp_err++;
 		goto error; /* critical */
 	}
