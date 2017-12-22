@@ -75,6 +75,24 @@
 			</para>
 		    </listitem>
 	    	</itemizedlist>
+			<para>
+			    This module can be compiled against LuaJIT compiler (instead of
+			    standard Lua). Then this library is needed:
+			    <itemizedlist>
+				    <listitem>
+				    <emphasis>libluajit-5.1-dev</emphasis> - LuaJIT devel library.
+				    </listitem>
+				</itemizedlist>
+				<para>
+				    To enable that, LUAJIT variable has to be set.
+					<example>
+					    <title>Build against LuaJIT libraries</title>
+					E.g: $ LUAJIT="yes" make modules modules=modules/app_lua
+					</example>
+			    (Warning: LuaJIT version is 5.1, so scripts prepared for higher Lua versions
+			    may not work with LuaJIT)
+				</para>
+			</para>
 	    </para>
 	</section>
     </section>
