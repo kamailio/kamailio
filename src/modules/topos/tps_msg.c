@@ -931,7 +931,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	str xuuid;
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 
-	LM_DBG("handling outgoing request\n");
+	LM_DBG("handling outgoing request (%d, %d)\n", dialog, local);
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&btsd, 0, sizeof(tps_data_t));
