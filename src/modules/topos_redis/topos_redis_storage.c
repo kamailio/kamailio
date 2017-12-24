@@ -472,6 +472,11 @@ int tps_redis_insert_branch(tps_data_t *td)
 	TPS_REDIS_SET_ARGS(&td->s_method, argc, &tt_key_s_method, argv, argvlen);
 	TPS_REDIS_SET_ARGS(&td->s_cseq, argc, &tt_key_s_cseq, argv, argvlen);
 
+	TPS_REDIS_SET_ARGS(&td->a_contact, argc, &tt_key_a_contact, argv, argvlen);
+	TPS_REDIS_SET_ARGS(&td->b_contact, argc, &tt_key_b_contact, argv, argvlen);
+	TPS_REDIS_SET_ARGS(&td->as_contact, argc, &tt_key_as_contact, argv, argvlen);
+	TPS_REDIS_SET_ARGS(&td->bs_contact, argc, &tt_key_bs_contact, argv, argvlen);
+
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
 		LM_ERR("failed to execute redis command\n");
@@ -858,6 +863,12 @@ int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		} else if(skey.len==tt_key_b_contact.len
 				&& strncmp(skey.s, tt_key_b_contact.s, skey.len)==0) {
 			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->b_contact);
+		} else if(skey.len==tt_key_as_contact.len
+				&& strncmp(skey.s, tt_key_as_contact.s, skey.len)==0) {
+			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->as_contact);
+		} else if(skey.len==tt_key_bs_contact.len
+				&& strncmp(skey.s, tt_key_bs_contact.s, skey.len)==0) {
+			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->bs_contact);
 		} else {
 			LM_WARN("unknow key[%.*s]\n", skey.len, skey.s);
 		}
