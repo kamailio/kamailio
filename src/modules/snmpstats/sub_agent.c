@@ -167,6 +167,7 @@ void agentx_child(int rank)
 	 * need to be fatal however, because we can re-establish our
 	 * connection.  Therefore we set ourselves up to ignore the
 	 * SIGPIPE. */
+	sigemptyset(&sigpipe_handler.sa_mask);
 	sigpipe_handler.sa_flags = SA_RESTART;
 	sigpipe_handler.sa_handler = SIG_IGN;
 
