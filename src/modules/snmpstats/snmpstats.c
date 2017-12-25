@@ -539,6 +539,7 @@ static int spawn_sysUpTime_child(void)
 		LM_ERR("Ran out of memory while trying to retrieve sysUpTime.  ");
 		LM_ERR("                  kamailioSIPServiceStartTime is "
 			   "defaulting to zero\n");
+		close(snmpget_fd);
 		return -1;
 	} else {
 		/* Make a new string containing the full path to the binary. */
@@ -559,6 +560,7 @@ static int spawn_sysUpTime_child(void)
 
 	/* We should never be able to get here, because execve() is never
 	 * supposed to return. */
+	close(snmpget_fd);
 	free(full_path_to_snmpget);
 	exit(-1);
 }
