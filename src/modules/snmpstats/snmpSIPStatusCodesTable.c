@@ -625,13 +625,18 @@ void initialize_table_kamailioSIPStatusCodesTable(void)
 
 	/** create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
+	if(!table_info) {
+		snmp_log(LOG_ERR, "failed to allocate table_info\n");
+		return;
+	}
 
 	my_handler = netsnmp_create_handler_registration(
 			"kamailioSIPStatusCodesTable", netsnmp_table_array_helper_handler,
 			kamailioSIPStatusCodesTable_oid,
 			kamailioSIPStatusCodesTable_oid_len, HANDLER_CAN_RWRITE);
 
-	if(!my_handler || !table_info) {
+	if(!my_handler) {
+		SNMP_FREE(table_info);
 		snmp_log(LOG_ERR, "malloc failed in initialize_table_kamailioSIP"
 						  "StatusCodesTable_handler\n");
 		return; /** mallocs failed */
