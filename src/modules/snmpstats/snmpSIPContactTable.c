@@ -290,12 +290,17 @@ void initialize_table_kamailioSIPContactTable(void)
 
 	/** create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
+	if(table_info==NULL) {
+		snmp_log(LOG_ERR, "failed to allocate table_info\n");
+		return;
+	}
 
 	my_handler = netsnmp_create_handler_registration("kamailioSIPContactTable",
 			netsnmp_table_array_helper_handler, kamailioSIPContactTable_oid,
 			kamailioSIPContactTable_oid_len, HANDLER_CAN_RONLY);
 
-	if(!my_handler || !table_info) {
+	if(!my_handler) {
+		SNMP_FREE(table_info);
 		snmp_log(LOG_ERR, "malloc failed in initialize_table_kamailio"
 						  "SIPContactTable_handler\n");
 		return; /** mallocs failed */
