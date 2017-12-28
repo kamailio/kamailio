@@ -956,18 +956,19 @@ void dlg_release(dlg_cell_t *dlg)
 
 
 /*!
- * \brief Small logging helper functions for next_state_dlg.
+ * \brief Small logging helper macro for next_state_dlg.
  * \param event logged event
  * \param dlg dialog data
  * \see next_state_dlg
  */
-static inline void log_next_state_dlg(const int event, const struct dlg_cell *dlg) {
-	LM_CRIT("bogus event %d in state %d for dlg %p [%u:%u] with clid '%.*s' and tags "
-		"'%.*s' '%.*s'\n", event, dlg->state, dlg, dlg->h_entry, dlg->h_id,
-		dlg->callid.len, dlg->callid.s,
-		dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
-		dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
-}
+#define log_next_state_dlg(event, dlg) do { \
+		LM_CRIT("bogus event %d in state %d for dlg %p [%u:%u]" \
+			" with clid '%.*s' and tags" \
+			" '%.*s' '%.*s'\n", event, (dlg)->state, (dlg), \
+			(dlg)->h_entry, (dlg)->h_id, (dlg)->callid.len, (dlg)->callid.s, \
+			(dlg)->tag[DLG_CALLER_LEG].len, (dlg)->tag[DLG_CALLER_LEG].s, \
+			(dlg)->tag[DLG_CALLEE_LEG].len, (dlg)->tag[DLG_CALLEE_LEG].s); \
+	} while(0)
 
 
 /*!
