@@ -694,8 +694,8 @@ struct rdata* get_record(char* name, int type, int flags)
 {
 	int size;
 	int skip;
-	int qno, answers_no;
-	int i, r;
+	unsigned short qno, answers_no, r;
+	int i;
 	static union dns_query buff;
 	unsigned char* p;
 	unsigned char* end;
