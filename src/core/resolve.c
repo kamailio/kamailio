@@ -679,12 +679,15 @@ void free_rdata_list(struct rdata* head)
 int match_search_list(const struct __res_state* res, char* name) {
 	int i;
 	for (i=0; (i<MAXDNSRCH) && (res->dnsrch[i]); i++) {
-		if (strcasecmp(name, res->dnsrch[i])==0) 
+		if (strcasecmp(name, res->dnsrch[i])==0)
 			return 1;
 	}
 	return 0;
 }
 #endif
+
+#define SR_DNS_MAX_QNO 10
+#define SR_DNS_MAX_ANO 100
 
 /** gets the DNS records for name:type
  * returns a dyn. alloc'ed struct rdata linked list with the parsed responses
@@ -714,7 +717,7 @@ struct rdata* get_record(char* name, int type, int flags)
 	int name_len;
 	struct rdata* fullname_rd;
 	char c;
-	
+
 	name_len=strlen(name);
 
 	for (i = 0; i < name_len; i++) {
@@ -744,12 +747,21 @@ struct rdata* get_record(char* name, int type, int flags)
 	else if (unlikely(size > sizeof(buff))) size=sizeof(buff);
 	head=rd=0;
 	last=crt=&head;
-	
+
 	p=buff.buff+DNS_HDR_SIZE;
 	end=buff.buff+size;
 	if (unlikely(p>=end)) goto error_boundary;
 	qno=ntohs((unsigned short)buff.hdr.qdcount);
 
+	if(qno!=1) {
+		/* usually the query is with a single domain name */
+		LM_INFO("dns questions number is: %u\n", (uint32_t)qno);
+		if(qno>SR_DNS_MAX_QNO) {
+			/* early safe check against broken results */
+			LM_ERR("dns questions number is too high: %u\n", (uint32_t)qno);
+			goto error;
+		}
+	}
 	for (r=0; r<qno; r++){
 		/* skip the name of the question */
 		if (unlikely((p=dns_skipname(p, end))==0)) {
@@ -765,8 +777,13 @@ struct rdata* get_record(char* name, int type, int flags)
 			LM_ERR("p>=end\n");
 			goto error;
 		}
-	};
+	}
 	answers_no=ntohs((unsigned short)buff.hdr.ancount);
+	if(answers_no>SR_DNS_MAX_ANO) {
+		/* early safety check on answers number */
+		LM_ERR("dns answers number is too high: %u\n", (uint32_t)answers_no);
+		goto error;
+	}
 again:
 	for (r=0; (r<answers_no) && (p<end); r++){
 #if 0
@@ -815,7 +832,7 @@ again:
 			continue;
 		}
 		/* expand the "type" record  (rdata)*/
-		
+
 		rd=(struct rdata*) local_malloc(sizeof(struct rdata)+rec_name_len+
 										1-1);
 		if (rd==0){
@@ -857,14 +874,14 @@ again:
 				srv_rd= dns_srv_parser(buff.buff, end, rd_end, p);
 				rd->rdata=(void*)srv_rd;
 				if (unlikely(srv_rd==0)) goto error_parse;
-				
+
 				/* insert sorted into the list */
 				for (crt=&head; *crt; crt= &((*crt)->next)){
 					if ((*crt)->type!=T_SRV)
 						continue;
 					crt_srv=(struct srv_rdata*)(*crt)->rdata;
 					if ((srv_rd->priority <  crt_srv->priority) ||
-					   ( (srv_rd->priority == crt_srv->priority) && 
+					   ( (srv_rd->priority == crt_srv->priority) &&
 							 (srv_rd->weight > crt_srv->weight) ) ){
 						/* insert here */
 						goto skip;
@@ -926,9 +943,9 @@ again:
 				*last=rd;
 				last=&(rd->next);
 		}
-		
+
 		p+=rdlength;
-		
+
 	}
 	if (flags & RES_AR){
 		flags&=~RES_AR;
