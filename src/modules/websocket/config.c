@@ -34,26 +34,21 @@
 #include "ws_frame.h"
 #include "config.h"
 
-struct cfg_group_websocket default_ws_cfg =
-{
-        DEFAULT_KEEPALIVE_TIMEOUT, /* keepalive_timeout */
-        1                       /* enabled */
+struct cfg_group_websocket default_ws_cfg = {
+		DEFAULT_KEEPALIVE_TIMEOUT, /* keepalive_timeout */
+		1						   /* enabled */
 };
 
 void *ws_cfg = &default_ws_cfg;
 
-cfg_def_t ws_cfg_def[] =
-{
-        /* ws_frame.c */
-        { "keepalive_timeout",  CFG_VAR_INT | CFG_ATOMIC,
-          0, 0, 0, 0,
-          "Time (in seconds) after which to send a keep-alive on idle"
-          " WebSocket connections." },
+cfg_def_t ws_cfg_def[] = {
+		/* ws_frame.c */
+		{"keepalive_timeout", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,
+				"Time (in seconds) after which to send a keep-alive on idle"
+				" WebSocket connections."},
 
-        /* ws_handshake.c */
-        { "enabled",            CFG_VAR_INT | CFG_ATOMIC,
-          0, 0, 0, 0,
-          "Shows whether WebSockets are enabled or not." },
+		/* ws_handshake.c */
+		{"enabled", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,
+				"Shows whether WebSockets are enabled or not."},
 
-        { 0, 0, 0, 0, 0, 0 }
-};
+		{0, 0, 0, 0, 0, 0}};
