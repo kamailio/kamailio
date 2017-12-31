@@ -375,13 +375,13 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	unsigned int mask_start, j;
 	char *buf = tcpinfo->buf;
 
-	LM_DBG("decoding WebSocket frame\n");
+	LM_DBG("decoding WebSocket frame (len: %u)\n", len);
 
 	wsconn_update(frame->wsc);
 
 	/* Decode and validate first 9 bits */
 	if(len < 2) {
-		LM_WARN("message is too short\n");
+		LM_WARN("message is too short (%u)\n", len);
 		*err_code = 1002;
 		*err_text = str_status_protocol_error;
 		return -1;
@@ -437,7 +437,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	frame->payload_len = (buf[1] & 0xff) & BYTE1_MASK_PAYLOAD_LEN;
 	if(frame->payload_len == 126) {
 		if(len < 4) {
-			LM_WARN("message is too short\n");
+			LM_WARN("message is too short (%u)\n", len);
 			*err_code = 1002;
 			*err_text = str_status_protocol_error;
 			return -1;
@@ -447,7 +447,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 		frame->payload_len = ((buf[2] & 0xff) << 8) | ((buf[3] & 0xff) << 0);
 	} else if(frame->payload_len == 127) {
 		if(len < 10) {
-			LM_WARN("message is too short\n");
+			LM_WARN("message is too short (%u)\n", len);
 			*err_code = 1002;
 			*err_text = str_status_protocol_error;
 			return -1;
@@ -456,7 +456,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 
 		if((buf[2] & 0xff) != 0 || (buf[3] & 0xff) != 0 || (buf[4] & 0xff) != 0
 				|| (buf[5] & 0xff) != 0) {
-			LM_WARN("message is too long\n");
+			LM_WARN("message is too long (%u)\n", len);
 			*err_code = 1009;
 			*err_text = str_status_message_too_big;
 			return -1;
@@ -498,8 +498,8 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 		frame->payload_data[i] = frame->payload_data[i] ^ frame->masking_key[j];
 	}
 
-	LM_DBG("Rx (decoded): %.*s\n", (int)frame->payload_len,
-			frame->payload_data);
+	LM_DBG("Rx (decoded) (len %u): %.*s\n", frame->payload_len,
+			(int)frame->payload_len, frame->payload_data);
 
 	return frame->opcode;
 }
