@@ -406,7 +406,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
                                         short *err_code, str *err_text)
 {
 	unsigned int i, len = tcpinfo->len;
-	int mask_start, j;
+	unsigned int mask_start, j;
 	char *buf = tcpinfo->buf;
 
 	LM_DBG("decoding WebSocket frame\n");
@@ -533,6 +533,13 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 			frame->payload_len + mask_start + 4, len);
 		*err_code = 1002;
 		*err_text = str_status_protocol_error;
+		return -1;
+	}
+	if(frame->payload_len >= BUF_SIZE) {
+		LM_WARN("message is too long for our buffer size (%d / %d)\n",
+				BUF_SIZE, frame->payload_len);
+		*err_code = 1009;
+		*err_text = str_status_message_too_big;
 		return -1;
 	}
 	frame->payload_data = &buf[mask_start + 4];
