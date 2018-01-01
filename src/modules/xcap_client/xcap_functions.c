@@ -514,11 +514,11 @@ char* send_http_get(char* path, unsigned int xcap_port, char* match_etag,
 
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_function);
 
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &stream);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void*)(&stream));
 
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, get_xcap_etag);
 
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, &etag);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, (void*)(&etag));
 
 	if(match_header)
 		curl_easy_setopt(curl_handle, CURLOPT_HEADER, (long)match_header);
