@@ -208,7 +208,7 @@ static int mod_init(void)
 		return -2;
 	}
 	/* we pass our 'glb_tcert' struct to the callback function */
-	if ((iRet=curl_easy_setopt(glb_hcurl, CURLOPT_WRITEDATA, (void *)&glb_tcert.scertpem))!=0) {
+	if ((iRet=curl_easy_setopt(glb_hcurl, CURLOPT_WRITEDATA, (void *)(&glb_tcert.scertpem)))!=0) {
 		LOG(L_ERR,
 			"AUTH_IDENTITY:mod_init: Unable to set cURL writedata option: %s\n",
 			curl_easy_strerror(iRet));
@@ -220,7 +220,7 @@ static int mod_init(void)
 	}
   	/* some servers don't like requests that are made without a user-agent
 	   field, so we provide one */
-	if ((iRet=curl_easy_setopt(glb_hcurl, CURLOPT_USERAGENT, "ser-agent/1.0"))!=0) {
+	if ((iRet=curl_easy_setopt(glb_hcurl, CURLOPT_USERAGENT, NAME "-Agent/1.0"))!=0) {
 		LOG(L_WARN,
 			"AUTH_IDENTITY:mod_init: Unable to set cURL useragent option: %s\n",
 			curl_easy_strerror(iRet));
