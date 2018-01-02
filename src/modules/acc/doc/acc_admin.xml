@@ -1209,7 +1209,6 @@ modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
 		<para>
 		Default value is 0.
 		</para>
-		</para>
 		<example>
 		<title>cdr_extra_nullable example</title>
 		<programlisting format="linespecific">
