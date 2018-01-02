@@ -64,6 +64,9 @@ int close_extra_socks(int proc_id, int proc_no);
 /* return processes pid */
 int my_pid(void);
 
+/* return processes description */
+char* my_desc(void);
+
 /**
  * Forks a new process.
  * @param desc - text description for the process table
