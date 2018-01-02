@@ -917,10 +917,12 @@ static int init_mod_child( struct sr_module* m, int rank )
 		 */
 		if (init_mod_child(m->next, rank)!=0) return -1;
 		if (m->exports.init_child_f) {
-			LM_DBG("rank %d: %s\n", rank, m->exports.name);
+			LM_DBG("idx %d rank %d: %s [%s]\n", process_no, rank,
+					m->exports.name, my_desc());
 			if (m->exports.init_child_f(rank)<0) {
-				LM_ERR("Error while initializing module %s (%s)\n",
-							m->exports.name, m->path);
+				LM_ERR("error while initializing module %s (%s)"
+						" (idx: %d rank: %d desc: [%s])\n",
+						m->exports.name, m->path, process_no, rank, my_desc());
 				return -1;
 			} else {
 				/* module correctly initialized */
