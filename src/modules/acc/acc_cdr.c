@@ -238,9 +238,14 @@ static int db_write_cdr( struct dlg_cell* dialog,
 
 	for( ; i<m; i++) {
 		db_cdr_keys[i] = &cdr_attrs[i];
-		VAL_TYPE(db_cdr_vals+i)=DB1_STR;
-		VAL_NULL(db_cdr_vals+i)=0;
-		VAL_STR(db_cdr_vals+i) = cdr_value_array[i];
+
+		if (cdr_extra_nullable == 1 && cdr_type_array[i] == TYPE_NULL) {
+			VAL_NULL(db_cdr_vals + i) = 1;
+		} else {
+			VAL_TYPE(db_cdr_vals+i)=DB1_STR;
+			VAL_NULL(db_cdr_vals+i)=0;
+			VAL_STR(db_cdr_vals+i) = cdr_value_array[i];
+		}
 	}
 
 	if (df->use_table(dh, &acc_cdrs_table /*table*/) < 0) {
