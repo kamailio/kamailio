@@ -111,7 +111,8 @@ int cnode_connect_to(cnode_handler_t *phandler, ei_cnode *ec, const str *nodenam
 		LM_DBG("... connected to %.*s %s:%u\n", STR_FMT(nodename), ip_addr2strz(&ip), port);
 	}
 
-	strcpy(phandler->conn.nodename, nodename->s);
+	strncpy(phandler->conn.nodename, nodename->s, nodename->len);
+	phandler->conn.nodename[nodename->len] = 0;
 
 	/* for #Pid */
 	phandler->ec.self.num = phandler->sockfd;
