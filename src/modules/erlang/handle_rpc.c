@@ -1138,6 +1138,8 @@ static int get_int(int *int_ptr,erl_rpc_ctx_t *ctx, int reads, int autoconvert)
 			return -1;
 		}
 
+		ei_decode_string(ctx->request->buff, &ctx->request_index, p);
+
 		*int_ptr = strtol(p,&endptr,10);
 		if (p == endptr)
 		{
@@ -1216,6 +1218,8 @@ static int get_double(double *double_prt,erl_rpc_ctx_t *ctx, int reads, int auto
 			LM_ERR("Not enough memory\n");
 			return -1;
 		}
+
+		ei_decode_string(ctx->request->buff, &ctx->request_index, p);
 
 		*double_prt = strtod(p,&endptr);
 		if (p == endptr)
