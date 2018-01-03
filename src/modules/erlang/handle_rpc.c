@@ -486,10 +486,10 @@ int erl_rpc_struct_scan(erl_rpc_ctx_t* ctx, char* fmt, ...)
 
 	va_list ap;
 
-	/* save index */
+	/* preserve index */
 	index = ctx->request_index;
 
-	if(ei_decode_tuple_header(ctx->request->buff,&ctx->request_index, &arity))
+	if(ei_decode_tuple_header(ctx->request->buff,&index, &arity))
 	{
 		erl_rpc_fault(ctx,400,"Bad tuple");
 		return -1;
@@ -560,9 +560,6 @@ int erl_rpc_struct_scan(erl_rpc_ctx_t* ctx, char* fmt, ...)
 		reads++;
 		fmt++;
 	}
-
-	/* restore index */
-	ctx->request_index = index;
 
     va_end(ap);
     return reads-modifiers;
