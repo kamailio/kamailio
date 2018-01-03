@@ -640,6 +640,8 @@ int handle_rex_msg(cnode_handler_t *phandler, erlang_msg * msg)
 	ei_x_buff *request = &phandler->request;
 	ei_x_buff *response = &phandler->response;
 
+	memset((void*)&ref,0,sizeof(erlang_ref_ex_t));
+
 	/* start from first arg */
 	request->index = 0;
 	ei_decode_version(request->buff, &request->index, &version);
