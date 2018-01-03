@@ -337,7 +337,7 @@ DST_BLST_TCP_IMASK	dst_blacklist_tcp_imask
 DST_BLST_TLS_IMASK	dst_blacklist_tls_imask
 DST_BLST_SCTP_IMASK	dst_blacklist_sctp_imask
 
-IP_FREE_BIND		ip_free_bind|ip_freebind|ipfreebind
+IP_FREE_BIND		ip_free_bind|ipfreebind|ip_nonlocal_bind
 
 PORT	port
 STAT	statistics
