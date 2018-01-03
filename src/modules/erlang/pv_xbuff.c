@@ -87,9 +87,9 @@ sr_xavp_t *xbuff_new(str *name)
 	if(!xbuffs_root)
 	{
 		xbuff = xavp_add_xavp_value(&xbuff_list,name,&xbuff_val,xavp_get_crt_list());
+	} else {
+		xbuff = xavp_get_child(&xbuff_list, name);
 	}
-
-	xbuff=xavp_get_child(&xbuff_list, name);
 
 	if (!xbuff) {
 
