@@ -223,7 +223,7 @@ int erl_rpc_add(erl_rpc_ctx_t* ctx, char* fmt, ...)
 			param->type = ERL_STRING_EXT;
 			param->value.S.len = strlen(char_ptr);
 
-			param->value.S.s = (char*)pkg_malloc(param->value.S.len);
+			param->value.S.s = (char*)pkg_malloc(param->value.S.len+1);
 
 			if (!param->value.S.s)
 			{
@@ -696,7 +696,7 @@ int erl_rpc_struct_add(erl_rpc_ctx_t* ctx, char* fmt, ...)
 			param->type = ERL_STRING_EXT;
 			param->value.S.len = strlen(char_ptr);
 
-			param->value.S.s = (char*)pkg_malloc(param->value.S.len);
+			param->value.S.s = (char*)pkg_malloc(param->value.S.len+1);
 
 			if (!param->value.S.s)
 			{
@@ -847,7 +847,7 @@ int erl_rpc_array_add(erl_rpc_ctx_t* ctx, char* fmt, ...)
 			param->type = ERL_STRING_EXT;
 			param->value.S.len = strlen(char_ptr);
 
-			param->value.S.s = (char*)pkg_malloc(param->value.S.len);
+			param->value.S.s = (char*)pkg_malloc(param->value.S.len+1);
 
 			if (!param->value.S.s)
 			{
