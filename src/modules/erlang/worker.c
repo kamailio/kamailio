@@ -59,7 +59,10 @@ int handle_worker(handler_common_t *phandler)
 	int rc;
 
 	/* ensure be connected */
-	enode_connect();
+	if (enode_connect()){
+		LM_ERR("failed to connect!\n");
+		return -1;
+	}
 
 	memset((void*)&msg,0,sizeof(msg));
 

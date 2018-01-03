@@ -988,7 +988,10 @@ int xavp_decode(ei_x_buff *xbuff, int *index, sr_xavp_t **xavp,int level)
 			return -1;
 		}
 
-		ei_decode_atom(xbuff->buff,index,pbuf);
+		if (ei_decode_atom(xbuff->buff,index,pbuf)) {
+			LM_ERR("failed to decode atom\n");
+			goto err;
+		}
 
 		val.type = SR_XTYPE_STR;
 		val.v.s.s = pbuf;
