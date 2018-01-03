@@ -666,6 +666,7 @@ static int fixup_rpc(void** param, int param_no)
 	if(param_no==1 || param_no==2) {
 		if (fix_param_types(FPARAM_STR|FPARAM_STRING|FPARAM_AVP|FPARAM_PVS|FPARAM_PVE,param)){
 			LM_ERR("wrong parameter #%d\n",param_no);
+			pkg_free((void*)erl_param);
 			return -1;
 		}
 		erl_param->type = ERL_PARAM_FPARAM;
@@ -873,6 +874,7 @@ static int fixup_reg(void** param, int param_no)
 	if(param_no==1) {
 		if (fix_param_types(FPARAM_STR|FPARAM_STRING|FPARAM_AVP|FPARAM_PVS|FPARAM_PVE|FPARAM_INT,param)){
 			LM_ERR("wrong parameter #%d\n",param_no);
+			pkg_free((void*)erl_param);
 			return -1;
 		}
 		erl_param->type = ERL_PARAM_FPARAM;
