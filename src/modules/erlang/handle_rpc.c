@@ -1418,15 +1418,13 @@ static int find_member(erl_rpc_ctx_t *ctx, int arity, const char* member_name)
 				erl_rpc_fault(ctx,400,"Unexpected end of struct tuple");
 				goto error;
 			}
-			continue;
+			i++;
 		}
 		else
 		{
 			/* return at current position */
 			return 0;
 		}
-
-		i++;
 	}
 
 	erl_rpc_fault(ctx,400, "Member %s not found",member_name);
