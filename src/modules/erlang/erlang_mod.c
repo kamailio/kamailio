@@ -697,7 +697,6 @@ static int fixup_rpc(void** param, int param_no)
 
 			if (psp->setf != pv_list_set && psp->setf != pv_xbuff_set) {
 				LM_ERR("wrong parameter #%d: accepted types are list or xbuff\n",param_no);
-				pv_spec_free(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -916,7 +915,6 @@ static int fixup_reg(void** param, int param_no)
 				erl_param->type = ERL_PARAM_XBUFF_SPEC;
 			} else {
 				LM_ERR("wrong parameter #%d\n",param_no);
-				pv_spec_free(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -1111,7 +1109,6 @@ static int fixup_reply(void** param, int param_no)
 				erl_param->type = ERL_PARAM_XBUFF_SPEC;
 			} else {
 				LM_ERR("wrong parameter #%d\n",param_no);
-				pv_spec_free(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -1376,7 +1373,6 @@ static int fixup_send(void** param, int param_no)
 				erl_param->type = ERL_PARAM_XBUFF_SPEC;
 			} else {
 				LM_ERR("wrong parameter #%d\n",param_no);
-				pv_spec_free(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
