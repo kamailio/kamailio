@@ -2222,7 +2222,7 @@ void update_db_subs_timer_dbnone(int no_lock)
 
 
 
-void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
+void update_db_subs_timer(db1_con_t *db,db_func_t *dbf, shtable_t hash_table,
 		int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
 {
 	db_key_t query_cols[25], update_cols[8];
@@ -2468,7 +2468,7 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 					update_vals[u_contact_col].val.str_val = s->contact;
 					update_vals[u_record_route_col].val.str_val = s->record_route;
 
-					if(dbf.update(db, query_cols, 0, query_vals, update_cols,
+					if(dbf->update(db, query_cols, 0, query_vals, update_cols,
 								update_vals, n_query_update, n_update_cols)< 0)
 					{
 						LM_ERR("updating in database\n");
@@ -2507,7 +2507,7 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 					query_vals[user_agent_col].val.str_val = s->user_agent;
 
 
-					if(dbf.insert(db,query_cols,query_vals,n_query_cols )<0)
+					if(dbf->insert(db,query_cols,query_vals,n_query_cols )<0)
 					{
 						LM_ERR("unsuccessful sql insert\n");
 					} else {
@@ -2524,7 +2524,7 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 
 	update_vals[0].val.int_val= (int)time(NULL) - expires_offset;
 	update_ops[0]= OP_LT;
-	if(dbf.delete(db, update_cols, update_ops, update_vals, 1) < 0)
+	if(dbf->delete(db, update_cols, update_ops, update_vals, 1) < 0)
 	{
 		LM_ERR("deleting expired information from database\n");
 	}
@@ -2561,7 +2561,7 @@ void timer_db_update(unsigned int ticks,void *param)
 				LM_ERR("sql use table failed\n");
 				return;
 			}
-			update_db_subs_timer(pa_db, pa_dbf, subs_htable, shtable_size,
+			update_db_subs_timer(pa_db, &pa_dbf, subs_htable, shtable_size,
 					no_lock, handle_expired_subs);
 	}
 }
