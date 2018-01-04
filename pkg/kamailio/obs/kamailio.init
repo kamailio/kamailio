@@ -36,7 +36,7 @@ RUN_KAMAILIO=no
 check_fork ()
 {
     if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" $KAMCFG; then
-        echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/kamailio debug instead"
+        echo "Not starting $PROG: fork=no specified in config file; run /etc/init.d/kamailio debug instead"
         exit 1
     fi
 }
@@ -44,10 +44,10 @@ check_fork ()
 check_kamailio_config ()
 {
         # Check if kamailio configuration is valid before starting the server
-        out=$($KAM -c 2>&1 > /dev/null)
+        out=$($KAM -c $OPTIONS 2>&1 > /dev/null)
         retcode=$?
         if [ "$retcode" != '0' ]; then
-            echo "Not starting $DESC: invalid configuration file!"
+            echo "Not starting $PROG: invalid configuration file!"
             echo -e "\n$out\n"
             exit 1
         fi
@@ -69,7 +69,7 @@ start() {
 
 stop() {
 	echo -n $"Stopping $PROG: "
-	killproc $KAM
+	killproc -p $PID_FILE
 	RETVAL=$?
 	echo
 	[ $RETVAL = 0 ] && rm -f $LOCK_FILE $PID_FILE
@@ -81,7 +81,7 @@ if [ -f $DEFAULTS ]; then
 fi
 
 if [ "$RUN_KAMAILIO" != "yes" ]; then
-    echo "Kamailio not yet configured. Edit /etc/default/kamailio first."
+    echo "Kamailio not yet configured. Edit $DEFAULTS first."
     exit 0
 fi
 
@@ -108,7 +108,7 @@ if [ ! -d $HOMEDIR ]; then
 	chown ${USER}:${GROUP} $HOMEDIR
 fi
 
-OPTIONS="-P $PID_FILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP $EXTRA_OPTIONS"
+OPTIONS="-f $KAMCFG -P $PID_FILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP $EXTRA_OPTIONS"
 
 
 # See how we were called.
