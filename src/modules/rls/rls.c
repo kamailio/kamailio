@@ -119,7 +119,7 @@ extern subs_t* rls_search_shtable(shtable_t htable,str callid,str to_tag,
 extern int rls_delete_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs);
 extern int rls_update_shtable(shtable_t htable,unsigned int hash_code,
 		subs_t* subs, int type);
-extern void rls_update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
+extern void rls_update_db_subs_timer(db1_con_t *db,db_func_t *dbf, shtable_t hash_table,
 		int htable_size, int no_lock, handle_expired_func_t handle_expired_func);
 
 static int rls_rpc_init(void);
@@ -837,7 +837,7 @@ void rlsubs_table_update(unsigned int ticks,void *param)
 		LM_ERR("sql use table failed\n");
 		return;
 	}
-	pres_update_db_subs_timer(rls_db, rls_dbf, rls_table, hash_size,
+	pres_update_db_subs_timer(rls_db, &rls_dbf, rls_table, hash_size,
 			no_lock, handle_expired_record);
 
 }
