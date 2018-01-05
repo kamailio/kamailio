@@ -169,32 +169,35 @@ int kamailioSIPRegUserLookupTable_extract_index(
 	var_kamailioSIPRegUserLookupIndex.type = ASN_UNSIGNED;
 	var_kamailioSIPRegUserLookupIndex.next_variable = NULL;
 
+	if(hdr) {
+		/* parse the oid into the individual index components */
+		err = parse_oid_indexes(
+				hdr->oids, hdr->len, &var_kamailioSIPRegUserLookupIndex);
 
-	/* parse the oid into the individual index components */
-	err = parse_oid_indexes(
-			hdr->oids, hdr->len, &var_kamailioSIPRegUserLookupIndex);
+		if(err == SNMP_ERR_NOERROR) {
 
-	if(err == SNMP_ERR_NOERROR) {
+			/* copy index components into the context structure */
+			ctx->kamailioSIPRegUserLookupIndex =
+					*var_kamailioSIPRegUserLookupIndex.val.integer;
 
-		/* copy index components into the context structure */
-		ctx->kamailioSIPRegUserLookupIndex =
-				*var_kamailioSIPRegUserLookupIndex.val.integer;
-
-		/* 
+			/* 
 		 * Check to make sure that the index corresponds to the
 		 * global_userLookupCounter, as per the MIB specifications. 
 		 */
-		if(*var_kamailioSIPRegUserLookupIndex.val.integer
-						!= global_UserLookupCounter
-				|| *var_kamailioSIPRegUserLookupIndex.val.integer < 1) {
-			err = -1;
+			if(*var_kamailioSIPRegUserLookupIndex.val.integer
+							!= global_UserLookupCounter
+					|| *var_kamailioSIPRegUserLookupIndex.val.integer < 1) {
+				err = -1;
+			}
 		}
+
+		/* parsing may have allocated memory. free it. */
+		snmp_reset_var_buffers(&var_kamailioSIPRegUserLookupIndex);
+
+		return err;
 	}
 
-	/* parsing may have allocated memory. free it. */
-	snmp_reset_var_buffers(&var_kamailioSIPRegUserLookupIndex);
-
-	return err;
+	return -1;
 }
 
 /*
@@ -588,6 +591,8 @@ void kamailioSIPRegUserLookupTable_set_action(netsnmp_request_group *rg)
 		row_err = 1;
 	}
 #endif
+
+	LM_DBG("stage row_err = %d\n", row_err);
 
 	/*
 	 * check activation/deactivation
