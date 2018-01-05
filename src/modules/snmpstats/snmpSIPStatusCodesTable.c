@@ -186,34 +186,37 @@ int kamailioSIPStatusCodesTable_extract_index(
 
 	var_kamailioSIPStatusCodeValue.next_variable = NULL;
 
-	/* parse the oid into the individual index components */
-	err = parse_oid_indexes(
-			hdr->oids, hdr->len, &var_kamailioSIPStatusCodeMethod);
+	if(hdr) {
+		/* parse the oid into the individual index components */
+		err = parse_oid_indexes(
+				hdr->oids, hdr->len, &var_kamailioSIPStatusCodeMethod);
 
-	if(err == SNMP_ERR_NOERROR) {
+		if(err == SNMP_ERR_NOERROR) {
 
-		/* copy index components into the context structure */
-		ctx->kamailioSIPStatusCodeMethod =
-				*var_kamailioSIPStatusCodeMethod.val.integer;
-		ctx->kamailioSIPStatusCodeValue =
-				*var_kamailioSIPStatusCodeValue.val.integer;
+			/* copy index components into the context structure */
+			ctx->kamailioSIPStatusCodeMethod =
+					*var_kamailioSIPStatusCodeMethod.val.integer;
+			ctx->kamailioSIPStatusCodeValue =
+					*var_kamailioSIPStatusCodeValue.val.integer;
 
 
-		if(*var_kamailioSIPStatusCodeMethod.val.integer < 1) {
-			err = -1;
+			if(*var_kamailioSIPStatusCodeMethod.val.integer < 1) {
+				err = -1;
+			}
+
+			if(*var_kamailioSIPStatusCodeValue.val.integer < 100
+					|| *var_kamailioSIPStatusCodeValue.val.integer > 699) {
+				err = -1;
+			}
 		}
 
-		if(*var_kamailioSIPStatusCodeValue.val.integer < 100
-				|| *var_kamailioSIPStatusCodeValue.val.integer > 699) {
-			err = -1;
-		}
+		/* parsing may have allocated memory. free it. */
+		snmp_reset_var_buffers(&var_kamailioSIPStatusCodeMethod);
+
+		return err;
 	}
 
-
-	/* parsing may have allocated memory. free it. */
-	snmp_reset_var_buffers(&var_kamailioSIPStatusCodeMethod);
-
-	return err;
+	return -1;
 }
 
 
@@ -560,6 +563,8 @@ void kamailioSIPStatusCodesTable_set_action(netsnmp_request_group *rg)
 		row_err = 1;
 	}
 #endif
+
+	LM_DBG("stage row_err = %d\n", row_err);
 
 	/*
 	 * check activation/deactivation
