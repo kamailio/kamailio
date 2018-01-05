@@ -244,7 +244,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst,
 
 
 	res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
-	res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
+	res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)(&stream));
 
 	if(params->useragent)
 		res |= curl_easy_setopt(curl, CURLOPT_USERAGENT, params->useragent);
