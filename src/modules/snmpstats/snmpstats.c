@@ -302,10 +302,14 @@ static int register_message_code_statistics(void)
 			sizeof(stat_var *) * number_of_message_codes);
 
 	for(i = 0; i < number_of_message_codes; i++) {
-		register_stat(SNMPSTATS_MODULE_NAME, in_message_code_names[i],
-				&in_message_code_stats[i], 0);
-		register_stat(SNMPSTATS_MODULE_NAME, out_message_code_names[i],
-				&out_message_code_stats[i], 0);
+		if(register_stat(SNMPSTATS_MODULE_NAME, in_message_code_names[i],
+				&in_message_code_stats[i], 0)!=0) {
+			LM_ERR("failed to register in_message_code_names[%d]\n", i);
+		}
+		if(register_stat(SNMPSTATS_MODULE_NAME, out_message_code_names[i],
+				&out_message_code_stats[i], 0)!=0) {
+			LM_ERR("failed to register out_message_code_names[%d]\n", i);
+		}
 	}
 
 	return 0;
