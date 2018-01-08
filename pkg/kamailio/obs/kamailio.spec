@@ -1188,7 +1188,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.group
 %doc %{_docdir}/kamailio/modules/README.htable
 %doc %{_docdir}/kamailio/modules/README.imc
-%doc %{_docdir}/kamailio/modules/README.ims_ocs
 %doc %{_docdir}/kamailio/modules/README.ipops
 %doc %{_docdir}/kamailio/modules/README.kex
 %doc %{_docdir}/kamailio/modules/README.malloc_test
@@ -1336,7 +1335,6 @@ fi
 %{_libdir}/kamailio/modules/group.so
 %{_libdir}/kamailio/modules/htable.so
 %{_libdir}/kamailio/modules/imc.so
-%{_libdir}/kamailio/modules/ims_ocs.so
 %{_libdir}/kamailio/modules/ipops.so
 %{_libdir}/kamailio/modules/kex.so
 %{_libdir}/kamailio/modules/malloc_test.so
@@ -1553,6 +1551,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ims_diameter_server
 %doc %{_docdir}/kamailio/modules/README.ims_icscf
 %doc %{_docdir}/kamailio/modules/README.ims_isc
+%doc %{_docdir}/kamailio/modules/README.ims_ocs
 %doc %{_docdir}/kamailio/modules/README.ims_qos
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_pcscf
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_scscf
@@ -1570,6 +1569,7 @@ fi
 %{_libdir}/kamailio/modules/ims_diameter_server.so
 %{_libdir}/kamailio/modules/ims_icscf.so
 %{_libdir}/kamailio/modules/ims_isc.so
+%{_libdir}/kamailio/modules/ims_ocs.so
 %{_libdir}/kamailio/modules/ims_qos.so
 %{_libdir}/kamailio/modules/ims_registrar_pcscf.so
 %{_libdir}/kamailio/modules/ims_registrar_scscf.so
