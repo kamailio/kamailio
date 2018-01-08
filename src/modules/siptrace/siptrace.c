@@ -79,7 +79,7 @@ static int fixup_siptrace(void **param, int param_no);
 static int w_hlog1(struct sip_msg *, char *message, char *);
 static int w_hlog2(struct sip_msg *, char *correlationid, char *message);
 
-static int sip_trace_store_db(struct _siptrace_data *sto);
+static int sip_trace_store_db(siptrace_data_t *sto);
 
 static void trace_onreq_in(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps);
@@ -470,7 +470,7 @@ static inline str *siptrace_get_table(void)
 	return &avp_value.s;
 }
 
-static int sip_trace_store(struct _siptrace_data *sto, struct dest_info *dst,
+static int sip_trace_store(siptrace_data_t *sto, dest_info_t *dst,
 		str *correlation_id_str)
 {
 	if(sto == NULL) {
@@ -499,7 +499,7 @@ static int sip_trace_store(struct _siptrace_data *sto, struct dest_info *dst,
 	return ret;
 }
 
-static int sip_trace_store_db(struct _siptrace_data *sto)
+static int sip_trace_store_db(siptrace_data_t *sto)
 {
 	if(db_con == NULL) {
 		LM_DBG("database connection not initialized\n");
@@ -640,9 +640,9 @@ error:
 static int fixup_siptrace(void **param, int param_no)
 {
 	char *duri;
-	struct sip_uri uri;
-	struct dest_info *dst = NULL;
-	struct proxy_l *p = NULL;
+	sip_uri_t uri;
+	dest_info_t *dst = NULL;
+	proxy_l_t *p = NULL;
 	str dup_uri_str = {0, 0};
 
 	if(param_no != 1) {
@@ -678,7 +678,7 @@ static int fixup_siptrace(void **param, int param_no)
 		}
 	}
 
-	dst = (struct dest_info *)pkg_malloc(sizeof(struct dest_info));
+	dst = (dest_info_t *)pkg_malloc(sizeof(dest_info_t));
 	if(dst == 0) {
 		LM_ERR("no more pkg memory left\n");
 		return -1;
@@ -710,9 +710,9 @@ static int fixup_siptrace(void **param, int param_no)
  */
 static int ki_sip_trace_dst_cid(sip_msg_t *msg, str *duri, str *cid)
 {
-	struct dest_info *dst = NULL;
-	struct sip_uri uri;
-	struct proxy_l *p = NULL;
+	dest_info_t *dst = NULL;
+	sip_uri_t uri;
+	proxy_l_t *p = NULL;
 
 	// If the dest is empty, use the module parameter, if set
 	if(duri == NULL || duri->len <= 0) {
@@ -730,7 +730,7 @@ static int ki_sip_trace_dst_cid(sip_msg_t *msg, str *duri, str *cid)
 		}
 	}
 
-	dst = (struct dest_info *)pkg_malloc(sizeof(struct dest_info));
+	dst = (dest_info_t *)pkg_malloc(sizeof(dest_info_t));
 	if(dst == 0) {
 		LM_ERR("no more pkg memory left\n");
 		return -1;
@@ -814,8 +814,8 @@ static int w_sip_trace2(sip_msg_t *msg, char *dest, char *correlation_id)
 static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 		str *correlation_id_str, char *dir)
 {
-	struct _siptrace_data sto;
-	struct onsend_info *snd_inf = NULL;
+	siptrace_data_t sto;
+	onsend_info_t *snd_inf = NULL;
 
 	if(dst) {
 		if(dst->send_sock == 0) {
@@ -833,7 +833,7 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 		LM_DBG("nothing to trace\n");
 		return -1;
 	}
-	memset(&sto, 0, sizeof(struct _siptrace_data));
+	memset(&sto, 0, sizeof(siptrace_data_t));
 
 	if(traced_user_avp.n != 0)
 		sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
@@ -992,11 +992,11 @@ static void trace_onreq_in(struct cell *t, int type, struct tmcb_params *ps)
 
 static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 {
-	struct _siptrace_data sto;
+	siptrace_data_t sto;
 	sip_msg_t *msg;
-	struct ip_addr to_ip;
+	ip_addr_t to_ip;
 	int len;
-	struct dest_info *dst;
+	dest_info_t *dst;
 
 	if(t == NULL || ps == NULL) {
 		LM_DBG("very weird\n");
@@ -1025,7 +1025,7 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 			return;
 		}
 	}
-	memset(&sto, 0, sizeof(struct _siptrace_data));
+	memset(&sto, 0, sizeof(siptrace_data_t));
 
 	if(traced_user_avp.n != 0)
 		sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
@@ -1112,7 +1112,7 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 
 static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps)
 {
-	struct _siptrace_data sto;
+	siptrace_data_t sto;
 	sip_msg_t *msg;
 	sip_msg_t *req;
 	char statusbuf[8];
@@ -1128,7 +1128,7 @@ static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps)
 		LM_DBG("no reply\n");
 		return;
 	}
-	memset(&sto, 0, sizeof(struct _siptrace_data));
+	memset(&sto, 0, sizeof(siptrace_data_t));
 
 	if(traced_user_avp.n != 0)
 		sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
@@ -1184,14 +1184,14 @@ static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps)
 
 static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 {
-	struct _siptrace_data sto;
+	siptrace_data_t sto;
 	int faked = 0;
 	struct sip_msg *msg;
 	struct sip_msg *req;
 	struct ip_addr to_ip;
 	int len;
 	char statusbuf[8];
-	struct dest_info *dst;
+	dest_info_t *dst;
 
 	if(t == NULL || t->uas.request == 0 || ps == NULL) {
 		LM_DBG("no uas request, local transaction\n");
@@ -1202,7 +1202,7 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 		LM_DBG("retransmission\n");
 		return;
 	}
-	memset(&sto, 0, sizeof(struct _siptrace_data));
+	memset(&sto, 0, sizeof(siptrace_data_t));
 	if(traced_user_avp.n != 0)
 		sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
 				&sto.avp_value, &sto.state);
@@ -1303,9 +1303,9 @@ static void trace_sl_ack_in(sl_cbp_t *slcbp)
 static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 {
 	sip_msg_t *req;
-	struct _siptrace_data sto;
-	struct sip_msg *msg;
-	struct ip_addr to_ip;
+	siptrace_data_t sto;
+	sip_msg_t *msg;
+	ip_addr_t to_ip;
 	int len;
 	char statusbuf[5];
 
@@ -1315,7 +1315,7 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	}
 	req = slcbp->req;
 
-	memset(&sto, 0, sizeof(struct _siptrace_data));
+	memset(&sto, 0, sizeof(siptrace_data_t));
 	if(traced_user_avp.n != 0)
 		sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
 				&sto.avp_value, &sto.state);
@@ -1377,14 +1377,13 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	return;
 }
 
-
 /**
  *
  */
 int siptrace_net_data_recv(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
-	struct _siptrace_data sto;
+	siptrace_data_t sto;
 
 	if(evp->data == 0)
 		return -1;
@@ -1393,7 +1392,7 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	if(nd->rcv == NULL || nd->data.s == NULL || nd->data.len <= 0)
 		return -1;
 
-	memset(&sto, 0, sizeof(struct _siptrace_data));
+	memset(&sto, 0, sizeof(siptrace_data_t));
 
 	sto.body.s = nd->data.s;
 	sto.body.len = nd->data.len;
@@ -1424,8 +1423,8 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 int siptrace_net_data_send(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
-	struct dest_info new_dst;
-	struct _siptrace_data sto;
+	dest_info_t new_dst;
+	siptrace_data_t sto;
 
 	if(evp->data == 0)
 		return -1;
@@ -1437,7 +1436,7 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 	new_dst = *nd->dst;
 	new_dst.send_sock = get_send_socket(0, &nd->dst->to, nd->dst->proto);
 
-	memset(&sto, 0, sizeof(struct _siptrace_data));
+	memset(&sto, 0, sizeof(siptrace_data_t));
 
 	sto.body.s = nd->data.s;
 	sto.body.len = nd->data.len;
