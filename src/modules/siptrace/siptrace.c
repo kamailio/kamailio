@@ -1377,6 +1377,44 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	return;
 }
 
+#define st_bufcopy_uint(_dbuf, _dsize, _dp, _sival) do { \
+		str _ls; \
+		_ls.s = int2str(_sival, &_ls.len); \
+		if(_ls.s == NULL || _dp + _ls.len >= _dbuf + _dsize) { \
+			LM_ERR("conversion error or out of bound (%p:%d/%p:%d\n", \
+					_dbuf, _dsize, _dp, _ls.len); \
+			goto error; \
+		} \
+		memcpy(_dp, _ls.s, _ls.len); \
+		_dp += _ls.len; \
+	} while(0)
+
+#define st_bufcopy_ipaddr(_dbuf, _dsize, _dp, _sipaddr) do { \
+		str _ls; \
+		_ls.s = ip_addr2a(_sipaddr); \
+		if(_ls.s == NULL) { \
+			LM_ERR("conversion error\n"); \
+			goto error; \
+		} \
+		_ls.len = strlen(_ls.s); \
+		if(_dp + _ls.len >= _dbuf + _dsize) { \
+			LM_ERR("out of bound (%p:%d/%p:%d\n", \
+					_dbuf, _dsize, _dp, _ls.len); \
+			goto error; \
+		} \
+		memcpy(_dp, _ls.s, _ls.len); \
+		_dp += _ls.len; \
+	} while(0)
+
+#define st_bufcopy_char(_dbuf, _dsize, _dp, _scval) do { \
+		if(_dp + 1 >= _dbuf + _dsize) { \
+			LM_ERR("out of bound (%p:%d/%p:1\n", _dbuf, _dsize, _dp); \
+			goto error; \
+		} \
+		*_dp = _scval; \
+		_dp += 1; \
+	} while(0)
+
 /**
  *
  */
@@ -1384,6 +1422,7 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
 	siptrace_data_t sto;
+	char *cp;
 
 	if(evp->data == 0)
 		return -1;
@@ -1398,16 +1437,22 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	sto.body.len = nd->data.len;
 
 	siptrace_copy_proto(nd->rcv->proto, sto.fromip_buff);
-	strcat(sto.fromip_buff, ip_addr2a(&nd->rcv->src_ip));
-	strcat(sto.fromip_buff, ":");
-	strcat(sto.fromip_buff, int2str(nd->rcv->src_port, NULL));
+	cp = sto.fromip_buff + strlen(sto.fromip_buff);
+	st_bufcopy_ipaddr(sto.fromip_buff, SIPTRACE_IP_ADDR_MAX, cp,
+			&nd->rcv->src_ip);
+	st_bufcopy_char(sto.fromip_buff, SIPTRACE_IP_ADDR_MAX, cp, ':');
+	st_bufcopy_uint(sto.fromip_buff, SIPTRACE_IP_ADDR_MAX, cp,
+			nd->rcv->src_port);
 	sto.fromip.s = sto.fromip_buff;
 	sto.fromip.len = strlen(sto.fromip_buff);
 
 	siptrace_copy_proto(nd->rcv->proto, sto.toip_buff);
-	strcat(sto.toip_buff, ip_addr2a(&nd->rcv->dst_ip));
-	strcat(sto.toip_buff, ":");
-	strcat(sto.toip_buff, int2str(nd->rcv->dst_port, NULL));
+	cp = sto.toip_buff + strlen(sto.fromip_buff);
+	st_bufcopy_ipaddr(sto.toip_buff, SIPTRACE_IP_ADDR_MAX, cp,
+			&nd->rcv->dst_ip);
+	st_bufcopy_char(sto.toip_buff, SIPTRACE_IP_ADDR_MAX, cp, ':');
+	st_bufcopy_uint(sto.toip_buff, SIPTRACE_IP_ADDR_MAX, cp,
+			nd->rcv->dst_port);
 	sto.toip.s = sto.toip_buff;
 	sto.toip.len = strlen(sto.toip_buff);
 
@@ -1415,6 +1460,9 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 
 	trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);
 	return 0;
+
+error:
+	return -1;
 }
 
 /**
