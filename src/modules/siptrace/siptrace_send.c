@@ -44,29 +44,6 @@ extern sip_uri_t *dup_uri;
 /**
  *
  */
-int siptrace_copy_proto(int proto, char *buf)
-{
-	if(buf == 0)
-		return -1;
-	if(proto == PROTO_TCP) {
-		strcpy(buf, "tcp:");
-	} else if(proto == PROTO_TLS) {
-		strcpy(buf, "tls:");
-	} else if(proto == PROTO_SCTP) {
-		strcpy(buf, "sctp:");
-	} else if(proto == PROTO_WS) {
-		strcpy(buf, "ws:");
-	} else if(proto == PROTO_WSS) {
-		strcpy(buf, "wss:");
-	} else {
-		strcpy(buf, "udp:");
-	}
-	return 0;
-}
-
-/**
- *
- */
 int sip_trace_prepare(sip_msg_t *msg)
 {
 	if(parse_from_header(msg) == -1 || msg->from == NULL
