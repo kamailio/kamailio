@@ -32,7 +32,7 @@
 #endif
 
 #define XHEADERS_BUFSIZE 512
-#define SIPTRACE_IP_ADDR_MAX (IP_ADDR_MAX_STR_SIZE + 12)
+#define SIPTRACE_ADDR_MAX (IP_ADDR_MAX_STR_SIZE + 14)
 
 typedef struct _siptrace_data
 {
@@ -48,8 +48,8 @@ typedef struct _siptrace_data
 	str fromip;
 	str totag;
 	str toip;
-	char toip_buff[SIPTRACE_IP_ADDR_MAX];
-	char fromip_buff[SIPTRACE_IP_ADDR_MAX];
+	char toip_buff[SIPTRACE_ADDR_MAX];
+	char fromip_buff[SIPTRACE_ADDR_MAX];
 	struct timeval tv;
 #ifdef STATISTICS
 	stat_var *stat;

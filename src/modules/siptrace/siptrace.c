@@ -1423,6 +1423,7 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	sr_net_info_t *nd;
 	siptrace_data_t sto;
 	char *cp;
+	int olen;
 
 	if(evp->data == 0)
 		return -1;
@@ -1436,24 +1437,25 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	sto.body.s = nd->data.s;
 	sto.body.len = nd->data.len;
 
-	siptrace_copy_proto(nd->rcv->proto, sto.fromip_buff);
-	cp = sto.fromip_buff + strlen(sto.fromip_buff);
-	st_bufcopy_ipaddr(sto.fromip_buff, SIPTRACE_IP_ADDR_MAX, cp,
+	siptrace_copy_proto_olen(nd->rcv->proto, sto.fromip_buff, olen);
+	cp = sto.fromip_buff + olen;
+	st_bufcopy_ipaddr(sto.fromip_buff, SIPTRACE_ADDR_MAX, cp,
 			&nd->rcv->src_ip);
-	st_bufcopy_char(sto.fromip_buff, SIPTRACE_IP_ADDR_MAX, cp, ':');
-	st_bufcopy_uint(sto.fromip_buff, SIPTRACE_IP_ADDR_MAX, cp,
+	st_bufcopy_char(sto.fromip_buff, SIPTRACE_ADDR_MAX, cp, ':');
+	st_bufcopy_uint(sto.fromip_buff, SIPTRACE_ADDR_MAX, cp,
 			nd->rcv->src_port);
 	sto.fromip.s = sto.fromip_buff;
 	sto.fromip.len = strlen(sto.fromip_buff);
 
-	siptrace_copy_proto(nd->rcv->proto, sto.toip_buff);
-	cp = sto.toip_buff + strlen(sto.fromip_buff);
-	st_bufcopy_ipaddr(sto.toip_buff, SIPTRACE_IP_ADDR_MAX, cp,
+	siptrace_copy_proto_olen(nd->rcv->proto, sto.toip_buff, olen);
+	cp = sto.toip_buff + olen;
+	st_bufcopy_ipaddr(sto.toip_buff, SIPTRACE_ADDR_MAX, cp,
 			&nd->rcv->dst_ip);
-	st_bufcopy_char(sto.toip_buff, SIPTRACE_IP_ADDR_MAX, cp, ':');
-	st_bufcopy_uint(sto.toip_buff, SIPTRACE_IP_ADDR_MAX, cp,
+	st_bufcopy_char(sto.toip_buff, SIPTRACE_ADDR_MAX, cp, ':');
+	st_bufcopy_uint(sto.toip_buff, SIPTRACE_ADDR_MAX, cp,
 			nd->rcv->dst_port);
 	sto.toip.s = sto.toip_buff;
+	/* zero terminated due to memset */
 	sto.toip.len = strlen(sto.toip_buff);
 
 	sto.dir = "in";
@@ -1473,6 +1475,9 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 	sr_net_info_t *nd;
 	dest_info_t new_dst;
 	siptrace_data_t sto;
+	char *cp;
+	char *p0;
+	int olen;
 
 	if(evp->data == 0)
 		return -1;
@@ -1492,24 +1497,43 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 	if(unlikely(new_dst.send_sock == 0)) {
 		LM_WARN("no sending socket found\n");
 		strcpy(sto.fromip_buff, "any:255.255.255.255:5060");
+		sto.fromip.len = 24;
 	} else {
+		if(new_dst.send_sock->sock_str.len>=SIPTRACE_ADDR_MAX-1) {
+			LM_ERR("socket string is too large: %d\n",
+					new_dst.send_sock->sock_str.len);
+			goto error;
+		}
 		strncpy(sto.fromip_buff, new_dst.send_sock->sock_str.s,
 				new_dst.send_sock->sock_str.len);
+		sto.fromip.len = new_dst.send_sock->sock_str.len;
 	}
 	sto.fromip.s = sto.fromip_buff;
-	sto.fromip.len = strlen(sto.fromip_buff);
 
-	siptrace_copy_proto(new_dst.send_sock->proto, sto.toip_buff);
-	strcat(sto.toip_buff, suip2a(&new_dst.to, sizeof(new_dst.to)));
-	strcat(sto.toip_buff, ":");
-	strcat(sto.toip_buff, int2str((int)su_getport(&new_dst.to), NULL));
+	siptrace_copy_proto_olen(new_dst.send_sock->proto, sto.toip_buff, olen);
+	cp = sto.toip_buff + olen;
+	p0 = suip2a(&new_dst.to, sizeof(new_dst.to));
+	olen = strlen(p0);
+	if(cp + olen >= sto.toip_buff + SIPTRACE_ADDR_MAX - 1) {
+		LM_ERR("out of bounds: %p %p %d\n", sto.toip_buff, cp, olen);
+		goto error;
+	}
+	memcpy(cp, p0, olen);
+	cp += olen;
+	st_bufcopy_char(sto.toip_buff, SIPTRACE_ADDR_MAX, cp, ':');
+	st_bufcopy_uint(sto.toip_buff, SIPTRACE_ADDR_MAX, cp,
+			(int)su_getport(&new_dst.to));
 	sto.toip.s = sto.toip_buff;
+	/* zero terminated due to memset */
 	sto.toip.len = strlen(sto.toip_buff);
 
 	sto.dir = "out";
 
 	trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);
 	return 0;
+
+error:
+	return -1;
 }
 
 /**
