@@ -28,11 +28,46 @@
 #include "../../core/ip_addr.h"
 #include "siptrace_data.h"
 
-int siptrace_copy_proto(int proto, char *buf);
 int sip_trace_prepare(sip_msg_t *msg);
 int sip_trace_xheaders_write(struct _siptrace_data *sto);
 int sip_trace_xheaders_read(struct _siptrace_data *sto);
 int sip_trace_xheaders_free(struct _siptrace_data *sto);
 int trace_send_duplicate(char *buf, int len, struct dest_info *dst2);
+
+/**
+ *
+ */
+#define siptrace_copy_proto_olen(vproto, vbuf, vlen) do { \
+		switch(vproto) { \
+			case PROTO_TCP: \
+				strcpy(vbuf, "tcp:"); \
+				vlen = 4; \
+			break; \
+			case PROTO_TLS: \
+				strcpy(vbuf, "tls:"); \
+				vlen = 4; \
+			break; \
+			case PROTO_SCTP: \
+				strcpy(vbuf, "sctp:"); \
+				vlen = 5; \
+			break; \
+			case PROTO_WS: \
+				strcpy(vbuf, "ws:"); \
+				vlen = 3; \
+			break; \
+			case PROTO_WSS: \
+				strcpy(vbuf, "wss:"); \
+				vlen = 4; \
+			break; \
+			default: \
+				strcpy(vbuf, "udp:"); \
+				vlen = 4; \
+		} \
+	} while(0)
+
+#define siptrace_copy_proto(vproto, vbuf) do { \
+		int __olen; \
+		siptrace_copy_proto_olen(vproto, vbuf, __olen); \
+	} while(0)
 
 #endif
