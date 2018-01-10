@@ -183,6 +183,10 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 	{
 		if(tuple== NULL)
 		{
+			if(strlen(tuple_id)>=50) {
+				LM_ERR("tuple id is too long: %s\n", tuple_id);
+				goto error;
+			}
 			strcpy(buf, tuple_id);
 			xmlFree(tuple_id);
 			tuple_id= buf;
