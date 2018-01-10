@@ -249,14 +249,15 @@ Chapter 1. Admin Guide
 
 4.1. force_socket (string)
 
-   Socket to be used when sending NAT pings for UDP communication. If no
-   one specified, the OS will choose a socket.
+   Socket to be used when sending NAT pings for UDP communication.
+   It uses the first socket it finds based on the IP address. If
+   no one specified, the OS will choose a socket.
 
    Default value is “NULL”.
 
    Example 1.1. Set force_socket parameter
 ...
-modparam("nathelper", "force_socket", "localhost:33333")
+modparam("nathelper", "force_socket", "127.0.0.1")
 ...
 
 4.2. natping_interval (integer)
