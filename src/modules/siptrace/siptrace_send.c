@@ -318,3 +318,24 @@ error:
 	}
 	return -1;
 }
+
+/**
+ *
+ */
+char* siptrace_proto_name(int vproto)
+{
+	switch(vproto) {
+		case PROTO_TCP:
+			return "tcp";
+		case PROTO_TLS:
+			return "tls";
+		case PROTO_SCTP:
+			return "sctp";
+		case PROTO_WS:
+			return "ws";
+		case PROTO_WSS:
+			return "wss";
+		default:
+			return "udp";
+	}
+}
