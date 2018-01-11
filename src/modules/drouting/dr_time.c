@@ -214,6 +214,7 @@ ac_maxval_p ac_get_maxval(ac_tm_p _atp)
 	_amp = (ac_maxval_p)shm_malloc(sizeof(ac_maxval_t));
 	if(!_amp)
 		return NULL;
+	memset(_amp, 0, sizeof(ac_maxval_t));
 
 	/* the number of the days in the year */
 	_amp->yday = 365 + is_leap_year(_atp->t.tm_year + 1900);
@@ -268,6 +269,10 @@ ac_maxval_p ac_get_maxval(ac_tm_p _atp)
 						  + (7 - (6 + _v) % 7 + (_amp->mday - 1) % 7) / 7)
 				  + 1;
 #endif
+
+	if(_atp->mv!=NULL) {
+		shm_free(_atp->mv);
+	}
 
 	_atp->mv = _amp;
 	return _amp;
