@@ -1339,12 +1339,16 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	if(trace_local_ip.len > 0) {
 		sto.fromip = trace_local_ip;
 	} else {
-		siptrace_copy_proto(msg->rcv.proto, sto.fromip_buff);
-		strcat(sto.fromip_buff, ip_addr2a(&req->rcv.dst_ip));
-		strcat(sto.fromip_buff, ":");
-		strcat(sto.fromip_buff, int2str(req->rcv.dst_port, NULL));
-		sto.fromip.s = sto.fromip_buff;
-		sto.fromip.len = strlen(sto.fromip_buff);
+		sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
+				siptrace_proto_name(req->rcv.proto),
+				ip_addr2a(&req->rcv.dst_ip), req->rcv.dst_port);
+		if(sto.fromip.len<0 || sto.fromip.len>=SIPTRACE_ADDR_MAX) {
+			LM_ERR("failed to format toip buffer (%d)\n", sto.fromip.len);
+			sto.fromip.s = "any:255.255.255.255";
+			sto.fromip.len = 19;
+		} else {
+			sto.fromip.s = sto.fromip_buff;
+		}
 	}
 
 	strcpy(statusbuf, int2str(slcbp->code, &sto.status.len));
@@ -1356,13 +1360,16 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 		sto.toip.len = 19;
 	} else {
 		su2ip_addr(&to_ip, &slcbp->dst->to);
-		siptrace_copy_proto(req->rcv.proto, sto.toip_buff);
-		strcat(sto.toip_buff, ip_addr2a(&to_ip));
-		strcat(sto.toip_buff, ":");
-		strcat(sto.toip_buff,
-				int2str((unsigned long)su_getport(&slcbp->dst->to), &len));
-		sto.toip.s = sto.toip_buff;
-		sto.toip.len = strlen(sto.toip_buff);
+		sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
+				siptrace_proto_name(req->rcv.proto), ip_addr2a(&to_ip),
+				(int)su_getport(&slcbp->dst->to));
+		if(sto.toip.len<0 || sto.toip.len>=SIPTRACE_ADDR_MAX) {
+			LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
+			sto.toip.s = "any:255.255.255.255";
+			sto.toip.len = 19;
+		} else {
+			sto.toip.s = sto.toip_buff;
+		}
 	}
 
 	sto.dir = "out";
