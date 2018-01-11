@@ -59,6 +59,8 @@
 
 MODULE_VERSION
 
+#define SIPTRACE_ANYADDR "any:255.255.255.255:5060"
+#define SIPTRACE_ANYADDR_LEN (sizeof(SIPTRACE_ANYADDR) - 1)
 
 struct tm_binds tmb;
 
@@ -1084,8 +1086,8 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 	if(dst == 0) {
-		sto.toip.s = "any:255.255.255.255";
-		sto.toip.len = 19;
+		sto.toip.s = SIPTRACE_ANYADDR;
+		sto.toip.len = SIPTRACE_ANYADDR_LEN;
 	} else {
 		su2ip_addr(&to_ip, &dst->to);
 		siptrace_copy_proto(dst->proto, sto.toip_buff);
@@ -1267,8 +1269,8 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 	memset(&to_ip, 0, sizeof(struct ip_addr));
 	dst = ps->dst;
 	if(dst == 0) {
-		sto.toip.s = "any:255.255.255.255";
-		sto.toip.len = 19;
+		sto.toip.s = SIPTRACE_ANYADDR;
+		sto.toip.len = SIPTRACE_ANYADDR_LEN;
 	} else {
 		su2ip_addr(&to_ip, &dst->to);
 		siptrace_copy_proto(dst->proto, sto.toip_buff);
@@ -1344,8 +1346,8 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 				ip_addr2a(&req->rcv.dst_ip), req->rcv.dst_port);
 		if(sto.fromip.len<0 || sto.fromip.len>=SIPTRACE_ADDR_MAX) {
 			LM_ERR("failed to format toip buffer (%d)\n", sto.fromip.len);
-			sto.fromip.s = "any:255.255.255.255";
-			sto.fromip.len = 19;
+			sto.fromip.s = SIPTRACE_ANYADDR;
+			sto.fromip.len = SIPTRACE_ANYADDR_LEN;
 		} else {
 			sto.fromip.s = sto.fromip_buff;
 		}
@@ -1356,8 +1358,8 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 
 	memset(&to_ip, 0, sizeof(struct ip_addr));
 	if(slcbp->dst == 0) {
-		sto.toip.s = "any:255.255.255.255";
-		sto.toip.len = 19;
+		sto.toip.s = SIPTRACE_ANYADDR;
+		sto.toip.len = SIPTRACE_ANYADDR_LEN;
 	} else {
 		su2ip_addr(&to_ip, &slcbp->dst->to);
 		sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
@@ -1365,8 +1367,8 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 				(int)su_getport(&slcbp->dst->to));
 		if(sto.toip.len<0 || sto.toip.len>=SIPTRACE_ADDR_MAX) {
 			LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
-			sto.toip.s = "any:255.255.255.255";
-			sto.toip.len = 19;
+			sto.toip.s = SIPTRACE_ANYADDR;
+			sto.toip.len = SIPTRACE_ANYADDR_LEN;
 		} else {
 			sto.toip.s = sto.toip_buff;
 		}
@@ -1503,8 +1505,8 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 
 	if(unlikely(new_dst.send_sock == 0)) {
 		LM_WARN("no sending socket found\n");
-		strcpy(sto.fromip_buff, "any:255.255.255.255:5060");
-		sto.fromip.len = 24;
+		strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
+		sto.fromip.len = SIPTRACE_ANYADDR_LEN;
 	} else {
 		if(new_dst.send_sock->sock_str.len>=SIPTRACE_ADDR_MAX-1) {
 			LM_ERR("socket string is too large: %d\n",
