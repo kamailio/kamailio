@@ -879,24 +879,32 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 				&& strncmp(sto.dir, "out", 3) == 0) {
 			sto.fromip = trace_local_ip;
 		} else {
-			siptrace_copy_proto(msg->rcv.proto, sto.fromip_buff);
-			strcat(sto.fromip_buff, ip_addr2a(&msg->rcv.src_ip));
-			strcat(sto.fromip_buff, ":");
-			strcat(sto.fromip_buff, int2str(msg->rcv.src_port, NULL));
-			sto.fromip.s = sto.fromip_buff;
-			sto.fromip.len = strlen(sto.fromip_buff);
+			sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
+					siptrace_proto_name(msg->rcv.proto),
+					ip_addr2a(&msg->rcv.src_ip), (int)msg->rcv.src_port);
+			if(sto.fromip.len<0 || sto.fromip.len>=SIPTRACE_ADDR_MAX) {
+				LM_ERR("failed to format toip buffer (%d)\n", sto.fromip.len);
+				sto.fromip.s = SIPTRACE_ANYADDR;
+				sto.fromip.len = SIPTRACE_ANYADDR_LEN;
+			} else {
+				sto.fromip.s = sto.fromip_buff;
+			}
 		}
 
 		if(trace_local_ip.s && trace_local_ip.len > 0
 				&& strncmp(sto.dir, "in", 2) == 0) {
 			sto.toip = trace_local_ip;
 		} else {
-			siptrace_copy_proto(msg->rcv.proto, sto.toip_buff);
-			strcat(sto.toip_buff, ip_addr2a(&msg->rcv.dst_ip));
-			strcat(sto.toip_buff, ":");
-			strcat(sto.toip_buff, int2str(msg->rcv.dst_port, NULL));
-			sto.toip.s = sto.toip_buff;
-			sto.toip.len = strlen(sto.toip_buff);
+			sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
+					siptrace_proto_name(msg->rcv.proto), ip_addr2a(&msg->rcv.dst_ip),
+					(int)msg->rcv.dst_port);
+			if(sto.toip.len<0 || sto.toip.len>=SIPTRACE_ADDR_MAX) {
+				LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
+				sto.toip.s = SIPTRACE_ANYADDR;
+				sto.toip.len = SIPTRACE_ANYADDR_LEN;
+			} else {
+				sto.toip.s = sto.toip_buff;
+			}
 		}
 	} else {
 		sto.body.s = snd_inf->buf;
@@ -905,18 +913,29 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 		if(trace_local_ip.s && trace_local_ip.len > 0) {
 			sto.fromip = trace_local_ip;
 		} else {
-			strncpy(sto.fromip_buff, snd_inf->send_sock->sock_str.s,
-					snd_inf->send_sock->sock_str.len);
-			sto.fromip.s = sto.fromip_buff;
-			sto.fromip.len = strlen(sto.fromip_buff);
+			if(snd_inf->send_sock->sock_str.len>=SIPTRACE_ADDR_MAX-1) {
+				LM_WARN("local socket address is too large\n");
+				sto.fromip.s = SIPTRACE_ANYADDR;
+				sto.fromip.len = SIPTRACE_ANYADDR_LEN;
+			} else {
+				strncpy(sto.fromip_buff, snd_inf->send_sock->sock_str.s,
+						snd_inf->send_sock->sock_str.len);
+				sto.fromip.s = sto.fromip_buff;
+				sto.fromip.len = snd_inf->send_sock->sock_str.len;
+			}
 		}
 
-		siptrace_copy_proto(snd_inf->send_sock->proto, sto.toip_buff);
-		strcat(sto.toip_buff, suip2a(snd_inf->to, sizeof(*snd_inf->to)));
-		strcat(sto.toip_buff, ":");
-		strcat(sto.toip_buff, int2str((int)su_getport(snd_inf->to), NULL));
-		sto.toip.s = sto.toip_buff;
-		sto.toip.len = strlen(sto.toip_buff);
+		sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
+				siptrace_proto_name(snd_inf->send_sock->proto),
+				suip2a(snd_inf->to, sizeof(*snd_inf->to)),
+				(int)su_getport(snd_inf->to));
+		if(sto.toip.len<0 || sto.toip.len>=SIPTRACE_ADDR_MAX) {
+			LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
+			sto.toip.s = SIPTRACE_ANYADDR;
+			sto.toip.len = SIPTRACE_ANYADDR_LEN;
+		} else {
+			sto.toip.s = sto.toip_buff;
+		}
 
 		sto.dir = "out";
 	}
