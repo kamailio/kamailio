@@ -76,7 +76,7 @@ int ac_tm_free(ac_tm_p);
 
 int ac_get_mweek(struct tm *);
 int ac_get_yweek(struct tm *);
-ac_maxval_p ac_get_maxval(ac_tm_p);
+ac_maxval_p ac_get_maxval(ac_tm_p, int);
 int ac_get_wkst();
 
 int ac_print(ac_tm_p);
