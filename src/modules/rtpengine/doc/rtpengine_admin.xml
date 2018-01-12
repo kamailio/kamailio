@@ -197,6 +197,33 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
 </programlisting>
 		</example>
 	</section>
+	<section id="rtpengine.p.aggressive_redetection">
+		<title><varname>aggressive_redetection</varname> (integer)</title>
+		<para>
+		This parameter determines what happens when all potential rtpengines are found
+		to be unreachable. If enabled, the sip server will send pings to all rtpengines,
+		else no rtpengine will pe queried until its rtpengine_disable_tout timeout passes.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int rtpengine aggressive_redetection 0
+			</programlisting>
+		</para>
+		<example>
+		<title>Set <varname>aggressive_redetection</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "aggressive_redetection", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="rtpengine.p.rtpengine_tout_ms">
 		<title><varname>rtpengine_tout_ms</varname> (integer)</title>
 		<para>

@@ -32,6 +32,7 @@
 
 struct cfg_group_rtpengine	default_rtpengine_cfg = {
 		60,	/* default disable timeout in seconds */
+		1,	/* default aggressive_redetection enabled */
 		1000,	/* default wait timeout in milliseconds */
 		MAX_RTPP_TRIED_NODES,
         5, /* rtprengine retries */
@@ -42,6 +43,8 @@ void	*rtpengine_cfg = &default_rtpengine_cfg;
 cfg_def_t	rtpengine_cfg_def[] = {
 	{"rtpengine_disable_tout",	CFG_VAR_INT | CFG_ATOMIC, 	0, 0, 0, 0,
 		"The time after which rtpengine will try to communicate to an RTP proxy after it has been marked disabled automatically. "},
+	{"aggressive_redetection",	CFG_VAR_INT | CFG_ATOMIC, 	0, 1, 0, 0,
+		"Determines if the sip proxy should force a query of all nodes when all RTP proxies seem unavailable."},
 	{"rtpengine_tout_ms",		CFG_VAR_INT | CFG_ATOMIC, 	0, 0, 0, 0,
 		"The total number of nodes inside a set to be queried before giving up establishing a session"},
 	{"queried_nodes_limit",     CFG_VAR_INT | CFG_ATOMIC,   0, MAX_RTPP_TRIED_NODES, 0, 0,

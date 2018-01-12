@@ -336,6 +336,7 @@ static param_export_t params[] = {
 	{"rtpengine_sock",        PARAM_STRING|USE_FUNC_PARAM,
 	                         (void*)rtpengine_set_store          },
 	{"rtpengine_disable_tout",INT_PARAM, &default_rtpengine_cfg.rtpengine_disable_tout },
+	{"aggressive_redetection",INT_PARAM, &default_rtpengine_cfg.aggressive_redetection },
 	{"rtpengine_retr",        INT_PARAM, &default_rtpengine_cfg.rtpengine_retr         },
 	{"queried_nodes_limit",   INT_PARAM, &default_rtpengine_cfg.queried_nodes_limit    },
 	{"rtpengine_tout_ms",     INT_PARAM, &default_rtpengine_cfg.rtpengine_tout_ms      },
@@ -2610,6 +2611,10 @@ retry:
 
 	/* No proxies? Force all to be redetected, if not yet */
 	if (weight_sum == 0) {
+		if (!cfg_get(rtpengine,rtpengine_cfg,aggressive_redetection)) {
+			return NULL;
+		}
+
 		if (was_forced) {
 			return NULL;
 		}
