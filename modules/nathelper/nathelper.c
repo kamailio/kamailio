@@ -606,6 +606,8 @@ mod_init(void)
 	struct in_addr addr;
 	pv_spec_t avp_spec;
 	str s;
+	int port, proto;
+	str host;
 
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
@@ -631,8 +633,13 @@ mod_init(void)
 		rcv_avp_type = 0;
 	}
 
-	if (force_socket_str.s && force_socket_str.len>0) {
-		force_socket=grep_sock_info(&force_socket_str,0,0);
+	if(force_socket_str.s && force_socket_str.len > 0) {
+		if(parse_phostport(force_socket_str.s, &host.s, &host.len, &port, &proto) == 0) {
+			force_socket = grep_sock_info(&host, port, proto);
+			if(force_socket == 0) {
+				LM_ERR("non-local force_socket <%s>\n", force_socket_str.s);
+			}
+		}
 	}
 
 	/* create raw socket? */

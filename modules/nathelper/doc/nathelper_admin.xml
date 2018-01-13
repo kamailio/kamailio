@@ -139,7 +139,7 @@
 		<title>Set <varname>force_socket</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "force_socket", "localhost:33333")
+modparam("nathelper", "force_socket", "127.0.0.1:5060")
 ...
 </programlisting>
 		</example>
