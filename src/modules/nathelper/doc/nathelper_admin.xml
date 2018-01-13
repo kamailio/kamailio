@@ -128,8 +128,7 @@
 		<title><varname>force_socket</varname> (string)</title>
 		<para>
 		Socket to be used when sending NAT pings for UDP communication.
-		It uses the first socket it finds based on the IP address. If
-		no one specified, the OS will choose a socket.
+		If no one specified, the OS will choose a socket.
 		</para>
 		<para>
 		<emphasis>
@@ -140,7 +139,7 @@
 		<title>Set <varname>force_socket</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "force_socket", "127.0.0.1")
+modparam("nathelper", "force_socket", "127.0.0.1:5060")
 ...
 </programlisting>
 		</example>
