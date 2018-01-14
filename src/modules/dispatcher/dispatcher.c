@@ -1360,9 +1360,13 @@ static void dispatcher_rpc_set_state(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	if(ds_reinit_state(group, &dest, stval) < 0) {
-		rpc->fault(ctx, 500, "State Update Failed");
-		return;
+	if(strcmp(dest.s, "all") == 0) {
+		ds_reinit_state_all(group, stval);
+	} else {
+		if(ds_reinit_state(group, &dest, stval) < 0) {
+			rpc->fault(ctx, 500, "State Update Failed");
+			return;
+		}
 	}
 
 	return;

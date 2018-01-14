@@ -1511,7 +1511,8 @@ onreply_route {
 
 			<listitem><para>_group_: destination group id</para></listitem>
 
-			<listitem><para>_address_: address of the destination in the _group_</para></listitem>
+			<listitem><para>_address_: address of the destination in the _group_
+					or 'all' to update all destinations in the group</para></listitem>
 		</itemizedlist>
 		<para>
 		Example:
@@ -1520,6 +1521,7 @@ onreply_route {
 ...
 # prototype: &sercmd; dispatcher.set_state _state_ _group_ _address_
 &sercmd; dispatcher.set_state ip 2 sip:127.0.0.1:5080
+&sercmd; dispatcher.set_state ip 3 all
 ...
 </programlisting>
     </section>
