@@ -68,6 +68,7 @@
 #include "event_list.h"
 #include "bind_presence.h"
 #include "notify.h"
+#include "presence_dmq.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 #include "../../core/timer_proc.h"
@@ -165,6 +166,7 @@ int pres_startup_mode = 1;
 str pres_xavp_cfg = {0};
 int pres_retrieve_order = 0;
 str pres_retrieve_order_by = str_init("priority");
+int pres_enable_dmq = 0;
 
 int db_table_lock_type = 1;
 db_locking_t db_table_lock = DB_LOCKING_WRITE;
@@ -173,6 +175,8 @@ int *pres_notifier_id = NULL;
 
 int phtable_size= 9;
 phtable_t* pres_htable=NULL;
+
+sruid_t pres_sruid;
 
 static cmd_export_t cmds[]=
 {
@@ -233,7 +237,8 @@ static param_export_t params[]={
 	{ "retrieve_order",         PARAM_INT, &pres_retrieve_order},
 	{ "retrieve_order_by",      PARAM_STR, &pres_retrieve_order_by},
 	{ "sip_uri_match",          PARAM_INT, &pres_uri_match},
-    { "cseq_offset",            PARAM_INT, &pres_cseq_offset},
+	{ "cseq_offset",            PARAM_INT, &pres_cseq_offset},
+	{ "enable_dmq",             PARAM_INT, &pres_enable_dmq},
 	{0,0,0}
 };
 
@@ -291,6 +296,10 @@ static int mod_init(void)
 	{
 		LM_DBG("Presence module used for API library purpose only\n");
 		return 0;
+	}
+
+	if(sruid_init(&pres_sruid, '-', "pres", SRUID_INC) < 0) {
+		return -1;
 	}
 
 	if(expires_offset<0)
@@ -463,6 +472,11 @@ static int mod_init(void)
 	if (goto_on_notify_reply>=0 && event_rt.rlist[goto_on_notify_reply]==0)
 		goto_on_notify_reply=-1; /* disable */
 
+	if (pres_enable_dmq>0 && pres_dmq_initialize()!=0) {
+		LM_ERR("failed to initialize dmq integration\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -478,6 +492,10 @@ static int child_init(int rank)
 
 	if(library_mode)
 		return 0;
+
+	if(sruid_init(&pres_sruid, '-', "pres", SRUID_INC) < 0) {
+		return -1;
+	}
 
 	if (rank == PROC_MAIN)
 	{

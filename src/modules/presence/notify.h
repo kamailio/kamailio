@@ -76,6 +76,7 @@ extern str str_watcher_domain_col;
 extern str str_event_id_col;
 extern str str_event_col;
 extern str str_etag_col;
+extern str str_ruid_col;
 extern str str_from_tag_col;
 extern str str_to_tag_col;
 extern str str_callid_col;

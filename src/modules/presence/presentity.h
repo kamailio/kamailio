@@ -32,7 +32,7 @@
 #include "../../core/str.h"
 #include "../../core/parser/msg_parser.h" 
 #include "event_list.h"
-//#include "presence.h"
+#include "presence.h"
 
 extern char prefix;
 
@@ -55,7 +55,7 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 
 /* update presentity in database */
 int update_presentity(struct sip_msg* msg,presentity_t* p,str* body,int t_new,
-		int* sent_reply, char* sphere);
+		int* sent_reply, char* sphere, str* etag_override, str* ruid);
 
 /* free memory */
 void free_presentity(presentity_t* p);
@@ -69,8 +69,8 @@ char* extract_sphere(str body);
 char* get_sphere(str* pres_uri);
 typedef char* (*pres_get_sphere_t)(str* pres_uri);
 
-int mark_presentity_for_delete(presentity_t *pres);
-int delete_presentity(presentity_t *pres);
+int mark_presentity_for_delete(presentity_t *pres, str *ruid);
+int delete_presentity(presentity_t *pres, str *ruid);
 int delete_offline_presentities(str *pres_uri, pres_ev_t *event);
 
 #endif
