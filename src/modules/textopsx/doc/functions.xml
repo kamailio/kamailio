@@ -76,8 +76,8 @@ if(msg_apply_changes())
 	    <title><function>change_reply_status</function> usage</title>
 	    <programlisting>
 ...
-onreply_route {
-    if (@status == "603") {
+reply_route {
+    if (status == "603") {
         change_reply_status(404, "Not Found");
         exit;
     }
