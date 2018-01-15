@@ -156,8 +156,8 @@ if(msg_apply_changes())
 
    Example 1.2. change_reply_status usage
 ...
-onreply_route {
-    if (@status == "603") {
+reply_route {
+    if (status == "603") {
         change_reply_status(404, "Not Found");
         exit;
     }
