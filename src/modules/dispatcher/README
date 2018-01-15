@@ -1238,12 +1238,14 @@ onreply_route {
        The states “a”, “i” or “t” can be followed by “p” to set probing
        mode (e.g. 'ap', 'ip' or 'tp').
      * _group_: destination group id
-     * _address_: address of the destination in the _group_
+     * _address_: address of the destination in the _group_ or 'all' to
+       update all destinations in the group
 
    Example:
 ...
 # prototype: kamcmd dispatcher.set_state _state_ _group_ _address_
 kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
+kamcmd dispatcher.set_state ip 3 all
 ...
 
 5.2.  dispatcher.list
