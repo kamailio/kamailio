@@ -2608,6 +2608,39 @@ int ds_reinit_state(int group, str *address, int state)
 /**
  *
  */
+int ds_reinit_state_all(int group, int state)
+{
+	int i = 0;
+	ds_set_t *idx = NULL;
+
+	if(_ds_list == NULL || _ds_list_nr <= 0) {
+		LM_ERR("the list is null\n");
+		return -1;
+	}
+
+	/* get the index of the set */
+	if(ds_get_index(group, *crt_idx, &idx) != 0) {
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+
+	for(i = 0; i < idx->nr; i++) {
+		int old_state = idx->dlist[i].flags;
+		/* reset the bits used for states */
+		idx->dlist[i].flags &= ~(DS_STATES_ALL);
+		/* set the new states */
+		idx->dlist[i].flags |= state;
+		if(idx->dlist[i].attrs.rweight > 0) {
+			ds_reinit_rweight_on_state_change(
+					old_state, idx->dlist[i].flags, idx);
+		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
 void ds_fprint_set(FILE *fout, ds_set_t *node)
 {
 	int i, j;

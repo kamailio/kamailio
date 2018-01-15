@@ -115,6 +115,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_next_dst(struct sip_msg *msg, int mode);
 int ds_update_state(sip_msg_t *msg, int group, str *address, int state);
 int ds_reinit_state(int group, str *address, int state);
+int ds_reinit_state_all(int group, int state);
 int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
 int ds_log_sets(void);
