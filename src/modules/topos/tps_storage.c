@@ -383,6 +383,9 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog)
 	if(ret<0) goto error;
 	ret = tps_storage_link_msg(msg, td, TPS_DIR_DOWNSTREAM);
 	if(ret<0) goto error;
+	if(td->as_contact.len <= 0 && td->bs_contact.len <= 0) {
+		LM_WARN("no local address - do record routing for all initial requests\n");
+	}
 	if(dialog==0) {
 		ret = _tps_storage_api.insert_dialog(td);
 		if(ret<0) goto error;
