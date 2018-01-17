@@ -479,7 +479,7 @@ int udp_rcv_loop()
 				if(isprint(buf[i])) {
 					printbuf[j++] = buf[i];
 				} else {
-					l = snprintf(printbuf+j, 6, " %02X ", buf[i]);
+					l = snprintf(printbuf+j, 6, " %02X ", (unsigned char)buf[i]);
 					if(l<0 || l>=6) {
 						LM_ERR("print buffer building failed (%d/%d/%d)\n",
 								l, j, i);
