@@ -483,7 +483,7 @@ int udp_rcv_loop()
 					if(l<0 || l>=6) {
 						LM_ERR("print buffer building failed (%d/%d/%d)\n",
 								l, j, i);
-						goto error;
+						continue; /* skip it */
 					}
 					j += l;
 				}
