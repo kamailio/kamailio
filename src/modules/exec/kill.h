@@ -13,15 +13,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
  * \file
  * \brief Exec module:: Kill process
- * \ingroup exec 
+ * \ingroup exec
  * Module: \ref exec
  */
 
@@ -29,7 +29,8 @@
 #ifndef _KILL_H
 #define _KILL_H
 
-struct timer_link {
+struct timer_link
+{
 	struct timer_link *next_tl;
 	struct timer_link *prev_tl;
 	volatile unsigned int time_out;
@@ -38,16 +39,14 @@ struct timer_link {
 
 struct timer_list
 {
-	struct timer_link  first_tl;
-	struct timer_link  last_tl;
+	struct timer_link first_tl;
+	struct timer_link last_tl;
 };
 
 extern unsigned int time_to_kill;
 
 void destroy_kill(void);
 int initialize_kill(void);
-int schedule_to_kill( int pid );
-
+int schedule_to_kill(int pid);
 
 #endif
-
