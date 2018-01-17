@@ -483,7 +483,7 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 	} else {
 		if (!append_var(EV_OUSER, oparsed_uri.user.s, 
 					oparsed_uri.user.len, list)) {
-			LM_ERR("ppend_var OUSER failed\n");
+			LM_ERR("append_var OUSER failed\n");
 			goto error;
 		}
 	}
