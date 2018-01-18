@@ -101,6 +101,7 @@ typedef struct _peer_t{
 	str src_addr;			/**< IP Address used to connect to the peer */
 
 	app_config *applications;/**< list of supported applications */
+	int applications_max;	/**< size of list of supporter applications*/
 	int applications_cnt;	/**< size of list of supporter applications*/
 
 	gen_lock_t *lock;		/**< lock for operations with this peer */
