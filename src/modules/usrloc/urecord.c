@@ -286,8 +286,10 @@ static inline void nodb_timer(urecord_t* _r)
 
 		if (!VALID_CONTACT(ptr, act_time)) {
 			/* run callbacks for EXPIRE event */
-			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
+			if (!(ptr->flags&FL_EXPCLB) && exists_ulcb_type(UL_CONTACT_EXPIRE)) {
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
+				ptr->flags |= FL_EXPCLB;
+			}
 
 			LM_DBG("Binding '%.*s','%.*s' has expired\n",
 				ptr->aor->len, ZSW(ptr->aor->s),

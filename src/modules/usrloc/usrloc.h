@@ -62,6 +62,7 @@ typedef enum flags {
 	FL_NONE        = 0,          /*!< No flags set */
 	FL_MEM         = 1 << 0,     /*!< Update memory only */
 	FL_DMQRPL      = 1 << 1,     /*!< DMQ replication */
+	FL_EXPCLB      = 1 << 2,     /*!< Expired callback executed */
 	FL_ALL         = (int)0xFFFFFFFF  /*!< All flags set */
 } flags_t;
 
