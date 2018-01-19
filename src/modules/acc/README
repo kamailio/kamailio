@@ -1246,9 +1246,9 @@ modparam("acc", "cdrs_table", "acc_cdrs")
      * 1 - save seconds in time_attr and microseconds in time_exten.
      * 2 - save seconds.milliseconds in time_attr.
      * 3 - save formatted time according to time_format parameter, using
-       the output of localtime().
+       the output of localtime(). Used for cdr entries too.
      * 4 - save formatted time according to time_format parameter, using
-       the output of gmtime().
+       the output of gmtime(). Used for cdr entries too.
 
    Example 1.44. time_mode example
 ...

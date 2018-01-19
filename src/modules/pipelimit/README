@@ -120,15 +120,16 @@ Chapter 1. Admin Guide
    This module implements traffic limiting for SIP requests.
 
    The module defines in an abstract mode the notion of 'pipe', which can
-   be a link to an IP address, to a network or a trunk. The associtiation
-   of traffic to a pipe is done in the config file, therefore, a pipe
-   could represent SIP traffic coming from a user or the flow of specific
-   SIP requests such as INVITE or REGISTER.
+   be a reference to an IP address, to a network or a trunk. The
+   associtiation of traffic to a pipe is done in the config file,
+   therefore, a pipe could represent SIP traffic coming from a user or the
+   flow of specific SIP requests such as INVITE or REGISTER.
 
    Pipelimit started from ratelimit module, adding support for definition
    of pipes limits in database and dynamic names. Complexity of keeping
    everything in a module and make it dual mode functional resulted in a
-   new module which is focused on just traffic shaping policies.
+   new module which is focused on just traffic shaping policies, the
+   implementation of queues was discarded.
 
 1.1. Algorithms
 
@@ -141,7 +142,8 @@ Chapter 1. Admin Guide
    This is a trivial algorithm that imposes some risks when used in
    conjunction with long timer intervals. At the start of each interval an
    internal counter is reset and incremented for each incoming message.
-   Once the counter hits the configured limit pl_check returns an error.
+   Once the counter hits the configured limit pl_check() returns false
+   (negative value).
 
    Random Early Detection Algorithm (RED)
 
@@ -160,8 +162,8 @@ Chapter 1. Admin Guide
    This algorithm relies on information provided by network interfaces.
    The total amount of bytes waiting to be consumed on all the network
    interfaces is retrieved once every timer_interval seconds. If the
-   returned amount exceeds the limit specified in the modparam, pl_check
-   returns an error.
+   returned amount exceeds the limit specified in the modparam, pl_check()
+   returns false (negative value).
 
    Feedback Algorithm (FEEDBACK)
 
@@ -277,12 +279,15 @@ modparam("pipelimit", "plp_algorithm_column", "name")
 
 3.7. timer_interval (integer)
 
-   The initial length of a timer interval in seconds. All amounts of
-   messages have to be divided by this timer to get a messages per second
-   value.
+   The length of the timer interval in seconds. Counted messages are reset
+   each timer_interval, therefore the amounts of messages have to be
+   divided by this timer_interval value to get the messages per second
+   value. For example, if you want to allow an average of 10 messages per
+   second with a timer inteval of 10 seconds, then the limit value has to
+   be 100.
 
-   IMPORTANT: A too small value may lead to performance penalties due to
-   timer process overloading.
+   Note: A too small value may lead to performance penalties due to timer
+   process overloading.
 
    Default value is 10.
 
@@ -333,8 +338,9 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
    Check the current request against the 'name' pipe.
 
    If algorithm and limit are provided, the function attempts to create a
-   new pipe of one with that name doesn't exit. If it exists, no changes
-   to algorithm and limit are done. Algorithm is case sensitive.
+   new pipe if one with that name doesn't exit. If it exists, no changes
+   to algorithm is done and the pipe limit is set to the 'limit' parameter
+   value, if this is greater than 0. Algorithm is case sensitive.
 
    The pipe name can be provided via a pseudo variabile.
 
@@ -349,7 +355,8 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
      * algorithm - the string or pseudovariable with the algorithm. The
        values can be: TAILDROP, RED, NETWORK, or FEEDBACK - see readme of
        ratelimit module for details on each algorithm.
-     * limit - the integer or pseudovariable with the limit value.
+     * limit - the integer or pseudovariable with the limit value per
+       timer_interval.
 
    This function can be used from ANY_ROUTE.
 
