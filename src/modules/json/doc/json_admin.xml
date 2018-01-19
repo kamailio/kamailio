@@ -74,5 +74,31 @@ xlog("foo is $var(foo)");
 	    </example>
 	</section>
 	</section>
+
+	<section>
+	<title>Transformations</title>
+	<para>You can use the transformation to extract values from the json structured pseudo-variables</para>
+	<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>json</emphasis>
+			</para>
+			<example>
+				<title>
+					<function>json.parse</function> usage
+				</title>
+				<programlisting format="linespecific">
+	...
+	# extract value of "Custom-Data" from $rb pseudo-variable and set it to $var(Custom-Data)
+	$var(Custom-Data) = $(rb{json.parse,Custom-Data});
+	if($var(Custom-Data) != $null) {	xlog("L_INFO", "$ci|log|custom data: $var(Custom-Data) from Request: $rb");
+	}
+	...
+				</programlisting>
+			</example>
+		</listitem>
+	</itemizedlist>
+	</section>
+</section>
 </chapter>
 

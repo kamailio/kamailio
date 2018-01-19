@@ -28,34 +28,50 @@
 #include "../../core/sr_module.h"
 
 #include "json_funcs.h"
+#include "json_trans.h"
 
 MODULE_VERSION
 
 static int fixup_get_field(void** param, int param_no);
 static int fixup_get_field_free(void** param, int param_no);
+str tr_json_escape_str = str_init("%");
+char tr_json_escape_char = '%';
 
 /* Exported functions */
+static tr_export_t mod_trans[] = {
+		{{"json", sizeof("json") - 1}, json_tr_parse}, {{0, 0}, 0}};
+
 static cmd_export_t cmds[]={
 	{"json_get_field", (cmd_function)json_get_field, 3,
 		fixup_get_field, fixup_get_field_free, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
+static param_export_t params[] = {
+		{"json_escape_char", PARAM_STR, &tr_json_escape_str}, {0, 0, 0}};
+
 struct module_exports exports = {
-		"json",
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* Exported functions */
-		0,		 /* Exported parameters */
-		0,		 /* exported statistics */
-		0,	             /* exported MI functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* extra processes */
-		0,        /* module initialization function */
-		0,				 /* response function*/
-		0,	 /* destroy function */
-		0       /* per-child init function */
+		"json", DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,					 /* Exported functions */
+		params,					 /* Exported parameters */
+		0,						 /* exported statistics */
+		0,						 /* exported MI functions */
+		0,						 /* exported pseudo-variables */
+		0,						 /* extra processes */
+		0,						 /* module initialization function */
+		0,						 /* response function*/
+		0,						 /* destroy function */
+		0						 /* per-child init function */
 };
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	if(json_tr_init_buffers() < 0) {
+		LM_ERR("failed to initialize transformations buffers\n");
+		return -1;
+	}
+	return register_trans_mod(path, mod_trans);
+}
 
 static int fixup_get_field(void** param, int param_no)
 {
