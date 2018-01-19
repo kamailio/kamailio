@@ -1177,6 +1177,27 @@ modparam("usrloc", "db_timer_clean", 1)
 		</example>
 	</section>
 
+	<section id="usrloc.p.rm_expired_delay">
+		<title><varname>rm_expired_delay</varname> (int)</title>
+		<para>
+			Specify the number of seconds to delay the removal of expired
+			records. For now it works for DB_ONLY mode (db_mode=3).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rm_expired_delay</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "rm_expired_delay", 30)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
