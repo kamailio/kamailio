@@ -89,6 +89,7 @@ Carsten Bock
               3.43. db_insert_null (int)
               3.44. skip_remote_socket (int)
               3.45. db_timer_clean (int)
+              3.46. rm_expired_delay (int)
 
         4. RPC Commands
 
@@ -181,6 +182,7 @@ Carsten Bock
    1.43. Set db_insert_null parameter
    1.44. Set skip_remote_socket parameter
    1.45. Set db_timer_clean parameter
+   1.46. Set rm_expired_delay parameter
 
 Chapter 1. Admin Guide
 
@@ -242,6 +244,7 @@ Chapter 1. Admin Guide
         3.43. db_insert_null (int)
         3.44. skip_remote_socket (int)
         3.45. db_timer_clean (int)
+        3.46. rm_expired_delay (int)
 
    4. RPC Commands
 
@@ -367,6 +370,7 @@ Chapter 1. Admin Guide
    3.43. db_insert_null (int)
    3.44. skip_remote_socket (int)
    3.45. db_timer_clean (int)
+   3.46. rm_expired_delay (int)
 
 3.1. nat_bflag (integer)
 
@@ -978,6 +982,18 @@ modparam("usrloc", "skip_remote_socket", 1)
    Example 1.45. Set db_timer_clean parameter
 ...
 modparam("usrloc", "db_timer_clean", 1)
+...
+
+3.46. rm_expired_delay (int)
+
+   Specify the number of seconds to delay the removal of expired records.
+   For now it works for DB_ONLY mode (db_mode=3).
+
+   Default value is “0”.
+
+   Example 1.46. Set rm_expired_delay parameter
+...
+modparam("usrloc", "rm_expired_delay", 30)
 ...
 
 4. RPC Commands
