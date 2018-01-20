@@ -146,8 +146,8 @@ static int ms_skip_notification_flag = -1;
 static int mod_init(void);
 static int child_init(int);
 
-static int m_store(struct sip_msg*, str*);
-static int m_dump(struct sip_msg*, str*);
+static int m_store(sip_msg_t *masg, str *owner_s);
+static int m_dump(sip_msg_t *msg, str *owner_s);
 
 static int m_store_2(struct sip_msg*, char*, char*);
 static int m_dump_2(struct sip_msg*, char*, char*);
@@ -544,7 +544,7 @@ static int get_non_mandatory_headers(struct sip_msg *msg, char *buf, int buf_len
  * 		= "2" -- look for outgoing URI only at to header
  */
 
-static int m_store(struct sip_msg* msg, str *owner_s)
+static int m_store(sip_msg_t* msg, str *owner_s)
 {
 	str body, str_hdr, ctaddr;
 	struct to_body *pto, *pfrom;
@@ -935,7 +935,7 @@ static int ki_m_store(sip_msg_t* msg)
 /**
  * dump message
  */
-static int m_dump(struct sip_msg* msg, str* owner_s)
+static int m_dump(sip_msg_t* msg, str* owner_s)
 {
 	struct to_body *pto = NULL;
 	db_key_t db_keys[3];
