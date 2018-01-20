@@ -334,7 +334,7 @@ static int ki_tcp_conid_state(sip_msg_t* msg, int i_conid)
 		LM_DBG("Connection id %d does not exist.\n", i_conid);
 		ret = -1;
 		goto done;
-	} 
+	}
 	/* Connection structure exists, now check what Kamailio thinks of it */
 	if (s_con->state == S_CONN_OK) {
 		/* All is fine, return happily */
@@ -387,7 +387,7 @@ static int w_tcp_conid_alive(sip_msg_t* msg, char* conid, char *p2)
 	int ret = w_tcp_conid_state(msg, conid, p2);
 	if (ret >= 1) {
 		return 1;	/* TRUE */
-	} 
+	}
 	/* We have some kind of problem */
 	return -1;
 }
@@ -397,7 +397,7 @@ static int ki_tcp_conid_alive(sip_msg_t* msg, int i_conid)
 	int ret = ki_tcp_conid_state(msg, i_conid);
 	if (ret >= 1) {
 		return 1;	/* TRUE */
-	} 
+	}
 	/* We have some kind of problem */
 	return -1;
 }
@@ -642,22 +642,22 @@ static sr_kemi_t sr_kemi_tcpops_exports[] = {
 	},
 	{ str_init("tcpops"), str_init("tcp_enable_closed_event"),
 		SR_KEMIP_INT, ki_tcpops_enable_closed_event,
-		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tcpops"), str_init("tcp_enable_closed_event_cid"),
 		SR_KEMIP_INT, ki_tcpops_enable_closed_event_cid,
-		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tcpops"), str_init("tcp_conid_alive"),
 		SR_KEMIP_INT, ki_tcp_conid_alive,
-		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tcpops"), str_init("tcp_conid_state"),
 		SR_KEMIP_INT, ki_tcp_conid_state,
-		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
