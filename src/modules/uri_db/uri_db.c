@@ -232,7 +232,7 @@ static sr_kemi_t sr_kemi_uri_db_exports[] = {
 	},
 	{ str_init("uri_db"), str_init("check_uri_realm"),
 		SR_KEMIP_INT, ki_check_uri_realm,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
