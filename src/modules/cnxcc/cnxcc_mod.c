@@ -2133,7 +2133,7 @@ static sr_kemi_t sr_kemi_cnxcc_exports[] = {
 	},
 	{ str_init("cnxcc"), str_init("get_channel_count"),
 		SR_KEMIP_INT, ki_get_channel_count,
-		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("cnxcc"), str_init("terminate_all"),
