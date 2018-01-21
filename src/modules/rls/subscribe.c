@@ -479,7 +479,6 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 	pres_ev_t* event = NULL;
 	int err_ret = -1;
 	int ret = to_presence_code;
-	str* contact = NULL;
 	xmlDocPtr doc = NULL;
 	xmlNodePtr service_node = NULL;
 	unsigned int hash_code=0;
@@ -802,13 +801,6 @@ done:
 	ret = 1;
 stop:
 forpresence:
-	if(contact!=NULL)
-	{
-		if(contact->s!=NULL)
-			pkg_free(contact->s);
-		pkg_free(contact);
-	}
-
 	if(subs.pres_uri.s!=NULL)
 		pkg_free(subs.pres_uri.s);
 	if(subs.record_route.s!=NULL)
@@ -829,13 +821,6 @@ bad_event:
 
 error:
 	LM_ERR("occurred in rls_handle_subscribe\n");
-
-	if(contact!=NULL)
-	{
-		if(contact->s!=NULL)
-			pkg_free(contact->s);
-		pkg_free(contact);
-	}
 	if(subs.pres_uri.s!=NULL)
 		pkg_free(subs.pres_uri.s);
 
