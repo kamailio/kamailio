@@ -272,12 +272,10 @@ int rls_get_service_list(str *service_uri, str *user, str *domain,
 		LM_DBG("service uri %.*s not found in rl document for user"
 				" sip:%.*s@%.*s\n", service_uri->len, service_uri->s,
 				user->len, user->s, domain->len, domain->s);
-		rootdoc = NULL;
 		if(xmldoc!=NULL)
 			xmlFreeDoc(xmldoc);
-	}
-	else
-	{
+		*rootdoc = NULL;
+	} else {
 		*rootdoc = xmldoc;
 	}
 
@@ -290,8 +288,6 @@ int rls_get_service_list(str *service_uri, str *user, str *domain,
 error:
 	if(result!=NULL)
 		rls_xcap_dbf.free_result(rls_xcap_db, result);
-	if(xmldoc!=NULL)
-		xmlFreeDoc(xmldoc);
 	if(xcapdoc!=NULL)
 		pkg_free(xcapdoc);
 
