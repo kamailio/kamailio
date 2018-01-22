@@ -112,6 +112,11 @@ void free_ppublic(ppublic_t* _p)
 	shm_free(_p);
 }
 
+
+// The same piece of code also lives in modules/ims_registrar_pcscf/sec_agree.c
+// Function - parse_sec_agree()
+// goto label - cleanup
+// Keep them in sync!
 void free_security(security_t* _p)
 {
     if (!_p)
@@ -137,8 +142,9 @@ void free_security(security_t* _p)
         case SECURITY_TLS:
             shm_free(_p->data.tls);
         break;
-
-        default: // Nothing to deallocate
+        
+        case SECURITY_NONE:
+            //Nothing to deallocate
         break;
     }
 
