@@ -797,9 +797,6 @@ static int sctp_init_sock_opt_common(int s, int af)
 		sctp_err++;
 		goto error; /* critical */
 	}
-#ifdef __OS_linux
-ev_success:
-#endif
 #else
 #error no sctp lib support for SCTP_EVENTS, consider upgrading
 #endif /* SCTP_EVENTS */
