@@ -68,6 +68,7 @@ int trace_send_duplicate(char *buf, int len, struct dest_info *dst2);
 #define siptrace_copy_proto(vproto, vbuf) do { \
 		int __olen; \
 		siptrace_copy_proto_olen(vproto, vbuf, __olen); \
+		(void)__olen; \
 	} while(0)
 
 char* siptrace_proto_name(int vproto);
