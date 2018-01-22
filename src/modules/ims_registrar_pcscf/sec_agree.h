@@ -32,6 +32,4 @@
  */
 security_t* cscf_get_security(struct sip_msg *msg);
 
-void free_security_t(security_t *params);
-
 #endif // SEC_AGREE_H
