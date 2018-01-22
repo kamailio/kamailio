@@ -45,6 +45,7 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/receive.h"
 #include "../../core/fmsg.h"
 #include "../../modules/tm/tm_load.h"
 
@@ -226,6 +227,7 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 		fmsg = faked_msg_next();
 		if (run_top_route(act, fmsg, 0)<0)
 			LM_ERR("failure inside run_top_route\n");
+		ksr_msg_env_reset();
 	}
 
 	free_sip_msg(ah_reply);
