@@ -1016,7 +1016,6 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 	siptrace_data_t sto;
 	sip_msg_t *msg;
 	ip_addr_t to_ip;
-	int len;
 	dest_info_t *dst;
 
 	if(t == NULL || ps == NULL) {
@@ -1334,7 +1333,6 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	siptrace_data_t sto;
 	sip_msg_t *msg;
 	ip_addr_t to_ip;
-	int len;
 	char statusbuf[5];
 
 	if(slcbp == NULL || slcbp->req == NULL) {
