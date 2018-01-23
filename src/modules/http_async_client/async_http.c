@@ -631,8 +631,6 @@ void init_query_params(struct query_params *p) {
 
 void set_query_params(struct query_params *p) {
 	int len;
-	p->headers.len = 0;
-	p->headers.t = NULL;
 	p->tls_verify_host = tls_verify_host;
 	p->tls_verify_peer = tls_verify_peer;
 	p->suspend_transaction = 1;
