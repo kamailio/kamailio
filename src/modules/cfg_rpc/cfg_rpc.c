@@ -310,48 +310,113 @@ static const char* rpc_get_doc[2] = {
 
 static void rpc_get(rpc_t* rpc, void* c)
 {
-	str	group, var;
-	void	*val;
-	unsigned int	val_type;
-	int	ret;
-	unsigned int	*group_id;
+	str     group, var;
+	void    *val;
+	unsigned int    val_type;
+	int     ret, n;
+	unsigned int    *group_id;
+	void *rh = NULL;
 
-	if (rpc->scan(c, "SS", &group, &var) < 2)
+	n = rpc->scan(c, "S*S", &group, &var);
+	/*  2: both group and variable name are present
+	 * -1: only group is present, print all variables in the group */
+	if(n<1) {
+		rpc->fault(c, 500, "Failed to get the parameters");
 		return;
-
+	}
+	if (n == 1) {
+		var.s = NULL;
+		var.len = 0;
+	}
 	if (get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
 		return;
 	}
+	if(var.len != 0) {
+		LM_DBG("getting value for variable: %.*s.%.*s\n", group.len, group.s,
+				var.len, var.s);
+		/* print value for one variable */
+		val = NULL;
+		ret = cfg_get_by_name(ctx, &group, group_id, &var,
+				&val, &val_type);
+		if (ret < 0) {
+			rpc->fault(c, 400, "Failed to get the variable");
+			return;
+		} else if (ret > 0) {
+			rpc->fault(c, 400, "Variable exists, but it is not readable via RPC interface");
+			return;
+		}
+		switch (val_type) {
+			case CFG_VAR_INT:
+				rpc->add(c, "d", (int)(long)val);
+				break;
+			case CFG_VAR_STRING:
+				rpc->add(c, "s", (char *)val);
+				break;
+			case CFG_VAR_STR:
+				rpc->add(c, "S", (str *)val);
+				break;
+			case CFG_VAR_POINTER:
+				rpc->rpl_printf(c, "%p", val);
+				break;
+		}
+	} else {
+		/* print values for all variables in the group */
+		void            *h;
+		str             gname;
+		cfg_def_t       *def;
+		int             i;
+		char pbuf[32];
+		int plen;
+		LM_DBG("getting values for group: %.*s\n", group.len, group.s);
+		rpc->add(c, "{", &rh);
+		if(rh==NULL) {
+			LM_ERR("failed to add root structure\n");
+			rpc->fault(c, 500, "Failed to add root structure");
+			return;
+		}
+		cfg_get_group_init(&h);
+		while(cfg_get_group_next(&h, &gname, &def)) {
+			if (((gname.len == group.len) && (memcmp(gname.s, group.s, group.len) == 0))) {
+				for (i=0; def[i].name; i++) {
+					var.s = def[i].name;
+					var.len = (int)strlen(def[i].name);
+					LM_DBG("getting value for variable: %.*s.%.*s\n", group.len, group.s,
+							var.len, var.s);
+					val = NULL;
+					ret = cfg_get_by_name(ctx, &group, group_id, &var,
+							&val, &val_type);
+					if (ret < 0) {
+						rpc->fault(c, 400, "Failed to get the variable");
+						return;
+					} else if (ret > 0 || val==NULL) {
+						continue;
+					}
+					LM_DBG("type: %d value: %p\n", val_type, val);
+					switch (val_type) {
+						case CFG_VAR_INT:
+							rpc->struct_add(rh, "d", var.s, (int)(long)val);
+							break;
+						case CFG_VAR_STRING:
+							rpc->struct_add(rh, "s", var.s, (char *)val);
+							break;
+						case CFG_VAR_STR:
+							rpc->struct_add(rh, "S", var.s, (str *)val);
+							break;
+						case CFG_VAR_POINTER:
+							plen = snprintf(pbuf, 32, "%p", val);
+							if(plen>0 && plen<32) {
+								rpc->struct_add(rh, "s", var.s, pbuf);
+							} else {
+								LM_ERR("error adding: %.*s.%s\n",
+										group.len, group.s, var.s);
+							}
+							break;
+					}
 
-	ret = cfg_get_by_name(ctx, &group, group_id, &var,
-			&val, &val_type);
-	if (ret < 0) {
-		rpc->fault(c, 400, "Failed to get the variable");
-		return;
-		
-	} else if (ret > 0) {
-		rpc->fault(c, 400, "Variable exists, but it is not readable via RPC interface");
-		return;
-	}
-
-	switch (val_type) {
-	case CFG_VAR_INT:
-		rpc->add(c, "d", (int)(long)val);
-		break;
-
-	case CFG_VAR_STRING:
-		rpc->add(c, "s", (char *)val);
-		break;
-
-	case CFG_VAR_STR:
-		rpc->add(c, "S", (str *)val);
-		break;
-
-	case CFG_VAR_POINTER:
-		rpc->rpl_printf(c, "%p", val);
-		break;
-
+				}
+			}
+		}
 	}
 
 }
