@@ -381,18 +381,20 @@ static void rpc_get(rpc_t* rpc, void* c)
 				for (i=0; def[i].name; i++) {
 					var.s = def[i].name;
 					var.len = (int)strlen(def[i].name);
-					LM_DBG("getting value for variable: %.*s.%.*s\n", group.len, group.s,
-							var.len, var.s);
+					LM_DBG("getting value for variable: %.*s.%.*s\n",
+							group.len, group.s, var.len, var.s);
 					val = NULL;
 					ret = cfg_get_by_name(ctx, &group, group_id, &var,
 							&val, &val_type);
 					if (ret < 0) {
 						rpc->fault(c, 400, "Failed to get the variable");
 						return;
-					} else if (ret > 0 || val==NULL) {
+					} else if (ret > 0) {
+						LM_DBG("skipping dynamic (callback) value for variable:"
+								" %.*s.%.*s (%p/%d)\n",
+								group.len, group.s, var.len, var.s, val, ret);
 						continue;
 					}
-					LM_DBG("type: %d value: %p\n", val_type, val);
 					switch (val_type) {
 						case CFG_VAR_INT:
 							rpc->struct_add(rh, "d", var.s, (int)(long)val);
