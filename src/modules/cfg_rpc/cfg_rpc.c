@@ -310,48 +310,88 @@ static const char* rpc_get_doc[2] = {
 
 static void rpc_get(rpc_t* rpc, void* c)
 {
-	str	group, var;
-	void	*val;
-	unsigned int	val_type;
-	int	ret;
-	unsigned int	*group_id;
+	str     group, var;
+	void    *val;
+	unsigned int    val_type;
+	int     ret, n;
+	unsigned int    *group_id;
 
-	if (rpc->scan(c, "SS", &group, &var) < 2)
-		return;
-
+	n = rpc->scan(c, "SS", &group, &var);
+	/*  2: both group and variable name are present
+	 * -1: only group is present, print all variables in the group */
+	if(n<2) {
+		if (n == -1) {
+			var.s = NULL;
+			var.len = 0;
+		}
+		else return;
+	}
 	if (get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
 		return;
 	}
-
-	ret = cfg_get_by_name(ctx, &group, group_id, &var,
-			&val, &val_type);
-	if (ret < 0) {
-		rpc->fault(c, 400, "Failed to get the variable");
-		return;
-		
-	} else if (ret > 0) {
-		rpc->fault(c, 400, "Variable exists, but it is not readable via RPC interface");
-		return;
+	/* print value for one variable */
+	if(var.len != 0) {
+		ret = cfg_get_by_name(ctx, &group, group_id, &var,
+				&val, &val_type);
+		if (ret < 0) {
+			rpc->fault(c, 400, "Failed to get the variable");
+			return;
+		} else if (ret > 0) {
+			rpc->fault(c, 400, "Variable exists, but it is not readable via RPC interface");
+			return;
+		}
+		switch (val_type) {
+			case CFG_VAR_INT:
+				rpc->add(c, "d", (int)(long)val);
+				break;
+			case CFG_VAR_STRING:
+				rpc->add(c, "s", (char *)val);
+				break;
+			case CFG_VAR_STR:
+				rpc->add(c, "S", (str *)val);
+				break;
+			case CFG_VAR_POINTER:
+				rpc->rpl_printf(c, "%p", val);
+				break;
+		}
 	}
+	/* print values for all variables in the group */
+	else {
+		void            *h;
+		str             gname;
+		cfg_def_t       *def;
+		int             i;
+		cfg_get_group_init(&h);
+		while(cfg_get_group_next(&h, &gname, &def))
+			if (((gname.len == group.len) && (memcmp(gname.s, group.s, group.len) == 0)))
+				for (i=0; def[i].name; i++) {
+					var.s = def[i].name;
+					var.len = (int)strlen(def[i].name);
+					ret = cfg_get_by_name(ctx, &group, group_id, &var,
+							&val, &val_type);
+					if (ret < 0) {
+						rpc->fault(c, 400, "Failed to get the variable");
+						return;
+					} else if (ret > 0) {
+						continue;
+					}
+					switch (val_type) {
+						case CFG_VAR_INT:
+							rpc->add(c, "sd", var.s, (int)(long)val);
+							break;
+						case CFG_VAR_STRING:
+							rpc->add(c, "ss", var.s, (char *)val);
+							break;
+						case CFG_VAR_STR:
+							rpc->add(c, "sS", var.s, (str *)val);
+							break;
+						case CFG_VAR_POINTER:
+							rpc->rpl_printf(c, "%p", val);
+							break;
+					}
 
-	switch (val_type) {
-	case CFG_VAR_INT:
-		rpc->add(c, "d", (int)(long)val);
-		break;
-
-	case CFG_VAR_STRING:
-		rpc->add(c, "s", (char *)val);
-		break;
-
-	case CFG_VAR_STR:
-		rpc->add(c, "S", (str *)val);
-		break;
-
-	case CFG_VAR_POINTER:
-		rpc->rpl_printf(c, "%p", val);
-		break;
-
+				}
 	}
 
 }
