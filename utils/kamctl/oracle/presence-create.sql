@@ -9,7 +9,9 @@ CREATE TABLE presentity (
     body BLOB,
     sender VARCHAR2(128),
     priority NUMBER(10) DEFAULT 0 NOT NULL,
-    CONSTRAINT presentity_presentity_idx  UNIQUE (username, domain, event, etag)
+    ruid VARCHAR2(64),
+    CONSTRAINT presentity_presentity_idx  UNIQUE (username, domain, event, etag),
+    CONSTRAINT presentity_ruid_idx  UNIQUE (ruid)
 );
 
 CREATE OR REPLACE TRIGGER presentity_tr
@@ -23,7 +25,7 @@ BEGIN map2users('presentity'); END;
 CREATE INDEX presentity_presentity_expires  ON presentity (expires);
 CREATE INDEX presentity_account_idx  ON presentity (username, domain, event);
 
-INSERT INTO version (table_name, table_version) values ('presentity','4');
+INSERT INTO version (table_name, table_version) values ('presentity','5');
 
 CREATE TABLE active_watchers (
     id NUMBER(10) PRIMARY KEY,

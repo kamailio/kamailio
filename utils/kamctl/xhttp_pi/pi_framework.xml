@@ -507,6 +507,7 @@
 		<column><field>body</field><type>DB1_BLOB</type></column>
 		<column><field>sender</field><type>DB1_STR</type></column>
 		<column><field>priority</field><type>DB1_INT</type></column>
+		<column><field>ruid</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of active_watchers table-->
 	<db_table id="active_watchers">
@@ -2970,6 +2971,7 @@
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
 				<col><field>priority</field></col>
+				<col><field>ruid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -2985,6 +2987,7 @@
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
 				<col><field>priority</field></col>
+				<col><field>ruid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -3003,6 +3006,7 @@
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
 				<col><field>priority</field></col>
+				<col><field>ruid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
