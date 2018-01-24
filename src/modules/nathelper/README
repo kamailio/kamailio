@@ -517,12 +517,14 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 
 5.3.  add_rcv_param([flag]),
 
-   Add a received parameter to the “Contact” header fields or the Contact
-   URI. The parameter will contain the URI created from the source IP,
-   port, and protocol of the packet containing the SIP message. The
-   parameter can be then processed by another registrar. This is useful,
-   for example, when replicating register messages using t_replicate
-   function to another registrar.
+   Add a received parameter to the “Contact” header fields (available for
+   all transports) or to the Contact URI (available only for UDP traffic).
+
+   The parameter will contain the URI created from the source IP, port,
+   and protocol (if different than UDP) of the packet containing the SIP
+   message. The parameter can be then processed by another registrar. This
+   is useful, for example, when replicating register messages using
+   t_replicate function to another registrar.
 
    Meaning of the parameters is as follows:
      * flag - flags to indicate if the parameter should be added to
