@@ -2110,9 +2110,13 @@ static int ki_add_rcv_param(sip_msg_t *msg, int upos)
 	struct lump *anchor;
 	char *param;
 	str uri;
-	int hdr_param;
 
-	hdr_param = (upos)?0:1;
+	if(upos) {
+		if(msg->rcv.proto != PROTO_UDP) {
+			LM_ERR("adding received parameter to Contact URI works only for UDP\n");
+			return -1;
+		}
+	}
 
 	if(create_rcv_uri(&uri, msg) < 0) {
 		return -1;
@@ -2129,16 +2133,20 @@ static int ki_add_rcv_param(sip_msg_t *msg, int upos)
 			return -1;
 		}
 		memcpy(param, RECEIVED, RECEIVED_LEN);
-		param[RECEIVED_LEN] = '\"';
-		memcpy(param + RECEIVED_LEN + 1, uri.s, uri.len);
-		param[RECEIVED_LEN + 1 + uri.len] = '\"';
-
-		if(hdr_param) {
-			/* add the param as header param */
-			anchor = anchor_lump(msg, c->name.s + c->len - msg->buf, 0, 0);
+		if(upos) {
+			memcpy(param + RECEIVED_LEN, uri.s, uri.len);
 		} else {
+			param[RECEIVED_LEN] = '\"';
+			memcpy(param + RECEIVED_LEN + 1, uri.s, uri.len);
+			param[RECEIVED_LEN + 1 + uri.len] = '\"';
+		}
+
+		if(upos) {
 			/* add the param as uri param */
 			anchor = anchor_lump(msg, c->uri.s + c->uri.len - msg->buf, 0, 0);
+		} else {
+			/* add the param as header param */
+			anchor = anchor_lump(msg, c->name.s + c->len - msg->buf, 0, 0);
 		}
 		if(anchor == NULL) {
 			LM_ERR("anchor_lump failed\n");
@@ -2146,9 +2154,8 @@ static int ki_add_rcv_param(sip_msg_t *msg, int upos)
 			return -1;
 		}
 
-		if(insert_new_lump_after(
-				   anchor, param, RECEIVED_LEN + 1 + uri.len + 1, 0)
-				== 0) {
+		if(insert_new_lump_after(anchor, param,
+					RECEIVED_LEN + 1 + uri.len + 1 - ((upos)?2:0), 0) == 0) {
 			LM_ERR("insert_new_lump_after failed\n");
 			pkg_free(param);
 			return -1;
