@@ -2104,12 +2104,15 @@ static int create_rcv_uri(str *uri, struct sip_msg *m)
  * Add received parameter to Contacts for further
  * forwarding of the REGISTER requuest
  */
-static int ki_add_rcv_param(sip_msg_t *msg, int hdr_param)
+static int ki_add_rcv_param(sip_msg_t *msg, int upos)
 {
 	contact_t *c;
 	struct lump *anchor;
 	char *param;
 	str uri;
+	int hdr_param;
+
+	hdr_param = (upos)?0:1;
 
 	if(create_rcv_uri(&uri, msg) < 0) {
 		return -1;
@@ -2169,7 +2172,7 @@ static int add_rcv_param_f(struct sip_msg *msg, char *str1, char *str2)
 
 	if(str1) {
 		if(fixup_get_ivalue(msg, (gparam_t*)str1, &hdr_param)<0) {
-			LM_ERR("failed to get falgs parameter\n");
+			LM_ERR("failed to get flags parameter\n");
 			return -1;
 		}
 	}
