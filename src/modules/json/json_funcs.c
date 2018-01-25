@@ -270,39 +270,6 @@ int tr_json_get_field(struct sip_msg *msg, char *json, char *field, char *dst)
 	return 1;
 }
 
-struct json_object *json_parse(const char *str)
-{
-	struct json_tokener *tok;
-	struct json_object *obj;
-
-	tok = json_tokener_new();
-	if(!tok) {
-		LM_ERR("Error parsing json: could not allocate tokener\n");
-		return NULL;
-	}
-
-	obj = json_tokener_parse_ex(tok, str, -1);
-	if(tok->err != json_tokener_success) {
-		LM_ERR("Error parsing json: %s\n", json_tokener_error_desc(tok->err));
-		LM_ERR("%s\n", str);
-		if(obj != NULL) {
-			json_object_put(obj);
-		}
-		obj = NULL;
-	}
-
-	json_tokener_free(tok);
-	return obj;
-}
-
-struct json_object *json_get_object(
-		struct json_object *jso, const char *key)
-{
-	struct json_object *result = NULL;
-	json_object_object_get_ex(jso, key, &result);
-	return result;
-}
-
 int tr_json_get_keys(struct sip_msg *msg, char *json, char *field, char *dst)
 {
 	str json_s;
