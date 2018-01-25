@@ -1079,7 +1079,7 @@ int db_link_contact_to_impu(impurecord_t* _r, ucontact_t* _c) {
 
     }
 
-    query_buffer_len = snprintf(query_buffer.s, query_buffer_len, impu_contact_insert_query, _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
+    query_buffer.len = snprintf(query_buffer.s, query_buffer_len, impu_contact_insert_query, _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
 
     LM_DBG("QUERY IS [%.*s] and len is %d\n", query_buffer.len, query_buffer.s, query_buffer.len);
     if (ul_dbf.raw_query(ul_dbh, &query_buffer, &rs) != 0) {
