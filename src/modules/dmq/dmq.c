@@ -349,7 +349,7 @@ static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
 			goto error;
 		if(rpc->struct_add(h, "SSsSdd", "host", &cur->uri.host, "port",
 				   &cur->uri.port, "resolved_ip", ip, "status",
-				   get_status_str(cur->status), "last_notification",
+				   dmq_get_status_str(cur->status), "last_notification",
 				   cur->last_notification, "local", cur->local)
 				< 0)
 			goto error;

@@ -9,13 +9,15 @@ CREATE TABLE `presentity` (
     `body` BLOB NOT NULL,
     `sender` VARCHAR(128) NOT NULL,
     `priority` INT(11) DEFAULT 0 NOT NULL,
-    CONSTRAINT presentity_idx UNIQUE (`username`, `domain`, `event`, `etag`)
+    `ruid` VARCHAR(64),
+    CONSTRAINT presentity_idx UNIQUE (`username`, `domain`, `event`, `etag`),
+    CONSTRAINT ruid_idx UNIQUE (`ruid`)
 );
 
 CREATE INDEX presentity_expires ON presentity (`expires`);
 CREATE INDEX account_idx ON presentity (`username`, `domain`, `event`);
 
-INSERT INTO version (table_name, table_version) values ('presentity','4');
+INSERT INTO version (table_name, table_version) values ('presentity','5');
 
 CREATE TABLE `active_watchers` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,

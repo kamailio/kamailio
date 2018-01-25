@@ -39,7 +39,7 @@ str dmq_node_timeout_str = str_init("timeout");
 /**
  * @brief get the string status of the node
  */
-str *get_status_str(int status)
+str *dmq_get_status_str(int status)
 {
 	switch(status) {
 		case DMQ_NODE_ACTIVE: {
@@ -389,8 +389,8 @@ int build_node_str(dmq_node_t *node, char *buf, int buflen)
 	len += 1;
 	memcpy(buf + len, "status=", 7);
 	len += 7;
-	memcpy(buf + len, get_status_str(node->status)->s,
-			get_status_str(node->status)->len);
-	len += get_status_str(node->status)->len;
+	memcpy(buf + len, dmq_get_status_str(node->status)->s,
+			dmq_get_status_str(node->status)->len);
+	len += dmq_get_status_str(node->status)->len;
 	return len;
 }

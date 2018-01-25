@@ -9,7 +9,7 @@
 
 <table id="presentity" xmlns:db="http://docbook.org/ns/docbook">
     <name>presentity</name>
-    <version>4</version>
+    <version>5</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>
@@ -98,12 +98,26 @@
         <description>Priority of the record</description>
 	</column>
 
+    <column id="ruid">
+        <name>ruid</name>
+        <type>string</type>
+        <size>64</size>
+        <null/>
+        <description>Record internal unique id</description>
+    </column>
+
     <index>
         <name>presentity_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="event"/>
         <colref linkend="etag"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>ruid_idx</name>
+        <colref linkend="ruid"/>
         <unique/>
     </index>
 

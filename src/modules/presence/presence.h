@@ -34,6 +34,7 @@
 #include "../../modules/sl/sl.h"
 #include "../../lib/srdb1/db.h"
 #include "../../core/parser/parse_from.h"
+#include "../../lib/srutils/sruid.h"
 #include "event_list.h"
 #include "hash.h"
 
@@ -94,9 +95,12 @@ extern int pres_startup_mode;
 extern str pres_xavp_cfg;
 extern int pres_retrieve_order;
 extern str pres_retrieve_order_by;
+extern int pres_enable_dmq;
 
 extern int phtable_size;
 extern phtable_t* pres_htable;
+
+extern sruid_t pres_sruid;
 
 extern db_locking_t db_table_lock;
 
