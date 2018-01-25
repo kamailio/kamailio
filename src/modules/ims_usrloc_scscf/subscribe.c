@@ -346,6 +346,7 @@ int update_subscriber(impurecord_t* urec, reg_subscriber** _reg_subscriber, int 
     subs.callid = rs->call_id;
     subs.expires = rs->expires - act_time;
     subs.contact = rs->watcher_contact;
+    subs.record_route = rs->record_route;
     
     hash_code = core_hash(&subs.callid, &subs.to_tag, sub_dialog_hash_size);
     
