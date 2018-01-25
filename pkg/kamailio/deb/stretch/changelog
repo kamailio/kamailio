@@ -1,4 +1,10 @@
-kamailio (5.2.0~dev2) UNRELEASED; urgency=medium
+kamailio (5.2.0~dev3) unstable; urgency=medium
+
+  * version set to 5.2.0-dev3
+
+ -- Victor Seva <vseva@debian.org>  Thu, 25 Jan 2018 10:34:25 +0100
+
+kamailio (5.2.0~dev2) unstable; urgency=medium
 
   * version set to 5.2.0-dev2
 
