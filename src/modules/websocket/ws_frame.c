@@ -678,6 +678,9 @@ int ws_frame_receive(sr_event_param_t *evp)
 
 					return -1;
 				}
+			} else {
+				LM_ERR("Unrecognized WebSocket subprotocol: %u\n", frame.wsc->sub_protocol);
+				return -1;
 			}
 
 		case OPCODE_CLOSE:
