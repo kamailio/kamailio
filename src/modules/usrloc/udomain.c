@@ -902,7 +902,7 @@ int db_timer_udomain(udomain_t* _d)
 	keys[0] = &expires_col;
 	ops[0] = "<";
 	vals[0].nul = 0;
-	UL_DB_EXPIRES_SET(&vals[0], act_time + 1 + ul_rm_expired_delay);
+	UL_DB_EXPIRES_SET(&vals[0], act_time + 1 - ul_rm_expired_delay);
 
 	keys[1] = &expires_col;
 	ops[1] = OP_NEQ;
