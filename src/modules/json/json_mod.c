@@ -27,6 +27,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/sr_module.h"
 
+#include "api.h"
 #include "json_funcs.h"
 #include "json_trans.h"
 
@@ -41,11 +42,11 @@ char tr_json_escape_char = '%';
 static tr_export_t mod_trans[] = {
 		{{"json", sizeof("json") - 1}, json_tr_parse}, {{0, 0}, 0}};
 
-static cmd_export_t cmds[]={
-	{"json_get_field", (cmd_function)json_get_field, 3,
-		fixup_get_field, fixup_get_field_free, ANY_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {
+		{"json_get_field", (cmd_function)json_get_field, 3, fixup_get_field,
+				fixup_get_field_free, ANY_ROUTE},
+		{"bind_json", (cmd_function)bind_json, 0, 0, 0, ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
 		{"json_escape_char", PARAM_STR, &tr_json_escape_str}, {0, 0, 0}};
@@ -63,6 +64,26 @@ struct module_exports exports = {
 		0,						 /* destroy function */
 		0						 /* per-child init function */
 };
+
+str _json_extract_field(struct json_object *json_obj, char *json_name)
+{
+	str val;
+	json_extract_field(json_name, val);
+	return val;
+}
+
+/**
+ *
+ */
+int bind_json(json_api_t *api) {
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->json_parse = json_parse;
+	api->extract_field = _json_extract_field;
+	return 0;
+}
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
