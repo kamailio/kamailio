@@ -65,9 +65,8 @@ struct module_exports exports = {
 		0						 /* per-child init function */
 };
 
-str _json_extract_field(struct json_object *json_obj, char *json_name)
-{
-	str val;
+str _json_extract_field(struct json_object *json_obj, char *json_name) {
+	str val = {0, 0};
 	json_extract_field(json_name, val);
 	return val;
 }
@@ -81,6 +80,7 @@ int bind_json(json_api_t *api) {
 		return -1;
 	}
 	api->json_parse = json_parse;
+	api->get_object = json_get_object;
 	api->extract_field = _json_extract_field;
 	return 0;
 }

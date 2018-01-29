@@ -25,11 +25,12 @@
 #include "../../core/sr_module.h"
 
 typedef struct json_object *(*json_parse_f) (const char *str);
-typedef str (*json_extract_field_f)(
-		struct json_object *json_obj, char *json_name);
+typedef struct json_object *(*json_get_object_f) (struct json_object *json_obj, const char *str);
+typedef str (*json_extract_field_f) (struct json_object *json_obj, char *json_name);
 
 typedef struct json_api {
 	json_parse_f json_parse;
+	json_get_object_f get_object;
 	json_extract_field_f extract_field;
 } json_api_t;
 
