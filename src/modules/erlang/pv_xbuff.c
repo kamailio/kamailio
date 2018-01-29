@@ -87,9 +87,9 @@ sr_xavp_t *xbuff_new(str *name)
 	if(!xbuffs_root)
 	{
 		xbuff = xavp_add_xavp_value(&xbuff_list,name,&xbuff_val,xavp_get_crt_list());
+	} else {
+		xbuff = xavp_get_child(&xbuff_list, name);
 	}
-
-	xbuff=xavp_get_child(&xbuff_list, name);
 
 	if (!xbuff) {
 
@@ -988,7 +988,10 @@ int xavp_decode(ei_x_buff *xbuff, int *index, sr_xavp_t **xavp,int level)
 			return -1;
 		}
 
-		ei_decode_atom(xbuff->buff,index,pbuf);
+		if (ei_decode_atom(xbuff->buff,index,pbuf)) {
+			LM_ERR("failed to decode atom\n");
+			goto err;
+		}
 
 		val.type = SR_XTYPE_STR;
 		val.v.s.s = pbuf;

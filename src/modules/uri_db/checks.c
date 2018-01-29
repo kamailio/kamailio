@@ -153,7 +153,7 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri,
 /*
  * Check username part in To header field
  */
-int check_to(struct sip_msg* _m, char* _s1, char* _s2)
+int ki_check_to(struct sip_msg* _m)
 {
 	if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || (!_m->to))) {
 		LM_ERR("Error while parsing To header field\n");
@@ -169,9 +169,17 @@ int check_to(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
+ * Check username part in To header field
+ */
+int check_to(struct sip_msg* _m, char* _s1, char* _s2)
+{
+	return ki_check_to(_m);
+}
+
+/*
  * Check username part in From header field
  */
-int check_from(struct sip_msg* _m, char* _s1, char* _s2)
+int ki_check_from(struct sip_msg* _m)
 {
 	if (parse_from_header(_m) < 0) {
 		LM_ERR("Error while parsing From header field\n");
@@ -187,16 +195,50 @@ int check_from(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
+ * Check username part in From header field
+ */
+int check_from(struct sip_msg* _m, char* _s1, char* _s2)
+{
+	return ki_check_from(_m);
+}
+
+/*
  * Checks username part of the supplied sip URI.
  * Optinal with supplied credentials.
  */
+int ki_check_uri_realm(struct sip_msg* msg, str *suri, str *susername,
+		str *srealm)
+{
+	struct sip_uri parsed_uri;
+
+	if(suri==NULL || suri->s==NULL || suri->len<=0) {
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	if (parse_uri(suri->s, suri->len, &parsed_uri) != 0)
+	{
+		LM_ERR("Error while parsing URI: %.*s\n", suri->len, suri->s);
+		return -1;
+	}
+
+	if(susername==NULL || susername->len<=0 || srealm==NULL || srealm->len<=0) {
+		return check_username(msg, &parsed_uri, NULL, NULL);
+	}
+
+	return check_username(msg, &parsed_uri, susername, srealm);
+}
+
+int ki_check_uri(struct sip_msg* msg, str *suri)
+{
+	return ki_check_uri_realm(msg, suri, NULL, NULL);
+}
+
 int check_uri(struct sip_msg* msg, char* uri, char* username, char* realm)
 {
 	str suri;
 	str susername;
 	str srealm;
-
-	struct sip_uri parsed_uri;
 
 	if (get_str_fparam(&suri, msg, (fparam_t*) uri) != 0)
 	{
@@ -204,14 +246,8 @@ int check_uri(struct sip_msg* msg, char* uri, char* username, char* realm)
 		return -1;
 	}
 
-	if (parse_uri(suri.s, suri.len, &parsed_uri) != 0)
-	{
-		LM_ERR("Error while parsing URI\n");
-		return -1;
-	}
-
 	if (!username || !realm) {
-		return check_username(msg, &parsed_uri, NULL, NULL);
+		return ki_check_uri_realm(msg, &suri, NULL, NULL);
 	}
 
 	if (get_str_fparam(&susername, msg, (fparam_t*) username) != 0)
@@ -225,20 +261,23 @@ int check_uri(struct sip_msg* msg, char* uri, char* username, char* realm)
 		LM_ERR("Error while getting realm value\n");
 		return -1;
 	}
-
-	return check_username(msg, &parsed_uri, &susername, &srealm);
+	return ki_check_uri_realm(msg, &suri, &susername, &srealm);
 }
-
 
 /*
  * Check if uri belongs to a local user
  */
-int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
+int ki_does_uri_exist(struct sip_msg* _msg)
 {
 	db_key_t keys[2];
 	db_val_t vals[2];
 	db_key_t cols[1];
 	db1_res_t* res = NULL;
+
+	if(db_handle==NULL) {
+		LM_ERR("database connection does not exist\n");
+		return -1;
+	}
 
 	if (parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("Error while parsing URI\n");
@@ -285,6 +324,14 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 }
 
+
+/*
+ * Check if uri belongs to a local user
+ */
+int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
+{
+	return ki_does_uri_exist(_msg);
+}
 
 
 int uridb_db_init(const str* db_url)

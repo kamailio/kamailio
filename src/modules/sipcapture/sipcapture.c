@@ -3030,7 +3030,7 @@ static int pv_parse_hep_name(pv_spec_p sp, str *in)
 	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 
-	LM_ERR("REQUEST, PRE, %.*s\n", in->len, in->s);
+	LM_DBG("REQUEST, PRE, %.*s\n", in->len, in->s);
 
 	switch(in->len) {
 		case 5: {
@@ -3114,7 +3114,7 @@ static sr_kemi_t sr_kemi_sipcapture_exports[] = {
 	},
 	{ str_init("sipcapture"), str_init("sip_capture_mode"),
 		SR_KEMIP_INT, ki_sip_capture_mode,
-		{ SR_KEMIP_NONE, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("sipcapture"), str_init("report_capture"),

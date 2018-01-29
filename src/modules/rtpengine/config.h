@@ -28,6 +28,7 @@
 
 struct cfg_group_rtpengine {
 	unsigned int	rtpengine_disable_tout;
+	unsigned int	aggressive_redetection;
 	unsigned int	rtpengine_tout_ms;
 	unsigned int    queried_nodes_limit;
 	unsigned int	rtpengine_retr;

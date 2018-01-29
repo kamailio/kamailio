@@ -55,11 +55,11 @@ Anca-Maria Vamanu
 
         4. Functions
 
-              4.1. do_routing("[groupID]")
-              4.2. use_next_gw()/next_routing()
-              4.3. goes_to_gw([type])
-              4.4. is_from_gw([type])
-              4.5. is_from_gw( type, [flag])
+              4.1. do_routing([groupID])
+              4.2. next_routing()
+              4.3. use_next_gw()
+              4.4. goes_to_gw([type])
+              4.5. is_from_gw([ type, [flag] ])
 
         5. RPC Commands
 
@@ -95,10 +95,9 @@ Anca-Maria Vamanu
    1.14. Set force_dns parameter
    1.15. Set enable_keepalive parameter
    1.16. do_routing usage
-   1.17. use_next_gw usage
+   1.17. next_routing usage
    1.18. goes_to_gw usage
    1.19. is_from_gw usage
-   1.20. is_from_gw usage
 
 Chapter 1. Admin Guide
 
@@ -142,11 +141,11 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. do_routing("[groupID]")
-        4.2. use_next_gw()/next_routing()
-        4.3. goes_to_gw([type])
-        4.4. is_from_gw([type])
-        4.5. is_from_gw( type, [flag])
+        4.1. do_routing([groupID])
+        4.2. next_routing()
+        4.3. use_next_gw()
+        4.4. goes_to_gw([type])
+        4.5. is_from_gw([ type, [flag] ])
 
    5. RPC Commands
 
@@ -710,13 +709,13 @@ modparam("drouting", "enable_keepalive", 1)
 
 4. Functions
 
-   4.1. do_routing("[groupID]")
-   4.2. use_next_gw()/next_routing()
-   4.3. goes_to_gw([type])
-   4.4. is_from_gw([type])
-   4.5. is_from_gw( type, [flag])
+   4.1. do_routing([groupID])
+   4.2. next_routing()
+   4.3. use_next_gw()
+   4.4. goes_to_gw([type])
+   4.5. is_from_gw([ type, [flag] ])
 
-4.1.  do_routing("[groupID]")
+4.1.  do_routing([groupID])
 
    Function to trigger routing of the message according to the rules in
    the database table and the configured parameters.
@@ -724,9 +723,10 @@ modparam("drouting", "enable_keepalive", 1)
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
    The module can take one optional parameter: the routing group the
-   caller belongs to - this may be a static numerical value or an AVP
-   specification. If none specified, the function will automatically try
-   to query the dr_group table to get this information.
+   caller belongs to - this may be a static int value or a variable
+   holding an int. If none specified, the function will automatically try
+   to query the dr_group table to get the group id associated with the
+   user in From URI.
 
    Example 1.16. do_routing usage
 ...
@@ -736,7 +736,7 @@ do_routing("0");
 ...
 do_routing("$avp(i:10)");
 
-4.2.  use_next_gw()/next_routing()
+4.2.  next_routing()
 
    The function takes the next available destination (set by do_routing,
    as alternative destinations) and push it into RURI. Note that the
@@ -751,26 +751,32 @@ do_routing("$avp(i:10)");
    is no other alternative destinations are found or in case of internal
    processing error.
 
-   Example 1.17. use_next_gw usage
+   Example 1.17. next_routing usage
 ...
-if (use_next_gw()) {
+if (next_routing()) {
         t_relay();
         exit;
 }
 ...
 
-4.3.  goes_to_gw([type])
+4.3.  use_next_gw()
+
+   Same as next_routing().
+
+4.4.  goes_to_gw([type])
 
    Function returns true if the destination of the current request
    (destination URI or Request URI) points (as IP) to one of the gateways.
-   There no DNS lookups done if the domain part of the URI is not an IP.
+   There is no DNS lookups done if the domain part of the URI is not an
+   IP.
 
    This function does not change anything in the message.
 
-   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and
+   ONREPLY_ROUTE.
 
-   The function can take one optional parameter:
-     * type (optional) - GW/destination type to be checked
+   The function can take two optional parameters:
+     * type - GW/destination type to be checked
 
    Example 1.18. goes_to_gw usage
 ...
@@ -780,38 +786,23 @@ if (goes_to_gw("1")) {
 }
 ...
 
-4.4.  is_from_gw([type])
+4.5.  is_from_gw([ type, [flag] ])
 
    The function checks if the sender of the message is a gateway from a
-   certain group.
+   group in drouting rules.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and
-   ONREPLY_ROUTE
-
-   The function can take one optional parameter:
-     * type (optional) - GW/destination type to be checked
-     * flags - if message is a request and the GW has a STRIP defined,
-       then apply it if GW is source.
-
-   Example 1.19. is_from_gw usage
-...
-if (is_from_gw("1") {
-}
-...
-
-4.5.  is_from_gw( type, [flag])
-
-   The function checks if the sender of the message is a gateway from a
-   certain group.
-
-   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+   ONREPLY_ROUTE.
 
    The function can take two parameters:
      * type (mandatory) - GW/destination type to be checked
      * flags (optional) - if message is a request and the GW has a STRIP
        defined, then apply it if GW is source.
 
-   Example 1.20. is_from_gw usage
+   Example 1.19. is_from_gw usage
+...
+if (is_from_gw("1") {
+}
 ...
 if (is_from_gw("3","1") {
 }

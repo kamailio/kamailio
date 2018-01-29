@@ -528,23 +528,23 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 				}
 				break;
 			case URI_HOST:
-				switch(*p){
-					case '[':
-						state=URI_HOST6_P;
-						break;
-					case ':':
-					case ';':
-					case '?': /* null host name ->invalid */
-					case '&':
-					case '@': /*chars not allowed in hosts names */
+				if(*p == '[') {
+					state = URI_HOST6_P;
+				} else {
+					if(isalnum(*p)) {
+						state = URI_HOST_P;
+					} else {
 						goto error_bad_host;
-					default:
-						state=URI_HOST_P;
+					}
 				}
 				break;
 			case URI_HOST_P:
-				switch(*p){
+				switch(*p) {
 					check_host_end;
+					default:
+						if(!isalnum(*p) && (*p != '.') && (*p != '-')) {
+							goto error_bad_host;
+						}
 				}
 				break;
 			case URI_HOST6_END:

@@ -157,7 +157,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 
 			if (pres_force_delete == 1)
 			{
-				if (delete_presentity(&pres) < 0)
+				if (delete_presentity(&pres, NULL) < 0)
 				{
 					LM_ERR("Deleting presentity\n");
 					goto error;
@@ -186,7 +186,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 
 				if (num_watchers > 0)
 				{
-					if (mark_presentity_for_delete(&pres) < 0)
+					if (mark_presentity_for_delete(&pres, NULL) < 0)
 					{
 						LM_ERR("Marking presentity\n");
 						if (pa_dbf.abort_transaction)
@@ -199,7 +199,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 				}
 				else
 				{
-					if (delete_presentity(&pres) < 0)
+					if (delete_presentity(&pres, NULL) < 0)
 					{
 						LM_ERR("Deleting presentity\n");
 						goto error;
@@ -494,7 +494,7 @@ int ki_handle_publish_uri(struct sip_msg* msg, str* sender_uri)
 	}
 
 	/* querry the database and update or insert */
-	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply, sphere) <0)
+	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply, sphere, NULL, NULL) <0)
 	{
 		LM_ERR("when updating presentity\n");
 		goto error;
@@ -635,7 +635,7 @@ int update_hard_presentity(str *pres_uri, pres_ev_t *event, str *file_uri, str *
 		goto done;
 	}
 
-	if (update_presentity(NULL, pres, pidf_doc, new_t, NULL, sphere) < 0)
+	if (update_presentity(NULL, pres, pidf_doc, new_t, NULL, sphere, NULL, NULL) < 0)
 	{
 		LM_ERR("updating presentity\n");
 		goto done;

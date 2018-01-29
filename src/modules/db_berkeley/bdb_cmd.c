@@ -51,17 +51,17 @@
  * @param cmd A pointer to generic db_cmd command being freed.
  * @param payload A pointer to ld_cmd structure to be freed.
  */
-static void bdb_cmd_free(db_cmd_t* cmd, bdb_cmd_t* payload)
+static void bdb_cmd_free(db_cmd_t *cmd, bdb_cmd_t *payload)
 {
 	db_drv_free(&payload->gen);
-	if (payload->dbcp)
+	if(payload->dbcp)
 		payload->dbcp->CLOSE_CURSOR(payload->dbcp);
 	if(payload->skey.s)
 		pkg_free(payload->skey.s);
 	pkg_free(payload);
 }
 
-int bdb_prepare_query(db_cmd_t* cmd, bdb_cmd_t *bcmd)
+int bdb_prepare_query(db_cmd_t *cmd, bdb_cmd_t *bcmd)
 {
 	bdb_tcache_t *tbc = NULL;
 	bdb_table_t *tp = NULL;
@@ -70,28 +70,24 @@ int bdb_prepare_query(db_cmd_t* cmd, bdb_cmd_t *bcmd)
 	int mode;
 	int i;
 
-	if(bcmd->bcon==NULL || bcmd->bcon->dbp==NULL)
+	if(bcmd->bcon == NULL || bcmd->bcon->dbp == NULL)
 		return -1;
-	
+
 	tbc = bdblib_get_table(bcmd->bcon->dbp, &cmd->table);
-	if(tbc==NULL)
-	{
+	if(tbc == NULL) {
 		ERR("bdb: table does not exist!\n");
 		return -1;
 	}
 
 	tp = tbc->dtp;
-	if(tp==NULL || tp->db==NULL)
-	{
+	if(tp == NULL || tp->db == NULL) {
 		ERR("bdb: table not loaded!\n");
 		return -1;
 	}
 
 	mode = 0;
-	if (!DB_FLD_EMPTY(cmd->result)) 
-	{ /* columns to be returned provided */
-		if (cmd->result_count > tp->ncols)
-		{
+	if(!DB_FLD_EMPTY(cmd->result)) { /* columns to be returned provided */
+		if(cmd->result_count > tp->ncols) {
 			ERR("bdb: too many columns in query\n");
 			goto error;
 		}
@@ -100,21 +96,20 @@ int bdb_prepare_query(db_cmd_t* cmd, bdb_cmd_t *bcmd)
 		cmd->result = db_fld(tp->ncols + 1);
 		cmd->result_count = tp->ncols;
 		for(i = 0; i < cmd->result_count; i++) {
-			if (bdb_fld(cmd->result + i, cmd->table.s) < 0)
+			if(bdb_fld(cmd->result + i, cmd->table.s) < 0)
 				goto error;
-		}		
+		}
 	}
-	
-	for (i = 0; i < cmd->result_count; i++) {
+
+	for(i = 0; i < cmd->result_count; i++) {
 		fld = cmd->result + i;
 		f = DB_GET_PAYLOAD(fld);
-		if(mode==1)
-		{
+		if(mode == 1) {
 			DBG("bdb: column name [%.*s]\n", tp->colp[i]->name.len,
 					tp->colp[i]->name.s);
-		
-			f->name = pkg_malloc(tp->colp[i]->name.len+1);
-			if (f->name == NULL) {
+
+			f->name = pkg_malloc(tp->colp[i]->name.len + 1);
+			if(f->name == NULL) {
 				ERR("bdb: Out of private memory\n");
 				goto error;
 			}
@@ -125,8 +120,7 @@ int bdb_prepare_query(db_cmd_t* cmd, bdb_cmd_t *bcmd)
 			f->col_pos = i;
 		} else {
 			f->col_pos = bdb_get_colpos(tp, fld->name);
-			if(f->col_pos == -1)
-			{
+			if(f->col_pos == -1) {
 				ERR("bdb: Column not found\n");
 				goto error;
 			}
@@ -138,51 +132,51 @@ int bdb_prepare_query(db_cmd_t* cmd, bdb_cmd_t *bcmd)
 			case DB_DOUBLE:
 			case DB_DATETIME:
 			case DB_STR:
-				if (!f->buf.s) f->buf.s = pkg_malloc(BDB_BUF_SIZE);
-				if (f->buf.s == NULL) {
+				if(!f->buf.s)
+					f->buf.s = pkg_malloc(BDB_BUF_SIZE);
+				if(f->buf.s == NULL) {
 					ERR("bdb: No memory left\n");
 					goto error;
 				}
 				fld[i].v.lstr.s = f->buf.s;
-			break;
+				break;
 
 			case DB_CSTR:
-				if (!f->buf.s) f->buf.s = pkg_malloc(BDB_BUF_SIZE);
-				if (f->buf.s == NULL) {
+				if(!f->buf.s)
+					f->buf.s = pkg_malloc(BDB_BUF_SIZE);
+				if(f->buf.s == NULL) {
 					ERR("bdb: No memory left\n");
 					goto error;
 				}
 				fld[i].v.cstr = f->buf.s;
-			break;
+				break;
 
-		case DB_BLOB:
-				if (!f->buf.s) f->buf.s = pkg_malloc(BDB_BUF_SIZE);
-				if (f->buf.s == NULL) {
+			case DB_BLOB:
+				if(!f->buf.s)
+					f->buf.s = pkg_malloc(BDB_BUF_SIZE);
+				if(f->buf.s == NULL) {
 					ERR("mysql: No memory left\n");
 					goto error;
 				}
 				fld[i].v.blob.s = f->buf.s;
-			break;
+				break;
 
-		case DB_NONE:
-			/* Eliminates gcc warning */
-			break;
+			case DB_NONE:
+				/* Eliminates gcc warning */
+				break;
 		}
 	}
-	
-	if (!DB_FLD_EMPTY(cmd->match))
-	{
-		if (cmd->match_count > tp->ncols)
-		{
+
+	if(!DB_FLD_EMPTY(cmd->match)) {
+		if(cmd->match_count > tp->ncols) {
 			ERR("bdb: too many columns in match struct of query\n");
 			goto error;
 		}
-		for (i = 0; i < cmd->match_count; i++) {
+		for(i = 0; i < cmd->match_count; i++) {
 			fld = cmd->result + i;
 			f = DB_GET_PAYLOAD(fld);
 			f->col_pos = bdb_get_colpos(tp, fld->name);
-			if(f->col_pos == -1)
-			{
+			if(f->col_pos == -1) {
 				ERR("bdb: Match column not found\n");
 				goto error;
 			}
@@ -195,7 +189,7 @@ error:
 	return -1;
 }
 
-int bdb_query(db_cmd_t* cmd, bdb_cmd_t *bcmd)
+int bdb_query(db_cmd_t *cmd, bdb_cmd_t *bcmd)
 {
 	DBT key;
 	DB *db;
@@ -205,33 +199,28 @@ int bdb_query(db_cmd_t* cmd, bdb_cmd_t *bcmd)
 	bdb_tcache_t *tbc = NULL;
 	bdb_table_t *tp = NULL;
 
-	if(bcmd->bcon==NULL || bcmd->bcon->dbp==NULL)
+	if(bcmd->bcon == NULL || bcmd->bcon->dbp == NULL)
 		return -1;
-	
+
 	tbc = bdblib_get_table(bcmd->bcon->dbp, &cmd->table);
-	if(tbc==NULL)
-	{
+	if(tbc == NULL) {
 		ERR("bdb: table does not exist!\n");
 		return -1;
 	}
 
 	tp = tbc->dtp;
-	if(tp==NULL)
-	{
+	if(tp == NULL) {
 		ERR("bdb: table not loaded!\n");
 		return -1;
 	}
 	db = tp->db;
-	if(db==NULL)
-	{
+	if(db == NULL) {
 		ERR("bdb: db structure not initialized!\n");
 		return -1;
 	}
 
-	if (DB_FLD_EMPTY(cmd->match))
-	{ /* no match constraint */
-		if (db->cursor(db, NULL, &bcmd->dbcp, 0) != 0) 
-		{
+	if(DB_FLD_EMPTY(cmd->match)) { /* no match constraint */
+		if(db->cursor(db, NULL, &bcmd->dbcp, 0) != 0) {
 			ERR("bdb: error creating cursor\n");
 			goto error;
 		}
@@ -241,22 +230,19 @@ int bdb_query(db_cmd_t* cmd, bdb_cmd_t *bcmd)
 
 	memset(&key, 0, sizeof(DBT));
 	memset(kbuf, 0, MAX_ROW_SIZE);
-	
-	klen=MAX_ROW_SIZE;
-	if(bdblib_valtochar(tp, cmd->match, cmd->match_count,
-			kbuf, &klen, BDB_KEY)!=0)
-	{
+
+	klen = MAX_ROW_SIZE;
+	if(bdblib_valtochar(tp, cmd->match, cmd->match_count, kbuf, &klen, BDB_KEY)
+			!= 0) {
 		ERR("bdb: error creating key\n");
 		goto error;
 	}
-	
-	if(klen > bcmd->skey_size || bcmd->skey.s==NULL)
-	{
-		if(bcmd->skey.s!=NULL)
+
+	if(klen > bcmd->skey_size || bcmd->skey.s == NULL) {
+		if(bcmd->skey.s != NULL)
 			pkg_free(bcmd->skey.s);
-		bcmd->skey.s = (char*)pkg_malloc(klen*sizeof(char));
-		if(bcmd->skey.s == NULL)
-		{
+		bcmd->skey.s = (char *)pkg_malloc(klen * sizeof(char));
+		if(bcmd->skey.s == NULL) {
 			ERR("bdb: no pkg memory\n");
 			goto error;
 		}
@@ -270,50 +256,50 @@ error:
 	return -1;
 }
 
-int bdb_cmd(db_cmd_t* cmd)
+int bdb_cmd(db_cmd_t *cmd)
 {
 	bdb_cmd_t *bcmd;
-	db_con_t  *con;
+	db_con_t *con;
 	bdb_con_t *bcon;
 
-	bcmd = (bdb_cmd_t*)pkg_malloc(sizeof(bdb_cmd_t));
-	if (bcmd == NULL) {
+	bcmd = (bdb_cmd_t *)pkg_malloc(sizeof(bdb_cmd_t));
+	if(bcmd == NULL) {
 		ERR("bdb: No memory left\n");
 		goto error;
 	}
 	memset(bcmd, '\0', sizeof(bdb_cmd_t));
-	if (db_drv_init(&bcmd->gen, bdb_cmd_free) < 0) goto error;
+	if(db_drv_init(&bcmd->gen, bdb_cmd_free) < 0)
+		goto error;
 
 	con = cmd->ctx->con[db_payload_idx];
 	bcon = DB_GET_PAYLOAD(con);
 	bcmd->bcon = bcon;
 
 	switch(cmd->type) {
-	case DB_PUT:
-	case DB_DEL:
-	case DB_UPD:
-		ERR("bdb: The driver does not support DB modifications yet.\n");
-		goto error;
-		break;
-
-	case DB_GET:
-		if(bdb_prepare_query(cmd, bcmd)!=0)
-		{
-			ERR("bdb: error preparing query.\n");
+		case DB_PUT:
+		case DB_DEL:
+		case DB_UPD:
+			ERR("bdb: The driver does not support DB modifications yet.\n");
 			goto error;
-		}
-		break;
+			break;
 
-	case DB_SQL:
-		ERR("bdb: The driver does not support raw queries yet.\n");
-		goto error;
+		case DB_GET:
+			if(bdb_prepare_query(cmd, bcmd) != 0) {
+				ERR("bdb: error preparing query.\n");
+				goto error;
+			}
+			break;
+
+		case DB_SQL:
+			ERR("bdb: The driver does not support raw queries yet.\n");
+			goto error;
 	}
 
 	DB_SET_PAYLOAD(cmd, bcmd);
 	return 0;
 
 error:
-	if (bcmd) {
+	if(bcmd) {
 		DB_SET_PAYLOAD(cmd, NULL);
 		db_drv_free(&bcmd->gen);
 		pkg_free(bcmd);
@@ -322,9 +308,9 @@ error:
 }
 
 
-int bdb_cmd_exec(db_res_t* res, db_cmd_t* cmd)
+int bdb_cmd_exec(db_res_t *res, db_cmd_t *cmd)
 {
-	db_con_t* con;
+	db_con_t *con;
 	bdb_cmd_t *bcmd;
 	bdb_con_t *bcon;
 
@@ -335,7 +321,7 @@ int bdb_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 	bcmd = DB_GET_PAYLOAD(cmd);
 	bcon = DB_GET_PAYLOAD(con);
 
-	if ((bcon->flags & BDB_CONNECTED)==0) {
+	if((bcon->flags & BDB_CONNECTED) == 0) {
 		ERR("bdb: not connected\n");
 		return -1;
 	}
@@ -344,15 +330,15 @@ int bdb_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 		case DB_DEL:
 		case DB_PUT:
 		case DB_UPD:
-				/* no result expected - cleanup */
-				DBG("bdb: query with no result.\n");
+			/* no result expected - cleanup */
+			DBG("bdb: query with no result.\n");
 			break;
 		case DB_GET:
-				return bdb_query(cmd, bcmd);
+			return bdb_query(cmd, bcmd);
 			break;
 		default:
-				/* result expected - no cleanup */
-				DBG("bdb: query with result.\n");
+			/* result expected - no cleanup */
+			DBG("bdb: query with result.\n");
 	}
 
 	return 0;
@@ -367,28 +353,25 @@ int bdb_update_result(db_cmd_t *cmd, DBT *data)
 	char *s;
 	static str col_map[MAX_NUM_COLS];
 
-	memset(col_map, 0, MAX_NUM_COLS*sizeof(str));
+	memset(col_map, 0, MAX_NUM_COLS * sizeof(str));
 
 	col = 0;
-	s = (char*)data->data;
+	s = (char *)data->data;
 	col_map[col].s = s;
-	while(*s!='\0')
-	{
-		if(*s == *DELIM)
-		{
+	while(*s != '\0') {
+		if(*s == *DELIM) {
 			col_map[col].len = s - col_map[col].s;
 			col++;
-			col_map[col].s = s+1;
+			col_map[col].s = s + 1;
 		}
 		s++;
 	}
 	col_map[col].len = s - col_map[col].s;
 
-	for (i = 0; i < cmd->result_count; i++) {
+	for(i = 0; i < cmd->result_count; i++) {
 		fld = cmd->result + i;
 		f = DB_GET_PAYLOAD(fld);
-		if(col_map[f->col_pos].len == 0)
-		{
+		if(col_map[f->col_pos].len == 0) {
 			fld->flags |= DB_NULL;
 			continue;
 		}
@@ -397,20 +380,18 @@ int bdb_update_result(db_cmd_t *cmd, DBT *data)
 		switch(fld->type) {
 			case DB_STR:
 				fld->v.lstr.s = f->buf.s;
-				if(col_map[f->col_pos].len < BDB_BUF_SIZE)
-				{
+				if(col_map[f->col_pos].len < BDB_BUF_SIZE) {
 					fld->v.lstr.len = col_map[f->col_pos].len;
 				} else {
 					/* truncate ?!? */
 					fld->v.lstr.len = BDB_BUF_SIZE - 1;
 				}
 				memcpy(fld->v.lstr.s, col_map[f->col_pos].s, fld->v.lstr.len);
-			break;
+				break;
 
 			case DB_BLOB:
 				fld->v.blob.s = f->buf.s;
-				if(col_map[f->col_pos].len < BDB_BUF_SIZE)
-				{
+				if(col_map[f->col_pos].len < BDB_BUF_SIZE) {
 					fld->v.blob.len = col_map[f->col_pos].len;
 				} else {
 					/* truncate ?!? */
@@ -418,12 +399,11 @@ int bdb_update_result(db_cmd_t *cmd, DBT *data)
 				}
 				memcpy(fld->v.blob.s, col_map[f->col_pos].s, fld->v.blob.len);
 
-			break;
+				break;
 
 			case DB_CSTR:
 				fld->v.cstr = f->buf.s;
-				if(col_map[f->col_pos].len < BDB_BUF_SIZE)
-				{
+				if(col_map[f->col_pos].len < BDB_BUF_SIZE) {
 					memcpy(fld->v.cstr, col_map[f->col_pos].s,
 							col_map[f->col_pos].len);
 					fld->v.cstr[col_map[f->col_pos].len] = '\0';
@@ -431,72 +411,68 @@ int bdb_update_result(db_cmd_t *cmd, DBT *data)
 					/* truncate ?!? */
 					memcpy(fld->v.cstr, col_map[f->col_pos].s,
 							BDB_BUF_SIZE - 1);
-					fld->v.cstr[BDB_BUF_SIZE - 1] = '\0';;
+					fld->v.cstr[BDB_BUF_SIZE - 1] = '\0';
+					;
 				}
 
-			break;
-			
+				break;
+
 			case DB_DATETIME:
 				/* str to time */
-				col_map[f->col_pos].s[col_map[f->col_pos].len]='\0';
-				if (bdb_str2time(col_map[f->col_pos].s, &fld->v.time) < 0)
-				{
+				col_map[f->col_pos].s[col_map[f->col_pos].len] = '\0';
+				if(bdb_str2time(col_map[f->col_pos].s, &fld->v.time) < 0) {
 					ERR("Error while converting INT value from string\n");
 					return -1;
 				}
-			break;
+				break;
 
 			case DB_INT:
 				/* str to int */
-				col_map[f->col_pos].s[col_map[f->col_pos].len]='\0';
-				if (bdb_str2int(col_map[f->col_pos].s, &fld->v.int4) < 0)
-				{
+				col_map[f->col_pos].s[col_map[f->col_pos].len] = '\0';
+				if(bdb_str2int(col_map[f->col_pos].s, &fld->v.int4) < 0) {
 					ERR("Error while converting INT value from string\n");
 					return -1;
 				}
-			break;
+				break;
 
 			case DB_FLOAT:
 			case DB_DOUBLE:
 				/* str to dowuble */
-				col_map[f->col_pos].s[col_map[f->col_pos].len]='\0';
-				if (bdb_str2double(col_map[f->col_pos].s, &fld->v.dbl) < 0)
-				{
+				col_map[f->col_pos].s[col_map[f->col_pos].len] = '\0';
+				if(bdb_str2double(col_map[f->col_pos].s, &fld->v.dbl) < 0) {
 					ERR("Error while converting DOUBLE value from string\n");
 					return -1;
 				}
-			break;
+				break;
 
 			case DB_BITMAP:
 				/* str to int */
-				col_map[f->col_pos].s[col_map[f->col_pos].len]='\0';
-				if (bdb_str2int(col_map[f->col_pos].s, &fld->v.int4) < 0)
-				{
+				col_map[f->col_pos].s[col_map[f->col_pos].len] = '\0';
+				if(bdb_str2int(col_map[f->col_pos].s, &fld->v.int4) < 0) {
 					ERR("Error while converting BITMAP value from string\n");
 					return -1;
 				}
-			break;
+				break;
 
 			case DB_NONE:
-			break;
+				break;
 		}
 	}
 	return 0;
-
 }
 
-int bdb_cmd_first(db_res_t* res)
+int bdb_cmd_first(db_res_t *res)
 {
 	bdb_cmd_t *bcmd;
 
 	bcmd = DB_GET_PAYLOAD(res->cmd);
-	switch (bcmd->next_flag) {
+	switch(bcmd->next_flag) {
 		case -2: /* table is empty */
 			return 1;
-		case 0:  /* cursor position is 0 */
+		case 0: /* cursor position is 0 */
 			return 0;
-		case 1:  /* next row */
-		case 2:  /* EOF */
+		case 1: /* next row */
+		case 2: /* EOF */
 			ERR("bdb: no next row.\n");
 			return -1;
 		default:
@@ -505,7 +481,7 @@ int bdb_cmd_first(db_res_t* res)
 }
 
 
-int bdb_cmd_next(db_res_t* res)
+int bdb_cmd_next(db_res_t *res)
 {
 	bdb_cmd_t *bcmd;
 	DBT key, data;
@@ -514,28 +490,27 @@ int bdb_cmd_next(db_res_t* res)
 
 	bcmd = DB_GET_PAYLOAD(res->cmd);
 
-	if (bcmd->next_flag == 2 || bcmd->next_flag == -2) return 1;
+	if(bcmd->next_flag == 2 || bcmd->next_flag == -2)
+		return 1;
 
 	memset(&key, 0, sizeof(DBT));
 	memset(&data, 0, sizeof(DBT));
 	memset(dbuf, 0, MAX_ROW_SIZE);
-	
+
 	data.data = dbuf;
 	data.ulen = MAX_ROW_SIZE;
 	data.flags = DB_DBT_USERMEM;
 
 	ret = 0;
-	if(bcmd->skey.len==0)
-	{
-		while((ret = bcmd->dbcp->c_get(bcmd->dbcp, &key, &data, DB_NEXT))==0)
-		{
-			if(!strncasecmp((char*)key.data,"METADATA",8)) 
+	if(bcmd->skey.len == 0) {
+		while((ret = bcmd->dbcp->c_get(bcmd->dbcp, &key, &data, DB_NEXT))
+				== 0) {
+			if(!strncasecmp((char *)key.data, "METADATA", 8))
 				continue;
 			break;
 		}
-		if(ret!=0)
-		{
-			bcmd->next_flag =  bcmd->next_flag<0?-2:2;
+		if(ret != 0) {
+			bcmd->next_flag = bcmd->next_flag < 0 ? -2 : 2;
 			return 1;
 		}
 	} else {
@@ -544,18 +519,17 @@ int bdb_cmd_next(db_res_t* res)
 		key.flags = DB_DBT_USERMEM;
 		key.size = bcmd->skey.len;
 		ret = bcmd->dbcp->c_get(bcmd->dbcp, &key, &data, DB_NEXT);
-		if(ret!=0)
-		{
-			bcmd->next_flag = bcmd->next_flag<0?-2:2;
+		if(ret != 0) {
+			bcmd->next_flag = bcmd->next_flag < 0 ? -2 : 2;
 			return 1;
 		}
 	}
 
-	if (bcmd->next_flag <= 0) {
+	if(bcmd->next_flag <= 0) {
 		bcmd->next_flag++;
 	}
 
-	if (bdb_update_result(res->cmd, &data) < 0) {
+	if(bdb_update_result(res->cmd, &data) < 0) {
 		return -1;
 	}
 

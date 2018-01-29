@@ -60,4 +60,10 @@ int uridb_db_bind(const str* db_url);
 void uridb_db_close(void);
 int uridb_db_ver(const str* db_url, str* name);
 
+int ki_check_to(struct sip_msg* _m);
+int ki_check_from(struct sip_msg* _m);
+int ki_check_uri(struct sip_msg* msg, str *suri);
+int ki_check_uri_realm(struct sip_msg* msg, str *suri, str *susername, str *srelam);
+int ki_does_uri_exist(struct sip_msg* _msg);
+
 #endif /* CHECKS_H */

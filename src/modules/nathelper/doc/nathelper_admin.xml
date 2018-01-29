@@ -139,7 +139,7 @@
 		<title>Set <varname>force_socket</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "force_socket", "localhost:33333")
+modparam("nathelper", "force_socket", "127.0.0.1:5060")
 ...
 </programlisting>
 		</example>
@@ -554,11 +554,15 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 		</title>
 		<para>
 		Add a received parameter to the <quote>Contact</quote> header fields
-		or the Contact URI. The parameter will contain the URI created from the
-		source IP, port, and protocol of the packet containing the SIP message.
-		The parameter can be then processed by another registrar. This is useful,
-		for example, when replicating register messages using <function>t_replicate</function>
-		function to another registrar.
+		(available for all transports) or to the Contact URI (available only
+		for UDP traffic).
+		</para>
+		<para>
+		The parameter will contain the URI created from the
+		source IP, port, and protocol (if different than UDP) of the packet
+		containing the SIP message. The parameter can be then processed by
+		another registrar. This is useful, for example, when replicating register
+		messages using <function>t_replicate</function> function to another registrar.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -566,7 +570,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 			<emphasis>flag</emphasis> - flags to indicate if the parameter
 			should be added to Contact URI or Contact header. If the flag is
 			non-zero, the parameter will be added to the Contact URI. If not
-			used or equal to zero, the parameter will go to the Contact 
+			used or equal to zero, the parameter will go to the Contact
 			header.
 			</para></listitem>
 		</itemizedlist>
@@ -707,8 +711,8 @@ if(is_rfc1918("$rd")) {
 		the contact URI containing either received ip, port, and
 		transport protocol or those given as parameters.  If called
 		without parameters, <quote>;alias</quote> parameter is
-		only added if received ip and port differ from those in
-		contact URI.
+		only added if received ip, port, or transport protocol differs
+        from that in contact URI.
 		</para>
 		<para>
 		This function can be used from

@@ -3,15 +3,18 @@ language: c
 compiler:
   - gcc
   - clang
+env:
+  - DIST=stretch
+  - DIST=sid
 services:
   - docker
 before_install:
-  - docker pull kamailio/pkg-kamailio-docker:dev-stretch
-script: docker run -v $TRAVIS_BUILD_DIR:/code:rw kamailio/pkg-kamailio-docker:dev-stretch /bin/bash -c "export CC=$CC; cd /code; ./test/travis/build_travis.sh"
+  - docker pull kamailio/pkg-kamailio-docker:dev-$DIST
+script: docker run -v $TRAVIS_BUILD_DIR:/code:rw kamailio/pkg-kamailio-docker:dev-$DIST /bin/bash -c "cd /code; CC=$CC DIST=$DIST ./test/travis/build_travis.sh"
 branches:
   only:
     - 'master'
-    - '/^4\.[0-9]+$/'
+    - '/^5\.[0-9]+$/'
 notifications:
   irc:
     channels:

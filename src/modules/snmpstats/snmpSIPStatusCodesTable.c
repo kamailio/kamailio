@@ -80,11 +80,10 @@
 static netsnmp_handler_registration *my_handler = NULL;
 static netsnmp_table_array_callbacks cb;
 
-oid kamailioSIPStatusCodesTable_oid[] = {
-	kamailioSIPStatusCodesTable_TABLE_OID };
+oid kamailioSIPStatusCodesTable_oid[] = {kamailioSIPStatusCodesTable_TABLE_OID};
 
 size_t kamailioSIPStatusCodesTable_oid_len =
-OID_LENGTH(kamailioSIPStatusCodesTable_oid);
+		OID_LENGTH(kamailioSIPStatusCodesTable_oid);
 
 
 /* 
@@ -100,34 +99,32 @@ void init_kamailioSIPStatusCodesTable(void)
 
 /* the *_row_copy routine */
 static int kamailioSIPStatusCodesTable_row_copy(
-		kamailioSIPStatusCodesTable_context * dst,
-		kamailioSIPStatusCodesTable_context * src)
+		kamailioSIPStatusCodesTable_context *dst,
+		kamailioSIPStatusCodesTable_context *src)
 {
-	if(!dst||!src)
+	if(!dst || !src)
 		return 1;
-		
-	
+
+
 	/* copy index, if provided */
-	if(dst->index.oids)
-	{
+	if(dst->index.oids) {
 		free(dst->index.oids);
 	}
 
-	if(snmp_clone_mem( (void*)&dst->index.oids, src->index.oids, 
-				src->index.len * sizeof(oid) )) 
-	{
+	if(snmp_clone_mem((void *)&dst->index.oids, src->index.oids,
+			   src->index.len * sizeof(oid))) {
 		dst->index.oids = NULL;
 		return 1;
 	}
 
 	dst->index.len = src->index.len;
-	
+
 
 	/* copy components into the context structure */
-	dst->kamailioSIPStatusCodeMethod    = src->kamailioSIPStatusCodeMethod;
-	dst->kamailioSIPStatusCodeValue     = src->kamailioSIPStatusCodeValue;
-	dst->kamailioSIPStatusCodeIns       = src->kamailioSIPStatusCodeIns;
-	dst->kamailioSIPStatusCodeOuts      = src->kamailioSIPStatusCodeOuts;
+	dst->kamailioSIPStatusCodeMethod = src->kamailioSIPStatusCodeMethod;
+	dst->kamailioSIPStatusCodeValue = src->kamailioSIPStatusCodeValue;
+	dst->kamailioSIPStatusCodeIns = src->kamailioSIPStatusCodeIns;
+	dst->kamailioSIPStatusCodeOuts = src->kamailioSIPStatusCodeOuts;
 	dst->kamailioSIPStatusCodeRowStatus = src->kamailioSIPStatusCodeRowStatus;
 
 	return 0;
@@ -145,8 +142,8 @@ static int kamailioSIPStatusCodesTable_row_copy(
  * returned if they are invalid.  An index is invalid if it is not between 
  * 100 and 699 (Inclusive).
  */
-int kamailioSIPStatusCodesTable_extract_index( 
-		kamailioSIPStatusCodesTable_context * ctx, netsnmp_index * hdr)
+int kamailioSIPStatusCodesTable_extract_index(
+		kamailioSIPStatusCodesTable_context *ctx, netsnmp_index *hdr)
 {
 
 	/*
@@ -164,64 +161,62 @@ int kamailioSIPStatusCodesTable_extract_index(
 	 */
 	if(hdr) {
 		netsnmp_assert(ctx->index.oids == NULL);
-		if((hdr->len > MAX_OID_LEN) || 
-				snmp_clone_mem( 
-					(void*)&ctx->index.oids,
-					hdr->oids,
-					hdr->len * sizeof(oid))) 
-		{
+		if((hdr->len > MAX_OID_LEN)
+				|| snmp_clone_mem((void *)&ctx->index.oids, hdr->oids,
+						   hdr->len * sizeof(oid))) {
 			return -1;
 		}
 
 		ctx->index.len = hdr->len;
 	}
 
- 	/* Initialize the two variables responsible for holding our two indices.
+	/* Initialize the two variables responsible for holding our two indices.
 	 */
-	memset(&var_kamailioSIPStatusCodeMethod, 0x00, 
-			 sizeof(var_kamailioSIPStatusCodeMethod));
+	memset(&var_kamailioSIPStatusCodeMethod, 0x00,
+			sizeof(var_kamailioSIPStatusCodeMethod));
 
-	memset( &var_kamailioSIPStatusCodeValue, 0x00, 
-			sizeof(var_kamailioSIPStatusCodeValue) );
+	memset(&var_kamailioSIPStatusCodeValue, 0x00,
+			sizeof(var_kamailioSIPStatusCodeValue));
 
-	var_kamailioSIPStatusCodeMethod.type = ASN_UNSIGNED; 
-	var_kamailioSIPStatusCodeValue.type  = ASN_UNSIGNED;
+	var_kamailioSIPStatusCodeMethod.type = ASN_UNSIGNED;
+	var_kamailioSIPStatusCodeValue.type = ASN_UNSIGNED;
 
-	var_kamailioSIPStatusCodeMethod.next_variable = 
-		&var_kamailioSIPStatusCodeValue;
+	var_kamailioSIPStatusCodeMethod.next_variable =
+			&var_kamailioSIPStatusCodeValue;
 
 	var_kamailioSIPStatusCodeValue.next_variable = NULL;
 
-	/* parse the oid into the individual index components */
-	err = parse_oid_indexes( hdr->oids, hdr->len, 
-			&var_kamailioSIPStatusCodeMethod );
+	if(hdr) {
+		/* parse the oid into the individual index components */
+		err = parse_oid_indexes(
+				hdr->oids, hdr->len, &var_kamailioSIPStatusCodeMethod);
 
-	if (err == SNMP_ERR_NOERROR) {
+		if(err == SNMP_ERR_NOERROR) {
 
-		/* copy index components into the context structure */
-		ctx->kamailioSIPStatusCodeMethod = 
-			*var_kamailioSIPStatusCodeMethod.val.integer;
-		ctx->kamailioSIPStatusCodeValue  = 
-			*var_kamailioSIPStatusCodeValue.val.integer;
-   
-   
-		if (*var_kamailioSIPStatusCodeMethod.val.integer < 1)
-		{
-			err = -1;
+			/* copy index components into the context structure */
+			ctx->kamailioSIPStatusCodeMethod =
+					*var_kamailioSIPStatusCodeMethod.val.integer;
+			ctx->kamailioSIPStatusCodeValue =
+					*var_kamailioSIPStatusCodeValue.val.integer;
+
+
+			if(*var_kamailioSIPStatusCodeMethod.val.integer < 1) {
+				err = -1;
+			}
+
+			if(*var_kamailioSIPStatusCodeValue.val.integer < 100
+					|| *var_kamailioSIPStatusCodeValue.val.integer > 699) {
+				err = -1;
+			}
 		}
 
-		if (*var_kamailioSIPStatusCodeValue.val.integer < 100 ||
-		    *var_kamailioSIPStatusCodeValue.val.integer > 699) {
-			err = -1;
-		}
+		/* parsing may have allocated memory. free it. */
+		snmp_reset_var_buffers(&var_kamailioSIPStatusCodeMethod);
 
+		return err;
 	}
 
-	
-	/* parsing may have allocated memory. free it. */
-	snmp_reset_var_buffers( &var_kamailioSIPStatusCodeMethod );
-
-	return err;
+	return -1;
 }
 
 
@@ -235,8 +230,7 @@ int kamailioSIPStatusCodesTable_extract_index(
  */
 int kamailioSIPStatusCodesTable_can_activate(
 		kamailioSIPStatusCodesTable_context *undo_ctx,
-		kamailioSIPStatusCodesTable_context *row_ctx,
-		netsnmp_request_group * rg)
+		kamailioSIPStatusCodesTable_context *row_ctx, netsnmp_request_group *rg)
 {
 	return 1;
 }
@@ -254,8 +248,7 @@ int kamailioSIPStatusCodesTable_can_activate(
  */
 int kamailioSIPStatusCodesTable_can_deactivate(
 		kamailioSIPStatusCodesTable_context *undo_ctx,
-		kamailioSIPStatusCodesTable_context *row_ctx,
-		netsnmp_request_group * rg)
+		kamailioSIPStatusCodesTable_context *row_ctx, netsnmp_request_group *rg)
 {
 	return 1;
 }
@@ -272,12 +265,11 @@ int kamailioSIPStatusCodesTable_can_deactivate(
  */
 int kamailioSIPStatusCodesTable_can_delete(
 		kamailioSIPStatusCodesTable_context *undo_ctx,
-		kamailioSIPStatusCodesTable_context *row_ctx,
-		netsnmp_request_group * rg)
+		kamailioSIPStatusCodesTable_context *row_ctx, netsnmp_request_group *rg)
 {
-	if(kamailioSIPStatusCodesTable_can_deactivate(undo_ctx,row_ctx,rg) != 1)
+	if(kamailioSIPStatusCodesTable_can_deactivate(undo_ctx, row_ctx, rg) != 1)
 		return 0;
-	
+
 	return 1;
 }
 
@@ -300,21 +292,21 @@ int kamailioSIPStatusCodesTable_can_delete(
  * This value will be used in the future to calculate the delta between now and
  * the time this row has been read.  
  * */
-kamailioSIPStatusCodesTable_context *
-kamailioSIPStatusCodesTable_create_row( netsnmp_index* hdr)
+kamailioSIPStatusCodesTable_context *kamailioSIPStatusCodesTable_create_row(
+		netsnmp_index *hdr)
 {
 	stat_var *in_status_code;
 	stat_var *out_status_code;
 
-	kamailioSIPStatusCodesTable_context * ctx =
-		SNMP_MALLOC_TYPEDEF(kamailioSIPStatusCodesTable_context);
+	kamailioSIPStatusCodesTable_context *ctx =
+			SNMP_MALLOC_TYPEDEF(kamailioSIPStatusCodesTable_context);
 	if(!ctx)
 		return NULL;
-		
+
 	/* The *_extract_index funtion already validates the indices, so we
 	 * don't need to do any further evaluations here.  */
-	if(kamailioSIPStatusCodesTable_extract_index( ctx, hdr )) {
-		if (NULL != ctx->index.oids)
+	if(kamailioSIPStatusCodesTable_extract_index(ctx, hdr)) {
+		if(NULL != ctx->index.oids)
 			free(ctx->index.oids);
 		free(ctx);
 		return NULL;
@@ -323,8 +315,8 @@ kamailioSIPStatusCodesTable_create_row( netsnmp_index* hdr)
 
 	/* The indices were already set up in the extract_index function
 	 * above. */
-	ctx->kamailioSIPStatusCodeIns       = 0;
-	ctx->kamailioSIPStatusCodeOuts      = 0;
+	ctx->kamailioSIPStatusCodeIns = 0;
+	ctx->kamailioSIPStatusCodeOuts = 0;
 	ctx->kamailioSIPStatusCodeRowStatus = 0;
 
 	/* Retrieve the index for the status code, and then assign the starting
@@ -332,19 +324,17 @@ kamailioSIPStatusCodesTable_create_row( netsnmp_index* hdr)
 	 * the next snmpget/snmpwalk/snmptable/etc. */
 	int codeIndex = ctx->kamailioSIPStatusCodeValue;
 
-	ctx->startingInStatusCodeValue  = 0;
+	ctx->startingInStatusCodeValue = 0;
 	ctx->startingOutStatusCodeValue = 0;
 
-	in_status_code  = get_stat_var_from_num_code(codeIndex, 0);
+	in_status_code = get_stat_var_from_num_code(codeIndex, 0);
 	out_status_code = get_stat_var_from_num_code(codeIndex, 1);
 
-	if (in_status_code != NULL) 
-	{
-		ctx->startingInStatusCodeValue  = get_stat_val(in_status_code);
+	if(in_status_code != NULL) {
+		ctx->startingInStatusCodeValue = get_stat_val(in_status_code);
 	}
 
-	if (out_status_code != NULL) 
-	{
+	if(out_status_code != NULL) {
 		ctx->startingOutStatusCodeValue = get_stat_val(out_status_code);
 	}
 
@@ -355,11 +345,10 @@ kamailioSIPStatusCodesTable_create_row( netsnmp_index* hdr)
 /* 
  * Auto-generated function.  The *_duplicate row routine
  */
-kamailioSIPStatusCodesTable_context *
-kamailioSIPStatusCodesTable_duplicate_row( 
-		kamailioSIPStatusCodesTable_context * row_ctx)
+kamailioSIPStatusCodesTable_context *kamailioSIPStatusCodesTable_duplicate_row(
+		kamailioSIPStatusCodesTable_context *row_ctx)
 {
-	kamailioSIPStatusCodesTable_context * dup;
+	kamailioSIPStatusCodesTable_context *dup;
 
 	if(!row_ctx)
 		return NULL;
@@ -367,8 +356,8 @@ kamailioSIPStatusCodesTable_duplicate_row(
 	dup = SNMP_MALLOC_TYPEDEF(kamailioSIPStatusCodesTable_context);
 	if(!dup)
 		return NULL;
-		
-	if(kamailioSIPStatusCodesTable_row_copy(dup,row_ctx)) {
+
+	if(kamailioSIPStatusCodesTable_row_copy(dup, row_ctx)) {
 		free(dup);
 		dup = NULL;
 	}
@@ -384,13 +373,13 @@ kamailioSIPStatusCodesTable_duplicate_row(
  * deleted.  However, in our implementation there is never a reason why this
  * function can't be called. 
  */
-netsnmp_index * kamailioSIPStatusCodesTable_delete_row( 
-		kamailioSIPStatusCodesTable_context * ctx )
+netsnmp_index *kamailioSIPStatusCodesTable_delete_row(
+		kamailioSIPStatusCodesTable_context *ctx)
 {
 	if(ctx->index.oids)
 		free(ctx->index.oids);
 
-	free( ctx );
+	free(ctx);
 
 	return NULL;
 }
@@ -415,68 +404,59 @@ netsnmp_index * kamailioSIPStatusCodesTable_delete_row(
  * any other condition is considered illegal, and will result in an SNMP error
  * being returned. 
  */
-void kamailioSIPStatusCodesTable_set_reserve1( netsnmp_request_group *rg )
+void kamailioSIPStatusCodesTable_set_reserve1(netsnmp_request_group *rg)
 {
 	kamailioSIPStatusCodesTable_context *row_ctx =
-		(kamailioSIPStatusCodesTable_context *)rg->existing_row;
+			(kamailioSIPStatusCodesTable_context *)rg->existing_row;
 
-	netsnmp_variable_list      *var;
+	netsnmp_variable_list *var;
 	netsnmp_request_group_item *current;
 
 	int rc;
 
 	/* Loop through the specified columns, and make sure that all values are
 	 * valid. */
-	for( current = rg->list; current; current = current->next ) {
+	for(current = rg->list; current; current = current->next) {
 
 		var = current->ri->requestvb;
 		rc = SNMP_ERR_NOERROR;
 
-		switch(current->tri->colnum) 
-		{
+		switch(current->tri->colnum) {
 			case COLUMN_KAMAILIOSIPSTATUSCODEROWSTATUS:
 
 				/** RowStatus = ASN_INTEGER */
-				rc = netsnmp_check_vb_type_and_size(var, 
-						ASN_INTEGER,
-						sizeof(
-						row_ctx->kamailioSIPStatusCodeRowStatus));
-			
+				rc = netsnmp_check_vb_type_and_size(var, ASN_INTEGER,
+						sizeof(row_ctx->kamailioSIPStatusCodeRowStatus));
+
 				/* Want to make sure that if it already exists that it
 				 * is setting it to 'destroy', or if it doesn't exist,
 				 * that it is setting it to 'createAndGo' */
-				if (row_ctx->kamailioSIPStatusCodeRowStatus == 0 && 
-				    *var->val.integer != TC_ROWSTATUS_CREATEANDGO) 
-				{
-					rc = SNMP_ERR_BADVALUE;
-				}			
-
-				else if (row_ctx->kamailioSIPStatusCodeRowStatus ==
-						TC_ROWSTATUS_ACTIVE && 
-						*var->val.integer != 
-						TC_ROWSTATUS_DESTROY) 
-				{
+				if(row_ctx->kamailioSIPStatusCodeRowStatus == 0
+						&& *var->val.integer != TC_ROWSTATUS_CREATEANDGO) {
 					rc = SNMP_ERR_BADVALUE;
 				}
-		
+
+				else if(row_ctx->kamailioSIPStatusCodeRowStatus
+								== TC_ROWSTATUS_ACTIVE
+						&& *var->val.integer != TC_ROWSTATUS_DESTROY) {
+					rc = SNMP_ERR_BADVALUE;
+				}
+
 
 				break;
 
 			default: /** We shouldn't get here */
 				rc = SNMP_ERR_GENERR;
 				snmp_log(LOG_ERR, "unknown column in kamailioSIP"
-						"StatusCodesTable_set_reserve1\n");
+								  "StatusCodesTable_set_reserve1\n");
 		}
 
-		if (rc)
-		{
-		   netsnmp_set_mode_request_error(MODE_SET_BEGIN, 
-				   current->ri, rc );
+		if(rc) {
+			netsnmp_set_mode_request_error(MODE_SET_BEGIN, current->ri, rc);
 		}
 
 		rg->status = SNMP_MAX(rg->status, current->ri->status);
 	}
-
 }
 
 /*
@@ -484,10 +464,10 @@ void kamailioSIPStatusCodesTable_set_reserve1( netsnmp_request_group *rg )
  * last-minute conditions not being met.  However, we don't have any such
  * conditions, so we leave the default function as is.
  */
-void kamailioSIPStatusCodesTable_set_reserve2( netsnmp_request_group *rg )
+void kamailioSIPStatusCodesTable_set_reserve2(netsnmp_request_group *rg)
 {
-	kamailioSIPStatusCodesTable_context *undo_ctx = 
-		(kamailioSIPStatusCodesTable_context *)rg->undo_info;
+	kamailioSIPStatusCodesTable_context *undo_ctx =
+			(kamailioSIPStatusCodesTable_context *)rg->undo_info;
 
 	netsnmp_request_group_item *current;
 
@@ -495,33 +475,29 @@ void kamailioSIPStatusCodesTable_set_reserve2( netsnmp_request_group *rg )
 
 	rg->rg_void = rg->list->ri;
 
-	for( current = rg->list; current; current = current->next ) {
+	for(current = rg->list; current; current = current->next) {
 
 		rc = SNMP_ERR_NOERROR;
 
-		switch(current->tri->colnum) 
-		{
+		switch(current->tri->colnum) {
 
 			case COLUMN_KAMAILIOSIPSTATUSCODEROWSTATUS:
 				/** RowStatus = ASN_INTEGER */
 				rc = netsnmp_check_vb_rowstatus(current->ri->requestvb,
-					undo_ctx ? 
-					undo_ctx->kamailioSIPStatusCodeRowStatus:0);
+						undo_ctx ? undo_ctx->kamailioSIPStatusCodeRowStatus
+								 : 0);
 
 				rg->rg_void = current->ri;
 				break;
 
-			default: /** We shouldn't get here */
+			default:			   /** We shouldn't get here */
 				netsnmp_assert(0); /** why wasn't this caught in reserve1? */
 		}
 
-		if (rc)
-		{
-			netsnmp_set_mode_request_error(MODE_SET_BEGIN, 
-					current->ri, rc);
+		if(rc) {
+			netsnmp_set_mode_request_error(MODE_SET_BEGIN, current->ri, rc);
 		}
 	}
-
 }
 
 /*
@@ -532,15 +508,15 @@ void kamailioSIPStatusCodesTable_set_reserve2( netsnmp_request_group *rg )
  * In our case, we don't require any changes.  So we leave the original
  * auto-generated code as is.   
  */
-void kamailioSIPStatusCodesTable_set_action( netsnmp_request_group *rg )
+void kamailioSIPStatusCodesTable_set_action(netsnmp_request_group *rg)
 {
 	netsnmp_variable_list *var;
 
-	kamailioSIPStatusCodesTable_context *row_ctx = 
-		(kamailioSIPStatusCodesTable_context *)rg->existing_row;
+	kamailioSIPStatusCodesTable_context *row_ctx =
+			(kamailioSIPStatusCodesTable_context *)rg->existing_row;
 
-	kamailioSIPStatusCodesTable_context *undo_ctx = 
-		(kamailioSIPStatusCodesTable_context *)rg->undo_info;
+	kamailioSIPStatusCodesTable_context *undo_ctx =
+			(kamailioSIPStatusCodesTable_context *)rg->undo_info;
 
 	netsnmp_request_group_item *current;
 
@@ -548,66 +524,59 @@ void kamailioSIPStatusCodesTable_set_action( netsnmp_request_group *rg )
 
 	/* Depending on what the snmpset was, set the row to be created or
 	 * deleted.   */
-	for( current = rg->list; current; current = current->next ) 
-	{
+	for(current = rg->list; current; current = current->next) {
 		var = current->ri->requestvb;
 
-		switch(current->tri->colnum) 
-		{
+		switch(current->tri->colnum) {
 			case COLUMN_KAMAILIOSIPSTATUSCODEROWSTATUS:
-			
-				/** RowStatus = ASN_INTEGER */
-				row_ctx->kamailioSIPStatusCodeRowStatus = 
-					*var->val.integer;
 
-				if (*var->val.integer == TC_ROWSTATUS_CREATEANDGO)
-				{
+				/** RowStatus = ASN_INTEGER */
+				row_ctx->kamailioSIPStatusCodeRowStatus = *var->val.integer;
+
+				if(*var->val.integer == TC_ROWSTATUS_CREATEANDGO) {
 					rg->row_created = 1;
-				}
-				else if (*var->val.integer == TC_ROWSTATUS_DESTROY)
-				{
+				} else if(*var->val.integer == TC_ROWSTATUS_DESTROY) {
 					rg->row_deleted = 1;
-				}
-				else {
+				} else {
 					/* We should never be here, because the RESERVE
 					 * functions should have taken care of all other
 					 * values. */
-				LM_ERR("Invalid RowStatus in kamailioSIPStatusCodesTable\n");
+					LM_ERR("Invalid RowStatus in "
+						   "kamailioSIPStatusCodesTable\n");
 				}
 
 				break;
 
-			default: /** We shouldn't get here */
+			default:			   /** We shouldn't get here */
 				netsnmp_assert(0); /** why wasn't this caught in reserve1? */
 		}
 	}
 
-	/*
+/*
 	 * done with all the columns. Could check row related
 	 * requirements here.
 	 */
 #ifndef kamailioSIPStatusCodesTable_CAN_MODIFY_ACTIVE_ROW
-	if( undo_ctx && RS_IS_ACTIVE(undo_ctx->kamailioSIPStatusCodeRowStatus) &&
-		row_ctx && RS_IS_ACTIVE(row_ctx->kamailioSIPStatusCodeRowStatus)) 
-	{
-			row_err = 1;
+	if(undo_ctx && RS_IS_ACTIVE(undo_ctx->kamailioSIPStatusCodeRowStatus)
+			&& row_ctx
+			&& RS_IS_ACTIVE(row_ctx->kamailioSIPStatusCodeRowStatus)) {
+		row_err = 1;
 	}
 #endif
+
+	LM_DBG("stage row_err = %d\n", row_err);
 
 	/*
 	 * check activation/deactivation
 	 */
-	row_err = netsnmp_table_array_check_row_status(&cb, rg, 
-			row_ctx ? 
-			&row_ctx->kamailioSIPStatusCodeRowStatus : NULL,
-			undo_ctx ? 
-			&undo_ctx->kamailioSIPStatusCodeRowStatus : NULL);
+	row_err = netsnmp_table_array_check_row_status(&cb, rg,
+			row_ctx ? &row_ctx->kamailioSIPStatusCodeRowStatus : NULL,
+			undo_ctx ? &undo_ctx->kamailioSIPStatusCodeRowStatus : NULL);
 	if(row_err) {
-		netsnmp_set_mode_request_error(MODE_SET_BEGIN,
-				(netsnmp_request_info*)rg->rg_void, row_err);
+		netsnmp_set_mode_request_error(
+				MODE_SET_BEGIN, (netsnmp_request_info *)rg->rg_void, row_err);
 		return;
 	}
-
 }
 
 
@@ -615,9 +584,8 @@ void kamailioSIPStatusCodesTable_set_action( netsnmp_request_group *rg )
  * The COMMIT phase is used to do any extra processing after the ACTION phase.
  * In our table, there is nothing to do, so the function body is empty.
  */
-void kamailioSIPStatusCodesTable_set_commit( netsnmp_request_group *rg )
+void kamailioSIPStatusCodesTable_set_commit(netsnmp_request_group *rg)
 {
-
 }
 
 
@@ -627,9 +595,8 @@ void kamailioSIPStatusCodesTable_set_commit( netsnmp_request_group *rg )
  * all these resources in earlier functions.  So for our purposes, the function
  * body is empty. 
  */
-void kamailioSIPStatusCodesTable_set_free( netsnmp_request_group *rg )
+void kamailioSIPStatusCodesTable_set_free(netsnmp_request_group *rg)
 {
-
 }
 
 
@@ -638,11 +605,9 @@ void kamailioSIPStatusCodesTable_set_free( netsnmp_request_group *rg )
  * We don't have anything complicated enough to warrant putting anything in this
  * function.  Therefore, its just left with an empty function body. 
  */
-void kamailioSIPStatusCodesTable_set_undo( netsnmp_request_group *rg )
+void kamailioSIPStatusCodesTable_set_undo(netsnmp_request_group *rg)
 {
-
 }
-
 
 
 /*
@@ -657,7 +622,7 @@ void initialize_table_kamailioSIPStatusCodesTable(void)
 
 	if(my_handler) {
 		snmp_log(LOG_ERR, "initialize_table_kamailioSIPStatusCodes"
-				"Table_handler called again\n");
+						  "Table_handler called again\n");
 		return;
 	}
 
@@ -665,17 +630,20 @@ void initialize_table_kamailioSIPStatusCodesTable(void)
 
 	/** create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
+	if(!table_info) {
+		snmp_log(LOG_ERR, "failed to allocate table_info\n");
+		return;
+	}
 
 	my_handler = netsnmp_create_handler_registration(
-			"kamailioSIPStatusCodesTable",
-			netsnmp_table_array_helper_handler,
+			"kamailioSIPStatusCodesTable", netsnmp_table_array_helper_handler,
 			kamailioSIPStatusCodesTable_oid,
-			kamailioSIPStatusCodesTable_oid_len,
-			HANDLER_CAN_RWRITE);
-			
-	if (!my_handler || !table_info) {
+			kamailioSIPStatusCodesTable_oid_len, HANDLER_CAN_RWRITE);
+
+	if(!my_handler) {
+		SNMP_FREE(table_info);
 		snmp_log(LOG_ERR, "malloc failed in initialize_table_kamailioSIP"
-				"StatusCodesTable_handler\n");
+						  "StatusCodesTable_handler\n");
 		return; /** mallocs failed */
 	}
 
@@ -692,58 +660,54 @@ void initialize_table_kamailioSIPStatusCodesTable(void)
 	 */
 	cb.get_value = kamailioSIPStatusCodesTable_get_value;
 
-	cb.container = 
-		netsnmp_container_find("kamailioSIPStatusCodesTable_primary:"
-				"kamailioSIPStatusCodesTable:"
-				"table_container");
+	cb.container = netsnmp_container_find("kamailioSIPStatusCodesTable_primary:"
+										  "kamailioSIPStatusCodesTable:"
+										  "table_container");
 
 #ifdef kamailioSIPStatusCodesTable_CUSTOM_SORT
 	netsnmp_container_add_index(cb.container,
-			netsnmp_container_find(
-				"kamailioSIPStatusCodesTable_custom:"
-				"kamailioSIPStatusCodesTable:"
-				"table_container"));
+			netsnmp_container_find("kamailioSIPStatusCodesTable_custom:"
+								   "kamailioSIPStatusCodesTable:"
+								   "table_container"));
 
 	cb.container->next->compare = kamailioSIPStatusCodesTable_cmp;
 #endif
 	cb.can_set = 1;
 
-	cb.create_row    =
-		(UserRowMethod*)kamailioSIPStatusCodesTable_create_row;
+	cb.create_row = (UserRowMethod *)kamailioSIPStatusCodesTable_create_row;
 
-	cb.duplicate_row = 
-		(UserRowMethod*)kamailioSIPStatusCodesTable_duplicate_row;
+	cb.duplicate_row =
+			(UserRowMethod *)kamailioSIPStatusCodesTable_duplicate_row;
 
-	cb.delete_row    = 
-		(UserRowMethod*)kamailioSIPStatusCodesTable_delete_row;
+	cb.delete_row = (UserRowMethod *)kamailioSIPStatusCodesTable_delete_row;
 
-	cb.row_copy      = (Netsnmp_User_Row_Operation *)
-		kamailioSIPStatusCodesTable_row_copy;
+	cb.row_copy =
+			(Netsnmp_User_Row_Operation *)kamailioSIPStatusCodesTable_row_copy;
 
-	cb.can_activate  = (Netsnmp_User_Row_Action *)
-		kamailioSIPStatusCodesTable_can_activate;
+	cb.can_activate =
+			(Netsnmp_User_Row_Action *)kamailioSIPStatusCodesTable_can_activate;
 
 	cb.can_deactivate = (Netsnmp_User_Row_Action *)
-		kamailioSIPStatusCodesTable_can_deactivate;
+			kamailioSIPStatusCodesTable_can_deactivate;
 
-	cb.can_delete     = 
-		(Netsnmp_User_Row_Action *)kamailioSIPStatusCodesTable_can_delete;
+	cb.can_delete =
+			(Netsnmp_User_Row_Action *)kamailioSIPStatusCodesTable_can_delete;
 
-	cb.set_reserve1   = kamailioSIPStatusCodesTable_set_reserve1;
-	cb.set_reserve2   = kamailioSIPStatusCodesTable_set_reserve2;
-	
+	cb.set_reserve1 = kamailioSIPStatusCodesTable_set_reserve1;
+	cb.set_reserve2 = kamailioSIPStatusCodesTable_set_reserve2;
+
 	cb.set_action = kamailioSIPStatusCodesTable_set_action;
 	cb.set_commit = kamailioSIPStatusCodesTable_set_commit;
-	
+
 	cb.set_free = kamailioSIPStatusCodesTable_set_free;
 	cb.set_undo = kamailioSIPStatusCodesTable_set_undo;
-	
+
 	DEBUGMSGTL(("initialize_table_kamailioSIPStatusCodesTable",
-				"Registering table kamailioSIPStatusCodesTable "
-				"as a table array\n"));
-	
-	netsnmp_table_container_register(my_handler, table_info, &cb,
-			cb.container, 1);
+			"Registering table kamailioSIPStatusCodesTable "
+			"as a table array\n"));
+
+	netsnmp_table_container_register(
+			my_handler, table_info, &cb, cb.container, 1);
 }
 
 /*
@@ -759,74 +723,67 @@ void initialize_table_kamailioSIPStatusCodesTable(void)
  * ins and how many outs have been received (With respect to the message code)
  * since this row was created. 
  */
-int kamailioSIPStatusCodesTable_get_value(
-			netsnmp_request_info *request,
-			netsnmp_index *item,
-			netsnmp_table_request_info *table_info )
+int kamailioSIPStatusCodesTable_get_value(netsnmp_request_info *request,
+		netsnmp_index *item, netsnmp_table_request_info *table_info)
 {
 	stat_var *the_stat;
 
 	netsnmp_variable_list *var = request->requestvb;
 
-	kamailioSIPStatusCodesTable_context *context = 
-		(kamailioSIPStatusCodesTable_context *)item;
+	kamailioSIPStatusCodesTable_context *context =
+			(kamailioSIPStatusCodesTable_context *)item;
 
 	/* Retrieve the statusCodeIdx so we can calculate deltas between current
 	 * values and previous values. */
 	int statusCodeIdx = context->kamailioSIPStatusCodeValue;
 
-	switch(table_info->colnum) 
-	{
+	switch(table_info->colnum) {
 		case COLUMN_KAMAILIOSIPSTATUSCODEINS:
 
 			context->kamailioSIPStatusCodeIns = 0;
 
 			the_stat = get_stat_var_from_num_code(statusCodeIdx, 0);
 
-			if (the_stat != NULL)  
-			{
+			if(the_stat != NULL) {
 				/* Calculate the Delta */
-				context->kamailioSIPStatusCodeIns = get_stat_val(the_stat) -
-					context->startingInStatusCodeValue;
+				context->kamailioSIPStatusCodeIns =
+						get_stat_val(the_stat)
+						- context->startingInStatusCodeValue;
 			}
 
 			snmp_set_var_typed_value(var, ASN_COUNTER,
-					(unsigned char*)
-					&context->kamailioSIPStatusCodeIns,
+					(unsigned char *)&context->kamailioSIPStatusCodeIns,
 					sizeof(context->kamailioSIPStatusCodeIns));
 			break;
-	
+
 		case COLUMN_KAMAILIOSIPSTATUSCODEOUTS:
-			
+
 			context->kamailioSIPStatusCodeOuts = 0;
 
 			the_stat = get_stat_var_from_num_code(statusCodeIdx, 1);
 
-			if (the_stat != NULL)
-			{
+			if(the_stat != NULL) {
 				/* Calculate the Delta */
 				context->kamailioSIPStatusCodeOuts =
-					get_stat_val(the_stat) -
-					context->startingOutStatusCodeValue;
+						get_stat_val(the_stat)
+						- context->startingOutStatusCodeValue;
 			}
 			snmp_set_var_typed_value(var, ASN_COUNTER,
-					 (unsigned char*)
-					 &context->kamailioSIPStatusCodeOuts,
-					 sizeof(context->kamailioSIPStatusCodeOuts) );
-		break;
-	
+					(unsigned char *)&context->kamailioSIPStatusCodeOuts,
+					sizeof(context->kamailioSIPStatusCodeOuts));
+			break;
+
 		case COLUMN_KAMAILIOSIPSTATUSCODEROWSTATUS:
 			/** RowStatus = ASN_INTEGER */
 			snmp_set_var_typed_value(var, ASN_INTEGER,
-					 (unsigned char*)
-					 &context->kamailioSIPStatusCodeRowStatus,
-					 sizeof(context->kamailioSIPStatusCodeRowStatus) );
-		break;
-	
-	default: /** We shouldn't get here */
-		snmp_log(LOG_ERR, "unknown column in "
-				 "kamailioSIPStatusCodesTable_get_value\n");
-		return SNMP_ERR_GENERR;
+					(unsigned char *)&context->kamailioSIPStatusCodeRowStatus,
+					sizeof(context->kamailioSIPStatusCodeRowStatus));
+			break;
+
+		default: /** We shouldn't get here */
+			snmp_log(LOG_ERR, "unknown column in "
+							  "kamailioSIPStatusCodesTable_get_value\n");
+			return SNMP_ERR_GENERR;
 	}
 	return SNMP_ERR_NOERROR;
 }
@@ -835,10 +792,8 @@ int kamailioSIPStatusCodesTable_get_value(
  * kamailioSIPRegUserLookupTable_get_by_idx
  */
 const kamailioSIPStatusCodesTable_context *
-kamailioSIPStatusCodesTable_get_by_idx(netsnmp_index * hdr)
+kamailioSIPStatusCodesTable_get_by_idx(netsnmp_index *hdr)
 {
-	return (const kamailioSIPStatusCodesTable_context *)
-		CONTAINER_FIND(cb.container, hdr );
+	return (const kamailioSIPStatusCodesTable_context *)CONTAINER_FIND(
+			cb.container, hdr);
 }
-
-

@@ -841,11 +841,11 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 	/* clear the previously saved error code */
 	rpc_fault_reset(ctx);
 
-	va_start(ap, fmt);
 	orig_fmt=fmt;
 	nofault = 0;
 	modifiers=0;
 	autoconv=autoconvert;
+	va_start(ap, fmt);
 	for (;*fmt; fmt++){
 		switch(*fmt){
 			case '*': /* start of optional parameters */
@@ -918,7 +918,7 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 error_read:
 	/* Do not immediately send out the error message, the user might retry the scan with
 	different parameters */
-	if(nofault==0 || ((err!=E_BINRPC_MORE_DATA) && (err!=E_BINRPC_EOP)))
+	if(nofault==0 || ((err!=E_BINRPC_MORE_DATA) && (err!=E_BINRPC_EOP))) {
 		rpc_fault_prepare(ctx, 400, "error at parameter %d: expected %s type but"
 						" %s", ctx->in.record_no, rpc_type_name(v.type),
 						 binrpc_error(err));
@@ -927,6 +927,11 @@ error_read:
 						": %s", ctx->in.record_no, ctx->in.ctx.offset,
 								v.type, binrpc_error(err));
 	*/
+	}
+	if(nofault==1 && (err==E_BINRPC_MORE_DATA || err==E_BINRPC_EOP)) {
+		va_end(ap);
+		return (int)(fmt-orig_fmt)-modifiers;
+	}
 	goto error_ret;
 error_not_supported:
 	rpc_fault(ctx, 500, "internal server error, type %d not supported",

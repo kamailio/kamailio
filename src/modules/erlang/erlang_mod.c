@@ -666,6 +666,7 @@ static int fixup_rpc(void** param, int param_no)
 	if(param_no==1 || param_no==2) {
 		if (fix_param_types(FPARAM_STR|FPARAM_STRING|FPARAM_AVP|FPARAM_PVS|FPARAM_PVE,param)){
 			LM_ERR("wrong parameter #%d\n",param_no);
+			pkg_free((void*)erl_param);
 			return -1;
 		}
 		erl_param->type = ERL_PARAM_FPARAM;
@@ -696,7 +697,7 @@ static int fixup_rpc(void** param, int param_no)
 
 			if (psp->setf != pv_list_set && psp->setf != pv_xbuff_set) {
 				LM_ERR("wrong parameter #%d: accepted types are list or xbuff\n",param_no);
-				pv_spec_free(&erl_param->value.sp);
+				pv_spec_destroy(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -873,6 +874,7 @@ static int fixup_reg(void** param, int param_no)
 	if(param_no==1) {
 		if (fix_param_types(FPARAM_STR|FPARAM_STRING|FPARAM_AVP|FPARAM_PVS|FPARAM_PVE|FPARAM_INT,param)){
 			LM_ERR("wrong parameter #%d\n",param_no);
+			pkg_free((void*)erl_param);
 			return -1;
 		}
 		erl_param->type = ERL_PARAM_FPARAM;
@@ -914,7 +916,7 @@ static int fixup_reg(void** param, int param_no)
 				erl_param->type = ERL_PARAM_XBUFF_SPEC;
 			} else {
 				LM_ERR("wrong parameter #%d\n",param_no);
-				pv_spec_free(&erl_param->value.sp);
+				pv_spec_destroy(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -1109,7 +1111,7 @@ static int fixup_reply(void** param, int param_no)
 				erl_param->type = ERL_PARAM_XBUFF_SPEC;
 			} else {
 				LM_ERR("wrong parameter #%d\n",param_no);
-				pv_spec_free(&erl_param->value.sp);
+				pv_spec_destroy(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -1355,6 +1357,7 @@ static int fixup_send(void** param, int param_no)
 		if (erl_param->value.sp.pvp.pvn.type == PV_NAME_INTSTR) {
 			if (fix_param_types(FPARAM_STR|FPARAM_STRING,param)) {
 				LM_ERR("wrong parameter #%d\n",param_no);
+				pv_spec_destroy(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -1364,6 +1367,7 @@ static int fixup_send(void** param, int param_no)
 		else {
 			if (erl_param->value.sp.type == PVT_XAVP) {
 				LM_ERR("XAVP not acceptable for parameter #%d\n",param_no);
+				pv_spec_destroy(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -1374,7 +1378,7 @@ static int fixup_send(void** param, int param_no)
 				erl_param->type = ERL_PARAM_XBUFF_SPEC;
 			} else {
 				LM_ERR("wrong parameter #%d\n",param_no);
-				pv_spec_free(&erl_param->value.sp);
+				pv_spec_destroy(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -1394,6 +1398,7 @@ static int fixup_send(void** param, int param_no)
 		if (erl_param->value.sp.pvp.pvn.type == PV_NAME_INTSTR) {
 			if (fix_param_types(FPARAM_STR|FPARAM_STRING,param)) {
 				LM_ERR("wrong parameter #%d\n",param_no);
+				pv_spec_destroy(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -1402,6 +1407,7 @@ static int fixup_send(void** param, int param_no)
 		} else {
 			if (erl_param->value.sp.type ==PVT_XAVP) {
 				LM_ERR("XAVP not acceptable for parameter #%d\n",param_no);
+				pv_spec_destroy(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}
@@ -1417,7 +1423,7 @@ static int fixup_send(void** param, int param_no)
 				erl_param->type = ERL_PARAM_XBUFF_SPEC;
 			} else {
 				LM_ERR("wrong parameter #%d\n",param_no);
-				pv_spec_free(&erl_param->value.sp);
+				pv_spec_destroy(&erl_param->value.sp);
 				pkg_free((void*)erl_param);
 				return E_UNSPEC;
 			}

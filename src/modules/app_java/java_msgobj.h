@@ -21,7 +21,7 @@
  */
 
 #ifndef __JAVA_MSGOBJ_H__
-#define	__JAVA_MSGOBJ_H__
+#define __JAVA_MSGOBJ_H__
 
 #include "../../core/parser/msg_parser.h"
 

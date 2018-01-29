@@ -38,30 +38,20 @@
 /*
 * LDAP API functions
 */
-int ldap_params_search(
-	int* _ld_result_count,
-	char* _lds_name,
-	char* _dn,
-	int _scope,
-	char** _attrs,
-	char* _filter,
-	...);
+int ldap_params_search(int *_ld_result_count, char *_lds_name, char *_dn,
+		int _scope, char **_attrs, char *_filter, ...);
 
-int ldap_url_search(
-	char* _ldap_url,
-	int* _ld_result_count);
+int ldap_url_search(char *_ldap_url, int *_ld_result_count);
 
-int ldap_get_attr_vals(
-	str *_attr_name,
-	struct berval ***_vals);
+int ldap_get_attr_vals(str *_attr_name, struct berval ***_vals);
 
 int ldap_inc_result_pointer(void);
 
-int ldap_str2scope(char* scope_str);
+int ldap_str2scope(char *scope_str);
 
-int get_ldap_handle(char* _lds_name, LDAP** _ldap_handle);
+int get_ldap_handle(char *_lds_name, LDAP **_ldap_handle);
 
-void get_last_ldap_result(LDAP** _last_ldap_handle, 
-		LDAPMessage** _last_ldap_result);
+void get_last_ldap_result(
+		LDAP **_last_ldap_handle, LDAPMessage **_last_ldap_result);
 
 #endif /* LDAP_API_FN_H */

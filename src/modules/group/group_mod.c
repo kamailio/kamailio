@@ -42,6 +42,7 @@
 #include "../../core/error.h"
 #include "../../core/mem/mem.h"
 #include "../../core/usr_avp.h"
+#include "../../core/kemi.h"
 #include "group_mod.h"
 #include "group.h"
 #include "re_group.h"
@@ -316,5 +317,26 @@ static int get_gid_fixup(void** param, int param_no)
 		*param = sp;
 	}
 
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_group_exports[] = {
+	{ str_init("group"), str_init("is_user_in"),
+		SR_KEMIP_INT, ki_is_user_in,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_group_exports);
 	return 0;
 }

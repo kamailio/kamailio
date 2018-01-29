@@ -36,15 +36,15 @@
 #include "sr_compat.h"
 #include "kemi.h"
 
-struct onsend_info{
+typedef struct onsend_info{
 	union sockaddr_union* to;       /* dest info */
 	struct socket_info* send_sock;  /* local send socket */
 	char* buf;                      /* outgoing buffer */
 	int len;                        /* outgoing buffer len */
 	sip_msg_t *msg;                 /* original sip msg struct */
-};
+} onsend_info_t;
 
-extern struct onsend_info* p_onsend;
+extern onsend_info_t* p_onsend;
 
 
 #define get_onsend_info()	(p_onsend)
@@ -53,13 +53,13 @@ extern struct onsend_info* p_onsend;
  * returns: 0 drop the message, >= ok, <0 error (but forward the message)
  * it also migh change dst->send_flags!
  * WARNING: buf must be 0 terminated (to allow regex matches on it) */
-static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
+static inline int run_onsend(sip_msg_t* orig_msg, dest_info_t* dst,
 								char* buf, int len)
 {
-	struct onsend_info onsnd_info = {0};
+	onsend_info_t onsnd_info = {0};
 	int ret;
-	struct run_act_ctx ra_ctx;
-	struct run_act_ctx *bctx;
+	run_act_ctx_t ra_ctx;
+	run_act_ctx_t *bctx;
 	int backup_route_type;
 	snd_flags_t fwd_snd_flags_bak;
 	snd_flags_t rpl_snd_flags_bak;

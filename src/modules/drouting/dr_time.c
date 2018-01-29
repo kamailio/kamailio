@@ -203,17 +203,23 @@ int ac_tm_free(ac_tm_p _atp)
 	return 0;
 }
 
-ac_maxval_p ac_get_maxval(ac_tm_p _atp)
+ac_maxval_p ac_get_maxval(ac_tm_p _atp, int mode)
 {
 	struct tm _tm;
 	int _v;
 	ac_maxval_p _amp = NULL;
+	static ac_maxval_t _amv;
 
 	if(!_atp)
 		return NULL;
-	_amp = (ac_maxval_p)shm_malloc(sizeof(ac_maxval_t));
-	if(!_amp)
-		return NULL;
+	if(mode==1) {
+		_amp = (ac_maxval_p)shm_malloc(sizeof(ac_maxval_t));
+		if(!_amp)
+			return NULL;
+	} else {
+		_amp = &_amv;
+	}
+	memset(_amp, 0, sizeof(ac_maxval_t));
 
 	/* the number of the days in the year */
 	_amp->yday = 365 + is_leap_year(_atp->t.tm_year + 1900);
@@ -269,7 +275,13 @@ ac_maxval_p ac_get_maxval(ac_tm_p _atp)
 				  + 1;
 #endif
 
-	_atp->mv = _amp;
+	if(mode==1) {
+		if(_atp->mv!=NULL) {
+			shm_free(_atp->mv);
+		}
+
+		_atp->mv = _amp;
+	}
 	return _amp;
 }
 
@@ -1045,7 +1057,7 @@ int check_byxxx(tmrec_p _trp, ac_tm_p _atp)
 			&& !_trp->byweekno)
 		return REC_MATCH;
 
-	_amp = ac_get_maxval(_atp);
+	_amp = ac_get_maxval(_atp, 0);
 	if(!_amp)
 		return REC_NOMATCH;
 

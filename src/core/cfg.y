@@ -475,6 +475,8 @@ extern char *default_routename;
 %token MAX_WLOOPS
 %token PVBUFSIZE
 %token PVBUFSLOTS
+%token PVCACHELIMIT
+%token PVCACHEACTION
 %token HTTP_REPLY_PARSE
 %token VERSION_TABLE_CFG
 %token VERBOSE_STARTUP
@@ -1556,6 +1558,10 @@ assign_stm:
 	| PVBUFSIZE EQUAL error { yyerror("number expected"); }
 	| PVBUFSLOTS EQUAL NUMBER { pv_set_buffer_slots($3); }
 	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
+	| PVCACHELIMIT EQUAL NUMBER { default_core_cfg.pv_cache_limit=$3; }
+	| PVCACHELIMIT EQUAL error { yyerror("number expected"); }
+	| PVCACHEACTION EQUAL NUMBER { default_core_cfg.pv_cache_action=$3; }
+	| PVCACHEACTION EQUAL error { yyerror("number expected"); }
 	| HTTP_REPLY_PARSE EQUAL NUMBER { http_reply_parse=$3; }
 	| HTTP_REPLY_PARSE EQUAL error { yyerror("boolean value expected"); }
 	| VERBOSE_STARTUP EQUAL NUMBER { ksr_verbose_startup=$3; }

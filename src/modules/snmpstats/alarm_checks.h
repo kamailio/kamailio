@@ -34,7 +34,7 @@
 #define _SNMPSTATS_ALARM_AGENT_
 
 #define ALARM_AGENT_FREQUENCY_IN_SECONDS 5
-#define ALARM_AGENT_NAME                 "snmpstats_alarm_agent"
+#define ALARM_AGENT_NAME "snmpstats_alarm_agent"
 
 /*! Returns the number of bytes currently waiting in the msg queue if they exceed
  * the threshold, and zero otherwise.  If threshold_to_compare_to is < 0, then
@@ -48,6 +48,6 @@ int check_dialog_alarm(int threshold_to_compare_to);
 /*! This function will be called periodically from an Kamailio timer.  The first
  * time it is called, it will query KAMAILIO-MIB for configured thresholds.
  */
-void run_alarm_check(unsigned int ticks, void * attr);
+void run_alarm_check(unsigned int ticks, void *attr);
 
 #endif

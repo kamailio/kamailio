@@ -256,7 +256,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set force_socket parameter
 ...
-modparam("nathelper", "force_socket", "localhost:33333")
+modparam("nathelper", "force_socket", "127.0.0.1:5060")
 ...
 
 4.2. natping_interval (integer)
@@ -517,12 +517,14 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 
 5.3.  add_rcv_param([flag]),
 
-   Add a received parameter to the “Contact” header fields or the Contact
-   URI. The parameter will contain the URI created from the source IP,
-   port, and protocol of the packet containing the SIP message. The
-   parameter can be then processed by another registrar. This is useful,
-   for example, when replicating register messages using t_replicate
-   function to another registrar.
+   Add a received parameter to the “Contact” header fields (available for
+   all transports) or to the Contact URI (available only for UDP traffic).
+
+   The parameter will contain the URI created from the source IP, port,
+   and protocol (if different than UDP) of the packet containing the SIP
+   message. The parameter can be then processed by another registrar. This
+   is useful, for example, when replicating register messages using
+   t_replicate function to another registrar.
 
    Meaning of the parameters is as follows:
      * flag - flags to indicate if the parameter should be added to
@@ -612,7 +614,8 @@ if(is_rfc1918("$rd")) {
    Adds an “;alias=ip~port~transport” parameter to the contact URI
    containing either received ip, port, and transport protocol or those
    given as parameters. If called without parameters, “;alias” parameter
-   is only added if received ip and port differ from those in contact URI.
+   is only added if received ip, port, or transport protocol differs from
+   that in contact URI.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and LOCAL_ROUTE.

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Carlos Ruiz Díaz (caruizdiaz.com),
  *                    ConexionGroup (www.conexiongroup.com)
  *

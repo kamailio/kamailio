@@ -134,33 +134,49 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
  * \param _grp checked table
  * \return 1 on success, negative on failure 
  */
-int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
+int is_user_in_helper(sip_msg_t* _msg, str *user, str *domain, str *grp)
 {
 	db_key_t keys[3];
 	db_val_t vals[3];
 	db_key_t col[1];
 	db1_res_t* res = NULL;
 
+	if (user==NULL || user->s==NULL || user->len==0 ) {
+		LM_DBG("no username part\n");
+		return -1;
+	}
+
+	if (grp==NULL || grp->s==NULL || grp->len==0 ) {
+		LM_DBG("no group\n");
+		return -1;
+	}
+
 	keys[0] = &user_column;
 	keys[1] = &group_column;
 	keys[2] = &domain_column;
 	col[0]  = &group_column;
 
-	if ( get_username_domain( _msg, (group_check_p)_hf, &(VAL_STR(vals)),
-	&(VAL_STR(vals+2)))!=0) {
-		LM_ERR("failed to get username@domain\n");
-		return -1;
-	}
+	VAL_STR(vals) = *user;
 
-	if (VAL_STR(vals).s==NULL || VAL_STR(vals).len==0 ) {
-		LM_DBG("no username part\n");
-		return -1;
+	if(use_domain) {
+		if(domain && domain->s) {
+			VAL_STR(vals + 2) = *domain;
+		} else {
+			LM_ERR("no domain\n");
+			return -1;
+		}
+		LM_DBG("checking if '%.*s@%.*s' is in '%.*s'\n",
+				user->len, user->s, domain->len, domain->s,
+				grp->len, grp->s);
+	} else {
+		LM_DBG("checking if '%.*s' is in '%.*s'\n",
+				user->len, user->s, grp->len, grp->s);
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB1_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
 
-	VAL_STR(vals + 1) = *((str*)_grp);
+	VAL_STR(vals + 1) = *grp;
 
 	if (group_dbf.use_table(group_dbh, &table) < 0) {
 		LM_ERR("failed to use_table\n");
@@ -174,18 +190,55 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		LM_DBG("user is not in group '%.*s'\n", 
-		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
+		LM_DBG("user is not in group '%.*s'\n", grp->len, grp->s);
 		group_dbf.free_result(group_dbh, res);
 		return -6;
 	} else {
-		LM_DBG("user is in group '%.*s'\n", 
-			((str*)_grp)->len, ZSW(((str*)_grp)->s));
+		LM_DBG("user is in group '%.*s'\n", grp->len, grp->s);
 		group_dbf.free_result(group_dbh, res);
 		return 1;
 	}
 }
 
+/*!
+ * \brief Check if username in specified header field is in a table
+ * \param _msg SIP message
+ * \param _hf Header field
+ * \param _grp checked table
+ * \return 1 on success, negative on failure 
+ */
+int is_user_in(sip_msg_t* _msg, char* _hf, char* _grp)
+{
+	str user = STR_NULL;
+	str domain = STR_NULL;
+
+	if ( get_username_domain( _msg, (group_check_p)_hf, &user, &domain)!=0) {
+		LM_ERR("failed to get username@domain\n");
+		return -1;
+	}
+
+	return is_user_in_helper(_msg, &user, &domain, (str*)_grp);
+}
+
+/**
+ * 
+ */
+int ki_is_user_in(sip_msg_t *msg, str *uri, str *grp)
+{
+	sip_uri_t puri;
+
+	if (uri==NULL || uri->s==NULL || uri->len==0 ) {
+		LM_DBG("no uri parameter\n");
+		return -1;
+	}
+
+	if(parse_uri(uri->s, uri->len, &puri) < 0) {
+		LM_ERR("failed to parse SIP URI <%.*s>\n", uri->len, uri->s);
+		return -1;
+	}
+
+	return is_user_in_helper(msg, &puri.user, &puri.host, grp);
+}
 
 /*!
  * \brief Initialize the DB connection

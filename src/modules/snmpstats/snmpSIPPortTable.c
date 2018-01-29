@@ -42,10 +42,10 @@
 #include "snmpstats_globals.h"
 #include "snmpSIPPortTable.h"
 
-static     netsnmp_handler_registration *my_handler = NULL;
-static     netsnmp_table_array_callbacks cb;
+static netsnmp_handler_registration *my_handler = NULL;
+static netsnmp_table_array_callbacks cb;
 
-oid    kamailioSIPPortTable_oid[]   = { kamailioSIPPortTable_TABLE_OID };
+oid kamailioSIPPortTable_oid[] = {kamailioSIPPortTable_TABLE_OID};
 size_t kamailioSIPPortTable_oid_len = OID_LENGTH(kamailioSIPPortTable_oid);
 
 
@@ -58,7 +58,7 @@ size_t kamailioSIPPortTable_oid_len = OID_LENGTH(kamailioSIPPortTable_oid);
  * Note: This function returns a newly allocated block of memory.  Make sure to
  * deallocate the memory when you no longer need it. 
  */
-static oid *createIndex(int ipType, int *ipAddress, int *sizeOfOID) 
+static oid *createIndex(int ipType, int *ipAddress, int *sizeOfOID)
 {
 	oid *currentOIDIndex;
 	int i;
@@ -74,7 +74,7 @@ static oid *createIndex(int ipType, int *ipAddress, int *sizeOfOID)
 	currentOIDIndex = pkg_malloc((*sizeOfOID) * sizeof(oid));
 	LM_DBG("----> Size of OID %d \n", *sizeOfOID);
 
-	if (currentOIDIndex == NULL) {
+	if(currentOIDIndex == NULL) {
 		LM_ERR("failed to create a row for kamailioSIPPortTable\n");
 		*sizeOfOID = 0;
 		return NULL;
@@ -83,14 +83,15 @@ static oid *createIndex(int ipType, int *ipAddress, int *sizeOfOID)
 	/* Assign the OID Index */
 	currentOIDIndex[0] = ipType;
 	currentOIDIndex[1] = num_octets;
-		
-	for (i = 0; i < num_octets; i++) {
-		currentOIDIndex[i+2] = ipAddress[i];
+
+	for(i = 0; i < num_octets; i++) {
+		currentOIDIndex[i + 2] = ipAddress[i];
 	}
 
 	/* Extract out the port number */
 	currentOIDIndex[num_octets + 2] = ipAddress[num_octets];
-	LM_DBG("----> Port number %d Family %s \n", ipAddress[num_octets], ipType == 1 ? "IPv4" : "IPv6");
+	LM_DBG("----> Port number %d Family %s \n", ipAddress[num_octets],
+			ipType == 1 ? "IPv4" : "IPv6");
 
 	return currentOIDIndex;
 }
@@ -110,42 +111,41 @@ kamailioSIPPortTable_context *getRow(int ipType, int *ipAddress)
 	kamailioSIPPortTable_context *rowToReturn;
 	int num_octets = ipType == 1 ? NUM_IP_OCTETS : NUM_IPV6_OCTETS;
 
-	if (currentOIDIndex == NULL)
-	{
+	if(currentOIDIndex == NULL) {
 		return NULL;
 	}
 
 	theIndex.oids = currentOIDIndex;
-	theIndex.len  = lengthOfOID;
+	theIndex.len = lengthOfOID;
 
 	/* Lets check to see if there is an existing row. */
 	rowToReturn = CONTAINER_FIND(cb.container, &theIndex);
-	
+
 	/* We found an existing row, so there is no need to create a new one.
 	 * Let's return it to the caller. */
-	if (rowToReturn != NULL) 
-	{
+	if(rowToReturn != NULL) {
 		/* We don't need the index we allocated anymore, because the
 		 * existing row already has its own copy, so free the memory */
 		pkg_free(currentOIDIndex);
 
 		return rowToReturn;
 	}
-	
+
 	/* If we are here then the row doesn't exist yet.  So lets create it. */
 	rowToReturn = SNMP_MALLOC_TYPEDEF(kamailioSIPPortTable_context);
 
 	/* Not enough memory to create the new row. */
-	if (rowToReturn == NULL) {
+	if(rowToReturn == NULL) {
 		pkg_free(currentOIDIndex);
 		return NULL;
 	}
 
 	/* Assign the Container Index. */
-	rowToReturn->index.len  = lengthOfOID;
+	rowToReturn->index.len = lengthOfOID;
 	rowToReturn->index.oids = currentOIDIndex;
 
-	memcpy(rowToReturn->kamailioSIPStringIndex, currentOIDIndex, num_octets + 3);
+	memcpy(rowToReturn->kamailioSIPStringIndex, currentOIDIndex,
+			num_octets + 3);
 	rowToReturn->kamailioSIPStringIndex_len = num_octets + 3;
 
 	/* Insert the new row into the table */
@@ -162,8 +162,9 @@ kamailioSIPPortTable_context *getRow(int ipType, int *ipAddress)
  * to an integer so that if the function is called again with another
  * 'protocol', we can continue from the last index. 
  */
-static void createRowsFromIPList(int *theList, int listSize, int protocol, 
-		int *snmpIndex, int family) {
+static void createRowsFromIPList(
+		int *theList, int listSize, int protocol, int *snmpIndex, int family)
+{
 
 	kamailioSIPPortTable_context *currentRow;
 	int num_octets = family == AF_INET ? NUM_IP_OCTETS : NUM_IPV6_OCTETS;
@@ -171,48 +172,49 @@ static void createRowsFromIPList(int *theList, int listSize, int protocol,
 	int curSocketIdx;
 	int valueToAssign;
 
-	if (protocol == PROTO_UDP) 
-	{
+	if(protocol == PROTO_UDP) {
 		valueToAssign = TC_TRANSPORT_PROTOCOL_UDP;
-	}
-	else if (protocol == PROTO_TCP) 
-	{
+	} else if(protocol == PROTO_TCP) {
 		valueToAssign = TC_TRANSPORT_PROTOCOL_TCP;
-	}
-	else if (protocol == PROTO_TLS)
-	{
+	} else if(protocol == PROTO_TLS) {
 		valueToAssign = TC_TRANSPORT_PROTOCOL_TLS;
-	}
-	else if (protocol == PROTO_SCTP)
-	{
+	} else if(protocol == PROTO_SCTP) {
 		valueToAssign = TC_SIP_TRANSPORT_PROTOCOL_SCTP;
-	}
-	else 
-	{
+	} else {
 		valueToAssign = TC_TRANSPORT_PROTOCOL_OTHER;
 	}
-	
-	/* Create all rows with respect to the given protocol */
-	for (curSocketIdx=0; curSocketIdx < listSize; curSocketIdx++) {
 
-		curIndexOfIP   = (num_octets + 1) * curSocketIdx;
-		
+	/* Create all rows with respect to the given protocol */
+	for(curSocketIdx = 0; curSocketIdx < listSize; curSocketIdx++) {
+
+		curIndexOfIP = (num_octets + 1) * curSocketIdx;
+
 		/* Retrieve an existing row, or a new row if one doesn't
 		 * already exist. 
 		 * RFC 4001 defined IPv4 as 1, IPv6 as 2
 		*/
-		currentRow = getRow(family == AF_INET? 1 : 2, &theList[curIndexOfIP]);
+		currentRow = getRow(family == AF_INET ? 1 : 2, &theList[curIndexOfIP]);
 
-		if (currentRow == NULL) {
+		if(currentRow == NULL) {
 			LM_ERR("failed to create all the "
-					"rows for the kamailioSIPPortTable\n");
+				   "rows for the kamailioSIPPortTable\n");
 			return;
 		}
 
-		currentRow->kamailioSIPTransportRcv[0]  |= valueToAssign;
+		currentRow->kamailioSIPTransportRcv[0] |= valueToAssign;
 		currentRow->kamailioSIPTransportRcv_len = 1;
 	}
 }
+
+static int *_sr_snmp_UDPList = NULL;
+static int *_sr_snmp_TCPList = NULL;
+static int *_sr_snmp_TLSList = NULL;
+static int *_sr_snmp_SCTPList = NULL;
+
+static int *_sr_snmp_UDP6List = NULL;
+static int *_sr_snmp_TCP6List = NULL;
+static int *_sr_snmp_TLS6List = NULL;
+static int *_sr_snmp_SCTP6List = NULL;
 
 /*
  * Initializes the kamailioSIPPortTable module.  
@@ -227,61 +229,69 @@ void init_kamailioSIPPortTable(void)
 
 	initialize_table_kamailioSIPPortTable();
 
-	int *UDPList = NULL;
-	int *TCPList = NULL;
-	int *TLSList = NULL;
-	int *SCTPList = NULL;
-
-	int *UDP6List = NULL;
-	int *TCP6List = NULL;
-	int *TLS6List = NULL;
-	int *SCTP6List = NULL;
-
 	int numUDPSockets;
-	int numTCPSockets; 
+	int numTCPSockets;
 	int numTLSSockets;
 	int numSCTPSockets;
 
 	int numUDP6Sockets;
-	int numTCP6Sockets; 
+	int numTCP6Sockets;
 	int numTLS6Sockets;
 	int numSCTP6Sockets;
-	
-	/* Retrieve the list of the number of UDP and TCP sockets. */
-	numUDPSockets = get_socket_list_from_proto_and_family(&UDPList, PROTO_UDP, AF_INET);
-	numUDP6Sockets = get_socket_list_from_proto_and_family(&UDP6List, PROTO_UDP, AF_INET6);
-	numTCPSockets = get_socket_list_from_proto_and_family(&TCPList, PROTO_TCP, AF_INET);
-	numTCP6Sockets = get_socket_list_from_proto_and_family(&TCP6List, PROTO_TCP, AF_INET6);
-	numTLSSockets = get_socket_list_from_proto_and_family(&TLSList, PROTO_TLS, AF_INET);
-	numTLS6Sockets = get_socket_list_from_proto_and_family(&TLS6List, PROTO_TLS, AF_INET6);
-	numSCTPSockets = get_socket_list_from_proto_and_family(&SCTPList, PROTO_SCTP, AF_INET);
-	numSCTP6Sockets = get_socket_list_from_proto_and_family(&SCTP6List, PROTO_SCTP, AF_INET6);
 
-	LM_DBG("-----> Sockets UDP %d UDP6 %d TCP %d TCP6 %d TLS %d TLS6 %d SCTP %d SCTP6 %d\n",
-		numUDPSockets, numUDP6Sockets, numTCPSockets, numTCP6Sockets, numTLSSockets, numTLS6Sockets, numSCTPSockets, numSCTP6Sockets);
+	/* Retrieve the list of the number of UDP and TCP sockets. */
+	numUDPSockets = get_socket_list_from_proto_and_family(
+			&_sr_snmp_UDPList, PROTO_UDP, AF_INET);
+	numUDP6Sockets = get_socket_list_from_proto_and_family(
+			&_sr_snmp_UDP6List, PROTO_UDP, AF_INET6);
+	numTCPSockets = get_socket_list_from_proto_and_family(
+			&_sr_snmp_TCPList, PROTO_TCP, AF_INET);
+	numTCP6Sockets = get_socket_list_from_proto_and_family(
+			&_sr_snmp_TCP6List, PROTO_TCP, AF_INET6);
+	numTLSSockets = get_socket_list_from_proto_and_family(
+			&_sr_snmp_TLSList, PROTO_TLS, AF_INET);
+	numTLS6Sockets = get_socket_list_from_proto_and_family(
+			&_sr_snmp_TLS6List, PROTO_TLS, AF_INET6);
+	numSCTPSockets = get_socket_list_from_proto_and_family(
+			&_sr_snmp_SCTPList, PROTO_SCTP, AF_INET);
+	numSCTP6Sockets = get_socket_list_from_proto_and_family(
+			&_sr_snmp_SCTP6List, PROTO_SCTP, AF_INET6);
+
+	LM_DBG("-----> Sockets UDP %d UDP6 %d TCP %d TCP6 %d TLS %d TLS6 %d SCTP "
+		   "%d SCTP6 %d\n",
+			numUDPSockets, numUDP6Sockets, numTCPSockets, numTCP6Sockets,
+			numTLSSockets, numTLS6Sockets, numSCTPSockets, numSCTP6Sockets);
 
 	/* Generate all rows, using all retrieved interfaces. */
-	createRowsFromIPList(UDPList, numUDPSockets, PROTO_UDP, &curSNMPIndex, AF_INET);
+	createRowsFromIPList(
+			_sr_snmp_UDPList, numUDPSockets, PROTO_UDP, &curSNMPIndex, AF_INET);
 	curSNMPIndex = 0;
-	createRowsFromIPList(UDP6List, numUDP6Sockets, PROTO_UDP, &curSNMPIndex, AF_INET6);
+	createRowsFromIPList(_sr_snmp_UDP6List, numUDP6Sockets, PROTO_UDP,
+			&curSNMPIndex, AF_INET6);
 
 	curSNMPIndex = 0;
-	createRowsFromIPList(TCPList, numTCPSockets, PROTO_TCP, &curSNMPIndex, AF_INET);
+	createRowsFromIPList(
+			_sr_snmp_TCPList, numTCPSockets, PROTO_TCP, &curSNMPIndex, AF_INET);
 	curSNMPIndex = 0;
-	createRowsFromIPList(TCP6List, numTCP6Sockets, PROTO_TCP, &curSNMPIndex, AF_INET6);
+	createRowsFromIPList(_sr_snmp_TCP6List, numTCP6Sockets, PROTO_TCP,
+			&curSNMPIndex, AF_INET6);
 
 	curSNMPIndex = 0;
-	createRowsFromIPList(TLSList, numTLSSockets, PROTO_TLS, &curSNMPIndex, AF_INET);
+	createRowsFromIPList(
+			_sr_snmp_TLSList, numTLSSockets, PROTO_TLS, &curSNMPIndex, AF_INET);
 	curSNMPIndex = 0;
-	createRowsFromIPList(TLS6List, numTLS6Sockets, PROTO_TLS, &curSNMPIndex, AF_INET6);
+	createRowsFromIPList(_sr_snmp_TLS6List, numTLS6Sockets, PROTO_TLS,
+			&curSNMPIndex, AF_INET6);
 
 	curSNMPIndex = 0;
-	createRowsFromIPList(SCTPList, numSCTPSockets, PROTO_SCTP, &curSNMPIndex, AF_INET);
+	createRowsFromIPList(_sr_snmp_SCTPList, numSCTPSockets, PROTO_SCTP,
+			&curSNMPIndex, AF_INET);
 	curSNMPIndex = 0;
-	createRowsFromIPList(SCTP6List, numSCTP6Sockets, PROTO_SCTP, &curSNMPIndex, AF_INET6);
+	createRowsFromIPList(_sr_snmp_SCTP6List, numSCTP6Sockets, PROTO_SCTP,
+			&curSNMPIndex, AF_INET6);
 }
 
- 
+
 /* Initialize the kamailioSIPPortTable table by defining how it is structured */
 void initialize_table_kamailioSIPPortTable(void)
 {
@@ -289,7 +299,7 @@ void initialize_table_kamailioSIPPortTable(void)
 
 	if(my_handler) {
 		snmp_log(LOG_ERR, "initialize_table_kamailioSIPPortTable_handler"
-				"called again\n");
+						  "called again\n");
 		return;
 	}
 
@@ -297,21 +307,24 @@ void initialize_table_kamailioSIPPortTable(void)
 
 	/* create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
+	if(table_info==NULL) {
+		snmp_log(LOG_ERR, "failed to allocate table_info\n");
+		return;
+	}
 
 	my_handler = netsnmp_create_handler_registration("kamailioSIPPortTable",
-			netsnmp_table_array_helper_handler,
-			kamailioSIPPortTable_oid,
-			kamailioSIPPortTable_oid_len,
-			HANDLER_CAN_RONLY);
-    
-	if (!my_handler || !table_info) {
+			netsnmp_table_array_helper_handler, kamailioSIPPortTable_oid,
+			kamailioSIPPortTable_oid_len, HANDLER_CAN_RONLY);
+
+	if(!my_handler) {
+		SNMP_FREE(table_info);
 		snmp_log(LOG_ERR, "malloc failed in "
-			 "initialize_table_kamailioSIPPortTable_handler\n");
+						  "initialize_table_kamailioSIPPortTable_handler\n");
 		return; /** mallocs failed */
 	}
 
 	/* Set up the table's structural definition */
-	
+
 	/* index: kamailioSIPPortIndex */
 	netsnmp_table_helper_add_index(table_info, ASN_OCTET_STR);
 
@@ -321,16 +334,16 @@ void initialize_table_kamailioSIPPortTable(void)
 	/* register the table with the master agent */
 	cb.get_value = kamailioSIPPortTable_get_value;
 	cb.container = netsnmp_container_find("kamailioSIPPortTable_primary:"
-			"kamailioSIPPortTable:"
-			"table_container");
+										  "kamailioSIPPortTable:"
+										  "table_container");
 
-	
+
 	DEBUGMSGTL(("initialize_table_kamailioSIPPortTable",
-				"Registering table kamailioSIPPortTable "
-				"as a table array\n"));
-	
-	netsnmp_table_container_register(my_handler, table_info, &cb,
-			cb.container, 1);
+			"Registering table kamailioSIPPortTable "
+			"as a table array\n"));
+
+	netsnmp_table_container_register(
+			my_handler, table_info, &cb, cb.container, 1);
 }
 
 /*
@@ -338,29 +351,26 @@ void initialize_table_kamailioSIPPortTable(void)
  *
  * The function is mostly left in its auto-generated form 
  */
-int kamailioSIPPortTable_get_value(netsnmp_request_info *request, 
-		netsnmp_index *item,
-		netsnmp_table_request_info *table_info )
+int kamailioSIPPortTable_get_value(netsnmp_request_info *request,
+		netsnmp_index *item, netsnmp_table_request_info *table_info)
 {
 	netsnmp_variable_list *var = request->requestvb;
 
-	kamailioSIPPortTable_context *context = 
-		(kamailioSIPPortTable_context *)item;
+	kamailioSIPPortTable_context *context =
+			(kamailioSIPPortTable_context *)item;
 
-	switch(table_info->colnum) 
-	{
-		
+	switch(table_info->colnum) {
+
 		case COLUMN_KAMAILIOSIPTRANSPORTRCV:
 			/** KamailioSIPTransportProtocol = ASN_OCTET_STR */
 			snmp_set_var_typed_value(var, ASN_OCTET_STR,
-					(unsigned char *)
-					&context->kamailioSIPTransportRcv,
-					context->kamailioSIPTransportRcv_len );
+					(unsigned char *)&context->kamailioSIPTransportRcv,
+					context->kamailioSIPTransportRcv_len);
 			break;
 
 		default: /** We shouldn't get here */
 			snmp_log(LOG_ERR, "unknown column in "
-					"kamailioSIPPortTable_get_value\n");
+							  "kamailioSIPPortTable_get_value\n");
 			return SNMP_ERR_GENERR;
 	}
 
@@ -368,11 +378,9 @@ int kamailioSIPPortTable_get_value(netsnmp_request_info *request,
 }
 
 /* Auto-generated function */
-const kamailioSIPPortTable_context *
-kamailioSIPPortTable_get_by_idx(netsnmp_index * hdr)
+const kamailioSIPPortTable_context *kamailioSIPPortTable_get_by_idx(
+		netsnmp_index *hdr)
 {
-	return (const kamailioSIPPortTable_context *)
-		CONTAINER_FIND(cb.container, hdr );
+	return (const kamailioSIPPortTable_context *)CONTAINER_FIND(
+			cb.container, hdr);
 }
-
-

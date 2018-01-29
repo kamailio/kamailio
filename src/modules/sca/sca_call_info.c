@@ -1786,7 +1786,8 @@ struct sca_call_info_dispatch call_info_dispatch[] = {
 #define SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC	(1 << 0)
 #define SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC	(1 << 1)
 
-int sca_call_info_update(sip_msg_t *msg, char *p1, str *uri_to, str *uri_from)
+int sca_call_info_update(sip_msg_t *msg, int update_mask, str *uri_to,
+		str *uri_from)
 {
 	sca_call_info call_info;
 	hdr_field_t *call_info_hdr;
@@ -1802,7 +1803,6 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, str *uri_to, str *uri_from)
 	int i;
 	int method;
 	int rc = -1;
-	int update_mask = SCA_CALL_INFO_SHARED_BOTH;
 
 	method = sca_get_msg_method(msg);
 
@@ -1829,13 +1829,7 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, str *uri_to, str *uri_from)
 		return (-1);
 	}
 
-	if (p1 != NULL) {
-		if (get_int_fparam(&update_mask, msg, (fparam_t *) p1) < 0) {
-			LM_ERR("sca_call_info_update: argument 1: bad value "
-					"(integer expected)\n");
-			return (-1);
-		}
-
+	if (update_mask != SCA_CALL_INFO_SHARED_BOTH) {
 		switch (update_mask) {
 		case SCA_CALL_INFO_SHARED_NONE:
 			update_mask = SCA_CALL_INFO_SHARED_BOTH;

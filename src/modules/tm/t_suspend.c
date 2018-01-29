@@ -23,6 +23,7 @@
 #include "../../core/script_cb.h"
 #include "../../core/dset.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/kemi.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -162,8 +163,8 @@ int t_suspend(struct sip_msg *msg,
  * 	0  - success
  * 	<0 - failure
  */
-int t_continue(unsigned int hash_index, unsigned int label,
-		struct action *route)
+int t_continue_helper(unsigned int hash_index, unsigned int label,
+		struct action *rtact, str *cbname, str *cbparam)
 {
 	struct cell	*t;
 	sip_msg_t *faked_req;
@@ -181,6 +182,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	int do_put_on_wait;
 	struct hdr_field *hdr, *prev = 0, *tmp = 0;
 	int route_type_bk;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("tm:continue");
 
 	cfg_update();
 
@@ -292,8 +295,30 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		set_route_type(FAILURE_ROUTE);
 		/* execute the pre/post -script callbacks based on original route block */
 		if (exec_pre_script_cb(faked_req, cb_type)>0) {
-			if (run_top_route(route, faked_req, 0)<0)
-				LM_ERR("failure inside run_top_route\n");
+			if(rtact!=NULL) {
+				if (run_top_route(rtact, faked_req, 0)<0) {
+					LM_ERR("failure inside run_top_route\n");
+				}
+			} else {
+				if(cbname!=NULL && cbname->s!=NULL) {
+					keng = sr_kemi_eng_get();
+					if(keng!=NULL) {
+						if(cbparam && cbparam->s) {
+							evname = *cbparam;
+						}
+						if(keng->froute(faked_req, FAILURE_ROUTE, cbname,
+								&evname)<0) {
+							LM_ERR("error running event route kemi callback\n");
+							return -1;
+						}
+					} else {
+						LM_DBG("event callback (%.*s) set, but no cfg engine\n",
+								cbname->len, cbname->s);
+					}
+				} else {
+					LM_WARN("no continue callback\n");
+				}
+			}
 			exec_post_script_cb(faked_req, cb_type);
 		}
 		set_route_type(route_type_bk);
@@ -348,8 +373,29 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		faked_env( t, t->uac[branch].reply, 1);
 
 		if (exec_pre_script_cb(t->uac[branch].reply, cb_type)>0) {
-			if (run_top_route(route, t->uac[branch].reply, 0)<0){
-				LM_ERR("Error in run_top_route\n");
+			if(rtact!=NULL) {
+				if (run_top_route(rtact, t->uac[branch].reply, 0)<0){
+					LM_ERR("Error in run_top_route\n");
+				}
+			} else {
+				if(cbname!=NULL && cbname->s!=NULL) {
+					keng = sr_kemi_eng_get();
+					if(keng!=NULL) {
+						if(cbparam && cbparam->s) {
+							evname = *cbparam;
+						}
+						if(keng->froute(t->uac[branch].reply, TM_ONREPLY_ROUTE,
+								cbname, &evname)<0) {
+							LM_ERR("error running event route kemi callback\n");
+							return -1;
+						}
+					} else {
+						LM_DBG("event callback (%.*s) set, but no cfg engine\n",
+								cbname->len, cbname->s);
+					}
+				} else {
+					LM_WARN("no continue callback\n");
+				}
 			}
 			exec_post_script_cb(t->uac[branch].reply, cb_type);
 		}
@@ -521,6 +567,18 @@ kill_trans:
 		t_unref(t->uac[branch].reply);
 	}
 	return ret;
+}
+
+int t_continue(unsigned int hash_index, unsigned int label,
+		struct action *route)
+{
+	return t_continue_helper(hash_index, label, route, NULL, NULL);
+}
+
+int t_continue_cb(unsigned int hash_index, unsigned int label,
+		str *cbname, str *cbparam)
+{
+	return t_continue_helper(hash_index, label, NULL, cbname, cbparam);
 }
 
 /* Revoke the suspension of the SIP request, i.e.

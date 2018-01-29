@@ -21,6 +21,8 @@
  */
 #include <stdio.h>
 #include <sys/stat.h>
+#include <string.h>
+#include <errno.h>
 
 #include "../../core/events.h"
 #include "../../core/strutils.h"
@@ -268,15 +270,19 @@ void _cfgt_remove_node(cfgt_node_p node)
 
 int _cfgt_get_filename(int msgid, str uuid, str *dest, int *dir)
 {
-	int i, lid;
+	int lid;
 	char buff_id[INT2STR_MAX_LEN];
 	char *sid;
+	char *format = "%.*s%.*s/%.*s.json";
 	if(dest == NULL || uuid.len == 0)
 		return -1;
 
 	dest->len = cfgt_basedir.len + uuid.len;
-	if(cfgt_basedir.s[cfgt_basedir.len - 1] != '/')
+	if(cfgt_basedir.s[cfgt_basedir.len - 1] != '/') {
 		dest->len = dest->len + 1;
+		format = "%.*s/%.*s/%.*s.json";
+	}
+	(*dir) = dest->len;
 	sid = sint2strbuf(msgid, buff_id, INT2STR_MAX_LEN, &lid);
 	dest->len += lid + 6;
 	dest->s = (char *)pkg_malloc((dest->len * sizeof(char) + 1));
@@ -284,20 +290,8 @@ int _cfgt_get_filename(int msgid, str uuid, str *dest, int *dir)
 		LM_ERR("no more memory.\n");
 		return -1;
 	}
-	strncpy(dest->s, cfgt_basedir.s, cfgt_basedir.len);
-	i = cfgt_basedir.len;
-	if(cfgt_basedir.s[cfgt_basedir.len - 1] != '/') {
-		strncpy(dest->s + i, "/", 1);
-		i = i + 1;
-	}
-	strncpy(dest->s + i, uuid.s, uuid.len);
-	i = i + uuid.len;
-	(*dir) = i;
-	strncpy(dest->s + i, "\0", 1);
-	i = i + 1;
-	strncpy(dest->s + i, sid, lid);
-	i = i + lid;
-	strncpy(dest->s + i, ".json\0", 6);
+	snprintf(dest->s, dest->len + 1, format, cfgt_basedir.len, cfgt_basedir.s,
+			uuid.len, uuid.s, lid, sid);
 	return 0;
 }
 
@@ -332,9 +326,10 @@ void cfgt_save_node(cfgt_node_p node)
 		LM_ERR("can't build filename\n");
 		return;
 	}
+	dest.s[dir] = '\0';
 	LM_DBG("dir [%s]\n", dest.s);
 	if(mkdir(dest.s, S_IRWXO | S_IXGRP | S_IRWXU) < 0) {
-		LM_ERR("failed to make directory (%d)\n", errno);
+		LM_ERR("failed to make directory: %s\n", strerror(errno));
 		return;
 	}
 	dest.s[dir] = '/';
@@ -349,7 +344,7 @@ void cfgt_save_node(cfgt_node_p node)
 			return;
 		}
 		if(fputs(dest.s, fp) < 0) {
-			LM_ERR("failed writing to file\n");
+			LM_ERR("failed writing to file: %s\n", strerror(errno));
 		}
 		fclose(fp);
 		node->jdoc.free_fn(dest.s);

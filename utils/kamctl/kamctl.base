@@ -136,6 +136,9 @@ fi
 if [ -z "$ACL_GROUPS" ] ; then
 	ACL_GROUPS="local ld int voicemail free-pstn"
 fi
+if [ -z "$VERIFY_USER" ] ; then
+	VERIFY_USER=1
+fi
 
 ##### ----------------------------------------------- #####
 #### Defined values

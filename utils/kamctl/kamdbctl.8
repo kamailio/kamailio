@@ -1,5 +1,4 @@
-.\" $Id$
-.TH kamdbctl 8 05.02.2009 Kamailio "Kamailio"
+.TH kamdbctl 8 20.11.2017 Kamailio "Kamailio"
 .SH NAME
 kamdbctl \- Kamailio database control tool
 .SH SYNOPSIS
@@ -14,60 +13,39 @@ kamdbctl \- Kamailio database control tool
 is a script to maintain the database needed by some Kamalio modules.
 
 .SH Configuration
-Before you can use 
-.B kamdbctl 
+Before you can use
+.B kamdbctl
 you have to select a database engine in the kamctlrc file.
-Just change the DBENGINE parameter in the respective section in kamctlrc.
+Just change the DBENGINE parameter in the respective section in
+.B kamctlrc
+file.
 .TP
 Valid values are: MYSQL, PGSQL, ORACLE, DB_BERKELEY, DBTEXT.
-.TP 
+.TP
 The default is 'none'.
 .TP
 The username, password, database name and other settings can be configured by editing the kamctrl script.
 
 .SH COMMANDS
-.B backup <file> 
-Dumps the current database to a file.
-.TP
-.B copy <new_db> 
-Creates a new database from an existing one.
-.TP
-.B create <db name or db_path, optional> 
-Creates a new database with the specified name, or the default if no name is given.
-.TP
-.B drop <db name or db_path, optional> 
-Entirely deletes the database with the specified name, or the default if no name is given.
-.TP
-.B extra 
-Adds the extra tables
-.TP
-.B migrate <old_db> <new_db> 
-Migrates database tables from an old version to the actual version.
-.TP
-.B presence 
-Adds the presence related tables.
-.TP
-.B reinit <db name or db_path, optional> 
-Entirely deletes and than re-creates tables.
-.TP
-.B restore <file> 
-Restores tables from a file.
+Run
+.B kamdbctl help
+to see the list of available commands.
 
 .SH NOTES
-Not all databases scripts support all commands.
+Several commands are not available for some of the database systems.
 
 .SH FILES
 .PD 0
-.I /etc/kamailio/.kamctlrc
+.I /etc/kamailio/kamctlrc
 .br
-.I /usr/local/etc/kamailio/.kamctlrc
+.I /usr/local/etc/kamailio/kamctlrc
 .br
 .I ~/.kamctlrc
 .br
 
 .SH AUTHORS
 
-see 
+See
 .B /usr/share/doc/kamailio/AUTHORS
 
 .SH SEE ALSO
@@ -75,11 +53,13 @@ see
 .BR kamailio.cfg(5)
 .PP
 Full documentation on Kamailio is available at
-.I http://www.kamailio.org/.
+.I https://www.kamailio.org
+
 .PP
 Mailing lists:
-.nf 
-users@lists.kamailio.org - Kamailio user community
-.nf 
-devel@lists.kamailio.org - Kamailio development, new features and unstable version
+
+.nf
+sr-users@lists.kamailio.org - Kamailio user community
+.nf
+sr-dev@lists.kamailio.org - Kamailio development community
 

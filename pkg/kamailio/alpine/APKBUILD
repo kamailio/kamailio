@@ -2,13 +2,14 @@
 # Contributor: Michael Mason <ms13sp@gmail.com>
 # Contributor: Leonardo Arena <rnalrd@gmail.com>
 # Maintainer: Nathan Angelacos <nangel@alpinelinux.org>
+
 pkgname=kamailio
 pkgver=5.1.0
 pkgrel=0
 
 # If building from a git snapshot, specify the gitcommit
 # If building a proper release, leave gitcommit blank
-_gitcommit=c5ffc265cf83c7e329ee8d21c3bafba78b670c58
+_gitcommit=991fe9b28e0e201309048f3b38a135037e40357a
 
 [ ! -z "${_gitcommit}" ] && pkgver="${pkgver}.$(date +%Y%m%d)"
 [ ! -z "${_gitcommit}" ] && _suffix="-${_gitcommit:0:7}"
@@ -22,7 +23,7 @@ pkgusers="kamailio"
 pkggroups="kamailio"
 arch="all"
 license="GPL2+"
-depends=""
+depends="gawk"
 makedepends="bison db-dev flex freeradius-client-dev expat-dev lksctp-tools-dev perl-dev postgresql-dev python2-dev pcre-dev mariadb-dev
 	libxml2-dev curl-dev unixodbc-dev confuse-dev ncurses-dev sqlite-dev
 	lua-dev openldap-dev libressl-dev net-snmp-dev libuuid libev-dev
@@ -178,7 +179,7 @@ _mod_list_redis="ndb_redis topos_redis"
 _mod_list_mono="app_mono"
 
 # - modules related to IMS extensions
-_mod_list_ims="cdp cdp_avp ims_dialog ims_auth ims_isc ims_icscf ims_qos \
+_mod_list_ims="cdp cdp_avp ims_dialog ims_diameter_server ims_auth ims_isc ims_icscf ims_qos \
 		ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
 		ims_usrloc_scscf ims_charging"
 
@@ -212,6 +213,15 @@ _mod_list_jansson="jansson janssonrpcc"
 # - modules depending on libm
 _mod_list_jsdt="app_jsdt"
 
+# - modules depending on sqlang
+_mod_list_sqlang="app_sqlang"
+
+# - modules depending on rabbitmq
+_mod_list_rabbitmq="rabbitmq"
+
+# - modules depending on sipdump
+_mod_list_sipdump="sipdump"
+
 
 # Alpine Specific
 _mod_list_debugger="$_mod_list_devel benchmark debugger"
@@ -227,7 +237,7 @@ for _i in db postgres sqlite dbtext mysql \
 	cpl xml unixodbc snmpstats xmpp carrierroute \
 	ldap utils tls presence lua ims outbound debugger \
 	extras json websocket authephemeral \
-	uuid ev memcached redis geoip2 jansson \
+	uuid ev memcached redis geoip2 jansson sqlang sipdump \
 	jsdt http_async kazoo rabbitmq sctp radius perl python; do
 
    subpackages="$subpackages $pkgname-$_i"
@@ -508,8 +518,22 @@ python() {
 		"$_mod_list_python"
 }
 
+sqlang() {
+	_generic_pkg "Squirrel Language (SQLang) for Kamailio" \
+		"$_mod_list_sqlang"
+}
 
-sha512sums="245411ac2445f4865cd09f56a3cfc4d10a64c9a1be90bfb35cfe80149e845c34c1a867ff661bbd9dac1c48a0416bc577b57ae6133edb69e2a2b43d3a2305ffde  kamailio-5.1.0.20170930-c5ffc26.tar.gz
+rabbitmq() {
+	_generic_pkg "RabbitMQ related modules for Kamailio" \
+		"$_mod_list_rabbitmq"
+}
+
+sipdump() {
+	_generic_pkg "This module writes SIP traffic and some associated details into local files" \
+		"$_mod_list_sipdump"
+}
+
+sha512sums="51ea5fccd27a9d3d1783cfc5596eb28ab27e34faeec3268600363f43c48a3634c3c584c479ba874fdb53b85766a0ce8fe7df0e20954c9c6514b1d9d41d9237e6  kamailio-5.1.0.20171125-991fe9b.tar.gz
 6badfb611c02ffcb4c2e9937731162ea1a4b737f042ed52120e2f96ebb80b5b7d240b5612c9ca565e693eec9b8c52c1ee5db04dfc47d204501021f984b4b11db  0001-kamdbctl.base.patch
 af8362201957eae6b66baf7368c9ca884024209a396d77c5c52180c9aabe13772e9c6513e59721d39503e5bb7a8c1030f5c10301ea9055bddafb7f01ee2f3076  0004-src_core_tcp_read_c.patch
 cd6e3b677d803cd78561ad14d9b2589fd35ad0096f48047fdcb4ddc7d9103871357efba3b350946844cb53dbb081210746421fc420c22ac845b90251168a628e  kamailio.initd"

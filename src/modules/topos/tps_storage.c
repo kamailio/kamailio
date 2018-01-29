@@ -214,17 +214,8 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 	} else {
 		sv = td->as_contact;
 	}
-	if(sv.len<=0) {
-		/* no contact - skip */
-		return 0;
-	}
-
 	if(td->cp + 8 + (2*uuid->len) + sv.len >= td->cbuf + TPS_DATA_SIZE) {
 		LM_ERR("insufficient data buffer\n");
-		return -1;
-	}
-	if (parse_uri(sv.s, sv.len, &puri) < 0) {
-		LM_ERR("failed to parse the uri\n");
 		return -1;
 	}
 	if(dir==TPS_DIR_DOWNSTREAM) {
@@ -234,8 +225,6 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 		memcpy(td->cp, uuid->s, uuid->len);
 		td->cp += uuid->len;
 		td->b_uuid.len = td->cp - td->b_uuid.s;
-
-		td->bs_contact.s = td->cp;
 	} else {
 		td->a_uuid.s = td->cp;
 		*td->cp = 'a';
@@ -243,7 +232,20 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 		memcpy(td->cp, uuid->s, uuid->len);
 		td->cp += uuid->len;
 		td->a_uuid.len = td->cp - td->a_uuid.s;
+	}
 
+	if(sv.len<=0) {
+		/* no contact - skip */
+		return 0;
+	}
+
+	if (parse_uri(sv.s, sv.len, &puri) < 0) {
+		LM_ERR("failed to parse the uri\n");
+		return -1;
+	}
+	if(dir==TPS_DIR_DOWNSTREAM) {
+		td->bs_contact.s = td->cp;
+	} else {
 		td->as_contact.s = td->cp;
 	}
 	*td->cp = '<';
@@ -381,6 +383,9 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog)
 	if(ret<0) goto error;
 	ret = tps_storage_link_msg(msg, td, TPS_DIR_DOWNSTREAM);
 	if(ret<0) goto error;
+	if(td->as_contact.len <= 0 && td->bs_contact.len <= 0) {
+		LM_WARN("no local address - do record routing for all initial requests\n");
+	}
 	if(dialog==0) {
 		ret = _tps_storage_api.insert_dialog(td);
 		if(ret<0) goto error;
@@ -728,6 +733,36 @@ int tps_db_insert_branch(tps_data_t *td)
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->s_cseq);
 	nr_keys++;
 
+	db_keys[nr_keys] = &tt_col_a_contact;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_contact);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_b_contact;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_contact);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_as_contact;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->as_contact);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_bs_contact;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->bs_contact);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_a_tag;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_tag);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_b_tag;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_tag);
+	nr_keys++;
+
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
 		return -1;
@@ -898,6 +933,10 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	db_cols[nr_cols++] = &tt_col_s_cseq;
 	db_cols[nr_cols++] = &tt_col_a_contact;
 	db_cols[nr_cols++] = &tt_col_b_contact;
+	db_cols[nr_cols++] = &tt_col_as_contact;
+	db_cols[nr_cols++] = &tt_col_bs_contact;
+	db_cols[nr_cols++] = &tt_col_a_tag;
+	db_cols[nr_cols++] = &tt_col_b_tag;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
@@ -942,6 +981,10 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_cseq); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_contact); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_contact); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->as_contact); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->bs_contact); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_tag); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_tag); n++;
 
 done:
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
@@ -1251,7 +1294,9 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->a_uuid);
 	} else {
 		if(sd->b_uuid.len<=0) {
-			LM_ERR("no valid dlg uuid\n");
+			LM_ERR("no valid dlg uuid (%d:%.*s - %d:%.*s)\n",
+					sd->a_uuid.len, sd->a_uuid.len, ZSW(sd->a_uuid.s),
+					sd->b_uuid.len, sd->b_uuid.len, ZSW(sd->b_uuid.s));
 			return -1;
 		}
 		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->b_uuid);

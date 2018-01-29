@@ -305,12 +305,11 @@ static int fixup_cancel_branches(void** param, int param_no)
 /**
  *
  */
-static int t_cancel_branches(sip_msg_t* msg, char *k, char *s2)
+static int t_cancel_branches_helper(sip_msg_t* msg, int n)
 {
 	struct cancel_info cancel_data;
 	tm_cell_t *t = 0;
 	tm_ctx_t *tcx = 0;
-	int n=0;
 	int idx = 0;
 	t=_tmx_tmb.t_gett();
 	if (t==NULL || t==T_UNDEFINED || !is_invite(t))
@@ -318,7 +317,6 @@ static int t_cancel_branches(sip_msg_t* msg, char *k, char *s2)
 	tcx = _tmx_tmb.tm_ctx_get();
 	if(tcx != NULL)
 		idx = tcx->branch_index;
-	n = (int)(long)k;
 	init_cancel_info(&cancel_data);
 	switch(n) {
 		case 1:
@@ -352,12 +350,41 @@ static int t_cancel_branches(sip_msg_t* msg, char *k, char *s2)
 /**
  *
  */
+static int t_cancel_branches(sip_msg_t* msg, char *k, char *s2)
+{
+	return t_cancel_branches_helper(msg, (int)(long)k);
+}
+
+/**
+ *
+ */
+static int ki_t_cancel_branches(sip_msg_t* msg, str *mode)
+{
+	int n = 0;
+
+	if (mode->len==3 && strncasecmp(mode->s, "all", 3)==0) {
+		n = 0;
+	} else if (mode->len==6 && strncasecmp(mode->s, "others", 6)==0) {
+		n = 1;
+	} else if (mode->len==4 && strncasecmp(mode->s, "this", 4)==0) {
+		n = 2;
+	} else {
+		LM_ERR("invalid param \"%.*s\"\n", mode->len, mode->s);
+		return -1;
+	}
+
+	return t_cancel_branches_helper(msg, n);
+}
+
+/**
+ *
+ */
 static int fixup_cancel_callid(void** param, int param_no)
 {
 	if (param_no==1 || param_no==2) {
 		return fixup_spve_null(param, 1);
 	}
-	if (param_no==3) {
+	if (param_no==3 || param_no==4) {
 		return fixup_igp_null(param, 1);
 	}
 	return 0;
@@ -366,12 +393,53 @@ static int fixup_cancel_callid(void** param, int param_no)
 /**
  *
  */
-static int t_cancel_callid(sip_msg_t* msg, char *cid, char *cseq, char *flag, char *creason)
+static int ki_t_cancel_callid_reason(sip_msg_t* msg, str *callid_s, str *cseq_s,
+		int fl, int rcode)
 {
 	tm_cell_t *trans;
 	tm_cell_t *bkt;
 	int bkb;
 	struct cancel_info cancel_data;
+
+	if(rcode<100 || rcode>699)
+		rcode = 0;
+
+	bkt = _tmx_tmb.t_gett();
+	bkb = _tmx_tmb.t_gett_branch();
+	if( _tmx_tmb.t_lookup_callid(&trans, *callid_s, *cseq_s) < 0 ) {
+		DBG("Lookup failed - no transaction\n");
+		return -1;
+	}
+
+	DBG("Now calling cancel_uacs\n");
+	if(trans->uas.request && fl>0 && fl<32)
+		setflag(trans->uas.request, fl);
+	init_cancel_info(&cancel_data);
+	cancel_data.reason.cause = rcode;
+	cancel_data.cancel_bitmap = 0;
+	_tmx_tmb.prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
+	_tmx_tmb.cancel_uacs(trans, &cancel_data, 0);
+
+	//_tmx_tmb.unref_cell(trans);
+	_tmx_tmb.t_sett(bkt, bkb);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_t_cancel_callid(sip_msg_t* msg, str *callid_s, str *cseq_s,
+		int fl)
+{
+	return ki_t_cancel_callid_reason(msg, callid_s, cseq_s, fl, 0);
+}
+
+/**
+ *
+ */
+static int t_cancel_callid(sip_msg_t* msg, char *cid, char *cseq, char *flag, char *creason)
+{
 	str cseq_s;
 	str callid_s;
 	int fl;
@@ -402,30 +470,8 @@ static int t_cancel_callid(sip_msg_t* msg, char *cid, char *cseq, char *flag, ch
 		LM_ERR("cannot get flag\n");
 		return -1;
 	}
-	if(rcode<100 || rcode>699)
-		rcode = 0;
 
-
-	bkt = _tmx_tmb.t_gett();
-	bkb = _tmx_tmb.t_gett_branch();
-	if( _tmx_tmb.t_lookup_callid(&trans, callid_s, cseq_s) < 0 ) {
-		DBG("Lookup failed - no transaction\n");
-		return -1;
-	}
-
-	DBG("Now calling cancel_uacs\n");
-	if(trans->uas.request && fl>0 && fl<32)
-		setflag(trans->uas.request, fl);
-	init_cancel_info(&cancel_data);
-	cancel_data.reason.cause = rcode;
-	cancel_data.cancel_bitmap = 0;
-	_tmx_tmb.prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
-	_tmx_tmb.cancel_uacs(trans, &cancel_data, 0);
-
-	//_tmx_tmb.unref_cell(trans);
-	_tmx_tmb.t_sett(bkt, bkb);
-
-	return 1;
+	return ki_t_cancel_callid_reason(msg, &callid_s, &cseq_s, fl, rcode);
 }
 
 /**
@@ -452,7 +498,7 @@ static int fixup_reply_callid(void** param, int param_no)
 	if (param_no==1 || param_no==2 || param_no==4) {
 		return fixup_spve_null(param, 1);
 	}
-	if (param_no==3 || param_no==4) {
+	if (param_no==3) {
 		return fixup_igp_null(param, 1);
 	}
 	return 0;
@@ -461,14 +507,35 @@ static int fixup_reply_callid(void** param, int param_no)
 /**
  *
  */
+static int ki_t_reply_callid(sip_msg_t* msg, str *callid_s, str *cseq_s,
+		int code, str *status_s)
+{
+	tm_cell_t *trans;
+
+	if(_tmx_tmb.t_lookup_callid(&trans, *callid_s, *cseq_s) < 0 )
+	{
+		LM_DBG("Lookup failed - no transaction\n");
+		return -1;
+	}
+
+	LM_DBG("now calling internal tm reply\n");
+	if(_tmx_tmb.t_reply_trans(trans, trans->uas.request,
+			(unsigned int)code, status_s->s)>0)
+		return 1;
+
+	return -1;
+}
+
+/**
+ *
+ */
 static int t_reply_callid(sip_msg_t* msg, char *cid, char *cseq,
 		char *rc, char *rs)
 {
-	tm_cell_t *trans;
 	str cseq_s;
 	str callid_s;
 	str status_s;
-	unsigned int code;
+	int code;
 
 	if(fixup_get_svalue(msg, (gparam_p)cid, &callid_s)<0)
 	{
@@ -482,7 +549,7 @@ static int t_reply_callid(sip_msg_t* msg, char *cid, char *cseq,
 		return -1;
 	}
 
-	if(fixup_get_ivalue(msg, (gparam_p)rc, (int*)&code)<0)
+	if(fixup_get_ivalue(msg, (gparam_p)rc, &code)<0)
 	{
 		LM_ERR("cannot get reply code\n");
 		return -1;
@@ -494,23 +561,13 @@ static int t_reply_callid(sip_msg_t* msg, char *cid, char *cseq,
 		return -1;
 	}
 
-	if(_tmx_tmb.t_lookup_callid(&trans, callid_s, cseq_s) < 0 )
-	{
-		LM_DBG("Lookup failed - no transaction\n");
-		return -1;
-	}
-
-	LM_DBG("Now calling internal replay\n");
-	if(_tmx_tmb.t_reply_trans(trans, trans->uas.request, code, status_s.s)>0)
-		return 1;
-
-	return -1;
+	return ki_t_reply_callid(msg, &callid_s, &cseq_s, code, &status_s);
 }
 
 /**
  *
  */
-static int t_flush_flags(sip_msg_t* msg, char *foo, char *bar)
+static int ki_t_flush_flags(sip_msg_t* msg)
 {
 	tm_cell_t *t;
 
@@ -522,6 +579,14 @@ static int t_flush_flags(sip_msg_t* msg, char *foo, char *bar)
 
 	t->uas.request->flags = msg->flags;
 	return 1;
+}
+
+/**
+ *
+ */
+static int t_flush_flags(sip_msg_t* msg, char *foo, char *bar)
+{
+	return ki_t_flush_flags(msg);
 }
 
 /**
@@ -607,7 +672,7 @@ static int t_is_request_route(sip_msg_t* msg)
 /**
  *
  */
-static int w_t_suspend(sip_msg_t* msg, char *p1, char *p2)
+static int ki_t_suspend(sip_msg_t* msg)
 {
 	unsigned int tindex;
 	unsigned int tlabel;
@@ -636,6 +701,14 @@ static int w_t_suspend(sip_msg_t* msg, char *p1, char *p2)
 
 	LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
 	return 1;
+}
+
+/**
+ *
+ */
+static int w_t_suspend(sip_msg_t* msg, char *p1, char *p2)
+{
+	return ki_t_suspend(msg);
 }
 
 /**
@@ -691,11 +764,27 @@ static int w_t_continue(sip_msg_t* msg, char *idx, char *lbl, char *rtn)
 }
 
 /**
+ *
+ */
+static int ki_t_continue(sip_msg_t* msg, int tindex, int tlabel, str *cbname)
+{
+	str evname = str_init("tmx:continue");
+
+	if(_tmx_tmb.t_continue_cb((unsigned int)tindex, (unsigned int)tlabel,
+			cbname, &evname)<0) {
+		LM_WARN("resuming the processing of transaction [%u:%u] failed\n",
+				tindex, tlabel);
+		return -1;
+	}
+	return 1;
+}
+
+/**
  * Creates new "main" branch by making copy of branch-failure branch.
  * Currently the following branch attributes are included:
  * request-uri, ruid, path, instance, and branch flags.
  */
-static int w_t_reuse_branch(sip_msg_t* msg, char *p1, char *p2)
+static int ki_t_reuse_branch(sip_msg_t* msg)
 {
 	tm_cell_t *t;
 	int branch;
@@ -736,6 +825,13 @@ static int w_t_reuse_branch(sip_msg_t* msg, char *p1, char *p2)
 	}
 }
 
+/**
+ *
+ */
+static int w_t_reuse_branch(sip_msg_t* msg, char *p1, char *p2)
+{
+	return ki_t_reuse_branch(msg);
+}
 
 /**
  *
@@ -924,6 +1020,46 @@ static sr_kemi_t sr_kemi_tmx_exports[] = {
 		SR_KEMIP_INT, t_is_branch_route,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_suspend"),
+		SR_KEMIP_INT, ki_t_suspend,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_continue"),
+		SR_KEMIP_INT, ki_t_continue,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_flush_flags"),
+		SR_KEMIP_INT, ki_t_flush_flags,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_cancel_branches"),
+		SR_KEMIP_INT, ki_t_cancel_branches,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_reuse_branch"),
+		SR_KEMIP_INT, ki_t_reuse_branch,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_cancel_callid"),
+		SR_KEMIP_INT, ki_t_cancel_callid,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_cancel_callid_reason"),
+		SR_KEMIP_INT, ki_t_cancel_callid_reason,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_reply_callid"),
+		SR_KEMIP_INT, ki_t_reply_callid,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }

@@ -60,7 +60,7 @@
  * @param avp - the actual AVP to set flags
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
  */
-inline void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
+void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
 {
 	switch (code) {
 		case   1: /*AVP_User_Name*/

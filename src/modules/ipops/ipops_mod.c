@@ -47,6 +47,7 @@
 #include "../../core/pvar.h"
 #include "../../core/resolve.h"
 #include "../../core/lvalue.h"
+#include "../../core/kemi.h"
 #include "api.h"
 #include "ipops_pv.h"
 #include "ip_parser.h"
@@ -82,33 +83,33 @@ int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen,
 int _ip_is_in_subnet_str(void *ip, enum enum_ip_type type, char *s, int slen);
 int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b,
 		char *e);
-static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg,
+static int _detailed_ip_type(unsigned int _type, sip_msg_t* _msg,
 		char* _s,  char *_dst);
 
 
 /*
  * Script functions
  */
-static int w_is_ip(struct sip_msg*, char*);
-static int w_is_pure_ip(struct sip_msg*, char*);
-static int w_is_ipv4(struct sip_msg*, char*);
-static int w_is_ipv6(struct sip_msg*, char*);
-static int w_is_ipv6_reference(struct sip_msg*, char*);
-static int w_ip_type(struct sip_msg*, char*);
-static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *res);
-static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *res);
-static int w_detailed_ip_type(struct sip_msg* _msg, char* _s,  char *res);
-static int w_compare_ips(struct sip_msg*, char*, char*);
-static int w_compare_pure_ips(struct sip_msg*, char*, char*);
-static int w_is_ip_rfc1918(struct sip_msg*, char*);
-static int w_ip_is_in_subnet(struct sip_msg*, char*, char*);
+static int w_is_ip(sip_msg_t*, char*, char*);
+static int w_is_pure_ip(sip_msg_t*, char*, char*);
+static int w_is_ipv4(sip_msg_t*, char*, char*);
+static int w_is_ipv6(sip_msg_t*, char*, char*);
+static int w_is_ipv6_reference(sip_msg_t*, char*, char*);
+static int w_ip_type(sip_msg_t*, char*, char*);
+static int w_detailed_ipv6_type(sip_msg_t* _msg, char* _s,  char *res);
+static int w_detailed_ipv4_type(sip_msg_t* _msg, char* _s,  char *res);
+static int w_detailed_ip_type(sip_msg_t* _msg, char* _s,  char *res);
+static int w_compare_ips(sip_msg_t*, char*, char*);
+static int w_compare_pure_ips(sip_msg_t*, char*, char*);
+static int w_is_ip_rfc1918(sip_msg_t*, char*, char*);
+static int w_ip_is_in_subnet(sip_msg_t*, char*, char*);
 static int w_dns_sys_match_ip(sip_msg_t*, char*, char*);
 static int w_dns_int_match_ip(sip_msg_t*, char*, char*);
 static int fixup_detailed_ip_type(void** param, int param_no);
 static int fixup_free_detailed_ip_type(void** param, int param_no);
-static int w_dns_query(struct sip_msg* msg, char* str1, char* str2);
-static int w_srv_query(struct sip_msg* msg, char* str1, char* str2);
-static int w_naptr_query(struct sip_msg* msg, char* str1, char* str2);
+static int w_dns_query(sip_msg_t* msg, char* str1, char* str2);
+static int w_srv_query(sip_msg_t* msg, char* str1, char* str2);
+static int w_naptr_query(sip_msg_t* msg, char* str1, char* str2);
 static int mod_init(void);
 
 static pv_export_t mod_pvs[] = {
@@ -507,7 +508,7 @@ int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b,
 
 /*! \brief Return true if the given argument (string or pv) is a valid IPv4,
  * IPv6 or IPv6 reference. */
-static int w_is_ip(struct sip_msg* _msg, char* _s)
+static int w_is_ip(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -528,10 +529,20 @@ static int w_is_ip(struct sip_msg* _msg, char* _s)
 		return -1;
 }
 
+/**
+ * 
+ */
+static int ki_is_ip(sip_msg_t *msg, str *sval)
+{
+	if (ip_parser_execute(sval->s, sval->len) != ip_type_error)
+		return 1;
+	else
+		return -1;
+}
 
 /*! \brief Return true if the given argument (string or pv) is a valid
  * IPv4 or IPv6. */
-static int w_is_pure_ip(struct sip_msg* _msg, char* _s)
+static int w_is_pure_ip(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -559,9 +570,26 @@ static int w_is_pure_ip(struct sip_msg* _msg, char* _s)
 	}
 }
 
+/**
+ * 
+ */
+static int ki_is_pure_ip(sip_msg_t *msg, str *sval)
+{
+	switch(ip_parser_execute(sval->s, sval->len)) {
+		case(ip_type_ipv4):
+			return 1;
+			break;
+		case(ip_type_ipv6):
+			return 1;
+			break;
+		default:
+			return -1;
+			break;
+	}
+}
 
 /*! \brief Return true if the given argument (string or pv) is a valid IPv4. */
-static int w_is_ipv4(struct sip_msg* _msg, char* _s)
+static int w_is_ipv4(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -583,8 +611,19 @@ static int w_is_ipv4(struct sip_msg* _msg, char* _s)
 }
 
 
+/**
+ * 
+ */
+static int ki_is_ip4(sip_msg_t *msg, str *sval)
+{
+	if (ip_parser_execute(sval->s, sval->len) == ip_type_ipv4)
+		return 1;
+	else
+		return -1;
+}
+
 /*! \brief Return true if the given argument (string or pv) is a valid IPv6. */
-static int w_is_ipv6(struct sip_msg* _msg, char* _s)
+static int w_is_ipv6(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -605,10 +644,20 @@ static int w_is_ipv6(struct sip_msg* _msg, char* _s)
 		return -1;
 }
 
+/**
+ * 
+ */
+static int ki_is_ip6(sip_msg_t *msg, str *sval)
+{
+	if (ip_parser_execute(sval->s, sval->len) == ip_type_ipv6)
+		return 1;
+	else
+		return -1;
+}
 
 /*! \brief Return true if the given argument (string or pv) is a valid
  * IPv6 reference. */
-static int w_is_ipv6_reference(struct sip_msg* _msg, char* _s)
+static int w_is_ipv6_reference(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -630,9 +679,20 @@ static int w_is_ipv6_reference(struct sip_msg* _msg, char* _s)
 }
 
 
+/**
+ * 
+ */
+static int ki_is_ip6_reference(sip_msg_t *msg, str *sval)
+{
+	if (ip_parser_execute(sval->s, sval->len) == ip_type_ipv6_reference)
+		return 1;
+	else
+		return -1;
+}
+
 /*! \brief Return the IP type of the given argument (string or pv):
  *  1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
-static int w_ip_type(struct sip_msg* _msg, char* _s)
+static int w_ip_type(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -663,42 +723,51 @@ static int w_ip_type(struct sip_msg* _msg, char* _s)
 	}
 }
 
-static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *_dst)
+/*! \brief Return the IP type of the given argument (string or pv):
+ *  1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
+static int ki_ip_type(sip_msg_t *msg, str *sval)
+{
+	switch (ip_parser_execute(sval->s, sval->len)) {
+		case(ip_type_ipv4):
+			return 1;
+			break;
+		case(ip_type_ipv6):
+			return 2;
+			break;
+		case(ip_type_ipv6_reference):
+			return 3;
+			break;
+		default:
+			return -1;
+			break;
+	}
+}
+
+static int w_detailed_ipv4_type(sip_msg_t* _msg, char* _s,  char *_dst)
 {
 	return _detailed_ip_type(ip_type_ipv4, _msg, _s, _dst);
 }
 
-static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *_dst)
+static int w_detailed_ipv6_type(sip_msg_t* _msg, char* _s,  char *_dst)
 {
 	return _detailed_ip_type(ip_type_ipv6, _msg, _s, _dst);
 }
 
-static int w_detailed_ip_type(struct sip_msg* _msg, char* _s,  char *_dst)
+static int w_detailed_ip_type(sip_msg_t* _msg, char* _s,  char *_dst)
 {
 	/* `ip_type_error` should read `unknown type` */
 	return _detailed_ip_type(ip_type_error, _msg, _s, _dst);
 }
 
-static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg,
-		char* _s,  char *_dst)
+static int _detailed_ip_type_helper(unsigned int _type, sip_msg_t* _msg,
+		str* sval,  pv_spec_t *dst)
 {
 	str string;
-	pv_spec_t *dst;
 	pv_value_t val;
 	char *res;
 	unsigned int assumed_type;
 
-	if (_s == NULL) {
-		LM_ERR("bad parameter\n");
-		return -2;
-	}
-
-	if (fixup_get_svalue(_msg, (gparam_p)_s, &string))
-	{
-		LM_ERR("cannot print the format for string\n");
-		return -3;
-	}
-
+	string = *sval;
 	assumed_type = (ip_type_error == _type)?
 						ip_parser_execute(string.s, string.len) : _type;
 
@@ -728,35 +797,73 @@ static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg,
 	val.rs.s = res;
 	val.rs.len = strlen(res);
 	val.flags = PV_VAL_STR;
-	dst = (pv_spec_t *)_dst;
 	dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
 	return 1;
 }
 
+static int _detailed_ip_type(unsigned int _type, sip_msg_t* _msg,
+		char* _s,  char *_dst)
+{
+	str string;
+	pv_spec_t *dst;
+
+	if (_s == NULL) {
+		LM_ERR("bad parameter\n");
+		return -2;
+	}
+
+	if (fixup_get_svalue(_msg, (gparam_p)_s, &string))
+	{
+		LM_ERR("cannot print the format for string\n");
+		return -3;
+	}
+	dst = (pv_spec_t *)_dst;
+
+	return _detailed_ip_type_helper(_type, _msg, &string, dst);
+}
+
+static int ki_detailed_ip_type_helper(unsigned int _type, sip_msg_t* _msg,
+		str* _sval,  str *_dpv)
+{
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(_dpv);
+	if (dst == NULL) {
+		LM_ERR("result pvar is not found: %.*s\n", _dpv->len, _dpv->s);
+		return -1;
+	}
+	if (dst->setf == NULL) {
+		LM_ERR("result pvar is not writeble: %.*s\n", _dpv->len, _dpv->s);
+		return -1;
+	}
+	return _detailed_ip_type_helper(_type, _msg, _sval, dst);
+}
+
+static int ki_detailed_ipv4_type(sip_msg_t* _msg, str* _sval, str *_dpv)
+{
+	return ki_detailed_ip_type_helper(ip_type_ipv4, _msg, _sval, _dpv);
+}
+
+static int ki_detailed_ipv6_type(sip_msg_t* _msg, str* _sval, str *_dpv)
+{
+	return ki_detailed_ip_type_helper(ip_type_ipv6, _msg, _sval, _dpv);
+}
+
+static int ki_detailed_ip_type(sip_msg_t* _msg, str* _sval, str *_dpv)
+{
+	/* `ip_type_error` should read `unknown type` */
+	return ki_detailed_ip_type_helper(ip_type_error, _msg, _sval, _dpv);
+}
+
 /*! \brief Return true if both IP's (string or pv) are equal.
  * This function also allows comparing an IPv6 with an IPv6 reference. */
-static int w_compare_ips(struct sip_msg* _msg, char* _s1, char* _s2)
+static int ki_compare_ips(sip_msg_t* _msg, str* _sval1, str* _sval2)
 {
 	str string1, string2;
 	enum enum_ip_type ip1_type, ip2_type;
 
-	if (_s1 == NULL || _s2 == NULL ) {
-		LM_ERR("bad parameters\n");
-		return -2;
-	}
-
-	if (fixup_get_svalue(_msg, (gparam_p)_s1, &string1))
-	{
-		LM_ERR("cannot print the format for first string\n");
-		return -3;
-	}
-
-	if (fixup_get_svalue(_msg, (gparam_p)_s2, &string2))
-	{
-		LM_ERR("cannot print the format for second string\n");
-		return -3;
-	}
-
+	string1 = *_sval1;
+	string2 = *_sval2;
 	switch(ip1_type = ip_parser_execute(string1.s, string1.len)) {
 		case(ip_type_error):
 			return -1;
@@ -789,13 +896,11 @@ static int w_compare_ips(struct sip_msg* _msg, char* _s1, char* _s2)
 		return -1;
 }
 
-
-/*! \brief Return true if both pure IP's (string or pv) are equal.
- * IPv6 references not allowed. */
-static int w_compare_pure_ips(struct sip_msg* _msg, char* _s1, char* _s2)
+/*! \brief Return true if both IP's (string or pv) are equal.
+ * This function also allows comparing an IPv6 with an IPv6 reference. */
+static int w_compare_ips(sip_msg_t* _msg, char* _s1, char* _s2)
 {
 	str string1, string2;
-	enum enum_ip_type ip1_type, ip2_type;
 
 	if (_s1 == NULL || _s2 == NULL ) {
 		LM_ERR("bad parameters\n");
@@ -814,6 +919,18 @@ static int w_compare_pure_ips(struct sip_msg* _msg, char* _s1, char* _s2)
 		return -3;
 	}
 
+	return ki_compare_ips(_msg, &string1, &string2);
+}
+
+/*! \brief Return true if both pure IP's (string or pv) are equal.
+ * IPv6 references not allowed. */
+static int ki_compare_pure_ips(sip_msg_t* _msg, str* _sval1, str* _sval2)
+{
+	str string1, string2;
+	enum enum_ip_type ip1_type, ip2_type;
+
+	string1 = *_sval1;
+	string2 = *_sval2;
 	switch(ip1_type = ip_parser_execute(string1.s, string1.len)) {
 		case(ip_type_error):
 			return -1;
@@ -842,19 +959,11 @@ static int w_compare_pure_ips(struct sip_msg* _msg, char* _s1, char* _s2)
 		return -1;
 }
 
-
-/*! \brief Return true if the first IP (string or pv) is within the subnet
- * defined by the second commma-separated IP list in CIDR notation.
+/*! \brief Return true if both pure IP's (string or pv) are equal.
  * IPv6 references not allowed. */
-static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
+static int w_compare_pure_ips(sip_msg_t* _msg, char* _s1, char* _s2)
 {
-	struct in6_addr ip_addr6;
-	struct in_addr ip_addr;
-	int ret;
-	char ip_addr_str[INET6_ADDRSTRLEN],*b,*e;
-	void *ip;
 	str string1, string2;
-	enum enum_ip_type ip1_type;
 
 	if (_s1 == NULL || _s2 == NULL ) {
 		LM_ERR("bad parameters\n");
@@ -873,6 +982,24 @@ static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
 		return -3;
 	}
 
+	return ki_compare_pure_ips(_msg, &string1, &string2);
+}
+
+/*! \brief Return true if the first IP (string or pv) is within the subnet
+ * defined by the second commma-separated IP list in CIDR notation.
+ * IPv6 references not allowed. */
+static int ki_ip_is_in_subnet(sip_msg_t* _msg, str* _sval1, str* _sval2)
+{
+	struct in6_addr ip_addr6;
+	struct in_addr ip_addr;
+	int ret;
+	char ip_addr_str[INET6_ADDRSTRLEN],*b,*e;
+	void *ip;
+	str string1, string2;
+	enum enum_ip_type ip1_type;
+
+	string1 = *_sval1;
+	string2 = *_sval2;
 	switch(ip1_type = ip_parser_execute(string1.s, string1.len)) {
 		case(ip_type_error):
 			return -1;
@@ -910,9 +1037,36 @@ static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
 }
 
 
+/*! \brief Return true if the first IP (string or pv) is within the subnet
+ * defined by the second commma-separated IP list in CIDR notation.
+ * IPv6 references not allowed. */
+static int w_ip_is_in_subnet(sip_msg_t* _msg, char* _s1, char* _s2)
+{
+	str string1, string2;
+
+	if (_s1 == NULL || _s2 == NULL ) {
+		LM_ERR("bad parameters\n");
+		return -2;
+	}
+
+	if (fixup_get_svalue(_msg, (gparam_p)_s1, &string1))
+	{
+		LM_ERR("cannot print the format for first string\n");
+		return -3;
+	}
+
+	if (fixup_get_svalue(_msg, (gparam_p)_s2, &string2))
+	{
+		LM_ERR("cannot print the format for second string\n");
+		return -3;
+	}
+
+	return ki_ip_is_in_subnet(_msg, &string1, &string2);
+}
+
 /*! \brief Return true if the given argument (string or pv) is a valid
  * RFC 1918 IPv4 (private address). */
-static int w_is_ip_rfc1918(struct sip_msg* _msg, char* _s)
+static int w_is_ip_rfc1918(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
 
@@ -933,6 +1087,16 @@ static int w_is_ip_rfc1918(struct sip_msg* _msg, char* _s)
 		return -1;
 }
 
+/*! \brief Return true if the given argument (string or pv) is a valid
+ * RFC 1918 IPv4 (private address). */
+static int ki_is_ip_rfc1918(sip_msg_t* _msg, str* sval)
+{
+	if (rfc1918_parser_execute(sval->s, sval->len) == 1)
+		return 1;
+	else
+		return -1;
+}
+
 static inline ip_addr_t *strtoipX(str *ips)
 {
 	/* try to figure out INET class */
@@ -946,7 +1110,7 @@ static inline ip_addr_t *strtoipX(str *ips)
 	}
 }
 
-static int w_dns_sys_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
+static int ki_dns_sys_match_ip(sip_msg_t *msg, str *vhn, str *vip)
 {
 	struct addrinfo hints, *res, *p;
 	int status;
@@ -957,18 +1121,8 @@ static int w_dns_sys_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 	struct sockaddr_in *ipv4;
 	struct sockaddr_in6 *ipv6;
 
-	if (fixup_get_svalue(msg, (gparam_p)hnp, &hns))
-	{
-		LM_ERR("cannot evaluate hostname parameter\n");
-		return -2;
-	}
-
-	if (fixup_get_svalue(msg, (gparam_p)ipp, &ips))
-	{
-		LM_ERR("cannot evaluate ip address parameter\n");
-		return -2;
-	}
-
+	hns = *vhn;
+	ips = *vip;
 	ipa = strtoipX(&ips);
 	if(ipa==NULL)
 	{
@@ -1012,13 +1166,10 @@ static int w_dns_sys_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 	return -1;
 }
 
-static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
+static int w_dns_sys_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 {
-	ip_addr_t *ipa;
 	str hns;
 	str ips;
-	struct hostent* he;
-	char ** h;
 
 	if (fixup_get_svalue(msg, (gparam_p)hnp, &hns))
 	{
@@ -1032,6 +1183,19 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 		return -2;
 	}
 
+	return ki_dns_sys_match_ip(msg, &hns, &ips);
+}
+
+static int ki_dns_int_match_ip(sip_msg_t *msg, str *vhn, str *vip)
+{
+	ip_addr_t *ipa;
+	str hns;
+	str ips;
+	struct hostent* he;
+	char ** h;
+
+	hns = *vhn;
+	ips = *vip;
 	ipa = strtoipX(&ips);
 	if(ipa==NULL)
 	{
@@ -1060,10 +1224,30 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 	return -1;
 }
 
+static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
+{
+	str hns;
+	str ips;
+
+	if (fixup_get_svalue(msg, (gparam_p)hnp, &hns))
+	{
+		LM_ERR("cannot evaluate hostname parameter\n");
+		return -2;
+	}
+
+	if (fixup_get_svalue(msg, (gparam_p)ipp, &ips))
+	{
+		LM_ERR("cannot evaluate ip address parameter\n");
+		return -2;
+	}
+
+	return ki_dns_int_match_ip(msg, &hns, &ips);
+}
+
 /**
  *
  */
-static int w_dns_query(struct sip_msg* msg, char* str1, char* str2)
+static int w_dns_query(sip_msg_t* msg, char* str1, char* str2)
 {
 	str hostname;
 	str name;
@@ -1091,7 +1275,15 @@ static int w_dns_query(struct sip_msg* msg, char* str1, char* str2)
 /**
  *
  */
-static int w_srv_query(struct sip_msg* msg, char* str1, char* str2)
+static int ki_dns_query(sip_msg_t* msg, str* naptrname, str* pvid)
+{
+	return dns_update_pv(naptrname, pvid);
+}
+
+/**
+ *
+ */
+static int w_srv_query(sip_msg_t* msg, char* str1, char* str2)
 {
 	str srvcname;
 	str name;
@@ -1119,7 +1311,15 @@ static int w_srv_query(struct sip_msg* msg, char* str1, char* str2)
 /**
  *
  */
-static int w_naptr_query(struct sip_msg* msg, char* str1, char* str2)
+static int ki_srv_query(sip_msg_t* msg, str* naptrname, str* pvid)
+{
+	return srv_update_pv(naptrname, pvid);
+}
+
+/**
+ *
+ */
+static int w_naptr_query(sip_msg_t* msg, char* str1, char* str2)
 {
 	str naptrname;
 	str name;
@@ -1142,4 +1342,118 @@ static int w_naptr_query(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	return naptr_update_pv(&naptrname, &name);
+}
+
+/**
+ *
+ */
+static int ki_naptr_query(sip_msg_t* msg, str* naptrname, str* pvid)
+{
+	return naptr_update_pv(naptrname, pvid);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_ipops_exports[] = {
+	{ str_init("ipops"), str_init("is_ip"),
+		SR_KEMIP_INT, ki_is_ip,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("is_pure_ip"),
+		SR_KEMIP_INT, ki_is_pure_ip,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("is_ip4"),
+		SR_KEMIP_INT, ki_is_ip4,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("is_ip6"),
+		SR_KEMIP_INT, ki_is_ip6,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("is_ip6_reference"),
+		SR_KEMIP_INT, ki_is_ip6_reference,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("ip_type"),
+		SR_KEMIP_INT, ki_ip_type,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("detailed_ipv4_type"),
+		SR_KEMIP_INT, ki_detailed_ipv4_type,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("detailed_ipv6_type"),
+		SR_KEMIP_INT, ki_detailed_ipv6_type,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("detailed_ip_type"),
+		SR_KEMIP_INT, ki_detailed_ip_type,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("compare_ips"),
+		SR_KEMIP_INT, ki_compare_ips,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("compare_pure_ips"),
+		SR_KEMIP_INT, ki_compare_pure_ips,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("ip_is_in_subnet"),
+		SR_KEMIP_INT, ki_ip_is_in_subnet,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("is_ip_rfc1918"),
+		SR_KEMIP_INT, ki_is_ip_rfc1918,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("dns_sys_match_ip"),
+		SR_KEMIP_INT, ki_dns_sys_match_ip,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("dns_int_match_ip"),
+		SR_KEMIP_INT, ki_dns_int_match_ip,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("dns_query"),
+		SR_KEMIP_INT, ki_dns_query,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("srv_query"),
+		SR_KEMIP_INT, ki_srv_query,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("naptr_query"),
+		SR_KEMIP_INT, ki_naptr_query,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_ipops_exports);
+	return 0;
 }

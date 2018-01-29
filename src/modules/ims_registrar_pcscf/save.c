@@ -334,12 +334,9 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 		ci.received_port = 5060;
 
     // Parse security parameters
-    security_t sec_params;
-    memset(&sec_params, 0, sizeof(security_t));
-
-    int ret;
-    if((ret = cscf_get_security(_m, &sec_params)) != 0) {
-        LM_ERR("Error parsing sec-agree parameters: %d\n", ret);
+    security_t* sec_params = NULL;
+    if((sec_params = cscf_get_security(_m)) == NULL) {
+        LM_ERR("Will save pending contact without security parameters\n");
     }
 
 	ul.lock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
@@ -357,14 +354,13 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	}
 
     // Update security parameters
-    if(ul.update_temp_security(_d, sec_params.type, &sec_params, pcontact) != 0)
+    if(ul.update_temp_security(_d, sec_params->type, sec_params, pcontact) != 0)
     {
         LM_ERR("Error updating temp security\n");
     }
 
 	ul.unlock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 
-    free_security_t(&sec_params);
 
 	return 1;
 

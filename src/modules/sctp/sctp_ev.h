@@ -49,39 +49,39 @@
  * @param src   - pointer to a sockaddr_union containing the src.
  * @param proto - protocol used
  */
-#define SCTP_EV_ASSOC_CHANGE(lip, lport, src, reason, state) \
-	DBG("SCTP_ASSOC_CHANGE from %s on %s:%d: %s\n", \
-			su2a(src, sizeof(*(src))), ip_addr2a(lip), lport, reason)
+#define SCTP_EV_ASSOC_CHANGE(lip, lport, src, reason, state)                   \
+	DBG("SCTP_ASSOC_CHANGE from %s on %s:%d: %s\n", su2a(src, sizeof(*(src))), \
+			ip_addr2a(lip), lport, reason)
 
 /** an address part of an assoc. changed state.
  * called for the SCTP_PEER_ADDR_CHANGE event.*/
 #define SCTP_EV_PEER_ADDR_CHANGE(lip, lport, src, reason, state, addr_su) \
-	DBG("SCTP_PEER_ADDR_CHANGE from %s on %s:%d: %s\n", \
+	DBG("SCTP_PEER_ADDR_CHANGE from %s on %s:%d: %s\n",                   \
 			su2a(src, sizeof(*(src))), ip_addr2a(lip), lport, reason)
 
 /** remote operation error from the peer.
  * called for the SCTP_REMOTE_ERROR event.*/
-#define SCTP_EV_REMOTE_ERROR(lip, lport, src, err) \
-	DBG("SCTP_REMOTE_ERROR from %s on %s:%d: %d\n", \
-			su2a(src, sizeof(*(src))), ip_addr2a(lip), lport, err)
+#define SCTP_EV_REMOTE_ERROR(lip, lport, src, err)                             \
+	DBG("SCTP_REMOTE_ERROR from %s on %s:%d: %d\n", su2a(src, sizeof(*(src))), \
+			ip_addr2a(lip), lport, err)
 
 /** send failed.
  * called for the SCTP_SEND_FAILED event.*/
-#define SCTP_EV_SEND_FAILED(lip, lport, src, err) \
-	DBG("SCTP_SEND_FAILED from %s on %s:%d: %d\n", \
-			su2a(src, sizeof(*(src))), ip_addr2a(lip), lport, err)
+#define SCTP_EV_SEND_FAILED(lip, lport, src, err)                             \
+	DBG("SCTP_SEND_FAILED from %s on %s:%d: %d\n", su2a(src, sizeof(*(src))), \
+			ip_addr2a(lip), lport, err)
 
 /** the peer has sent a shutdown.
  * called for the SCTP_SHUTDOWN_EVENT event.*/
-#define SCTP_EV_SHUTDOWN_EVENT(lip, lport, src) \
-	DBG("SCTP_SHUTDOWN_EVENT from %s on %s:%d\n", \
-			su2a(src, sizeof(*(src))), ip_addr2a(lip), lport)
+#define SCTP_EV_SHUTDOWN_EVENT(lip, lport, src)                              \
+	DBG("SCTP_SHUTDOWN_EVENT from %s on %s:%d\n", su2a(src, sizeof(*(src))), \
+			ip_addr2a(lip), lport)
 
 /** kernel has finished sending all the queued data.
  * called for the SCTP_SENDER_DRY_EVENT event.*/
-#define SCTP_EV_SENDER_DRY_EVENT(lip, lport, src) \
-	DBG("SCTP_SENDER_DRY_EVENT from %s on %s:%d\n", \
-			su2a(src, sizeof(*(src))), ip_addr2a(lip), lport)
+#define SCTP_EV_SENDER_DRY_EVENT(lip, lport, src)                              \
+	DBG("SCTP_SENDER_DRY_EVENT from %s on %s:%d\n", su2a(src, sizeof(*(src))), \
+			ip_addr2a(lip), lport)
 
 #endif /* USE_SCTP_EV */
 

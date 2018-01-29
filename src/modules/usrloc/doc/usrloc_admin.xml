@@ -516,6 +516,26 @@ modparam("usrloc", "keepalive_column", "kalive")
 		</example>
 	</section>
 
+	<section id="usrloc.p.partition_column">
+		<title><varname>partition_column</varname> (string)</title>
+		<para>
+		Name of database table column containing the value for partition id.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>partition</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>partitioncolumn</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "partition_column", "part")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.use_domain">
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
@@ -1152,6 +1172,27 @@ modparam("usrloc", "skip_remote_socket", 1)
 		<programlisting format="linespecific">
 ...
 modparam("usrloc", "db_timer_clean", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.rm_expired_delay">
+		<title><varname>rm_expired_delay</varname> (int)</title>
+		<para>
+			Specify the number of seconds to delay the removal of expired
+			records. For now it works for DB_ONLY mode (db_mode=3).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rm_expired_delay</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "rm_expired_delay", 30)
 ...
 </programlisting>
 		</example>

@@ -931,7 +931,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	str xuuid;
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 
-	LM_DBG("handling outgoing request\n");
+	LM_DBG("handling outgoing request (%d, %d)\n", dialog, local);
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&btsd, 0, sizeof(tps_data_t));
@@ -1002,9 +1002,9 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 	if(dialog!=0) {
 		tps_storage_end_dialog(msg, &mtsd, ptsd);
-	}
-	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
-		goto error;
+		if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
+			goto error;
+		}
 	}
 
 done:
@@ -1081,6 +1081,9 @@ int tps_response_sent(sip_msg_t *msg)
 	}
 
 	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
+	if(tps_storage_update_branch(msg, &mtsd, &btsd, TPS_DBU_CONTACT)<0) {
+		goto error;
+	}
 	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
 		goto error1;
 	}

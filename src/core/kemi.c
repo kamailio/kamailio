@@ -938,6 +938,7 @@ static int sr_kemi_hdr_append_after(sip_msg_t *msg, str *txt, str *hname)
 			if (cmp_hdrname_str(&hf->name, &hfm.name)!=0)
 				continue;
 		}
+		break;
 	}
 
 	hdr = (char*)pkg_malloc(txt->len);
@@ -1129,16 +1130,15 @@ static int sr_kemi_hdr_insert_before(sip_msg_t *msg, str *txt, str *hname)
 			if (cmp_hdrname_str(&hf->name, &hfm.name)!=0)
 				continue;
 		}
+		break;
 	}
 
-	hf = msg->headers;
 	hdr = (char*)pkg_malloc(txt->len);
 	if(hdr==NULL) {
 		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 	memcpy(hdr, txt->s, txt->len);
-	anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
 	if(hf==0) { /* before first header */
 		anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
 	} else { /* before hf */

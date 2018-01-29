@@ -45,7 +45,9 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/receive.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_http.h"
@@ -56,7 +58,7 @@ extern struct tm_binds tmb;
 struct sip_msg *ah_reply = NULL;
 str ah_error = {NULL, 0};
 
-async_http_worker_t *workers;
+async_http_worker_t *workers = NULL;
 int num_workers = 1;
 
 struct query_params ah_params;
@@ -122,23 +124,43 @@ static inline char *strfindcasestrz(str *haystack, char *needlez)
 
 void async_http_cb(struct http_m_reply *reply, void *param)
 {
-	async_query_t *aq;
-	cfg_action_t *act;
+	async_query_t *aq = NULL;
+	cfg_action_t *act = NULL;
+	int ri;
 	unsigned int tindex;
 	unsigned int tlabel;
 	struct cell *t = NULL;
 	char *p;
 	str newbuf = {0, 0};
-	sip_msg_t *fmsg;
+	sip_msg_t *fmsg = NULL;
+	sr_kemi_eng_t *keng = NULL;
+	str cbname = {0, 0};
+	str evname = str_init("http_async_client:callback");
 
-	if (reply->result != NULL) {
-		LM_DBG("query result = %.*s [%d]\n", reply->result->len, reply->result->s, reply->result->len);
-	}
+	aq = param;
 
 	/* clean process-local result variables */
 	ah_error.s = NULL;
 	ah_error.len = 0;
 	memset(ah_reply, 0, sizeof(struct sip_msg));
+
+	keng = sr_kemi_eng_get();
+	if(keng==NULL) {
+		ri = route_lookup(&main_rt, aq->cbname);
+		if(ri<0) {
+			LM_ERR("unable to find route block [%s]\n", aq->cbname);
+			goto done;
+		}
+		act = main_rt.rlist[ri];
+		if(act==NULL) {
+			LM_ERR("empty action lists in route block [%s]\n", aq->cbname);
+			goto done;
+		}
+	}
+
+	if (reply->result != NULL) {
+		LM_DBG("query result = %.*s [%d]\n", reply->result->len, reply->result->s, reply->result->len);
+	}
 
 	/* set process-local result variables */
 	if (reply->result == NULL) {
@@ -189,12 +211,10 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 		}
 	}
 
-	aq = param;
 	strncpy(q_id, aq->id, strlen(aq->id));
 	
 	q_id[strlen(aq->id)] = '\0';
 
-	act = (cfg_action_t*)aq->param;
 	cfg_update();
 
 	if (aq->query_params.suspend_transaction) {
@@ -220,14 +240,34 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 
 		LM_DBG("resuming transaction (%d:%d)\n", tindex, tlabel);
 
-		if(act!=NULL)
-			tmb.t_continue(tindex, tlabel, act);
+		if(keng==NULL) {
+			if(act!=NULL) {
+				tmb.t_continue(tindex, tlabel, act);
+			}
+		} else {
+			cbname.s = aq->cbname;
+			cbname.len = aq->cbname_len;
+			tmb.t_continue_cb(tindex, tlabel, &cbname, &evname);
+		}
 	} else {
 		fmsg = faked_msg_next();
-		if (run_top_route(act, fmsg, 0)<0)
-			LM_ERR("failure inside run_top_route\n");
+		if(keng==NULL) {
+			if(act!=NULL) {
+				if (run_top_route(act, fmsg, 0)<0) {
+					LM_ERR("failure inside run_top_route\n");
+				}
+			}
+		} else {
+			cbname.s = aq->cbname;
+			cbname.len = aq->cbname_len;
+			if(keng->froute(fmsg, EVENT_ROUTE, &cbname, &evname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
+		ksr_msg_env_reset();
 	}
 
+done:
 	free_sip_msg(ah_reply);
 	free_async_query(aq);
 
@@ -391,7 +431,7 @@ int init_socket(async_http_worker_t *worker)
 	return (0);
 }
 
-int async_send_query(sip_msg_t *msg, str *query, cfg_action_t *act)
+int async_send_query(sip_msg_t *msg, str *query, str *cbname)
 {
 	async_query_t *aq;
 	unsigned int tindex = 0;
@@ -403,6 +443,11 @@ int async_send_query(sip_msg_t *msg, str *query, cfg_action_t *act)
 
 	if(query==0) {
 		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	if(cbname->len>=MAX_CBNAME_LEN-1) {
+		LM_ERR("callback name is too long: %d / %.*s\n", cbname->len,
+				cbname->len, cbname->s);
 		return -1;
 	}
 
@@ -440,7 +485,9 @@ int async_send_query(sip_msg_t *msg, str *query, cfg_action_t *act)
 		goto error;
 	}
 
-	aq->param = act;
+	memcpy(aq->cbname, cbname->s, cbname->len);
+	aq->cbname[cbname->len] = '\0';
+	aq->cbname_len = cbname->len;
 	aq->tindex = tindex;
 	aq->tlabel = tlabel;
 	

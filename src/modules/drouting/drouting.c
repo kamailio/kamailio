@@ -38,6 +38,8 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/dset.h"
+#include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/rand/kam_rand.h"
 
@@ -110,13 +112,10 @@ static int dr_init(void);
 static int dr_child_init(int rank);
 static int dr_exit(void);
 
-static int fixup_do_routing(void **param, int param_no);
-static int fixup_from_gw(void **param, int param_no);
-
-static int do_routing(struct sip_msg *msg, dr_group_t *drg);
+static int do_routing(struct sip_msg *msg, int grp_id);
 static int do_routing_0(struct sip_msg *msg, char *str1, char *str2);
 static int do_routing_1(struct sip_msg *msg, char *str1, char *str2);
-static int use_next_gw(struct sip_msg *msg);
+static int use_next_gw(struct sip_msg *msg, char *p1, char *p2);
 static int is_from_gw_0(struct sip_msg *msg, char *str1, char *str2);
 static int is_from_gw_1(struct sip_msg *msg, char *str1, char *str2);
 static int is_from_gw_2(struct sip_msg *msg, char *str1, char *str2);
@@ -132,20 +131,20 @@ MODULE_VERSION
 static cmd_export_t cmds[] = {
 	{"do_routing", (cmd_function)do_routing_0, 0, 0,
 			  0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"do_routing", (cmd_function)do_routing_1, 1, fixup_do_routing, 0,
+	{"do_routing", (cmd_function)do_routing_1, 1, fixup_igp_null, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE},
 	{"use_next_gw", (cmd_function)use_next_gw, 0, 0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE},
 	{"next_routing", (cmd_function)use_next_gw, 0, 0, 0, FAILURE_ROUTE},
 	{"is_from_gw", (cmd_function)is_from_gw_0, 0, 0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"is_from_gw", (cmd_function)is_from_gw_1, 1, fixup_from_gw, 0,
+	{"is_from_gw", (cmd_function)is_from_gw_1, 1, fixup_igp_null, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"is_from_gw", (cmd_function)is_from_gw_2, 2, fixup_from_gw, 0,
-			REQUEST_ROUTE},
+	{"is_from_gw", (cmd_function)is_from_gw_2, 2, fixup_igp_igp, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"goes_to_gw", (cmd_function)goes_to_gw_0, 0, 0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"goes_to_gw", (cmd_function)goes_to_gw_1, 1, fixup_from_gw, 0,
+	{"goes_to_gw", (cmd_function)goes_to_gw_1, 1, fixup_igp_null, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -624,18 +623,50 @@ static inline str *build_ruri(
 }
 
 
+static int ki_do_routing_furi(sip_msg_t *msg)
+{
+	int grp_id;
+	struct to_body *from;
+	struct sip_uri uri;
+
+	/* get the username from FROM_HDR */
+	if(parse_from_header(msg) != 0) {
+		LM_ERR("unable to parse from hdr\n");
+		return -1;
+	}
+	from = (struct to_body *)msg->from->parsed;
+	/* parse uri */
+	if(parse_uri(from->uri.s, from->uri.len, &uri) != 0) {
+		LM_ERR("unable to parse from uri\n");
+		return -1;
+	}
+
+	grp_id = get_group_id(&uri);
+	if(grp_id < 0) {
+		LM_ERR("failed to get group id\n");
+		return -1;;
+	}
+
+	return do_routing(msg, grp_id);
+}
+
 static int do_routing_0(struct sip_msg *msg, char *str1, char *str2)
 {
-	return do_routing(msg, NULL);
+	return ki_do_routing_furi(msg);
 }
 
 static int do_routing_1(struct sip_msg *msg, char *str1, char *str2)
 {
-	return do_routing(msg, (dr_group_t *)str1);
+	int grp_id;
+	if(fixup_get_ivalue(msg, (gparam_t*)str1, &grp_id)<0) {
+		LM_ERR("failed to get group id parameter\n");
+		return -1;
+	}
+	return do_routing(msg, grp_id);
 }
 
 
-static int use_next_gw(struct sip_msg *msg)
+static int ki_next_routing(sip_msg_t *msg)
 {
 	struct usr_avp *avp;
 	int_str val;
@@ -668,6 +699,11 @@ static int use_next_gw(struct sip_msg *msg)
 	return 1;
 }
 
+static int use_next_gw(struct sip_msg *msg, char *p1, char *p2)
+{
+	return ki_next_routing(msg);
+}
+
 int dr_already_choosen(rt_info_t *rt_info, int *active_gwlist,
 		int *local_gwlist, int lgw_size, int check)
 {
@@ -686,16 +722,13 @@ int dr_already_choosen(rt_info_t *rt_info, int *active_gwlist,
 	return 0;
 }
 
-static int do_routing(struct sip_msg *msg, dr_group_t *drg)
+static int do_routing(struct sip_msg *msg, int grp_id)
 {
-	struct to_body *from;
-	struct sip_uri uri;
 	rt_info_t *rt_info;
-	int grp_id;
 	int i, j, l, t;
+	struct sip_uri uri;
 	str *ruri;
 	int_str val;
-	struct usr_avp *avp;
 #define DR_MAX_GWLIST 32
 	static int active_gwlist[DR_MAX_GWLIST];
 	static int local_gwlist[DR_MAX_GWLIST];
@@ -710,41 +743,6 @@ static int do_routing(struct sip_msg *msg, dr_group_t *drg)
 		goto error1;
 	}
 
-	/* get the username from FROM_HDR */
-	if(parse_from_header(msg) != 0) {
-		LM_ERR("unable to parse from hdr\n");
-		goto error1;
-	}
-	from = (struct to_body *)msg->from->parsed;
-	/* parse uri */
-	if(parse_uri(from->uri.s, from->uri.len, &uri) != 0) {
-		LM_ERR("unable to parse from uri\n");
-		goto error1;
-	}
-
-	/* get user's routing group */
-	if(drg == NULL) {
-		grp_id = get_group_id(&uri);
-		if(grp_id < 0) {
-			LM_ERR("failed to get group id\n");
-			goto error1;
-		}
-	} else {
-		if(drg->type == 0)
-			grp_id = (int)drg->u.grp_id;
-		else if(drg->type == 1) {
-			grp_id = 0; /* call get avp here */
-			if((avp = search_first_avp(
-						drg->u.avp_id.type, drg->u.avp_id.name, &val, 0))
-							== NULL
-					|| (avp->flags & AVP_VAL_STR)) {
-				LM_ERR("failed to get group id\n");
-				goto error1;
-			}
-			grp_id = val.n;
-		} else
-			grp_id = 0;
-	}
 	LM_DBG("using dr group %d\n", grp_id);
 
 	/* get the number */
@@ -992,85 +990,6 @@ error1:
 }
 
 
-static int fixup_do_routing(void **param, int param_no)
-{
-	char *s;
-	dr_group_t *drg;
-	pv_spec_t avp_spec;
-	str r;
-
-	s = (char *)*param;
-
-	if(param_no == 1) {
-		if(s == NULL || s[0] == 0) {
-			LM_CRIT("empty group id definition");
-			return E_CFG;
-		}
-
-		drg = (dr_group_t *)pkg_malloc(sizeof(dr_group_t));
-		if(drg == NULL) {
-			LM_ERR("no more memory\n");
-			return E_OUT_OF_MEM;
-		}
-		memset(drg, 0, sizeof(dr_group_t));
-
-		if(s[0] == '$') {
-			/* param is a PV (AVP only supported) */
-			r.s = s;
-			r.len = strlen(s);
-			if(pv_parse_spec(&r, &avp_spec) == 0 || avp_spec.type != PVT_AVP) {
-				LM_ERR("malformed or non AVP %s AVP definition\n", s);
-				pkg_free(drg);
-				return E_CFG;
-			}
-
-			if(pv_get_avp_name(0, &(avp_spec.pvp), &(drg->u.avp_id.name),
-					   &(drg->u.avp_id.type))
-					!= 0) {
-				LM_ERR("[%s]- invalid AVP definition\n", s);
-				pkg_free(drg);
-				return E_CFG;
-			}
-			drg->type = 1;
-			/* do not free the param as the AVP spec may point inside
-			 * this string*/
-		} else {
-			while(s && *s) {
-				if(*s < '0' || *s > '9') {
-					LM_ERR("bad number\n");
-					pkg_free(drg);
-					return E_UNSPEC;
-				}
-				drg->u.grp_id = (drg->u.grp_id) * 10 + (*s - '0');
-				s++;
-			}
-			pkg_free(*param);
-		}
-		*param = (void *)drg;
-	}
-
-	return 0;
-}
-
-
-static int fixup_from_gw(void **param, int param_no)
-{
-	unsigned long type;
-	int err;
-
-	if(param_no == 1 || param_no == 2) {
-		type = str2s(*param, strlen(*param), &err);
-		if(err == 0) {
-			pkg_free(*param);
-			*param = (void *)type;
-			return 0;
-		} else {
-			LM_ERR("bad number <%s>\n", (char *)(*param));
-			return E_CFG;
-		}
-	}
-	return 0;
-}
 
 static int strip_username(struct sip_msg *msg, int strip)
 {
@@ -1091,7 +1010,7 @@ static int strip_username(struct sip_msg *msg, int strip)
 }
 
 
-static int is_from_gw_0(struct sip_msg *msg, char *str, char *str2)
+static int ki_is_from_gw(sip_msg_t *msg)
 {
 	pgw_addr_t *pgwa = NULL;
 
@@ -1108,11 +1027,14 @@ static int is_from_gw_0(struct sip_msg *msg, char *str, char *str2)
 	return -1;
 }
 
+static int is_from_gw_0(struct sip_msg *msg, char *str, char *str2)
+{
+	return ki_is_from_gw(msg);
+}
 
-static int is_from_gw_1(struct sip_msg *msg, char *str, char *str2)
+static int ki_is_from_gw_type(sip_msg_t *msg, int type)
 {
 	pgw_addr_t *pgwa = NULL;
-	int type = (int)(long)str;
 
 	if(rdata == NULL || *rdata == NULL || msg == NULL)
 		return -1;
@@ -1128,11 +1050,21 @@ static int is_from_gw_1(struct sip_msg *msg, char *str, char *str2)
 	return -1;
 }
 
-static int is_from_gw_2(struct sip_msg *msg, char *str1, char *str2)
+static int is_from_gw_1(struct sip_msg *msg, char *str1, char *str2)
+{
+	int type;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)str1, &type)<0) {
+		LM_ERR("failed to get parameter value\n");
+		return -1;
+	}
+
+	return ki_is_from_gw_type(msg, type);
+}
+
+static int ki_is_from_gw_type_flags(sip_msg_t *msg, int type, int flags)
 {
 	pgw_addr_t *pgwa = NULL;
-	int type = (int)(long)str1;
-	int flags = (int)(long)str2;
 
 	if(rdata == NULL || *rdata == NULL || msg == NULL)
 		return -1;
@@ -1151,20 +1083,34 @@ static int is_from_gw_2(struct sip_msg *msg, char *str1, char *str2)
 	return -1;
 }
 
+static int is_from_gw_2(struct sip_msg *msg, char *str1, char *str2)
+{
+	int type;
+	int flags;
 
-static int goes_to_gw_1(struct sip_msg *msg, char *_type, char *_f2)
+	if(fixup_get_ivalue(msg, (gparam_t*)str1, &type)<0) {
+		LM_ERR("failed to get type parameter value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)str2, &flags)<0) {
+		LM_ERR("failed to get flags parameter value\n");
+		return -1;
+	}
+
+	return ki_is_from_gw_type_flags(msg, type, flags);
+}
+
+static int ki_goes_to_gw_type(struct sip_msg *msg, int type)
 {
 	pgw_addr_t *pgwa = NULL;
 	struct sip_uri puri;
 	struct ip_addr *ip;
 	str *uri;
-	int type;
 
 	if(rdata == NULL || *rdata == NULL || msg == NULL)
 		return -1;
 
 	uri = GET_NEXT_HOP(msg);
-	type = (int)(long)_type;
 
 	if(parse_uri(uri->s, uri->len, &puri) < 0) {
 		LM_ERR("bad uri <%.*s>\n", uri->len, uri->s);
@@ -1183,8 +1129,83 @@ static int goes_to_gw_1(struct sip_msg *msg, char *_type, char *_f2)
 	return -1;
 }
 
+static int goes_to_gw_1(struct sip_msg *msg, char *_type, char *_f2)
+{
+	int type;
+	if(fixup_get_ivalue(msg, (gparam_t*)_type, &type)<0) {
+		LM_ERR("failed to get parameter value\n");
+		return -1;
+	}
+	return ki_goes_to_gw_type(msg, type);
+}
 
 static int goes_to_gw_0(struct sip_msg *msg, char *_type, char *_f2)
 {
-	return goes_to_gw_1(msg, (char *)(long)-1, _f2);
+	return ki_goes_to_gw_type(msg, -1);
+}
+
+static int ki_goes_to_gw(sip_msg_t *msg)
+{
+	return ki_goes_to_gw_type(msg, -1);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_drouting_exports[] = {
+	{ str_init("drouting"), str_init("do_routing_furi"),
+		SR_KEMIP_INT, ki_do_routing_furi,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("do_routing"),
+		SR_KEMIP_INT, do_routing,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("next_routing"),
+		SR_KEMIP_INT, ki_next_routing,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("use_next_gw"),
+		SR_KEMIP_INT, ki_next_routing,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("is_from_gw"),
+		SR_KEMIP_INT, ki_is_from_gw,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("is_from_gw_type"),
+		SR_KEMIP_INT, ki_is_from_gw_type,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("is_from_gw_type_flags"),
+		SR_KEMIP_INT, ki_is_from_gw_type_flags,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("goes_to_gw"),
+		SR_KEMIP_INT, ki_goes_to_gw,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("drouting"), str_init("goes_to_gw_type"),
+		SR_KEMIP_INT, ki_goes_to_gw_type,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_drouting_exports);
+	return 0;
 }

@@ -213,7 +213,7 @@ static inline int digest_authenticate(struct sip_msg *_m, str *_realm,
 				hdr_types_t _hftype, str *_method)
 {
 	struct hdr_field* h;
-	auth_cfg_result_t ret;
+	auth_cfg_result_t ret = AUTH_ERROR;
 	auth_result_t rauth;
 	struct secret *secret_struct;
 	str username;
@@ -278,9 +278,8 @@ static inline int digest_authenticate(struct sip_msg *_m, str *_realm,
 	return ret;
 }
 
-int autheph_check(struct sip_msg *_m, char *_realm)
+int ki_autheph_check(sip_msg_t *_m, str *srealm)
 {
-	str srealm;
 
 	if (eph_auth_api.pre_auth == NULL)
 	{
@@ -289,24 +288,12 @@ int autheph_check(struct sip_msg *_m, char *_realm)
 		return AUTH_ERROR;
 	}
 
-	if(_m == NULL || _realm == NULL)
-	{
-		LM_ERR("invalid parameters\n");
-		return AUTH_ERROR;
-	}
-
 	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
 	{
 		return AUTH_OK;
 	}
 
-	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0)
-	{
-		LM_ERR("failed to get realm value\n");
-		return AUTH_ERROR;
-	}
-
-	if (srealm.len == 0)
+	if (srealm->len == 0)
 	{
 		LM_ERR("invalid realm parameter - empty value\n");
 		return AUTH_ERROR;
@@ -314,36 +301,24 @@ int autheph_check(struct sip_msg *_m, char *_realm)
 
 	if (_m->REQ_METHOD == METHOD_REGISTER)
 	{
-		return digest_authenticate(_m, &srealm, HDR_AUTHORIZATION_T,
+		return digest_authenticate(_m, srealm, HDR_AUTHORIZATION_T,
 					&_m->first_line.u.request.method);
 	}
 	else
 	{
-		return digest_authenticate(_m, &srealm, HDR_PROXYAUTH_T,
+		return digest_authenticate(_m, srealm, HDR_PROXYAUTH_T,
 					&_m->first_line.u.request.method);
 	}
 }
 
-int autheph_www(struct sip_msg *_m, char *_realm)
+int autheph_check(struct sip_msg *_m, char *_realm, char *_p2)
 {
 	str srealm;
-
-	if (eph_auth_api.pre_auth == NULL)
-	{
-		LM_ERR("autheph_www() cannot be used without the auth "
-			"module\n");
-		return AUTH_ERROR;
-	}
 
 	if(_m == NULL || _realm == NULL)
 	{
 		LM_ERR("invalid parameters\n");
 		return AUTH_ERROR;
-	}
-
-	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
-	{
-		return AUTH_OK;
 	}
 
 	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0)
@@ -352,14 +327,79 @@ int autheph_www(struct sip_msg *_m, char *_realm)
 		return AUTH_ERROR;
 	}
 
-	if (srealm.len == 0)
+	return ki_autheph_check(_m, &srealm);
+}
+
+int ki_autheph_www(sip_msg_t *_m, str *srealm)
+{
+	if (eph_auth_api.pre_auth == NULL)
+	{
+		LM_ERR("autheph_www() cannot be used without the auth "
+			"module\n");
+		return AUTH_ERROR;
+	}
+
+	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
+	{
+		return AUTH_OK;
+	}
+
+	if (srealm->len == 0)
 	{
 		LM_ERR("invalid realm parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 
-	return digest_authenticate(_m, &srealm, HDR_AUTHORIZATION_T,
+	return digest_authenticate(_m, srealm, HDR_AUTHORIZATION_T,
 					&_m->first_line.u.request.method);
+}
+
+int autheph_www(struct sip_msg *_m, char *_realm, char *_p2)
+{
+	str srealm;
+
+	if(_m == NULL || _realm == NULL)
+	{
+		LM_ERR("invalid parameters\n");
+		return AUTH_ERROR;
+	}
+
+	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0)
+	{
+		LM_ERR("failed to get realm value\n");
+		return AUTH_ERROR;
+	}
+
+	return ki_autheph_www(_m, &srealm);
+}
+
+int ki_autheph_www_method(sip_msg_t *_m, str *srealm, str *smethod)
+{
+	if (eph_auth_api.pre_auth == NULL)
+	{
+		LM_ERR("autheph_www() cannot be used without the auth "
+			"module\n");
+		return AUTH_ERROR;
+	}
+
+	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
+	{
+		return AUTH_OK;
+	}
+
+	if (srealm->len == 0)
+	{
+		LM_ERR("invalid realm parameter - empty value\n");
+		return AUTH_ERROR;
+	}
+
+	if (smethod->len == 0)
+	{
+		LM_ERR("invalid method value - empty value\n");
+		return AUTH_ERROR;
+	}
+
+	return digest_authenticate(_m, srealm, HDR_AUTHORIZATION_T, smethod);
 }
 
 int autheph_www2(struct sip_msg *_m, char *_realm, char *_method)
@@ -367,33 +407,15 @@ int autheph_www2(struct sip_msg *_m, char *_realm, char *_method)
 	str srealm;
 	str smethod;
 
-	if (eph_auth_api.pre_auth == NULL)
-	{
-		LM_ERR("autheph_www() cannot be used without the auth "
-			"module\n");
-		return AUTH_ERROR;
-	}
-
-	if(_m == NULL || _realm == NULL)
+	if(_m == NULL || _realm == NULL || _method == NULL)
 	{
 		LM_ERR("invalid parameters\n");
 		return AUTH_ERROR;
 	}
 
-	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
-	{
-		return AUTH_OK;
-	}
-
 	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0)
 	{
 		LM_ERR("failed to get realm value\n");
-		return AUTH_ERROR;
-	}
-
-	if (srealm.len == 0)
-	{
-		LM_ERR("invalid realm parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 
@@ -403,29 +425,15 @@ int autheph_www2(struct sip_msg *_m, char *_realm, char *_method)
 		return AUTH_ERROR;
 	}
 
-	if (smethod.len == 0)
-	{
-		LM_ERR("invalid method value - empty value\n");
-		return AUTH_ERROR;
-	}
-
-	return digest_authenticate(_m, &srealm, HDR_AUTHORIZATION_T, &smethod);
+	return ki_autheph_www_method(_m, &srealm, &smethod);
 }
 
-int autheph_proxy(struct sip_msg *_m, char *_realm)
+int ki_autheph_proxy(sip_msg_t *_m, str *srealm)
 {
-	str srealm;
-
 	if (eph_auth_api.pre_auth == NULL)
 	{
 		LM_ERR("autheph_proxy() cannot be used without the auth "
 			"module\n");
-		return AUTH_ERROR;
-	}
-
-	if(_m == NULL || _realm == NULL)
-	{
-		LM_ERR("invalid parameters\n");
 		return AUTH_ERROR;
 	}
 
@@ -434,28 +442,92 @@ int autheph_proxy(struct sip_msg *_m, char *_realm)
 		return AUTH_OK;
 	}
 
+	if (srealm->len == 0)
+	{
+		LM_ERR("invalid realm parameter - empty value\n");
+		return AUTH_ERROR;
+	}
+
+	return digest_authenticate(_m, srealm, HDR_PROXYAUTH_T,
+					&_m->first_line.u.request.method);
+}
+
+int autheph_proxy(struct sip_msg *_m, char *_realm, char *_p2)
+{
+	str srealm;
+
+	if(_m == NULL || _realm == NULL)
+	{
+		LM_ERR("invalid parameters\n");
+		return AUTH_ERROR;
+	}
+
 	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0)
 	{
 		LM_ERR("failed to get realm value\n");
 		return AUTH_ERROR;
 	}
 
-	if (srealm.len == 0)
+	return ki_autheph_proxy(_m, &srealm);
+}
+
+int ki_autheph_authenticate(sip_msg_t *_m, str *susername, str *spassword)
+{
+	char generated_password[base64_enc_len(SHA_DIGEST_LENGTH)];
+	str sgenerated_password;
+	struct secret *secret_struct;
+
+	if (susername->len == 0)
 	{
-		LM_ERR("invalid realm parameter - empty value\n");
+		LM_ERR("invalid username parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 
-	return digest_authenticate(_m, &srealm, HDR_PROXYAUTH_T,
-					&_m->first_line.u.request.method);
+	if (spassword->len == 0)
+	{
+		LM_ERR("invalid password parameter - empty value\n");
+		return AUTH_ERROR;
+	}
+
+	if (autheph_verify_timestamp(susername) < 0)
+	{
+		LM_ERR("invalid timestamp in username\n");
+		return AUTH_ERROR;
+	}
+
+	LM_DBG("username: %.*s\n", susername->len, susername->s);
+	LM_DBG("password: %.*s\n", spassword->len, spassword->s);
+
+	sgenerated_password.s = generated_password;
+	SECRET_LOCK;
+	secret_struct = secret_list;
+	while (secret_struct != NULL)
+	{
+		LM_DBG("trying secret: %.*s\n",
+			secret_struct->secret_key.len,
+			secret_struct->secret_key.s);
+		if (get_pass(susername, &secret_struct->secret_key,
+				&sgenerated_password) == 0)
+		{
+			LM_DBG("generated password: %.*s\n",
+				sgenerated_password.len, sgenerated_password.s);
+			if (strncmp(spassword->s, sgenerated_password.s,
+					spassword->len) == 0)
+			{
+				SECRET_UNLOCK;
+				return AUTH_OK;
+			}
+		}
+		secret_struct = secret_struct->next;
+	}
+	SECRET_UNLOCK;
+
+	return AUTH_ERROR;
 }
 
 int autheph_authenticate(struct sip_msg *_m, char *_username, char *_password)
 {
 	str susername, spassword;
-	char generated_password[base64_enc_len(SHA_DIGEST_LENGTH)];
-	str sgenerated_password;
-	struct secret *secret_struct;
 
 	if (_m == NULL || _username == NULL || _password == NULL)
 	{
@@ -469,56 +541,11 @@ int autheph_authenticate(struct sip_msg *_m, char *_username, char *_password)
 		return AUTH_ERROR;
 	}
 
-	if (susername.len == 0)
-	{
-		LM_ERR("invalid username parameter - empty value\n");
-		return AUTH_ERROR;
-	}
-
 	if (get_str_fparam(&spassword, _m, (fparam_t*)_password) < 0)
 	{
 		LM_ERR("failed to get password value\n");
 		return AUTH_ERROR;
 	}
 
-	if (spassword.len == 0)
-	{
-		LM_ERR("invalid password parameter - empty value\n");
-		return AUTH_ERROR;
-	}
-
-	if (autheph_verify_timestamp(&susername) < 0)
-	{
-		LM_ERR("invalid timestamp in username\n");
-		return AUTH_ERROR;
-	}
-
-	LM_DBG("username: %.*s\n", susername.len, susername.s);
-	LM_DBG("password: %.*s\n", spassword.len, spassword.s);
-
-	sgenerated_password.s = generated_password;
-	SECRET_LOCK;
-	secret_struct = secret_list;
-	while (secret_struct != NULL)
-	{
-		LM_DBG("trying secret: %.*s\n",
-			secret_struct->secret_key.len,
-			secret_struct->secret_key.s);
-		if (get_pass(&susername, &secret_struct->secret_key,
-				&sgenerated_password) == 0)
-		{
-			LM_DBG("generated password: %.*s\n",
-				sgenerated_password.len, sgenerated_password.s);
-			if (strncmp(spassword.s, sgenerated_password.s,
-					spassword.len) == 0)
-			{
-				SECRET_UNLOCK;
-				return AUTH_OK;
-			}
-		}
-		secret_struct = secret_struct->next;
-	}
-	SECRET_UNLOCK;
-
-	return AUTH_ERROR;
+	return ki_autheph_authenticate(_m, &susername, &spassword);
 }

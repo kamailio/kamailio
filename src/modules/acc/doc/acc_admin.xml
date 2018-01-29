@@ -1197,6 +1197,27 @@ modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
 </programlisting>
 		</example>
 	</section>
+	<section id="acc.p.cdr_extra_nullable">
+		<title><varname>cdr_extra_nullable</varname> (integer)</title>
+		<para>
+		Should custom CDR fields be saved as NULL?
+		</para>
+		<para>
+		If set to 0, custom CDR fields not defined in config operation (or set to $null) will be saved as empty string.
+		If set to 1, custom CDR fields not defined in config operation (or set to $null) will be saved as NULL.
+		</para>
+		<para>
+		Default value is 0.
+		</para>
+		<example>
+		<title>cdr_extra_nullable example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "cdr_extra_nullable", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="acc.p.cdr_start_id">
 		<title><varname>cdr_start_id</varname> (string)</title>
 		<para>
@@ -1306,12 +1327,12 @@ modparam("acc", "cdrs_table", "acc_cdrs")
 		</listitem>
 		<listitem>
 			<para><emphasis>3</emphasis> - save formatted time according
-				to time_format parameter, using the output of localtime().
+				to time_format parameter, using the output of localtime(). Used for cdr entries too.
 			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>4</emphasis> - save formatted time according
-				to time_format parameter, using the output of gmtime().
+				to time_format parameter, using the output of gmtime(). Used for cdr entries too.
 			</para>
 		</listitem>
 		</itemizedlist>

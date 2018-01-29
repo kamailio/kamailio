@@ -46,7 +46,7 @@
 
 #include "../../core/counters.h"
 
-static cfg_ctx_t  *ctx = NULL;
+static cfg_ctx_t *ctx = NULL;
 
 /*!
  * This function copies an Kamailio "str" datatype into a '\\0' terminated char*
@@ -61,8 +61,7 @@ int convertStrToCharString(str *strToConvert, char **copiedString)
 	/* We want enough space for the string, plus 1 for the '\0' character. */
 	*copiedString = shm_malloc(sizeof(char) * (strToConvert->len + 1));
 
-	if (*copiedString == NULL)
-	{
+	if(*copiedString == NULL) {
 		return 0;
 	}
 
@@ -75,19 +74,19 @@ int convertStrToCharString(str *strToConvert, char **copiedString)
 
 /*! Silently returns 1 if the supplied parameters are sane.  Otherwise, an error
  * message is logged for parameterName, and 0 returned. */
-int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName)
+int stringHandlerSanityCheck(modparam_t type, void *val, char *parameterName)
 {
 	char *theString = (char *)val;
 
 	/* Make sure the function was called correctly. */
-	if (PARAM_TYPE_MASK(type) != PARAM_STRING) {
+	if(PARAM_TYPE_MASK(type) != PARAM_STRING) {
 		LM_ERR("the %s parameter was assigned a type %d instead of %d\n",
 				parameterName, type, PARAM_STRING);
 		return 0;
 	}
 
 	/* An empty string was supplied.  We consider this illegal */
-	if (theString==0 || (theString[0])==0) {
+	if(theString == 0 || (theString[0]) == 0) {
 		LM_ERR("the %s parameter was specified  with an empty string\n",
 				parameterName);
 		return 0;
@@ -95,7 +94,6 @@ int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName)
 
 	return 1;
 }
-
 
 
 /*!
@@ -109,12 +107,12 @@ int get_statistic(char *statName)
 
 	str theStr;
 
-	theStr.s   = statName;
+	theStr.s = statName;
 	theStr.len = strlen(statName);
 
 	stat_var *theVar = get_stat(&theStr);
 
-	if (theVar==0) {
+	if(theVar == 0) {
 		LM_INFO("failed to retrieve statistics for %s\n", statName);
 	} else {
 		result = get_stat_val(theVar);
@@ -126,7 +124,7 @@ int get_statistic(char *statName)
 /*! Returns a pointer to an SNMP DateAndTime OCTET STRING representation of the
  * time structure.  Note that the pointer is to static data, so it shouldn't be
  * counted on to be around if this function is called again. */
-char * convertTMToSNMPDateAndTime(struct tm *timeStructure)
+char *convertTMToSNMPDateAndTime(struct tm *timeStructure)
 {
 	static char dateAndTime[8];
 
@@ -135,13 +133,13 @@ char * convertTMToSNMPDateAndTime(struct tm *timeStructure)
 	int currentYear = timeStructure->tm_year + 1900;
 
 	/* See SNMPv2-TC for the conversion details */
-	dateAndTime[0] = (char) ((currentYear & 0xFF00) >> 8);
-	dateAndTime[1] = (char)  currentYear & 0xFF;
-	dateAndTime[2] = (char) timeStructure->tm_mon + 1;
-	dateAndTime[3] = (char) timeStructure->tm_mday;
-	dateAndTime[4] = (char) timeStructure->tm_hour;
-	dateAndTime[5] = (char) timeStructure->tm_min;
-	dateAndTime[6] = (char) timeStructure->tm_sec;
+	dateAndTime[0] = (char)((currentYear & 0xFF00) >> 8);
+	dateAndTime[1] = (char)currentYear & 0xFF;
+	dateAndTime[2] = (char)timeStructure->tm_mon + 1;
+	dateAndTime[3] = (char)timeStructure->tm_mday;
+	dateAndTime[4] = (char)timeStructure->tm_hour;
+	dateAndTime[5] = (char)timeStructure->tm_min;
+	dateAndTime[6] = (char)timeStructure->tm_sec;
 	dateAndTime[7] = 0;
 
 	return dateAndTime;
@@ -150,7 +148,7 @@ char * convertTMToSNMPDateAndTime(struct tm *timeStructure)
 /* module initialization function */
 int config_context_init(void)
 {
-	if (cfg_register_ctx(&ctx, NULL)) {
+	if(cfg_register_ctx(&ctx, NULL)) {
 		LM_ERR("failed to register cfg context\n");
 		return -1;
 	}
@@ -164,8 +162,8 @@ int config_context_init(void)
 */
 int snmp_cfg_get_int(char *arg_group, char *arg_name, unsigned int *type)
 {
-	void	*val;
-	unsigned int	val_type;
+	void *val;
+	unsigned int val_type;
 	int res;
 
 	str group, name;
@@ -178,15 +176,15 @@ int snmp_cfg_get_int(char *arg_group, char *arg_name, unsigned int *type)
 	*type = CFG_VAR_UNSET;
 
 	res = cfg_get_by_name(ctx, &group, NULL, &name, &val, &val_type);
-	if (res < 0) {
+	if(res < 0) {
 		LM_ERR("failed to get the variable\n");
 		return -1;
-	} else if (res > 0) {
+	} else if(res > 0) {
 		LM_ERR("fariable exists, but it is not readable via RPC interface\n");
 		return -1;
 	}
-	LM_DBG("xonfig framework variable %s:%s retrieved %d\n",
-			arg_group, arg_name, (int)(long) val);
+	LM_DBG("xonfig framework variable %s:%s retrieved %d\n", arg_group,
+			arg_name, (int)(long)val);
 	*type = val_type;
-	return (int) (long) val;
+	return (int)(long)val;
 }

@@ -49,6 +49,7 @@ extern int log_flag;
 extern int log_missed_flag;
 
 extern int cdr_enable;
+extern int cdr_extra_nullable;
 extern int cdr_start_on_confirmed;
 extern int cdr_log_facility;
 extern int cdr_expired_dlg_enable;

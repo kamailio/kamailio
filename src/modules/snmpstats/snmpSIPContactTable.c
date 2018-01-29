@@ -84,8 +84,9 @@
 static netsnmp_handler_registration *my_handler = NULL;
 static netsnmp_table_array_callbacks cb;
 
-oid kamailioSIPContactTable_oid[]      = { kamailioSIPContactTable_TABLE_OID };
-size_t kamailioSIPContactTable_oid_len = OID_LENGTH(kamailioSIPContactTable_oid);
+oid kamailioSIPContactTable_oid[] = {kamailioSIPContactTable_TABLE_OID};
+size_t kamailioSIPContactTable_oid_len =
+		OID_LENGTH(kamailioSIPContactTable_oid);
 
 /* 
  * This function adds a new contactToIndexStruct_t record to the front of
@@ -96,23 +97,25 @@ size_t kamailioSIPContactTable_oid_len = OID_LENGTH(kamailioSIPContactTable_oid)
  * we need to find out which SNMP row the information is stored under.
  */
 int insertContactRecord(
-		contactToIndexStruct_t **contactRecord, int index, char *name) 
+		contactToIndexStruct_t **contactRecord, int index, char *name)
 {
-    int nameLength =strlen(name);
-	
-    contactToIndexStruct_t *newContactRecord = (contactToIndexStruct_t *)
-        pkg_malloc(sizeof(contactToIndexStruct_t) +(nameLength+1)* sizeof(char));
+	int nameLength = strlen(name);
 
-	if (newContactRecord == NULL)
-	{
-        LM_ERR("no more pkg memory\n");
+	contactToIndexStruct_t *newContactRecord =
+			(contactToIndexStruct_t *)pkg_malloc(
+					sizeof(contactToIndexStruct_t)
+					+ (nameLength + 1) * sizeof(char));
+
+	if(newContactRecord == NULL) {
+		LM_ERR("no more pkg memory\n");
 		return 0;
 	}
 
-	newContactRecord->next         = *contactRecord;
-	newContactRecord->contactName  = (char*)newContactRecord + sizeof(contactToIndexStruct_t);
-    memcpy(newContactRecord->contactName, name, nameLength);
-    newContactRecord->contactName[nameLength]= '\0';
+	newContactRecord->next = *contactRecord;
+	newContactRecord->contactName =
+			(char *)newContactRecord + sizeof(contactToIndexStruct_t);
+	memcpy(newContactRecord->contactName, name, nameLength);
+	newContactRecord->contactName[nameLength] = '\0';
 	newContactRecord->contactIndex = index;
 
 	*contactRecord = newContactRecord;
@@ -127,32 +130,31 @@ int insertContactRecord(
  * the records index.  In the event that the record could not be found, 0 will
  * be returned. 
  */
-int deleteContactRecord(contactToIndexStruct_t **contactRecord,char *contactName)
+int deleteContactRecord(
+		contactToIndexStruct_t **contactRecord, char *contactName)
 {
 	int contactIndexToReturn;
-	contactToIndexStruct_t *currentContact  = *contactRecord;
+	contactToIndexStruct_t *currentContact = *contactRecord;
 	contactToIndexStruct_t *previousContact = *contactRecord;
 
-	while (currentContact != NULL) {
+	while(currentContact != NULL) {
 
-		if (strcmp(currentContact->contactName, contactName) == 0) 
-		{
+		if(strcmp(currentContact->contactName, contactName) == 0) {
 			/* This means that this is the first element.  Link up
 			 * the pointer to the next element */
-			if (currentContact == previousContact) {
+			if(currentContact == previousContact) {
 				*contactRecord = currentContact->next;
 			} else {
 				previousContact->next = currentContact->next;
 			}
 
 			contactIndexToReturn = currentContact->contactIndex;
-            pkg_free(currentContact);
+			pkg_free(currentContact);
 			return contactIndexToReturn;
 		}
 
 		previousContact = currentContact;
-		currentContact  = currentContact->next;
-
+		currentContact = currentContact->next;
 	}
 
 	return 0;
@@ -165,25 +167,25 @@ int deleteContactRecord(contactToIndexStruct_t **contactRecord,char *contactName
  *
  * Returns: 1 on success, and 0 otherwise. 
  */
-int createContactRow(int userIndex, int contactIndex, char *contactName, 
-		ucontact_t *contactInfo)  
+int createContactRow(int userIndex, int contactIndex, char *contactName,
+		ucontact_t *contactInfo)
 {
 	kamailioSIPContactTable_context *theRow;
 
-	oid  *OIDIndex;
-	int  stringLength;
+	oid *OIDIndex;
+	int stringLength;
 
 	theRow = SNMP_MALLOC_TYPEDEF(kamailioSIPContactTable_context);
 
-	if (theRow == NULL) {
+	if(theRow == NULL) {
 		LM_ERR("failed to create a row for kamailioSIPContactTable\n");
 		return 0;
 	}
 
 	/* We need enough memory for both the user index and contact index. */
-	OIDIndex = pkg_malloc(sizeof(oid)*2);
+	OIDIndex = pkg_malloc(sizeof(oid) * 2);
 
-	if (OIDIndex == NULL) {
+	if(OIDIndex == NULL) {
 		free(theRow);
 		LM_ERR("failed to create a row for kamailioSIPContactTable\n");
 		return 0;
@@ -195,24 +197,23 @@ int createContactRow(int userIndex, int contactIndex, char *contactName,
 	OIDIndex[0] = userIndex;
 	OIDIndex[1] = contactIndex;
 
-	theRow->index.len  = 2;
+	theRow->index.len = 2;
 	theRow->index.oids = OIDIndex;
 	theRow->kamailioSIPContactIndex = contactIndex;
 
 	/* Fill in the rest of the rows columns */
-	theRow->kamailioSIPContactURI = (unsigned char*)
-        pkg_malloc((stringLength+ 1)* sizeof(char));
-    if(theRow->kamailioSIPContactURI == NULL)
-    {
-        pkg_free(OIDIndex);
+	theRow->kamailioSIPContactURI =
+			(unsigned char *)pkg_malloc((stringLength + 1) * sizeof(char));
+	if(theRow->kamailioSIPContactURI == NULL) {
+		pkg_free(OIDIndex);
 		free(theRow);
 		LM_ERR("failed to allocate memory for contact name\n");
 		return 0;
-    }
-    memcpy(theRow->kamailioSIPContactURI, contactName, stringLength);
-    theRow->kamailioSIPContactURI[stringLength] = '\0';
+	}
+	memcpy(theRow->kamailioSIPContactURI, contactName, stringLength);
+	theRow->kamailioSIPContactURI[stringLength] = '\0';
 
-    theRow->kamailioSIPContactURI_len = stringLength;
+	theRow->kamailioSIPContactURI_len = stringLength;
 	theRow->contactInfo = contactInfo;
 
 	CONTAINER_INSERT(cb.container, theRow);
@@ -225,7 +226,7 @@ int createContactRow(int userIndex, int contactIndex, char *contactName,
  * Removes the row indexed by userIndex and contactIndex, and free's up the
  * memory allocated to it.  If the row could not be found, then nothing is done.
  */
-void deleteContactRow(int userIndex, int contactIndex) 
+void deleteContactRow(int userIndex, int contactIndex)
 {
 	kamailioSIPContactTable_context *theRow;
 
@@ -235,20 +236,20 @@ void deleteContactRow(int userIndex, int contactIndex)
 	/* Form the OID Index of the row so we can search for it */
 	indexToRemoveOID[0] = userIndex;
 	indexToRemoveOID[1] = contactIndex;
-	indexToRemove.oids  = indexToRemoveOID;
-	indexToRemove.len   = 2;
+	indexToRemove.oids = indexToRemoveOID;
+	indexToRemove.len = 2;
 
 	theRow = CONTAINER_FIND(cb.container, &indexToRemove);
 
 	/* The ContactURI is shared memory, the index.oids was allocated from
 	 * pkg_malloc(), and theRow was made with the NetSNMP API which uses
 	 * malloc() */
-	if (theRow != NULL) {
+	if(theRow != NULL) {
 		CONTAINER_REMOVE(cb.container, &indexToRemove);
 		pkg_free(theRow->kamailioSIPContactURI);
 		pkg_free(theRow->index.oids);
 		free(theRow);
-	} 
+	}
 }
 
 /*
@@ -269,7 +270,6 @@ void init_kamailioSIPContactTable(void)
 }
 
 
-
 /*
  * Initialize the kamailioSIPContactTable table by defining its contents and how
  * it's structured.
@@ -282,7 +282,7 @@ void initialize_table_kamailioSIPContactTable(void)
 
 	if(my_handler) {
 		snmp_log(LOG_ERR, "initialize_table_kamailioSIPContactTable_"
-				"handler called again\n");
+						  "handler called again\n");
 		return;
 	}
 
@@ -290,17 +290,19 @@ void initialize_table_kamailioSIPContactTable(void)
 
 	/** create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
+	if(table_info==NULL) {
+		snmp_log(LOG_ERR, "failed to allocate table_info\n");
+		return;
+	}
 
-	my_handler = netsnmp_create_handler_registration(
-			"kamailioSIPContactTable",
-			netsnmp_table_array_helper_handler,
-			kamailioSIPContactTable_oid,
-			kamailioSIPContactTable_oid_len,
-			HANDLER_CAN_RONLY);
-			
-	if (!my_handler || !table_info) {
+	my_handler = netsnmp_create_handler_registration("kamailioSIPContactTable",
+			netsnmp_table_array_helper_handler, kamailioSIPContactTable_oid,
+			kamailioSIPContactTable_oid_len, HANDLER_CAN_RONLY);
+
+	if(!my_handler) {
+		SNMP_FREE(table_info);
 		snmp_log(LOG_ERR, "malloc failed in initialize_table_kamailio"
-				"SIPContactTable_handler\n");
+						  "SIPContactTable_handler\n");
 		return; /** mallocs failed */
 	}
 
@@ -317,14 +319,15 @@ void initialize_table_kamailioSIPContactTable(void)
 	 */
 	cb.get_value = kamailioSIPContactTable_get_value;
 	cb.container = netsnmp_container_find("kamailioSIPContactTable_primary:"
-			"kamailioSIPContactTable:" "table_container");
-	
+										  "kamailioSIPContactTable:"
+										  "table_container");
+
 	DEBUGMSGTL(("initialize_table_kamailioSIPContactTable",
-				"Registering table kamailioSIPContactTable "
-				"as a table array\n"));
-	
-	netsnmp_table_container_register(my_handler, table_info, &cb, 
-			cb.container, 1);
+			"Registering table kamailioSIPContactTable "
+			"as a table array\n"));
+
+	netsnmp_table_container_register(
+			my_handler, table_info, &cb, cb.container, 1);
 }
 
 
@@ -337,20 +340,18 @@ void initialize_table_kamailioSIPContactTable(void)
  * may have changed since the row was first created.  Therefore, this data is
  * retrieved when it is requested for.
  */
-int kamailioSIPContactTable_get_value(
-			netsnmp_request_info *request,
-			netsnmp_index *item,
-			netsnmp_table_request_info *table_info )
+int kamailioSIPContactTable_get_value(netsnmp_request_info *request,
+		netsnmp_index *item, netsnmp_table_request_info *table_info)
 {
-	static char defaultExpiry[8]      = {0, 0, 0, 0, 0, 0, 0, 0};
+	static char defaultExpiry[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 	/* Needs to be large enough to hold the null terminated string "-0.01".
 	 */
-	char  contactPreference[6];	
-	float preferenceAsFloat     = -1;
+	char contactPreference[6];
+	float preferenceAsFloat = -1;
 
-	char       *retrievedExpiry;
-	struct tm  *timeValue;
+	char *retrievedExpiry;
+	struct tm *timeValue;
 
 	/* First things first, we need to consume the interprocess buffer, in
 	 * case something has changed. We want to return the freshest data. */
@@ -358,69 +359,56 @@ int kamailioSIPContactTable_get_value(
 
 	netsnmp_variable_list *var = request->requestvb;
 
-	kamailioSIPContactTable_context *context = 
-		(kamailioSIPContactTable_context *)item;
+	kamailioSIPContactTable_context *context =
+			(kamailioSIPContactTable_context *)item;
 
-	switch(table_info->colnum) 
-	{
+	switch(table_info->colnum) {
 
 		case COLUMN_KAMAILIOSIPCONTACTDISPLAYNAME:
 
 			/* FIXME: WHERE DO WE FIND THIS??  Setting to the same
 			 * thing as contact uri for now. */
-			snmp_set_var_typed_value(var, ASN_OCTET_STR, 
-					(unsigned char*)
-					context->kamailioSIPContactURI,
+			snmp_set_var_typed_value(var, ASN_OCTET_STR,
+					(unsigned char *)context->kamailioSIPContactURI,
 					context->kamailioSIPContactURI_len);
 			break;
 
 		case COLUMN_KAMAILIOSIPCONTACTURI:
 
 			snmp_set_var_typed_value(var, ASN_OCTET_STR,
-					 (unsigned char*)
-					 context->kamailioSIPContactURI,
-					 context->kamailioSIPContactURI_len);
+					(unsigned char *)context->kamailioSIPContactURI,
+					context->kamailioSIPContactURI_len);
 			break;
-	
+
 		case COLUMN_KAMAILIOSIPCONTACTLASTUPDATED:
-		
-			if (context->contactInfo != NULL) 
-			{
-				timeValue = 
-					localtime(&(context->contactInfo->last_modified));
-				retrievedExpiry  = 
-					convertTMToSNMPDateAndTime(timeValue);
+
+			if(context->contactInfo != NULL) {
+				timeValue = localtime(&(context->contactInfo->last_modified));
+				retrievedExpiry = convertTMToSNMPDateAndTime(timeValue);
 			} else {
 				retrievedExpiry = defaultExpiry;
 			}
 
-			snmp_set_var_typed_value(var, ASN_OCTET_STR,
-					 (unsigned char*)
-					 retrievedExpiry,
-					 8);
+			snmp_set_var_typed_value(
+					var, ASN_OCTET_STR, (unsigned char *)retrievedExpiry, 8);
 			break;
-	
+
 		case COLUMN_KAMAILIOSIPCONTACTEXPIRY:
 
-			if (context->contactInfo != NULL) 
-			{
-				timeValue = 
-					localtime(&(context->contactInfo->expires));
+			if(context->contactInfo != NULL) {
+				timeValue = localtime(&(context->contactInfo->expires));
 
-				retrievedExpiry  = 
-					convertTMToSNMPDateAndTime(timeValue);
+				retrievedExpiry = convertTMToSNMPDateAndTime(timeValue);
 			} else {
 				retrievedExpiry = defaultExpiry;
 			}
-			snmp_set_var_typed_value(var, ASN_OCTET_STR,
-					 (unsigned char*)
-					 retrievedExpiry,
-					 8);
+			snmp_set_var_typed_value(
+					var, ASN_OCTET_STR, (unsigned char *)retrievedExpiry, 8);
 			break;
-	
+
 		case COLUMN_KAMAILIOSIPCONTACTPREFERENCE:
 
-			if (context->contactInfo != NULL) {
+			if(context->contactInfo != NULL) {
 				preferenceAsFloat = context->contactInfo->q;
 			}
 
@@ -434,15 +422,13 @@ int kamailioSIPContactTable_get_value(
 			 * MIB. */
 			sprintf(contactPreference, "%5.2f", preferenceAsFloat);
 
-			snmp_set_var_typed_value(var, ASN_OCTET_STR,
-					 (unsigned char*)
-					 contactPreference,
-					 5);
+			snmp_set_var_typed_value(
+					var, ASN_OCTET_STR, (unsigned char *)contactPreference, 5);
 			break;
-	
+
 		default: /** We shouldn't get here */
 			snmp_log(LOG_ERR, "unknown column in "
-					 "kamailioSIPContactTable_get_value\n");
+							  "kamailioSIPContactTable_get_value\n");
 			return SNMP_ERR_GENERR;
 	}
 
@@ -452,11 +438,9 @@ int kamailioSIPContactTable_get_value(
 /* 
  * kamailioSIPContactTable_get_by_idx is an auto-generated function. 
  */
-const kamailioSIPContactTable_context *
-kamailioSIPContactTable_get_by_idx(netsnmp_index * hdr)
+const kamailioSIPContactTable_context *kamailioSIPContactTable_get_by_idx(
+		netsnmp_index *hdr)
 {
-	return (const kamailioSIPContactTable_context *)
-		CONTAINER_FIND(cb.container, hdr );
+	return (const kamailioSIPContactTable_context *)CONTAINER_FIND(
+			cb.container, hdr);
 }
-
-

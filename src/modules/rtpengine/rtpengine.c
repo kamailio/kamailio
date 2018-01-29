@@ -336,6 +336,7 @@ static param_export_t params[] = {
 	{"rtpengine_sock",        PARAM_STRING|USE_FUNC_PARAM,
 	                         (void*)rtpengine_set_store          },
 	{"rtpengine_disable_tout",INT_PARAM, &default_rtpengine_cfg.rtpengine_disable_tout },
+	{"aggressive_redetection",INT_PARAM, &default_rtpengine_cfg.aggressive_redetection },
 	{"rtpengine_retr",        INT_PARAM, &default_rtpengine_cfg.rtpengine_retr         },
 	{"queried_nodes_limit",   INT_PARAM, &default_rtpengine_cfg.queried_nodes_limit    },
 	{"rtpengine_tout_ms",     INT_PARAM, &default_rtpengine_cfg.rtpengine_tout_ms      },
@@ -906,7 +907,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 			p1++;
 		}
 
-		if (p1 != NULL && p1 != '\0') {
+		if (p1 != NULL && p1[0] != '\0') {
 			s1.s = p1;
 			s1.len = strlen(p1);
 			if (str2int(&s1, &port) < 0 || port > 0xFFFF) {
@@ -2610,6 +2611,10 @@ retry:
 
 	/* No proxies? Force all to be redetected, if not yet */
 	if (weight_sum == 0) {
+		if (!cfg_get(rtpengine,rtpengine_cfg,aggressive_redetection)) {
+			return NULL;
+		}
+
 		if (was_forced) {
 			return NULL;
 		}
@@ -3328,6 +3333,7 @@ rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more)
 	str body, newbody;
 	struct lump *anchor;
 	pv_value_t pv_val;
+	str cur_body = {0, 0};
 
 	dict = rtpp_function_call_ok(&bencbuf, msg, op, flags, &body);
 	if (!dict)
@@ -3357,7 +3363,12 @@ rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more)
 			pkg_free(newbody.s);
 
 		} else {
-			anchor = del_lump(msg, body.s - msg->buf, body.len, 0);
+			/* get the body from the message as body ptr may have changed */
+			cur_body.len = 0;
+			cur_body.s = get_body(msg);
+			cur_body.len = msg->buf + msg->len - cur_body.s;
+
+			anchor = del_lump(msg, cur_body.s - msg->buf, cur_body.len, 0);
 			if (!anchor) {
 				LM_ERR("del_lump failed\n");
 				goto error_free;
@@ -3668,7 +3679,7 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     },
     { str_init("rtpengine"), str_init("set_rtpengine_set2"),
         SR_KEMIP_INT, ki_set_rtpengine_set2,
-        { SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+        { SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
 

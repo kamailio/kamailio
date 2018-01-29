@@ -27,11 +27,14 @@ Build-Depends:
  libjson-c-dev,
  libldap2-dev,
  liblua5.1-0-dev,
+ libmaxminddb-dev,
  libmemcached-dev,
+ libmongoc-dev,
  libmono-2.0-dev,
  libncurses5-dev,
  libpcre3-dev,
  libperl-dev,
+ libphonenumber-dev (>= 7),
  libpq-dev,
  librabbitmq-dev,
  libradcli-dev,
@@ -145,6 +148,24 @@ Description: The geoip module for the Kamailio SIP Server
  .
  This package provides the geoip module, an extension enabling
  usage of the GeoIP API within the Kamailio configuration file.
+
+Package: kamailio-geoip2-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: The geoip2 module for the Kamailio SIP Server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the geoip2 module, an extension enabling
+ real-time queries against the Max Mind GeoIP2 database within the Kamailio
+ configuration file.
 
 Package: kamailio-sqlite-modules
 Architecture: linux-any
@@ -323,6 +344,10 @@ Description: CPL module (CPL interpreter engine) for the Kamailio SIP server
 Package: kamailio-radius-modules
 Architecture: linux-any
 Multi-Arch: same
+Breaks:
+ kamailio (<<5.1),
+Replaces:
+ kamailio (<<5.1),
 Pre-Depends:
  ${misc:Pre-Depends},
 Depends:
@@ -741,6 +766,40 @@ Description: systemd logging modules for the Kamailio SIP server
  This package provides logging to systemd journal directly from the
  Kamailio configuration and routing scripts.
 
+Package: kamailio-phonenum-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: phonenum modules for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides real-time queries against the libphonenumber to be
+ performed directly from the Kamailio configuration and routing scripts.
+
+Package: kamailio-mongodb-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: mongodb modules for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the mongodb database driver and non-db connector for
+ Kamailio.
+
 Package: kamailio-extra-modules
 Architecture: linux-any
 Multi-Arch: same
@@ -757,7 +816,7 @@ Description: Extra modules for the Kamailio SIP Server
  .
  This package provides a set of modules for compression of SIP attachments,
  UUID usage, JSON data structure support, HTTP restful API asynchronous
- access and a few more functions: gzcompress uuid ev jansson janssonrpc-c http_async
+ access and a few more functions: gzcompress uuid evapi jansson janssonrpcc http_async_client
 
 Package: kamailio-nth
 Architecture: any

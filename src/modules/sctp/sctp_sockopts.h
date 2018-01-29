@@ -24,12 +24,12 @@
 #include <netinet/sctp.h>
 
 #ifndef SCTP_DELAYED_SACK
-#ifdef	SCTP_DELAYED_ACK
+#ifdef SCTP_DELAYED_ACK
 /* on linux lksctp/libsctp <= 1.0.11 (and possible future versions)
  * SCTP_DELAYED_ACK is used instead of SCTP_DELAYED_SACK (typo?)
  */
-#define	SCTP_DELAYED_SACK SCTP_DELAYED_ACK
-#endif	/* SCTP_DELAYED_ACK */
+#define SCTP_DELAYED_SACK SCTP_DELAYED_ACK
+#endif /* SCTP_DELAYED_ACK */
 #endif /* SCTP_DELAYED_SACK */
 
 #endif /*__sctp_sockopts_h*/

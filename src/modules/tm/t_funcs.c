@@ -281,7 +281,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	/* at this point if the msg is an ACK it is an e2e ACK and
 	   e2e ACKs do not establish a transaction and are fwd-ed statelessly */
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
-		LM_DBG( "forwarding ACK  statelessly \n");
+		LM_DBG("forwarding ACK statelessly\n");
 		if (proxy==0) {
 			init_dest_info(&dst);
 			dst.proto=proto;
@@ -302,7 +302,11 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			proxy2su(&dst.to, proxy);
 			/* dst->send_sock not set, but forward_request will take care
 			 * of it */
-			ret=forward_request( p_msg , 0, 0, &dst) ;
+			ret=forward_request(p_msg , 0, 0, &dst) ;
+		}
+		if (ret>=0) {
+			/* convert return code for cfg script */
+			ret=1;
 		}
 		goto done;
 	}

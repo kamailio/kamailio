@@ -201,6 +201,9 @@ static int split_fields(char *part, int *n, struct xlstr **strs) {
 	int i, res;
 	char *c, *fld;
 
+	if(part==NULL || *part=='\0' || strs==NULL)
+		return -1;
+
 	*n = 0;
 	*strs = 0;
 	c = part;
@@ -210,7 +213,7 @@ static int split_fields(char *part, int *n, struct xlstr **strs) {
 		(*n)++;
 	}
 	*strs = pkg_malloc( (*n)*sizeof(**strs));
-	if (!strs) {
+	if (*strs==NULL) {
 		ERR(MODULE_NAME": split_fields: not enough pkg memory\n");
 		return E_OUT_OF_MEM;
 	}
@@ -1040,12 +1043,27 @@ static int mod_init(void) {
 	for (p=dbops_actions; p; p=p->next) {
 		int res;
 		res = init_action(p);
-		if (res < 0)
+		if (res < 0) {
+			pkg_free(xlbuf);
+			xlbuf = NULL;
 			return res;
+		}
 	}
 
-	register_script_cb(dbops_pre_script_cb, REQUEST_CB | ONREPLY_CB | PRE_SCRIPT_CB, 0);
-	register_script_cb(dbops_post_script_cb, REQUEST_CB | ONREPLY_CB | POST_SCRIPT_CB, 0);
+	if(register_script_cb(dbops_pre_script_cb,
+			REQUEST_CB | ONREPLY_CB | PRE_SCRIPT_CB, 0)<0) {
+		LM_ERR("failed to register pre script callback\n");
+		pkg_free(xlbuf);
+		xlbuf = NULL;
+		return -1;
+	}
+	if(register_script_cb(dbops_post_script_cb,
+			REQUEST_CB | ONREPLY_CB | POST_SCRIPT_CB, 0)<0) {
+		LM_ERR("failed to register post script callback\n");
+		pkg_free(xlbuf);
+		xlbuf = NULL;
+		return -1;
+	}
 	register_select_table(sel_declaration);
 
 	return 0;

@@ -64,6 +64,7 @@
 
 #define TIME_STR_BUFFER_SIZE 20
 #define TIME_BUFFER_LENGTH 256
+#define TIME_STRING_FORMAT "%Y-%m-%d %H:%M:%S"
 
 struct dlg_binds dlgb;
 struct acc_extra* cdr_extra = NULL;
@@ -141,6 +142,8 @@ static int db_write_cdr( struct dlg_cell* dialog,
 	long long_val;
 	double double_val;
 	char * end;
+	struct tm *t;
+	char cdr_time_format_buf[MAX_CDR_CORE][TIME_STR_BUFFER_SIZE];
 
 	if(acc_cdrs_table.len<=0)
 		return 0;
@@ -182,13 +185,24 @@ static int db_write_cdr( struct dlg_cell* dialog,
 				VAL_STR(db_cdr_vals+i) = cdr_value_array[i];
 				break;
 			case TYPE_DATE:
-				VAL_TYPE(db_cdr_vals+i)=DB1_DATETIME;
 				VAL_NULL(db_cdr_vals+i)=0;
 				if(string2time(&cdr_value_array[i], &timeval_val) < 0) {
 					LM_ERR("failed to convert string to timeval.\n");
 					goto error;
 				}
-				VAL_TIME(db_cdr_vals+i) = timeval_val.tv_sec;
+				if (acc_time_mode==4) {
+					VAL_TYPE(db_cdr_vals+i)=DB1_STRING;
+					t = gmtime(&timeval_val.tv_sec);
+					/* Convert time_t structure to format accepted by the database */
+					if (strftime(cdr_time_format_buf[i], TIME_STR_BUFFER_SIZE, TIME_STRING_FORMAT, t) <= 0) {
+						cdr_time_format_buf[i][0] = '\0';
+					}
+
+					VAL_STRING(db_cdr_vals+i) = cdr_time_format_buf[i];
+				} else {
+					VAL_TYPE(db_cdr_vals+i)=DB1_DATETIME;
+					VAL_TIME(db_cdr_vals+i) = timeval_val.tv_sec;
+				}
 				break;
 			case TYPE_DOUBLE:
 				VAL_TYPE(db_cdr_vals+i)=DB1_DOUBLE;
@@ -224,9 +238,14 @@ static int db_write_cdr( struct dlg_cell* dialog,
 
 	for( ; i<m; i++) {
 		db_cdr_keys[i] = &cdr_attrs[i];
-		VAL_TYPE(db_cdr_vals+i)=DB1_STR;
-		VAL_NULL(db_cdr_vals+i)=0;
-		VAL_STR(db_cdr_vals+i) = cdr_value_array[i];
+
+		if (cdr_extra_nullable == 1 && cdr_type_array[i] == TYPE_NULL) {
+			VAL_NULL(db_cdr_vals + i) = 1;
+		} else {
+			VAL_TYPE(db_cdr_vals+i)=DB1_STR;
+			VAL_NULL(db_cdr_vals+i)=0;
+			VAL_STR(db_cdr_vals+i) = cdr_value_array[i];
+		}
 	}
 
 	if (df->use_table(dh, &acc_cdrs_table /*table*/) < 0) {

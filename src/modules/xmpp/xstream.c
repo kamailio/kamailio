@@ -31,7 +31,7 @@ static void _xode_put_expatattribs(xode owner, const char** atts)
 {
     int i = 0;
     if (atts == NULL) return;
-    while (atts[i] != '\0')
+    while (*(atts[i]) != '\0')
     {
         xode_put_attrib(owner, atts[i], atts[i+1]);
         i += 2;

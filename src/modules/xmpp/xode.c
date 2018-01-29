@@ -343,7 +343,7 @@ xode xode_get_tag(xode parent, const char* name)
     char *str, *slash, *qmark, *equals;
     xode step, ret;
 
-    if(parent == NULL || parent->firstchild == NULL || name == NULL || name == '\0') return NULL;
+    if(parent == NULL || parent->firstchild == NULL || name == NULL || *name == '\0') return NULL;
 
     if(strstr(name, "/") == NULL && strstr(name,"?") == NULL)
         return _xode_search(parent->firstchild, name, XODE_TYPE_TAG);
