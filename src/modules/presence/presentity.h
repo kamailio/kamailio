@@ -57,8 +57,12 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 int update_presentity(struct sip_msg* msg,presentity_t* p,str* body,int t_new,
 		int* sent_reply, char* sphere, str* etag_override, str* ruid);
 
+/* update presentity in database using API */
+int _api_update_presentity(str *event, str *realm, str *user, str *etag,
+		str *sender, str *body, int expires, int reset);
+
 /* free memory */
-void free_presentity(presentity_t* p);
+void free_presentity(presentity_t *p);
 
 char* generate_ETag(int publ_count);
 
