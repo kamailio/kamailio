@@ -26,7 +26,7 @@
 
 typedef struct json_object *(*json_parse_f) (const char *str);
 typedef struct json_object *(*json_get_object_f) (struct json_object *json_obj, const char *str);
-typedef str (*json_extract_field_f) (struct json_object *json_obj, char *json_name);
+typedef int (*json_extract_field_f) (struct json_object *json_obj, char *json_name, str *var);
 
 typedef struct json_api {
 	json_parse_f json_parse;

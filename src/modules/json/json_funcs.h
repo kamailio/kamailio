@@ -29,18 +29,18 @@
 
 int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst);
 
-#define json_extract_field(json_name, field)                                \
-	do {                                                                    \
+#define json_extract_field(json_name, field)                            \
+	do {                                                                \
 		struct json_object *obj = json_get_object(json_obj, json_name); \
-		field.s = (char *)json_object_get_string(obj);                      \
-		if(field.s == NULL) {                                               \
-			LM_DBG("Json-c error - failed to extract field [%s]\n",         \
-					json_name);                                             \
-			field.s = "";                                                   \
-		} else {                                                            \
-			field.len = strlen(field.s);                                    \
-		}                                                                   \
-		LM_DBG("%s: [%s]\n", json_name, field.s ? field.s : "Empty");       \
+		field->s = (char *)json_object_get_string(obj);                 \
+		if(field->s == NULL) {                                          \
+			LM_DBG("Json-c error - failed to extract field [%s]\n",     \
+					json_name);                                         \
+			field->s = "";                                              \
+		} else {                                                        \
+			field->len = strlen(field->s);                              \
+		}                                                               \
+		LM_DBG("%s: [%s]\n", json_name, field->s ? field->s : "Empty"); \
 	} while(0);
 
 
