@@ -1425,44 +1425,6 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	return;
 }
 
-#define st_bufcopy_uint(_dbuf, _dsize, _dp, _sival) do { \
-		str _ls; \
-		_ls.s = int2str(_sival, &_ls.len); \
-		if(_ls.s == NULL || _dp + _ls.len >= _dbuf + _dsize) { \
-			LM_ERR("conversion error or out of bound (%p:%d/%p:%d\n", \
-					_dbuf, _dsize, _dp, _ls.len); \
-			goto error; \
-		} \
-		memcpy(_dp, _ls.s, _ls.len); \
-		_dp += _ls.len; \
-	} while(0)
-
-#define st_bufcopy_ipaddr(_dbuf, _dsize, _dp, _sipaddr) do { \
-		str _ls; \
-		_ls.s = ip_addr2a(_sipaddr); \
-		if(_ls.s == NULL) { \
-			LM_ERR("conversion error\n"); \
-			goto error; \
-		} \
-		_ls.len = strlen(_ls.s); \
-		if(_dp + _ls.len >= _dbuf + _dsize) { \
-			LM_ERR("out of bound (%p:%d/%p:%d\n", \
-					_dbuf, _dsize, _dp, _ls.len); \
-			goto error; \
-		} \
-		memcpy(_dp, _ls.s, _ls.len); \
-		_dp += _ls.len; \
-	} while(0)
-
-#define st_bufcopy_char(_dbuf, _dsize, _dp, _scval) do { \
-		if(_dp + 1 >= _dbuf + _dsize) { \
-			LM_ERR("out of bound (%p:%d/%p:1\n", _dbuf, _dsize, _dp); \
-			goto error; \
-		} \
-		*_dp = _scval; \
-		_dp += 1; \
-	} while(0)
-
 /**
  *
  */
@@ -1485,26 +1447,27 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	sto.body.s = nd->data.s;
 	sto.body.len = nd->data.len;
 
-	siptrace_copy_proto_olen(nd->rcv->proto, sto.fromip_buff, olen);
-	cp = sto.fromip_buff + olen;
-	st_bufcopy_ipaddr(sto.fromip_buff, SIPTRACE_ADDR_MAX, cp,
-			&nd->rcv->src_ip);
-	st_bufcopy_char(sto.fromip_buff, SIPTRACE_ADDR_MAX, cp, ':');
-	st_bufcopy_uint(sto.fromip_buff, SIPTRACE_ADDR_MAX, cp,
-			nd->rcv->src_port);
-	sto.fromip.s = sto.fromip_buff;
-	sto.fromip.len = strlen(sto.fromip_buff);
+	sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
+			siptrace_proto_name(nd->rcv->proto),
+			ip_addr2a(&nd->rcv->src_ip), (int)nd->rcv->src_port);
+	if(sto.fromip.len<0 || sto.fromip.len>=SIPTRACE_ADDR_MAX) {
+		LM_ERR("failed to format toip buffer (%d)\n", sto.fromip.len);
+		sto.fromip.s = SIPTRACE_ANYADDR;
+		sto.fromip.len = SIPTRACE_ANYADDR_LEN;
+	} else {
+		sto.fromip.s = sto.fromip_buff;
+	}
 
-	siptrace_copy_proto_olen(nd->rcv->proto, sto.toip_buff, olen);
-	cp = sto.toip_buff + olen;
-	st_bufcopy_ipaddr(sto.toip_buff, SIPTRACE_ADDR_MAX, cp,
-			&nd->rcv->dst_ip);
-	st_bufcopy_char(sto.toip_buff, SIPTRACE_ADDR_MAX, cp, ':');
-	st_bufcopy_uint(sto.toip_buff, SIPTRACE_ADDR_MAX, cp,
-			nd->rcv->dst_port);
-	sto.toip.s = sto.toip_buff;
-	/* zero terminated due to memset */
-	sto.toip.len = strlen(sto.toip_buff);
+	sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
+			siptrace_proto_name(nd->rcv->proto), ip_addr2a(&nd->rcv->dst_ip),
+			(int)nd->rcv->dst_port);
+	if(sto.toip.len<0 || sto.toip.len>=SIPTRACE_ADDR_MAX) {
+		LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
+		sto.toip.s = SIPTRACE_ANYADDR;
+		sto.toip.len = SIPTRACE_ANYADDR_LEN;
+	} else {
+		sto.toip.s = sto.toip_buff;
+	}
 
 	sto.dir = "in";
 
@@ -1558,22 +1521,17 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 	}
 	sto.fromip.s = sto.fromip_buff;
 
-	siptrace_copy_proto_olen(new_dst.send_sock->proto, sto.toip_buff, olen);
-	cp = sto.toip_buff + olen;
-	p0 = suip2a(&new_dst.to, sizeof(new_dst.to));
-	olen = strlen(p0);
-	if(cp + olen >= sto.toip_buff + SIPTRACE_ADDR_MAX - 1) {
-		LM_ERR("out of bounds: %p %p %d\n", sto.toip_buff, cp, olen);
-		goto error;
-	}
-	memcpy(cp, p0, olen);
-	cp += olen;
-	st_bufcopy_char(sto.toip_buff, SIPTRACE_ADDR_MAX, cp, ':');
-	st_bufcopy_uint(sto.toip_buff, SIPTRACE_ADDR_MAX, cp,
+	sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
+			siptrace_proto_name(new_dst.send_sock->proto),
+			suip2a(&new_dst.to, sizeof(new_dst.to)),
 			(int)su_getport(&new_dst.to));
-	sto.toip.s = sto.toip_buff;
-	/* zero terminated due to memset */
-	sto.toip.len = strlen(sto.toip_buff);
+	if(sto.toip.len<0 || sto.toip.len>=SIPTRACE_ADDR_MAX) {
+		LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
+		sto.toip.s = SIPTRACE_ANYADDR;
+		sto.toip.len = SIPTRACE_ANYADDR_LEN;
+	} else {
+		sto.toip.s = sto.toip_buff;
+	}
 
 	sto.dir = "out";
 
