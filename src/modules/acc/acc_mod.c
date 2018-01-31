@@ -44,6 +44,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../modules/mqueue/api.h"
 #include "../../core/str.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
@@ -59,6 +60,7 @@ MODULE_VERSION
 
 struct tm_binds tmb;
 struct rr_binds rrb;
+mq_api_t mq_api;
 
 static int mod_init(void);
 static void destroy(void);
@@ -93,6 +95,18 @@ str acc_time_attr  = str_init("time_attr");
 str acc_time_exten  = str_init("time_exten");
 int _acc_clone_msg  = 1;
 int _acc_cdr_on_failed = 1;
+
+/*@}*/
+
+
+/* ----- JSON acc variables ----------- */
+/*! \name AccJsonVariables  Json Variables */
+/*@{*/
+
+int json_flag = -1;
+int json_missed_flag = -1;
+int json_syslog = -1;
+char *json_mqueue_str = 0; /*!< see mqueue module queue name */
 
 /*@}*/
 
@@ -193,6 +207,11 @@ static param_export_t params[] = {
 	{"acc_prepare_flag",        INT_PARAM, &acc_prepare_flag        },
 	{"acc_prepare_always",      INT_PARAM, &acc_prepare_always      },
 	{"reason_from_hf",          INT_PARAM, &reason_from_hf          },
+	/* json acc specific */
+	{"json_flag",             INT_PARAM, &json_flag             },
+	{"json_missed_flag",      INT_PARAM, &json_missed_flag      },
+	{"json_mqueue",           PARAM_STRING, &json_mqueue_str    },
+	{"json_syslog",           INT_PARAM, &json_syslog        },
 	/* syslog specific */
 	{"log_flag",             INT_PARAM, &log_flag             },
 	{"log_missed_flag",      INT_PARAM, &log_missed_flag      },
@@ -420,6 +439,12 @@ static int mod_init( void )
 	if (load_tm_api(&tmb)!=0) {
 		LM_ERR("can't load TM API\n");
 		return -1;
+	}
+
+	/* load the MQUEUE API */
+	if (json_mqueue_str && (load_mq_api(&mq_api) !=0) ) {
+		LM_ERR("can't load mqueue module API, disabling json acc to mqueue\n");
+		json_mqueue_str = NULL;
 	}
 
 	/* if detect_direction is enabled, load rr also */

@@ -30,7 +30,9 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <syslog.h>
 
+#include "../../core/str.h"
 #include "../../core/dprint.h"
 #include "../../core/error.h"
 #include "../../core/mem/mem.h"
@@ -47,6 +49,14 @@
 #include "acc_extra.h"
 #include "acc_logic.h"
 #include "acc_api.h"
+
+#ifdef WITH_JSON
+#include <jansson.h>
+#include "../../modules/mqueue/api.h"
+extern mq_api_t mq_api;
+extern int json_syslog;
+extern char *json_mqueue_str;
+#endif
 
 extern struct acc_extra *log_extra;
 extern struct acc_extra *leg_info;
@@ -185,6 +195,106 @@ void acc_log_init(void)
 		log_attrs[n++] = extra->name;
 }
 
+#ifdef WITH_JSON
+void syslog_write(const char *acc) {
+	//setlogmask(LOG_UPTO (LOG_NOTICE));
+	openlog("json_acc", LOG_CONS | LOG_PID | LOG_NDELAY, log_facility);
+	syslog(log_level, "%s", acc);
+	closelog();
+}
+
+int acc_json_request(struct sip_msg *rq) {
+	int i;
+	int m, o;
+        /* get default values */
+	m = core2strar( rq, val_arr, int_arr, type_arr);
+	/* get extra values */
+	o = extra2strar( log_extra, rq, val_arr+m, int_arr+m, type_arr+m);
+
+	json_t *object = json_object();
+	if (acc_time_mode==2) {
+		double dtime = (double)acc_env.tv.tv_usec;
+		dtime = (dtime / 1000000) + (double)acc_env.tv.tv_sec;
+		json_object_set_new(object, "time", json_real(dtime));
+	} else if (acc_time_mode==3 || acc_time_mode==4) {
+		struct tm *t;
+		if (acc_time_mode==3) {
+			t = localtime(&acc_env.ts);
+		} else {
+			t = gmtime(&acc_env.ts);
+		}
+		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
+					acc_time_format, t)<=0) {
+			acc_time_format_buf[0] = '\0';
+		}
+		json_object_set_new(object, "time", json_string(acc_time_format_buf));
+	} else { // default acc_time_mode==1
+		json_object_set_new(object, "time", json_integer(acc_env.ts));
+	}
+
+	for (i=0; i<m; i++) {
+		LM_DBG("[%d][%.*s]\n", i, val_arr[i].len, val_arr[i].s);
+		char *tmp = strndup(val_arr[i].s, val_arr[i].len);
+		if (i == 0) {
+			json_object_set_new(object, acc_method_col.s, json_string(tmp));
+		} else if (i == 1) {
+			json_object_set_new(object, acc_fromtag_col.s, json_string(tmp));
+		} else if (i == 2) {
+			json_object_set_new(object, acc_totag_col.s, json_string(tmp));
+		} else if (i == 3) {
+			json_object_set_new(object, acc_callid_col.s, json_string(tmp));
+		} else if (i == 4) {
+			json_object_set_new(object, acc_sipcode_col.s, json_string(tmp));
+		} else if (i == 5) {
+			json_object_set_new(object, acc_sipreason_col.s, json_string(tmp));
+		}
+		free(tmp);
+	}
+
+	/* extra columns */
+        struct acc_extra *extra = log_extra;
+	m += o;
+	for (; i<m; i++) {
+		LM_DBG("[%d][%s][%.*s]\n", i, extra->name.s, val_arr[i].len, val_arr[i].s);
+		char *tmp = strndup(val_arr[i].s, val_arr[i].len);
+		json_object_set_new(object, extra->name.s, json_string(tmp));
+		free(tmp);
+		extra = extra->next;
+	}
+
+	if (object) {
+		if (json_object_size(object) == 0) {
+			LM_ERR("json object empty\n");
+			json_decref(object);
+			return 0;
+		}
+		char *json_string = json_dumps(object, JSON_ENSURE_ASCII);
+		str acc_str = {json_string, strlen(json_string)};
+
+		// json_mqueue
+		if (json_mqueue_str) {
+			str q_name;
+			q_name.s = json_mqueue_str;
+			q_name.len = strlen(json_mqueue_str);
+			str key = str_init("acc");
+			if (mq_api.add(&q_name, &key, &acc_str)) {
+				LM_DBG("ACC queued [%d][%s]\n", acc_str.len, acc_str.s);
+			} else {
+				LM_DBG("ACC mqueue add error [%d][%s]\n", acc_str.len, acc_str.s);
+			}
+		}
+		// acc_json_syslog
+		if (json_syslog)
+			syslog_write(json_string);
+		free(json_string);
+		json_object_clear(object);
+		json_decref(object);
+	}
+	/* free memory allocated by extra2strar */
+	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
+	return 1;
+}
+#endif
 
 int acc_log_request( struct sip_msg *rq)
 {

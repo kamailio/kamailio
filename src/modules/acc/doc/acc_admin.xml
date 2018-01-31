@@ -300,6 +300,18 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 				RADIUS AVPs used in call-leg AVP set definition.
 				</para></note>
 				</listitem>
+				<listitem>
+				<para><emphasis>Json</emphasis> -- Json format for accounting,
+                                the resulting json dictionnary can be either logged to syslog
+                                or mqueue using the parameters json_syslog and json_mqueue
+				</para>
+				<note><para>log_extra is use to control the extra fields,
+                                json_mqueue to set the mqueue name.
+                                You can use both json_mqueue and json_syslog at the same time.
+                                The same set of fields found in previous syslog/database are present
+                                in json acc records, including time_mode.
+				</para></note>
+				</listitem>
 			</itemizedlist>
 		</section>
 	</section>
@@ -456,6 +468,11 @@ $dlg_var(callee) = $avp(callee); #callee='C'
 				<listitem>
 				<para><emphasis>dialog</emphasis> -- Dialog, if
 				<quote>cdr_enable</quote> module parameter is enabled.
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>mqueue</emphasis> -- Mqueue, if
+				<quote>json_mqueue</quote> module parameter is enabled.
 				</para>
 				</listitem>
 			</itemizedlist>
@@ -662,6 +679,110 @@ modparam("acc", "multi_leg_info",
 # for DIAMETER-based accounting, use the DIAMETER AVP ID (as integer)
 modparam("acc", "multi_leg_info",
     "2345=$avp(src);2346=$avp(dst)")
+...
+</programlisting>
+		</example>
+	</section>
+	<!-- JSON specific ACC parameters -->
+	<section id="acc.p.json_flag">
+		<title><varname>json_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a transaction in json.
+                See json_mqueue and json_syslog
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>json_flag example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "json_flag", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.json_missed_flag">
+		<title><varname>json_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed calls in json.
+                See json_mqueue and json_syslog
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>json_missed_flag example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "json_missed_flag", 3)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.json_mqueue">
+		<title><varname>json_mqueue</varname> (integer)</title>
+		<para>
+                Requires the mqueue module.
+                The acc module will queue json acc events in the specified mqueue.
+                Using a rtimer module exec you can access the queue and process them.
+		</para>
+		<para>
+		Default value is not-set mqueue will not be required
+		</para>
+		<example>
+		<title>json_mqueue usage example</title>
+		<programlisting format="linespecific">
+...
+# example using json_mqueue/http_client to publish to NSQD
+max_while_loops=100000
+modparam("mqueue", "mqueue", "name=acc_events;size=100000")
+modparam("acc", "json_mqueue", "acc_events")
+modparam("acc", "json_flag", 2)
+modparam("acc", "log_extra", "caller_ip_port=$avp(caller_ip_port);")
+modparam("rtimer", "timer", "name=nsqt;interval=1;mode=1;")
+modparam("rtimer", "exec", "timer=nsqt;route=RUN_CDR_PUBLISH")
+modparam("http_client", "keep_connections", 1)
+modparam("http_client", "httpcon", "nsqd=>http://localhost:4151/pub?topic=acc")
+
+route[RUN_CDR_PUBLISH] {
+   $var(count) = 0;
+   while (mq_fetch("acc_events")) {
+      $var(q_size) = mq_size("acc_events");
+      $var(count) = $var(count) + 1;
+      xinfo("[RUN_CDR_PUBLISH][$var(q_size)][$var(count)][$mqk(acc_events)][$mqv(acc_events)]\n");
+      $var(res) = http_connect("nsqd", "", "application/json", $mqv(acc_events), "$var(nsq_res)");
+      if ($var(res) != "200") {
+         mq_add("acc_events", "acc_key", "$mqv(acc_events)");
+         return;
+      }
+   }
+   if ($var(count) > 0 ) {
+      xinfo("[RUN_CDR_PUBLISH]done count[$var(count)]\n");
+   }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.json_syslog">
+		<title><varname>json_syslog</varname> (integer)</title>
+		<para>
+		Control if the output of acc json should be sent to syslog.
+                This is not dependent on Kamailio global logging settigns,
+                we can use syslog even if Kamailio is not daemonized and/or
+                logging is done to sdtout stderr.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>json_flag example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "json_syslog", 1)
+modparam("acc", "log_level", 2)
+modparam("acc", "log_facility", "LOG_DAEMON")
 ...
 </programlisting>
 		</example>

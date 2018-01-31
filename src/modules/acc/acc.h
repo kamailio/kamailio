@@ -74,6 +74,7 @@
 
 void acc_log_init(void);
 int  acc_log_request( struct sip_msg *req);
+int  acc_json_request(struct sip_msg *req);
 
 int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals);
 
