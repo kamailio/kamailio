@@ -165,7 +165,8 @@ python_exec("my_python_function", "$rU");
             <function moreinfo="none">app_python.reload</function>
             </title>
 			<para>
-				IMPORTANT: not implemented yet.
+				IMPORTANT: not functional yet (can crash a running instance,
+				use it only for testing).
 			</para>
             <para>
             Marks the need to reload the js script.
