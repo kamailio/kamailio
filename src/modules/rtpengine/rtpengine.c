@@ -733,14 +733,6 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 	unsigned int my_current_id = 0;
 	int new_list;
 
-#if DEFAULT_RTPP_SET_ID > 0
-	if (set_id < DEFAULT_RTPP_SET_ID )
-	{
-		LM_ERR(" invalid rtpproxy set value [%u]\n", set_id);
-		return NULL;
-	}
-#endif
-
 	my_current_id = set_id;
 	/*search for the current_id*/
 	lock_get(rtpp_set_list->rset_head_lock);
@@ -797,7 +789,7 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 		rtpp_set_list->rset_last = rtpp_list;
 		rtpp_set_count++;
 
-		if(my_current_id == DEFAULT_RTPP_SET_ID){
+		if(my_current_id == setid_default){
 			default_rtpp_set = rtpp_list;
 		}
 	}
@@ -1009,7 +1001,7 @@ static int rtpengine_add_rtpengine_set(char * rtp_proxies, unsigned int weight, 
 		rtp_proxies+=2;
 	}else{
 		rtp_proxies = p;
-		my_current_id = DEFAULT_RTPP_SET_ID;
+		my_current_id = setid_default;
 	}
 
 	for(;*rtp_proxies && isspace(*rtp_proxies);rtp_proxies++);
@@ -1488,10 +1480,6 @@ mod_init(void)
 			return -1;
 		}
 	}
-
-	/* any rtpproxy configured? */
-	if (rtpp_set_list)
-		default_rtpp_set = select_rtpp_set(DEFAULT_RTPP_SET_ID);
 
 	if (rtp_inst_pv_param.s) {
 		rtp_inst_pv_param.len = strlen(rtp_inst_pv_param.s);
