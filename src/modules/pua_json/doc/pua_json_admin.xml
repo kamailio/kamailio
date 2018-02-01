@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
+	<title>&adminguide;</title>
+
+
+	<section>
+		<title>Overview</title>
+		<para>The PUA_JSON module adds support to publish updates to the presence module through the pua_json_publish() function.
+		</para>
+		<para>
+			From a high-level perspective, the module may be used for:
+			<itemizedlist>
+				<listitem>
+					<para>
+						Providing a real-time presence updates.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+
+	</section>
+	<section>
+		<title>How it works</title>
+		<para>
+			The module parses json data objects and inserts them into the presentity table for real-time presence updates.
+		</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+				The following modules must be loaded before this module:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>none</emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>libjson</emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+	<section>
+		<title>Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">pua_json_publish(json_payload)</function>
+			</title>
+			<para>
+				The function build presentity state from json_payload and updates presentity table.
+			</para>
+			<para>
+				Usage: presence related.
+			</para>
+			<para>
+				This function can be used from ANY ROUTE.
+			</para>
+
+			<example>
+				<title><function>pua_json_publish</function> usage</title>
+<programlisting format="linespecific">
+...
+event_route[xhttp:request] {
+	$var(call-id) = $(rb{json.parse,Call-ID});
+	if ($(rb{json.parse,Event-Package}) == "dialog") {
+		xlog("L_INFO", "$var(call-id)|log|received $(rb{json.parse,Event-Package}) update for $(rb{json.parse,From})");
+		pua_json_publish($rb);
+	}
+}
+...
+</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+
+</chapter>
+
