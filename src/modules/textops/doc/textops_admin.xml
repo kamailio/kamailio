@@ -1323,7 +1323,7 @@ if(is_privacy("id"))
 ...
 $var(subject) = "fi";
 $var(list) = "dk,fi,no,se";
-if (in_list("$var(subject)", "$var(list)", ",") {
+if (in_list("$var(subject)", "$var(list)", ",")) {
     xlog("L_INFO", "subject is found in list\n");
 }
 ...
