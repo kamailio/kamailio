@@ -694,6 +694,11 @@ error:
 	return -1;
 }
 
+int _api_pres_refresh_watchers(str *pres, str *event, int type)
+{
+	return pres_refresh_watchers(pres, event, type, NULL, NULL);
+}
+
 int ki_pres_refresh_watchers(sip_msg_t *msg, str *pres, str *event, int type)
 {
 	return pres_refresh_watchers(pres, event, type, NULL, NULL);

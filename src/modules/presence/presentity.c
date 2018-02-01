@@ -1915,3 +1915,33 @@ int delete_offline_presentities(str *pres_uri, pres_ev_t *event)
 error:
 	return -1;
 }
+
+// used for API updates to the presentity table
+int _api_update_presentity(str *event, str *realm, str *user, str *etag,
+		str *sender, str *body, int expires, int new_t)
+{
+	int ret;
+	presentity_t *pres = NULL;
+	pres_ev_t *ev;
+	char *sphere = NULL;
+
+	ev = contains_event(event, NULL);
+	if(ev == NULL) {
+		LM_ERR("wrong event parameter\n");
+		return -1;
+	}
+
+	pres = new_presentity(realm, user, expires, ev, etag, sender);
+
+	if(sphere_enable) {
+		sphere = extract_sphere(*body);
+	}
+	ret = update_presentity(NULL, pres, body, new_t, NULL, sphere, NULL, NULL);
+
+	if(pres)
+		pkg_free(pres);
+	if(sphere)
+		pkg_free(sphere);
+
+	return ret;
+}
