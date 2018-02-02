@@ -120,7 +120,7 @@ void SQFuncState::Dump(SQFunctionProto *func)
     scprintf(_SC("SQInstruction sizeof %d\n"),(SQInt32)sizeof(SQInstruction));
     scprintf(_SC("SQObject sizeof %d\n"), (SQInt32)sizeof(SQObject));
     scprintf(_SC("--------------------------------------------------------------------\n"));
-    scprintf(_SC("*****FUNCTION [%s]\n"),type(func->_name)==OT_STRING?_stringval(func->_name):_SC("unknown"));
+    scprintf(_SC("*****FUNCTION [%s]\n"),sq_type(func->_name)==OT_STRING?_stringval(func->_name):_SC("unknown"));
     scprintf(_SC("-----LITERALS\n"));
     SQObjectPtr refidx,key,val;
     SQInteger idx;

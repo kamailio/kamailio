@@ -82,6 +82,12 @@ static SQInteger _blob__get(HSQUIRRELVM v)
 {
     SETUP_BLOB(v);
     SQInteger idx;
+	
+	if ((sq_gettype(v, 2) & SQOBJECT_NUMERIC) == 0)
+	{
+		sq_pushnull(v);
+		return sq_throwobject(v);
+	}
     sq_getinteger(v,2,&idx);
     if(idx < 0 || idx >= self->Len())
         return sq_throwerror(v,_SC("index out of range"));
@@ -168,7 +174,7 @@ static const SQRegFunction _blob_methods[] = {
     _DECL_BLOB_FUNC(swap2,1,_SC("x")),
     _DECL_BLOB_FUNC(swap4,1,_SC("x")),
     _DECL_BLOB_FUNC(_set,3,_SC("xnn")),
-    _DECL_BLOB_FUNC(_get,2,_SC("xn")),
+    _DECL_BLOB_FUNC(_get,2,_SC("x.")),
     _DECL_BLOB_FUNC(_typeof,1,_SC("x")),
     _DECL_BLOB_FUNC(_nexti,2,_SC("x")),
     _DECL_BLOB_FUNC(_cloned,2,_SC("xx")),
