@@ -383,7 +383,7 @@ SQInteger SQLexer::ReadString(SQInteger ndelim,bool verbatim)
                     break;
                     case _SC('U'):
                     case _SC('u'):  {
-                        const SQInteger maxdigits = x == 'u' ? 4 : 8;
+                        const SQInteger maxdigits = CUR_CHAR == 'u' ? 4 : 8;
                         SQChar temp[8 + 1];
                         ProcessStringHexEscape(temp, maxdigits);
                         SQChar *stemp;

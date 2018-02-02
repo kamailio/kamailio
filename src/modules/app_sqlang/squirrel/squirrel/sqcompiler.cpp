@@ -1171,9 +1171,10 @@ public:
         }
         _fs->AddInstruction(_OP_JMP, 0, jmppos - _fs->GetCurrentPos() - 1, 0);
         if(jzpos>  0) _fs->SetIntructionParam(jzpos, 1, _fs->GetCurrentPos() - jzpos);
-        END_SCOPE();
-
+        
         END_BREAKBLE_BLOCK(continuetrg);
+
+		END_SCOPE();
     }
     void ForEachStatement()
     {
