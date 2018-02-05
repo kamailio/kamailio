@@ -179,10 +179,9 @@ static int w_process_maxfwd_header(struct sip_msg *msg, char *str1, char *str2)
 static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo)
 {
 	str mf_value;
-	int limit;
+	int limit = 70;
 	int val;
 
-	limit = (int)(long)slimit;
 	if(get_int_fparam(&limit, msg, (fparam_t *)slimit) < 0) {
 		LM_ERR("could not get param value\n");
 		return -1;
