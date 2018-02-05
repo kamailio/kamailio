@@ -2002,10 +2002,10 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 		prefix_len = gws[index].prefix_len;
 		tag_len = gws[index].tag_len;
 		if(5 /* gw_index */ + 5 /* scheme */ + 4 /* strip */ + prefix_len
-						+ tag_len
-						+ 1 /* @ */ + ((hostname_len > IP6_MAX_STR_SIZE + 2)
-													  ? hostname_len
-													  : IP6_MAX_STR_SIZE + 2)
+						+ tag_len + 1 /* @ */
+						+ ((hostname_len > IP6_MAX_STR_SIZE + 2)
+										  ? hostname_len
+										  : IP6_MAX_STR_SIZE + 2)
 						+ 6 /* port */ + params_len /* params */
 						+ 15 /* transport */ + 10   /* flags */
 						+ 7							/* separators */
@@ -2186,8 +2186,8 @@ done:
 /*
  * Load info of matching GWs into gw_uri_avps
  */
-static int ki_load_gws_furi(sip_msg_t *_m, int lcr_id, str *ruri_user,
-		str *from_uri)
+static int ki_load_gws_furi(
+		sip_msg_t *_m, int lcr_id, str *ruri_user, str *from_uri)
 {
 	str *request_uri;
 	int i, j;
@@ -2201,9 +2201,8 @@ static int ki_load_gws_furi(sip_msg_t *_m, int lcr_id, str *ruri_user,
 	struct usr_avp *avp;
 	struct search_state st;
 
-	LM_DBG("load_gws(%u, %.*s, %.*s)\n", lcr_id,
-			ruri_user->len, ZSW(ruri_user->s),
-			from_uri->len, ZSW(from_uri->s));
+	LM_DBG("load_gws(%u, %.*s, %.*s)\n", lcr_id, ruri_user->len,
+			ZSW(ruri_user->s), from_uri->len, ZSW(from_uri->s));
 
 	request_uri = GET_RURI(_m);
 
@@ -2364,7 +2363,7 @@ static int ki_load_gws_ruser(sip_msg_t *_m, int lcr_id, str *ruri_user)
 {
 	str from_uri = STR_NULL;
 
-	if(ruri_user==NULL || ruri_user->s==NULL) {
+	if(ruri_user == NULL || ruri_user->s == NULL) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
@@ -2379,9 +2378,9 @@ static int ki_load_gws(sip_msg_t *_m, int lcr_id)
 	str ruri_user;
 	str from_uri = STR_NULL;
 
-	if ((parse_sip_msg_uri(_m) < 0) || (!_m->parsed_uri.user.s)) {
-	    LM_ERR("error while parsing R-URI\n");
-	    return -1;
+	if((parse_sip_msg_uri(_m) < 0) || (!_m->parsed_uri.user.s)) {
+		LM_ERR("error while parsing R-URI\n");
+		return -1;
 	}
 	ruri_user = _m->parsed_uri.user;
 
@@ -2460,10 +2459,10 @@ static int generate_uris(struct sip_msg *_m, char *r_uri, str *r_uri_user,
 		addr_str.len = 0;
 	}
 
-	if(scheme.len + r_uri_user->len - strip + prefix.len
-					+ 1 /* @ */ + ((hostname.len > IP6_MAX_STR_SIZE + 2)
-												  ? hostname.len
-												  : IP6_MAX_STR_SIZE + 2)
+	if(scheme.len + r_uri_user->len - strip + prefix.len + 1 /* @ */
+					+ ((hostname.len > IP6_MAX_STR_SIZE + 2)
+									  ? hostname.len
+									  : IP6_MAX_STR_SIZE + 2)
 					+ 1 /* : */ + port.len + params.len + transport.len
 					+ 1 /* null */
 			> MAX_URI_LEN) {
@@ -2828,8 +2827,9 @@ static int ki_next_gw(sip_msg_t *_m)
 			LM_ERR("parsing of R-URI failed\n");
 			return -1;
 		}
-		if(!generate_uris(_m, r_uri, &(_m->parsed_uri.user), &r_uri_len,
-				   dst_uri, &dst_uri_len, &addr, &gw_index, &flags, &tag_str)) {
+		if(generate_uris(_m, r_uri, &(_m->parsed_uri.user), &r_uri_len, dst_uri,
+				   &dst_uri_len, &addr, &gw_index, &flags, &tag_str)
+				<= 0) {
 			return -1;
 		}
 
@@ -2846,8 +2846,9 @@ static int ki_next_gw(sip_msg_t *_m)
 	 * Take Request-URI user from ruri_user_avp and generate Request
          * and Destination URIs. */
 
-		if(!generate_uris(_m, r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
-				   &dst_uri_len, &addr, &gw_index, &flags, &tag_str)) {
+		if(generate_uris(_m, r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
+				   &dst_uri_len, &addr, &gw_index, &flags, &tag_str)
+				<= 0) {
 			return -1;
 		}
 	}
@@ -2989,8 +2990,8 @@ static int from_gw_1(struct sip_msg *_m, char *_lcr_id, char *_s2)
  * Checks if request comes from ip address of a gateway taking source
  * address and transport protocol from parameters
  */
-static int ki_from_gw_addr(sip_msg_t *_m, int lcr_id, str *addr_str,
-		int transport)
+static int ki_from_gw_addr(
+		sip_msg_t *_m, int lcr_id, str *addr_str, int transport)
 {
 	struct ip_addr src_addr;
 	struct ip_addr *ip;
@@ -3005,8 +3006,8 @@ static int ki_from_gw_addr(sip_msg_t *_m, int lcr_id, str *addr_str,
 	else if((ip = str2ip6(addr_str)) != NULL)
 		src_addr = *ip;
 	else {
-		LM_ERR("addr param value %.*s is not an IP address\n",
-				addr_str->len, addr_str->s);
+		LM_ERR("addr param value %.*s is not an IP address\n", addr_str->len,
+				addr_str->s);
 		return -1;
 	}
 
@@ -3019,8 +3020,8 @@ static int ki_from_gw_addr(sip_msg_t *_m, int lcr_id, str *addr_str,
 	return do_from_gw(_m, lcr_id, &src_addr, transport);
 }
 
-static int from_gw_3(struct sip_msg *_m, char *_lcr_id, char *_addr,
-		char *_transport)
+static int from_gw_3(
+		struct sip_msg *_m, char *_lcr_id, char *_addr, char *_transport)
 {
 	int lcr_id;
 	str addr_str;
@@ -3084,8 +3085,8 @@ static int ki_from_any_gw_addr(sip_msg_t *_m, str *addr_str, int transport)
 	else if((ip = str2ip6(addr_str)) != NULL)
 		src_addr = *ip;
 	else {
-		LM_ERR("addr param value %.*s is not an IP address\n",
-				addr_str->len, addr_str->s);
+		LM_ERR("addr param value %.*s is not an IP address\n", addr_str->len,
+				addr_str->s);
 		return -1;
 	}
 
@@ -3214,8 +3215,8 @@ static int to_gw_1(struct sip_msg *_m, char *_lcr_id, char *_s2)
  * Checks if request goes to ip address of a gateway taking lcr_id,
  * destination address and transport protocol from parameters.
  */
-static int ki_to_gw_addr(sip_msg_t *_m, int lcr_id, str *addr_str,
-		int transport)
+static int ki_to_gw_addr(
+		sip_msg_t *_m, int lcr_id, str *addr_str, int transport)
 {
 	struct ip_addr *ip, dst_addr;
 
@@ -3230,8 +3231,8 @@ static int ki_to_gw_addr(sip_msg_t *_m, int lcr_id, str *addr_str,
 	else if((ip = str2ip(addr_str)) != NULL)
 		dst_addr = *ip;
 	else {
-		LM_ERR("addr param value %.*s is not an IP address\n",
-				addr_str->len, addr_str->s);
+		LM_ERR("addr param value %.*s is not an IP address\n", addr_str->len,
+				addr_str->s);
 		return -1;
 	}
 
@@ -3330,8 +3331,8 @@ static int ki_to_any_gw_addr(sip_msg_t *_m, str *addr_str, int transport)
 	else if((ip = str2ip6(addr_str)) != NULL)
 		dst_addr = *ip;
 	else {
-		LM_ERR("addr param value %.*s is not an IP address\n",
-				addr_str->len, addr_str->s);
+		LM_ERR("addr param value %.*s is not an IP address\n", addr_str->len,
+				addr_str->s);
 		return -1;
 	}
 
