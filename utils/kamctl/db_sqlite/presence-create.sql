@@ -44,7 +44,7 @@ CREATE TABLE active_watchers (
     updated INTEGER NOT NULL,
     updated_winfo INTEGER NOT NULL,
     flags INTEGER DEFAULT 0 NOT NULL,
-    user_agent VARCHAR(255) DEFAULT '' NOT NULL,
+    user_agent VARCHAR(255) DEFAULT '',
     CONSTRAINT active_watchers_active_watchers_idx UNIQUE (callid, to_tag, from_tag)
 );
 

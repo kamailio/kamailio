@@ -44,7 +44,7 @@ CREATE TABLE `active_watchers` (
     `updated` INT(11) NOT NULL,
     `updated_winfo` INT(11) NOT NULL,
     `flags` INT(11) DEFAULT 0 NOT NULL,
-    `user_agent` VARCHAR(255) DEFAULT '' NOT NULL,
+    `user_agent` VARCHAR(255) DEFAULT '',
     CONSTRAINT active_watchers_idx UNIQUE (`callid`, `to_tag`, `from_tag`)
 );
 
