@@ -73,7 +73,7 @@ char* generate_ETag(int publ_count)
 	size = snprintf (etag, ETAG_LEN, "%c.%d.%d.%d.%d",prefix, startup_time, pid, counter, publ_count);
 	if( size <0 )
 	{
-		LM_ERR("unsuccessfull snprintf\n ");
+		LM_ERR("unsuccessful snprintf\n ");
 		pkg_free(etag);
 		return NULL;
 	}

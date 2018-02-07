@@ -1396,7 +1396,7 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 			cs= mem_copy_subs(s, PKG_MEM_TYPE);
 			if(cs== NULL)
 			{
-				LM_ERR( "copying subs_t stucture\n");
+				LM_ERR( "copying subs_t structure\n");
 				lock_release(&subs_htable[hash_code].lock);
 				return -1;
 			}
