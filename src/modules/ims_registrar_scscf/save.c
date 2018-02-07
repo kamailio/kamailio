@@ -948,7 +948,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             }
 
             for (k = 0; k < num_explicit_dereg_contact; k++) {
-                LM_DBG("Stored explit contact to dereg: [%.*s]\n", (explicit_dereg_contact)[k].len, (explicit_dereg_contact)[k].s);
+                LM_DBG("Stored explicit contact to dereg: [%.*s]\n", (explicit_dereg_contact)[k].len, (explicit_dereg_contact)[k].s);
             }
 
             //now, we get the subscription

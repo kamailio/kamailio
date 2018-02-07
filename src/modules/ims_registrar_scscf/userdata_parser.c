@@ -943,7 +943,7 @@ int parser_init(char *dtd_filename, char *xsd_filename)
 	if (dtd_filename){
 		dtd = xmlParseDTD(NULL,(unsigned char*)dtd_filename);
 		if (!dtd){
-			LM_ERR("unsuccesful DTD parsing from file <%s>\n",
+			LM_ERR("unsuccessful DTD parsing from file <%s>\n",
 				dtd_filename);
 			return 0;
 		}
@@ -956,7 +956,7 @@ int parser_init(char *dtd_filename, char *xsd_filename)
 		xmlSchemaParserCtxtPtr ctxt;
 		ctxt = xmlSchemaNewParserCtxt(xsd_filename);
 		if (!ctxt) {
-			LM_ERR("unsuccesful XSD parsing from file <%s>\n",
+			LM_ERR("unsuccessful XSD parsing from file <%s>\n",
 				xsd_filename);
 			return 0;
 		}
