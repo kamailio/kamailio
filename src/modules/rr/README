@@ -46,6 +46,7 @@ Bogdan-Andrei Iancu
               4.4. add_username (integer)
               4.5. enable_socket_mismatch_warning (integer)
               4.6. custom_user_avp (avp string)
+              4.7. force_send_socket (int)
 
         5. Functions
 
@@ -86,15 +87,16 @@ Bogdan-Andrei Iancu
    1.6. Set add_username parameter
    1.7. enable_socket_mismatch_warning usage
    1.8. custom_user_avp usage
-   1.9. loose_route usage
-   1.10. record_route usage
-   1.11. remove_record_route usage
-   1.12. record_route_preset usage
-   1.13. record_route_advertised_address usage
-   1.14. add_rr_param usage
-   1.15. check_route_param usage
-   1.16. is_direction usage
-   1.17. $route_uri
+   1.9. Set force_send_socket parameter
+   1.10. loose_route usage
+   1.11. record_route usage
+   1.12. remove_record_route usage
+   1.13. record_route_preset usage
+   1.14. record_route_advertised_address usage
+   1.15. add_rr_param usage
+   1.16. check_route_param usage
+   1.17. is_direction usage
+   1.18. $route_uri
    2.1. record_route usage
    2.2. record_route_advertised_address usage
    2.3. Loading RR module's API from another module
@@ -118,6 +120,7 @@ Chapter 1. Admin Guide
         4.4. add_username (integer)
         4.5. enable_socket_mismatch_warning (integer)
         4.6. custom_user_avp (avp string)
+        4.7. force_send_socket (int)
 
    5. Functions
 
@@ -211,6 +214,7 @@ UAC                       Kamailio PROXY                          UAS
    4.4. add_username (integer)
    4.5. enable_socket_mismatch_warning (integer)
    4.6. custom_user_avp (avp string)
+   4.7. force_send_socket (int)
 
 4.1. enable_full_lr (integer)
 
@@ -325,6 +329,20 @@ $avp(RR_CUSTOM_USER_AVP)="mo";
 record_route();
 ...
 
+4.7. force_send_socket (int)
+
+   If set to 1, local socket is forced even for single Record-Route,
+   otherwise is done on double Record-Route (should that be enabled).
+
+   When use of “outbound” is enabled, the socket is not forced.
+
+   Default value is 0.
+
+   Example 1.9. Set force_send_socket parameter
+...
+modparam("rr", "force_send_socket", 1)
+...
+
 5. Functions
 
    5.1. loose_route()
@@ -377,7 +395,7 @@ record_route();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.9. loose_route usage
+   Example 1.10. loose_route usage
 ...
 loose_route();
 ...
@@ -400,7 +418,7 @@ loose_route();
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.10. record_route usage
+   Example 1.11. record_route usage
 ...
 record_route();
 ...
@@ -414,7 +432,7 @@ record_route();
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.11. remove_record_route usage
+   Example 1.12. remove_record_route usage
 ...
 remove_record_route();
 ...
@@ -442,7 +460,7 @@ remove_record_route();
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.12. record_route_preset usage
+   Example 1.13. record_route_preset usage
 ...
 record_route_preset("1.2.3.4:5090");
 ...
@@ -469,7 +487,7 @@ record_route_preset("1.2.3.4:5090");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.13. record_route_advertised_address usage
+   Example 1.14. record_route_advertised_address usage
 ...
 record_route_advertised_address("1.2.3.4:5080");
 ...
@@ -489,7 +507,7 @@ record_route_advertised_address("1.2.3.4:5080");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.14. add_rr_param usage
+   Example 1.15. add_rr_param usage
 ...
 add_rr_param(";nat=yes");
 ...
@@ -506,7 +524,7 @@ add_rr_param(";nat=yes");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.15. check_route_param usage
+   Example 1.16. check_route_param usage
 ...
 if (check_route_param("nat=yes")) {
     setflag(6);
@@ -534,7 +552,7 @@ if (check_route_param("nat=yes")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.16. is_direction usage
+   Example 1.17. is_direction usage
 ...
 if (is_direction("downstream")) {
     xdbg("in-dialog request from caller to callee (downstream) ($rm)\n");
@@ -551,7 +569,7 @@ if (is_direction("downstream")) {
 
    Returns the URI of the top route-header.
 
-   Example 1.17. $route_uri
+   Example 1.18. $route_uri
 ...
     xdbg("Route-URI is: $route_uri\n");
 ...
