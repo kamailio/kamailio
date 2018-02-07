@@ -642,7 +642,7 @@ static void rpc_add_group_inst(rpc_t* rpc, void* c)
 }
 
 static const char* rpc_del_group_inst_doc[2] = {
-	"Delte an instance of a configuration group",
+	"Delete an instance of a configuration group",
 	0
 };
 
