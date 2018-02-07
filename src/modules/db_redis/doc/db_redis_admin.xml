@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a DB APIv1 connector for Redis server.
+	</para>
+	<para>
+	It can be used as a replacement for other database modules such as
+	db_mysql and db_postgres. Not all the specs of DB APIv1 are
+	implemented, thus the usage of this module might be restricted to
+	specific modules. Also, for proper performance, the module needs
+	particular configuration tailored to the using modules.
+	</para>
+	<para>
+	Since Redis does not provide a schema, a schema has to be defined as
+	module parameter "schema". The schema definition is composed of a
+	semi-column	separated list of table definitions in format
+	&lt;table-name&gt;=&lt;column-name&gt;/&lt;type&gt;[,&lt;column-name&gt;/&lt;type&gt; ...].
+	</para>
+	<para>
+	Example:
+	<programlisting format="linespecific">
+	version=table_name/string,table_version/int;location=username/string,domain/string,contact/string,received/string,path/string,expires/timestamp,q/double,callid/string,cseq/int,last_modified/timestamp,flags/int,cflags/int,user_agent/string,socket/string,methods/int,ruid/string,reg_id/int,instance/string,server_id/int,connection_id/int,keepalive/int,partition/int
+	</programlisting>
+	</para>
+	<para>
+	Also since Redis is a key-value store with keys having to be unique,
+	tables and rows e.g. from MySQL can not be ported 1:1 to Redis. For
+	instance, usrloc relies on a key "username@domain", but it must not be
+	unique for being able to store multiple contacts per AoR. Thus, db_redis
+	supports mapping sets in a way for example for usrloc to have a set with
+	a key "username@domain", with its entries being unique keys per contact being
+	the ruid of a contact. Thus, one contact in usrloc consists of a unique
+	key "location:entry::example-ruid-1" being a hash with the columns like
+	username, domain, contact, path etc. In addition, this unique key is stored
+	in a set "location:usrdom::exampleuser:exampledomain.org". When usrloc does
+	a lookup based on "username@domain", db_redis figures out via the keys/values
+	the query is constructed by usrloc to look for the final entry key in the
+	mapping set first, then querying the actual entries from there, avoiding full
+	table scans. For usrloc, the same holds true for expired contacts, requiring
+	a different kind of mapping. There is a certain balance of read performance
+	vs. write performance to consider, because inserts and deletes also have to
+	maintain the mappings, in favor of much faster selects. The mappings can be
+	freely defined, so even though other kamailio modules don't require a specific
+	mapping to be in place for proper performance, mappings could be defined
+	for external applications to read faster (for instance letting the acc module
+	also write mappings besides the actual records for billing systems to
+	correlate start and stop records faster).
+	</para>
+	<para>
+	The mappings can be freely defined in the "keys" module parameter. It is
+	composed of a semi-colon separated list of definitions in format
+	&lt;table-name&gt;=&lt;entry&gt;:&lt;column-name&gt;[&amp;&lt;map-name&gt;:&lt;column-name&gt;,&lt;column-name&gt;...].
+	Each table must at least have an "entry" key for db_redis to be able to store data.
+	</para>
+	<para>
+	Example:
+	<programlisting format="linespecific">
+	version=entry:table_name;location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive;acc=entry:callid,time_hires&amp;cid:callid
+	</programlisting>
+	</para>
+	<para>
+	Note that as of now, you have to have version information in your Redis db,
+	similar to your MySQL schema. To insert table versions (e.g. for usrloc and acc),
+	execute the following:
+	</para>
+	<programlisting format="linespecific">
+	# redis-cli -h $host -n $dbnumber HMSET version:entry::location table_version 8
+	# redis-cli -h $host -n $dbnumber HMSET version:entry::acc table_version 5
+	</programlisting>
+
+	<para>
+		You can read more about Redis at:
+		<ulink url="https://www.redis.io">https://www.redis.io</ulink>.
+	</para>
+
+	<section>
+	<title>Limitations</title>
+	<itemizedlist>
+	<listitem>
+	<para>
+		This module has implemented the equivalent operations for INSERT,
+		UPDATE, DELETE and SELECT. The ORDER BY for SELECT is not implemented.
+		Raw query is not implemented inside this module, use ndb_redis for sending any
+		kind of command to a Redis server.
+	</para>
+	</listitem>
+	</itemizedlist>
+	</section>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>schema</varname> (string)</title>
+		<para>
+		The schema of your tables.
+		</para>
+		<example>
+		<title>Setting schema module parameter</title>
+		<programlisting format="linespecific">
+modparam("db_redis", "schema", "version=table_name/string,table_version/int;location=username/string,domain/string,contact/string,received/string,path/string,expires/timestamp,q/double,callid/string,cseq/int,last_modified/timestamp,flags/int,cflags/int,user_agent/string,socket/string,methods/int,ruid/string,reg_id/int,instance/string,server_id/int,connection_id/int,keepalive/int,partition/int")
+		</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>keys</varname> (string)</title>
+		<para>
+		The entry and mapping keys of your tables.
+		</para>
+		<example>
+		<title>Setting keys module parameter</title>
+		<programlisting format="linespecific">
+modparam("db_redis", "keys", "version=entry:table_name;location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive")
+		</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>hiredis</emphasis> - available at
+				<ulink url="https://github.com/redis/hiredis">https://github.com/redis/hiredis</ulink>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Usage</title>
+		<para>
+			Load the module and set the the DB URL for specific modules to:
+			redis://[username]@host:port/database. Username is optional.
+			Database must be a valid redis database number.
+		</para>
+		<example>
+		<title>Usage</title>
+		<programlisting format="linespecific">
+...
+loadmodule "db_redis.so"
+...
+#!define DBURL "redis://127.0.0.1:6379/5"
+...
+modparam("db_redis", "schema", "version=table_name/string,table_version/int;location=username/string,domain/string,contact/string,received/string,path/string,expires/timestamp,q/double,callid/string,cseq/int,last_modified/timestamp,flags/int,cflags/int,user_agent/string,socket/string,methods/int,ruid/string,reg_id/int,instance/string,server_id/int,connection_id/int,keepalive/int,partition/int")
+modparam("db_redis", "keys", "version=entry:table_name;location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive")
+modparam("usrloc", "db_url", DBURL)
+...
+</programlisting>
+		</example>
+	</section>
+</chapter>
+

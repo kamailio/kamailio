@@ -153,7 +153,7 @@ mod_list_jansson=jansson
 mod_list_jansson_event=janssonrpcc
 
 # - modules depending on redis library
-mod_list_redis=ndb_redis topos_redis
+mod_list_redis=db_redis ndb_redis topos_redis
 
 # - modules depending on mono library
 mod_list_mono=app_mono
