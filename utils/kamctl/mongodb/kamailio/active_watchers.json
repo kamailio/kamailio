@@ -135,7 +135,7 @@
     "user_agent": {
       "type": "string",
       "default": "",
-      "null": false
+      "null": true
     }
   ]
 }
