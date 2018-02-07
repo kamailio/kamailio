@@ -57,6 +57,7 @@ int append_fromtag = 1;		/*!< append from tag by default */
 int enable_double_rr = 1;	/*!< enable using of 2 RR by default */
 int enable_full_lr = 0;		/*!< compatibilty mode disabled by default */
 int add_username = 0;	 	/*!< do not add username by default */
+int rr_force_send_socket = 0; /*!< control if socket is forced by rr */
 int enable_socket_mismatch_warning = 1; /*!< enable socket mismatch warning */
 static str custom_user_spec = {NULL, 0};
 pv_spec_t custom_user_avp;
@@ -120,15 +121,16 @@ static cmd_export_t cmds[] = {
  * \brief Exported parameters
  */
 static param_export_t params[] ={
-	{"append_fromtag",	INT_PARAM, &append_fromtag},
+	{"append_fromtag",	    INT_PARAM, &append_fromtag},
 	{"enable_double_rr",	INT_PARAM, &enable_double_rr},
 	{"enable_full_lr",		INT_PARAM, &enable_full_lr},
 #ifdef ENABLE_USER_CHECK
-	{"ignore_user",		PARAM_STR, &i_user},
+	{"ignore_user",		    PARAM_STR, &i_user},
 #endif
 	{"add_username",		INT_PARAM, &add_username},
 	{"enable_socket_mismatch_warning",INT_PARAM,&enable_socket_mismatch_warning},
-	{"custom_user_avp",           PARAM_STR, &custom_user_spec},
+	{"custom_user_avp",     PARAM_STR, &custom_user_spec},
+	{"force_send_socket",   PARAM_INT, &rr_force_send_socket},
 	{0, 0, 0 }
 };
 
