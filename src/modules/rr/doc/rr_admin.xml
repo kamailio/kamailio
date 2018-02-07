@@ -268,6 +268,31 @@ record_route();
 </programlisting>
       </example>
     </section>
+    <section id="rr.p.force_send_socket">
+      <title><varname>force_send_socket</varname> (int)</title>
+
+	  <para>
+	  	  If set to 1, local socket is forced even for single Record-Route,
+		  otherwise is done on double Record-Route (should that be enabled).
+	  </para>
+
+	  <para>
+	  	  When use of <quote>outbound</quote> is enabled, the socket is not
+		  forced.
+	  </para>
+
+      <para><emphasis>Default value is 0.</emphasis></para>
+
+      <example>
+        <title>Set <varname>force_send_socket</varname> parameter</title>
+
+        <programlisting format="linespecific">
+...
+modparam("rr", "force_send_socket", 1)
+...
+</programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
