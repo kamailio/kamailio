@@ -700,7 +700,7 @@ end:
 error:
 	if (f_ctx.replied==0){
 			rpc_fault(&f_ctx, 500, "internal server error");
-			LOG(L_ERR, "ERROR: unknown rpc errror\n");
+			LOG(L_ERR, "ERROR: unknown rpc error\n");
 	}
 	*bytes_needed=0; /* we don't need anymore crap */
 	destroy_binrpc_ctx(&f_ctx);
