@@ -383,7 +383,7 @@ int parse_struct_header(FILE* file, char* expected_struct_type, str* struct_name
 	}
 
 	if ( SUCCESSFUL_PARSING == ret ){
-		LM_DBG( "Sucessfully parsed struct %s - <%s> header\n", expected_struct_type, name);
+		LM_DBG( "Successfully parsed struct %s - <%s> header\n", expected_struct_type, name);
 		struct_name->len = strlen(name);
 		memcpy(struct_name->s, name, struct_name->len);
 		struct_name->s[struct_name->len]='\0';
