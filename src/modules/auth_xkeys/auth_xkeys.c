@@ -311,7 +311,7 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 	if(hbody.len!=SHA256_DIGEST_STRING_LENGTH-1
 			&& hbody.len!=SHA384_DIGEST_STRING_LENGTH-1
 			&& hbody.len!=SHA512_DIGEST_STRING_LENGTH-1) {
-		LM_DBG("not maching digest size for [%.*s]\n",
+		LM_DBG("not matching digest size for [%.*s]\n",
 				hf->body.len, hf->body.s);
 		return -1;
 	}
@@ -337,7 +337,7 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 		strncpy(xdata.s + itc->kvalue.len + 1, data->s, data->len);
 		if(alg->len==6 && strncasecmp(alg->s, "sha256", 6)==0) {
 			if(hbody.len!=SHA256_DIGEST_STRING_LENGTH-1) {
-				LM_DBG("not maching sha256 digest size for [%.*s]\n",
+				LM_DBG("not matching sha256 digest size for [%.*s]\n",
 						hf->body.len, hf->body.s);
 				return -1;
 			}
@@ -349,7 +349,7 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 			}
 		} else if(alg->len==6 && strncasecmp(alg->s, "sha384", 6)==0) {
 			if(hbody.len!=SHA384_DIGEST_STRING_LENGTH-1) {
-				LM_DBG("not maching sha384 digest size for [%.*s]\n",
+				LM_DBG("not matching sha384 digest size for [%.*s]\n",
 						hf->body.len, hf->body.s);
 				return -1;
 			}
@@ -361,7 +361,7 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 			}
 		} else if(alg->len==6 && strncasecmp(alg->s, "sha512", 6)==0) {
 			if(hbody.len!=SHA512_DIGEST_STRING_LENGTH-1) {
-				LM_DBG("not maching sha512 digest size for [%.*s]\n",
+				LM_DBG("not matching sha512 digest size for [%.*s]\n",
 						hf->body.len, hf->body.s);
 				return -1;
 			}
