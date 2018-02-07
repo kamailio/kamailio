@@ -680,7 +680,7 @@ void dlg_remove_dlg_out(struct dlg_cell_out *dlg_out_do_not_remove, struct dlg_c
                 dlg->dlg_entry_out.first = dlg->dlg_entry_out.last = 0;
             } else {
                 if (!only_mark) {
-                    LM_DBG("Deleteing dlg out structure\n");
+                    LM_DBG("Deleting dlg out structure\n");
                     if (dlg_out->prev) {
                         dlg_out->prev->next = dlg_out->next;
                     }
