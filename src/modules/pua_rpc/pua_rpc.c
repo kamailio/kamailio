@@ -337,8 +337,8 @@ static void pua_rpc_subscribe(rpc_t* rpc, void* ctx)
 		return;
 	}
 	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0) {
-		LM_ERR("bad pres uri\n");
-		rpc->fault(ctx, 400, "Invalid pres URI");
+		LM_ERR("bad presentity uri\n");
+		rpc->fault(ctx, 400, "Invalid presentity URI");
 		return;
 	}
 	if(parse_uri(watcher_uri.s, watcher_uri.len, &uri)<0) {
