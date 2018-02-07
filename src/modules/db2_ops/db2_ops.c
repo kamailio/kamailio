@@ -488,7 +488,7 @@ static int parse_xlstr(struct xlstr* s) {
 
 	if (!s->s) return 0;
 	if (!strchr(s->s, '%')) return 0;
-	/* probably xl_log formating */
+	/* probably xl_log formatting */
 
 	if (!xl_print) {
 		xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
@@ -535,7 +535,7 @@ static int eval_xlstr(struct sip_msg* msg, struct xlstr* s) {
 	if (s->xlfmt) {
 		len = xlbuf_size - (xlbuf_tail-xlbuf);
 		if (xl_print(msg, s->xlfmt, xlbuf_tail, &len) < 0) {
-			ERR(MODULE_NAME": eval_xlstr: Error while formating result\n");
+			ERR(MODULE_NAME": eval_xlstr: Error while formatting result\n");
 			return E_UNSPEC;
 		}
 
