@@ -188,7 +188,7 @@ int w_is_domain_local(struct sip_msg *_msg, char *_sp, char *_s2)
 	str sdomain;
 
 	if(fixup_get_svalue(_msg, (gparam_t *)_sp, &sdomain) < 0) {
-		LM_ERR("cannot get domain paramter\n");
+		LM_ERR("cannot get domain parameter\n");
 		return -1;
 	}
 
@@ -206,7 +206,7 @@ int ki_lookup_domain_prefix(struct sip_msg *_msg, str *_sdomain, str *_sprefix)
 	unsigned short flags;
 
 	if(_sdomain==NULL || _sdomain->s==NULL) {
-		LM_ERR("invalid domain paramter\n");
+		LM_ERR("invalid domain parameter\n");
 		return -1;	}
 
 	if(hash_table_lookup(_sdomain, &did, &attrs) != 1) {
@@ -286,12 +286,12 @@ int w_lookup_domain(struct sip_msg *_msg, char *_sp, char *_prefix)
 	str sprefix;
 
 	if(fixup_get_svalue(_msg, (gparam_t *)_sp, &sdomain) < 0) {
-		LM_ERR("cannot get domain paramter\n");
+		LM_ERR("cannot get domain parameter\n");
 		return -1;
 	}
 	if(_prefix) {
 		if(fixup_get_svalue(_msg, (gparam_t *)_prefix, &sprefix) < 0) {
-			LM_ERR("cannot get prefix paramter\n");
+			LM_ERR("cannot get prefix parameter\n");
 			return -1;
 		}
 	}
