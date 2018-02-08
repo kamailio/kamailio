@@ -2351,7 +2351,7 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip)
 
 		/* if the message has not alpha */
 		if(!isalnum((buf + offset)[0])) {
-			DBG("not alpha and not digit... skiping...\n");
+			DBG("not alpha and not digit... skipping...\n");
 			continue;
 		}
 
