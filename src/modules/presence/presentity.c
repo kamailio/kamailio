@@ -281,7 +281,7 @@ int check_if_dialog(str body, int *is_dialog, char **dialog_id)
 	doc = xmlParseMemory(body.s, body.len);
 	if(doc== NULL)
 	{
-		LM_ERR("failed to parse xml document\n");
+		LM_INFO("failed to parse xml document\n");
 		return -1;
 	}
 
@@ -556,7 +556,7 @@ int is_dialog_terminated(presentity_t* presentity)
 }
 
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
-		int new_t, int* sent_reply, char* sphere, str* etag_override, str* ruid)
+		int new_t, int* sent_reply, char* sphere, str* etag_override, str* ruid, int replace)
 {
 	db_key_t query_cols[14], rquery_cols[2], update_keys[9], result_cols[7];
 	db_op_t  query_ops[14], rquery_ops[2];
@@ -658,6 +658,9 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		}
 
 		LM_DBG("new htable record added\n");
+		if (presentity->expires == -1) {
+			replace = 1;
+		}
 
 		/* insert new record into database */
 		query_cols[n_query_cols] = &str_sender_col;
@@ -697,7 +700,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		query_vals[n_query_cols].val.str_val = p_ruid;
 		n_query_cols++;
 
-		if (presentity->expires != -1)
+		if (!replace)
 		{
 			/* A real PUBLISH */
 			query_cols[n_query_cols] = &str_expires_col;
@@ -748,6 +751,10 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			query_vals[n_query_cols].type = DB1_INT;
 			query_vals[n_query_cols].nul = 0;
 			query_vals[n_query_cols].val.int_val = -1;
+			if(presentity->expires != -1) {
+				query_vals[n_query_cols].val.int_val =
+						presentity->expires + (int)time(NULL);
+			}
 			n_query_cols++;
 
 			if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
@@ -1918,7 +1925,7 @@ error:
 
 // used for API updates to the presentity table
 int _api_update_presentity(str *event, str *realm, str *user, str *etag,
-		str *sender, str *body, int expires, int new_t)
+		str *sender, str *body, int expires, int new_t, int replace)
 {
 	int ret;
 	presentity_t *pres = NULL;
@@ -1936,7 +1943,7 @@ int _api_update_presentity(str *event, str *realm, str *user, str *etag,
 	if(sphere_enable) {
 		sphere = extract_sphere(*body);
 	}
-	ret = update_presentity(NULL, pres, body, new_t, NULL, sphere, NULL, NULL);
+	ret = update_presentity(NULL, pres, body, new_t, NULL, sphere, NULL, NULL, replace);
 
 	if(pres)
 		pkg_free(pres);

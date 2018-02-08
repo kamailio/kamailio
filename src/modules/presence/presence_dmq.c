@@ -302,7 +302,7 @@ int pres_dmq_handle_msg(
 	switch(action) {
 		case PRES_DMQ_UPDATE_PRESENTITY:
 			if(update_presentity(NULL, presentity, &p_body, t_new, &sent_reply,
-					   sphere, &cur_etag, &ruid)
+					   sphere, &cur_etag, &ruid, 0)
 					< 0) {
 				goto error;
 			}
