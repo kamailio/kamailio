@@ -141,7 +141,7 @@ mod_list_sqlite=db_sqlite
 mod_list_oracle=db_oracle
 
 # - modules depending on json library
-mod_list_json=json
+mod_list_json=json pua_json
 
 # - modules depending on json (+libevent) library
 mod_list_json_event=jsonrpcc
