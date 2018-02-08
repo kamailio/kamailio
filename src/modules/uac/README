@@ -811,7 +811,7 @@ event_route[uac:reply] {
 
      * regtotal: Total number of registrations
      * regactive: Total number of active registrations (successfully
-       registred with service)
+       registered with service)
      * regdisabled: Total number of disabled registrations (no longer
        active)
 
