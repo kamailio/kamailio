@@ -523,7 +523,7 @@ int load_data(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle, int id)
 	key_vals[0].val.int_val = id;
 	
 	if(dbf->use_table(dbh, &reg_table) < 0){
-		LM_ERR("could't use table.\n");
+		LM_ERR("couldn't use table.\n");
 		return -1;
 	}
 	if(dbf->query(dbh, keys, op, key_vals, cols, 1, 7, order, &res) < 0){
