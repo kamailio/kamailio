@@ -95,7 +95,7 @@ void ts_onreply(struct cell* t, int type, struct tmcb_params *param)
 		LM_DBG("transaction %u:%u not found\n",cb_ptr->tindex, cb_ptr->tlabel);
 		unlock_entry(_e);
 	} else {
-		LM_DBG("called with uknown type %d\n", type);
+		LM_DBG("called with unknown type %d\n", type);
 	}
 
 	return;
