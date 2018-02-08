@@ -146,7 +146,7 @@ int reload_address_table(void)
 		/* basic checks to db values */
 		if (ROW_N(row + i) != 5)
 		{
-			LM_DBG("failure during checks of db address table: Colums %d - expected 5\n", ROW_N(row + i));
+			LM_DBG("failure during checks of db address table: Columns %d - expected 5\n", ROW_N(row + i));
 			goto dberror;
 		}
 		if ((VAL_TYPE(val) != DB1_INT) || VAL_NULL(val) || (VAL_INT(val) <= 0))
