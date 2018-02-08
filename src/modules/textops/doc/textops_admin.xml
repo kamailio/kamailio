@@ -1342,8 +1342,32 @@ if(is_privacy("id"))
 ...
 $var(subject) = "fi";
 $var(list) = "dk,fi,no,se";
-if (in_list("$var(subject)", "$var(list)", ",") {
+if (in_list("$var(subject)", "$var(list)", ",")) {
     xlog("L_INFO", "subject is found in list\n");
+}
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.in_list_prefix">
+		<title>
+			<function moreinfo="none">in_list_prefix(subject, list, separator)</function>
+		</title>
+		<para>
+		Function checks if any element in list string is a prefix for subject string where list items are separated by separator string.  Subject and list strings may contain pseudo variables.  Separator string needs to be one character long.  Returns 1 if subject is found and -1 otherwise.
+    	        </para>
+		<para>
+		Function can be used from all kinds of routes.
+		</para>
+		<example>
+			<title><function>in_list()</function> usage</title>
+			<programlisting format="linespecific">
+...
+$var(subject) = "final";
+$var(list) = "dk,fi,no,se";
+if (in_list_prefix("$var(subject)", "$var(list)", ",")) {
+    xlog("L_INFO", "prefix for subject is found in list\n");
 }
 ...
 			</programlisting>

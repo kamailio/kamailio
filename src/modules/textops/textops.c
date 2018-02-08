@@ -125,6 +125,8 @@ static int is_method_f(struct sip_msg* msg, char* , char *);
 static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
 static int in_list_f(struct sip_msg* _msg, char* _subject, char* _list,
 		char* _sep);
+static int in_list_prefix_f(struct sip_msg* _msg, char* _subject, char* _list,
+		char* _sep);
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 );
 static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2 );
 static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 );
@@ -139,7 +141,9 @@ static int fixup_method(void** param, int param_no);
 static int add_header_fixup(void** param, int param_no);
 static int fixup_body_type(void** param, int param_no);
 static int fixup_in_list(void** param, int param_no);
+static int fixup_in_list_prefix(void** param, int param_no);
 static int fixup_free_in_list(void** param, int param_no);
+static int fixup_free_in_list_prefix(void** param, int param_no);
 int fixup_regexpNL_none(void** param, int param_no);
 static int fixup_search_hf(void** param, int param_no);
 static int fixup_subst_hf(void** param, int param_no);
@@ -258,6 +262,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"in_list", (cmd_function)in_list_f, 3, fixup_in_list,
 		fixup_free_in_list,
+		ANY_ROUTE},
+	{"in_list_prefix", (cmd_function)in_list_prefix_f, 3,
+		fixup_in_list_prefix, fixup_free_in_list_prefix,
 		ANY_ROUTE},
 	{"cmp_str",  (cmd_function)cmp_str_f, 2,
 		fixup_spve_spve, 0,
@@ -3007,6 +3014,41 @@ static int fixup_free_in_list(void** param, int param_no)
 	return -1;
 }
 
+/*
+ * Fix in_list_prefix params: subject and list (strings that may contain pvars),
+ * separator (string)
+ */
+static int fixup_in_list_prefix(void** param, int param_no)
+{
+	if ((param_no == 1) || (param_no == 2)) return fixup_spve_null(param, 1);
+
+	if (param_no == 3) {
+		if ((strlen((char *)*param) != 1) || (*((char *)(*param)) == 0)) {
+			LM_ERR("invalid separator parameter\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/*
+ * Free in_list_prefix params
+ */
+static int fixup_free_in_list_prefix(void** param, int param_no)
+{
+	if ((param_no == 1) || (param_no == 2)) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	if (param_no == 3) return 0;
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
 static int add_header_fixup(void** param, int param_no)
 {
 	if(param_no==1)
@@ -3240,6 +3282,112 @@ int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
 	sep.len = 1;
 
 	return ki_in_list(_m, &subject, &list, &sep);
+}
+
+/*
+ * Checks if an element in list is a prefix for subject
+ */
+int ki_in_list_prefix(sip_msg_t* _m, str* subject, str* list, str* vsep)
+{
+	int sep;
+	char *at, *past, *next_sep, *s;
+	
+	if(subject==NULL || subject->len<=0 || list==NULL || list->len<=0
+			|| vsep==NULL || vsep->len<=0)
+		return -1;
+
+	sep = vsep->s[0];
+
+	at = list->s;
+	past = list->s + list->len;
+
+	/* Eat leading white space */
+	while ((at < past) &&
+			((*at == ' ') || (*at == '\t') || (*at == '\r') || (*at == '\n') )) {
+		at++;
+	}
+
+	while (at < past) {
+		next_sep = index(at, sep);
+		s = next_sep;
+		int list_element_len;
+
+		if (s == NULL) {
+			/* Eat trailing white space */
+			while ((at < past) &&
+					((*(past-1) == ' ') || (*(past-1) == '\t')
+						|| (*(past-1) == '\r') || (*(past-1) == '\n') )) {
+				past--;
+			}
+			list_element_len = past - at;
+			if (list_element_len == 0) {
+				/* There is no list element */
+				return -1;
+			}
+			if (list_element_len > subject->len) {
+				/* Length of list element is greater than subject length */
+				return -1;
+			}
+			if (strncmp(at, subject->s, list_element_len) != 0) {
+				return -1;
+			}
+			/* Prefix match found */
+			return 1;
+
+		} else {
+			/* Eat trailing white space */
+			while ((at < s) &&
+					((*(s-1) == ' ') || (*(s-1) == '\t') || (*(s-1) == '\r')
+						|| (*(s-1) == '\n') )) {
+				s--;
+			}
+			list_element_len = s - at;
+			if (list_element_len == 0 || list_element_len > subject->len ||
+				strncmp(at, subject->s, list_element_len) != 0) {
+				/* Prefix match not found */
+				at = next_sep + 1;
+				/* Eat leading white space */
+				while ((at < past) &&
+						((*at == ' ') || (*at == '\t') || (*at == '\r')
+							|| (*at == '\n') )) {
+					at++;
+				}
+			} else {
+				/* Prefix match found */
+				return 1;
+			}
+		}
+	}
+
+	return -1;
+}
+
+/*
+ * Checks if an element in list is a prefix for subject
+ */
+int in_list_prefix_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
+{
+	str subject, list, sep;
+	if (fixup_get_svalue(_m, (gparam_p)_subject, &subject) != 0) {
+		LM_ERR("cannot get subject value\n");
+		return -1;
+	} else {
+		if (subject.len == 0) {
+			LM_ERR("subject cannot be empty string\n");
+			return -1;
+		}
+	}
+
+	if (fixup_get_svalue(_m, (gparam_p)_list, &list) != 0) {
+		LM_ERR("cannot get list value\n");
+		return -1;
+	} else {
+		if (list.len == 0) return -1;
+	}
+	sep.s = _sep;
+	sep.len = 1;
+
+	return ki_in_list_prefix(_m, &subject, &list, &sep);
 }
 
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 )
@@ -4046,6 +4194,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("in_list"),
 		SR_KEMIP_INT, ki_in_list,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("in_list_prefix"),
+		SR_KEMIP_INT, ki_in_list_prefix,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
