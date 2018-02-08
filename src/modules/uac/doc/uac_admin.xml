@@ -953,7 +953,7 @@ event_route[uac:reply] {
 				<emphasis>regtotal</emphasis>: Total number of registrations
 			</para></listitem>
 			<listitem><para>
-				<emphasis>regactive</emphasis>: Total number of active registrations (successfully registred with service)
+				<emphasis>regactive</emphasis>: Total number of active registrations (successfully registered with service)
 			</para></listitem>
 			<listitem><para>
 				<emphasis>regdisabled</emphasis>: Total number of disabled registrations (no longer active)

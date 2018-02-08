@@ -172,7 +172,7 @@ static void uac_reg_counter_init()
 {
 	LM_DBG("*** Initializing UAC reg counters\n");
 	counter_register(&regtotal, "uac", "regtotal", 0, 0, 0, "Total number of registration accounts in memory", 0);
-	counter_register(&regactive, "uac", "regactive", 0, 0, 0, "Number of successfully registred accounts (200 OK)", 0);
+	counter_register(&regactive, "uac", "regactive", 0, 0, 0, "Number of successfully registered accounts (200 OK)", 0);
 	counter_register(&regdisabled, "uac", "regdisabled", 0, 0, 0, "Counter of failed registrations (not 200 OK)", 0);
 }
 
