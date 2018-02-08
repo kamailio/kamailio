@@ -442,7 +442,7 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 						break;
 					}
 				} else {
-					LM_ERR("invalid number of spearators (%d)\n", n);
+					LM_ERR("invalid number of separators (%d)\n", n);
 					goto done;
 				}
 			}
