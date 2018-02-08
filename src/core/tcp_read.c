@@ -1176,7 +1176,7 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 		   handled to 2^32 - which should be plenty for SIP! */
 		if((p[pos] & 0xff)!=0 || (p[pos + 1] & 0xff)!=0
 				|| (p[pos + 2] & 0xff)!=0 || (p[pos + 3] & 0xff)!=0) {
-			LM_WARN("advertised lenght is too large (more than 2^32)\n");
+			LM_WARN("advertised length is too large (more than 2^32)\n");
 			goto skip;
 		}
 		len = ((p[pos + 4] & 0xff) << 24)
@@ -1194,9 +1194,9 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 		pos += 4;
 	}
 
-	/* check if advertised lenght fits in read buffer */
+	/* check if advertised length fits in read buffer */
 	if(len>=r->b_size) {
-		LM_WARN("advertised lenght (%u) greater than buffer size (%u)\n",
+		LM_WARN("advertised length (%u) greater than buffer size (%u)\n",
 				len, r->b_size);
 		goto skip;
 	}
@@ -1282,9 +1282,9 @@ static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
 
 	len = ((uint32_t)(p[4] & 0xff) <<  8) + (p[5] & 0xff);
 
-	/* check if advertised lenght fits in read buffer */
+	/* check if advertised length fits in read buffer */
 	if(len>=r->b_size) {
-		LM_WARN("advertised lenght (%u) greater than buffer size (%u)\n",
+		LM_WARN("advertised length (%u) greater than buffer size (%u)\n",
 				len, r->b_size);
 		goto skip;
 	}
@@ -1878,7 +1878,7 @@ read_error:
 						fm->fd, fm->type, fm->data);
 			goto error;
 		default:
-			LM_CRIT("uknown fd type %d\n", fm->type); 
+			LM_CRIT("unknown fd type %d\n", fm->type);
 			goto error;
 	}
 	

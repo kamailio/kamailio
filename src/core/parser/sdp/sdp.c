@@ -371,7 +371,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	str fmtp_string;
 	str remote_candidates = {"a:remote-candidates:", 20};
 
-	/* hook the start and lenght of sdp body inside structure
+	/* hook the start and length of sdp body inside structure
 	 * - shorcut useful for multi-part bodies and sdp operations
 	 */
 	_sdp->text = *sdp_body;

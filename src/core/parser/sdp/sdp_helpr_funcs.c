@@ -469,7 +469,7 @@ int extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 		return -1;
 	}
 	/* safety checks:
-	 * - for lenght, at least 6: ' IP[4|6] x...'
+	 * - for length, at least 6: ' IP[4|6] x...'
 	 * - white space after
 	 */
 	if(cp + 6 > mediaip->s + mediaip->len && cp[4]!=' ') {

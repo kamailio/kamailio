@@ -342,7 +342,7 @@ char* b58_decode(char *outb, int *outbszp, char *b58, int b58sz)
 /**
  * encode raw data (of size binsz) into base58 format stored in b58
  *   - *b58sz gives the size of b58 buffer
- *   - *b58sz is updated to the lenght of result
+ *   - *b58sz is updated to the length of result
  *   - b58 is 0-terminated
  *   - return NULL on failure or b58
  */

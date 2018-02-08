@@ -4365,7 +4365,7 @@ int dns_cache_add_record(unsigned short type,
 					);
 				}
 				if (!rr_p) {
-					LM_ERR("Failed to correct the orderd list of SRV resource records\n");
+					LM_ERR("Failed to correct the ordered list of SRV resource records\n");
 					goto error;
 				}
 
