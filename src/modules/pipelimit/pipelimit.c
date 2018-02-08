@@ -700,7 +700,7 @@ static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
 	if(fixup_get_svalue(msg, (gparam_t*)p2alg, &alg)!=0
 			|| alg.s == 0)
 	{
-		LM_ERR("invalid algoritm parameter");
+		LM_ERR("invalid algorithm parameter");
 		return -1;
 	}
 
