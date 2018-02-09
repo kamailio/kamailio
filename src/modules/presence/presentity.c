@@ -1100,10 +1100,6 @@ after_etag_generation:
 				}
 				if (sent_reply) *sent_reply= 1;
 
-				if(etag.s)
-					pkg_free(etag.s);
-				etag.s= NULL;
-
 				goto done;
 			}
 		}
@@ -1232,10 +1228,6 @@ after_etag_generation:
 		}
 		if (sent_reply) *sent_reply= 1;
 
-		if(etag.s)
-			pkg_free(etag.s);
-		etag.s= NULL;
-
 		if(!body)
 			goto done;
 	}
@@ -1265,6 +1257,10 @@ done:
 	if (pres_enable_dmq>0) {
 		pres_dmq_replicate_presentity(presentity, body, new_t, &cur_etag, sphere, &p_ruid, NULL);
 	}
+
+	if(etag.s)
+		pkg_free(etag.s);
+	etag.s= NULL;
 
 	if(cur_ruid.s)
 		pkg_free(cur_ruid.s);
