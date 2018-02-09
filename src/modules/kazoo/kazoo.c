@@ -74,6 +74,8 @@ struct timeval kz_amqp_tv = (struct timeval){0,100000};
 struct timeval kz_qtimeout_tv = (struct timeval){2,0};
 struct timeval kz_ack_tv = (struct timeval){0,100000};
 struct timeval kz_timer_tv = (struct timeval){0,200000};
+struct timeval kz_amqp_connect_timeout_tv = (struct timeval){0,200000};
+
 int kz_timer_ms = 200;
 
 str kz_json_escape_str = str_init("%");
@@ -199,6 +201,8 @@ static param_export_t params[] = {
     {"amqps_verify_peer", INT_PARAM, &kz_amqps_verify_peer},
     {"amqps_verify_hostname", INT_PARAM, &kz_amqps_verify_hostname},
 	{"pua_lock_type", INT_PARAM, &kz_pua_lock_type},
+    {"amqp_connect_timeout_micro", INT_PARAM, &kz_amqp_connect_timeout_tv.tv_usec},
+    {"amqp_connect_timeout_sec", INT_PARAM, &kz_amqp_connect_timeout_tv.tv_sec},
     {0, 0, 0}
 };
 
