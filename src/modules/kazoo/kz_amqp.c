@@ -2659,10 +2659,10 @@ void kz_amqp_reconnect_cb(int fd, short event, void *arg)
 
 	kz_amqp_timer_destroy(&connection->reconnect);
 
-//	if (connection->state == KZ_AMQP_CONNECTION_OPEN) {
-//		LM_WARN("trying to connect an already connected server.\n");
-//		return;
-//	}
+	if (connection->state == KZ_AMQP_CONNECTION_OPEN) {
+		LM_WARN("trying to connect an already connected server.\n");
+		return;
+	}
 
 	kz_amqp_connect(connection);
 }
@@ -3235,6 +3235,8 @@ int kz_amqp_consumer_worker_proc(int cmd_pipe)
 
 void kz_amqp_timer_destroy(kz_amqp_timer_ptr* pTimer)
 {
+	if(!pTimer)
+		return;
 	kz_amqp_timer_ptr timer = *pTimer;
 	if (timer->ev != NULL) {
 		event_del(timer->ev);
@@ -3328,7 +3330,6 @@ void kz_amqp_heartbeat_proc(int fd, short event, void *arg)
 	LM_DBG("sending heartbeat to zone : %s , connection id : %d\n", connection->server->zone->zone, connection->server->id);
 	if (connection->state != KZ_AMQP_CONNECTION_OPEN) {
 		kz_amqp_timer_destroy(&connection->heartbeat);
-		kz_amqp_handle_server_failure(connection);
 		return;
 	}
 	heartbeat.channel = 0;
