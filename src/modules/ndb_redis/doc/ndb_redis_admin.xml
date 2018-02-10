@@ -271,6 +271,36 @@ modparam("ndb_redis", "flush_on_reconnect", 1)
 			</programlisting>
 		</example>
 	</section>
+	<section id="ndb_redis.p.allow_dynamic_nodes">
+		<title><varname>allow_dynamic_nodes</varname> (integer)</title>
+		<para>
+			If set to 1, the module will connect to servers indicated in the "MOVED" reply,
+			even if they are not specified at startup.
+		</para>
+		<para>
+			When <quote>cluster</quote> is enabled the module supports redirections ("MOVED") replies.
+			Set <quote>allow_dynamic_nodes</quote> to 1 to avoid listing all the nodes at startup.
+			You can only list one node, e.g. by using a DNS name for the cluster instead of an IP address.
+			The module will add dynamically the new nodes as the MOVED replies are received.
+			Only works if <quote>cluster</quote> is set to 1.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>allow_dynamic_nodes</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("ndb_redis", "server", "name=redis_cluster;addr=127.0.0.1;port=26008")
+...
+modparam("ndb_redis", "cluster", 1)
+modparam("ndb_redis", "allow_dynamic_nodes", 1)
+...
+			</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
