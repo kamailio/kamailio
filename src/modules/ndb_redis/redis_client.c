@@ -52,6 +52,7 @@ extern int redis_cluster_param;
 extern int redis_disable_time_param;
 extern int redis_allowed_timeouts_param;
 extern int redis_flush_on_reconnect_param;
+extern int redis_allow_dynamic_nodes_param;
 
 /* backwards compatibility with hiredis < 0.12 */
 #if (HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
@@ -651,6 +652,9 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv) {
 	char buffername[100];
 	unsigned int port;
 	str addr = {0, 0}, tmpstr = {0, 0}, name = {0, 0};
+	int server_len = 0;
+	char spec_new[100];
+
 	if (redis_cluster_param) {
 		LM_DBG("Redis replied: \"%.*s\"\n", reply->len, reply->str);
 		if ((reply->len > 7) && (strncmp(reply->str, "MOVED", 5) == 0)) {
@@ -683,9 +687,54 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv) {
 				LM_DBG("Reusing Connection\n");
 				*rsrv = rsrv_new;
 				return 1;
-			} else {
-				LM_ERR("No Connection with name (%.*s)\n", name.len, name.s);
 			}
+			/* New param redis_allow_dynamic_nodes_param:
+			if set, we allow ndb_redis to add nodes that were
+			not defined explicitly in the module configuration */
+			else if (redis_allow_dynamic_nodes_param) {
+                                /* For now the only way this can work is if
+				the new node is accessible with default
+				parameters for sock and db */
+                                memset(spec_new, 0, sizeof(spec_new));
+                                server_len = snprintf(spec_new, sizeof(spec_new) - 1, "name=%.*s;addr=%.*s;port=%i", name.len, name.s, addr.len, addr.s, port);
+
+                                char* server_new = (char*)pkg_malloc(server_len + 1);
+                                if (server_new == NULL) {
+                                        LM_ERR("Error allocating pkg mem\n");
+                                        pkg_free(server_new);
+                                        return 0;
+                                }
+
+                                strncpy(server_new, spec_new, server_len);
+                                server_new[server_len] = '\0';
+
+                                if (redisc_add_server(server_new) == 0) {
+                                        rsrv_new = redisc_get_server(&name);
+
+                                        if (rsrv_new) {
+                                                *rsrv = rsrv_new;
+						// Need to connect to the new server now
+                                                if(redisc_reconnect_server(rsrv_new)==0) {
+							LM_DBG("Connected to the new server with name: %.*s\n", name.len, name.s);
+							return 1;
+                                                }
+                                                else {
+							LM_ERR("ERROR connecting to the new server with name: %.*s\n", name.len, name.s);
+							return 0;
+                                                }
+                                        }
+                                        else {
+                                                /* Adding the new node failed
+                                                Cannot perform redirection */
+                                                LM_ERR("No new connection with name (%.*s) was created\n", name.len, name.s);
+                                        }
+                                }
+                                else {
+                                        LM_ERR("Could not add a new connection with name %.*s\n", name.len, name.s);
+                                }
+                        } else {
+                                LM_ERR("No Connection with name (%.*s)\n", name.len, name.s);
+                        }
 		}
 	}
 	return 0;

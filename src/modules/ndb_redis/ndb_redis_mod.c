@@ -52,6 +52,7 @@ int redis_cluster_param = 0;
 int redis_disable_time_param=0;
 int redis_allowed_timeouts_param=-1;
 int redis_flush_on_reconnect_param=0;
+int redis_allow_dynamic_nodes_param = 0;
 
 static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
 		char* sres);
@@ -127,6 +128,7 @@ static param_export_t params[]={
 	{"disable_time", INT_PARAM, &redis_disable_time_param},
 	{"allowed_timeouts", INT_PARAM, &redis_allowed_timeouts_param},
 	{"flush_on_reconnect", INT_PARAM, &redis_flush_on_reconnect_param},
+	{"allow_dynamic_nodes", INT_PARAM, &redis_allow_dynamic_nodes_param},
 	{0, 0, 0}
 };
 
