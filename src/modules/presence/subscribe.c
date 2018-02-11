@@ -191,6 +191,7 @@ int insert_subs_db(subs_t* s, int type)
 		contact_col, local_contact_col, version_col,socket_info_col,reason_col,
 		watcher_user_col, watcher_domain_col, updated_col, updated_winfo_col,
 		user_agent_col, flags_col;
+	str sval_empty = str_init("");
 
 	if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
 	{
@@ -353,7 +354,8 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[updated_col].val.int_val = s->updated;
 	query_vals[updated_winfo_col].val.int_val = s->updated_winfo;
 	query_vals[flags_col].val.int_val = s->flags;
-	query_vals[user_agent_col].val.str_val= s->user_agent;
+	query_vals[user_agent_col].val.str_val=
+		(s->user_agent.s && s->user_agent.len>0)?s->user_agent:sval_empty;
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
