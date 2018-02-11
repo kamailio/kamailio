@@ -784,7 +784,6 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	int res;
 	int status = RR_DRIVEN;
 	str uri;
-	struct socket_info *si;
 	int uri_is_myself;
 	int use_ob = 0;
 	str rparams;
