@@ -220,6 +220,7 @@
         <type>string</type>
         <size>&hf_len;</size>
         <default/>
+        <null/>
         <description>User-Agent header field contains information about the UAC originating the request.</description>
     </column>
 
