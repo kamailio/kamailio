@@ -2512,8 +2512,8 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	 * Take Request-URI user from ruri_user_avp and generate Request
          * and Destination URIs. */
 
-	if (!generate_uris(_m, r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
-			   &dst_uri_len, &addr, &gw_index, &flags, &tag_str)) {
+	if (generate_uris(_m, r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
+			   &dst_uri_len, &addr, &gw_index, &flags, &tag_str) <= 0) {
 	    return -1;
 	}
     }
