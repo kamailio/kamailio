@@ -214,8 +214,17 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 	} else {
 		sv = td->as_contact;
 	}
+	if(sv.len<=0) {
+		/* no contact - skip */
+		return 0;
+	}
+
 	if(td->cp + 8 + (2*uuid->len) + sv.len >= td->cbuf + TPS_DATA_SIZE) {
 		LM_ERR("insufficient data buffer\n");
+		return -1;
+	}
+	if (parse_uri(sv.s, sv.len, &puri) < 0) {
+		LM_ERR("failed to parse the uri\n");
 		return -1;
 	}
 	if(dir==TPS_DIR_DOWNSTREAM) {
@@ -225,6 +234,8 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 		memcpy(td->cp, uuid->s, uuid->len);
 		td->cp += uuid->len;
 		td->b_uuid.len = td->cp - td->b_uuid.s;
+
+		td->bs_contact.s = td->cp;
 	} else {
 		td->a_uuid.s = td->cp;
 		*td->cp = 'a';
@@ -232,20 +243,7 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 		memcpy(td->cp, uuid->s, uuid->len);
 		td->cp += uuid->len;
 		td->a_uuid.len = td->cp - td->a_uuid.s;
-	}
 
-	if(sv.len<=0) {
-		/* no contact - skip */
-		return 0;
-	}
-
-	if (parse_uri(sv.s, sv.len, &puri) < 0) {
-		LM_ERR("failed to parse the uri\n");
-		return -1;
-	}
-	if(dir==TPS_DIR_DOWNSTREAM) {
-		td->bs_contact.s = td->cp;
-	} else {
 		td->as_contact.s = td->cp;
 	}
 	*td->cp = '<';
