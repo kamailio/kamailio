@@ -303,27 +303,31 @@ int check_if_dialog(str body, int *is_dialog, char **dialog_id)
 	return 0;
 }
 
-int parse_dialog_state_from_body(str body, int *is_dialog, char **state)
+/**
+ * return 1 if all dialog nodes have the vstate
+ *   * 0 if at least one state is different
+ *   * -1 in case of error
+ */
+int ps_match_dialog_state_from_body(str body, int *is_dialog, char *vstate)
 {
 	xmlDocPtr doc;
 	xmlNodePtr node;
 	xmlNodePtr childNode;
 	char *tmp_state;
+	int rmatch = 0;
 
-	*state = NULL;
 	*is_dialog = 0;
 
 	doc = xmlParseMemory(body.s, body.len);
-	if(doc== NULL)
+	if(doc == NULL || doc->children == NULL)
 	{
 		LM_ERR("failed to parse xml document\n");
 		return -1;
 	}
 
-	node = doc->children;
-	node = xmlNodeGetChildByName(node, "dialog");
+	node = xmlNodeGetChildByName(doc->children, "dialog");
 
-	if(node != NULL)
+	while(node != NULL)
 	{
 		*is_dialog = 1;
 
@@ -332,16 +336,33 @@ int parse_dialog_state_from_body(str body, int *is_dialog, char **state)
 
 		if (tmp_state != NULL)
 		{
-			*state = strdup(tmp_state);
+			if(strcmp(tmp_state, vstate)!=0) {
+				xmlFree(tmp_state);
+				rmatch = 0;
+				goto done;
+			}
+			rmatch = 1;
 			xmlFree(tmp_state);
 		}
+		/* search for next dialog node */
+		do {
+			if(node->next != NULL && node->next->name != NULL
+					&& xmlStrcmp(node->name, node->next->name) == 0) {
+				node = node->next;
+				break;
+			}
+			node = node->next;
+		} while(node != NULL);
 	}
 
+done:
 	xmlFreeDoc(doc);
-	return 0;
+	return rmatch;
 }
 
-int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog_id) {
+int delete_presentity_if_dialog_id_exists(presentity_t* presentity,
+		char* dialog_id)
+{
 	db_key_t query_cols[13], result_cols[6];
 	db_op_t  query_ops[13];
 	db_val_t query_vals[13];
@@ -447,7 +468,10 @@ int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog
 	return 0;
 }
 
-int get_dialog_state(presentity_t* presentity, char** state)
+/**
+ * check if the states of all related dialogs match vstate
+ */
+int ps_match_dialog_state(presentity_t* presentity, char* vstate)
 {
 	db_key_t query_cols[13], result_cols[6];
 	db_op_t  query_ops[13];
@@ -459,9 +483,7 @@ int get_dialog_state(presentity_t* presentity, char** state)
 	db_val_t *row_vals = NULL;
 	int db_is_dialog = 0;
 	str tmp_db_body;
-	int i = 0, parse_state_result = 0;
-
-	*state = NULL;
+	int i = 0, rmatch = 0;
 
 	query_cols[n_query_cols] = &str_domain_col;
 	query_ops[n_query_cols] = OP_EQ;
@@ -515,7 +537,7 @@ int get_dialog_state(presentity_t* presentity, char** state)
 		return 0;
 	}
 
-	parse_state_result = 0;
+	rmatch = 0;
 	// Loop the rows returned from the DB
 	for (i=0; i < result->n; i++)
 	{
@@ -524,34 +546,20 @@ int get_dialog_state(presentity_t* presentity, char** state)
 		tmp_db_body.s = (char*)row_vals[rez_body_col].val.string_val;
 		tmp_db_body.len = strlen(tmp_db_body.s);
 
-		parse_state_result = parse_dialog_state_from_body(tmp_db_body,
-				&db_is_dialog, state);
+		rmatch = ps_match_dialog_state_from_body(tmp_db_body,
+				&db_is_dialog, vstate);
 
-		if(parse_state_result==0) {
-			/* successful parsing */
+		if(rmatch<=0) {
+			/* failure or not a match */
 			pa_dbf.free_result(pa_db, result);
 			result = NULL;
-			return parse_state_result;
+			return rmatch;
 		}
 	}
 
 	pa_dbf.free_result(pa_db, result);
 	result = NULL;
-	return parse_state_result;
-}
-
-int is_dialog_terminated(presentity_t* presentity)
-{
-	char *state = NULL;
-	int rtn;
-
-	get_dialog_state(presentity, &state);
-
-	rtn = state && !strcasecmp(state, "terminated");
-
-	free(state);
-
-	return rtn;
+	return rmatch;
 }
 
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
@@ -999,7 +1007,7 @@ after_dialog_check:
 			cur_etag= presentity->etag;
 
 		if (presentity->event->evp->type==EVENT_DIALOG) {
-			if(is_dialog_terminated(presentity))
+			if(ps_match_dialog_state(presentity, "terminated")==1)
 			{
 				LM_WARN("Trying to update an already terminated state."
 						" Skipping update.\n");
