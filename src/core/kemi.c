@@ -1342,7 +1342,7 @@ int sr_kemi_eng_register(str *ename, sr_kemi_eng_route_f froute)
 	_sr_kemi_eng_list[_sr_kemi_eng_list_size].froute = froute;
 	_sr_kemi_eng_list_size++;
 
-	LM_DBG("registered config routing enginge [%.*s]",
+	LM_DBG("registered config routing enginge [%.*s]\n",
 			ename->len, ename->s);
 
 	return 0;
