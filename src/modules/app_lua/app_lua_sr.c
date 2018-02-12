@@ -1970,10 +1970,14 @@ void lua_sr_kemi_register_libs(lua_State *L)
 				}
 				n++;
 			}
+			if(!lua_checkstack(L, i+8)) {
+				LM_ERR("not enough Lua stack capacity\n");
+				exit(-1);
+			}
 			luaL_openlib(L, mname, _sr_crt_KSRMethods, 0);
-			LM_DBG("initializing kemi sub-module: %s (%s)\n", mname,
-					emods[k].kexp[0].mname.s);
+			LM_DBG("initializing kemi sub-module: %s (%s) (%d/%d/%d)\n", mname,
+					emods[k].kexp[0].mname.s, i, k, n);
 		}
 	}
-	LM_DBG("module 'KSR' has been initialized\n");
+	LM_DBG("module 'KSR' has been initialized (%d/%d)\n", emods_size, n);
 }
