@@ -337,6 +337,7 @@ int ps_match_dialog_state_from_body(str body, int *is_dialog, char *vstate)
 		if (tmp_state != NULL)
 		{
 			if(strcmp(tmp_state, vstate)!=0) {
+				/* state not matched */
 				xmlFree(tmp_state);
 				rmatch = 0;
 				goto done;
@@ -549,8 +550,8 @@ int ps_match_dialog_state(presentity_t* presentity, char* vstate)
 		rmatch = ps_match_dialog_state_from_body(tmp_db_body,
 				&db_is_dialog, vstate);
 
-		if(rmatch<=0) {
-			/* failure or not a match */
+		if(rmatch==1) {
+			/* having a full match */
 			pa_dbf.free_result(pa_db, result);
 			result = NULL;
 			return rmatch;
