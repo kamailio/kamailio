@@ -37,6 +37,9 @@ ORACLE_XSL = $(STYLESHEETS)/oracle.xsl
 # Stylesheet used to generate mongodb database schema
 MONGODB_XSL = $(STYLESHEETS)/mongodb.xsl
 
+# Stylesheet used to generate Redis database schema
+DB_REDIS_XSL = $(STYLESHEETS)/db_redis.xsl
+
 # Stylesheet used to generate docbook documentation
 DOCBOOK_XSL = $(STYLESHEETS)/docbook.xsl
 
@@ -69,7 +72,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext db_berkeley db_sqlite oracle mongodb pi_framework
+all: mysql postgres dbtext db_berkeley db_sqlite oracle mongodb db_redis pi_framework
 
 .PHONY: pi_framework pi_framework_clean
 pi_framework:
@@ -227,6 +230,18 @@ mongodb:
 mongodb_clean:
 	-@rm -f $(SCHEME)/mongodb/kamailio/*
 
+.PHONY: db_redis db_redis_clean
+db_redis:
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(SCHEME)/db_redis/kamailio" \
+		--stringparam prefix "" \
+		--stringparam db "db_redis" \
+		$(DB_REDIS_XSL) kamailio-"$$FILE".xml ; \
+	done
+
+db_redis_clean:
+	-@rm -f $(SCHEME)/db_redis/*
 
 .PHONY: docbook-xml
 docbook-xml:
@@ -350,4 +365,4 @@ dbdoc_clean:
 	done
 
 .PHONY: clean
-clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean db_sqlite_clean pi_framework_clean docbook_clean # modules_clean dbdoc_clean
+clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean db_sqlite_clean mongodb_clean db_redis_clean pi_framework_clean docbook_clean # modules_clean dbdoc_clean

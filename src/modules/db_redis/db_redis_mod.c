@@ -27,15 +27,17 @@
 
 #include "db_redis_mod.h"
 #include "redis_dbase.h"
+#include "redis_table.h"
 
 MODULE_VERSION
 
 str redis_keys = str_init("");
-str redis_schema = str_init("");
+str redis_schema_path = str_init("/usr/share/kamailio/db_redis/kamailio");
 
 static int db_redis_bind_api(db_func_t *dbb);
 static int mod_init(void);
 static void mod_destroy(void);
+int keys_param(modparam_t type, void* val);
 
 static cmd_export_t cmds[] = {
     {"db_bind_api",    (cmd_function)db_redis_bind_api,    0, 0, 0, 0},
@@ -47,8 +49,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-    {"keys", PARAM_STR, &redis_keys },
-    {"schema", PARAM_STR, &redis_schema },
+    {"keys",        PARAM_STRING|USE_FUNC_PARAM, (void*)keys_param},
+    {"schema_path", PARAM_STR, &redis_schema_path },
     {0, 0, 0}
 };
 
@@ -87,6 +89,14 @@ static int db_redis_bind_api(db_func_t *dbb) {
     dbb->replace          = 0; //db_redis_replace;
 
     return 0;
+}
+
+int keys_param(modparam_t type, void *val)
+{
+	if (val == NULL)
+		return -1;
+	else
+		return db_redis_keys_spec((char*)val);
 }
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2) {

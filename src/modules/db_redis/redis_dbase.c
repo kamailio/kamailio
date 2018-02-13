@@ -64,6 +64,16 @@ void db_redis_close(db1_con_t* _h) {
     db_do_close(_h, db_redis_free_connection);
 }
 
+
+static db1_res_t* db_redis_new_result(void) {
+    db1_res_t* obj;
+
+    obj = db_new_result();
+    if (!obj)
+        return NULL;
+    return obj;
+}
+
 static int db_redis_val2str(const db_val_t *v, str *_str) {
     const char *s;
     const str *tmpstr;
@@ -145,6 +155,64 @@ static int db_redis_val2str(const db_val_t *v, str *_str) {
 memerr:
     LM_ERR("Failed to allocate memory to convert value to string\n");
 err:
+    return -1;
+}
+
+static int db_redis_return_version(const db1_con_t* _h, km_redis_con_t *con, const str *table_name,
+    db1_res_t **_r) {
+
+    struct str_hash_entry *table_e;
+    redis_table_t *table;
+    db_val_t* dval;
+    db_row_t* drow;
+
+    LM_DBG("get table version\n");
+
+    table_e = str_hash_get(&con->tables, table_name->s, table_name->len);
+    if (!table_e) {
+        LM_ERR("query to undefined table '%.*s', define it in schema file!\n",
+                table_name->len, table_name->s);
+        return -1;
+    }
+    table = (redis_table_t*)table_e->u.p;
+
+    *_r = db_redis_new_result();
+    if (!*_r) {
+        LM_ERR("Failed to allocate memory for result");
+        return -1;
+    }
+    RES_NUM_ROWS(*_r) = 1;
+    RES_COL_N(*_r) = 1;
+    RES_ROW_N(*_r) = 1;
+    if (db_allocate_rows(*_r) != 0) {
+        LM_ERR("Failed to allocate memory for rows\n");
+        goto err;
+    }
+    if (db_allocate_columns(*_r, 1) != 0) {
+        LM_ERR("Failed to allocate memory for result columns");
+        goto err;
+    }
+
+    drow = &(RES_ROWS(*_r)[0]);
+
+    if (db_allocate_row(*_r, drow) != 0) {
+        LM_ERR("Failed to allocate row %d\n", RES_NUM_ROWS(*_r));
+        goto err;
+    }
+
+    dval = &(ROW_VALUES(drow)[0]);
+
+    VAL_TYPE(dval) = DB1_INT;
+    VAL_NULL(dval) = 0;
+    VAL_INT(dval) = table->version;
+
+    LM_DBG("returning short-cut table version %d for table '%.*s'",
+        table->version, table_name->len, table_name->s);
+
+    return 0;
+
+err:
+    if (*_r) db_redis_free_result((db1_con_t*)_h, *_r);
     return -1;
 }
 
@@ -680,15 +748,6 @@ err:
     return -1;
 }
 
-static db1_res_t* db_redis_new_result(void) {
-    db1_res_t* obj;
-
-    obj = db_new_result();
-    if (!obj)
-        return NULL;
-    return obj;
-}
-
 static int db_redis_compare_column(db_key_t k, db_val_t *v, db_op_t op, redisReply *reply) {
     int i_value;
     long long ll_value;
@@ -1001,9 +1060,6 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
         }
     }
 
-
-
-    LM_DBG("++++++ going over query keys\n");
     for (redis_key_t *key = *keys; key; key = key->next) {
         redis_key_t *tmp = NULL;
         str *keyname = &(key->key);
@@ -1609,6 +1665,20 @@ int db_redis_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
     }
 
     if(_r) *_r = NULL;
+
+    // check if we have a version query, and return version directly from
+    // schema instead of loading it from redis
+    if (_nc == 1 && _n >= 1 && VAL_TYPE(&_v[0]) == DB1_STR &&
+            CON_TABLE(_h)->len == strlen("version") && strncmp(CON_TABLE(_h)->s, "version", CON_TABLE(_h)->len) == 0 &&
+            _k[0]->len == strlen("table_name") && strncmp(_k[0]->s, "table_name", _k[0]->len) == 0 &&
+            _c[0]->len == strlen("table_version") && strncmp(_c[0]->s, "table_version", _c[0]->len) == 0) {
+
+        if (db_redis_return_version(_h, con, &VAL_STR(&_v[0]), _r) == 0) {
+            return 0;
+        }
+        // if we fail to return a version from the schema, go query the table, just in case
+    }
+
     free_op = 0;
 
     if (_op == NULL) {

@@ -7,7 +7,6 @@
 %docentities;
 
 ]>
-
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
 	<title>DB_REDIS Module</title>
@@ -30,8 +29,5 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
     <xi:include href="db_redis_admin.xml"/>
-    
-    
 </book>

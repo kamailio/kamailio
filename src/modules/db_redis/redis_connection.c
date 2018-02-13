@@ -39,6 +39,7 @@ int db_redis_connect(km_redis_con_t *con) {
     // TODO: on carrier, if we have db fail-over, the currently connected
     // redis server will become slave without dropping connections?
 
+    LM_DBG("connecting to redis at %s:%d\n", con->id->host, con->id->port);
     con->con = redisConnectWithTimeout(con->id->host, con->id->port, tv);
 
     if (!con->con) {
@@ -91,6 +92,7 @@ int db_redis_connect(km_redis_con_t *con) {
         goto err;
     }
     freeReplyObject(reply); reply = NULL;
+    LM_DBG("connection opened to %.*s\n", con->id->url.len, con->id->url.s);
 
     return 0;
 
@@ -125,9 +127,9 @@ km_redis_con_t* db_redis_new_connection(const struct db_id* id) {
     ptr->id = (struct db_id*)id;
 
     /*
-    LM_DBG("trying to initialize connection to '%.*s' with schema '%.*s' and keys '%.*s'\n",
+    LM_DBG("trying to initialize connection to '%.*s' with schema path '%.*s' and keys '%.*s'\n",
             id->url.len, id->url.s,
-            redis_schema.len, redis_schema.s,
+            redis_schema_path.len, redis_schema_path.s,
             redis_keys.len, redis_keys.s);
     */
     LM_DBG("trying to initialize connection to '%.*s'\n",
@@ -209,12 +211,14 @@ void *db_redis_command_argv(km_redis_con_t *con, redis_key_t *query) {
     LM_DBG("query has %d args\n", argc);
 
     redisReply *reply = redisCommandArgv(con->con, argc, (const char**)argv, NULL);
-    if (con->con->err == REDIS_ERR_EOF &&
-        strcmp(con->con->errstr,"Server closed the connection") == 0) {
-
+    if (con->con->err == REDIS_ERR_EOF) {
         if (db_redis_connect(con) != 0) {
             LM_ERR("Failed to reconnect to redis db\n");
             pkg_free(argv);
+            if (con->con) {
+                redisFree(con->con);
+                con->con = NULL;
+            }
             return NULL;
         }
         reply = redisCommandArgv(con->con, argc, (const char**)argv, NULL);
@@ -237,12 +241,14 @@ int db_redis_append_command_argv(km_redis_con_t *con, redis_key_t *query) {
     LM_DBG("query has %d args\n", argc);
 
     ret = redisAppendCommandArgv(con->con, argc, (const char**)argv, NULL);
-    if (con->con->err == REDIS_ERR_EOF &&
-        strcmp(con->con->errstr,"Server closed the connection") == 0) {
-
+    if (con->con->err == REDIS_ERR_EOF) {
         if (db_redis_connect(con) != 0) {
             LM_ERR("Failed to reconnect to redis db\n");
             pkg_free(argv);
+            if (con->con) {
+                redisFree(con->con);
+                con->con = NULL;
+            }
             return ret;
         }
         ret = redisAppendCommandArgv(con->con, argc, (const char**)argv, NULL);
@@ -259,11 +265,13 @@ int db_redis_get_reply(km_redis_con_t *con, void **reply) {
 
     *reply = NULL;
     ret = redisGetReply(con->con, reply);
-    if (con->con->err == REDIS_ERR_EOF &&
-        strcmp(con->con->errstr,"Server closed the connection") == 0) {
-
+    if (con->con->err == REDIS_ERR_EOF) {
         if (db_redis_connect(con) != 0) {
             LM_ERR("Failed to reconnect to redis db\n");
+            if (con->con) {
+                redisFree(con->con);
+                con->con = NULL;
+            }
             return ret;
         }
         ret = redisGetReply(con->con, reply);

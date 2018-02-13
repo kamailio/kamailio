@@ -19,6 +19,8 @@
  */
 
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 #include "db_redis_mod.h"
 #include "redis_connection.h"
@@ -148,7 +150,6 @@ int db_redis_key_list2arr(redis_key_t *list, char ***arr) {
     }
     for (tmp = list, i = 0; tmp; tmp = tmp->next, i++) {
         (*arr)[i] = tmp->key.s;
-        LM_DBG("++++++ assign #%d (%s) from list to array\n", i, (*arr)[i]);
     }
     LM_DBG("returning %d entries\n", len);
 
@@ -308,6 +309,7 @@ void db_redis_free_tables(km_redis_con_t *con) {
             for (int j = 0; j < col_ht->size; ++j) {
                 col_last = (&col_ht->table[j])->prev;
                 clist_foreach(&col_ht->table[j], col_he, next) {
+                    pkg_free(col_he->key.s);
                     pkg_free(col_he);
                     if (col_he == col_last) break;
                 }
@@ -334,6 +336,7 @@ void db_redis_free_tables(km_redis_con_t *con) {
                 pkg_free(tmptype);
             }
             pkg_free(table);
+            pkg_free(he->key.s);
             pkg_free(he);
 
             if (he == last) break;
@@ -372,6 +375,9 @@ static redis_type_t* db_redis_create_type(str *type) {
 static struct str_hash_entry* db_redis_create_table(str *table) {
     struct str_hash_entry *e;
     redis_table_t *t;
+
+    LM_DBG("creating schema hash entry for table '%.*s'", table->len, table->s);
+
     e = (struct str_hash_entry*) pkg_malloc(sizeof(struct str_hash_entry));
     if (!e) {
         LM_ERR("Failed to allocate memory for table entry\n");
@@ -379,13 +385,17 @@ static struct str_hash_entry* db_redis_create_table(str *table) {
     }
     memset(e, 0, sizeof(struct str_hash_entry));
 
-    e->key.s = table->s;
-    e->key.len = table->len;
+    if (pkg_str_dup(&e->key, table) != 0) {
+        LM_ERR("Failed to allocate memory for table name\n");
+        pkg_free(e);
+        return NULL;
+    }
     e->flags = 0;
 
     t = (redis_table_t*) pkg_malloc(sizeof(redis_table_t));
     if (!t) {
         LM_ERR("Failed to allocate memory for table data\n");
+        pkg_free(e->key.s);
         pkg_free(e);
         return NULL;
     }
@@ -394,6 +404,7 @@ static struct str_hash_entry* db_redis_create_table(str *table) {
 
     if (str_hash_alloc(&t->columns, REDIS_HT_SIZE) != 0) {
         LM_ERR("Failed to allocate memory for table schema hashtable\n");
+        pkg_free(e->key.s);
         pkg_free(e);
         return NULL;
     }
@@ -410,8 +421,10 @@ static struct str_hash_entry* db_redis_create_column(str *col, str *type) {
         LM_ERR("Failed to allocate memory for column entry\n");
         return NULL;
     }
-    e->key.s = col->s;
-    e->key.len = col->len;
+    if (pkg_str_dup(&e->key, col) != 0) {
+        LM_ERR("Failed to allocate memory for column name\n");
+        return NULL;
+    }
     e->flags = 0;
     switch (type->s[0]) {
         case 's':
@@ -467,12 +480,13 @@ int db_redis_parse_keys(km_redis_con_t *con) {
         DBREDIS_KEYS_END_ST
     } state;
 
-    //LM_DBG("parsing keys '%.*s'\n", redis_keys.len, redis_keys.s);
     if (!redis_keys.len) {
         LM_ERR("Failed to parse empty 'keys' mod-param, please define it!\n");
         return -1;
     }
 
+    type_target = NULL;
+    key_location = NULL;
     end = redis_keys.s + redis_keys.len;
     p = start = redis_keys.s;
     state = DBREDIS_KEYS_TABLE_ST;
@@ -489,7 +503,7 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                 table_name.len = p - start;
                 state = DBREDIS_KEYS_TYPE_ST;
                 start = ++p;
-                //LM_DBG("found table name '%.*s'\n", table_name.len, table_name.s);
+                LM_DBG("found table name '%.*s'\n", table_name.len, table_name.s);
 
                 table_entry = str_hash_get(&con->tables, table_name.s, table_name.len);
                 if (!table_entry) {
@@ -510,9 +524,9 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                 type_name.len = p - start;
                 state = DBREDIS_KEYS_COLUMN_ST;
                 start = ++p;
-                //LM_DBG("found type name '%.*s' for table '%.*s'\n",
-                //        type_name.len, type_name.s,
-                //        table_name.len, table_name.s);
+                LM_DBG("found type name '%.*s' for table '%.*s'\n",
+                        type_name.len, type_name.s,
+                        table_name.len, table_name.s);
                 if (type_name.len == REDIS_DIRECT_PREFIX_LEN &&
                         !strncmp(type_name.s, REDIS_DIRECT_PREFIX, type_name.len)) {
                     key_target = &table->entry_keys;
@@ -543,11 +557,12 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                 column_name.s = start;
                 column_name.len = p - start;
                 start = ++p;
-                //LM_DBG("found column name '%.*s' in type '%.*s' for table '%.*s'\n",
-                //        column_name.len, column_name.s,
-                //        type_name.len, type_name.s,
-                //        table_name.len, table_name.s);
-
+                /*
+                LM_DBG("found column name '%.*s' in type '%.*s' for table '%.*s'\n",
+                        column_name.len, column_name.s,
+                        type_name.len, type_name.s,
+                        table_name.len, table_name.s);
+                */
                 key = db_redis_create_key(&column_name);
                 if (!key) goto err;
                 if (*key_target == NULL) {
@@ -558,7 +573,7 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                 }
                 break;
             case DBREDIS_KEYS_END_ST:
-                //LM_DBG("done parsing keys definition\n");
+                LM_DBG("done parsing keys definition\n");
                 return 0;
 
 
@@ -574,9 +589,10 @@ err:
 
 
 int db_redis_parse_schema(km_redis_con_t *con) {
-    char *p;
-    char *start;
-    char *end;
+    DIR *srcdir;
+    FILE *fin;
+    struct dirent* dent;
+    char *dir_name;
 
     str table_name;
     str column_name;
@@ -586,17 +602,39 @@ int db_redis_parse_schema(km_redis_con_t *con) {
     struct str_hash_entry *column_entry;
     redis_table_t *table;
 
+    char full_path[_POSIX_PATH_MAX + 1];
+    int path_len;
+    struct stat fstat;
+    char c;
+
     enum {
-        DBREDIS_SCHEMA_TABLE_ST,
         DBREDIS_SCHEMA_COLUMN_ST,
         DBREDIS_SCHEMA_TYPE_ST,
-        DBREDIS_SCHEMA_END_ST
+        DBREDIS_SCHEMA_VERSION_ST,
+        DBREDIS_SCHEMA_END_ST,
     } state;
 
+    char buf[4096];
+    char *bufptr;
+
+
+    srcdir = NULL;
+    fin = NULL;
+    dir_name = NULL;
+
     //LM_DBG("parsing schema '%.*s'\n", redis_schema.len, redis_schema.s);
-    if (!redis_schema.len) {
-        LM_ERR("Failed to parse empty 'schema' mod-param, please define it!\n");
+    if (!redis_schema_path.len) {
+        LM_ERR("Failed to parse empty 'schema_path' mod-param, please define it!\n");
         return -1;
+    }
+
+    dir_name = (char*)pkg_malloc((redis_schema_path.len + 1) * sizeof(char));
+    strncpy(dir_name, redis_schema_path.s, redis_schema_path.len);
+    dir_name[redis_schema_path.len] = '\0';
+    srcdir = opendir(dir_name);
+    if (!srcdir) {
+        LM_ERR("Failed to open schema directory '%s'\n", dir_name);
+        goto err;
     }
 
     if (str_hash_alloc(&con->tables, REDIS_HT_SIZE) != 0) {
@@ -605,88 +643,196 @@ int db_redis_parse_schema(km_redis_con_t *con) {
     }
     str_hash_init(&con->tables);
 
-    end = redis_schema.s + redis_schema.len;
-    p = start = redis_schema.s;
-    state = DBREDIS_SCHEMA_TABLE_ST;
-    do {
-        switch(state) {
-            case DBREDIS_SCHEMA_TABLE_ST:
-                while(p != end && *p != '=')
-                    ++p;
-                if (p == end) {
-                    LM_ERR("Invalid table definition, expecting <table>=<definition>\n");
-                    goto err;
-                }
-                table_name.s = start;
-                table_name.len = p - start;
-                state = DBREDIS_SCHEMA_COLUMN_ST;
-                start = ++p;
-                //LM_DBG("found table name '%.*s'\n", table_name.len, table_name.s);
+    while((dent = readdir(srcdir)) != NULL) {
+        path_len = redis_schema_path.len;
+        if(strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0) {
+            continue;
+        }
+        if ((path_len + strlen(dent->d_name) + 1) > _POSIX_PATH_MAX) {
+            LM_WARN("Redis schema path '%.*s/%s' is too long, skipping...\n",
+                redis_schema_path.len, redis_schema_path.s, dent->d_name);
+            continue;
+        }
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir_name, dent->d_name);
 
-                table_entry = str_hash_get(&con->tables, table_name.s, table_name.len);
-                if (table_entry) {
-                    LM_ERR("Found duplicate table schema definition '%.*s', fix config by removing one from the 'schema' mod-param!\n",
-                            table_name.len, table_name.s);
-                    goto err;
-                }
-                table_entry = db_redis_create_table(&table_name);
-                if (!table_entry) goto err;
-                str_hash_add(&con->tables, table_entry);
-                table = table_entry->u.p;
-                break;
-            case DBREDIS_SCHEMA_COLUMN_ST:
-                while(p != end && *p != '/')
-                    ++p;
-                if (p == end) {
-                    LM_ERR("Invalid column definition, expecting <column>/<type>\n");
-                    goto err;
-                }
-                column_name.s = start;
-                column_name.len = p - start;
-                state = DBREDIS_SCHEMA_TYPE_ST;
-                start = ++p;
-                //LM_DBG("found column name '%.*s'\n", column_name.len, column_name.s);
-                break;
-            case DBREDIS_SCHEMA_TYPE_ST:
-                while(p != end && *p != ',' && *p != ';')
-                    ++p;
-                type_name.s = start;
-                type_name.len = p - start;
-                if (p == end) {
-                    state = DBREDIS_SCHEMA_END_ST;
-                } else if (*p == ';') {
-                    state = DBREDIS_SCHEMA_TABLE_ST;
-                } else {
-                    state = DBREDIS_SCHEMA_COLUMN_ST;
-                }
-                start = ++p;
-                //LM_DBG("found column type '%.*s' for column name '%.*s' in table '%.*s'\n",
-                //        type_name.len, type_name.s,
-                //        column_name.len, column_name.s,
-                //        table_name.len, table_name.s);
+        if (stat(full_path, &fstat) < 0) {
+            LM_ERR("Failed to stat schema file %s\n", full_path);
+            continue;
+        }
+        if (!S_ISREG(fstat.st_mode)) {
+            LM_DBG("skipping schema file '%s' as it's not a regular file\n", full_path);
+            continue;
+        }
 
-                column_entry = str_hash_get(&table->columns, column_name.s, column_name.len);
-                if (column_entry) {
-                    LM_ERR("Found duplicate column definition '%.*s' in schema definition of table '%.*s', remove one from mod-param 'schema'!\n",
+        LM_DBG("reading schema full path '%s'\n", full_path);
+
+        fin = fopen(full_path, "r");
+        if (!fin) {
+            LM_ERR("Failed to open redis schema file '%s'\n", full_path);
+            continue;
+        }
+
+        table_name.s = dent->d_name;
+        table_name.len = strlen(table_name.s);
+        table_entry = str_hash_get(&con->tables, table_name.s, table_name.len);
+        if (table_entry) {
+            // should not happen, as this would require two files with same name
+            LM_WARN("Found duplicate table schema definition '%.*s', skipping...\n",
+                    table_name.len, table_name.s);
+            fclose(fin);
+            continue;
+        }
+        table_entry = db_redis_create_table(&table_name);
+        if (!table_entry) goto err;
+        str_hash_add(&con->tables, table_entry);
+        table = table_entry->u.p;
+
+        state = DBREDIS_SCHEMA_COLUMN_ST;
+        memset(buf, 0, sizeof(buf));
+        bufptr = buf;
+        do {
+            if (bufptr - buf > sizeof(buf)) {
+                LM_ERR("Schema line too long in file %s\n", full_path);
+                goto err;
+            }
+
+            c = fgetc(fin);
+
+            if (c == '\r')
+                continue;
+            //LM_DBG("parsing char %c, buf is '%s' at pos %lu\n", c, buf, bufpos);
+            switch(state) {
+                case DBREDIS_SCHEMA_COLUMN_ST:
+                    if (c == EOF) {
+                        LM_ERR("Unexpected end of file in schema column name of file %s\n", full_path);
+                        goto err;
+                    }
+                    if(c != '\n' && c != '/') {
+                        *bufptr = c;
+                        bufptr++;
+                        continue;
+                    }
+                    if (c == '\n') {
+                        if (bufptr == buf) {
+                            // trailing comma, skip
+                            state = DBREDIS_SCHEMA_VERSION_ST;
+                            continue;
+                        } else {
+                            LM_ERR("Invalid column definition, expecting <column>/<type>\n");
+                            goto err;
+                        }
+                    }
+                    column_name.s = buf;
+                    column_name.len = bufptr - buf;
+                    bufptr++;
+                    state = DBREDIS_SCHEMA_TYPE_ST;
+                    LM_DBG("found column name '%.*s'\n", column_name.len, column_name.s);
+                    break;
+                case DBREDIS_SCHEMA_TYPE_ST:
+                    if (c == EOF) {
+                        LM_ERR("Unexpected end of file in schema column type of file %s\n", full_path);
+                        goto err;
+                    }
+                    if(c != '\n' && c != ',') {
+                        *bufptr = c;
+                        bufptr++;
+                        continue;
+                    }
+                    type_name.s = buf + column_name.len + 1;
+                    type_name.len = bufptr - type_name.s;
+
+                    if (c == '\n') {
+                        state = DBREDIS_SCHEMA_VERSION_ST;
+                    } else {
+                        state = DBREDIS_SCHEMA_COLUMN_ST;
+                    }
+                    /*
+                    LM_DBG("found column type '%.*s' with len %d for column name '%.*s' in table '%.*s'\n",
+                            type_name.len, type_name.s,
+                            type_name.len,
                             column_name.len, column_name.s,
                             table_name.len, table_name.s);
-                    goto err;
-                }
-                column_entry = db_redis_create_column(&column_name, &type_name);
-                if (!column_entry) {
-                    goto err;
-                }
-                str_hash_add(&table->columns, column_entry);
-                break;
-            case DBREDIS_SCHEMA_END_ST:
-                //LM_DBG("done parsing redis table schema\n");
-                return 0;
+                    */
+                    column_entry = str_hash_get(&table->columns, column_name.s, column_name.len);
+                    if (column_entry) {
+                        LM_ERR("Found duplicate column definition '%.*s' in schema definition of table '%.*s', remove one from schema!\n",
+                                column_name.len, column_name.s,
+                                table_name.len, table_name.s);
+                        goto err;
+                    }
+                    column_entry = db_redis_create_column(&column_name, &type_name);
+                    if (!column_entry) {
+                        goto err;
+                    }
+                    str_hash_add(&table->columns, column_entry);
+                    memset(buf, 0, sizeof(buf));
+                    bufptr = buf;
+                    break;
+                case DBREDIS_SCHEMA_VERSION_ST:
+                    if (c != '\n' && c != EOF) {
+                        *bufptr = c;
+                        bufptr++;
+                        continue;
+                    }
+                    *bufptr = '\0';
+                    table->version = atoi(buf);
+                    state = DBREDIS_SCHEMA_END_ST;
+                    break;
+                case DBREDIS_SCHEMA_END_ST:
+                    goto fileend;
+                    break;
+            }
+        } while (c != EOF);
 
-        }
-    } while (p != end);
+fileend:
+        fclose(fin);
+        fin = NULL;
+    }
+
+
+    closedir(srcdir);
+    pkg_free(dir_name);
 
     return 0;
 err:
+    if (fin)
+        fclose(fin);
+    if (srcdir)
+        closedir(srcdir);
+    if (dir_name)
+        pkg_free(dir_name);
+
     db_redis_free_tables(con);
+    return -1;
+}
+
+int db_redis_keys_spec(char *spec) {
+    size_t len = strlen(spec);
+
+    if (redis_keys.len == 0) {
+        redis_keys.s = (char*)pkg_malloc(len * sizeof(char));
+        if (!redis_keys.s) {
+            LM_ERR("Failed to allocate memory for keys spec\n");
+            goto err;
+        }
+    } else {
+        redis_keys.s = (char*)pkg_realloc(redis_keys.s, redis_keys.len + 1 + len);
+        if (!redis_keys.s) {
+            LM_ERR("Failed to reallocate memory for keys spec\n");
+            goto err;
+        }
+        redis_keys.s[redis_keys.len] = ';';
+        redis_keys.len++;
+    }
+
+    strncpy(redis_keys.s + redis_keys.len, spec, len);
+    redis_keys.len += len;
+
+    return 0;
+
+err:
+    if (redis_keys.len) {
+        pkg_free(redis_keys.s);
+    }
     return -1;
 }

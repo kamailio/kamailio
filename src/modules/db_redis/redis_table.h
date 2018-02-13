@@ -41,6 +41,7 @@ struct redis_type {
 
 typedef struct redis_table redis_table_t;
 struct redis_table {
+	int version;
     redis_key_t *entry_keys;
     redis_type_t *types;
     struct str_hash_table columns;
@@ -59,5 +60,7 @@ int db_redis_key_prepend_string(redis_key_t **list, const char* entry, int len);
 int db_redis_key_list2arr(redis_key_t *list, char ***arr);
 redis_key_t * db_redis_key_unshift(redis_key_t **list);
 void db_redis_key_free(redis_key_t **list);
+
+int db_redis_keys_spec(char *spec);
 
 #endif /* _REDIS_TABLE_H_ */

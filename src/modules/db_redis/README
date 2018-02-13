@@ -18,24 +18,22 @@ Andreas Granig
    1. Admin Guide
 
         1. Overview
+        2. Limitations
+        3. Dependencies
 
-              1.1. Limitations
+              3.1. Kamailio Modules
 
-        2. Dependencies
+        4. Parameters
 
-              2.1. Kamailio Modules
-              2.2. Parameters
+              4.1. schema_path (string)
+              4.2. keys (string)
 
-                    2.2.1. schema (string)
-                    2.2.2. keys (string)
-
-              2.3. External Libraries or Applications
-
-        3. Usage
+        5. External Libraries or Applications
+        6. Usage
 
    List of Examples
 
-   1.1. Setting schema module parameter
+   1.1. Setting schema_path module parameter
    1.2. Setting keys module parameter
    1.3. Usage
 
@@ -44,24 +42,20 @@ Chapter 1. Admin Guide
    Table of Contents
 
    1. Overview
+   2. Limitations
+   3. Dependencies
 
-        1.1. Limitations
+        3.1. Kamailio Modules
 
-   2. Dependencies
+   4. Parameters
 
-        2.1. Kamailio Modules
-        2.2. Parameters
+        4.1. schema_path (string)
+        4.2. keys (string)
 
-              2.2.1. schema (string)
-              2.2.2. keys (string)
-
-        2.3. External Libraries or Applications
-
-   3. Usage
+   5. External Libraries or Applications
+   6. Usage
 
 1. Overview
-
-   1.1. Limitations
 
    This module provides a DB APIv1 connector for Redis server.
 
@@ -71,17 +65,20 @@ Chapter 1. Admin Guide
    specific modules. Also, for proper performance, the module needs
    particular configuration tailored to the using modules.
 
-   Since Redis does not provide a schema, a schema has to be defined as
-   module parameter "schema". The schema definition is composed of a
-   semi-column separated list of table definitions in format
-   <table-name>=<column-name>/<type>[<column-name>/<type> ...].
+   Since Redis does not provide a schema by itself, db_redis ships with
+   schema files, which path has to be defined as module parameter
+   "schema_path". The schema definition is defined in one file per table
+   with the file name being the table name, and each file is composed of a
+   comma-separated list of column definitions in format
+   <column-name>/<type>[,<column-name>/<type> ...] in one line, followed
+   by a line holding the table version.
 
-   Example:
-        version=table_name/string,table_version/int;location=username/string,dom
-ain/string,contact/string,received/string,path/string,expires/timestamp,q/double
-,callid/string,cseq/int,last_modified/timestamp,flags/int,cflags/int,user_agent/
-string,socket/string,methods/int,ruid/string,reg_id/int,instance/string,server_i
-d/int,connection_id/int,keepalive/int,partition/int
+   Example for location definition:
+username/string,domain/string,contact/string,received/string,path/string,expires
+/timestamp,q/double,callid/string,cseq/int,last_modified/timestamp,flags/int,cfl
+ags/int,user_agent/string,socket/string,methods/int,ruid/string,reg_id/int,insta
+nce/string,server_id/int,connection_id/int,keepalive/int,partition/int
+8
 
    Also since Redis is a key-value store with keys having to be unique,
    tables and rows e.g. from MySQL can not be ported 1:1 to Redis. For
@@ -98,85 +95,76 @@ d/int,connection_id/int,keepalive/int,partition/int
    keys/values the query is constructed by usrloc to look for the final
    entry key in the mapping set first, then querying the actual entries
    from there, avoiding full table scans. For usrloc, the same holds true
-   for exipired contacts, requiring a different kind of mapping. There is
-   a certain balance of read performance vs. write performance to
-   consider, because inserts and deletes also have to maintain the
-   mappings, in favor of much faster selects. The mappings can be freely
-   defined, so even though other kamailio modules don't require a specific
-   mapping to be in place for proper performance, mappings could be
-   defined for external applications to read faster (for instance letting
-   the acc module also write mappings besides the actual records for
-   billing systems to correlate start and stop records faster).
+   for expired contacts, requiring a different kind of mapping. There is a
+   certain balance of read performance vs. write performance to consider,
+   because inserts and deletes also have to maintain the mappings, in
+   favor of much faster selects. The mappings can be freely defined, so
+   even though other kamailio modules don't require a specific mapping to
+   be in place for proper performance, mappings could be defined for
+   external applications to read faster (for instance letting the acc
+   module also write mappings besides the actual records for billing
+   systems to correlate start and stop records faster).
 
    The mappings can be freely defined in the "keys" module parameter. It
    is composed of a semi-colon separated list of definitions in format
    <table-name>=<entry>:<column-name>[&<map-name>:<column-name>,<column-na
-   me>...]
+   me>...]. Each table must at least have an "entry" key for db_redis to
+   be able to store data.
 
    Example:
-        version=entry:table_name;location=entry:ruid&usrdom:username,domain&time
-r:partition,keepalive;acc=entry:callid,time_hires&cid:callid
+location=entry:ruid&usrdom:username,domain&timer:partition,keepalive;acc=entry:c
+allid,time_hires&cid:callid
 
-   Note that as of now, you have to have version information in your Redis
-   db, similar to your MySQL schema. To insert table versions (e.g. for
-   usrloc and acc), execute the following:
-        # redis-cli -h $host -n $dbnumber HMSET version:entry::location table_ve
-rsion 8
-        # redis-cli -h $host -n $dbnumber HMSET version:entry::acc table_version
- 5
+   For readability purposes, keys per table can be defined line by line by
+   providing multiple "keys" mod-params.
 
    You can read more about Redis at: https://www.redis.io.
 
-1.1. Limitations
+2. Limitations
 
      * This module has implemented the equivalent operations for INSERT,
        UPDATE, DELETE and SELECT. The ORDER BY for SELECT is not
        implemented. Raw query is not implemented inside this module, use
-       db_redis for sending any kind of command to a Redis server.
+       ndb_redis for sending any kind of command to a Redis server.
 
-2. Dependencies
+3. Dependencies
 
-   2.1. Kamailio Modules
-   2.2. Parameters
+   3.1. Kamailio Modules
 
-        2.2.1. schema (string)
-        2.2.2. keys (string)
-
-   2.3. External Libraries or Applications
-
-2.1. Kamailio Modules
+3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * none.
 
-2.2. Parameters
+4. Parameters
 
-2.2.1. schema (string)
+   4.1. schema_path (string)
+   4.2. keys (string)
 
-   The schema of your tables.
+4.1. schema_path (string)
 
-   Example 1.1. Setting schema module parameter
-modparam("db_redis", "schema", "version=table_name/string,table_version/int;loca
-tion=username/string,domain/string,contact/string,received/string,path/string,ex
-pires/timestamp,q/double,callid/string,cseq/int,last_modified/timestamp,flags/in
-t,cflags/int,user_agent/string,socket/string,methods/int,ruid/string,reg_id/int,
-instance/string,server_id/int,connection_id/int,keepalive/int,partition/int")
+   The path to the schema of your tables (default
+   /usr/share/kamailio/db_redis).
 
-2.2.2. keys (string)
+   Example 1.1. Setting schema_path module parameter
+modparam("db_redis", "schema_path", "/usr/local/share/kamailio/db_redis/kamailio
+")
 
-   The lookup and mapping keys of your tables.
+4.2. keys (string)
+
+   The entry and mapping keys of your tables.
 
    Example 1.2. Setting keys module parameter
 modparam("db_redis", "keys", "version=entry:table_name;location=entry:ruid&usrdo
 m:username,domain&timer:partition,keepalive")
 
-2.3. External Libraries or Applications
+5. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * hiredis - available at https://github.com/redis/hiredis
 
-3. Usage
+6. Usage
 
    Load the module and set the the DB URL for specific modules to:
    redis://[username]@host:port/database. Username is optional. Database
@@ -186,14 +174,16 @@ m:username,domain&timer:partition,keepalive")
 ...
 loadmodule "db_redis.so"
 ...
-#!define DBURL "redis://127.0.0.1:6379/5"
+#!define DBURL_USRLOC "redis://127.0.0.1:6379/5"
+#!define DBURL_ACC    "redis://127.0.0.1:6379/6"
+#!define DBURL_AUTH   "redis://127.0.0.1:6379/7"
 ...
-modparam("db_redis", "schema", "version=table_name/string,table_version/int;loca
-tion=username/string,domain/string,contact/string,received/string,path/string,ex
-pires/timestamp,q/double,callid/string,cseq/int,last_modified/timestamp,flags/in
-t,cflags/int,user_agent/string,socket/string,methods/int,ruid/string,reg_id/int,
-instance/string,server_id/int,connection_id/int,keepalive/int,partition/int")
-modparam("db_redis", "keys", "version=entry:table_name;location=entry:ruid&usrdo
-m:username,domain&timer:partition,keepalive")
-modparam("usrloc", "db_url", DBURL)
+modparam("db_redis", "schema_path", "/usr/share/kamailio/db_redis/kamailio")
+modparam("db_redis", "keys", "location=entry:ruid&usrdom:username,domain&timer:p
+artition,keepalive")
+modparam("db_redis", "keys", "acc=entry:callid,time_hires&cid:callid")
+modparam("db_redis", "keys", "subscriber=entry:username,domain")
+modparam("usrloc", "db_url", DBURL_USRLOC)
+modparam("acc_db", "db_url", DBURL_ACC)
+modparam("auth_db", "db_url", DBURL_AUTH)
 ...

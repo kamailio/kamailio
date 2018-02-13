@@ -1,0 +1,2 @@
+id/int,presentity_uri/string,watcher_username/string,watcher_domain/string,to_user/string,to_domain/string,event/string,event_id/string,to_tag/string,from_tag/string,callid/string,local_cseq/int,remote_cseq/int,contact/string,record_route/string,expires/int,status/int,reason/string,version/int,socket_info/string,local_contact/string,from_user/string,from_domain/string,updated/int,updated_winfo/int,flags/int,user_agent/string,
+12

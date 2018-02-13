@@ -48,6 +48,6 @@
 #define REDIS_HT_SIZE 8
 
 extern str redis_keys;
-extern str redis_schema;
+extern str redis_schema_path;
 
 #endif /* _DB_REDIS_MOD_H */
