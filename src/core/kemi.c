@@ -501,6 +501,20 @@ static int sr_kemi_core_force_rport(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_add_local_rport(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	msg->msg_flags|=FL_ADD_LOCAL_RPORT;
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_match_method_id(str *rmethod, str *vmethod, int mid)
 {
 	char mbuf[SR_KEMI_HNAME_SIZE];
@@ -699,6 +713,68 @@ static int sr_kemi_core_set_reply_no_connect(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_set_advertised_address(sip_msg_t *msg, str *addr)
+{
+#define SR_ADV_ADDR_SIZE 128
+	static char _sr_adv_addr_buf[SR_ADV_ADDR_SIZE];
+
+	if(addr==NULL || addr->s==NULL) {
+		LM_ERR("invalid addr parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(addr->len>=SR_ADV_ADDR_SIZE) {
+		LM_ERR("addr parameter is too large\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	memcpy(_sr_adv_addr_buf, addr->s, addr->len);
+	_sr_adv_addr_buf[addr->len] = '\0';
+	msg->set_global_address.s = _sr_adv_addr_buf;
+	msg->set_global_address.len = addr->len;
+
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_set_advertised_port(sip_msg_t *msg, str *port)
+{
+#define SR_ADV_PORT_SIZE 8
+	static char _sr_adv_port_buf[SR_ADV_PORT_SIZE];
+
+	if(port==NULL || port->s==NULL) {
+		LM_ERR("invalid port parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(port->len>=SR_ADV_PORT_SIZE) {
+		LM_ERR("port parameter is too large\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	memcpy(_sr_adv_port_buf, port->s, port->len);
+	_sr_adv_port_buf[port->len] = '\0';
+	msg->set_global_port.s = _sr_adv_port_buf;
+	msg->set_global_port.len = port->len;
+
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -825,6 +901,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init(""), str_init("add_local_rport"),
+		SR_KEMIP_BOOL, sr_kemi_core_add_local_rport,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init(""), str_init("is_method"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_method,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -858,6 +939,16 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("set_reply_no_connect"),
 		SR_KEMIP_BOOL, sr_kemi_core_set_reply_no_connect,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("set_advertised_address"),
+		SR_KEMIP_INT, sr_kemi_core_set_advertised_address,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("set_advertised_port"),
+		SR_KEMIP_INT, sr_kemi_core_set_advertised_port,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
