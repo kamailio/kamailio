@@ -65,6 +65,7 @@ typedef struct redisc_server {
 	str *sname;
 	unsigned int hname;
 	param_t *attrs;
+	char *spec;
 	redisContext *ctxRedis;
 	struct redisc_server *next;
 	redisc_piped_cmds_t piped;

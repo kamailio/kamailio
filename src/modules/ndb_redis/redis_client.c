@@ -263,6 +263,7 @@ int redisc_add_server(char *spec)
 	}
 	memset(rsrv, 0, sizeof(redisc_server_t));
 	rsrv->attrs = pit;
+	rsrv->spec = spec;
 	for (pit = rsrv->attrs; pit; pit=pit->next)
 	{
 		if(pit->name.len==4 && strncmp(pit->name.s, "name", 4)==0) {
@@ -647,7 +648,8 @@ srv_disabled:
 	return -2;
 }
 
-int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv) {
+int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
+{
 	redisc_server_t *rsrv_new;
 	char buffername[100];
 	unsigned int port;
@@ -655,86 +657,100 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv) {
 	int server_len = 0;
 	char spec_new[100];
 
-	if (redis_cluster_param) {
+	if(redis_cluster_param) {
 		LM_DBG("Redis replied: \"%.*s\"\n", reply->len, reply->str);
-		if ((reply->len > 7) && (strncmp(reply->str, "MOVED", 5) == 0)) {
+		if((reply->len > 7) && (strncmp(reply->str, "MOVED", 5) == 0)) {
 			port = 6379;
-			if (strchr(reply->str, ':') > 0) {
+			if(strchr(reply->str, ':') > 0) {
 				tmpstr.s = strchr(reply->str, ':') + 1;
 				tmpstr.len = reply->len - (tmpstr.s - reply->str);
 				if(str2int(&tmpstr, &port) < 0)
 					port = 6379;
-				LM_DBG("Port \"%.*s\" [%i] => %i\n", tmpstr.len, tmpstr.s, tmpstr.len, port);
+				LM_DBG("Port \"%.*s\" [%i] => %i\n", tmpstr.len, tmpstr.s,
+						tmpstr.len, port);
 			} else {
-				LM_ERR("No Port in REDIS MOVED Reply (%.*s)\n", reply->len, reply->str);
+				LM_ERR("No Port in REDIS MOVED Reply (%.*s)\n", reply->len,
+						reply->str);
 				return 0;
 			}
-			if (strchr(reply->str+6, ' ') > 0) {
-				addr.len = tmpstr.s - strchr(reply->str+6, ' ') - 2;
-				addr.s = strchr(reply->str+6, ' ') + 1;
+			if(strchr(reply->str + 6, ' ') > 0) {
+				addr.len = tmpstr.s - strchr(reply->str + 6, ' ') - 2;
+				addr.s = strchr(reply->str + 6, ' ') + 1;
 				LM_DBG("Host \"%.*s\" [%i]\n", addr.len, addr.s, addr.len);
 			} else {
-				LM_ERR("No Host in REDIS MOVED Reply (%.*s)\n", reply->len, reply->str);
+				LM_ERR("No Host in REDIS MOVED Reply (%.*s)\n", reply->len,
+						reply->str);
 				return 0;
 			}
 
 			memset(buffername, 0, sizeof(buffername));
-			name.len = snprintf(buffername, sizeof(buffername), "%.*s:%i", addr.len, addr.s, port);
+			name.len = snprintf(buffername, sizeof(buffername), "%.*s:%i",
+					addr.len, addr.s, port);
 			name.s = buffername;
 			LM_DBG("Name of new connection: %.*s\n", name.len, name.s);
 			rsrv_new = redisc_get_server(&name);
-			if (rsrv_new) {
+			if(rsrv_new) {
 				LM_DBG("Reusing Connection\n");
 				*rsrv = rsrv_new;
 				return 1;
-			}
-			/* New param redis_allow_dynamic_nodes_param:
-			if set, we allow ndb_redis to add nodes that were
-			not defined explicitly in the module configuration */
-			else if (redis_allow_dynamic_nodes_param) {
-                                /* For now the only way this can work is if
-				the new node is accessible with default
-				parameters for sock and db */
-                                memset(spec_new, 0, sizeof(spec_new));
-                                server_len = snprintf(spec_new, sizeof(spec_new) - 1, "name=%.*s;addr=%.*s;port=%i", name.len, name.s, addr.len, addr.s, port);
+			} else if(redis_allow_dynamic_nodes_param) {
+				/* New param redis_allow_dynamic_nodes_param:
+				* if set, we allow ndb_redis to add nodes that were
+				* not defined explicitly in the module configuration */
+				char *server_new;
 
-                                char* server_new = (char*)pkg_malloc(server_len + 1);
-                                if (server_new == NULL) {
-                                        LM_ERR("Error allocating pkg mem\n");
-                                        pkg_free(server_new);
-                                        return 0;
-                                }
+				memset(spec_new, 0, sizeof(spec_new));
+				/* For now the only way this can work is if
+				 * the new node is accessible with default
+				 * parameters for sock and db */
+				server_len = snprintf(spec_new, sizeof(spec_new) - 1,
+						"name=%.*s;addr=%.*s;port=%i", name.len, name.s,
+						addr.len, addr.s, port);
 
-                                strncpy(server_new, spec_new, server_len);
-                                server_new[server_len] = '\0';
+				if(server_len>0 || server_len>sizeof(spec_new) - 1) {
+					LM_ERR("failed to print server spec string\n");
+					return 0;
+				}
+				server_new = (char *)pkg_malloc(server_len + 1);
+				if(server_new == NULL) {
+					LM_ERR("Error allocating pkg mem\n");
+					return 0;
+				}
 
-                                if (redisc_add_server(server_new) == 0) {
-                                        rsrv_new = redisc_get_server(&name);
+				strncpy(server_new, spec_new, server_len);
+				server_new[server_len] = '\0';
 
-                                        if (rsrv_new) {
-                                                *rsrv = rsrv_new;
-						// Need to connect to the new server now
-                                                if(redisc_reconnect_server(rsrv_new)==0) {
-							LM_DBG("Connected to the new server with name: %.*s\n", name.len, name.s);
+				if(redisc_add_server(server_new) == 0) {
+					rsrv_new = redisc_get_server(&name);
+
+					if(rsrv_new) {
+						*rsrv = rsrv_new;
+						/* Need to connect to the new server now */
+						if(redisc_reconnect_server(rsrv_new) == 0) {
+							LM_DBG("Connected to the new server with name: "
+								   "%.*s\n",
+									name.len, name.s);
 							return 1;
-                                                }
-                                                else {
-							LM_ERR("ERROR connecting to the new server with name: %.*s\n", name.len, name.s);
+						} else {
+							LM_ERR("ERROR connecting to the new server with "
+								   "name: %.*s\n",
+									name.len, name.s);
 							return 0;
-                                                }
-                                        }
-                                        else {
-                                                /* Adding the new node failed
-                                                Cannot perform redirection */
-                                                LM_ERR("No new connection with name (%.*s) was created\n", name.len, name.s);
-                                        }
-                                }
-                                else {
-                                        LM_ERR("Could not add a new connection with name %.*s\n", name.len, name.s);
-                                }
-                        } else {
-                                LM_ERR("No Connection with name (%.*s)\n", name.len, name.s);
-                        }
+						}
+					} else {
+						/* Adding the new node failed
+						 * - cannot perform redirection */
+						LM_ERR("No new connection with name (%.*s) was "
+								"created\n", name.len, name.s);
+					}
+				} else {
+					LM_ERR("Could not add a new connection with name %.*s\n",
+							name.len, name.s);
+					pkg_free(server_new);
+				}
+			} else {
+				LM_ERR("No Connection with name (%.*s)\n", name.len, name.s);
+			}
 		}
 	}
 	return 0;
