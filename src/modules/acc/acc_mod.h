@@ -48,6 +48,9 @@ extern int log_level;
 extern int log_flag;
 extern int log_missed_flag;
 
+extern int json_flag;
+extern int json_missed_flag;
+
 extern int cdr_enable;
 extern int cdr_extra_nullable;
 extern int cdr_start_on_confirmed;

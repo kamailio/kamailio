@@ -62,14 +62,17 @@ struct acc_enviroment acc_env;
 #define is_log_acc_on(_rq)     is_acc_flag_set(_rq,log_flag)
 #define is_log_mc_on(_rq)      is_acc_flag_set(_rq,log_missed_flag)
 
+#define is_json_acc_on(_rq)     is_acc_flag_set(_rq,json_flag)
+#define is_json_mc_on(_rq)      is_acc_flag_set(_rq,json_missed_flag)
+
 #define is_db_acc_on(_rq)     is_acc_flag_set(_rq,db_flag)
 #define is_db_mc_on(_rq)      is_acc_flag_set(_rq,db_missed_flag)
 
 #define is_acc_on(_rq) \
-	( (is_log_acc_on(_rq)) || (is_db_acc_on(_rq)) || (is_eng_acc_on(_rq)) )
+	( (is_json_acc_on(_rq)) || (is_log_acc_on(_rq)) || (is_db_acc_on(_rq)) || (is_eng_acc_on(_rq)) )
 
 #define is_mc_on(_rq) \
-	( (is_log_mc_on(_rq)) || (is_db_mc_on(_rq)) || (is_eng_mc_on(_rq)) )
+	( (is_json_mc_on(_rq)) || (is_log_mc_on(_rq)) || (is_db_mc_on(_rq)) || (is_eng_mc_on(_rq)) )
 
 #define skip_cancel(_rq) \
 	(((_rq)->REQ_METHOD==METHOD_CANCEL) && report_cancels==0)
@@ -487,7 +490,13 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	 * forwarding attempt fails; we do not wish to
 	 * report on every attempt; so we clear the flags;
 	 */
-
+#ifdef WITH_JSON
+	if (is_json_mc_on(req)) {
+		env_set_text( ACC_MISSED, ACC_MISSED_LEN);
+		acc_json_request( req );
+		flags_to_reset |= json_missed_flag;
+	}
+#endif
 	if (is_log_mc_on(req)) {
 		env_set_text( ACC_MISSED, ACC_MISSED_LEN);
 		acc_log_request( req );
@@ -582,6 +591,12 @@ static void acc_onreply(tm_cell_t *t, sip_msg_t *req, sip_msg_t *reply, int code
 	env_set_to( get_rpl_to(t,reply) );
 	env_set_code_status( code, reply);
 
+#ifdef WITH_JSON
+	if ( is_json_acc_on(preq) ) {
+		env_set_text( ACC_ANSWERED, ACC_ANSWERED_LEN);
+		acc_json_request(preq);
+	}
+#endif
 	if ( is_log_acc_on(preq) ) {
 		env_set_text( ACC_ANSWERED, ACC_ANSWERED_LEN);
 		acc_log_request(preq);
@@ -630,6 +645,12 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 	env_set_to( ack->to?ack->to:req->to );
 	env_set_code_status( t->uas.status, 0 );
 
+#ifdef WITH_JSON
+	if (is_json_acc_on(req)) {
+		env_set_text( ACC_ACKED, ACC_ACKED_LEN);
+		acc_json_request( ack );
+	}
+#endif
 	if (is_log_acc_on(req)) {
 		env_set_text( ACC_ACKED, ACC_ACKED_LEN);
 		acc_log_request( ack );

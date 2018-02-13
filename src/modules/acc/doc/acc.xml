@@ -43,6 +43,12 @@
 		<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
 		<email>sven.knoblich@1und1.de</email>
 		</editor>
+		<editor>
+		<firstname>Julien</firstname>
+		<surname>Chavanton</surname>
+		<affiliation><orgname>Flowroute</orgname></affiliation>
+		<email>jchavanton@gmail.com</email>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2002</year>
@@ -57,6 +63,10 @@
 	<copyright>
 		<year>2011</year>
 		<holder>1&amp;1 Internet AG</holder>
+	</copyright>
+	<copyright>
+		<year>2018</year>
+		<holder>Flowroute</holder>
 	</copyright>
 	</bookinfo>
 	<toc></toc>
