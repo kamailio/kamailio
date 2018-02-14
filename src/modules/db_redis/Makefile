@@ -18,6 +18,12 @@ ifeq ($(HIREDIS_BUILDER),)
 else
 	HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags)
 	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs)
+
+ifeq ($(HIREDISLIBS),-L -lhiredis)
+		HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags) /opt/local/include
+		HIREDISLIBS = -L/opt/local/lib -lhiredis
+endif
+
 endif
 
 DEFS+=$(HIREDISDEFS)

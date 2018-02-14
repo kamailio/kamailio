@@ -23,7 +23,7 @@
 #ifndef _REDIS_CONNECTION_H_
 #define _REDIS_CONNECTION_H_
 
-#include <hiredis.h>
+#include <hiredis/hiredis.h>
 
 #include "db_redis_mod.h"
 
