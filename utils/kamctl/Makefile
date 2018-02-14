@@ -264,7 +264,18 @@ install-modules: $(bin_prefix)/$(bin_dir)
 				fi ;\
 			done ; \
 		fi
-
+		# install Redis stuff
+		if [ "$(REDISON)" = "yes" ]; then \
+			mkdir -p $(data_prefix)/$(data_dir)/db_redis/kamailio ; \
+			for FILE in $(wildcard db_redis/kamailio/*) ; do \
+				if [ -f $$FILE ] ; then \
+					$(INSTALL_TOUCH) $$FILE \
+						$(data_prefix)/$(data_dir)/db_redis/kamailio/`basename "$$FILE"` ; \
+					$(INSTALL_CFG) $$FILE \
+						$(data_prefix)/$(data_dir)/db_redis/kamailio/`basename "$$FILE"` ; \
+				fi ;\
+			done ; \
+		fi
 
 $(cfg_prefix)/$(cfg_dir):
 		mkdir -p $(cfg_prefix)/$(cfg_dir)

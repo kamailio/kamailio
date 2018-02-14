@@ -35,3 +35,8 @@ SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1
 
 include ../../Makefile.modules
+
+install-redis-scripts: $(bin_prefix)/$(bin_dir)
+	REDISON=yes $(MAKE) -C ../../../utils/kamctl/ install-modules
+
+install-scripts: install-redis-scripts
