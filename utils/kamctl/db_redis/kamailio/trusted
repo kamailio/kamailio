@@ -1,0 +1,2 @@
+id/int,src_ip/string,proto/string,from_pattern/string,ruri_pattern/string,tag/string,priority/int,
+6

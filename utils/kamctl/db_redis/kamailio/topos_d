@@ -1,0 +1,2 @@
+id/int,rectime/int,s_method/string,s_cseq/string,a_callid/string,a_uuid/string,b_uuid/string,a_contact/string,b_contact/string,as_contact/string,bs_contact/string,a_tag/string,b_tag/string,a_rr/string,b_rr/string,s_rr/string,iflags/int,a_uri/string,b_uri/string,r_uri/string,a_srcaddr/string,b_srcaddr/string,a_socket/string,b_socket/string,
+1
