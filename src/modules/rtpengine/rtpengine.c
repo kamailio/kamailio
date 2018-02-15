@@ -209,6 +209,7 @@ static int pv_parse_var(str *inp, pv_elem_t **outp, int *got_any);
 static int mos_label_stats_parse(struct minmax_mos_label_stats *mmls);
 static void parse_call_stats(bencode_item_t *, struct sip_msg *);
 
+static int control_cmd_tos = -1; 
 static int rtpengine_allow_op = 0;
 static struct rtpp_node **queried_nodes_ptr = NULL;
 static pid_t mypid;
@@ -341,6 +342,7 @@ static param_export_t params[] = {
 	{"queried_nodes_limit",   INT_PARAM, &default_rtpengine_cfg.queried_nodes_limit    },
 	{"rtpengine_tout_ms",     INT_PARAM, &default_rtpengine_cfg.rtpengine_tout_ms      },
 	{"rtpengine_allow_op",    INT_PARAM, &rtpengine_allow_op     },
+	{"control_cmd_tos",       INT_PARAM, &control_cmd_tos        }, 
 	{"db_url",                PARAM_STR, &rtpp_db_url            },
 	{"table_name",            PARAM_STR, &rtpp_table_name        },
 	{"setid_col",             PARAM_STR, &rtpp_setid_col         },
@@ -1674,6 +1676,20 @@ static int build_rtpp_socks() {
 					sizeof(ip_mtu_discover)))
 				LM_WARN("Failed enable set MTU discovery socket option\n");
 #endif
+
+			if((0 <= control_cmd_tos) && (control_cmd_tos < 256)) {
+				unsigned char tos = control_cmd_tos;
+				if (pnode->rn_umode == 6) {
+					setsockopt(rtpp_socks[pnode->idx], IPPROTO_IPV6,
+							IPV6_TCLASS, &control_cmd_tos,
+							sizeof(control_cmd_tos));
+
+				} else {
+					setsockopt(rtpp_socks[pnode->idx], IPPROTO_IP,
+							IP_TOS, &tos,
+							sizeof(tos));
+				}
+			}
 
 			if (bind_force_send_ip(pnode->idx) == -1) {
 				LM_ERR("can't bind socket\n");
