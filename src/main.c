@@ -161,7 +161,7 @@ Options:\n\
                   [proto:]addr_lst[:port], where proto=udp|tcp|tls|sctp, \n\
                   addr_lst= addr|(addr, addr_lst) and \n\
                   addr= host|ip_address|interface_name. \n\
-                  E.g: -l locahost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
+                  E.g: -l localhost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
                   -l \"sctp:(eth0)\", -l \"(eth0, eth1, 127.0.0.1):5065\".\n\
                   The default behaviour is to listen on all the interfaces.\n\
     -n processes Number of child processes to fork per interface\n\
