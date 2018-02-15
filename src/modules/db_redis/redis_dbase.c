@@ -28,6 +28,7 @@
 #include "redis_table.h"
 
 static void db_redis_dump_reply(redisReply *reply) {
+	int i;
     if (reply->type == REDIS_REPLY_STRING) {
         LM_DBG("%s\n", reply->str);
     } else if (reply->type == REDIS_REPLY_INTEGER) {
@@ -36,7 +37,7 @@ static void db_redis_dump_reply(redisReply *reply) {
         LM_DBG("<null>\n");
     } else if (reply->type == REDIS_REPLY_ARRAY) {
         LM_DBG("printing %lu elements in array reply\n", reply->elements);
-        for(int i = 0; i < reply->elements; ++i) {
+        for(i = 0; i < reply->elements; ++i) {
             db_redis_dump_reply(reply->element[i]);
         }
     } else {
@@ -216,7 +217,8 @@ err:
     return -1;
 }
 
-static int db_redis_build_entry_manual_keys(redis_table_t *table, const db_key_t *_k, const db_val_t *_v, const int _n, int **manual_keys, int *manual_key_count) {
+static int db_redis_build_entry_manual_keys(redis_table_t *table, const db_key_t *_k,
+		const db_val_t *_v, const int _n, int **manual_keys, int *manual_key_count) {
 
     // TODO: we also put keys here which are already part of type mapping!
     // there must be removed for performance reasons
@@ -233,9 +235,10 @@ static int db_redis_build_entry_manual_keys(redis_table_t *table, const db_key_t
 
     for (key = table->entry_keys; key; key = key->next) {
         int subkey_found = 0;
+        int i;
         LM_DBG("checking for existence of entry key '%.*s' in query to get manual key\n",
                 key->key.len, key->key.s);
-        for (int i = 0; i < _n; ++i) {
+        for (i = 0; i < _n; ++i) {
             const db_key_t k = _k[i];
             if (!str_strcmp(&key->key, (str*)k)) {
                 LM_DBG("found key in entry key\n");
@@ -260,7 +263,9 @@ err:
     return -1;
 }
 
-static int db_redis_find_query_key(redis_key_t *key, const str *table_name, str *type_name, const db_key_t *_k, const db_val_t *_v, const int _n, str *key_name, int *key_found) {
+static int db_redis_find_query_key(redis_key_t *key, const str *table_name,
+		str *type_name, const db_key_t *_k, const db_val_t *_v, const int _n,
+		str *key_name, int *key_found) {
 
     unsigned int len;
     str val = {NULL, 0};
@@ -271,9 +276,10 @@ static int db_redis_find_query_key(redis_key_t *key, const str *table_name, str 
 
     for (; key; key = key->next) {
         int subkey_found = 0;
+        int i;
         LM_DBG("checking for existence of entry key '%.*s' in query\n",
                 key->key.len, key->key.s);
-        for (int i = 0; i < _n; ++i) {
+        for (i = 0; i < _n; ++i) {
             const db_key_t k = _k[i];
             const db_val_t v = _v[i];
 
@@ -558,9 +564,10 @@ static int db_redis_build_query_keys(km_redis_con_t *con, const str *table_name,
                         db_redis_free_reply(&reply);
                         break;
                     } else {
+                    	int i;
                         LM_DBG("populating query keys list with result of type query\n");
                         *query_keys_count = reply->elements;
-                        for (int i = 0; i < reply->elements; ++i) {
+                        for (i = 0; i < reply->elements; ++i) {
                             redisReply *subreply = reply->element[i];
                             if (subreply->type == REDIS_REPLY_STRING) {
                                 LM_DBG("adding resulting entry key '%s' from type query\n", subreply->str);
@@ -622,6 +629,8 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
     redisReply *reply = NULL;
     unsigned long cursor = 0;
     char *match = NULL;
+    size_t j;
+    int l;
 
     str match_pattern = {":entry::*", strlen(":entry::*")};
 
@@ -696,7 +705,7 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
 
         *query_keys_count += reply->element[1]->elements;
 
-        for (size_t j = 0; j < reply->element[1]->elements; ++i, ++j) {
+        for (j = 0; j < reply->element[1]->elements; ++i, ++j) {
             redisReply *key = reply->element[1]->element[j];
             if (!key) {
                 LM_ERR("Invalid null key at cursor result index %lu while scanning table '%.*s'\n",
@@ -724,8 +733,8 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
         goto err;
     }
     memset(*manual_keys, 0, *manual_keys_count * sizeof(int));
-    for (int i = 0; i < _n; ++i) {
-        (*manual_keys)[i] = i;
+    for (l = 0; l < _n; ++l) {
+        (*manual_keys)[l] = l;
     }
 
     if (reply) {
@@ -946,6 +955,7 @@ static int db_redis_convert_row(km_redis_con_t *con, db1_res_t* _r, const db_key
         int *manual_keys, int manual_keys_count) {
     db_val_t* dval;
     db_row_t* drow;
+    size_t col;
 
     if (reply->type != REDIS_REPLY_ARRAY) {
         LM_ERR("Unexpected redis reply type, expecting array\n");
@@ -958,7 +968,7 @@ static int db_redis_convert_row(km_redis_con_t *con, db1_res_t* _r, const db_key
     }
 
     // manually filter non-matching replies
-    for (size_t col = 0; col < reply->elements; ++col) {
+    for (col = 0; col < reply->elements; ++col) {
         if (col < manual_keys_count) {
             int idx = manual_keys[col];
             db_key_t k = _k[idx];
@@ -986,7 +996,7 @@ static int db_redis_convert_row(km_redis_con_t *con, db1_res_t* _r, const db_key
                 RES_NUM_ROWS(_r), RES_ROW_N(_r), RES_COL_N(_r), reply->elements - manual_keys_count);
         return -1;
     }
-    for (size_t col = manual_keys_count; col < reply->elements; ++col) {
+    for (col = manual_keys_count; col < reply->elements; ++col) {
         size_t colidx = col - manual_keys_count;
         size_t redisidx = col;
         int coltype;
@@ -1036,6 +1046,8 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
     redisReply *reply = NULL;
     redis_key_t *query_v = NULL;
     int num_rows = 0;
+    redis_key_t *key;
+    int j;
 
     *_r = db_redis_new_result();
     if (!*_r) {
@@ -1060,7 +1072,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
         }
     }
 
-    for (redis_key_t *key = *keys; key; key = key->next) {
+    for (key = *keys; key; key = key->next) {
         redis_key_t *tmp = NULL;
         str *keyname = &(key->key);
 
@@ -1099,7 +1111,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
 
         // we put the manual comparison columns first, so we can skip them
         // easily in result, for the cost of potential duplicate column returns
-        for (int j = 0; j < *manual_keys_count; ++j) {
+        for (j = 0; j < *manual_keys_count; ++j) {
             int idx = (*manual_keys)[j];
             str *k_name = _k[idx];
             if (db_redis_key_add_str(&query_v, k_name) != 0) {
@@ -1107,7 +1119,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
                 goto error;
             }
         }
-        for (int j = 0; j < _nc; ++j) {
+        for (j = 0; j < _nc; ++j) {
             str *k_name = _c[j];
             if (db_redis_key_add_str(&query_v, k_name) != 0) {
                 LM_ERR("Failed to add manual key to query list\n");
@@ -1134,7 +1146,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
     // reset and increment in convert_row
     RES_NUM_ROWS(*_r) = RES_ROW_N(*_r) = 0;
 
-    for (redis_key_t *key = *keys; key; key = key->next) {
+    for (key = *keys; key; key = key->next) {
         // get reply for EXISTS query
         if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
             LM_ERR("Failed to get reply for query: %s\n",
@@ -1196,6 +1208,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
     redis_key_t *k = NULL;
     int type_keys_count = 0;
     int all_type_keys_count = 0;
+    size_t col;
 
     redisReply *reply = NULL;
     redis_key_t *query_v = NULL;
@@ -1203,6 +1216,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
     redis_key_t *all_type_keys = NULL;
     db_val_t *db_vals = NULL;
     db_key_t *db_keys = NULL;
+    redis_key_t *type_key;
 
     if (!keys_count && do_table_scan) {
         LM_DBG("performing full table scan\n");
@@ -1285,7 +1299,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
 
         // manually filter non-matching replies
         row_match = 1;
-        for (size_t col = 0; col < reply->elements; ++col) {
+        for (col = 0; col < reply->elements; ++col) {
             if (col < manual_keys_count) {
                 int idx = manual_keys[col];
                 db_key_t k = _k[idx];
@@ -1357,7 +1371,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
         db_redis_check_reply(con, reply, error);
         db_redis_free_reply(&reply);
 
-        for (redis_key_t *type_key = type_keys; type_key; type_key = type_key->next) {
+        for (type_key = type_keys; type_key; type_key = type_key->next) {
             if (db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
                 LM_ERR("Failed to add srem command to post-delete query\n");
                 goto error;
@@ -1408,6 +1422,10 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
     redisReply *reply = NULL;
     redis_key_t *query_v = NULL;
     int update_queries = 0;
+    redis_key_t *key;
+    int i;
+    int j;
+    size_t col;
 
     if (!keys_count && do_table_scan) {
         LM_DBG("performing full table scan\n");
@@ -1419,7 +1437,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
         }
     }
 
-    for (redis_key_t *key = *keys; key; key = key->next) {
+    for (key = *keys; key; key = key->next) {
         str *keyname = &key->key;
 
         LM_DBG("fetching row for '%.*s' from redis\n", keyname->len, keyname->s);
@@ -1459,7 +1477,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
             goto error;
         }
 
-        for (int j = 0; j < *manual_keys_count; ++j) {
+        for (j = 0; j < *manual_keys_count; ++j) {
             int idx = (*manual_keys)[j];
             str *k_name = _k[idx];
             if (db_redis_key_add_str(&query_v, k_name) != 0) {
@@ -1492,7 +1510,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
     */
 
 
-    for (redis_key_t *key = *keys; key; key = key->next) {
+    for (key = *keys; key; key = key->next) {
         int row_match;
 
         LM_DBG("fetching replies for '%.*s' from redis\n", key->key.len, key->key.s);
@@ -1533,7 +1551,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
 
         // manually filter non-matching replies
         row_match = 1;
-        for (size_t col = 0; col < reply->elements; ++col) {
+        for (col = 0; col < reply->elements; ++col) {
             if (col < *manual_keys_count) {
                 int idx = (*manual_keys)[col];
                 db_key_t k = _k[idx];
@@ -1564,7 +1582,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
             goto error;
         }
 
-        for (int i = 0; i < _nu; ++i) {
+        for (i = 0; i < _nu; ++i) {
             str *k = _uk[i];
             str v = {NULL, 0};
 
@@ -1593,7 +1611,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
 
     LM_DBG("getting replies for %d queries\n", update_queries);
 
-    for (int i = 0; i < update_queries; ++i) {
+    for (i = 0; i < update_queries; ++i) {
         if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
             LM_ERR("Failed to get reply for query: %s\n",
                     con->con->errstr);
@@ -1640,6 +1658,7 @@ int db_redis_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
     int *manual_keys = NULL;
     int manual_keys_count = 0;
     db_op_t *query_ops = NULL;
+    int i;
 
     // TODO: implement order-by
     // TODO: optimize mapping-based manual post-check (remove check for keys already
@@ -1689,7 +1708,7 @@ int db_redis_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
             LM_ERR("Failed to allocate memory for query op list\n");
             goto error;
         }
-        for (int i = 0; i < _n; ++i) {
+        for (i = 0; i < _n; ++i) {
             query_ops[i] = op;
         }
     } else {
@@ -1773,6 +1792,8 @@ int db_redis_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
     int type_keys_count = 0;
     redis_key_t *query_v = NULL;
     redisReply *reply = NULL;
+    int i;
+    redis_key_t *k;
 
     con = REDIS_CON(_h);
     if (con && con->con == NULL) {
@@ -1813,7 +1834,7 @@ int db_redis_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
         goto error;
     }
 
-    for (int i = 0; i < _n; ++i) {
+    for (i = 0; i < _n; ++i) {
         str *k = _k[i];
         str v;
 
@@ -1837,7 +1858,7 @@ int db_redis_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
     db_redis_check_reply(con, reply, error);
     db_redis_free_reply(&reply);
 
-    for (redis_key_t *k = type_keys; k; k = k->next) {
+    for (k = type_keys; k; k = k->next) {
         str *type_key = &k->key;
 
         LM_DBG("inserting entry key '%.*s' to type map '%.*s'\n",
@@ -1901,6 +1922,7 @@ int db_redis_delete(const db1_con_t* _h, const db_key_t* _k,
     int free_op = 0;
     int do_table_scan = 0;
     db_op_t *query_ops = NULL;
+    int i;
 
     // TODO: optimize mapping-based manual post-check (remove check for keys already
     // in type query key)
@@ -1934,7 +1956,7 @@ int db_redis_delete(const db1_con_t* _h, const db_key_t* _k,
             LM_ERR("Failed to allocate memory for query op list\n");
             goto error;
         }
-        for (int i = 0; i < _n; ++i) {
+        for (i = 0; i < _n; ++i) {
             query_ops[i] = op;
         }
     } else {
@@ -2012,6 +2034,7 @@ int db_redis_update(const db1_con_t* _h, const db_key_t* _k,
     int *manual_keys = NULL;
     int manual_keys_count = 0;
     db_op_t *query_ops = NULL;
+    int i;
 
     // TODO: optimize mapping-based manual post-check (remove check for keys already
     // in type query key)
@@ -2045,7 +2068,7 @@ int db_redis_update(const db1_con_t* _h, const db_key_t* _k,
             LM_ERR("Failed to allocate memory for query op list\n");
             goto error;
         }
-        for (int i = 0; i < _n; ++i) {
+        for (i = 0; i < _n; ++i) {
             query_ops[i] = op;
         }
     } else {
