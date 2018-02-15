@@ -348,7 +348,7 @@ static int mod_init(void)
 		}
 		memset(dup_uri, 0, sizeof(struct sip_uri));
 		if(parse_uri(dup_uri_str.s, dup_uri_str.len, dup_uri) < 0) {
-			LM_ERR("bad dup uri\n");
+			LM_ERR("bad duplicate_uri\n");
 			return -1;
 		}
 	}
@@ -365,7 +365,7 @@ static int mod_init(void)
 		if(parse_uri(force_send_sock_str.s, force_send_sock_str.len,
 				   force_send_sock_uri)
 				< 0) {
-			LM_ERR("bad dup uri\n");
+			LM_ERR("bad force_send_sock\n");
 			return -1;
 		}
 	}
