@@ -189,11 +189,12 @@ void db_redis_print_all_tables(km_redis_con_t *con) {
     redis_table_t *table;
     redis_key_t *key;
     redis_type_t *type;
+    int i, j;
 
     LM_DBG("dumping all redis tables:\n");
     ht = &con->tables;
 
-    for (int i = 0; i < ht->size; ++i) {
+    for (i = 0; i < ht->size; ++i) {
         last = (&ht->table[i])->prev;
         clist_foreach(&ht->table[i], he, next) {
             LM_DBG("  table %.*s\n", he->key.len, he->key.s);
@@ -201,7 +202,7 @@ void db_redis_print_all_tables(km_redis_con_t *con) {
 
             LM_DBG("    schema:\n");
             col_ht = &table->columns;
-            for (int j = 0; j < col_ht->size; ++j) {
+            for (j = 0; j < col_ht->size; ++j) {
                 col_last = (&col_ht->table[j])->prev;
                 clist_foreach(&col_ht->table[j], col_he, next) {
                     LM_DBG("      %.*s: %d\n",
@@ -239,6 +240,7 @@ void db_redis_print_table(km_redis_con_t *con, char *name) {
     redis_table_t *table;
     redis_key_t *key;
     redis_type_t *type;
+    int j;
 
     struct str_hash_table *col_ht;
     struct str_hash_entry *col_he;
@@ -259,7 +261,7 @@ void db_redis_print_table(km_redis_con_t *con, char *name) {
 
     LM_DBG("  schema:\n");
     col_ht = &table->columns;
-    for (int j = 0; j < col_ht->size; ++j) {
+    for (j = 0; j < col_ht->size; ++j) {
         col_last = (&col_ht->table[j])->prev;
         clist_foreach(&col_ht->table[j], col_he, next) {
             LM_DBG("    %.*s: %d\n",
@@ -298,15 +300,16 @@ void db_redis_free_tables(km_redis_con_t *con) {
     redis_table_t *table;
     redis_key_t *key, *tmpkey;
     redis_type_t *type, *tmptype;
+    int i, j;
 
     ht = &con->tables;
-    for (int i = 0; i < ht->size; ++i) {
+    for (i = 0; i < ht->size; ++i) {
         last = (&ht->table[i])->prev;
         clist_foreach(&ht->table[i], he, next) {
             table = (redis_table_t*) he->u.p;
 
             col_ht = &table->columns;
-            for (int j = 0; j < col_ht->size; ++j) {
+            for (j = 0; j < col_ht->size; ++j) {
                 col_last = (&col_ht->table[j])->prev;
                 clist_foreach(&col_ht->table[j], col_he, next) {
                     pkg_free(col_he->key.s);
