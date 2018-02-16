@@ -313,6 +313,7 @@ int ps_match_dialog_state_from_body(str body, int *is_dialog, char *vstate)
 {
 	xmlDocPtr doc;
 	xmlNodePtr node;
+	xmlNodePtr fnode;
 	xmlNodePtr childNode;
 	char *tmp_state;
 	int rmatch = 0;
@@ -326,7 +327,7 @@ int ps_match_dialog_state_from_body(str body, int *is_dialog, char *vstate)
 		return -1;
 	}
 
-	node = xmlNodeGetChildByName(doc->children, "dialog");
+	fnode = node = xmlNodeGetChildByName(doc->children, "dialog");
 
 	while(node != NULL)
 	{
@@ -349,7 +350,7 @@ int ps_match_dialog_state_from_body(str body, int *is_dialog, char *vstate)
 		/* search for next dialog node */
 		do {
 			if(node->next != NULL && node->next->name != NULL
-					&& xmlStrcmp(node->name, node->next->name) == 0) {
+					&& xmlStrcmp(fnode->name, node->next->name) == 0) {
 				node = node->next;
 				break;
 			}
