@@ -707,7 +707,7 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
 						"name=%.*s;addr=%.*s;port=%i", name.len, name.s,
 						addr.len, addr.s, port);
 
-				if(server_len>0 || server_len>sizeof(spec_new) - 1) {
+				if(server_len<0 || server_len>sizeof(spec_new) - 1) {
 					LM_ERR("failed to print server spec string\n");
 					return 0;
 				}
