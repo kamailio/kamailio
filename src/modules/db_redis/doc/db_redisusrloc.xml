@@ -41,5 +41,5 @@
     </bookinfo>
     <toc></toc>
     
-	<xi:include href="db_redis_admin.xml"/>
+	<xi:include href="db_redisusrloc_admin.xml"/>
 </book>

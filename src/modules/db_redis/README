@@ -1,4 +1,4 @@
-DB_REDIS Module
+DB_REDISUSRLOC Module
 
 Surendra Tiwari
 
@@ -78,11 +78,10 @@ Chapter 1. Admin Guide
 4. Usage
 
    Load the module and set the the DB URL for specific modules to:
-   mongodb://password@host:port/database.
 
    Example 1.1. Usage
 ...
-loadmodule "db_redis.so"
+loadmodule "db_redisusrloc.so"
 ...
 #!define DBURL "redis://password@localhost:6379/0"
 modparam("usrloc", "db_url", DBURL)

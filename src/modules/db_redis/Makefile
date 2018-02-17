@@ -2,7 +2,7 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 include ../../Makefile.defs
 auto_gen=
-NAME=db_redis.so
+NAME=db_redisusrloc.so
 
 ifeq ($(CROSS_COMPILE),)
 HIREDIS_BUILDER = $(shell \
