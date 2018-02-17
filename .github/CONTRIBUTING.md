@@ -77,6 +77,9 @@ and commit history, there are several *rules* required for each contribution.
   * code **should** be formatted with **clang-format** or to match the style of
   the component that the commit applies to. The `.clang-format` file is part of
   Kamailio source code tree, in the root folder.
+  * personal branches of developers done inside Kamailio GIT repository must be
+  prefixed with `developerid/`, e.g., `alice/new-feature`. Do not use just
+  `new-feature` or `alice-new-feature` or other variant without `developerid/`.
 
 
 ### Commit Message Format ###
