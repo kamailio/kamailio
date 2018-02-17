@@ -1,0 +1,88 @@
+DB_REDISUSRLOC Module
+
+Surendra Tiwari
+
+   Plivo Communications
+
+Edited by
+
+Surendra Tiwari
+
+   Plivo Communications
+
+   Copyright © 2018 Plivo Communications
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Limitations
+        3. Dependencies
+
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
+
+        4. Usage
+
+   List of Examples
+
+   1.1. Usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Limitations
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Usage
+
+1. Overview
+
+   This is a module which provides Redis connectivity for Kamailio. It
+   implements the DB API defined in Kamailio.The usage of this module
+   might be restricted to usrloc modules.Below key should be included into
+   redis: Hmset kamailio:table_version location â8â
+
+2. Limitations
+
+   This module has implemented the equivalent operations for INSERT,
+   UPDATE, DELETE and SELECT. db_mode = 3 of usrloc module in kamailio is
+   used . Username based key unique, we do not use ruid etc, thus redis
+   key should be based on username. . Multiple registration is not allowed
+   for same user with different contacts, only one registration per
+   contact. .
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * Redis - "libhiredis>0.13.3".
+
+4. Usage
+
+   Load the module and set the the DB URL for specific modules to:
+
+   Example 1.1. Usage
+...
+loadmodule "db_redisusrloc.so"
+...
+#!define DBURL "redis://password@localhost:6379/0"
+modparam("usrloc", "db_url", DBURL)
+...
