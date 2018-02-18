@@ -194,25 +194,36 @@ static void mod_destroy(void)
 	destroy_mod_Router();
 }
 
+
+#define PY_GIL_ENSURE gstate = PyGILState_Ensure();
+#define PY_GIL_RELEASE PyGILState_Release(gstate);
+
+// #define PY_THREADSTATE_SWAP_IN PyThreadState_Swap(myThreadState);
+// #define PY_THREADSTATE_SWAP_NULL PyThreadState_Swap(NULL);
+#define PY_THREADSTATE_SWAP_IN
+#define PY_THREADSTATE_SWAP_NULL
+
 int apy_load_script(void)
 {
 	PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
 	PyThreadState *mainThreadState;
-
+	PyGILState_STATE gstate;
+	
 	if (ap_init_modules() != 0) {
 		return -1;
 	}
 
 	Py_Initialize();
-	//TODO PyEval_InitThreads();
-	//TODI mainThreadState = PyThreadState_Get();
+	PyEval_InitThreads();
+	myThreadState = PyThreadState_Get();
 
+	PY_GIL_ENSURE
 	format_exc_obj = InitTracebackModule();
 
 	if (format_exc_obj == NULL || !PyCallable_Check(format_exc_obj))
 	{
 		Py_XDECREF(format_exc_obj);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -224,7 +235,7 @@ int apy_load_script(void)
 					"'module' object 'sys' has no attribute 'path'");
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -235,7 +246,7 @@ int apy_load_script(void)
 					"PyUnicode_FromString() has failed");
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -248,7 +259,7 @@ int apy_load_script(void)
 					"python_msgobj_init() has failed");
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -259,7 +270,7 @@ int apy_load_script(void)
 			PyErr_Format(PyExc_ImportError, "No module named '%s'", bname);
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 
 		return -1;
 	}
@@ -277,7 +288,7 @@ int apy_load_script(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -289,7 +300,7 @@ int apy_load_script(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -299,7 +310,7 @@ int apy_load_script(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		Py_DECREF(pFunc);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -315,7 +326,7 @@ int apy_load_script(void)
 					" Should be a class instance.", mod_init_fname.s, bname);
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -323,7 +334,7 @@ int apy_load_script(void)
 		python_handle_exception("mod_init");
 		Py_XDECREF(_sr_apy_handler_obj);
 		Py_DECREF(format_exc_obj);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -336,13 +347,12 @@ int apy_load_script(void)
 					mod_init_fname.s, bname);
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
-		//TODO PyEval_SaveThread();
+		PY_GIL_RELEASE
 		return -1;
 	}
 
-	//TODO myThreadState = PyThreadState_New(mainThreadState->interp);
-	//TODO PyEval_SaveThread();
-
+	//myThreadState = PyThreadState_New(mainThreadState->interp);
+	PY_GIL_RELEASE
 	return 0;
 }
 
@@ -351,9 +361,11 @@ int apy_init_script(int rank)
 	PyObject *pFunc, *pArgs, *pValue, *pResult;
 	int rval;
 	char *classname;
+	PyGILState_STATE gstate;
 
-	//TODO PyEval_AcquireLock();
-	//TODO PyThreadState_Swap(myThreadState);
+
+	PY_GIL_ENSURE
+	PY_THREADSTATE_SWAP_IN
 
 	// get instance class name
 	classname = get_instance_class_name(_sr_apy_handler_obj);
@@ -364,8 +376,8 @@ int apy_init_script(int rank)
 					"'module' instance has no class name");
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
-		//TODO PyThreadState_Swap(NULL);
-		//TODO PyEval_SaveThread();
+		PY_THREADSTATE_SWAP_NULL
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -375,8 +387,8 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_XDECREF(pFunc);
 		Py_DECREF(format_exc_obj);
-		//TODO PyThreadState_Swap(NULL);
-		//TODO PyEval_SaveThread();
+		PY_THREADSTATE_SWAP_NULL
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -388,8 +400,8 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
-		//TODO PyThreadState_Swap(NULL);
-		//TODO PyEval_SaveThread();
+		PY_THREADSTATE_SWAP_NULL
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -398,8 +410,8 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_DECREF(pFunc);
-		//TODO PyThreadState_Swap(NULL);
-		//TODO PyEval_SaveThread();
+		PY_THREADSTATE_SWAP_NULL
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -409,8 +421,8 @@ int apy_init_script(int rank)
 		Py_DECREF(format_exc_obj);
 		Py_DECREF(pArgs);
 		Py_DECREF(pFunc);
-		//TODO PyThreadState_Swap(NULL);
-		//TODO PyEval_SaveThread();
+		PY_THREADSTATE_SWAP_NULL
+		PY_GIL_RELEASE
 		return -1;
 	}
 	PyTuple_SetItem(pArgs, 0, pValue);
@@ -424,15 +436,15 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pResult);
-		//TODO PyThreadState_Swap(NULL);
-		//TODO PyEval_SaveThread();
+		PY_THREADSTATE_SWAP_NULL
+		PY_GIL_RELEASE
 		return -1;
 	}
 
 	if (pResult == NULL) {
 		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
-		//TODO PyThreadState_Swap(NULL);
-		//TODO PyEval_SaveThread();
+		PY_THREADSTATE_SWAP_NULL
+		PY_GIL_RELEASE
 		return -1;
 	}
 
@@ -445,15 +457,15 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pResult);
-		//TODO PyThreadState_Swap(NULL);
-		//TODO PyEval_SaveThread();
+		PY_THREADSTATE_SWAP_NULL
+		PY_GIL_RELEASE
 		return -1;
 	}
 
 	rval = PyLong_AsLong(pResult);
 	Py_DECREF(pResult);
-	//TODO PyThreadState_Swap(NULL);
-	//TODO PyEval_SaveThread();
+	PY_THREADSTATE_SWAP_NULL
+	PY_GIL_RELEASE
 
 	return rval;
 }

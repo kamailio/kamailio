@@ -48,6 +48,14 @@ sr_apy_env_t *sr_apy_env_get()
 
 static int _sr_apy_exec_pid = 0;
 
+#define PY_GIL_ENSURE gstate = PyGILState_Ensure();
+#define PY_GIL_RELEASE PyGILState_Release(gstate);
+
+// #define PY_THREADSTATE_SWAP_IN PyThreadState_Swap(myThreadState);
+// #define PY_THREADSTATE_SWAP_NULL PyThreadState_Swap(NULL);
+#define PY_THREADSTATE_SWAP_IN
+#define PY_THREADSTATE_SWAP_NULL
+
 /**
  *
  */
@@ -59,15 +67,16 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	sip_msg_t *bmsg;
 	int mpid;
 	int locked = 0;
-
+	PyGILState_STATE gstate;
+	
 	bmsg = _sr_apy_env.msg;
 	_sr_apy_env.msg = _msg;
 	mpid = getpid();
 
 	if(_sr_apy_exec_pid!=mpid) {
-		//TODO PyEval_AcquireLock();
+		PY_GIL_ENSURE
 		_sr_apy_exec_pid = mpid;
-		//TODO PyThreadState_Swap(myThreadState);
+		PY_THREADSTATE_SWAP_IN
 		locked = 1;
 	}
 
@@ -81,8 +90,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		Py_XDECREF(pFunc);
 		if(locked) {
 			_sr_apy_exec_pid = 0;
-			//TODO PyThreadState_Swap(NULL);
-			//TODO PyEvalReleaseLock();
+			PY_THREADSTATE_SWAP_NULL
+			PY_GIL_RELEASE
 		}
 		_sr_apy_env.msg = bmsg;
 		if(emode==1) {
@@ -98,8 +107,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		Py_DECREF(pFunc);
 		if(locked) {
 			_sr_apy_exec_pid = 0;
-			//TODO PyThreadState_Swap(NULL);
-			//TODO PyEvalReleaseLock();
+			PY_THREADSTATE_SWAP_NULL
+			PY_GIL_RELEASE
 		}
 		_sr_apy_env.msg = bmsg;
 		return -1;
@@ -113,8 +122,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		Py_DECREF(pFunc);
 		if(locked) {
 			_sr_apy_exec_pid = 0;
-			//TODO PyThreadState_Swap(NULL);
-			//TODO PyEvalReleaseLock();
+			PY_THREADSTATE_SWAP_NULL
+			PY_GIL_RELEASE
 		}
 		_sr_apy_env.msg = bmsg;
 		return -1;
@@ -131,8 +140,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 			Py_DECREF(pFunc);
 			if(locked) {
 				_sr_apy_exec_pid = 0;
-				//TODO PyThreadState_Swap(NULL);
-				//TODO PyEvalReleaseLock();
+				PY_THREADSTATE_SWAP_NULL
+				PY_GIL_RELEASE
 			}
 			_sr_apy_env.msg = bmsg;
 			return -1;
@@ -150,8 +159,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		python_handle_exception("python_exec2");
 		if(locked) {
 			_sr_apy_exec_pid = 0;
-			//TODO PyThreadState_Swap(NULL);
-			//TODO PyEvalReleaseLock();
+			PY_THREADSTATE_SWAP_NULL
+			PY_GIL_RELEASE
 		}
 		_sr_apy_env.msg = bmsg;
 		return -1;
@@ -161,8 +170,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		LM_ERR("PyObject_CallObject() returned NULL\n");
 		if(locked) {
 			_sr_apy_exec_pid = 0;
-			//TODO PyThreadState_Swap(NULL);
-			//TODO PyEvalReleaseLock();
+			PY_THREADSTATE_SWAP_NULL
+			PY_GIL_RELEASE
 		}
 		_sr_apy_env.msg = bmsg;
 		return -1;
@@ -172,8 +181,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	Py_DECREF(pResult);
 	if(locked) {
 		_sr_apy_exec_pid = 0;
-		//TODO PyThreadState_Swap(NULL);
-		//TODO PyEval_ReleaseLock();
+		PY_THREADSTATE_SWAP_NULL
+		PY_GIL_RELEASE
 	}
 	_sr_apy_env.msg = bmsg;
 	return rval;
