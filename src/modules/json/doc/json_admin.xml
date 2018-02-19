@@ -99,6 +99,5 @@ xlog("foo is $var(foo)");
 		</listitem>
 	</itemizedlist>
 	</section>
-</section>
 </chapter>
 
