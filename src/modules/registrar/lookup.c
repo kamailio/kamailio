@@ -759,6 +759,7 @@ int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag,
 			}
 		}
 
+		get_act_time();
 		for (ptr = r->contacts; ptr; ptr = ptr->next) {
 			if(!VALID_CONTACT(ptr, act_time)) continue;
 			if (match_callid.s && /* optionally enforce tighter matching w/ Call-ID */
