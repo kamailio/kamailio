@@ -906,7 +906,7 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
 	<title><varname>enable_dmq</varname> (integer)</title>
 	<para>
 		If set to 1, will enable DMQ replication of presentities between nodes. Use this instead of a shared DB
-		to share state across a cluster and update local watchers in realtime (subs_db_mode < 3) or on next
+		to share state across a cluster and update local watchers in realtime (subs_db_mode &lt; 3) or on next
 		notifier run (subs_db_mode = 3).
 	</para>
 	<para>
