@@ -1965,6 +1965,27 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
 		</example>
 	</section>
 
+	<section id="rtpengine.p.control_cmd_tos">
+		<title><varname>control_cmd_tos</varname> (integer)</title>
+		<para>
+			The parameter is used to set the value of <quote>type of service (tos)</quote> for the control commands (such as rtpengine_offer(), rtpengine_answer() etc).
+		</para>
+		<para>
+			There is no default value. By default this feature is not used.
+		</para>
+		<para>
+			The values not falling into the range <quote>0-255</quote> will be simply ignored.
+		</para>
+		<example>
+		<title>Set <varname>control_cmd_tos</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "control_cmd_tos", "144")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
