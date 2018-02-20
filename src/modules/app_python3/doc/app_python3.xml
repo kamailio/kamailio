@@ -10,12 +10,16 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
-	<title>app_python Module</title>
+	<title>app_python3 Module</title>
 	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 	    <author>
 		<firstname>Maxim</firstname>
 		<surname>Sobolev</surname>
+	    </author>
+	    <author>
+                <firstname>Anthony</firstname>
+		<surname>Alba</surname>
 	    </author>
 	    <editor>
 		<firstname>Maxim</firstname>
@@ -29,6 +33,6 @@
     </bookinfo>
     <toc></toc>
     
-	<xi:include href="app_python_admin.xml"/>
+	<xi:include href="app_python3_admin.xml"/>
     
 </book>

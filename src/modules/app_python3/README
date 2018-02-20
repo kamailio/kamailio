@@ -1,6 +1,8 @@
-app_python Module
+app_python3 Module
 
 Maxim Sobolev
+
+Anthony Alba
 
 Edited by
 
@@ -70,12 +72,20 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module allows executing Python scripts from config file, exporting
-   functions to access the SIP message from Python.
+   This module is a port of the 'app_python' module to Python 3. It is
+   based on the work of Maxim Sobolev.
+
+   This module cannot be loaded together with 'app_python' as global
+   symbols have not been renamed. To ease transition, the functions, KEMI
+   exports, and RPC commands have the same names as 'app_python', which
+   also means the two modules cannot coexist.
+
+   This module allows executing Python scripts from the config file,
+   exporting functions to access the SIP message from Python.
 
    For some basic examples of Python scripts that can be used with this
-   module, look at the files inside source tree located at
-   'modules/app_python/python_examples/'.
+   module, look at the files inside the source tree located at
+   'modules/app_python3/python_examples/'.
 
 2. Dependencies
 
@@ -91,7 +101,13 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * python-dev - Python devel library.
+     * python3 - Python 3 runtime.
+
+   To compile this module the Python 3 development package is needed.
+   Requirements:
+     * python3-dev - Python 3 development package.
+     * python3-config - (part of python3-dev) tool to output C includes
+       and library paths.
 
 3. Parameters
 
@@ -109,7 +125,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set load parameter
 ...
-modparam("app_python", "load", "/usr/local/etc/kamailio/myscript.py")
+modparam("app_python3", "load", "/usr/local/etc/kamailio/myscript.py")
 ...
 
 3.2. script_name (string)
@@ -126,7 +142,7 @@ modparam("app_python", "load", "/usr/local/etc/kamailio/myscript.py")
 
    Example 1.2. Set mod_init_function parameter
 ...
-modparam("app_python", "mod_init_function", "my_mod_init")
+modparam("app_python3", "mod_init_function", "my_mod_init")
 ...
 
 3.4. child_init_method (string)
@@ -138,7 +154,7 @@ modparam("app_python", "mod_init_function", "my_mod_init")
 
    Example 1.3. Set child_init_method parameter
 ...
-modparam("app_python", "child_init_method", "my_child_init")
+modparam("app_python3", "child_init_method", "my_child_init")
 ...
 
 4. Functions
@@ -170,8 +186,8 @@ python_exec("my_python_function", "$rU");
    IMPORTANT: not functional yet (can crash a running instance, use it
    only for testing).
 
-   Marks the need to reload the js script. The actual reload is done by
-   every working process when the next call to KEMI config is executed.
+   Marks the need to reload the Python script. The actual reload is done
+   by every working process when the next call to KEMI config is executed.
 
    Name: app_python.reload
 

@@ -10,28 +10,28 @@ import pprint
 class Loggers:
 
     def __init__(self):
-	pass
+        pass
 
     def __del__(self):
-	pass
+        pass
 
     def child_init(self, y):
-	return 0
+        return 0
 
     def BuggyCode_lvl5(self, a):
-	a / 0
+        a / 0
 
     def BuggyCode_lvl4(self, a):
-	return self.BuggyCode_lvl5(a)
+        return self.BuggyCode_lvl5(a)
 
     def BuggyCode_lvl3(self, a):
-	return self.BuggyCode_lvl4(a)
+        return self.BuggyCode_lvl4(a)
 
     def BuggyCode_lvl2(self, a):
-	return self.BuggyCode_lvl3(a)
+        return self.BuggyCode_lvl3(a)
 
     def BuggyCode(self, a, b=None):
-	return self.BuggyCode_lvl2(a)
+        return self.BuggyCode_lvl2(a)
 
 
 
