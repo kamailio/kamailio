@@ -44,12 +44,20 @@
     } \
 } while(0);
 
+typedef struct redis_key redis_key_t;
+
+typedef struct redis_command {
+    redis_key_t *query;
+    struct redis_command *next;
+} redis_command_t;
+
 typedef struct km_redis_con {
     struct db_id* id;
     unsigned int ref;
     struct pool_con* next;
 
     redisContext *con;
+    redis_command_t *command_queue;
     unsigned int append_counter;
     struct str_hash_table tables;
 } km_redis_con_t;
@@ -65,7 +73,7 @@ void db_redis_free_connection(struct pool_con* con);
 
 int db_redis_connect(km_redis_con_t *con);
 void *db_redis_command_argv(km_redis_con_t *con, redis_key_t *query);
-int db_redis_append_command_argv(km_redis_con_t *con, redis_key_t *query);
+int db_redis_append_command_argv(km_redis_con_t *con, redis_key_t *query, int queue);
 int db_redis_get_reply(km_redis_con_t *con, void **reply);
 void db_redis_consume_replies(km_redis_con_t *con);
 void db_redis_free_reply(redisReply **reply);

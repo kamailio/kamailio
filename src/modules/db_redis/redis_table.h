@@ -41,7 +41,7 @@ struct redis_type {
 
 typedef struct redis_table redis_table_t;
 struct redis_table {
-	int version;
+    int version;
     redis_key_t *entry_keys;
     redis_type_t *types;
     struct str_hash_table columns;

@@ -77,7 +77,7 @@ const db_key_t* _uk, const db_val_t* _uv, const int _n, const int _un);
  * Just like insert, but replace the row if it exists
  */
 int db_redis_replace(const db1_con_t* handle, const db_key_t* keys, const db_val_t* vals,
-		const int n, const int _un, const int _m);
+        const int n, const int _un, const int _m);
 
 /*
  * Store name of table that will be used by

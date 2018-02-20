@@ -1088,7 +1088,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
             LM_ERR("Failed to add key name to list\n");
             goto error;
         }
-        if (db_redis_append_command_argv(con, query_v) != REDIS_OK) {
+        if (db_redis_append_command_argv(con, query_v, 1) != REDIS_OK) {
             LM_ERR("Failed to append redis command\n");
             goto error;
         }
@@ -1127,7 +1127,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
             }
         }
 
-        if (db_redis_append_command_argv(con, query_v) != REDIS_OK) {
+        if (db_redis_append_command_argv(con, query_v, 1) != REDIS_OK) {
             LM_ERR("Failed to append redis command\n");
             goto error;
         }
@@ -1451,7 +1451,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
             LM_ERR("Failed to add key name to pre-update exists query\n");
             goto error;
         }
-        if (db_redis_append_command_argv(con, query_v) != REDIS_OK) {
+        if (db_redis_append_command_argv(con, query_v, 1) != REDIS_OK) {
             LM_ERR("Failed to append redis command\n");
             goto error;
         }
@@ -1486,7 +1486,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
             }
         }
 
-        if (db_redis_append_command_argv(con, query_v) != REDIS_OK) {
+        if (db_redis_append_command_argv(con, query_v, 1) != REDIS_OK) {
             LM_ERR("Failed to append redis command\n");
             goto error;
         }
@@ -1601,7 +1601,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
             pkg_free(v.s);
         }
         update_queries++;
-        if (db_redis_append_command_argv(con, query_v) != REDIS_OK) {
+        if (db_redis_append_command_argv(con, query_v, 1) != REDIS_OK) {
             LM_ERR("Failed to append redis command\n");
             goto error;
         }
