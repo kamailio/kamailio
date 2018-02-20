@@ -1224,7 +1224,6 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 	struct sip_msg *msg;
 	struct sip_msg *req;
 	struct ip_addr to_ip;
-	int len;
 	char statusbuf[8];
 	dest_info_t *dst;
 
@@ -1432,8 +1431,6 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
 	siptrace_data_t sto;
-	char *cp;
-	int olen;
 
 	if(evp->data == 0)
 		return -1;
@@ -1473,9 +1470,6 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 
 	trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);
 	return 0;
-
-error:
-	return -1;
 }
 
 /**
@@ -1486,9 +1480,6 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 	sr_net_info_t *nd;
 	dest_info_t new_dst;
 	siptrace_data_t sto;
-	char *cp;
-	char *p0;
-	int olen;
 
 	if(evp->data == 0)
 		return -1;
