@@ -17,13 +17,22 @@
     <section>
 	<title>Overview</title>
 	<para>
-		This module allows executing Python scripts from config file,
+		This module is a port of the 'app_python' module to Python 3.
+		It is based on the work of Maxim Sobolev.
+	</para>
+	<para>
+		<emphasis>This module cannot be loaded together with 'app_python'</emphasis> as global symbols
+		have not been renamed. To ease transition, the functions, KEMI exports, and
+		RPC commands have the same names as 'app_python', which also means the two modules cannot coexist.
+	</para>
+	<para>
+		This module allows executing Python scripts from the config file,
 		exporting functions to access the SIP message from Python.
 	</para>
 	<para>
 		For some basic examples of Python scripts that can be used with
-		this module, look at the files inside source tree located at
-		'modules/app_python/python_examples/'.
+		this module, look at the files inside the source tree located at
+		'modules/app_python3/python_examples/'.
 	</para>
     </section>
     <section>
@@ -49,7 +58,24 @@
 	    	<itemizedlist>
 		    <listitem>
 			<para>
-			    <emphasis>python-dev</emphasis> - Python devel library.
+			    <emphasis>python3</emphasis> - Python 3 runtime.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	    <para>
+		To compile this module the Python 3 development package is needed.
+		Requirements:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>python3-dev</emphasis> - Python 3 development package.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>python3-config</emphasis> - (part of python3-dev) 
+				tool to output C includes and library paths.
 			</para>
 		    </listitem>
 	    	</itemizedlist>
@@ -58,7 +84,7 @@
     </section>
     <section>
 	<title>Parameters</title>
-	<section id="app_python.p.load">
+	<section id="app_python3.p.load">
 	    <title><varname>load</varname> (string)</title>
 	    <para>
 			The path to the file with Python code to be executed
@@ -73,13 +99,13 @@
 		<title>Set <varname>load</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("app_python", "load", "/usr/local/etc/kamailio/myscript.py")
+modparam("app_python3", "load", "/usr/local/etc/kamailio/myscript.py")
 ...
 </programlisting>
 	    </example>
 	</section>
 
-	<section id="app_python.p.script_name">
+	<section id="app_python3.p.script_name">
 	    <title><varname>script_name</varname> (string)</title>
 	    <para>
 			This is same as "load" parameter, kept for backward compatibility
@@ -87,7 +113,7 @@ modparam("app_python", "load", "/usr/local/etc/kamailio/myscript.py")
 	    </para>
 	</section>
 
-	<section id="app_python.p.mod_init_function">
+	<section id="app_python3.p.mod_init_function">
 	    <title><varname>mod_init_function</varname> (string)</title>
 	    <para>
 			The Python function to be executed by this module when
@@ -102,13 +128,13 @@ modparam("app_python", "load", "/usr/local/etc/kamailio/myscript.py")
 		<title>Set <varname>mod_init_function</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("app_python", "mod_init_function", "my_mod_init")
+modparam("app_python3", "mod_init_function", "my_mod_init")
 ...
 </programlisting>
 	    </example>
 	</section>
 
-	<section id="app_python.p.child_init_method">
+	<section id="app_python3.p.child_init_method">
 	    <title><varname>child_init_method</varname> (string)</title>
 	    <para>
 			The Python function to be executed by this module when
@@ -123,7 +149,7 @@ modparam("app_python", "mod_init_function", "my_mod_init")
 		<title>Set <varname>child_init_method</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("app_python", "child_init_method", "my_child_init")
+modparam("app_python3", "child_init_method", "my_child_init")
 ...
 </programlisting>
 	    </example>
@@ -133,7 +159,7 @@ modparam("app_python", "child_init_method", "my_child_init")
 
     <section>
 	<title>Functions</title>
- 	<section id="app_python.f.python_exec">
+ 	<section id="app_python3.f.python_exec">
 	    <title>
 		<function moreinfo="none">python_exec(method [, args])</function>
 	    </title>
@@ -160,7 +186,7 @@ python_exec("my_python_function", "$rU");
     </section>
 	<section>
         <title>RPC Commands</title>
-        <section id="app_python.r.reload">
+        <section id="app_python3.r.reload">
             <title>
             <function moreinfo="none">app_python.reload</function>
             </title>
@@ -169,7 +195,7 @@ python_exec("my_python_function", "$rU");
 				use it only for testing).
 			</para>
             <para>
-            Marks the need to reload the js script.
+            Marks the need to reload the Python script.
             The actual reload is done by every working process when the next
             call to KEMI config is executed.
             </para>
@@ -186,7 +212,7 @@ python_exec("my_python_function", "$rU");
 ...
             </programlisting>
 		</section>
-		<section id="app_python.r.api_list">
+		<section id="app_python3.r.api_list">
             <title>
             <function moreinfo="none">app_python.api_list</function>
             </title>
