@@ -33,6 +33,7 @@
 #include "strutils.h"
 #include "mem/shm.h"
 #include "parser/parse_uri.h"
+#include "parser/parse_from.h"
 #include "parser/parse_hname2.h"
 #include "parser/parse_methods.h"
 
@@ -155,6 +156,78 @@ static int sr_kemi_core_is_myself(sip_msg_t *msg, str *uri)
 		return SR_KEMI_TRUE;
 	}
 	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_myself_ruri(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg->first_line.type == SIP_REPLY)	/* REPLY doesn't have a ruri */
+		return SR_KEMI_FALSE;
+
+	if (msg->new_uri.s!=NULL)
+		return sr_kemi_core_is_myself(msg, &msg->new_uri);
+	return sr_kemi_core_is_myself(msg, &msg->first_line.u.request.uri);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_myself_furi(sip_msg_t *msg)
+{
+	to_body_t *xfrom;
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(parse_from_header(msg)<0) {
+		LM_ERR("cannot parse From header\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg->from==NULL || get_from(msg)==NULL) {
+		LM_DBG("no From header\n");
+		return SR_KEMI_FALSE;
+	}
+
+	xfrom = get_from(msg);
+
+	return sr_kemi_core_is_myself(msg, &xfrom->uri);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_myself_turi(sip_msg_t *msg)
+{
+	to_body_t *xto;
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(parse_to_header(msg)<0) {
+		LM_ERR("cannot parse To header\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg->to==NULL || get_to(msg)==NULL) {
+		LM_DBG("no To header\n");
+		return SR_KEMI_FALSE;
+	}
+
+	xto = get_to(msg);
+
+	return sr_kemi_core_is_myself(msg, &xto->uri);
 }
 
 /**
@@ -804,6 +877,21 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("is_myself"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_myself,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_myself_ruri"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_myself_ruri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_myself_furi"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_myself_furi,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_myself_turi"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_myself_turi,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init(""), str_init("setflag"),
