@@ -25,8 +25,10 @@
 #include "redis_table.h"
 
 static void print_query(redis_key_t *query) {
+	redis_key_t *k;
+
     LM_DBG("Query dump:\n");
-    for (redis_key_t *k = query; k; k = k->next) {
+    for (k = query; k; k = k->next) {
         LM_DBG("  %s\n", k->key.s);
     }
 }
