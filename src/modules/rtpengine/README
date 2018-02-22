@@ -129,6 +129,7 @@ Richard Fuchs
               4.67. mos_average_jitter_B_pv (string)
               4.68. mos_average_roundtrip_B_pv (string)
               4.69. mos_average_samples_B_pv (string)
+              4.70. control_cmd_tos (integer)
 
         5. Functions
 
@@ -227,20 +228,21 @@ Richard Fuchs
    1.68. Set mos_average_jitter_B_pv parameter
    1.69. Set mos_average_roundtrip_B_pv parameter
    1.70. Set mos_average_samples_B_pv parameter
-   1.71. set_rtpengine_set usage
-   1.72. rtpengine_offer usage
-   1.73. rtpengine_answer usage
-   1.74. rtpengine_delete usage
-   1.75. rtpengine_query usage
-   1.76. rtpengine_manage usage
-   1.77. start_recording usage
-   1.78. stop_recording usage
-   1.79. $rtpstat Usage
-   1.80. rtpengine.reload usage
-   1.81. rtpengine.enable usage
-   1.82. rtpengine.show usage
-   1.83. rtpengine.ping usage
-   1.84. rtpengine.get_hash_total usage
+   1.71. Set control_cmd_tos parameter
+   1.72. set_rtpengine_set usage
+   1.73. rtpengine_offer usage
+   1.74. rtpengine_answer usage
+   1.75. rtpengine_delete usage
+   1.76. rtpengine_query usage
+   1.77. rtpengine_manage usage
+   1.78. start_recording usage
+   1.79. stop_recording usage
+   1.80. $rtpstat Usage
+   1.81. rtpengine.reload usage
+   1.82. rtpengine.enable usage
+   1.83. rtpengine.show usage
+   1.84. rtpengine.ping usage
+   1.85. rtpengine.get_hash_total usage
 
 Chapter 1. Admin Guide
 
@@ -324,6 +326,7 @@ Chapter 1. Admin Guide
         4.67. mos_average_jitter_B_pv (string)
         4.68. mos_average_roundtrip_B_pv (string)
         4.69. mos_average_samples_B_pv (string)
+        4.70. control_cmd_tos (integer)
 
    5. Functions
 
@@ -505,6 +508,7 @@ Chapter 1. Admin Guide
    4.67. mos_average_jitter_B_pv (string)
    4.68. mos_average_roundtrip_B_pv (string)
    4.69. mos_average_samples_B_pv (string)
+   4.70. control_cmd_tos (integer)
 
 4.1. rtpengine_sock (string)
 
@@ -1735,6 +1739,21 @@ B)")
 modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
 ...
 
+4.70. control_cmd_tos (integer)
+
+   The parameter is used to set the value of “type of service (tos)” for
+   the control commands (such as rtpengine_offer(), rtpengine_answer()
+   etc).
+
+   There is no default value. By default this feature is not used.
+
+   The values not falling into the range “0-255” will be simply ignored.
+
+   Example 1.71. Set control_cmd_tos parameter
+...
+modparam("rtpengine", "control_cmd_tos", "144")
+...
+
 5. Functions
 
    5.1. set_rtpengine_set(setid[, setid])
@@ -1768,7 +1787,7 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.71. set_rtpengine_set usage
+   Example 1.72. set_rtpengine_set usage
 ...
 set_rtpengine_set("2");
 rtpengine_offer();
@@ -1993,7 +2012,7 @@ rtpengine_offer();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.72. rtpengine_offer usage
+   Example 1.73. rtpengine_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -2037,7 +2056,7 @@ onreply_route[2]
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.73. rtpengine_answer usage
+   Example 1.74. rtpengine_answer usage
 
    See rtpengine_offer() function example above for example.
 
@@ -2051,7 +2070,7 @@ onreply_route[2]
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.74. rtpengine_delete usage
+   Example 1.75. rtpengine_delete usage
 ...
 rtpengine_delete();
 ...
@@ -2067,7 +2086,7 @@ rtpengine_delete();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.75. rtpengine_query usage
+   Example 1.76. rtpengine_query usage
 ...
 rtpengine_query();
 ...
@@ -2101,7 +2120,7 @@ rtpengine_query();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.76. rtpengine_manage usage
+   Example 1.77. rtpengine_manage usage
 ...
 rtpengine_manage();
 ...
@@ -2120,7 +2139,7 @@ rtpengine_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.77. start_recording usage
+   Example 1.78. start_recording usage
 ...
 start_recording();
 ...
@@ -2139,7 +2158,7 @@ start_recording();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.78. stop_recording usage
+   Example 1.79. stop_recording usage
 ...
 stop_recording();
 ...
@@ -2155,7 +2174,7 @@ stop_recording();
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.79. $rtpstat Usage
+   Example 1.80. $rtpstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -2178,7 +2197,7 @@ stop_recording();
    is enabled, the sessions are still allowed to finish for the hidden old
    nodes.
 
-   Example 1.80.  rtpengine.reload usage
+   Example 1.81.  rtpengine.reload usage
 ...
 $ kamcmd rtpengine.reload
 ...
@@ -2209,7 +2228,7 @@ $ kamcmd rtpengine.reload
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.81.  rtpengine.enable usage
+   Example 1.82.  rtpengine.enable usage
 ...
 $ kamcmd rtpengine.enable udp:192.168.2.133:8081 0
 $ kamcmd rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
@@ -2232,7 +2251,7 @@ $ kamcmd rtpengine.enable all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.82.  rtpengine.show usage
+   Example 1.83.  rtpengine.show usage
 ...
 $ kamcmd rtpengine.show udp:192.168.2.133:8081
 $ kamcmd rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2252,7 +2271,7 @@ $ kamcmd rtpengine.show all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.83.  rtpengine.ping usage
+   Example 1.84.  rtpengine.ping usage
 ...
 $ kamcmd rtpengine.ping udp:192.168.2.133:8081
 $ kamcmd rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2264,7 +2283,7 @@ $ kamcmd rtpengine.ping all
    Print the total number of hash entries in the hash table at a given
    moment.
 
-   Example 1.84.  rtpengine.get_hash_total usage
+   Example 1.85.  rtpengine.get_hash_total usage
 ...
 $ kamcmd rtpengine.get_hash_total
 ...
