@@ -187,6 +187,7 @@ struct dest_info{
 #endif
 };
 
+typedef struct dest_info dest_info_t;
 
 /* list of names for multi-homed sockets that need to bind on
  * multiple addresses in the same time (sctp ) */
