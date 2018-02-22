@@ -678,6 +678,94 @@ static int sr_kemi_core_is_method(sip_msg_t *msg, str *vmethod)
 /**
  *
  */
+static int sr_kemi_core_is_method_in(sip_msg_t *msg, str *vmethod)
+{
+	int imethod;
+	int i;
+
+	if(msg==NULL || vmethod==NULL || vmethod->s==NULL || vmethod->len<=0) {
+		LM_WARN("invalid parameters\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg->first_line.type==SIP_REQUEST) {
+		imethod = msg->first_line.u.request.method_value;
+	} else {
+		if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL) {
+			LM_ERR("cannot parse cseq header\n");
+			return SR_KEMI_FALSE;
+		}
+		imethod = get_cseq(msg)->method_id;
+	}
+
+	if(imethod==METHOD_OTHER) {
+		return SR_KEMI_FALSE;
+	}
+
+	for(i=0; i<vmethod->len; i++) {
+		switch(vmethod->s[i]) {
+			case 'I':
+			case 'i':
+				if(imethod==METHOD_INVITE) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'A':
+			case 'a':
+				if(imethod==METHOD_ACK) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'B':
+			case 'b':
+				if(imethod==METHOD_BYE) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'C':
+			case 'c':
+				if(imethod==METHOD_CANCEL) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'R':
+			case 'r':
+				if(imethod==METHOD_REGISTER) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'P':
+			case 'p':
+				if(imethod==METHOD_PUBLISH) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'S':
+			case 's':
+				if(imethod==METHOD_SUBSCRIBE) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'N':
+			case 'n':
+				if(imethod==METHOD_NOTIFY) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'O':
+			case 'o':
+				if(imethod==METHOD_OPTIONS) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+		}
+	}
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_forward_uri(sip_msg_t *msg, str *vuri)
 {
 	int ret;
@@ -996,6 +1084,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_method"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_method,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_method_in"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_in,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
