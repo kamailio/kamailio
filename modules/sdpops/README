@@ -35,7 +35,7 @@ Daniel-Constantin Mierla
               4.7. sdp_with_active_media(type)
               4.8. sdp_remove_media(type)
               4.9. sdp_with_transport(type)
-              4.10. sdp_with_transport_like(string)
+              4.10. sdp_with_transport_like(type)
               4.11. sdp_transport(pv)
               4.12. sdp_remove_transport(type)
               4.13. sdp_with_codecs_by_id(list)
@@ -90,7 +90,7 @@ Chapter 1. Admin Guide
         4.7. sdp_with_active_media(type)
         4.8. sdp_remove_media(type)
         4.9. sdp_with_transport(type)
-        4.10. sdp_with_transport_like(string)
+        4.10. sdp_with_transport_like(type)
         4.11. sdp_transport(pv)
         4.12. sdp_remove_transport(type)
         4.13. sdp_with_codecs_by_id(list)
@@ -142,7 +142,7 @@ Chapter 1. Admin Guide
    4.7. sdp_with_active_media(type)
    4.8. sdp_remove_media(type)
    4.9. sdp_with_transport(type)
-   4.10. sdp_with_transport_like(string)
+   4.10. sdp_with_transport_like(type)
    4.11. sdp_transport(pv)
    4.12. sdp_remove_transport(type)
    4.13. sdp_with_codecs_by_id(list)
@@ -321,26 +321,27 @@ sdp_remove_media("video");
 4.9.  sdp_with_transport(type)
 
    Return true of the SDP has 'media=media port type ...' line. Useful to
-   check the transport of the RTP sessions, such as 'RTP/AVP', 'RTP/SAVP'
-   or 'RTP/SAVPF'. The parameter can be static string or variable holding
-   the transport type.
+   check the transport of the RTP sessions, such as 'RTP/AVP', 'RTP/SAVP',
+   'RTP/SAVPF' or 'UDP/TLS/RTP/SAVPF'. The parameter can be static string
+   or variable holding the transport type. The function does an exact
+   match of the strings.
 
    This function can be used from ANY_ROUTE.
 
    Example 1.9. sdp_with_transport usage
 ...
 # check for RTP/SAVP stream
-if(sdp_with_transport("RTP/SAVP"))
+if(sdp_with_transport("UDP/TLS/RTP/SAVPF"))
 {
-    # the session has a SRTP/SAVP stream
+    # the session has a UDP/TLS/RTP/SAVPF stream
 }
 ...
 
-4.10.  sdp_with_transport_like(string)
+4.10.  sdp_with_transport_like(type)
 
    Returns true if the SDP has 'media=media port type ...' line, where
-   type contains string. The parameter can be static string or variable
-   holding a string.
+   type contains the string in the parameter. The parameter can be static
+   string or variable holding a string.
 
    This function can be used from ANY_ROUTE.
 

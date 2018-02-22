@@ -999,7 +999,7 @@ if (starts_with("$rU", "+358"))
    The core will take care of the last boundary ending "--". Detecting
    wich one is the last and fixing the others if needed.
 
-   Note: it may be required that msg_apply_changes() from textops module
+   Note: it may be required that msg_apply_changes() from textopsx module
    has to be executed if there are other operations over the new body.
 
    Example 1.37. set_body_multipart usage
