@@ -28,6 +28,7 @@
 #include "../../core/route.h"
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
+#include "../../core/locking.h"
 #include "../../core/pvar.h"
 #include "../../core/mem/pkg.h"
 #include "../../core/mem/shm.h"
@@ -39,34 +40,13 @@
 #include "apy_kemi_export.h"
 #include "apy_kemi.h"
 
-static int *_sr_python_reload_version = NULL;
-static int _sr_python_local_version = 0;
+int *_sr_python_reload_version = NULL;
+int _sr_python_local_version = 0;
+gen_lock_t* _sr_python_reload_lock;
 extern str _sr_python_load_file;
 extern int _apy_process_rank;
 
-/**
- *
- */
-
-int apy_reload_script(void)
-{
-	if(_sr_python_reload_version == NULL) {
-		return 0;
-	}
-	if(*_sr_python_reload_version == _sr_python_local_version) {
-		return 0;
-	}
-	if(apy_load_script()<0) {
-		LM_ERR("failed to load script file\n");
-		return -1;
-	}
-	if(apy_init_script(_apy_process_rank)<0) {
-		LM_ERR("failed to init script\n");
-		return -1;
-	}
-	_sr_python_local_version = *_sr_python_reload_version;
-	return 0;
-}
+int apy_reload_script(void);
 /**
  *
  */
@@ -1171,7 +1151,8 @@ int apy_sr_init_mod(void)
 		}
 		*_sr_python_reload_version = 0;
 	}
-
+	_sr_python_reload_lock = lock_alloc();
+	lock_init(_sr_python_reload_lock);
 	return 0;
 }
 
@@ -1197,16 +1178,12 @@ static void app_python_rpc_reload(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	v = *_sr_python_reload_version;
-	LM_INFO("marking for reload js script file: %.*s (%d => %d)\n",
-				_sr_python_load_file.len, _sr_python_load_file.s,
-				_sr_python_local_version, v);
+	_sr_python_local_version = v = *_sr_python_reload_version;
 	*_sr_python_reload_version += 1;
-
-	if(apy_reload_script()<0) {
-		rpc->fault(ctx, 500, "Reload failed");
-		return;
-	}
+	LM_INFO("marking for reload Python script file: %.*s (%d => %d)\n",
+		_sr_python_load_file.len, _sr_python_load_file.s,
+		v, 
+		*_sr_python_reload_version);
 
 	if (rpc->add(ctx, "{", &vh) < 0) {
 		rpc->fault(ctx, 500, "Server error");

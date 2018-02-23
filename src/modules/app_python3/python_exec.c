@@ -30,6 +30,7 @@
 #include "../../core/config.h"
 #include "../../core/mod_fix.h"
 #include "../../core/parser/parse_uri.h"
+#include "../../core/locking.h"
 
 #include "python_exec.h"
 #include "app_python_mod.h"
@@ -46,39 +47,43 @@ sr_apy_env_t *sr_apy_env_get()
 	return &_sr_apy_env;
 }
 
-static int _sr_apy_exec_pid = 0;
-
 #define PY_GIL_ENSURE gstate = PyGILState_Ensure();
 #define PY_GIL_RELEASE PyGILState_Release(gstate);
+#define LOCK_RELEASE if(locked) lock_release(_sr_python_reload_lock);
 
-// #define PY_THREADSTATE_SWAP_IN PyThreadState_Swap(myThreadState);
-// #define PY_THREADSTATE_SWAP_NULL PyThreadState_Swap(NULL);
-#define PY_THREADSTATE_SWAP_IN
-#define PY_THREADSTATE_SWAP_NULL
-
-/**
- *
+/*
+ * copy the logic from app_lua/app_lua_api.c:
+ * reload script if version has changed and we are depth 0
+ * initialized in apy_kemi.c
  */
+extern gen_lock_t* _sr_python_reload_lock;
+extern int *_sr_python_reload_version;
+extern int _sr_python_local_version;
+
 int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 {
 	PyObject *pFunc, *pArgs, *pValue, *pResult;
 	PyObject *pmsg;
-	int rval;
+	int rval = -1;
 	sip_msg_t *bmsg;
-	int mpid;
-	int locked = 0;
 	PyGILState_STATE gstate;
-	
-	bmsg = _sr_apy_env.msg;
-	_sr_apy_env.msg = _msg;
-	mpid = getpid();
+	int locked = 0;
 
-	if(_sr_apy_exec_pid!=mpid) {
-		PY_GIL_ENSURE
-		_sr_apy_exec_pid = mpid;
-		PY_THREADSTATE_SWAP_IN
+	if (lock_try(_sr_python_reload_lock) == 0) {
+		if(_sr_python_reload_version && *_sr_python_reload_version != _sr_python_local_version) {
+			LM_INFO("Reloading script %d->%d\n", _sr_python_local_version, *_sr_python_reload_version);
+			if (apy_reload_script()) {
+				LM_ERR("Error reloading script\n");
+			} else {
+				_sr_python_local_version = *_sr_python_reload_version;
+			}
+		}
 		locked = 1;
 	}
+
+	bmsg = _sr_apy_env.msg;
+	_sr_apy_env.msg = _msg;
+	PY_GIL_ENSURE
 
 	pFunc = PyObject_GetAttrString(_sr_apy_handler_obj, fname);
 	if (pFunc == NULL || !PyCallable_Check(pFunc)) {
@@ -88,16 +93,12 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 			LM_DBG("%s not found or is not callable\n", fname);
 		}
 		Py_XDECREF(pFunc);
-		if(locked) {
-			_sr_apy_exec_pid = 0;
-			PY_THREADSTATE_SWAP_NULL
-			PY_GIL_RELEASE
-		}
 		_sr_apy_env.msg = bmsg;
 		if(emode==1) {
-			return -1;
+			goto err;
 		} else {
-			return 1;
+			rval = 1;
+			goto err;
 		}
 	}
 
@@ -105,13 +106,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	if (pmsg == NULL) {
 		LM_ERR("can't create MSGtype instance\n");
 		Py_DECREF(pFunc);
-		if(locked) {
-			_sr_apy_exec_pid = 0;
-			PY_THREADSTATE_SWAP_NULL
-			PY_GIL_RELEASE
-		}
 		_sr_apy_env.msg = bmsg;
-		return -1;
+		goto err;
 	}
 
 	pArgs = PyTuple_New(fparam == NULL ? 1 : 2);
@@ -120,13 +116,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		msg_invalidate(pmsg);
 		Py_DECREF(pmsg);
 		Py_DECREF(pFunc);
-		if(locked) {
-			_sr_apy_exec_pid = 0;
-			PY_THREADSTATE_SWAP_NULL
-			PY_GIL_RELEASE
-		}
 		_sr_apy_env.msg = bmsg;
-		return -1;
+		goto err;
 	}
 	PyTuple_SetItem(pArgs, 0, pmsg);
 	/* Tuple steals pmsg */
@@ -138,13 +129,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 			msg_invalidate(pmsg);
 			Py_DECREF(pArgs);
 			Py_DECREF(pFunc);
-			if(locked) {
-				_sr_apy_exec_pid = 0;
-				PY_THREADSTATE_SWAP_NULL
-				PY_GIL_RELEASE
-			}
 			_sr_apy_env.msg = bmsg;
-			return -1;
+			goto err;
 		}
 		PyTuple_SetItem(pArgs, 1, pValue);
 		/* Tuple steals pValue */
@@ -157,34 +143,22 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	if (PyErr_Occurred()) {
 		Py_XDECREF(pResult);
 		python_handle_exception("python_exec2");
-		if(locked) {
-			_sr_apy_exec_pid = 0;
-			PY_THREADSTATE_SWAP_NULL
-			PY_GIL_RELEASE
-		}
 		_sr_apy_env.msg = bmsg;
-		return -1;
+		goto err;
 	}
 
 	if (pResult == NULL) {
 		LM_ERR("PyObject_CallObject() returned NULL\n");
-		if(locked) {
-			_sr_apy_exec_pid = 0;
-			PY_THREADSTATE_SWAP_NULL
-			PY_GIL_RELEASE
-		}
 		_sr_apy_env.msg = bmsg;
-		return -1;
+		goto err;
 	}
 
 	rval = PyLong_AsLong(pResult);
 	Py_DECREF(pResult);
-	if(locked) {
-		_sr_apy_exec_pid = 0;
-		PY_THREADSTATE_SWAP_NULL
-		PY_GIL_RELEASE
-	}
 	_sr_apy_env.msg = bmsg;
+ err:
+	PY_GIL_RELEASE
+	LOCK_RELEASE
 	return rval;
 }
 
