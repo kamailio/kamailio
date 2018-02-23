@@ -936,6 +936,60 @@ static int sr_kemi_core_set_advertised_port(sip_msg_t *msg, str *port)
 /**
  *
  */
+static int sr_kemi_core_add_tcp_alias(sip_msg_t *msg, int port)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+#ifdef USE_TCP
+	if ( msg->rcv.proto==PROTO_TCP
+#ifdef USE_TLS
+				|| msg->rcv.proto==PROTO_TLS
+#endif
+			) {
+		if (tcpconn_add_alias(msg->rcv.proto_reserved1, port,
+							msg->rcv.proto)!=0){
+			LM_ERR("adding tcp alias failed\n");
+			return SR_KEMI_FALSE;
+		}
+	}
+#endif
+
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_add_tcp_alias_via(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+#ifdef USE_TCP
+	if ( msg->rcv.proto==PROTO_TCP
+#ifdef USE_TLS
+				|| msg->rcv.proto==PROTO_TLS
+#endif
+			) {
+		if (tcpconn_add_alias(msg->rcv.proto_reserved1, msg->via1->port,
+							msg->rcv.proto)!=0){
+			LM_ERR("adding tcp alias failed\n");
+			return SR_KEMI_FALSE;
+		}
+	}
+#endif
+	return SR_KEMI_TRUE;
+}
+
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -1130,6 +1184,16 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("set_advertised_port"),
 		SR_KEMIP_INT, sr_kemi_core_set_advertised_port,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("add_tcp_alias"),
+		SR_KEMIP_INT, sr_kemi_core_add_tcp_alias,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("add_tcp_alias_via"),
+		SR_KEMIP_INT, sr_kemi_core_add_tcp_alias_via,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
