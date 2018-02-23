@@ -51,7 +51,7 @@ static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy(void);
 
-PyObject *_sr_apy_handler_obj;
+PyObject *_sr_apy_handler_obj = NULL;
 
 char *dname = NULL, *bname = NULL;
 
@@ -197,18 +197,141 @@ static void mod_destroy(void)
 
 #define PY_GIL_ENSURE gstate = PyGILState_Ensure();
 #define PY_GIL_RELEASE PyGILState_Release(gstate);
+int apy_mod_init(PyObject* pModule)
+{
 
-// #define PY_THREADSTATE_SWAP_IN PyThreadState_Swap(myThreadState);
-// #define PY_THREADSTATE_SWAP_NULL PyThreadState_Swap(NULL);
-#define PY_THREADSTATE_SWAP_IN
-#define PY_THREADSTATE_SWAP_NULL
+	/*
+	 * pModule: managed by caller, no need to Py_DECREF
+	 */
+	PyObject *pFunc, *pArgs, *pHandler;
+	PyGILState_STATE gstate;
+
+	PY_GIL_ENSURE
+	pFunc = PyObject_GetAttrString(pModule, mod_init_fname.s);
+
+	/* pFunc is a new reference */
+
+	if (pFunc == NULL) {
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_AttributeError,
+					"'module' object '%s' has no attribute '%s'",
+					bname, mod_init_fname.s);
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		Py_XDECREF(pFunc);
+		PY_GIL_RELEASE
+		return -1;
+	}
+
+	if (!PyCallable_Check(pFunc)) {
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_AttributeError,
+					"module object '%s' has is not callable attribute '%s'",
+					bname, mod_init_fname.s);
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		Py_XDECREF(pFunc);
+		PY_GIL_RELEASE
+		return -1;
+	}
+
+
+	pArgs = PyTuple_New(0);
+	if (pArgs == NULL) {
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		Py_DECREF(pFunc);
+		PY_GIL_RELEASE
+		return -1;
+	}
+
+	pHandler = PyObject_CallObject(pFunc, pArgs);
+
+	Py_XDECREF(pFunc);
+	Py_XDECREF(pArgs);
+
+	if (pHandler == Py_None) {
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_TypeError,
+					"Function '%s' of module '%s' has returned None."
+					" Should be a class instance.", mod_init_fname.s, bname);
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		PY_GIL_RELEASE
+		return -1;
+	}
+
+	if (PyErr_Occurred()) {
+		python_handle_exception("mod_init");
+		Py_XDECREF(_sr_apy_handler_obj);
+		Py_DECREF(format_exc_obj);
+		PY_GIL_RELEASE
+		return -1;
+	}
+
+	if (pHandler == NULL) {
+		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_TypeError,
+					"Function '%s' of module '%s' has returned not returned"
+					" object. Should be a class instance.",
+					mod_init_fname.s, bname);
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		PY_GIL_RELEASE
+		return -1;
+	}
+	Py_XDECREF(_sr_apy_handler_obj);
+	_sr_apy_handler_obj = pHandler;
+	PY_GIL_RELEASE
+	return 0;
+}
+
+
+/*
+ * reference to the module to allow reload
+ */
+static PyObject *_sr_apy_module;
+
+int apy_reload_script(void)
+{
+	PyGILState_STATE gstate;
+
+	PY_GIL_ENSURE
+	PyObject *pModule = PyImport_ReloadModule(_sr_apy_module);
+	if (!pModule) {
+                PyErr_PrintEx(0);
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_ImportError, "Reload module '%s'", bname);
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		PY_GIL_RELEASE
+
+		return -1;
+	}
+	if (apy_mod_init(pModule)) {
+		LM_ERR("Error calling mod_init on reload\n");
+		Py_DECREF(pModule);
+		PY_GIL_RELEASE
+		return -1;
+
+	}
+	Py_DECREF(_sr_apy_module);
+	_sr_apy_module = pModule;
+
+        if(apy_init_script(_apy_process_rank)<0) {
+                LM_ERR("failed to init script\n");
+                return -1;
+        }
+	PY_GIL_RELEASE
+        return 0;
+}
 
 int apy_load_script(void)
 {
-	PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
-	PyThreadState *mainThreadState;
+	PyObject *sys_path, *pDir, *pModule;
 	PyGILState_STATE gstate;
-	
+
 	if (ap_init_modules() != 0) {
 		return -1;
 	}
@@ -274,84 +397,15 @@ int apy_load_script(void)
 
 		return -1;
 	}
-
-	pFunc = PyObject_GetAttrString(pModule, mod_init_fname.s);
-	Py_DECREF(pModule);
-
-	/* pFunc is a new reference */
-
-	if (pFunc == NULL) {
-		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_AttributeError,
-					"'module' object '%s' has no attribute '%s'",
-					bname, mod_init_fname.s);
-		python_handle_exception("mod_init");
-		Py_DECREF(format_exc_obj);
-		Py_XDECREF(pFunc);
+	if (apy_mod_init(pModule) != 0) {
+		LM_ERR("Error calling mod_init\n");
+		Py_DECREF(pModule);
 		PY_GIL_RELEASE
 		return -1;
+
 	}
+	_sr_apy_module = pModule;
 
-	if (!PyCallable_Check(pFunc)) {
-		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_AttributeError,
-					"module object '%s' has is not callable attribute '%s'",
-					bname, mod_init_fname.s);
-		python_handle_exception("mod_init");
-		Py_DECREF(format_exc_obj);
-		Py_XDECREF(pFunc);
-		PY_GIL_RELEASE
-		return -1;
-	}
-
-
-	pArgs = PyTuple_New(0);
-	if (pArgs == NULL) {
-		python_handle_exception("mod_init");
-		Py_DECREF(format_exc_obj);
-		Py_DECREF(pFunc);
-		PY_GIL_RELEASE
-		return -1;
-	}
-
-	_sr_apy_handler_obj = PyObject_CallObject(pFunc, pArgs);
-
-	Py_XDECREF(pFunc);
-	Py_XDECREF(pArgs);
-
-	if (_sr_apy_handler_obj == Py_None) {
-		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_TypeError,
-					"Function '%s' of module '%s' has returned None."
-					" Should be a class instance.", mod_init_fname.s, bname);
-		python_handle_exception("mod_init");
-		Py_DECREF(format_exc_obj);
-		PY_GIL_RELEASE
-		return -1;
-	}
-
-	if (PyErr_Occurred()) {
-		python_handle_exception("mod_init");
-		Py_XDECREF(_sr_apy_handler_obj);
-		Py_DECREF(format_exc_obj);
-		PY_GIL_RELEASE
-		return -1;
-	}
-
-	if (_sr_apy_handler_obj == NULL) {
-		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
-		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_TypeError,
-					"Function '%s' of module '%s' has returned not returned"
-					" object. Should be a class instance.",
-					mod_init_fname.s, bname);
-		python_handle_exception("mod_init");
-		Py_DECREF(format_exc_obj);
-		PY_GIL_RELEASE
-		return -1;
-	}
-
-	//myThreadState = PyThreadState_New(mainThreadState->interp);
 	PY_GIL_RELEASE
 	return 0;
 }
@@ -365,7 +419,6 @@ int apy_init_script(int rank)
 
 
 	PY_GIL_ENSURE
-	PY_THREADSTATE_SWAP_IN
 
 	// get instance class name
 	classname = get_instance_class_name(_sr_apy_handler_obj);
@@ -376,7 +429,6 @@ int apy_init_script(int rank)
 					"'module' instance has no class name");
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
-		PY_THREADSTATE_SWAP_NULL
 		PY_GIL_RELEASE
 		return -1;
 	}
@@ -387,7 +439,6 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_XDECREF(pFunc);
 		Py_DECREF(format_exc_obj);
-		PY_THREADSTATE_SWAP_NULL
 		PY_GIL_RELEASE
 		return -1;
 	}
@@ -400,7 +451,6 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
-		PY_THREADSTATE_SWAP_NULL
 		PY_GIL_RELEASE
 		return -1;
 	}
@@ -410,7 +460,6 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_DECREF(pFunc);
-		PY_THREADSTATE_SWAP_NULL
 		PY_GIL_RELEASE
 		return -1;
 	}
@@ -421,7 +470,6 @@ int apy_init_script(int rank)
 		Py_DECREF(format_exc_obj);
 		Py_DECREF(pArgs);
 		Py_DECREF(pFunc);
-		PY_THREADSTATE_SWAP_NULL
 		PY_GIL_RELEASE
 		return -1;
 	}
@@ -436,14 +484,12 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pResult);
-		PY_THREADSTATE_SWAP_NULL
 		PY_GIL_RELEASE
 		return -1;
 	}
 
 	if (pResult == NULL) {
 		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
-		PY_THREADSTATE_SWAP_NULL
 		PY_GIL_RELEASE
 		return -1;
 	}
@@ -457,14 +503,12 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pResult);
-		PY_THREADSTATE_SWAP_NULL
 		PY_GIL_RELEASE
 		return -1;
 	}
 
 	rval = PyLong_AsLong(pResult);
 	Py_DECREF(pResult);
-	PY_THREADSTATE_SWAP_NULL
 	PY_GIL_RELEASE
 
 	return rval;

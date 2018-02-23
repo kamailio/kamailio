@@ -27,5 +27,5 @@
 extern PyObject *_sr_apy_handler_obj;
 extern PyObject *format_exc_obj;
 extern PyThreadState *myThreadState;
-
+int apy_reload_script(void);
 #endif

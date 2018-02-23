@@ -191,13 +191,19 @@ python_exec("my_python_function", "$rU");
             <function moreinfo="none">app_python.reload</function>
             </title>
 			<para>
-				IMPORTANT: not functional yet (can crash a running instance,
-				use it only for testing).
+				IMPORTANT: this is not thread-safe. In your Python script
+				do not use C extensions with threads that call into
+				<varname>apy_exec()</varname>.
 			</para>
             <para>
             Marks the need to reload the Python script.
-            The actual reload is done by every working process when the next
-            call to KEMI config is executed.
+            The actual reload is done in each worker when it next invokes a Python method.
+            The module uses a worker process lock to prevent recursive reloads. 
+            </para>
+            <para>
+              This function only reloads the user script and creates a new script object.
+	      It does not reinitialize the interpreter.
+	      E.g., references in the old module remain if not redefined by the new version.
             </para>
             <para>
             Name: <emphasis>app_python.reload</emphasis>
