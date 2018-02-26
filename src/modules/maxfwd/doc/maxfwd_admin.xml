@@ -110,7 +110,7 @@ modparam("maxfwd", "max_limit", 32)
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>2 (true)</emphasis> - header was not found and
-			a new header was succesfully added.
+			a new header was successfully added.
 			</para>
 		</listitem>
 		<listitem>
@@ -129,7 +129,7 @@ modparam("maxfwd", "max_limit", 32)
 		</listitem>
 		</itemizedlist>
 		<para>
-		The return code may be extensivly tested via script variable
+		The return code may be extensively tested via script variable
 		<quote>retcode</quote> (or <quote>$?</quote>).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -190,7 +190,7 @@ if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>1 (true)</emphasis> - header was found or set and
-			its value is stricly less than <quote>max_value</quote>.
+			its value is strictly less than <quote>max_value</quote>.
 			</para>
 		</listitem>
 		<listitem>
@@ -209,7 +209,7 @@ if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
 		</listitem>
 		</itemizedlist>
 		<para>
-		The return code may be extensivly tested via script variable
+		The return code may be extensively tested via script variable
 		<quote>retcode</quote> (or <quote>$?</quote>).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
