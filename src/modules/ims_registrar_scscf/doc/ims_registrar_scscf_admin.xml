@@ -89,8 +89,8 @@
       S-CSCF usrloc records are not fixed(when default_expires applies), but a
       random value in the intervalrdq [default_expires-default_expires_range%,
       default_expires+default_expires_range%]. The value is between 0 and 100
-      and represent the maximim percentage from default_expires that will be
-      substracted or added when computing the value. Default in 0, meaning
+      and represent the maximum percentage from default_expires that will be
+      subtracted or added when computing the value. Default in 0, meaning
       default_expires is left unmodified. This parameter can be modified via
       ser config framework.</para>
 
@@ -174,8 +174,8 @@
       but a random value in the interval
       [subscription_default_expires-subscription_expires_range%,
       subscription_default_expires+subscription_expires_range%]. The value is
-      between 0 and 100 and represent the maximim percentage from
-      subscription_default_expires that will be substracted or added when
+      between 0 and 100 and represent the maximum percentage from
+      subscription_default_expires that will be subtracted or added when
       computing the value. Default in 0, meaning subscription_default_expires
       is left unmodified.</para>
 
@@ -514,7 +514,7 @@ if (!impu_registered("location")) {
           </listitem>
 
           <listitem>
-            <para>-3 - Error ocurred internally during processing</para>
+            <para>-3 - Error occurred internally during processing</para>
           </listitem>
         </itemizedlist></para>
 
