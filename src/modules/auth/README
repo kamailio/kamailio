@@ -700,7 +700,7 @@ modparam("auth", "add_authinfo_hdr", yes)
 ...
 if (www_authenticate("realm", "subscriber")) {
     consume_credentials();
-};
+}
 ...
 
 4.2. has_credentials(realm)
@@ -750,6 +750,7 @@ if (has_credentials("myrealm")) {
 ...
 if (!www_authenticate("$td", "subscriber")) {
         www_challenge("$td", "1");
+        exit;
 }
 ...
 
@@ -772,7 +773,8 @@ if (!www_authenticate("$td", "subscriber")) {
 ...
 if (!proxy_authenticate("$fd", "subscriber")) {
         proxy_challenge("$fd", "1");
-};
+        exit;
+}
 ...
 
 4.5.  auth_challenge(realm, flags)
@@ -793,7 +795,8 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 ...
 if (!auth_check("$fd", "subscriber", "1")) {
         auth_challenge("$fd", "1");
-};
+        exit;
+}
 ...
 
 4.6.  pv_www_authenticate(realm, passwd, flags [, method])
@@ -845,7 +848,8 @@ if (!auth_check("$fd", "subscriber", "1")) {
 ...
 if (!pv_www_authenticate("$td", "123abc", "0")) {
         www_challenge("$td", "1");
-};
+        exit;
+}
 ...
 
 4.7.  pv_proxy_authenticate(realm, passwd, flags)
@@ -868,7 +872,8 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 $avp(password)="xyz";
 if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
         proxy_challenge("$fd", "1");
-};
+        exit;
+}
 ...
 
 4.8.  pv_auth_check(realm, passwd, flags, checks)
@@ -898,8 +903,9 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 ...
 $avp(password)="xyz";
 if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
-        proxy_challenge("$fd", "1");
-};
+        auth_challenge("$fd", "1");
+        exit;
+}
 ...
 
 4.9.  auth_get_www_authenticate(realm, flags, pvdest)
