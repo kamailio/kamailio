@@ -251,7 +251,7 @@ if (is_uri_host_local()) {
 		<para>
 		This function checks if the domain contained in the
 		parameter is local. The parameter can be a static string or contain
-		pseduo-variables.
+		pseudo-variables.
 		</para>
 		<para>
 		This function is a generalized form of the is_from_local()
