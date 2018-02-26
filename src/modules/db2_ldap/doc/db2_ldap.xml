@@ -75,7 +75,7 @@
 		The "equal"/"non-equal" operator requires <emphasis>equality matching rule</emphasis>,
 		the "greater"/"less" operator requires <emphasis>ordering matching rule</emphasis>.
 		If required matching rule is missing the LDAP server silently returns
-		empty result set. In case of double filtering both at the LDAP servar and the LDAP
+		empty result set. In case of double filtering both at the LDAP server and the LDAP
 		module, e.g. multi-value and equal comparison, check the LDAP server matching
 		rule satisfies your needs or use <emphasis>client_side_filtering</emphasis> feature. 
 		</para>
@@ -223,7 +223,7 @@ filter = "(objectClass=digestAuthCredentials)"
 # Mapping of field names to LDAP attribute names and vice versa. Names are
 # delimited using ':', the first name is database field name as used in SER
 # modules, the second name (after :) is corresponding LDAP attribute name,
-# optionally preceeded with LDAP attribute syntax name in parentheses.
+# optionally preceded with LDAP attribute syntax name in parentheses.
 field_map = password : (Binary) digestPassword
 field_map = realm : digestRealm
 field_map = auth_username : digestUsername
