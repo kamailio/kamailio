@@ -25,7 +25,7 @@
     <section>
       <title>&kamailio; Modules</title>
 
-      <para>The Following mouldes must be loaded before this module:</para>
+      <para>The Following modules must be loaded before this module:</para>
 
       <itemizedlist>
         <listitem>
@@ -324,7 +324,7 @@ modparam("ims_auth", "add_authinfo_hdr", 0)
       <para>It should be used only for testing, e.g. load balancing with SIPP
       where we don't want to worry about auth.</para>
 
-      <para>Default value is <quote>0</quote> (don't ingnore the failed
+      <para>Default value is <quote>0</quote> (don't ignore the failed
       authentication).</para>
 
       <example>
@@ -480,7 +480,7 @@ if (!www_authorize("kamailio.org", "subscriber")) {
           is running on.</para>
 
           <para>It must not be empty string <quote/>. Apart of a static
-          strinh, typical value is From header field domain (e.g., variable
+          string, typical value is From header field domain (e.g., variable
           $fd).</para>
 
           <para>If an empty string <quote/> is used then the server will
@@ -534,7 +534,7 @@ route[REG_MAR_REPLY]
       <title><function moreinfo="none">ims_www_challenge(route_block, realm,
       algorithm)</function></title>
 
-      <para>Same as 4.3 except here there is the addiional option to specify
+      <para>Same as 4.3 except here there is the additional option to specify
       the authorisation algorithm</para>
 
       <itemizedlist>
@@ -609,7 +609,7 @@ route[REG_MAR_REPLY]
           is running on.</para>
 
           <para>It must not be empty string <quote/>. Apart of a static
-          strinh, typical value is From header field domain (e.g., variable
+          string, typical value is From header field domain (e.g., variable
           $fd).</para>
 
           <para>If an empty string <quote/> is used then the server will
