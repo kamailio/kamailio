@@ -60,7 +60,7 @@ TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/ExtUtils/ty
 		<para>
 		The Perl module has two interfaces: The perl side, and the &kamailio; side. Once a Perl
 		function is defined and loaded via the module parameters (see below), it may be
-		called in &kamailio;'s configuration at an arbitary point. E.g., you could write
+		called in &kamailio;'s configuration at an arbitrary point. E.g., you could write
 		a function "ldap_alias" in Perl, and then execute <programlisting format="linespecific">
 ...
 if (perl_exec("ldap_alias")) {
@@ -91,7 +91,7 @@ if (perl_exec("ldap_alias")) {
 			<itemizedlist>
 			<listitem>
 			<para>
-				The "sl" module is needed for sending replies uppon fatal errors. All other modules
+				The "sl" module is needed for sending replies upon fatal errors. All other modules
 				can be accessed from the Perl module, though.
 			</para>
 			</listitem>
@@ -155,7 +155,7 @@ if (perl_exec("ldap_alias")) {
 		<section id="app_perl.p.filename">
 			<title><varname>filename</varname> (string)</title>
 			<para>
-			This is the file name of your script. This may be set once only, but it may include an arbitary
+			This is the file name of your script. This may be set once only, but it may include an arbitrary
 			number of functions and <quote>use</quote> as many Perl module as necessary.
 			</para>
 			<para>
