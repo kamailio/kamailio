@@ -101,7 +101,7 @@ modparam("cnxcc", "redis", "addr=127.0.0.1;port=6379;db=1")
 		<section id="cnxcc.p.credit_check_period">
 			<title><varname>credit_check_period</varname> (integer)</title>
 			<para>
-				Indicates how often the credit checking function should be called. It is directly related to the precison of the
+				Indicates how often the credit checking function should be called. It is directly related to the precision of the
 				module. The maximum precision is 1, which means that every call is checked every one second.
 
 			</para>
@@ -128,7 +128,7 @@ modparam("cnxcc", "credit_check_period", 1)
 			<para>
 				Associates the call with a customer id and sets the max credit,
 				cost per second, initial pulse and final pulse. The discount
-				is calculated in pulses (30/6, 1/1, etc) and sustracted from the pool
+				is calculated in pulses (30/6, 1/1, etc) and subtracted from the pool
 				of credit.
 			</para>
 			<para>
@@ -176,7 +176,7 @@ cnxcc_set_max_credit("john-doe", "100.5", "0.5", "20", "10");
 $var(customer) = "john-doe-premium"; # customer id
 $var(credit) = "100";       # max credit
 $var(cps)   = "2.00";       # cost per second
-$var(initial_p)   = 30;     # intial pulse
+$var(initial_p)   = 30;     # initial pulse
 $var(final_p)     = 6;      # final pulse
 cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)",
         "$var(initial_p)", "$var(final_p)");
