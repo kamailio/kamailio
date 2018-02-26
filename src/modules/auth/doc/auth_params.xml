@@ -225,7 +225,7 @@ modparam("auth", "qop", "auth")   # set qop=auth
 		<emphasis>Note:</emphasis> <varname>nonce_count</varname> should be 
 		enabled only in stateful mode (a transaction should be created prior
 		to the authentication check to absorb possible retransmissions and all
-		the replies should be sent statefuly, using 
+		the replies should be sent statefully, using 
 		<function>t_reply()</function>).
 		If <varname>nonce_count</varname> and the authentication checks are
 		used in the stateless mode then all retransmissions will be 

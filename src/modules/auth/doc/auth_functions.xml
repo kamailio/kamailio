@@ -40,7 +40,7 @@ if (www_authenticate("realm", "subscriber")) {
     <section id="auth.f.has_credentials">
 	<title><function>has_credentials(realm)</function></title>
 	<para>
-		This function returns true of the request has Autorization or
+		This function returns true of the request has Authorization or
 		Proxy-Authorization header with provided realm. The parameter
 		can be string with pseudo-variables.
 	</para>
@@ -236,10 +236,10 @@ if (!auth_check("$fd", "subscriber", "1")) {
 			</para>
 			<para>
 			It must not be empty string <quote></quote>. In case of REGISTER
-			requests To header field domain (e.g., varibale $td) can be used
+			requests To header field domain (e.g., variable $td) can be used
 			(because this header field represents a user being registered),
 			for all other messages From header field domain can be used
-			(e.g., varibale $fd).
+			(e.g., variable $fd).
 			</para>
 			<para>
 			The string may contain pseudo variables.
@@ -348,7 +348,7 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 		The function combines the functionalities of
 		<function moreinfo="none">pv_www_authenticate</function> and
 		<function moreinfo="none">pv_proxy_authenticate</function>, first being
-		exectuted if the SIP request is a REGISTER, the second for the rest.
+		executed if the SIP request is a REGISTER, the second for the rest.
 		</para>
 		<para>
 		Meaning of the first three parameters is the same as for
