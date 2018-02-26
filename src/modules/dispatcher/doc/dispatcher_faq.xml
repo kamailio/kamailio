@@ -21,7 +21,7 @@
 	    </question>
 	    <answer>
 		<para>
-			The algoritms doing hashing over parts of SIP message don't
+			The algorithms doing hashing over parts of SIP message don't
 			guarantee a fair distribution. You should do some measurements
 			to decide what hashing algorithm fits better in your
 			environment.
