@@ -106,7 +106,7 @@ modparam("acc_json", "acc_missed_flag", 3)
 	<section id="acc_json.p.acc_extra">
 		<title><varname>acc_extra</varname> (integer)</title>
 		<para>
-		Extra values to be added to the json dictionnary.
+		Extra values to be added to the json dictionary.
 		</para>
 		<para>
 		Default value is NULL.
@@ -230,7 +230,7 @@ route[RUN_CDR_PUBLISH] {
 		<title><varname>output_syslog</varname> (integer)</title>
 		<para>
 		Control if the output of acc json should be sent to syslog.
-                This is not dependent on Kamailio global logging settigns,
+                This is not dependent on Kamailio global logging settings,
                 we can use syslog even if Kamailio is not daemonized and/or
                 logging is done to sdtout stderr.
 		</para>
@@ -253,7 +253,7 @@ modparam("acc_json", "log_facility", "LOG_DAEMON")
 		<title><varname>log_facility</varname> (integer)</title>
 		<para>
 		Log facility to which accounting messages are issued to syslog.
-                This allows to easily seperate the accounting specific logging
+                This allows to easily separate the accounting specific logging
                 from the other log messages.
 		</para>
 		<para>
