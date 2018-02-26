@@ -200,7 +200,7 @@ modparam("ims_icscf", "preferred_scscf_uri", "sip:scscf.ims.smilecoms.com:6060")
       moreinfo="none">I_scscf_select(initial)</function></title>
 
       <para>This function is used to retrieve the next unused SCSCF from
-      thelist for this request (based on callid).</para>
+      the list for this request (based on callid).</para>
 
       <para>A positive return code (1) means an SCSCF was found and is armed
       for routing.</para>
@@ -260,8 +260,8 @@ I_scscf_drop();
 
       <para>Perform a UAR on Diameter CXDX interface. This function will build
       a list of SCSCFs to be used and populate the SCSCF list for the request.
-      On a succesful return of this message you can get the next available
-      SCSCF by using the I_scscf_select functoin in 4.1.</para>
+      On a successful return of this message you can get the next available
+      SCSCF by using the I_scscf_select function in 4.1.</para>
 
       <itemizedlist>
         <listitem>
