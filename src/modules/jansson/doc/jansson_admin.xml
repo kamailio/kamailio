@@ -99,7 +99,7 @@ xlog("L_INFO", "foo is $var(n)");
         </para>
         <para>
             Valid 'type' parameters are 'integer', 'real', 'string', 'object', 'array', 'true', 'false', and 'null'  as well as
-            abbriviated names such as 'int', 'str', and 'obj'. 'value' is ignored when type is 'true', 'false', or 'null'.
+            abbreviated names such as 'int', 'str', and 'obj'. 'value' is ignored when type is 'true', 'false', or 'null'.
         </para>
         <para>
             <emphasis>Note:</emphasis> If you want to insert a JSON-Integer value exceeding the C-Integer boundaries (e.g. C-type long), the a the number can be provided as a string.
@@ -194,7 +194,7 @@ while($var(count) &lt; $var(size)) {
         </programlisting>
         </example>
         <example>
-        <title>array concatination</title>
+        <title>array concatenation</title>
         <programlisting format="linespecific">
 ...
 $var(count) = 0;
