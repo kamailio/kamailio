@@ -1,3 +1,9 @@
+kamailio (4.4.7) unstable; urgency=medium
+
+  * version set to 4.4.7
+
+ -- Victor Seva <vseva@debian.org>  Mon, 26 Feb 2018 11:11:19 +0100
+
 kamailio (4.4.6) unstable; urgency=medium
 
   * version set to 4.4.6
