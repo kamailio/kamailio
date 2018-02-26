@@ -91,7 +91,7 @@ modparam("app_python", "load", "/usr/local/etc/kamailio/myscript.py")
 	    <title><varname>mod_init_function</varname> (string)</title>
 	    <para>
 			The Python function to be executed by this module when
-			it is initialied by &kamailio;.
+			it is initialized by &kamailio;.
 	    </para>
 	    <para>
 		<emphasis>
@@ -112,7 +112,7 @@ modparam("app_python", "mod_init_function", "my_mod_init")
 	    <title><varname>child_init_method</varname> (string)</title>
 	    <para>
 			The Python function to be executed by this module when
-			a new worker process (child) is initialied by &kamailio;.
+			a new worker process (child) is initialized by &kamailio;.
 	    </para>
 	    <para>
 		<emphasis>
