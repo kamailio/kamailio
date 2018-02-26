@@ -758,7 +758,7 @@ modparam("lcr","weight_column", "target_weight")
 	<section>
 		<title><varname>lcr_count</varname> (integer)</title>
 		<para>
-		Maximun value of lcr_id.
+		Maximum value of lcr_id.
 		</para>
 		<para>
 		<emphasis>
@@ -875,7 +875,7 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 		</para>
 		<para>
 		If defined, must have the same value as mtree module pv_values
-        paramater.
+        parameter.
 		</para>
 		<para>
 		<emphasis>
