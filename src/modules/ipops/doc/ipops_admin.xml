@@ -403,7 +403,7 @@ switch($rc) {
         </listitem>
         <listitem>
           <para>
-            <emphasis>negative value</emphasis> - error occured
+            <emphasis>negative value</emphasis> - error occurred
           </para>
         </listitem>       
       </itemizedlist>
@@ -467,7 +467,7 @@ switch($rc) {
         </listitem>
         <listitem>
           <para>
-            <emphasis>negative value</emphasis> - error occured
+            <emphasis>negative value</emphasis> - error occurred
           </para>
         </listitem>       
       </itemizedlist>
@@ -531,7 +531,7 @@ switch($rc) {
         </listitem>
         <listitem>
           <para>
-            <emphasis>negative value</emphasis> - error occured
+            <emphasis>negative value</emphasis> - error occurred
           </para>
         </listitem>       
       </itemizedlist>
@@ -791,7 +791,7 @@ if (!dns_sys_match_ip("myhost.com", "1.2.3.4")) {
 		  the IP addresses as returned by dns_sys_match_ip(), because the internal
 		  resolver targets to discover the first address to be used for relaying
 		  SIP traffic. Thus is better to use dns_sys_match_ip() if the host you want
-		  to check has many IP addresses, in different address famililies (IPv4/6).
+		  to check has many IP addresses, in different address families (IPv4/6).
       </para>
 
       <para>Parameters:</para>
