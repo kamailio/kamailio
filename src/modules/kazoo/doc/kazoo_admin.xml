@@ -128,7 +128,7 @@ event_route[kazoo:consumer-event]
         </example>
 </section>
     <section>
-    <title>aknowledge messages</title>
+    <title>acknowledge messages</title>
 <para>
 Consumed messages have the option of being acknowledge in two ways:
 <itemizedlist>
@@ -415,7 +415,7 @@ modparam("kazoo", "single_consumer_on_reconnect", 0)
     <section>
         <title><varname>amqp_consumer_ack_timeout</varname>(str)</title>
         <para>
-        Timeout when checking for aknowledge from workers.
+        Timeout when checking for acknowledge from workers.
         </para>
         <para>
         <emphasis>Default value is 100000 micro.</emphasis>
@@ -451,7 +451,7 @@ modparam("kazoo", "amqp_interprocess_timeout_micro", 200000)
     </section>    
 
     <section>
-        <title><varname>amqp_waitframe_tiemout</varname>(str)</title>
+        <title><varname>amqp_waitframe_timeout</varname>(str)</title>
         <para>
         Timeout when checking for messages from rabbitmq.
         </para>
