@@ -45,7 +45,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>mysql</emphasis> - the development libraries forthe Mysql database. In some Linux distributions named "libmysqlclient-dev".
+				<emphasis>mysql</emphasis> - the development libraries for the MySQL database. In some Linux distributions named "libmysqlclient-dev".
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -77,7 +77,7 @@ modparam("db_mysql", "ping_interval", 600)
 	<section>
 		<title><varname>server_timezone</varname> (integer)</title>
 		<para>
-		Control if kamailio convers a time to string using the local timezone
+		Control if kamailio converts a time to string using the local timezone
 		or if MySQL will convert it using FROM_UNIXTIME. This option is useful
 		if kamailio and the database are configured for different timezones.
 		</para>
@@ -191,7 +191,7 @@ modparam("db_mysql", "update_affected_found", 1)
 	<section>
 	<title>Installation</title>
 		<para>
-		Because it dependes on an external library, the mysql module is not
+		Because it depends on an external library, the mysql module is not
 		compiled and installed by default. You can use one of these options.
 		</para>
 		<itemizedlist>
