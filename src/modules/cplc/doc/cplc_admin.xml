@@ -349,7 +349,7 @@ modparam("cpl-c","realm_prefix","sip.")
 				used by the TIMEOUT attribute from the PROXY tag.
 			</para>
 			<para>
-				NOTE: take care and syncronize this value with the similar
+				NOTE: take care and synchronize this value with the similar
 				parameters in TM module.
 			</para>
 			<para>
