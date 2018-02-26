@@ -610,7 +610,7 @@ modparam("msilo", "max_messages", 0)
 	<section id="msilo.p.add_contact">
 		<title><varname>add_contact</varname> (int)</title>
 		<para>
-		Wheter to add contact header to generated messages. The
+		Whether to add contact header to generated messages. The
 		contact address is the From URI.
 		</para>
 		<para>
@@ -723,7 +723,7 @@ m_store("$tu");
 		<title><function moreinfo="none">m_dump([owner])</function></title>
 		<para>
 		The method sends stored messages for the &sip; user that has
-		registerered to the contact address in the registration. 
+		registered to the contact address in the registration. 
 		The method should be called when a REGISTER request is received
 		and the <quote>Expire</quote> header has a value greater than zero.
 		</para>
