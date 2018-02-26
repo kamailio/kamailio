@@ -139,7 +139,7 @@
 	<section id="mt.mem_test_stop">
 		<title> <function>mt.mem_test_stop id</function></title>
 		<para>
-			Stops the test indentified by <varname>id</varname>.
+			Stops the test identified by <varname>id</varname>.
 		</para>
 		<example>
 			<title><function>mt.mem_test_stop</function> usage</title>
@@ -152,7 +152,7 @@
 	<section id="mt.mem_test_destroy">
 		<title> <function>mt.mem_test_destroy id</function></title>
 		<para>
-			Destroys the test indentified by <varname>id</varname>
+			Destroys the test identified by <varname>id</varname>
 			(besides stopping it, it also frees all the data, including the
 			statistics).
 		</para>
