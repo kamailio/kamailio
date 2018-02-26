@@ -169,7 +169,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 	<section>
 	<title>Installation</title>
 		<para>
-		Because the db_cassandra module dependes on an external library, it is not
+		Because the db_cassandra module depends on an external library, it is not
 		compiled and installed by default. You can use one of these options:
 		</para>
 		<itemizedlist>
