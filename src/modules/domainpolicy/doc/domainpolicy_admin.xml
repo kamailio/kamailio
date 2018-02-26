@@ -588,7 +588,7 @@ mysql> select * from domainpolicy;
 	A member of this federation (e.g. example.com) can not announce its
 	SIP proxy's 10.x address in the standard SRV / A records of his domain,
 	as this address is only meaningful for other members of this federation.
-	In order to facilite different IP address resolution paths within the 
+	In order to facilitate different IP address resolution paths within the 
 	federation vs. outside the federation, all members of "http://l3fed.org/"
 	agree to prefix the destination domains with "l3fed" before the
 	SRV (or A) lookup.
