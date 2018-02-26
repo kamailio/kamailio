@@ -16,7 +16,7 @@
     the standard Kamailio module, usrloc, is a storage engine for standard SIP
     contacts. The concept of a contact in IMS, PCSCF specifically, is very
     different to that of std. SIP and as a result we have built this new
-    module. Alot of the design has been borrowed from the std. usrloc module.
+    module. A lot of the design has been borrowed from the std. usrloc module.
     For example. An IMS contact, in PCSCF, needs things like:</para>
 
     <para><itemizedlist>
@@ -27,7 +27,7 @@
         </listitem>
 
         <listitem>
-          <para>IPSEC Security Assocation for secure signalling between UE and
+          <para>IPSEC Security Association for secure signalling between UE and
           PCSCF (first point of contact)</para>
         </listitem>
 
@@ -138,7 +138,7 @@ modparam("ims_usrloc_pcscf", "db_url",
 
         <listitem>
           <para>1 - Write-Through Scheme. All changes to usrloc are
-          immediately refelcted in the database. This is slow but very
+          immediately reflected in the database. This is slow but very
           reliable. This mode will ensure that no registration data is lost as
           a result of a restart or crash.</para>
         </listitem>
