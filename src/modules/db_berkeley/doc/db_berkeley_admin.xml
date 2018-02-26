@@ -57,7 +57,7 @@
 		<title><varname>auto_reload</varname> (integer)</title>
 		<para>
 		The auto-reload will close and reopen a Berkeley DB when the
-		files inode has changed. The operation occurs only duing a query. 
+		files inode has changed. The operation occurs only during a query. 
 		Other operations such as insert or delete, do not invoke auto_reload.
 		</para>
 		<para>
@@ -151,7 +151,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		</para>
 
 		<para>Parameters: <emphasis>tablename</emphasis> (or db_path); to reload a particular table
-		provide the tablename as the arguement (eg subscriber); to reload all tables provide the db_path to
+		provide the tablename as the argument (eg subscriber); to reload all tables provide the db_path to
 		the db files. The path can be found in &ctltool;rc DB_PATH variable.
 		</para>
 	</section>
@@ -174,7 +174,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		</para>
 		
 		<para>
-		Because the module dependes on an external library, the db_berkeley module is not
+		Because the module depends on an external library, the db_berkeley module is not
 		compiled and installed by default. You can use one of the next options.
 		</para>
 		
@@ -280,7 +280,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		is identified as a natural key. 
 		Consider an example where use_domain = 0. In table subscriber, the db will be keying on 
 		'username|NULL' because the default value will be used when that key column is not provided.
-		This effectivly means that later queries must consistently use the username (w.o domain)
+		This effectively means that later queries must consistently use the username (w.o domain)
 		in order to find a result to that particular subscriber query.
 		The main point is 'use_domain' can not be changed once the db_berkeley is setup.
 		</para>
@@ -579,8 +579,8 @@ usage: ./kambdb_recover -s schemadir [-h home] [-R lastN]
 	<section>
 	<title>Known Limitations</title>
 	<para>
-	The Berkeley DB does not nativly support an autoincrement (or sequence) mechanism.
-	Consequently, this version does not support surragate keys in dbschema. These
+	The Berkeley DB does not natively support an autoincrement (or sequence) mechanism.
+	Consequently, this version does not support surrogate keys in dbschema. These
 	are the id columns in the tables.
 	</para>
 	</section>
