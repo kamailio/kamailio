@@ -78,7 +78,7 @@
 		<listitem>
 		<para>
 			<emphasis>name</emphasis> - name of the event route to be executed.
-			When used with a KEMI embedded laguage, this has to be the name
+			When used with a KEMI embedded language, this has to be the name
 			of a function from the KEMI script. The function must have a
 			string parameter, which will retrieve the index of the works in
 			string format.
