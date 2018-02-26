@@ -41,7 +41,7 @@
 			and parameter 'load'. Therefore lua_run() cannot execute functions
 			from scripts loaded via lua_dofile() in config. This is kind of
 			caching mode, avoiding reading file every time, but you must be sure
-			you do not have someting that is executed by default and requires
+			you do not have something that is executed by default and requires
 			access to SIP message.
 		</para>
 	    </listitem>
