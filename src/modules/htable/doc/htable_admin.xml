@@ -56,7 +56,7 @@ $sht(a=&gt;$ci::srcip) = $si;
 	<para>
 		The next example shows a way to protect against dictionary attacks. If
 		someone fails to authenticate 3 times, it is forbidden for 15 minutes.
-		Authenticatiion against database is expensive as it does a select
+		Authentication against database is expensive as it does a select
 		on the <quote>subscriber</quote> table. By disabling the DB auth for 15 minutes,
 		resources on the server are saved and time to discover the password is increased
 		substantially. Additional alerting can be done by writing a message
@@ -896,7 +896,7 @@ sht_lock("ha=>test");
 		<function moreinfo="none">sht_unlock(htable=>key)</function>
 		</title>
 		<para>
-			Unlock the slot in htable corespoding to the key item. Note that
+			Unlock the slot in htable corresponding to the key item. Note that
 			the locking is re-entrant for the process, therefore the lock
 			and unlock should be done by the same process.
 		</para>
@@ -950,7 +950,7 @@ sht_iterator_start("i1", "h1");
 		</title>
 		<para>
 			Close the iterator identified by iname parameter and release
-			the hash table slot aquired by the iterator. The iname value
+			the hash table slot acquired by the iterator. The iname value
 			must be the same used for sht_iterator_start().
 		</para>
 		<para>
@@ -1163,7 +1163,7 @@ kamcmd htable.sets test x[0] abc
 # Set $sht(test=>x) as integer
 kamcmd htable.seti test x 123
 
-# Set firsti entry in array key x $sht(test=>x[0]) as integer
+# Set first entry in array key x $sht(test=>x[0]) as integer
 kamcmd htable.sets test x[0] 123
 ...
 </programlisting>
