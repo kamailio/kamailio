@@ -321,6 +321,7 @@ int apy_reload_script(void)
 
         if(apy_init_script(_apy_process_rank)<0) {
                 LM_ERR("failed to init script\n");
+                PY_GIL_RELEASE
                 return -1;
         }
 	PY_GIL_RELEASE
