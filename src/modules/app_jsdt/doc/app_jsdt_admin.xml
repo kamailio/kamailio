@@ -42,7 +42,7 @@
 			and parameter 'load'. Therefore jsdt_run() cannot execute functions
 			from scripts loaded via jsdt_dofile() in config. This is kind of
 			caching mode, avoiding reading file every time, but you must be sure
-			you do not have someting that is executed by default and requires
+			you do not have something that is executed by default and requires
 			access to SIP message. This environment is also used by KEMI
 			framework for the config SIP routing functions.
 		</para>
@@ -74,7 +74,7 @@
 		    <listitem>
 			<para>
 				<emphasis>libm</emphasis> - the math library (part of standard
-				system libraries - it is needed to complile embedded Duktape JS
+				system libraries - it is needed to compile embedded Duktape JS
 				interpreter).
 			</para>
 		    </listitem>
