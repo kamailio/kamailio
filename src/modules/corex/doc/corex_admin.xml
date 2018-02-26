@@ -531,7 +531,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
             After executing of this event route, if msg_avp was defined and set then
             its value is used for further processing, otherwise, original value of
             $mb is used. If message was received from remote host, then it is parsed
-            and proceeds to appropriate route. Oterhwise if message set to send out,
+            and proceeds to appropriate route. Otherwise if message set to send out,
             then is sent to remote host per configured SIP timers in config script.
         </para>
         <para>
@@ -565,7 +565,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 			server. The SIP messages received from end-user at SIP edge proxy may be decrypted
 			and sent to SIP application server at remote location unencrypted, where they are
 			processed as normal. One the way back, the messages received from SIP application
-			server at edge proxy can be encrpyted before being sent to actual destination.
+			server at edge proxy can be encrypted before being sent to actual destination.
 			The edge proxy can check whether received message came from end-user or SIP 
 			application server by using simple regular expressions.
         </para>
@@ -587,7 +587,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 			For example, the client app running on Android or iPhone, may send device UUID along
 			with ITV key, encrypted using RSA or AES256 with pre-shared secret, as first packet,
 			which is set as cookie by server in e.g. memcache. This cookie is referred by client
-			app in each next packet, so server can retrive encyption key from cache and use that
+			app in each next packet, so server can retrieve encryption key from cache and use that
 			for decryption. Same can be done for server at client app side, so messages encrypted
 			by server can be decrypted at client app.
         </para>
