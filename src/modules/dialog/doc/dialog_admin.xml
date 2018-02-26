@@ -1275,7 +1275,7 @@ modparam("dialog", "send_bye", 1)
 	<section id="dialog.p.wait_ack">
 		<title><varname>wait_ack</varname> (int)</title>
 		<para>
-			If set to 1, dialog will be keept a bit longer in memory
+			If set to 1, dialog will be kept a bit longer in memory
 			in order to absorb the ACK negative replies of initial
 			INVITE. If not, the dialog is destroyed when negative reply
 			is sent out (less internal complexity).
@@ -1656,7 +1656,7 @@ if (is_in_profile("caller","XX")) {
 		Returns the number of dialogs belonging to a profile. If the profile
 		supports values, the check can be reinforced to take into account a
 		specific value, i.e. how many dialogs were inserted into the profile with
-		a specific value. If no value is passed, only the membersip of the
+		a specific value. If no value is passed, only the membership of the
 		dialog in the profile per se is checked. Note that if the profile does not
 		support values, the value parameter will be silently discarded.
 		</para>
