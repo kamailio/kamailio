@@ -302,7 +302,7 @@ bm_log_timer("test");
 			<title><function moreinfo="none">benchmark.enable_global</function></title>
 			<para>
 				Enables/disables the module. Parameter may be -1, 0 or 1. See
-				discription of "enable" parameter.
+				description of "enable" parameter.
 			</para>
 		</section>
 		<section id="benchmark.rpc.enable_timer">
