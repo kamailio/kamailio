@@ -40,7 +40,7 @@
 	</para>
 	<para>
 		RPC connector modules, such as <quote>ctl</quote> or <quote>xmlrpc</quote>, although
-		not a dependecy, should be loaded in order to execute
+		not a dependency, should be loaded in order to execute
 		the RPC commands exported by this module. When the ctl module
 		is loaded, the tool '&sercmd;' can be used to execute
 		the RPC commands implemented in this module.
