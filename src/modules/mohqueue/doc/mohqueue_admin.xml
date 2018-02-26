@@ -514,7 +514,7 @@ payload types.
         <function moreinfo="none">mohqueue.debug</function>
       </title>
       <para>
-Turns <ulink url="#mohqueues.dbase">debugging</ulink> on or off for a queue. The first paramater is the queue name and the second is a number indicating whether debugging should be turned off or on (0=off, &lt;&gt;0=on).
+Turns <ulink url="#mohqueues.dbase">debugging</ulink> on or off for a queue. The first parameter is the queue name and the second is a number indicating whether debugging should be turned off or on (0=off, &lt;&gt;0=on).
       </para>
       <example>
         <title><function>rpc.debug</function> usage:</title>
@@ -534,7 +534,7 @@ rpc.debug main 0
         <function moreinfo="none">mohqueue.drop_call</function>
       </title>
       <para>
-Drops a call from a queue. The first paramater is the queue name and the second is the <ulink url="#mohqcalls.dbase">call ID</ulink>. Using a call ID of "*" (asterisk) drops all calls from the queue.
+Drops a call from a queue. The first parameter is the queue name and the second is the <ulink url="#mohqcalls.dbase">call ID</ulink>. Using a call ID of "*" (asterisk) drops all calls from the queue.
       </para>
       <example>
         <title><function>rpc.drop_call</function> usage:</title>
