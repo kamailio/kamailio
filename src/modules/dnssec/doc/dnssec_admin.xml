@@ -23,7 +23,7 @@
 		and data integrity.
 	</para>
 	<para>
-		There is no module parameter that should be set nor fuction that has to
+		There is no module parameter that should be set nor function that has to
 		be executed by the configuration file. Existing SIP server deployments
 		can be updated to use DNSSEC by loading this module and setting
 		appropriate DNS server to the operating system.
