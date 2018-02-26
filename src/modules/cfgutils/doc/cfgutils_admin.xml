@@ -190,7 +190,7 @@ if (rand_event()) {
 	</section>
 
 	<section id="cfgutils.f.rand_set_prob">
-	    <title><function moreinfo="none">rand_set_prob(probabiltiy)</function></title>
+	    <title><function moreinfo="none">rand_set_prob(probability)</function></title>
 	    <para>
 		Set the <quote>probability</quote> of the decision.
 	    </para>
@@ -210,7 +210,7 @@ rand_set_prob("4");
 	<section id="cfgutils.f.rand_reset_prob">
 	    <title><function moreinfo="none">rand_reset_prob()</function></title>
 	    <para>
-		Reset the probability back to the inital value.
+		Reset the probability back to the initial value.
 	    </para>
 	    <example>
 		<title><function moreinfo="none">rand_reset_prob()</function> usage</title>
@@ -288,7 +288,7 @@ sleep("1");
 			<title><function>usleep</function> usage</title>
 			<programlisting format="linespecific">
 ...
-# wait 5 miliseconds
+# wait 5 milliseconds
 usleep("5000");
 ...
 			</programlisting>
@@ -487,7 +487,7 @@ if(is_gflag("4"))
 	<section id="cfgutils.f.lock">
 		<title><function moreinfo="none">lock(key)</function></title>
 		<para>
-		Lock the key. Can be used to syncronize operations in config file,
+		Lock the key. Can be used to synchronize operations in config file,
 		a hash id is computed over the key and appropriate lock is set in the
 		lock array controlled by parameter "lock_set_size". Do not use lock()
 		after another lock() unless you are sure the keys hit different array
@@ -650,7 +650,7 @@ core_hash("$ci", "", 4);
 	<section>
 		<title>RPC Commands</title>
 			<para>Functions that check or change some global flags accepts one
-			parameter which is the flag bitmap/mask specifing the corresponding
+			parameter which is the flag bitmap/mask specifying the corresponding
 			flags. It is not possible to specify directly the flag position that
 			should be changed as in the functions available in the routing
 			script.
@@ -677,7 +677,7 @@ $ &kamcmd; cfgutils.rand_set_prob 10
 		<section id="cfgutils.rpc.rand_reset_prob">
 			<title><function moreinfo="none">cfgutils.rand_reset_prob</function></title>
 			<para>
-				Reset the probability value to the inital start value.
+				Reset the probability value to the initial start value.
 			</para>
 			<para>
 				This command don't need a parameter.
