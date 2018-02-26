@@ -175,7 +175,7 @@ modparam("auth_db", "password_column_2", "ha1_2")
 		<title><varname>calculate_ha1</varname> (integer)</title>
 		<para>
 		This parameter tells the server whether it should use a pre-calculated
-		HA1 string or plaintext passwords for authentification.
+		HA1 string or plaintext passwords for authentication.
 		</para>
 		<para>
 		If the parameter is set to 0 and the username parameter of credentials
@@ -247,7 +247,7 @@ modparam("auth_db", "use_domain", 1)
 		<para>
 		This parameter specifies of credentials to be fetch from database when
 		the authentication is performed. The loaded credentials will be stored
-		in AVPs. If the AVP name is not specificaly given, it will be used a
+		in AVPs. If the AVP name is not specifically given, it will be used a
 		NAME AVP with the same name as the column name.
 		</para>
 		<para>
@@ -266,7 +266,7 @@ modparam("auth_db", "use_domain", 1)
 		</itemizedlist>
 		</para>
 		<para>
-		Default value of this parameter is <quote>NULL</quote> (no credientials
+		Default value of this parameter is <quote>NULL</quote> (no credentials
 		loaded).
 		</para>
 		<example>
@@ -531,7 +531,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 			match the authentication user. All other requests: From header must
 			match the authentication user. If bit 2 is set as well (flags==3),
 			the ID check is skipped for INVITE, BYE, PRACK, UPDATE, MESSAGE
-			- these requests can come with anonymoys caller id.
+			- these requests can come with anonymous caller id.
 			</para>
 			<para>
 			Additionally all domains in the checked URIs and the realm in the
