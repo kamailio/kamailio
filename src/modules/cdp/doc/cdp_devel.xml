@@ -673,7 +673,7 @@
         </listitem>
 
         <listitem>
-          <para>void *param - generic data to be bassed to callback
+          <para>void *param - generic data to be passed to callback
           function</para>
         </listitem>
       </itemizedlist>
