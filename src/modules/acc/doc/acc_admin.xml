@@ -234,7 +234,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			There is only one SIP call but with 2 legs ( A to B and B to C).
 			Accounting the legs of a call is required for proper billing of
 			the calls (if C is a PSTN number and the call is billed, user B
-			must pay for the call - as last party modifing the call
+			must pay for the call - as last party modifying the call
 			destination-, and not A - as initiator of the call. Call
 			forwarding on server is only one example which shows the
 			necessity of the having an accounting engine with multiple legs
@@ -246,7 +246,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			<para>
 			First how it works: The idea is to have a set of AVPs and for each
 			call leg to store a set of values in the AVPs. The meaning of
-			the AVP content is stricly decided by the script writer - it can
+			the AVP content is strictly decided by the script writer - it can
 			be the origin and source of the leg, its status or any other
 			related information. If you have a set of 4 AVPS (AVP1, AVP2, AVP3,
 			AVP4), then for the "A call B and B forwards to C" example,
@@ -285,7 +285,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 				only the fields corresponding to the call-leg info.
 				</para>
 				<note><para>You will need to add in your DB (all acc related
-				tables) the colums for call-leg info (a column for each AVP
+				tables) the columns for call-leg info (a column for each AVP
 				of the set).
 				</para></note>
 				</listitem>
@@ -395,7 +395,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 				corresponding caller and callee in a dialog based pseudo-variable (dlg_var)
 				(e.g. chain=B;cfa;C|C;cfnr;D). Additionally it is necessary to store the
 				caller and callee for each leg. All this helps to identify the involved
-				phone parners and forwarding chain. When you route such calls multiple times
+				phone partners and forwarding chain. When you route such calls multiple times
 				to the same Proxy, you could store the caller and callee within an transaction
 				based avp and write it into the dialog based dlg_var pv during a 200 INVITE.
 				</para>
@@ -576,7 +576,7 @@ modparam("acc", "report_cancels", 1)
 	<section id="acc.p.detect_direction">
 		<title><varname>detect_direction</varname> (integer)</title>
 		<para>
-		Controlles the direction detection for sequential requests. If
+		Controls the direction detection for sequential requests. If
 		enabled (non zero value), for sequential requests with upstream
 		direction (from callee to caller), the FROM and TO will be swapped
 		(the direction will be preserved as in the original request).
@@ -722,7 +722,7 @@ modparam("acc", "log_level", 2)   # Set log_level to 2 (L_INFO)
 		<title><varname>log_facility</varname> (string)</title>
 		<para>
 		Log facility to which accounting messages are issued to syslog.
-		This allows to easily seperate the accounting specific logging
+		This allows to easily separate the accounting specific logging
 		from the other log messages.
 		</para>
 		<para>
@@ -795,7 +795,7 @@ modparam("acc", "db_missed_flag", 3)
 	<section  id="acc.p.db_table_acc">
 		<title><varname>db_table_acc</varname> (string)</title>
 		<para>
-		Table name of accounting successfull calls -- database specific. It
+		Table name of accounting successful calls -- database specific. It
 		can contain config variables that will be evaluated at runtime.
 		</para>
 		<para>
@@ -832,7 +832,7 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
 	<section id="acc.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-		SQL address -- database specific. If is set to NULL or emty string,
+		SQL address -- database specific. If is set to NULL or empty string,
 		the SQL support is disabled.
 		</para>
 		<para>
@@ -919,7 +919,7 @@ modparam("acc", "acc_callid_column", "callid")
 	<section id="acc.p.acc_sip_code_column">
 		<title><varname>acc_sip_code_column</varname> (string)</title>
 		<para>
-		Column name in accounting table to store the final reply's numric code
+		Column name in accounting table to store the final reply's numeric code
 		value in string format.
 		</para>
 		<para>
@@ -1444,7 +1444,7 @@ modparam("acc", "reason_from_hf", 1)
 		<para>
 		If set to 1, request structure from transaction is cloned temporarily
 		in the callback to get acc attributes. It is required if you account
-		values from SIP headers to avoid concurent access to the shared memory
+		values from SIP headers to avoid concurrent access to the shared memory
 		transaction structure, specially when accounting 1xx events. If set to
 		0, it uses directly the shared memory structure, be sure you store all
 		needed attributes in AVPs/XAVPs inside request route.
