@@ -23,7 +23,7 @@
 	<para>
 		NOTE: This was developed based on some very early version of
 		the <acronym>Diameter</acronym> protocol, and has not been really
-		tested for many years. It is verly likely to be deleted in upcoming
+		tested for many years. It is very likely to be deleted in upcoming
 		releases. If you want to revive this module, you are welcome, be sure
 		you do proper testing before using in production -- it also may need to
 		be updated first to match the exported API by 'acc' module.
