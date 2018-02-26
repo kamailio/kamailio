@@ -41,7 +41,7 @@
 	<para>
 		Debian Linux squeeze includes already a database as dependency, but as
 		this contain the wrong data, it will not work correctly with the module.
-		More acurate, the module expect the <emphasis>GeoIP City Edition</emphasis>,
+		More accurate, the module expect the <emphasis>GeoIP City Edition</emphasis>,
 		and will not work with the <emphasis>GeoIP Country Edition</emphasis>. In
 		newer Debian Linux releases the package <emphasis>geoip-database-contrib</emphasis>
 		should contain the necessary database. You can download the Lite edition
