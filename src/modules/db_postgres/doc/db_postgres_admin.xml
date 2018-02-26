@@ -62,13 +62,13 @@
 	<section>
 		<title><varname>retries</varname> (integer)</title>
 		<para>
-			How many retries to attept to reconnect if connection to Postgres
+			How many retries to attempt to reconnect if connection to Postgres
 			server becomes broken.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 2 (that means three attepts to submit the query,
-			first will triger the connection error and two more (the value
+			Default value is 2 (that means three attempts to submit the query,
+			first will trigger the connection error and two more (the value
 			of this parameter) after resetting the connection).
 		</emphasis>
 		</para>
