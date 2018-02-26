@@ -257,7 +257,7 @@ resetbflag("1");
 				<emphasis>uri</emphasis> - Valid SIP URI representing the
 				address where to send the request. It must be a static string,
 				no variables are evaluated at runtime. If you need to set
-				outbound proxy address via a variable, use assginment to
+				outbound proxy address via a variable, use assignment to
 				<emphasis>$du</emphasis>.
 			</para>
 		</listitem>
@@ -315,7 +315,7 @@ if(isdsturiset())
 		<section id="kex.f.pv_printf">
 		<title><function moreinfo="none">pv_printf(var, str)</function></title>
 		<para>
-			Evalues the str and sets the resulting value to variable var. For
+			Evaluates the str and sets the resulting value to variable var. For
 			backward compatibility reasons, the same function can be executed via
 			'avp_printf(var, str)'.
 		</para>
@@ -695,7 +695,7 @@ resetdebug();
 		</title>
 		<para>
 			Print private memory (pkg) usage statistics per process. It
-			can take optinally a filter to print statistics only for a
+			can take optionally a filter to print statistics only for a
 			specific process or set of processes. If no filter is given,
 			it prints statistics for all processes.
 		</para>
@@ -849,7 +849,7 @@ resetdebug();
 		</para>
 		<para>
 			NOTE: Processing is done only when the command is issued and involves iterating
-            throug the list of memory fragments and printing details about them.
+            through the list of memory fragments and printing details about them.
 		</para>
 		<para>
 			NOTE: Only the module functions that <emphasis>directly</emphasis> calls shm_alloc or
