@@ -33,7 +33,7 @@
 		</question>
 		<answer>
 		<para>
-			The ims_dialog module addresses shortcomings in the intial dialog
+			The ims_dialog module addresses shortcomings in the initial dialog
                         module design.  It makes some large changes to the API and
                         therefore must be introduced slowly.  It is currently in the
                         early development stages.  Eventually the ims_dialog module should
