@@ -18,7 +18,7 @@
 	<title>Overview</title>
 	<para>
 	The ALIAS_DB module can be used as an alternative for user aliases
-	via usrloc. The main feature is that it does not store all addiacent
+	via usrloc. The main feature is that it does not store all adjacent
 	data as for user location and always uses the database for search (no
 	memory caching). A common use case is to provide additional user
 	aliases, i.e. to supplement the registration in the location database.
