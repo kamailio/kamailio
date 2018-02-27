@@ -63,7 +63,7 @@
 			<title>External Libraries or Applications</title>
 			<para>
 			The following libraries or applications must be installed 
-			before compilling &kamailio; with this module
+			before compiling &kamailio; with this module
 				loaded:
 			</para>
 			<itemizedlist>
