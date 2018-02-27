@@ -51,7 +51,7 @@
 	<section>
 	<title>Usage</title>
 	<para>
-		The layout of the provisionning interface is controlled via an external
+		The layout of the provisioning interface is controlled via an external
 		xml file (see the framework parameter).
 		An example of a framework xml file is provided inside the &kamailio;'s
 		examples directory.
@@ -239,7 +239,7 @@ kamdbctl pframework create
 		</para>
 		<itemizedlist>
 			<listitem><para>
-			full subscriber provisionning with automatic ha1/ha1b fields.
+			full subscriber provisioning with automatic ha1/ha1b fields.
 			</para></listitem>
 		</itemizedlist>
 	</section>
@@ -279,9 +279,9 @@ kamdbctl pframework create
 	<section>
 		<title><varname>xhttp_pi_root</varname> (str)</title>
 		<para>
-			It specifies the root path for provisionning http requests.
+			It specifies the root path for provisioning http requests.
 			The link to the provisioning web interface must be constructed
-			using the following patern:
+			using the following pattern:
 			http://[server_IP]:[tcp_port]/[xhttp_pi_root] 
 		</para>
 		<para>
