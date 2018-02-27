@@ -603,7 +603,7 @@ modparam("tm", "blst_503_max_timeout", 604800)
 		Change the value carefully, because requests that doesn't get
 		a provisional response (everything but INVITE) can easily
 		cause the next hop to be inserted into the blacklist
-		by mistake. For exmaple the next hop is a proxy, it is alive,
+		by mistake. For example the next hop is a proxy, it is alive,
 		but waiting for the response of the UAS, and has higher
 		fr_timer value.
 	</para>
