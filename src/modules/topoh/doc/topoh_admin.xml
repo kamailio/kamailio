@@ -24,7 +24,7 @@
 	<para>
 		The module is transparent for the configuration writer. It only needs to be
 		loaded (tune the parameters if needed). The SIP server can be restarted
-		whitout affecting ongoing calls - once it is up, can encode/decode
+		without affecting ongoing calls - once it is up, can encode/decode
 		topology details, thus no call will be lost.
 	</para>
 	<para>
@@ -237,7 +237,7 @@ modparam("topoh", "callid_prefix", "***")
 			If set to 1, topoh module will bind to sanity module in order
 			to perform sanity checks over received SIP request. Default
 			sanity checks are done. It is useful to check if received request
-			is well formated before proceeding to encoding/decoding.
+			is well formatted before proceeding to encoding/decoding.
 		</para>
 		<para>
 		<emphasis>
@@ -265,7 +265,7 @@ modparam("topoh", "sanity_checks", 1)
 			Note: do not enable this option if you have SIP devices that can
 			alter the URI values it takes from Contact or Record-Route headers
 			(like adding port 5060 when no port is in received URIs, or
-			thet introduce new parameters at unknown position).
+			that introduces new parameters at an unknown position).
 		</para>
 		<para>
 		<emphasis>
