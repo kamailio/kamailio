@@ -30,7 +30,7 @@
 <refsect1><title>Description</title>
 <para>Function pushes initialized message into message queue. This
 message may be removed from the queue using <function>pop_message</function>.
-Unremoved messages are automaticaly freed by <function>msg_queue_destroy</function> 
+Unremoved messages are automatically freed by <function>msg_queue_destroy</function> 
 (depending on message initialization, see <xref
 linkend="create_message"/>, <xref linkend="create_message_ex"/> and <xref
 linkend="init_message_ex"/>).

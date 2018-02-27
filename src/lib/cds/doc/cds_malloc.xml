@@ -27,7 +27,7 @@
 </funcsynopsis></refsynopsisdiv>
 
 <refsect1><title>Description</title>
-<para>Allocates Memory of given size. If compiled with SER it internaly uses
+<para>Allocates Memory of given size. If compiled with SER it internally uses
 <function>shm_malloc</function>, if compiled without SER it uses 
 <function>malloc</function>.
 <!-- detailed description -->
