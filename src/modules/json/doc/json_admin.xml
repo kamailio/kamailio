@@ -63,6 +63,12 @@
 	    <para>
 		Copy field 'field_name' from json object 'json_string' and store it in pvar 'destination'.
 		</para>
+		<para>
+		Note that the result is the string representation of that JSON filed.
+		For example, if you want to retrieve a field that has a string value,
+		then the result is the value enclosed in quotes. If the field value is a structure,
+		then the result is the string-formatted representation of that structure.
+		</para>
 		<example>
 		<title><function>json_get_field</function> usage</title>
 		<programlisting format="linespecific">
