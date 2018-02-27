@@ -200,7 +200,7 @@ append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if n
 	<para>
 		Insert new header value before an existing header, if no index acquired insert before first
 		hf header. Note that a header may consist of comma delimited list of values.
-		To insert value behing last value use <function>appenf_hf_value</function>.
+		To insert value behind last value use <function>appenf_hf_value</function>.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
@@ -302,7 +302,7 @@ remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
 	    </listitem>
 	    <listitem>
 			<para><emphasis>hvalue</emphasis> - Value to be assigned, config var
-				formatting supported. If value is empty then no equal sign apears in param.
+				formatting supported. If value is empty then no equal sign appears in param.
 		</para>
 	    </listitem>
 	</itemizedlist>
@@ -338,7 +338,7 @@ assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
 	    </listitem>
 	    <listitem>
 			<para><emphasis>hvalue</emphasis> - Value to be assigned, config var formatting supported.
-				If value is empty then no equal sign apears in param.
+				If value is empty then no equal sign appears in param.
 		</para>
 	    </listitem>
 	</itemizedlist>
