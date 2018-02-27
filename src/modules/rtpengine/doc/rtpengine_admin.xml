@@ -78,8 +78,8 @@
 		are shared memory(shm), so all processes can see a common list of nodes.
 		There is no locking when setting the nodes enabled/disabled (to keep the
 		memory access as fast as possible). Thus, problems related to node state
-		might appear for concurent processes that might set the nodes
-		enabled/disabled(e.g. by fifo command). This robustness problems are overcomed as follows.
+		might appear for concurrent processes that might set the nodes
+		enabled/disabled(e.g. by fifo command). This robustness problems are overcome as follows.
 	</para>
 
 	<para>
@@ -97,7 +97,7 @@
 	</para>
 
 	<para>
-		The 'kamctl fifo' commands (including rtpengin ones) are executed by an exclusive
+		The 'kamctl fifo' commands (including rtpengine ones) are executed by an exclusive
 		process which operate on the same shared memory node list.
 	</para>
 
@@ -202,7 +202,7 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
 		<para>
 		This parameter determines what happens when all potential rtpengines are found
 		to be unreachable. If enabled, the sip server will send pings to all rtpengines,
-		else no rtpengine will pe queried until its rtpengine_disable_tout timeout passes.
+		else no rtpengine will be queried until its rtpengine_disable_tout timeout passes.
 		</para>
 		<para>
 		<emphasis>
@@ -257,7 +257,7 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
 		Probably the manually deactivated machine is still running(did not crash).
 		</para>
 		<para>
-		This is <emphasis>useful</emphasis> when deactivating a node for maintanance and reject new sessions but allow current ones to finish.
+		This is <emphasis>useful</emphasis> when deactivating a node for maintenance and reject new sessions but allow current ones to finish.
 		</para>
 		<para>
 		The behaviour is the same for a rtpengine deleted table node.
@@ -334,7 +334,7 @@ modparam("rtpengine", "rtpengine_retr", 2)
 	<section id="rtpengine.p.extra_id_pv">
 		<title><varname>extra_id_pv</varname> (string)</title>
 		<para>
-			The parameter sets the PV defination to use when the <quote>b</quote>
+			The parameter sets the PV definition to use when the <quote>b</quote>
 			parameter is used on rtpengine_delete(), rtpengine_offer(),
 			rtpengine_answer() or rtpengine_manage() command.
 		</para><para>
@@ -382,7 +382,7 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
 			operating system will be used.
 			Note: when rtpengine_sock is a IPv6 link-local address,
 			one _must_ set this parameter in order to successfully connect to RTP engine.
-			This is necessarely because OS needs additional scope_id hint to communicate
+			This is necessarily because OS needs additional scope_id hint to communicate
 			over IPv6 link locals. The scope_id is resolved based on the given IPv6.
 		</para>
 		<para>
