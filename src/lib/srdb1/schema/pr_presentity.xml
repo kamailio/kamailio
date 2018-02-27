@@ -75,7 +75,7 @@
         <name>received_time</name>
         <type>int</type>
         <size>&expires_len;</size>
-        <description>Reveived time</description>
+        <description>Received time</description>
     </column>
 
     <column>

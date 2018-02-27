@@ -12,7 +12,7 @@
 	<version>3</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
-		<db:para>This table is used by the douting module - keeps the
+		<db:para>This table is used by the drouting module - keeps the
 			gateways data:
 			<itemizedlist>
 			<listitem>

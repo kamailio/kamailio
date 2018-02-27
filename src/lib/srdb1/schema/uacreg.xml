@@ -13,7 +13,7 @@
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>
-			This table is used by theuac module to load user details for remote
+			This table is used by the uac module to load user details for remote
 			server registration:
 			<itemizedlist>
 			<listitem>
