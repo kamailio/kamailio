@@ -43,7 +43,7 @@
 rtpengine_offer("force trust-address symmetric replace-origin replace-session-connection ICE=force RTP/SAVPF");
 		</programlisting>
 		<para>
-			Finally, if you were using the second paramater (explicit media address) to any of
+			Finally, if you were using the second parameter (explicit media address) to any of
 			these functions, this has been replaced by the <quote>media-address=...</quote>
 			option within the first string of flags.
 		</para>
