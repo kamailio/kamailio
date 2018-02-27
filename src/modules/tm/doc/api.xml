@@ -243,8 +243,8 @@ end of body
 		This function is for revoking t_suspend() from the
 		same process as it was executed before. t_cancel_suspend() can be
 		used when something fails after t_suspend() has already been executed
-		and it turns out that the transcation should not have been
-		suspended. The function cancels the FR timer of the transacation.
+		and it turns out that the transaction should not have been
+		suspended. The function cancels the FR timer of the transaction.
 	    </para>
 	    <para>
 		The message lumps are saved by t_suspend() which cannot be restored.

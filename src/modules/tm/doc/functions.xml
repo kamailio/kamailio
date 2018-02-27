@@ -19,7 +19,7 @@
 		used is the same protocol on which the message was received.
 	</para>
 	<para>
-		<function>t_relay()</function> is the statefull version for 
+		<function>t_relay()</function> is the stateful version for 
 		<function>forward()</function>
 		while <function>t_relay(host, port)</function> is similar to 
 		<function>forward(host, port)</function>.
@@ -75,7 +75,7 @@ if (!t_relay())
 	    </listitem>
 	</itemizedlist>
 	<para>If no parameters are specified the message is sent to a destination
-	 derived from the message uri (using sip sepcific DNS lookups), but with 
+	 derived from the message uri (using sip specific DNS lookups), but with 
 	 the protocol corresponding to the function name.</para>
 	<example>
 	    <title><function>t_relay_to_udp</function> usage</title>
@@ -1144,7 +1144,7 @@ failure_route[1] {
 		</para>
 		<para>
 		  The q parameter of a branch contains a value from range 0-1.0
-		  and it  expresses relative preferrence of the branch
+		  and it  expresses relative preference of the branch
 		  among all branches in the destination set.
 		  The higher the q value the more preference the
 		  user agent gave to the branch. Branches with higher q
@@ -1312,7 +1312,7 @@ event_route[tm:branch-failure:outbound]
 		<function moreinfo="none">t_check_status(re)</function>
 		</title>
 		<para>
-		Returns true if the regular expresion <quote>re</quote> match the
+		Returns true if the regular expression <quote>re</quote> match the
 		reply code of the response message as follows:
 		<itemizedlist>
 		<listitem>
@@ -1386,7 +1386,7 @@ if (t_check_status("(487)|(408)")) {
 				transaction wait time elapses, when the INVITE transaction no
 				longer exists and thus would not match anything. There are
 				also cases when tm would not keep all the information needed
-				for e2e ACK matching (since this is not needed for a statefull
+				for e2e ACK matching (since this is not needed for a stateful
 				proxy and it requires additional memory, tm will not keep this
 				information unless needed by some other module or callbacks).
 				</para>
@@ -1432,7 +1432,7 @@ if ( method == "CANCEL" &amp;&amp; !t_check_trans())
 		<function>t_set_disable_6xx(0|1)</function>
 	</title>
 	<para>
-		Turn off/on 6xx replies special rfc conformant handling on a per
+		Turn off/on 6xx replies special rfc conforming handling on a per
 		transaction basis. If turned off
 		(<function>t_set_disable_6xx("1")</function>) 6XXs will be treated
 		like normal replies.
@@ -1611,7 +1611,7 @@ t_replicate_to_udp("1.2.3.4", "5060");
 	    <listitem>
 		<para><emphasis>proxy</emphasis> - address where the request should
 		be sent. Format is: "proto:host:port" - any of proto or port can be
-		ommitted, along with the semicolon after or before.
+		omitted, along with the semicolon after or before.
 		</para>
 	    </listitem>
 	    <listitem>
