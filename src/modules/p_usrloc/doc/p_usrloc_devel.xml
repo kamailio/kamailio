@@ -39,7 +39,7 @@
 			</title>
 			<para>
 			 Lookup the first and if needed the second key, and insert the given values into the
-			 choosen databases.
+			 chosen databases.
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
@@ -77,7 +77,7 @@
 			</title>
 			<para>
 			 Lookup the first and if needed the second key, and update the given values in the
-			 choosen databases.
+			 chosen databases.
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
@@ -130,7 +130,7 @@
 			</title>
 			<para>
 			 Lookup the first and if needed the second key, and insert on duplicate key update 
-			 the given values in the choosen databases. This is like an insert, but update 
+			 the given values in the chosen databases. This is like an insert, but update 
 			 if the key already exist.
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
@@ -168,7 +168,7 @@
 			</title>
 			<para>
 			 Lookup the first and if needed the second key, and replace the given values in the
-			 choosen databases.
+			 chosen databases.
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
@@ -205,7 +205,7 @@
 			</title>
 			<para>
 			 Lookup the first and if needed the second key, and delete the given values into the
-			 choosen databases.
+			 chosen databases.
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
@@ -247,7 +247,7 @@
 			</title>
 			<para>
 			 Lookup the first and if needed the second key, and performs a query in one of the
-			 choosen databases. The returned handle _r_h must be used to free the result
+			 chosen databases. The returned handle _r_h must be used to free the result
 			 set after the usage of the returned database entries, otherwise a memory leak
 			 will occur.You must call ul_db_free_result before you can call ul_db_query again!
 			</para>

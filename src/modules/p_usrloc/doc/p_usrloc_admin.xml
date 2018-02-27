@@ -18,10 +18,10 @@
     <section>
 	<title>Overview</title>
 	<para>
-	      The p_usrloc module is built upon the usrloc module and provides the same usrloc export to the registrar module (for example). The usrloc module must not be loaded at the same time with the p_usrloc module. The parameters and the interface for the p_usrloc module are thus almost the same, so in this document only extra parameters (specific only to p_usrloc module) and differences are noted. For a complete description of the paramters that are inherited from usrloc see the page here. Note that the modparam statement must still refer to the p_usrloc module.
+	      The p_usrloc module is built upon the usrloc module and provides the same usrloc export to the registrar module (for example). The usrloc module must not be loaded at the same time with the p_usrloc module. The parameters and the interface for the p_usrloc module are thus almost the same, so in this document only extra parameters (specific only to p_usrloc module) and differences are noted. For a complete description of the parameters that are inherited from usrloc see the page here. Note that the modparam statement must still refer to the p_usrloc module.
 	</para>
 
-	<para> The goal of the p_usrloc module is to provide partionioned user location service to Kamailio/SER. This provides three major benefits:
+	<para> The goal of the p_usrloc module is to provide partitioned user location service to Kamailio/SER. This provides three major benefits:
 	      <itemizedlist>
 		    <listitem>
 			<para>
@@ -30,7 +30,7 @@
 		    </listitem>
 		    <listitem>
 			<para>
-				<emphasis> Load Balancing</emphasis> DB performance is greatly increased as queries are automatically split on a pool of ID(number configurable at runtime). Furthermore, a read only db handler can be used to further increase the spead of the "select" queries.
+				<emphasis> Load Balancing</emphasis> DB performance is greatly increased as queries are automatically split on a pool of ID(number configurable at runtime). Furthermore, a read only db handler can be used to further increase the spread of the "select" queries.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -47,7 +47,7 @@
 	distribution keys, e.g. the username and domain the subscribers. The number of databases
 	used for replication is configurable at compile time by modifying the DB_NUM define.
 	Its main field of application is for storing and retrieving location data. The actual
-	database for this subscriber is choosen from a set that is specified in the master
+	database for this subscriber is chosen from a set that is specified in the master
 	database. Read queries are executed on one database of the set. If this database is
 	not available, the other database would be used. This failure is recorded in the
 	master database.
@@ -64,7 +64,7 @@
 	possible to use one read-only instance, that is locally installed, and write only
 	errors and other status information to a central master database.
 	It is also possible to specify different failover schemas and even use transaction to
-	provide additional data safety. This module could further try to minimise the impact
+	provide additional data safety. This module could further try to minimize the impact
 	of a database error with the usage of spare databases that are automatically activated.
 	It also supports the manual deactivation of redundant databases for maintenance purposes.
 	</para>
@@ -127,7 +127,7 @@ modparam("p_usrloc", "write_db_url", "mysql://username:password@localhost/databa
 		<title><varname>read_db_url</varname> (string)</title>
 	    <para>
 		The url to the master database where the distribution data is
-		read from. It is seperated from write access, so for better
+		read from. It is separated from write access, so for better
 		performance, a local replicate can be used for read access.
 	    </para>
 	    <para>
@@ -773,7 +773,7 @@ modparam("p_usrloc", "db_mode", 2)
 	<section>
 		<title>Maintenance</title>
 		
-		<para>The module supports the decativation of redundant databases for maintenance
+		<para>The module supports the deactivation of redundant databases for maintenance
 		reasons. This can be done by setting the status column of the respective database
 		in the p_usrloc to the value <quote>2</quote>. This setting is autodetected from
 		all modules on the server cluster. Changes in the locdb table are periodically
@@ -785,7 +785,7 @@ modparam("p_usrloc", "db_mode", 2)
 		the respective status column needs to be set to <quote>0</quote>. This is
 		autodetected as well, the first module that noticed the change will set the status
 		column to <quote>1</quote> and setting the failover column to the current time and
-		date. Write requests are now transfered again to the database, but no reads are done
+		date. Write requests are now transferred again to the database, but no reads are done
 		yet.
 		</para>
 		<para>
