@@ -210,7 +210,7 @@ modparam("ndb_redis", "cluster", 1)
 		</emphasis>
 		</para>
 		<example>
-			<title>Set <varname>allowed_timeots</varname> parameter</title>
+			<title>Set <varname>allowed_timeouts</varname> parameter</title>
 			<programlisting format="linespecific">
 ...
 modparam("ndb_redis", "allowed_timeouts", 3)
