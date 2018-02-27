@@ -203,7 +203,7 @@ record_route_advertised_address("1.2.3.4:5090");
 			</listitem>
 			<listitem>
 				<para><emphasis>str *name</emphasis> - contains the Route header
-				parameter to be serached.
+				parameter to be searched.
 				</para>
 			</listitem>
 			<listitem>

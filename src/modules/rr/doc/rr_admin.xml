@@ -19,7 +19,7 @@
     <title>Dialog support</title>
 
     <para>&kamailio; is basically <emphasis>only</emphasis> a transaction
-    statefull proxy, without any dialog support build in. There are many
+    stateful proxy, without any dialog support build in. There are many
     features/services which actually requires a dialog awareness, like storing
     the information in the dialog creation stage, information which will be
     used during the whole dialog existence.</para>
@@ -183,7 +183,7 @@ modparam("rr", "enable_double_rr", 0)
       detects that both sender and receiver use same protocol (e. g. TCP or
       TLS), and this results in UDP being used by such broken clients. Set
       enable_double_rr to value 2 to always have two RR headers with transport
-      attributes expicitly set.</para>
+      attributes explicitly set.</para>
 
       <example>
         <title>Set <varname>enable_double_rr</varname> to 2 to always have two explicit RR headers</title>
@@ -583,7 +583,7 @@ if (check_route_param("nat=yes")) {
       <title><function moreinfo="none">is_direction(dir)</function></title>
 
       <para>The function checks the flow direction of in-dialog requests. This
-      function uses the <quote>ftag</quote> prameter from the Route header,
+      function uses the <quote>ftag</quote> parameter from the Route header,
       therefore the append_fromtag (see <xref linkend="append-fromtag-id"/>
       module parameter must be enabled. Also this must be called only after
       loose_route() (see <xref linkend="loose-route-id"/>).</para>
