@@ -107,7 +107,7 @@
 	    </listitem>
 	    <listitem>
 		<para>
-		    %Hd : host's domain (if system hosntame is FQDN, part behind first .)
+		    %Hd : host's domain (if system hostname is FQDN, part behind first .)
 		</para>
 	    </listitem>
 	    <listitem>
@@ -257,7 +257,7 @@
 		    The module should identify most of compact header names
 		    (the ones recognized by ser which should be all at this
 		    moment), if not, the compact form has to be specified
-		    explicitely. It is recommended to use dedicated specifiers
+		    explicitly. It is recommended to use dedicated specifiers
 		    for headers (e.g., %ua for user agent header), if they are
 		    available -- they are faster.
 		</para>
@@ -285,7 +285,7 @@
 		<para>
 		    %| or %(space) : end of %@select.framework identifier.
 			If you need to concatenate select framework call and
-			another non-whitespace literal, you need to explicitelly
+			another non-whitespace literal, you need to explicitly
 			set the end of the select framework identifier.
 		</para>
 		<para>
