@@ -60,7 +60,7 @@
 		<title><varname>separator</varname> (str)</title>
 		<para>
 			Separator character used to delimit attributes in time
-			reccurence definitions.
+			reccurrence definitions.
 		</para>
 		<para>
 		<emphasis>
@@ -131,7 +131,7 @@ modparam("tmrec", "separator", ";")
 			</para>
 			<para>
 			See RFC 2445 for the format of duration. In short for common cases
-			when the duration doesn't exeed a data, it must start with PT
+			when the duration doesn't exceed a data, it must start with PT
 			followed by the value for hours, minutes or seconds - e.g., a
 			duration of 8 hours must be written as PT8H.
 			</para>
