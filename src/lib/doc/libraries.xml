@@ -15,7 +15,7 @@
 <chapter><title>Introduction</title>
 
 <section><title>About</title>
-<para>Common libraries are originaly determined for usage with SER - as a
+<para>Common libraries are originalsy determined for usage with SER - as a
 collection of useful functions which are not present in the SER's code. 
 But as the time goes it seems to be good to make them usable without SER too, 
 at least for testing parts of SER modules and thus it is possible to use 
