@@ -160,7 +160,7 @@ modparam("uri_db", "uriuser_column", "uri_user")
 	<section id="uri_db.p.use_uri_table">
 		<title><varname>use_uri_table</varname> (integer)</title>
 		<para>
-		Specify if the <quote>uri</quote> table should be used for checkings
+		Specify if the <quote>uri</quote> table should be used for checking
 		instead of <quote>subscriber</quote> table. A non-zero value means true.
 		</para>
 		<para>
