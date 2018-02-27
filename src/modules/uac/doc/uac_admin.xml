@@ -791,7 +791,7 @@ uac_req_send();
 			</title>
 			<para>
 			This function sets the PV dst to SIP URI that correspond to uuid
-			in uac registations table. uuid and dst must be pseudo-variables.
+			in uac registrations table. uuid and dst must be pseudo-variables.
 			</para>
 			<para>
 			This function can be used from ANY_ROUTE.
