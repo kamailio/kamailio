@@ -895,8 +895,8 @@ append_rpid_hf();  # Append Remote-Party-ID header field
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>prefix</emphasis> - Prefix of the 
-			Remote-Party-ID URI. The string will be added at the begining of 
-			body of the header field, just before the URI.
+			Remote-Party-ID URI. The string will be added at the beginning of 
+			the body of the header field, just before the URI.
 			</para>
 		</listitem>
 		<listitem>
@@ -1095,7 +1095,7 @@ if (is_supported("outbound")) { ... }
 		Record-Route URI is 'myself' and source address is not matching it
 		(to avoid detecting in case of local loops). Note that it does not
 		detect spirals, which can have the condition for replies true also
-		in the case of additional SIP reply receival.
+		in the case of additional SIP reply reception.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
