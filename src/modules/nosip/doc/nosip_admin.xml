@@ -157,7 +157,7 @@ event_route[nosip:msg] {
 			back to handle a suspended SIP transaction. While this could be
 			achieved via XMLRPC or HTTP for TCP workers, UDP workers are the
 			least loaded in terms of network interaction layer (ie., there is
-			no overhad for connections management like for TCP).
+			no overhead for connections management like for TCP).
 		</para>
 		<para>
 			Parsing of the non-sip message can be done using config file
