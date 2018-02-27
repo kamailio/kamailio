@@ -2630,8 +2630,7 @@ try_again:
 
 	/* fix routing lists */
 	if ( (r=fix_rls())!=0){
-		fprintf(stderr, "ERROR: error %d while trying to fix configuration\n",
-						r);
+		fprintf(stderr, "error %d while trying to fix configuration\n", r);
 		goto error;
 	};
 	fixup_complete=1;
@@ -2647,7 +2646,7 @@ try_again:
 	if (is_main) shutdown_children(SIGTERM, 0);
 	if (!dont_daemonize) {
 		if (daemon_status_send(0) < 0)
-			ERR("error sending exit status: %s [%d]\n",
+			fprintf(stderr, "error sending exit status: %s [%d]\n",
 					strerror(errno), errno);
 	}
 	/* else terminate process */
@@ -2658,7 +2657,7 @@ error:
 	if (is_main) shutdown_children(SIGTERM, 0);
 	if (!dont_daemonize) {
 		if (daemon_status_send((char)-1) < 0)
-			ERR("error sending exit status: %s [%d]\n",
+			fprintf(stderr, "error sending exit status: %s [%d]\n",
 					strerror(errno), errno);
 	}
 	return -1;
