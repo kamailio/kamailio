@@ -99,7 +99,7 @@ modparam("statsc", "items", 200)
 		<title><varname>track</varname> (str)</title>
 		<para>
 			Specify the statistics to track. The parameter can
-			be set many times and one value can speficy many
+			be set many times and one value can specify many
 			statistics.
 		</para>
 		<para>
@@ -112,19 +112,19 @@ modparam("statsc", "items", 200)
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>shm.free</emphasis> - the internal statistc 'free_size'
+				<emphasis>shm.free</emphasis> - the internal statistic 'free_size'
 				(from group 'shmem').
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>shm.used</emphasis> - the internal statistc 'used_size'
+				<emphasis>shm.used</emphasis> - the internal statistic 'used_size'
 				(from group 'shmem').
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>shm.real_used</emphasis> - the internal statistc 'real_used_size'
+				<emphasis>shm.real_used</emphasis> - the internal statistic 'real_used_size'
 				(from group 'shmem').
 			</para>
 			</listitem>
