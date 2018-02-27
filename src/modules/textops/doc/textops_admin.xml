@@ -416,10 +416,10 @@ if(has_body() &amp;&amp; replace_body_atonce("^.+$", ""))
 				g (global) or s (match newline don't treat it as end of line).
 			</para>
 			<para>
-			're' - is regular expresion
+			're' - is regular expression
 			</para>
 			<para>
-			'repl' - is replacement string - may contain pseudo-varibales
+			'repl' - is replacement string - may contain pseudo-variables
 			</para>
 			<para>
 			'flags' - substitution flags (i - ignore case, g - global)
@@ -461,10 +461,10 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig') )
 				g (global) or s (match newline don't treat it as end of line).
 			</para>
 			<para>
-			're' - is regular expresion
+			're' - is regular expression
 			</para>
 			<para>
-			'repl' - is replacement string - may contain pseudo-varibales
+			'repl' - is replacement string - may contain pseudo-variables
 			</para>
 			<para>
 			'flags' - substitution flags (i - ignore case, g - global)
@@ -508,10 +508,10 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){$
 				g (global) or s (match newline don't treat it as end of line).
 			</para>
 			<para>
-			're' - is regular expresion
+			're' - is regular expression
 			</para>
 			<para>
-			'repl' - is replacement string - may contain pseudo-varibales
+			'repl' - is replacement string - may contain pseudo-variables
 			</para>
 			<para>
 			'flags' - substitution flags (i - ignore case, g - global)
@@ -553,10 +553,10 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 				g (global) or s (match newline don't treat it as end of line).
 			</para>
 			<para>
-			're' - is regular expresion
+			're' - is regular expression
 			</para>
 			<para>
-			'repl' - is replacement string - may contain pseudo-varibales
+			'repl' - is replacement string - may contain pseudo-variables
 			</para>
 			<para>
 			'flags' - substitution flags (i - ignore case, g - global)
@@ -969,7 +969,7 @@ if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\n");
 		</itemizedlist>
 		</para>
 		<para>
-		Return true if a header was succesfully appended.
+		Return true if a header was successfully appended.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, 
@@ -1024,7 +1024,7 @@ append_time();
 		</itemizedlist>
 		</para>
 		<para>
-		Return true if a header was succesfully appended.
+		Return true if a header was successfully appended.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -1479,7 +1479,7 @@ if (starts_with("$rU", "+358"))
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<para>
-		The core will take care of the last boundary ending "--". Detecting wich one is
+		The core will take care of the last boundary ending "--". Detecting which one is
 		the last and fixing the others if needed.
 		</para>
 		<para>
