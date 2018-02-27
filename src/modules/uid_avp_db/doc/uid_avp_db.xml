@@ -30,7 +30,7 @@
 	    manipulate the contents of AVPs (Attribute-Value pairs). The AVPs
 	    are variables attached to the SIP message being processed. Each
 	    variable has its name and value. AVPs can be used to store
-	    arbitrary data or as a means of inter-module comminication.
+	    arbitrary data or as a means of inter-module communication.
 	</para>
 	<para>
 	    You may also want to check the avpops module which is more flexible
