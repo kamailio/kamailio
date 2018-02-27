@@ -98,28 +98,6 @@ static redis_key_t* db_redis_shift_query(km_redis_con_t *con) {
     return query;
 }
 
-static redis_key_t* db_redis_pop_query(km_redis_con_t *con) {
-    redis_command_t **current;
-    redis_command_t *prev;
-    redis_key_t *query;
-
-    current = &con->command_queue;
-    if (!*current)
-        return NULL;
-
-    do {
-        query = (*current)->query;
-        prev = *current;
-        *current = (*current)->next;
-    } while (*current);
-
-    prev->next = NULL;
-    pkg_free(*current);
-    *current = NULL;
-
-    return query;
-}
-
 int db_redis_connect(km_redis_con_t *con) {
     struct timeval tv;
     redisReply *reply;
@@ -388,8 +366,8 @@ int db_redis_get_reply(km_redis_con_t *con, void **reply) {
             con->append_counter--;
         }
     } else {
-        LM_DBG("get_reply successful, popping query\n");
-        query = db_redis_pop_query(con);
+        LM_DBG("get_reply successful, removing query\n");
+        query = db_redis_shift_query(con);
         db_redis_key_free(&query);
         con->append_counter--;
     }
