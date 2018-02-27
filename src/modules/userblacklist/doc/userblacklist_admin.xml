@@ -100,7 +100,7 @@ modparam("userblacklist", "use_domain", 1)
     	    <title><varname>match_mode</varname> (integer)</title>
 	    <para>
 		The number of individual characters that are used for matching. 
-		Valid values are 10 or 128. When you specifiy 10, only digits will be used for matching, 
+		Valid values are 10 or 128. When you specify 10, only digits will be used for matching, 
 		this operation mode is equivalent to the old behaviour. When configured with 128, 
 		all standard ASCII chars are available for matching. Please be aware that memory 
 		requirements for storing the routing tree in shared memory will also
