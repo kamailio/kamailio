@@ -54,7 +54,7 @@
 			</para>
 			<itemizedlist>
 				<listitem>
-				<para><emphasis>Advantages:</emphasis> low bandwitdh traffic,
+				<para><emphasis>Advantages:</emphasis> low bandwidth traffic,
 				easy to generate by &kamailio;;
 				</para>
 				</listitem>
@@ -81,7 +81,7 @@
 				</para>
 				</listitem>
 				<listitem>
-				<para><emphasis>Disadvantages:</emphasis> higher bandwitdh 
+				<para><emphasis>Disadvantages:</emphasis> higher bandwidth 
 				traffic, more expensive (as time) to generate by &kamailio;;
 				</para>
 				</listitem>
@@ -374,7 +374,7 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 	<section id="nathelper.p.keepalive_timeout">
 		<title><varname>keepalive_timeout</varname> (int)</title>
 		<para>
-		The parameter sets the interval in secods after which a natted
+		The parameter sets the interval in seconds after which a natted
 		contact is removed from location table if it does not reply to SIP
 		keepalives (usually OPTIONS ping requests).
 		</para>
@@ -491,8 +491,8 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 		<function moreinfo="none">fix_nated_sdp(flags [, ip_address])</function>
 		</title>
 		<para>
-		Alters the SDP information in orer to facilitate NAT traversal. What
-		changes to be performed may be controled via the 
+		Alters the SDP information in order to facilitate NAT traversal. What
+		changes to be performed may be controlled via the 
 		<quote>flags</quote> parameter. Return value is -1 if error occurred,
 		1 if ip's were replaced, 2 if no ip's were replaced.
 		</para>
@@ -527,7 +527,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 			</itemizedlist>
 			</listitem>
 			<listitem><para>
-			<emphasis>ip_address</emphasis> - IP to be used for rewritting SDP.
+			<emphasis>ip_address</emphasis> - IP to be used for rewriting SDP.
 			If not specified, the received signalling IP will be used. The
 			parameter allows pseudo-variables usage. NOTE: For the IP to be
 			used, you need to use 0x02 or 0x08 flags, otherwise it will have
