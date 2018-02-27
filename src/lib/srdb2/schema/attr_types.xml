@@ -84,7 +84,7 @@
 	<description>
 	  Various flags. Meaning of bits in flags field is this:
 	  10 - multivalue  (if is set, attribute may contain multiple values)
-	  11 - fill_on_reg (attribute should be set when user is registrating)
+	  11 - fill_on_reg (attribute should be set when user is registering)
 	  12 - required    (attribute should not be empty)
 	</description>
   </column>
@@ -94,7 +94,7 @@
 	<type>int</type>
 	<default>0</default>
 	<description>
-	  Field of flags describeing where the attribute may be used (user, domain, global,...)
+	  Field of flags describing where the attribute may be used (user, domain, global,...)
 	  Meaning of bits is this:
 	  4 - uri
 	  8 - user

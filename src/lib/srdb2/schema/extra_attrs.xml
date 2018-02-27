@@ -48,7 +48,7 @@
   <index> 
 	<!-- 
 		 Note: we don't need unique index, but some databases require it.
-		 We need only non-unique index accordind id because of reading.
+		 We need only non-unique index according id because of reading.
 	  -->
 	<unique/>
 	<name>userattrs_idx</name>
