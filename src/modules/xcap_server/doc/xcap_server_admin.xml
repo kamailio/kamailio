@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides an XCAP server functionaly inside Kamailio
+		This module provides an XCAP server functionally inside Kamailio
 		and SER SIP servers.
 	</para>
 	<para>
@@ -26,13 +26,13 @@
 		<para>
 			reuse of SIP router transport layer - XCAP documents can be sent
 			via SIP (UDP, TCP, TLS and SCTP) and via HTTP (TCP or TLS (HTTPS)).
-			For HTTP/S, you neet to load XHTTP module to handle HTTP/S
+			For HTTP/S, you need to load XHTTP module to handle HTTP/S
 			requests.
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-			the Presence server has access imediatelly to the latest version
+			the Presence server has access immediately to the latest version
 			of XCAP documents. No more need to trigger refresh of XCAP
 			documents via RPC command.
 		</para>
@@ -226,7 +226,7 @@ modparam("xcap_server", "xml_ns",
 			be paths a client can use to download the listed XCAP
 			documents. In some cases (for example, when the XCAP
 			server is accessed using HTTP from an HTTP proxy the
-			client connectes to using HTTPS) the XCAP server may
+			client connected to using HTTPS) the XCAP server may
 			not be able to automatically determine the correct
 			scheme to use based on the HTTP connection.
 		</para>
@@ -264,7 +264,7 @@ modparam("xcap_server", "directory_scheme", 0)
 			be paths a client can use to download the listed XCAP
 			documents. In some cases (for example, when the XCAP
 			server is accessed through a proxy that re-writes
-			headers, or a client is non-conformant and does not
+			headers, or a client is non-conforming and does not
 			include a Host: header) the XCAP server may not be able
 			to automatically determine the correct hostname to use.
 		</para>
