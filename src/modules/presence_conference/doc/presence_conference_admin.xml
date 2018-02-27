@@ -59,7 +59,7 @@
 	<section>
 	    <title><varname>use_partial_states</varname> (int)</title>
 	    <para>
-		Control usage of partial state notifiations.
+		Control usage of partial state notifications.
 	    </para>
 	    <para>
 		<emphasis>
