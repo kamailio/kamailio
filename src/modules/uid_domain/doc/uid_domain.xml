@@ -185,7 +185,7 @@ iptel
 			table are cached in memory, just like virtual domain
 			themselves. If you disable caching then the domain module will
 			attempt to load attributes from the database each time you call
-			lookup_domain. Attributes cached in memory can be realoaded with
+			lookup_domain. Attributes cached in memory can be reloaded with
 			the domain.reload management function.</para>
 		</section>
 
