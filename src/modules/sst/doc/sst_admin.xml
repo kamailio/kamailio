@@ -180,7 +180,7 @@ modparam("sst", "enable_stats", 0)
 		<title><varname>min_se</varname> (integer)</title>
 
 		<para>The value is used to set the proxies MIN-SE
-		value and is used in the 422 error reply as the proxys
+		value and is used in the 422 error reply as the proxies
 		MIN-SE: header value if the <quote>sstCheckMin()</quote> flag is set
 		to true and the check fails.</para>
 
@@ -317,7 +317,7 @@ route {
 		modules minimum value, this function will return
 		true. </para>
 
-		<para>If the fuction is called with the
+		<para>If the function is called with the
 		send_reply_flag set to true (1) and the requested
 		Session-Expires / MIN-SE values are too small, a 422
 		reply will be sent for you. The 422 will carry a
