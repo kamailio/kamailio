@@ -34,7 +34,7 @@
 		The SIP RFC 3261 publishes a matching algorithm based only on the
 		contact string with Call-id and Cseq extra checking (if the Call-ID
 		is the same, it must have a higher Cseq number, otherwise it is invalid).
-		But as argumented above, this is not enough in NAT traversal context,
+		But as argued above, this is not enough in NAT traversal context,
 		so the &kamailio; implementation of contact matching offers more algorithms:
 		</para>
 		<itemizedlist>
@@ -73,7 +73,7 @@
 			</listitem>
 		</itemizedlist>
 		<para>
-		To find out how to control/select the contact maching algorithm, please see the
+		To find out how to control/select the contact matching algorithm, please see the
 		module parameter matching_mode - <xref linkend="usrloc.p.matching_mode"/>.
 		</para>
 		</section>
@@ -540,7 +540,7 @@ modparam("usrloc", "partition_column", "part")
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 		If the domain part of the user should be also saved and used for
-		identifing the user (along with the username part). Useful in
+		identifying the user (along with the username part). Useful in
 		multi domain scenarios. Non 0 value means true.
 		</para>
 		<para>
@@ -671,7 +671,7 @@ modparam("usrloc", "db_url", "&exampledb;")
 			more servers sharing the same DB without any replication at SIP
 			level. The mode may be slower due the high number of DB operation.
 			For example NAT pinging is a killer since during each ping cycle
-			all nated contact are loaded from the DB; The lack of memory
+			all natted contact are loaded from the DB; The lack of memory
 			caching also disable the statistics exports.
 			</para>
 		</listitem>
@@ -948,7 +948,7 @@ modparam("usrloc", "db_check_update", 1)
 		<title><varname>timer_procs</varname> (string)</title>
 		<para>
 			Number of timer processes to be started by module. Timer processes
-			take care of checking expired records and syncronization with
+			take care of checking expired records and synchronization with
 			database. If set to 0, no dedicated timer is started, the one from
 			core will be used.
 		</para>
@@ -1113,7 +1113,7 @@ modparam("usrloc", "db_raw_fetch_type", 1)
 			null fields (e.g., db_mongodb) for each stored record.
 		</para>
 		<para>
-			When set to 0, the fiels that default to null are not
+			When set to 0, the fields that default to null are not
 			added to the DB insert statement if they don't have a different
 			value, making the query smaller.
 		</para>
@@ -1407,7 +1407,7 @@ modparam("usrloc", "rm_expired_delay", 30)
 		<title>users</title>
 			<para>
 			Number of AOR existing in the USRLOC memory cache for that domain
-			- can not be resetted; this statistic will be register for each
+			- can not be reset; this statistic will be register for each
 			used domain (Ex: location).
 			</para>
 		</section>
@@ -1415,14 +1415,14 @@ modparam("usrloc", "rm_expired_delay", 30)
 		<title>contacts</title>
 			<para>
 			Number of contacts existing in the USRLOC memory cache for that
-			domain - can not be resetted; this statistic will be register for
+			domain - can not be reset; this statistic will be register for
 			each used domain (Ex: location).
 			</para>
 		</section>
 		<section id="usrloc.s.expires">
 		<title>expires</title>
 			<para>
-			Total number of expired contacts for that domain - can be resetted;
+			Total number of expired contacts for that domain - can be reset;
 			 this statistic will be register for each used domain
 			(Ex: location).
 			</para>
@@ -1431,7 +1431,7 @@ modparam("usrloc", "rm_expired_delay", 30)
 		<title>registered_users</title>
 			<para>
 			Total number of AOR existing in the USRLOC memory cache for all
-			domains - can not be resetted.
+			domains - can not be reset.
 			</para>
 		</section>
 	</section>
