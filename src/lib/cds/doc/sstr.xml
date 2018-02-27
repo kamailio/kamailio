@@ -15,7 +15,7 @@ Router due to it's usability and need of testing some parts of SER's code
 outside of <quote>SER's environment</quote>. Many of string functions were
 inspired by or directly taken from SER's code. Another reason for this structure 
 was to put string operations to one place and not leave them independently and
-often duplictly in SER's modules.</para>
+often duplicately in SER's modules.</para>
 </partintro>
 
 <include xmlns="http://www.w3.org/2001/XInclude" href="str_t.xml"/>
