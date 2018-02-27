@@ -102,7 +102,7 @@
 		<varlistentry>
 			<term>id</term>
 			<listitem><para>Identifier used for searching attributes. When
-			searching for user attributes it is UID, when searchnig uri
+			searching for user attributes it is UID, when searching uri
 			attributes it is URI.
 			</para></listitem>
 		</varlistentry>
