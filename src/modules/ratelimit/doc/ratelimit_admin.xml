@@ -248,7 +248,7 @@ modparam("ratelimit", "queue", "2:*")
 		<para>
 		A pipe is characterised by its algorithm and limit (bandwidth, in ipfw terms).
 		When specifying a limit, the unit depends on the algorithm used and doesn't
-		need to be spedified also (eg, for TAILDROP or RED, limit means packets/sec,
+		need to be specified also (eg, for TAILDROP or RED, limit means packets/sec,
 		whereas with the FEEDBACK algorithm, it means [CPU] load factor).
 		</para>
 		<example>
