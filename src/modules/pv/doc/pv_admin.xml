@@ -307,7 +307,7 @@ xavp_params_explode("a=b;c=d;e=d", "x");
 			</para>
 			<para>
 				Content of the static branch is not reset after this function is
-				executed. It has to be done explicitely with sbranch_reset().
+				executed. It has to be done explicitly with sbranch_reset().
 			</para>
 			<para>
 			Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
@@ -338,7 +338,7 @@ sbranch_set_ruri();
 			</para>
 			<para>
 				Content of the static branch is not reset after this function is
-				executed. It has to be done explicitely with sbranch_reset().
+				executed. It has to be done explicitly with sbranch_reset().
 			</para>
 			<para>
 			Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
