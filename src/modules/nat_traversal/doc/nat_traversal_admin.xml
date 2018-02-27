@@ -509,7 +509,7 @@ modparam("nat_traversal", "keepalive_state_file", "/var/run/kamailio/keepalive_s
       <para>
         Check if the client is behind NAT. What tests are performed is
         specified by the type parameter which is an integer given by the sum
-        of the numbers corresponsing to the tests that one wishes to perform.
+        of the numbers corresponding to the tests that one wishes to perform.
         The numbers corresponding to individual tests are shown below:
       </para>
 
@@ -561,7 +561,7 @@ if (client_nat_test("3")) {
       <para>
         Will replace the IP and port in the Contact header with the
         IP and port the SIP message was received from. Usually called
-        after a succesful call to client_nat_test(type)
+        after a successful call to client_nat_test(type)
       </para>
 
       <para>
