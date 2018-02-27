@@ -21,7 +21,7 @@
 	<para>
 		The module defines in an abstract mode the notion of 'pipe',
 		which can be a reference to an IP address, to a network or a trunk.
-		The associtiation of traffic to a pipe is done in the config file,
+		The association of traffic to a pipe is done in the config file,
 		therefore, a pipe could represent SIP traffic coming from a user or
 		the flow of specific SIP requests such as INVITE or REGISTER.
 	</para>
@@ -258,7 +258,7 @@ modparam("pipelimit", "plp_algorithm_column", "name")
 		each timer_interval, therefore the amounts of messages have to be divided
 		by this timer_interval value to get the messages per second value. For
 		example, if you want to allow an average of 10 messages per second with
-		a timer inteval of 10 seconds, then the limit value has to be 100.
+		a timer interval of 10 seconds, then the limit value has to be 100.
 		</para>
 		<para>
 		Note: A too small value may lead to performance penalties due to
@@ -356,7 +356,7 @@ modparam("pipelimit", "reply_reason", "Limiting")
 		value, if this is greater than 0. Algorithm is case sensitive.
 		</para>
 		<para>	
-		The pipe name can be provided via a pseudo variabile.
+		The pipe name can be provided via a pseudo variable.
 		</para>
 		<para>The method will return:
 		<itemizedlist>
@@ -492,8 +492,8 @@ with unexpected retcode=$var(check_result)\n");
 		<function moreinfo="none">pl.stats</function>
 		</title>
 		<para>
-		Lists the parameters and variabiles in the pipelimit module:
-		pipe id, pipe load and pipe couter.
+		Lists the parameters and variables in the pipelimit module:
+		pipe id, pipe load and pipe counter.
 		</para>
 		<para>
 		Name: <emphasis>pl.stats</emphasis>
