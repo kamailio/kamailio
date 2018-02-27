@@ -157,7 +157,7 @@ modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
 		<para>
 		The definition of a database result ID. The value of the parameter can be
 		any string. Results IDs are also added at fixup time when sql_query()
-		parameters are parsed, so there is no need to decalare them via module
+		parameters are parsed, so there is no need to declare them via module
 		parameter unless you want to use them from within other modules and be
 		available in all application processes.
 		</para>
@@ -407,7 +407,7 @@ sql_result_free("ra");
 			process and result is not available back to config, thus it should
 			be used only for sql statements that don't return values (e.g.,
 			insert, delete, update...). Note that async_workers core parameter
-			must be set in order to enable the asyncronous framework
+			must be set in order to enable the asynchronous framework
 			needed by this function.
 		</para>
 		<itemizedlist>
