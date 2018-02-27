@@ -271,7 +271,7 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 		<para>
 		If set to 1, module acts in passive mode - no bind to presence module,
 		no connection to database. Useful when needing only to use $xml(...)
-		pseudoc-variable.
+		pseudo-variable.
 		</para>
 		<para>
 			<emphasis>Default value: <quote>0</quote> (0 - active mode,
