@@ -179,7 +179,7 @@ modparam("sipdump", "fprefix", "ksipdump-")
 		<function moreinfo="none">sipdump_send(tag)</function>
 	    </title>
 	    <para>
-		Send the details of the current SIP message to the writter process and
+		Send the details of the current SIP message to the writer process and
 		get it stored in the file.
 		</para>
 		<para>
