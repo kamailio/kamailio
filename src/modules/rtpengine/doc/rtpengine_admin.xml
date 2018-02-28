@@ -2159,7 +2159,7 @@ rtpengine_offer();
 				&sdp; substitutions (c=, m=, etc) are unaffected by this flag.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>RTP, SRTP, AVP, AVPF</emphasis> - These flags control the &rtp;
+				<emphasis>RTP, SRTP, DTLS, AVP, AVPF</emphasis> - These flags control the &rtp;
 				transport protocol that should be used towards the recipient of
 				the &sdp;. If none of them are specified, the protocol given in
 				the &sdp; is left untouched. Otherwise, the <quote>SRTP</quote> flag indicates that
@@ -2169,8 +2169,8 @@ rtpengine_offer();
 				should be used. See also the next set of flags below.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>RTP/AVP, RTP/SAVP, RTP/AVPF, RTP/SAVPF</emphasis> - these serve as
-				an alternative, more explicit way to select between the different &rtp; protocols
+				<emphasis>RTP/AVP, RTP/SAVP, UDP/TLS/RTP/SAVP, RTP/AVPF, RTP/SAVPF, UDP/TLS/RTP/SAVPF</emphasis> - these 
+				serve as an alternative, more explicit way to select between the different &rtp; protocols
 				and profiles supported by the &rtp; proxy. For example, giving the flag
 				<quote>RTP/SAVPF</quote> has the same effect as giving the two flags
 				<quote>SRTP AVPF</quote>.
