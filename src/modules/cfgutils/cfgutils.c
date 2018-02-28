@@ -735,17 +735,17 @@ static int cfg_lock_helper(str *lkey, int mode)
 	return 1;
 }
 
-static int cfg_lock(str *lkey)
+static int cfg_lock(sip_msg_t *msg, str *lkey)
 {
 	return cfg_lock_helper(lkey, 0);
 }
 
-static int cfg_unlock(str *lkey)
+static int cfg_unlock(sip_msg_t *msg, str *lkey)
 {
 	return cfg_lock_helper(lkey, 1);
 }
 
-static int cfg_trylock(str *lkey)
+static int cfg_trylock(sip_msg_t *msg, str *lkey)
 {
 	return cfg_lock_helper(lkey, 2);
 }
