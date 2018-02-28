@@ -121,9 +121,9 @@ Chapter 1. Admin Guide
 
    The module defines in an abstract mode the notion of 'pipe', which can
    be a reference to an IP address, to a network or a trunk. The
-   associtiation of traffic to a pipe is done in the config file,
-   therefore, a pipe could represent SIP traffic coming from a user or the
-   flow of specific SIP requests such as INVITE or REGISTER.
+   association of traffic to a pipe is done in the config file, therefore,
+   a pipe could represent SIP traffic coming from a user or the flow of
+   specific SIP requests such as INVITE or REGISTER.
 
    Pipelimit started from ratelimit module, adding support for definition
    of pipes limits in database and dynamic names. Complexity of keeping
@@ -283,7 +283,7 @@ modparam("pipelimit", "plp_algorithm_column", "name")
    each timer_interval, therefore the amounts of messages have to be
    divided by this timer_interval value to get the messages per second
    value. For example, if you want to allow an average of 10 messages per
-   second with a timer inteval of 10 seconds, then the limit value has to
+   second with a timer interval of 10 seconds, then the limit value has to
    be 100.
 
    Note: A too small value may lead to performance penalties due to timer
@@ -342,7 +342,7 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
    to algorithm is done and the pipe limit is set to the 'limit' parameter
    value, if this is greater than 0. Algorithm is case sensitive.
 
-   The pipe name can be provided via a pseudo variabile.
+   The pipe name can be provided via a pseudo variable.
 
    The method will return:
      * -2 if no pipe was found
@@ -450,8 +450,8 @@ with unexpected retcode=$var(check_result)\n");
 
 5.1.  pl.stats
 
-   Lists the parameters and variabiles in the pipelimit module: pipe id,
-   pipe load and pipe couter.
+   Lists the parameters and variables in the pipelimit module: pipe id,
+   pipe load and pipe counter.
 
    Name: pl.stats
 

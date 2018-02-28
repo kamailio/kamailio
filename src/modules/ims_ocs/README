@@ -82,7 +82,7 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The Following mouldes must be loaded before this module:
+   The Following modules must be loaded before this module:
      * CDP - C Diameter Peer
      * CDP_AVP - CDP AVP Applications
 
@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
        Interim and Stop Events)
      * P-Access-Network-Info - The used access network - if available
      * P-Service-Identifier - The service identifier, if you want to
-       diffentiate different services (e.g. Audio and Video)
+       differentiate different services (e.g. Audio and Video)
 
 4. Functions
 
@@ -133,7 +133,7 @@ Chapter 1. Admin Guide
           + “5030” - User unknown
           + “5031” - Rating failed
           + “4010” - End-User Service denied (e.g. Service blocked)
-          + “5006” - Ressources exceeded (e.g. too many concurrent calls)
+          + “5006” - Resources exceeded (e.g. too many concurrent calls)
      * grantedunits - the number of granted units for this particular user
      * finalunit - indication, that all following requests will be denied
        (this is the final unit for the session)

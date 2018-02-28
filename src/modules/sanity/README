@@ -62,7 +62,7 @@ Chapter 1. Admin Guide
    traverses through a SIP network if it is rejected sooner or later by a
    SIP device any way. As every sanity check cost extra performance
    because of additional parsing and evaluation it is with this module now
-   up to the Kamailio adminstrator what checks should be done on which
+   up to the Kamailio administrator what checks should be done on which
    request.
 
    The following checks are available:

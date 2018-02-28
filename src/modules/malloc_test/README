@@ -226,14 +226,14 @@ mem_free();
 
 4.6.  mt.mem_test_stop id
 
-   Stops the test indentified by id.
+   Stops the test identified by id.
 
    Example 1.10. mt.mem_test_stop usage
  $ kamcmd mt.mem_test_stop 1
 
 4.7.  mt.mem_test_destroy id
 
-   Destroys the test indentified by id (besides stopping it, it also frees
+   Destroys the test identified by id (besides stopping it, it also frees
    all the data, including the statistics).
 
    Example 1.11. mt.mem_test_destroy usage

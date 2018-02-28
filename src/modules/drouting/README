@@ -273,7 +273,7 @@ Chapter 1. Admin Guide
    destination list ( like: 2,4;5,78,23;4;7;2 ). The destinations from
    within a group may be act differently (like load-balancing, random
    selection, etc), depending of the “sort_order” module parameter - more
-   about this is available under the module paramters section.
+   about this is available under the module parameters section.
 
 1.4.3. Routing Rules
 

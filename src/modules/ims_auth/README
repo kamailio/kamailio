@@ -149,7 +149,7 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The Following mouldes must be loaded before this module:
+   The Following modules must be loaded before this module:
      * TM - Transaction Manager
      * CDP - C Diameter Peer
      * CDP_AVP - CDP AVP Applications
@@ -339,7 +339,7 @@ modparam("ims_auth", "add_authinfo_hdr", 0)
    It should be used only for testing, e.g. load balancing with SIPP where
    we don't want to worry about auth.
 
-   Default value is “0” (don't ingnore the failed authentication).
+   Default value is “0” (don't ignore the failed authentication).
 
    Example 1.14. ignore_failed_auth parameter usage
 ...
@@ -432,7 +432,7 @@ if (!www_authorize("kamailio.org", "subscriber")) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. Apart of a static strinh, typical
+       It must not be empty string “”. Apart of a static string, typical
        value is From header field domain (e.g., variable $fd).
        If an empty string “” is used then the server will generate it from
        the request. From header field domain will be used as realm.
@@ -476,7 +476,7 @@ e\n");
 
 4.4. ims_www_challenge(route_block, realm, algorithm)
 
-   Same as 4.3 except here there is the addiional option to specify the
+   Same as 4.3 except here there is the additional option to specify the
    authorisation algorithm
      * algorithm - The algorithm to be used when challenging the client.
        Can be AKAv1-MD5, AKAv2-MD5, MD5, or HSS-Selected. If left as an
@@ -525,7 +525,7 @@ Unauthorized
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. Apart of a static strinh, typical
+       It must not be empty string “”. Apart of a static string, typical
        value is From header field domain (e.g., variable $fd).
        If an empty string “” is used then the server will generate it from
        the request. From header field domain will be used as realm.

@@ -234,7 +234,7 @@ ot exists add new header
 
    Insert new header value before an existing header, if no index acquired
    insert before first hf header. Note that a header may consist of comma
-   delimited list of values. To insert value behing last value use
+   delimited list of values. To insert value behind last value use
    appenf_hf_value.
 
    Meaning of the parameters is as follows:
@@ -299,7 +299,7 @@ remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
        [ [IDX] ] [. PARAM] If asterisk is specified as index then all
        values are affected.
      * hvalue - Value to be assigned, config var formatting supported. If
-       value is empty then no equal sign apears in param.
+       value is empty then no equal sign appears in param.
 
    Example 1.10. assign_hf_value usage
 ...
@@ -323,7 +323,7 @@ assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
        [ [IDX] ] [. PARAM] If asterisk is specified as index then all
        values are affected.
      * hvalue - Value to be assigned, config var formatting supported. If
-       value is empty then no equal sign apears in param.
+       value is empty then no equal sign appears in param.
 
    Example 1.11. assign_hf_value2 usage
 ...
@@ -392,7 +392,7 @@ if (@hf_value_exists.supported.path == "1") {
    treated as value delimiter. Formats: @hf_value.HFNAME[IDX] # idx value,
    negative value counts from bottom @hf_value.HFNAME.PARAM_NAME
    @hf_value.HFNAME[IDX].PARAM_NAME @hf_value.HFNAME.p.PARAM_NAME # or
-   .param., useful if requred called "uri", "p", "param"
+   .param., useful if required called "uri", "p", "param"
    @hf_value.HFNAME[IDX].p.PARAM_NAME # dtto @hf_value.HFNAME[IDX].uri #
    (< & > excluded) @hf_value.HFNAME[*] # return comma delimited list of
    all values (combines headers) @hf_value.HFNAME # the same as above [*]

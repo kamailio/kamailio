@@ -228,7 +228,7 @@ modparam("ctl", "group", 100)
    Example 1.7. Set fifo parameter
 ...
 # old fifo support
-modparam("ctl", "fifo", "fifo:/tmp/ser_fifo")      # clasic fifo
+modparam("ctl", "fifo", "fifo:/tmp/ser_fifo")      # classic fifo
 modparam("ctl", "fifo", "/tmp/ser_fifo2")
 modparam("ctl", "fifo", "udp:*:2050")              # fifo protocol over udp
 modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp

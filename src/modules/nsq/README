@@ -20,7 +20,7 @@ Emmanuel Schmidbauer
         1. Overview
         2. How it works
 
-              2.1. Aknowledge Messages
+              2.1. Acknowledge Messages
 
         3. Dependencies
 
@@ -78,7 +78,7 @@ Chapter 1. Admin Guide
    1. Overview
    2. How it works
 
-        2.1. Aknowledge Messages
+        2.1. Acknowledge Messages
 
    3. Dependencies
 
@@ -112,7 +112,7 @@ Chapter 1. Admin Guide
 1. Overview
 
    The module provides an NSQ consumer for Kamailio configuration file.
-   NSQ is a real time distributed messaging platofrm, more details about
+   NSQ is a real time distributed messaging platform, more details about
    it can be found at nsq.io.
 
    From a high-level perspective, the module may be used for:
@@ -122,7 +122,7 @@ Chapter 1. Admin Guide
        while utilizing a message bus.
      * Rely on a distributed messaging layer, such that machines
        processing requests/responses/events can go up/down or share the
-       workload, whithout impacting Kamailio's activity.
+       workload, without impacting Kamailio's activity.
 
    Supported NSQ operations are:
      * Subscribe to a Topic and Channel
@@ -132,14 +132,14 @@ Chapter 1. Admin Guide
 
 2. How it works
 
-   2.1. Aknowledge Messages
+   2.1. Acknowledge Messages
 
    The module creates an additional NSQ manager process that does the
    communication with NSQ for consuming messages. This one defers the
-   message for processing to other NSQ worker processs so that it doesn't
+   message for processing to other NSQ worker process so that it doesn't
    block itself, nor the SIP worker processes.
 
-2.1. Aknowledge Messages
+2.1. Acknowledge Messages
 
    Consumed messages have the option of being acknowledge in two ways:
      * immediately when received

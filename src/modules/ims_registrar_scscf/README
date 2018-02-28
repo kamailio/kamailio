@@ -239,8 +239,8 @@ Chapter 1. Admin Guide
    random value in the intervalrdq
    [default_expires-default_expires_range%,
    default_expires+default_expires_range%]. The value is between 0 and 100
-   and represent the maximim percentage from default_expires that will be
-   substracted or added when computing the value. Default in 0, meaning
+   and represent the maximum percentage from default_expires that will be
+   subtracted or added when computing the value. Default in 0, meaning
    default_expires is left unmodified. This parameter can be modified via
    ser config framework.
 
@@ -302,8 +302,8 @@ om default_expires
    but a random value in the interval
    [subscription_default_expires-subscription_expires_range%,
    subscription_default_expires+subscription_expires_range%]. The value is
-   between 0 and 100 and represent the maximim percentage from
-   subscription_default_expires that will be substracted or added when
+   between 0 and 100 and represent the maximum percentage from
+   subscription_default_expires that will be subtracted or added when
    computing the value. Default in 0, meaning subscription_default_expires
    is left unmodified.
 
@@ -547,7 +547,7 @@ if (!impu_registered("location")) {
      * -1 - Not found
      * -2 - Found, but method not allowed (check Allows header for INVITE,
        MESSAGE, etc).
-     * -3 - Error ocurred internally during processing
+     * -3 - Error occurred internally during processing
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE
 

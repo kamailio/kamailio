@@ -268,7 +268,7 @@ modparam("xlog", "long_format", 1)
 
 5.1.  xlog([ [facility,] level,] format)
 
-   Output a formated log message.
+   Output a formatted log message.
 
    Meaning of the parameters are as follows:
      * facility - The syslog facility that will be used for this single

@@ -340,10 +340,10 @@ modparam("registrar", "default_expires", 1800)
    This parameter specifies that the expiry used for newly created usrloc
    records are not fixed, but a random value in the interval
    “[default_expires-default_expires_range%, default_expires]”. The value
-   is between 0 and 100 and represent the maximim percentage from expires
-   that will be substracted when computing the value. Default is 0,
-   meaning default_expires is left unmodified. This parameter can be
-   modified via the Kamailio config framework.
+   is between 0 and 100 and represent the maximum percentage from expires
+   that will be subtracted when computing the value. Default is 0, meaning
+   default_expires is left unmodified. This parameter can be modified via
+   the Kamailio config framework.
 
    Default value is 0.
 
@@ -671,7 +671,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
        current registration AoR. It overwrites the 'max_contacts' module
        parameter value.
      * socket - the string representing the socket on which the register
-       rquest was received, as alternative to using the sock_hdr.
+       request was received, as alternative to using the sock_hdr.
      * q - q value of contact (integer 0-1000). It overrides q value given
        in contact header and default_q parameter.
 
@@ -851,7 +851,7 @@ modparam("registrar", "contact_max_size", 1024)
             AoR (user).
           + 0x08 - Do not apply expires_range or default_expires_range to
             this registration.
-       The flags may be given in decimal or hexa format.
+       The flags may be given in decimal or hexadecimal format.
      * uri (optional - flags param has to be set and can be 0 for default
        behavior) - SIP URI to do be used instead of To header URI. It can
        be a dynamic string with pseudo-variables.

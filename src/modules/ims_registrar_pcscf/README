@@ -118,7 +118,7 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The Following mouldes must be loaded before this module:
+   The Following modules must be loaded before this module:
      * Usrloc PCSCF
      * PUA - if reginfo is used.
 
@@ -315,7 +315,7 @@ pcscf_save("location");
 4.3. pcscf_follows_service_routes(domain)
 
    Returns true, if the request is following the "learned" service-routes
-   during registratin.
+   during registration.
 
    Meaning of the parameters is as follows:
      * domain - Logical domain within the registrar. If a database is used

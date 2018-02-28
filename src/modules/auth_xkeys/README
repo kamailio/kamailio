@@ -94,8 +94,8 @@ Chapter 1. Admin Guide
    of the new node. On large deployments, that can become rather complex.
    For example, as a replacement for IP trust relationships, the sender
    can hash the local IP with the secret shared key, add it in the header
-   and the receiver will check if the source ip hased with the key results
-   in the same value.
+   and the receiver will check if the source ip hashed with the key
+   results in the same value.
 
    Not being a challenge-reply mechanism, this can be used to authenticate
    SIP responses from trusted peers.
@@ -143,7 +143,7 @@ modparam("auth_xkeys", "xkey", "id=abc;name=xyz;value=secret;expires=72000")
 
 4.1.  auth_xkeys_add(hdr, kid, alg, data)
 
-   Add a header computed with the first key in the group kid, hasing with
+   Add a header computed with the first key in the group kid, hashing with
    algorithm alg over the content of parameter data. The parameters can
    include variables.
 
@@ -159,7 +159,7 @@ auth_xkeys_add("X-My-Key", "abc", "sha256", "$Ri:$fu:$ru:$hdr(CSeq)");
 4.2.  auth_xkeys_check(hdr, kid, alg, data)
 
    Check if the value of header hdr matches the value computed with the
-   first key in the group kid, hasing with algorithm alg over the content
+   first key in the group kid, hashing with algorithm alg over the content
    of parameter data. The parameters can include variables.
 
    The algorithm can be: sha256, sha384, sha512.

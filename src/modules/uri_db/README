@@ -176,7 +176,7 @@ modparam("uri_db", "uriuser_column", "uri_user")
 
 3.6. use_uri_table (integer)
 
-   Specify if the “uri” table should be used for checkings instead of
+   Specify if the “uri” table should be used for checking instead of
    “subscriber” table. A non-zero value means true.
 
    Default value is “0 (false)”.

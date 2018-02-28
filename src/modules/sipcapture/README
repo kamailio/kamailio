@@ -174,7 +174,7 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * database module - mysql, postrgress, dbtext, unixodbc...
+     * database module - mysql, postgres, dbtext, unixodbc...
 
 2.2. External Libraries or Applications
 

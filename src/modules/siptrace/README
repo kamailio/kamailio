@@ -152,7 +152,7 @@ Chapter 1. Admin Guide
    (using HEP, the Homer encapsulation protocol, or plain SIP mode)
 
    There are multiple ways of storing information:
-     * by calling the sip_trace() method explicitely in the Kamailio
+     * by calling the sip_trace() method explicitly in the Kamailio
        configuration file. In this case the original message is processed.
      * by setting the flag equal with the value of “trace_flag” (e.g.,
        setflag(__trace_flag__)) parameter of the module. In this case, the

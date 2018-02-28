@@ -697,7 +697,7 @@ modparam("lcr","weight_column", "target_weight")
 
 3.28. lcr_count (integer)
 
-   Maximun value of lcr_id.
+   Maximum value of lcr_id.
 
    Default value is 1.
 
@@ -764,7 +764,7 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
    URI userpart to a mtree given as mtree parameter.
 
    If defined, must have the same value as mtree module pv_values
-   paramater.
+   parameter.
 
    There is NO default value.
 

@@ -219,7 +219,7 @@ modparam("auth_db", "password_column_2", "ha1_2")
 3.6. calculate_ha1 (integer)
 
    This parameter tells the server whether it should use a pre-calculated
-   HA1 string or plaintext passwords for authentification.
+   HA1 string or plaintext passwords for authentication.
 
    If the parameter is set to 0 and the username parameter of credentials
    contains also “@domain” (some user agents append the domain to the
@@ -268,7 +268,7 @@ modparam("auth_db", "use_domain", 1)
 
    This parameter specifies of credentials to be fetch from database when
    the authentication is performed. The loaded credentials will be stored
-   in AVPs. If the AVP name is not specificaly given, it will be used a
+   in AVPs. If the AVP name is not specifically given, it will be used a
    NAME AVP with the same name as the column name.
 
    Parameter syntax:
@@ -276,7 +276,7 @@ modparam("auth_db", "use_domain", 1)
      * credential = (avp_specification '=' column_name) | (column_name)
      * avp_specification = '$avp(' + 'i:'ID | 's:'NAME | alias + ')'
 
-   Default value of this parameter is “NULL” (no credientials loaded).
+   Default value of this parameter is “NULL” (no credentials loaded).
 
    Example 1.8. load_credentials parameter usage
 ...
@@ -431,7 +431,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
        user. All other requests: From header must match the authentication
        user. If bit 2 is set as well (flags==3), the ID check is skipped
        for INVITE, BYE, PRACK, UPDATE, MESSAGE - these requests can come
-       with anonymoys caller id.
+       with anonymous caller id.
        Additionally all domains in the checked URIs and the realm in the
        authentication header will be checked to match the provided realm
        parameter.

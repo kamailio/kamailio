@@ -268,7 +268,7 @@ pemap"
    The Perl module has two interfaces: The perl side, and the Kamailio
    side. Once a Perl function is defined and loaded via the module
    parameters (see below), it may be called in Kamailio's configuration at
-   an arbitary point. E.g., you could write a function "ldap_alias" in
+   an arbitrary point. E.g., you could write a function "ldap_alias" in
    Perl, and then execute
 ...
 if (perl_exec("ldap_alias")) {
@@ -294,7 +294,7 @@ if (perl_exec("ldap_alias")) {
 4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * The "sl" module is needed for sending replies uppon fatal errors.
+     * The "sl" module is needed for sending replies upon fatal errors.
        All other modules can be accessed from the Perl module, though.
 
 4.2. External Libraries or Applications
@@ -343,7 +343,7 @@ if (perl_exec("ldap_alias")) {
 5.1. filename (string)
 
    This is the file name of your script. This may be set once only, but it
-   may include an arbitary number of functions and “use” as many Perl
+   may include an arbitrary number of functions and “use” as many Perl
    module as necessary.
 
    Must not be empty!
@@ -1065,9 +1065,9 @@ my $phonenumbers = new Kamailio::Utils::PhoneNumbers(
 $canonical = $phonenumbers->canonicalForm("07612034567");
 $number    = $phonenumbers->dialNumber("+497612034567");
 
-   A telphone number starting with a plus sign and containing all dial
-   prefixes is in canonical form. This is usally not the number to dial at
-   any location, so the dialing number depends on the context of the
+   A telephone number starting with a plus sign and containing all dial
+   prefixes is in canonical form. This is usually not the number to dial
+   at any location, so the dialing number depends on the context of the
    user/system.
 
    The idea to canonicalize numbers were taken from hylafax.
@@ -1083,7 +1083,7 @@ $number    = $phonenumbers->dialNumber("+497612034567");
    829. Then we add all the general dial prefixes - 49 (country) 761
    (area) 4514 (pbx) and 829, the number itself => +497614514829
 
-   To get the dialing number from a canonical phone number, we substract
+   To get the dialing number from a canonical phone number, we subtract
    all general prefixes until we have something
 
    As said before, the interpretation of a phone number depends on the
@@ -1140,8 +1140,8 @@ my $conf = new Kamailio::LDAPUtils::LDAPConf();
    used by other LDAP software, such as nsswitch.ldap and pam-ldap. The
    configuration is usualy stored in /etc/openldap/ldap.conf
 
-   When used from an account with sufficient privilegs (e.g. root), the
-   ldap manager passwort is also retrieved.
+   When used from an account with sufficient privileges (e.g. root), the
+   ldap manager password is also retrieved.
 
 6.1. Constructor new()
 
@@ -1162,14 +1162,14 @@ my $conf = new Kamailio::LDAPUtils::LDAPConf();
 6.5. Method uri()
 
    Returns an uri to contact the ldap server. When there is no ldap_uri in
-   the configuration file, an ldap: uri is constucted from host and port.
+   the configuration file, an ldap: uri is constructed from host and port.
 
 6.6. Method rootbindpw()
 
    Returns the ldap "root" password.
 
    Note that the rootbindpw is only available when the current account has
-   sufficient privilegs to access /etc/openldap/ldap.secret.
+   sufficient privileges to access /etc/openldap/ldap.secret.
 
 6.7. Method rootbinddn()
 
@@ -1233,8 +1233,8 @@ ou=de");
 7.2. Function/Method search( conf, filter, base, [requested_attributes ...])
 
    perform an ldap search, return the dn of the first matching directory
-   entry, unless a specific attribute has been requested, in wich case the
-   values(s) fot this attribute are returned.
+   entry, unless a specific attribute has been requested, in which case
+   the values(s) for this attribute are returned.
 
    When the first argument (conf) is a
    Kamailio::LDAPUtils::LDAPConnection, it will be used to perform the
@@ -1270,7 +1270,7 @@ ou=de");
    matching entries in the LDAP directory.
 
    When some requested_attributes are given, return an array with those
-   attibutes. When multiple entries match the query, the attribute lists
+   attributes. When multiple entries match the query, the attribute lists
    are concatenated.
 
 8. Kamailio::VDB
@@ -1371,7 +1371,7 @@ ou=de");
 
    This package handles virtual tables and is used by the Kamailio::VDB
    class to store information about valid tables. The package is not
-   inteded for end user access.
+   intended for end user access.
 
 17.1. new()
 
@@ -1622,7 +1622,7 @@ Chapter 3. Perl samples
    When processing SIP messages, you may want to use persistent data
    across multiple calls to your Perl functions. Your first option is to
    use global variables in your script. Unfortunately, these globals are
-   not visible from the mulitple instances of Kamailio. You may want to
+   not visible from the multiple instances of Kamailio. You may want to
    use a mechanism such as the IPC::Shareable shared memory access package
    to correct this.
 

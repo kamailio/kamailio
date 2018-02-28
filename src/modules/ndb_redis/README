@@ -65,7 +65,7 @@ Carsten Bock
    1.3. Set connect_timeout parameter
    1.4. Set cmd_timeout parameter
    1.5. Set cluster parameter
-   1.6. Set allowed_timeots parameter
+   1.6. Set allowed_timeouts parameter
    1.7. Set disable_time parameter
    1.8. Set flush_on_reconnect parameter
    1.9. Set allow_dynamic_nodes parameter
@@ -249,7 +249,7 @@ modparam("ndb_redis", "cluster", 1)
 
    Default value is “-1” (disabled).
 
-   Example 1.6. Set allowed_timeots parameter
+   Example 1.6. Set allowed_timeouts parameter
 ...
 modparam("ndb_redis", "allowed_timeouts", 3)
 ...

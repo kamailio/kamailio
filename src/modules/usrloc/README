@@ -285,9 +285,8 @@ Chapter 1. Admin Guide
    The SIP RFC 3261 publishes a matching algorithm based only on the
    contact string with Call-id and Cseq extra checking (if the Call-ID is
    the same, it must have a higher Cseq number, otherwise it is invalid).
-   But as argumented above, this is not enough in NAT traversal context,
-   so the Kamailio implementation of contact matching offers more
-   algorithms:
+   But as argued above, this is not enough in NAT traversal context, so
+   the Kamailio implementation of contact matching offers more algorithms:
      * Contact based only - it is strict RFC 3261 compliancy - the Contact
        URI is matched as string and extra checked via Call-ID and cseq (if
        Call-ID is the same, it must have a higher cseq number, otherwise
@@ -303,9 +302,9 @@ Chapter 1. Admin Guide
      * Call-id only based - it is not according to RFC3261, as it will
        check the Call-ID only (independent of the Contact-Header or Path).
 
-   To find out how to control/select the contact maching algorithm, please
-   see the module parameter matching_mode - Section 3.29, “matching_mode
-   (integer)”.
+   To find out how to control/select the contact matching algorithm,
+   please see the module parameter matching_mode - Section 3.29,
+   “matching_mode (integer)”.
 
 2. Dependencies
 
@@ -612,7 +611,7 @@ modparam("usrloc", "partition_column", "part")
 3.22. use_domain (integer)
 
    If the domain part of the user should be also saved and used for
-   identifing the user (along with the username part). Useful in multi
+   identifying the user (along with the username part). Useful in multi
    domain scenarios. Non 0 value means true.
 
    Default value is “0 (false)”.
@@ -688,7 +687,7 @@ modparam("usrloc", "db_url", "dbdriver://username:password@dbhost/dbname")
        more servers sharing the same DB without any replication at SIP
        level. The mode may be slower due the high number of DB operation.
        For example NAT pinging is a killer since during each ping cycle
-       all nated contact are loaded from the DB; The lack of memory
+       all natted contact are loaded from the DB; The lack of memory
        caching also disable the statistics exports.
      * 4 - This uses database to load records at startup but uses only
        memory during the runtime. Records are not written back at all, not
@@ -847,7 +846,7 @@ modparam("usrloc", "db_check_update", 1)
 3.36. timer_procs (string)
 
    Number of timer processes to be started by module. Timer processes take
-   care of checking expired records and syncronization with database. If
+   care of checking expired records and synchronization with database. If
    set to 0, no dedicated timer is started, the one from core will be
    used.
 
@@ -947,7 +946,7 @@ modparam("usrloc", "db_raw_fetch_type", 1)
    not have table definitions that create automatically the null fields
    (e.g., db_mongodb) for each stored record.
 
-   When set to 0, the fiels that default to null are not added to the DB
+   When set to 0, the fields that default to null are not added to the DB
    insert statement if they don't have a different value, making the query
    smaller.
 
@@ -1110,24 +1109,24 @@ modparam("usrloc", "rm_expired_delay", 30)
 5.1. users
 
    Number of AOR existing in the USRLOC memory cache for that domain - can
-   not be resetted; this statistic will be register for each used domain
-   (Ex: location).
+   not be reset; this statistic will be register for each used domain (Ex:
+   location).
 
 5.2. contacts
 
    Number of contacts existing in the USRLOC memory cache for that domain
-   - can not be resetted; this statistic will be register for each used
+   - can not be reset; this statistic will be register for each used
    domain (Ex: location).
 
 5.3. expires
 
-   Total number of expired contacts for that domain - can be resetted;
-   this statistic will be register for each used domain (Ex: location).
+   Total number of expired contacts for that domain - can be reset; this
+   statistic will be register for each used domain (Ex: location).
 
 5.4. registered_users
 
    Total number of AOR existing in the USRLOC memory cache for all domains
-   - can not be resetted.
+   - can not be reset.
 
 Chapter 2. Developer Guide
 

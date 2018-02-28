@@ -160,8 +160,8 @@ modparam("uac_redirect","default_filter","deny")
 
 4.2. deny_filter (string)
 
-   The regular expression for default deny filtering. It make sens to be
-   defined on only if the default_filter parameter is set to “accept”. All
+   The regular expression for default deny filtering. It makes sense to be
+   defined only if the default_filter parameter is set to “accept”. All
    contacts matching the deny_filter will be rejected; the rest of them
    will be accepted for redirection.
 
@@ -178,8 +178,8 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
 
 4.3. accept_filter (string)
 
-   The regular expression for default accept filtering. It make sens to be
-   defined on only if the default_filter parameter is set to “deny”. All
+   The regular expression for default accept filtering. It makes sense to
+   be defined only if the default_filter parameter is set to “deny”. All
    contacts matching the accept_filter will be accepted; the rest of them
    will be rejected for redirection.
 

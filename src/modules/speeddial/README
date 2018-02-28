@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module provides on-server speed dial facilities. An user can store
+   This module provides on-server speed dial facilities. A user can store
    records consisting of pairs short numbers (2 digits) and SIP addresses
    into a table of Kamailio. Then it can dial the two digits whenever it
    wants to call the SIP address associated with them.
@@ -202,7 +202,7 @@ modparam("speeddial", "domain_prefix", "tel.")
 
 3.8. use_domain (int)
 
-   The parameter specifies wheter or not to use the domain when searching
+   The parameter specifies whether or not to use the domain when searching
    a speed dial record (0 - no domain, 1 - use domain from From URI, 2 -
    use both domains, from From URI and from request URI).
 
@@ -225,7 +225,7 @@ modparam("speeddial", "use_domain", 1)
    Meaning of the parameters is as follows:
      * table - The name of the table storing the speed dial records.
      * owner - The SIP URI of the owner of short dialing codes. If not
-       pressent, URI of From header is used.
+       present, URI of From header is used.
 
    This function can be used from REQUEST_ROUTE.
 

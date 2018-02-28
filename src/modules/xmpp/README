@@ -138,7 +138,7 @@ Chapter 1. Admin Guide
 
    In the XMPP stand-alone server mode, the XMPP module is a minimal
    XMPP/Jabber server. In this mode, another Jabber server is not needed.
-   The gateway will connect to other XMPP servers basaed on the JID domain
+   The gateway will connect to other XMPP servers based on the JID domain
    and by using the standardized XMPP S2S protocol.
 
    If you want to change to server-mode, you have to change the "backend"
@@ -162,7 +162,7 @@ Chapter 1. Admin Guide
    'delim' is a character that can be set via 'domain_separator'
    parameter.
 
-   If 'gwmap' parameter is used, then the addresses are not enconding the
+   If 'gwmap' parameter is used, then the addresses are not encoding the
    domains in the username part. They are going to be straight
    'username@domain' always.
 

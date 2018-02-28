@@ -16,7 +16,7 @@ Julien Chavanton
    flowroute.com
    <jchavanton@gmail.com>
 
-   Copyright © 2018 Flowroute.com
+   Copyright Â© 2018 Flowroute.com
      __________________________________________________________________
 
    Table of Contents
@@ -142,7 +142,7 @@ modparam("acc_json", "acc_missed_flag", 3)
 
 3.3. acc_extra (integer)
 
-   Extra values to be added to the json dictionnary.
+   Extra values to be added to the json dictionary.
 
    Default value is NULL.
 
@@ -225,7 +225,7 @@ route[RUN_CDR_PUBLISH] {
 3.7. output_syslog (integer)
 
    Control if the output of acc json should be sent to syslog. This is not
-   dependent on Kamailio global logging settigns, we can use syslog even
+   dependent on Kamailio global logging settings, we can use syslog even
    if Kamailio is not daemonized and/or logging is done to sdtout stderr.
 
    Default value is not-set (no flag).
@@ -240,7 +240,7 @@ modparam("acc_json", "log_facility", "LOG_DAEMON")
 3.8. log_facility (integer)
 
    Log facility to which accounting messages are issued to syslog. This
-   allows to easily seperate the accounting specific logging from the
+   allows to easily separate the accounting specific logging from the
    other log messages.
 
    Default value is LOG_DAEMON.

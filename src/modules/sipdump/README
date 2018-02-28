@@ -182,7 +182,7 @@ modparam("sipdump", "fprefix", "ksipdump-")
 
 4.1.  sipdump_send(tag)
 
-   Send the details of the current SIP message to the writter process and
+   Send the details of the current SIP message to the writer process and
    get it stored in the file.
 
    The parameter "tag" can be any string, it is going to be written in the

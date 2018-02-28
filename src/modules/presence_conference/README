@@ -79,7 +79,7 @@ Chapter 1. Admin Guide
 
 3.1. use_partial_states (int)
 
-   Control usage of partial state notifiations.
+   Control usage of partial state notifications.
 
    Default value is “0”.
 

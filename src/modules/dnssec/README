@@ -45,10 +45,10 @@ Chapter 1. Admin Guide
    origin authentication of DNS data, authenticated denial of existence,
    and data integrity.
 
-   There is no module parameter that should be set nor fuction that has to
-   be executed by the configuration file. Existing SIP server deployments
-   can be updated to use DNSSEC by loading this module and setting
-   appropriate DNS server to the operating system.
+   There is no module parameter that should be set nor function that has
+   to be executed by the configuration file. Existing SIP server
+   deployments can be updated to use DNSSEC by loading this module and
+   setting appropriate DNS server to the operating system.
 
    Installing libval can be done from https://www.dnssec-tools.org.
 

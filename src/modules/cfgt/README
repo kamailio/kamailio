@@ -171,7 +171,8 @@ modparam("debugger", "cfgtest", 1)
    processed and the SIP messages sent during that process execution.
 
    The flow of the configuration routes is defined by an array of routes
-   with the content of the variables controled by “mask” module parameter.
+   with the content of the variables controlled by “mask” module
+   parameter.
 
    Each routename has a prefix as “start|”, “return|”, when the route
    finish its execution and “exit|” or “drop|” if the route finish its

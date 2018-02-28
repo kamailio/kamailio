@@ -81,10 +81,10 @@ Chapter 1. Admin Guide
    It uses t_suspend() and t_continue() from the TM module for
    asynchronous processing.
 
-   Note that after invoking an asyncronous operation, the processing will
+   Note that after invoking an asynchronous operation, the processing will
    continue later, in another application process. Therefore, do not rely
    on variables stored in private memory, use shared memory if you want to
-   get values after the processing is resumend (e.g., $shv(...) or htable
+   get values after the processing is resumed (e.g., $shv(...) or htable
    $sht(...)).
 
 2. Dependencies
@@ -130,7 +130,7 @@ modparam("janssonrpcc", "min_srv_ttl", 30)
 3.2. result_pv (string)
 
    The PV spec where to store the result of a call to
-   janssonrpc_request(). It can be any writtable PV.
+   janssonrpc_request(). It can be any writable PV.
 
    Default value is “$var(jsrpc_result)”.
 
@@ -174,7 +174,7 @@ modparam("janssonrpcc", "server", "conn=user_db;addr=rpc.prod.exmaple.net;port=5
 
    This will only be used if there is no route specified for the request.
 
-   An error code can be any interger, but is typically a negative number.
+   An error code can be any integer, but is typically a negative number.
 
    An error code range is delimited by ".." . For example,
    "-32099..-32000".
@@ -228,7 +228,7 @@ janssonrpc_notification("user_db", "update_user", '{"id": 1234, "name": "Daniel"
        optional.
           + retry - number of times you retry a failed request. -1 means
             retry forever. Default is 0. Request will be retried if they
-            either timeout or fail to send. Retries untilize exponential
+            either timeout or fail to send. Retries utilize exponential
             back off between successive retries, up to 60 seconds. The
             equation for time between retries is:
             time = n^2 * timeout (for time < 60 seconds)
@@ -240,7 +240,7 @@ janssonrpc_notification("user_db", "update_user", '{"id": 1234, "name": "Daniel"
    in the route specified.
 
    If no route is specified, then any errors are logged and successes are
-   ignored. The function will also not interupt script execution.
+   ignored. The function will also not interrupt script execution.
 
    Since the SIP request handling is resumed in another process, the
    config file execution is lost. Only shared variables ($shv, $avp, etc)

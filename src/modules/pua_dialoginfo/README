@@ -54,7 +54,7 @@ Phil Lavin
               5.10. pubruri_caller_avp (int)
               5.11. pubruri_callee_avp (int)
               5.12. pubruri_caller_dlg_var (str)
-              5.13. pubruri_callee_dlg_var (str)
+              5.13. pubruri_callee_dlg_var (int)
               5.14. callee_trying (int)
 
         6. Functions
@@ -102,7 +102,7 @@ Chapter 1. Admin Guide
         5.10. pubruri_caller_avp (int)
         5.11. pubruri_callee_avp (int)
         5.12. pubruri_caller_dlg_var (str)
-        5.13. pubruri_callee_dlg_var (str)
+        5.13. pubruri_callee_dlg_var (int)
         5.14. callee_trying (int)
 
    6. Functions
@@ -154,20 +154,18 @@ Chapter 1. Admin Guide
    the id parameter to the same value as the call-id parameter. The
    "local-tag" indicates the local tag of the entity. The remote-tag
    indicates the tag of the remote party. The "direction" indicates if the
-   entity was the initator of the dialog or the recepient (aka if the
+   entity was the initiator of the dialog or the recipient (aka if the
    entity sent or received the first INVITE).
 
    The "state" element describes the state of the dialog state machine and
    must be either: trying, proceeding, early, confirmed or terminated.
 
    The dialog element can contain optional "local" and "remote" elements
-   which decsribes the local and the remote party in more detail, for
+   which describes the local and the remote party in more detail, for
    example:
 <?xml version="1.0" encoding="UTF-8"?>
 <dialog-info xmlns="urn:ietf:params:xml:ns:dialog-info"
-             version="1"
-             state="full"
-             entity="sip:alice@example.com">
+             version="1" state="full">
     <dialog id="as7d900as8"
             call-id="a84b4c76e66710"
             local-tag="1928301774"
@@ -286,7 +284,7 @@ Chapter 1. Admin Guide
    5.10. pubruri_caller_avp (int)
    5.11. pubruri_callee_avp (int)
    5.12. pubruri_caller_dlg_var (str)
-   5.13. pubruri_callee_dlg_var (str)
+   5.13. pubruri_callee_dlg_var (int)
    5.14. callee_trying (int)
 
 5.1. include_callid (int)
@@ -350,7 +348,7 @@ modparam("pua_dialoginfo", "override_lifetime", 300)
    state is early, regardless if is is the caller or the callee (indicated
    with the "direction" parameter). To avoid blinking LEDs for the caller,
    you can enable this parameter. Then the state of the caller will be
-   singaled as "confirmed" even in "early" state. This is a workaround for
+   signaled as "confirmed" even in "early" state. This is a workaround for
    the buggy Linksys SPA962 phones. SNOM phones work well with the default
    setting.
 
@@ -403,7 +401,7 @@ modparam("pua_dialoginfo", "disable_callee_publish_flag", 10)
 5.9. use_pubruri_avps (int)
 
    Get Publish R-Uri from avps (see corresponding avp params), not from
-   reqeust to/from uri.
+   request to/from uri.
 
    Default value is “0”.
 
@@ -458,7 +456,7 @@ modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
 modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 ...
 
-5.13. pubruri_callee_dlg_var (str)
+5.13. pubruri_callee_dlg_var (int)
 
    Must be set to the name of dialog variable where to store the URI for
    callee, used to send the notifications. This is needed to restored the

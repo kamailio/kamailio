@@ -251,7 +251,7 @@ modparam("rls", "rlpres_db_url", "dbdriver://username:password@dbhost/dbname")
 3.3. xcap_db_url(str)
 
    The xcap database url. This parameter only needs to be specified if the
-   rls db and integerated xcap server db have different urls.
+   rls db and integrated xcap server db have different urls.
 
    Default value is a mirror of the “db_url” setting.
 
@@ -397,14 +397,14 @@ modparam("rls", "max_expires", 10800)
 
 3.14. expires_offset (int)
 
-   This paramater only has an effect when the db_mode is DB_ONLY (mode 2).
+   This parameter only has an effect when the db_mode is DB_ONLY (mode 2).
    When expired subscribers are checked for deletion from the database,
    those that have a value in the expires column which is less than
    current_time - expires_offset are matched. Hence when an offset of zero
    is used, all those that expire prior the current time will be deleted.
    If an offset of 't' is used, only those that expired more than t
    seconds ago are deleted from the database. Negative offsets are treated
-   as though an offset of zero was specifed.
+   as though an offset of zero was specified.
 
    Default value is “0”.
 
@@ -645,7 +645,7 @@ Within event_route[xhttp:request]:
 
 5.1. rls.cleanup
 
-   Manually triggers the cleanup functions forthe rls_watchers and
+   Manually triggers the cleanup functions for the rls_watchers and
    rls_presentity tables. Useful if you have set clean_period to zero or
    less.
 

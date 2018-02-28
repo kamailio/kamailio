@@ -196,17 +196,17 @@ Chapter 1. The Sip Express Application Server User's Guide
 
    There's only one relevant function, as_relay_t, exported by this
    module. This function receives as a parameter the name of the
-   application server to which the message should be relaied. Every
-   message relaied to an Application Server is automatically associated to
+   application server to which the message should be relayed. Every
+   message relayed to an Application Server is automatically associated to
    a SIP transaction (a transaction is created for it). Just after the
-   message is relaied to the Application Server, the script stops its
+   message is relayed to the Application Server, the script stops its
    execution on the message, because the control of message-processing is
    now in the Application Server.
 
    In the context of SEAS module, relaying a message to an App Server, is
    _not_ done in SIP protocol, but in a special protocol by means of which
-   the SEAS module and the Application Server comunicate efficiently and
-   seamlessly. This procotol is specially designed so that a message
+   the SEAS module and the Application Server communicate efficiently and
+   seamlessly. This protocol is specially designed so that a message
    doesn't need to be parsed again once it arrives at the Application
    Server. This protocol carries information regarding the internal
    structure of the SIP message (to avoid reparsing) and also information
@@ -239,7 +239,7 @@ Chapter 1. The Sip Express Application Server User's Guide
    a parameter, which specifies the name of an application server to which
    the message has to be sent. If that concrete application server hasn't
    already connected to the module, the function returns a negative value,
-   otherwise (the Application Server is connected), the message is relaied
+   otherwise (the Application Server is connected), the message is relayed
    to it.
 
 1.3. Dependencies
@@ -267,7 +267,7 @@ Chapter 1. The Sip Express Application Server User's Guide
    another at port+1. Application Servers must be configured to connect to
    that port.
 
-   In case this parameter is ommited, SEAS listens on the default IP which
+   In case this parameter is omitted, SEAS listens on the default IP which
    Kamailio is using, and opens the ports 5080 and 5081 to listen for
    Application Servers.
 
@@ -585,10 +585,10 @@ maxProcessors="10"
 addresses="localhost:5060"
 
    Specifies the SIP address and port in which the Application Server from
-   which the Application Server will process the SIP messages. This Addres
-   is where Kamailio listens for the messages, so in fact, Kamailio is
-   listening on them, but Kamailio passes the messages to WeSIP, so WeSIP
-   must be aware of this IP/port.
+   which the Application Server will process the SIP messages. This
+   address is where Kamailio listens for the messages, so in fact,
+   Kamailio is listening on them, but Kamailio passes the messages to
+   WeSIP, so WeSIP must be aware of this IP/port.
 
 Warning
 
@@ -600,7 +600,7 @@ listen = tcp:localhost:5060
 listen = udp:localhost:5060
 
    Within the SIP Connector element there must be an ExtraProperties
-   element, containing nestes Property elements. Each property element
+   element, containing nested Property elements. Each property element
    specifies a parameter for the SIP Stack. Each property is specified by
    a key and a value. The most significant keys are:
      * com.voztele.javax.sip.SER_ADDRESS
@@ -628,7 +628,7 @@ Warning
 <Property key="javax.sip.STACK_NAME" value="app_server_one" />
      * com.voztele.javax.sip.THREAD_POOL_SIZE (integer)
        Specifies the number of threads there must be in the pool to
-       process incoming SIP messages. If unspecificed, the default is
+       process incoming SIP messages. If unspecified, the default is
        "infinity".
      * com.voztele.javax.sip.SPIRAL_HDR
        This property tells WeSIP and SEAS that every SipRequest and UAC
@@ -652,8 +652,8 @@ route{
    the Connectors. It must have a "name" attribute with whatever name you
    feel like. It needs to have another attribute called "defaultHost"
    which will be the default host to which to pass the incoming request
-   (in HTTP/1.0 the requests dont have a Host header, so they will be
-   passed to this default host, in SIP, this attribute doesn't have a
+   (in HTTP/1.0 the requests don’t have a Host header, so they will be
+   passed to this default host, in SIP, this attribute doesn’t have a
    meaning.). In order to have this Engine handling also SIP messages, the
    "className" attribute of the Engine must be
    "com.voztele.sipservlet.core.ConvergedEngine".
@@ -728,7 +728,7 @@ route{
    Proxy/Registrar/Redirect and the second cooperating with WeSIP to act
    as the Application Server. This is the preferred deployment layout, as
    the first Kamailio works as usual, and the requests that need special
-   services are relaied to another Kamailio which acts on behalf of the
+   services are relayed to another Kamailio which acts on behalf of the
    WeSIP AS. This configuration profile distributes load (call-routing
    logic in one instance, and Application Services in the other), and is
    also more fault-tolerant. On the other hand, you can have all your
@@ -1156,8 +1156,8 @@ Chapter 2. Developer Guide
    The end of the field, will be the place where the following pointer
    points to, minus one (note that all the fields present in a URI are
    preceded by 1 character, ie
-   sip[:user][:passwod][@host][:port][;param1=x][;param2=y][?hdr1=a][&hdr2
-   =b]) it will also be necessary to have a pointer at the end, pointing
+   sip[:user][:password][@host][:port][;param1=x][;param2=y][?hdr1=a][&hdr
+   2=b]) it will also be necessary to have a pointer at the end, pointing
    two past the end of the URI, so that the length of the last header can
    be computed.
 

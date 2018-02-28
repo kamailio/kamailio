@@ -198,7 +198,7 @@ Chapter 1. Admin Guide
    Currently, the nathelper module supports two types of NAT pings:
      * UDP packet - 4 bytes (zero filled) UDP packets are sent to the
        contact address.
-          + Advantages: low bandwitdh traffic, easy to generate by
+          + Advantages: low bandwidth traffic, easy to generate by
             Kamailio;
           + Disadvantages: unidirectional traffic through NAT (inbound -
             from outside to inside); As many NATs do update the bind
@@ -210,7 +210,7 @@ Chapter 1. Admin Guide
             request from Kamailio (inbound traffic) will force the SIP
             client to generate a SIP reply (outbound traffic) - the NAT
             bind will be surely kept open.
-          + Disadvantages: higher bandwitdh traffic, more expensive (as
+          + Disadvantages: higher bandwidth traffic, more expensive (as
             time) to generate by Kamailio;
 
 3. Dependencies
@@ -407,7 +407,7 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 
 4.12. keepalive_timeout (int)
 
-   The parameter sets the interval in secods after which a natted contact
+   The parameter sets the interval in seconds after which a natted contact
    is removed from location table if it does not reply to SIP keepalives
    (usually OPTIONS ping requests).
 
@@ -487,8 +487,8 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 
 5.2.  fix_nated_sdp(flags [, ip_address])
 
-   Alters the SDP information in orer to facilitate NAT traversal. What
-   changes to be performed may be controled via the “flags” parameter.
+   Alters the SDP information in order to facilitate NAT traversal. What
+   changes to be performed may be controlled via the “flags” parameter.
    Return value is -1 if error occurred, 1 if ip's were replaced, 2 if no
    ip's were replaced.
 
@@ -502,8 +502,8 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
           + 0x08 - rewrite IP from origin description (o=) with source
             address of the message or the provided IP address (the provide
             IP address take precedence over the source address).
-     * ip_address - IP to be used for rewritting SDP. If not specified,
-       the received signalling IP will be used. The parameter allows
+     * ip_address - IP to be used for rewriting SDP. If not specified, the
+       received signalling IP will be used. The parameter allows
        pseudo-variables usage. NOTE: For the IP to be used, you need to
        use 0x02 or 0x08 flags, otherwise it will have no effect.
 

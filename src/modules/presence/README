@@ -252,7 +252,7 @@ Chapter 1. Admin Guide
    performance). For subscriptions it supports the 4 storage modes: Memory
    Only, Write Back, Write Through and DB Only. For publishes, it stores
    the state documents in database only(because of the large size) and it
-   can store a publish cache in memory to avoid unnecessairy database
+   can store a publish cache in memory to avoid unnecessary database
    queries. Read the subs_db_mode and publ_cache parameter sections to
    decide which is the best storage configuration for you.
 
@@ -658,7 +658,7 @@ modparam("presence", "pres_htable_size", 11)
    NOTIFY after a SUBSCRIBE/reSUBSCRIBE. This caused problems for MWI
    application, because some CPEs (like Samsung) fail to understand an
    empty NOTIFY to an message-summary event. This parameter is enabled by
-   default, thus addering to the standard.
+   default, thus adhering to the standard.
 
    Default value is “1 ”.
 
@@ -957,7 +957,7 @@ if (method=="MESSAGE") {
 
 4.5.  pres_refresh_watchers(uri, event, type[, file_uri, filename])
 
-   The function can be used in configuration to triger notifies to
+   The function can be used in configuration to trigger notifies to
    watchers if a change in watchers authorization or in published state
    occurred (i.e., updates of xcap documents).
 
@@ -1192,7 +1192,7 @@ typedef struct presence_api {
         /* function to extract dialog information from a
         SUBSCRIBE message */
         extract_sdialog_info_t extract_sdialog_info;
-        /* function to request sphere defition for a presentity */
+        /* function to request sphere definition for a presentity */
         pres_get_sphere_t get_sphere;
 
 }presence_api_t;
@@ -1333,7 +1333,7 @@ typedef void(free_body_t)(char* body);
    body for each watcher. E.g. if the XML body includes a 'version'
    parameter which will be increased for each NOTIFY, on a "per watcher"
    basis. The module can either allocate a new buffer for the new body an
-   return it (aux_free_body function must be set too) or it manipualtes
+   return it (aux_free_body function must be set too) or it manipulates
    the original body directly and returns NULL.
 
    Filed type:

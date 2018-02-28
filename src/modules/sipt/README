@@ -95,7 +95,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   Module for updating ISUP encapuslated in SIP (SIP-T/SIP-I)
+   Module for updating ISUP encapsulated in SIP (SIP-T/SIP-I)
 
    The sipt module can be used to update various ss7 headers contained
    inside a message.
@@ -120,7 +120,7 @@ Chapter 1. Admin Guide
    number to “destination” with the nature address specified in “nai” and
    decrementing the hop counter value if present. If the hop counter
    header is missing it will be added with the value of “hops”. If
-   “terminator” is set to 1, then F will be appened to digit string to
+   “terminator” is set to 1, then F will be appended to digit string to
    indicate the number is complete (default).
 
    Example 1.1. sipt_destination(destination, hops, nai) usage

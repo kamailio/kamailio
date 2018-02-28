@@ -75,9 +75,9 @@ Carlos Ruiz Diaz
               6.1. Initial CCRs (initial_ccrs)
               6.2. Interim CCRs (interim_ccrs)
               6.3. Final CCRs (final_ccrs)
-              6.4. Sucessful initial CCRs (successful_initial_ccrs)
-              6.5. Sucessful interim CCRs (successful_interim_ccrs)
-              6.6. Sucessful final CCRs (successful_final_ccrs)
+              6.4. Successful initial CCRs (successful_initial_ccrs)
+              6.5. Successful interim CCRs (successful_interim_ccrs)
+              6.6. Successful final CCRs (successful_final_ccrs)
               6.7. Failed initial CCRs (failed_initial_ccrs)
               6.8. Failed interim CCRs (failed_interim_ccrs)
               6.9. Failed final CCRs (failed_final_ccrs)
@@ -173,9 +173,9 @@ Chapter 1. Admin Guide
         6.1. Initial CCRs (initial_ccrs)
         6.2. Interim CCRs (interim_ccrs)
         6.3. Final CCRs (final_ccrs)
-        6.4. Sucessful initial CCRs (successful_initial_ccrs)
-        6.5. Sucessful interim CCRs (successful_interim_ccrs)
-        6.6. Sucessful final CCRs (successful_final_ccrs)
+        6.4. Successful initial CCRs (successful_initial_ccrs)
+        6.5. Successful interim CCRs (successful_interim_ccrs)
+        6.6. Successful final CCRs (successful_final_ccrs)
         6.7. Failed initial CCRs (failed_initial_ccrs)
         6.8. Failed interim CCRs (failed_interim_ccrs)
         6.9. Failed final CCRs (failed_final_ccrs)
@@ -202,7 +202,7 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The Following mouldes must be loaded before this module:
+   The Following modules must be loaded before this module:
      * ims_dialog
      * TM - Transaction Manager
      * CDP - C Diameter Peer
@@ -244,7 +244,7 @@ Chapter 1. Admin Guide
 
 3.1. Offline Charging (Rf)
 
-   For the offlinc charging (Rf), we have the following two
+   For the offline charging (Rf), we have the following two
    diameter-messages:
      * ACR - Accounting Request
      * ACA - Accounting Answer
@@ -380,7 +380,7 @@ modparam("ims_charging", "hash_size", 1024)
 4.2. interim_update_credits(int)
 
    How much credit should be requested interim request? At the start of
-   the call, we request the amout of seconds as per Command. For each
+   the call, we request the amount of seconds as per Command. For each
    interim request, we would request credit for "interim_update_credits".
 
    Default value is 30.
@@ -703,7 +703,7 @@ incoming_trunk_id, outgoing_trunk_id
      * route_name route to be executed upon reception of charging requests
      * direction "orig"inating or "term"inating
      * reservation_units how many units (at the moment seconds) should be
-       reservated at the moment.
+       reserved at the moment.
      * domain Logical domain within registrar.
      * incoming_trunk_id Identifies the trunk group from which this
        originates.
@@ -762,9 +762,9 @@ n");
    6.1. Initial CCRs (initial_ccrs)
    6.2. Interim CCRs (interim_ccrs)
    6.3. Final CCRs (final_ccrs)
-   6.4. Sucessful initial CCRs (successful_initial_ccrs)
-   6.5. Sucessful interim CCRs (successful_interim_ccrs)
-   6.6. Sucessful final CCRs (successful_final_ccrs)
+   6.4. Successful initial CCRs (successful_initial_ccrs)
+   6.5. Successful interim CCRs (successful_interim_ccrs)
+   6.6. Successful final CCRs (successful_final_ccrs)
    6.7. Failed initial CCRs (failed_initial_ccrs)
    6.8. Failed interim CCRs (failed_interim_ccrs)
    6.9. Failed final CCRs (failed_final_ccrs)
@@ -787,15 +787,15 @@ n");
 
    The number of CCRs sent to terminate a session.
 
-6.4. Sucessful initial CCRs (successful_initial_ccrs)
+6.4. Successful initial CCRs (successful_initial_ccrs)
 
    Initial CCRs that ended with DIAMETER_SUCCESS response code.
 
-6.5. Sucessful interim CCRs (successful_interim_ccrs)
+6.5. Successful interim CCRs (successful_interim_ccrs)
 
    Interim CCRs that ended with DIAMETER_SUCCESS response code.
 
-6.6. Sucessful final CCRs (successful_final_ccrs)
+6.6. Successful final CCRs (successful_final_ccrs)
 
    Final CCRs that ended with DIAMETER_SUCCESS response code.
 

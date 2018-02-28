@@ -166,7 +166,7 @@ Chapter 1. Admin Guide
 
    Enable/disable transaction pre-check via t_precheck_trans() function.
    If set to 0, the internal structures are not created at startup and the
-   funcation will return false always.
+   function will return false always.
 
    Default value is 1 (enabled).
 
@@ -347,7 +347,7 @@ route[abc] {
 ...
 if(t_suspend())
 {
-    xlog("proceesing suspended in trasaction [$T(id_index):$T(id_label)]\n");
+    xlog("processing suspended in transaction [$T(id_index):$T(id_label)]\n");
     exit;
 }
 ...

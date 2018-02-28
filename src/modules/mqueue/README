@@ -130,7 +130,7 @@ Chapter 1. Admin Guide
           + name: name of the queue.
      * Optional attributes:
           + size: size of the queue. Specifies the maximum number of items
-            in queue. If execeeded the oldest one is removed. If not set
+            in queue. If exceeded the oldest one is removed. If not set
             the queue will be limitless.
 
    The parameter can be set many times, each holding the definition of one

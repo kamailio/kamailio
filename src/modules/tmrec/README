@@ -103,7 +103,7 @@ Chapter 1. Admin Guide
 
 3.1. separator (str)
 
-   Separator character used to delimit attributes in time reccurence
+   Separator character used to delimit attributes in time reccurrence
    definitions.
 
    Default value is '|'.
@@ -148,7 +148,7 @@ modparam("tmrec", "separator", ";")
        duration means “forever”. Negative-length durations are not
        allowed.
        See RFC 2445 for the format of duration. In short for common cases
-       when the duration doesn't exeed a data, it must start with PT
+       when the duration doesn't exceed a data, it must start with PT
        followed by the value for hours, minutes or seconds - e.g., a
        duration of 8 hours must be written as PT8H.
      * frequency - can be one of the following values: “daily” - specify

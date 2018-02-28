@@ -280,7 +280,7 @@ bm_log_timer("test");
 6.1. benchmark.enable_global
 
    Enables/disables the module. Parameter may be -1, 0 or 1. See
-   discription of "enable" parameter.
+   description of "enable" parameter.
 
 6.2. benchmark.enable_timer
 

@@ -74,7 +74,7 @@ Chapter 1. Admin Guide
 
 2. How it works
 
-   CDP AVP is a lightwieght helper module that doesn't really do much
+   CDP AVP is a lightweight helper module that doesn't really do much
    other than offer a set of AVP facilitating functions for various
    application uses. CDP AVP module is used in conjunction with CDP
    module.
@@ -101,7 +101,7 @@ Chapter 1. Admin Guide
 
 5. Functions
 
-   No functions available from configuraion. See API for internal
+   No functions available from configuration. See API for internal
    functions.
 
 Chapter 2. Developer Guide

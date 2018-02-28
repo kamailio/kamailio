@@ -486,7 +486,7 @@ Content-Length: 276
    trying to open tcp connection to xmlrpc clients that closed it).
    Alternatively ending the XMLRPC route with return -1, exit -1 or drop
    -1 can also be used, but note that this will not work for async rpcs
-   (it will close the connection immeidately and not on the async
+   (it will close the connection immediately and not on the async
    response).
 
    Example 1.

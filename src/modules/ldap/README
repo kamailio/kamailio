@@ -546,7 +546,7 @@ ldap_result("telephoneNumber/$avp(s:tel_number)");
           $avp(i:12)
 
    avp_type
-          Opional specification of destination AVP type, either str or
+          Optional specification of destination AVP type, either str or
           int. If this parameter is not specified then the LDAP attribute
           values are stored as AVP of type string.
 
@@ -615,7 +615,7 @@ ldap_result("SIPIdentitySIPURI/$avp(i:10)", "/^[^@]+@(.+)$/\1/");
           e.g. SIPIdentitySIPURI
 
    string_to_match
-          String to be matched. Included AVPs and pseudo variabels do get
+          String to be matched. Included AVPs and pseudo variables do get
           expanded.
 
    regex_subst
@@ -727,7 +727,7 @@ if (ldap_result_next())
    Function Parameters:
 
    string
-          String to apply RFC 4515 and URL escpaing rules to. AVPs and
+          String to apply RFC 4515 and URL escaping rules to. AVPs and
           pseudo variables do get expanded. Example: "cn=$avp(s:name)"
 
    avp_spec

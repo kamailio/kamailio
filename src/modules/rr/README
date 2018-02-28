@@ -143,7 +143,7 @@ Chapter 1. Admin Guide
 
 2. Dialog support
 
-   Kamailio is basically only a transaction statefull proxy, without any
+   Kamailio is basically only a transaction stateful proxy, without any
    dialog support build in. There are many features/services which
    actually requires a dialog awareness, like storing the information in
    the dialog creation stage, information which will be used during the
@@ -270,7 +270,7 @@ modparam("rr", "enable_double_rr", 0)
    being added to header if it detects that both sender and receiver use
    same protocol (e. g. TCP or TLS), and this results in UDP being used by
    such broken clients. Set enable_double_rr to value 2 to always have two
-   RR headers with transport attributes expicitly set.
+   RR headers with transport attributes explicitly set.
 
    Example 1.5. Set enable_double_rr to 2 to always have two explicit RR
    headers
@@ -534,7 +534,7 @@ if (check_route_param("nat=yes")) {
 5.8. is_direction(dir)
 
    The function checks the flow direction of in-dialog requests. This
-   function uses the “ftag” prameter from the Route header, therefore the
+   function uses the “ftag” parameter from the Route header, therefore the
    append_fromtag (see Section 4.2, “append_fromtag (integer)” module
    parameter must be enabled. Also this must be called only after
    loose_route() (see Section 5.1, “loose_route()”).
@@ -703,7 +703,7 @@ record_route_advertised_address("1.2.3.4:5090");
    Meaning of the parameters is as follows:
      * struct sip_msg* msg - request that will have the Route header
        parameter searched.
-     * str *name - contains the Route header parameter to be serached.
+     * str *name - contains the Route header parameter to be searched.
      * str *val - returns the value of the searched Route header parameter
        if found. It might be empty string if the parameter had no value.
 

@@ -224,7 +224,7 @@ modparam("auth_ephemeral", "username_format", 0)
 
 3.3. sha_algorithm (integer)
 
-   The SHA algorhithm to be used for the Hash.
+   The SHA algorithm to be used for the Hash.
 
      * 0 - SHA1 (default, as per IETF/RFC)
      * 1 - SHA256

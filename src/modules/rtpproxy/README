@@ -296,7 +296,7 @@ modparam("rtpproxy", "rtpproxy_retr", 2)
 4.5. nortpproxy_str (string)
 
    This parameter sets the SDP attribute used by rtpproxy to mark the
-   message's SDP attachemnt with information that it have already been
+   message's SDP attachment with information that it have already been
    changed.
 
    If empty string, no marker will be added or checked.
@@ -347,7 +347,7 @@ modparam("rtpproxy", "ice_candidate_priority_avp", "$avp(ice_priority)")
 
 4.8. extra_id_pv (string)
 
-   The parameter sets the PV defination to use when the “b” parameter is
+   The parameter sets the PV definition to use when the “b” parameter is
    used on unforce_rtp_proxy(), rtpproxy_offer(), rtpproxy_answer() or
    rtpproxy_manage() command.
 
@@ -466,7 +466,7 @@ rtpproxy_offer();
           + b - append branch specific variable to Call-ID when sending
             command to rtpproxy. This creates one rtpproxy session per
             unique variable. Works similar to the 1, 2 and 3 parameter,
-            but is usefull when forking to multiple destinations on
+            but is useful when forking to multiple destinations on
             different address families or network segments, requiring
             different rtpproxy parameters. The variable value is taken
             from the “extra_id_pv”. When used, it must be used in every
@@ -528,9 +528,9 @@ rtpproxy_offer();
             increments, however for some codecs the increment could differ
             (e.g. 30ms for GSM or 20ms for G.723). The RTPproxy would
             select the closest value supported by the codec. This feature
-            could be used for significantly reducing bandwith overhead for
-            low bitrate codecs, for example with G.729 going from 10ms to
-            100ms saves two thirds of the network bandwith.
+            could be used for significantly reducing bandwidth overhead
+            for low bitrate codecs, for example with G.729 going from 10ms
+            to 100ms saves two thirds of the network bandwidth.
      * ip_address - new SDP IP address.
 
    This function can be used from ANY_ROUTE.

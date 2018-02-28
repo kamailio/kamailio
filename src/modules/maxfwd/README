@@ -131,7 +131,7 @@ modparam("maxfwd", "max_limit", 32)
    (if not 0). The parameter can be a variable.
 
    Return codes:
-     * 2 (true) - header was not found and a new header was succesfully
+     * 2 (true) - header was not found and a new header was successfully
        added.
      * 1 (true) - header was found and its value was successfully
        decremented (had a non-0 value).
@@ -139,7 +139,7 @@ modparam("maxfwd", "max_limit", 32)
        decremented).
      * -2 (false) - error during processing.
 
-   The return code may be extensivly tested via script variable “retcode”
+   The return code may be extensively tested via script variable “retcode”
    (or “$?”).
 
    Meaning of the parameters is as follows:
@@ -173,14 +173,14 @@ if (!maxfwd_process("10") && $retcode==-1) {
    (if locally added). The parameter can be a variable.
 
    Retuning codes:
-     * 1 (true) - header was found or set and its value is stricly less
+     * 1 (true) - header was found or set and its value is strictly less
        than “max_value”.
      * -1 (false) - the header was found or set and its value is greater
        or equal to “max_value”.
      * -2 (false) - header was not found or not set.
      * -3 (false) - error during processing.
 
-   The return code may be extensivly tested via script variable “retcode”
+   The return code may be extensively tested via script variable “retcode”
    (or “$?”).
 
    Meaning of the parameters is as follows:

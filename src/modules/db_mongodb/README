@@ -67,7 +67,7 @@ Chapter 1. Admin Guide
 
 3. Remarks
 
-   Using this module as a database dirver may require additional settings
+   Using this module as a database driver may require additional settings
    for various modules. For example, you have to set module parameter
    'db_insert_null' to 1 for 'usrloc' module. If the module you are using
    with 'db_mongodb' fails, check its README for notes about using it with

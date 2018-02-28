@@ -275,7 +275,7 @@ Chapter 1. Admin Guide
 
    This module offers SIP load balancer functionality and it can be used
    as SIP traffic dispatcher. There are many load balancing and traffic
-   dispaching algorithms that you can choose from, for example:
+   dispatching algorithms that you can choose from, for example:
    round-robin, weight based load balancing, call load distribution, and
    hashing over SIP message attributes.
 
@@ -366,7 +366,7 @@ modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
 
    Example 1.2. Set “db_url” parameter
 ...
-modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database")
+modparam("dispatcher", "db_url", "mysql://user:passwd@localhost/database")
 ...
 
 3.3. table_name (string)
@@ -465,7 +465,7 @@ modparam("dispatcher", "force_dst", 1)
 
    If the parameter is set to 1, the last address in destination set is
    used as a final option to send the request to. For example, it is
-   useful when wanting to send the call to an anouncement server saying:
+   useful when wanting to send the call to an announcement server saying:
    "the gateways are full, try later".
 
    Default value is “0”.
@@ -694,7 +694,7 @@ Note
 
    This parameter defines the valid response codes, which are accepted as
    a valid reply to the PING-Method. It is a list separated by colons,
-   whery you may define either a single code (e.g. "code=202" would accept
+   where you may define either a single code (e.g. "code=202" would accept
    202 as an additional, valid response) or a class of responses, you want
    to accept (e.g. "class=2" would accept everything from 200 to 299 as
    valid response). This parameter can be modified via config framework.
@@ -755,11 +755,11 @@ DEST: {
         FLAGS: AX
         PRIORITY: 9
         LATENCY: {
-                AVG: 24.250000 # weigthed moving average for the last few weeks
+                AVG: 24.250000 # weighted moving average for the last few weeks
                 STD: 1.035000  # standard deviation of AVG
                 EST: 25.000000 # short term estimate, see parameter: ds_latency_
 estimator_alpha
-                MAX: 26        # maximun value seen
+                MAX: 26        # maximum value seen
                 TIMEOUT: 0     # count of ping timeouts
         }
 }
@@ -774,7 +774,7 @@ estimator_alpha
 
    The value to be used to control the memory of the estimator EWMA
    "exponential weighted moving average" or "the speed at which the older
-   samples are dampened" a goog explanation can be found here :
+   samples are dampened" a good explanation can be found here :
    http://www.itl.nist.gov/div898/handbook/pmc/section3/pmc324.htm Because
    Kamailio doesn't support float parameter types, the value in the
    parameter is divided by 1000 and stored as float. For example, if you
@@ -936,7 +936,7 @@ end
        It is the first column in destination list file. The parameter can
        be an integer or a variable holding an integer.
      * alg - the algorithm used to select the destination address. The
-       parameter can be an integer or a variable holding an interger.
+       parameter can be an integer or a variable holding an integer.
           + “0” - hash over callid
           + “1” - hash over from URI.
           + “2” - hash over to URI.
@@ -984,7 +984,7 @@ end
           + “X” - if the algorithm is not implemented, the first entry in
             set is chosen.
      * limit - the maximum number of items to be stored in AVP list for
-       further failovers (the first selected destination and default
+       further fail-overs (the first selected destination and default
        destination are the first to be put in the list)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -1710,8 +1710,8 @@ Chapter 2. Frequently Asked Questions
 
        Does dispatcher provide a fair distribution?
 
-       The algoritms doing hashing over parts of SIP message don't guarantee a
-       fair distribution. You should do some measurements to decide what
+       The algorithms doing hashing over parts of SIP message don't guarantee
+       a fair distribution. You should do some measurements to decide what
        hashing algorithm fits better in your environment.
 
        Other distribution algorithms such as round robin or call load

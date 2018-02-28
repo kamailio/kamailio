@@ -270,7 +270,7 @@ request_route {
    Explicitly enables the "tcp:closed" event route on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the Kamailio internal connection id. If no
+     * conid (optional): the Kamailio internal connection id. If no
        parameter is given, it will be enabled on the current message
        source connection.
 
@@ -302,7 +302,7 @@ event_route[tcp:closed] {
    set in the variable named by pvname parameter.
 
    Meaning of the parameters is as follows:
-     * hostport - target "host:port" address, the port can be ommited
+     * hostport - target "host:port" address, the port can be omitted
        (default to 5060) and the parameter can contain variables.
      * pvname - target variable name.
 
@@ -310,7 +310,7 @@ event_route[tcp:closed] {
 
    1: connection was found
 
-   -1: connection was not found or an error occured
+   -1: connection was not found or an error occurred
 
    Example 1.8. tcp_get_conid usage
 ...

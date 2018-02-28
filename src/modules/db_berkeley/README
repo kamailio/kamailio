@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
 3.1. auto_reload (integer)
 
    The auto-reload will close and reopen a Berkeley DB when the files
-   inode has changed. The operation occurs only duing a query. Other
+   inode has changed. The operation occurs only during a query. Other
    operations such as insert or delete, do not invoke auto_reload.
 
    Default value is 0 (1 - on / 0 - off).
@@ -177,7 +177,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    Name: db_berkely.reload
 
    Parameters: tablename (or db_path); to reload a particular table
-   provide the tablename as the arguement (eg subscriber); to reload all
+   provide the tablename as the argument (eg subscriber); to reload all
    tables provide the db_path to the db files. The path can be found in
    kamctlrc DB_PATH variable.
 
@@ -193,7 +193,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    compile in extra debug logs. However, it is not a recommended
    deployment to production servers.
 
-   Because the module dependes on an external library, the db_berkeley
+   Because the module depends on an external library, the db_berkeley
    module is not compiled and installed by default. You can use one of the
    next options.
      * edit the "Makefile" and remove "db_berkeley" from
@@ -264,7 +264,7 @@ lt none is loaded
    natural key. Consider an example where use_domain = 0. In table
    subscriber, the db will be keying on 'username|NULL' because the
    default value will be used when that key column is not provided. This
-   effectivly means that later queries must consistently use the username
+   effectively means that later queries must consistently use the username
    (w.o domain) in order to find a result to that particular subscriber
    query. The main point is 'use_domain' can not be changed once the
    db_berkeley is setup.
@@ -485,6 +485,6 @@ ast N files.
 
 14. Known Limitations
 
-   The Berkeley DB does not nativly support an autoincrement (or sequence)
-   mechanism. Consequently, this version does not support surragate keys
-   in dbschema. These are the id columns in the tables.
+   The Berkeley DB does not natively support an autoincrement (or
+   sequence) mechanism. Consequently, this version does not support
+   surrogate keys in dbschema. These are the id columns in the tables.

@@ -246,7 +246,7 @@ modparam("cdp", "config_file", "/etc/kamailio/diametercfg.xml")
 
 4.2. latency_threshold (int)
 
-   The time in ms above which a log error is wrtten to log file for long
+   The time in ms above which a log error is written to log file for long
    CDP transactions.
 
    Default value is “500”.
@@ -292,7 +292,7 @@ modparam("cdp", "debug_heavy", 1)
    The method checks, if a specific peer is connected and ready.
 
    Meaning of the parameter is as follows:
-     * fqdn - the Fully qualified domai name of the peer, that should be
+     * fqdn - the Fully qualified domain name of the peer, that should be
        checked. The parameter may contain pseudovariables.
 
    Example 1.5. cdp_check_peer usage
@@ -358,8 +358,8 @@ if(!cdp_has_app("16777216")) {
 <!--
 
  DiameterPeer Parameters
-  - FQDN - FQDN of this peer, as it should apper in the Origin-Host AVP
-  - Realm - Realm of this peer, as it should apper in the Origin-Realm AVP
+  - FQDN - FQDN of this peer, as it should appear in the Origin-Host AVP
+  - Realm - Realm of this peer, as it should appear in the Origin-Realm AVP
   - Vendor_Id - Default Vendor-Id to appear in the Capabilities Exchange
   - Product_Name - Product Name to appear in the Capabilities Exchange
   - AcceptUnknownPeers - Whether to accept (1) or deny (0) connections from peer
@@ -419,8 +419,8 @@ easure meant to
         <!--
                 Definition of peers to connect to and accept connections from. F
 or each peer found in here
-                a dedicated receiver process will be forked. All other unkwnown
-peers will share a single
+                a dedicated receiver process will be forked. All other unknown p
+eers will share a single
                 receiver. NB: You must have a peer definition for each peer list
 ed in the realm routing section
         -->
@@ -477,13 +477,13 @@ CER/CEA in the
 tries will be used.
 
                 Note: In case a message already contains a Destination-Host AVP,
- Realm Routeing will not be
+ Realm Routing will not be
                 applied.
                 Note: Routing will only happen towards connected and application
  id supporting peers.
 
-                The metric is used to order the list of prefered peers, while lo
-oking for a connected and
+                The metric is used to order the list of preferred peers, while l
+ooking for a connected and
                 application id supporting peer. In the end, of course, just one
 peer will be selected.
         -->
@@ -916,7 +916,7 @@ searchType)
    Meaning of the parameters is as follows:
      * AAAResponseHandler_f *f - callback function to be called on
        incoming responses
-     * void *param - generic data to be bassed to callback function
+     * void *param - generic data to be passed to callback function
 
 Chapter 3. Frequently Asked Questions
 

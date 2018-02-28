@@ -88,15 +88,15 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module provides an XCAP server functionaly inside Kamailio and SER
-   SIP servers.
+   This module provides an XCAP server functionally inside Kamailio and
+   SER SIP servers.
 
    Benefits brought by this integrated XCAP server:
      * reuse of SIP router transport layer - XCAP documents can be sent
        via SIP (UDP, TCP, TLS and SCTP) and via HTTP (TCP or TLS (HTTPS)).
-       For HTTP/S, you neet to load XHTTP module to handle HTTP/S
+       For HTTP/S, you need to load XHTTP module to handle HTTP/S
        requests.
-     * the Presence server has access imediatelly to the latest version of
+     * the Presence server has access immediately to the latest version of
        XCAP documents. No more need to trigger refresh of XCAP documents
        via RPC command.
      * can be used stand-alone, with a different Presence server. It is
@@ -210,7 +210,7 @@ modparam("xcap_server", "xml_ns",
    The URLs in an org.oma.xcap-directory listing must be be paths a client
    can use to download the listed XCAP documents. In some cases (for
    example, when the XCAP server is accessed using HTTP from an HTTP proxy
-   the client connectes to using HTTPS) the XCAP server may not be able to
+   the client connected to using HTTPS) the XCAP server may not be able to
    automatically determine the correct scheme to use based on the HTTP
    connection.
      * -1 (default) - determine scheme automatically. HTTP for TCP
@@ -232,7 +232,7 @@ modparam("xcap_server", "directory_scheme", 0)
    The URLs in an org.oma.xcap-directory listing must be be paths a client
    can use to download the listed XCAP documents. In some cases (for
    example, when the XCAP server is accessed through a proxy that
-   re-writes headers, or a client is non-conformant and does not include a
+   re-writes headers, or a client is non-conforming and does not include a
    Host: header) the XCAP server may not be able to automatically
    determine the correct hostname to use.
 

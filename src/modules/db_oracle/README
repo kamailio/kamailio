@@ -135,7 +135,7 @@ modparam("db_oracle", "reconnect", 0.5)
 
 5. Installation
 
-   Because it dependes on an external library, the oracle module is not
+   Because it depends on an external library, the oracle module is not
    compiled and installed by default. You can use one of the next options.
      * - edit the "Makefile" and remove "db_oracle" from
        "excluded_modules" list. Then follow the standard procedure to
@@ -150,7 +150,7 @@ modparam("db_oracle", "reconnect", 0.5)
    command-line Oracle client (sqlplus) is not quite suitable for this, as
    it cannot align row width to real (received) data's (it always prints a
    cell width as described in the db scheme). This problem has been solved
-   by inclusion the utility openser_orasel, which formats printing
+   by inclusion the utility openser_oracle, which formats printing
    approximately in the same way as the 'mysql' client utility. In
    addition, this utility known about the "agreements and types" in DB
    that are used in Kamailio for the work with Oracle and formats printing

@@ -62,7 +62,7 @@ Phil Lavin
 
    List of Examples
 
-   1.1. “SIP-AVP” RADIUS AVP exmaples
+   1.1. “SIP-AVP” RADIUS AVP examples
    1.2. radius_config parameter usage
    1.3. service_type parameter usage
    1.4. auth_extra parameter usage
@@ -108,13 +108,13 @@ Chapter 1. Admin Guide
    to make sure that only well formed credentials will get to the server.
    We have implemented radius authentication according to
    draft-sterman-aaa-sip-00. This module requires the radiusclient-ng
-   library version 0.5.0 or higheer or freeradius-client which is
-   available from https://github.com/FreeRADIUS/freeradius-client/. You
-   can also install this library from distribution repositories.
+   library version 0.5.0 or higher or freeradius-client which is available
+   from https://github.com/FreeRADIUS/freeradius-client/. You can also
+   install this library from distribution repositories.
 
 2. Additional Credentials
 
-   When performing authentification, the RADIUS server may include
+   When performing authentication, the RADIUS server may include
    additional credentials in the response. This scheme is very useful in
    fetching additional user information from the RADIUS server without
    making extra queries.
@@ -130,7 +130,7 @@ Chapter 1. Admin Guide
 
    The RPID value may be fetch via this mechanism.
 
-   Example 1.1. “SIP-AVP” RADIUS AVP exmaples
+   Example 1.1. “SIP-AVP” RADIUS AVP examples
 ....
 "email:joe@yahoo.com"
     - STRING NAME AVP (email) with STRING VALUE (joe@yahoo.com)
@@ -156,7 +156,7 @@ Chapter 1. Admin Guide
 3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
-   compilling Kamailio with this module loaded:
+   compiling Kamailio with this module loaded:
 
    One of these libraries. Notice that development of radiusclient-ng has
    stopped, as the project merged with freeradius-client.

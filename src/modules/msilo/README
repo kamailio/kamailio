@@ -598,8 +598,8 @@ modparam("msilo", "max_messages", 0)
 
 3.28. add_contact (int)
 
-   Wheter to add contact header to generated messages. The contact address
-   is the From URI.
+   Whether to add contact header to generated messages. The contact
+   address is the From URI.
 
    Default value is “0” (1==on; 0==off as per RFC3428).
 
@@ -668,7 +668,7 @@ m_store("$tu");
 
 4.2. m_dump([owner])
 
-   The method sends stored messages for the SIP user that has registerered
+   The method sends stored messages for the SIP user that has registered
    to the contact address in the registration. The method should be called
    when a REGISTER request is received and the “Expire” header has a value
    greater than zero.

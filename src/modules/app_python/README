@@ -119,8 +119,8 @@ modparam("app_python", "load", "/usr/local/etc/kamailio/myscript.py")
 
 3.3. mod_init_function (string)
 
-   The Python function to be executed by this module when it is initialied
-   by Kamailio.
+   The Python function to be executed by this module when it is
+   initialized by Kamailio.
 
    Default value is “mod_init”.
 
@@ -132,7 +132,7 @@ modparam("app_python", "mod_init_function", "my_mod_init")
 3.4. child_init_method (string)
 
    The Python function to be executed by this module when a new worker
-   process (child) is initialied by Kamailio.
+   process (child) is initialized by Kamailio.
 
    Default value is “child_init”.
 

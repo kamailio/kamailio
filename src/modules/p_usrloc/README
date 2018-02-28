@@ -184,18 +184,18 @@ Chapter 1. User's Guide
    The parameters and the interface for the p_usrloc module are thus
    almost the same, so in this document only extra parameters (specific
    only to p_usrloc module) and differences are noted. For a complete
-   description of the paramters that are inherited from usrloc see the
+   description of the parameters that are inherited from usrloc see the
    page here. Note that the modparam statement must still refer to the
    p_usrloc module.
 
-   The goal of the p_usrloc module is to provide partionioned user
-   location service to Kamailio/SER. This provides three major benefits:
+   The goal of the p_usrloc module is to provide partitioned user location
+   service to Kamailio/SER. This provides three major benefits:
      * Redundancy Failure of a location database does not mean that the
        location service is down
      * Load Balancing DB performance is greatly increased as queries are
        automatically split on a pool of ID(number configurable at
        runtime). Furthermore, a read only db handler can be used to
-       further increase the spead of the "select" queries.
+       further increase the spread of the "select" queries.
      * Failover A faulty DB server is detected and taken out. When it
        recovers, the module makes sure that no stale contacts are returned
        from it.
@@ -205,7 +205,7 @@ Chapter 1. User's Guide
    The number of databases used for replication is configurable at compile
    time by modifying the DB_NUM define. Its main field of application is
    for storing and retrieving location data. The actual database for this
-   subscriber is choosen from a set that is specified in the master
+   subscriber is chosen from a set that is specified in the master
    database. Read queries are executed on one database of the set. If this
    database is not available, the other database would be used. This
    failure is recorded in the master database.
@@ -222,7 +222,7 @@ Chapter 1. User's Guide
    installed, and write only errors and other status information to a
    central master database. It is also possible to specify different
    failover schemas and even use transaction to provide additional data
-   safety. This module could further try to minimise the impact of a
+   safety. This module could further try to minimize the impact of a
    database error with the usage of spare databases that are automatically
    activated. It also supports the manual deactivation of redundant
    databases for maintenance purposes.
@@ -292,7 +292,7 @@ sename")
 3.2. read_db_url (string)
 
    The url to the master database where the distribution data is read
-   from. It is seperated from write access, so for better performance, a
+   from. It is separated from write access, so for better performance, a
    local replicate can be used for read access.
 
    Default value is mysql://kamailio:kamailiorw@localhost/kamailio .
@@ -715,7 +715,7 @@ modparam("p_usrloc", "db_mode", 2)
 
 6.2. Maintenance
 
-   The module supports the decativation of redundant databases for
+   The module supports the deactivation of redundant databases for
    maintenance reasons. This can be done by setting the status column of
    the respective database in the p_usrloc to the value “2”. This setting
    is autodetected from all modules on the server cluster. Changes in the
@@ -727,8 +727,8 @@ modparam("p_usrloc", "db_mode", 2)
    finished, the respective status column needs to be set to “0”. This is
    autodetected as well, the first module that noticed the change will set
    the status column to “1” and setting the failover column to the current
-   time and date. Write requests are now transfered again to the database,
-   but no reads are done yet.
+   time and date. Write requests are now transferred again to the
+   database, but no reads are done yet.
 
    After the configured expire_time has been passed, i.e. every contact
    has been inserted at least one time in the database the respective
@@ -783,7 +783,7 @@ Chapter 2. Developer's Guide
 _k, db_val_t* _v, int _n)
 
    Lookup the first and if needed the second key, and insert the given
-   values into the choosen databases.
+   values into the chosen databases.
 
    Meaning of the parameters is as follows:
      * table - Pointer to the table name.
@@ -798,7 +798,7 @@ _k, db_op_t * _op, db_val_t* _v, db_key_t* _uk, db_val_t* _uv, int _n, int
 _un);
 
    Lookup the first and if needed the second key, and update the given
-   values in the choosen databases.
+   values in the chosen databases.
 
    Meaning of the parameters is as follows:
      * table - Pointer to the table name.
@@ -816,7 +816,7 @@ _un);
 db_key_t* _k, db_val_t* _v, int _n)
 
    Lookup the first and if needed the second key, and insert on duplicate
-   key update the given values in the choosen databases. This is like an
+   key update the given values in the chosen databases. This is like an
    insert, but update if the key already exist.
 
    Meaning of the parameters is as follows:
@@ -831,7 +831,7 @@ db_key_t* _k, db_val_t* _v, int _n)
 db_key_t* _k, db_val_t* _v, int _n)
 
    Lookup the first and if needed the second key, and replace the given
-   values in the choosen databases.
+   values in the chosen databases.
 
    Meaning of the parameters is as follows:
      * table - Pointer to the table name.
@@ -845,7 +845,7 @@ db_key_t* _k, db_val_t* _v, int _n)
 _k, db_op_t* _o, db_val_t* _v, int _n)
 
    Lookup the first and if needed the second key, and delete the given
-   values into the choosen databases.
+   values into the chosen databases.
 
    Meaning of the parameters is as follows:
      * table - Pointer to the table name.
@@ -861,7 +861,7 @@ _k, db_op_t* _o, db_val_t* _v, int _n)
 _nc, db_key_t _o, db_res_t** _r);
 
    Lookup the first and if needed the second key, and performs a query in
-   one of the choosen databases. The returned handle _r_h must be used to
+   one of the chosen databases. The returned handle _r_h must be used to
    free the result set after the usage of the returned database entries,
    otherwise a memory leak will occur.You must call ul_db_free_result
    before you can call ul_db_query again!

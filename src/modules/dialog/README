@@ -1170,7 +1170,7 @@ modparam("dialog", "send_bye", 1)
 
 6.49. wait_ack (int)
 
-   If set to 1, dialog will be keept a bit longer in memory in order to
+   If set to 1, dialog will be kept a bit longer in memory in order to
    absorb the ACK negative replies of initial INVITE. If not, the dialog
    is destroyed when negative reply is sent out (less internal
    complexity).
@@ -1417,9 +1417,10 @@ if (is_in_profile("caller","XX")) {
    Returns the number of dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into account a
    specific value, i.e. how many dialogs were inserted into the profile
-   with a specific value. If no value is passed, only the membersip of the
-   dialog in the profile per se is checked. Note that if the profile does
-   not support values, the value parameter will be silently discarded.
+   with a specific value. If no value is passed, only the membership of
+   the dialog in the profile per se is checked. Note that if the profile
+   does not support values, the value parameter will be silently
+   discarded.
 
    Meaning of the parameters is as follows:
      * profile - name of the profile to get the size for;
@@ -2061,8 +2062,8 @@ Chapter 2. Developer Guide
 
    Meaning of parameters is as follows:
      * struct dlg_cell* dlg - dialog to terminate.
-     * str* hdrs - string containg extra headers (full format) to be added
-       to the BYE requests of the dialog.
+     * str* hdrs - string containing extra headers (full format) to be
+       added to the BYE requests of the dialog.
 
 Chapter 3. Frequently Asked Questions
 

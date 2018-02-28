@@ -172,7 +172,7 @@ modparam("db_cluster", "max_query_length", 5)
    Practically, all the modules that want to use a cluster, have to set
    their db_url parameter to "cluster://clusterid".
 
-   Following rules apply when doing DB commands: the connecions with
+   Following rules apply when doing DB commands: the connections with
    highest priority are chosen first and the operations are performed
    according to the command mode. Note that for same priority, only one
    command mode is used (the one from the first connection with that

@@ -1006,8 +1006,8 @@ Chapter 2. Developer Guide
      * str* callid - callid of dialog to terminate.
      * str* ftag - from_tag of dialog to terminate.
      * str* ttag - to tag of dialog to terminate.
-     * str* hdrs - string containg extra headers (full format) to be added
-       to the BYE requests of the dialog.
+     * str* hdrs - string containing extra headers (full format) to be
+       added to the BYE requests of the dialog.
 
 1.3.  lookup_terminate_dlg (unsigned int h_entry, unsigned int h_id, hdrs)
 
@@ -1019,8 +1019,8 @@ Chapter 2. Developer Guide
        dialog
      * unsigned int h_id - Number of the entry in the table, where to find
        the dialog terminate.
-     * str* hdrs - string containg extra headers (full format) to be added
-       to the BYE requests of the dialog.
+     * str* hdrs - string containing extra headers (full format) to be
+       added to the BYE requests of the dialog.
 
 1.4.  set_dlg_var (dlg, key, val)
 
@@ -1063,7 +1063,7 @@ Chapter 3. Frequently Asked Questions
 
        Why is there a ims_dialog module and a dialog module?
 
-       The ims_dialog module addresses shortcomings in the intial dialog
+       The ims_dialog module addresses shortcomings in the initial dialog
        module design. It makes some large changes to the API and therefore
        must be introduced slowly. It is currently in the early development
        stages. Eventually the ims_dialog module should replace the dialog

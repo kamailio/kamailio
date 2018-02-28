@@ -391,7 +391,8 @@ certs           = $dir/certs            # Where the issued certs are kept
 crl_dir         = $dir/crl              # Where the issued crl are kept
 database        = $dir/index.txt        # database index file.
 #unique_subject = no                    # Set to 'no' to allow creation of
-                                        # several ctificates with same subject.
+                                        # several certificates with same subject
+.
 new_certs_dir   = $dir/newcerts         # default place for new certs.
 
 certificate     = $dir/cacert.pem       # The CA certificate
@@ -864,7 +865,7 @@ modparam("tls", "ssl_freelist_max_len", 0)
 
    Sets the maximum number of bytes (from the clear text) sent into one
    TLS record. Valid values are between 512 and 16384. Note however that
-   even valid low values might not be big enough to allow a succesfull
+   even valid low values might not be big enough to allow a successful
    handshake (try minimum 1024).
 
    Lower values would lead to less memory usage, but values lower then the
@@ -876,7 +877,7 @@ modparam("tls", "ssl_freelist_max_len", 0)
 Note
 
    Values on the lower side, even if valid (> 512), might not allow for a
-   succesfull initial handshake. This happens if the certificate does not
+   successful initial handshake. This happens if the certificate does not
    fit inside one send fragment. Values lower then 1024 should not be
    used. Even with higher values, if the handshake fails, try increasing
    the value.
@@ -979,7 +980,7 @@ modparam("tls", "ct_wq_max", 4194304)
 9.22. ct_wq_blk_size (integer)
 
    Minimum block size for the internal clear-text send queues (debugging /
-   advanced tunning). Good values are multiple of typical datagram sizes.
+   advanced tuning). Good values are multiple of typical datagram sizes.
 
    The default value is 4096.
 
@@ -1043,7 +1044,7 @@ modparam("tls", "tls_debug", 10)
    writing this is not true for any OpenSSL version (including 0.9.8e).
 
    If an ill-behaved OpenSSL version is detected, a very conservative
-   value is choosed, which depends on the maximum possible number of
+   value is chosen, which depends on the maximum possible number of
    simultaneously created TLS connections (and hence on the process
    number).
 
@@ -1075,7 +1076,7 @@ modparam("tls", "low_mem_threshold1", -1)
    not true for any OpenSSL version (including 0.9.8e).
 
    If an ill-behaved OpenSSL version is detected, a very conservative
-   value is choosed, which depends on the maximum possible number of
+   value is chosen, which depends on the maximum possible number of
    simultaneously created TLS connections (and hence on the process
    number).
 
@@ -1101,7 +1102,7 @@ modparam("tls", "low_mem_threshold2", -1)
    If enabled Kamailio will start even if some of the OpenSSL sanity
    checks fail (turn it on at your own risk).
 
-   If any of the following sanity checks fal, Kamailio will not start:
+   If any of the following sanity checks fail, Kamailio will not start:
      * the version of the library the TLS module was compiled with is "too
        different" from the library used at runtime. The versions should
        have the same major, minor and fix level (e.g.: 0.9.8a and 0.9.8c

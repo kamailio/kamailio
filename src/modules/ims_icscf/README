@@ -232,7 +232,7 @@ modparam("ims_icscf", "preferred_scscf_uri", "sip:scscf.ims.smilecoms.com:6060")
 
 4.1. I_scscf_select(initial)
 
-   This function is used to retrieve the next unused SCSCF from thelist
+   This function is used to retrieve the next unused SCSCF from the list
    for this request (based on callid).
 
    A positive return code (1) means an SCSCF was found and is armed for
@@ -271,8 +271,8 @@ I_scscf_drop();
 
    Perform a UAR on Diameter CXDX interface. This function will build a
    list of SCSCFs to be used and populate the SCSCF list for the request.
-   On a succesful return of this message you can get the next available
-   SCSCF by using the I_scscf_select functoin in 4.1.
+   On a successful return of this message you can get the next available
+   SCSCF by using the I_scscf_select function in 4.1.
      * Route block to resume after async UAR Diameter reply.
      * capabilities - whether to request capabilities or not "1" - with
        capabilities, "0" - no capabilities.

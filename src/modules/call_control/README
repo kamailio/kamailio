@@ -137,7 +137,7 @@ Chapter 1. Admin Guide
        to be used and it has to be started by engage_media_proxy() to be
        able to keep track of the call's dialog and end it on timeout.
        Even when mediaproxy is unable to end the dialog because it was not
-       started with engage_media_proxy(), the callcantrol application is
+       started with engage_media_proxy(), the callcontrol application is
        still able to detect calls that did timeout sending media, by
        looking in the radius accounting records for entries recorded by
        mediaproxy for calls that did timeout. These calls will also be
@@ -226,7 +226,7 @@ modparam("call_control", "socket_timeout", 500)
 
    This is used by the rating engine which finds the rates to apply to a
    call based on caller's SIP URI, caller's SIP domain or caller's IP
-   address (whichever yields a rate forst, in this order).
+   address (whichever yields a rate first, in this order).
 
    Default value is “$avp(s:signaling_ip)”.
 

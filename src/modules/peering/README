@@ -101,7 +101,7 @@ Chapter 1. Admin Guide
 2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
-   compilling Kamailio with this module loaded:
+   compiling Kamailio with this module loaded:
      * radiusclient-ng 0.5.0 or higher -- library and development files.
        See http://developer.berlios.de/projects/radiusclient-ng/.
 

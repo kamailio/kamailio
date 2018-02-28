@@ -33,7 +33,7 @@ Chapter 1. Admin Guide
 
    This is an example module. It implements only one function that prints
    its string parameter to stderr (it won't work if server is started in
-   daemon mode). Its prupose is to show how to link to an internal library
+   daemon mode). Its purpose is to show how to link to an internal library
    (lib/print).
 
 2. Functions

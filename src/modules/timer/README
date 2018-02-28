@@ -142,7 +142,7 @@ modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,enable");
    handler by itself not to decrease performance. Disabling and enabling
    in sequence may be tricky.
      * timer_id references to timer declared by declare_timer.
-     * enable_distable - set to 1 to enable timer, to 0 to disable.
+     * enable_disable - set to 1 to enable timer, to 0 to disable.
 
    Example 1.2. timer_enable usage
 ...
