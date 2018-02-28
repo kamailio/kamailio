@@ -3127,7 +3127,6 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
 		LM_DBG("CONSUMER INIT DONE\n");
 
 		while(OK) {
-//			payload = NULL;
 			amqp_envelope_t envelope;
 			amqp_maybe_release_buffers(consumer->conn);
 			amqp_rpc_reply_t reply = amqp_consume_message(consumer->conn, &envelope, NULL, 0);
@@ -3165,6 +3164,7 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
 					if(OK)
 						kz_amqp_send_worker_event(server_ptr, &envelope, consumer_channels[idx].consumer);
 				}
+				amqp_destroy_envelope(&envelope);
 				break;
 			case AMQP_RESPONSE_SERVER_EXCEPTION:
 				LM_ERR("AMQP_RESPONSE_SERVER_EXCEPTION in consume\n");
@@ -3176,7 +3176,6 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
 				OK = 0;
 				break;
 			};
-			amqp_destroy_envelope(&envelope);
 		}
 
     	kz_amqp_connection_close(consumer);
