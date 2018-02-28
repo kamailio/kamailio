@@ -332,6 +332,7 @@ int apy_load_script(void)
 {
 	PyObject *sys_path, *pDir, *pModule;
 	PyGILState_STATE gstate;
+	int rc;
 
 	if (ap_init_modules() != 0) {
 		return -1;
@@ -342,6 +343,24 @@ int apy_load_script(void)
 	myThreadState = PyThreadState_Get();
 
 	PY_GIL_ENSURE
+
+	// Py3 does not create a package-like hierarchy of modules
+	// make legacy modules importable using Py2 syntax
+	// import Router.Logger
+
+	rc = PyRun_SimpleString("import sys\n"
+			   "import Router\n"
+			   "import KSR\n"
+			   "sys.modules['Router.Core'] = Router.Core\n"
+			   "sys.modules['Router.Logger'] = Router.Logger\n"
+			   "sys.modules['Router.Ranks'] = Router.Ranks\n"
+			   "sys.modules['KSR.pv'] = KSR.pv\n"
+			   "sys.modules['KSR.x'] = KSR.x\n"
+			   );
+	if (rc) {
+		LM_ERR("Early imports of modules failed\n");
+	}
+
 	format_exc_obj = InitTracebackModule();
 
 	if (format_exc_obj == NULL || !PyCallable_Check(format_exc_obj))
