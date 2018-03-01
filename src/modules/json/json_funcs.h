@@ -27,7 +27,14 @@
 #include "../../core/parser/msg_parser.h"
 #include <json.h>
 
+enum _json_get_field_type
+{
+        JSON_FIELD_DEFAULT = 0,
+        JSON_FIELD_STRING
+};
+
 int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst);
+int json_get_string(struct sip_msg* msg, char* json, char* field, char* dst);
 
 #define json_extract_field(json_name, field)                            \
 	do {                                                                \

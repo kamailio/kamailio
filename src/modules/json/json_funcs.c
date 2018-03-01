@@ -30,7 +30,7 @@
 
 #include "json_funcs.h"
 
-int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
+int _json_get_field(struct sip_msg *msg, char *json, char *field, char *dst, int field_type)
 {
 	str json_s;
 	str field_s;
@@ -53,7 +53,6 @@ int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
 
 	dst_pv = (pv_spec_t *)dst;
 
-
 	j = json_tokener_parse(json_s.s);
 
 	if (j==NULL) {
@@ -63,7 +62,11 @@ int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
 
 	json_object_object_get_ex(j, field_s.s, &oj);
 	if(oj!=NULL) {
-		value = (char*)json_object_to_json_string(oj);
+		if (field_type == JSON_FIELD_STRING) {
+			value = (char*)json_object_get_string(oj);
+		} else {
+			value = (char*)json_object_to_json_string(oj);
+		}
 		dst_val.rs.s = value;
 		dst_val.rs.len = strlen(value);
 		dst_val.flags = PV_VAL_STR;
@@ -75,6 +78,17 @@ int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
 
 	json_object_put(j);
 	return ret;
+}
+
+int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
+{
+	return _json_get_field(msg, json, field, dst, JSON_FIELD_DEFAULT);
+}
+
+
+int json_get_string(struct sip_msg* msg, char* json, char* field, char* dst)
+{
+	return _json_get_field(msg, json, field, dst, JSON_FIELD_STRING);
 }
 
 #define json_foreach_key(obj, key)                                        \
