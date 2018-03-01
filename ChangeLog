@@ -2,6 +2,16 @@
 
 ===================== Changes Since Version 5.1.1 ===========================
 
+commit fbea348d0b2a09a08a4a9de4e9ebf65f689d63c5
+Author: AnthonyA <ascanio.alba7@gmail.com>
+Date:   Thu Mar 1 21:28:21 2018 +0800
+
+    app_python: KEMI accept int-int-str for t_continue
+    
+        - t_continue() needs int-int-str arguments; enable in apy_kemi.c
+    
+    (cherry picked from commit 0ca711665e1299269ca2ca1e566af6e40749f22a)
+
 commit e4b76b0eb7637e404611b28dad1f063f1433bc9e
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Thu Mar 1 16:40:18 2018 +0100
