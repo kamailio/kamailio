@@ -825,6 +825,7 @@ int db_mongodb_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op
 	km_mongodb_con_t *mgcon;
 	mongoc_client_t *client;
 	bson_t *seldoc = NULL;
+	bson_t bcols;
 	char *cname;
 	char b1;
 	char *jstr;
@@ -904,13 +905,22 @@ int db_mongodb_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op
 			LM_ERR("cannot initialize columns bson document\n");
 			goto error;
 		}
+		if(!bson_append_document_begin (mgcon->colsdoc, "projection", 10,
+					&bcols)) {
+			LM_ERR("failed to start projection of fields\n");
+			goto error;
+		}
 		for(i = 0; i < _nc; i++) {
-			if(!bson_append_int32(mgcon->colsdoc, _c[i]->s, _c[i]->len, 1))
+			if(!bson_append_int32(&bcols, _c[i]->s, _c[i]->len, 1))
 			{
 				LM_ERR("failed to append int to columns bson %.*s = %d [%d]\n",
 						_c[i]->len, _c[i]->s, 1, i);
 				goto error;
 			}
+		}
+		if(!bson_append_document_end (mgcon->colsdoc, &bcols)) {
+			LM_ERR("failed to end projection of fields\n");
+			goto error;
 		}
 		if(is_printable(L_DBG)) {
 			jstr = bson_as_json (mgcon->colsdoc, NULL);
