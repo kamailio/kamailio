@@ -110,7 +110,7 @@ An open IRC discussion channel is managed by the community:
 News:
 
   * https://www.kamailio.org/w/category/news/
-  * Twitter @kamailioproject
+  * Twitter @kamailio
 
 ## Travis-CI - Testing Build Environment
 
