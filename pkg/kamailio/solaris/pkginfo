@@ -1,6 +1,6 @@
 PKG=Kamailio
 ARCH=sparc
-VERSION=5.1.1
+VERSION=5.1.2
 CATEGORY=application
 EMAIL=miconda@gmail.com
 NAME=Kamailio is a very fast and flexible SIP (RFC3261) proxy server
