@@ -167,11 +167,8 @@ python_exec("my_python_function", "$rU");
 
 5.1.  app_python.reload
 
-   IMPORTANT: not functional yet (can crash a running instance, use it
-   only for testing).
-
-   Marks the need to reload the js script. The actual reload is done by
-   every working process when the next call to KEMI config is executed.
+   Marks the need to reload the Python script. The actual reload is done
+   by each worker when the next Python method is invoked.
 
    Name: app_python.reload
 
