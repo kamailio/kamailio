@@ -703,8 +703,7 @@ int sqlops_do_query(str *scon, str *squery, str *sres)
 		LM_ERR("invalid connection [%.*s]\n", scon->len, scon->s);
 		goto error;
 	}
-	res = sql_get_result(sres);
-	if(res==NULL)
+	if (sres && ((res = sql_get_result(sres)) == NULL))
 	{
 		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
 		goto error;
