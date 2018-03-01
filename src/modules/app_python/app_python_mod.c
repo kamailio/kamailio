@@ -51,7 +51,7 @@ static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy(void);
 
-PyObject *_sr_apy_handler_obj;
+PyObject *_sr_apy_handler_obj = NULL;
 
 char *dname = NULL, *bname = NULL;
 
@@ -194,82 +194,16 @@ static void mod_destroy(void)
 	destroy_mod_Router();
 }
 
-int apy_load_script(void)
+#define PY_GIL_ENSURE gstate = PyGILState_Ensure()
+#define PY_GIL_RELEASE PyGILState_Release(gstate)
+static PyObject * _sr_apy_module;
+
+int apy_mod_init(PyObject *pModule)
 {
-	PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
-	PyThreadState *mainThreadState;
-
-	Py_Initialize();
-	PyEval_InitThreads();
-	mainThreadState = PyThreadState_Get();
-
-	format_exc_obj = InitTracebackModule();
-
-	if (format_exc_obj == NULL || !PyCallable_Check(format_exc_obj))
-	{
-		Py_XDECREF(format_exc_obj);
-		PyEval_ReleaseLock();
-		return -1;
-	}
-
-	sys_path = PySys_GetObject("path");
-	/* PySys_GetObject doesn't pass reference! No need to DEREF */
-	if (sys_path == NULL) {
-		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_AttributeError,
-					"'module' object 'sys' has no attribute 'path'");
-		python_handle_exception("mod_init");
-		Py_DECREF(format_exc_obj);
-		PyEval_ReleaseLock();
-		return -1;
-	}
-
-	pDir = PyString_FromString(dname);
-	if (pDir == NULL) {
-		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_AttributeError,
-					"PyString_FromString() has failed");
-		python_handle_exception("mod_init");
-		Py_DECREF(format_exc_obj);
-		PyEval_ReleaseLock();
-		return -1;
-	}
-
-	PyList_Insert(sys_path, 0, pDir);
-	Py_DECREF(pDir);
-
-	if (ap_init_modules() != 0) {
-		if (!PyErr_Occurred())
-			PyErr_SetString(PyExc_AttributeError, "init_modules() has failed");
-		python_handle_exception("mod_init");
-		Py_DECREF(format_exc_obj);
-		PyEval_ReleaseLock();
-		return -1;
-	}
-
-	if (python_msgobj_init() != 0) {
-		if (!PyErr_Occurred())
-			PyErr_SetString(PyExc_AttributeError,
-					"python_msgobj_init() has failed");
-		python_handle_exception("mod_init");
-		Py_DECREF(format_exc_obj);
-		PyEval_ReleaseLock();
-		return -1;
-	}
-
-	pModule = PyImport_ImportModule(bname);
-	if (pModule == NULL) {
-		if (!PyErr_Occurred())
-			PyErr_Format(PyExc_ImportError, "No module named '%s'", bname);
-		python_handle_exception("mod_init");
-		Py_DECREF(format_exc_obj);
-		PyEval_ReleaseLock();
-
-		return -1;
-	}
+	PyObject *pFunc, *pArgs, *pHandler;
+	int rval = -1;
 
 	pFunc = PyObject_GetAttrString(pModule, mod_init_fname.s);
-	Py_DECREF(pModule);
 
 	/* pFunc is a new reference */
 
@@ -281,8 +215,7 @@ int apy_load_script(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
 	if (!PyCallable_Check(pFunc)) {
@@ -293,8 +226,7 @@ int apy_load_script(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
 
@@ -303,35 +235,32 @@ int apy_load_script(void)
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
 		Py_DECREF(pFunc);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
-	_sr_apy_handler_obj = PyObject_CallObject(pFunc, pArgs);
+	pHandler = PyObject_CallObject(pFunc, pArgs);
 
 	Py_XDECREF(pFunc);
 	Py_XDECREF(pArgs);
 
-	if (_sr_apy_handler_obj == Py_None) {
+	if (pHandler == Py_None) {
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_TypeError,
 					"Function '%s' of module '%s' has returned None."
 					" Should be a class instance.", mod_init_fname.s, bname);
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
 	if (PyErr_Occurred()) {
 		python_handle_exception("mod_init");
-		Py_XDECREF(_sr_apy_handler_obj);
+		Py_XDECREF(pHandler);
 		Py_DECREF(format_exc_obj);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
-	if (_sr_apy_handler_obj == NULL) {
+	if (pHandler == NULL) {
 		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_TypeError,
@@ -340,25 +269,136 @@ int apy_load_script(void)
 					mod_init_fname.s, bname);
 		python_handle_exception("mod_init");
 		Py_DECREF(format_exc_obj);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
+	}
+	Py_XDECREF(_sr_apy_handler_obj);
+	_sr_apy_handler_obj = pHandler;
+	rval = 0;
+ err:
+	return rval;
+}
+
+int apy_reload_script(void)
+{
+	PyObject *pModule;
+	PyGILState_STATE gstate;
+	int rval = -1;
+
+	PY_GIL_ENSURE;
+	pModule = PyImport_ReloadModule(_sr_apy_module);
+	if (!pModule) {
+                PyErr_PrintEx(0);
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_ImportError, "Reload module '%s'", bname);
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		goto err;
+	}
+	if (apy_mod_init(pModule)) {
+		LM_ERR("Error calling mod_init on reload\n");
+		Py_DECREF(pModule);
+		goto err;
+	}
+	Py_DECREF(_sr_apy_module);
+	_sr_apy_module = pModule;
+
+        if(apy_init_script(_apy_process_rank)<0) {
+                LM_ERR("failed to init script\n");
+		goto err;
+        }
+
+	rval = 0;
+ err:
+	PY_GIL_RELEASE;
+        return rval;
+}
+
+int apy_load_script(void)
+{
+	PyObject *sys_path, *pDir, *pModule;
+	PyGILState_STATE gstate;
+	int rval = -1;
+
+	Py_Initialize();
+	PyEval_InitThreads();
+	myThreadState = PyThreadState_Get();
+	PY_GIL_ENSURE;
+
+	format_exc_obj = InitTracebackModule();
+
+	if (format_exc_obj == NULL || !PyCallable_Check(format_exc_obj))
+	{
+		Py_XDECREF(format_exc_obj);
+		goto err;
 	}
 
-	myThreadState = PyThreadState_New(mainThreadState->interp);
-	PyEval_ReleaseLock();
+	sys_path = PySys_GetObject("path");
+	/* PySys_GetObject doesn't pass reference! No need to DEREF */
+	if (sys_path == NULL) {
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_AttributeError,
+					"'module' object 'sys' has no attribute 'path'");
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		goto err;
+	}
 
-	return 0;
+	pDir = PyString_FromString(dname);
+	if (pDir == NULL) {
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_AttributeError,
+					"PyString_FromString() has failed");
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		goto err;
+	}
+
+	PyList_Insert(sys_path, 0, pDir);
+	Py_DECREF(pDir);
+
+	if (ap_init_modules() != 0) {
+		if (!PyErr_Occurred())
+			PyErr_SetString(PyExc_AttributeError, "init_modules() has failed");
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		goto err;
+	}
+
+	if (python_msgobj_init() != 0) {
+		if (!PyErr_Occurred())
+			PyErr_SetString(PyExc_AttributeError,
+					"python_msgobj_init() has failed");
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		goto err;
+	}
+
+	pModule = PyImport_ImportModule(bname);
+	if (pModule == NULL) {
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_ImportError, "No module named '%s'", bname);
+		python_handle_exception("mod_init");
+		Py_DECREF(format_exc_obj);
+		goto err;
+	}
+
+	/* keep reference to module for reload */
+	_sr_apy_module = pModule;
+
+	rval = apy_mod_init(pModule);
+ err:
+	PY_GIL_RELEASE;
+	return rval;
 }
 
 int apy_init_script(int rank)
 {
 	PyObject *pFunc, *pArgs, *pValue, *pResult;
-	int rval;
+	int rval = -1;
 	char *classname;
+	PyGILState_STATE gstate;
 
-	PyEval_AcquireLock();
-	PyThreadState_Swap(myThreadState);
-
+	PY_GIL_ENSURE;
 	// get instance class name
 	classname = get_instance_class_name(_sr_apy_handler_obj);
 	if (classname == NULL)
@@ -368,9 +408,7 @@ int apy_init_script(int rank)
 					"'module' instance has no class name");
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
-		PyThreadState_Swap(NULL);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
 	pFunc = PyObject_GetAttrString(_sr_apy_handler_obj, child_init_mname.s);
@@ -379,9 +417,7 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_XDECREF(pFunc);
 		Py_DECREF(format_exc_obj);
-		PyThreadState_Swap(NULL);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
 	if (!PyCallable_Check(pFunc)) {
@@ -392,9 +428,7 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
-		PyThreadState_Swap(NULL);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
 	pArgs = PyTuple_New(1);
@@ -402,9 +436,7 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_DECREF(pFunc);
-		PyThreadState_Swap(NULL);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
 	pValue = PyInt_FromLong((long)rank);
@@ -413,9 +445,7 @@ int apy_init_script(int rank)
 		Py_DECREF(format_exc_obj);
 		Py_DECREF(pArgs);
 		Py_DECREF(pFunc);
-		PyThreadState_Swap(NULL);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 	PyTuple_SetItem(pArgs, 0, pValue);
 	/* pValue has been stolen */
@@ -428,16 +458,12 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pResult);
-		PyThreadState_Swap(NULL);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
 	if (pResult == NULL) {
 		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
-		PyThreadState_Swap(NULL);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
 	if (!PyInt_Check(pResult))
@@ -449,16 +475,14 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pResult);
-		PyThreadState_Swap(NULL);
-		PyEval_ReleaseLock();
-		return -1;
+		goto err;
 	}
 
 	rval = PyInt_AsLong(pResult);
 	Py_DECREF(pResult);
-	PyThreadState_Swap(NULL);
-	PyEval_ReleaseLock();
 
+ err:
+	PY_GIL_RELEASE;
 	return rval;
 }
 /**
