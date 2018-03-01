@@ -1,3 +1,594 @@
+===================== 2018-03-01 Version 5.1.2 Released ==================
+
+===================== Changes Since Version 5.1.1 ===========================
+
+commit e4b76b0eb7637e404611b28dad1f063f1433bc9e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 1 16:40:18 2018 +0100
+
+    Makefile.defs: version set to 5.1.2
+
+commit 9ec0cc9d4a4ca70ce2ef13d6830cb5e30f4112c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 1 16:01:35 2018 +0100
+
+    pkg/rpms: updated version to 5.1.2 in spec files
+
+commit 49dee7f498e1001ce3e29c1691a7ec322392baca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 1 14:28:47 2018 +0100
+
+    db_mongodb: use projection iterator to convert bson for result
+    
+    (cherry picked from commit 899ab355fb58e22eaa02336e9b5b1f2f53dba375)
+
+commit ece17deeba435ed19c16fc2a227d351fd6013f86
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 1 12:56:18 2018 +0100
+
+    db_mongodb: iterate on projection fields for matching cols in result
+    
+    (cherry picked from commit aab4f5db964bf1980729ed8b7770f550bb86b72b)
+
+commit cc92737d06359d1812ec7bed22e4c253ae7ba2e9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 1 08:29:32 2018 +0100
+
+    db_mongodb: create projection field to set the list of returned column
+    
+    (cherry picked from commit d50498cf483cd22ac4e62af5aaa86fc27654f640)
+
+commit 3d3798d192c782eb2c4796b758831a7a33ec1ac4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 28 18:02:54 2018 +0100
+
+    misc/examples: added log_prefix to basic and oob examples
+    
+    (cherry picked from commit b32c5fc2582bd590b4385f28630c96cacfed3a86)
+
+commit 654aa457ecec7d35061dbb151fd786a303cba473
+Author: Jerzy Ptak <jerzy.ptak@bbitg.co.uk>
+Date:   Wed Feb 28 12:29:45 2018 +0000
+
+    rtpengine: added support for DTLS transports
+    
+    - added ability to explicitly request DTLS transports:
+      UDP/TLS/RTP/SAVP and UDP/TLS/RTP/SAVPF
+    
+    (cherry picked from commit 99695c2827d0ff6e3d25f144678f07548016415d)
+
+commit a4c5397f87daa2513ed9fdc4f8f8d532cc10852e
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Feb 26 08:43:46 2018 +0000
+
+    pkg/docker: Updated reference to packaging scripts
+
+commit c827d37a229ea5b38e41fdabe9d1dcd3725dec9c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Mar 1 09:12:07 2018 +0100
+
+    pkg/kamailio/deb: version set to 5.1.2
+
+commit fe6656c981d7a0f9efc745261d7dd13ff1f37fac
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Feb 28 16:24:22 2018 +0000
+
+    kazoo: free envelope only on normal response
+    (cherry picked from commit 6c40983bf04a23bd7394c247980f21c5f2d6d817)
+
+commit 03aa0b7340dd9b752502f765885eff1f08ea41e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 28 11:16:02 2018 +0100
+
+    registrar: downgraded some warning messages at startup
+    
+    (cherry picked from commit ceff642b25f8b464515446ed696da43c1f638d21)
+
+commit 34e21ce10787094cfe0ce7a3013c4f503cc15d35
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 28 10:36:11 2018 +0100
+
+    cfgutils: fix kemi wrappers for locking functions
+    
+    - sip_msg_t* argument was missing, reported by GH #1459
+    
+    (cherry picked from commit c9cd7b9212291e7d0846103cd2d4c8613dd667a1)
+
+commit 5041f3483ee9d579e144f77f5e43e1e406121e8a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 27 13:10:19 2018 +0100
+
+    json: docs - more details about the result of json_get_field()
+    
+    - reported by GH #1542
+    
+    (cherry picked from commit 6a64100105e7ac0ae8a952a2e3770d7534615796)
+
+commit 96d4a01287945a58b3b7c8dfc06bd41acd00d213
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 27 11:01:23 2018 +0100
+
+    core: main - use fprintf() if daemon_status_send() fails at shut down
+    
+    - avoid race with syslog() when processes are killed
+    - reported by GH #1454
+    
+    (cherry picked from commit 54774017325fe2e24ee7c5d64b343ad0097c8332)
+
+commit fc77e25b48c4ec1b9988925faa50d00c4fd296b3
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Tue Feb 20 01:32:39 2018 +0200
+
+    tm: flag core to use forced socket when uac socket is set
+    
+    - without flag SND_F_FORCE_SOCKET probing by dispatcher module
+      and route script function t_uac_send() will choose incorrect source socket
+    
+    (cherry picked from commit 7da5e5b0a1f4520c7fdd7eeb23b4b58ecc27be22)
+
+commit 438e11a04c488a8f53555c54d1a12b50213cd342
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 19 10:29:46 2018 +0100
+
+    registrar: set current time before checking registered() conditions
+    
+    - patch by Dmitri Savolainen, closes GH #1267
+    
+    (cherry picked from commit 5b5d55bd377b0572efaceeb0feb164bf5dd26bf0)
+
+commit fe299de412d3fd997151d27bd5b162cfdbd3aa62
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Sat Feb 17 14:33:07 2018 +0000
+
+    dispatch: change log level to debug for rpc list empty list
+    
+    when dynamically loading/querying the dispatcher list at runtime, empty dslist logs as error which misleads log monitoring tools looking for real errors
+    
+    (cherry picked from commit ca230986b7f4ea84746c47df177ac21b19fd70a3)
+
+commit f0d3a3f02cccf3b6c4cf17531ad77fb06d491b86
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 18 08:24:36 2018 +0100
+
+    CONTRIBUTING.md: added developer access section
+    
+    (cherry picked from commit 2bfb71472014cabf6a6fb0fdac1421d50486d775)
+
+commit 9b4d75f4ab8fbd9d8b136aaf183beed9eafaa069
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Feb 17 20:32:27 2018 +0100
+
+    CONTRIBUTING.md: note about personal branches of developers
+    
+    - prefix with `developerid/` when creating a personal branch inside
+    Kamailio GIT repository
+    
+    (cherry picked from commit 05e06cb01a2fbef6c3077ca46a1ef5dac1488a7f)
+
+commit 190f1a462025a2f03f5f57d50510c6f2e47b5a1d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 16 09:04:14 2018 +0100
+
+    presence: keep first dialog node reference to compare name with next nodes
+    
+    - there can be intermediary nodes of other type making the match fail
+    - related to GH #1425
+    
+    (cherry picked from commit 29d09b38fab5a1ee8d7f6f82818e3d3446d4dd8b)
+
+commit 8abe7b8ddff6bfc98a09b59c443487ce4ab612d4
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Feb 15 16:57:28 2018 +0200
+
+    main.c: fix argument help typo
+    
+    (cherry picked from commit 324f3f2347e24e3335a32b8310a76a7bc4a0550a)
+
+commit 1864fc0828621f6d0189bc66041b9891248d0d38
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Feb 15 17:17:28 2018 +0200
+
+    siptrace: improve module parameter error logging
+    
+    (cherry picked from commit 9d594b2d61d113ee13c5c6c6985d07d5e2c8b76a)
+
+commit 5f6f8cf461cf79faeb69c191d6f3168982d32536
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 14 11:24:37 2018 +0100
+
+    utils: kamdbctl - updated help message for migrate command
+    
+    (cherry picked from commit 52a8def8d2a3e83170ab554a85b26d977d99f51a)
+
+commit ae15fe5ec20c08c80fc9722fc63c0a4b358704c9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 14 11:23:55 2018 +0100
+
+    core: atomic - updated email addres in warning message
+    
+    (cherry picked from commit 65fab0d02271c242d6e43e499198ee1da2275a4b)
+
+commit 64e6301bbe512fcb51bf612e22d4d9ca4b795bdc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 13 08:41:13 2018 +0100
+
+    tls: small updates to tls config
+    
+    (cherry picked from commit a0b6b3abe1beab33e11a52ff601c9cc50f7e2d56)
+
+commit 894b1abf8ae3e04b28d32aaf59eab08582a11d00
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 12 10:15:47 2018 +0100
+
+    presence: return on having a full match on states in xml document
+    
+    - better handling after previous commit, related to GH #1427
+    
+    (cherry picked from commit 92451536a0ef985ff1d16c5531c232cd657532e1)
+
+commit 09bb7fd210e63d75c64cc768bff4d080ff46f791
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 12 10:07:00 2018 +0100
+
+    presence: check if all related dialog states are terminated
+    
+    - fix for incorrect dialog state for multiple dialogs xml body
+    - reported by GH #1427
+    
+    (cherry picked from commit 76b40abd6534a5af0164601e48e525b9a5915930)
+
+commit be398ec0c8301053dc2db61dc4a88c50fe874aaf
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Feb 7 14:42:25 2018 +0000
+
+    schema: allow null value for active_watchers user-agent column
+    
+    some UAs not sending Userg-Agent header on SUBSCRIBE
+    
+    (cherry picked from commit 7653124c2d3615e4f6229f12b699063f65b7afea)
+
+commit dbcdde19ab5fef461efea62b62861d2488c2ed81
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 9 13:52:58 2018 +0100
+
+    CONTRIBUTING.md: note about formatting the code
+    
+    - use clang-format or match the style of the existing component
+    
+    (cherry picked from commit 32564156a4ad3efd93099d7ae2c98758cf4ec9b0)
+
+commit 9d3096d0ce0b2b4e16b558abba15128cc2aafb1c
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Thu Feb 1 11:23:42 2018 +0100
+
+    textops: mismatch parenthesis in doc
+    
+    (cherry picked from commit 508befcbddc7b88b6a68b188d881b52943682cc8)
+
+commit 7d906b442b3852cfa9c39b26bbe2b43e25214756
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 5 12:45:05 2018 +0100
+
+    maxfwd: remove useless asign in is_maxfwd_lt()
+    
+    (cherry picked from commit adbdaabeef2d24882185f21fa1399da6468e1301)
+
+commit 09f588a5b643a3fe8dbf0a0d2cd11dc8bf62a1f8
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Fri Feb 2 14:30:53 2018 -0500
+
+    textops: documentation updated for is_audio_on_hold()
+    
+    (cherry picked from commit fad36ca8bc3526f71f8bb3af46afe3bb2a0f1789)
+
+commit 1b6cb70710a9bdbda012c5df27c5a52900e9cff2
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Fri Feb 2 14:25:20 2018 -0500
+
+    textops: is_audio_on_hold() returns hold type
+     1 - RFC2543 hold type (the connection IP is set to null IP)
+     2 - RFC3264 hold type (inactive or sendonly attr)
+    
+    (cherry picked from commit 9f735ef803bfc8b6722f71a2bef00b071ab1ca1b)
+
+commit b99e6f3fd454528a80d0b51ce632ed9e606e816e
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Fri Feb 2 14:23:08 2018 -0500
+
+    parser/sdp: distinguish between RFC2543 and RFC3264 media hold type
+    
+    (cherry picked from commit 51be5b7a889e394927cce1009a09e1c2f52123ca)
+
+commit 9d9ae2047a966c8c293a4001c6e53b0c7fdb34e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 2 18:11:10 2018 +0100
+
+    app_squirrel: imported last version of squirrel interpreter
+    
+    - master branch
+    
+    (cherry picked from commit 8233e5191d23f64d879d81aa4bc4e5b17cf68ffe)
+
+commit 15ea8f68ca77ad558eefa55f98f014e4f3e816f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 1 15:06:08 2018 +0100
+
+    misc/examples/kemi: convert port to string in log messages
+    
+    (cherry picked from commit 7612f67001c57d6adf339cd318e48ad828123213)
+
+commit 6b6c3043583c29d6c6bfca2cca13526834ccd923
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 31 21:20:16 2018 +0100
+
+    app_python: adjusted the note about incomplete implementation for rpc reload
+    
+    (cherry picked from commit 9e16ac869646ff62f648f9a822ffcc12a4614037)
+
+commit 7a17f43cf318f791cb6f325487f2c1d709417ffa
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Wed Jan 31 12:10:16 2018 -0500
+
+    rtpegnine: honour the 'setid_default' variable in all instances
+    
+    (cherry picked from commit 39d98127268afdfa841e7c80ce26185fe8d0673c)
+
+commit cabe86f64f0cb0ec37eb24c055c85d8a9316591a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 29 09:14:40 2018 +0100
+
+    modules/ims*: Makefile updates
+    
+    - use KAMAILIO mod interface define
+    - bits of updates in the comments
+    
+    (cherry picked from commit d40c65a9834d6e0c12ee24e0fde5b75be94593e5)
+
+commit d942adeb777916af737e96a0b0190d0d500855d8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 27 16:25:25 2018 +0100
+
+    modules/ims*: define KAMAILIO_MOD_INTERFACE instead of the old variant
+    
+    (cherry picked from commit 014958e62302819630ead306baa8e765b062196f)
+
+commit b65be9c7ddb6f7c05227eb6c6c3503a26611a971
+Author: Armen Babikyan <armen@firespotter.com>
+Date:   Thu Jan 25 17:36:55 2018 -0800
+
+    websocket: check bounds before reading mask
+    
+    (cherry picked from commit 4fabe253a1eb0f9b494521cfa98365523a93adcf)
+
+commit ec47df23265c33a75893e1fe589f3081c918c9aa
+Author: Armen Babikyan <armen@firespotter.com>
+Date:   Thu Jan 25 17:19:28 2018 -0800
+
+    websocket: handle unrecognized subprotocol better
+    
+    (cherry picked from commit 91c388147a9328743582a92c6f1184141aa268fb)
+
+commit dda84fd78cf1f53894978feb71209282babedcbb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 25 15:03:27 2018 +0100
+
+    pua: proper safety check on subs->extra_headers->s for subscribe_cbparam()
+    
+    - dicovered via GH PR #1409
+    
+    (cherry picked from commit cda1d086c164052a5b79b54a8d0e5cf6e5fb3e1c)
+
+commit d5140f1cfa24cd2b868282e96f33f577394fe126
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 24 11:44:33 2018 +0100
+
+    nathelper: fixed interpretation of flags param for add_rcv_param()
+    
+    - add as uri param when the flags are set and different than 0
+    - small typo in log message
+    
+    (cherry picked from commit 08df9d1b11ff3fcfe241ce179560431145be8216)
+
+commit c52820bc9c7cccf32993943e0e12dd3703ff0822
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 24 09:21:30 2018 +0100
+
+    sipt: Makefile - define KAMAILIO_MOD_INTERFACE
+    
+    (cherry picked from commit e62fa8f7813a0d22f4db30a99bcee541103f21b3)
+
+commit dcbee573a2027042fd180db6beda89a39f026631
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 24 09:21:17 2018 +0100
+
+    janssonrpcc: Makefile - define KAMAILIO_MOD_INTERFACE
+    
+    (cherry picked from commit cd0e1bd26cc31c001707ce98d084310979071fb0)
+
+commit 06c2ec25dcbdc93bfae23f8931714010fbfebb83
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 24 09:21:05 2018 +0100
+
+    jansson: Makefile - define KAMAILIO_MOD_INTERFACE
+    
+    (cherry picked from commit 86589cdda4f5390099165670d68d49f5c8b44af1)
+
+commit 24a81e1c829762fb0b7c1daae42f7a111b6ce4eb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 24 09:20:33 2018 +0100
+
+    cnxcc: Makefile - define KAMAILIO_MOD_INTERFACE
+    
+    (cherry picked from commit 22421845cfcc0eab194ac510bfc378f72765a059)
+
+commit 427145b9cdadf01a18b3f38ffdb14094154a647a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 23 17:33:39 2018 +0100
+
+    ctl: proper handling of optional param specifier (*) in rpc scan
+    
+    (cherry picked from commit a9972863681059c647af4bafd0d9a20f7648c801)
+
+commit cc638e4cd6d6f4ff9aca0bf6c9d6c940a3e64e59
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 12 09:12:26 2018 +0100
+
+    topos: revert "topos: set uuid fields before checking contact/rr fields"
+    
+    This reverts commit 97532ca18f595d89edf9b0b6e6688847aa38dd44.
+    
+    (cherry picked from commit be6a419a5b0d6fe3922219a30788ad527a313fd6)
+
+commit 8794d6d60549683120e22b3b150674e686a29ba0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 8 19:13:08 2018 +0100
+
+    rtpengine: get again body pointer only when read_sdp_pv is set
+    
+    - reported by GH #1434
+    
+    (cherry picked from commit 75c4ca0bb69bd4f1ba42c6d964697737813fa81e)
+
+commit 0e1fdeea9cc5f6948f8b3e19c1350718288278ba
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 12 08:24:56 2018 +0100
+
+    core: kemi - eol for debug message
+    
+    (cherry picked from commit 0476993b7c341bcc7a994ab52986b89f240bd3b0)
+
+commit df9389a613e16f15b860af60222abe43ca367d09
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 12 08:21:19 2018 +0100
+
+    app_lua: do lua_checkstack() to ensure  enough capacity on Lua stack
+    
+    - Lua doesn't do automatic management of the stack
+      * http://www.lua.org/manual/5.1/manual.html#3.2
+    - do exit on insufficient capacity
+    - based on the report by GH #1433
+    
+    (cherry picked from commit f6d69d87abdc48df22135c79ee2309248248ca8e)
+
+commit c1ec6b02139475abe7da276cd36de4ebb9709ea2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 11 09:37:05 2018 +0100
+
+    presence: set user agent db field to empty string if no value is found
+    
+    (cherry picked from commit 4654f8b4f341a6c9f8cf4daafc7d618871c95e1b)
+
+commit 5cd6530e68ef311a59acbec180588a498f2a32dc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Feb 10 22:05:42 2018 +0100
+
+    tmx: allocate space to store ending 0 for branch value
+    
+    - reported by Alfred Farrugia and Sandro Gauci
+    
+    (cherry picked from commit e1d8008a09d9390ebaf698abe8909e10dfec4097)
+
+commit 358f63a7a452923a28f7d5ea682c4dc9cde10d25
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Fri Feb 9 23:19:40 2018 +0000
+
+    kazoo: verify timer
+    (cherry picked from commit 00330db3864dbc7df20c76f413beb73a6d60189c)
+
+commit 72e9c0d00b78cccca79cd6547628d914a8fbb03c
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Fri Feb 9 21:38:03 2018 +0000
+
+    kazoo: fix blocked sockets & zones
+    
+    (cherry picked from commit a5212922c9bdf9560b45cdf6c0786a1fa651a232)
+
+commit df7c94863d9d75533a4430af84ba3647ac4decf6
+Author: Guillem Jover <gjover@sipwise.com>
+Date:   Tue Feb 6 18:22:51 2018 +0100
+
+    pkg/kamailio/deb: wait for kamailio to exit before returning on sysvinit stop action
+    
+    We should not return until the service has been fully terminated,
+    otherwise a subsequent start might break as it can consider itself
+    as already running. And once the old instance stops there's nothing
+    left running.
+    
+    This also makes it possibe to remove a sleep in the restart action.
+    
+    (cherry picked from commit 4cc60ede961554220cd265bd212407f42d5b8262)
+
+commit 732a3153a0a41d5f951fff85de607f0b46ae73da
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Mon Feb 5 21:58:04 2018 +0200
+
+    lcr: fixed checking if there is more uris available for next_gw
+    - plus some clang format changes
+    - reported by Daniel
+    
+    (cherry picked from commit f73470163b081f5c877dddff9c08e94073b0cc4b)
+
+commit 45233bf5d736b7f47390d150d41511702212183b
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Fri Feb 2 14:08:41 2018 -0500
+
+    textops: update documentation for is_audio_on_hold()
+    
+    (cherry picked from commit def7be2a3a60039c21c0711153152533b8ceb836)
+
+commit f17dd0d8c884f0264a1bfb64124caa69e119ca23
+Merge: 9ec46e949 df97c48f9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 29 20:17:26 2018 +0100
+
+    Merge pull request #1415 from christoph-v/wrong_query_buffer_assignment_5.1
+    
+    ims_usrloc_scscf: assignment of length missing for query_buffer in db_link_contact_to_impu() - 5.1
+
+commit 9ec46e94915294f2824abe828c0a1ec66e82c808
+Merge: 47821c587 acbc230e8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 29 20:17:10 2018 +0100
+
+    Merge pull request #1414 from christoph-v/missing_record_route_assignment_5.1
+    
+    ims_usrloc_scscf: missing assignment of record_route (5.1)
+
+commit df97c48f94e8c8ce28ca0624bc3cfe4a86c89259
+Author: Christoph Valentin <christoph.valentin@kapsch.net>
+Date:   Thu Jan 25 13:13:07 2018 +0100
+
+    ims_usrloc_scscf: assignment of length missing for query_buffer in
+    db_link_contact_to_impu()
+    
+    When writing to query_buffer with the help of the snprintf() function,
+    the result of the functio is written to variable query_buffer_len
+    instead of to the query_buffer.len itself. This leads to core dump
+    in some cases. Replaced "_" by "." in "query_buffer_len ="
+    
+    (cherry picked from commit 11c179ab232222f1c78f19557032afd49bef7324)
+
+commit acbc230e8f24ac838598631d9366f23d05218d73
+Author: Christoph Valentin <christoph.valentin@kapsch.net>
+Date:   Thu Jan 25 13:37:59 2018 +0100
+
+    ims_usrloc_scscf: missing assignment of record_route
+    
+    In update_subscriber() function, when the rs is assigned to the subs,
+    it is missing the record_route component, which leads to core dump in
+    some scenarios.
+    
+    (cherry picked from commit 595b8fe06165328366865328e43c14a9ca23c386)
+
+commit 47821c5871d188ac04b6e366717a314a8d710699
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Tue Jan 23 10:20:52 2018 +0000
+
+    kazoo: change string parameters to PARAM_STR
+    
+    (cherry picked from commit 3018595d13dde08d15e8063cecb42a01ea271b66)
+
+
 ===================== 2018-01-22 Version 5.1.1 Released ==================
 
 ===================== Changes Since Version 5.1.0 ===========================
