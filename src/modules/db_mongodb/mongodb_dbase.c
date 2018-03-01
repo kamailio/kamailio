@@ -316,10 +316,12 @@ int db_mongodb_get_columns(const db1_con_t* _h, db1_res_t* _r)
 	int col;
 	db_mongodb_result_t *mgres;
 	bson_iter_t riter;
+	bson_iter_t titer;
 	bson_iter_t citer;
 	bson_t *cdoc;
 	const char *colname;
 	bson_type_t coltype;
+	int cdocproj;
 
 	if ((!_h) || (!_r)) {
 		LM_ERR("invalid parameter\n");
@@ -338,8 +340,10 @@ int db_mongodb_get_columns(const db1_con_t* _h, db1_res_t* _r)
 			return -1;
 		}
 		cdoc = mgres->rdoc;
+		cdocproj = 0;
 	} else {
 		cdoc = mgres->colsdoc;
+		cdocproj = 1;
 	}
 	RES_COL_N(_r) = mgres->nrcols;
 	if (!RES_COL_N(_r)) {
@@ -355,9 +359,25 @@ int db_mongodb_get_columns(const db1_con_t* _h, db1_res_t* _r)
 		return -3;
 	}
 
-	if (!bson_iter_init (&citer, cdoc)) {
-		LM_ERR("failed to initialize columns iterator\n");
-		return -3;
+	if(cdocproj == 1) {
+		if (!bson_iter_init (&titer, cdoc)) {
+			LM_ERR("failed to initialize columns iterator\n");
+			return -3;
+		}
+		if(!bson_iter_find(&titer, "projection")
+				|| !BSON_ITER_HOLDS_DOCUMENT (&titer)) {
+			LM_ERR("failed to find projection field\n");
+			return -3;
+		}
+		if(!bson_iter_recurse (&titer, &citer)) {
+			LM_ERR("failed to init projection iterator\n");
+			return -3;
+		}
+	} else {
+		if (!bson_iter_init (&citer, cdoc)) {
+			LM_ERR("failed to initialize columns iterator\n");
+			return -3;
+		}
 	}
 	if(mgres->colsdoc) {
 		if (!bson_iter_init (&riter, mgres->rdoc)) {
