@@ -288,6 +288,16 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 			}
 			LM_DBG("params[%d] for: %.*s are int-int-int: [%d] [%d] [%d]\n",
 					i, fname.len, fname.s, vps[0].n, vps[1].n, vps[2].n);
+               } else if(ket->ptypes[0]==SR_KEMIP_INT && ket->ptypes[1]==SR_KEMIP_INT
+                               && ket->ptypes[2]==SR_KEMIP_STR) {
+                       if(!PyArg_ParseTuple(args, "iis:kemi-param-nns", &vps[0].n,
+                                            &vps[1].n, &vps[2].s.s)) {
+                               LM_ERR("unable to retrieve int-int-str params %d\n", i);
+                               return sr_kemi_apy_return_false();
+                       }
+                       vps[2].s.len = strlen(vps[2].s.s);
+                       LM_DBG("params[%d] for: %.*s are int-int-str: [%d] [%d] [%.*s]\n", i,
+                               fname.len, fname.s, vps[0].n, vps[1].n, vps[2].s.len, vps[2].s.s);
 		} else if(ket->ptypes[0]==SR_KEMIP_INT && ket->ptypes[1]==SR_KEMIP_STR
 				&& ket->ptypes[2]==SR_KEMIP_INT) {
 			if(!PyArg_ParseTuple(args, "isi:kemi-param-nsn", &vps[0].n,
