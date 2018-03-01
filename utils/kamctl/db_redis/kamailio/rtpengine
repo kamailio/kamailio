@@ -1,2 +1,2 @@
-setid/int,url/string,weight/int,disabled/int,
+id/int,setid/int,url/string,weight/int,disabled/int,stamp/int,
 1
