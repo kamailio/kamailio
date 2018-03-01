@@ -1192,7 +1192,7 @@ static void app_python_rpc_reload(rpc_t* rpc, void* ctx)
 	*_sr_python_reload_version += 1;
 	LM_INFO("marking for reload Python script file: %.*s (%d => %d)\n",
 		_sr_python_load_file.len, _sr_python_load_file.s,
-		v, 
+		v,
 		*_sr_python_reload_version);
 
 	if (rpc->add(ctx, "{", &vh) < 0) {

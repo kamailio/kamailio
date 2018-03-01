@@ -47,9 +47,9 @@ sr_apy_env_t *sr_apy_env_get()
 	return &_sr_apy_env;
 }
 
-#define PY_GIL_ENSURE gstate = PyGILState_Ensure();
-#define PY_GIL_RELEASE PyGILState_Release(gstate);
-#define LOCK_RELEASE if(locked) lock_release(_sr_python_reload_lock);
+#define PY_GIL_ENSURE gstate = PyGILState_Ensure()
+#define PY_GIL_RELEASE PyGILState_Release(gstate)
+#define LOCK_RELEASE if(locked) lock_release(_sr_python_reload_lock)
 
 /*
  * copy the logic from app_lua/app_lua_api.c:
@@ -83,7 +83,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 
 	bmsg = _sr_apy_env.msg;
 	_sr_apy_env.msg = _msg;
-	PY_GIL_ENSURE
+	PY_GIL_ENSURE;
 
 	pFunc = PyObject_GetAttrString(_sr_apy_handler_obj, fname);
 	if (pFunc == NULL || !PyCallable_Check(pFunc)) {
@@ -157,8 +157,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	Py_DECREF(pResult);
 	_sr_apy_env.msg = bmsg;
  err:
-	PY_GIL_RELEASE
-	LOCK_RELEASE
+	PY_GIL_RELEASE;
+	LOCK_RELEASE;
 	return rval;
 }
 
