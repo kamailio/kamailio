@@ -506,6 +506,7 @@ static int db_mongodb_convert_bson(const db1_con_t* _h, db1_res_t* _r,
 	const char *colname;
 	bson_type_t coltype;
 	bson_iter_t riter;
+	bson_iter_t titer;
 	bson_iter_t citer;
 	bson_iter_t *piter;
 	db_val_t* dval;
@@ -520,14 +521,27 @@ static int db_mongodb_convert_bson(const db1_con_t* _h, db1_res_t* _r,
 	}
 	if(mgres->colsdoc==NULL) {
 		cdoc = (bson_t*)_rdoc;
+		if (!bson_iter_init (&citer, cdoc)) {
+			LM_ERR("failed to initialize columns iterator\n");
+			return -3;
+		}
 	} else {
 		cdoc = (bson_t*)mgres->colsdoc;
+		if (!bson_iter_init (&titer, cdoc)) {
+			LM_ERR("failed to initialize columns iterator\n");
+			return -3;
+		}
+		if(!bson_iter_find(&titer, "projection")
+				|| !BSON_ITER_HOLDS_DOCUMENT (&titer)) {
+			LM_ERR("failed to find projection field\n");
+			return -3;
+		}
+		if(!bson_iter_recurse (&titer, &citer)) {
+			LM_ERR("failed to init projection iterator\n");
+			return -3;
+		}
 	}
 
-	if (!bson_iter_init (&citer, cdoc)) {
-		LM_ERR("failed to initialize columns iterator\n");
-		return -3;
-	}
 	if(mgres->colsdoc) {
 		if (!bson_iter_init (&riter, _rdoc)) {
 			LM_ERR("failed to initialize result iterator\n");
