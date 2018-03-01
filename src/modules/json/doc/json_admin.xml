@@ -79,6 +79,25 @@ xlog("foo is $var(foo)");
 		</programlisting>
 	    </example>
 	</section>
+	<section id="json.f.json_get_string">
+	    <title>
+		<function moreinfo="none">json_get_string(json_string, field_name, destination)</function>
+	    </title>
+	    <para>
+		Copy field 'field_name' from json object 'json_string' and store it in pvar 'destination'.
+		</para>
+		<para>
+		</para>
+		<example>
+		<title><function>json_get_string</function> usage</title>
+		<programlisting format="linespecific">
+...
+json_get_string("{'foo':'bar'}", "foo", "$var(foo)");
+xlog("foo is $var(foo)");
+...
+		</programlisting>
+	    </example>
+	</section>
 	</section>
 
 	<section>
