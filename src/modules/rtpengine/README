@@ -1883,20 +1883,21 @@ rtpengine_offer();
             otherwise the RTP proxy will only insert itself as additional
             ICE candidate. Other SDP substitutions (c=, m=, etc) are
             unaffected by this flag.
-          + RTP, SRTP, AVP, AVPF - These flags control the RTP transport
-            protocol that should be used towards the recipient of the SDP.
-            If none of them are specified, the protocol given in the SDP
-            is left untouched. Otherwise, the “SRTP” flag indicates that
-            SRTP should be used, while “RTP” indicates that SRTP should
-            not be used. “AVPF” indicates that the advanced RTCP profile
-            with feedback messages should be used, and “AVP” indicates
-            that the regular RTCP profile should be used. See also the
-            next set of flags below.
-          + RTP/AVP, RTP/SAVP, RTP/AVPF, RTP/SAVPF - these serve as an
-            alternative, more explicit way to select between the different
-            RTP protocols and profiles supported by the RTP proxy. For
-            example, giving the flag “RTP/SAVPF” has the same effect as
-            giving the two flags “SRTP AVPF”.
+          + RTP, SRTP, DTLS, AVP, AVPF - These flags control the RTP
+            transport protocol that should be used towards the recipient
+            of the SDP. If none of them are specified, the protocol given
+            in the SDP is left untouched. Otherwise, the “SRTP” flag
+            indicates that SRTP should be used, while “RTP” indicates that
+            SRTP should not be used. “AVPF” indicates that the advanced
+            RTCP profile with feedback messages should be used, and “AVP”
+            indicates that the regular RTCP profile should be used. See
+            also the next set of flags below.
+          + RTP/AVP, RTP/SAVP, UDP/TLS/RTP/SAVP, RTP/AVPF, RTP/SAVPF,
+            UDP/TLS/RTP/SAVPF - these serve as an alternative, more
+            explicit way to select between the different RTP protocols and
+            profiles supported by the RTP proxy. For example, giving the
+            flag “RTP/SAVPF” has the same effect as giving the two flags
+            “SRTP AVPF”.
           + to-tag - force inclusion of the “To” tag. Normally, the “To”
             tag is always included when present, except for “delete”
             messages. Including the “To” tag in a “delete” messages allows
