@@ -1926,29 +1926,27 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		/* check for specially handled items */
 		switch (key.len) {
 			case 3:
-				if (str_eq(&key, "RTP")) {
+				if (str_eq(&key, "RTP") && !val.s) {
 					ng_flags->transport |= 0x100;
 					ng_flags->transport &= ~0x001;
 				}
-				else if (str_eq(&key, "AVP")) {
+				else if (str_eq(&key, "AVP") && !val.s) {
 					ng_flags->transport |= 0x100;
 					ng_flags->transport &= ~0x002;
 				}
 				else if (str_eq(&key, "TOS") && val.s)
 					bencode_dictionary_add_integer(ng_flags->dict, "TOS", atoi(val.s));
-				else if (str_eq(&key, "delete-delay") && val.s)
-					bencode_dictionary_add_integer(ng_flags->dict, "delete delay", atoi(val.s));
 				else
 					goto generic;
 				goto next;
 				break;
 
 			case 4:
-				if (str_eq(&key, "SRTP"))
+				if (str_eq(&key, "SRTP") && !val.s)
 					ng_flags->transport |= 0x101;
-				else if (str_eq(&key, "AVPF"))
+				else if (str_eq(&key, "AVPF") && !val.s)
 					ng_flags->transport |= 0x102;
-				else if (str_eq(&key, "DTLS"))
+				else if (str_eq(&key, "DTLS") && !val.s)
 					ng_flags->transport |= 0x104;
 				else
 					goto generic;
@@ -1965,7 +1963,7 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				break;
 
 			case 7:
-				if (str_eq(&key, "RTP/AVP"))
+				if (str_eq(&key, "RTP/AVP") && !val.s)
 					ng_flags->transport = 0x100;
 				else if (str_eq(&key, "call-id")) {
 					err = "missing value";
@@ -1981,9 +1979,9 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 			case 8:
 				if (str_eq(&key, "internal") || str_eq(&key, "external"))
 					bencode_list_add_str(ng_flags->direction, &key);
-				else if (str_eq(&key, "RTP/AVPF"))
+				else if (str_eq(&key, "RTP/AVPF") && !val.s)
 					ng_flags->transport = 0x102;
-				else if (str_eq(&key, "RTP/SAVP"))
+				else if (str_eq(&key, "RTP/SAVP") && !val.s)
 					ng_flags->transport = 0x101;
 				else if (str_eq(&key, "from-tag")) {
 					err = "missing value";
@@ -1997,7 +1995,7 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				break;
 
 			case 9:
-				if (str_eq(&key, "RTP/SAVPF"))
+				if (str_eq(&key, "RTP/SAVPF") && !val.s)
 					ng_flags->transport = 0x103;
 				else if (str_eq(&key, "direction"))
 					bencode_list_add_str(ng_flags->direction, &val);
@@ -2051,10 +2049,12 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 					*op = OP_ANSWER;
 					goto next;
 				}
+				else if (str_eq(&key, "delete-delay") && val.s)
+					bencode_dictionary_add_integer(ng_flags->dict, "delete delay", atoi(val.s));
 				break;
 
 			case 16:
-				if (str_eq(&key, "UDP/TLS/RTP/SAVP"))
+				if (str_eq(&key, "UDP/TLS/RTP/SAVP") && !val.s)
 					ng_flags->transport = 0x104;
 				else
 					goto generic;
@@ -2062,7 +2062,7 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				break;
 
 			case 17:
-				if (str_eq(&key, "UDP/TLS/RTP/SAVPF"))
+				if (str_eq(&key, "UDP/TLS/RTP/SAVPF") && !val.s)
 					ng_flags->transport = 0x106;
 				else
 					goto generic;
