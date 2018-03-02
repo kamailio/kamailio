@@ -287,7 +287,7 @@ int apy_reload_script(void)
 	PY_GIL_ENSURE;
 	pModule = PyImport_ReloadModule(_sr_apy_module);
 	if (!pModule) {
-                PyErr_PrintEx(0);
+                // PyErr_PrintEx(0); - don't hide the real exception
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_ImportError, "Reload module '%s'", bname);
 		python_handle_exception("mod_init");
