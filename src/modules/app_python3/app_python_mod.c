@@ -300,7 +300,6 @@ int apy_reload_script(void)
 	PY_GIL_ENSURE
 	PyObject *pModule = PyImport_ReloadModule(_sr_apy_module);
 	if (!pModule) {
-                PyErr_PrintEx(0);
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_ImportError, "Reload module '%s'", bname);
 		python_handle_exception("mod_init");
@@ -408,7 +407,6 @@ int apy_load_script(void)
 
 	pModule = PyImport_ImportModule(bname);
 	if (pModule == NULL) {
-                PyErr_PrintEx(0);
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_ImportError, "No module named '%s'", bname);
 		python_handle_exception("mod_init");
