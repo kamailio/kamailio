@@ -1898,7 +1898,7 @@ dialplan() {
 			;;
 
 		reload)
-			ctl_cmd_run dp_reload dp.reload
+			ctl_cmd_run dp_reload dialplan.reload
 			;;
 
 		*)
