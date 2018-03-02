@@ -1118,7 +1118,7 @@ rm -rf %{buildroot}
 %if "%{?_unitdir}" == ""
 /sbin/chkconfig --add kamailio
 %else
-%tmpfiles_create kamailio
+%tmpfiles_create kamailio.conf
 /usr/bin/systemctl -q enable kamailio.service
 %endif
 
