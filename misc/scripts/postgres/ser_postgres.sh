@@ -53,7 +53,7 @@ Usage: $COMMAND create  [database]
                to create databases, tables, and users)
     PSQL      Full path to mysql command (${PSQL})
            
-Report bugs to <ser-bugs@iptel.org>
+Report bugs to <sr-dev@lists.kamailio.org>
 EOF
 } #usage
 
