@@ -176,12 +176,6 @@ kamailio_berkeley()  # parms: <op> <arg1> <arg2>
 			exit $?
 			;;
 
-		migrate)
-			shift
-			kamailio_migrate $1 $DB_PATH
-			exit $?
-			;;
-
 		import)
 			shift
 			kamailio_import  $1 $DB_PATH
@@ -305,21 +299,6 @@ kamailio_export()  # parms: <DUMP_DIR> [DB_PATH]
 	mdbg "All tables are now exported to DUMP_DIR: [$1]"
 	return 0
 
-}
-
-
-##
-# MIGRATE (schema)
-# Examine each plain-txt file in DUMP_DIR
-#  (Assumes that kamailio_export was already invoked)
-#
-# Migrate converts data from schema-old to schema-new in place.
-#
-# After this step is complete the IMPORT should be executed.
-kamailio_migrate()  # parms: <DUMP_DIR> [DB_PATH]
-{
-	merr "db_berkeley migrate not implemented"
-	exit 1
 }
 
 
