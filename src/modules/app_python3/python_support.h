@@ -28,7 +28,6 @@
 PyObject *format_exc_obj;
 
 void python_handle_exception(const char *, ...);
-char *make_message(const char *fmt, ...);
 
 PyObject *InitTracebackModule(void);
 char *get_class_name(PyObject *);
