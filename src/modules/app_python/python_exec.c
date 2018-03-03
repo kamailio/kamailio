@@ -146,7 +146,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	Py_DECREF(pFunc);
 	if (PyErr_Occurred()) {
 		Py_XDECREF(pResult);
-		python_handle_exception("python_exec2");
+		python_handle_exception("apy_exec: %s(%s)", fname, fparam);
 		_sr_apy_env.msg = bmsg;
 		goto err;
 	}
