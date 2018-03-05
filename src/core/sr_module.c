@@ -619,6 +619,9 @@ reload:
 	}
 	exp = (union module_exports_u*)dlsym(handle, "exports");
 	if(exp==NULL) {
+		error =(char*)dlerror();
+		LM_DBG("attempt to lookup exports structure failed - dlerror: %s\n",
+				(error)?error:"none");
 		/* 'exports' structure not found, look up for '_modulename_exports' */
 		mdir = strrchr(mod_path, '/');
 		if (!mdir) {
