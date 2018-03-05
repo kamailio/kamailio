@@ -1177,6 +1177,26 @@ modparam("usrloc", "db_timer_clean", 1)
 		</example>
 	</section>
 
+	<section id="usrloc.p.server_id_filter">
+		<title><varname>server_id_filter</varname> (int)</title>
+		<para>
+			Enable (1) or disable (0) filter records by server_id on load.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server_id_filter</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "server_id_filter", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
