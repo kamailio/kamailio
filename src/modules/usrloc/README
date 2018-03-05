@@ -86,6 +86,7 @@ Carsten Bock
               3.40. db_insert_null (int)
               3.41. skip_remote_socket (int)
               3.42. db_timer_clean (int)
+              3.43. server_id_filter (int)
 
         4. RPC Commands
 
@@ -175,6 +176,7 @@ Carsten Bock
    1.40. Set db_insert_null parameter
    1.41. Set skip_remote_socket parameter
    1.42. Set db_timer_clean parameter
+   1.43. Set server_id_filter parameter
 
 Chapter 1. Admin Guide
 
@@ -233,6 +235,7 @@ Chapter 1. Admin Guide
         3.40. db_insert_null (int)
         3.41. skip_remote_socket (int)
         3.42. db_timer_clean (int)
+        3.43. server_id_filter (int)
 
    4. RPC Commands
 
@@ -355,6 +358,7 @@ Chapter 1. Admin Guide
    3.40. db_insert_null (int)
    3.41. skip_remote_socket (int)
    3.42. db_timer_clean (int)
+   3.43. server_id_filter (int)
 
 3.1. nat_bflag (integer)
 
@@ -929,6 +933,17 @@ modparam("usrloc", "skip_remote_socket", 1)
    Example 1.42. Set db_timer_clean parameter
 ...
 modparam("usrloc", "db_timer_clean", 1)
+...
+
+3.43. server_id_filter (int)
+
+   Enable (1) or disable (0) filter records by server_id on load.
+
+   Default value is “0”.
+
+   Example 1.43. Set server_id_filter parameter
+...
+modparam("usrloc", "server_id_filter", 1)
 ...
 
 4. RPC Commands
