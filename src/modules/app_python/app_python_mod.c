@@ -175,6 +175,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	_apy_process_rank = rank;
+	PyOS_AfterFork();
 	return apy_init_script(rank);
 }
 
