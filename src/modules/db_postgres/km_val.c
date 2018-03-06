@@ -191,7 +191,7 @@ int db_postgres_val2str(
 			break;
 
 		default:
-			LM_DBG("unknown data type\n");
+			LM_ERR("unknown data type\n");
 			return -10;
 	}
 }
