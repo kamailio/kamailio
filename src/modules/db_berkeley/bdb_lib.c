@@ -1082,7 +1082,7 @@ int bdb_val2str(db_fld_t *fld, char *sout, int *slen)
 			break;
 
 		default:
-			DBG("Unknown data type\n");
+			ERR("Unknown data type\n");
 			return -8;
 	}
 }

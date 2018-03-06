@@ -274,7 +274,7 @@ int km_bdb_val2str(db_val_t *_v, char *_s, int *_len)
 			break;
 
 		default:
-			LM_DBG("Unknown data type\n");
+			LM_ERR("Unknown data type\n");
 			return -8;
 	}
 }
