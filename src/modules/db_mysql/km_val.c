@@ -123,7 +123,7 @@ int db_mysql_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _le
 		break;
 
 	default:
-		LM_DBG("unknown data type\n");
+		LM_ERR("unknown data type\n");
 		return -10;
 	}
 }
