@@ -309,6 +309,9 @@ static int cassa_convert_result(db_key_t qcol, std::vector<oac::ColumnOrSuperCol
 				return -1;
 			}
 			break;
+		default:
+			LM_ERR("unknown data type\n");
+			return -1;
 	}
 	return 0;
 }
@@ -334,6 +337,7 @@ static char* dbval_to_string(db_val_t dbval, char* pk)
 						   break;
 		case DB1_DATETIME:pk+= sprintf(pk, "%ld", (long int)dbval.val.time_val);
 						  break;
+		default: LM_ERR("unknown data type\n");
 	}
 	return pk;
 }
@@ -716,6 +720,9 @@ static int cassa_convert_result_raw(db_val_t* sr_cell, str *col_val) {
 				return -1;
 			}
 			break;
+		default:
+			LM_ERR("unknown data type\n");
+			return -1;
 	}
 	return 0;
 }
@@ -1149,7 +1156,8 @@ int db_cassa_modify(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 								break;
 				case DB1_BLOB:	value = std::string(_uv[i].val.blob_val.s, _uv[i].val.blob_val.len);
 								break;
-				case DB1_DATETIME:	unsigned int exp_time = (unsigned int)_uv[i].val.time_val;
+				case DB1_DATETIME: { /* own block because we declare a variable here */
+					unsigned int exp_time = (unsigned int)_uv[i].val.time_val;
 									out << exp_time;
 									value = out.str();
 									if(ts_col_name.s && ts_col_name.len==_uk[i]->len &&
@@ -1157,7 +1165,14 @@ int db_cassa_modify(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 										ts = exp_time;
 										LM_DBG("Found timestamp col [%.*s]\n", ts_col_name.len, ts_col_name.s);
 									}
-									break;
+				} break;
+				case DB1_UNKNOWN:
+									LM_ERR("unknown data type\n");
+									/* needs probably more errors handling, free at least the memory */
+									if(ts_col_name.s)
+										pkg_free(ts_col_name.s);
+									ts_col_name.s = 0;
+									return -1;
 			}
 			if (cont)
 				continue;
