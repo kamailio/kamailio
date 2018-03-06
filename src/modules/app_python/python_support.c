@@ -51,7 +51,7 @@ void python_handle_exception(const char *fmt, ...)
 	if (fmt == NULL)
 		srcbuf = NULL;
 	else {
-		va_start(fmt, ap);
+		va_start(ap, fmt);
 		srcbuf = make_message(fmt, ap);
 		va_end(ap);
 	}
