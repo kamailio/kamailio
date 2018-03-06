@@ -39,8 +39,8 @@
 #include <transport/TTransportUtils.h>
 
 extern "C" {
-#include "../../timer.h"
-#include "../../mem/mem.h"
+#include "../../core/timer.h"
+#include "../../core/mem/mem.h"
 #include "dbcassa_table.h"
 }
 

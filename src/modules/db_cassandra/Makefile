@@ -11,9 +11,9 @@ LD=g++
 auto_gen=
 NAME=db_cassandra.so
 
-THRIFT_DIR = /usr/local/include/thrift
-LIB_DIR = /usr/local/lib
-DEFS += -I${THRIFT_DIR} -DKAMAILIO_MOD_INTERFACE
+INCLUDE_DIR = /usr/include/thrift
+LIB_DIR = /usr/lib
+DEFS += -I${INCLUDE_DIR} -DKAMAILIO_MOD_INTERFACE
 LIBS += -L${LIB_DIR} dbcassa_base.o cassandra_constants.o cassandra_types.o Cassandra.o -lthrift
 
 CXXFLAGS=$(CFLAGS:-Wno-deprecated option=)
@@ -26,15 +26,15 @@ include ../../Makefile.modules
 
 cassandra_constants.o: cassandra_constants.cpp cassandra_constants.h
 	@echo "Compiling $<"
-	$(CXX) $(CXXFLAGS) -I/usr/local/include/thrift -c $< -o $@
+	$(CXX) $(CXXFLAGS) -I${INCLUDE_DIR} -c $< -o $@
 
 cassandra_types.o: cassandra_types.cpp cassandra_types.h
 	@echo "Compiling $<"
-	$(CXX) $(CXXFLAGS) -I/usr/local/include/thrift -c $< -o $@
+	$(CXX) $(CXXFLAGS) -I${INCLUDE_DIR} -c $< -o $@
 
 Cassandra.o: Cassandra.cpp Cassandra.h
 	@echo "Compiling $<"
-	$(CXX) $(CXXFLAGS) -I/usr/local/include/thrift -c $< -o $@
+	$(CXX) $(CXXFLAGS) -I${INCLUDE_DIR} -c $< -o $@
 
 dbcassa_base.o: dbcassa_base.cpp dbcassa_base.h dbcassa_table.h
 	@echo "Compiling $<"
