@@ -136,8 +136,11 @@ modparam("async", "workers", 2)
 
    Example 1.2. async_route usage
 ...
-async_route("RESUME", "4");
-...
+request_route {
+    ...
+    async_route("RESUME", "4");
+    ...
+}
 route[RESUME] {
    send_reply("404", "Not found");
    exit;
@@ -177,7 +180,7 @@ exit;
 
    Example 1.4. async_workers usage
 ...
-; Enable 8 worker processes used by async and other modules
+# Enable 8 worker processes used by async and other modules
 async_workers=8
 ...
 
@@ -197,8 +200,11 @@ async_workers=8
 
    Example 1.5. async_task_route usage
 ...
-async_task_route("RESUME");
-...
+request_route {
+    ...
+    async_task_route("RESUME");
+    ...
+}
 route[RESUME] {
    t_relay();
    exit;
