@@ -70,7 +70,9 @@ static inline int run_onsend(sip_msg_t* orig_msg, dest_info_t* dst,
 		return 1;
 	}
 	ret=1;
-	if (onsend_rt.rlist[DEFAULT_RT]){
+	// do if onsend_route{} or cfgengine exists
+	keng = sr_kemi_eng_get();
+	if (onsend_rt.rlist[DEFAULT_RT] || keng){
 		onsnd_info.to=&dst->to;
 		onsnd_info.send_sock=dst->send_sock;
 		onsnd_info.buf=buf;
@@ -86,8 +88,7 @@ static inline int run_onsend(sip_msg_t* orig_msg, dest_info_t* dst,
 			orig_msg->fwd_send_flags=dst->send_flags; /* intial value */
 			init_run_actions_ctx(&ra_ctx);
 
-			keng = sr_kemi_eng_get();
-			if(unlikely(keng!=NULL)) {
+			if(keng) {
 				bctx = sr_kemi_act_ctx_get();
 				sr_kemi_act_ctx_set(&ra_ctx);
 				ret=keng->froute(orig_msg, ONSEND_ROUTE, NULL, NULL);
