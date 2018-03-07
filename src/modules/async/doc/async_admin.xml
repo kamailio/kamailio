@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -24,7 +24,7 @@
 	</para>
 	<para>
 		Note that after invoking the asynchronous operation, the processing
-		will continue later in another application process. Therefore variables 
+		will continue later in another application process. Therefore variables
 		stored in private memory should not be used, try to use shared memory if you
 		want to get values after the processing is resumed (e.g., $avp(...),
 		$xavp(...), $shv(...), htable $sht(...)).
@@ -72,7 +72,7 @@
 		<title><varname>workers</varname> (int)</title>
 		<para>
 			Number of worker processes to be started to handle the asynchronous
-			tasks for async_route() and async_sleep(). 
+			tasks for async_route() and async_sleep().
 		</para>
 		<para>
 		<emphasis>
@@ -124,8 +124,11 @@ modparam("async", "workers", 2)
 		<title><function>async_route</function> usage</title>
 		<programlisting format="linespecific">
 ...
-async_route("RESUME", "4");
-...
+request_route {
+    ...
+    async_route("RESUME", "4");
+    ...
+}
 route[RESUME] {
    send_reply("404", "Not found");
    exit;
@@ -184,7 +187,7 @@ exit;
 		<title><function>async_workers</function> usage</title>
 		<programlisting format="linespecific">
 ...
-; Enable 8 worker processes used by async and other modules
+# Enable 8 worker processes used by async and other modules
 async_workers=8
 ...
 </programlisting>
@@ -212,8 +215,11 @@ async_workers=8
 		<title><function>async_task_route</function> usage</title>
 		<programlisting format="linespecific">
 ...
-async_task_route("RESUME");
-...
+request_route {
+    ...
+    async_task_route("RESUME");
+    ...
+}
 route[RESUME] {
    t_relay();
    exit;
@@ -224,4 +230,3 @@ route[RESUME] {
 	</section>
 	</section>
 </chapter>
-
