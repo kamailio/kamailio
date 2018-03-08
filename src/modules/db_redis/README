@@ -36,6 +36,9 @@ Alex Balashov
 
         5. External Libraries or Applications
         6. Usage
+        7. Module specific considerations
+
+              7.1. usrloc
 
    List of Examples
 
@@ -60,6 +63,9 @@ Chapter 1. Admin Guide
 
    5. External Libraries or Applications
    6. Usage
+   7. Module specific considerations
+
+        7.1. usrloc
 
 1. Overview
 
@@ -196,3 +202,13 @@ modparam("usrloc", "db_url", DBURL_USRLOC)
 modparam("acc_db", "db_url", DBURL_ACC)
 modparam("auth_db", "db_url", DBURL_AUTH)
 ...
+
+7. Module specific considerations
+
+   7.1. usrloc
+
+7.1. usrloc
+
+   If you set "expires_type" to "1" in order to use BIGINT instead of
+   DATETIME, make sure to update your location schema file and change the
+   type of "expires" and "last_modified" from "time" to "int".
