@@ -189,4 +189,17 @@ modparam("auth_db", "db_url", DBURL_AUTH)
 			</programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>Module specific considerations</title>
+		<section>
+			<title>usrloc</title>
+			<para>
+				If you set "expires_type" to "1" in order to use BIGINT instead of DATETIME,
+				make sure to update your location schema file and change the type of "expires"
+				and "last_modified" from "time" to "int".
+			</para>
+		</section>
+	</section>
+
 </chapter>
