@@ -115,7 +115,8 @@ enum {
 
 struct ng_flags_parse {
 	int via, to, packetize, transport;
-	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux;
+	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux, *sdes,
+		       *codec, *codec_strip, *codec_offer, *codec_transcode, *codec_mask;
 	str call_id, from_tag, to_tag;
 };
 
@@ -653,17 +654,32 @@ static inline int str_eq(const str *p, const char *q) {
 	return 1;
 }
 
-static inline str str_prefix(const str *p, const char *q) {
-	str ret = STR_NULL;
+static inline int str_prefix(const str *p, const char *q, str *out) {
 	int l = strlen(q);
 	if (p->len < l)
-		return ret;
+		return 0;
 	if (memcmp(p->s, q, l))
-		return ret;
-	ret = *p;
-	ret.s += l;
-	ret.len -= l;
-	return ret;
+		return 0;
+	*out = *p;
+	out->s += l;
+	out->len -= l;
+	return 1;
+}
+/* handle either "foo-bar" or "foo=bar" from flags */
+static inline int str_key_val_prefix(const str *p, const char *q, const str *v, str *out) {
+	if (str_eq(p, q)) {
+		*out = *v;
+		return 1;
+	}
+	if (!str_prefix(p, q, out))
+		return 0;
+	if (out->len < 2)
+		return 0;
+	if (*out->s != '-')
+		return 0;
+	out->s++;
+	out->len--;
+	return 1;
 }
 
 
@@ -1928,15 +1944,58 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 			break;
 
 		/* check for items which have their own sub-list */
-		s = str_prefix(&key, "replace-");
-		if (s.s) {
+		if (str_key_val_prefix(&key, "replace", &val, &s)) {
 			bencode_list_add_str(ng_flags->replace, &s);
 			goto next;
 		}
-
-		s = str_prefix(&key, "rtcp-mux-");
-		if (s.s) {
+		if (str_key_val_prefix(&key, "SDES", &val, &s)) {
+			bencode_list_add_str(ng_flags->sdes, &s);
+			goto next;
+		}
+		if (str_key_val_prefix(&key, "rtcp-mux", &val, &s)) {
 			bencode_list_add_str(ng_flags->rtcp_mux, &s);
+			goto next;
+		}
+
+		if (str_key_val_prefix(&key, "transcode", &val, &s)
+				|| str_key_val_prefix(&key, "codec-transcode", &val, &s))
+		{
+			if (!ng_flags->codec_transcode) {
+				ng_flags->codec_transcode = bencode_list(ng_flags->dict->buffer);
+				bencode_dictionary_add(ng_flags->codec, "transcode",
+					ng_flags->codec_transcode);
+			}
+			bencode_list_add_str(ng_flags->codec_transcode, &s);
+			goto next;
+		}
+
+		if (str_key_val_prefix(&key, "codec-strip", &val, &s)) {
+			if (!ng_flags->codec_strip) {
+				ng_flags->codec_strip = bencode_list(ng_flags->dict->buffer);
+				bencode_dictionary_add(ng_flags->codec, "strip",
+					ng_flags->codec_strip);
+			}
+			bencode_list_add_str(ng_flags->codec_strip, &s);
+			goto next;
+		}
+
+		if (str_key_val_prefix(&key, "codec-offer", &val, &s)) {
+			if (!ng_flags->codec_offer) {
+				ng_flags->codec_offer = bencode_list(ng_flags->dict->buffer);
+				bencode_dictionary_add(ng_flags->codec, "offer",
+					ng_flags->codec_offer);
+			}
+			bencode_list_add_str(ng_flags->codec_offer, &s);
+			goto next;
+		}
+
+		if (str_key_val_prefix(&key, "codec-mask", &val, &s)) {
+			if (!ng_flags->codec_mask) {
+				ng_flags->codec_mask = bencode_list(ng_flags->dict->buffer);
+				bencode_dictionary_add(ng_flags->codec, "mask",
+					ng_flags->codec_mask);
+			}
+			bencode_list_add_str(ng_flags->codec_mask, &s);
 			goto next;
 		}
 
@@ -2150,6 +2209,8 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		ng_flags.direction = bencode_list(bencbuf);
 		ng_flags.replace = bencode_list(bencbuf);
 		ng_flags.rtcp_mux = bencode_list(bencbuf);
+		ng_flags.sdes = bencode_list(bencbuf);
+		ng_flags.codec = bencode_dictionary(bencbuf);
 
 		if (read_sdp_pvar!= NULL) {
 			if (read_sdp_pvar->getf(msg,&read_sdp_pvar->pvp, &pv_val) < 0)
@@ -2184,11 +2245,15 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		bencode_dictionary_add(ng_flags.dict, "flags", ng_flags.flags);
 	if (ng_flags.replace && ng_flags.replace->child)
 		bencode_dictionary_add(ng_flags.dict, "replace", ng_flags.replace);
+	if (ng_flags.codec && ng_flags.codec->child)
+		bencode_dictionary_add(ng_flags.dict, "codec", ng_flags.codec);
 	if ((ng_flags.transport & 0x100))
 		bencode_dictionary_add_string(ng_flags.dict, "transport-protocol",
 				transports[ng_flags.transport & 0x007]);
 	if (ng_flags.rtcp_mux && ng_flags.rtcp_mux->child)
 		bencode_dictionary_add(ng_flags.dict, "rtcp-mux", ng_flags.rtcp_mux);
+	if (ng_flags.sdes && ng_flags.sdes->child)
+		bencode_dictionary_add(ng_flags.dict, "SDES", ng_flags.sdes);
 
 	bencode_dictionary_add_str(ng_flags.dict, "call-id", &ng_flags.call_id);
 
