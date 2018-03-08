@@ -101,7 +101,7 @@ fi
 ##### ------------------------------------------------ #####
 ### configuration for starting/stopping kamailio
 if [ -z "$PID_FILE" ] ; then
-	PID_FILE=/var/run/kamailio.pid
+	PID_FILE=/var/run/kamailio/kamailio.pid
 fi
 if [ -z "$SYSLOG" ] ; then
 	SYSLOG=1 # 0=output to console, 1=output to syslog
