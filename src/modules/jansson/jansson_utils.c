@@ -45,7 +45,7 @@ int jansson_to_val(pv_value_t* val, char** freeme, json_t* v) {
 		val->rs.len = strlen(value);
 		val->flags = PV_VAL_STR;
 	}else if(json_is_boolean(v)) {
-		val->ri = json_is_true(v) ? 0 : 1;
+		val->ri = json_is_true(v) ? 1 : 0;
 		val->flags = PV_TYPE_INT|PV_VAL_INT;
 	}else if(json_is_real(v)) {
 		char* value = NULL;
