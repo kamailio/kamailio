@@ -79,7 +79,10 @@ int sr_kemi_config_engine_python(sip_msg_t *msg, int rtype, str *rname,
 			ret = apy_exec(msg, rname->s, NULL, 0);
 		}
 	} else if(rtype==ONSEND_ROUTE) {
-		ret = apy_exec(msg, "ksr_onsend_route", NULL, 0);
+		if(kemi_onsend_route_callback.len>0) {
+			ret = apy_exec(msg, kemi_onsend_route_callback.s, NULL, 0);
+		}
+		return 1;
 	} else if(rtype==EVENT_ROUTE) {
 		if(rname!=NULL && rname->s!=NULL) {
 			ret = apy_exec(msg, rname->s,
