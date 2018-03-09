@@ -135,6 +135,7 @@ struct cfg_group_tm {
 	int local_ack_mode;
 	int local_cancel_reason;
 	int e2e_cancel_reason;
+	unsigned int relay_100;
 };
 
 extern struct cfg_group_tm	default_tm_cfg;
