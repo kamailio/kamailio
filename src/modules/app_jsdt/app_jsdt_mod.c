@@ -165,7 +165,11 @@ int sr_kemi_config_engine_jsdt(sip_msg_t *msg, int rtype, str *rname,
 			ret = app_jsdt_run_ex(msg, rname->s, NULL, NULL, NULL, 0);
 		}
 	} else if(rtype==ONSEND_ROUTE) {
-		ret = app_jsdt_run_ex(msg, "ksr_onsend_route", NULL, NULL, NULL, 0);
+		if(kemi_onsend_route_callback.len>0) {
+			ret = app_jsdt_run_ex(msg, kemi_onsend_route_callback.s,
+					NULL, NULL, NULL, 0);
+		}
+		return 1;
 	} else if(rtype==EVENT_ROUTE) {
 		if(rname!=NULL && rname->s!=NULL) {
 			ret = app_jsdt_run_ex(msg, rname->s,
