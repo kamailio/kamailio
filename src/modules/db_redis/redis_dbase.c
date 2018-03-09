@@ -1393,7 +1393,6 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
         //db_redis_key_free(&type_keys);
         LM_DBG("+++ done with loop '%.*s'\n", k->key.len, k->key.s);
     }
-    pkg_free(query_v);
     db_redis_key_free(&type_keys);
     db_redis_key_free(&all_type_keys);
 
