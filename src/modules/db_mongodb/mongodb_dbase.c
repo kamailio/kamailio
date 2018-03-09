@@ -753,6 +753,7 @@ static int db_mongodb_store_result(const db1_con_t* _h, db1_res_t** _r)
 	km_mongodb_con_t *mgcon;
 	db_mongodb_result_t *mgres;
 	const bson_t *itdoc;
+	bson_error_t error;
 
 	mgcon = MONGODB_CON(_h);
 	if(!_r) {
@@ -777,7 +778,11 @@ static int db_mongodb_store_result(const db1_con_t* _h, db1_res_t** _r)
 	if(!mongoc_cursor_more (mgres->cursor)
 			|| !mongoc_cursor_next (mgres->cursor, &itdoc)
 			|| !itdoc) {
-		LM_DBG("no result from mongodb\n");
+		if (mongoc_cursor_error (mgres->cursor, &error)) {
+			LM_DBG("An error occurred: %s\n", error.message);
+		} else {
+			LM_DBG("no result from mongodb\n");
+		}
 		return 0;
 	}
 	/* first document linked internally in result to get columns */
