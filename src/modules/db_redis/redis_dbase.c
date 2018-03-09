@@ -28,7 +28,7 @@
 #include "redis_table.h"
 
 static void db_redis_dump_reply(redisReply *reply) {
-	int i;
+    int i;
     if (reply->type == REDIS_REPLY_STRING) {
         LM_DBG("%s\n", reply->str);
     } else if (reply->type == REDIS_REPLY_INTEGER) {
@@ -218,7 +218,7 @@ err:
 }
 
 static int db_redis_build_entry_manual_keys(redis_table_t *table, const db_key_t *_k,
-		const db_val_t *_v, const int _n, int **manual_keys, int *manual_key_count) {
+        const db_val_t *_v, const int _n, int **manual_keys, int *manual_key_count) {
 
     // TODO: we also put keys here which are already part of type mapping!
     // there must be removed for performance reasons
@@ -264,8 +264,8 @@ err:
 }
 
 static int db_redis_find_query_key(redis_key_t *key, const str *table_name,
-		str *type_name, const db_key_t *_k, const db_val_t *_v, const int _n,
-		str *key_name, int *key_found) {
+        str *type_name, const db_key_t *_k, const db_val_t *_v, const int _n,
+        str *key_name, int *key_found) {
 
     unsigned int len;
     str val = {NULL, 0};
@@ -564,7 +564,7 @@ static int db_redis_build_query_keys(km_redis_con_t *con, const str *table_name,
                         db_redis_free_reply(&reply);
                         break;
                     } else {
-                    	int i;
+                        int i;
                         LM_DBG("populating query keys list with result of type query\n");
                         *query_keys_count = reply->elements;
                         for (i = 0; i < reply->elements; ++i) {
@@ -1597,7 +1597,8 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
                 LM_ERR("Failed to add key to update query\n");
                 goto error;
             }
-            pkg_free(v.s);
+            if (v.s)
+                pkg_free(v.s);
         }
         update_queries++;
         if (db_redis_append_command_argv(con, query_v, 1) != REDIS_OK) {
