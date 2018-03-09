@@ -445,6 +445,9 @@ VERBOSE_STARTUP		"verbose_startup"
 
 SERVER_ID     "server_id"
 
+KEMI     "kemi"
+ONSEND_ROUTE_CALLBACK	"onsend_route_callback"
+
 MAX_RECURSIVE_LEVEL		"max_recursive_level"
 MAX_BRANCHES_PARAM		"max_branches"|"max_branches"
 
@@ -929,6 +932,8 @@ IMPORTFILE      "import_file"
 <INITIAL>{VERBOSE_STARTUP}		{	count(); yylval.strval=yytext;
 									return VERBOSE_STARTUP; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
+<INITIAL>{KEMI}  { count(); yylval.strval=yytext; return KEMI;}
+<INITIAL>{ONSEND_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return ONSEND_ROUTE_CALLBACK;}
 <INITIAL>{MAX_RECURSIVE_LEVEL}  { count(); yylval.strval=yytext; return MAX_RECURSIVE_LEVEL;}
 <INITIAL>{MAX_BRANCHES_PARAM}  { count(); yylval.strval=yytext; return MAX_BRANCHES_PARAM;}
 <INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}

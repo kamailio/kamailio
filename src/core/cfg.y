@@ -482,6 +482,8 @@ extern char *default_routename;
 %token VERBOSE_STARTUP
 %token CFG_DESCRIPTION
 %token SERVER_ID
+%token KEMI
+%token ONSEND_ROUTE_CALLBACK
 %token MAX_RECURSIVE_LEVEL
 %token MAX_BRANCHES_PARAM
 %token LATENCY_CFG_LOG
@@ -1568,6 +1570,15 @@ assign_stm:
 	| VERBOSE_STARTUP EQUAL error { yyerror("boolean value expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
 	| SERVER_ID EQUAL error  { yyerror("number  expected"); }
+	| KEMI DOT ONSEND_ROUTE_CALLBACK EQUAL STRING {
+			kemi_onsend_route_callback.s = $5;
+			kemi_onsend_route_callback.len = strlen($5);
+			if(kemi_onsend_route_callback.len==4
+					&& strcasecmp(kemi_onsend_route_callback.s, "none")==0) {
+				kemi_onsend_route_callback.s = "";
+				kemi_onsend_route_callback.len = 0;
+			}
+		}
     | MAX_RECURSIVE_LEVEL EQUAL NUMBER { set_max_recursive_level($3); }
     | MAX_BRANCHES_PARAM EQUAL NUMBER { sr_dst_max_branches = $3; }
     | LATENCY_LOG EQUAL intno { default_core_cfg.latency_log=$3; }

@@ -42,6 +42,7 @@
 
 #define SR_KEMI_HNAME_SIZE 128
 
+str kemi_onsend_route_callback = str_init("ksr_onsend_route");
 /**
  *
  */

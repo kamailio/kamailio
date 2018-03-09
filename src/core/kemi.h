@@ -37,6 +37,8 @@
 
 #define SR_KEMI_PARAMS_MAX	6
 
+extern str kemi_onsend_route_callback;
+
 typedef struct sr_kemi {
 	str mname; /* sub-module name */
 	str fname; /* function name */
