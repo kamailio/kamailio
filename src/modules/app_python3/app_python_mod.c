@@ -174,6 +174,9 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
+	if(rank==PROC_INIT) {
+		return 0;
+	}
 	_apy_process_rank = rank;
 	PyOS_AfterFork();
 	return apy_init_script(rank);
