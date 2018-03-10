@@ -19,8 +19,8 @@
  *
 */
 
-#ifndef _PYTHON_MOD_H
-#define  _PYTHON_MOD_H
+#ifndef _APP_PYTHON3_MOD_H
+#define  _APP_PYTHON3_MOD_H
 
 #include <Python.h>
 

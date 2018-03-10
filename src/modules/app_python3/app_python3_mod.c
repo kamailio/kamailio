@@ -31,7 +31,7 @@
 #include "python_iface.h"
 #include "python_msgobj.h"
 #include "python_support.h"
-#include "app_python_mod.h"
+#include "app_python3_mod.h"
 
 #include "mod_Router.h"
 #include "mod_Core.h"

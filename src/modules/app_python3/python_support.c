@@ -26,7 +26,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
 
-#include "app_python_mod.h"
+#include "app_python3_mod.h"
 #include "python_support.h"
 
 static char *make_message(const char *fmt, va_list args);
