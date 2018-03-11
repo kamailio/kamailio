@@ -326,7 +326,9 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 		}
 
 		/* exec the onreply routing script */
-		keng = sr_kemi_eng_get();
+		if(kemi_reply_route_callback.len>0) {
+			keng = sr_kemi_eng_get();
+		}
 		if(onreply_rt.rlist[DEFAULT_RT] != NULL || keng != NULL) {
 			set_route_type(CORE_ONREPLY_ROUTE);
 			ret = 1;
