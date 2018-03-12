@@ -64,7 +64,9 @@ int sr_kemi_config_engine_python(sip_msg_t *msg, int rtype, str *rname,
 			ret = apy_exec(msg, "ksr_request_route", NULL, 1);
 		}
 	} else if(rtype==CORE_ONREPLY_ROUTE) {
-		ret = apy_exec(msg, "ksr_reply_route", NULL, 0);
+		if(kemi_reply_route_callback.len>0) {
+			ret = apy_exec(msg, kemi_reply_route_callback.s, NULL, 0);
+		}
 	} else if(rtype==BRANCH_ROUTE) {
 		if(rname!=NULL && rname->s!=NULL) {
 			ret = apy_exec(msg, rname->s, NULL, 0);
