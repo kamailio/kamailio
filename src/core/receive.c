@@ -309,24 +309,30 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				LM_ERR("no config routing engine registered\n");
 				goto error_req;
 			}
-			if(unlikely(cidlockset) )
+			if(unlikely(cidlockset)) {
 				rec_lock_set_get(ksr_route_locks_set, cidlockidx);
-			if(keng->froute(msg, REQUEST_ROUTE, NULL, NULL) < 0) {
-				LM_NOTICE("negative return code from engine function\n");
-			}
-			if(unlikely(cidlockset))
+				if(keng->froute(msg, REQUEST_ROUTE, NULL, NULL) < 0)
+					LM_NOTICE("negative return code from engine function\n");
 				rec_lock_set_release(ksr_route_locks_set, cidlockidx);
+			} else {
+				if(keng->froute(msg, REQUEST_ROUTE, NULL, NULL) < 0)
+					LM_NOTICE("negative return code from engine function\n");
+			}
 		} else {
-			if(unlikely(cidlockset))
+			if(unlikely(cidlockset)) {
 				rec_lock_set_get(ksr_route_locks_set, cidlockidx);
-			if(run_top_route(main_rt.rlist[DEFAULT_RT], msg, 0) < 0) {
-				if(unlikely(cidlockset))
+				if(run_top_route(main_rt.rlist[DEFAULT_RT], msg, 0) < 0) {
 					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
-				LM_WARN("error while trying script\n");
-				goto error_req;
-			}
-			if(unlikely(cidlockset))
+					LM_WARN("error while trying script\n");
+					goto error_req;
+				}
 				rec_lock_set_release(ksr_route_locks_set, cidlockidx);
+			} else {
+				if(run_top_route(main_rt.rlist[DEFAULT_RT], msg, 0) < 0) {
+					LM_WARN("error while trying script\n");
+					goto error_req;
+				}
+			}
 		}
 
 		if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
@@ -385,18 +391,23 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				bctx = sr_kemi_act_ctx_get();
 				init_run_actions_ctx(&ctx);
 				sr_kemi_act_ctx_set(&ctx);
-				if(unlikely(cidlockset))
+				if(unlikely(cidlockset)) {
 					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
-				ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL, NULL);
-				if(unlikely(cidlockset))
+					ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL, NULL);
 					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
-				sr_kemi_act_ctx_set(bctx);
+					sr_kemi_act_ctx_set(bctx);
+				} else {
+					ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL, NULL);
+					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
+				}
 			} else {
-				if(unlikely(cidlockset))
+				if(unlikely(cidlockset)) {
 					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
-				ret = run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
-				if(unlikely(cidlockset))
+					ret = run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
 					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
+				} else  {
+					ret = run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
+				}
 			}
 #ifndef NO_ONREPLY_ROUTE_ERROR
 			if(unlikely(ret < 0)) {
