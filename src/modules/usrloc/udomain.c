@@ -910,21 +910,20 @@ int db_timer_udomain(udomain_t* _d)
 	vals[1].nul = 0;
 	UL_DB_EXPIRES_SET(&vals[1], 0);
 
-	keys[2] = &srv_id_col;
-	ops[2] = OP_EQ;
-	vals[2].type = DB1_INT;
-	vals[2].nul = 0;
-	vals[2].val.int_val = server_id;
+	if (ul_db_srvid != 0) {
+		keys[2] = &srv_id_col;
+		ops[2] = OP_EQ;
+		vals[2].type = DB1_INT;
+		vals[2].nul = 0;
+		vals[2].val.int_val = server_id;
+		key_num = 3;
+	}
 
 	if (ul_dbf.use_table(ul_dbh, _d->name) < 0) {
 		LM_ERR("use_table failed\n");
 		return -1;
 	}
 	
-	if (ul_db_srvid != 0) {
-		key_num = 3;
-	}
-
 	if (ul_dbf.delete(ul_dbh, keys, ops, vals, key_num) < 0) {
 		LM_ERR("failed to delete from table %s\n",_d->name->s);
 		return -1;
