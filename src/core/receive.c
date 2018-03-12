@@ -242,8 +242,8 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	/* ... clear branches from previous message */
 	clear_branches();
 
-	if(ksr_route_locks_set!=NULL && msg->callid && msg->callid->body.s
-			&& msg->callid->body.len >0) {
+	if(unlikely(ksr_route_locks_set!=NULL && msg->callid && msg->callid->body.s
+			&& msg->callid->body.len >0)) {
 		cidlockidx = get_hash1_raw(msg->callid->body.s, msg->callid->body.len);
 		cidlockidx = cidlockidx % ksr_route_locks_set->size;
 		cidlockset = 1;
@@ -309,23 +309,23 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				LM_ERR("no config routing engine registered\n");
 				goto error_req;
 			}
-			if(cidlockset)
+			if(unlikely(cidlockset) )
 				rec_lock_set_get(ksr_route_locks_set, cidlockidx);
 			if(keng->froute(msg, REQUEST_ROUTE, NULL, NULL) < 0) {
 				LM_NOTICE("negative return code from engine function\n");
 			}
-			if(cidlockset)
+			if(unlikely(cidlockset))
 				rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 		} else {
-			if(cidlockset)
+			if(unlikely(cidlockset))
 				rec_lock_set_get(ksr_route_locks_set, cidlockidx);
 			if(run_top_route(main_rt.rlist[DEFAULT_RT], msg, 0) < 0) {
-				if(cidlockset)
+				if(unlikely(cidlockset))
 					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 				LM_WARN("error while trying script\n");
 				goto error_req;
 			}
-			if(cidlockset)
+			if(unlikely(cidlockset))
 				rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 		}
 
@@ -385,17 +385,17 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				bctx = sr_kemi_act_ctx_get();
 				init_run_actions_ctx(&ctx);
 				sr_kemi_act_ctx_set(&ctx);
-				if(cidlockset)
+				if(unlikely(cidlockset))
 					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
 				ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL, NULL);
-				if(cidlockset)
+				if(unlikely(cidlockset))
 					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 				sr_kemi_act_ctx_set(bctx);
 			} else {
-				if(cidlockset)
+				if(unlikely(cidlockset))
 					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
 				ret = run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
-				if(cidlockset)
+				if(unlikely(cidlockset))
 					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 			}
 #ifndef NO_ONREPLY_ROUTE_ERROR
