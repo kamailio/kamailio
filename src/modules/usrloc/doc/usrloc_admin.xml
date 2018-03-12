@@ -1201,7 +1201,9 @@ modparam("usrloc", "rm_expired_delay", 30)
 	<section id="usrloc.p.server_id_filter">
 		<title><varname>server_id_filter</varname> (int)</title>
 		<para>
-			Enable (1) or disable (0) filter records by server_id on load.
+			Enable (1) or disable (0) filter records by server_id on load and during cleaning of expired db records.
+                        It could be usefull when you want to use the same location table for several kamailio instances which are configured to work in db_mode=1 or db_mode=2 (cache modes).
+                        Otherwise one instance of proxy cleans records made by another proxy and that breaks its cache.
 		</para>
 		<para>
 		<emphasis>
