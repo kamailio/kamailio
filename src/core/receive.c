@@ -189,7 +189,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	len = inb.len;
 
 	msg = pkg_malloc(sizeof(struct sip_msg));
-	if(msg == 0) {
+	if(unlikely(msg == 0)) {
 		LM_ERR("no mem for sip_msg\n");
 		goto error00;
 	}
@@ -225,8 +225,8 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 			goto error02;
 	}
 
-	if(parse_headers(msg, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
-			< 0) {
+	if(unlikely(parse_headers(msg, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
+			< 0)) {
 		LM_WARN("parsing relevant headers failed\n");
 	}
 	LM_DBG("--- received sip message - %s - call-id: [%.*s] - cseq: [%.*s]\n",
@@ -259,7 +259,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 			}
 		}
 		/* sanity checks */
-		if((msg->via1 == 0) || (msg->via1->error != PARSE_OK)) {
+		if(unlikely((msg->via1 == 0) || (msg->via1->error != PARSE_OK))) {
 			/* no via, send back error ? */
 			LM_ERR("no via found in request\n");
 			STATS_BAD_MSG();
