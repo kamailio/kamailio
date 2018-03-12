@@ -480,6 +480,7 @@ extern char *default_routename;
 %token HTTP_REPLY_PARSE
 %token VERSION_TABLE_CFG
 %token VERBOSE_STARTUP
+%token ROUTE_LOCKS_SIZE
 %token CFG_DESCRIPTION
 %token SERVER_ID
 %token KEMI
@@ -1569,6 +1570,8 @@ assign_stm:
 	| HTTP_REPLY_PARSE EQUAL error { yyerror("boolean value expected"); }
 	| VERBOSE_STARTUP EQUAL NUMBER { ksr_verbose_startup=$3; }
 	| VERBOSE_STARTUP EQUAL error { yyerror("boolean value expected"); }
+	| ROUTE_LOCKS_SIZE EQUAL NUMBER { ksr_route_locks_size=$3; }
+	| ROUTE_LOCKS_SIZE EQUAL error { yyerror("number expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
 	| SERVER_ID EQUAL error  { yyerror("number expected"); }
 	| KEMI DOT ONSEND_ROUTE_CALLBACK EQUAL STRING {

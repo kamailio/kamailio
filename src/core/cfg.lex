@@ -444,6 +444,7 @@ VERSION_TABLE_CFG	"version_table"
 VERBOSE_STARTUP		"verbose_startup"
 
 SERVER_ID     "server_id"
+ROUTE_LOCKS_SIZE     "route_locks_size"
 
 KEMI     "kemi"
 ONSEND_ROUTE_CALLBACK	"onsend_route_callback"
@@ -932,6 +933,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{VERSION_TABLE_CFG}  { count(); yylval.strval=yytext; return VERSION_TABLE_CFG;}
 <INITIAL>{VERBOSE_STARTUP}		{	count(); yylval.strval=yytext;
 									return VERBOSE_STARTUP; }
+<INITIAL>{ROUTE_LOCKS_SIZE}  { count(); yylval.strval=yytext; return ROUTE_LOCKS_SIZE; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{KEMI}  { count(); yylval.strval=yytext; return KEMI;}
 <INITIAL>{REPLY_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return REPLY_ROUTE_CALLBACK;}

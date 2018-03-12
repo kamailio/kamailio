@@ -135,6 +135,7 @@
 #include "core/dset.h"
 #include "core/timer_proc.h"
 #include "core/srapi.h"
+#include "core/receive.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -554,6 +555,7 @@ void cleanup(int show_status)
 #endif
 	destroy_timer();
 	pv_destroy_api();
+	ksr_route_locks_set_destroy();
 	destroy_script_cb();
 	destroy_nonsip_hooks();
 	destroy_routes();
@@ -2322,6 +2324,9 @@ try_again:
 
 	/* reinit if pv buffer size has been set in config */
 	if (pv_reinit_buffer()<0)
+		goto error;
+
+	if (ksr_route_locks_set_init()<0)
 		goto error;
 
 	/* init lookup for core event routes */

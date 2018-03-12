@@ -69,6 +69,36 @@ str default_global_port = {0, 0};
 str default_via_address = {0, 0};
 str default_via_port = {0, 0};
 
+int ksr_route_locks_size = 0;
+static rec_lock_set_t* ksr_route_locks_set = NULL;
+
+int ksr_route_locks_set_init(void)
+{
+	if(ksr_route_locks_set!=NULL || ksr_route_locks_size<=0)
+		return 0;
+
+	ksr_route_locks_set = rec_lock_set_alloc(ksr_route_locks_size);
+	if(ksr_route_locks_set) {
+		LM_ERR("failed to allocate route locks set\n");
+		return -1;
+	}
+	if(rec_lock_set_init(ksr_route_locks_set)==NULL) {
+		LM_ERR("failed to init route locks set\n");
+		return -1;
+	}
+	return 0;
+}
+
+void ksr_route_locks_set_destroy(void)
+{
+	if(ksr_route_locks_set==NULL)
+		return;
+
+	rec_lock_set_destroy(ksr_route_locks_set);
+	rec_lock_set_dealloc(ksr_route_locks_set);
+	ksr_route_locks_set = NULL;
+}
+
 /**
  * increment msg_no and return the new value
  */
@@ -137,6 +167,8 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	sr_net_info_t netinfo;
 	sr_kemi_eng_t *keng = NULL;
 	sr_event_param_t evp = {0};
+	unsigned int cidlockidx = 0;
+	unsigned int cidlockset = 0;
 
 	if(sr_event_enabled(SREV_NET_DATA_RECV)) {
 		if(sip_check_fline(buf, len) == 0) {
@@ -210,6 +242,13 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	/* ... clear branches from previous message */
 	clear_branches();
 
+	if(ksr_route_locks_set!=NULL && msg->callid && msg->callid->body.s
+			&& msg->callid->body.len >0) {
+		cidlockidx = get_hash1_raw(msg->callid->body.s, msg->callid->body.len);
+		cidlockidx = cidlockidx % ksr_route_locks_set->size;
+		cidlockset = 1;
+	}
+
 	if(msg->first_line.type == SIP_REQUEST) {
 		ruri_mark_new(); /* ruri is usable for forking (not consumed yet) */
 		if(!IS_SIP(msg)) {
@@ -270,14 +309,24 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				LM_ERR("no config routing engine registered\n");
 				goto error_req;
 			}
+			if(cidlockset)
+				rec_lock_set_get(ksr_route_locks_set, cidlockidx);
 			if(keng->froute(msg, REQUEST_ROUTE, NULL, NULL) < 0) {
 				LM_NOTICE("negative return code from engine function\n");
 			}
+			if(cidlockset)
+				rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 		} else {
+			if(cidlockset)
+				rec_lock_set_get(ksr_route_locks_set, cidlockidx);
 			if(run_top_route(main_rt.rlist[DEFAULT_RT], msg, 0) < 0) {
+				if(cidlockset)
+					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 				LM_WARN("error while trying script\n");
 				goto error_req;
 			}
+			if(cidlockset)
+				rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 		}
 
 		if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
@@ -336,10 +385,18 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				bctx = sr_kemi_act_ctx_get();
 				init_run_actions_ctx(&ctx);
 				sr_kemi_act_ctx_set(&ctx);
+				if(cidlockset)
+					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
 				ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL, NULL);
+				if(cidlockset)
+					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 				sr_kemi_act_ctx_set(bctx);
 			} else {
+				if(cidlockset)
+					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
 				ret = run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
+				if(cidlockset)
+					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 			}
 #ifndef NO_ONREPLY_ROUTE_ERROR
 			if(unlikely(ret < 0)) {
