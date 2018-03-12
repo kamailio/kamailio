@@ -1850,7 +1850,8 @@ int db_redis_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
             LM_ERR("Failed to add column value to insert query\n");
             goto error;
         }
-        pkg_free(v.s);
+        if (v.s)
+            pkg_free(v.s);
     }
 
     reply = db_redis_command_argv(con, query_v);
