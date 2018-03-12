@@ -176,7 +176,7 @@ unsigned int init_flag = 0;
 db1_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
 
-/* filter on load by server id */
+/* filter on load and during cleanup by server id */
 unsigned int ul_db_srvid = 0;
 
 /*! \brief

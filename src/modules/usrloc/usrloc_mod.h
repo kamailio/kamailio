@@ -100,7 +100,7 @@ extern str ul_xavp_contact_name;
 extern db1_con_t* ul_dbh;   /* Database connection handle */
 extern db_func_t ul_dbf;
 
-/* filter on load by server id */
+/* filter on load and during cleanup by server id */
 extern unsigned int ul_db_srvid;
 
 /*
