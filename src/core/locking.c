@@ -92,3 +92,65 @@ void rec_lock_release(rec_lock_t* rlock)
 		rlock->rec_lock_level--;
 	}
 }
+
+/**
+ *
+ */
+rec_lock_set_t* rec_lock_set_alloc(int n)
+{
+	rec_lock_set_t* ls;
+	ls=(rec_lock_set_t*)shm_malloc(sizeof(rec_lock_set_t)+n*sizeof(rec_lock_t));
+	if (ls==0){
+		LM_CRIT("could not allocate rec_lock_set\n");
+	}else{
+		ls->locks=(rec_lock_t*)((char*)ls+sizeof(rec_lock_set_t));
+		ls->size=n;
+	}
+	return ls;
+	return NULL;
+}
+
+/**
+ *
+ */
+rec_lock_set_t* rec_lock_set_init(rec_lock_set_t* lset)
+{
+	int r;
+	for (r=0; r<lset->size; r++) if (rec_lock_init(&lset->locks[r])==0) return 0;
+	return lset;
+}
+
+/**
+ *
+ */
+void rec_lock_set_destroy(rec_lock_set_t* lset)
+{
+	return;
+}
+
+/**
+ *
+ */
+void rec_lock_set_dealloc(rec_lock_set_t* lset)
+{
+	shm_free((void*)lset);
+	return;
+}
+
+/**
+ *
+ */
+void rec_lock_set_get(rec_lock_set_t* lset, int i)
+{
+	rec_lock_get(&lset->locks[i]);
+	return;
+}
+
+/**
+ *
+ */
+void rec_lock_set_release(rec_lock_set_t* lset, int i)
+{
+	rec_lock_release(&lset->locks[i]);
+	return;
+}
