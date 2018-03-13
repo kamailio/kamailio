@@ -28,7 +28,7 @@
  */
 
 /**
- * @defgroup Textops Various text operatoins on messages
+ * @defgroup textops Various text operations on messages
  * @brief Kamailio textops module
  */
 
