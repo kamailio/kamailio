@@ -50,18 +50,18 @@
 
 #include "jsonrpcs_mod.h"
 
-/** @addtogroup jsonrpc-s
- * @ingroup modules
- * @{
- *
- * <h1>Overview of Operation</h1>
- * This module provides jsonrpc over http server implementation.
- */
-
 /** @file
  *
  * This is the main file of jsonrpc-s module which contains all the functions
  * related to http processing, as well as the module interface.
+ */
+
+/** @addtogroup jsonrpc-s
+ * @ingroup modules
+ *
+ * <h1>Overview of Operation</h1>
+ * This module provides jsonrpc over http server implementation.
+ * @{
  */
 
 MODULE_VERSION
@@ -1495,3 +1495,5 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 	sr_kemi_modules_add(sr_kemi_jsonrpcs_exports);
 	return 0;
 }
+
+/** @} */
