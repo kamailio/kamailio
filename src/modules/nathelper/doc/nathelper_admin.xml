@@ -70,7 +70,7 @@
 		<listitem>
 			<para>
 			<emphasis>SIP request</emphasis> - a stateless SIP request is 
-			sent to the contact address.
+			sent to the UDP contact address.
 			</para>
 			<itemizedlist>
 				<listitem>
