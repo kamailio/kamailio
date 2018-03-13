@@ -18,7 +18,6 @@
  * \file
  * \brief Kamailio core :: Compiler specific optimizations
  * \see \ref CompilerOptions
- * \auth Andrei
  *
  * \ingroup core
  * Module: \ref core
