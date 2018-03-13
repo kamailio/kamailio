@@ -923,3 +923,4 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 	return 0;
 }
 
+/** @} */
