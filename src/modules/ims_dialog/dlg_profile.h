@@ -118,7 +118,7 @@ struct dlg_profile_table* search_dlg_profile(str *name);
  * \brief Cleanup a profile
  * \param msg SIP message
  * \param flags unused
- * \param unused
+ * \param param unused
  * \return 1
  */
 int profile_cleanup( struct sip_msg *msg, unsigned int flags, void *param );

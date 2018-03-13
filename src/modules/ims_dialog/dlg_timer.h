@@ -106,7 +106,7 @@ int update_dlg_timer(struct dlg_tl *tl, int timeout);
 /*!
  * \brief Timer routine for expiration of dialogs
  * Timer handler for expiration of dialogs, runs the global timer handler on them.
- * \param time for expiration checks
+ * \param ticks for expiration checks
  * \param attr unused
  */
 void dlg_timer_routine(unsigned int ticks , void * attr);
