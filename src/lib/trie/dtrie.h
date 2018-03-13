@@ -34,6 +34,7 @@
  * available for matching. The trie is setup in shared memory.
  * - Module: \ref carrierroute
  * - Module: \ref userblacklist
+ * @{ 
  */
 
 #ifndef _DTRIE_H_
@@ -171,4 +172,5 @@ void **dtrie_contains(struct dtrie_node_t *root, const char *number,
 		const unsigned int numberlen, const unsigned int branches);
 
 
+/** @} */
 #endif
