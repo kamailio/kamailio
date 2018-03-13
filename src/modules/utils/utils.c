@@ -28,8 +28,8 @@
  * \ingroup utils
  */
 
-/*! \defgroup Utils Kamailio :: Various utilities
- *
+/*! \defgroup utils Kamailio :: Various utilities
+ * @{
  */
 
 
@@ -471,3 +471,5 @@ static struct mi_root* forward_fifo_proxy(struct mi_root* cmd_tree, void* param)
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 #endif
+
+/** @} */
