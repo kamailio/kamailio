@@ -110,7 +110,9 @@ struct module_exports exports = {
 
 /*!
  * \brief Wrapper functions around our internal memory management for libmemcached (version >= 0.38) callback
+ * \param ptr pointer to memcache handle
  * \param mem freed memory
+ * \param context context for callbacks
  * \note pkg_free does not allow NULL pointer as standard free, therefore we check it here
  * \see pkg_free
  */
@@ -121,6 +123,7 @@ static inline void mcd_free(memcached_st *ptr, void *mem, void *context) {
 
 /*!
  * \brief Wrapper functions around our internal memory management for libmemcached (version < 0.38) callback
+ * \param ptr pointer to memcache handle
  * \param mem freed memory
  * \note pkg_free does not allow NULL pointer as standard free, therefore we check it here
  * \see pkg_free
@@ -133,7 +136,9 @@ static inline void mcd_free(memcached_st *ptr, void *mem, void *context) {
 
 /*!
  * \brief Wrapper functions around our internal memory management for libmemcached (version >= 0.38) callback
+ * \param ptr pointer to memcache handle
  * \param size allocated size
+ * \param context context for callbacks
  * \return allocated memory, or NULL on failure
  * \see pkg_malloc
  */
@@ -143,6 +148,7 @@ static inline void* mcd_malloc(memcached_st *ptr, const size_t size, void *conte
 
 /*!
  * \brief Wrapper functions around our internal memory management for libmemcached (version < 0.38) callback
+ * \param ptr pointer to memcache handle
  * \param size allocated size
  * \return allocated memory, or NULL on failure
  * \see pkg_malloc
@@ -154,8 +160,10 @@ static inline void* mcd_malloc(memcached_st *ptr, const size_t size, void *conte
 
 /*!
  * \brief Wrapper functions around our internal memory management for libmemcached (version >= 0.38) callback
+ * \param ptr pointer to memcache handle
  * \param mem pointer to allocated memory
  * \param size new size of memory area
+ * \param context context for callbacks
  * \return allocated memory, or NULL on failure
  * \see pkg_realloc
  */
@@ -165,6 +173,7 @@ static inline void* mcd_realloc(memcached_st *ptr, void *mem, const size_t size,
 
 /*!
  * \brief Wrapper functions around our internal memory management for libmemcached (version < 0.38) callback
+ * \param ptr pointer to memcache handle
  * \param mem pointer to allocated memory
  * \param size new size of memory area
  * \return allocated memory, or NULL on failure
@@ -177,11 +186,13 @@ static inline void* mcd_realloc_compat(memcached_st *ptr, void *mem, const size_
 
 /*!
  * \brief Wrapper functions around our internal memory management for libmemcached (version >= 0.38) callback
- * \param mem pointer to allocated memory
- * \param size new size of memory area
- * \return allocated memory, or NULL on failure
+ * \param ptr pointer to memcache handle
+ * \param nelem number of elements
+ * \param elsize size of elements
+ * \param context context for callbacks
+ * \return pointer to allocated memory, or NULL on failure
  * \see pkg_malloc
- * \todo this is not optimal, 	use internal calloc implemention which is not exported yet
+ * \todo this is not optimal, use internal calloc implemention which is not exported yet
  */
 static inline void * mcd_calloc(memcached_st *ptr, size_t nelem, const size_t elsize, void *context) {
 	void* tmp = NULL;
@@ -194,11 +205,12 @@ static inline void * mcd_calloc(memcached_st *ptr, size_t nelem, const size_t el
 
 /*!
  * \brief Wrapper functions around our internal memory management for libmemcached (version < 0.38) callback
- * \param mem pointer to allocated memory
- * \param size new size of memory area
- * \return allocated memory, or NULL on failure
+ * \param ptr pointer to memcache handle
+ * \param nelem number of elements
+ * \param elsize size of elements
+ * \return pointer to allocated memory, or NULL on failure
  * \see pkg_malloc
- * \todo this is not optimal, 	use internal calloc implemention which is not exported yet
+ * \todo this is not optimal, use internal calloc implemention which is not exported yet
  */
 static inline void * mcd_calloc_compat(memcached_st *ptr, size_t nelem, const size_t elsize) {
         void* tmp = NULL;
@@ -210,20 +222,22 @@ static inline void * mcd_calloc_compat(memcached_st *ptr, size_t nelem, const si
 }
 
 
+#if 0
 /**
  * \brief Callback to check if we could connect successfully to a server
  * \param ptr memcached handler
- * \param server server instance
+ * \param my_server server instance
  * \param context context for callback
  * \return MEMCACHED_SUCCESS on success, MEMCACHED_CONNECTION_FAILURE on failure
  * \todo FIXME
+ */
 static inline memcached_server_fn mcd_check_connection(const memcached_st *ptr, memcached_server_instance_st my_server, void *context) {
 	if (my_server->fd < 0) {
 		return MEMCACHED_CONNECTION_FAILURE;
 	}
 	return MEMCACHED_SUCCESS;
 }
-*/
+#endif
 
 /*!
  * \brief Module initialization function
