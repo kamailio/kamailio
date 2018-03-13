@@ -197,11 +197,11 @@ Options:\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
     -w dir       Change the working directory to \"dir\" (default: \"/\")\n\
     -t dir       Chroot to \"dir\"\n\
-    -u uid       Change uid \n\
-    -g gid       Change gid \n\
+    -u uid       Change uid (user id)\n\
+    -g gid       Change gid (group id)\n\
     -P file      Create a pid file\n\
     -G file      Create a pgid file\n\
-    -Y dir       Runtime dir\n\
+    -Y dir       Runtime dir path\n\
     -O nr        Script optimization level (debugging option)\n\
     -a mode      Auto aliases mode: enable with yes or on,\n\
                   disable with no or off\n\
@@ -211,7 +211,7 @@ Options:\n\
     -X name      Specify internal manager for private memory (pkg)\n\
                   - if omitted, the one for shm is used\n"
 #ifdef STATS
-"    -s file     File to which statistics is dumped (disabled otherwise)\n"
+"    -s file     File where to write internal statistics on SIGUSR1\n"
 #endif
 ;
 
