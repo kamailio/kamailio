@@ -21,7 +21,7 @@
  */
 
 /**
- * \file
+ * \ingroup dtrie
  * \brief Trie datastructure with utility functions
  *
  * Provides a generic trie datastructure and utility functions to
