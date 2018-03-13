@@ -421,3 +421,5 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 	sr_kemi_modules_add(sr_kemi_xhttp_pi_exports);
 	return 0;
 }
+
+/** @} */
