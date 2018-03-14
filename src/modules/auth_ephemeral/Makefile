@@ -11,6 +11,14 @@ SSL_BUILDER=$(shell \
 	if pkg-config --exists libssl; then \
 		echo 'pkg-config libssl'; \
 	fi)
+
+ifneq ($(SSL_BUILDER),)
+SSL_BUILDER+=$(shell \
+	if pkg-config --exists libcrypto; then \
+		echo 'libcrypto'; \
+	fi)
+endif
+
 endif
 
 ifneq ($(SSL_BUILDER),)
