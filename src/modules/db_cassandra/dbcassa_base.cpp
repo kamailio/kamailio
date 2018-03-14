@@ -75,7 +75,8 @@ struct cassa_con {
 
 /*!
  * \brief Open connection to Cassandra cluster
- * \param db_id
+ * \param id database id
+ * \return zero on succes
  */
 oac::CassandraClient* dbcassa_open(struct db_id* id)
 {
@@ -179,7 +180,7 @@ void* db_cassa_new_connection(struct db_id* id)
 
 /*!
  * \brief Close Cassandra connection
- * \param CassandraConnection
+ * \param con Cassandra connection
  */
 void dbcassa_close(oac::CassandraClient* con)
 {
@@ -190,7 +191,7 @@ void dbcassa_close(oac::CassandraClient* con)
 
 /*!
  * \brief Close the connection and release memory
- * \param connection
+ * \param con connection structure
  */
 void db_cassa_free_connection(struct pool_con* con)
 {
@@ -205,7 +206,7 @@ void db_cassa_free_connection(struct pool_con* con)
 
 /*!
  * \brief Reconnect to Cassandra cluster
- * \param connection
+ * \param con connection structure
  */
 void dbcassa_reconnect(struct cassa_con* con)
 {
@@ -596,6 +597,7 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
  *
  * \param _cql_res  handle for the CQLResult
  * \param _r result set for storage
+ * \param tbd cassandra database table
  * \return zero on success, negative value on failure
  */
 int cql_get_columns(oac::CqlResult& _cql_res, db1_res_t* _r, dbcassa_table_p tbc)
