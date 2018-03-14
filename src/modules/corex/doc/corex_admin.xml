@@ -409,6 +409,93 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 </programlisting>
 		</example>
 	</section>
+		<section id="corex.f.setxflag">
+		<title><function moreinfo="none">setxflag(flag)</function></title>
+		<para>
+			Set the extended message (transaction) flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be set. Can be integer or pseudo-variable with integer value
+				(range 0-63).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>setxflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+setxflag("1");
+...
+$var(flag) = 11;
+setxflag("$var(flag)");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.isxflagset">
+		<title><function moreinfo="none">isxflagset(flag)</function></title>
+		<para>
+			Return true of the extended message (transaction) flag is set.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be tested. Can be integer or pseudo-variable with integer value
+				(range 0-63).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>isxflagset</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(isxflagset("1"))
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.resetxflag">
+		<title><function moreinfo="none">resetxflag(flag)</function></title>
+		<para>
+			Reset the extended message (transaction) flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be reset. Can be integer or pseudo-variable with integer value
+				(range 0-63).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>resetxflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+resetxflag("1");
+...
+</programlisting>
+		</example>
+		</section>
 
 	</section>
 
