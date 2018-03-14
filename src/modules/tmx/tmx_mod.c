@@ -67,6 +67,7 @@ static int t_reply_callid(sip_msg_t* msg, char *cid, char *cseq,
 static int fixup_reply_callid(void** param, int param_no);
 
 static int t_flush_flags(sip_msg_t* msg, char*, char* );
+static int t_flush_xflags(sip_msg_t* msg, char *, char *);
 static int w_t_is_failure_route(sip_msg_t* msg, char*, char* );
 static int w_t_is_branch_route(sip_msg_t* msg, char*, char* );
 static int w_t_is_reply_route(sip_msg_t* msg, char*, char*);
@@ -175,6 +176,8 @@ static cmd_export_t cmds[]={
 	{"t_reply_callid", (cmd_function)t_reply_callid,    4,
 		fixup_reply_callid, 0, ANY_ROUTE },
 	{"t_flush_flags",   (cmd_function)t_flush_flags,    0, 0,
+		0, ANY_ROUTE  },
+	{"t_flush_xflags",  (cmd_function)t_flush_xflags,   0, 0,
 		0, ANY_ROUTE  },
 	{"t_is_failure_route",  (cmd_function)w_t_is_failure_route,   0, 0,
 		0, ANY_ROUTE  },
@@ -588,6 +591,33 @@ static int t_flush_flags(sip_msg_t* msg, char *foo, char *bar)
 {
 	return ki_t_flush_flags(msg);
 }
+
+/**
+ *
+ */
+static int ki_t_flush_xflags(sip_msg_t* msg)
+{
+	tm_cell_t *t;
+
+	t=_tmx_tmb.t_gett();
+	if ( t==0 || t==T_UNDEFINED) {
+		LM_ERR("failed to flush flags - no transaction found\n");
+		return -1;
+	}
+
+	memcpy(t->uas.request->xflags, msg->xflags,
+			KSR_XFLAGS_SIZE * sizeof(flag_t));
+	return 1;
+}
+
+/**
+ *
+ */
+static int t_flush_xflags(sip_msg_t* msg, char *foo, char *bar)
+{
+	return ki_t_flush_xflags(msg);
+}
+
 
 /**
  *
@@ -1033,6 +1063,11 @@ static sr_kemi_t sr_kemi_tmx_exports[] = {
 	},
 	{ str_init("tmx"), str_init("t_flush_flags"),
 		SR_KEMIP_INT, ki_t_flush_flags,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_flush_xflags"),
+		SR_KEMIP_INT, ki_t_flush_xflags,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
