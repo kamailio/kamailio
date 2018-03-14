@@ -359,6 +359,7 @@ typedef struct sip_msg {
 								to avoid unnecessary calculations */
 	unsigned int msg_flags; /*!< internal flags used by core */
 	flag_t flags; /*!< config flags */
+	flag_t xflags[KSR_XFLAGS_SIZE]; /*!< config extended flags */
 	str set_global_address;
 	str set_global_port;
 	struct socket_info* force_send_socket; /*!< force sending on this socket */
