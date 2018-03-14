@@ -48,6 +48,9 @@ Muhammad Shahzad Shafi
               4.8. msg_iflag_is_set(flagname)
               4.9. file_read(fpath, var)
               4.10. file_write(fpath, content)
+              4.11. setxflag(flag)
+              4.12. isxflagset(flag)
+              4.13. resetxflag(flag)
 
         5. RPC Commands
 
@@ -79,8 +82,11 @@ Muhammad Shahzad Shafi
    1.11. msg_iflag_is_set usage
    1.12. file_read usage
    1.13. file_write usage
-   1.14. event_route[network:msg] use cases
-   1.15. Sample PERL code for do_compress and do_uncompress
+   1.14. setxflag usage
+   1.15. isxflagset usage
+   1.16. resetxflag usage
+   1.17. event_route[network:msg] use cases
+   1.18. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -111,6 +117,9 @@ Chapter 1. Admin Guide
         4.8. msg_iflag_is_set(flagname)
         4.9. file_read(fpath, var)
         4.10. file_write(fpath, content)
+        4.11. setxflag(flag)
+        4.12. isxflagset(flag)
+        4.13. resetxflag(flag)
 
    5. RPC Commands
 
@@ -240,6 +249,9 @@ modparam("corex", "msg_avp", "$avp(msg)")
    4.8. msg_iflag_is_set(flagname)
    4.9. file_read(fpath, var)
    4.10. file_write(fpath, content)
+   4.11. setxflag(flag)
+   4.12. isxflagset(flag)
+   4.13. resetxflag(flag)
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -386,6 +398,57 @@ if(file_read("/tmp/data.txt", "$var(data)")) { ... }
 if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 ...
 
+4.11. setxflag(flag)
+
+   Set the extended message (transaction) flag.
+
+   Meaning of the parameters is as follows:
+     * flag - the index of the flag to be set. Can be integer or
+       pseudo-variable with integer value (range 0-63).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14. setxflag usage
+...
+setxflag("1");
+...
+$var(flag) = 11;
+setxflag("$var(flag)");
+...
+
+4.12. isxflagset(flag)
+
+   Return true of the extended message (transaction) flag is set.
+
+   Meaning of the parameters is as follows:
+     * flag - the index of the flag to be tested. Can be integer or
+       pseudo-variable with integer value (range 0-63).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.15. isxflagset usage
+...
+if(isxflagset("1"))
+{
+    ...
+}
+...
+
+4.13. resetxflag(flag)
+
+   Reset the extended message (transaction) flag.
+
+   Meaning of the parameters is as follows:
+     * flag - the index of the flag to be reset. Can be integer or
+       pseudo-variable with integer value (range 0-63).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.16. resetxflag usage
+...
+resetxflag("1");
+...
+
 5. RPC Commands
 
    5.1. corex.debug
@@ -520,7 +583,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
    Next is a basic usage example where encoding and decoding is done using
    PERL,
 
-   Example 1.14. event_route[network:msg] use cases
+   Example 1.17. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -551,7 +614,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.15. Sample PERL code for do_compress and do_uncompress
+   Example 1.18. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
