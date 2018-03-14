@@ -504,6 +504,8 @@ int db_mongodb_get_columns(const db1_con_t* _h, db1_res_t* _r)
  * \brief Convert rows from mongodb to db API representation
  * \param _h database connection
  * \param _r database result set
+ * \param _row number of rows
+ * \param _rdoc binary json structure
  * \return 0 on success, negative on failure
  */
 static int db_mongodb_convert_bson(const db1_con_t* _h, db1_res_t* _r,
