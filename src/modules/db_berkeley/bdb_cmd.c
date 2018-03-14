@@ -61,6 +61,11 @@ static void bdb_cmd_free(db_cmd_t *cmd, bdb_cmd_t *payload)
 	pkg_free(payload);
 }
 
+/** Prepare a query
+ * @param cmd DB command structure
+ * @param bcmd berkey DB command structure
+ * @return 0 on success, -1 on error
+ */
 int bdb_prepare_query(db_cmd_t *cmd, bdb_cmd_t *bcmd)
 {
 	bdb_tcache_t *tbc = NULL;
@@ -189,6 +194,12 @@ error:
 	return -1;
 }
 
+/**
+ * Execute a query
+ * @param cmd DB command structure
+ * @param bcmd Berkely DB command structure
+ * @return 0 on success, -1 on error
+ */
 int bdb_query(db_cmd_t *cmd, bdb_cmd_t *bcmd)
 {
 	DBT key;

@@ -68,6 +68,7 @@ typedef struct _bdb_cmd
  * structure in cmd parameter.
  * @param cmd A generic db_cmd structure to which the newly created bdb_cmd
  *            structure will be attached.
+ * @return 0 on success, -1 on error
  */
 int bdb_cmd(db_cmd_t *cmd);
 
@@ -78,6 +79,7 @@ int bdb_cmd(db_cmd_t *cmd);
  * ldap.
  * @param res A pointer to (optional) result structure if the command returns
  *            a result.
+ * @param cmd DB command structure
  * @retval 0 if executed successfully
  * @retval A negative number if the database server failed to execute command
  * @retval A positive number if there was an error on client side (SER)
