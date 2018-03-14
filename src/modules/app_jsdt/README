@@ -79,14 +79,15 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module allows executing JavaScript scripts from config file. It
-   exports all KEMI functions to JavaScript in order to access the current
-   processed SIP message. These functions are within JavaScript object
-   'KSR'.
+   This module allows executing JavaScript scripts from the Kamailio
+   configuration file. It exports all KEMI functions to JavaScript in
+   order to access the currently processed SIP message. These functions
+   are named within the JavaScript object 'KSR'.
 
-   It includes the Duktape JavaScript engine (http://www.duktape.org),
-   which is a fast and easy to embed JavaScript interpreter. Exported API
-   from SIP router to JavaScript is documented in the dokuwiki.
+   The module is based on the Duktape JavaScript engine
+   (http://www.duktape.org), which is a fast and easy to embed JavaScript
+   interpreter. The exported API from Kamailio to JavaScript is documented
+   in the wiki.
 
    The module has two JavaScript contexts:
      * first is used for functions jsdt_dofile() and jsdt_dostring().
@@ -142,8 +143,8 @@ modparam("app_jsdt", "load", "/usr/local/etc/kamailio/js/myscript.js")
 
 4.1.  jsdt_dofile(path)
 
-   Execute the JS script stored in 'path'. The parameter can be a string
-   with pseudo-variables evaluated at runtime.
+   Execute the JavaScript script stored in 'path'. The parameter can be a
+   string with pseudo-variables evaluated at runtime.
 
    Example 1.2. jsdt_dofile usage
 ...
@@ -152,8 +153,8 @@ jsdt_dofile("/usr/local/etc/kamailio/js/myscript.js");
 
 4.2.  jsdt_dostring(script)
 
-   Execute the Lua script stored in parameter. The parameter can be a
-   string with pseudo-variables.
+   Execute the JavaScript script stored in parameter. The parameter can be
+   a string with pseudo-variables.
 
    Example 1.3. jsdt_dostring usage
 ...
@@ -229,7 +230,7 @@ kamcmd app_jsdt.api_list
 
 6. Example of usage
 
-   Create your JS script and stored on file system, say:
+   Create your JS script and store it on the file system, say:
    '/usr/local/etc/kamailio/js/myscript.js'.
 ...
 function sr_append_fu_to_reply()
