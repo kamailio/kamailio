@@ -46,6 +46,9 @@ static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2);
 static int w_file_read(sip_msg_t *msg, char *fn, char *vn);
 static int w_file_write(sip_msg_t *msg, char *fn, char *vn);
+static int w_isxflagset(struct sip_msg *msg, char *flag, str *s2);
+static int w_resetxflag(struct sip_msg *msg, char *flag, str *s2);
+static int w_setxflag(struct sip_msg *msg, char *flag, char *s2);
 
 static int fixup_file_op(void** param, int param_no);
 
@@ -90,6 +93,12 @@ static cmd_export_t cmds[]={
 	{"file_read", (cmd_function)w_file_read,   2, fixup_file_op,
 		0, ANY_ROUTE },
 	{"file_write", (cmd_function)w_file_write, 2, fixup_spve_spve,
+		0, ANY_ROUTE },
+	{"setxflag", (cmd_function)w_setxflag,          1,fixup_igp_null,
+		0, ANY_ROUTE },
+	{"resetxflag", (cmd_function)w_resetxflag,      1,fixup_igp_null,
+		0, ANY_ROUTE },
+	{"isxflagset", (cmd_function)w_isxflagset,      1,fixup_igp_null,
 		0, ANY_ROUTE },
 
 	{0, 0, 0, 0, 0, 0}
@@ -465,6 +474,75 @@ static int ki_append_branch_uri_q(sip_msg_t *msg, str *uri, str *q)
 /**
  *
  */
+static int ki_isxflagset(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval>KSR_MAX_XFLAG)
+		return -1;
+	return isxflagset(msg, (flag_t)fval);
+}
+
+/**
+ *
+ */
+static int w_isxflagset(sip_msg_t *msg, char *flag, str *s2)
+{
+	int fval=0;
+	if(fixup_get_ivalue(msg, (gparam_t*)flag, &fval)!=0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_isxflagset(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_resetxflag(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval>KSR_MAX_XFLAG)
+		return -1;
+	return resetxflag(msg, (flag_t)fval);
+}
+
+/**
+ *
+ */
+static int w_resetxflag(sip_msg_t *msg, char *flag, str *s2)
+{
+	int fval=0;
+	if(fixup_get_ivalue(msg, (gparam_t*)flag, &fval)!=0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_resetxflag(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_setxflag(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval>KSR_MAX_XFLAG)
+		return -1;
+	return setxflag(msg, (flag_t)fval);
+}
+
+/**
+ *
+ */
+static int w_setxflag(sip_msg_t *msg, char *flag, char *s2)
+{
+	int fval=0;
+	if(fixup_get_ivalue(msg, (gparam_t*)flag, &fval)!=0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_setxflag(msg, fval);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_corex_exports[] = {
 	{ str_init("corex"), str_init("append_branch"),
@@ -480,6 +558,21 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	{ str_init("corex"), str_init("append_branch_uri_q"),
 		SR_KEMIP_INT, ki_append_branch_uri_q,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("setxflag"),
+		SR_KEMIP_INT, ki_setxflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("resetxflag"),
+		SR_KEMIP_INT, ki_resetxflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("isxflagset"),
+		SR_KEMIP_INT, ki_isxflagset,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
