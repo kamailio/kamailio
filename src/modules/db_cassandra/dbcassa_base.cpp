@@ -134,7 +134,7 @@ oac::CassandraClient* dbcassa_open(struct db_id* id)
 
 /*!
  * \brief Create new DB connection structure
- * \param db_id
+ * \param id database id
  */
 void* db_cassa_new_connection(struct db_id* id)
 {
@@ -597,7 +597,7 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
  *
  * \param _cql_res  handle for the CQLResult
  * \param _r result set for storage
- * \param tbd cassandra database table
+ * \param tbc cassandra database table
  * \return zero on success, negative value on failure
  */
 int cql_get_columns(oac::CqlResult& _cql_res, db1_res_t* _r, dbcassa_table_p tbc)
