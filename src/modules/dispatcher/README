@@ -108,7 +108,7 @@ Julien Chavanton
               4.4. ds_next_dst()
               4.5. ds_next_domain()
               4.6. ds_mark_dst([state])
-              4.7. ds_list_exist(groupid)
+              4.7. ds_list_exists(groupid)
               4.8. ds_is_from_list([groupid [, mode [, uri] ] ])
               4.9. ds_load_update()
               4.10. ds_load_unset()
@@ -181,7 +181,7 @@ Julien Chavanton
    1.40. ds_select_domain usage
    1.41. ds_select usage
    1.42. ds_mark_dst usage
-   1.43. ds_list_exist usage
+   1.43. ds_list_exists usage
    1.44. ds_is_from_list usage
    1.45. ds_load_unset usage
    1.46. dispatcher list file
@@ -244,7 +244,7 @@ Chapter 1. Admin Guide
         4.4. ds_next_dst()
         4.5. ds_next_domain()
         4.6. ds_mark_dst([state])
-        4.7. ds_list_exist(groupid)
+        4.7. ds_list_exists(groupid)
         4.8. ds_is_from_list([groupid [, mode [, uri] ] ])
         4.9. ds_load_update()
         4.10. ds_load_unset()
@@ -912,7 +912,7 @@ end
    4.4. ds_next_dst()
    4.5. ds_next_domain()
    4.6. ds_mark_dst([state])
-   4.7. ds_list_exist(groupid)
+   4.7. ds_list_exists(groupid)
    4.8. ds_is_from_list([groupid [, mode [, uri] ] ])
    4.9. ds_load_update()
    4.10. ds_load_unset()
@@ -1097,16 +1097,18 @@ failure_route[tryagain] {
 }
 ...
 
-4.7.  ds_list_exist(groupid)
+4.7.  ds_list_exists(groupid)
+
+   Function alias: ds_list_exist(groupid)
 
    Check if a specific group is defined in dispatcher list or database.
      * groupid - A group ID to check.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.43. ds_list_exist usage
+   Example 1.43. ds_list_exists usage
 ...
-if(ds_list_exist("10")) {
+if(ds_list_exists("10")) {
     ...
 }
 ...
