@@ -207,6 +207,8 @@ static cmd_export_t cmds[]={
 		fixup_ds_is_from_list, 0, ANY_ROUTE},
 	{"ds_list_exist",  (cmd_function)w_ds_list_exist, 1,
 		fixup_ds_list_exist, 0, ANY_ROUTE},
+	{"ds_list_exists",  (cmd_function)w_ds_list_exist, 1,
+		fixup_ds_list_exist, 0, ANY_ROUTE},
 	{"ds_load_unset",    (cmd_function)w_ds_load_unset,   0,
 		0, 0, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
