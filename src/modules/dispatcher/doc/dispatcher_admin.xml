@@ -1302,10 +1302,13 @@ failure_route[tryagain] {
 </programlisting>
 		</example>
  	</section>
-  	<section  id="dispatcher.f.ds_list_exist">
+  	<section  id="dispatcher.f.ds_list_exists">
  		<title>
-		<function moreinfo="none">ds_list_exist(groupid)</function>
+		<function moreinfo="none">ds_list_exists(groupid)</function>
  		</title>
+ 		<para>
+		Function alias: ds_list_exist(groupid)
+ 		</para>
  		<para>
 		Check if a specific group is defined in dispatcher list
 		or database.
@@ -1320,10 +1323,10 @@ failure_route[tryagain] {
 			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>ds_list_exist</function> usage</title>
+		<title><function>ds_list_exists</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(ds_list_exist("10")) {
+if(ds_list_exists("10")) {
     ...
 }
 ...
