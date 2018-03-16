@@ -166,8 +166,8 @@ static int w_ds_is_from_list0(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list1(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list2(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list3(struct sip_msg*, char*, char*, char*);
-static int w_ds_list_exist(struct sip_msg*, char*);
-static int w_ds_reload(struct sip_msg* msg);
+static int w_ds_list_exist(struct sip_msg*, char*, char*);
+static int w_ds_reload(struct sip_msg* msg, char*, char*);
 
 static int fixup_ds_is_from_list(void** param, int param_no);
 static int fixup_ds_list_exist(void** param,int param_no);
@@ -731,7 +731,7 @@ static int w_ds_next_domain(struct sip_msg *msg, char *str1, char *str2)
 /**
  *
  */
-static int w_ds_mark_dst0(struct sip_msg *msg, char *str1, char *str2)
+static int ki_ds_mark_dst(sip_msg_t *msg)
 {
 	int state;
 
@@ -745,23 +745,43 @@ static int w_ds_mark_dst0(struct sip_msg *msg, char *str1, char *str2)
 /**
  *
  */
-static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
+static int w_ds_mark_dst0(struct sip_msg *msg, char *str1, char *str2)
+{
+	return ki_ds_mark_dst(msg);
+}
+
+/**
+ *
+ */
+static int ki_ds_mark_dst_state(sip_msg_t *msg, str *sval)
 {
 	int state;
 
-	if(str1 == NULL)
-		return w_ds_mark_dst0(msg, NULL, NULL);
+	if(sval->s == NULL || sval->len == 0)
+		return ki_ds_mark_dst(msg);
 
-	state = ds_parse_flags(str1, strlen(str1));
+	state = ds_parse_flags(sval->s, sval->len);
 
 	if(state < 0) {
-		LM_WARN("Failed to parse flag: %s", str1);
+		LM_WARN("Failed to parse state flags: %.*s", sval->len, sval->s);
 		return -1;
 	}
 
 	return ds_mark_dst(msg, state);
 }
 
+/**
+ *
+ */
+static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
+{
+	str sval;
+
+	sval.s = str1;
+	sval.len = strlen(str1);
+
+	return ki_ds_mark_dst_state(msg, &sval);
+}
 
 /**
  *
@@ -796,7 +816,7 @@ static int ds_warn_fixup(void **param, int param_no)
 	return 0;
 }
 
-static int w_ds_reload(struct sip_msg *msg)
+static int ds_reload(sip_msg_t *msg)
 {
 	if(!ds_db_url.s) {
 		if(ds_load_list(dslistfile) != 0)
@@ -812,11 +832,20 @@ static int w_ds_reload(struct sip_msg *msg)
 }
 
 
+static int w_ds_reload(struct sip_msg *msg, char *str1, char *str2)
+{
+	return ds_reload(msg);
+}
+
 static int w_ds_is_from_list0(struct sip_msg *msg, char *str1, char *str2)
 {
 	return ds_is_from_list(msg, -1);
 }
 
+static int ki_ds_is_from_lists(sip_msg_t *msg)
+{
+	return ds_is_from_list(msg, -1);
+}
 
 static int w_ds_is_from_list1(struct sip_msg *msg, char *set, char *str2)
 {
@@ -845,6 +874,11 @@ static int w_ds_is_from_list2(struct sip_msg *msg, char *set, char *mode)
 	return ds_is_addr_from_list(msg, vset, NULL, vmode);
 }
 
+static int ki_ds_is_from_list_mode(sip_msg_t *msg, int vset, int vmode)
+{
+	return ds_is_addr_from_list(msg, vset, NULL, vmode);
+}
+
 static int w_ds_is_from_list3(
 		struct sip_msg *msg, char *set, char *mode, char *uri)
 {
@@ -868,6 +902,10 @@ static int w_ds_is_from_list3(
 	return ds_is_addr_from_list(msg, vset, &suri, vmode);
 }
 
+static int ki_ds_is_from_list_uri(sip_msg_t *msg, int vset, int vmode, str *vuri)
+{
+	return ds_is_addr_from_list(msg, vset, vuri, vmode);
+}
 
 static int fixup_ds_is_from_list(void **param, int param_no)
 {
@@ -879,7 +917,7 @@ static int fixup_ds_is_from_list(void **param, int param_no)
 }
 
 /* Check if a given set exist in memory */
-static int w_ds_list_exist(struct sip_msg *msg, char *param)
+static int w_ds_list_exist(struct sip_msg *msg, char *param, char *p2)
 {
 	int set;
 
@@ -888,6 +926,11 @@ static int w_ds_list_exist(struct sip_msg *msg, char *param)
 		return -1;
 	}
 	LM_DBG("--- Looking for dispatcher set %d\n", set);
+	return ds_list_exist(set);
+}
+
+static int ki_ds_list_exists(struct sip_msg *msg, int set)
+{
 	return ds_list_exist(set);
 }
 
@@ -1129,6 +1172,56 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 	},
 	{ str_init("dispatcher"), str_init("ds_next_dst"),
 		SR_KEMIP_INT, ki_ds_next_dst,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_mark_dst"),
+		SR_KEMIP_INT, ki_ds_mark_dst,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_mark_dst_state"),
+		SR_KEMIP_INT, ki_ds_mark_dst_state,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_is_from_lists"),
+		SR_KEMIP_INT, ki_ds_is_from_lists,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_is_from_list"),
+		SR_KEMIP_INT, ds_is_from_list,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_is_from_list_mode"),
+		SR_KEMIP_INT, ki_ds_is_from_list_mode,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_is_from_list_uri"),
+		SR_KEMIP_INT, ki_ds_is_from_list_uri,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_load_update"),
+		SR_KEMIP_INT, ds_load_update,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_load_unset"),
+		SR_KEMIP_INT, ds_load_unset,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_reload"),
+		SR_KEMIP_INT, ds_reload,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_list_exists"),
+		SR_KEMIP_INT, ki_ds_list_exists,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
