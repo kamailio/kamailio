@@ -68,7 +68,7 @@
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("uri_db", "db_url", "mysql://username:password@localhost/openser")
+modparam("uri_db", "db_url", "mysql://username:password@localhost/kamailio")
 ...
 </programlisting>
 		</example>
