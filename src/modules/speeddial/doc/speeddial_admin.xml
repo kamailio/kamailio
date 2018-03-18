@@ -68,7 +68,7 @@
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("speeddial", "db_url", "mysql://openser:xxx@localhost/openser")
+modparam("speeddial", "db_url", "mysql://kamailio:xxx@localhost/kamailio")
 ...
 </programlisting>
 		</example>
@@ -242,7 +242,7 @@ modparam("speeddial", "use_domain", 1)
 		<title><function>sd_lookup</function> usage</title>
 		<programlisting format="linespecific">
 ...
-# 'speed_dial' is the default table name created by openser db script
+# 'speed_dial' is the default table name created by kamailio db script
 if(uri=~"sip:[0-9]{2}@.*")
 	sd_lookup("speed_dial");
 # use auth username
