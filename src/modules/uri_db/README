@@ -125,7 +125,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set db_url parameter
 ...
-modparam("uri_db", "db_url", "mysql://username:password@localhost/openser")
+modparam("uri_db", "db_url", "mysql://username:password@localhost/kamailio")
 ...
 
 3.2. db_table (string)

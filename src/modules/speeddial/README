@@ -126,7 +126,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set db_url parameter
 ...
-modparam("speeddial", "db_url", "mysql://openser:xxx@localhost/openser")
+modparam("speeddial", "db_url", "mysql://kamailio:xxx@localhost/kamailio")
 ...
 
 3.2. user_column (string)
@@ -231,7 +231,7 @@ modparam("speeddial", "use_domain", 1)
 
    Example 1.9. sd_lookup usage
 ...
-# 'speed_dial' is the default table name created by openser db script
+# 'speed_dial' is the default table name created by kamailio db script
 if(uri=~"sip:[0-9]{2}@.*")
         sd_lookup("speed_dial");
 # use auth username
