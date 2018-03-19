@@ -39,6 +39,7 @@
 
 extern str kemi_onsend_route_callback;
 extern str kemi_reply_route_callback;
+extern str kemi_event_route_callback;
 
 typedef struct sr_kemi {
 	str mname; /* sub-module name */

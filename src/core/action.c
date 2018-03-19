@@ -1663,23 +1663,41 @@ int run_top_route(struct action* a, sip_msg_t* msg, struct run_act_ctx *c)
 int run_child_one_init_route(void)
 {
 	struct sip_msg *fmsg;
-	struct run_act_ctx ctx;
+	run_act_ctx_t ctx;
+	run_act_ctx_t *bctx;
 	int rtb, rt;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("core:worker-one-init");
 
-	LM_DBG("attempting to run event_route[core:worker-one-init]\n");
+	LM_DBG("attempting to run event_route[%s]\n", evname.s);
 
-	rt = route_get(&event_rt, "core:worker-one-init");
-	if(rt>=0 && event_rt.rlist[rt]!=NULL) {
-		LM_DBG("executing event_route[core:worker-one-init] (%d)\n", rt);
+	if(kemi_event_route_callback.s!=NULL && kemi_event_route_callback.len>0) {
+		keng = sr_kemi_eng_get();
+		rt = -1;
+	} else {
+		rt = route_get(&event_rt, evname.s);
+	}
+	if((keng!=NULL) || (rt>=0 && event_rt.rlist[rt]!=NULL)) {
+		LM_DBG("executing event_route[%s] (%d)\n", evname.s, rt);
 		if(faked_msg_init()<0)
 			return -1;
 		fmsg = faked_msg_next();
 		rtb = get_route_type();
 		set_route_type(REQUEST_ROUTE);
 		init_run_actions_ctx(&ctx);
-		run_top_route(event_rt.rlist[rt], fmsg, &ctx);
-		if(ctx.run_flags&DROP_R_F)
-		{
+		if(keng==NULL) {
+			run_top_route(event_rt.rlist[rt], fmsg, &ctx);
+		} else {
+			bctx = sr_kemi_act_ctx_get();
+			sr_kemi_act_ctx_set(&ctx);
+			if(keng->froute(fmsg, EVENT_ROUTE,
+						&kemi_event_route_callback, &evname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+				return -1;
+			}
+			sr_kemi_act_ctx_set(bctx);
+		}
+		if(ctx.run_flags&DROP_R_F) {
 			LM_ERR("exit due to 'drop' in event route\n");
 			return -1;
 		}
