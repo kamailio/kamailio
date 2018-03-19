@@ -313,8 +313,12 @@ void db_redis_free_tables(km_redis_con_t *con) {
                 col_last = (&col_ht->table[j])->prev;
                 clist_foreach(&col_ht->table[j], col_he, next) {
                     pkg_free(col_he->key.s);
-                    pkg_free(col_he);
-                    if (col_he == col_last) break;
+                    if (col_he == col_last) {
+                        pkg_free(col_he);
+                        break;
+                    } else {
+                        pkg_free(col_he);
+                    }
                 }
             }
             pkg_free(col_ht->table);
@@ -340,9 +344,13 @@ void db_redis_free_tables(km_redis_con_t *con) {
             }
             pkg_free(table);
             pkg_free(he->key.s);
-            pkg_free(he);
+            if (he == last) {
+                pkg_free(he);
+                break;
+            } else {
+                pkg_free(he);
+            }
 
-            if (he == last) break;
         }
     }
     pkg_free(ht->table);
@@ -409,6 +417,7 @@ static struct str_hash_entry* db_redis_create_table(str *table) {
         LM_ERR("Failed to allocate memory for table schema hashtable\n");
         pkg_free(e->key.s);
         pkg_free(e);
+        pkg_free(t);
         return NULL;
     }
     str_hash_init(&t->columns);
@@ -426,6 +435,7 @@ static struct str_hash_entry* db_redis_create_column(str *col, str *type) {
     }
     if (pkg_str_dup(&e->key, col) != 0) {
         LM_ERR("Failed to allocate memory for column name\n");
+        pkg_free(e);
         return NULL;
     }
     e->flags = 0;
@@ -453,6 +463,7 @@ static struct str_hash_entry* db_redis_create_column(str *col, str *type) {
         default:
             LM_ERR("Invalid schema column type '%.*s', expecting one of string, int, timestamp, double, blob\n",
                     type->len, type->s);
+            pkg_free(e->key.s);
             pkg_free(e);
             return NULL;
     }
@@ -539,6 +550,10 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                     if (!table->types) {
                         table->types = type_target = type;
                     } else {
+                        if (!type_target) {
+                            LM_ERR("Internal error accessing null type_target\n");
+                            goto err;
+                        }
                         type_target->next = type;
                         type_target = type_target->next;
                     }
@@ -571,6 +586,10 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                 if (*key_target == NULL) {
                     *key_target = key_location = key;
                 } else {
+                    if (!key_location) {
+                        LM_ERR("Internal error, null key_location pointer\n");
+                        goto err;
+                    }
                     key_location->next = key;
                     key_location = key_location->next;
                 }
@@ -608,7 +627,7 @@ int db_redis_parse_schema(km_redis_con_t *con) {
     char full_path[_POSIX_PATH_MAX + 1];
     int path_len;
     struct stat fstat;
-    char c;
+    unsigned char c;
 
     enum {
         DBREDIS_SCHEMA_COLUMN_ST,

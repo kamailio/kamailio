@@ -378,8 +378,6 @@ static int db_redis_build_entry_keys(km_redis_con_t *con, const str *table_name,
         goto err;
     }
     if (key_found) {
-        db_redis_key_add_str(keys, &keyname);
-
         if (db_redis_key_add_str(keys, &keyname) != 0) {
             LM_ERR("Failed to add key string\n");
             goto err;
@@ -470,7 +468,10 @@ static int db_redis_build_type_keys(km_redis_con_t *con, const str *table_name,
             goto err;
         }
         if (key_found) {
-            db_redis_key_add_str(keys, &keyname);
+            if (db_redis_key_add_str(keys, &keyname) != 0) {
+                LM_ERR("Failed to add query key to key list\n");
+                goto err;
+            }
             (*keys_count)++;
             LM_DBG("found key '%.*s' for type '%.*s'\n",
                     keyname.len, keyname.s,
@@ -526,7 +527,10 @@ static int db_redis_build_query_keys(km_redis_con_t *con, const str *table_name,
     if (key_found) {
         LM_DBG("found suitable entry key '%.*s' for query\n",
                 keyname.len, keyname.s);
-        db_redis_key_add_str(query_keys, &keyname);
+        if (db_redis_key_add_str(query_keys, &keyname) != 0) {
+            LM_ERR("Failed to add key name to query keys\n");
+            goto err;
+        }
         *query_keys_count = 1;
         pkg_free(keyname.s);
         keyname.s = NULL;
@@ -544,10 +548,12 @@ static int db_redis_build_query_keys(km_redis_con_t *con, const str *table_name,
 
                 if (db_redis_key_add_string(&query_v, prefix, strlen(prefix)) != 0) {
                     LM_ERR("Failed to add smembers command to query\n");
+                    db_redis_key_free(&query_v);
                     goto err;
                 }
                 if (db_redis_key_add_str(&query_v, &keyname) != 0) {
                     LM_ERR("Failed to add key name to smembers query\n");
+                    db_redis_key_free(&query_v);
                     goto err;
                 }
 
@@ -1062,7 +1068,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
     RES_NUM_ROWS(*_r) = RES_ROW_N(*_r) = 0;
     RES_COL_N(*_r) = _nc;
 
-    if (!keys_count && do_table_scan) {
+    if (!(*keys_count) && do_table_scan) {
         LM_DBG("performing full table scan\n");
         if (db_redis_scan_query_keys(con, CON_TABLE(_h), _k, _n,
                     keys, keys_count,
@@ -1354,7 +1360,9 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
             goto error;
         }
         pkg_free(db_keys);
+        db_keys = NULL;
         pkg_free(db_vals);
+        db_vals = NULL;
         db_redis_free_reply(&reply);
 
         if (db_redis_key_add_string(&query_v, "DEL", 3) != 0) {
@@ -1395,6 +1403,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
     }
     db_redis_key_free(&type_keys);
     db_redis_key_free(&all_type_keys);
+    db_redis_key_free(&query_v);
 
     return 0;
 
@@ -1426,7 +1435,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
     int j;
     size_t col;
 
-    if (!keys_count && do_table_scan) {
+    if (!(*keys_count) && do_table_scan) {
         LM_DBG("performing full table scan\n");
         if (db_redis_scan_query_keys(con, CON_TABLE(_h), _k, _n,
                     keys, keys_count,
@@ -1664,6 +1673,10 @@ int db_redis_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
     // TODO: optimize mapping-based manual post-check (remove check for keys already
     // in type query key)
 
+    if (!_r) {
+        LM_ERR("db result is null\n");
+        return -1;
+    }
     con = REDIS_CON(_h);
     if (con && con->con == NULL) {
         if (db_redis_connect(con) != 0) {
@@ -1683,7 +1696,7 @@ int db_redis_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
                 CON_TABLE(_h)->len, CON_TABLE(_h)->s);
     }
 
-    if(_r) *_r = NULL;
+    *_r = NULL;
 
     // check if we have a version query, and return version directly from
     // schema instead of loading it from redis

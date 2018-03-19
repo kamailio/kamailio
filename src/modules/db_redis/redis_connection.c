@@ -339,6 +339,11 @@ int db_redis_get_reply(km_redis_con_t *con, void **reply) {
     int ret;
     redis_key_t *query;
 
+    if (!con || !con->con) {
+        LM_ERR("Internal error passing null connection\n");
+        return -1;
+    }
+
     *reply = NULL;
     ret = redisGetReply(con->con, reply);
     if (con->con->err == REDIS_ERR_EOF) {
