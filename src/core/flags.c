@@ -27,6 +27,7 @@
 
 
 #include <limits.h>
+#include <stdint.h>
 #include "sr_module.h"
 #include "dprint.h"
 #include "parser/msg_parser.h"
@@ -317,6 +318,8 @@ error:
 	return E_CFG;
 }
 
+#endif
+
 /**
  *
  */
@@ -354,5 +357,3 @@ int isxflagset(struct sip_msg* msg, flag_t flag)
 	fb = flag % (sizeof(flag_t)*CHAR_BIT);
 	return (msg->xflags[fi] & (1<<fb)) ? 1 : -1;
 }
-
-#endif
