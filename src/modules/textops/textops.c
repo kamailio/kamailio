@@ -208,7 +208,7 @@ static cmd_export_t cmds[]={
 	{"remove_hf_re",     (cmd_function)remove_hf_re_f,    1,
 		fixup_regexp_null, fixup_free_regexp_null,
 		ANY_ROUTE},
-	{"remove_hf_exp",     (cmd_function)remove_hf_exp_f,  1,
+	{"remove_hf_exp",     (cmd_function)remove_hf_exp_f,  2,
 		fixup_regexp_regexp, fixup_free_regexp_regexp,
 		ANY_ROUTE},
 	{"is_present_hf",    (cmd_function)is_present_hf_f,   1,
