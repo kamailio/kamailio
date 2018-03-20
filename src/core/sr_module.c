@@ -594,7 +594,7 @@ reload:
 		exit(-1);
 	}
 	mod_if_ver = (unsigned *)dlsym(handle, "module_interface_ver");
-	if ( (error =(char*)dlerror())!=0 ){
+	if (mod_if_ver==NULL || (error =(char*)dlerror())!=0 ){
 		LM_ERR("no module interface version in module <%s>\n", path );
 		goto error1;
 	}
@@ -635,12 +635,10 @@ reload:
 		snprintf(exbuf, 62, "_%.*s_exports", expref.len, expref.s);
 		LM_DBG("looking up exports with name: %s\n", exbuf);
 		exp = (union module_exports_u*)dlsym(handle, exbuf);
-		if(exp==NULL) {
-			if ( (error =(char*)dlerror())!=0 ){
-				LM_ERR("failure for exports symbol: %s - dlerror: %s\n",
-						exbuf, error);
-				goto error1;
-			}
+		if(exp==NULL || (error =(char*)dlerror())!=0 ){
+			LM_ERR("failure for exports symbol: %s - dlerror: %s\n",
+					exbuf, (error)?error:"none");
+			goto error1;
 		}
 	}
 	/* hack to allow for kamailio style dlflags inside exports */
