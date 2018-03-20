@@ -66,7 +66,7 @@ extern int isc_fr_inv_timeout;		/**< default ISC INVITE response timeout in ms *
 /**	SIP Status Code to send to client on Session Termination because AS did not respond */
 
 
-int isc_forward( struct sip_msg *msg, isc_match *m,isc_mark *mark);
+int isc_forward( struct sip_msg *msg, isc_match *m,isc_mark *mark, int firstflag);
 
 
 #endif
