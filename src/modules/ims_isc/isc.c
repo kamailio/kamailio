@@ -56,7 +56,7 @@
  * @param mark  - the isc_mark that should be used to mark the message
  * @returns #ISC_RETURN_TRUE if OK, #ISC_RETURN_ERROR if not
  */
-int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark) {
+int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag) {
 	struct cell *t;
 	unsigned int hash, label;
 	ticks_t fr_timeout, fr_inv_timeout;
@@ -75,7 +75,7 @@ int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark) {
 	memcpy(msg->dst_uri.s, m->server_name.s, m->server_name.len);
 
 	/* append branch if last trigger failed */
-	if (is_route_type(FAILURE_ROUTE))
+	if (is_route_type(FAILURE_ROUTE) && !firstflag)
 		append_branch(msg, &(msg->first_line.u.request.uri), &(msg->dst_uri), 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0);
 
 	// Determines the tm transaction identifiers.
