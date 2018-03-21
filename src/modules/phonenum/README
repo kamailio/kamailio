@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2017 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2017 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -97,7 +97,7 @@ Chapter 1. Admin Guide
 
    Phone number search mode.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.1. Set smode parameter
 ...
@@ -108,7 +108,7 @@ modparam("phonenum", "smode", 0)
 
    4.1. phonenum_match(num, pvc)
 
-4.1. phonenum_match(num, pvc)
+4.1.  phonenum_match(num, pvc)
 
    Match num against the libphonenumber and set the attributes inside the
    pvc container. The function has to be called before accessing a key
@@ -120,8 +120,13 @@ modparam("phonenum", "smode", 0)
 
    Example 1.2. phonenum_match usage
 ...
-if(phonenum_match("1-484-555-8888", "src"))
-    xlog("number normalized to: $phn(src=>num)\n");
+if(phonenum_match("1-484-555-8888", "src")) {
+    if($phn(src=>valid)==1) {
+        xlog("number normalized to: $phn(src=>normalized)\n");
+    } else {
+        xlog("number normalization error: $phn(src=>error)\n");
+    }
+}
 ...
 
 5. Pseudo Variables
@@ -129,10 +134,14 @@ if(phonenum_match("1-484-555-8888", "src"))
      * $phn(pvc=>key) - pvc is an identifier for this query result; it is
        designated by the second parameter of phonenum_match(). The key can
        be one of the following:
-          + number - normalized phone number
-          + country - country for phone number
-          + region - region for phone number
-          + operator - operator for phone number
+          + number - phone number that is matched
+          + valid - 1 if the matched number has a valid result; 0
+            otherwise
+          + normalized - normalized phone number
+          + cctel - country code for phone number
+          + ltype - local network type
+          + ndesc - phone number description
+          + error - error string if phone number matching fails.
 
    Exported pseudo-variables are documented at
    https://www.kamailio.org/wiki/.
