@@ -109,7 +109,7 @@
 		<title>Set the <quote>db_url</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
+modparam("msilo", "db_url", "&exampledb;")
 ...
 </programlisting>
 		</example>
