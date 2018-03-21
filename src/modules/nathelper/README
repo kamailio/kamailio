@@ -568,13 +568,15 @@ fix_nated_register();
      * 1 - The “Contact” header field is searched for occurrence of
        RFC1918 or RFC6598 addresses.
      * 2 - the "received" test is used: address in the “Via” header is
-       compared against source IP address of signaling
+       compared against source IP address of signaling. If the “Via”
+       header contains no port, it uses the default SIP port 5060
      * 4 - The Top Most “Via” is searched for occurrence of RFC1918 or
        RFC6598 addresses
      * 8 - The SDP is searched for occurrence of RFC1918 or RFC6598
        addresses
      * 16 - Test if the source port is different from the port in the
-       “Via” header
+       “Via” header. If the “Via” header contains no port, it uses the
+       default SIP port 5060
      * 32 - Test if the source IP address of signaling is a RFC1918 or
        RFC6598 address
      * 64 - Test if the source connection of signaling is a WebSocket
