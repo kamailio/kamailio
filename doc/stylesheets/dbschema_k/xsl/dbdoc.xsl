@@ -53,7 +53,7 @@ ALL CHANGES DONE HERE WILL BE LOST IF THE FILE IS REGENERATED&#x0A;</xsl:comment
 			<para>URL to the database containing the data.</para>
 			<para>
 				<!-- TODO use ro or rw URL depending on the module -->
-				<emphasis>Default value is <quote>mysql://openserro:openserro@localhost/openser</quote>.</emphasis>
+				<emphasis>Default value is <quote>mysql://kamailio:kamailiorw@localhost/kamailio</quote>.</emphasis>
 			</para>
 			<example>
 				<title>Set <varname>db_url</varname> parameter</title>
