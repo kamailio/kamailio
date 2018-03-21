@@ -212,11 +212,11 @@ Chapter 1. Admin Guide
 
    Database URL.
 
-   Default value is "mysql://kamailio:kamailiorw@localhost/okamailio".
+   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.1. Set db_url parameter
 ...
-modparam("siptrace", "db_url", "mysql://user:passwd@host/dbname")
+modparam("siptrace", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
 3.2. table (str)
