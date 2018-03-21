@@ -764,7 +764,7 @@ done:
  * \brief Loads from DB all contacts for a RUID
  * \param _c database connection
  * \param _d domain
- * \param _aor address of record
+ * \param _ruid record unique id
  * \return pointer to the record on success, 0 on errors or if nothing is found
  */
 urecord_t* db_load_urecord_by_ruid(db1_con_t* _c, udomain_t* _d, str *_ruid)
@@ -1010,8 +1010,10 @@ void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
 
 
 /*!
- * \brief Run timer handler for given domain
+ * \brief Run timer handler for given domain, delete urecords
  * \param _d domain
+ * \param istart start of run
+ * \param istep loop steps
  */
 void mem_timer_udomain(udomain_t* _d, int istart, int istep)
 {

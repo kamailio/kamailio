@@ -85,7 +85,7 @@ static inline int find_dlist(str* _n, dlist_t** _d)
  * \param flags contact flags
  * \param part_idx part index
  * \param part_max maximal part
- * \param GAU options
+ * \param options options
  * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
 static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
@@ -333,7 +333,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
  * \param flags contact flags
  * \param part_idx part index
  * \param part_max maximal part
- * \param GAU options
+ * \param options options
  * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
 static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
@@ -483,7 +483,7 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
  * \param flags contact flags
  * \param part_idx part index
  * \param part_max maximal part
- * \param GAU options
+ * \param options options
  * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
 int get_all_ucontacts(void *buf, int len, unsigned int flags,

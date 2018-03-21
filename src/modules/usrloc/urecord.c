@@ -735,7 +735,7 @@ static inline struct ucontact* contact_path_match( ucontact_t* ptr, str* _c, str
 /*!
  * \brief Match a contact record to a Call-ID only
  * \param ptr contact record
- * \param _c contact string
+ * \param _callid callid string
  * \return ptr on successfull match, 0 when they not match
  */
 static inline struct ucontact* contact_match_callidonly( ucontact_t* ptr, str* _callid)
