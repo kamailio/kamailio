@@ -632,7 +632,8 @@ fix_nated_register();
 			<listitem><para>
 			<emphasis>2</emphasis> -  the "received" test is used: address
 			in the <quote>Via</quote> header is compared against source
-			IP address of signaling
+			IP address of signaling. If the <quote>Via</quote> header contains
+			no port, it uses the default SIP port 5060
 			</para></listitem>
 			<listitem><para>
 			<emphasis>4</emphasis> -  The Top Most <quote>Via</quote> is searched 
@@ -643,8 +644,9 @@ fix_nated_register();
 			RFC1918 or RFC6598 addresses
 			</para></listitem>
 			<listitem><para>
-			<emphasis>16</emphasis> -  Test if the source port is different
-			from the port in the <quote>Via</quote> header
+			<emphasis>16</emphasis> -  Test if the source port is different from the port
+			in the <quote>Via</quote> header. If the <quote>Via</quote> header contains
+			no port, it uses the default SIP port 5060
 			</para></listitem>
 			<listitem><para>
 			<emphasis>32</emphasis> -  Test if the source IP address of
