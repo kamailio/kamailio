@@ -102,14 +102,14 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is "mysql://kamailio:kamailiorw@localhost/okamailio".
+			Default value is "&defaultdb;".
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("siptrace", "db_url", "mysql://user:passwd@host/dbname")
+modparam("siptrace", "db_url", "&exampledb;")
 ...
 </programlisting>
 		</example>
