@@ -88,7 +88,7 @@ The URL to connect to the database for the mohqueue tables.
         <title>Set <varname>db_url</varname>:</title>
         <programlisting format="linespecific">
 ...
-modparam ("mohqueue", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
+modparam ("mohqueue", "db_url", "&defaultdb;")
 ...
         </programlisting>
       </example>
