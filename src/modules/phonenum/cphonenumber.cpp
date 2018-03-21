@@ -134,7 +134,10 @@ telnum_t* telnum_parse(char* number, char* region)
 	string descNumber = _phoneGeoCoder->GetDescriptionForNumber(parsedNumber, Locale("en"));
 	res->ndesc = strdup(descNumber.c_str());
 	res->ltype = strdup(telnum_linetype(_phoneUtil.GetNumberType(parsedNumber)));
-	res->cctel = _phoneUtil.GetCountryCodeForRegion(regionStr);
+	// res->cctel = _phoneUtil.GetCountryCodeForRegion(regionStr);
+	string regionCode;
+	_phoneUtil.GetRegionCodeForNumber(parsedNumber, &regionCode);
+	res->cctel = _phoneUtil.GetCountryCodeForRegion(regionCode);
 
 	return res;
 }
