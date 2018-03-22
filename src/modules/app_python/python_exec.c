@@ -69,6 +69,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	int mpid;
 	int locked = 0;
 	PyGILState_STATE gstate;
+	int gstate_init = 0;
 
 	bmsg = _sr_apy_env.msg;
 	_sr_apy_env.msg = _msg;
@@ -87,6 +88,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 			}
 		}
 		PY_GIL_ENSURE;
+		gstate_init = 1;
 	}
 
 	pFunc = PyObject_GetAttrString(_sr_apy_handler_obj, fname);
@@ -164,7 +166,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	Py_DECREF(pResult);
 	_sr_apy_env.msg = bmsg;
  err:
-	PY_GIL_RELEASE;
+	if(gstate_init) { PY_GIL_RELEASE; }
 	LOCK_RELEASE;
 	return rval;
 }
