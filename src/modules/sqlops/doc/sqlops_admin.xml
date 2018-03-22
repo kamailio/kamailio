@@ -146,7 +146,7 @@
 		<title>Set <varname>sqlcon</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("sqlops","sqlcon","cb=&gt;&defaultdb")
+modparam("sqlops","sqlcon","cb=&gt;&defaultdb;")
 modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
 ...
 </programlisting>
