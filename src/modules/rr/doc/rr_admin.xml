@@ -109,7 +109,7 @@ UAC                       &kamailio; PROXY                          UAS
   <section>
     <title>Parameters</title>
 
-    <section>
+    <section id="rr.p.enable_full_lr">
       <title><varname>enable_full_lr</varname> (integer)</title>
 
       <para>If set to 1 then <quote>;lr=on</quote> instead of just
@@ -131,7 +131,7 @@ modparam("rr", "enable_full_lr", 1)
       </example>
     </section>
 
-    <section id="append-fromtag-id">
+    <section id="rr.p.append_fromtag_id">
       <title><varname>append_fromtag</varname> (integer)</title>
 
       <para>If turned on, request's from-tag is appended to record-route;
@@ -152,7 +152,7 @@ modparam("rr", "append_fromtag", 0)
       </example>
     </section>
 
-    <section>
+    <section id="rr.p.enable_double_rr">
       <title><varname>enable_double_rr</varname> (integer)</title>
 
       <para>There are some situations when the server needs to insert two
@@ -196,7 +196,7 @@ modparam("rr", "enable_double_rr", 2)
       </example>
     </section>
 
-    <section>
+    <section id="rr.p.add_username">
       <title><varname>add_username</varname> (integer)</title>
 
       <para>If set to a non 0 value (which means yes), the username part will
@@ -219,7 +219,7 @@ modparam("rr", "add_username", 1)
       </example>
     </section>
 
-    <section>
+    <section id="rr.p.enable_socket_warning">
       <title><varname>enable_socket_mismatch_warning</varname>
       (integer)</title>
 
@@ -243,7 +243,7 @@ modparam("rr", "enable_socket_mismatch_warning", 0)
       </example>
     </section>
 
-    <section>
+    <section id="rr.p.custom_user_avp">
       <title><varname>custom_user_avp</varname> (avp string)</title>
 
       <para>When enable_username is enabled, a call to record_route will add
@@ -273,7 +273,7 @@ record_route();
   <section>
     <title>Functions</title>
 
-    <section id="loose-route-id">
+    <section id="rr.f.loose_route">
       <title><function moreinfo="none">loose_route()</function></title>
 
       <para>The function performs routing of SIP requests which contain a
@@ -346,7 +346,7 @@ loose_route();
       </example>
     </section>
 
-    <section id="record-route-id">
+    <section id="rr.f.record_route">
       <title><function moreinfo="none">record_route()</function> and <function
       moreinfo="none">record_route(string)</function></title>
 
@@ -378,7 +378,7 @@ record_route();
       </example>
     </section>
 
-    <section id="remove-record-route-id">
+    <section id="rr.f.remove_record_route">
 		<title><function moreinfo="none">remove_record_route()</function></title>
 
 		<para>The function removes the internal lumps added by
@@ -403,7 +403,7 @@ remove_record_route();
       </example>
     </section>
 
-    <section>
+    <section id="rr.f.record_route_preset">
       <title><function moreinfo="none">record_route_preset(string
       [,string2])</function></title>
 
@@ -447,7 +447,7 @@ record_route_preset("1.2.3.4:5090");
       </example>
     </section>
 
-    <section id="record-route-adv-addr-id">
+    <section id="rr.f.record_route_adv_addr">
       <title><function
       moreinfo="none">record_route_advertised_address(address)</function></title>
 
@@ -488,7 +488,7 @@ record_route_advertised_address("1.2.3.4:5080");
       </example>
     </section>
 
-    <section id="add-rr-param-id">
+    <section  id="rr.f.add_rr_param">
       <title><function moreinfo="none">add_rr_param(param)</function></title>
 
       <para>Adds a parameter to the Record-Route URI (param must be in
@@ -521,7 +521,7 @@ add_rr_param(";nat=yes");
       </example>
     </section>
 
-    <section id="check-route-param-id">
+    <section id="rr.f.check_route_param">
       <title><function
       moreinfo="none">check_route_param(re)</function></title>
 
@@ -554,7 +554,7 @@ if (check_route_param("nat=yes")) {
       </example>
     </section>
 
-    <section>
+    <section id="rr.f.is_direction">
       <title><function moreinfo="none">is_direction(dir)</function></title>
 
       <para>The function checks the flow direction of in-dialog requests. This
