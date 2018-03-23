@@ -258,6 +258,7 @@ static NetInfo rfc1918nets[] = {
 	{"172.16.0.0", 0xac100000UL, 0xfff00000UL},
 	{"192.168.0.0", 0xc0a80000UL, 0xffff0000UL},
 	{"100.64.0.0", 0x64400000UL, 0xffc00000UL}, // include rfc6598 shared address space as technically the same for our purpose
+	{"192.0.0.0", 0xc0000000UL, 0xfffffff8UL}, // include rfc7335 IPv4 Service Continuity Prefix
 	{NULL, 0UL, 0UL}
 };
 
