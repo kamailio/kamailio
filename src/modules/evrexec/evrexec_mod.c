@@ -158,7 +158,12 @@ void evrexec_process(evrexec_task_t *it, int idx)
 		if(it->wait>0) sleep_us(it->wait);
 		keng = sr_kemi_eng_get();
 		if(keng==NULL) {
-			run_top_route(event_rt.rlist[it->rtid], fmsg, 0);
+			if(it->rtid>=0 && event_rt.rlist[it->rtid]!=NULL) {
+				run_top_route(event_rt.rlist[it->rtid], fmsg, 0);
+			} else {
+				LM_WARN("empty event route block [%.*s]\n",
+						it->ename.len, it->ename.s);
+			}
 		} else {
 			sidx.s = int2str(idx, &sidx.len);
 			if(keng->froute(fmsg, EVENT_ROUTE,
@@ -227,7 +232,7 @@ int evrexec_param(modparam_t type, void *val)
 	tmp.ename.s[tmp.ename.len] = '\0';
 	keng = sr_kemi_eng_get();
 	if(keng==NULL) {
-		tmp.rtid = route_lookup(&event_rt, tmp.ename.s);
+		tmp.rtid = route_get(&event_rt, tmp.ename.s);
 		if(tmp.rtid == -1) {
 			LM_ERR("event route not found: %.*s\n", tmp.ename.len, tmp.ename.s);
 			free_params(params_list);
