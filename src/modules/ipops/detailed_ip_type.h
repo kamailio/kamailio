@@ -25,7 +25,7 @@
 #ifndef _IPOPS_DETAILED_IP_TYPE_H
 #define _IPOPS_DETAILED_IP_TYPE_H
 
-#define IPv4RANGES_SIZE 16
+#define IPv4RANGES_SIZE 17
 #define IPv6RANGES_SIZE 29
 
 #include <stdint.h>
