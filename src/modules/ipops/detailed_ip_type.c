@@ -41,6 +41,7 @@ static ip4_node IPv4ranges[IPv4RANGES_SIZE] = {
         { 0xc0586300,  "6TO4-RELAY", 0xffffff00 },  // 192.88.99.0/24
         { 0xc0000200,  "TEST-NET",   0xffffff00 },  // 192.0.2/24
         { 0xc0000000,  "RESERVED",   0xffffff00 },  // 192.0.0/24
+        { 0xc0000000,  "6TO4-RELAY", 0xfffffff8 },  // 192.0.0.0/29
         { 0xc0a80000,  "PRIVATE",    0xffff0000 },  // 192.168/16
         { 0xa9fe0000,  "LINK-LOCAL", 0xffff0000 },  // 169.254/16
         { 0xc6120000,  "RESERVED",   0xfffe0000 },  // 198.18/15
