@@ -148,6 +148,7 @@ static struct {
 	{"172.16.0.0",  0, 0xffffffffu << 20},
 	{"192.168.0.0", 0, 0xffffffffu << 16},
 	{"100.64.0.0",  0, 0xffffffffu << 22}, /* rfc6598 - cg-nat */
+	{"192.0.0.0",   0, 0xffffffffu <<  3}, /* rfc7335 - IPv4 Service Continuity Prefix */
 	{NULL, 0, 0}
 };
 /* clang-format on */
