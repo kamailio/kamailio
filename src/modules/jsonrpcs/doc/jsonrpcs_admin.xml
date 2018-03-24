@@ -459,6 +459,7 @@ event_route[xhttp:request] {
 		<programlisting format="linespecific">
 ...
 jsonrpc_exec('{"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
+xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
 ...
 </programlisting>
 	    </example>
