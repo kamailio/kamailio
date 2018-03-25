@@ -1945,7 +1945,7 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 		"socket", dlg->bind_addr[DLG_CALLEE_LEG] ? &dlg->bind_addr[DLG_CALLEE_LEG]->sock_str : &empty_str);
 
 	if (rpc->struct_add(h, "[", "profiles", &sh) < 0) goto error;
-	for (pl = dlg->profile_links ; pl ; pl=pl->next) {
+	for (pl = dlg->profile_links ; pl && (dlg->state<DLG_STATE_DELETED) ; pl=pl->next) {
 		if (pl->profile->has_value) {
 			rpc->array_add(sh, "{", &ssh);
 			rpc->struct_add(ssh, "S", pl->profile->name.s, &pl->hash_linker.value);
@@ -1955,7 +1955,7 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 	}
 
 	if (rpc->struct_add(h, "[", "variables", &sh) < 0) goto error;
-	for(var=dlg->vars ; var ; var=var->next) {
+	for(var=dlg->vars ; var && (dlg->state<DLG_STATE_DELETED) ; var=var->next) {
 		rpc->array_add(sh, "{", &ssh);
 		rpc->struct_add(ssh, "S", var->key.s, &var->value);
 	}
