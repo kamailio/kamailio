@@ -354,9 +354,11 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	}
 
     // Update security parameters
-    if(ul.update_temp_security(_d, sec_params->type, sec_params, pcontact) != 0)
-    {
-        LM_ERR("Error updating temp security\n");
+    if(sec_params) {
+        if(ul.update_temp_security(_d, sec_params->type, sec_params, pcontact) != 0)
+        {
+            LM_ERR("Error updating temp security\n");
+        }
     }
 
 	ul.unlock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
