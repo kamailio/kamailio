@@ -2342,7 +2342,11 @@ int reply_received( struct sip_msg  *p_msg )
 		replies_locked=1;
 
 		/* transfer transaction flag to message context */
-		if (t->uas.request) p_msg->flags=t->uas.request->flags;
+		if (t->uas.request) {
+			p_msg->flags=t->uas.request->flags;
+			memcpy(p_msg->xflags, t->uas.request->xflags,
+				KSR_XFLAGS_SIZE * sizeof(flag_t));
+		}
 		/* set the as avp_list the one from transaction */
 
 		backup_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI,
@@ -2387,7 +2391,11 @@ int reply_received( struct sip_msg  *p_msg )
 		/* restore brach last_received as before executing onreply_route */
 		uac->last_received = last_uac_status;
 		/* transfer current message context back to t */
-		if (t->uas.request) t->uas.request->flags=p_msg->flags;
+		if (t->uas.request) {
+			t->uas.request->flags=p_msg->flags;
+			memcpy(t->uas.request->xflags, p_msg->xflags,
+				KSR_XFLAGS_SIZE * sizeof(flag_t));
+		}
 		getbflagsval(0, &uac->branch_flags);
 
 		/* restore original avp list */
