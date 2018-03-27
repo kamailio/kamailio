@@ -289,7 +289,7 @@ void phonenum_pv_reset(str *name)
 	memset(gr, 0, sizeof(sr_phonenum_record_t));
 }
 
-int phonenum_update_pv(str *tomatch, str *name)
+int phonenum_update_pv(str *tomatch, str *name, str *cncode)
 {
 	sr_phonenum_record_t *gr = NULL;
 
@@ -310,7 +310,8 @@ int phonenum_update_pv(str *tomatch, str *name)
 	strncpy(gr->tomatch, tomatch->s, tomatch->len);
 	gr->tomatch[tomatch->len] = '\0';
 	LM_DBG("attempt to match: %s\n", gr->tomatch);
-	gr->record = telnum_parse(gr->tomatch, "ZZ");
+	gr->record = telnum_parse(gr->tomatch,
+			(cncode && cncode->len>0)?cncode->s:"ZZ");
 	if(gr->record == NULL) {
 		LM_DBG("no match for: %s\n", gr->tomatch);
 		return -2;
