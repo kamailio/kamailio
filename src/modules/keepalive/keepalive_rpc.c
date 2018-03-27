@@ -63,26 +63,11 @@ static const char *keepalive_rpc_list_doc[2] = {
 
 static void keepalive_rpc_list(rpc_t *rpc, void *ctx)
 {
-	void *foo, *bar, *baz;
 	void *sub;
 	ka_dest_t *dest;
 	char *_ctime;
 	char *_utime;
 	char *_dtime;
-	str text = str_init("foobar");
-
-	if(rpc->add(ctx, "Sd", &text, 42) < 0)
-		LM_ERR("failed creating RPC struct\n");
-	if(rpc->add(ctx, "Sd", &text, 42) < 0)
-		LM_ERR("failed creating RPC struct\n");
-
-	rpc->add(ctx, "{", &foo);
-	rpc->struct_add(foo, "Sd", "text", &text, "number", 42);
-
-	rpc->add(ctx, "{", &bar);
-	rpc->struct_add(bar, "[", "list", &baz);
-	rpc->struct_add(baz, "d", "nn", 17);
-	rpc->struct_add(baz, "d", "nn", 22);
 
 	for(dest = ka_destinations_list->first; dest != NULL; dest = dest->next) {
 		rpc->add(ctx, "{", &sub);
