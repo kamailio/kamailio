@@ -289,7 +289,7 @@ void phonenum_pv_reset(str *name)
 	memset(gr, 0, sizeof(sr_phonenum_record_t));
 }
 
-int phonenum_update_pv(str *tomatch, str *name, str *cncode)
+int phonenum_update_pv(str *tomatch, str *cncode, str *name)
 {
 	sr_phonenum_record_t *gr = NULL;
 

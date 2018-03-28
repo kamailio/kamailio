@@ -109,7 +109,7 @@ static int phonenum_match(sip_msg_t *msg, str *tomatch, str *pvclass)
 {
 	phonenum_pv_reset(pvclass);
 
-	return phonenum_update_pv(tomatch, pvclass, NULL);
+	return phonenum_update_pv(tomatch, NULL, pvclass);
 }
 
 static int w_phonenum_match(sip_msg_t *msg, char *target, char *pvname)
@@ -134,15 +134,15 @@ static int w_phonenum_match(sip_msg_t *msg, char *target, char *pvname)
 	return phonenum_match(msg, &tomatch, &pvclass);
 }
 
-static int phonenum_match_cn(sip_msg_t *msg, str *tomatch, str *pvclass, str *cc)
+static int phonenum_match_cn(sip_msg_t *msg, str *tomatch, str *cnc, str *pvclass)
 {
 	phonenum_pv_reset(pvclass);
 
-	return phonenum_update_pv(tomatch, pvclass, cc);
+	return phonenum_update_pv(tomatch, cnc, pvclass);
 }
 
-static int w_phonenum_match_cn(sip_msg_t *msg, char *target, char *pvname,
-		char *cncstr)
+static int w_phonenum_match_cn(sip_msg_t *msg, char *target, char *cncstr,
+		char *pvname)
 {
 	str tomatch = STR_NULL;
 	str pvclass = STR_NULL;
@@ -157,16 +157,16 @@ static int w_phonenum_match_cn(sip_msg_t *msg, char *target, char *pvname,
 		LM_ERR("cannot get the address\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t *)pvname, &pvclass) < 0) {
-		LM_ERR("cannot get the pv class\n");
-		return -1;
-	}
 	if(fixup_get_svalue(msg, (gparam_t *)cncstr, &cncval) < 0) {
 		LM_ERR("cannot get the country code\n");
 		return -1;
 	}
+	if(fixup_get_svalue(msg, (gparam_t *)pvname, &pvclass) < 0) {
+		LM_ERR("cannot get the pv class\n");
+		return -1;
+	}
 
-	return phonenum_match_cn(msg, &tomatch, &pvclass, &cncval);
+	return phonenum_match_cn(msg, &tomatch, &cncval, &pvclass);
 }
 
 /**
