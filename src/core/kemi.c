@@ -126,11 +126,11 @@ static int sr_kemi_core_log(sip_msg_t *msg, str *level, str *txt)
 /**
  *
  */
-int sr_kemi_core_drop(sip_msg_t *msg)
+int sr_kemi_core_set_drop(sip_msg_t *msg)
 {
 	if(_sr_kemi_act_ctx==NULL)
 		return 0;
-	LM_DBG("drop action executed inside embedded interpreter\n");
+	LM_DBG("set drop action executed inside embedded interpreter\n");
 	_sr_kemi_act_ctx->run_flags |= EXIT_R_F|DROP_R_F;
 	return 0;
 }
@@ -1016,8 +1016,8 @@ static sr_kemi_t _sr_kemi_core[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init(""), str_init("drop"),
-		SR_KEMIP_NONE, sr_kemi_core_drop,
+	{ str_init(""), str_init("set_drop"),
+		SR_KEMIP_NONE, sr_kemi_core_set_drop,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
