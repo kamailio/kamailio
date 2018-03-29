@@ -287,10 +287,10 @@ int parse_options(FILE* file, option_description* opts, int no_options, char* en
 /**
  * Searches for next content line in the src file
  *
- * @param data the destination trimmed non blank line
+ * @param line the destination trimmed non blank line
  * @param size maximum accepted line length
  * @param file source file
- * @param p_full_len initial lenght of contents line
+ * @param pFull_len initial lenght of contents line
  *
  * @return  0 on success, -1 on error, 1 on EOF
  */
