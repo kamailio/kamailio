@@ -28,7 +28,7 @@
  * \brief add transaction structure to tm callbacks
  * \param t current transaction
  * \param req current sip request
- * \param tma_t current transaction
+ * \param ts current transaction
  * \return 0 on success, -1 on failure
  */
 int ts_set_tm_callbacks(struct cell *t, sip_msg_t *req, ts_transaction_t *ts);
