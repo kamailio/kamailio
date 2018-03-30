@@ -458,12 +458,12 @@ static int ki_sqlops_reset_result(sip_msg_t *msg, str *sres)
 	return 1;
 }
 
-static int ki_sqlops_num_rows(str *sres)
+static int ki_sqlops_num_rows(sip_msg_t *msg, str *sres)
 {
 	return sqlops_num_rows(sres);
 }
 
-static int ki_sqlops_num_columns(str *sres)
+static int ki_sqlops_num_columns(sip_msg_t *msg, str *sres)
 {
 	return sqlops_num_columns(sres);
 }
