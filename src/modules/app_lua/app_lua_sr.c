@@ -1489,9 +1489,27 @@ int sr_kemi_lua_exec_func_ex(lua_State* L, sr_kemi_t *ket, int pdelta)
 	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
 		if(ket->ptypes[i]==SR_KEMIP_NONE) {
 			break;
-		} else if(ket->ptypes[i]==SR_KEMIP_STR) {
+		}
+		if(argc<i+pdelta+1) {
+			LM_ERR("not enough parameters for: %.*s.%.*s\n",
+					mname->len, mname->s, fname->len, fname->s);
+			return app_lua_return_false(L);
+		}
+		if(ket->ptypes[i]==SR_KEMIP_STR) {
 			vps[i].s.s = (char*)lua_tostring(L, i+pdelta+1);
-			vps[i].s.len = strlen(vps[i].s.s);
+			if(vps[i].s.s!=NULL) {
+				if(lua_isstring(L, i+pdelta+1)) {
+#if LUA_VERSION_NUM > 501
+					vps[i].s.len = lua_rawlen(L, i+pdelta+1);
+#else
+					vps[i].s.len = lua_strlen(L, i+pdelta+1);
+#endif
+				} else {
+					vps[i].s.len = strlen(vps[i].s.s);
+				}
+			} else {
+				vps[i].s.len = 0;
+			}
 			LM_DBG("param[%d] for: %.*s is str: %.*s\n", i,
 				fname->len, fname->s, vps[i].s.len, vps[i].s.s);
 		} else if(ket->ptypes[i]==SR_KEMIP_INT) {
