@@ -1184,7 +1184,7 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 	},
 	{ str_init("dispatcher"), str_init("ds_mark_dst_state"),
 		SR_KEMIP_INT, ki_ds_mark_dst_state,
-		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dispatcher"), str_init("ds_is_from_lists"),
@@ -1224,7 +1224,7 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 	},
 	{ str_init("dispatcher"), str_init("ds_list_exists"),
 		SR_KEMIP_INT, ki_ds_list_exists,
-		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
