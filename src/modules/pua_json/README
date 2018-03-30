@@ -1,0 +1,101 @@
+PUA_JSON Module
+
+Emmanuel Schmidbauer
+
+   <eschmidbauer@gmail.com>
+
+Edited by
+
+Emmanuel Schmidbauer
+
+   <eschmidbauer@gmail.com>
+
+   Copyright © 2018 VoIPxSWITCH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. How it works
+        3. Dependencies
+
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
+
+        4. Functions
+
+              4.1. pua_json_publish(json_payload)
+
+   List of Examples
+
+   1.1. pua_json_publish usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. How it works
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Functions
+
+        4.1. pua_json_publish(json_payload)
+
+1. Overview
+
+   The PUA_JSON module adds support to publish updates to the presence
+   module through the pua_json_publish() function.
+
+   From a high-level perspective, the module may be used for:
+     * Providing a real-time presence updates.
+
+2. How it works
+
+   The module parses json data objects and inserts them into the
+   presentity table for real-time presence updates.
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+     * libjson.
+
+4. Functions
+
+   4.1. pua_json_publish(json_payload)
+
+4.1.  pua_json_publish(json_payload)
+
+   The function build presentity state from json_payload and updates
+   presentity table.
+
+   Usage: presence related.
+
+   This function can be used from ANY ROUTE.
+
+   Example 1.1. pua_json_publish usage
+...
+event_route[xhttp:request] {
+        $var(call-id) = $(rb{json.parse,Call-ID});
+        if ($(rb{json.parse,Event-Package}) == "dialog") {
+                xlog("L_INFO", "$var(call-id)|log|received $(rb{json.parse,Event
+-Package}) update for $(rb{json.parse,From})");
+                pua_json_publish($rb);
+        }
+}
+...
