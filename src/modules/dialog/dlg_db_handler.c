@@ -223,48 +223,6 @@ static int use_dialog_vars_table(void)
 	return 0;
 }
 
-
-
-static int select_entire_dialog_table(db1_res_t ** res, int fetch_num_rows)
-{
-	db_key_t query_cols[DIALOG_TABLE_COL_NO] = {	&h_entry_column,
-			&h_id_column,		&call_id_column,	&from_uri_column,
-			&from_tag_column,	&to_uri_column,		&to_tag_column,
-			&start_time_column,	&state_column,		&timeout_column,
-			&from_cseq_column,	&to_cseq_column,	&from_route_column,
-			&to_route_column, 	&from_contact_column, &to_contact_column,
-			&from_sock_column,	&to_sock_column,    &sflags_column,
-			&toroute_name_column,	&req_uri_column, &xdata_column,
-			&iflags_column};
-
-	if(use_dialog_table() != 0){
-		return -1;
-	}
-
-	/* select the whole tabel and all the columns */
-	if (DB_CAPABILITY(dialog_dbf, DB_CAP_FETCH) && (fetch_num_rows > 0)) {
-		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0, 
-		DIALOG_TABLE_COL_NO, 0, 0) < 0) {
-			LM_ERR("Error while querying (fetch) database\n");
-			return -1;
-		}
-		if(dialog_dbf.fetch_result(dialog_db_handle, res, fetch_num_rows) < 0) {
-			LM_ERR("fetching rows failed\n");
-			return -1;
-		}
-	} else {
-		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0,
-		DIALOG_TABLE_COL_NO, 0, res) < 0) {
-			LM_ERR("Error while querying database\n");
-			return -1;
-		}
-	}
-
-	return 0;
-}
-
-
-
 struct socket_info * create_socket_info(db_val_t * vals, int n){
 
 	struct socket_info * sock;
@@ -296,6 +254,16 @@ struct socket_info * create_socket_info(db_val_t * vals, int n){
 
 static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 {
+	db_key_t query_cols[DIALOG_TABLE_COL_NO] = {	&h_entry_column,
+			&h_id_column,		&call_id_column,	&from_uri_column,
+			&from_tag_column,	&to_uri_column,		&to_tag_column,
+			&start_time_column,	&state_column,		&timeout_column,
+			&from_cseq_column,	&to_cseq_column,	&from_route_column,
+			&to_route_column, 	&from_contact_column, &to_contact_column,
+			&from_sock_column,	&to_sock_column,    &sflags_column,
+			&toroute_name_column,	&req_uri_column, &xdata_column,
+			&iflags_column};
+
 	db1_res_t * res;
 	db_val_t * values;
 	db_row_t * rows;
@@ -307,10 +275,30 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 	str xdata;
 	unsigned int next_id;
 	srjson_doc_t jdoc;
-	
+
+	if(use_dialog_table() != 0){
+		return -1;
+	}
+
 	res = 0;
-	if((nr_rows = select_entire_dialog_table(&res, fetch_num_rows)) < 0)
-		goto end;
+
+	if (DB_CAPABILITY(dialog_dbf, DB_CAP_FETCH) && (fetch_num_rows > 0)) {
+		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0,
+				DIALOG_TABLE_COL_NO, 0, 0) < 0) {
+			LM_ERR("Error while querying (fetch) database\n");
+			goto error;
+		}
+		if(dialog_dbf.fetch_result(dialog_db_handle, &res, fetch_num_rows) < 0) {
+			LM_ERR("fetching rows failed\n");
+			goto error;
+		}
+	} else {
+		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0,
+				DIALOG_TABLE_COL_NO, 0, &res) < 0) {
+			LM_ERR("Error while querying database\n");
+			goto error;
+		}
+	}
 
 	nr_rows = RES_ROW_N(res);
 
@@ -468,7 +456,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			nr_rows = 0;
 		}
 
-	}while (nr_rows>0);
+	} while (nr_rows>0);
 
 	if (dlg_db_mode==DB_MODE_SHUTDOWN) {
 		if (dialog_dbf.delete(dialog_db_handle, 0, 0, 0, 0) < 0) {
@@ -481,55 +469,45 @@ end:
 	dialog_dbf.free_result(dialog_db_handle, res);
 	return 0;
 error:
-	dialog_dbf.free_result(dialog_db_handle, res);
+	if(res!=NULL) dialog_dbf.free_result(dialog_db_handle, res);
 	return -1;
 
 }
 
-
-
-static int select_entire_dialog_vars_table(db1_res_t ** res, int fetch_num_rows)
+static int load_dialog_vars_from_db(int fetch_num_rows)
 {
 	db_key_t query_cols[DIALOG_VARS_TABLE_COL_NO] = {	&vars_h_entry_column,
 			&vars_h_id_column,	&vars_key_column,	&vars_value_column };
+
+	db1_res_t * res;
+	db_val_t * values;
+	db_row_t * rows;
+	struct dlg_cell  * dlg;
+	int i, nr_rows;
 
 	if(use_dialog_vars_table() != 0){
 		return -1;
 	}
 
-	/* select the whole tabel and all the columns */
+	res = 0;
+	/* select the whole table and all the columns */
 	if (DB_CAPABILITY(dialog_dbf, DB_CAP_FETCH) && (fetch_num_rows > 0)) {
-		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0, 
-		DIALOG_VARS_TABLE_COL_NO, 0, 0) < 0) {
+		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0,
+				DIALOG_VARS_TABLE_COL_NO, 0, 0) < 0) {
 			LM_ERR("Error while querying (fetch) database\n");
-			return -1;
+			goto error;
 		}
-		if(dialog_dbf.fetch_result(dialog_db_handle, res, fetch_num_rows) < 0) {
+		if(dialog_dbf.fetch_result(dialog_db_handle, &res, fetch_num_rows) < 0) {
 			LM_ERR("fetching rows failed\n");
-			return -1;
+			goto error;
 		}
 	} else {
 		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0,
-		DIALOG_VARS_TABLE_COL_NO, 0, res) < 0) {
+					DIALOG_VARS_TABLE_COL_NO, 0, &res) < 0) {
 			LM_ERR("Error while querying database\n");
-			return -1;
+			goto error;
 		}
 	}
-
-	return 0;
-}
-
-static int load_dialog_vars_from_db(int fetch_num_rows)
-{
-	db1_res_t * res;
-	db_val_t * values;
-	db_row_t * rows;
-	struct dlg_cell  * dlg; 
-	int i, nr_rows;
-
-	res = 0;
-	if((nr_rows = select_entire_dialog_vars_table(&res, fetch_num_rows)) < 0)
-		goto end;
 
 	nr_rows = RES_ROW_N(res);
 
@@ -600,7 +578,7 @@ end:
 	dialog_dbf.free_result(dialog_db_handle, res);
 	return 0;
 error:
-	dialog_dbf.free_result(dialog_db_handle, res);
+	if(res!=0) dialog_dbf.free_result(dialog_db_handle, res);
 	return -1;
 
 }
