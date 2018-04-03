@@ -1769,7 +1769,7 @@ static int sr_kemi_lua_drop (lua_State *L)
 	str *s;
 
 	LM_DBG("script drop call\n");
-	sr_kemi_core_drop(NULL);
+	sr_kemi_core_set_drop(NULL);
 	s = sr_kemi_lua_exit_string_get();
 	lua_getglobal(L, "error");
 	lua_pushstring(L, s->s);
