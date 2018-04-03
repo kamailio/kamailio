@@ -538,7 +538,7 @@ static SQInteger sqlang_sr_drop (HSQUIRRELVM J)
 	} else {
 		_sr_J_env.J_exit = 1;
 	}
-	sr_kemi_core_drop(NULL);
+	sr_kemi_core_set_drop(NULL);
 	return sq_throwerror(J, _SC("~~ksr~exit~~"));
 }
 
