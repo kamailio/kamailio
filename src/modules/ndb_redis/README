@@ -165,6 +165,15 @@ password")
 
 # Unix domain socket
 modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
+
+# sentinel (for a redis slave)
+modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_ma
+ster=0;sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
+
+# sentinel (for a redis master)
+modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_ma
+ster=1;sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
+
 ...
 
 3.2. init_without_redis (integer)
