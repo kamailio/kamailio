@@ -35,7 +35,7 @@ dmq_api_t dlg_dmqb;
 dmq_peer_t* dlg_dmq_peer = NULL;
 dmq_resp_cback_t dlg_dmq_resp_callback = {&dlg_dmq_resp_callback_f, 0};
 
-int dmq_send_all_dlgs();
+int dmq_send_all_dlgs(dmq_node_t* dmq_node);
 int dlg_dmq_request_sync();
 
 
