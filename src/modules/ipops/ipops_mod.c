@@ -415,7 +415,7 @@ int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen,
 		else ipv6_mask[i] = 0x00;
 	}
 	for (i=0; i<16; i++)  ip->s6_addr[i] &= ipv6_mask[i];
-	if (memcmp(ip->s6_addr, ip->s6_addr, sizeof(net_addr.s6_addr)) == 0)
+	if (memcmp(ip->s6_addr, net_addr.s6_addr, sizeof(net_addr.s6_addr)) == 0)
 		return 1;
 	return 0;
 }
