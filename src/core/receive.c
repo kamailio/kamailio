@@ -395,11 +395,10 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
 					ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL, NULL);
 					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
-					sr_kemi_act_ctx_set(bctx);
 				} else {
 					ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL, NULL);
-					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 				}
+				sr_kemi_act_ctx_set(bctx);
 			} else {
 				if(unlikely(cidlockset)) {
 					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
