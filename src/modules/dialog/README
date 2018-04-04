@@ -127,6 +127,7 @@ Olle E. Johansson
               7.16. dlg_set_property(attr)
               7.17. dlg_remote_profile(cmd, profile, value, uid, expires)
               7.18. dlg_set_ruri()
+              7.19. dlg_db_load_callid(cival)
 
         8. Statistics
 
@@ -251,6 +252,7 @@ Olle E. Johansson
    1.74. dlg_set_property usage
    1.75. dlg_remote_profile usage
    1.76. dlg_set_ruri() usage
+   1.77. dlg_db_load_callid() usage
 
 Chapter 1. Admin Guide
 
@@ -346,6 +348,7 @@ Chapter 1. Admin Guide
         7.16. dlg_set_property(attr)
         7.17. dlg_remote_profile(cmd, profile, value, uid, expires)
         7.18. dlg_set_ruri()
+        7.19. dlg_db_load_callid(cival)
 
    8. Statistics
 
@@ -1342,6 +1345,7 @@ end
    7.16. dlg_set_property(attr)
    7.17. dlg_remote_profile(cmd, profile, value, uid, expires)
    7.18. dlg_set_ruri()
+   7.19. dlg_db_load_callid(cival)
 
 7.1.  set_dlg_profile(profile,[value])
 
@@ -1724,6 +1728,25 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
         if(dlg_set_ruri()) {
                 xlog("Request URI changed from [$ou] to dlg value: [$ru]\n");
         }
+}
+...
+
+7.19.  dlg_db_load_callid(cival)
+
+   Load dialog record from database matching on Call-Id provided as
+   parameter.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.77. dlg_db_load_callid() usage
+...
+if(has_totag()) {
+    if(!is_known_dlg()) {
+        dlg_db_load_callid("$ci");
+            if(!is_known_dlg()) {
+            xlog("no dialog found with callid: $ci\n");
+        }
+    }
 }
 ...
 
