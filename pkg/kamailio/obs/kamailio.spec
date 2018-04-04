@@ -1739,6 +1739,9 @@ fi
 %doc %{_docdir}/kamailio/modules/README.pua
 %doc %{_docdir}/kamailio/modules/README.pua_bla
 %doc %{_docdir}/kamailio/modules/README.pua_dialoginfo
+%if %{with json}
+%doc %{_docdir}/kamailio/modules/README.pua_json
+%endif
 %doc %{_docdir}/kamailio/modules/README.pua_reginfo
 %doc %{_docdir}/kamailio/modules/README.pua_usrloc
 %doc %{_docdir}/kamailio/modules/README.pua_xmpp
@@ -1755,6 +1758,9 @@ fi
 %{_libdir}/kamailio/modules/pua.so
 %{_libdir}/kamailio/modules/pua_bla.so
 %{_libdir}/kamailio/modules/pua_dialoginfo.so
+%if %{with json}
+%{_libdir}/kamailio/modules/pua_json.so
+%endif
 %{_libdir}/kamailio/modules/pua_reginfo.so
 %{_libdir}/kamailio/modules/pua_usrloc.so
 %{_libdir}/kamailio/modules/pua_xmpp.so
