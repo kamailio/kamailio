@@ -63,6 +63,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/timer_proc.h"
 #include "../../core/lvalue.h"
+#include "../../core/globals.h"
 #include "../../core/parser/parse_to.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../core/rpc_lookup.h"
@@ -123,6 +124,9 @@ str dlg_bridge_contact = str_init("sip:controller@kamailio.org:5060");
 str ruri_pvar_param = str_init("$ru");
 pv_elem_t * ruri_param_model = NULL;
 str empty_str = STR_NULL;
+
+int dlg_h_id_start = 0;
+int dlg_h_id_step = 1;
 
 /* statistic variables */
 int dlg_enable_stats = 1;
@@ -315,6 +319,8 @@ static param_export_t mod_params[]={
 	{ "early_timeout",         PARAM_INT, &dlg_early_timeout        },
 	{ "noack_timeout",         PARAM_INT, &dlg_noack_timeout        },
 	{ "end_timeout",           PARAM_INT, &dlg_end_timeout          },
+	{ "h_id_start",            PARAM_INT, &dlg_h_id_start           },
+	{ "h_id_step",             PARAM_INT, &dlg_h_id_step            },
 	{ 0,0,0 }
 };
 
@@ -469,6 +475,16 @@ static int mod_init(void)
 {
 	unsigned int n;
 	sr_cfgenv_t *cenv = NULL;
+
+	if(dlg_h_id_start==-1) {
+		dlg_h_id_start = server_id;
+	} else if(dlg_h_id_start<0) {
+		dlg_h_id_start = 0;
+	}
+
+	if(dlg_h_id_step<1) {
+		dlg_h_id_step = 1;
+	}
 
 	if(dlg_ka_interval!=0 && dlg_ka_interval<30) {
 		LM_ERR("ka interval too low (%d), has to be at least 30\n",

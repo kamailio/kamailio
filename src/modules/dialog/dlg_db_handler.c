@@ -82,7 +82,8 @@ static db_func_t dialog_dbf;
 extern int dlg_enable_stats;
 extern int active_dlgs_cnt;
 extern int early_dlgs_cnt;
-
+extern int dlg_h_id_start;
+extern int dlg_h_id_step;
 
 #define SET_STR_VALUE(_val, _str)\
 	do{\
@@ -281,6 +282,7 @@ int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows,
 	dlg_iuid_t dbuid[DLG_MAX_DB_LOAD_EXTRA];
 	int loaded_extra = 0;
 	int loaded_extra_more = 0;
+	dlg_cell_t *dit;
 
 	if(use_dialog_table() != 0){
 		return -1;
@@ -363,6 +365,21 @@ int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows,
 
 			if(mode!=0) {
 				dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+				/* loading at runtime - check dialog id conflicts */
+				dit = (d_table->entries)[dlg->h_entry].first;
+				while (dit) {
+					if (dit->h_id == VAL_INT(values+1)) {
+						break;
+					}
+					dit = dit->next;
+				}
+				if(dit) {
+					LM_WARN("conflicting dialog id: %u/%u - skipping\n",
+							dlg->h_entry, (unsigned int)VAL_INT(values+1));
+					dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+					shm_free(dlg);
+					continue;
+				}
 			}
 
 			/*link the dialog*/
@@ -370,10 +387,17 @@ int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows,
 
 			dlg->h_id = VAL_INT(values+1);
 			next_id = d_table->entries[dlg->h_entry].next_id;
-
-			d_table->entries[dlg->h_entry].next_id =
-				(next_id <= dlg->h_id) ? (dlg->h_id+1) : next_id;
-
+			if(dlg_h_id_step==1) {
+				d_table->entries[dlg->h_entry].next_id =
+						(next_id <= dlg->h_id) ? (dlg->h_id+1) : next_id;
+			} else {
+				/* update next id only if matches this instance series */
+				if((dlg->h_id - dlg_h_id_start) % dlg_h_id_step == 0) {
+					d_table->entries[dlg->h_entry].next_id =
+						(next_id <= dlg->h_id) ? (dlg->h_id + dlg_h_id_step)
+								: next_id;
+				}
+			}
 			if(mode!=0) {
 				dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 			}
