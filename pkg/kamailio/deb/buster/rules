@@ -18,11 +18,10 @@ include /usr/share/dpkg/buildflags.mk
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-export JAVA_HOME=/usr/lib/jvm/java-gcj
 export RADCLI=1
 
 # modules not in the "main" kamailio package
-EXCLUDED_MODULES=
+EXCLUDED_MODULES= java
 
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main kamailio package or to some module package,
@@ -36,7 +35,7 @@ EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy mi_xmlrpc dnssec
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils lua memcached \
 			   snmpstats carrierroute xmpp cpl redis python geoip geoip2 \
-			   sqlite json mono ims sctp java \
+			   sqlite json mono ims sctp \
 			   tls outbound websocket autheph kazoo cnxcc \
 			   erlang systemd phonenum mongodb rabbitmq
 
