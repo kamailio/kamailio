@@ -13,7 +13,6 @@ Build-Depends:
  erlang-dev,
  flex,
  gcj-jdk,
- libconfuse-dev,
  libcurl4-openssl-dev,
  libdb-dev (>= 4.6.19),
  libev-dev,
@@ -66,9 +65,10 @@ Depends:
  python,
  ${misc:Depends},
  ${shlibs:Depends},
+Replaces:
+ kamailio-carrierroute-modules,
 Suggests:
  kamailio-berkeley-modules,
- kamailio-carrierroute-modules,
  kamailio-cpl-modules,
  kamailio-dbg,
  kamailio-ldap-modules,
@@ -450,23 +450,6 @@ Description: XML based extensions for Kamailio's Management Interface
  - the XMLRPC transport implementations for Kamailio's
  Management and Control Interface.
  - xmlops module for XPath operations in configuration file
-
-Package: kamailio-carrierroute-modules
-Architecture: linux-any
-Multi-Arch: same
-Pre-Depends:
- ${misc:Pre-Depends},
-Depends:
- kamailio (= ${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends},
-Description: The carrierroute module for the Kamailio SIP server
- Kamailio is a very fast and flexible SIP (RFC3261)
- server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package provides the "carrierroute" module for Kamailio, an integrated
- solution for routing, balancing and blacklisting.
 
 Package: kamailio-berkeley-modules
 Architecture: linux-any
