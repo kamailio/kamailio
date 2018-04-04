@@ -503,6 +503,7 @@ int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows,
 		}
 	}
 
+end:
 	dialog_dbf.free_result(dialog_db_handle, res);
 	return 0;
 error:
@@ -634,6 +635,7 @@ static int load_dialog_vars_from_db(int fetch_num_rows, int mode,
 		}
 	}
 
+end:
 	dialog_dbf.free_result(dialog_db_handle, res);
 	return 0;
 error:
