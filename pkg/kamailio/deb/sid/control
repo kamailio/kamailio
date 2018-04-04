@@ -14,7 +14,6 @@ Build-Depends:
  dpkg-dev (>= 1.16.1.1),
  erlang-dev,
  flex,
- gcj-jdk,
  libconfuse-dev,
  libcurl4-openssl-dev,
  libdb-dev (>= 4.6.19),
@@ -595,24 +594,6 @@ Description: SCTP SIP transport module for the Kamailio SIP server
  per second even on low-budget hardware.
  .
  This package provides the SCTP SIP transport module for Kamailio.
-
-Package: kamailio-java-modules
-Architecture: linux-any
-Multi-Arch: same
-Pre-Depends:
- ${misc:Pre-Depends},
-Depends:
- gcj-jre,
- kamailio (= ${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends},
-Description: The app_java module - JAVA support for the Kamailio SIP server
- Kamailio is a very fast and flexible SIP (RFC3261)
- server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package provides the app_java module, an extension allowing to
- execute embedded Java applications within the Kamailio routing script.
 
 Package: kamailio-tls-modules
 Architecture: linux-any

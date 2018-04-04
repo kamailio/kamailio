@@ -18,6 +18,13 @@ sed -i -e '/libval-dev/d' -e '/^Package: kamailio-dnssec-modules/,/^$/d' \
 sed -i -e 's/ dnssec[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ dnssec/' ${DIST}/rules
 
+# No app_java due lack of gcj-jdk
+sed -i -e '/gcj-jdk/d' -e '/^Package: kamailio-java-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^export JAVA_HOME/d' ${DIST}/rules
+sed -i -e 's/ java[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXCLUDED_MODULES=/s/$/ java/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
