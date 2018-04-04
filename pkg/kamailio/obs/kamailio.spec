@@ -179,6 +179,7 @@ Source:     http://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.g
 URL:        http://kamailio.org/
 Vendor:     kamailio.org
 BuildRoot:  %{_tmppath}/%{name}-%{ver}-buildroot
+Conflicts:  kamailio-acc_json < %ver
 Conflicts:  kamailio-auth-ephemeral < %ver, kamailio-bdb < %ver
 Conflicts:  kamailio-carrierroute < %ver, kamailio-cpl < %ver
 Conflicts:  kamailio-dialplan < %ver, kamailio-dnssec < %ver
@@ -216,6 +217,23 @@ such as MySQL, Postgres, Oracle, Radius, LDAP, Redis, Cassandra; XMLRPC control
 interface, SNMP monitoring. It can be used to build large VoIP servicing
 platforms or to scale up SIP-to-PSTN gateways, PBX systems or media servers
 like Asterisk™, FreeSWITCH™ or SEMS.
+
+
+%if %{with jansson}
+%package    acc_json
+Summary:    Account transaction information in a JSON dictionary
+Group:      System Environment/Daemons
+%if 0%{?suse_version}
+Requires:   libjansson
+BuildRequires:  libjansson-devel
+%else
+Requires:   jansson
+BuildRequires:  jansson-devel
+%endif
+
+%description    acc_json
+Account transaction information in a JSON dictionary
+%endif
 
 
 %package    auth-ephemeral
@@ -1440,6 +1458,14 @@ fi
 %dir %{_datadir}/kamailio/dbtext
 %dir %{_datadir}/kamailio/dbtext/kamailio
 %{_datadir}/kamailio/dbtext/kamailio/*
+
+
+%if %{with jansson}
+%files      acc_json
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.acc_json
+%{_libdir}/kamailio/modules/acc_json.so
+%endif
 
 
 %files      auth-ephemeral
