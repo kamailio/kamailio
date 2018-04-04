@@ -2203,6 +2203,33 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 </programlisting>
 		</example>
 	</section>
+	<section id="dialog.f.dlg_db_load_callid">
+		<title>
+		<function moreinfo="none">dlg_db_load_callid(cival)</function>
+		</title>
+		<para>
+		Load dialog record from database matching on Call-Id provided
+		as parameter.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_db_load_callid()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(has_totag()) {
+    if(!is_known_dlg()) {
+        dlg_db_load_callid("$ci");
+	    if(!is_known_dlg()) {
+            xlog("no dialog found with callid: $ci\n");
+        }
+    }
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 
