@@ -112,12 +112,16 @@ extern str vars_value_column;
 extern str dialog_vars_table_name;
 
 
-int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int fetch_num_rows, int db_skip_load);
+int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period,
+		int fetch_num_rows, int db_skip_load);
 int dlg_connect_db(const str *db_url);
 void destroy_dlg_db(void);
 
 int remove_dialog_from_db(struct dlg_cell * cell);
 int update_dialog_dbinfo(struct dlg_cell * cell);
 void dialog_update_db(unsigned int ticks, void * param);
+
+int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows,
+		int mode, str *mval);
 
 #endif

@@ -120,9 +120,8 @@ extern int early_dlgs_cnt;
 		} \
 	}while(0);
 
-
-static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows);
-static int load_dialog_vars_from_db(int fetch_num_rows);
+static int load_dialog_vars_from_db(int fetch_num_rows, int mode,
+		dlg_iuid_t *mval);
 
 int dlg_connect_db(const str *db_url)
 {
@@ -165,11 +164,11 @@ int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int
 	}
 
 	if ( db_skip_load == 0 ) {
-		if( (load_dialog_info_from_db(dlg_hash_size, fetch_num_rows) ) !=0 ){
+		if( (load_dialog_info_from_db(dlg_hash_size, fetch_num_rows, 0, NULL) ) !=0 ){
 			LM_ERR("Unable to load the dialog data\n");
 			return -1;
 		}
-		if( (load_dialog_vars_from_db(fetch_num_rows) ) !=0 ){
+		if( (load_dialog_vars_from_db(fetch_num_rows, 0, NULL) ) !=0 ){
 			LM_ERR("Unable to load the dialog variable data\n");
 			return -1;
 		}
@@ -252,7 +251,8 @@ struct socket_info * create_socket_info(db_val_t * vals, int n){
 
 
 
-static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
+int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows,
+		int mode, str *mval)
 {
 	db_key_t query_cols[DIALOG_TABLE_COL_NO] = {	&h_entry_column,
 			&h_id_column,		&call_id_column,	&from_uri_column,
@@ -263,7 +263,9 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			&from_sock_column,	&to_sock_column,    &sflags_column,
 			&toroute_name_column,	&req_uri_column, &xdata_column,
 			&iflags_column};
-
+	db_key_t match_cols[1] = { &call_id_column };
+	db_val_t match_vals[1];
+	int match_cols_no = 0;
 	db1_res_t * res;
 	db_val_t * values;
 	db_row_t * rows;
@@ -275,16 +277,27 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 	str xdata;
 	unsigned int next_id;
 	srjson_doc_t jdoc;
+#define DLG_MAX_DB_LOAD_EXTRA 256
+	dlg_iuid_t dbuid[DLG_MAX_DB_LOAD_EXTRA];
+	int loaded_extra = 0;
+	int loaded_extra_more = 0;
 
 	if(use_dialog_table() != 0){
 		return -1;
 	}
 
+	if(mode==1 && mval!=NULL && mval->len>0) {
+		match_vals[0].type = DB1_STR;
+		match_vals[0].nul = 0;
+		match_vals[0].val.str_val = *mval;
+		match_cols_no = 1;
+	}
+
 	res = 0;
 
 	if (DB_CAPABILITY(dialog_dbf, DB_CAP_FETCH) && (fetch_num_rows > 0)) {
-		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0,
-				DIALOG_TABLE_COL_NO, 0, 0) < 0) {
+		if(dialog_dbf.query(dialog_db_handle, match_cols, 0, match_vals,
+				query_cols, match_cols_no, DIALOG_TABLE_COL_NO, 0, 0) < 0) {
 			LM_ERR("Error while querying (fetch) database\n");
 			goto error;
 		}
@@ -293,8 +306,8 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			goto error;
 		}
 	} else {
-		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0,
-				DIALOG_TABLE_COL_NO, 0, &res) < 0) {
+		if(dialog_dbf.query(dialog_db_handle, match_cols, 0, match_vals,
+				query_cols, match_cols_no, DIALOG_TABLE_COL_NO, 0, &res) < 0) {
 			LM_ERR("Error while querying database\n");
 			goto error;
 		}
@@ -348,6 +361,10 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 				goto error;
 			}
 
+			if(mode!=0) {
+				dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+			}
+
 			/*link the dialog*/
 			link_dlg(dlg, 0, 0);
 
@@ -356,6 +373,10 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 
 			d_table->entries[dlg->h_entry].next_id =
 				(next_id <= dlg->h_id) ? (dlg->h_id+1) : next_id;
+
+			if(mode!=0) {
+				dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+			}
 
 			GET_STR_VALUE(to_tag, values, 6, 1, 1);
 
@@ -440,6 +461,16 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 					get_ticks());
 
 			dlg->dflags = 0;
+			if(mode!=0) {
+				if(loaded_extra<DLG_MAX_DB_LOAD_EXTRA) {
+					dbuid[loaded_extra].h_entry = dlg->h_entry;
+					dbuid[loaded_extra].h_id = dlg->h_id;
+					loaded_extra++;
+				} else {
+					dlg->dflags |= DLG_FLAG_DB_LOAD_EXTRA;
+					loaded_extra_more = 1;
+				}
+			}
 			next_dialog:
 			;
 		}
@@ -458,6 +489,13 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 
 	} while (nr_rows>0);
 
+	if(mode!=0) {
+		for(i=0; i<loaded_extra; i++) {
+			load_dialog_vars_from_db(fetch_num_rows, 1, &dbuid[i]);
+		}
+		goto end;
+	}
+
 	if (dlg_db_mode==DB_MODE_SHUTDOWN) {
 		if (dialog_dbf.delete(dialog_db_handle, 0, 0, 0, 0) < 0) {
 			LM_ERR("failed to clear dialog table\n");
@@ -473,11 +511,14 @@ error:
 
 }
 
-static int load_dialog_vars_from_db(int fetch_num_rows)
+static int load_dialog_vars_from_db(int fetch_num_rows, int mode,
+		dlg_iuid_t *mval)
 {
 	db_key_t query_cols[DIALOG_VARS_TABLE_COL_NO] = {	&vars_h_entry_column,
 			&vars_h_id_column,	&vars_key_column,	&vars_value_column };
-
+	db_key_t match_cols[2] = { &vars_h_entry_column, &vars_h_id_column};
+	db_val_t match_vals[2];
+	int match_cols_no = 0;
 	db1_res_t * res;
 	db_val_t * values;
 	db_row_t * rows;
@@ -488,11 +529,20 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 		return -1;
 	}
 
+	if(mode==1 && mval!=NULL) {
+		VAL_TYPE(match_vals) = VAL_TYPE(match_vals+1) = DB1_INT;
+		VAL_NULL(match_vals) = VAL_NULL(match_vals+1) = 0;
+		VAL_INT(match_vals) = mval->h_entry;
+		VAL_INT(match_vals+1) = mval->h_id;
+		match_cols_no = 2;
+	}
+
 	res = 0;
 	/* select the whole table and all the columns */
 	if (DB_CAPABILITY(dialog_dbf, DB_CAP_FETCH) && (fetch_num_rows > 0)) {
-		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0,
-				DIALOG_VARS_TABLE_COL_NO, 0, 0) < 0) {
+		if(dialog_dbf.query(dialog_db_handle, match_cols, 0, match_vals,
+				query_cols, match_cols_no, DIALOG_VARS_TABLE_COL_NO, 0, 0)
+				< 0) {
 			LM_ERR("Error while querying (fetch) database\n");
 			goto error;
 		}
@@ -501,8 +551,9 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 			goto error;
 		}
 	} else {
-		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0,
-					DIALOG_VARS_TABLE_COL_NO, 0, &res) < 0) {
+		if(dialog_dbf.query(dialog_db_handle, match_cols, 0, match_vals,
+					query_cols, match_cols_no, DIALOG_VARS_TABLE_COL_NO, 0,
+					&res) < 0) {
 			LM_ERR("Error while querying database\n");
 			goto error;
 		}
@@ -534,6 +585,9 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 				continue;
 			}
 			if (VAL_INT(values) < d_table->size) {
+				if(mode==1 && mval!=NULL) {
+					dlg_lock(d_table, &(d_table->entries[VAL_INT(values)]));
+				}
 				dlg = (d_table->entries)[VAL_INT(values)].first;
 				while (dlg) {
 					if (dlg->h_id == VAL_INT(values+1)) {
@@ -546,6 +600,9 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 					if (!dlg) {
 						LM_WARN("insonsistent data: the dialog h_entry/h_id does not exist!\n");
 					}
+				}
+				if(mode==1 && mval!=NULL) {
+					dlg_unlock(d_table, &(d_table->entries[VAL_INT(values)]));
 				}
 			} else {
 				LM_WARN("insonsistent data: the h_entry in the DB does not exist!\n");
@@ -565,6 +622,10 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 		}
 
 	}while (nr_rows>0);
+
+	if(mode!=0) {
+		goto end;
+	}
 
 	if (dlg_db_mode==DB_MODE_SHUTDOWN) {
 		if (dialog_dbf.delete(dialog_db_handle, 0, 0, 0, 0) < 0) {

@@ -187,6 +187,7 @@ static int fixup_dlg_bridge(void** param, int param_no);
 static int w_dlg_get(struct sip_msg*, char*, char*, char*);
 static int w_is_known_dlg(struct sip_msg *);
 static int w_dlg_set_ruri(sip_msg_t *, char *, char *);
+static int w_dlg_db_load_callid(sip_msg_t *msg, char *ci, char *p2);
 
 static int w_dlg_remote_profile(sip_msg_t *msg, char *cmd, char *pname,
 		char *pval, char *puid, char *expires);
@@ -243,6 +244,9 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"dlg_set_ruri",       (cmd_function)w_dlg_set_ruri,  0, NULL,
 			0, ANY_ROUTE },
+	{"dlg_db_load_callid", (cmd_function)w_dlg_db_load_callid, 1, fixup_spve_null,
+			0, ANY_ROUTE },
+
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
@@ -1787,6 +1791,39 @@ static int ki_get_profile_size(sip_msg_t *msg, str *sprofile, str *svalue,
 /**
  *
  */
+static int ki_dlg_db_load_callid(sip_msg_t *msg, str *callid)
+{
+	int ret;
+
+	ret = load_dialog_info_from_db(dlg_hash_size, db_fetch_rows, 1, callid);
+
+	if(ret==0) return 1;
+	return ret;
+}
+
+/**
+ *
+ */
+static int w_dlg_db_load_callid(sip_msg_t *msg, char *ci, char *p2)
+{
+	str sc = {0,0};
+
+	if(ci==0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)ci, &sc)!=0) {
+		LM_ERR("unable to get Call-ID\n");
+		return -1;
+	}
+
+	return ki_dlg_db_load_callid(msg, &sc);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_manage"),
@@ -1877,6 +1914,11 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_isflagset"),
 		SR_KEMIP_INT, ki_dlg_isflagset,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_db_load_callid"),
+		SR_KEMIP_INT, ki_dlg_db_load_callid,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
