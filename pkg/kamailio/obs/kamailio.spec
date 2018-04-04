@@ -1766,10 +1766,14 @@ fi
 %if %{with redis}
 %files      redis
 %defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.db_redis
 %doc %{_docdir}/kamailio/modules/README.ndb_redis
 %doc %{_docdir}/kamailio/modules/README.topos_redis
+%{_libdir}/kamailio/modules/db_redis.so
 %{_libdir}/kamailio/modules/ndb_redis.so
 %{_libdir}/kamailio/modules/topos_redis.so
+%dir %{_datadir}/kamailio/db_redis
+%{_datadir}/kamailio/db_redis/*
 %endif
 
 
