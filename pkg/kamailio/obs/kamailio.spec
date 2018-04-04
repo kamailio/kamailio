@@ -275,13 +275,6 @@ Berkeley database connectivity for Kamailio.
 Summary:    The carrierroute module for Kamailio
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
-%if 0%{?suse_version}
-Requires:   libconfuse0
-BuildRequires:  libconfuse-devel
-%else
-Requires:   libconfuse
-BuildRequires:  libconfuse-devel
-%endif
 
 %description    carrierroute
 The carrierroute module for Kamailio.
