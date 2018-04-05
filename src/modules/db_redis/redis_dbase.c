@@ -1744,6 +1744,7 @@ int db_redis_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
     } else {
         LM_DBG("no columns given to build query keys, falling back to full table scan\n");
         keys_count = 0;
+        do_table_scan = 1;
     }
 
     if (db_redis_perform_query(_h, con, _k, _v, query_ops, _c, _n, _nc, _r,
