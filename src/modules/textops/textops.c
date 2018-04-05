@@ -116,6 +116,8 @@ static int set_multibody_2(struct sip_msg* msg, char*, char *, char *);
 static int set_multibody_3(struct sip_msg* msg, char*, char *, char *);
 static int append_multibody_2(struct sip_msg* msg, char*, char *);
 static int append_multibody_3(struct sip_msg* msg, char*, char *, char *);
+static int append_multibody_hex_2(struct sip_msg* msg, char*, char *);
+static int append_multibody_hex_3(struct sip_msg* msg, char*, char *, char *);
 static int fixup_multibody_f(void** param, int param_no);
 static int remove_multibody_f(struct sip_msg *msg, char *p1, char *p2);
 static int get_body_part_raw_f(sip_msg_t* msg, char* ctype, char* ovar);
@@ -298,6 +300,12 @@ static cmd_export_t cmds[]={
 		fixup_spve_spve, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"append_body_part",     (cmd_function)append_multibody_3,    3,
+		fixup_multibody_f, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"append_body_part_hex",     (cmd_function)append_multibody_hex_2,    2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"append_body_part_hex",     (cmd_function)append_multibody_hex_3,    3,
 		fixup_multibody_f, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"remove_body_part",     (cmd_function)remove_multibody_f,    1,
@@ -2266,7 +2274,86 @@ int ki_append_multibody(sip_msg_t* msg, str* txt, str* ct)
 	return ki_append_multibody_cd(msg, txt, ct, &cd);
 }
 
-static int append_multibody_helper(sip_msg_t *msg, char *p1, char *p2, char *p3)
+int ki_append_multibody_hex_cd(sip_msg_t* msg, str* htxt, str* ct, str* cd)
+{
+	str sraw;
+	int i;
+	int ret;
+	char v;
+
+	if(htxt==NULL || htxt->s==NULL || htxt->len==0) {
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+
+	sraw.len = htxt->len / 2 + 2;
+	sraw.s = pkg_malloc(sraw.len * sizeof(char));
+	if(sraw.s==NULL) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+	memset(sraw.s, 0, sraw.len * sizeof(char));
+
+	sraw.len = 0;
+	for(i=0; i<htxt->len; i++) {
+		if(htxt->s[i]==' ' || htxt->s[i]=='\t') {
+			continue;
+		}
+		if(i+1==htxt->len) {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
+					htxt->len, i);
+			pkg_free(sraw.s);
+			return -1;
+		}
+		v = 0;
+		if(htxt->s[i]>='0' && htxt->s[i]<='9') {
+			v = (htxt->s[i] - '0') << 4;
+		} else if(htxt->s[i]>='A' && htxt->s[i]<='F') {
+			v = (htxt->s[i] - 'A' + 10) << 4;
+		} else if(htxt->s[i]>='a' && htxt->s[i]<='f') {
+			v = (htxt->s[i] - 'a' + 10) << 4;
+		} else {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
+					htxt->len, i);
+			pkg_free(sraw.s);
+			return -1;
+		}
+		i++;
+		if(htxt->s[i]>='0' && htxt->s[i]<='9') {
+			v += (htxt->s[i] - '0');
+		} else if(htxt->s[i]>='A' && htxt->s[i]<='F') {
+			v += (htxt->s[i] - 'A' + 10);
+		} else if(htxt->s[i]>='a' && htxt->s[i]<='f') {
+			v += (htxt->s[i] - 'a' + 10);
+		} else {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
+					htxt->len, i);
+			pkg_free(sraw.s);
+			return -1;
+		}
+		sraw.s[sraw.len++] = v;
+	}
+	if(sraw.len==0) {
+		/* only white spaces */
+		LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
+				htxt->len, i);
+		pkg_free(sraw.s);
+		return -1;
+	}
+	ret  = ki_append_multibody_cd(msg, &sraw, ct, cd);
+	pkg_free(sraw.s);
+	return ret;
+}
+
+int ki_append_multibody_hex(sip_msg_t* msg, str* txt, str* ct)
+{
+	str cd = {0,0};
+
+	return ki_append_multibody_hex_cd(msg, txt, ct, &cd);
+}
+
+static int append_multibody_helper(sip_msg_t *msg, char *p1, char *p2, char *p3,
+		int hex)
 {
 	str txt = {0,0};
 	str ct = {0,0};
@@ -2297,17 +2384,31 @@ static int append_multibody_helper(sip_msg_t *msg, char *p1, char *p2, char *p3)
 		}
 	}
 
-	return ki_append_multibody_cd(msg, &txt, &ct, &cd);
+	if(hex) {
+		return ki_append_multibody_hex_cd(msg, &txt, &ct, &cd);
+	} else {
+		return ki_append_multibody_cd(msg, &txt, &ct, &cd);
+	}
 }
 
 static int append_multibody_2(struct sip_msg* msg, char* p1, char* p2)
 {
-	return append_multibody_helper(msg, p1, p2, NULL);
+	return append_multibody_helper(msg, p1, p2, NULL, 0);
 }
 
 static int append_multibody_3(struct sip_msg* msg, char* p1, char* p2, char *p3)
 {
-	return append_multibody_helper(msg, p1, p2, p3);
+	return append_multibody_helper(msg, p1, p2, p3, 0);
+}
+
+static int append_multibody_hex_2(struct sip_msg* msg, char* p1, char* p2)
+{
+	return append_multibody_helper(msg, p1, p2, NULL, 1);
+}
+
+static int append_multibody_hex_3(struct sip_msg* msg, char* p1, char* p2, char *p3)
+{
+	return append_multibody_helper(msg, p1, p2, p3, 1);
 }
 
 static int fixup_multibody_f(void** param, int param_no)
@@ -4249,6 +4350,16 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("append_body_part_cd"),
 		SR_KEMIP_INT, ki_append_multibody_cd,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("append_body_part_hex"),
+		SR_KEMIP_INT, ki_append_multibody_hex,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("append_body_part_hex_cd"),
+		SR_KEMIP_INT, ki_append_multibody_hex_cd,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
