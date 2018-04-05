@@ -1567,6 +1567,63 @@ Content-Disposition: signal;handling=required
 		</example>
 	</section>
 
+		<section id="textops.f.append_body_part_hex">
+		<title>
+		<function moreinfo="none">append_body_part_hex(txt,content_type[, content_disposition])</function>
+		</title>
+		<para>
+		Append a part on multipart body SIP message, with the content provided
+		in hexa format. Will use "unique-boundary-1" as boundary.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - content for the multipart body in
+				hexa format. Spaces can be used between the pairs of hexa digits
+				to make it easier to read in the config, they are ignored and
+				not added in the body part. The parameter can include
+				pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>content_type</emphasis> - value of Content-Type header,
+				can include pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>content_disposition</emphasis> - value of Content-Disposition header,
+				can include pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<para>
+		The core will take care of the last boundary ending "--". Detecting wich one is
+		the last and fixing the others if needed.
+		</para>
+		<example>
+		<title><function>append_body_part_hex</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(b) = "6b 61 6d 61 69 6c 69 6f";
+append_body_part_hex("$var(b)", "application/my-custom-ext");
+...
+
+# Will append this to the body:
+
+...
+Content-Type: application/my-custom-ext
+
+kamailio
+
+--unique-boundary-1
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.get_body_part">
 		<title>
 		<function moreinfo="none">get_body_part(content_type, opv)</function>
