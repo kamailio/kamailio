@@ -87,9 +87,12 @@ Ovidiu Sas
               4.40. append_body_part(txt,content_type[,
                       content_disposition])
 
-              4.41. get_body_part(content_type, opv)
-              4.42. get_body_part_raw(content_type, opv)
-              4.43. remove_body_part(content_type)
+              4.41. append_body_part_hex(txt,content_type[,
+                      content_disposition])
+
+              4.42. get_body_part(content_type, opv)
+              4.43. get_body_part_raw(content_type, opv)
+              4.44. remove_body_part(content_type)
 
    2. Developer Guide
 
@@ -139,9 +142,10 @@ Ovidiu Sas
    1.38. starts_with usage
    1.39. set_body_multipart usage
    1.40. append_body_part usage
-   1.41. get_body_part usage
-   1.42. get_body_part_raw usage
-   1.43. remove_body_part usage
+   1.41. append_body_part_hex usage
+   1.42. get_body_part usage
+   1.43. get_body_part_raw usage
+   1.44. remove_body_part usage
 
 Chapter 1. Admin Guide
 
@@ -196,9 +200,12 @@ Chapter 1. Admin Guide
         4.38. starts_with(str1, str2)
         4.39. set_body_multipart([txt,content_type][,boundary])
         4.40. append_body_part(txt,content_type[, content_disposition])
-        4.41. get_body_part(content_type, opv)
-        4.42. get_body_part_raw(content_type, opv)
-        4.43. remove_body_part(content_type)
+        4.41. append_body_part_hex(txt,content_type[,
+                content_disposition])
+
+        4.42. get_body_part(content_type, opv)
+        4.43. get_body_part_raw(content_type, opv)
+        4.44. remove_body_part(content_type)
 
 1. Overview
 
@@ -277,9 +284,10 @@ From: medabeda
    4.38. starts_with(str1, str2)
    4.39. set_body_multipart([txt,content_type][,boundary])
    4.40. append_body_part(txt,content_type[, content_disposition])
-   4.41. get_body_part(content_type, opv)
-   4.42. get_body_part_raw(content_type, opv)
-   4.43. remove_body_part(content_type)
+   4.41. append_body_part_hex(txt,content_type[, content_disposition])
+   4.42. get_body_part(content_type, opv)
+   4.43. get_body_part_raw(content_type, opv)
+   4.44. remove_body_part(content_type)
 
 4.1.  search(re)
 
@@ -1119,7 +1127,44 @@ Content-Disposition: signal;handling=required
 --unique-boundary-1
 ...
 
-4.41.  get_body_part(content_type, opv)
+4.41.  append_body_part_hex(txt,content_type[, content_disposition])
+
+   Append a part on multipart body SIP message, with the content provided
+   in hexa format. Will use "unique-boundary-1" as boundary.
+
+   Meaning of the parameters is as follows:
+     * txt - content for the multipart body in hexa format. Spaces can be
+       used between the pairs of hexa digits to make it easier to read in
+       the config, they are ignored and not added in the body part. The
+       parameter can include pseudo-variables.
+     * content_type - value of Content-Type header, can include
+       pseudo-variables.
+     * content_disposition - value of Content-Disposition header, can
+       include pseudo-variables.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   The core will take care of the last boundary ending "--". Detecting
+   wich one is the last and fixing the others if needed.
+
+   Example 1.41. append_body_part_hex usage
+...
+$var(b) = "6b 61 6d 61 69 6c 69 6f";
+append_body_part_hex("$var(b)", "application/my-custom-ext");
+...
+
+# Will append this to the body:
+
+...
+Content-Type: application/my-custom-ext
+
+kamailio
+
+--unique-boundary-1
+...
+
+4.42.  get_body_part(content_type, opv)
 
    Return the content of a multipart body SIP message, storing it in opv.
 
@@ -1132,12 +1177,12 @@ Content-Disposition: signal;handling=required
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.41. get_body_part usage
+   Example 1.42. get_body_part usage
 ...
 get_body_part("application/vnd.cirpack.isdn-ext", "$var(pbody)");
 ...
 
-4.42.  get_body_part_raw(content_type, opv)
+4.43.  get_body_part_raw(content_type, opv)
 
    Return the content of a multipart body SIP message, including headers
    and boundary string, storing it in opv.
@@ -1151,12 +1196,12 @@ get_body_part("application/vnd.cirpack.isdn-ext", "$var(pbody)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.42. get_body_part_raw usage
+   Example 1.43. get_body_part_raw usage
 ...
 get_body_part("application/vnd.cirpack.isdn-ext", "$var(hbody)");
 ...
 
-4.43.  remove_body_part(content_type)
+4.44.  remove_body_part(content_type)
 
    Remove a part on a multipart body SIP message.
 
@@ -1171,7 +1216,7 @@ get_body_part("application/vnd.cirpack.isdn-ext", "$var(hbody)");
    The core will take care of the last boundary ending "--". Detecting
    wich one is the last and fixing the others if needed.
 
-   Example 1.43. remove_body_part usage
+   Example 1.44. remove_body_part usage
 ...
 remove_body_part("application/vnd.cirpack.isdn-ext");
 ...
