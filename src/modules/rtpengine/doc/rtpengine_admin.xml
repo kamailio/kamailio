@@ -2278,6 +2278,11 @@ rtpengine_offer();
 				it in rtpengine_offer() to start recording immediately and save the call metadata,
 				as alternative to start_recording().
 				</para></listitem>
+				<listitem><para>
+				<emphasis>metadata</emphasis> - a generic metadata string. The metadata will be  used when
+                                recording calls to provide custom additional information. More details about this are found
+                                in the rtpengine README.
+				</para></listitem>
 			</itemizedlist>
 			<para>
 			 Check also the documentation of RTPEngine, these flags are documented there as well:
