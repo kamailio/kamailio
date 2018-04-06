@@ -374,8 +374,13 @@ int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows,
 					dit = dit->next;
 				}
 				if(dit) {
-					LM_WARN("conflicting dialog id: %u/%u - skipping\n",
+					if(mode==1) {
+						LM_WARN("conflicting dialog id: %u/%u - skipping\n",
 							dlg->h_entry, (unsigned int)VAL_INT(values+1));
+					} else {
+						LM_DBG("conflicting dialog id: %u/%u - skipping\n",
+							dlg->h_entry, (unsigned int)VAL_INT(values+1));
+					}
 					dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 					shm_free(dlg);
 					continue;
@@ -516,6 +521,23 @@ int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows,
 	if(mode!=0) {
 		for(i=0; i<loaded_extra; i++) {
 			load_dialog_vars_from_db(fetch_num_rows, 1, &dbuid[i]);
+		}
+		if(loaded_extra_more) {
+			/* more dialogs loaded - scan hash table */
+			for(i=0; i<d_table->size; i++) {
+				dlg_lock(d_table, &d_table->entries[i]);
+				dlg = d_table->entries[i].first;
+				while (dlg) {
+					if(dlg->dflags & DLG_FLAG_DB_LOAD_EXTRA) {
+						dbuid[0].h_entry = dlg->h_entry;
+						dbuid[0].h_id = dlg->h_id;
+						load_dialog_vars_from_db(fetch_num_rows, 1, &dbuid[0]);
+						dlg->dflags &= ~DLG_FLAG_DB_LOAD_EXTRA;
+					}
+					dlg = dlg->next;
+				}
+				dlg_unlock(d_table, &d_table->entries[i]);
+			}
 		}
 		goto end;
 	}
