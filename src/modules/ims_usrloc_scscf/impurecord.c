@@ -1239,7 +1239,7 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
 	impucontact = impu->linked_contacts.head;
 	
 	while (impucontact) {
-		if ((contact = impucontact->contact)) {
+		if ((contact == impucontact->contact)) {
 			remove_impucontact_from_list(impu, impucontact);
 			if (write_to_db && db_mode == WRITE_THROUGH && (db_unlink_contact_from_impu(impu, contact) != 0)) {
 				LM_ERR("Failed to un-link DB contact [%.*s] from IMPU [%.*s]...continuing but db will be out of sync!\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
