@@ -2000,15 +2000,17 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 
 	if (rpc->add(c, "{", &h) < 0) goto error;
 
-	rpc->struct_add(h, "ddSSSdddddddd",
+	rpc->struct_add(h, "dddSSSddddddddd",
 		"h_entry", dlg->h_entry,
 		"h_id", dlg->h_id,
+		"ref", dlg->ref,
 		"call-id", &dlg->callid,
 		"from_uri", &dlg->from_uri,
 		"to_uri", &dlg->to_uri,
 		"state", dlg->state,
 		"start_ts", dlg->start_ts,
 		"init_ts", dlg->init_ts,
+		"end_ts", dlg->end_ts,
 		"timeout", dlg->tl.timeout ? time(0) + dlg->tl.timeout - get_ticks() : 0,
 		"lifetime", dlg->lifetime,
 		"dflags", dlg->dflags,
