@@ -356,6 +356,27 @@ modparam("dialog", "noack_timeout", 90)
 		</example>
 	</section>
 
+	<section id="dialog.p.end_timeout">
+		<title><varname>end_timeout</varname> (integer)</title>
+		<para>
+		The timeout (in seconds) after which the dialogs in terminated state
+		are destroyed.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>300 (5 minutes)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>end_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "end_timeout", 180)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dialog.p.dlg_extra_hdrs">
 		<title><varname>dlg_extra_hdrs</varname> (string)</title>
 		<para>
