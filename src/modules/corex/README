@@ -51,6 +51,8 @@ Muhammad Shahzad Shafi
               4.11. setxflag(flag)
               4.12. isxflagset(flag)
               4.13. resetxflag(flag)
+              4.14. set_send_socket(saddr)
+              4.15. set_recv_socket(saddr)
 
         5. RPC Commands
 
@@ -85,8 +87,10 @@ Muhammad Shahzad Shafi
    1.14. setxflag usage
    1.15. isxflagset usage
    1.16. resetxflag usage
-   1.17. event_route[network:msg] use cases
-   1.18. Sample PERL code for do_compress and do_uncompress
+   1.17. set_send_socket usage
+   1.18. set_recv_socket usage
+   1.19. event_route[network:msg] use cases
+   1.20. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -120,6 +124,8 @@ Chapter 1. Admin Guide
         4.11. setxflag(flag)
         4.12. isxflagset(flag)
         4.13. resetxflag(flag)
+        4.14. set_send_socket(saddr)
+        4.15. set_recv_socket(saddr)
 
    5. RPC Commands
 
@@ -252,6 +258,8 @@ modparam("corex", "msg_avp", "$avp(msg)")
    4.11. setxflag(flag)
    4.12. isxflagset(flag)
    4.13. resetxflag(flag)
+   4.14. set_send_socket(saddr)
+   4.15. set_recv_socket(saddr)
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -449,6 +457,36 @@ if(isxflagset("1"))
 resetxflag("1");
 ...
 
+4.14. set_send_socket(saddr)
+
+   Set the socket for sending out.
+
+   Meaning of the parameters is as follows:
+     * saddr - the address of the local socket (listen address). Can be a
+       static string or contain pseudo-variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.17. set_send_socket usage
+...
+set_send_socket("upd:127.0.0.1:5060");
+...
+
+4.15. set_recv_socket(saddr)
+
+   Switch local socket used for receiving the message.
+
+   Meaning of the parameters is as follows:
+     * saddr - the address of the local socket (listen address). Can be a
+       static string or contain pseudo-variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.18. set_recv_socket usage
+...
+set_recv_socket("upd:127.0.0.1:5060");
+...
+
 5. RPC Commands
 
    5.1. corex.debug
@@ -583,7 +621,7 @@ resetxflag("1");
    Next is a basic usage example where encoding and decoding is done using
    PERL,
 
-   Example 1.17. event_route[network:msg] use cases
+   Example 1.19. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -614,7 +652,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.18. Sample PERL code for do_compress and do_uncompress
+   Example 1.20. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
