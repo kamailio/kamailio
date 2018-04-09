@@ -68,9 +68,9 @@ int redis_append_formatted_command(redisContext *c, const char *cmd, size_t len)
  */
 int redisc_init(void)
 {
-	char addr[256], pass[256], unix_sock_path[256];
+	char addr[256], pass[256], unix_sock_path[256], sentinel_group[256];
 
-	unsigned int port, db, sock = 0, haspass = 0;
+	unsigned int port, db, sock = 0, haspass = 0, sentinel_master = 1;
 	redisc_server_t *rsrv=NULL;
 	param_t *pit = NULL;
 	struct timeval tv_conn;
@@ -90,6 +90,9 @@ int redisc_init(void)
 
 	for(rsrv=_redisc_srv_list; rsrv; rsrv=rsrv->next)
 	{
+		char sentinels[MAXIMUM_SENTINELS][256];
+		uint8_t sentinels_count = 0;
+		
 		port = 6379;
 		db = 0;
 		haspass = 0;
@@ -115,6 +118,74 @@ int redisc_init(void)
 			} else if(pit->name.len==4 && strncmp(pit->name.s, "pass", 4)==0) {
 				snprintf(pass, sizeof(pass)-1, "%.*s", pit->body.len, pit->body.s);
 				haspass = 1;
+			} else if(pit->name.len==14 && strncmp(pit->name.s, "sentinel_group", 14)==0) {
+				snprintf(sentinel_group, sizeof(sentinel_group)-1, "%.*s", pit->body.len, pit->body.s);
+			} else if(pit->name.len==15 && strncmp(pit->name.s, "sentinel_master", 15)==0) {
+				if(str2int(&pit->body, &sentinel_master) < 0)
+					sentinel_master = 1;
+			} else if(pit->name.len==8 && strncmp(pit->name.s, "sentinel", 8)==0) {
+				if( sentinels_count < MAXIMUM_SENTINELS ){
+					snprintf(sentinels[sentinels_count], sizeof(sentinels[sentinels_count])-1, "%.*s", pit->body.len, pit->body.s);
+					sentinels_count++;
+				}
+				else {
+					LM_ERR("too many sentinels, maximum %d supported.\n", MAXIMUM_SENTINELS);
+					return -1;
+				}
+			}
+		}
+		
+		// if sentinels are provided, we need to connect to them and retrieve the redis server
+		// address / port
+		if(sentinels_count > 0) {
+			for(int i= 0; i< sentinels_count; i++) {
+				char *sentinelAddr = sentinels[i];
+				char *pos;
+				redisContext *redis;
+				redisReply *res, *res2;
+				
+				port = 6379;
+				if( (pos = strchr(sentinelAddr, ':')) != NULL ) {
+					port = atoi(pos+1);
+					pos[i] = '\0';
+				}
+				
+				redis = redisConnectWithTimeout(sentinelAddr, port, tv_conn);
+				if( redis ) {
+					if(sentinel_master != 0) {
+						res = redisCommand(redis, "SENTINEL get-master-addr-by-name %s", sentinel_group);
+						if( res && (res->type == REDIS_REPLY_ARRAY) && (res->elements == 2) ) {
+							strncpy(addr, res->element[0]->str, res->element[0]->len + 1);
+							port = atoi(res->element[1]->str);
+							
+							
+							printf("sentinel replied: %s:%d\n", addr, port);
+						}
+					}
+					else {
+						res = redisCommand(redis, "SENTINEL slaves %s", sentinel_group);
+						if( res && (res->type == REDIS_REPLY_ARRAY) ) {
+							
+							for(int row = 0; row< res->elements; row++){
+								res2 = res->element[row];
+								
+								for(int i= 0; i< res2->elements; i+= 2) {
+									if( strncmp(res2->element[i]->str, "ip", 2) == 0 ) {
+										strncpy(addr, res2->element[i+1]->str, res2->element[i+1]->len);
+										addr[res2->element[i+1]->len] = '\0';
+									}
+									else if( strncmp(res2->element[i]->str, "port", 4) == 0) {
+										port = atoi(res2->element[i+1]->str);
+										break;
+									}
+								}
+								
+							}
+							
+							printf("slave for %s: %s:%d\n", sentinel_group, addr, port);
+						}
+					}
+				}
 			}
 		}
 
