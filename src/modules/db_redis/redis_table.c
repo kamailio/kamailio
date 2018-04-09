@@ -627,7 +627,7 @@ int db_redis_parse_schema(km_redis_con_t *con) {
     char full_path[_POSIX_PATH_MAX + 1];
     int path_len;
     struct stat fstat;
-    unsigned char c;
+    char c;
 
     enum {
         DBREDIS_SCHEMA_COLUMN_ST,
