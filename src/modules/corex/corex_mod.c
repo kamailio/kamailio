@@ -552,7 +552,6 @@ static int w_setxflag(sip_msg_t *msg, char *flag, char *s2)
 static int ki_set_socket_helper(sip_msg_t *msg, str *ssock, int smode)
 {
 	socket_info_t *si;
-	receive_info_t ri;
 	int port, proto;
 	str host;
 
