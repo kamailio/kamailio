@@ -726,6 +726,31 @@ int pv_get_srcaddr_uri_helper(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &sr);
 }
 
+int pv_get_srcaddr_socket(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	str ssock;
+	str sr;
+
+	if(msg==NULL)
+		return -1;
+
+	if(get_src_address_socket(msg, &ssock)<0)
+		return pv_get_null(msg, param, res);
+
+	if (ssock.len + 1 >= pv_get_buffer_size()) {
+		LM_ERR("local buffer size exceeded\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	sr.s = pv_get_buffer();
+	strncpy(sr.s, ssock.s, ssock.len);
+	sr.len = ssock.len;
+	sr.s[sr.len] = '\0';
+
+	return pv_get_strval(msg, param, res, &sr);
+}
+
 int pv_get_srcaddr_uri(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
