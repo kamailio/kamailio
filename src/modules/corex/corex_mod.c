@@ -25,6 +25,8 @@
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
+#include "../../core/socket_info.h"
+#include "../../core/resolve.h"
 #include "../../core/lvalue.h"
 #include "../../core/pvar.h"
 #include "../../core/kemi.h"
@@ -51,6 +53,7 @@ static int w_resetxflag(struct sip_msg *msg, char *flag, str *s2);
 static int w_setxflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_set_send_socket(sip_msg_t *msg, char *psock, char *p2);
 static int w_set_recv_socket(sip_msg_t *msg, char *psock, char *p2);
+static int w_set_source_address(sip_msg_t *msg, char *paddr, char *p2);
 
 static int fixup_file_op(void** param, int param_no);
 
@@ -105,6 +108,8 @@ static cmd_export_t cmds[]={
 	{"set_send_socket", (cmd_function)w_set_send_socket, 1, fixup_spve_null,
 		0, ANY_ROUTE },
 	{"set_recv_socket", (cmd_function)w_set_recv_socket, 1, fixup_spve_null,
+		0, ANY_ROUTE },
+	{"set_source_address", (cmd_function)w_set_source_address, 1, fixup_spve_null,
 		0, ANY_ROUTE },
 
 	{0, 0, 0, 0, 0, 0}
@@ -638,6 +643,53 @@ static int w_set_recv_socket(sip_msg_t *msg, char *psock, char *p2)
 /**
  *
  */
+static int ki_set_source_address(sip_msg_t *msg, str *saddr)
+{
+	sr_phostp_t rp;
+	union sockaddr_union faddr;
+	char cproto;
+	int ret;
+
+	if(msg==NULL || saddr==NULL || saddr->len<=0) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	if(parse_protohostport(saddr, &rp)<0) {
+		LM_ERR("failed to parse the address [%.*s]\n", saddr->len, saddr->s);
+		return -1;
+	}
+
+	cproto = (char)rp.proto;
+	ret = sip_hostport2su(&faddr, &rp.host, (unsigned short)rp.port, &cproto);
+	if(ret!=0) {
+		LM_ERR("failed to resolve address [%.*s]\n", saddr->len, saddr->s);
+		return -1;
+	}
+
+	msg->rcv.src_su=faddr;
+	su2ip_addr(&msg->rcv.src_ip, &faddr);
+	msg->rcv.src_port=rp.port;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_set_source_address(sip_msg_t *msg, char *paddr, char *p2)
+{
+	str saddr;
+	if (fixup_get_svalue(msg, (gparam_t*)paddr, &saddr) != 0 || saddr.len<=0) {
+		LM_ERR("cannot get source address value\n");
+		return -1;
+	}
+	return ki_set_source_address(msg, &saddr);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_corex_exports[] = {
 	{ str_init("corex"), str_init("append_branch"),
@@ -677,6 +729,11 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	},
 	{ str_init("corex"), str_init("set_recv_socket"),
 		SR_KEMIP_INT, ki_set_recv_socket,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("set_source_address"),
+		SR_KEMIP_INT, ki_set_source_address,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
