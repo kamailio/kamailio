@@ -71,6 +71,7 @@ int redisc_init(void)
 	char addr[256], pass[256], unix_sock_path[256], sentinel_group[256];
 
 	unsigned int port, db, sock = 0, haspass = 0, sentinel_master = 1;
+	int i, row;
 	redisc_server_t *rsrv=NULL;
 	param_t *pit = NULL;
 	struct timeval tv_conn;
@@ -138,7 +139,7 @@ int redisc_init(void)
 		// if sentinels are provided, we need to connect to them and retrieve the redis server
 		// address / port
 		if(sentinels_count > 0) {
-			for(int i= 0; i< sentinels_count; i++) {
+			for(i= 0; i< sentinels_count; i++) {
 				char *sentinelAddr = sentinels[i];
 				char *pos;
 				redisContext *redis;
@@ -166,10 +167,10 @@ int redisc_init(void)
 						res = redisCommand(redis, "SENTINEL slaves %s", sentinel_group);
 						if( res && (res->type == REDIS_REPLY_ARRAY) ) {
 							
-							for(int row = 0; row< res->elements; row++){
+							for(row = 0; row< res->elements; row++){
 								res2 = res->element[row];
 								
-								for(int i= 0; i< res2->elements; i+= 2) {
+								for(i= 0; i< res2->elements; i+= 2) {
 									if( strncmp(res2->element[i]->str, "ip", 2) == 0 ) {
 										strncpy(addr, res2->element[i+1]->str, res2->element[i+1]->len);
 										addr[res2->element[i+1]->len] = '\0';
