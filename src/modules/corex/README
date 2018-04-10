@@ -53,6 +53,7 @@ Muhammad Shahzad Shafi
               4.13. resetxflag(flag)
               4.14. set_send_socket(saddr)
               4.15. set_recv_socket(saddr)
+              4.16. set_source_address(saddr)
 
         5. RPC Commands
 
@@ -89,8 +90,9 @@ Muhammad Shahzad Shafi
    1.16. resetxflag usage
    1.17. set_send_socket usage
    1.18. set_recv_socket usage
-   1.19. event_route[network:msg] use cases
-   1.20. Sample PERL code for do_compress and do_uncompress
+   1.19. set_source_address usage
+   1.20. event_route[network:msg] use cases
+   1.21. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -126,6 +128,7 @@ Chapter 1. Admin Guide
         4.13. resetxflag(flag)
         4.14. set_send_socket(saddr)
         4.15. set_recv_socket(saddr)
+        4.16. set_source_address(saddr)
 
    5. RPC Commands
 
@@ -260,6 +263,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
    4.13. resetxflag(flag)
    4.14. set_send_socket(saddr)
    4.15. set_recv_socket(saddr)
+   4.16. set_source_address(saddr)
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -469,7 +473,7 @@ resetxflag("1");
 
    Example 1.17. set_send_socket usage
 ...
-set_send_socket("upd:127.0.0.1:5060");
+set_send_socket("udp:127.0.0.1:5060");
 ...
 
 4.15. set_recv_socket(saddr)
@@ -484,7 +488,22 @@ set_send_socket("upd:127.0.0.1:5060");
 
    Example 1.18. set_recv_socket usage
 ...
-set_recv_socket("upd:127.0.0.1:5060");
+set_recv_socket("udp:127.0.0.1:5060");
+...
+
+4.16. set_source_address(saddr)
+
+   Set the source address for the message.
+
+   Meaning of the parameters is as follows:
+     * saddr - the source address in socket format. Can be a static string
+       or contain pseudo-variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.19. set_source_address usage
+...
+set_source_address("udp:127.0.0.1:5080");
 ...
 
 5. RPC Commands
@@ -621,7 +640,7 @@ set_recv_socket("upd:127.0.0.1:5060");
    Next is a basic usage example where encoding and decoding is done using
    PERL,
 
-   Example 1.19. event_route[network:msg] use cases
+   Example 1.20. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -652,7 +671,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.20. Sample PERL code for do_compress and do_uncompress
+   Example 1.21. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
