@@ -518,7 +518,7 @@ resetxflag("1");
 		<title><function>set_send_socket</function> usage</title>
 		<programlisting format="linespecific">
 ...
-set_send_socket("upd:127.0.0.1:5060");
+set_send_socket("udp:127.0.0.1:5060");
 ...
 </programlisting>
 		</example>
@@ -545,7 +545,33 @@ set_send_socket("upd:127.0.0.1:5060");
 		<title><function>set_recv_socket</function> usage</title>
 		<programlisting format="linespecific">
 ...
-set_recv_socket("upd:127.0.0.1:5060");
+set_recv_socket("udp:127.0.0.1:5060");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.set_source_address">
+		<title><function moreinfo="none">set_source_address(saddr)</function></title>
+		<para>
+			Set the source address for the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>saddr</emphasis> - the source address in socket format.
+				Can be a static string or contain pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_source_address</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_source_address("udp:127.0.0.1:5080");
 ...
 </programlisting>
 		</example>
