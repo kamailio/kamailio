@@ -500,6 +500,11 @@ void msg_ldata_reset(sip_msg_t*);
 int get_src_uri(sip_msg_t *m, int tmode, str *uri);
 
 /**
+ * get source proto:ip:port (socket address format)
+ */
+int get_src_address_socket(sip_msg_t *m, str *ssock);
+
+/**
  * get received-on-socket ip, port and protocol in SIP URI format
  */
 int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype);

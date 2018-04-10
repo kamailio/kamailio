@@ -1103,6 +1103,65 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 }
 
 /**
+ * get source proto:ip:port (socket address format)
+ */
+int get_src_address_socket(sip_msg_t *m, str *ssock)
+{
+	static char buf[MAX_URI_SIZE];
+	char* p;
+	str ip, port;
+	int len;
+	str proto;
+
+	if (!ssock || !m) {
+		ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto)<0) {
+		ERR("unknown transport protocol\n");
+		return -1;
+	}
+
+	ip.s = ip_addr2a(&m->rcv.src_ip);
+	ip.len = strlen(ip.s);
+
+	port.s = int2str(m->rcv.src_port, &port.len);
+
+	len = proto.len + 1 + ip.len + 2*(m->rcv.src_ip.af==AF_INET6)+ 1 + port.len;
+
+	if (len+1 >= MAX_URI_SIZE) {
+		ERR("buffer too small\n");
+		return -1;
+	}
+
+	p = buf;
+
+	memcpy(p, proto.s, proto.len);
+	p += proto.len;
+
+	*p++ = ':';
+
+	if (m->rcv.src_ip.af==AF_INET6)
+		*p++ = '[';
+	memcpy(p, ip.s, ip.len);
+	p += ip.len;
+	if (m->rcv.src_ip.af==AF_INET6)
+		*p++ = ']';
+
+	*p++ = ':';
+
+	memcpy(p, port.s, port.len);
+	p += port.len;
+	*p = '\0';
+
+	ssock->s = buf;
+	ssock->len = len;
+
+	return 0;
+}
+
+/**
  * get received-on-socket ip, port and protocol in SIP URI format
  * - tmode - 0: short format (transport=udp is not added, being default)
  * - atype - 0: listen address; 1: advertised address
