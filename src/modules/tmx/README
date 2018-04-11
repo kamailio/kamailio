@@ -263,6 +263,10 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
    transaction. It make sense only in routing block if the transaction was
    created via t_newtran() and the flags have been altered since.
 
+   It is not needed to execute this function when using t_relay() (or
+   similar tm relay functions, flags are synchornized automatically in
+   that case).
+
    This function can be used from ANY_ROUTE .
 
    Example 1.5. t_flush_flags usage
@@ -276,6 +280,10 @@ t_flush_flags();
    created transaction. It make sense only in routing block if the
    transaction was created via t_newtran() and the extended flags have
    been altered since.
+
+   It is not needed to execute this function when using t_relay() (or
+   similar tm relay functions, xflags are synchornized automatically in
+   that case).
 
    This function can be used from ANY_ROUTE .
 
