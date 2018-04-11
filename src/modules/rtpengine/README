@@ -2347,8 +2347,6 @@ nnection ICE=force RTP/SAVPF");
    <sr-users@lists.kamailio.org> and e-mails regarding development
    versions should be sent to <sr-dev@lists.kamailio.org>.
 
-   Please report security issues to <management at kamailio dot org>.
-
    2.4.
 
    How can I report a bug?
