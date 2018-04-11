@@ -81,10 +81,6 @@ rtpengine_offer("force trust-address symmetric replace-origin replace-session-co
 			&kamailiousersmail; and e-mails regarding development versions
 			should be sent to &kamailiodevmail;.
 		</para>
-		<para>
-			Please report security issues to 
-			&kamailioprivatemail;.
-		</para>
 	    </answer>
 	</qandaentry>
 	<qandaentry>

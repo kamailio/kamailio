@@ -29,7 +29,6 @@
 <!ENTITY kamailiodevlink "<ulink url='&kamailiodev;'>&kamailiodev;</ulink>">
 <!ENTITY kamailiodbdocslink "<ulink url='&kamailiodbdocs;'>&kamailiodbdocs;</ulink>">
 
-<!ENTITY kamailioprivatemail "<email>management at kamailio dot org</email>">
 <!ENTITY kamailiousersmail "<email>sr-users@lists.kamailio.org</email>">
 <!ENTITY kamailiodevmail "<email>sr-dev@lists.kamailio.org</email>">
 
