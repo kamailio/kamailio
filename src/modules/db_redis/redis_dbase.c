@@ -671,6 +671,14 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
             LM_ERR("Failed to add match pattern to scan query\n");
             goto err;
         }
+        if (db_redis_key_add_string(&query_v, "COUNT", 5) != 0) {
+            LM_ERR("Failed to add count command to scan query\n");
+            goto err;
+        }
+        if (db_redis_key_add_string(&query_v, "1000", 5) != 0) {
+            LM_ERR("Failed to add count value to scan query\n");
+            goto err;
+        }
         pkg_free(match); match = NULL;
 
         reply = db_redis_command_argv(con, query_v);
@@ -697,6 +705,7 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
                     table_name->len, table_name->s);
             goto err;
         }
+        LM_DBG("cursor is %lu\n", cursor);
 
         if (reply->element[1]->type != REDIS_REPLY_ARRAY) {
             LM_ERR("Invalid content type for scan on table '%.*s', expected array\n",
@@ -723,8 +732,8 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
                         j, table_name->len, table_name->s);
                 goto err;
             }
-            if (db_redis_key_add_string(query_keys, key->str, strlen(key->str)) != 0) {
-                LM_ERR("Failed to add redis key\n");
+            if (db_redis_key_prepend_string(query_keys, key->str, strlen(key->str)) != 0) {
+                LM_ERR("Failed to prepend redis key\n");
                 goto err;
             }
         }
@@ -746,6 +755,8 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
     if (reply) {
         db_redis_free_reply(&reply);
     }
+
+    LM_DBG("got %lu entries by scan\n", i);
     return 0;
 
 err:
@@ -1053,7 +1064,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
     redis_key_t *query_v = NULL;
     int num_rows = 0;
     redis_key_t *key;
-    int j;
+    int i, j, max;
 
     *_r = db_redis_new_result();
     if (!*_r) {
@@ -1077,6 +1088,16 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
             goto error;
         }
     }
+
+    // we allocate best case scenario (all rows match)
+    RES_NUM_ROWS(*_r) = RES_ROW_N(*_r) = *keys_count;
+    if (db_allocate_rows(*_r) != 0) {
+        LM_ERR("Failed to allocate memory for rows\n");
+        return -1;
+    }
+    RES_COL_N(*_r) = _nc;
+    // reset and increment in convert_row
+    RES_NUM_ROWS(*_r) = RES_ROW_N(*_r) = 0;
 
     for (key = *keys; key; key = key->next) {
         redis_key_t *tmp = NULL;
@@ -1140,58 +1161,58 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
 
         db_redis_key_free(&query_v);
         query_v = NULL;
+
+        max = 0;
+        if (*keys_count == num_rows)
+            max = (*keys_count) % 1000;
+        else if (num_rows % 1000 == 0)
+            max = 1000;
+
+        if (max) {
+            LM_DBG("fetching next %d results\n", max);
+            for (i = 0; i < max; ++i) {
+                // get reply for EXISTS query
+                if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
+                    LM_ERR("Failed to get reply for query: %s\n",
+                            con->con->errstr);
+                    goto error;
+                }
+                db_redis_check_reply(con, reply, error);
+                if (reply->integer == 0) {
+                    LM_DBG("key does not exist, returning no row for query\n");
+                    db_redis_free_reply(&reply);
+                    // also free next reply, as this is a null row for the HMGET
+                    db_redis_get_reply(con, (void**)&reply);
+                    db_redis_check_reply(con, reply, error);
+                    db_redis_free_reply(&reply);
+                    continue;
+                }
+                db_redis_free_reply(&reply);
+
+                // get reply for actual HMGET query
+                if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
+                    LM_ERR("Failed to get reply for query: %s\n",
+                            con->con->errstr);
+                    goto error;
+                }
+                db_redis_check_reply(con, reply, error);
+                if (reply->type != REDIS_REPLY_ARRAY) {
+                    LM_ERR("Unexpected reply, expected array\n");
+                    goto error;
+                }
+                LM_DBG("dumping full query reply for row\n");
+                db_redis_dump_reply(reply);
+
+                if (db_redis_convert_row(con, *_r, _k, _v, _op, reply, CON_TABLE(_h), _c, _nc, *manual_keys, *manual_keys_count)) {
+                    LM_ERR("Failed to convert redis reply for row\n");
+                    goto error;
+                }
+                db_redis_free_reply(&reply);
+            }
+        }
     }
 
-    // we allocate best case scenario (all rows match)
-    RES_NUM_ROWS(*_r) = RES_ROW_N(*_r) = num_rows;
-    if (db_allocate_rows(*_r) != 0) {
-        LM_ERR("Failed to allocate memory for rows\n");
-        return -1;
-    }
-    RES_COL_N(*_r) = _nc;
-    // reset and increment in convert_row
-    RES_NUM_ROWS(*_r) = RES_ROW_N(*_r) = 0;
-
-    for (key = *keys; key; key = key->next) {
-        // get reply for EXISTS query
-        if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
-            LM_ERR("Failed to get reply for query: %s\n",
-                    con->con->errstr);
-            goto error;
-        }
-        db_redis_check_reply(con, reply, error);
-        if (reply->integer == 0) {
-            LM_DBG("key does not exist, returning no row for query\n");
-            db_redis_free_reply(&reply);
-            // also free next reply, as this is a null row for the HMGET
-            db_redis_get_reply(con, (void**)&reply);
-            db_redis_check_reply(con, reply, error);
-            db_redis_free_reply(&reply);
-            continue;
-        }
-        db_redis_free_reply(&reply);
-
-        // get reply for actual HMGET query
-        if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
-            LM_ERR("Failed to get reply for query: %s\n",
-                    con->con->errstr);
-            goto error;
-        }
-        db_redis_check_reply(con, reply, error);
-        if (reply->type != REDIS_REPLY_ARRAY) {
-            LM_ERR("Unexpected reply, expected array\n");
-            goto error;
-        }
-        LM_DBG("dumping full query reply for row\n");
-        db_redis_dump_reply(reply);
-
-        if (db_redis_convert_row(con, *_r, _k, _v, _op, reply, CON_TABLE(_h), _c, _nc, *manual_keys, *manual_keys_count)) {
-            LM_ERR("Failed to convert redis reply for row\n");
-            goto error;
-        }
-        db_redis_free_reply(&reply);
-    }
-
+    LM_DBG("done performing query\n");
     return 0;
 
 error:
@@ -1199,7 +1220,7 @@ error:
     db_redis_key_free(&query_v);
     if(reply)
         db_redis_free_reply(&reply);
-    if(_r && *_r) {
+    if(*_r) {
         db_redis_free_result((db1_con_t*)_h, *_r); *_r = NULL;
     }
     return -1;
@@ -1244,13 +1265,13 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
             goto error;
     }
 
-    LM_DBG("+++ delete all keys\n");
+    LM_DBG("delete all keys\n");
     for (k = keys; k; k = k->next) {
         redis_key_t *all_type_key;
         str *key = &k->key;
         redis_key_t *tmp = NULL;
         int row_match;
-        LM_DBG("+++ delete key '%.*s'\n", key->len, key->s);
+        LM_DBG("delete key '%.*s'\n", key->len, key->s);
 
         if (db_redis_key_add_string(&query_v, "EXISTS", 6) != 0) {
             LM_ERR("Failed to add exists command to pre-delete query\n");
@@ -1399,7 +1420,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
         }
 
         //db_redis_key_free(&type_keys);
-        LM_DBG("+++ done with loop '%.*s'\n", k->key.len, k->key.s);
+        LM_DBG("done with loop '%.*s'\n", k->key.len, k->key.s);
     }
     db_redis_key_free(&type_keys);
     db_redis_key_free(&all_type_keys);
@@ -1677,6 +1698,7 @@ int db_redis_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
         LM_ERR("db result is null\n");
         return -1;
     }
+
     con = REDIS_CON(_h);
     if (con && con->con == NULL) {
         if (db_redis_connect(con) != 0) {

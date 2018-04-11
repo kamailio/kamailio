@@ -25,7 +25,7 @@
 #include "redis_table.h"
 
 static void print_query(redis_key_t *query) {
-	redis_key_t *k;
+    redis_key_t *k;
 
     LM_DBG("Query dump:\n");
     for (k = query; k; k = k->next) {
@@ -355,6 +355,7 @@ int db_redis_get_reply(km_redis_con_t *con, void **reply) {
                 redisFree(con->con);
                 con->con = NULL;
             }
+            return -1;
         }
         // take commands from oldest to newest and re-do again,
         // but don't queue them once again in retry-mode

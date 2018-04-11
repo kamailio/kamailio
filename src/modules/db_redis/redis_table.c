@@ -505,6 +505,8 @@ int db_redis_parse_keys(km_redis_con_t *con) {
     p = start = redis_keys.s;
     state = DBREDIS_KEYS_TABLE_ST;
     do {
+        type = NULL;
+        key = NULL;
         switch(state) {
             case DBREDIS_KEYS_TABLE_ST:
                 while(p != end && *p != '=')
@@ -605,6 +607,10 @@ int db_redis_parse_keys(km_redis_con_t *con) {
     return 0;
 
 err:
+    if (type)
+        pkg_free(type);
+    if (key)
+        pkg_free(key);
     db_redis_free_tables(con);
     return -1;
 }
@@ -627,7 +633,8 @@ int db_redis_parse_schema(km_redis_con_t *con) {
     char full_path[_POSIX_PATH_MAX + 1];
     int path_len;
     struct stat fstat;
-    char c;
+    unsigned char c;
+    int cc;
 
     enum {
         DBREDIS_SCHEMA_COLUMN_ST,
@@ -651,6 +658,10 @@ int db_redis_parse_schema(km_redis_con_t *con) {
     }
 
     dir_name = (char*)pkg_malloc((redis_schema_path.len + 1) * sizeof(char));
+    if (!dir_name) {
+        LM_ERR("Failed to allocate memory for schema directory name\n");
+        goto err;
+    }
     strncpy(dir_name, redis_schema_path.s, redis_schema_path.len);
     dir_name[redis_schema_path.len] = '\0';
     srcdir = opendir(dir_name);
@@ -718,14 +729,15 @@ int db_redis_parse_schema(km_redis_con_t *con) {
                 goto err;
             }
 
-            c = fgetc(fin);
+            cc = fgetc(fin);
+            c = (unsigned char)cc;
 
             if (c == '\r')
                 continue;
             //LM_DBG("parsing char %c, buf is '%s' at pos %lu\n", c, buf, bufpos);
             switch(state) {
                 case DBREDIS_SCHEMA_COLUMN_ST:
-                    if (c == EOF) {
+                    if (cc == EOF) {
                         LM_ERR("Unexpected end of file in schema column name of file %s\n", full_path);
                         goto err;
                     }
@@ -751,7 +763,7 @@ int db_redis_parse_schema(km_redis_con_t *con) {
                     LM_DBG("found column name '%.*s'\n", column_name.len, column_name.s);
                     break;
                 case DBREDIS_SCHEMA_TYPE_ST:
-                    if (c == EOF) {
+                    if (cc == EOF) {
                         LM_ERR("Unexpected end of file in schema column type of file %s\n", full_path);
                         goto err;
                     }
@@ -791,7 +803,7 @@ int db_redis_parse_schema(km_redis_con_t *con) {
                     bufptr = buf;
                     break;
                 case DBREDIS_SCHEMA_VERSION_ST:
-                    if (c != '\n' && c != EOF) {
+                    if (c != '\n' && cc != EOF) {
                         *bufptr = c;
                         bufptr++;
                         continue;
@@ -804,7 +816,7 @@ int db_redis_parse_schema(km_redis_con_t *con) {
                     goto fileend;
                     break;
             }
-        } while (c != EOF);
+        } while (cc != EOF);
 
 fileend:
         fclose(fin);
