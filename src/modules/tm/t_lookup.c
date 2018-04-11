@@ -1326,8 +1326,11 @@ int t_newtran( struct sip_msg* p_msg )
 		/* t_newtran() has been already called, and the script
 		 * might changed the flags after it, so we must update the flags
 		 * in shm memory -- Miklos */
-		if (T->uas.request)
+		if (T->uas.request) {
 			T->uas.request->flags = p_msg->flags;
+			memcpy(T->uas.request->xflags, p_msg->xflags,
+					KSR_XFLAGS_SIZE * sizeof(flag_t));
+		}
 
 		return E_SCRIPT;
 	}
