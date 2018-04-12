@@ -2912,7 +2912,7 @@ char* create_via_hf( unsigned int *len,
 	if(msg && (msg->msg_flags&FL_ADD_SRVID) && server_id!=0) {
 		slen = snprintf(sbuf, 24, ";srvid=%u", (unsigned int)server_id);
 		if(slen<=0 || slen>=24) {
-			LM_WARN("failed to buld srvid parameter");
+			LM_WARN("failed to build srvid parameter");
 		} else {
 			via = (char*)pkg_malloc(extra_params.len+slen+1);
 			if(via==0) {
