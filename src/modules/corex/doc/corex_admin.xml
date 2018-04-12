@@ -576,6 +576,33 @@ set_source_address("udp:127.0.0.1:5080");
 </programlisting>
 		</example>
 		</section>
+		<section id="corex.f.via_add_srvid">
+		<title><function moreinfo="none">via_add_srvid(flags)</function></title>
+		<para>
+			Control if srvid parameter is added or not to local Via. If yes,
+			the value is server_id, added only if it is different than 0.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - add srvid parameter; 0 - do not
+				add srvid parameter.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_add_srvid</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_add_srv("1");
+...
+</programlisting>
+		</example>
+		</section>
 
 	</section>
 
