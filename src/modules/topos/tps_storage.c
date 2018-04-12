@@ -372,13 +372,28 @@ error:
 int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog)
 {
 	int ret;
+	str suid;
 
-	sruid_next(&_tps_sruid);
+	if(dialog==0) {
+		sruid_next(&_tps_sruid);
+		suid = _tps_sruid.uid;
+	} else {
+		if(td->a_uuid.len>0) {
+			suid = td->a_uuid;
+		} else if(td->b_uuid.len>0) {
+			suid = td->b_uuid;
+		} else {
+			goto error;
+		}
+		suid.s++;
+		suid.len--;
+	}
 
-	ret = tps_storage_fill_contact(msg, td, &_tps_sruid.uid, TPS_DIR_DOWNSTREAM);
+	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_DOWNSTREAM);
 	if(ret<0) goto error;
-	ret = tps_storage_fill_contact(msg, td, &_tps_sruid.uid, TPS_DIR_UPSTREAM);
+	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_UPSTREAM);
 	if(ret<0) goto error;
+
 	ret = tps_storage_link_msg(msg, td, TPS_DIR_DOWNSTREAM);
 	if(ret<0) goto error;
 	if(td->as_contact.len <= 0 && td->bs_contact.len <= 0) {
