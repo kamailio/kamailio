@@ -48,8 +48,8 @@ static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2);
 static int w_file_read(sip_msg_t *msg, char *fn, char *vn);
 static int w_file_write(sip_msg_t *msg, char *fn, char *vn);
-static int w_isxflagset(struct sip_msg *msg, char *flag, str *s2);
-static int w_resetxflag(struct sip_msg *msg, char *flag, str *s2);
+static int w_isxflagset(struct sip_msg *msg, char *flag, char *s2);
+static int w_resetxflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_setxflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_set_send_socket(sip_msg_t *msg, char *psock, char *p2);
 static int w_set_recv_socket(sip_msg_t *msg, char *psock, char *p2);
@@ -498,7 +498,7 @@ static int ki_isxflagset(sip_msg_t *msg, int fval)
 /**
  *
  */
-static int w_isxflagset(sip_msg_t *msg, char *flag, str *s2)
+static int w_isxflagset(sip_msg_t *msg, char *flag, char *s2)
 {
 	int fval=0;
 	if(fixup_get_ivalue(msg, (gparam_t*)flag, &fval)!=0) {
@@ -521,7 +521,7 @@ static int ki_resetxflag(sip_msg_t *msg, int fval)
 /**
  *
  */
-static int w_resetxflag(sip_msg_t *msg, char *flag, str *s2)
+static int w_resetxflag(sip_msg_t *msg, char *flag, char *s2)
 {
 	int fval=0;
 	if(fixup_get_ivalue(msg, (gparam_t*)flag, &fval)!=0) {
