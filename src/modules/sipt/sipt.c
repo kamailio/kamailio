@@ -41,6 +41,7 @@ MODULE_VERSION
 static int sipt_set_bci_1(struct sip_msg *msg, char *_charge_indicator, char *_called_status, char * _called_category, char * _e2e_indicator);
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai);
 static int sipt_destination2(struct sip_msg *msg, char *_destination, char *_hops, char * _nai, char * _terminator);
+static int sipt_forwarding(struct sip_msg *msg, char *_fwdnumber, char * _nai);
 static int sipt_set_calling(struct sip_msg *msg, char *_origin, char *_nai, char *_pres, char * _screen);
 static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_event_info(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
@@ -50,6 +51,10 @@ static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_valu
 static int sipt_get_screening(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_charge_indicator(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+
+static int sipt_get_redirection_info(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_redirection_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 /* New API */
 int sipt_parse_pv_name(pv_spec_p sp, str *in);
@@ -139,6 +144,12 @@ static cmd_export_t cmds[]={
 		fixup_str_str_str, fixup_free_str_str_str,         /* */
 		/* can be applied to original requests */
 		REQUEST_ROUTE|BRANCH_ROUTE}, 
+        {"sipt_forwarding", /* action name as in scripts */
+		(cmd_function)sipt_forwarding,  /* C function name */
+		2,          /* number of parameters */
+		fixup_str_str_str, fixup_free_str_str_str,         /* */
+		/* can be applied to original requests */
+		REQUEST_ROUTE|BRANCH_ROUTE}, 
 	{"sipt_set_calling", /* action name as in scripts */
 		(cmd_function)sipt_set_calling,  /* C function name */
 		4,          /* number of parameters */
@@ -173,6 +184,12 @@ static pv_export_t mod_items[] = {
                 0, 0, 0, 0 },
         { {"sipt",  sizeof("sipt")-1}, PVT_OTHER,  sipt_get_pv,    0,
                 sipt_parse_pv_name, 0, 0, 0 },
+        { {"sipt_redirection_info",  sizeof("sipt_redirection_info")-1}, PVT_OTHER,  sipt_get_redirection_info,    0,
+               0, 0, 0, 0 },
+        { {"sipt_redirection_number_nai",  sizeof("sipt_redirection_number_nai")-1}, PVT_OTHER,  sipt_get_redirection_number_nai,    0,
+                0, 0, 0, 0 },
+        { {"sipt_redirection_number",  sizeof("sipt_redirection_number")-1}, PVT_OTHER,  sipt_get_redirection_number,    0,
+                0, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -274,6 +291,81 @@ static int sipt_get_calling_party_nai(struct sip_msg *msg, pv_param_t *param, pv
 	pv_get_sintval(msg, param, res, isup_get_calling_party_nai((unsigned char*)body.s, body.len));
 	return 0;
 }
+
+static int sipt_get_redirection_info(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_INFO("No ISUP Message Found");
+		return -1;
+	}
+
+	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG))
+	{
+		LM_DBG("message not an ACM or CPG\n");
+		return -1;
+	}
+	
+	pv_get_sintval(msg, param, res, isup_get_redirection_info((unsigned char*)body.s, body.len));
+	return 0;
+}
+
+static int sipt_get_redirection_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_INFO("No ISUP Message Found");
+		return -1;
+	}
+
+	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG))
+	{
+		LM_DBG("message not an ACM or CPG\n");
+		return -1;
+	}
+	
+	pv_get_sintval(msg, param, res, isup_get_redirection_number_nai((unsigned char*)body.s, body.len));
+	return 0;
+}
+
+static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	char sb_s_buf[25];
+	str sb_s = {0, 0};
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_INFO("No ISUP Message Found");
+		return -1;
+	}
+
+	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG))
+	{
+		LM_DBG("message not an ACM or CPG\n");
+		return -1;
+	}
+	
+	sb_s.len = isup_get_redirection_number((unsigned char*)body.s, body.len, (unsigned char*)sb_s_buf, sizeof(sb_s_buf));
+	sb_s.s = sb_s_buf;
+	
+	if (sb_s.len > 0)
+	{
+		pv_get_strval(msg, param, res, &sb_s);
+	} else {
+		pv_get_sintval(msg, param, res, -1);
+	}
+	
+	return 0;
+}
+
 
 static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
@@ -689,10 +781,65 @@ static int sipt_set_calling(struct sip_msg *msg, char *_origin, char *_nai, char
 	mangle.msg = msg;
 	mangle.body_offset = (int)(body.s - msg->buf);
 
-	char * digits = calloc(1,origin->len+1);
+	char * digits = calloc(1,origin->len+2);
 	memcpy(digits, origin->s, origin->len);
 
 	int res = isup_update_calling(&mangle, digits, int_nai, pres, screen, (unsigned char*)body.s, body.len);
+	free(digits);
+	if(res < 0)
+	{
+		LM_DBG("error updating IAM\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+static int sipt_forwarding(struct sip_msg *msg, char *_fwdnumber, char * _nai)
+{
+	str * nai = (str*)_nai;
+	unsigned int int_nai = 0;
+	str2int(nai, &int_nai);
+	str * fwdnumber = (str*)_fwdnumber;
+	struct sdp_mangler mangle;
+
+	// update forwarded iam
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_INFO("No ISUP Message Found");
+		return -1;
+	}
+	str sdp;
+	sdp.s = get_body_part(msg, TYPE_APPLICATION, SUBTYPE_SDP, &sdp.len);
+	
+	unsigned char newbuf[1024];
+	memset(newbuf, 0, 1024);
+	if (body.s==0) {
+		LM_ERR("failed to get the message body\n");
+		return -1;
+	}
+	body.len = msg->len -(int)(body.s-msg->buf);
+	if (body.len==0) {
+		LM_DBG("message body has zero length\n");
+		return -1;
+	}
+
+	if(body.s[0] != ISUP_IAM)
+	{
+		LM_DBG("message not an IAM\n");
+		return -1;
+	}
+
+	mangle.msg = msg;
+	mangle.body_offset = (int)(body.s - msg->buf);
+
+	char * digits = calloc(1,fwdnumber->len+2);
+	memcpy(digits, fwdnumber->s, fwdnumber->len);
+
+	int res = isup_update_forwarding(&mangle, digits, int_nai, (unsigned char*)body.s, body.len);
 	free(digits);
 	if(res < 0)
 	{
