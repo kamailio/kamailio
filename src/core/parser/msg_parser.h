@@ -100,6 +100,7 @@ typedef enum request_method {
 #define FL_BODY_MULTIPART    (1<<17)  /* body modified is multipart */
 #define FL_RR_ADDED          (1<<18)  /* Record-Route header was added */
 #define FL_UAC_AUTH          (1<<19)  /* Proxy UAC-like authentication */
+#define FL_ADD_SRVID         (1<<20) /*!< add 'srvid' to local via hdr */
 
 /* WARNING: Value (1 << 28) is temporarily reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
