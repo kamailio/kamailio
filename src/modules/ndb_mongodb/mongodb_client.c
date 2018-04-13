@@ -216,9 +216,13 @@ int mongodbc_exec_cmd(str *srv, str *dname, str *cname, str *cmd, str *res, int 
 	bson_error_t error;
 	bson_t command;
 	bson_t reply;
+#if MONGOC_CHECK_VERSION(1, 5, 0)
+	bson_t *opts;
+#else
+	int nres;
+#endif
 	const bson_t *cdoc;
 	char c;
-	int nres;
 	int ret;
 
 	if(srv==NULL || cmd==NULL || res==NULL)
@@ -285,6 +289,20 @@ int mongodbc_exec_cmd(str *srv, str *dname, str *cname, str *cmd, str *res, int 
 					NULL,
 					0);
 		} else {
+#if MONGOC_CHECK_VERSION(1, 5, 0)
+			if(emode==3) opts = BCON_NEW("limit", BCON_INT32 (1));
+			else opts = BCON_NEW("limit", BCON_INT32 (0));
+			if(opts==NULL) {
+				LM_ERR("cannot initialize opts bson document\n");
+				bson_destroy (&command);
+				goto error_exec;
+			}
+			rpl->cursor = mongoc_collection_find_with_opts (rpl->collection,
+					&command,
+					opts,
+					NULL);
+			bson_destroy (opts);
+#else
 			nres = 0;
 			if(emode==3) nres = 1; /* return one result */
 			rpl->cursor = mongoc_collection_find (rpl->collection,
@@ -295,6 +313,7 @@ int mongodbc_exec_cmd(str *srv, str *dname, str *cname, str *cmd, str *res, int 
 					&command,
 					NULL,
 					NULL);
+#endif
 		}
 		bson_destroy (&command);
 		if(rpl->cursor==NULL) {
