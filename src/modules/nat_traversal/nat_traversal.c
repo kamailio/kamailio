@@ -1905,7 +1905,7 @@ static int mod_init(void)
 		LM_NOTICE("using 10 seconds for keepalive_interval\n");
 		keepalive_interval = 10;
 	}
-	register_dummy_timers(1);
+	register_basic_timers(1);
 
 	return 0;
 }
@@ -1913,7 +1913,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if(rank == PROC_MAIN) {
-		if(fork_dummy_timer(PROC_TIMER, "TIMER NT", 1 /*socks flag*/,
+		if(fork_basic_timer(PROC_TIMER, "TIMER NT", 1 /*socks flag*/,
 				   keepalive_timer, NULL, 1 /*sec*/)
 				< 0) {
 			LM_ERR("failed to register keepalive timer process\n");
