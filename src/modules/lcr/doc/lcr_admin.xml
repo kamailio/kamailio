@@ -170,7 +170,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="lcr.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		&url; of the database table to be used.
@@ -191,7 +191,7 @@ modparam("lcr","db_url","&exampledb;")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.lcr_gw_table">
 		<title><varname>lcr_gw_table</varname> (string)</title>
 		<para>
 		Name of the table holding gateways definitions.
@@ -496,7 +496,7 @@ modparam("lcr", "defunct_column", "defunct_until")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.lcr_rule_table">
 		<title><varname>lcr_rule_table</varname> (string)</title>
 		<para>
 		Name of the table holding the LCR rules.
@@ -644,7 +644,7 @@ modparam("lcr", "enabled_column", "in_use")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.lcr_rule_target_table">
 		<title><varname>lcr_rule_target_table</varname> (string)</title>
 		<para>
 		Name of the table holding information about the LCR rule
@@ -755,7 +755,7 @@ modparam("lcr","weight_column", "target_weight")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.lcr_count">
 		<title><varname>lcr_count</varname> (integer)</title>
 		<para>
 		Maximun value of lcr_id.
@@ -778,7 +778,7 @@ modparam("lcr", "lcr_count", 10)
                 </example>
 	</section>
 
-	<section>
+	<section id="lcr.p.gw_uri_avp">
 		<title><varname>gw_uri_avp</varname> (AVP string)</title>
 		<para>
 		Internal AVP that load_gws() function uses to store
@@ -801,7 +801,7 @@ modparam("lcr", "gw_uri_avp", "$avp(i:709)")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.ruri_user_avp">
 		<title><varname>ruri_user_avp</varname> (AVP string)</title>
 		<para>
    		Internal AVP that next_gw function uses to store
@@ -823,7 +823,7 @@ modparam("lcr", "ruri_user_avp", "$avp(i:500)")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.tag_avp">
 		<title><varname>tag_avp</varname> (AVP string)</title>
 		<para>
 		If defined, an AVP where successful next_gw and from_gw
@@ -845,7 +845,7 @@ modparam("lcr", "tag_avp", "$avp(lcr_tag)")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.flags_avp">
 		<title><varname>flags_avp</varname> (AVP string)</title>
 		<para>
 		If defined, an AVP where successful next_gw and from_gw
@@ -867,7 +867,7 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.mt_pv_values">
 		<title><varname>mt_pv_values</varname> (AVP string)</title>
 		<para>
 		If defined and mt_value is given for a rule, load_gws() matches
@@ -892,7 +892,7 @@ modparam("lcr", "mt_pv_values", "$avp(mt_values)")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.mtree">
 		<title><varname>mtree</varname> (string)</title>
 		<para>
 		Name of mtree to which load_gws() matches caller URI userpart.
@@ -912,7 +912,7 @@ modparam("lcr", "mtree", "caller_tree")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.defunct_capability">
 		<title><varname>defunct_capability</varname> (integer)</title>
 		<para>
 		Tells if defunct capability of (non-responsive) gateways is
@@ -936,7 +936,7 @@ modparam("lcr", "defunct_capability", 1)
                 </example>
 	</section>
 
-	<section>
+	<section id="lcr.p.lcr_id_avp">
 		<title><varname>lcr_id_avp</varname> (AVP string)</title>
 		<para>
 		Internal AVP that load_gws() function uses to store
@@ -959,7 +959,7 @@ modparam("lcr", "lcr_id_avp", "$avp(s:lcr_id_avp)")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.defunct_gw_avp">
 		<title><varname>defunct_gw_avp</varname> (AVP string)</title>
 		<para>
 		Internal AVP that next_gw() function uses to store
@@ -984,7 +984,7 @@ modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.lcr_rule_hash_size">
 		<title><varname>lcr_rule_hash_size</varname> (integer)</title>
 		<para>
 		Defines the size of hash table used to store LCR rules.
@@ -1010,7 +1010,7 @@ modparam("lcr", "lcr_rule_hash_size", 1024)
                 </example>
 	</section>
 
-	<section>
+	<section id="lcr.p.lcr_gw_count">
 		<title><varname>lcr_gw_count</varname> (integer)</title>
 		<para>
 		Defines the maximum number of gateways in lcr_gw table.
@@ -1032,7 +1032,7 @@ modparam("lcr", "lcr_gw_count", 1024)
                 </example>
 	</section>
 
-	<section>
+	<section id="lcr.p.dont_strip_or_prefix_flag">
 		<title><varname>dont_strip_or_prefix_flag</varname> (integer)</title>
 		<para>
 		Defines the flag number used to tell if stripping and
@@ -1057,7 +1057,7 @@ modparam("lcr", "dont_strip_or_prefix_flag", 10)
                 </example>
 	</section>
 
-	<section>
+	<section id="lcr.p.priority_ordering">
 		<title><varname>priority_ordering</varname> (integer)</title>
 		<para>
 		Defines how matching gateways are ordered (see Overview section).
@@ -1080,7 +1080,7 @@ modparam("lcr", "priority_ordering", 1)
                 </example>
 	</section>
 
-	<section>
+	<section id="lcr.p.fetch_rows">
 		<title><varname>fetch_rows</varname> (integer)</title>
 		<para>
 		The number of the rows to be fetched at once from database
@@ -1106,7 +1106,7 @@ modparam("lcr", "fetch_rows", 3000)
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.ping_interval">
 		<title><varname>ping_interval</varname> (integer)</title>
 		<para>
 		  Interval in seconds for sending OPTIONS ping requests
@@ -1141,7 +1141,7 @@ modparam("lcr", "ping_interval", 15)
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.ping_inactivate_threshold">
 		<title><varname>ping_inactivate_threshold</varname> (integer)</title>
 		<para>
 		  Tells after how many failures (= inactivate_gw() function
@@ -1165,7 +1165,7 @@ modparam("lcr", "ping_inactivate_threshold", 3)
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.ping_valid_reply_codes">
 		<title><varname>ping_valid_reply_codes</varname> (string)</title>
 		<para>
 		  A comma separated list of SIP reply codes, which are
@@ -1191,7 +1191,7 @@ modparam("lcr", "ping_valid_reply_codes", "403,405,501")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.ping_from">
 		<title><varname>ping_from</varname> (string)</title>
 		<para>
 		  From URI used in OPTIONS ping requests.
@@ -1213,7 +1213,7 @@ modparam("lcr", "ping_from", "sip:proxy.operator.com")
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.p.ping_socket">
 		<title><varname>ping_socket</varname> (string)</title>
 		<para>
 		  Socket to be used for sending OPTIONS ping request.  If not
@@ -1240,7 +1240,7 @@ modparam("lcr", "ping_socket", "192.98.102.10:5060")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="lcr.f.load_gws">
 		<title>
 		<function moreinfo="none">load_gws(lcr_id[, uri_user[, caller_uri]])
 		</function> 
@@ -1283,7 +1283,7 @@ if (!load_gws(1, $rU, $var(caller_uri))) {
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.f.next_gw">
 		<title>
 		<function moreinfo="none">next_gw()</function>
 		</title>	
@@ -1340,7 +1340,7 @@ if (!next_gw()) {
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.f.inactivate_gw">
 		<title>
 		<function moreinfo="none">inactivate_gw()</function>
 		</title>	
@@ -1372,7 +1372,7 @@ failure_route [GW_FAILURE] {
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.f.defunct_gw">
 		<title>
 		<function moreinfo="none">defunct_gw(period)</function>
 		</title>	
@@ -1400,7 +1400,7 @@ defunct_gw(60);
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.f.from_gw">
 		<title>
 		<function moreinfo="none">from_gw(lcr_id[, ip_addr, proto])</function>
 		</title>
@@ -1450,7 +1450,7 @@ if (from_gw(1, $avp(s:real_source_addr), 2) {
 		</example>
 		</section>
 
-	<section>
+	<section id="lcr.f.from_any_gw">
 		<title>
 		<function moreinfo="none">from_any_gw([ip_addr, proto])</function>
 		</title>
@@ -1496,7 +1496,7 @@ $var(lcr_id) = from_any_gw("192.168.1.1", 3);
 		</example>
 		</section>
 
-		<section>
+		<section id="lcr.f.to_gw">
 		<title>
 		<function moreinfo="none">to_gw(lcr_id[, ip_addr, proto])</function>
 		</title>
@@ -1533,7 +1533,7 @@ if (to_gw("1")) {
 		</example>
 	</section>
 
-	<section>
+	<section id="lcr.f.to_any_gw">
 		<title>
 		<function moreinfo="none">to_any_gw([ip_addr, proto])</function>
 		</title>
@@ -1577,7 +1577,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 
 	<section>
 	<title>RPC Commands</title>
-		<section>
+		<section id="lcr.rpc.reload">
 		<title><function>lcr.reload</function></title>
 		<para>
 			Causes lcr module to re-read the contents of
@@ -1595,7 +1595,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 		</example>
 		</section>
 
-		<section>
+		<section id="lcr.rpc.dump_gws">
 		<title><function>lcr.dump_gws</function></title>
 		<para>
 			Causes lcr module to dump the contents of its
@@ -1610,7 +1610,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 		</example>
 		</section>
 
-		<section>
+		<section id="lcr.rpc.dump_rules">
 		<title><function>lcr.dump_rules</function></title>
 		<para>
 			Causes lcr module to dump the contents of its
@@ -1625,7 +1625,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 		</example>
 		</section>
 
-		<section>
+		<section id="lcr.rpc.load_gws">
 		<title><function>lcr.load_gws</function></title>
 		<para>
 			Loads gateways and prints ids of matching ones in priority order.
@@ -1642,7 +1642,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 		</example>
 		</section>
 
-		<section>
+		<section id="lcr.rpc.defunct_gw">
 		<title><function>lcr.defunct_gw</function></title>
 		<para>
 			Defuncts gateway loaded into memory for a period of
