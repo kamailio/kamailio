@@ -44,7 +44,7 @@
  * reload enabled param
  * default: 0 (off)
  */
-static unsigned int _app_lua_sr_reload = 0;
+static unsigned int _app_lua_sr_reload = 1;
 /**
  *
  */
