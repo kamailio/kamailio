@@ -199,13 +199,14 @@ modparam("app_lua", "register", "sl")
 3.3. reload (boolean)
 
    If reload is 1 enables the ability to reload the scripts using the RPC
-   app_lua.reload command.
+   app_lua.reload command. To disable reload feature, set this parameter
+   to 0.
 
-   Default value is “0 (off)”.
+   Default value is “1 (on)”.
 
    Example 1.4. Set reload parameter
 ...
-modparam("app_lua", "reload", 1)
+modparam("app_lua", "reload", 0)
 ...
 
 4. Functions
