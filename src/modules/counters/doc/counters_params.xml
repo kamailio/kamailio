@@ -12,7 +12,7 @@
 	</sectioninfo>
 	<title>Parameters</title>
 
-	<section id="scrip_counter">
+	<section id="counters.p.scrip_counter">
 		<title><varname>script_counter</varname></title>
 		<para>
 			Define a new counter that can be used from the script.
@@ -40,7 +40,7 @@ modparam("counters", "script_counter", "test.x:another example") # test.x
 		</example>
 	</section>
 
-	<section id="scrip_cnt_grp_name">
+	<section id="counters.p.scrip_cnt_grp_name">
 		<title><varname>script_cnt_grp_name</varname></title>
 		<para>
 			Group name that will be used for the counters defined
