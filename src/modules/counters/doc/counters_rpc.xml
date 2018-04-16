@@ -12,7 +12,7 @@
 	</sectioninfo>
 	<title>RPC Commands</title>
 
-	<section id="cnt.r.get">
+	<section id="counters.rpc.cnt.get">
 		<title> <function>cnt.get</function></title>
 		<para>
 			Get the value of the counter identified by group.counter_name.
@@ -28,7 +28,7 @@
 		</example>
 	</section>
 
-	<section id="cnt.r.reset">
+	<section id="counters.rpc.cnt.reset">
 		<title> <function>cnt.reset</function></title>
 		<para>
 			Resets the counter identified by group.counter_name.
@@ -44,7 +44,7 @@
 		</example>
 	</section>
 
-	<section id="cnt.r.list_groups">
+	<section id="counters.rpc.cnt.list_groups">
 		<title> <function>cnt.list_groups</function></title>
 		<para>
 			Lists all the declared counter groups.
@@ -60,14 +60,14 @@
 		</example>
 	</section>
 
-	<section id="cnt.r.grps_list">
+	<section id="counters.rpc.cnt.grps_list">
 		<title> <function>cnt.grps_list</function></title>
 		<para>
 			Alias to cnt.list_groups.
 		</para>
 	</section>
 
-	<section id="cnt.r.list_vars">
+	<section id="counters.rpc.cnt.list_vars">
 		<title> <function>cnt.list_vars</function></title>
 		<para>
 			Lists all the names of all the counters belonging to the
@@ -84,14 +84,14 @@
 		</example>
 	</section>
 
-	<section id="cnt.r.var_list">
+	<section id="counters.rpc.cnt.var_list">
 		<title> <function>cnt.var_list</function></title>
 		<para>
 			Alias to cnt.list_vars.
 		</para>
 	</section>
 
-	<section id="cnt.r.get_vars">
+	<section id="counters.rpc.cnt.get_vars">
 		<title> <function>cnt.get_vars</function></title>
 		<para>
 			Lists all the counter names and their values in the
@@ -108,14 +108,14 @@
 		</example>
 	</section>
 
-	<section id="cnt.r.grp_get_all">
+	<section id="counters.rpc.cnt.grp_get_all">
 		<title> <function>cnt.grp_get_all</function></title>
 		<para>
 			Alias to cnt.get_vars.
 		</para>
 	</section>
 
-	<section id="cnt.r.help">
+	<section id="counters.rpc.cnt.help">
 		<title> <function>cnt.help</function></title>
 		<para>
 			Displays the counter description.
