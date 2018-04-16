@@ -426,6 +426,8 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 				srjson_DestroyDoc(&jdoc);
 			}
 			dlg->iflags = (unsigned int)VAL_INT(values+22);
+			if (dlg->state==DLG_STATE_CONFIRMED)
+				dlg_ka_add(dlg);
 
 			if (!dlg->bind_addr[DLG_CALLER_LEG] || !dlg->bind_addr[DLG_CALLEE_LEG]) {
 				/* non-local socket, probably not our dialog */
