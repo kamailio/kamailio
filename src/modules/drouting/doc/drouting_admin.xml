@@ -825,7 +825,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="drouting.p.db_url">
 		<title><varname>db_url</varname>(str)</title>
 		<para>
 		The database url.
@@ -844,7 +844,7 @@ modparam("drouting", "db_url",
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="drouting.p.drd_table">
 		<title><varname>drd_table</varname>(str)</title>
 		<para>
 		The name of the db table storing gateway addresses.
@@ -862,7 +862,7 @@ modparam("drouting", "drd_table", "dr_gateways")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="drouting.p.drr_table">
 		<title><varname>drr_table</varname>(str)</title>
 		<para>
 		The name of the db table storing routing rules.
@@ -881,7 +881,7 @@ modparam("drouting", "drr_table", "rules")
 		</example>
 	</section>
 
-	<section>
+	<section id="drouting.p.drg_table">
 		<title><varname>drg_table</varname>(str)</title>
 		<para>
 		The name of the db table storing groups.
@@ -900,7 +900,7 @@ modparam("drouting", "drg_table", "groups")
 		</example>
 	</section>
 
-	<section>
+	<section id="drouting.p.drl_table">
 		<title><varname>drl_table</varname>(str)</title>
 		<para>
 		The name of the db table storing definitions of destination lists (to
@@ -924,7 +924,7 @@ modparam("drouting", "drl_table", "my_gw_lists")
 	</section>
 
 	<section>
-		<title><varname>sort_order</varname> (int)</title>
+		<title id="drouting.p.sort_order"><varname>sort_order</varname> (int)</title>
 		<para>
 		Defines how the destination list should be processed (ordering of
 		the elements). Possible modes are
@@ -982,7 +982,7 @@ modparam("drouting", "sort_order", 2)
 		</example>
 	</section>
 
-<section>
+<section id="drouting.p.ruri_avp">
 		<title><varname>ruri_avp</varname> (str)</title>
 		<para>
 		The name of the avp for storing Request URIs to be later used
@@ -1003,7 +1003,7 @@ modparam("drouting", "ruri_avp", '$avp(i:33)')
 		</example>
 	</section>
 
-	<section>
+	<section id="drouting.p.attrs_avp">
 		<title><varname>attrs_avp</varname> (str)</title>
 		<para>
 		The name of the avp for storing the attribute of the current selected
@@ -1026,7 +1026,7 @@ modparam("drouting", "atrrs_avp", '$avp(i:67)')
 		</example>
 	</section>
 
-	<section>
+	<section id="drouting.p.use_domain">
 		<title><varname>use_domain</varname> (int)</title>
 		<para>
 			Flag to configure whether to use domain match when querying
@@ -1102,7 +1102,7 @@ modparam("drouting", "drg_grpid_col", "grpid")
 		</example>
 	</section>
 
-	<section>
+	<section id="drouting.p.fetch_rows">
 		<title><varname>fetch_rows</varname> (int)</title>
 		<para>
 		</para>
@@ -1122,7 +1122,7 @@ modparam("drouting", "fetch_rows", 1500)
 		</example>
 	</section>
 
-	<section>
+	<section id="drouting.p.force_dns">
 		<title><varname>force_dns</varname> (int)</title>
 		<para>
 		Force DNS resolving of GW/destination names (if not IPs) during
@@ -1143,7 +1143,7 @@ modparam("drouting", "force_dns", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="drouting.p.enable_keepalive">
 		<title><varname>enable_keepalive</varname> (int)</title>
 		<para>
 		Enable monitoring of GW/destinations using keepalive module.
@@ -1168,7 +1168,7 @@ modparam("drouting", "enable_keepalive", 1)
 
 <section>
 	<title>Functions</title>
-	<section>
+	<section id="drouting.f.do_routing">
 		<title>
 		<function moreinfo="none">do_routing([groupID])</function>
 		</title>
@@ -1199,7 +1199,7 @@ do_routing("$avp(i:10)");
 		</example>
 	</section>
 
-	<section>
+	<section id="drouting.f.next_routing">
 		<title>
 		<function moreinfo="none">next_routing()</function>
 		</title>
@@ -1233,7 +1233,7 @@ if (next_routing()) {
 		</example>
 	</section>
 
-	<section>
+	<section id="drouting.f.use_next_gw">
 		<title>
 		<function moreinfo="none">use_next_gw()</function>
 		</title>
@@ -1279,7 +1279,7 @@ if (goes_to_gw("1")) {
 		</example>
 	</section>
 
-	<section>
+	<section id="drouting.f.is_from_gw">
 		<title>
 		<function moreinfo="none">is_from_gw([ type, [flag] ])</function>
 		</title>
@@ -1324,7 +1324,7 @@ if (is_from_gw("3","1") {
 
 <section>
 	<title>RPC Commands</title>
-	<section>
+	<section id="drouting.rpc.reload">
 		<title>
 		<function moreinfo="none">drouting.reload</function>
 		</title>
