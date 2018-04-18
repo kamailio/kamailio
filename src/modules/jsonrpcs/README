@@ -167,13 +167,14 @@ Chapter 1. Admin Guide
 
 4.1. pretty_format (int)
 
-   Pretty format for JSON-RPC response document.
+   Pretty format for JSON-RPC response document if set to 1. To disable,
+   set to 0.
 
-   Default value is '0'.
+   Default value is '1' (on).
 
    Example 1.1. Set pretty_format parameter
 ...
-modparam("jsonrpcs", "pretty_format", 1)
+modparam("jsonrpcs", "pretty_format", 0)
 ...
 
 4.2. transport (int)
