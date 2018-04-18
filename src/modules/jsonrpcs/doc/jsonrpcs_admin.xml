@@ -86,18 +86,19 @@
 	<section id="jsonrpcs.p.pretty_format">
 		<title><varname>pretty_format</varname> (int)</title>
 		<para>
-			Pretty format for JSON-RPC response document.
+			Pretty format for JSON-RPC response document if set to 1. To
+			disable, set to 0.
 		</para>
 		<para>
 		<emphasis>
-			Default value is '0'.
+			Default value is '1' (on).
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>pretty_format</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpcs", "pretty_format", 1)
+modparam("jsonrpcs", "pretty_format", 0)
 ...
 </programlisting>
 		</example>

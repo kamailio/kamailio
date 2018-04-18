@@ -76,7 +76,7 @@ static str JSONRPC_CONTENT_TYPE_HTML = str_init("application/json");
 /*!< 0 - all available; 1 - http; 2 - fifo; 4 - datagram */
 static int jsonrpc_transport = 6; /* fifo + datagram */
 
-static int jsonrpc_pretty_format = 0;
+static int jsonrpc_pretty_format = 1;
 
 static int jsonrpc_register_rpc(void);
 
