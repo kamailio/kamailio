@@ -603,7 +603,34 @@ via_add_srv("1");
 </programlisting>
 		</example>
 		</section>
+		<section id="corex.f.via_add_xavp_params">
+		<title><function moreinfo="none">via_add_xavp_params(flags)</function></title>
+		<para>
+			Control if fields of the xavp with the name specified by
+			xavp_via_params global parameter are added or not to local Via.
 
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - add xavp parameters; 0 - do not
+				add xavp parameters.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_add_xavp_params</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_add_xavp_params("1");
+...
+</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>
