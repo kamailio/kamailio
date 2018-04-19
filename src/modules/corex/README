@@ -55,6 +55,7 @@ Muhammad Shahzad Shafi
               4.15. set_recv_socket(saddr)
               4.16. set_source_address(saddr)
               4.17. via_add_srvid(flags)
+              4.18. via_add_xavp_params(flags)
 
         5. RPC Commands
 
@@ -93,8 +94,9 @@ Muhammad Shahzad Shafi
    1.18. set_recv_socket usage
    1.19. set_source_address usage
    1.20. via_add_srvid usage
-   1.21. event_route[network:msg] use cases
-   1.22. Sample PERL code for do_compress and do_uncompress
+   1.21. via_add_xavp_params usage
+   1.22. event_route[network:msg] use cases
+   1.23. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -132,6 +134,7 @@ Chapter 1. Admin Guide
         4.15. set_recv_socket(saddr)
         4.16. set_source_address(saddr)
         4.17. via_add_srvid(flags)
+        4.18. via_add_xavp_params(flags)
 
    5. RPC Commands
 
@@ -268,6 +271,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
    4.15. set_recv_socket(saddr)
    4.16. set_source_address(saddr)
    4.17. via_add_srvid(flags)
+   4.18. via_add_xavp_params(flags)
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -525,6 +529,21 @@ set_source_address("udp:127.0.0.1:5080");
 via_add_srv("1");
 ...
 
+4.18. via_add_xavp_params(flags)
+
+   Control if fields of the xavp with the name specified by
+   xavp_via_params global parameter are added or not to local Via.
+
+   Meaning of the parameters is as follows:
+     * flags: 1 - add xavp parameters; 0 - do not add xavp parameters.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.21. via_add_xavp_params usage
+...
+via_add_xavp_params("1");
+...
+
 5. RPC Commands
 
    5.1. corex.debug
@@ -659,7 +678,7 @@ via_add_srv("1");
    Next is a basic usage example where encoding and decoding is done using
    PERL,
 
-   Example 1.21. event_route[network:msg] use cases
+   Example 1.22. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -690,7 +709,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.22. Sample PERL code for do_compress and do_uncompress
+   Example 1.23. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
