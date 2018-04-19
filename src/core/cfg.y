@@ -324,6 +324,7 @@ extern char *default_routename;
 %token LOGPREFIXMODE
 %token LOGENGINETYPE
 %token LOGENGINEDATA
+%token XAVPVIAPARAMS
 %token LISTEN
 %token ADVERTISE
 %token ALIAS
@@ -797,6 +798,10 @@ assign_stm:
 	| LOGENGINETYPE EQUAL error { yyerror("string value expected"); }
 	| LOGENGINEDATA EQUAL STRING { _km_log_engine_data=$3; }
 	| LOGENGINEDATA EQUAL error { yyerror("string value expected"); }
+	| XAVPVIAPARAMS EQUAL STRING { _ksr_xavp_via_params.s=$3;
+			_ksr_xavp_via_params.len=strlen($3);
+		}
+	| XAVPVIAPARAMS EQUAL error { yyerror("string value expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }

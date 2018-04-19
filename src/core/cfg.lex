@@ -293,6 +293,7 @@ LOGPREFIX	log_prefix
 LOGPREFIXMODE	log_prefix_mode
 LOGENGINETYPE	log_engine_type
 LOGENGINEDATA	log_engine_data
+XAVPVIAPARAMS	xavp_via_params
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
 ALIAS		alias
@@ -694,6 +695,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGPREFIXMODE}	{ yylval.strval=yytext; return LOGPREFIXMODE; }
 <INITIAL>{LOGENGINETYPE}	{ yylval.strval=yytext; return LOGENGINETYPE; }
 <INITIAL>{LOGENGINEDATA}	{ yylval.strval=yytext; return LOGENGINEDATA; }
+<INITIAL>{XAVPVIAPARAMS}	{ yylval.strval=yytext; return XAVPVIAPARAMS; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }

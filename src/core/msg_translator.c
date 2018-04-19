@@ -111,7 +111,7 @@
 extern char version[];
 extern int version_len;
 
-
+str _ksr_xavp_via_params = STR_NULL;
 
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
