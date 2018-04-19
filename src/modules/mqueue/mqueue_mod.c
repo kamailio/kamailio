@@ -294,13 +294,13 @@ static void  mqueue_rpc_get_size(rpc_t* rpc, void* ctx)
 	int			mqueue_sz = 0;
 
 	if (rpc->scan(ctx, "S", &mqueue_name) < 1) {
-		rpc->fault(ctx, 500, "No queue name");
+		rpc->fault(ctx, 400, "No queue name");
 		return;
 	}
 
 	if(mqueue_name.len <= 0 || mqueue_name.s == NULL) {
 		LM_ERR("bad mqueue name\n");
-		rpc->fault(ctx, 500, "Invalid queue name");
+		rpc->fault(ctx, 400, "Invalid queue name");
 		return;
 	}
 
@@ -308,7 +308,7 @@ static void  mqueue_rpc_get_size(rpc_t* rpc, void* ctx)
 
 	if(mqueue_sz < 0) {
 		LM_ERR("no such mqueue\n");
-		rpc->fault(ctx, 500, "No such queue");
+		rpc->fault(ctx, 404, "No such queue");
 		return;
 	}
 
