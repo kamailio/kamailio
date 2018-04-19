@@ -173,6 +173,9 @@ mq_head_t *mq_head_get(str *name)
 	mq_head_t *mh = NULL;
 
 	mh = _mq_head_list;
+	if (!name) {
+		return mh;
+	}
 	while(mh!=NULL)
 	{
 		if(name->len == mh->name.len

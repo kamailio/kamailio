@@ -327,6 +327,34 @@ static const char* mqueue_rpc_get_size_doc[2] = {
 	0
 };
 
+static void mqueue_rpc_get_sizes(rpc_t* rpc, void* ctx)
+{
+	mq_head_t* mh = mq_head_get(NULL);
+	void* vh;
+	int size;
+
+	while(mh!=NULL)
+	{
+		if (rpc->add(ctx, "{", &vh) < 0) {
+			rpc->fault(ctx, 500, "Server error");
+			return;
+		}
+		lock_get(&mh->lock);
+		size = mh->csize;
+		lock_release(&mh->lock);
+		rpc->struct_add(vh, "Sd",
+				"name", &mh->name,
+				"size", size
+		);
+		mh = mh->next;
+	}
+}
+
+static const char* mqueue_rpc_get_sizes_doc[2] = {
+	"Get sizes of all mqueues.",
+	0
+};
+
 static void  mqueue_rpc_fetch(rpc_t* rpc, void* ctx)
 {
 	str mqueue_name;
@@ -392,6 +420,7 @@ static const char* mqueue_rpc_fetch_doc[2] = {
 
 rpc_export_t mqueue_rpc[] = {
 	{"mqueue.get_size", mqueue_rpc_get_size, mqueue_rpc_get_size_doc, 0},
+	{"mqueue.get_sizes", mqueue_rpc_get_sizes, mqueue_rpc_get_sizes_doc, RET_ARRAY},
 	{"mqueue.fetch", mqueue_rpc_fetch, mqueue_rpc_fetch_doc, 0},
 	{0, 0, 0, 0}
 };

@@ -303,6 +303,24 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 </programlisting>
 	    </example>
 	</section>
+
+	<section id="mqueue.r.get_sizes">
+		<title>mqueue.get_sizes</title>
+		<para>
+			Get the size for all memory queues.
+		</para>
+		<para>
+			Parameters: none
+		</para>
+		<example>
+		<title><function>mqueue.get_sizes</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamcmd; mqueue.get_sizes
+...
+</programlisting>
+	    </example>
+	</section>
     </section>
 
 </chapter>
