@@ -68,6 +68,8 @@ typedef struct {
 	char default_handling;	/**< handling to apply on failure to contact the AS */
 	str service_info;		/**< additional service information */
 	int index;				/**< index of the matching IFC */
+	int include_register_request;	/**< additional flag from the HSS */
+	int include_register_response;	/**< additional flag from the HSS */
 } isc_match;
 
 

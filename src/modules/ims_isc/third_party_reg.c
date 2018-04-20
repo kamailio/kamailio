@@ -44,6 +44,7 @@
  */
 
 #include "third_party_reg.h"
+#include "../../core/msg_translator.h"
 
 usrloc_api_t isc_ulb;/*!< Structure containing pointers to usrloc functions*/
 
@@ -204,7 +205,7 @@ int build_p_associated_uri(ims_subscription* s) {
     return 0;
 }
 
-
+static str reg_resp_200OK = {"OK", 2};
 
 /**
  * Handle third party registration
@@ -286,7 +287,24 @@ no_pai:
 	r.pvni = pvni;
 	r.pani = pani;
 	r.cv = cv;
-	r.service_info = m->service_info;
+	if (m->service_info.s && m->service_info.len) {
+		r.body.content_type = CT_SERVICE_INFO;
+		r.body.content = m->service_info;
+	} else if (m->include_register_request) {
+		r.body.content_type = CT_REGISTER_REQ;
+                r.body.content.s = msg->first_line.u.request.method.s;
+		r.body.content.len = msg->len;
+	} else if (m->include_register_response) {
+		struct bookmark dummy_bm;
+		r.body.content_type = CT_REGISTER_RESP;
+                r.body.content.s = build_res_buf_from_sip_req(200, &reg_resp_200OK, 0, msg, (unsigned int*)&r.body.content.len, &dummy_bm);
+		if (!r.body.content.s) {
+			LM_DBG("response building failed for body of third party register request");
+			r.body.content_type = CT_NONE;
+		}
+	} else {
+		r.body.content_type = CT_NONE;
+	}
 	r.path = path;
 
 	if (expires <= 0)
@@ -323,6 +341,13 @@ static str comma = {",", 1};
 
 static str path_mine_s = {"<", 1};
 static str path_mine_e = {";lr>", 4};
+
+static str content_type_s = {"Content-Type: ", 14};
+static str content_type_e = {"\r\n", 2};
+
+static str ct_service_info = {"application/3gpp-ims+xml", 24};
+static str ct_register_req = {"message/sip", 11};
+static str ct_register_resp = {"message/sip", 11};
 
 static str body_s = {"<ims-3gpp version=\"1\"><service-info>", 36};
 static str body_e = {"</service-info></ims-3gpp>", 26};
@@ -370,6 +395,20 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
 		pauri.len = p_associated_uri.data_len;
 		h.len += pauri.len;
 	}
+
+    if (r->body.content_type == CT_SERVICE_INFO) {
+        h.len += content_type_s.len;
+        h.len += ct_service_info.len;
+        h.len += content_type_e.len;
+    } else if (r->body.content_type == CT_REGISTER_REQ) {
+        h.len += content_type_s.len;
+        h.len += ct_register_req.len;
+        h.len += content_type_e.len;
+    } else if (r->body.content_type == CT_REGISTER_RESP) {
+        h.len += content_type_s.len;
+        h.len += ct_register_resp.len;
+        h.len += content_type_e.len;
+    }
 
     h.s = pkg_malloc(h.len);
     if (!h.s) {
@@ -423,20 +462,53 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
     if (p_associated_uri.data_len > 0) {
 		STR_APPEND(h, pauri);
 	}
-    LM_DBG("SRV INFO:<%.*s>\n", r->service_info.len, r->service_info.s);
-    if (r->service_info.len) {
-	b.len = body_s.len + r->service_info.len + body_e.len;
-	b.s = pkg_malloc(b.len);
-	if (!b.s) {
-	    LM_ERR("r_send_third_party_reg: Error allocating %d bytes\n", b.len);
-	    b.len = 0;
-	    return 0;
+    LM_DBG("BODY TYPE(3rd PARTY REGISTER):<%d>\n", r->body.content_type);
+    if (r->body.content_type != CT_NONE) {
+	if (r->body.content_type == CT_SERVICE_INFO) {
+		LM_ERR("BODY (3rd PARTY REGISTER) \"SI\": <%.*s>\n", r->body.content.len, r->body.content.s);
+		b.len = body_s.len + r->body.content.len + body_e.len;
+		b.s = pkg_malloc(b.len);
+		if (!b.s) {
+		    LM_ERR("r_send_third_party_reg: Error allocating %d bytes\n", b.len);
+		    b.len = 0;
+		    goto error;
+		}
+		b.len = 0;
+		STR_APPEND(b, body_s);
+		STR_APPEND(b, r->body.content);
+		STR_APPEND(b, body_e);
+		STR_APPEND(h, content_type_s);
+		STR_APPEND(h, ct_service_info);
+		STR_APPEND(h, content_type_e);
+	} else if (r->body.content_type == CT_REGISTER_REQ) {
+		LM_ERR("BODY (3rd PARTY REGISTER) \"REQ\": <%.*s>\n", r->body.content.len, r->body.content.s);
+		b.len = r->body.content.len;
+		b.s = pkg_malloc(b.len);
+		if (!b.s) {
+                    LM_ERR("r_send_third_party_reg: Error allocating %d bytes\n", b.len);
+                    b.len = 0;
+                    goto error;
+                }
+		b.len = 0;
+		STR_APPEND(b, r->body.content);
+		STR_APPEND(h, content_type_s);
+                STR_APPEND(h, ct_register_req);
+                STR_APPEND(h, content_type_e);
+	} else if (r->body.content_type == CT_REGISTER_RESP) {
+		LM_ERR("BODY (3rd PARTY REGISTER) \"RESP\": <%.*s>\n", r->body.content.len, r->body.content.s);
+		b.len = r->body.content.len;
+                b.s = pkg_malloc(b.len);
+                if (!b.s) {
+                    LM_ERR("r_send_third_party_reg: Error allocating %d bytes\n", b.len);
+                    b.len = 0;
+                    goto error;
+                }
+                b.len = 0;
+                STR_APPEND(b, r->body.content);
+                STR_APPEND(h, content_type_s);
+                STR_APPEND(h, ct_register_resp);
+                STR_APPEND(h, content_type_e);
 	}
-
-	b.len = 0;
-	STR_APPEND(b, body_s);
-	STR_APPEND(b, r->service_info);
-	STR_APPEND(b, body_e);
     }
 
     set_uac_req(&req, &method, &h, &b, 0,
@@ -450,6 +522,8 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
 	pkg_free(h.s);
     if (b.s)
 	pkg_free(b.s);
+    if (r->body.content_type == CT_REGISTER_RESP)
+	pkg_free(r->body.content.s);
     return 1;
 
 error:
@@ -457,6 +531,8 @@ error:
 	pkg_free(h.s);
     if (b.s)
 	pkg_free(b.s);
+    if (r->body.content_type == CT_REGISTER_RESP)
+        pkg_free(r->body.content.s);
     return 0;
 }
 
