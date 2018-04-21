@@ -103,6 +103,8 @@
 #include "parser/parse_param.h"
 #include "forward.h"
 #include "str_list.h"
+#include "pvapi.h"
+#include "xavp.h"
 #include "rand/kam_rand.h"
 
 #define append_str_trans(_dest,_src,_len,_msg) \
@@ -2849,6 +2851,7 @@ char* create_via_hf( unsigned int *len,
 	struct hostport hp;
 	char sbuf[24];
 	int slen;
+	str xparams;
 #if defined USE_TCP || defined USE_SCTP
 	char* id_buf;
 	unsigned int id_len;
@@ -2927,6 +2930,29 @@ char* create_via_hf( unsigned int *len,
 			memcpy(via + extra_params.len, sbuf, slen);
 			extra_params.s = via;
 			extra_params.len += slen;
+			extra_params.s[extra_params.len] = '\0';
+		}
+	}
+
+	/* test and add xavp params */
+	if(msg && (msg->msg_flags&FL_ADD_XAVP_VIA) && _ksr_xavp_via_params.len>0) {
+		xparams.s = pv_get_buffer();
+		xparams.len = xavp_serialize_fields(&_ksr_xavp_via_params,
+							xparams.s, pv_get_buffer_size());
+		if(xparams.len>0) {
+			via = (char*)pkg_malloc(extra_params.len+xparams.len+1);
+			if(via==0) {
+				LM_ERR("building xavps params failed\n");
+				if (extra_params.s) pkg_free(extra_params.s);
+				return 0;
+			}
+			if(extra_params.len != 0) {
+				memcpy(via, extra_params.s, extra_params.len);
+				pkg_free(extra_params.s);
+			}
+			memcpy(via + extra_params.len, xparams.s, xparams.len);
+			extra_params.s = via;
+			extra_params.len += xparams.len;
 			extra_params.s[extra_params.len] = '\0';
 		}
 	}
