@@ -687,8 +687,8 @@ modparam("p_usrloc", "db_mode", 2)
    databases. For that, if the table was not created by the installation
    script or you choose to install everything by yourself you can use the
    p_usrloc-create.sql SQL script in the database directories in the
-   openser/scripts folder as template. Database and table name can be set
-   with module parameters so they can be changed, but the name of the
+   utils/kamctl/mysql/ folder as template. Database and table name can be
+   set with module parameters so they can be changed, but the name of the
    columns must be as they are in the SQL script. You can also find the
    complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.

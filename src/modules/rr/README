@@ -166,8 +166,8 @@ Chapter 1. Admin Guide
    3261 (see 12.1.1 UAS behavior).
 
    For this purpose, the modules offers the following functions:
-     * add_rr_param() - see Section 5.6, “add_rr_param(param)”
-     * check_route_param() - see Section 5.7, “check_route_param(re)”
+     * add_rr_param() - see ???
+     * check_route_param() - see ???
 
    Example 1.1. Dialog support in RR module
 ...
@@ -478,9 +478,8 @@ record_route_advertised_address("1.2.3.4:5080");
 
    Adds a parameter to the Record-Route URI (param must be in
    “;name=value” format. The function may be called also before or after
-   the record_route() or record_route_advertised_address() calls (see
-   Section 5.2, “record_route() and record_route(string)” or Section 5.5,
-   “record_route_advertised_address(address)”)).
+   the record_route() or record_route_advertised_address() calls (see ???
+   or ???)).
 
    Meaning of the parameters is as follows:
      * param - String containing the URI parameter to be added. It must
@@ -498,8 +497,7 @@ add_rr_param(";nat=yes");
 
    The function checks if the URI parameters of the local Route header
    (corresponding to the local server) matches the given regular
-   expression. It must be call after loose_route() (see Section 5.1,
-   “loose_route()”).
+   expression. It must be call after loose_route() (see ???).
 
    Meaning of the parameters is as follows:
      * re - regular expression to check against the Route URI parameters.
@@ -517,9 +515,8 @@ if (check_route_param("nat=yes")) {
 
    The function checks the flow direction of in-dialog requests. This
    function uses the “ftag” prameter from the Route header, therefore the
-   append_fromtag (see Section 4.2, “append_fromtag (integer)” module
-   parameter must be enabled. Also this must be called only after
-   loose_route() (see Section 5.1, “loose_route()”).
+   append_fromtag (see ??? module parameter must be enabled. Also this
+   must be called only after loose_route() (see ???).
 
    The function returns true if the “dir” is the same with the request's
    flow direction.
@@ -661,9 +658,8 @@ record_route_advertised_address("1.2.3.4:5090");
 
    The function checks the flow direction of the request “msg”. As for
    checking it's used the “ftag” Route header parameter, the
-   append_fromtag (see Section 4.2, “append_fromtag (integer)” module
-   parameter must be enables. Also this must be call only after the
-   loose_route is done.
+   append_fromtag (see ??? module parameter must be enables. Also this
+   must be call only after the loose_route is done.
 
    The function returns 0 if the “dir” is the same with the request's flow
    direction. Otherwise, -1 is returned.
