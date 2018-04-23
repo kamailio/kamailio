@@ -33,6 +33,7 @@
 #include "../../core/tcp_conn.h"
 #include "../../core/pvapi.h"
 #include "../../core/trim.h"
+#include "../../core/msg_translator.h"
 
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_uri.h"
@@ -516,6 +517,45 @@ int pv_get_msg_buf(struct sip_msg *msg, pv_param_t *param,
 	s.s = msg->buf;
 	s.len = msg->len;
 	return pv_get_strval(msg, param, res, &s);
+}
+
+
+static str _ksr_pv_msg_buf_updated = STR_NULL;
+int pv_get_msg_buf_updated(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	dest_info_t send_info;
+
+	if(msg==NULL)
+		return -1;
+
+	if(_ksr_pv_msg_buf_updated.s!=NULL) {
+		pkg_free(_ksr_pv_msg_buf_updated.s);
+		_ksr_pv_msg_buf_updated.s = NULL;
+		_ksr_pv_msg_buf_updated.len = 0;
+	}
+
+	init_dest_info(&send_info);
+	send_info.proto = PROTO_UDP;
+	if(msg->first_line.type == SIP_REPLY) {
+		_ksr_pv_msg_buf_updated.s = generate_res_buf_from_sip_res(msg,
+				(unsigned int*)&_ksr_pv_msg_buf_updated.len,
+				BUILD_NO_VIA1_UPDATE);
+	} else if(msg->first_line.type == SIP_REQUEST) {
+		_ksr_pv_msg_buf_updated.s = build_req_buf_from_sip_req(msg,
+				(unsigned int*)&_ksr_pv_msg_buf_updated.len,
+				&send_info,
+				BUILD_NO_PATH|BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
+	} else {
+		return pv_get_null(msg, param, res);
+	}
+
+	if(_ksr_pv_msg_buf_updated.s == NULL) {
+		LM_ERR("couldn't update msg buffer content\n");
+		_ksr_pv_msg_buf_updated.len = 0;
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &_ksr_pv_msg_buf_updated);
 }
 
 int pv_get_msg_len(struct sip_msg *msg, pv_param_t *param,

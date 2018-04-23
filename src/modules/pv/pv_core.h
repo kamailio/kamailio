@@ -94,6 +94,9 @@ int pv_get_cseq_body(struct sip_msg *msg, pv_param_t *param,
 int pv_get_msg_buf(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_msg_buf_updated(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_msg_len(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 

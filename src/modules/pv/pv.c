@@ -263,6 +263,9 @@ static pv_export_t mod_pvs[] = {
 	{{"mb", (sizeof("mb")-1)}, /* */
 		PVT_OTHER, pv_get_msg_buf, 0,
 		0, 0, 0, 0},
+	{{"mbu", (sizeof("mbu")-1)}, /* */
+		PVT_OTHER, pv_get_msg_buf_updated, 0,
+		0, 0, 0, 0},
 	{{"mf", (sizeof("mf")-1)}, /* */
 		PVT_OTHER, pv_get_flags, pv_set_mflags,
 		0, 0, 0, 0},
