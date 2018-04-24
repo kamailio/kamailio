@@ -2,6 +2,18 @@
 
 ===================== Changes Since Version 5.1.2 ===========================
 
+commit 5f5f7fd506bbde1ac159cbebf133e499dc06427a (HEAD -> 5.1)
+Author: lyokha <alexey.radkov@gmail.com>
+Date:   Tue Apr 24 14:46:32 2018 +0200
+
+    textops: reinitialize new tr_param_t object for tr_txt_parse_re()
+
+    - avoid segfault when running fparam_free_restore() on
+      such an object immediately after creation, because its field "next"
+      contains garbage
+
+    (cherry picked from commit 38b8fbdf940b273cf541678fd22af7dd4d63ab3d)
+
 commit f300f27140ba7fc313850fb2d70a9fbfc3064801
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Tue Apr 24 12:41:48 2018 +0200
