@@ -1361,7 +1361,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
 	create_cca_fui_avps(fui_action, redirecturi);
 	
 	/* check result code at mscc level */
-	if (ro_cca_data->mscc->resultcode != 2001) {
+	if (ro_cca_data->mscc->resultcode && ro_cca_data->mscc->resultcode != 2001) {
 		LM_DBG("CCA failure at MSCC level with resultcode [%d]\n", ro_cca_data->mscc->resultcode);
 		error_code = RO_RETURN_FALSE;
         goto error1;
