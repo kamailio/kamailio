@@ -215,6 +215,7 @@ char* tr_txt_parse_re(str *in, trans_t *t)
 				LM_ERR("no more private memory!\n");
 				goto error;
 			}
+			memset(tp, 0, sizeof(tr_param_t));
 
 			se=subst_parser(&tok);
 
