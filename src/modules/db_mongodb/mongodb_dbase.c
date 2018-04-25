@@ -630,7 +630,13 @@ static int db_mongodb_convert_bson(const db1_con_t* _h, db1_res_t* _r,
 				break;
 
 			case BSON_TYPE_UTF8:
-				VAL_STRING(dval) = (char*)bson_iter_utf8 (piter, &i32tmp);
+				{
+					char* rstring = (char*)bson_iter_utf8 (piter, &i32tmp);
+					if(db_str2val(DB1_STRING, dval, rstring, i32tmp, 1)<0) {
+						LM_ERR("failed to convert utf8 value\n");
+						return -5;
+					}
+				}
 				break;
 
 			case BSON_TYPE_OID:
