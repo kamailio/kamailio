@@ -85,6 +85,8 @@ static void *CRYPTO_zalloc(size_t num, const char *file, int line)
 	return ret;
 }
 # define OPENSSL_zalloc(num) CRYPTO_zalloc(num, __FILE__, __LINE__)
+
+#if LIBRESSL_VERSION_NUMBER < 0x20700000L
 static void *BIO_get_data(BIO *b)
 {
 	return b->ptr;
@@ -97,6 +99,8 @@ static void BIO_set_init(BIO *b, int init)
 {
 	b->init = init;
 }
+#endif
+
 #else
 static BIO_METHOD *tls_mbuf_method = NULL;
 #endif
