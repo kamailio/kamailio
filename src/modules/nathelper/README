@@ -204,7 +204,7 @@ Chapter 1. Admin Guide
             from outside to inside); As many NATs do update the bind
             timeout only on outbound traffic, the bind may expire and
             closed.
-     * SIP request - a stateless SIP request is sent to the contact
+     * SIP request - a stateless SIP request is sent to the UDP contact
        address.
           + Advantages: bidirectional traffic through NAT, since each PING
             request from Kamailio (inbound traffic) will force the SIP

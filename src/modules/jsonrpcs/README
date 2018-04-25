@@ -397,6 +397,7 @@ event_route[xhttp:request] {
    Example 1.15. jsonrpc_exec usage
 ...
 jsonrpc_exec('{"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
+xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
 ...
 
 6. JSONRPC Commands
