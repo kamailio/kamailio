@@ -631,9 +631,11 @@ static int db_mongodb_convert_bson(const db1_con_t* _h, db1_res_t* _r,
                   (uint32_t*)&VAL_BLOB(dval).len, (const uint8_t**)&VAL_BLOB(dval).s);
 				break;
 
-			case BSON_TYPE_UTF8:
-				VAL_STRING(dval) = (char*)bson_iter_utf8 (piter, &i32tmp);
+			case BSON_TYPE_UTF8: {
+				char* rstring = (char*)bson_iter_utf8 (piter, &i32tmp);
+				db_str2val(DB1_STRING, dval, rstring, i32tmp, 1);
 				break;
+			}
 
 			case BSON_TYPE_OID:
 				break;
