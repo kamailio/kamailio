@@ -626,13 +626,12 @@ error:
  * returns 1 if everything was OK or -1 for error
  */
 static int _reply( struct cell *trans, struct sip_msg* p_msg,
-	unsigned int code, char * text, int lock )
+	unsigned int code, str *reason, int lock )
 {
 	unsigned int len;
 	char * buf, *dset;
 	struct bookmark bm;
 	int dset_len;
-	str reason;
 
 	if (code>=200) set_kr(REQ_RPLD);
 	/* compute the buffer in private memory prior to entering lock;
@@ -646,18 +645,16 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 		}
 	}
 
-	reason.s = text;
-	reason.len = strlen(text);
 	if (code>=180 && p_msg->to
 				&& (get_to(p_msg)->tag_value.s==0
 					|| get_to(p_msg)->tag_value.len==0)) {
 		calc_crc_suffix( p_msg, tm_tag_suffix );
-		buf = build_res_buf_from_sip_req(code, &reason, &tm_tag, p_msg,
+		buf = build_res_buf_from_sip_req(code, reason, &tm_tag, p_msg,
 				&len, &bm);
 		return _reply_light( trans, buf, len, code,
 			tm_tag.s, TOTAG_VALUE_LEN, lock, &bm);
 	} else {
-		buf = build_res_buf_from_sip_req(code, &reason, 0 /*no to-tag*/,
+		buf = build_res_buf_from_sip_req(code, reason, 0 /*no to-tag*/,
 			p_msg, &len, &bm);
 		return _reply_light(trans,buf,len,code,
 			0, 0, /* no to-tag */lock, &bm);
@@ -1600,16 +1597,36 @@ error:
 int t_reply( struct cell *t, struct sip_msg* p_msg, unsigned int code,
 	char * text )
 {
-	return _reply( t, p_msg, code, text, 1 /* lock replies */ );
+	str reason;
+
+	reason.s = text;
+	reason.len = strlen(text);
+
+	return _reply( t, p_msg, code, &reason, 1 /* lock replies */ );
+}
+
+int t_reply_str( struct cell *t, struct sip_msg* p_msg, unsigned int code,
+	str* reason)
+{
+	return _reply( t, p_msg, code, reason, 1 /* lock replies */ );
 }
 
 int t_reply_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code,
 	char * text )
 {
-	return _reply( t, p_msg, code, text, 0 /* don't lock replies */ );
+	str reason;
+
+	reason.s = text;
+	reason.len = strlen(text);
+
+	return _reply( t, p_msg, code, &reason, 0 /* don't lock replies */ );
 }
 
-
+int t_reply_str_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code,
+	str* reason)
+{
+	return _reply( t, p_msg, code, reason, 0 /* don't lock replies */ );
+}
 
 void set_final_timer( struct cell *t )
 {

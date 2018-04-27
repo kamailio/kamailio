@@ -1311,13 +1311,10 @@ static int w_t_forward_nonack_to( struct sip_msg  *p_msg ,
 	return r;
 }
 
-
-static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
+static int t_reply_helper(sip_msg_t* msg, int code, str* reason)
 {
-	struct cell *t;
-	int code, ret = -1;
-	str reason;
-	char* r;
+	tm_cell_t *t = NULL;
+	int ret = -1;
 
 	if (msg->REQ_METHOD==METHOD_ACK) {
 		LM_DBG("ACKs are not replied\n");
@@ -1330,18 +1327,6 @@ static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 				" for which no T-state has been established\n");
 		return -1;
 	}
-
-	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
-		code = cfg_get(tm, tm_cfg, default_code);
-	}
-
-	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
-		r = cfg_get(tm, tm_cfg, default_reason);
-	} else {
-		r = as_asciiz(&reason);
-		if (r == NULL) r = cfg_get(tm, tm_cfg, default_reason);
-	}
-
 	/* if called from reply_route, make sure that unsafe version
 	 * is called; we are already in a mutex and another mutex in
 	 * the safe version would lead to a deadlock
@@ -1350,15 +1335,15 @@ static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 	t->flags |= T_ADMIN_REPLY;
 	if (is_route_type(FAILURE_ROUTE)) {
 		LM_DBG("t_reply_unsafe called from w_t_reply\n");
-		ret = t_reply_unsafe(t, msg, code, r);
+		ret = t_reply_str_unsafe(t, msg, code, reason);
 	} else if (is_route_type(REQUEST_ROUTE)) {
-		ret = t_reply( t, msg, code, r);
+		ret = t_reply_str( t, msg, code, reason);
 	} else if (is_route_type(ONREPLY_ROUTE)) {
 		if (likely(t->uas.request)){
 			if (is_route_type(CORE_ONREPLY_ROUTE))
-				ret=t_reply(t, t->uas.request, code, r);
+				ret=t_reply_str(t, t->uas.request, code, reason);
 			else
-				ret=t_reply_unsafe(t, t->uas.request, code, r);
+				ret=t_reply_str_unsafe(t, t->uas.request, code, reason);
 		}else
 			ret=-1;
 		/* t_check() above has the side effect of setting T and
@@ -1375,8 +1360,29 @@ static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 		ret = -1;
 	}
 
-	if (r && (r != cfg_get(tm, tm_cfg, default_reason))) pkg_free(r);
 	return ret;
+}
+
+static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
+{
+	int code, ret = -1;
+	str reason;
+
+	if (msg->REQ_METHOD==METHOD_ACK) {
+		LM_DBG("ACKs are not replied\n");
+		return -1;
+	}
+
+	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+		code = cfg_get(tm, tm_cfg, default_code);
+	}
+
+	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+		reason.s = cfg_get(tm, tm_cfg, default_reason);
+		reason.len = strlen(reason.s);
+	}
+
+	return t_reply_helper(msg, code, &reason);
 }
 
 
