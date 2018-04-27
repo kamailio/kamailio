@@ -1311,7 +1311,10 @@ static int w_t_forward_nonack_to( struct sip_msg  *p_msg ,
 	return r;
 }
 
-static int t_reply_helper(sip_msg_t* msg, int code, str* reason)
+/**
+ *
+ */
+static int ki_t_reply(sip_msg_t* msg, int code, str* reason)
 {
 	tm_cell_t *t = NULL;
 	int ret = -1;
@@ -1320,6 +1323,7 @@ static int t_reply_helper(sip_msg_t* msg, int code, str* reason)
 		LM_DBG("ACKs are not replied\n");
 		return -1;
 	}
+
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
 	if (!t) {
@@ -1327,23 +1331,24 @@ static int t_reply_helper(sip_msg_t* msg, int code, str* reason)
 				" for which no T-state has been established\n");
 		return -1;
 	}
+
 	/* if called from reply_route, make sure that unsafe version
 	 * is called; we are already in a mutex and another mutex in
 	 * the safe version would lead to a deadlock
 	 */
-
 	t->flags |= T_ADMIN_REPLY;
 	if (is_route_type(FAILURE_ROUTE)) {
 		LM_DBG("t_reply_unsafe called from w_t_reply\n");
-		ret = t_reply_str_unsafe(t, msg, code, reason);
+		ret = t_reply_str_unsafe(t, msg, (unsigned int)code, reason);
 	} else if (is_route_type(REQUEST_ROUTE)) {
-		ret = t_reply_str( t, msg, code, reason);
+		ret = t_reply_str( t, msg, (unsigned int)code, reason);
 	} else if (is_route_type(ONREPLY_ROUTE)) {
 		if (likely(t->uas.request)){
 			if (is_route_type(CORE_ONREPLY_ROUTE))
-				ret=t_reply_str(t, t->uas.request, code, reason);
+				ret=t_reply_str(t, t->uas.request, (unsigned int)code, reason);
 			else
-				ret=t_reply_str_unsafe(t, t->uas.request, code, reason);
+				ret=t_reply_str_unsafe(t, t->uas.request, (unsigned int)code,
+							reason);
 		}else
 			ret=-1;
 		/* t_check() above has the side effect of setting T and
@@ -1382,9 +1387,8 @@ static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 		reason.len = strlen(reason.s);
 	}
 
-	return t_reply_helper(msg, code, &reason);
+	return ki_t_reply(msg, code, &reason);
 }
-
 
 static int t_release(sip_msg_t* msg)
 {
@@ -2254,24 +2258,6 @@ static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
 	return ki_t_save_lumps(msg);
 }
 
-/* wrapper function needed after changes in w_t_reply */
-int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt)
-{
-	fparam_t c;
-	fparam_t r;
-
-	c.type = FPARAM_INT;
-	c.orig = NULL; /* ? */
-	c.v.i = code;
-
-	r.type = FPARAM_STRING;
-	r.orig = NULL; /* ? */
-	r.v.asciiz = txt;
-
-	return w_t_reply(m, (char *)&c, (char*)&r);
-}
-
-
 
 /** script function, check if a msg is assoc. to a transaction.
  * @return -1 (not), 1 (reply, e2e ack or cancel for an existing transaction),
@@ -2738,14 +2724,6 @@ static int ki_t_on_reply(sip_msg_t *msg, str *rname)
 static int ki_t_relay(sip_msg_t *msg)
 {
 	return _w_t_relay_to(msg, (struct proxy_l *)0, PROTO_NONE);
-}
-
-/**
- *
- */
-static int ki_t_reply(sip_msg_t *msg, int code, str *reason)
-{
-	return w_t_reply_wrp(msg, (unsigned int)code, reason->s);
 }
 
 /**
