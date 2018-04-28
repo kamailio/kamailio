@@ -111,6 +111,7 @@ static int child_init(int rank);
 static int w_t_check(struct sip_msg* msg, char* str, char* str2);
 static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2);
 static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
+static int w_t_send_reply(struct sip_msg* msg, char* p1, char* p2);
 static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo, char* bar );
 static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
@@ -241,7 +242,9 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE},
 	{"t_lookup_cancel",    w_t_lookup_cancel,       1, fixup_int_1,
 		REQUEST_ROUTE},
-	{"t_reply",              w_t_reply,               2, fixup_t_reply,
+	{"t_reply",              w_t_reply,             2, fixup_t_reply,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"t_send_reply",         w_t_send_reply,        2, fixup_t_reply,
 		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0,
 		REQUEST_ROUTE},
@@ -1390,6 +1393,49 @@ static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 	return ki_t_reply(msg, code, &reason);
 }
 
+/**
+ *
+ */
+static int ki_t_send_reply(sip_msg_t* msg, int code, str* reason)
+{
+	int ret;
+
+	ret = t_newtran(msg);
+	if (ret==0) {
+		LM_NOTICE("transaction already in process %p\n", get_t());
+	}
+
+	return ki_t_reply(msg, code, reason);
+}
+
+/**
+ *
+ */
+static int w_t_send_reply(struct sip_msg* msg, char* p1, char* p2)
+{
+	int code;
+	str reason;
+
+	if (msg->REQ_METHOD==METHOD_ACK) {
+		LM_DBG("ACKs are not replied\n");
+		return -1;
+	}
+
+	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+		code = cfg_get(tm, tm_cfg, default_code);
+	}
+
+	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+		reason.s = cfg_get(tm, tm_cfg, default_reason);
+		reason.len = strlen(reason.s);
+	}
+
+	return ki_t_send_reply(msg, code, &reason);
+}
+
+/**
+ *
+ */
 static int t_release(sip_msg_t* msg)
 {
 	struct cell *t;
@@ -2757,6 +2803,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 	},
 	{ str_init("tm"), str_init("t_reply"),
 		SR_KEMIP_INT, ki_t_reply,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_send_reply"),
+		SR_KEMIP_INT, ki_t_send_reply,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
