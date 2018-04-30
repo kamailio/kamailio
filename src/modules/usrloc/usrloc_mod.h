@@ -111,7 +111,7 @@ extern unsigned int ul_db_srvid;
 #define CONTACT_PATH         (2)
 #define CONTACT_CALLID_ONLY  (3)
 
-extern int matching_mode;
+extern int ul_matching_mode;
 
 extern int ul_db_ops_ruid;
 

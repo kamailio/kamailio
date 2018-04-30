@@ -42,7 +42,7 @@
 #include "usrloc.h"
 
 /*! contact matching mode */
-int matching_mode = CONTACT_ONLY;
+int ul_matching_mode = CONTACT_ONLY;
 /*! retransmission detection interval in seconds */
 int cseq_delay = 20;
 
@@ -772,7 +772,7 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 	no_callid = 0;
 	*_co = 0;
 
-	switch (matching_mode) {
+	switch (ul_matching_mode) {
 		case CONTACT_ONLY:
 			ptr = contact_match( _r->contacts, _c);
 			break;
@@ -787,7 +787,7 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 			ptr = contact_match_callidonly( _r->contacts, _callid);
 			break;
 		default:
-			LM_CRIT("unknown matching_mode %d\n", matching_mode);
+			LM_CRIT("unknown matching_mode %d\n", ul_matching_mode);
 			return -1;
 	}
 

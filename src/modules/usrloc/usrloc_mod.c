@@ -220,7 +220,7 @@ static param_export_t params[] = {
 	{"connection_id_column",PARAM_STR, &con_id_col    },
 	{"keepalive_column",    PARAM_STR, &keepalive_col },
 	{"partition_column",    PARAM_STR, &partition_col },
-	{"matching_mode",       INT_PARAM, &matching_mode   },
+	{"matching_mode",       INT_PARAM, &ul_matching_mode },
 	{"cseq_delay",          INT_PARAM, &cseq_delay      },
 	{"fetch_rows",          INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",           INT_PARAM, &ul_hash_size    },
@@ -308,14 +308,14 @@ static int mod_init(void)
 		ul_hash_size = 1<<ul_hash_size;
 
 	/* check matching mode */
-	switch (matching_mode) {
+	switch (ul_matching_mode) {
 		case CONTACT_ONLY:
 		case CONTACT_CALLID:
 		case CONTACT_PATH:
 		case CONTACT_CALLID_ONLY:
 			break;
 		default:
-			LM_ERR("invalid matching mode %d\n", matching_mode);
+			LM_ERR("invalid matching mode %d\n", ul_matching_mode);
 	}
 
 	/* Register cache timer */
