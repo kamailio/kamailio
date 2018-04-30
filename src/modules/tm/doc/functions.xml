@@ -362,7 +362,7 @@ t_reply("404", "Not found");
 
     <section id="tm.f.t_send_reply">
 	<title>
-	    <function>t_semd_reply(code, reason)</function>
+	    <function>t_send_reply(code, reason)</function>
 	</title>
 	<para>
 	    Creates the transaction if it does not exist (executing internally
