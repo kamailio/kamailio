@@ -88,7 +88,7 @@ Daniel-Constantin Mierla
               4.9. t_on_branch(branch_route)
               4.10. t_newtran()
               4.11. t_reply(code, reason_phrase)
-              4.12. t_semd_reply(code, reason)
+              4.12. t_send_reply(code, reason)
               4.13. t_lookup_request()
               4.14. t_retransmit_reply()
               4.15. t_release()
@@ -332,7 +332,7 @@ Chapter 1. Admin Guide
         4.9. t_on_branch(branch_route)
         4.10. t_newtran()
         4.11. t_reply(code, reason_phrase)
-        4.12. t_semd_reply(code, reason)
+        4.12. t_send_reply(code, reason)
         4.13. t_lookup_request()
         4.14. t_retransmit_reply()
         4.15. t_release()
@@ -1639,7 +1639,7 @@ end
    4.9. t_on_branch(branch_route)
    4.10. t_newtran()
    4.11. t_reply(code, reason_phrase)
-   4.12. t_semd_reply(code, reason)
+   4.12. t_send_reply(code, reason)
    4.13. t_lookup_request()
    4.14. t_retransmit_reply()
    4.15. t_release()
@@ -1913,7 +1913,7 @@ if (t_newtran()) {
 t_reply("404", "Not found");
 ...
 
-4.12.  t_semd_reply(code, reason)
+4.12.  t_send_reply(code, reason)
 
    Creates the transaction if it does not exist (executing internally
    t_newtran()) and sends a stateful reply (executing internally
