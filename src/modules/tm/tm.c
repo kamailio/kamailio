@@ -1393,6 +1393,17 @@ static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 	return ki_t_reply(msg, code, &reason);
 }
 
+/* wrapper for inter-module api */
+int w_t_reply_wrp(struct sip_msg *msg, unsigned int code, char *txt)
+{
+	str reason;
+
+	reason.s = txt;
+	reason.len = strlen(reason.s);
+
+	return ki_t_reply(msg, code, &reason);
+}
+
 /**
  *
  */
