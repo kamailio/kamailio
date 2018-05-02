@@ -132,7 +132,6 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	/* where fields */
 	keys1[0] = &expires_col;
 	ops1[0] = OP_GT;
-	vals1[0].type = DB1_STR;
 	vals1[0].nul = 0;
 	UL_DB_EXPIRES_SET(&vals1[0], time(0));
 
