@@ -67,6 +67,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/digest/digest.h"
 #include "../../core/parser/parse_ppi_pai.h"
+#include "../../core/forward.h"
 #include "../../core/pvar.h"
 #include "../../core/str.h"
 #include "../../core/onsend.h"
@@ -157,6 +158,8 @@ static int w_report_capture2(sip_msg_t *_m, char *_table, char *_corr);
 static int w_report_capture3(sip_msg_t *_m, char *_table, char *_corr,
 		char *_data);
 static int w_float2int(sip_msg_t *_m, char *_val, char *_coof);
+
+static int w_sip_capture_forward(sip_msg_t *_m, char *_dst, char *_p2);
 
 static int sipcapture_parse_aleg_callid_headers();
 int parse_aleg_callid_headers(str *headers_str, str *headers);
@@ -310,6 +313,8 @@ static cmd_export_t cmds[] = {
 		reportcapture_fixup, 0, ANY_ROUTE},
 	{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0,
 		ANY_ROUTE},
+	{"sip_capture_forward", (cmd_function)w_sip_capture_forward, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}};
 
 
@@ -2895,10 +2900,9 @@ static int nosip_hep_msg(sr_event_param_t *evp)
 	int rtb;
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("sipcapture:request");
+	struct hep_hdr *heph;
 
 	msg = (sip_msg_t *)evp->data;
-
-	struct hep_hdr *heph;
 
 	buf = msg->buf;
 	len = msg->len;
@@ -3100,6 +3104,98 @@ static int pv_get_hep(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 /**
  *
  */
+static int ki_sip_capture_forward(sip_msg_t *msg, str *puri)
+{
+	dest_info_t dst;
+	sip_uri_t next_hop;
+	str pdata;
+	int ret = 0;
+	char proto;
+
+	if(parse_uri(puri->s, puri->len, &next_hop)<0) {
+		LM_ERR("bad dst sip uri <%.*s>\n", puri->len, puri->s);
+		return -1;
+	}
+
+	init_dest_info(&dst);
+	LM_DBG("sending data to sip uri <%.*s>\n", puri->len, puri->s);
+	proto = next_hop.proto;
+	if(sip_hostport2su(&dst.to, &next_hop.host, next_hop.port_no,
+				&proto)!=0) {
+		LM_ERR("failed to resolve [%.*s]\n", next_hop.host.len,
+			ZSW(next_hop.host.s));
+		return -1;
+	}
+	dst.proto = proto;
+	if(dst.proto==PROTO_NONE) dst.proto = PROTO_UDP;
+
+	pdata.s = msg->buf;
+	pdata.len = msg->len;
+
+	if (dst.proto == PROTO_UDP) {
+		dst.send_sock=get_send_socket(0, &dst.to, PROTO_UDP);
+		if (dst.send_sock!=0) {
+			ret=udp_send(&dst, pdata.s, pdata.len);
+		} else {
+			LM_ERR("no socket for dst sip uri <%.*s>\n", puri->len, puri->s);
+			ret=-1;
+		}
+	}
+#ifdef USE_TCP
+	else if(dst.proto == PROTO_TCP) {
+		/*tcp*/
+		dst.id=0;
+		ret=tcp_send(&dst, 0, pdata.s, pdata.len);
+	}
+#endif
+#ifdef USE_TLS
+	else if(dst.proto == PROTO_TLS) {
+		/*tls*/
+		dst.id=0;
+		ret=tcp_send(&dst, 0, pdata.s, pdata.len);
+	}
+#endif
+#ifdef USE_SCTP
+	else if(dst.proto == PROTO_SCTP) {
+		/*sctp*/
+		dst.send_sock=get_send_socket(0, &dst.to, PROTO_SCTP);
+		if (dst.send_sock!=0) {
+			ret=sctp_core_msg_send(&dst, pdata.s, pdata.len);
+		} else {
+			LM_ERR("no socket for dst sip uri <%.*s>\n", puri->len, puri->s);
+			ret=-1;
+		}
+	}
+#endif
+	else {
+		LM_ERR("unknown proto [%d] for dst sip uri <%.*s>\n",
+				dst.proto, puri->len, puri->s);
+		ret=-1;
+	}
+
+	if (ret>=0) ret=1;
+
+	return ret;
+}
+
+/**
+ *
+ */
+static int w_sip_capture_forward(sip_msg_t *_m, char *_dst, char *_p2)
+{
+	str sdst;
+
+	if(fixup_get_svalue(_m, (gparam_t*)_dst, &sdst)<0) {
+		LM_ERR("failed to get the destination address\n");
+		return -1;
+	}
+
+	return ki_sip_capture_forward(_m, &sdst);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_sipcapture_exports[] = {
 	{ str_init("sipcapture"), str_init("sip_capture"),
@@ -3135,6 +3231,11 @@ static sr_kemi_t sr_kemi_sipcapture_exports[] = {
 	{ str_init("sipcapture"), str_init("float2int"),
 		SR_KEMIP_INT, ki_float2int,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipcapture"), str_init("sip_capture_forward"),
+		SR_KEMIP_INT, ki_sip_capture_forward,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
