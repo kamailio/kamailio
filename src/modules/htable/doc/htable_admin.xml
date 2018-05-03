@@ -704,6 +704,30 @@ end
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.p.event_callback_mode">
+		<title><varname>event_callback_mode</varname> (int)</title>
+		<para>
+			Control when event_route[htable:init] is executed: 0 - after all
+			modules were initialized; 1 - in first worker process.
+		</para>
+		<para>
+			Set it to 1 if used in a KEMI script or when needing to use database
+			(e.g., via sqlops) inside event_route[htable:init].
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "event_callback_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>
