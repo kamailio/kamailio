@@ -3829,6 +3829,11 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 		switch(e->type) {
 			case T_A:
 			case T_AAAA:
+				if(e->type==T_A) {
+				  rpc->rpl_printf(ctx, "%srr type: a", SPACE_FORMAT);
+				} else {
+				  rpc->rpl_printf(ctx, "%srr type: aaaa", SPACE_FORMAT);
+				}
 				if (dns_rr2ip(e->type, rr, &ip)==0){
 				  rpc->rpl_printf(ctx, "%srr ip: %s", SPACE_FORMAT,
 									ip_addr2a(&ip) );
@@ -3838,6 +3843,7 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 				}
 				break;
 			case T_SRV:
+				rpc->rpl_printf(ctx, "%srr type: srv", SPACE_FORMAT);
 				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
 							((struct srv_rdata*)(rr->rdata))->name);
 				rpc->rpl_printf(ctx, "%srr port: %d", SPACE_FORMAT,
@@ -3848,6 +3854,7 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 							((struct srv_rdata*)(rr->rdata))->weight);
 				break;
 			case T_NAPTR:
+				rpc->rpl_printf(ctx, "%srr type: naptr", SPACE_FORMAT);
 				rpc->rpl_printf(ctx, "%srr order: %d", SPACE_FORMAT,
 							((struct naptr_rdata*)(rr->rdata))->order);
 				rpc->rpl_printf(ctx, "%srr preference: %d", SPACE_FORMAT,
@@ -3870,10 +3877,12 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 									SPACE_FORMAT, s.len, s.s);
 				break;
 			case T_CNAME:
+				rpc->rpl_printf(ctx, "%srr type: cname", SPACE_FORMAT);
 				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
 							((struct cname_rdata*)(rr->rdata))->name);
 				break;
 			case T_TXT:
+				rpc->rpl_printf(ctx, "%srr type: txt", SPACE_FORMAT);
 				for (i=0; i<((struct txt_rdata*)(rr->rdata))->cstr_no;
 						i++){
 					rpc->rpl_printf(ctx, "%stxt[%d]: %s", SPACE_FORMAT, i,
@@ -3881,6 +3890,7 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 				}
 				break;
 			case T_EBL:
+				rpc->rpl_printf(ctx, "%srr type: ebl", SPACE_FORMAT);
 				rpc->rpl_printf(ctx, "%srr position: %d", SPACE_FORMAT,
 							((struct ebl_rdata*)(rr->rdata))->position);
 				rpc->rpl_printf(ctx, "%srr separator: %s", SPACE_FORMAT,
@@ -3889,6 +3899,7 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 							((struct ebl_rdata*)(rr->rdata))->apex);
 				break;
 			case T_PTR:
+				rpc->rpl_printf(ctx, "%srr type: ptr", SPACE_FORMAT);
 				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
 							((struct ptr_rdata*)(rr->rdata))->ptrdname);
 				break;
