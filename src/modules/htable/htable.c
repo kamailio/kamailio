@@ -146,7 +146,7 @@ static param_export_t params[]={
 	{"enable_dmq",          INT_PARAM, &ht_enable_dmq},
 	{"timer_procs",         PARAM_INT, &ht_timer_procs},
 	{"event_callback",      PARAM_STR, &ht_event_callback},
-	{"event_callback_mode", PARAM_STR, &ht_event_callback_mode},
+	{"event_callback_mode", PARAM_INT, &ht_event_callback_mode},
 	{0,0,0}
 };
 
