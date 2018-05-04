@@ -46,43 +46,33 @@ static oid snmptrap_oid[] = {1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0};
  *  - kamailioMsgQueueMinorThreshold = minorThreshold
  *
  */
-int send_kamailioMsgQueueDepthMinorEvent_trap(int msgQueueDepth, 
-		int minorThreshold)
+int send_kamailioMsgQueueDepthMinorEvent_trap(
+		int msgQueueDepth, int minorThreshold)
 {
-	netsnmp_variable_list  *var_list = NULL;
-	
-	oid kamailioMsgQueueDepthMinorEvent_oid[] = { 
-		KAMAILIO_OID,3,1,3,2,0,1 };
+	netsnmp_variable_list *var_list = NULL;
 
-	oid kamailioMsgQueueDepth_oid[]		 = { 
-		KAMAILIO_OID,3,1,3,1,2,3,1,0 };
+	oid kamailioMsgQueueDepthMinorEvent_oid[] = {
+			KAMAILIO_OID, 3, 1, 3, 2, 0, 1};
 
-	oid kamailioMsgQueueMinorThreshold_oid[]  = { 
-		KAMAILIO_OID,3,1,3,1,2,3,2,0 };
+	oid kamailioMsgQueueDepth_oid[] = {KAMAILIO_OID, 3, 1, 3, 1, 2, 3, 1, 0};
 
-	snmp_varlist_add_variable(&var_list,
-			snmptrap_oid, 
-			OID_LENGTH(snmptrap_oid),
-			ASN_OBJECT_ID,
-			(u_char *)kamailioMsgQueueDepthMinorEvent_oid, 
+	oid kamailioMsgQueueMinorThreshold_oid[] = {
+			KAMAILIO_OID, 3, 1, 3, 1, 2, 3, 2, 0};
+
+	snmp_varlist_add_variable(&var_list, snmptrap_oid, OID_LENGTH(snmptrap_oid),
+			ASN_OBJECT_ID, (u_char *)kamailioMsgQueueDepthMinorEvent_oid,
 			(int)sizeof(kamailioMsgQueueDepthMinorEvent_oid));
-	
-	snmp_varlist_add_variable(&var_list,
-			kamailioMsgQueueDepth_oid, 
-			OID_LENGTH(kamailioMsgQueueDepth_oid),
-			ASN_GAUGE,
-			(u_char *)&msgQueueDepth, 
-			sizeof(msgQueueDepth));
 
-	snmp_varlist_add_variable(&var_list,
-			kamailioMsgQueueMinorThreshold_oid, 
-			OID_LENGTH(kamailioMsgQueueMinorThreshold_oid),
-			ASN_INTEGER,
-			(u_char *)&minorThreshold,
-			sizeof(minorThreshold));
+	snmp_varlist_add_variable(&var_list, kamailioMsgQueueDepth_oid,
+			OID_LENGTH(kamailioMsgQueueDepth_oid), ASN_GAUGE,
+			(u_char *)&msgQueueDepth, sizeof(msgQueueDepth));
 
-	send_v2trap( var_list );
-	snmp_free_varbind( var_list );
+	snmp_varlist_add_variable(&var_list, kamailioMsgQueueMinorThreshold_oid,
+			OID_LENGTH(kamailioMsgQueueMinorThreshold_oid), ASN_INTEGER,
+			(u_char *)&minorThreshold, sizeof(minorThreshold));
+
+	send_v2trap(var_list);
+	snmp_free_varbind(var_list);
 
 	return SNMP_ERR_NOERROR;
 }
@@ -95,43 +85,33 @@ int send_kamailioMsgQueueDepthMinorEvent_trap(int msgQueueDepth,
  *  - kamailioMsgQueueMajorThreshold = majorThreshold
  *
  */
-int send_kamailioMsgQueueDepthMajorEvent_trap(int msgQueueDepth, 
-		int majorThreshold)
+int send_kamailioMsgQueueDepthMajorEvent_trap(
+		int msgQueueDepth, int majorThreshold)
 {
-	netsnmp_variable_list  *var_list = NULL;
+	netsnmp_variable_list *var_list = NULL;
 
-	oid kamailioMsgQueueDepthMajorEvent_oid[] = { 
-		KAMAILIO_OID,3,1,3,2,0,2 };
+	oid kamailioMsgQueueDepthMajorEvent_oid[] = {
+			KAMAILIO_OID, 3, 1, 3, 2, 0, 2};
 
-	oid kamailioMsgQueueDepth_oid[]		 = {
-		KAMAILIO_OID,3,1,3,1,2,3,1,0 };
+	oid kamailioMsgQueueDepth_oid[] = {KAMAILIO_OID, 3, 1, 3, 1, 2, 3, 1, 0};
 
-	oid kamailioMsgQueueMajorThreshold_oid[]  = { 
-		KAMAILIO_OID,3,1,3,1,2,3,3,0 };
+	oid kamailioMsgQueueMajorThreshold_oid[] = {
+			KAMAILIO_OID, 3, 1, 3, 1, 2, 3, 3, 0};
 
-	snmp_varlist_add_variable(&var_list, 
-		snmptrap_oid,
-		OID_LENGTH(snmptrap_oid), 
-		ASN_OBJECT_ID,
-		(u_char *)kamailioMsgQueueDepthMajorEvent_oid,
-		(int)sizeof(kamailioMsgQueueDepthMajorEvent_oid));
-	
-	snmp_varlist_add_variable(&var_list, 
-			kamailioMsgQueueDepth_oid,
-			OID_LENGTH(kamailioMsgQueueDepth_oid),
-			ASN_GAUGE,
-			(u_char *)&msgQueueDepth, 
-			sizeof(msgQueueDepth));
+	snmp_varlist_add_variable(&var_list, snmptrap_oid, OID_LENGTH(snmptrap_oid),
+			ASN_OBJECT_ID, (u_char *)kamailioMsgQueueDepthMajorEvent_oid,
+			(int)sizeof(kamailioMsgQueueDepthMajorEvent_oid));
 
-	snmp_varlist_add_variable(&var_list,
-			kamailioMsgQueueMajorThreshold_oid,
-			OID_LENGTH(kamailioMsgQueueMajorThreshold_oid),
-			ASN_INTEGER,
-			(u_char *)&majorThreshold,
-			sizeof(majorThreshold));
+	snmp_varlist_add_variable(&var_list, kamailioMsgQueueDepth_oid,
+			OID_LENGTH(kamailioMsgQueueDepth_oid), ASN_GAUGE,
+			(u_char *)&msgQueueDepth, sizeof(msgQueueDepth));
 
-	send_v2trap( var_list );
-	snmp_free_varbind( var_list );
+	snmp_varlist_add_variable(&var_list, kamailioMsgQueueMajorThreshold_oid,
+			OID_LENGTH(kamailioMsgQueueMajorThreshold_oid), ASN_INTEGER,
+			(u_char *)&majorThreshold, sizeof(majorThreshold));
+
+	send_v2trap(var_list);
+	snmp_free_varbind(var_list);
 
 	return SNMP_ERR_NOERROR;
 }
@@ -147,40 +127,29 @@ int send_kamailioMsgQueueDepthMajorEvent_trap(int msgQueueDepth,
  */
 int send_kamailioDialogLimitMinorEvent_trap(int numDialogs, int threshold)
 {
-	netsnmp_variable_list  *var_list = NULL;
+	netsnmp_variable_list *var_list = NULL;
 
-	oid kamailioDialogLimitMinorEvent_oid[]    = { 
-		KAMAILIO_OID,3,1,3,2,0,3 };
-	
-	oid kamailioCurNumDialogs_oid[]            = { 
-		KAMAILIO_OID,3,1,3,1,3,2,1, 0 };
-	
-	oid kamailioDialogLimitMinorThreshold_oid[] = { 
-		KAMAILIO_OID,3,1,3,1,3,2,5, 0 };
+	oid kamailioDialogLimitMinorEvent_oid[] = {KAMAILIO_OID, 3, 1, 3, 2, 0, 3};
 
-	snmp_varlist_add_variable(&var_list,
-		snmptrap_oid,
-		OID_LENGTH(snmptrap_oid), 
-		ASN_OBJECT_ID,
-		(u_char *)kamailioDialogLimitMinorEvent_oid,
-		(int)sizeof(kamailioDialogLimitMinorEvent_oid));
-	
-	snmp_varlist_add_variable(&var_list,
-		kamailioCurNumDialogs_oid, 
-		OID_LENGTH(kamailioCurNumDialogs_oid),
-		ASN_GAUGE,
-		(u_char *)&numDialogs,
-		sizeof(numDialogs));
+	oid kamailioCurNumDialogs_oid[] = {KAMAILIO_OID, 3, 1, 3, 1, 3, 2, 1, 0};
 
-	snmp_varlist_add_variable(&var_list,
-		kamailioDialogLimitMinorThreshold_oid, 
-		OID_LENGTH(kamailioDialogLimitMinorThreshold_oid),
-		ASN_INTEGER,
-		(u_char *)&threshold,
-		sizeof(threshold));
+	oid kamailioDialogLimitMinorThreshold_oid[] = {
+			KAMAILIO_OID, 3, 1, 3, 1, 3, 2, 5, 0};
 
-	send_v2trap( var_list );
-	snmp_free_varbind( var_list );
+	snmp_varlist_add_variable(&var_list, snmptrap_oid, OID_LENGTH(snmptrap_oid),
+			ASN_OBJECT_ID, (u_char *)kamailioDialogLimitMinorEvent_oid,
+			(int)sizeof(kamailioDialogLimitMinorEvent_oid));
+
+	snmp_varlist_add_variable(&var_list, kamailioCurNumDialogs_oid,
+			OID_LENGTH(kamailioCurNumDialogs_oid), ASN_GAUGE,
+			(u_char *)&numDialogs, sizeof(numDialogs));
+
+	snmp_varlist_add_variable(&var_list, kamailioDialogLimitMinorThreshold_oid,
+			OID_LENGTH(kamailioDialogLimitMinorThreshold_oid), ASN_INTEGER,
+			(u_char *)&threshold, sizeof(threshold));
+
+	send_v2trap(var_list);
+	snmp_free_varbind(var_list);
 
 	return SNMP_ERR_NOERROR;
 }
@@ -196,40 +165,29 @@ int send_kamailioDialogLimitMinorEvent_trap(int numDialogs, int threshold)
  */
 int send_kamailioDialogLimitMajorEvent_trap(int numDialogs, int threshold)
 {
-	netsnmp_variable_list  *var_list = NULL;
+	netsnmp_variable_list *var_list = NULL;
 
-	oid kamailioDialogLimitMajorEvent_oid[]     = { 
-		KAMAILIO_OID,3,1,3,2,0,4 };
+	oid kamailioDialogLimitMajorEvent_oid[] = {KAMAILIO_OID, 3, 1, 3, 2, 0, 4};
 
-	oid kamailioCurNumDialogs_oid[]             = { 
-		KAMAILIO_OID,3,1,3,1,3,2,1, 0 };
+	oid kamailioCurNumDialogs_oid[] = {KAMAILIO_OID, 3, 1, 3, 1, 3, 2, 1, 0};
 
-	oid kamailioDialogLimitMajorThreshold_oid[] = { 
-		KAMAILIO_OID,3,1,3,1,3,2,6, 0 };
+	oid kamailioDialogLimitMajorThreshold_oid[] = {
+			KAMAILIO_OID, 3, 1, 3, 1, 3, 2, 6, 0};
 
-	snmp_varlist_add_variable(&var_list,
-		snmptrap_oid, 
-		OID_LENGTH(snmptrap_oid),
-		ASN_OBJECT_ID,
-		(u_char *)kamailioDialogLimitMajorEvent_oid, 
-		(int)sizeof(kamailioDialogLimitMajorEvent_oid));
-	
-	snmp_varlist_add_variable(&var_list,
-		kamailioCurNumDialogs_oid, 
-		OID_LENGTH(kamailioCurNumDialogs_oid),
-		ASN_GAUGE,
-		(u_char *)&numDialogs,
-		sizeof(numDialogs));
+	snmp_varlist_add_variable(&var_list, snmptrap_oid, OID_LENGTH(snmptrap_oid),
+			ASN_OBJECT_ID, (u_char *)kamailioDialogLimitMajorEvent_oid,
+			(int)sizeof(kamailioDialogLimitMajorEvent_oid));
 
-	snmp_varlist_add_variable(&var_list,
-		kamailioDialogLimitMajorThreshold_oid, 
-		OID_LENGTH(kamailioDialogLimitMajorThreshold_oid),
-		ASN_INTEGER,
-		(u_char *)&threshold,
-		sizeof(threshold));
+	snmp_varlist_add_variable(&var_list, kamailioCurNumDialogs_oid,
+			OID_LENGTH(kamailioCurNumDialogs_oid), ASN_GAUGE,
+			(u_char *)&numDialogs, sizeof(numDialogs));
 
-	send_v2trap( var_list );
-	snmp_free_varbind( var_list );
+	snmp_varlist_add_variable(&var_list, kamailioDialogLimitMajorThreshold_oid,
+			OID_LENGTH(kamailioDialogLimitMajorThreshold_oid), ASN_INTEGER,
+			(u_char *)&threshold, sizeof(threshold));
+
+	send_v2trap(var_list);
+	snmp_free_varbind(var_list);
 
 	return SNMP_ERR_NOERROR;
 }

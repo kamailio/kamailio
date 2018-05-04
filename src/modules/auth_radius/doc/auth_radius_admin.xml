@@ -23,7 +23,7 @@
 		credentials to make sure that only well formed credentials will get to
 		the server. We have implemented radius authentication according to
 		draft-sterman-aaa-sip-00. This module requires the radiusclient-ng
-		library version 0.5.0 or higheer or freeradius-client which is available from
+		library version 0.5.0 or higher or freeradius-client which is available from
 		<ulink url='https://github.com/FreeRADIUS/freeradius-client/'>
 		https://github.com/FreeRADIUS/freeradius-client/</ulink>.
 		You can also install this library from distribution repositories.
@@ -32,7 +32,7 @@
 	<section>
 	<title>Additional Credentials</title>
 	<para>
-		When performing authentification, the RADIUS server may include additional
+		When performing authentication, the RADIUS server may include additional
 		credentials in the response. This scheme is very useful in fetching
 		additional user information from the RADIUS server without making
 		extra queries.
@@ -60,7 +60,7 @@
 		The RPID value may be fetch via this mechanism.
 	</para>
 	<example>
-	<title><quote>SIP-AVP</quote> RADIUS AVP exmaples</title>
+	<title><quote>SIP-AVP</quote> RADIUS AVP examples</title>
 		<programlisting format="linespecific">
 ....
 "email:joe@yahoo.com"
@@ -96,7 +96,7 @@
 			<title>External Libraries or Applications</title>
 			<para>
 			The following libraries or applications must be installed
-			before compilling &kamailio; with this module loaded:
+			before compiling &kamailio; with this module loaded:
 			</para>
 			<itemizedlist>
 				<para>One of these libraries. Notice that development of

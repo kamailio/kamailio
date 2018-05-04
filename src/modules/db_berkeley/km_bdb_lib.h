@@ -29,7 +29,6 @@
  */
 
 
-
 #ifndef _KM_BDB_LIB_H_
 #define _KM_BDB_LIB_H_
 
@@ -59,16 +58,16 @@
 #define METADATA_DEFAULTS "METADATA_DEFAULTS"
 
 /*journal logging flag masks */
-#define JLOG_NONE   0
+#define JLOG_NONE 0
 #define JLOG_INSERT 1
 #define JLOG_DELETE 2
 #define JLOG_UPDATE 4
-#define JLOG_FILE   8
+#define JLOG_FILE 8
 #define JLOG_STDOUT 16
 #define JLOG_SYSLOG 32
 
 #define DELIM "|"
-#define DELIM_LEN (sizeof(DELIM)-1)
+#define DELIM_LEN (sizeof(DELIM) - 1)
 
 typedef db_val_t bdb_val_t, *bdb_val_p;
 
@@ -82,7 +81,7 @@ typedef struct _row
 typedef struct _column
 {
 	str name;
-	str dv;     /* default value */
+	str dv; /* default value */
 	int type;
 	int flag;
 } column_t, *column_p;
@@ -92,13 +91,13 @@ typedef struct _table
 	str name;
 	DB *db;
 	gen_lock_t sem;
-	column_p colp [MAX_NUM_COLS];
+	column_p colp[MAX_NUM_COLS];
 	int ncols;
 	int nkeys;
-	int ro;       /*db readonly flag*/
+	int ro;		  /*db readonly flag*/
 	int logflags; /*flags indication what-where to journal log */
-	FILE* fp;     /*jlog file pointer */
-	time_t t;     /*jlog creation time */
+	FILE *fp;	 /*jlog file pointer */
+	time_t t;	 /*jlog creation time */
 	ino_t ino;
 } table_t, *table_p;
 
@@ -128,15 +127,15 @@ typedef struct _db_parms
 
 int km_bdblib_init(db_parms_p _parms);
 int km_bdblib_destroy(void);
-int km_bdblib_close(char* _n);
-int km_bdblib_reopen(char* _n);
+int km_bdblib_close(char *_n);
+int km_bdblib_reopen(char *_n);
 int km_bdblib_recover(table_p _tp, int error_code);
-void km_bdblib_log(int op, table_p _tp, char* _msg, int len);
-int km_bdblib_create_dbenv(DB_ENV **dbenv, char* home);
+void km_bdblib_log(int op, table_p _tp, char *_msg, int len);
+int km_bdblib_create_dbenv(DB_ENV **dbenv, char *home);
 int km_bdblib_create_journal(table_p _tp);
-database_p  	km_bdblib_get_db(str *_s);
-tbl_cache_p 	km_bdblib_get_table(database_p _db, str *_s);
-table_p 	km_bdblib_create_table(database_p _db, str *_s);
+database_p km_bdblib_get_db(str *_s);
+tbl_cache_p km_bdblib_get_table(database_p _db, str *_s);
+table_p km_bdblib_create_table(database_p _db, str *_s);
 
 int db_free(database_p _dbp);
 int tbl_cache_free(tbl_cache_p _tbc);
@@ -148,6 +147,7 @@ int km_load_metadata_readonly(table_p _tp);
 int km_load_metadata_logflags(table_p _tp);
 int km_load_metadata_defaults(table_p _tp);
 
-int km_bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko);
+int km_bdblib_valtochar(table_p _tp, int *_lres, char *_k, int *_klen,
+		db_val_t *_v, int _n, int _ko);
 
 #endif

@@ -29,7 +29,7 @@
 	<para>
 	    This is an example module. It implements only one function that
 	    prints its string parameter to stderr (it won't work if server is
-		started in daemon mode). Its prupose is to show how to link to
+		started in daemon mode). Its purpose is to show how to link to
 		an internal library (lib/print).
 	</para>
     </section>

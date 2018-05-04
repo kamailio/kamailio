@@ -15,7 +15,7 @@
 
 	<title>Functions</title>
 
-	<section id="cnt_inc">
+	<section id="counters.f.cnt_inc">
 	<title>
 		<function>cnt_inc([group.]name)</function>
 	</title>
@@ -43,7 +43,7 @@ route {
 	</example>
 	</section>
 
-	<section id="cnt_add">
+	<section id="counters.f.cnt_add">
 	<title>
 		<function>cnt_add([group.]name, number)</function>
 	</title>
@@ -69,7 +69,7 @@ route {
 	</example>
 	</section>
 
-	<section id="cnt_reset">
+	<section id="counters.f.cnt_reset">
 	<title>
 		<function>cnt_reset([group.]name)</function>
 	</title>

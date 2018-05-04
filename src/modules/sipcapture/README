@@ -57,6 +57,7 @@ Alexandr Dubovikov
               4.1. sip_capture([table], [cmode])
               4.2. report_capture([table], [cid], [data])
               4.3. float2int(fval, ival)
+              4.4. sip_capture_forward(uri)
 
         5. Event Routes
 
@@ -96,7 +97,8 @@ Alexandr Dubovikov
    1.23. sip_capture() usage
    1.24. report_capture() usage
    1.25. report_capture() usage
-   1.26. event_route[sipcapture:request] usage
+   1.26. sip_capture_forward() usage
+   1.27. event_route[sipcapture:request] usage
 
 Chapter 1. Admin Guide
 
@@ -138,6 +140,7 @@ Chapter 1. Admin Guide
         4.1. sip_capture([table], [cmode])
         4.2. report_capture([table], [cid], [data])
         4.3. float2int(fval, ival)
+        4.4. sip_capture_forward(uri)
 
    5. Event Routes
 
@@ -174,7 +177,7 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * database module - mysql, postrgress, dbtext, unixodbc...
+     * database module - mysql, postgres, dbtext, unixodbc...
 
 2.2. External Libraries or Applications
 
@@ -515,6 +518,7 @@ end
    4.1. sip_capture([table], [cmode])
    4.2. report_capture([table], [cid], [data])
    4.3. float2int(fval, ival)
+   4.4. sip_capture_forward(uri)
 
 4.1.  sip_capture([table], [cmode])
 
@@ -574,6 +578,28 @@ report_capture("report_data", "$ci", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 $var(res) = float2int("10.5", "1");
 ...
 
+4.4.  sip_capture_forward(uri)
+
+   Forward the HEP packet to an address specified by the parameter uri (it
+   has to be a sip uri format). The function should be used inside
+   event_route[sipcapture:request]. After using this function, add a
+   return 0 in order to stop processing further the packet in the local
+   Kamailio instance.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.26. sip_capture_forward() usage
+...
+    event_route[sipcapture:request] {
+        ...
+        if(src_ip==1.2.3.4) {
+            sip_capture_forward("sip:2.3.4.5:5090");
+            return 0;
+        }
+        ...
+    }
+...
+
 5. Event Routes
 
    5.1. event_route[sipcapture:request]
@@ -583,7 +609,7 @@ $var(res) = float2int("10.5", "1");
    Event route block to be executed when HEP packet is received. It
    requires module parameter 'nonsip_hook' to be set to 1.
 
-   Example 1.26. event_route[sipcapture:request] usage
+   Example 1.27. event_route[sipcapture:request] usage
 ...
 # new event sipcapture socket
 modparam("sipcapture", "nonsip_hook", 1)

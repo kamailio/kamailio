@@ -20,8 +20,8 @@
 	</para>
 	<para>
 		The module defines in an abstract mode the notion of 'pipe',
-		which can be a link to an IP address, to a network or a trunk.
-		The associtiation of traffic to a pipe is done in the config file,
+		which can be a reference to an IP address, to a network or a trunk.
+		The association of traffic to a pipe is done in the config file,
 		therefore, a pipe could represent SIP traffic coming from a user or
 		the flow of specific SIP requests such as INVITE or REGISTER.
 	</para>
@@ -29,7 +29,8 @@
 		Pipelimit started from ratelimit module, adding support for definition
 		of pipes limits in database and dynamic names. Complexity of keeping
 		everything in a module and make it dual mode functional resulted in a
-		new module which is focused on just traffic shaping policies.
+		new module which is focused on just traffic shaping policies, the
+		implementation of queues was discarded.
 	</para>
 	<section>
 		<title>Algorithms</title>
@@ -45,7 +46,8 @@
 			This is a trivial algorithm that imposes some risks when used in
 			conjunction with long timer intervals. At the start of each interval an
 			internal counter is reset and incremented for each incoming message.
-			Once the counter hits the configured limit pl_check returns an error.
+			Once the counter hits the configured limit pl_check() returns false
+			(negative value).
 		</para>
 		<para>
 			<emphasis>Random Early Detection Algorithm (RED)</emphasis>
@@ -68,8 +70,8 @@
 			This algorithm relies on information provided by network interfaces.
 			The total amount of bytes waiting to be consumed on all the network
 			interfaces is retrieved once every timer_interval seconds. If the
-			returned amount exceeds the limit specified in the modparam, pl_check
-			returns an error.
+			returned amount exceeds the limit specified in the modparam, pl_check()
+			returns false (negative value).
 		</para>
 		<para>
 			<emphasis>Feedback Algorithm (FEEDBACK)</emphasis>
@@ -252,12 +254,14 @@ modparam("pipelimit", "plp_algorithm_column", "name")
 	<section id="pipelimit.p.timer_interval">
 		<title><varname>timer_interval</varname> (integer)</title>
 		<para>
-		The initial length of a timer interval in seconds. All amounts of
-		messages have to be divided by this timer to get a messages per second
-		value.
+		The length of the timer interval in seconds. Counted messages are reset
+		each timer_interval, therefore the amounts of messages have to be divided
+		by this timer_interval value to get the messages per second value. For
+		example, if you want to allow an average of 10 messages per second with
+		a timer interval of 10 seconds, then the limit value has to be 100.
 		</para>
 		<para>
-		IMPORTANT: A too small value may lead to performance penalties due to
+		Note: A too small value may lead to performance penalties due to
 		timer process overloading.
 		</para>
 		<para>
@@ -347,11 +351,12 @@ modparam("pipelimit", "reply_reason", "Limiting")
 		</para>
 		<para>	
 		If algorithm and limit are provided, the function attempts to create a
-		new pipe of one with that name doesn't exit. If it exists, no changes
-		to algorithm and limit are done. Algorithm is case sensitive.
+		new pipe if one with that name doesn't exit. If it exists, no changes
+		to algorithm is done and the pipe limit is set to the 'limit' parameter
+		value, if this is greater than 0. Algorithm is case sensitive.
 		</para>
 		<para>	
-		The pipe name can be provided via a pseudo variabile.
+		The pipe name can be provided via a pseudo variable.
 		</para>
 		<para>The method will return:
 		<itemizedlist>
@@ -372,7 +377,8 @@ modparam("pipelimit", "reply_reason", "Limiting")
 			readme of ratelimit module for details on each algorithm.
 			</para></listitem>
 			<listitem><para>
-			<emphasis>limit</emphasis> - the integer or pseudovariable with the limit value.
+			<emphasis>limit</emphasis> - the integer or pseudovariable with the limit value
+			per timer_interval.
 			</para></listitem>
 		</itemizedlist>
 		<para>
@@ -486,8 +492,8 @@ with unexpected retcode=$var(check_result)\n");
 		<function moreinfo="none">pl.stats</function>
 		</title>
 		<para>
-		Lists the parameters and variabiles in the pipelimit module:
-		pipe id, pipe load and pipe couter.
+		Lists the parameters and variables in the pipelimit module:
+		pipe id, pipe load and pipe counter.
 		</para>
 		<para>
 		Name: <emphasis>pl.stats</emphasis>

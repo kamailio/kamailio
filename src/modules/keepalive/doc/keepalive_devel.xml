@@ -98,7 +98,7 @@
 		<itemizedlist>
 			<listitem><emphasis>0</emphasis> if ok
 			</listitem>
-			<listitem><emphasis>-1</emphasis> if an error occured
+			<listitem><emphasis>-1</emphasis> if an error occurred
 			</listitem>
 		</itemizedlist>
 		

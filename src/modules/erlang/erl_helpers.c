@@ -73,7 +73,6 @@ int erl_passive_socket(const char *hostname, int qlen,
 	int port;
 	struct addrinfo *ai;
 	struct addrinfo hints;
-	struct ip_addr ip;
 	socklen_t addrlen = sizeof(struct sockaddr);
 
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -103,8 +102,7 @@ int erl_passive_socket(const char *hostname, int qlen,
 	/* initialize TCP */
 #if  !defined(TCP_DONT_REUSEADDR)
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(int))) {
-		LM_ERR("failed to enable SO_REUSEADDR for socket on %s %s, %s\n",
-				hostname, ip_addr2strz(&ip), strerror(errno));
+		LM_ERR("failed to enable SO_REUSEADDR: %s\n", strerror(errno));
 	}
 #endif
 	/* tos */
@@ -118,8 +116,8 @@ int erl_passive_socket(const char *hostname, int qlen,
 	if (bind(sockfd, ai->ai_addr, ai->ai_addrlen) < 0)
 	{
 		port=sockaddr_port(ai->ai_addr);
-		LM_CRIT("failed to bind socket on %s %s:%u. %s.\n", hostname,
-				ip_addr2strz(&ip), port, strerror(errno));
+		LM_CRIT("failed to bind socket on %s:%u. %s.\n", hostname,
+				port, strerror(errno));
 
 		erl_close_socket(sockfd);
 		freeaddrinfo(ai);
@@ -128,8 +126,8 @@ int erl_passive_socket(const char *hostname, int qlen,
 
 	if (ai->ai_socktype == SOCK_STREAM && listen(sockfd, qlen) < 0)
 	{
-		LM_CRIT("failed to listen socket on %s, %s. %s.\n", hostname,
-				ip_addr2strz(&ip), strerror(errno));
+		LM_CRIT("failed to listen socket on %s: %s.\n", hostname,
+				strerror(errno));
 
 		erl_close_socket(sockfd);
 		freeaddrinfo(ai);

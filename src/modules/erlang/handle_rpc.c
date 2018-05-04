@@ -223,7 +223,7 @@ int erl_rpc_add(erl_rpc_ctx_t* ctx, char* fmt, ...)
 			param->type = ERL_STRING_EXT;
 			param->value.S.len = strlen(char_ptr);
 
-			param->value.S.s = (char*)pkg_malloc(param->value.S.len);
+			param->value.S.s = (char*)pkg_malloc(param->value.S.len+1);
 
 			if (!param->value.S.s)
 			{
@@ -486,10 +486,10 @@ int erl_rpc_struct_scan(erl_rpc_ctx_t* ctx, char* fmt, ...)
 
 	va_list ap;
 
-	/* save index */
+	/* preserve index */
 	index = ctx->request_index;
 
-	if(ei_decode_tuple_header(ctx->request->buff,&ctx->request_index, &arity))
+	if(ei_decode_tuple_header(ctx->request->buff,&index, &arity))
 	{
 		erl_rpc_fault(ctx,400,"Bad tuple");
 		return -1;
@@ -560,9 +560,6 @@ int erl_rpc_struct_scan(erl_rpc_ctx_t* ctx, char* fmt, ...)
 		reads++;
 		fmt++;
 	}
-
-	/* restore index */
-	ctx->request_index = index;
 
     va_end(ap);
     return reads-modifiers;
@@ -696,7 +693,7 @@ int erl_rpc_struct_add(erl_rpc_ctx_t* ctx, char* fmt, ...)
 			param->type = ERL_STRING_EXT;
 			param->value.S.len = strlen(char_ptr);
 
-			param->value.S.s = (char*)pkg_malloc(param->value.S.len);
+			param->value.S.s = (char*)pkg_malloc(param->value.S.len+1);
 
 			if (!param->value.S.s)
 			{
@@ -847,7 +844,7 @@ int erl_rpc_array_add(erl_rpc_ctx_t* ctx, char* fmt, ...)
 			param->type = ERL_STRING_EXT;
 			param->value.S.len = strlen(char_ptr);
 
-			param->value.S.s = (char*)pkg_malloc(param->value.S.len);
+			param->value.S.s = (char*)pkg_malloc(param->value.S.len+1);
 
 			if (!param->value.S.s)
 			{
@@ -1138,6 +1135,8 @@ static int get_int(int *int_ptr,erl_rpc_ctx_t *ctx, int reads, int autoconvert)
 			return -1;
 		}
 
+		ei_decode_string(ctx->request->buff, &ctx->request_index, p);
+
 		*int_ptr = strtol(p,&endptr,10);
 		if (p == endptr)
 		{
@@ -1216,6 +1215,8 @@ static int get_double(double *double_prt,erl_rpc_ctx_t *ctx, int reads, int auto
 			LM_ERR("Not enough memory\n");
 			return -1;
 		}
+
+		ei_decode_string(ctx->request->buff, &ctx->request_index, p);
 
 		*double_prt = strtod(p,&endptr);
 		if (p == endptr)
@@ -1414,15 +1415,13 @@ static int find_member(erl_rpc_ctx_t *ctx, int arity, const char* member_name)
 				erl_rpc_fault(ctx,400,"Unexpected end of struct tuple");
 				goto error;
 			}
-			continue;
+			i++;
 		}
 		else
 		{
 			/* return at current position */
 			return 0;
 		}
-
-		i++;
 	}
 
 	erl_rpc_fault(ctx,400, "Member %s not found",member_name);

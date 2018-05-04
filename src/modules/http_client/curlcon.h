@@ -47,7 +47,7 @@ int http_client_load_config(str *config_file);
 
 int curl_parse_param(char *val);
 
-curl_con_t* curl_get_connection(str *name);
-curl_con_pkg_t* curl_get_pkg_connection(curl_con_t *con);
+curl_con_t *curl_get_connection(str *name);
+curl_con_pkg_t *curl_get_pkg_connection(curl_con_t *con);
 
 #endif

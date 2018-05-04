@@ -248,7 +248,7 @@ modparam("xlog", "long_format", 1)
 		<function moreinfo="none">xlog([ [facility,] level,] format)</function>
 		</title>
 		<para>
-		Output a formated log message.
+		Output a formatted log message.
 		</para>
 		<para>Meaning of the parameters are as follows:</para>
 		<itemizedlist>

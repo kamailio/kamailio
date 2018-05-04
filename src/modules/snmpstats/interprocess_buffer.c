@@ -65,7 +65,7 @@ interprocessBuffer_t *endRegUserTableBuffer = NULL;
 
 /*! This is to protect the potential racecondition in which a command is added to
  * the buffer while it is being consumed */
-gen_lock_t           *interprocessCBLock = NULL;
+gen_lock_t *interprocessCBLock = NULL;
 
 /*!
  * This function takes an element of the interprocess buffer passed to it, and
@@ -78,29 +78,27 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer);
  * Initialize shared memory used to buffer communication between the usrloc
  * module and the SNMPStats module.  (Specifically, the user and contact tables)
  */
-int initInterprocessBuffers(void) 
+int initInterprocessBuffers(void)
 {
 	/* Initialize the shared memory that will be used to buffer messages
 	 * over the usrloc module to RegUserTable callback. */
-	frontRegUserTableBuffer =  shm_malloc(sizeof(interprocessBuffer_t));
-	endRegUserTableBuffer   =  shm_malloc(sizeof(interprocessBuffer_t));
+	frontRegUserTableBuffer = shm_malloc(sizeof(interprocessBuffer_t));
+	endRegUserTableBuffer = shm_malloc(sizeof(interprocessBuffer_t));
 
-	if(frontRegUserTableBuffer == NULL || endRegUserTableBuffer == NULL)
-	{
+	if(frontRegUserTableBuffer == NULL || endRegUserTableBuffer == NULL) {
 		LM_ERR("no more shared memory\n");
 		return -1;
 	}
 
 	memset(frontRegUserTableBuffer, 0x00, sizeof(interprocessBuffer_t));
-	memset(endRegUserTableBuffer,   0x00, sizeof(interprocessBuffer_t));
+	memset(endRegUserTableBuffer, 0x00, sizeof(interprocessBuffer_t));
 
 	/* Initialize a lock to the interprocess buffer.  The lock will be used
 	 * to control race-conditions that would otherwise occur if an snmp
 	 * command was received while the interprocess buffer was being consumed.
 	 */
 	interprocessCBLock = lock_alloc();
-	if(interprocessCBLock==NULL)
-	{
+	if(interprocessCBLock == NULL) {
 		LM_ERR("cannot allocate the lock\n");
 		shm_free(frontRegUserTableBuffer);
 		frontRegUserTableBuffer = NULL;
@@ -111,8 +109,7 @@ int initInterprocessBuffers(void)
 	lock_init(interprocessCBLock);
 
 	hashTable = createHashTable(HASH_SIZE);
-	if(hashTable == NULL)
-	{
+	if(hashTable == NULL) {
 		LM_ERR("no more shared memory\n");
 		lock_destroy(interprocessCBLock);
 		lock_dealloc(interprocessCBLock);
@@ -140,7 +137,7 @@ int initInterprocessBuffers(void)
  * any race conditions between this function and the consumeInterprocessBuffer()
  * function.
  */
-void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param) 
+void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param)
 {
 	char *addressOfRecord;
 	char *contact;
@@ -149,8 +146,7 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param)
 
 	currentBufferElement = shm_malloc(sizeof(interprocessBuffer_t));
 
-	if (currentBufferElement == NULL) 
-	{
+	if(currentBufferElement == NULL) {
 		goto error;
 	}
 
@@ -160,14 +156,14 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param)
 	 * If we do not maintain our own copies, then the AOR and contact adress
 	 * pointed to could be removed and reallocated to another thread before
 	 * we get a chance to consume our interprocess buffer.  */
-	convertStrToCharString(contactInfo->aor,  &addressOfRecord);
+	convertStrToCharString(contactInfo->aor, &addressOfRecord);
 	convertStrToCharString(&(contactInfo->c), &contact);
 
-	currentBufferElement->stringName    = addressOfRecord;
+	currentBufferElement->stringName = addressOfRecord;
 	currentBufferElement->stringContact = contact;
-	currentBufferElement->contactInfo   = contactInfo;
-	currentBufferElement->callbackType  = type;
-	currentBufferElement->next          = NULL;
+	currentBufferElement->contactInfo = contactInfo;
+	currentBufferElement->callbackType = type;
+	currentBufferElement->next = NULL;
 
 
 	/* A lock is necessary to prevent a race condition.  Specifically, it
@@ -177,21 +173,22 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param)
 	lock_get(interprocessCBLock);
 
 	/* This is the first element to be added. */
-	if (frontRegUserTableBuffer->next == NULL) {
+	if(frontRegUserTableBuffer->next == NULL) {
 		frontRegUserTableBuffer->next = currentBufferElement;
 	} else {
 		endRegUserTableBuffer->next->next = currentBufferElement;
 	}
-	
-	endRegUserTableBuffer->next   = currentBufferElement;
+
+	endRegUserTableBuffer->next = currentBufferElement;
 
 	lock_release(interprocessCBLock);
-	
+
 	return;
 
 error:
 	LM_ERR("Not enough shared memory for  kamailioSIPRegUserTable insert."
-			" (%s)\n", contactInfo->c.s);
+		   " (%s)\n",
+			contactInfo->c.s);
 }
 
 
@@ -212,14 +209,13 @@ error:
  *       This is made possible by simply changing the head of the interprocess
  *       buffer, and then releasing the lock.  
  */
-void consumeInterprocessBuffer(void) 
+void consumeInterprocessBuffer(void)
 {
 	interprocessBuffer_t *previousBuffer;
 	interprocessBuffer_t *currentBuffer;
-	
+
 	/* There is nothing to consume, so just exit. */
-	if (frontRegUserTableBuffer->next == NULL) 
-	{
+	if(frontRegUserTableBuffer->next == NULL) {
 		return;
 	}
 
@@ -231,13 +227,13 @@ void consumeInterprocessBuffer(void)
 	lock_get(interprocessCBLock);
 
 	currentBuffer = frontRegUserTableBuffer->next;
-	
+
 	frontRegUserTableBuffer->next = NULL;
-	endRegUserTableBuffer->next   = NULL;
+	endRegUserTableBuffer->next = NULL;
 
 	lock_release(interprocessCBLock);
 
-	while (currentBuffer != NULL) {
+	while(currentBuffer != NULL) {
 
 		executeInterprocessBufferCmd(currentBuffer);
 
@@ -250,9 +246,7 @@ void consumeInterprocessBuffer(void)
 		shm_free(previousBuffer->stringName);
 		shm_free(previousBuffer->stringContact);
 		shm_free(previousBuffer);
-
 	}
-
 }
 
 
@@ -261,92 +255,82 @@ void consumeInterprocessBuffer(void)
  * handles populating the respective user and contact tables with its contained
  * data.  
  */
-static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer) 
+static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 {
 	int delContactIndex;
 
 	aorToIndexStruct_t *currentUser;
 
-	if (currentBuffer->callbackType == UL_CONTACT_INSERT) 
-	{
+	if(currentBuffer->callbackType == UL_CONTACT_INSERT) {
 		/* Add the user if the user doesn't exist, or increment its 
 		 * contact index otherwise. */
 		updateUser(currentBuffer->stringName);
-	}
-	else if (currentBuffer->callbackType != UL_CONTACT_EXPIRE)
-	{
+	} else if(currentBuffer->callbackType != UL_CONTACT_EXPIRE) {
 		/* Currently we only support UL_CONTACT_INSERT and
 		 * UL_CONTACT_EXPIRE.  If we receive another callback type, this
 		 * is a bug. */
 		LM_ERR("found a command on the interprocess buffer that"
-				" was not an INSERT or EXPIRE");
+			   " was not an INSERT or EXPIRE");
 		return;
 	}
 
 	currentUser =
-		findHashRecord(hashTable, currentBuffer->stringName, HASH_SIZE);
+			findHashRecord(hashTable, currentBuffer->stringName, HASH_SIZE);
 
 
 	/* This should never happen.  This is more of a sanity check. */
-	if (currentUser == NULL) {
+	if(currentUser == NULL) {
 		LM_ERR("Received a request for contact: %s for user: %s who doesn't "
-				"exists\n", currentBuffer->stringName, 
-				currentBuffer->stringContact);
+			   "exists\n",
+				currentBuffer->stringName, currentBuffer->stringContact);
 		return;
-	} 
+	}
 
 	/* This buffer element specified that we need to add a contact.  So lets
 	 * add them */
-	if (currentBuffer->callbackType == UL_CONTACT_INSERT) {
+	if(currentBuffer->callbackType == UL_CONTACT_INSERT) {
 
 		/* Increment the contact index, which will be used to generate
-		 * our new row.  */  
+		 * our new row.  */
 		currentUser->contactIndex++;
 
 		/* We should do this after we create the row in the snmptable.
 		 * Its easier to delete the SNMP Row than the contact record. */
-		if(!insertContactRecord(&(currentUser->contactList), 
-			currentUser->contactIndex, 
-				currentBuffer->stringContact)) {
+		if(!insertContactRecord(&(currentUser->contactList),
+				   currentUser->contactIndex, currentBuffer->stringContact)) {
 
 			LM_ERR("kamailioSIPRegUserTable was unable to allocate memory for "
-					"adding contact: %s to user %s.\n",
+				   "adding contact: %s to user %s.\n",
 					currentBuffer->stringName, currentBuffer->stringContact);
 
 			/* We didn't use the index, so decrement it so we can
 			 * use it next time around. */
 			currentUser->contactIndex--;
-			
+
 			return;
 		}
-	
-		if (!createContactRow(currentUser->userIndex, 
-					currentUser->contactIndex,
-					currentBuffer->stringContact, 
-					currentBuffer->contactInfo)) {
-		
-			deleteContactRecord(&(currentUser->contactList), 
-					currentBuffer->stringContact);
 
+		if(!createContactRow(currentUser->userIndex, currentUser->contactIndex,
+				   currentBuffer->stringContact, currentBuffer->contactInfo)) {
+
+			deleteContactRecord(
+					&(currentUser->contactList), currentBuffer->stringContact);
 		}
 
-	}
-	else {
+	} else {
 
-		delContactIndex = 
-			deleteContactRecord(&(currentUser->contactList), 
-					currentBuffer->stringContact);
+		delContactIndex = deleteContactRecord(
+				&(currentUser->contactList), currentBuffer->stringContact);
 
 		/* This should never happen.  But its probably wise to check and
 		 * to print out debug messages in case there is a hidden bug.  */
 		if(delContactIndex == 0) {
-			
-			LM_ERR("Received a request to delete contact: %s for user: %s"
-				"  who doesn't exist\n", currentBuffer->stringName,
-				currentBuffer->stringContact);
-			return;
 
-		}		
+			LM_ERR("Received a request to delete contact: %s for user: %s"
+				   "  who doesn't exist\n",
+					currentBuffer->stringName, currentBuffer->stringContact);
+			return;
+		}
 
 		deleteContactRow(currentUser->userIndex, delContactIndex);
 
@@ -358,27 +342,25 @@ void freeInterprocessBuffer(void)
 {
 	interprocessBuffer_t *currentBuffer, *previousBuffer;
 
-	if (frontRegUserTableBuffer==NULL
-			|| frontRegUserTableBuffer->next == NULL
-			|| endRegUserTableBuffer==NULL) {
+	if(frontRegUserTableBuffer == NULL || frontRegUserTableBuffer->next == NULL
+			|| endRegUserTableBuffer == NULL) {
 		LM_DBG("Nothing to clean\n");
 		return;
 	}
 
 	currentBuffer = frontRegUserTableBuffer->next;
-	
+
 	frontRegUserTableBuffer->next = NULL;
-	endRegUserTableBuffer->next   = NULL;
+	endRegUserTableBuffer->next = NULL;
 
 
-	while (currentBuffer != NULL) {
+	while(currentBuffer != NULL) {
 
 		previousBuffer = currentBuffer;
 		currentBuffer = currentBuffer->next;
 		shm_free(previousBuffer->stringName);
 		shm_free(previousBuffer->stringContact);
 		shm_free(previousBuffer);
-
 	}
 
 	if(frontRegUserTableBuffer)
@@ -386,5 +368,4 @@ void freeInterprocessBuffer(void)
 
 	if(endRegUserTableBuffer)
 		shm_free(endRegUserTableBuffer);
-
 }

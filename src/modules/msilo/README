@@ -273,7 +273,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set the “db_url” parameter
 ...
-modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
+modparam("msilo", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
 3.2. db_table (string)
@@ -598,8 +598,8 @@ modparam("msilo", "max_messages", 0)
 
 3.28. add_contact (int)
 
-   Wheter to add contact header to generated messages. The contact address
-   is the From URI.
+   Whether to add contact header to generated messages. The contact
+   address is the From URI.
 
    Default value is “0” (1==on; 0==off as per RFC3428).
 
@@ -668,7 +668,7 @@ m_store("$tu");
 
 4.2. m_dump([owner])
 
-   The method sends stored messages for the SIP user that has registerered
+   The method sends stored messages for the SIP user that has registered
    to the contact address in the registration. The method should be called
    when a REGISTER request is received and the “Expire” header has a value
    greater than zero.
@@ -768,18 +768,12 @@ modparam("usrloc", "db_mode", 0)
 
 # -- msilo params --
 
-modparam("msilo","db_url","mysql://openser:openserrw@localhost/openser")
+modparam("msilo","db_url","mysql://kamailio:kamailiorw@localhost/kamailio")
 modparam("msilo","from_address","sip:registrar@kamailio.org")
 modparam("msilo","contact_hdr","Contact: registrar@192.168.1.2:5060;msilo=yes\r\
 n")
 modparam("msilo","content_type_hdr","Content-Type: text/plain\r\n")
 modparam("msilo","offline_message","*** User $rU is offline!")
-
-# -- tm params --
-
-modparam("tm", "fr_timer", 10 )
-modparam("tm", "fr_inv_timer", 15 )
-modparam("tm", "wt_timer", 10 )
 
 
 route{

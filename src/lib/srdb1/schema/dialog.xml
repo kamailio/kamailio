@@ -177,7 +177,7 @@
 		<type>unsigned int</type>
 		<size>10</size>
 		<default>0</default>
-		<description>The flags to set for dialog and accesible from config file.
+		<description>The flags to set for dialog and accessible from config file.
 		</description>
 	</column>
 

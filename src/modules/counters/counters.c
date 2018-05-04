@@ -31,6 +31,7 @@
 #include "../../core/dprint.h"
 #include "../../core/compiler_opt.h"
 #include "../../core/counters.h"
+#include "../../core/kemi.h"
 
 MODULE_VERSION
 
@@ -238,7 +239,9 @@ static int cnt_int_fixup(void** param, int param_no)
 }
 
 
-
+/**
+ * 
+ */
 static int cnt_inc_f(struct sip_msg* msg, char* handle, char* bar)
 {
 	counter_handle_t h;
@@ -248,8 +251,39 @@ static int cnt_inc_f(struct sip_msg* msg, char* handle, char* bar)
 	return 1;
 }
 
+#define cnt_op_handle_get() \
+	do { \
+		name = sname->s; \
+		grp = cnt_script_grp; /* default group */ \
+		if ((p = strchr(name, '.')) != 0) { \
+			/* found group */ \
+			grp = name; \
+			name = p+1; \
+			*p = 0; \
+		} \
+		if (counter_lookup(&h, grp, name) < 0) { \
+			ERR("counter %s.%s does not exist (forgot to define it?)\n", \
+					grp, name); \
+			return -1; \
+		} \
+	} while(0)
 
+static int ki_cnt_inc(sip_msg_t* msg, str *sname)
+{
+	char* name;
+	char* grp;
+	char* p;
+	counter_handle_t h;
 
+	cnt_op_handle_get();
+
+	counter_inc(h);
+	return 1;
+}
+
+/**
+ * 
+ */
 static int cnt_add_f(struct sip_msg* msg, char* handle, char* val)
 {
 	counter_handle_t h;
@@ -264,8 +298,22 @@ static int cnt_add_f(struct sip_msg* msg, char* handle, char* val)
 	return 1;
 }
 
+static int ki_cnt_add(sip_msg_t* msg, str *sname, int v)
+{
+	char* name;
+	char* grp;
+	char* p;
+	counter_handle_t h;
 
+	cnt_op_handle_get();
 
+	counter_add(h, v);
+	return 1;
+}
+
+/**
+ * 
+ */
 static int cnt_reset_f(struct sip_msg* msg, char* handle, char* bar)
 {
 	counter_handle_t h;
@@ -275,6 +323,19 @@ static int cnt_reset_f(struct sip_msg* msg, char* handle, char* bar)
 	return 1;
 }
 
+
+static int ki_cnt_reset(sip_msg_t* msg, str *sname)
+{
+	char* name;
+	char* grp;
+	char* p;
+	counter_handle_t h;
+
+	cnt_op_handle_get();
+
+	counter_reset(h);
+	return 1;
+}
 
 
 static void cnt_grp_get_all(rpc_t* rpc, void* c, char* group);
@@ -459,6 +520,37 @@ static void cnt_help_rpc(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 400, "no description for counter %s.%s\n",
 					group, name);
 	return;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_counters_exports[] = {
+	{ str_init("counters"), str_init("inc"),
+		SR_KEMIP_INT, ki_cnt_inc,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("counters"), str_init("add"),
+		SR_KEMIP_INT, ki_cnt_add,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("counters"), str_init("reset"),
+		SR_KEMIP_INT, ki_cnt_reset,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_counters_exports);
+	return 0;
 }
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

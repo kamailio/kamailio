@@ -30,6 +30,7 @@ Olle E. Johansson
               3.4. tcp_keepalive_disable([conid])
               3.5. tcp_set_connection_lifetime([conid], lifetime)
               3.6. tcp_enable_closed_event([conid])
+              3.7. tcp_get_conid(hostport, pvname)
 
         4. Event routes
 
@@ -47,6 +48,7 @@ Olle E. Johansson
    1.5. tcp_keepalive_disable usage
    1.6. tcp_set_connection_lifetime usage
    1.7. tcp_set_closed_event usage
+   1.8. tcp_get_conid usage
 
 Chapter 1. Admin Guide
 
@@ -65,6 +67,7 @@ Chapter 1. Admin Guide
         3.4. tcp_keepalive_disable([conid])
         3.5. tcp_set_connection_lifetime([conid], lifetime)
         3.6. tcp_enable_closed_event([conid])
+        3.7. tcp_get_conid(hostport, pvname)
 
    4. Event routes
 
@@ -114,6 +117,7 @@ modparam("tcpops", "closed_event", 0)
    3.4. tcp_keepalive_disable([conid])
    3.5. tcp_set_connection_lifetime([conid], lifetime)
    3.6. tcp_enable_closed_event([conid])
+   3.7. tcp_get_conid(hostport, pvname)
 
 3.1.  tcp_conid_alive(conid)
 
@@ -266,7 +270,7 @@ request_route {
    Explicitly enables the "tcp:closed" event route on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the Kamailio internal connection id. If no
+     * conid (optional): the Kamailio internal connection id. If no
        parameter is given, it will be enabled on the current message
        source connection.
 
@@ -291,6 +295,29 @@ request_route {
 event_route[tcp:closed] {
         xlog("connection $conid was closed");
 }
+
+3.7.  tcp_get_conid(hostport, pvname)
+
+   Get the connection id based on target host:port. The connection id is
+   set in the variable named by pvname parameter.
+
+   Meaning of the parameters is as follows:
+     * hostport - target "host:port" address, the port can be omitted
+       (default to 5060) and the parameter can contain variables.
+     * pvname - target variable name.
+
+   Return values:
+
+   1: connection was found
+
+   -1: connection was not found or an error occurred
+
+   Example 1.8. tcp_get_conid usage
+...
+        if(tcp_conid_alive("127.0.0.1:5060", "$var(conid)")) {
+                xlog("connection id is: $var(conid)\n");
+        }
+...
 
 4. Event routes
 

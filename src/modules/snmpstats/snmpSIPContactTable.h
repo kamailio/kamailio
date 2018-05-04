@@ -61,7 +61,7 @@
 extern "C" {
 #endif
 
-    
+
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/library/container.h>
 #include <net-snmp/agent/table_array.h>
@@ -77,21 +77,21 @@ extern "C" {
  * was done because the values change over time.  Therefore we retrieve the data
  * only when it is requested for, instead of storing stale data.
  */
-typedef struct kamailioSIPContactTable_context_s 
+typedef struct kamailioSIPContactTable_context_s
 {
 	netsnmp_index index; /** THIS MUST BE FIRST!!! */
 
 	unsigned long kamailioSIPContactIndex;
 
 	unsigned char *kamailioSIPContactURI;
-	long           kamailioSIPContactURI_len;
+	long kamailioSIPContactURI_len;
 
 	/* A pointer to the rest of the contact structure, giving us access to
 	 * kamailioSIPContactURI, kamailioSIPContactExpirty, and
 	 * kamailioSIPContactPreference. */
 	ucontact_t *contactInfo;
 
-	void * data;
+	void *data;
 
 } kamailioSIPContactTable_context;
 
@@ -105,7 +105,7 @@ typedef struct kamailioSIPContactTable_context_s
  *
  * Returns: 1 on success, and 0 otherwise. 
  */
-int  createContactRow(int userIndex, int contactIndex, char *contactName,
+int createContactRow(int userIndex, int contactIndex, char *contactName,
 		ucontact_t *contactInfo);
 
 /* 
@@ -123,8 +123,8 @@ void deleteContactRow(int userIndex, int contactIndex);
  * indexing scheme.  It will be used later when a delete command comes in, and
  * we need to find out which SNMP row the information is stored under.
  */
-int  insertContactRecord(contactToIndexStruct_t **contactRecord, int index, 
-		char *name);
+int insertContactRecord(
+		contactToIndexStruct_t **contactRecord, int index, char *name);
 
 /*
  * This function will remove the contactToIndexStruct_T record matching
@@ -132,8 +132,8 @@ int  insertContactRecord(contactToIndexStruct_t **contactRecord, int index,
  * the records index.  In the event that the record could not be found, 0 will
  * be returned. 
  */
-int  deleteContactRecord(contactToIndexStruct_t **contactRecord, 
-		char *contactName);
+int deleteContactRecord(
+		contactToIndexStruct_t **contactRecord, char *contactName);
 
 
 /********************************/
@@ -148,7 +148,7 @@ int  deleteContactRecord(contactToIndexStruct_t **contactRecord,
  *  2) Creating a default row, so that there is a row to query to trigger the
  *     consumption of the interprocess buffer.
  */
-void  init_kamailioSIPContactTable(void);
+void init_kamailioSIPContactTable(void);
 
 
 /*
@@ -157,34 +157,34 @@ void  init_kamailioSIPContactTable(void);
  *
  * This function is mostly auto-generated.
  */
-void  initialize_table_kamailioSIPContactTable(void);
+void initialize_table_kamailioSIPContactTable(void);
 
-const kamailioSIPContactTable_context * kamailioSIPContactTable_get_by_idx(
+const kamailioSIPContactTable_context *kamailioSIPContactTable_get_by_idx(
 		netsnmp_index *);
 
-const kamailioSIPContactTable_context * kamailioSIPContactTable_get_by_idx_rs(
+const kamailioSIPContactTable_context *kamailioSIPContactTable_get_by_idx_rs(
 		netsnmp_index *, int row_status);
 
 /* This routine is called to process get requests for elements of the table. */
-int   kamailioSIPContactTable_get_value(netsnmp_request_info *, netsnmp_index *,
-		netsnmp_table_request_info *);
+int kamailioSIPContactTable_get_value(
+		netsnmp_request_info *, netsnmp_index *, netsnmp_table_request_info *);
 
 
 /* oid declarations */
-extern oid    kamailioSIPContactTable_oid[];
+extern oid kamailioSIPContactTable_oid[];
 extern size_t kamailioSIPContactTable_oid_len;
 
-#define kamailioSIPContactTable_TABLE_OID KAMAILIO_OID,3,1,2,1,5,7
-    
+#define kamailioSIPContactTable_TABLE_OID KAMAILIO_OID, 3, 1, 2, 1, 5, 7
+
 /*************************************************************
  * column number definitions for table kamailioSIPContactTable
  */
-#define COLUMN_KAMAILIOSIPCONTACTINDEX       1
+#define COLUMN_KAMAILIOSIPCONTACTINDEX 1
 #define COLUMN_KAMAILIOSIPCONTACTDISPLAYNAME 2
-#define COLUMN_KAMAILIOSIPCONTACTURI         3
+#define COLUMN_KAMAILIOSIPCONTACTURI 3
 #define COLUMN_KAMAILIOSIPCONTACTLASTUPDATED 4
-#define COLUMN_KAMAILIOSIPCONTACTEXPIRY      5
-#define COLUMN_KAMAILIOSIPCONTACTPREFERENCE  6
+#define COLUMN_KAMAILIOSIPCONTACTEXPIRY 5
+#define COLUMN_KAMAILIOSIPCONTACTPREFERENCE 6
 
 #define kamailioSIPContactTable_COL_MIN 2
 #define kamailioSIPContactTable_COL_MAX 6

@@ -57,6 +57,14 @@ static const char* pua_rpc_publish_doc[2] = {
 	0
 };
 
+static const char* pua_rpc_send_publish_doc[2] = {
+	"Send publish request without waiting for the final reply, using a list "
+	"of string parameters: presentity uri, expires, event package, "
+	"content type, id, etag, outbound proxy, extra headers, "
+	" and body (optional)",
+	0
+};
+
 
 static int pua_rpc_publish_callback(ua_pres_t* hentity, sip_msg_t* reply)
 {
@@ -130,11 +138,11 @@ static int pua_rpc_publish_callback(ua_pres_t* hentity, sip_msg_t* reply)
 }
 
 
-static void pua_rpc_publish(rpc_t* rpc, void* c)
+static void pua_rpc_publish_mode(rpc_t* rpc, void* c, int mode)
 {
 	str pres_uri, expires, event, content_type, id, etag,
 		outbound_proxy, extra_headers, body;
-	rpc_delayed_ctx_t* dctx;
+	rpc_delayed_ctx_t* dctx = NULL;
 	int exp, sign, ret, err_ret, sip_error;
 	char err_buf[MAX_REASON_LEN];
 	struct sip_uri uri;
@@ -242,24 +250,30 @@ static void pua_rpc_publish(rpc_t* rpc, void* c)
 		publ.body= &body;
 	}
 
-	dctx = rpc->delayed_ctx_new(c);
-	if (dctx == 0) {
-		LM_ERR("internal error: failed to create context\n");
-		rpc->fault(c, 500, "Internal error: failed to create context");
-		return;
+	if(mode==1) {
+		dctx = rpc->delayed_ctx_new(c);
+		if (dctx == 0) {
+			LM_ERR("internal error: failed to create context\n");
+			rpc->fault(c, 500, "Internal error: failed to create context");
+			return;
+		}
+		publ.cb_param = dctx;
+		publ.source_flag = RPC_ASYN_PUBLISH;
+	} else {
+		publ.source_flag = RPC_PUBLISH;
 	}
-	publ.cb_param = dctx;
-	publ.source_flag = MI_ASYN_PUBLISH;
 
 	ret = pua_rpc_api.send_publish(&publ);
 	LM_DBG("pua send_publish returned %d\n", ret);
 
-	if (dctx->reply_ctx != 0) {
-		/* callback was not executed or its execution failed */
-		rpc = &dctx->rpc;
-		c = dctx->reply_ctx;
-	} else {
-		return;
+	if(mode==1) {
+		if (dctx->reply_ctx != 0) {
+			/* callback was not executed or its execution failed */
+			rpc = &dctx->rpc;
+			c = dctx->reply_ctx;
+		} else {
+			return;
+		}
 	}
 
 	if (ret < 0) {
@@ -271,18 +285,36 @@ static void pua_rpc_publish(rpc_t* rpc, void* c)
 		} else {
 			rpc->fault(c, 500, "RPC/PUBLISH error");
 		}
-		rpc->delayed_ctx_close(dctx);
+		if(mode==1) {
+			rpc->delayed_ctx_close(dctx);
+		}
 	}
 
 	if (ret == 418) {
 		rpc->fault(c, 500, "Wrong ETag");
-		rpc->delayed_ctx_close(dctx);
+		if(mode==1) {
+			rpc->delayed_ctx_close(dctx);
+		}
 	}
-
 
 	return;
 }
 
+/**
+ *
+ */
+static void pua_rpc_publish(rpc_t* rpc, void* c)
+{
+	pua_rpc_publish_mode(rpc, c, 1);
+}
+
+/**
+ *
+ */
+static void pua_rpc_send_publish(rpc_t* rpc, void* c)
+{
+	pua_rpc_publish_mode(rpc, c, 0);
+}
 
 /**
  * rpc pua.subscribe
@@ -305,8 +337,8 @@ static void pua_rpc_subscribe(rpc_t* rpc, void* ctx)
 		return;
 	}
 	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0) {
-		LM_ERR("bad pres uri\n");
-		rpc->fault(ctx, 400, "Invalid pres URI");
+		LM_ERR("bad presentity uri\n");
+		rpc->fault(ctx, 400, "Invalid presentity URI");
 		return;
 	}
 	if(parse_uri(watcher_uri.s, watcher_uri.len, &uri)<0) {
@@ -326,7 +358,7 @@ static void pua_rpc_subscribe(rpc_t* rpc, void* ctx)
 	subs.contact= &watcher_uri;
 
 	subs.expires= vexp;
-	subs.source_flag |= MI_SUBSCRIBE;
+	subs.source_flag |= RPC_SUBSCRIBE;
 	subs.event= get_event_flag(&event);
 	if(subs.event< 0) {
 		LM_ERR("unknown event\n");
@@ -348,6 +380,7 @@ static const char* pua_rpc_subscribe_doc[2] = {
 
 rpc_export_t pua_rpc_ex[] = {
 	{"pua.publish", pua_rpc_publish, pua_rpc_publish_doc, 0},
+	{"pua.send_publish", pua_rpc_send_publish, pua_rpc_send_publish_doc, 0},
 	{"pua.subscribe", pua_rpc_subscribe, pua_rpc_subscribe_doc, 0},
 	{0, 0, 0, 0}
 };
@@ -393,7 +426,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (pua_rpc_api.register_puacb(MI_ASYN_PUBLISH, pua_rpc_publish_callback, NULL) < 0) {
+	if (pua_rpc_api.register_puacb(RPC_ASYN_PUBLISH, pua_rpc_publish_callback, NULL) < 0) {
 		LM_ERR("could not register callback\n");
 		return -1;
 	}

@@ -90,7 +90,7 @@
     "reason": {
       "type": "string",
       "default": null,
-      "null": false
+      "null": true
     },
     "version": {
       "type": "int",
@@ -135,7 +135,7 @@
     "user_agent": {
       "type": "string",
       "default": "",
-      "null": false
+      "null": true
     }
   ]
 }

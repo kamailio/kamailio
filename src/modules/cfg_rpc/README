@@ -89,7 +89,7 @@ Chapter 1. Admin Guide
    such as debug, tcp/sctp/dns attributes, without the need of restart.
 
    RPC connector modules, such as “ctl” or “xmlrpc”, although not a
-   dependecy, should be loaded in order to execute the RPC commands
+   dependency, should be loaded in order to execute the RPC commands
    exported by this module. When the ctl module is loaded, the tool
    'kamcmd' can be used to execute the RPC commands implemented in this
    module.
@@ -147,12 +147,15 @@ Chapter 1. Admin Guide
 3.2. cfg.get
 
    cfg.get - Get the value of a configuration variable. The function
-   accepts two parameters: group name, variable name. The group name can
-   optionally contain the group instance id, for example foo[5].
+   accepts two parameters: group name, variable name, but if all the
+   elements belonging to a certain group is wanted to be retrieved then
+   only the group name would suffice as the function parameter. The group
+   name can optionally contain the group instance id, for example foo[5].
 
    Example 1.2. Use cfg.get RPC command
 ...
 # kamcmd cfg.get core debug
+# kamcmd cfg.get tm
 ...
 
 3.3. cfg.seti

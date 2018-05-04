@@ -83,7 +83,7 @@ void init_custom_user(pv_spec_t *custom_user_avp_p)
  * \param custom_user to be returned
  * \return <0 for failure
  */
-inline static int get_custom_user(struct sip_msg *req, str *custom_user) {
+static int get_custom_user(struct sip_msg *req, str *custom_user) {
 	pv_value_t pv_val;
 
 	if (custom_user_avp) {
@@ -121,7 +121,7 @@ void credit_control_session_callback(int event, void* session) {
  * @param func - the name of the calling function, for debugging purposes
  * @returns 1 on success or 0 on failure
  */
-inline int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
+int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
         int flags, int vendorid, int data_do, const char *func) {
     AAA_AVP *avp;
     if (vendorid != 0) flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
@@ -145,7 +145,7 @@ inline int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
     return 1;
 }
 
-inline int Ro_add_cc_request(AAAMessage *msg, unsigned int cc_request_type, unsigned int cc_request_number) {
+int Ro_add_cc_request(AAAMessage *msg, unsigned int cc_request_type, unsigned int cc_request_number) {
     char x[4];
     set_4bytes(x, cc_request_type);
     int success = Ro_add_avp(msg, x, 4, AVP_CC_Request_Type, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
@@ -157,7 +157,7 @@ inline int Ro_add_cc_request(AAAMessage *msg, unsigned int cc_request_type, unsi
 
 }
 
-inline int Ro_add_event_timestamp(AAAMessage *msg, time_t now) {
+int Ro_add_event_timestamp(AAAMessage *msg, time_t now) {
     char x[4];
     str s = {x, 4};
     uint32_t ntime = htonl(now + EPOCH_UNIX_TO_EPOCH_NTP);
@@ -167,7 +167,7 @@ inline int Ro_add_event_timestamp(AAAMessage *msg, time_t now) {
 
 }
 
-inline int Ro_add_user_equipment_info(AAAMessage *msg, unsigned int type, str value) {
+int Ro_add_user_equipment_info(AAAMessage *msg, unsigned int type, str value) {
     AAA_AVP_LIST list;
     str group;
     char x[4];
@@ -187,7 +187,7 @@ inline int Ro_add_user_equipment_info(AAAMessage *msg, unsigned int type, str va
     return Ro_add_avp(msg, group.s, group.len, AVP_User_Equipment_Info, AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
+int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
     char x[4];
     str s = {x, 4};
     uint32_t code = htonl(term_code);
@@ -196,7 +196,7 @@ inline int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
     return Ro_add_avp(msg, s.s, s.len, AVP_Termination_Cause, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_vendor_specific_termination_cause(AAAMessage *msg, unsigned int term_code) {
+int Ro_add_vendor_specific_termination_cause(AAAMessage *msg, unsigned int term_code) {
     char x[4];
     str s = {x, 4};
     uint32_t code = htonl(term_code);
@@ -205,14 +205,14 @@ inline int Ro_add_vendor_specific_termination_cause(AAAMessage *msg, unsigned in
     return Ro_add_avp(msg, s.s, s.len, VS_TERMCODE, AAA_AVP_FLAG_VENDOR_SPECIFIC, 10, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_vendor_specific_termination_reason(AAAMessage *msg, str* reason) {
+int Ro_add_vendor_specific_termination_reason(AAAMessage *msg, str* reason) {
     return Ro_add_avp(msg, reason->s, reason->len, VS_TERMREASON, AAA_AVP_FLAG_VENDOR_SPECIFIC, 10, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
 
 
 /* called only when building stop record AVPS */
-inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used_unit, int active_rating_group, int active_service_identifier) {
+int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used_unit, int active_rating_group, int active_service_identifier) {
     char x[4];
     AAA_AVP_LIST used_list, mscc_list;
     str used_group;
@@ -254,7 +254,7 @@ inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used
     return Ro_add_avp(msg, used_group.s, used_group.len, AVP_Multiple_Services_Credit_Control, AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int requested_unit, int used_unit, int active_rating_group, int active_service_identifier) {
+int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int requested_unit, int used_unit, int active_rating_group, int active_service_identifier) {
     // Add Multiple-Services AVP Indicator
     char x[4];
     set_4bytes(x, 1);
@@ -301,7 +301,7 @@ inline int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int 
     return Ro_add_avp(msg, group.s, group.len, AVP_Multiple_Services_Credit_Control, AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
 }
 
-inline int Ro_add_subscription_id(AAAMessage *msg, unsigned int type, str *subscription_id)//, struct sip_msg* sip_msg)
+int Ro_add_subscription_id(AAAMessage *msg, unsigned int type, str *subscription_id)//, struct sip_msg* sip_msg)
 {
     AAA_AVP_LIST list;
     str group;
@@ -330,7 +330,7 @@ inline int Ro_add_subscription_id(AAAMessage *msg, unsigned int type, str *subsc
  * @param acct_id - the accounting application id
  * @returns 1 on success or 0 on error
  */
-inline int Ro_add_vendor_specific_appid(AAAMessage *msg, unsigned int vendor_id, unsigned int auth_id, unsigned int acct_id) {
+int Ro_add_vendor_specific_appid(AAAMessage *msg, unsigned int vendor_id, unsigned int auth_id, unsigned int acct_id) {
     AAA_AVP_LIST list;
     str group;
     char x[4];
@@ -660,7 +660,7 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     LM_DBG("Sending CCR Diameter message.\n");
     ro_session->last_event_timestamp_backup = ro_session->last_event_timestamp;
     ro_session->last_event_timestamp = get_current_time_micro(); /*this is to make sure that if we get a term request now that we don't double bill for this time we are about to bill for in the interim */
-    
+
     cdpb.AAASessionsUnlock(auth->hash);
 
     if (ro_forced_peer.len > 0) {
@@ -760,7 +760,7 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
     goto success;
 
 error:
-    counter_inc(ims_charging_cnts_h.failed_interim_ccr);  
+    counter_inc(ims_charging_cnts_h.failed_interim_ccr);
     if (ro_cca_data)
         Ro_free_CCA(ro_cca_data);
 
@@ -985,7 +985,7 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
 
     if (!cca) {
         LM_ERR("Error in termination CCR.\n");
-        counter_inc(ims_charging_cnts_h.failed_final_ccrs); 
+        counter_inc(ims_charging_cnts_h.failed_final_ccrs);
         return;
     }
 
@@ -993,7 +993,7 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
 
     if (ro_cca_data == NULL) {
         LM_DBG("Could not parse CCA message response.\n");
-        counter_inc(ims_charging_cnts_h.failed_final_ccrs); 
+        counter_inc(ims_charging_cnts_h.failed_final_ccrs);
         return;
     }
 
@@ -1012,7 +1012,7 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
     return;
 
 error:
-    counter_inc(ims_charging_cnts_h.failed_final_ccrs);      
+    counter_inc(ims_charging_cnts_h.failed_final_ccrs);
     Ro_free_CCA(ro_cca_data);
     if (!is_timeout && cca) {
         cdpb.AAAFreeMessage(&cca);
@@ -1071,14 +1071,16 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     }
 
     //getting asserted identity
-    if ((asserted_identity = cscf_get_asserted_identity(msg, 0)).len == 0) {
-        LM_DBG("No P-Asserted-Identity hdr found. Using From hdr for asserted_identity");
-        asserted_identity = dlg->from_uri;
-        if (asserted_identity.len > 0 && asserted_identity.s) {
-            p=(char*)memchr(asserted_identity.s, ';',asserted_identity.len);
-            if (p) 
-                asserted_identity.len = (p-asserted_identity.s);
-        }
+    if (get_custom_user(msg, &asserted_identity) == -1) {
+      if ((asserted_identity = cscf_get_asserted_identity(msg, 0)).len == 0) {
+          LM_DBG("No P-Asserted-Identity hdr found. Using From hdr for asserted_identity");
+          asserted_identity = dlg->from_uri;
+          if (asserted_identity.len > 0 && asserted_identity.s) {
+              p=(char*)memchr(asserted_identity.s, ';',asserted_identity.len);
+              if (p)
+                  asserted_identity.len = (p-asserted_identity.s);
+          }
+      }
     }
 
     //getting called asserted identity
@@ -1251,13 +1253,13 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     counter_inc(ims_charging_cnts_h.initial_ccrs);
     counter_inc(ims_charging_cnts_h.active_ro_sessions);
 
-    if (free_called_asserted_identity) shm_free(called_asserted_identity.s); // shm_malloc in cscf_get_public_identity_from_requri	
+    if (free_called_asserted_identity) shm_free(called_asserted_identity.s); // shm_malloc in cscf_get_public_identity_from_requri
     return RO_RETURN_BREAK;
 
 error:
     LM_DBG("Trying to reserve credit on initial INVITE failed.\n");
 
-    if (free_called_asserted_identity) shm_free(called_asserted_identity.s); // shm_malloc in cscf_get_public_identity_from_requri	
+    if (free_called_asserted_identity) shm_free(called_asserted_identity.s); // shm_malloc in cscf_get_public_identity_from_requri
     Ro_free_CCR(ro_ccr_data);
     if (cc_acc_session) {
         cdpb.AAASessionsUnlock(cc_acc_session->hash);
@@ -1323,7 +1325,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
 		create_cca_result_code(0);
         goto error0;
     }
-    
+
     LM_DBG("Ro result code is [%d]\n", (int)ro_cca_data->resultcode);
     create_cca_result_code((int)ro_cca_data->resultcode);
     if (ro_cca_data->resultcode != 2001) {
@@ -1356,12 +1358,12 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
 			}
 		}
 	}
-	
+
 	/* create the AVPs cca_redirect_uri and cca_fui_action  for export to cfg file */
 	create_cca_fui_avps(fui_action, redirecturi);
-	
+
 	/* check result code at mscc level */
-	if (ro_cca_data->mscc->resultcode != 2001) {
+	if (ro_cca_data->mscc->resultcode && ro_cca_data->mscc->resultcode != 2001) {
 		LM_DBG("CCA failure at MSCC level with resultcode [%d]\n", ro_cca_data->mscc->resultcode);
 		error_code = RO_RETURN_FALSE;
         goto error1;
@@ -1391,7 +1393,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     LM_DBG("Freeing CCA message\n");
     cdpb.AAAFreeMessage(&cca);
 
-    link_ro_session(ssd->ro_session, 0); 
+    link_ro_session(ssd->ro_session, 0);
 
     if (ro_db_mode == DB_MODE_REALTIME) {
         ssd->ro_session->flags |= RO_SESSION_FLAG_NEW;
@@ -1524,7 +1526,7 @@ static int create_cca_fui_avps(int action, str* redirecturi) {
     redirecturi_avp_name.s.len = RO_AVP_CCA_FUI_REDIRECT_URI_LENGTH;
     char buf[10];
 	int rc;
-	
+
     action_avp_val.n = action;
     action_avp_val.s.len = snprintf(buf, 10, "%i", action);
     action_avp_val.s.s = buf;
@@ -1535,7 +1537,7 @@ static int create_cca_fui_avps(int action, str* redirecturi) {
         LM_ERR("Couldn't create ["RO_AVP_CCA_FUI_ACTION"] AVP\n");
     else
         LM_DBG("Created AVP ["RO_AVP_CCA_FUI_ACTION"] successfully: value=[%d]\n", action);
-	
+
 	if (redirecturi && redirecturi->len >0 && redirecturi->s) {
 		redirecturi_avp_val.s.len = redirecturi->len;
 		redirecturi_avp_val.s.s = redirecturi->s;
@@ -1547,7 +1549,7 @@ static int create_cca_fui_avps(int action, str* redirecturi) {
 		else
 			LM_DBG("Created AVP ["RO_AVP_CCA_FUI_REDIRECT_URI"] successfully: value=[%.*s]\n", redirecturi->len, redirecturi->s);
 	}
-	
+
     return 1;
 }
 

@@ -195,7 +195,7 @@ modparam("mtree", "db_table", "mtrees")
 
 3.3. mtree (string)
 
-   Definition of memory tree with using a prameters format string. The
+   Definition of memory tree with using a parameters format string. The
    parameter names can be:
      * name - the name of the tree to be used for referencing inside
        configuration file.

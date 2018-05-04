@@ -35,7 +35,8 @@
 	    <para>
 		<emphasis>cfg.get</emphasis> - Get the value of
 		a configuration variable. The function accepts two parameters:
-		group name, variable name. The group name can optionally contain the
+		group name, variable name, but if all the elements belonging to a certain group is wanted to be retrieved
+		then only the group name would suffice as the function parameter. The group name can optionally contain the
 		group instance id, for example foo[5].
 	    </para>
 		<example>
@@ -43,6 +44,7 @@
 		<programlisting format="linespecific">
 ...
 # &sercmd; cfg.get core debug
+# &sercmd; cfg.get tm
 ...
 </programlisting>
 		</example>

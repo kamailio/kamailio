@@ -86,18 +86,19 @@
 	<section id="jsonrpcs.p.pretty_format">
 		<title><varname>pretty_format</varname> (int)</title>
 		<para>
-			Pretty format for JSON-RPC response document.
+			Pretty format for JSON-RPC response document if set to 1. To
+			disable, set to 0.
 		</para>
 		<para>
 		<emphasis>
-			Default value is '0'.
+			Default value is '1' (on).
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>pretty_format</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpcs", "pretty_format", 1)
+modparam("jsonrpcs", "pretty_format", 0)
 ...
 </programlisting>
 		</example>
@@ -367,7 +368,7 @@ modparam("jsonrpcs", "dgram_user", "root")
 		<title><varname>dgram_timeout</varname> (int)</title>
 		<para>
 		The reply will expire after trying to sent it for socket_timeout
-		miliseconds.
+		milliseconds.
 		</para>
 		<para>
 		<emphasis>
@@ -459,6 +460,7 @@ event_route[xhttp:request] {
 		<programlisting format="linespecific">
 ...
 jsonrpc_exec('{"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
+xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
 ...
 </programlisting>
 	    </example>
@@ -540,7 +542,7 @@ jsonrpc_exec('{"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
  	<section>
 	    <title>JSONRPC Over FIFO</title>
 	    <para>
-			This module can retrive JSONRPC requests via a local FIFO file. To
+			This module can retrieve JSONRPC requests via a local FIFO file. To
 			enable this feature, 'fifo_name' parameter must be set and
 			'transport' parameter has to be 0 or 2.
 		</para>
@@ -586,7 +588,7 @@ rm /tmp/kamailio_jsonrpc_reply_fifo
  	<section>
 	    <title>JSONRPC Over DATAGRAM</title>
 		<para>
-			This module can retrive JSONRPC requests via a UNIX socket file
+			This module can retrieve JSONRPC requests via a UNIX socket file
 			or UDP IPv4/IPv6 socket. To enable this feature, 'dgram_socket'
 			parameter must be set and 'transport' parameter has to be 0 or 4.
 		</para>

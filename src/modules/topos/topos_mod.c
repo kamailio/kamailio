@@ -26,11 +26,12 @@
  * Module: \ref topos
  */
 
-/*! \defgroup topoh Kamailio :: Topology stripping
+/*! \defgroup topos Kamailio :: Topology stripping
  *
  * This module removes the SIP routing headers that show topology details.
  * The script interpreter gets the SIP messages with full content, so all
  * existing functionality is preserved.
+ * @{
  */
 
 #include <stdio.h>
@@ -398,6 +399,13 @@ int tps_msg_sent(sr_event_param_t *evp)
 			local = 1;
 		}
 
+		if(local==1 && dialog==0) {
+			if((get_cseq(&msg)->method_id) & (METHOD_OPTIONS|METHOD_NOTIFY)) {
+				/* skip local out-of-dialog requests (e.g., keepalive) */
+				goto done;
+			}
+		}
+
 		tps_request_sent(&msg, dialog, local);
 	} else {
 		/* reply */
@@ -517,3 +525,5 @@ int bind_topos(topos_api_t *api)
 
 	return 0;
 }
+
+/** @} */

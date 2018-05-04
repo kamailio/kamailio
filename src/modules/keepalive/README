@@ -196,7 +196,7 @@ Chapter 2. Developer Guide
 
    Returned values:
      * 0 if ok
-     * -1 if an error occured
+     * -1 if an error occurred
 
 1.2. Examples
 

@@ -52,7 +52,7 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. rand_event()
-              4.2. rand_set_prob(probabiltiy)
+              4.2. rand_set_prob(probability)
               4.3. rand_reset_prob()
               4.4. rand_get_prob()
               4.5. sleep(time)
@@ -141,7 +141,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. rand_event()
-        4.2. rand_set_prob(probabiltiy)
+        4.2. rand_set_prob(probability)
         4.3. rand_reset_prob()
         4.4. rand_get_prob()
         4.5. sleep(time)
@@ -291,7 +291,7 @@ modparam("cfgutils", "lock_set_size", 4)
 4. Functions
 
    4.1. rand_event()
-   4.2. rand_set_prob(probabiltiy)
+   4.2. rand_set_prob(probability)
    4.3. rand_reset_prob()
    4.4. rand_get_prob()
    4.5. sleep(time)
@@ -326,7 +326,7 @@ if (rand_event()) {
 # normal message processing follows
 ...
 
-4.2. rand_set_prob(probabiltiy)
+4.2. rand_set_prob(probability)
 
    Set the “probability” of the decision.
 
@@ -339,7 +339,7 @@ rand_set_prob("4");
 
 4.3. rand_reset_prob()
 
-   Reset the probability back to the inital value.
+   Reset the probability back to the initial value.
 
    Example 1.7. rand_reset_prob() usage
 ...
@@ -382,7 +382,7 @@ sleep("1");
 
    Example 1.10. usleep usage
 ...
-# wait 5 miliseconds
+# wait 5 milliseconds
 usleep("5000");
 ...
 
@@ -508,7 +508,7 @@ if(is_gflag("4"))
 
 4.15. lock(key)
 
-   Lock the key. Can be used to syncronize operations in config file, a
+   Lock the key. Can be used to synchronize operations in config file, a
    hash id is computed over the key and appropriate lock is set in the
    lock array controlled by parameter "lock_set_size". Do not use lock()
    after another lock() unless you are sure the keys hit different array
@@ -632,7 +632,7 @@ core_hash("$ci", "", 4);
    5.9. cfgutils.get_gflags
 
    Functions that check or change some global flags accepts one parameter
-   which is the flag bitmap/mask specifing the corresponding flags. It is
+   which is the flag bitmap/mask specifying the corresponding flags. It is
    not possible to specify directly the flag position that should be
    changed as in the functions available in the routing script.
 
@@ -650,7 +650,7 @@ $ kamcmd cfgutils.rand_set_prob 10
 
 5.2. cfgutils.rand_reset_prob
 
-   Reset the probability value to the inital start value.
+   Reset the probability value to the initial start value.
 
    This command don't need a parameter.
 

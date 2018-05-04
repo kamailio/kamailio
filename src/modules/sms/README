@@ -170,7 +170,7 @@ modem_param      = name "=" value
      * t=to (optional) - uri for sip header TO. Default is NULL.
      * s=scan (optional) - Values: 0: NOT SCAN uri from body sms, use URI
        in t=to. 1: SCAN uri from body sms (normal mode, default mode,
-       clasic mode) 2: SCAN MIX (both modes), First SCAN Default is 1
+       classic mode) 2: SCAN MIX (both modes), First SCAN Default is 1
        (SCAN).
 
 Note

@@ -147,8 +147,8 @@ modparam("uac_redirect","default_filter","deny")
 		<section>
 			<title><varname>deny_filter</varname> (string)</title>
 			<para>
-			The regular expression for default deny filtering. It make sens
-			to be defined on only if the <varname>default_filter</varname>
+			The regular expression for default deny filtering. It makes sense
+			to be defined only if the <varname>default_filter</varname>
 			parameter is set to <quote>accept</quote>. All contacts matching
 			the <varname>deny_filter</varname> will be rejected; the rest 
 			of them will be accepted for redirection.
@@ -179,8 +179,8 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
 		<section>
 			<title><varname>accept_filter</varname> (string)</title>
 			<para>
-			The regular expression for default accept filtering. It make sens
-			to be defined on only if the <varname>default_filter</varname>
+			The regular expression for default accept filtering. It makes sense
+			to be defined only if the <varname>default_filter</varname>
 			parameter is set to <quote>deny</quote>. All contacts matching
 			the <varname>accept_filter</varname> will be accepted; the rest 
 			of them will be rejected for redirection.

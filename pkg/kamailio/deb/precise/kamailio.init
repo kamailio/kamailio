@@ -137,7 +137,7 @@ case "$1" in
   stop)
 	log_daemon_msg "Stopping $DESC: $NAME"
 	start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE \
-		--exec $DAEMON
+		--exec $DAEMON --retry 5
 	log_end_msg 0
 	;;
   restart|force-reload)
@@ -145,7 +145,6 @@ case "$1" in
 	create_radius_seqfile
 
 	$0 stop
-	sleep 1
 	$0 start
 	;;
   status)

@@ -34,6 +34,10 @@ enum { FL_WHITE=1, FL_YELLOW, FL_GREEN, FL_RED, FL_BLUE, FL_MAGENTA,
 
 typedef unsigned int flag_t;
 
+#define KSR_XFLAGS_SIZE 2
+#define KSR_MAX_XFLAG \
+	((unsigned int)(KSR_XFLAGS_SIZE * sizeof(flag_t) * CHAR_BIT - 1 ))
+
 #define MAX_FLAG  ((unsigned int)( sizeof(flag_t) * CHAR_BIT - 1 ))
 
 struct sip_msg;
@@ -42,6 +46,10 @@ int setflag( struct sip_msg* msg, flag_t flag );
 int resetflag( struct sip_msg* msg, flag_t flag );
 int isflagset( struct sip_msg* msg, flag_t flag );
 
+
+int setxflag(struct sip_msg* msg, flag_t flag);
+int resetxflag(struct sip_msg* msg, flag_t flag);
+int isxflagset(struct sip_msg* msg, flag_t flag);
 
 /* Script flag functions. Script flags are global flags that keep their
  * value regardless of the SIP message being processed.

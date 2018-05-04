@@ -133,8 +133,8 @@ err:
  * @return pkg_malloc'ed header block on success (with *l set to its length),
  *         0 on error.
  */
-static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
-		struct socket_info* ssock, int* l)
+static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
+		struct socket_info* ssock, str* hout)
 {
 	struct str_list sl, *last, *i, *foo;
 	int p, frag_len, total_len;
@@ -142,6 +142,8 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 	str *sock_name, *portname;
 	struct dest_info di;
 
+	hout->s = NULL;
+	hout->len = 0;
 	ret = 0; /* pessimist: assume failure */
 	total_len = 0;
 	last = &sl;
@@ -209,7 +211,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 
 	if(total_len==0) {
 		LM_DBG("empty result for headers block\n");
-		goto error;
+		return 1;;
 	}
 
 	/* construct a single header block now */
@@ -227,8 +229,9 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 		dst += foo->s.len;
 		pkg_free(foo);
 	}
-	*l = total_len;
-	return ret;
+	hout->len = total_len;
+	hout->s = ret;
+	return 0;
 
 error:
 	i = sl.next;
@@ -237,8 +240,7 @@ error:
 		i = i->next;
 		pkg_free(foo);
 	}
-	*l = 0;
-	return 0;
+	return -1;
 }
 
 
@@ -500,10 +502,9 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 	if (rpc_uac_check_msg(rpc, c, &faked_msg, &method, &body, &fromtag,
 				&cseq_is, &cseq, &callid)<0)
 		goto error;
-	hfb.s=get_hfblock(nexthop.len? &nexthop: &ruri, faked_msg.headers,
-			PROTO_NONE, ssock, &hfb.len);
-	if (hfb.s==0){
-		rpc->fault(c, 500, "out of memory");
+	if(get_hfblock(nexthop.len? &nexthop: &ruri, faked_msg.headers,
+			PROTO_NONE, ssock, &hfb)<0) {
+		rpc->fault(c, 500, "Failed to build headers block");
 		goto error;
 	}
 	/* proceed to transaction creation */
@@ -534,7 +535,7 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 
 	memset(&uac_req, 0, sizeof(uac_req));
 	uac_req.method=&method;
-	uac_req.headers=&hfb;
+	if(hfb.s!=NULL && hfb.len>0) uac_req.headers=&hfb;
 	uac_req.body=body.len?&body:0;
 	uac_req.dialog=&dlg;
 	if (reply_wait){
@@ -732,10 +733,9 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 		LM_ERR("checking values failed\n");
 		goto error;
 	}
-	hfb.s=get_hfblock(nexthop->len? nexthop: ruri, faked_msg.headers,
-			PROTO_NONE, ssock, &hfb.len);
-	if (hfb.s==0){
-		LM_ERR("out of memory");
+	if(get_hfblock(nexthop->len? nexthop: ruri, faked_msg.headers,
+			PROTO_NONE, ssock, &hfb)<0) {
+		LM_ERR("failed to get the block of headers");
 		goto error;
 	}
 	/* proceed to transaction creation */
@@ -766,7 +766,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 
 	memset(&uac_req, 0, sizeof(uac_req));
 	uac_req.method=method;
-	uac_req.headers=&hfb;
+	if(hfb.s!=NULL && hfb.len>0) uac_req.headers=&hfb;
 	uac_req.body=body->len?body:0;
 	uac_req.dialog=&dlg;
 

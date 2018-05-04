@@ -28,7 +28,7 @@
  */
 
 /**
- * @defgroup Textops Various text operatoins on messages
+ * @defgroup textops Various text operations on messages
  * @brief Kamailio textops module
  */
 
@@ -116,14 +116,18 @@ static int set_multibody_2(struct sip_msg* msg, char*, char *, char *);
 static int set_multibody_3(struct sip_msg* msg, char*, char *, char *);
 static int append_multibody_2(struct sip_msg* msg, char*, char *);
 static int append_multibody_3(struct sip_msg* msg, char*, char *, char *);
+static int append_multibody_hex_2(struct sip_msg* msg, char*, char *);
+static int append_multibody_hex_3(struct sip_msg* msg, char*, char *, char *);
 static int fixup_multibody_f(void** param, int param_no);
-static int remove_multibody_f(struct sip_msg *msg, char *);
+static int remove_multibody_f(struct sip_msg *msg, char *p1, char *p2);
 static int get_body_part_raw_f(sip_msg_t* msg, char* ctype, char* ovar);
 static int get_body_part_f(sip_msg_t* msg, char* ctype, char* ovar);
 static int fixup_get_body_part(void** param, int param_no);
 static int is_method_f(struct sip_msg* msg, char* , char *);
 static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
 static int in_list_f(struct sip_msg* _msg, char* _subject, char* _list,
+		char* _sep);
+static int in_list_prefix_f(struct sip_msg* _msg, char* _subject, char* _list,
 		char* _sep);
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 );
 static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2 );
@@ -139,7 +143,9 @@ static int fixup_method(void** param, int param_no);
 static int add_header_fixup(void** param, int param_no);
 static int fixup_body_type(void** param, int param_no);
 static int fixup_in_list(void** param, int param_no);
+static int fixup_in_list_prefix(void** param, int param_no);
 static int fixup_free_in_list(void** param, int param_no);
+static int fixup_free_in_list_prefix(void** param, int param_no);
 int fixup_regexpNL_none(void** param, int param_no);
 static int fixup_search_hf(void** param, int param_no);
 static int fixup_subst_hf(void** param, int param_no);
@@ -208,7 +214,7 @@ static cmd_export_t cmds[]={
 	{"remove_hf_re",     (cmd_function)remove_hf_re_f,    1,
 		fixup_regexp_null, fixup_free_regexp_null,
 		ANY_ROUTE},
-	{"remove_hf_exp",     (cmd_function)remove_hf_exp_f,  1,
+	{"remove_hf_exp",     (cmd_function)remove_hf_exp_f,  2,
 		fixup_regexp_regexp, fixup_free_regexp_regexp,
 		ANY_ROUTE},
 	{"is_present_hf",    (cmd_function)is_present_hf_f,   1,
@@ -259,6 +265,9 @@ static cmd_export_t cmds[]={
 	{"in_list", (cmd_function)in_list_f, 3, fixup_in_list,
 		fixup_free_in_list,
 		ANY_ROUTE},
+	{"in_list_prefix", (cmd_function)in_list_prefix_f, 3,
+		fixup_in_list_prefix, fixup_free_in_list_prefix,
+		ANY_ROUTE},
 	{"cmp_str",  (cmd_function)cmp_str_f, 2,
 		fixup_spve_spve, 0,
 		ANY_ROUTE},
@@ -291,6 +300,12 @@ static cmd_export_t cmds[]={
 		fixup_spve_spve, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"append_body_part",     (cmd_function)append_multibody_3,    3,
+		fixup_multibody_f, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"append_body_part_hex",     (cmd_function)append_multibody_hex_2,    2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"append_body_part_hex",     (cmd_function)append_multibody_hex_3,    3,
 		fixup_multibody_f, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"remove_body_part",     (cmd_function)remove_multibody_f,    1,
@@ -378,30 +393,28 @@ static int search_body_f(struct sip_msg* msg, char* key, char* str2)
 	return search_body_helper_f(msg, (regex_t*)key);
 }
 
-int search_append_f(struct sip_msg* msg, char* key, char* str2)
+int search_append_helper(sip_msg_t* msg, regex_t* re, str* val)
 {
 	struct lump* l;
 	regmatch_t pmatch;
 	char* s;
-	int len;
 	char *begin;
 	int off;
 
 	begin=get_header(msg); /* msg->orig/buf previously .. uri problems */
 	off=begin-msg->buf;
 
-	if (regexec((regex_t*) key, begin, 1, &pmatch, 0)!=0) return -1;
+	if (regexec(re, begin, 1, &pmatch, 0)!=0) return -1;
 	if (pmatch.rm_so!=-1){
 		if ((l=anchor_lump(msg, off+pmatch.rm_eo, 0, 0))==0)
 			return -1;
-		len=strlen(str2);
-		s=pkg_malloc(len+1);
+		s=pkg_malloc(val->len+1);
 		if (s==0){
 			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str2, len);
-		if (insert_new_lump_after(l, s, len, 0)==0){
+		memcpy(s, val->s, val->len);
+		if (insert_new_lump_after(l, s, val->len, 0)==0){
 			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
@@ -411,12 +424,36 @@ int search_append_f(struct sip_msg* msg, char* key, char* str2)
 	return -1;
 }
 
-static int search_append_body_f(struct sip_msg* msg, char* key, char* str2)
+int search_append_f(struct sip_msg* msg, char* key, char* str2)
+{
+	str s;
+
+	s.s = str2;
+	s.len = strlen(str2);
+	return search_append_helper(msg, (regex_t*)key, &s);
+}
+
+static int ki_search_append(sip_msg_t *msg, str *ematch, str *val)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, ematch->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", ematch->len, ematch->s);
+		return -1;
+	}
+	ret = search_append_helper(msg, &mre, val);
+	regfree(&mre);
+
+	return ret;
+}
+
+static int search_append_body_helper(sip_msg_t* msg, regex_t *re, str* val)
 {
 	struct lump* l;
 	regmatch_t pmatch;
 	char* s;
-	int len;
 	int off;
 	str body;
 
@@ -433,18 +470,17 @@ static int search_append_body_f(struct sip_msg* msg, char* key, char* str2)
 
 	off=body.s-msg->buf;
 
-	if (regexec((regex_t*) key, body.s, 1, &pmatch, 0)!=0) return -1;
+	if (regexec(re, body.s, 1, &pmatch, 0)!=0) return -1;
 	if (pmatch.rm_so!=-1){
 		if ((l=anchor_lump(msg, off+pmatch.rm_eo, 0, 0))==0)
 			return -1;
-		len=strlen(str2);
-		s=pkg_malloc(len+1);
+		s=pkg_malloc(val->len+1);
 		if (s==0){
 			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str2, len);
-		if (insert_new_lump_after(l, s, len, 0)==0){
+		memcpy(s, val->s, val->len);
+		if (insert_new_lump_after(l, s, val->len, 0)==0){
 			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
@@ -454,6 +490,30 @@ static int search_append_body_f(struct sip_msg* msg, char* key, char* str2)
 	return -1;
 }
 
+static int search_append_body_f(struct sip_msg* msg, char* key, char* str2)
+{
+	str s;
+
+	s.s = str2;
+	s.len = strlen(str2);
+	return search_append_body_helper(msg, (regex_t*)key, &s);
+}
+
+static int ki_search_append_body(sip_msg_t *msg, str *ematch, str *val)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, ematch->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", ematch->len, ematch->s);
+		return -1;
+	}
+	ret = search_append_body_helper(msg, &mre, val);
+	regfree(&mre);
+
+	return ret;
+}
 
 static int replace_all_helper(sip_msg_t* msg, regex_t* re, str* val)
 {
@@ -1062,12 +1122,11 @@ static int check_multipart(struct sip_msg *msg)
 
 /* Filters multipart/mixed body by leaving out everything else except
  * first body part of given content type. */
-static int filter_body_f(struct sip_msg* msg, char* _content_type,
-		char* ignored)
+static int ki_filter_body(struct sip_msg* msg, str *content_type)
 {
 	char *start;
 	unsigned int len;
-	str *content_type, body;
+	str body;
 	str boundary = {0,0};
 
 	body.s = get_body(msg);
@@ -1088,7 +1147,6 @@ static int filter_body_f(struct sip_msg* msg, char* _content_type,
 	if(get_boundary(msg, &boundary)!=0) {
 		return -1;
 	}
-	content_type = (str *)_content_type;
 	start = body.s;
 	len = body.len;
 
@@ -1151,6 +1209,13 @@ err:
 	return -1;
 }
 
+/* Filters multipart/mixed body by leaving out everything else except
+ * first body part of given content type. */
+static int filter_body_f(struct sip_msg* msg, char* _content_type,
+		char* ignored)
+{
+	return ki_filter_body(msg, (str*)_content_type);
+}
 
 int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 {
@@ -1355,14 +1420,11 @@ static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	return is_present_hf_helper_f(msg, (gparam_t*)str_hf);
 }
 
-static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo)
+static int is_present_hf_re_helper(sip_msg_t* msg, regex_t *re)
 {
 	struct hdr_field *hf;
-	regex_t *re;
 	regmatch_t pmatch;
 	char c;
-
-	re = (regex_t*)key;
 
 	/* we need to be sure we have seen all HFs */
 	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
@@ -1385,6 +1447,26 @@ static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo)
 	return -1;
 }
 
+static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo)
+{
+	return is_present_hf_re_helper(msg, (regex_t*)key);
+}
+
+static int ki_is_present_hf_re(sip_msg_t* msg, str *ematch)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, ematch->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", ematch->len, ematch->s);
+		return -1;
+	}
+	ret = is_present_hf_re_helper(msg, &mre);
+	regfree(&mre);
+
+	return ret;
+}
 
 static int fixup_substre(void** param, int param_no)
 {
@@ -1495,7 +1577,7 @@ error:
 	return -1;
 }
 
-static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
+static int ki_set_body(sip_msg_t* msg, str* nb, str* nc)
 {
 	struct lump *anchor;
 	char* buf;
@@ -1503,31 +1585,14 @@ static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 	char* value_s;
 	int value_len;
 	str body = {0,0};
-	str nb = {0,0};
-	str nc = {0,0};
 
-	if(p1==0 || p2==0)
-	{
-		LM_ERR("invalid parameters\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)p1, &nb)!=0)
-	{
-		LM_ERR("unable to get p1\n");
-		return -1;
-	}
-	if(nb.s==NULL || nb.len == 0)
+	if(nb==NULL || nb->s==NULL || nb->len == 0)
 	{
 		LM_ERR("invalid body parameter\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_p)p2, &nc)!=0)
-	{
-		LM_ERR("unable to get p2\n");
-		return -1;
-	}
-	if(nc.s==NULL || nc.len == 0)
+
+	if(nc==NULL || nc->s==NULL || nc->len == 0)
 	{
 		LM_ERR("invalid content-type parameter\n");
 		return -1;
@@ -1573,7 +1638,7 @@ static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 	if (msg->content_length==0)
 	{
 		/* need to add Content-Length */
-		len = nb.len;
+		len = nb->len;
 		value_s=int2str(len, &value_len);
 		LM_DBG("content-length: %d (%s)\n", value_len, value_s);
 
@@ -1598,8 +1663,8 @@ static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 	}
 
 	/* add content-type */
-	if(msg->content_type==NULL || msg->content_type->body.len!=nc.len
-			|| strncmp(msg->content_type->body.s, nc.s, nc.len)!=0)
+	if(msg->content_type==NULL || msg->content_type->body.len!=nc->len
+			|| strncmp(msg->content_type->body.s, nc->s, nc->len)!=0)
 	{
 		if(msg->content_type!=NULL)
 			if(del_lump(msg, msg->content_type->name.s-msg->buf,
@@ -1608,7 +1673,7 @@ static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 				LM_ERR("failed to delete content type\n");
 				return -1;
 			}
-		value_len = nc.len;
+		value_len = nc->len;
 		len=sizeof("Content-Type: ") - 1 + value_len + CRLF_LEN;
 		buf=pkg_malloc(sizeof(char)*(len));
 
@@ -1618,7 +1683,7 @@ static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 			return -1;
 		}
 		memcpy(buf, "Content-Type: ", sizeof("Content-Type: ") - 1);
-		memcpy(buf+sizeof("Content-Type: ") - 1, nc.s, value_len);
+		memcpy(buf+sizeof("Content-Type: ") - 1, nc->s, value_len);
 		memcpy(buf+sizeof("Content-Type: ") - 1 + value_len, CRLF, CRLF_LEN);
 		if (insert_new_lump_after(anchor, buf, len, 0) == 0)
 		{
@@ -1635,28 +1700,25 @@ static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 		return -1;
 	}
 
-	buf=pkg_malloc(sizeof(char)*(nb.len));
+	buf=pkg_malloc(sizeof(char)*(nb->len));
 	if (buf==0)
 	{
 		LM_ERR("out of pkg memory\n");
 		return -1;
 	}
-	memcpy(buf, nb.s, nb.len);
-	if (insert_new_lump_after(anchor, buf, nb.len, 0) == 0)
+	memcpy(buf, nb->s, nb->len);
+	if (insert_new_lump_after(anchor, buf, nb->len, 0) == 0)
 	{
 		LM_ERR("failed to insert body lump\n");
 		pkg_free(buf);
 		return -1;
 	}
-	LM_DBG("new body: [%.*s]", nb.len, nb.s);
+	LM_DBG("new body: [%.*s]", nb->len, nb->s);
 	return 1;
 }
 
-static int set_rpl_body_f(struct sip_msg* msg, char* p1, char* p2)
+static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 {
-	char* buf;
-	int len;
-	int value_len;
 	str nb = {0,0};
 	str nc = {0,0};
 
@@ -1671,24 +1733,36 @@ static int set_rpl_body_f(struct sip_msg* msg, char* p1, char* p2)
 		LM_ERR("unable to get p1\n");
 		return -1;
 	}
-	if(nb.s==NULL || nb.len == 0)
-	{
-		LM_ERR("invalid body parameter\n");
-		return -1;
-	}
+
 	if(fixup_get_svalue(msg, (gparam_p)p2, &nc)!=0)
 	{
 		LM_ERR("unable to get p2\n");
 		return -1;
 	}
-	if(nc.s==NULL || nc.len == 0)
+
+	return ki_set_body(msg, &nb, &nc);
+}
+
+static int ki_set_rpl_body(sip_msg_t* msg, str* nb, str* nc)
+{
+	char* buf;
+	int len;
+	int value_len;
+
+	if(nb==NULL || nb->s==NULL || nb->len == 0)
+	{
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+
+	if(nc==NULL || nc->s==NULL || nc->len == 0)
 	{
 		LM_ERR("invalid content-type parameter\n");
 		return -1;
 	}
 
 	/* add content-type */
-	value_len = nc.len;
+	value_len = nc->len;
 	len=sizeof("Content-Type: ") - 1 + value_len + CRLF_LEN;
 	buf=pkg_malloc(sizeof(char)*(len));
 
@@ -1698,7 +1772,7 @@ static int set_rpl_body_f(struct sip_msg* msg, char* p1, char* p2)
 		return -1;
 	}
 	memcpy(buf, "Content-Type: ", sizeof("Content-Type: ") - 1);
-	memcpy(buf+sizeof("Content-Type: ") - 1, nc.s, value_len);
+	memcpy(buf+sizeof("Content-Type: ") - 1, nc->s, value_len);
 	memcpy(buf+sizeof("Content-Type: ") - 1 + value_len, CRLF, CRLF_LEN);
 	if (add_lump_rpl(msg, buf, len, LUMP_RPL_HDR) == 0)
 	{
@@ -1708,12 +1782,38 @@ static int set_rpl_body_f(struct sip_msg* msg, char* p1, char* p2)
 	}
 	pkg_free(buf);
 
-	if (add_lump_rpl( msg, nb.s, nb.len, LUMP_RPL_BODY)==0) {
+	if (add_lump_rpl( msg, nb->s, nb->len, LUMP_RPL_BODY)==0) {
 		LM_ERR("cannot add body lump\n");
 		return -1;
 	}
 
 	return 1;
+}
+
+static int set_rpl_body_f(struct sip_msg* msg, char* p1, char* p2)
+{
+	str nb = {0,0};
+	str nc = {0,0};
+
+	if(p1==0 || p2==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &nb)!=0)
+	{
+		LM_ERR("unable to get p1\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p2, &nc)!=0)
+	{
+		LM_ERR("unable to get p2\n");
+		return -1;
+	}
+
+	return ki_set_rpl_body(msg, &nb, &nc);
 }
 
 static str* generate_boundary(str *txt, str *content_type,
@@ -1798,82 +1898,66 @@ static str* generate_boundary(str *txt, str *content_type,
 	return n;
 }
 
-int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
+int ki_set_multibody(sip_msg_t* msg, str* nbody, str* ctype,
+		str* boundary)
 {
 	struct lump *anchor;
-	char* buf = NULL;
-	int len;
-	char* value_s;
-	int value_len;
-	str body = {0,0};
-	str nb = {0,0};
-	str oc = {0,0};
-	str cd = {0,0};
-	str delimiter = {0,0};
-	str default_delimiter = {"unique-boundary-1", 17};
-	str nc = {0,0};
-	str cth = {"Content-Type: ", 14};
+	str body = STR_NULL;
+	str delimiter = STR_NULL;
+	str default_ctype = str_init("text/plain");
+	str default_delimiter = str_init("unique-boundary-1");
+	str cd = STR_NULL;
 	str* nbb = NULL;
-	unsigned int convert = 0;
 	fparam_t header;
+	int convert;
+	str oldbody = STR_NULL;
+	str newbody = STR_NULL;
+	str oldctype = STR_NULL;
+	str newctype = STR_NULL;
+#define HBUF_SIZE	128
+	char hbuf[HBUF_SIZE];
+	str hdrctype = STR_NULL;
+	str hdrclength = STR_NULL;
+
+	if(check_multipart(msg)==1) {
+		convert = -1;
+	} else {
+		convert = 1;
+	}
+
+	if(convert==-1) {
+		if(nbody==NULL || nbody->s==NULL || nbody->len==0) {
+			LM_DBG("message has already multipart body\n");
+			return 1;
+		}
+	}
+
 	header.orig = NULL;
 	header.type = FPARAM_STR;
 	header.v.str.s = "Mime-Version: 1.0\r\n";
 	header.v.str.len = 19;
 
-	if(p3==0)
-	{
+	if(nbody!=NULL && nbody->s!=NULL && nbody->len>0) {
+		newbody.s = nbody->s;
+		newbody.len = nbody->len;
+	}
+
+	if(ctype==NULL || ctype->s==NULL || ctype->len<=0) {
+		newctype.s = default_ctype.s;
+		newctype.len = default_ctype.len;
+	} else {
+		newctype.s = ctype->s;
+		newctype.len = ctype->len;
+	}
+
+	if(boundary==NULL || boundary->s==NULL || boundary->len<=0) {
 		delimiter.s = default_delimiter.s;
 		delimiter.len = default_delimiter.len;
-	}
-	else
-	{
-		if(fixup_get_svalue(msg, (gparam_p)p3, &delimiter)!=0)
-		{
-			LM_ERR("unable to get p3\n");
-			return -1;
-		}
-		if(delimiter.s==NULL || delimiter.len == 0)
-		{
-			LM_ERR("invalid boundary parameter\n");
-			return -1;
-		}
+	} else {
+		delimiter.s = boundary->s;
+		delimiter.len = boundary->len;
 	}
 	LM_DBG("delimiter<%d>:[%.*s]\n", delimiter.len, delimiter.len, delimiter.s);
-	if(p1==0 || p2==0)
-	{
-		if(check_multipart(msg)==1) {
-			LM_WARN("body is already multipart. Do nothing\n");
-			return -1;
-		}
-		convert = 1;
-	}
-	else
-	{
-		if(fixup_get_svalue(msg, (gparam_p)p1, &nb)!=0)
-		{
-			LM_ERR("unable to get p1\n");
-			return -1;
-		}
-		if(nb.s==NULL || nb.len == 0)
-		{
-			LM_ERR("invalid body parameter\n");
-			return -1;
-		}
-		if(fixup_get_svalue(msg, (gparam_p)p2, &oc)!=0)
-		{
-			LM_ERR("unable to get p2\n");
-			return -1;
-		}
-		if(oc.s==NULL || oc.len==0)
-		{
-			LM_ERR("invalid content-type parameter\n");
-			return -1;
-		}
-		if(check_multipart(msg)==1) {
-			convert = -1;
-		}
-	}
 
 	body.len = 0;
 	body.s = get_body(msg);
@@ -1887,46 +1971,43 @@ int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 	del_nonshm_lump( &(msg->body_lumps) );
 	msg->body_lumps = NULL;
 
-	if(msg->content_length)
+	if(body.len > 0)
 	{
-		if(body.len > 0)
+		if(convert==1 && newbody.len==0)
 		{
-			if(body.s+body.len>msg->buf+msg->len)
+			/* need to copy of old body to re-add as a part of new body */
+			oldbody.s=pkg_malloc(sizeof(char)*body.len);
+			if (oldbody.s==0)
 			{
-				LM_ERR("invalid content length: %d\n", body.len);
+				LM_ERR("out of pkg memory\n");
 				return -1;
 			}
-			if(convert==1)
+			memcpy(oldbody.s, body.s, body.len);
+			oldbody.len = body.len;
+			if(msg->content_type!=NULL && msg->content_type->body.s!=NULL)
 			{
-				/* need to copy body */
-				nb.s=pkg_malloc(sizeof(char)*body.len);
-				if (nb.s==0)
+				oldctype.len = msg->content_type->body.len;
+				oldctype.s=pkg_malloc(sizeof(char)*oldctype.len);
+				if (oldctype.s==0)
 				{
 					LM_ERR("out of pkg memory\n");
-					return -1;
+					goto error;
 				}
-				memcpy(nb.s, body.s, body.len);
-				nb.len = body.len;
-				if(msg->content_type!=NULL && msg->content_type->body.s!=NULL)
-				{
-					oc.len = msg->content_type->body.len;
-					oc.s=pkg_malloc(sizeof(char)*oc.len);
-					if (oc.s==0)
-					{
-						LM_ERR("out of pkg memory\n");
-						goto error;
-					}
-					memcpy(oc.s, msg->content_type->body.s, oc.len);
-				}
+				memcpy(oldctype.s, msg->content_type->body.s, oldctype.len);
 			}
-			if(del_lump(msg, body.s-msg->buf, body.len, 0) == 0)
-			{
-				LM_ERR("cannot delete existing body");
-				goto error;
-			}
+		}
+		if(del_lump(msg, body.s-msg->buf, body.len, 0) == 0)
+		{
+			LM_ERR("cannot delete existing body");
+			goto error;
 		}
 	}
 
+	/* safety check to be sure there is a body to be set in the message */
+	if(newbody.len == 0 && oldbody.len==0) {
+		LM_WARN("no body to be set in the message\n");
+		goto error;
+	}
 	anchor = anchor_lump(msg, msg->unparsed-msg->buf, 0, 0);
 	if(anchor==0)
 	{
@@ -1935,7 +2016,15 @@ int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 	}
 
 	/* get initial boundary */
-	nbb = generate_boundary(&nb, &oc, &cd, &delimiter, 1);
+	if(newbody.len>0) {
+		nbb = generate_boundary(&newbody, &newctype, &cd, &delimiter, 1);
+	} else {
+		if(oldctype.len==0) {
+			nbb = generate_boundary(&oldbody, &newctype, &cd, &delimiter, 1);
+		} else {
+			nbb = generate_boundary(&oldbody, &oldctype, &cd, &delimiter, 1);
+		}
+	}
 	if(nbb==NULL)
 	{
 		LM_ERR("couldn't create initial boundary\n");
@@ -1944,69 +2033,65 @@ int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 
 	if(msg->content_length==0)
 	{
-		/* need to add Content-Length */
-		len = nbb->len;
-		value_s=int2str(len, &value_len);
+		/* need to add Content-Length header */
+		hdrclength.len = snprintf(hbuf, HBUF_SIZE,
+				"Content-Length: %d\r\n", nbb->len);
+		if(hdrclength.len<0 || hdrclength.len>=HBUF_SIZE) {
+			LM_ERR("failed to build new content length\n");
+			goto error;
+		}
+		hdrclength.s=pkg_malloc(sizeof(char)*(hdrclength.len+1));
 
-		len=CONTENT_LENGTH_LEN+value_len+CRLF_LEN;
-		buf=pkg_malloc(sizeof(char)*len);
-
-		if (buf==0)
-		{
+		if (hdrclength.s==0) {
 			LM_ERR("out of pkg memory\n");
 			goto error;
 		}
-
-		memcpy(buf, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
-		memcpy(buf+CONTENT_LENGTH_LEN, value_s, value_len);
-		memcpy(buf+CONTENT_LENGTH_LEN+value_len, CRLF, CRLF_LEN);
-		if (insert_new_lump_after(anchor, buf, len, 0) == 0)
+		memcpy(hdrclength.s, hbuf, hdrclength.len);
+		hdrclength.s[hdrclength.len] = '\0';
+		if (insert_new_lump_after(anchor, hdrclength.s, hdrclength.len, 0) == 0)
 		{
 			LM_ERR("failed to insert content-length lump\n");
 			goto error;
 		}
-		buf = NULL;
+		hdrclength.s = NULL;
 	}
 
-	if(convert!=-1)
+	if(convert==1)
 	{
-		/* set new content type with delimiter */
-		nc.len = delimiter.len + 27;
-		nc.s = pkg_malloc(sizeof(char)*nc.len);
-		memcpy(nc.s, "multipart/mixed;boundary=\"", 26);
-		memcpy(nc.s+26, delimiter.s, delimiter.len);
-		nc.s[26+delimiter.len] = '"';
-		LM_DBG("content-type<%d>:[%.*s]\n", nc.len, nc.len, nc.s);
-		/* add content-type */
-		if(msg->content_type==NULL || msg->content_type->body.len!=nc.len
-				|| strncmp(msg->content_type->body.s, nc.s, nc.len)!=0)
-		{
-			if(msg->content_type!=NULL)
-				if(del_lump(msg, msg->content_type->name.s-msg->buf,
-							msg->content_type->len, 0) == 0)
-				{
-					LM_ERR("failed to delete content type\n");
-					goto error;
-				}
-			value_len = nc.len;
-			len = cth.len + value_len + CRLF_LEN;
-			buf = pkg_malloc(sizeof(char)*len);
-
-			if(buf==0)
+		/* convert to multipart body - content-type has to be updated */
+		if(msg->content_type!=NULL) {
+			if(del_lump(msg, msg->content_type->name.s-msg->buf,
+						msg->content_type->len, 0) == 0)
 			{
-				LM_ERR("out of pkg memory\n");
+				LM_ERR("failed to delete content type\n");
 				goto error;
 			}
-			memcpy(buf, cth.s, cth.len);
-			memcpy(buf + cth.len, nc.s, value_len);
-			memcpy(buf + cth.len + value_len, CRLF, CRLF_LEN);
-			if (insert_new_lump_after(anchor, buf, len, 0) == 0)
-			{
-				LM_ERR("failed to insert content-type lump\n");
-				goto error;
-			}
-			buf = NULL;
 		}
+		/* set new content type with delimiter */
+		hdrctype.len = snprintf(hbuf, HBUF_SIZE-1,
+			"Content-Type: multipart/mixed;boundary=\"%.*s\"\r\n",
+			delimiter.len, delimiter.s);
+		if(hdrctype.len<0 || hdrctype.len>=HBUF_SIZE) {
+			LM_ERR("failed to build new content type\n");
+			goto error;
+		}
+
+		LM_DBG("content-type<%d>:[%.*s]\n", hdrctype.len, hdrctype.len, hbuf);
+		/* add content-type */
+		hdrctype.s = pkg_malloc(hdrctype.len + 1);
+		if(hdrctype.s==NULL) {
+			LM_ERR("not enough pkg memory\n");
+			goto error;
+		}
+		memcpy(hdrctype.s, hbuf, hdrctype.len);
+		hdrctype.s[hdrctype.len] = '\0';
+		if (insert_new_lump_after(anchor, hdrctype.s, hdrctype.len, 0) == 0)
+		{
+			LM_ERR("failed to insert content-type lump\n");
+			goto error;
+		}
+		hdrctype.s = NULL;
+
 		/* add Mime-Version header */
 		if(add_hf_helper(msg, 0, 0, &header, 0, 0)<0)
 		{
@@ -2021,26 +2106,83 @@ int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 		goto error;
 	}
 
+	/* set the new message body */
 	if(insert_new_lump_after(anchor, nbb->s, nbb->len, 0)==0)
 	{
 		LM_ERR("failed to insert body lump\n");
 		goto error;
 	}
-	pkg_free(nbb);
-	if(nc.s!=NULL) pkg_free(nc.s);
-	if(convert && nb.s!=NULL) pkg_free(nb.s);
-	if(convert && oc.s!=NULL) pkg_free(oc.s);
+
 	LM_DBG("set flag FL_BODY_MULTIPART\n");
 	msg->msg_flags |= FL_BODY_MULTIPART;
+
+	pkg_free(nbb);
+	if(oldbody.s!=NULL) pkg_free(oldbody.s);
+	if(oldctype.s!=NULL) pkg_free(oldctype.s);
+
 	return 1;
 
 error:
 	if(nbb!=NULL) { pkg_free(nbb->s); pkg_free(nbb); }
-	if(nc.s!=NULL) pkg_free(nc.s);
-	if(buf!=NULL) pkg_free(buf);
-	if(convert && nb.s!=NULL) pkg_free(nb.s);
-	if(convert && oc.s!=NULL) pkg_free(oc.s);
+	if(oldbody.s!=NULL) pkg_free(oldbody.s);
+	if(oldctype.s!=NULL) pkg_free(oldctype.s);
+
 	return -1;
+}
+
+int ki_set_multibody_mode(sip_msg_t* msg)
+{
+	str nbody = STR_NULL;
+	str ctype = STR_NULL;
+	str boundary = STR_NULL;
+
+	return ki_set_multibody(msg, &nbody, &ctype, &boundary);
+}
+
+int ki_set_multibody_boundary(sip_msg_t* msg, str* boundary)
+{
+	str nbody = STR_NULL;
+	str ctype = STR_NULL;
+
+	return ki_set_multibody(msg, &nbody, &ctype, boundary);
+}
+
+int ki_set_multibody_content(sip_msg_t* msg, str* nbody, str* ctype)
+{
+	str boundary = STR_NULL;
+
+	return ki_set_multibody(msg, nbody, ctype, &boundary);
+}
+
+int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
+{
+	str nbody = STR_NULL;
+	str ctype = STR_NULL;
+	str boundary = STR_NULL;
+
+	if(p1!=NULL) {
+		if(fixup_get_svalue(msg, (gparam_t*)p1, &nbody)!=0)
+		{
+			LM_ERR("unable to get new body parameter\n");
+			return -1;
+		}
+	}
+	if(p2!=NULL) {
+		if(fixup_get_svalue(msg, (gparam_t*)p2, &ctype)!=0)
+		{
+			LM_ERR("unable to get content type parameter\n");
+			return -1;
+		}
+	}
+	if(p3!=0) {
+		if(fixup_get_svalue(msg, (gparam_t*)p3, &boundary)!=0)
+		{
+			LM_ERR("unable to get boundary parameter\n");
+			return -1;
+		}
+	}
+
+	return ki_set_multibody(msg, &nbody, &ctype, &boundary);
 }
 
 static int set_multibody_0(struct sip_msg* msg, char* p1, char* p2, char* p3)
@@ -2063,50 +2205,24 @@ static int set_multibody_3(struct sip_msg* msg, char* p1, char* p2, char *p3)
 	return set_multibody_helper(msg, p1, p2, p3);
 }
 
-int append_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
+int ki_append_multibody_cd(sip_msg_t* msg, str* txt, str* ct, str* cd)
 {
 	struct lump *l;
 	int off;
 	str body = {0,0};
-	str nc = {0,0};
-	str cd = {0,0};
-	str txt = {0,0};
 	str* nbb = NULL;
 	str delimiter = {0,0};
 
-	if(p1==0 || p2==0)
-	{
-		LM_ERR("invalid parameters\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)p1, &txt)!=0)
-	{
-		LM_ERR("unable to get p1\n");
-		return -1;
-	}
-	if(txt.s==NULL || txt.len==0)
+	if(txt==NULL || txt->s==NULL || txt->len==0)
 	{
 		LM_ERR("invalid body parameter\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_p)p2, &nc)!=0)
-	{
-		LM_ERR("unable to get p2\n");
-		return -1;
-	}
-	if(nc.s==NULL || nc.len==0)
+
+	if(ct==NULL || ct->s==NULL || ct->len==0)
 	{
 		LM_ERR("invalid content-type parameter\n");
 		return -1;
-	}
-	if(p3!=NULL)
-	{
-		if(fixup_get_svalue(msg, (gparam_p)p3, &cd)!=0)
-		{
-			LM_ERR("unable to get p3\n");
-			return -1;
-		}
 	}
 
 	body.s = get_body(msg);
@@ -2131,7 +2247,7 @@ int append_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 		LM_ERR("Cannot get boundary. Is body multipart?\n");
 		return -1;
 	}
-	nbb = generate_boundary(&txt, &nc, &cd, &delimiter, 0);
+	nbb = generate_boundary(txt, ct, cd, &delimiter, 0);
 	if(nbb==NULL)
 	{
 		LM_ERR("couldn't create initial boundary\n");
@@ -2151,14 +2267,148 @@ int append_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 	return 1;
 }
 
+int ki_append_multibody(sip_msg_t* msg, str* txt, str* ct)
+{
+	str cd = {0,0};
+
+	return ki_append_multibody_cd(msg, txt, ct, &cd);
+}
+
+int ki_append_multibody_hex_cd(sip_msg_t* msg, str* htxt, str* ct, str* cd)
+{
+	str sraw;
+	int i;
+	int ret;
+	char v;
+
+	if(htxt==NULL || htxt->s==NULL || htxt->len==0) {
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+
+	sraw.len = htxt->len / 2 + 2;
+	sraw.s = pkg_malloc(sraw.len * sizeof(char));
+	if(sraw.s==NULL) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+	memset(sraw.s, 0, sraw.len * sizeof(char));
+
+	sraw.len = 0;
+	for(i=0; i<htxt->len; i++) {
+		if(htxt->s[i]==' ' || htxt->s[i]=='\t') {
+			continue;
+		}
+		if(i+1==htxt->len) {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
+					htxt->len, i);
+			pkg_free(sraw.s);
+			return -1;
+		}
+		v = 0;
+		if(htxt->s[i]>='0' && htxt->s[i]<='9') {
+			v = (htxt->s[i] - '0') << 4;
+		} else if(htxt->s[i]>='A' && htxt->s[i]<='F') {
+			v = (htxt->s[i] - 'A' + 10) << 4;
+		} else if(htxt->s[i]>='a' && htxt->s[i]<='f') {
+			v = (htxt->s[i] - 'a' + 10) << 4;
+		} else {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
+					htxt->len, i);
+			pkg_free(sraw.s);
+			return -1;
+		}
+		i++;
+		if(htxt->s[i]>='0' && htxt->s[i]<='9') {
+			v += (htxt->s[i] - '0');
+		} else if(htxt->s[i]>='A' && htxt->s[i]<='F') {
+			v += (htxt->s[i] - 'A' + 10);
+		} else if(htxt->s[i]>='a' && htxt->s[i]<='f') {
+			v += (htxt->s[i] - 'a' + 10);
+		} else {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
+					htxt->len, i);
+			pkg_free(sraw.s);
+			return -1;
+		}
+		sraw.s[sraw.len++] = v;
+	}
+	if(sraw.len==0) {
+		/* only white spaces */
+		LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
+				htxt->len, i);
+		pkg_free(sraw.s);
+		return -1;
+	}
+	ret  = ki_append_multibody_cd(msg, &sraw, ct, cd);
+	pkg_free(sraw.s);
+	return ret;
+}
+
+int ki_append_multibody_hex(sip_msg_t* msg, str* txt, str* ct)
+{
+	str cd = {0,0};
+
+	return ki_append_multibody_hex_cd(msg, txt, ct, &cd);
+}
+
+static int append_multibody_helper(sip_msg_t *msg, char *p1, char *p2, char *p3,
+		int hex)
+{
+	str txt = {0,0};
+	str ct = {0,0};
+	str cd = {0,0};
+
+	if(p1==0 || p2==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &txt)!=0)
+	{
+		LM_ERR("unable to get body parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)p2, &ct)!=0)
+	{
+		LM_ERR("unable to get content type parameter\n");
+		return -1;
+	}
+	if(p3!=NULL)
+	{
+		if(fixup_get_svalue(msg, (gparam_p)p3, &cd)!=0)
+		{
+			LM_ERR("unable to get content disposition\n");
+			return -1;
+		}
+	}
+
+	if(hex) {
+		return ki_append_multibody_hex_cd(msg, &txt, &ct, &cd);
+	} else {
+		return ki_append_multibody_cd(msg, &txt, &ct, &cd);
+	}
+}
+
 static int append_multibody_2(struct sip_msg* msg, char* p1, char* p2)
 {
-	return append_multibody_helper(msg, p1, p2, NULL);
+	return append_multibody_helper(msg, p1, p2, NULL, 0);
 }
 
 static int append_multibody_3(struct sip_msg* msg, char* p1, char* p2, char *p3)
 {
-	return append_multibody_helper(msg, p1, p2, p3);
+	return append_multibody_helper(msg, p1, p2, p3, 0);
+}
+
+static int append_multibody_hex_2(struct sip_msg* msg, char* p1, char* p2)
+{
+	return append_multibody_helper(msg, p1, p2, NULL, 1);
+}
+
+static int append_multibody_hex_3(struct sip_msg* msg, char* p1, char* p2, char *p3)
+{
+	return append_multibody_helper(msg, p1, p2, p3, 1);
 }
 
 static int fixup_multibody_f(void** param, int param_no)
@@ -2204,24 +2454,12 @@ static inline int get_line(char *s, int len)
 	return 0;
 }
 
-static int remove_multibody_f(struct sip_msg* msg, char* p1)
+static int ki_remove_multibody(sip_msg_t* msg, str* content_type)
 {
 	char *start, *end;
 	unsigned int len, t;
-	str content_type, body;
+	str body;
 	str boundary = {0,0};
-
-	if(p1==0)
-	{
-		LM_ERR("invalid parameters\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)p1, &content_type)!=0)
-	{
-		LM_ERR("unable to get p1\n");
-		return -1;
-	}
 
 	body.s = get_body(msg);
 	if (body.s == 0) {
@@ -2246,21 +2484,20 @@ static int remove_multibody_f(struct sip_msg* msg, char* p1)
 	{
 		end = start + 14;
 		len = len - 14;
-		if (len > (content_type.len + 2)) {
-			if (strncasecmp(end, content_type.s, content_type.len)== 0)
+		if (len > (content_type->len + 2)) {
+			if (strncasecmp(end, content_type->s, content_type->len)== 0)
 			{
 				LM_DBG("found content type %.*s\n",
-					content_type.len, content_type.s);
-				end = end + content_type.len;
+					content_type->len, content_type->s);
+				end = end + content_type->len;
 				if ((*end != 13) || (*(end + 1) != 10))
 				{
 					LM_ERR("no CRLF found after content type\n");
 					goto err;
 				}
 				end = end + 2;
-				len = len - content_type.len - 2;
-				if (find_line_start(boundary.s, boundary.len, &end,
-					&len))
+				len = len - content_type->len - 2;
+				if (find_line_start(boundary.s, boundary.len, &end, &len))
 				{
 					LM_DBG("found boundary %.*s\n", boundary.len, boundary.s);
 					end = end + boundary.len;
@@ -2292,28 +2529,37 @@ err:
 	return -1;
 }
 
-/**
- *
- */
-static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mode)
+static int remove_multibody_f(struct sip_msg* msg, char* p1, char *p2)
 {
-	char *start, *end, *bstart;
-	char *body_headers_end;
-	unsigned int len, t;
-	str content_type, body;
-	str boundary = {0,0};
-	pv_spec_t *dst;
-	pv_value_t val;
+	str content_type;
 
-	if(ctype==0) {
+	if(p1==0)
+	{
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)ctype, &content_type)!=0) {
-		LM_ERR("unable to get content type\n");
+	if(fixup_get_svalue(msg, (gparam_p)p1, &content_type)!=0)
+	{
+		LM_ERR("unable to get p1\n");
 		return -1;
 	}
+
+	return ki_remove_multibody(msg, &content_type);
+}
+
+/**
+ *
+ */
+static int ki_get_body_part_helper(sip_msg_t* msg, str* ctype, pv_spec_t *dst,
+		int mode)
+{
+	char *start, *end, *bstart;
+	char *body_headers_end;
+	unsigned int len, t;
+	str body;
+	str boundary = {0,0};
+	pv_value_t val;
 
 	body.s = get_body(msg);
 	if (body.s == 0) {
@@ -2339,19 +2585,19 @@ static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mod
 	{
 		end = start + 14;
 		len = len - 14;
-		if (len > (content_type.len + 2)) {
-			if (strncasecmp(end, content_type.s, content_type.len)== 0)
+		if (len > (ctype->len + 2)) {
+			if (strncasecmp(end, ctype->s, ctype->len)== 0)
 			{
 				LM_DBG("found content type %.*s\n",
-					content_type.len, content_type.s);
-				end = end + content_type.len;
+					ctype->len, ctype->s);
+				end = end + ctype->len;
 				if ((*end != 13) || (*(end + 1) != 10))
 				{
 					LM_ERR("no CRLF found after content type\n");
 					goto err;
 				}
 				end = end + 2;
-				len = len - content_type.len - 2;
+				len = len - ctype->len - 2;
 				body_headers_end = end;
 				if (find_line_start(boundary.s, boundary.len, &end,
 					&len))
@@ -2377,7 +2623,6 @@ static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mod
 					}
 					LM_DBG("output result: %.*s\n", val.rs.len, val.rs.s);
 					val.flags = PV_VAL_STR;
-					dst = (pv_spec_t *)ovar;
 					dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 					return 1;
 				}
@@ -2393,6 +2638,58 @@ static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mod
 err:
 	if(boundary.s) pkg_free(boundary.s);
 	return -1;
+}
+
+/**
+ *
+ */
+static int ki_get_body_part_raw(sip_msg_t* msg, str* ctype, str *pvname)
+{
+	pv_spec_t *pvd = NULL;
+
+	pvd = pv_cache_get(pvname);
+	if(pvd == NULL) {
+		LM_ERR("failed to get pv spec\n");
+		return -1;
+	}
+
+	return ki_get_body_part_helper(msg, ctype, pvd, 0);
+}
+
+/**
+ *
+ */
+static int ki_get_body_part(sip_msg_t* msg, str* ctype, str *pvname)
+{
+	pv_spec_t *pvd = NULL;
+
+	pvd = pv_cache_get(pvname);
+	if(pvd == NULL) {
+		LM_ERR("failed to get pv spec\n");
+		return -1;
+	}
+
+	return ki_get_body_part_helper(msg, ctype, pvd, 1);
+}
+
+/**
+ *
+ */
+static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mode)
+{
+	str content_type;
+
+	if(ctype==0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)ctype, &content_type)!=0) {
+		LM_ERR("unable to get content type\n");
+		return -1;
+	}
+
+	return ki_get_body_part_helper(msg, &content_type, (pv_spec_t *)ovar, mode);
 }
 
 /**
@@ -2818,6 +3115,41 @@ static int fixup_free_in_list(void** param, int param_no)
 	return -1;
 }
 
+/*
+ * Fix in_list_prefix params: subject and list (strings that may contain pvars),
+ * separator (string)
+ */
+static int fixup_in_list_prefix(void** param, int param_no)
+{
+	if ((param_no == 1) || (param_no == 2)) return fixup_spve_null(param, 1);
+
+	if (param_no == 3) {
+		if ((strlen((char *)*param) != 1) || (*((char *)(*param)) == 0)) {
+			LM_ERR("invalid separator parameter\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/*
+ * Free in_list_prefix params
+ */
+static int fixup_free_in_list_prefix(void** param, int param_no)
+{
+	if ((param_no == 1) || (param_no == 2)) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	if (param_no == 3) return 0;
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
 static int add_header_fixup(void** param, int param_no)
 {
 	if(param_no==1)
@@ -2861,7 +3193,7 @@ static int fixup_body_type(void** param, int param_no)
 }
 
 
-static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
+static int has_body_helper(sip_msg_t *msg, int type)
 {
 	int mime;
 
@@ -2893,12 +3225,46 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
 	}
 	LM_DBG("content type is %d\n",mime);
 
-	if ( (unsigned int)mime!=(unsigned int)(unsigned long)type )
+	if ( (unsigned int)mime!=(unsigned int)type )
 		return -1;
 
 	return 1;
 }
 
+static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
+{
+	if(type==0) {
+		return has_body_helper(msg, 0);
+	}
+	return has_body_helper(msg, (int)(long)type);
+}
+
+static int ki_has_body(sip_msg_t *msg)
+{
+	return has_body_helper(msg, 0);
+}
+
+static int ki_has_body_type(sip_msg_t *msg, str *ctype)
+{
+	char *r;
+	unsigned int type;
+
+	if (ctype==0 || ctype->s==0 || ctype->len==0) {
+		type = 0;
+	} else {
+		r = decode_mime_type(ctype->s, ctype->s + ctype->len, &type);
+		if (r==0) {
+			LM_ERR("unsupported mime <%.*s>\n", ctype->len, ctype->s);
+			return -1;
+		}
+		if ( r!=ctype->s + ctype->len ) {
+			LM_ERR("multiple mimes not supported!\n");
+			return -1;
+		}
+	}
+
+	return has_body_helper(msg, (int)type);
+}
 
 int is_privacy_f(struct sip_msg *msg, char *_privacy, char *str2 )
 {
@@ -2906,39 +3272,42 @@ int is_privacy_f(struct sip_msg *msg, char *_privacy, char *str2 )
 		return -1;
 
 	return get_privacy_values(msg) & ((unsigned int)(long)_privacy) ? 1 : -1;
+}
 
+int ki_is_privacy(sip_msg_t *msg, str *privacy)
+{
+	unsigned int val;
+
+	if (parse_privacy(msg) == -1)
+		return -1;
+
+	if(privacy==NULL || privacy->s==NULL || privacy->len<=0)
+		return -1;
+
+	if (parse_priv_value(privacy->s, privacy->len, &val) != privacy->len) {
+		LM_ERR("invalid privacy value\n");
+		return -1;
+	}
+
+	return (get_privacy_values(msg) & val) ? 1 : -1;
 }
 
 /*
  * Checks if subject is found in list
  */
-int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
+int ki_in_list(sip_msg_t* _m, str* subject, str* list, str* vsep)
 {
-	str subject, list;
 	int sep;
 	char *at, *past, *next_sep, *s;
 
-	if (fixup_get_svalue(_m, (gparam_p)_subject, &subject) != 0) {
-		LM_ERR("cannot get subject value\n");
+	if(subject==NULL || subject->len<=0 || list==NULL || list->len<=0
+			|| vsep==NULL || vsep->len<=0)
 		return -1;
-	} else {
-		if (subject.len == 0) {
-			LM_ERR("subject cannot be empty string\n");
-			return -1;
-		}
-	}
 
-	if (fixup_get_svalue(_m, (gparam_p)_list, &list) != 0) {
-		LM_ERR("cannot get list value\n");
-		return -1;
-	} else {
-		if (list.len == 0) return -1;
-	}
+	sep = vsep->s[0];
 
-	sep = _sep[0];
-
-	at = list.s;
-	past = list.s + list.len;
+	at = list->s;
+	past = list->s + list->len;
 
 	/* Eat leading white space */
 	while ((at < past) &&
@@ -2957,8 +3326,8 @@ int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
 						|| (*(past-1) == '\r') || (*(past-1) == '\n') )) {
 				past--;
 			}
-			if ((subject.len == (past - at)) &&
-				strncmp(at, subject.s, subject.len) == 0) {
+			if ((subject->len == (past - at)) &&
+				strncmp(at, subject->s, subject->len) == 0) {
 				return 1;
 			} else {
 				return -1;
@@ -2970,8 +3339,8 @@ int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
 						|| (*(s-1) == '\n') )) {
 				s--;
 			}
-			if ((subject.len == (s - at)) &&
-				strncmp(at, subject.s, subject.len) == 0) {
+			if ((subject->len == (s - at)) &&
+				strncmp(at, subject->s, subject->len) == 0) {
 				return 1;
 			} else {
 				at = next_sep + 1;
@@ -2986,6 +3355,140 @@ int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
 	}
 
 	return -1;
+}
+
+/*
+ * Checks if subject is found in list
+ */
+int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
+{
+	str subject, list, sep;
+	if (fixup_get_svalue(_m, (gparam_p)_subject, &subject) != 0) {
+		LM_ERR("cannot get subject value\n");
+		return -1;
+	} else {
+		if (subject.len == 0) {
+			LM_ERR("subject cannot be empty string\n");
+			return -1;
+		}
+	}
+
+	if (fixup_get_svalue(_m, (gparam_p)_list, &list) != 0) {
+		LM_ERR("cannot get list value\n");
+		return -1;
+	} else {
+		if (list.len == 0) return -1;
+	}
+	sep.s = _sep;
+	sep.len = 1;
+
+	return ki_in_list(_m, &subject, &list, &sep);
+}
+
+/*
+ * Checks if an element in list is a prefix for subject
+ */
+int ki_in_list_prefix(sip_msg_t* _m, str* subject, str* list, str* vsep)
+{
+	int sep;
+	char *at, *past, *next_sep, *s;
+	
+	if(subject==NULL || subject->len<=0 || list==NULL || list->len<=0
+			|| vsep==NULL || vsep->len<=0)
+		return -1;
+
+	sep = vsep->s[0];
+
+	at = list->s;
+	past = list->s + list->len;
+
+	/* Eat leading white space */
+	while ((at < past) &&
+			((*at == ' ') || (*at == '\t') || (*at == '\r') || (*at == '\n') )) {
+		at++;
+	}
+
+	while (at < past) {
+		next_sep = index(at, sep);
+		s = next_sep;
+		int list_element_len;
+
+		if (s == NULL) {
+			/* Eat trailing white space */
+			while ((at < past) &&
+					((*(past-1) == ' ') || (*(past-1) == '\t')
+						|| (*(past-1) == '\r') || (*(past-1) == '\n') )) {
+				past--;
+			}
+			list_element_len = past - at;
+			if (list_element_len == 0) {
+				/* There is no list element */
+				return -1;
+			}
+			if (list_element_len > subject->len) {
+				/* Length of list element is greater than subject length */
+				return -1;
+			}
+			if (strncmp(at, subject->s, list_element_len) != 0) {
+				return -1;
+			}
+			/* Prefix match found */
+			return 1;
+
+		} else {
+			/* Eat trailing white space */
+			while ((at < s) &&
+					((*(s-1) == ' ') || (*(s-1) == '\t') || (*(s-1) == '\r')
+						|| (*(s-1) == '\n') )) {
+				s--;
+			}
+			list_element_len = s - at;
+			if (list_element_len == 0 || list_element_len > subject->len ||
+				strncmp(at, subject->s, list_element_len) != 0) {
+				/* Prefix match not found */
+				at = next_sep + 1;
+				/* Eat leading white space */
+				while ((at < past) &&
+						((*at == ' ') || (*at == '\t') || (*at == '\r')
+							|| (*at == '\n') )) {
+					at++;
+				}
+			} else {
+				/* Prefix match found */
+				return 1;
+			}
+		}
+	}
+
+	return -1;
+}
+
+/*
+ * Checks if an element in list is a prefix for subject
+ */
+int in_list_prefix_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
+{
+	str subject, list, sep;
+	if (fixup_get_svalue(_m, (gparam_p)_subject, &subject) != 0) {
+		LM_ERR("cannot get subject value\n");
+		return -1;
+	} else {
+		if (subject.len == 0) {
+			LM_ERR("subject cannot be empty string\n");
+			return -1;
+		}
+	}
+
+	if (fixup_get_svalue(_m, (gparam_p)_list, &list) != 0) {
+		LM_ERR("cannot get list value\n");
+		return -1;
+	} else {
+		if (list.len == 0) return -1;
+	}
+	sep.s = _sep;
+	sep.len = 1;
+
+	return ki_in_list_prefix(_m, &subject, &list, &sep);
 }
 
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 )
@@ -3012,6 +3515,18 @@ static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 )
 	return -2;
 }
 
+static int ki_cmp_str(sip_msg_t *msg, str *s1, str *s2 )
+{
+	int ret;
+
+	ret = cmp_str(s1, s2);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
 static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	str s1;
@@ -3029,6 +3544,18 @@ static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2)
 		return -8;
 	}
 	ret = cmpi_str(&s1, &s2);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
+static int ki_cmp_istr(sip_msg_t *msg, str *s1, str *s2 )
+{
+	int ret;
+
+	ret = cmpi_str(s1, s2);
 	if(ret==0)
 		return 1;
 	if(ret>0)
@@ -3061,7 +3588,19 @@ static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 )
 	return -2;
 }
 
-static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 )
+static int ki_starts_with(sip_msg_t *msg, str *s1, str *s2 )
+{
+	int ret;
+	if (s1->len < s2->len) return -1;
+	ret = strncmp(s1->s, s2->s, s2->len);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
+static int ki_is_audio_on_hold(sip_msg_t *msg)
 {
 	int sdp_session_num = 0, sdp_stream_num;
 	sdp_session_cell_t* sdp_session;
@@ -3078,13 +3617,18 @@ static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 )
 				if(sdp_stream->media.len==AUDIO_STR_LEN &&
 					strncmp(sdp_stream->media.s,AUDIO_STR,AUDIO_STR_LEN)==0 &&
 					sdp_stream->is_on_hold)
-					return 1;
+					return sdp_stream->is_on_hold;
 				sdp_stream_num++;
 			}
 			sdp_session_num++;
 		}
 	}
 	return -1;
+}
+
+static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 )
+{
+	return ki_is_audio_on_hold(msg);
 }
 
 int fixup_regexpNL_none(void** param, int param_no)
@@ -3639,8 +4183,23 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("textops"), str_init("search_append"),
+		SR_KEMIP_INT, ki_search_append,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("search_append_body"),
+		SR_KEMIP_INT, ki_search_append_body,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("textops"), str_init("is_present_hf"),
 		SR_KEMIP_INT, ki_is_present_hf,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("is_present_hf_re"),
+		SR_KEMIP_INT, ki_is_present_hf_re,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -3701,6 +4260,121 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("replace_body_atonce"),
 		SR_KEMIP_INT, ki_replace_body_atonce,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_body"),
+		SR_KEMIP_INT, ki_set_body,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_reply_body"),
+		SR_KEMIP_INT, ki_set_rpl_body,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("has_body"),
+		SR_KEMIP_INT, ki_has_body,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("has_body_type"),
+		SR_KEMIP_INT, ki_has_body_type,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("filter_body"),
+		SR_KEMIP_INT, ki_filter_body,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("is_privacy"),
+		SR_KEMIP_INT, ki_is_privacy,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("in_list"),
+		SR_KEMIP_INT, ki_in_list,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("in_list_prefix"),
+		SR_KEMIP_INT, ki_in_list_prefix,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("cmp_str"),
+		SR_KEMIP_INT, ki_cmp_str,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("cmp_istr"),
+		SR_KEMIP_INT, ki_cmp_istr,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("starts_with"),
+		SR_KEMIP_INT, ki_starts_with,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("is_audio_on_hold"),
+		SR_KEMIP_INT, ki_is_audio_on_hold,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_body_multipart_mode"),
+		SR_KEMIP_INT, ki_set_multibody_mode,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_body_multipart_boundary"),
+		SR_KEMIP_INT, ki_set_multibody_boundary,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_body_multipart_content"),
+		SR_KEMIP_INT, ki_set_multibody_content,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_body_multipart"),
+		SR_KEMIP_INT, ki_set_multibody,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("append_body_part"),
+		SR_KEMIP_INT, ki_append_multibody,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("append_body_part_cd"),
+		SR_KEMIP_INT, ki_append_multibody_cd,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("append_body_part_hex"),
+		SR_KEMIP_INT, ki_append_multibody_hex,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("append_body_part_hex_cd"),
+		SR_KEMIP_INT, ki_append_multibody_hex_cd,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("remove_body_part"),
+		SR_KEMIP_INT, ki_remove_multibody,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("get_body_part"),
+		SR_KEMIP_INT, ki_get_body_part,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("get_body_part_raw"),
+		SR_KEMIP_INT, ki_get_body_part_raw,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

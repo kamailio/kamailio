@@ -146,13 +146,13 @@ class kamailio:
                 # ip is already blocked
                 KSR.dbg("request from blocked IP - " + KSR.pv.get("$rm")
                         + " from " + KSR.pv.get("$fu") + " (IP:"
-                        + KSR.pv.get("$si") + ":" + KSR.pv.get("$sp") + ")\n");
+                        + KSR.pv.get("$si") + ":" + str(KSR.pv.get("$sp")) + ")\n");
                 return -255;
 
             if KSR.pike.pike_check_req()<0 :
                 KSR.err("ALERT: pike blocking " + KSR.pv.get("$rm")
                         + " from " + KSR.pv.get("$fu") + " (IP:"
-                        + KSR.pv.get("$si") + ":" + KSR.pv.get("$sp") + ")\n");
+                        + KSR.pv.get("$si") + ":" + str(KSR.pv.get("$sp")) + ")\n");
                 KSR.pv.seti("$sht(ipban=>$si)", 1);
                 return -255;
 
@@ -174,7 +174,7 @@ class kamailio:
 
         if KSR.sanity.sanity_check(1511, 7)<0 :
             KSR.err("Malformed SIP message from "
-                    + KSR.pv.get("$si") + ":" + KSR.pv.get("$sp") +"\n");
+                    + KSR.pv.get("$si") + ":" + str(KSR.pv.get("$sp")) +"\n");
             return -255;
 
 
@@ -343,7 +343,7 @@ class kamailio:
     # -- equivalent of branch_route[...]{}
     def ksr_branch_manage(self, msg):
         KSR.dbg("new branch ["+ str(KSR.pv.get("$T_branch_idx"))
-                    + " to "+ KSR.pv.get("$ru") + "\n");
+                    + "] to "+ KSR.pv.get("$ru") + "\n");
         self.ksr_route_natmanage(msg);
         return 1;
 

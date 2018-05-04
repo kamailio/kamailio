@@ -200,7 +200,7 @@ modparam("auth_ephemeral", "username_format", 0)
 	<section id="auth_eph.p.sha_algorithm">
 		<title><varname>sha_algorithm</varname> (integer)</title>
 		<para>
-		The SHA algorhithm to be used for the Hash.
+		The SHA algorithm to be used for the Hash.
 		</para>
 		<para>
 		<itemizedlist>

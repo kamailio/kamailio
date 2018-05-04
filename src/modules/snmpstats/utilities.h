@@ -53,7 +53,7 @@ int convertStrToCharString(str *strToConvert, char **copiedString);
 
 /*! Performs sanity checks on the parameters passed to a string configuration
  * file parameter handler. */
-int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName);
+int stringHandlerSanityCheck(modparam_t type, void *val, char *parameterName);
 
 /*!
  * This function is a wrapper around the standard statistic framework.  It will
@@ -65,7 +65,7 @@ int get_statistic(char *statName);
 /*! Returns a pointer to an SNMP DateAndTime OCTET STRING representation of the
  * time structure.  Note that the pointer is to static data, so it shouldn't be
  * counted on to be around if this function is called again. */
-char * convertTMToSNMPDateAndTime(struct tm *timeStructure);
+char *convertTMToSNMPDateAndTime(struct tm *timeStructure);
 
 /*! \brief Get config framework variable 
  * type will return cfg_type - CFG_VAR_INT, CFG_VAR_STRING, CFG_VAR_STR
@@ -75,6 +75,5 @@ int snmp_cfg_get_int(char *arg_group, char *arg_name, unsigned int *type);
 
 /*! Initialize config framework */
 int config_context_init(void);
-
 
 #endif

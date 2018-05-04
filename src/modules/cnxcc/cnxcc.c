@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Carlos Ruiz Díaz (caruizdiaz.com),
  *                    ConexionGroup (www.conexiongroup.com)
  *
@@ -32,7 +30,7 @@ double str2double(str *string)
 {
 	char buffer[string->len + 1];
 
-	buffer[string->len]	= '\0';
+	buffer[string->len] = '\0';
 	memcpy(buffer, string->s, string->len);
 
 	return atof(buffer);

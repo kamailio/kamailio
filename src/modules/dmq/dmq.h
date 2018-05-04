@@ -33,15 +33,15 @@
 #include "peer.h"
 #include "worker.h"
 
-#define DEFAULT_NUM_WORKERS	2
-#define MIN_PING_INTERVAL	5
+#define DEFAULT_NUM_WORKERS 2
+#define MIN_PING_INTERVAL 5
 
 extern int num_workers;
 extern int worker_usleep;
-extern dmq_worker_t* workers;
-extern dmq_peer_t* dmq_notification_peer;
+extern dmq_worker_t *workers;
+extern dmq_peer_t *dmq_notification_peer;
 extern str dmq_server_address;
-extern dmq_peer_list_t* peer_list;
+extern dmq_peer_list_t *peer_list;
 extern str dmq_request_method;
 extern str dmq_server_socket;
 extern struct sip_uri dmq_server_uri;
@@ -58,4 +58,3 @@ extern str dmq_500_rpl;
 extern str dmq_404_rpl;
 
 #endif
-

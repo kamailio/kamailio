@@ -751,7 +751,7 @@ int receive_loop(peer *original_peer)
 							LM_DBG("select_recv(): There is something on the send pipe\n");
 							cnt = read(sp->send_pipe_fd,&msg,sizeof(AAAMessage *));
 							if (cnt==0){
-								//This is very stupid and might not work well - droped messages... to be fixed
+								//This is very stupid and might not work well - dropped messages... to be fixed
 								LM_INFO("select_recv(): ReOpening pipe for read. This should not happen...\n");
 								close(sp->send_pipe_fd);
 								sp->send_pipe_fd = open(sp->send_pipe_name.s, O_RDONLY | O_NDELAY);

@@ -195,6 +195,12 @@ int my_pid()
 }
 
 
+/* return processes description */
+char* my_desc(void)
+{
+	return pt ? pt[process_no].desc : "unknown";
+}
+
 
 /* close unneeded sockets */
 int close_extra_socks(int child_id, int proc_no)

@@ -48,9 +48,9 @@
 #define XMPP_PUBLISH        1<<3
 #define XMPP_SUBSCRIBE      1<<4
 #define XMPP_INITIAL_SUBS   1<<5
-#define MI_PUBLISH          1<<6
-#define MI_ASYN_PUBLISH     1<<7
-#define MI_SUBSCRIBE        1<<8
+#define RPC_PUBLISH         1<<6
+#define RPC_ASYN_PUBLISH    1<<7
+#define RPC_SUBSCRIBE       1<<8
 #define RLS_SUBSCRIBE       1<<9
 #define DIALOG_PUBLISH      1<<10
 #define PURPLE_PUBLISH      1<<11

@@ -50,11 +50,12 @@
  * This data structure extends the generic data structure db_cmd in the
  * database API with data specific to the ldap driver.
  */
-typedef struct _bdb_cmd {
-	db_drv_t gen;    /**< Generic part of the data structure (must be first */
+typedef struct _bdb_cmd
+{
+	db_drv_t gen;	/**< Generic part of the data structure (must be first */
 	bdb_con_t *bcon; /**< DB connection handle */
-	DB *dbp;         /**< DB structure handle */
-	DBC *dbcp;       /**< DB cursor handle */
+	DB *dbp;		 /**< DB structure handle */
+	DBC *dbcp;		 /**< DB cursor handle */
 	int next_flag;
 	str skey;
 	int skey_size;
@@ -67,8 +68,9 @@ typedef struct _bdb_cmd {
  * structure in cmd parameter.
  * @param cmd A generic db_cmd structure to which the newly created bdb_cmd
  *            structure will be attached.
+ * @return 0 on success, -1 on error
  */
-int bdb_cmd(db_cmd_t* cmd);
+int bdb_cmd(db_cmd_t *cmd);
 
 
 /** The main execution function in BDB SER driver.
@@ -77,17 +79,18 @@ int bdb_cmd(db_cmd_t* cmd);
  * ldap.
  * @param res A pointer to (optional) result structure if the command returns
  *            a result.
+ * @param cmd DB command structure
  * @retval 0 if executed successfully
  * @retval A negative number if the database server failed to execute command
  * @retval A positive number if there was an error on client side (SER)
  */
-int bdb_cmd_exec(db_res_t* res, db_cmd_t* cmd);
+int bdb_cmd_exec(db_res_t *res, db_cmd_t *cmd);
 
 
-int bdb_cmd_first(db_res_t* res);
+int bdb_cmd_first(db_res_t *res);
 
 
-int bdb_cmd_next(db_res_t* res);
+int bdb_cmd_next(db_res_t *res);
 
 /** @} */
 

@@ -183,7 +183,10 @@ int t_reply( struct cell *t, struct sip_msg * , unsigned int , char * );
    REPLY_LOCK -- useful to be called within reply
    processing
 */
+int t_reply_str( struct cell *t, struct sip_msg * , unsigned int , str * );
+
 int t_reply_unsafe( struct cell *t, struct sip_msg * , unsigned int , char * );
+int t_reply_str_unsafe( struct cell *t, struct sip_msg * , unsigned int , str * );
 
 
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,

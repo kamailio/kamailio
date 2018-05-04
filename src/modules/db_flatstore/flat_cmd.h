@@ -55,12 +55,13 @@ struct flat_cmd {
 int flat_cmd(db_cmd_t* cmd);
 
 
-/** The main execution function in flat SER driver.
+/** The main execution function in the flat driver.
  * This is the main execution function in this driver. It is executed whenever
  * a SER module calls db_exec and the target database of the commands is
  * flatstore.
  * @param res A pointer to (optional) result structure if the command returns
  *            a result.
+ * @param cmd database command structure
  * @retval 0 if executed successfully
  * @retval A negative number if the database server failed to execute command
  * @retval A positive number if there was an error on client side (SER)

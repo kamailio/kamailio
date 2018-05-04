@@ -74,6 +74,8 @@ struct timeval kz_amqp_tv = (struct timeval){0,100000};
 struct timeval kz_qtimeout_tv = (struct timeval){2,0};
 struct timeval kz_ack_tv = (struct timeval){0,100000};
 struct timeval kz_timer_tv = (struct timeval){0,200000};
+struct timeval kz_amqp_connect_timeout_tv = (struct timeval){0,200000};
+
 int kz_timer_ms = 200;
 
 str kz_json_escape_str = str_init("%");
@@ -159,8 +161,8 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-    {"node_hostname", STR_PARAM, &dbk_node_hostname.s},
-    {"amqp_connection", STR_PARAM|USE_FUNC_PARAM,(void*)kz_amqp_add_connection},
+    {"node_hostname", PARAM_STR, &dbk_node_hostname},
+    {"amqp_connection", PARAM_STRING|USE_FUNC_PARAM,(void*)kz_amqp_add_connection},
     {"amqp_max_channels", INT_PARAM, &dbk_channels},
     {"amqp_timmer_process_interval", INT_PARAM, &kz_timer_ms},
     {"amqp_consumer_ack_timeout_micro", INT_PARAM, &kz_ack_tv.tv_usec},
@@ -171,34 +173,36 @@ static param_export_t params[] = {
     {"amqp_waitframe_timeout_sec", INT_PARAM, &kz_amqp_tv.tv_sec},
     {"amqp_consumer_processes", INT_PARAM, &dbk_consumer_processes},
     {"amqp_consumer_workers", INT_PARAM, &dbk_consumer_workers},
-    {"amqp_consumer_event_key", STR_PARAM, &dbk_consumer_event_key.s},
-    {"amqp_consumer_event_subkey", STR_PARAM, &dbk_consumer_event_subkey.s},
+    {"amqp_consumer_event_key", PARAM_STR, &dbk_consumer_event_key},
+    {"amqp_consumer_event_subkey", PARAM_STR, &dbk_consumer_event_subkey},
     {"amqp_query_timeout_micro", INT_PARAM, &kz_qtimeout_tv.tv_usec},
     {"amqp_query_timeout_sec", INT_PARAM, &kz_qtimeout_tv.tv_sec},
     {"amqp_internal_loop_count", INT_PARAM, &dbk_internal_loop_count},
     {"amqp_consumer_loop_count", INT_PARAM, &dbk_consumer_loop_count},
     {"amqp_consumer_ack_loop_count", INT_PARAM, &dbk_consumer_ack_loop_count},
     {"pua_include_entity", INT_PARAM, &dbk_include_entity},
-    {"presentity_table", STR_PARAM, &kz_presentity_table.s},
-	{"db_url", STR_PARAM, &kz_db_url.s},
+    {"presentity_table", PARAM_STR, &kz_presentity_table},
+	{"db_url", PARAM_STR, &kz_db_url},
     {"pua_mode", INT_PARAM, &dbk_pua_mode},
     {"single_consumer_on_reconnect", INT_PARAM, &dbk_single_consumer_on_reconnect},
     {"consume_messages_on_reconnect", INT_PARAM, &dbk_consume_messages_on_reconnect},
-    {"amqp_query_timeout_avp", STR_PARAM, &kz_query_timeout_avp.s},
-    {"json_escape_char", STR_PARAM, &kz_json_escape_str.s},
-    {"app_name", STR_PARAM, &kz_app_name.s},
+    {"amqp_query_timeout_avp", PARAM_STR, &kz_query_timeout_avp},
+    {"json_escape_char", PARAM_STR, &kz_json_escape_str},
+    {"app_name", PARAM_STR, &kz_app_name},
     {"use_federated_exchange", INT_PARAM, &dbk_use_federated_exchange},
-    {"federated_exchange", STR_PARAM, &dbk_federated_exchange.s},
+    {"federated_exchange", PARAM_STR, &dbk_federated_exchange},
     {"amqp_heartbeats", INT_PARAM, &dbk_use_hearbeats},
-    {"amqp_primary_zone", STR_PARAM, &dbk_primary_zone_name.s},
+    {"amqp_primary_zone", PARAM_STR, &dbk_primary_zone_name},
     {"amqp_command_hashtable_size", INT_PARAM, &dbk_command_table_size},
-    {"amqp_result_avp", STR_PARAM, &kz_query_result_avp.s},
-    {"amqps_ca_cert", STR_PARAM, &kz_amqps_ca_cert.s},
-    {"amqps_cert", STR_PARAM, &kz_amqps_cert.s},
-    {"amqps_key", STR_PARAM, &kz_amqps_key.s},
+    {"amqp_result_avp", PARAM_STR, &kz_query_result_avp},
+    {"amqps_ca_cert", PARAM_STR, &kz_amqps_ca_cert},
+    {"amqps_cert", PARAM_STR, &kz_amqps_cert},
+    {"amqps_key", PARAM_STR, &kz_amqps_key},
     {"amqps_verify_peer", INT_PARAM, &kz_amqps_verify_peer},
     {"amqps_verify_hostname", INT_PARAM, &kz_amqps_verify_hostname},
 	{"pua_lock_type", INT_PARAM, &kz_pua_lock_type},
+    {"amqp_connect_timeout_micro", INT_PARAM, &kz_amqp_connect_timeout_tv.tv_usec},
+    {"amqp_connect_timeout_sec", INT_PARAM, &kz_amqp_connect_timeout_tv.tv_sec},
     {0, 0, 0}
 };
 
@@ -255,11 +259,6 @@ static int mod_init(void) {
 	LM_ERR("You must set the node_hostname parameter\n");
 	return -1;
     }
-    dbk_node_hostname.len = strlen(dbk_node_hostname.s);
-
-    dbk_consumer_event_key.len = strlen(dbk_consumer_event_key.s);
-   	dbk_consumer_event_subkey.len = strlen(dbk_consumer_event_subkey.s);
-
 
    	if(kz_init_avp()) {
    		LM_ERR("Error in avp params\n");

@@ -41,7 +41,7 @@
 			and parameter 'load'. Therefore lua_run() cannot execute functions
 			from scripts loaded via lua_dofile() in config. This is kind of
 			caching mode, avoiding reading file every time, but you must be sure
-			you do not have someting that is executed by default and requires
+			you do not have something that is executed by default and requires
 			access to SIP message.
 		</para>
 	    </listitem>
@@ -75,6 +75,24 @@
 			</para>
 		    </listitem>
 	    	</itemizedlist>
+			<para>
+			    This module can be compiled against LuaJIT compiler (instead of
+			    standard Lua). Then this library is needed:
+			    <itemizedlist>
+				    <listitem>
+				    <emphasis>libluajit-5.1-dev</emphasis> - LuaJIT devel library.
+				    </listitem>
+				</itemizedlist>
+				<para>
+				    To enable that, LUAJIT variable has to be set.
+					<example>
+					    <title>Build against LuaJIT libraries</title>
+					E.g: $ LUAJIT="yes" make modules modules=modules/app_lua
+					</example>
+			    (Warning: LuaJIT version is 5.1, so scripts prepared for higher Lua versions
+			    may not work with LuaJIT)
+				</para>
+			</para>
 	    </para>
 	</section>
     </section>
@@ -253,18 +271,19 @@ modparam("app_lua", "register", "sl")
 	    <title><varname>reload</varname> (boolean)</title>
 	    <para>
 			If reload is 1 enables the ability to reload the
-			scripts using the RPC app_lua.reload command.
+			scripts using the RPC app_lua.reload command. To disable reload
+			feature, set this parameter to 0.
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>0 (off)</quote>.
+		    Default value is <quote>1 (on)</quote>.
 		</emphasis>
 	    </para>
 	    <example>
 		<title>Set <varname>reload</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("app_lua", "reload", 1)
+modparam("app_lua", "reload", 0)
 ...
 </programlisting>
 	    </example>

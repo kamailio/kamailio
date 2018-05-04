@@ -32,9 +32,8 @@
 extern "C" {
 #endif
 
-/** \ingroup cds
- * @{ 
- *
+/**
+ * \ingroup cds
  * \defgroup cds_dstring Dynamic strings
  *
  * Dynamic strings were introduced to satisfy needs of presence
@@ -142,8 +141,7 @@ void dstr_clear_error(dstring_t *dstr); */
 /** Macro for cleaning error flag in dynamic string. */
 #define dstr_clear_error(dstr) (dstr)->error = 0
 
-/** @} 
- @} */
+/** @} */
 
 #ifdef __cplusplus
 }

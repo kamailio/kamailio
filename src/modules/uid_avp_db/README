@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
    the contents of AVPs (Attribute-Value pairs). The AVPs are variables
    attached to the SIP message being processed. Each variable has its name
    and value. AVPs can be used to store arbitrary data or as a means of
-   inter-module comminication.
+   inter-module communication.
 
    You may also want to check the avpops module which is more flexible and
    contains more functions. In future SER releases the avp module will be
@@ -296,7 +296,7 @@ route {
 
    id
           Identifier used for searching attributes. When searching for
-          user attributes it is UID, when searchnig uri attributes it is
+          user attributes it is UID, when searching uri attributes it is
           URI.
 
 4.2. load_extra_attrs (group_id, id)

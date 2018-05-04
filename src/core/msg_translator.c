@@ -103,6 +103,8 @@
 #include "parser/parse_param.h"
 #include "forward.h"
 #include "str_list.h"
+#include "pvapi.h"
+#include "xavp.h"
 #include "rand/kam_rand.h"
 
 #define append_str_trans(_dest,_src,_len,_msg) \
@@ -111,7 +113,7 @@
 extern char version[];
 extern int version_len;
 
-
+str _ksr_xavp_via_params = STR_NULL;
 
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
@@ -678,8 +680,8 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 			case SUBST_SND_IP: \
 				if (send_sock){ \
 					new_len+=send_address_str->len; \
-					if (send_sock->address.af!=AF_INET && \
-							send_address_str==&(send_sock->address_str)) \
+					if (send_sock->address.af==AF_INET6 && \
+							send_address_str->s[0]!='[') \
 						new_len+=2; \
 				}else{ \
 					LM_CRIT("FIXME: null send_sock\n"); \
@@ -724,8 +726,8 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 			case SUBST_SND_ALL: \
 				if (send_sock){ \
 					new_len+=send_address_str->len; \
-					if ((send_sock->address.af!=AF_INET) && \
-							(send_address_str==&(send_sock->address_str))) \
+					if ((send_sock->address.af==AF_INET6) && \
+							(send_address_str->s[0]!='[')) \
 						new_len+=2; \
 					if ((send_sock->port_no!=SIP_PORT) || \
 							(send_port_str!=&(send_sock->port_no_str))){ \
@@ -766,7 +768,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 			default: \
 				LM_CRIT("unknown subst type %d\n", (subst_l)->u.subst); \
 		}
-	
+
 	if (send_info){
 		send_sock=send_info->send_sock;
 	}else{
@@ -935,7 +937,7 @@ void process_lumps( struct sip_msg* msg,
 					default:\
 						LM_CRIT("unknown comp %d\n", msg->rcv.comp); \
 				}
-	
+
 	#define SENDCOMP_PARAM_ADD \
 				/* add ;comp=xxxx */ \
 				switch(send_info->comp){ \
@@ -956,7 +958,7 @@ void process_lumps( struct sip_msg* msg,
 						break;\
 					default:\
 						LM_CRIT("unknown comp %d\n", msg->rcv.comp); \
-				} 
+				}
 #else
 	#define RCVCOMP_PARAM_ADD
 	#define SENDCOMP_PARAM_ADD
@@ -1057,14 +1059,14 @@ void process_lumps( struct sip_msg* msg,
 		case SUBST_SND_IP: \
 			if (send_sock){  \
 				if ((send_sock->address.af!=AF_INET) && \
-						(send_address_str==&(send_sock->address_str))){\
+						(send_address_str->s[0]!='[')){\
 					new_buf[offset]='['; offset++; \
 				}\
 				memcpy(new_buf+offset, send_address_str->s, \
 									send_address_str->len); \
 				offset+=send_address_str->len; \
 				if ((send_sock->address.af!=AF_INET) && \
-						(send_address_str==&(send_sock->address_str))){\
+						(send_address_str->s[0]!='[')){\
 					new_buf[offset]=']'; offset++; \
 				}\
 			}else{  \
@@ -1086,14 +1088,14 @@ void process_lumps( struct sip_msg* msg,
 			if (send_sock){  \
 				/* address */ \
 				if ((send_sock->address.af!=AF_INET) && \
-						(send_address_str==&(send_sock->address_str))){\
+						(send_address_str->s[0]!='[')){\
 					new_buf[offset]='['; offset++; \
 				}\
 				memcpy(new_buf+offset, send_address_str->s, \
 						send_address_str->len); \
 				offset+=send_address_str->len; \
 				if ((send_sock->address.af!=AF_INET) && \
-						(send_address_str==&(send_sock->address_str))){\
+						(send_address_str->s[0]!='[')){\
 					new_buf[offset]=']'; offset++; \
 				}\
 				/* :port */ \
@@ -2847,6 +2849,9 @@ char* create_via_hf( unsigned int *len,
 	char* via;
 	str extra_params;
 	struct hostport hp;
+	char sbuf[24];
+	int slen;
+	str xparams;
 #if defined USE_TCP || defined USE_SCTP
 	char* id_buf;
 	unsigned int id_len;
@@ -2904,6 +2909,52 @@ char* create_via_hf( unsigned int *len,
 		extra_params.s = via;
 		extra_params.len += RPORT_LEN-1;
 		extra_params.s[extra_params.len]='\0';
+	}
+
+	/* test and add srvid parameter to local via  */
+	if(msg && (msg->msg_flags&FL_ADD_SRVID) && server_id!=0) {
+		slen = snprintf(sbuf, 24, ";srvid=%u", (unsigned int)server_id);
+		if(slen<=0 || slen>=24) {
+			LM_WARN("failed to build srvid parameter");
+		} else {
+			via = (char*)pkg_malloc(extra_params.len+slen+1);
+			if(via==0) {
+				LM_ERR("building srvid param failed\n");
+				if (extra_params.s) pkg_free(extra_params.s);
+				return 0;
+			}
+			if(extra_params.len != 0) {
+				memcpy(via, extra_params.s, extra_params.len);
+				pkg_free(extra_params.s);
+			}
+			memcpy(via + extra_params.len, sbuf, slen);
+			extra_params.s = via;
+			extra_params.len += slen;
+			extra_params.s[extra_params.len] = '\0';
+		}
+	}
+
+	/* test and add xavp params */
+	if(msg && (msg->msg_flags&FL_ADD_XAVP_VIA) && _ksr_xavp_via_params.len>0) {
+		xparams.s = pv_get_buffer();
+		xparams.len = xavp_serialize_fields(&_ksr_xavp_via_params,
+							xparams.s, pv_get_buffer_size());
+		if(xparams.len>0) {
+			via = (char*)pkg_malloc(extra_params.len+xparams.len+1);
+			if(via==0) {
+				LM_ERR("building xavps params failed\n");
+				if (extra_params.s) pkg_free(extra_params.s);
+				return 0;
+			}
+			if(extra_params.len != 0) {
+				memcpy(via, extra_params.s, extra_params.len);
+				pkg_free(extra_params.s);
+			}
+			memcpy(via + extra_params.len, xparams.s, xparams.len);
+			extra_params.s = via;
+			extra_params.len += xparams.len;
+			extra_params.s[extra_params.len] = '\0';
+		}
 	}
 
 	set_hostport(&hp, msg);

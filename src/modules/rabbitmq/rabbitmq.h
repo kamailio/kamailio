@@ -40,10 +40,10 @@
 #ifndef _RABBITMQ_H_
 #define _RABBITMQ_H_
 
-#define RABBITMQ_DEFAULT_AMQP_URL	"amqp://guest:guest@localhost:5672/%2F"
+#define RABBITMQ_DEFAULT_AMQP_URL "amqp://guest:guest@localhost:5672/%2F"
 
 typedef enum {
-	RABBITMQ_OK=1,
+	RABBITMQ_OK = 1,
 	RABBITMQ_ERR_CONNECT,
 	RABBITMQ_ERR_CHANNEL,
 	RABBITMQ_ERR_QUEUE,

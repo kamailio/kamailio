@@ -21,25 +21,25 @@
  */
 
 #ifndef __JAVA_SIG_PARSER_H__
-#define	__JAVA_SIG_PARSER_H__
+#define __JAVA_SIG_PARSER_H__
 
 #include "../../core/str.h"
 #include "../../core/sr_module.h"
 
 #include <jni.h>
 
-#define	JAVA_INV_SUPP_TYPE_OBJECTS
+#define JAVA_INV_SUPP_TYPE_OBJECTS
 
-#define	JAVA_INV_SUPP_TYPE_BOOLEAN
-#define	JAVA_INV_SUPP_TYPE_BYTE
-#define	JAVA_INV_SUPP_TYPE_CHARACTER
-#define	JAVA_INV_SUPP_TYPE_DOUBLE
-#define	JAVA_INV_SUPP_TYPE_FLOAT
-#define	JAVA_INV_SUPP_TYPE_INTEGER
-#define	JAVA_INV_SUPP_TYPE_LONG
-#define	JAVA_INV_SUPP_TYPE_SHORT
-#define	JAVA_INV_SUPP_TYPE_STRING
-#define	JAVA_INV_SUPP_TYPE_VOID
+#define JAVA_INV_SUPP_TYPE_BOOLEAN
+#define JAVA_INV_SUPP_TYPE_BYTE
+#define JAVA_INV_SUPP_TYPE_CHARACTER
+#define JAVA_INV_SUPP_TYPE_DOUBLE
+#define JAVA_INV_SUPP_TYPE_FLOAT
+#define JAVA_INV_SUPP_TYPE_INTEGER
+#define JAVA_INV_SUPP_TYPE_LONG
+#define JAVA_INV_SUPP_TYPE_SHORT
+#define JAVA_INV_SUPP_TYPE_STRING
+#define JAVA_INV_SUPP_TYPE_VOID
 
 int is_sig_allowed(char *);
 jvalue *get_value_by_sig_type(char *, char *);

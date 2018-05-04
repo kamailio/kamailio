@@ -21,7 +21,7 @@
  */
 
 #ifndef __JAVA_SUPPORT_H__
-#define	__JAVA_SUPPORT_H__
+#define __JAVA_SUPPORT_H__
 
 #include "../../core/str.h"
 #include "../../core/sr_module.h"

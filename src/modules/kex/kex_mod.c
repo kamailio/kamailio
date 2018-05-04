@@ -264,7 +264,7 @@ static sr_kemi_t sr_kemi_kex_exports[] = {
 	},
 	{ str_init("kex"), str_init("resetdebug"),
 		SR_KEMIP_INT, ki_kex_resetdebug,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

@@ -33,7 +33,7 @@ extern struct ts_table *t_table;
  * \brief add transaction structure to tm callbacks
  * \param t current transaction
  * \param req current sip request
- * \param tma_t current transaction
+ * \param ts current transaction
  * \return 0 on success, -1 on failure
  */
 int ts_set_tm_callbacks(struct cell *t, sip_msg_t *req, ts_transaction_t *ts)
@@ -95,7 +95,7 @@ void ts_onreply(struct cell* t, int type, struct tmcb_params *param)
 		LM_DBG("transaction %u:%u not found\n",cb_ptr->tindex, cb_ptr->tlabel);
 		unlock_entry(_e);
 	} else {
-		LM_DBG("called with uknown type %d\n", type);
+		LM_DBG("called with unknown type %d\n", type);
 	}
 
 	return;

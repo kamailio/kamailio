@@ -28,7 +28,7 @@
     <section>
       <title>Kamailio Modules</title>
 
-      <para>The Following mouldes must be loaded before this module:</para>
+      <para>The Following modules must be loaded before this module:</para>
 
       <itemizedlist>
         <listitem>
@@ -92,7 +92,7 @@
     <section>
       <title>Offline Charging (Rf)</title>
 
-      <para>For the offlinc charging (Rf), we have the following two
+      <para>For the offline charging (Rf), we have the following two
       diameter-messages:</para>
 
       <itemizedlist>
@@ -267,7 +267,7 @@ modparam("ims_charging", "hash_size", 1024)
       <title><varname>interim_update_credits</varname>(int)</title>
 
       <para>How much credit should be requested interim request? At the start
-      of the call, we request the amout of seconds as per Command. For each
+      of the call, we request the amount of seconds as per Command. For each
       interim request, we would request credit for
       "interim_update_credits".</para>
 
@@ -782,7 +782,7 @@ modparam("ims_charging", "custom_user_avp", "$avp(from_user)")
 
         <listitem>
           <para><emphasis>reservation_units</emphasis> how many units (at the
-          moment seconds) should be reservated at the moment.</para>
+          moment seconds) should be reserved at the moment.</para>
         </listitem>
 
         <listitem>
@@ -886,21 +886,21 @@ route[CHARGING_CCR_REPLY]
     </section>
 
     <section>
-      <title>Sucessful initial CCRs (successful_initial_ccrs)</title>
+      <title>Successful initial CCRs (successful_initial_ccrs)</title>
 
       <para>Initial CCRs that ended with DIAMETER_SUCCESS response
       code.</para>
     </section>
 
     <section>
-      <title>Sucessful interim CCRs (successful_interim_ccrs)</title>
+      <title>Successful interim CCRs (successful_interim_ccrs)</title>
 
       <para>Interim CCRs that ended with DIAMETER_SUCCESS response
       code.</para>
     </section>
 
     <section>
-      <title>Sucessful final CCRs (successful_final_ccrs)</title>
+      <title>Successful final CCRs (successful_final_ccrs)</title>
 
       <para>Final CCRs that ended with DIAMETER_SUCCESS response code.</para>
     </section>

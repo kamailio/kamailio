@@ -1135,7 +1135,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 	return (-1);
 }
 
-int sca_handle_subscribe(sip_msg_t *msg, char *p1, char *p2)
+int ki_sca_handle_subscribe(sip_msg_t *msg)
 {
 	sca_subscription req_sub;
 	sca_subscription *sub = NULL;
@@ -1352,6 +1352,11 @@ int sca_handle_subscribe(sip_msg_t *msg, char *p1, char *p2)
 	}
 
 	return (rc);
+}
+
+int sca_handle_subscribe(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_sca_handle_subscribe(msg);
 }
 
 int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,

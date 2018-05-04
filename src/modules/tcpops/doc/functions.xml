@@ -228,7 +228,7 @@ request_route {
                 <para>Meaning of the parameters is as follows:</para>
                 <itemizedlist>
                         <listitem>
-                                <para><emphasis>conid</emphasis> (optionnal): the &kamailio; internal
+                                <para><emphasis>conid</emphasis> (optional): the &kamailio; internal
                                 connection id. If no parameter
                                 is given, it will be enabled on the current message source connection.
                                 </para>
@@ -259,4 +259,39 @@ event_route[tcp:closed] {
 ]]></programlisting>
                 </example>
         </section>
+	<section id="tcpops.f.tcp_get_conid">
+		<title>
+			<function>tcp_get_conid(hostport, pvname)</function>
+		</title>
+		<para>
+			Get the connection id based on target host:port. The connection id
+			is set in the variable named by pvname parameter.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>hostport</emphasis> - target "host:port" address,
+				the port can be omitted (default to 5060) and the parameter can
+				contain variables.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>pvname</emphasis> - target variable name.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Return values:</para>
+		<para>1: connection was found</para>
+		<para>-1: connection was not found or an error occurred</para>
+		<example>
+			<title><function>tcp_get_conid</function> usage</title>
+			<programlisting><![CDATA[
+...
+	if(tcp_conid_alive("127.0.0.1:5060", "$var(conid)")) {
+		xlog("connection id is: $var(conid)\n");
+	}
+...
+			]]></programlisting>
+		</example>
+	</section>
 </section>

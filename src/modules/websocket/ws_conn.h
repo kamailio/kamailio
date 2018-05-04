@@ -32,12 +32,11 @@
 #include "../../core/counters.h"
 #include "../../core/rpc.h"
 
-typedef enum
-{
-	WS_S_CONNECTING	= 0,	/* Never used - included for completeness */
+typedef enum {
+	WS_S_CONNECTING = 0, /* Never used - included for completeness */
 	WS_S_OPEN,
 	WS_S_CLOSING,
-	WS_S_CLOSED		/* Never used - included for completeness */
+	WS_S_CLOSED /* Never used - included for completeness */
 } ws_conn_state_t;
 
 typedef struct ws_connection
@@ -49,8 +48,8 @@ typedef struct ws_connection
 	struct ws_connection *used_prev;
 	struct ws_connection *used_next;
 
-	int id;			/* id and id_hash are identical to the values */
-	unsigned id_hash;	/* for the corresponding TCP/TLS connection */
+	int id;			  /* id and id_hash are identical to the values */
+	unsigned id_hash; /* for the corresponding TCP/TLS connection */
 	struct ws_connection *id_prev;
 	struct ws_connection *id_next;
 
@@ -59,7 +58,7 @@ typedef struct ws_connection
 	unsigned int sub_protocol;
 
 	atomic_t refcnt;
-	int      run_event;
+	int run_event;
 
 	str frag_buf;
 } ws_connection_t;
@@ -70,8 +69,7 @@ typedef struct
 	ws_connection_t *tail;
 } ws_connection_used_list_t;
 
-typedef enum
-{
+typedef enum {
 	WSCONN_EVENTROUTE_NO = 0,
 	WSCONN_EVENTROUTE_YES
 } ws_conn_eventroute_t;
@@ -97,5 +95,5 @@ ws_connection_t *wsconn_get(int id);
 int wsconn_put(ws_connection_t *wsc);
 ws_connection_t **wsconn_get_list(void);
 int wsconn_put_list(ws_connection_t **list);
-void ws_rpc_dump(rpc_t* rpc, void* ctx);
+void ws_rpc_dump(rpc_t *rpc, void *ctx);
 #endif /* _WS_CONN_H */

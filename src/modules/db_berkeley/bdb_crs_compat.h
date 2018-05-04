@@ -29,12 +29,12 @@
  * starting with version 4.6
  */
 #if DB_VERSION_MAJOR < 4
-#	define CLOSE_CURSOR c_close
+#define CLOSE_CURSOR c_close
 #else
-#if (DB_VERSION_MAJOR == 4) && (DB_VERSION_MINOR < 6)
-#	define CLOSE_CURSOR c_close
+#if(DB_VERSION_MAJOR == 4) && (DB_VERSION_MINOR < 6)
+#define CLOSE_CURSOR c_close
 #else
-#	define CLOSE_CURSOR close
+#define CLOSE_CURSOR close
 #endif
 #endif
 

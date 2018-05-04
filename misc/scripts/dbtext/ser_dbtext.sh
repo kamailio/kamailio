@@ -104,7 +104,7 @@ FILES
   ${SRCDB_DIR}/${SRCDB}
     
 REPORTING BUGS
-  Report bugs to <ser-bugs@iptel.org>             
+  Report bugs to <sr-dev@lists.kamailio.org>             
 EOF
 } #usage
 

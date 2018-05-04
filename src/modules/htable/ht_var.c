@@ -129,6 +129,23 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 	return 0;
 }
 
+void pv_ht_free_name(void *p)
+{
+	pv_name_t *pn;
+	ht_pv_t *hpv=NULL;
+
+	if(p==NULL)
+		return;
+
+	pn = (pv_name_t*)p;
+	hpv = (ht_pv_t*)pn->u.dname;
+	if(hpv==NULL)
+		return;
+	if(hpv->pve)
+		pv_elem_free_all(hpv->pve);
+	pkg_free(hpv);
+}
+
 int pv_parse_ht_name(pv_spec_p sp, str *in)
 {
 	ht_pv_t *hpv=NULL;
@@ -184,6 +201,7 @@ int pv_parse_ht_name(pv_spec_p sp, str *in)
 	hpv->ht = ht_get_table(&hpv->htname);
 	sp->pvp.pvn.u.dname = (void*)hpv;
 	sp->pvp.pvn.type = PV_NAME_OTHER;
+	sp->pvp.pvn.nfree = pv_ht_free_name;
 	return 0;
 
 error:

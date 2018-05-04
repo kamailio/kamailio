@@ -30,12 +30,12 @@
 <refsect1><title>Description</title>
 
 <para>Allocates message using <function>cds_malloc</function> and initializes
-its content so it will be freed automaticaly. Pointer to the explicitly
+its content so it will be freed automatically. Pointer to the explicitly
 allocated data is set to <parameter>data</parameter> and its length is set to
 <parameter>data_len</parameter>. Message created by <function>create_message</function> 
 should be freed using <function>message_free</function>.</para>
 
-<para>Unremoved messages created this way are freed automaticaly in
+<para>Unremoved messages created this way are freed automatically in
 <function>msg_queue_destroy</function> using <function>free_message</function>.
 </para>
 

@@ -18,10 +18,10 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 				   auth_xkeys smsops tsilo cfgt statsc topos sipdump
 
 # - extra used modules, with no extra dependency
-mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
+mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp carrierroute \
 			     pdb qos sca seas sms sst timer tmrec uac_redirect xhttp \
 				 xhttp_rpc xprint jsonrpcs nosip dmq_usrloc statsd rtjson \
-				 log_custom keepalive ss7ops app_sqlang acc_diameter
+			  log_custom keepalive ss7ops app_sqlang acc_diameter evrexec
 
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
@@ -70,9 +70,6 @@ mod_list_snmpstats=snmpstats
 
 # - modules depending on expat library
 mod_list_xmpp=xmpp
-
-# - modules depending on confuse library
-mod_list_carrierroute=carrierroute
 
 # - modules depending on bdb (db4) library
 mod_list_berkeley=db_berkeley
@@ -125,6 +122,9 @@ mod_list_perldeps=app_perl db_perlvdb
 # - modules depending on python library
 mod_list_python=app_python
 
+# - modules depending on python3 library
+mod_list_python3=app_python3
+
 # - modules depending on libm (math library - standard system library)
 mod_list_jsdt=app_jsdt
 
@@ -141,19 +141,19 @@ mod_list_sqlite=db_sqlite
 mod_list_oracle=db_oracle
 
 # - modules depending on json library
-mod_list_json=json
+mod_list_json=json pua_json
 
 # - modules depending on json (+libevent) library
 mod_list_json_event=jsonrpcc
 
 # - modules depending on jansson library
-mod_list_jansson=jansson
+mod_list_jansson=jansson acc_json
 
 # - modules depending on jansson (+libevent) library
 mod_list_jansson_event=janssonrpcc
 
 # - modules depending on redis library
-mod_list_redis=ndb_redis topos_redis
+mod_list_redis=db_redis ndb_redis topos_redis
 
 # - modules depending on mono library
 mod_list_mono=app_mono
@@ -210,13 +210,14 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_mysql) $(mod_list_postgres) \
 			   $(mod_list_unixodbc) $(mod_list_xmldeps) \
 			   $(mod_list_perldeps) $(mod_list_cpl) \
-			   $(mod_list_xmpp) $(mod_list_carrierroute) \
+			   $(mod_list_xmpp) \
 			   $(mod_list_berkeley) $(mod_list_utils) \
 			   $(mod_list_memcached) \
 			   $(mod_list_tlsdeps) $(mod_list_tlsdeps_curl) \
 			   $(mod_list_websocket) \
 			   $(mod_list_snmpstats) $(mod_list_presence) \
 			   $(mod_list_lua) $(mod_list_python) \
+			   $(mod_list_python3) \
 			   $(mod_list_geoip) $(mod_list_sqlite) \
 			   $(mod_list_json) $(mod_list_json_event) \
 			   $(mod_list_redis) \
@@ -330,9 +331,6 @@ module_group_ksnmpstats=$(mod_list_snmpstats)
 # pkg xmpp module
 module_group_kxmpp=$(mod_list_xmpp)
 
-# pkg carrierroute module
-module_group_kcarrierroute=$(mod_list_carrierroute)
-
 # pkg berkeley module
 module_group_kberkeley=$(mod_list_berkeley)
 
@@ -365,6 +363,9 @@ module_group_klua=$(mod_list_lua)
 
 # pkg python module
 module_group_kpython=$(mod_list_python)
+
+# pkg python3 module
+module_group_kpython3=$(mod_list_python3)
 
 # pkg geoip module
 module_group_kgeoip=$(mod_list_geoip)

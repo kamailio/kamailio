@@ -1,5 +1,5 @@
 #
-# registrar module makefile
+# ims registrar module makefile
 #
 #
 # WARNING: do not run this directly, it should be run by the master Makefile
@@ -26,7 +26,7 @@ ifneq ($(OS),darwin)
 	LIBS += -lpthread
 endif
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims

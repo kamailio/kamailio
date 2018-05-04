@@ -41,12 +41,12 @@ Netsnmp_Node_Handler handle_kamailioSIPRegUserLookupCounter;
 Netsnmp_Node_Handler handle_kamailioSIPRegAcceptedRegistrations;
 Netsnmp_Node_Handler handle_kamailioSIPRegRejectedRegistrations;
 
-#define PROXY_STATEFULNESS_STATELESS            1
+#define PROXY_STATEFULNESS_STATELESS 1
 #define PROXY_STATEFULNESS_TRANSACTION_STATEFUL 2
-#define PROXY_STATEFULNESS_CALL_STATEFUL        3
+#define PROXY_STATEFULNESS_CALL_STATEFUL 3
 
-#define SIP_AUTH_METHOD_NONE   (128 >> 0)
-#define SIP_AUTH_METHOD_TLS    (128 >> 1)
+#define SIP_AUTH_METHOD_NONE (128 >> 0)
+#define SIP_AUTH_METHOD_TLS (128 >> 1)
 #define SIP_AUTH_METHOD_DIGEST (128 >> 2)
 
 #endif /* KAMAILIOSIPSERVEROBJECTS_H */

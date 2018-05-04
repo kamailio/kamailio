@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -29,8 +29,12 @@
 		The core Makefile variable SCTP must be set to 1 (which is by default set
 		to 1 in Makefile.defs) and sources compiled with -DUSE_SCTP (automatically
 		set when SCTP=1). In other words, if core Makefiles are not changed and
-		SCTP variable is not overwritten from command line, then the SCTP 
+		SCTP variable is not overwritten from command line, then the SCTP
 		support in core is enabled.
+	</para>
+	<para>
+		Note: it is recommended to use recent versions of libsctp (>1.0.10)
+		and kernel (>4.0.0) when enabling SCTP transport.
 	</para>
 	</section>
 

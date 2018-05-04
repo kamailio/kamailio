@@ -42,7 +42,7 @@
 #include "usrloc.h"
 
 /*! contact matching mode */
-int matching_mode = CONTACT_ONLY;
+int ul_matching_mode = CONTACT_ONLY;
 /*! retransmission detection interval in seconds */
 int cseq_delay = 20;
 
@@ -216,7 +216,7 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 	free_ucontact(_c);
 }
 
-static inline int is_valid_tcpconn(ucontact_t *c)
+int is_valid_tcpconn(ucontact_t *c)
 {
 	if (c->tcpconn_id == -1)
 		return 0; /* tcpconn_id is not present */
@@ -224,7 +224,7 @@ static inline int is_valid_tcpconn(ucontact_t *c)
 		return 1; /* valid tcpconn_id */
 }
 
-static inline int is_tcp_alive(ucontact_t *c)
+int is_tcp_alive(ucontact_t *c)
 {
 	struct tcp_connection *con = NULL;
 	int rc = 0;
@@ -286,8 +286,10 @@ static inline void nodb_timer(urecord_t* _r)
 
 		if (!VALID_CONTACT(ptr, act_time)) {
 			/* run callbacks for EXPIRE event */
-			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
+			if (!(ptr->flags&FL_EXPCLB) && exists_ulcb_type(UL_CONTACT_EXPIRE)) {
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
+				ptr->flags |= FL_EXPCLB;
+			}
 
 			LM_DBG("Binding '%.*s','%.*s' has expired\n",
 				ptr->aor->len, ZSW(ptr->aor->s),
@@ -733,7 +735,7 @@ static inline struct ucontact* contact_path_match( ucontact_t* ptr, str* _c, str
 /*!
  * \brief Match a contact record to a Call-ID only
  * \param ptr contact record
- * \param _c contact string
+ * \param _callid callid string
  * \return ptr on successfull match, 0 when they not match
  */
 static inline struct ucontact* contact_match_callidonly( ucontact_t* ptr, str* _callid)
@@ -770,7 +772,7 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 	no_callid = 0;
 	*_co = 0;
 
-	switch (matching_mode) {
+	switch (ul_matching_mode) {
 		case CONTACT_ONLY:
 			ptr = contact_match( _r->contacts, _c);
 			break;
@@ -785,7 +787,7 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 			ptr = contact_match_callidonly( _r->contacts, _callid);
 			break;
 		default:
-			LM_CRIT("unknown matching_mode %d\n", matching_mode);
+			LM_CRIT("unknown matching_mode %d\n", ul_matching_mode);
 			return -1;
 	}
 

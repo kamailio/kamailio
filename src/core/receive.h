@@ -35,4 +35,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info *ri);
 unsigned int inc_msg_no(void);
 void ksr_msg_env_reset(void);
 
+int ksr_route_locks_set_init(void);
+void ksr_route_locks_set_destroy(void);
+
 #endif

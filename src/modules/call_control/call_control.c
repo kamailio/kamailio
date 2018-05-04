@@ -91,6 +91,7 @@ typedef struct AVP_Param {
 typedef struct AVP_List {
     pv_spec_p pv;
     str name;
+    char *orig;
     struct AVP_List *next;
 } AVP_List;
 
@@ -261,6 +262,7 @@ cc_parse_param(void *val, AVP_List** avps) {
 
     p0 = (char*) pkg_malloc (content.len + 1);
     CHECK_ALLOC(p0);
+    memset(p0, 0, content.len + 1);
     p = p0;
 
     p[content.len] = '\0';
@@ -270,9 +272,11 @@ cc_parse_param(void *val, AVP_List** avps) {
 
         mp = (AVP_List*) pkg_malloc (sizeof(AVP_List));
         CHECK_ALLOC(mp);
+        memset(mp, 0, sizeof(AVP_List));
         mp->next = *avps;
         mp->pv = (pv_spec_p) pkg_malloc (sizeof(pv_spec_t));
         CHECK_ALLOC(mp->pv);
+        memset(mp->pv, 0, sizeof(pv_spec_t));
 
         for (; isspace(*p); p++);
         CHECK_COND(*p != '\0');
@@ -305,6 +309,12 @@ cc_parse_param(void *val, AVP_List** avps) {
         for (; isspace(*p); p++);
 
         *avps = mp;
+    }
+
+    if(mp==0) {
+        pkg_free(p0);
+    } else {
+        mp->orig = p0;
     }
 
     return 0;

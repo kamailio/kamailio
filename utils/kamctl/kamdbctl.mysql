@@ -32,10 +32,10 @@ if [ -z "$DBROOTUSER" ]; then
 	DBROOTUSER="root"
 fi
 
-# Uncomment this to set the database root password if you want to run this 
-# script without any user prompt. This is unsafe, but useful e.g. for 
-# automatic testing.
-#PW=""
+# Set DBROOTPW in kamctlrc or via next line to set the database
+# root password if you want to run this script without any user prompt.
+# This is unsafe, but useful e.g. for automatic testing.
+#DBROOTPW=""
 
 
 if [ -z "$DBPORT" ] ; then
@@ -55,13 +55,13 @@ prompt_pw()
 	savetty=`stty -g`
 	echo -n "MySQL password for $DBROOTUSER: "
 	stty -echo
-	read PW
+	read DBROOTPW
 	stty $savetty
 	echo
-	export PW
+	export DBROOTPW
 }
 
-# execute sql command with optional db name 
+# execute sql command with optional db name
 # and password parameters given
 sql_query()
 {
@@ -72,14 +72,14 @@ sql_query()
 			DB=""
 		fi
 		shift
-		if [ -n "$PW" ]; then
-			$CMD "-p$PW" $DB -e "$@"
+		if [ -n "$DBROOTPW" ]; then
+			$CMD "-p$DBROOTPW" $DB -e "$@"
 		else
 			$CMD $DB -e "$@"
 		fi
 	else
-		if [ -n "$PW" ]; then
-			$CMD "-p$PW" "$@"
+		if [ -n "$DBROOTPW" ]; then
+			$CMD "-p$DBROOTPW" "$@"
 		else
 			$CMD "$@"
 		fi
@@ -106,9 +106,9 @@ kamailio_drop()  # pars: <database name>
 
 db_charset_test()
 {
-	if [ -n "$PW" ]; then
-		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$PW" | $AWK '{print $2}' | $SED -e 1d`
-		ALLCHARSETS=`echo "show character set" | $CMD "-p$PW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv -e "utf8\|ucs2"`
+	if [ -n "$DBROOTPW" ]; then
+		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$DBROOTPW" | $AWK '{print $2}' | $SED -e 1d`
+		ALLCHARSETS=`echo "show character set" | $CMD "-p$DBROOTPW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv -e "utf8\|ucs2"`
 	else
 		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD | $AWK '{print $2}' | $SED -e 1d`
 		ALLCHARSETS=`echo "show character set" | $CMD | $AWK '{print $1}' | $SED -e 1d | $GREP -iv -e "utf8\|ucs2"`
@@ -373,176 +373,10 @@ kamailio_add_tables () # params: <database name> <tables group name>
 	fi
 }  # end kamailio_add_tables
 
-migrate_table () # 4 paremeters (dst_table, dst_cols, src_table, src_cols)
-{
-	if [ $# -ne 4 ] ; then
-		merr "migrate_table function takes 4 params $@"
-		exit 1
-	fi
 
-	src_cols=`echo $4 | sed s/?/$3./g `
-
-	X=`sql_query "" "INSERT into $1 ($2) SELECT $src_cols from $3;" 2>&1`
-
-	if [ $? -ne 0 ] ; then
-		echo $X | $GREP "ERROR 1146" > /dev/null
-		if [ $? -eq 0 ] ; then 
-			echo " -- Migrating $3 to $1.....SKIPPED (no source)"
-			return 0
-		fi
-		echo "ERROR: failed to migrate $3 to $1!!!"
-		echo -n "Skip it and continue (y/n)? "
-		read INPUT
-		if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
-		then
-			return 0
-		fi
-
-		exit 1;
-	fi
-
-	minfo " -- Migrating $3 to $1.....OK"
-
-}
-
-migrate_db () # 2 parameters (src_db, dst_db)
-{
-if [ $# -ne 2 ] ; then
-	merr "migrate_db function takes 2 params"
-	exit 1
-fi
-
-dst_db=$2
-src_db=$1
-
-migrate_table ${dst_db}.acc \
-	"id,method,from_tag,to_tag,callid,sip_code,sip_reason,time" \
-	${src_db}.acc \
-	"?id,?method,?from_tag,?to_tag,?callid,?sip_code,?sip_reason,?time"
-
-migrate_table ${dst_db}.missed_calls \
-	"id,method,from_tag,to_tag,callid,sip_code,sip_reason,time" \
-	${src_db}.missed_calls \
-	"?id,?method,?from_tag,?to_tag,?callid,?sip_code,?sip_reason,?time"
-
-migrate_table ${dst_db}.aliases \
-	"id,username,domain,contact,expires,q,callid,cseq,last_modified,\
-		flags,cflags,user_agent" \
-	${src_db}.aliases \
-	"?id,?username,?domain,?contact,?expires,?q,?callid,?cseq,?last_modified,\
-		?flags,?cflags,?user_agent"
-
-migrate_table ${dst_db}.dbaliases \
-	"id,alias_username,alias_domain,username,domain" \
-	${src_db}.dbaliases \
-	"?id,?alias_username,?alias_domain,?username,?domain"
-
-migrate_table ${dst_db}.grp \
-	"id,username,domain,grp,last_modified" \
-	${src_db}.grp \
-	"?id,?username,?domain,?grp,?last_modified"
-
-migrate_table ${dst_db}.re_grp \
-	"id,reg_exp,group_id" \
-	${src_db}.re_grp \
-	"?id,?reg_exp,?group_id"
-
-migrate_table ${dst_db}.silo \
-	"id,src_addr,dst_addr,username,domain,inc_time,exp_time,snd_time,\
-		ctype,body" \
-	${src_db}.silo \
-	"?id,?src_addr,?dst_addr,?username,?domain,?inc_time,?exp_time,?snd_time,\
-		?ctype,?body"
-
-migrate_table ${dst_db}.domain \
-	"id,domain,last_modified" \
-	${src_db}.domain \
-	"?id,?domain,?last_modified"
-
-migrate_table ${dst_db}.uri \
-	"id,username,domain,uri_user,last_modified" \
-	${src_db}.uri \
-	"?id,?username,?domain,?uri_user,?last_modified"
-
-migrate_table ${dst_db}.usr_preferences \
-	"id,uuid,username,domain,attribute,type,value,last_modified" \
-	${src_db}.usr_preferences \
-	"?id,?uuid,?username,?domain,?attribute,?type,?value,?last_modified"
-
-migrate_table ${dst_db}.trusted \
-	"id,src_ip,proto,from_pattern,tag" \
-	${src_db}.trusted \
-	"?id,?src_ip,?proto,?from_pattern,?tag"
-
-migrate_table ${dst_db}.address \
-	"id,grp,ip_addr,mask,port" \
-	${src_db}.address \
-	"?id,?grp,?ip_addr,?mask,?port"
-
-migrate_table ${dst_db}.speed_dial \
-	"id,username,domain,sd_username,sd_domain,new_uri,\
-		fname,lname,description" \
-	${src_db}.speed_dial \
-	"?id,?username,?domain,?sd_username,?sd_domain,?new_uri,\
-		?fname,?lname,?description"
-
-migrate_table ${dst_db}.gw \
-	"id,gw_name,grp_id,ip_addr,port,uri_scheme,transport,strip,prefix" \
-	${src_db}.gw \
-	"?id,?gw_name,?grp_id,?ip_addr,?port,?uri_scheme,?transport,?strip,?prefix"
-
-migrate_table ${dst_db}.gw_grp \
-	"grp_id,grp_name" \
-	${src_db}.gw_grp \
-	"?grp_id,?grp_name"
-
-migrate_table ${dst_db}.lcr \
-	"id,prefix,from_uri,grp_id,priority" \
-	${src_db}.lcr \
-	"?id,?prefix,?from_uri,?grp_id,?priority"
-
-migrate_table ${dst_db}.pdt \
-	"id,sdomain,prefix,domain" \
-	${src_db}.pdt \
-	"?id,?sdomain,?prefix,?domain"
-
-# migrate subscribers with no serweb support
-migrate_table ${dst_db}.subscriber \
-	"id,username,domain,password,ha1,ha1b,rpid" \
-	${src_db}.subscriber \
-	"?id,?username,?domain,?password,?ha1,?ha1b,?rpid"
-
-if [ "$HAS_EXTRA" = "yes" ] ; then
-	migrate_table ${dst_db}.cpl \
-		"id,username,domain,cpl_xml,cpl_bin" \
-		${src_db}.cpl \
-		"?id,?username,?domain,?cpl_xml,?cpl_bin"
-
-	migrate_table ${dst_db}.siptrace \
-		"id,date,callid,traced_user,msg,method,status,fromip,toip,\
-		fromtag,direction" \
-		${src_db}.siptrace \
-		"?id,?date,?callid,?traced_user,?msg,?method,?status,?fromip,?toip,\
-		?fromtag,?direction"
-
-	migrate_table ${dst_db}.imc_rooms \
-		"id,name,domain,flag" \
-		${src_db}.imc_rooms \
-		"?id,?name,?domain,?flag"
-
-	migrate_table ${dst_db}.imc_members \
-		"id,username,domain,room,flag" \
-		${src_db}.im_members \
-		"?id,?username,?domain,?room,?flag"
-fi
-
-
-}  #end migrate_db()
-
-
-export PW
-if [ "$#" -ne 0 ] && [ "$PW" = "" ]; then
-	if [ "$PWSKIP" = "" ]; then
+export DBROOTPW
+if [ "$#" -ne 0 ] && [ "$DBROOTPW" = "" ]; then
+	if [ "$DBROOTPWSKIP" = "" ]; then
 		prompt_pw
 	fi
 fi

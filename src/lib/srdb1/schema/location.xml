@@ -65,7 +65,7 @@
         <type>string</type>
         <size>&contact_len;</size>
         <default/>
-        <description>Contact header field value provides a URI whoses meaning depends on the type of request or response it is in.</description>
+        <description>Contact header field value provides a URI whose meaning depends on the type of request or response it is in.</description>
     </column>
 
     <column>

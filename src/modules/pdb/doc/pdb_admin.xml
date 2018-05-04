@@ -23,7 +23,7 @@
 	The pdb module allows &kamailio; to send queries to a list of servers
   	and store the answer in an AVP. The idea is to ask all servers in
   	parallel and use the first answer, that comes back. A timeout for the
-	query can be defined in milliseconds. The queying can be activated and
+	query can be defined in milliseconds. The querying can be activated and
   	deactivated using FIFO commands.
 	</para>
 	<para>

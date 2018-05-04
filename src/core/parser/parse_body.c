@@ -23,6 +23,7 @@
  * \brief Parser :: Body handling
  *
  * \ingroup parser
+ * @{
  */
 
 
@@ -289,14 +290,13 @@ next_hf:
 
 
 /**
- * trim_leading_hts
+ * \brief trim_leading_hts
  *
- * trim leading all spaces ' ' and horizontal tabs '\t' characters.
- *   - buffer, pointer to the beginning of the buffer.
- *   - end_buffer, pointer to the end of the buffer.
- * returns
- *   - pointer to the first non-match character if success.
- *   - pointer to NULL if the end_buffer is reached.
+ * trim leading all spaces ' ' and horizontal tabs '\\t' characters.
+ * \param buffer pointer to the beginning of the buffer
+ * \param end_buffer pointer to the end of the buffer
+ * \return pointer to the first non-match character if success, 
+ * pointer to NULL if the end_buffer is reached.
  */
 char *trim_leading_hts (char *buffer, char *end_buffer)
 {
@@ -311,15 +311,13 @@ char *trim_leading_hts (char *buffer, char *end_buffer)
 
 
 /**
- * trim_leading_e_r
+ * \brief trim_leading_e_r
  *
- * trim leading characters until get a '\r'.
- *   - buffer, pointer to the beginning of the buffer.
- *   - end_buffer, pointer to the end of the buffer.
- *
- * returns
- *   - pointer to the first '\r' character if success.
- *   - pointer to NULL if the end_buffer is reached.
+ * trim leading characters until get a '\\r'.
+ * \param buffer pointer to the beginning of the buffer
+ * \param end_buffer pointer to the end of the buffer
+ * \return pointer to the first '\\r' character if success,
+ * pointer to NULL if the end_buffer is reached.
  */
 char *trim_leading_e_r (char *buffer, char *end_buffer)
 {
@@ -332,24 +330,20 @@ char *trim_leading_e_r (char *buffer, char *end_buffer)
 
 
 /**
- * part_multipart_headers_cmp
- * trim leading characters until get a '\r'.
- * receives
- *   - buffer, pointer to the beginning of the headers in a part of the multipart body.
- *   - end_buffer, pointer to the end of the headers in the multipart body.
- *   - content type/ content subtype.
- *         if (type == 0 / subtype == 0): Content-Type: disabled in the search.
- *   - content id.
- *         if (id == NULL): Content-ID: disabled in the search.
- *   - content length.
- *         if (length == NULL) Content-Length: disabled in the search.
- *
- * returns
- *   - true, if the part of the multipart body has :
- *            -- Content-Type   that matches content_type / content_subtype. (if Content-Type enabled) &&
- *            -- Content-ID     that matches content_id. (if Content-ID enabled) &&
- *            -- Content-Length that matches content_length. (if Content-Length enabled)
- *   - false, if any of them doesnt match.
+ * \brief part_multipart_headers_cmp
+ * 
+ * trim leading characters until get a '\\r'.
+ * \param buffer pointer to the beginning of the headers in a part of the multipart body
+ * \param end_buffer pointer to the end of the headers in the multipart body
+ * \param content_type if NULL Content-Type: disabled in the search
+ * \param content_subtype if NULL Content-Subtype: disabled in the search
+ * \param content_id if NULL then Content-ID: disabled in the search
+ * \param content_length if NULL then Content-Length: disabled in the search
+ * \return true, if the part of the multipart body has :
+ * -- Content-Type   that matches content_type / content_subtype. (if Content-Type enabled) &&
+ * -- Content-ID     that matches content_id. (if Content-ID enabled) &&
+ * -- Content-Length that matches content_length. (if Content-Length enabled)
+ * - false, if any of them doesnt match.
  */
 int part_multipart_headers_cmp (char *buffer,
 				char *end_buffer,
@@ -518,25 +512,18 @@ int part_multipart_headers_cmp (char *buffer,
 }
 
 /**
- * get_body_part_by_filter
+ * \brief get_body_part_by_filter
  *
  * Filters the multipart part from a given SIP message which matches the
  * Content-Type && || Content-ID  && || Content-Length
- * receives
- *   - SIP message
- *   - pointer to the beginning of the headers in a part of the multipart body.
- *   - pointer to the end of the headers in the multipart body.
- *   - content type/ content subtype.
- *         if (type == 0 / subtype == 0): Content-Type: disabled in the search.
- *   - content id.
- *         if (id == NULL): Content-ID: disabled in the search.
- *   - content length.
- *         if (length == NULL) Content-Length: disabled in the search.
- *   - len. Length of the multipart message returned.
- *
- * returns
- *   - pointer to the multipart if success.
- *   - NULL, if none of the multiparts match.
+ * 
+ * \param msg SIP message
+ * \param content_type if NULL Content-Type: disabled in the search
+ * \param content_subtype if NULL Content-Subtype: disabled in the search
+ * \param content_id if NULL then Content-ID: disabled in the search
+ * \param content_length, if NULL then Content-Length: disabled in the search
+ * \param len Length of the multipart message returned
+ * \return pointer to the multipart if success,  NULL, if none of the multiparts match
  */
 char *get_body_part_by_filter(struct sip_msg *msg,
 		     unsigned short content_type,
@@ -585,3 +572,5 @@ char *get_body_part_by_filter(struct sip_msg *msg,
 	}
 	return NULL;
 }
+
+/** @} */

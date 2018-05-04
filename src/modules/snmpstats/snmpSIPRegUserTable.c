@@ -86,8 +86,9 @@
 static netsnmp_handler_registration *my_handler = NULL;
 static netsnmp_table_array_callbacks cb;
 
-oid    kamailioSIPRegUserTable_oid[]   = { kamailioSIPRegUserTable_TABLE_OID };
-size_t kamailioSIPRegUserTable_oid_len = OID_LENGTH(kamailioSIPRegUserTable_oid);
+oid kamailioSIPRegUserTable_oid[] = {kamailioSIPRegUserTable_TABLE_OID};
+size_t kamailioSIPRegUserTable_oid_len =
+		OID_LENGTH(kamailioSIPRegUserTable_oid);
 
 
 /* If the usrloc module is loaded, this function will grab hooks into its
@@ -95,25 +96,23 @@ size_t kamailioSIPRegUserTable_oid_len = OID_LENGTH(kamailioSIPRegUserTable_oid)
  * callback for UL_CONTACT_INSERT and UL_CONTACT_EXPIRE.
  *
  * Returns 1 on success, and zero otherwise. */
-int registerForUSRLOCCallbacks(void)  
+int registerForUSRLOCCallbacks(void)
 {
 	bind_usrloc_t bind_usrloc;
 	usrloc_api_t ul;
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
-	if (!bind_usrloc)
-	{
+	if(!bind_usrloc) {
 		LM_ERR("Can't find ul_bind_usrloc\n");
 		goto error;
 	}
-	if (bind_usrloc(&ul) < 0 || ul.register_ulcb == NULL)
-	{
+	if(bind_usrloc(&ul) < 0 || ul.register_ulcb == NULL) {
 		LM_ERR("Can't bind usrloc\n");
 		goto error;
 	}
 
 	ul.register_ulcb(UL_CONTACT_INSERT, handleContactCallbacks, NULL);
-	
+
 	ul.register_ulcb(UL_CONTACT_EXPIRE, handleContactCallbacks, NULL);
 
 	return 1;
@@ -128,30 +127,29 @@ error:
 
 /* Removes an SNMP row indexed by userIndex, and frees the string and index it
  * pointed to. */
-void deleteRegUserRow(int userIndex) 
+void deleteRegUserRow(int userIndex)
 {
-	
+
 	kamailioSIPRegUserTable_context *theRow;
 
 	netsnmp_index indexToRemove;
 	oid indexToRemoveOID;
-		
-	indexToRemoveOID   = userIndex;
+
+	indexToRemoveOID = userIndex;
 	indexToRemove.oids = &indexToRemoveOID;
-	indexToRemove.len  = 1;
+	indexToRemove.len = 1;
 
 	theRow = CONTAINER_FIND(cb.container, &indexToRemove);
 
 	/* The userURI is shared memory, the index.oids was allocated from
 	 * pkg_malloc(), and theRow was made with the NetSNMP API which uses
 	 * malloc() */
-	if (theRow != NULL) {
+	if(theRow != NULL) {
 		CONTAINER_REMOVE(cb.container, &indexToRemove);
 		pkg_free(theRow->kamailioSIPUserUri);
 		pkg_free(theRow->index.oids);
 		free(theRow);
 	}
-
 }
 
 /*
@@ -162,19 +160,18 @@ void deleteRegUserRow(int userIndex)
  *   - If the user doesn't exist, the user will be added to the table, and its
  *     number of contacts' count set to 1. 
  */
-void updateUser(char *userName) 
+void updateUser(char *userName)
 {
-	int userIndex; 
+	int userIndex;
 
 	aorToIndexStruct_t *newRecord;
 
-	aorToIndexStruct_t *existingRecord = 
-		findHashRecord(hashTable, userName, HASH_SIZE);
+	aorToIndexStruct_t *existingRecord =
+			findHashRecord(hashTable, userName, HASH_SIZE);
 
 	/* We found an existing record, so  we need to update its 'number of
 	 * contacts' count. */
-	if (existingRecord != NULL) 
-	{
+	if(existingRecord != NULL) {
 		existingRecord->numContacts++;
 		return;
 	}
@@ -183,61 +180,60 @@ void updateUser(char *userName)
 	 * structures */
 	userIndex = createRegUserRow(userName);
 
-	if (userIndex == 0) 
-	{
+	if(userIndex == 0) {
 		LM_ERR("kamailioSIPRegUserTable ran out of memory."
-				"  Not able to add user: %s", userName);
+			   "  Not able to add user: %s",
+				userName);
 		return;
 	}
 
 	newRecord = createHashRecord(userIndex, userName);
-	
+
 	/* If we couldn't create a record in the hash table, then we won't be
 	 * able to access this row properly later.  So remove the row from the
 	 * table and fail. */
-	if (newRecord == NULL) {
+	if(newRecord == NULL) {
 		deleteRegUserRow(userIndex);
 		LM_ERR("kamailioSIPRegUserTable was not able to push %s into the hash."
-				"  User not added to this table\n", userName);
+			   "  User not added to this table\n",
+				userName);
 		return;
 	}
-	
+
 	/* Insert the new record of the mapping data structure into the hash
 	 * table */
 	/*insertHashRecord(hashTable,
 			createHashRecord(userIndex, userName), 
 			HASH_SIZE);*/
-	
-	insertHashRecord(hashTable,
-			newRecord, 
-			HASH_SIZE);
+
+	insertHashRecord(hashTable, newRecord, HASH_SIZE);
 }
 
 
 /* Creates a row and inserts it.  
  *
  * Returns: The rows userIndex on success, and 0 otherwise. */
-int createRegUserRow(char *stringToRegister) 
+int createRegUserRow(char *stringToRegister)
 {
 	int static index = 0;
-	
+
 	index++;
 
 	kamailioSIPRegUserTable_context *theRow;
 
-	oid  *OIDIndex;
-	int  stringLength;
+	oid *OIDIndex;
+	int stringLength;
 
 	theRow = SNMP_MALLOC_TYPEDEF(kamailioSIPRegUserTable_context);
 
-	if (theRow == NULL) {
+	if(theRow == NULL) {
 		LM_ERR("failed to create a row for kamailioSIPRegUserTable\n");
 		return 0;
 	}
 
 	OIDIndex = pkg_malloc(sizeof(oid));
 
-	if (OIDIndex == NULL) {
+	if(OIDIndex == NULL) {
 		free(theRow);
 		LM_ERR("failed to create a row for kamailioSIPRegUserTable\n");
 		return 0;
@@ -247,22 +243,21 @@ int createRegUserRow(char *stringToRegister)
 
 	OIDIndex[0] = index;
 
-	theRow->index.len  = 1;
+	theRow->index.len = 1;
 	theRow->index.oids = OIDIndex;
 	theRow->kamailioSIPUserIndex = index;
 
-	theRow->kamailioSIPUserUri     = (unsigned char*)pkg_malloc(stringLength* sizeof(char));
-    if(theRow->kamailioSIPUserUri== NULL)
-    {
-        pkg_free(OIDIndex);
+	theRow->kamailioSIPUserUri =
+			(unsigned char *)pkg_malloc(stringLength * sizeof(char));
+	if(theRow->kamailioSIPUserUri == NULL) {
+		pkg_free(OIDIndex);
 		free(theRow);
 		LM_ERR("failed to create a row for kamailioSIPRegUserTable\n");
 		return 0;
+	}
+	memcpy(theRow->kamailioSIPUserUri, stringToRegister, stringLength);
 
-    }
-    memcpy(theRow->kamailioSIPUserUri, stringToRegister, stringLength);
-	
-    theRow->kamailioSIPUserUri_len = stringLength;
+	theRow->kamailioSIPUserUri_len = stringLength;
 
 	theRow->kamailioSIPUserAuthenticationFailures = 0;
 
@@ -279,10 +274,9 @@ void init_kamailioSIPRegUserTable(void)
 
 	/* We need to create a default row, so create DefaultUser */
 	static char *defaultUser = "DefaultUser";
-	
+
 	createRegUserRow(defaultUser);
 }
-
 
 
 /*
@@ -295,7 +289,7 @@ void initialize_table_kamailioSIPRegUserTable(void)
 
 	if(my_handler) {
 		snmp_log(LOG_ERR, "initialize_table_kamailioSIPRegUserTable_hand"
-				"ler called again\n");
+						  "ler called again\n");
 		return;
 	}
 
@@ -303,18 +297,19 @@ void initialize_table_kamailioSIPRegUserTable(void)
 
 	/* create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
+	if(table_info==NULL) {
+		snmp_log(LOG_ERR, "failed to allocate table_info\n");
+		return;
+	}
 
-	my_handler = 
-		netsnmp_create_handler_registration(
-			"kamailioSIPRegUserTable",
-			netsnmp_table_array_helper_handler, 
-			kamailioSIPRegUserTable_oid,
-			kamailioSIPRegUserTable_oid_len,
-			HANDLER_CAN_RONLY);
+	my_handler = netsnmp_create_handler_registration("kamailioSIPRegUserTable",
+			netsnmp_table_array_helper_handler, kamailioSIPRegUserTable_oid,
+			kamailioSIPRegUserTable_oid_len, HANDLER_CAN_RONLY);
 
-	if (!my_handler || !table_info) {
+	if(!my_handler) {
+		SNMP_FREE(table_info);
 		snmp_log(LOG_ERR, "malloc failed in initialize_table_kamailio"
-				"SIPRegUserTable_handler\n");
+						  "SIPRegUserTable_handler\n");
 		return; /** mallocs failed */
 	}
 
@@ -325,22 +320,21 @@ void initialize_table_kamailioSIPRegUserTable(void)
 
 	cb.get_value = kamailioSIPRegUserTable_get_value;
 	cb.container = netsnmp_container_find("kamailioSIPRegUserTable_primary:"
-			"kamailioSIPRegUserTable:" "table_container");
+										  "kamailioSIPRegUserTable:"
+										  "table_container");
 
 	DEBUGMSGTL(("initialize_table_kamailioSIPRegUserTable",
-				"Registering table kamailioSIPRegUserTable "
-				"as a table array\n"));
+			"Registering table kamailioSIPRegUserTable "
+			"as a table array\n"));
 
-	netsnmp_table_container_register(my_handler, table_info, &cb, 
-			cb.container, 1);
+	netsnmp_table_container_register(
+			my_handler, table_info, &cb, cb.container, 1);
 }
 
 
 /* Handles SNMP GET requests. */
-int kamailioSIPRegUserTable_get_value(
-		netsnmp_request_info *request,
-		netsnmp_index *item,
-		netsnmp_table_request_info *table_info )
+int kamailioSIPRegUserTable_get_value(netsnmp_request_info *request,
+		netsnmp_index *item, netsnmp_table_request_info *table_info)
 {
 	/* First things first, we need to consume the interprocess buffer, in
 	 * case something has changed. We want to return the freshest data. */
@@ -348,31 +342,29 @@ int kamailioSIPRegUserTable_get_value(
 
 	netsnmp_variable_list *var = request->requestvb;
 
-	kamailioSIPRegUserTable_context *context = 
-		(kamailioSIPRegUserTable_context *)item;
+	kamailioSIPRegUserTable_context *context =
+			(kamailioSIPRegUserTable_context *)item;
 
-	switch(table_info->colnum) 
-	{
+	switch(table_info->colnum) {
 
 		case COLUMN_KAMAILIOSIPUSERURI:
 			/** SnmpAdminString = ASN_OCTET_STR */
 			snmp_set_var_typed_value(var, ASN_OCTET_STR,
-				(unsigned char*)context->kamailioSIPUserUri,
-				context->kamailioSIPUserUri_len );
+					(unsigned char *)context->kamailioSIPUserUri,
+					context->kamailioSIPUserUri_len);
 			break;
-	
+
 		case COLUMN_KAMAILIOSIPUSERAUTHENTICATIONFAILURES:
 			/** COUNTER = ASN_COUNTER */
 			snmp_set_var_typed_value(var, ASN_COUNTER,
-				(unsigned char*)
-				&context->kamailioSIPUserAuthenticationFailures,
-				sizeof(
-				context->kamailioSIPUserAuthenticationFailures));
-		break;
-	
+					(unsigned char *)&context
+							->kamailioSIPUserAuthenticationFailures,
+					sizeof(context->kamailioSIPUserAuthenticationFailures));
+			break;
+
 		default: /** We shouldn't get here */
 			snmp_log(LOG_ERR, "unknown column in "
-				"kamailioSIPRegUserTable_get_value\n");
+							  "kamailioSIPRegUserTable_get_value\n");
 
 			return SNMP_ERR_GENERR;
 	}
@@ -381,11 +373,9 @@ int kamailioSIPRegUserTable_get_value(
 }
 
 
-const kamailioSIPRegUserTable_context *
-kamailioSIPRegUserTable_get_by_idx(netsnmp_index * hdr)
+const kamailioSIPRegUserTable_context *kamailioSIPRegUserTable_get_by_idx(
+		netsnmp_index *hdr)
 {
-	return (const kamailioSIPRegUserTable_context *)
-		CONTAINER_FIND(cb.container, hdr );
+	return (const kamailioSIPRegUserTable_context *)CONTAINER_FIND(
+			cb.container, hdr);
 }
-
-

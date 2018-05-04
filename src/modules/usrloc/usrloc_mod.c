@@ -111,6 +111,7 @@ int ul_keepalive_timeout = 0;
 int ul_db_ops_ruid = 1;
 int ul_expires_type = 0;
 int ul_db_raw_fetch_type = 0;
+int ul_rm_expired_delay = 0;
 
 str ul_xavp_contact_name = {0};
 
@@ -175,7 +176,7 @@ unsigned int init_flag = 0;
 db1_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
 
-/* filter on load by server id */
+/* filter on load and during cleanup by server id */
 unsigned int ul_db_srvid = 0;
 
 /*! \brief
@@ -218,7 +219,8 @@ static param_export_t params[] = {
 	{"server_id_column",    PARAM_STR, &srv_id_col    },
 	{"connection_id_column",PARAM_STR, &con_id_col    },
 	{"keepalive_column",    PARAM_STR, &keepalive_col },
-	{"matching_mode",       INT_PARAM, &matching_mode   },
+	{"partition_column",    PARAM_STR, &partition_col },
+	{"matching_mode",       INT_PARAM, &ul_matching_mode },
 	{"cseq_delay",          INT_PARAM, &cseq_delay      },
 	{"fetch_rows",          INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",           INT_PARAM, &ul_hash_size    },
@@ -237,6 +239,7 @@ static param_export_t params[] = {
 	{"db_insert_null",      PARAM_INT, &ul_db_insert_null},
 	{"server_id_filter",    PARAM_INT, &ul_db_srvid},
 	{"db_timer_clean",      PARAM_INT, &ul_db_timer_clean},
+	{"rm_expired_delay",    PARAM_INT, &ul_rm_expired_delay},
 	{0, 0, 0}
 };
 
@@ -271,6 +274,17 @@ static int mod_init(void)
 	int i;
 	udomain_t* d;
 
+	if(ul_rm_expired_delay!=0) {
+		if(db_mode != DB_ONLY) {
+			LM_ERR("rm expired delay feature is available for db only mode\n");
+			return -1;
+		}
+	}
+	if(ul_rm_expired_delay<0) {
+		LM_WARN("rm expired delay value is negative (%d) - setting it to 0\n",
+				ul_rm_expired_delay);
+		ul_rm_expired_delay = 0;
+	}
 	if(sruid_init(&_ul_sruid, '-', "ulcx", SRUID_INC)<0)
 		return -1;
 
@@ -294,14 +308,14 @@ static int mod_init(void)
 		ul_hash_size = 1<<ul_hash_size;
 
 	/* check matching mode */
-	switch (matching_mode) {
+	switch (ul_matching_mode) {
 		case CONTACT_ONLY:
 		case CONTACT_CALLID:
 		case CONTACT_PATH:
 		case CONTACT_CALLID_ONLY:
 			break;
 		default:
-			LM_ERR("invalid matching mode %d\n", matching_mode);
+			LM_ERR("invalid matching mode %d\n", ul_matching_mode);
 	}
 
 	/* Register cache timer */

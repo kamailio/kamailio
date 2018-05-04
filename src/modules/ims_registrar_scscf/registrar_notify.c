@@ -340,7 +340,7 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     } else {
         presentity_uri = ul.get_presentity_from_subscriber_dialog(&callid, &ttag, &ftag);
         if (presentity_uri.len == 0) {
-            LM_ERR("Unable to get pres uri from subscriber dialog with callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n", callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
+            LM_ERR("Unable to get presentity uri from subscriber dialog with callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n", callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
             goto done;
         }
     }
@@ -481,7 +481,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
                 return 1;
             }
             ul.unlock_udomain((udomain_t*) _d, presentity_uri);
-            LM_DBG("About to ceate notification");
+            LM_DBG("About to create notification");
 
             create_notifications(_d, r_passed, presentity_uri, watcher_contact, impu_list, num_impus, event_type, explit_dereg_contact, num_explit_dereg_contact);
             if (impu_list) {
@@ -577,7 +577,7 @@ int process_contact(ims_subscription* subscription, udomain_t * _d, int expires,
             //            }
             ul.lock_udomain(_d, &pi->public_identity);
             if (ul.get_impurecord(_d, &pi->public_identity, &implicit_impurecord) != 0) {
-                LM_DBG("usrloc does not have impurecord for implicity IMPU, ignore\n");
+                LM_DBG("usrloc does not have impurecord for implicitly IMPU, ignore\n");
                 goto next_implicit_impu;
             }
             if (ul.get_ucontact(&contact_uri, &callid, &path, 0/*cseq*/, &ucontact) != 0) { //contact does not exist
@@ -1078,7 +1078,7 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
         //cscf_get_to_uri(msg, &presentity_uri);
         presentity_uri = ul.get_presentity_from_subscriber_dialog(&callid, &ttag, &ftag);
         if (presentity_uri.len == 0) {
-            LM_ERR("Unable to get pres uri from subscriber dialog with callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n", callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
+            LM_ERR("Unable to get presentity uri from subscriber dialog with callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n", callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
             ret = CSCF_RETURN_FALSE;
             goto doneorerror;
         }

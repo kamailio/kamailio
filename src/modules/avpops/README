@@ -173,12 +173,12 @@ Chapter 1. Admin Guide
        all AVPs, regardless they have or not a script flag set (preserves
        the compatibility with the old naming schema).
      * avp_name = string | integer
-       string - might be any alphanumeric string, wich contain following
+       string - might be any alphanumeric string, which contain following
        characters: [a-z] [A-Z] [0-9] '_'
        integer - might be an unsigned integer, greater than zero, up to
        2^16-1
      * avp_alias = string
-       string - might be any alphanumeric string, wich contain following
+       string - might be any alphanumeric string, which contain following
        characters: [a-z] [A-Z] [0-9] '_'
 
    Example 1.1. AVP naming examples
@@ -374,7 +374,7 @@ modparam("avpops","db_scheme",
             'a' or 'A' means matching any of AVP name types ('i' and 's')
             (NOTE: matching_flags cannot be used with $db_scheme because
             the name of AVP to save in cannot be specified), the rest have
-            the meaning descriped in 'AVP naming format' chapter.
+            the meaning described in 'AVP naming format' chapter.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
@@ -534,7 +534,7 @@ avp_pushto("$br","$avp(i:680)");
           + le - less or equal
           + gt - greater than
           + ge - greater or equal
-          + re - regexp (regular exression match)
+          + re - regexp (regular expression match)
           + fm - fast match (see: man fnmatch)
           + and - bitwise 'and'
           + or - bitwise 'or'

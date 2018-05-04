@@ -125,7 +125,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set db_url parameter
 ...
-modparam("uri_db", "db_url", "mysql://username:password@localhost/openser")
+modparam("uri_db", "db_url", "mysql://username:password@localhost/kamailio")
 ...
 
 3.2. db_table (string)
@@ -176,7 +176,7 @@ modparam("uri_db", "uriuser_column", "uri_user")
 
 3.6. use_uri_table (integer)
 
-   Specify if the “uri” table should be used for checkings instead of
+   Specify if the “uri” table should be used for checking instead of
    “subscriber” table. A non-zero value means true.
 
    Default value is “0 (false)”.

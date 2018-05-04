@@ -213,7 +213,7 @@ if (is_method("REGISTER")) {
 		</listitem>
 		<listitem>
 			<para>
-			<emphasis>uri</emphasis> (optiona) - uri for which to do lookup for new
+			<emphasis>uri</emphasis> (optional) - uri for which to do lookup for new
 				destinations.
 			</para>
 		</listitem>

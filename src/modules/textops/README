@@ -79,16 +79,20 @@ Ovidiu Sas
               4.32. is_audio_on_hold()
               4.33. is_privacy(privacy_type)
               4.34. in_list(subject, list, separator)
-              4.35. cmp_str(str1, str2)
-              4.36. cmp_istr(str1, str2)
-              4.37. starts_with(str1, str2)
-              4.38. set_body_multipart([txt,content_type][,boundary])
-              4.39. append_body_part(txt,content_type[,
+              4.35. in_list_prefix(subject, list, separator)
+              4.36. cmp_str(str1, str2)
+              4.37. cmp_istr(str1, str2)
+              4.38. starts_with(str1, str2)
+              4.39. set_body_multipart([txt,content_type][,boundary])
+              4.40. append_body_part(txt,content_type[,
                       content_disposition])
 
-              4.40. get_body_part(content_type, opv)
-              4.41. get_body_part_raw(content_type, opv)
-              4.42. remove_body_part(content_type)
+              4.41. append_body_part_hex(txt,content_type[,
+                      content_disposition])
+
+              4.42. get_body_part(content_type, opv)
+              4.43. get_body_part_raw(content_type, opv)
+              4.44. remove_body_part(content_type)
 
    2. Developer Guide
 
@@ -132,14 +136,16 @@ Ovidiu Sas
    1.32. is_audio_on_hold usage
    1.33. is_privacy usage
    1.34. in_list() usage
-   1.35. cmp_str usage
+   1.35. in_list() usage
    1.36. cmp_str usage
-   1.37. starts_with usage
-   1.38. set_body_multipart usage
-   1.39. append_body_part usage
-   1.40. get_body_part usage
-   1.41. get_body_part_raw usage
-   1.42. remove_body_part usage
+   1.37. cmp_str usage
+   1.38. starts_with usage
+   1.39. set_body_multipart usage
+   1.40. append_body_part usage
+   1.41. append_body_part_hex usage
+   1.42. get_body_part usage
+   1.43. get_body_part_raw usage
+   1.44. remove_body_part usage
 
 Chapter 1. Admin Guide
 
@@ -188,14 +194,18 @@ Chapter 1. Admin Guide
         4.32. is_audio_on_hold()
         4.33. is_privacy(privacy_type)
         4.34. in_list(subject, list, separator)
-        4.35. cmp_str(str1, str2)
-        4.36. cmp_istr(str1, str2)
-        4.37. starts_with(str1, str2)
-        4.38. set_body_multipart([txt,content_type][,boundary])
-        4.39. append_body_part(txt,content_type[, content_disposition])
-        4.40. get_body_part(content_type, opv)
-        4.41. get_body_part_raw(content_type, opv)
-        4.42. remove_body_part(content_type)
+        4.35. in_list_prefix(subject, list, separator)
+        4.36. cmp_str(str1, str2)
+        4.37. cmp_istr(str1, str2)
+        4.38. starts_with(str1, str2)
+        4.39. set_body_multipart([txt,content_type][,boundary])
+        4.40. append_body_part(txt,content_type[, content_disposition])
+        4.41. append_body_part_hex(txt,content_type[,
+                content_disposition])
+
+        4.42. get_body_part(content_type, opv)
+        4.43. get_body_part_raw(content_type, opv)
+        4.44. remove_body_part(content_type)
 
 1. Overview
 
@@ -268,14 +278,16 @@ From: medabeda
    4.32. is_audio_on_hold()
    4.33. is_privacy(privacy_type)
    4.34. in_list(subject, list, separator)
-   4.35. cmp_str(str1, str2)
-   4.36. cmp_istr(str1, str2)
-   4.37. starts_with(str1, str2)
-   4.38. set_body_multipart([txt,content_type][,boundary])
-   4.39. append_body_part(txt,content_type[, content_disposition])
-   4.40. get_body_part(content_type, opv)
-   4.41. get_body_part_raw(content_type, opv)
-   4.42. remove_body_part(content_type)
+   4.35. in_list_prefix(subject, list, separator)
+   4.36. cmp_str(str1, str2)
+   4.37. cmp_istr(str1, str2)
+   4.38. starts_with(str1, str2)
+   4.39. set_body_multipart([txt,content_type][,boundary])
+   4.40. append_body_part(txt,content_type[, content_disposition])
+   4.41. append_body_part_hex(txt,content_type[, content_disposition])
+   4.42. get_body_part(content_type, opv)
+   4.43. get_body_part_raw(content_type, opv)
+   4.44. remove_body_part(content_type)
 
 4.1.  search(re)
 
@@ -452,8 +464,8 @@ if(has_body() && replace_body_atonce("^.+$", ""))
      * '/re/repl/flags' - sed like regular expression. flags can be a
        combination of i (case insensitive), g (global) or s (match newline
        don't treat it as end of line).
-       're' - is regular expresion
-       'repl' - is replacement string - may contain pseudo-varibales
+       're' - is regular expression
+       'repl' - is replacement string - may contain pseudo-variables
        'flags' - substitution flags (i - ignore case, g - global)
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -479,8 +491,8 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig') )
      * '/re/repl/flags' - sed like regular expression. flags can be a
        combination of i (case insensitive), g (global) or s (match newline
        don't treat it as end of line).
-       're' - is regular expresion
-       'repl' - is replacement string - may contain pseudo-varibales
+       're' - is regular expression
+       'repl' - is replacement string - may contain pseudo-variables
        'flags' - substitution flags (i - ignore case, g - global)
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -507,8 +519,8 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){$
      * '/re/repl/flags' - sed like regular expression. flags can be a
        combination of i (case insensitive), g (global) or s (match newline
        don't treat it as end of line).
-       're' - is regular expresion
-       'repl' - is replacement string - may contain pseudo-varibales
+       're' - is regular expression
+       'repl' - is replacement string - may contain pseudo-variables
        'flags' - substitution flags (i - ignore case, g - global)
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -533,8 +545,8 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
      * '/re/repl/flags' - sed like regular expression. flags can be a
        combination of i (case insensitive), g (global) or s (match newline
        don't treat it as end of line).
-       're' - is regular expresion
-       'repl' - is replacement string - may contain pseudo-varibales
+       're' - is regular expression
+       'repl' - is replacement string - may contain pseudo-variables
        'flags' - substitution flags (i - ignore case, g - global)
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -745,7 +757,7 @@ if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\n");
      * %M minutes
      * %S seconds
 
-   Return true if a header was succesfully appended.
+   Return true if a header was successfully appended.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
@@ -767,7 +779,7 @@ append_time();
      * %M minutes
      * %S seconds
 
-   Return true if a header was succesfully appended.
+   Return true if a header was successfully appended.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
@@ -910,9 +922,10 @@ if(has_body("application/sdp"))
 4.32.  is_audio_on_hold()
 
    The function returns true if the SIP message has a body attached and at
-   least one audio stream in on hold. Only RFC2543 is supported
-   (c=0.0.0.0). Hold detection based on RFC3264 is not supported
-   (a=sendonly/inactive).
+   least one audio stream in on hold. The return code of the function
+   indicates the detected hold type:
+     * 1 - RFC2543 hold type: null connection IP detected
+     * 2 - RFC3264 hold type: inactive or sendonly attributes detected
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
@@ -921,7 +934,15 @@ if(has_body("application/sdp"))
 ...
 if(is_audio_on_hold())
 {
-    # do interesting stuff here
+    switch ($rc) {
+    case 1:
+        # RFC2543 hold type
+        # do interesting stuff here
+        break;
+    case 2:
+        # RFC3264 hold type
+        # do interesting stuff here
+        break;
 }
 ...
 
@@ -956,12 +977,30 @@ if(is_privacy("id"))
 ...
 $var(subject) = "fi";
 $var(list) = "dk,fi,no,se";
-if (in_list("$var(subject)", "$var(list)", ",") {
+if (in_list("$var(subject)", "$var(list)", ",")) {
     xlog("L_INFO", "subject is found in list\n");
 }
 ...
 
-4.35.  cmp_str(str1, str2)
+4.35.  in_list_prefix(subject, list, separator)
+
+   Function checks if any element in list string is a prefix for subject
+   string where list items are separated by separator string. Subject and
+   list strings may contain pseudo variables. Separator string needs to be
+   one character long. Returns 1 if subject is found and -1 otherwise.
+
+   Function can be used from all kinds of routes.
+
+   Example 1.35. in_list() usage
+...
+$var(subject) = "final";
+$var(list) = "dk,fi,no,se";
+if (in_list_prefix("$var(subject)", "$var(list)", ",")) {
+    xlog("L_INFO", "prefix for subject is found in list\n");
+}
+...
+
+4.36.  cmp_str(str1, str2)
 
    The function returns true if the two parameters matches as string case
    sensitive comparison.
@@ -969,7 +1008,7 @@ if (in_list("$var(subject)", "$var(list)", ",") {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.35. cmp_str usage
+   Example 1.36. cmp_str usage
 ...
 if(cmp_str("$rU", "kamailio"))
 {
@@ -977,7 +1016,7 @@ if(cmp_str("$rU", "kamailio"))
 }
 ...
 
-4.36.  cmp_istr(str1, str2)
+4.37.  cmp_istr(str1, str2)
 
    The function returns true if the two parameters matches as string case
    insensitive comparison.
@@ -985,7 +1024,7 @@ if(cmp_str("$rU", "kamailio"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.36. cmp_str usage
+   Example 1.37. cmp_str usage
 ...
 if(cmp_istr("$rU@you", "kamailio@YOU"))
 {
@@ -993,7 +1032,7 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
 }
 ...
 
-4.37.  starts_with(str1, str2)
+4.38.  starts_with(str1, str2)
 
    The function returns true if the first string starts with the second
    string.
@@ -1001,7 +1040,7 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.37. starts_with usage
+   Example 1.38. starts_with usage
 ...
 if (starts_with("$rU", "+358"))
 {
@@ -1009,7 +1048,7 @@ if (starts_with("$rU", "+358"))
 }
 ...
 
-4.38.  set_body_multipart([txt,content_type][,boundary])
+4.39.  set_body_multipart([txt,content_type][,boundary])
 
    Set multipart body to a SIP message. If called with no parameters, will
    convert present body to multipart.
@@ -1025,12 +1064,12 @@ if (starts_with("$rU", "+358"))
    BRANCH_ROUTE.
 
    The core will take care of the last boundary ending "--". Detecting
-   wich one is the last and fixing the others if needed.
+   which one is the last and fixing the others if needed.
 
    Note: it may be required that msg_apply_changes() from textopsx module
    has to be executed if there are other operations over the new body.
 
-   Example 1.38. set_body_multipart usage
+   Example 1.39. set_body_multipart usage
 ...
 set_body_multipart("test", "text/plain", "delimiter");
 msg_apply_changes();
@@ -1052,7 +1091,7 @@ text
 --delimiter
 ...
 
-4.39.  append_body_part(txt,content_type[, content_disposition])
+4.40.  append_body_part(txt,content_type[, content_disposition])
 
    Append a part on multipart body SIP message. Will use
    "unique-boundary-1" as boundary.
@@ -1070,7 +1109,7 @@ text
    The core will take care of the last boundary ending "--". Detecting
    wich one is the last and fixing the others if needed.
 
-   Example 1.39. append_body_part usage
+   Example 1.40. append_body_part usage
 ...
 $var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c"
 append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext", "signal;handling
@@ -1088,7 +1127,44 @@ Content-Disposition: signal;handling=required
 --unique-boundary-1
 ...
 
-4.40.  get_body_part(content_type, opv)
+4.41.  append_body_part_hex(txt,content_type[, content_disposition])
+
+   Append a part on multipart body SIP message, with the content provided
+   in hexa format. Will use "unique-boundary-1" as boundary.
+
+   Meaning of the parameters is as follows:
+     * txt - content for the multipart body in hexa format. Spaces can be
+       used between the pairs of hexa digits to make it easier to read in
+       the config, they are ignored and not added in the body part. The
+       parameter can include pseudo-variables.
+     * content_type - value of Content-Type header, can include
+       pseudo-variables.
+     * content_disposition - value of Content-Disposition header, can
+       include pseudo-variables.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   The core will take care of the last boundary ending "--". Detecting
+   wich one is the last and fixing the others if needed.
+
+   Example 1.41. append_body_part_hex usage
+...
+$var(b) = "6b 61 6d 61 69 6c 69 6f";
+append_body_part_hex("$var(b)", "application/my-custom-ext");
+...
+
+# Will append this to the body:
+
+...
+Content-Type: application/my-custom-ext
+
+kamailio
+
+--unique-boundary-1
+...
+
+4.42.  get_body_part(content_type, opv)
 
    Return the content of a multipart body SIP message, storing it in opv.
 
@@ -1101,12 +1177,12 @@ Content-Disposition: signal;handling=required
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.40. get_body_part usage
+   Example 1.42. get_body_part usage
 ...
 get_body_part("application/vnd.cirpack.isdn-ext", "$var(pbody)");
 ...
 
-4.41.  get_body_part_raw(content_type, opv)
+4.43.  get_body_part_raw(content_type, opv)
 
    Return the content of a multipart body SIP message, including headers
    and boundary string, storing it in opv.
@@ -1120,12 +1196,12 @@ get_body_part("application/vnd.cirpack.isdn-ext", "$var(pbody)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.41. get_body_part_raw usage
+   Example 1.43. get_body_part_raw usage
 ...
 get_body_part("application/vnd.cirpack.isdn-ext", "$var(hbody)");
 ...
 
-4.42.  remove_body_part(content_type)
+4.44.  remove_body_part(content_type)
 
    Remove a part on a multipart body SIP message.
 
@@ -1140,7 +1216,7 @@ get_body_part("application/vnd.cirpack.isdn-ext", "$var(hbody)");
    The core will take care of the last boundary ending "--". Detecting
    wich one is the last and fixing the others if needed.
 
-   Example 1.42. remove_body_part usage
+   Example 1.44. remove_body_part usage
 ...
 remove_body_part("application/vnd.cirpack.isdn-ext");
 ...

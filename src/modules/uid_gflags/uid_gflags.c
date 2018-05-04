@@ -361,7 +361,7 @@ int save_gflags(unsigned int flags)
 		return -1;
 	}
 
-	LM_DBG("successfuly stored in database\n");
+	LM_DBG("successfully stored in database\n");
 	return 0;
 }
 

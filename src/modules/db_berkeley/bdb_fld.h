@@ -40,9 +40,10 @@
 #include "../../lib/srdb2/db_gen.h"
 #include "../../lib/srdb2/db_fld.h"
 
-typedef struct _bdb_fld {
+typedef struct _bdb_fld
+{
 	db_drv_t gen;
-	char* name;
+	char *name;
 	int is_null;
 	unsigned long length;
 	str buf;
@@ -58,7 +59,7 @@ typedef struct _bdb_fld {
  * @retval 0 on success.
  * @retval A negative number on error.
  */
-int bdb_fld(db_fld_t* fld, char* table);
+int bdb_fld(db_fld_t *fld, char *table);
 
 /** @} */
 

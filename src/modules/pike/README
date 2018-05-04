@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
 
    The module does not implement any actions on blocking - it just simply
    reports that there is high traffic from an IP; what to do, is the
-   administator decision (via scripting).
+   administrator decision (via scripting).
 
 2. Dependencies
 
@@ -146,7 +146,7 @@ modparam("pike", "reqs_density_per_unit", 30)
    Specifies for how long the IP address will be kept in memory after the
    last request from that IP address. It's a sort of timeout value, in
    seconds. Note that it is not the duration to keep the IP in state
-   'blocked'. An IP is unblocked next occurence of 'sampling_time_unit'
+   'blocked'. An IP is unblocked next occurrence of 'sampling_time_unit'
    that does not exceed 'reqs_density_per_unit'. Keeping an IP in memory
    results in faster reaching of blocked state -- see the notes about the
    limits of getting to state 'blocked'.

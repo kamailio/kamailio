@@ -221,7 +221,7 @@ static inline int t_run_local_req(
 		uac_req_t *uac_r,
 		struct cell *new_cell, struct retr_buf *request)
 {
-	static struct sip_msg lreq;
+	struct sip_msg lreq = {0};
 	struct onsend_info onsnd_info;
 	tm_xlinks_t backup_xd;
 	int sflag_bk;
@@ -428,6 +428,12 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	/* new message => take the dialog send_socket if set, or the default
 	  send_socket if not*/
 	SND_FLAGS_INIT(&snd_flags);
+
+	if (uac_r->dialog->send_sock != NULL)
+	{
+		snd_flags.f |= SND_F_FORCE_SOCKET;
+	}
+
 #ifdef USE_DNS_FAILOVER
 	if ((uri2dst2(cfg_get(core, core_cfg, use_dns_failover) ? &new_cell->uac[0].dns_h : 0,
 			&dst, uac_r->dialog->send_sock, snd_flags,

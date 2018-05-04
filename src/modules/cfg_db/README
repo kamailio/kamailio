@@ -100,7 +100,7 @@ modparam("cfg_db", "db_url", "mysql://SER:123@127.0.0.1:12345/SER");
    used. The default values are declared in record having group_name
    called <default>. The C-code "absolutely" default values ("cfg_var",
    "group_name", "name", "value"). The other keyword is asterisk * which
-   matches all parameters and will be used if parameter is not explicitely
+   matches all parameters and will be used if parameter is not explicitly
    mentioned.
 
 3.3. custom_tbl (string) := "cfg_custom"

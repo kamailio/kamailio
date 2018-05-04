@@ -371,7 +371,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	str fmtp_string;
 	str remote_candidates = {"a:remote-candidates:", 20};
 
-	/* hook the start and lenght of sdp body inside structure
+	/* hook the start and length of sdp body inside structure
 	 * - shorcut useful for multi-part bodies and sdp operations
 	 */
 	_sdp->text = *sdp_body;
@@ -584,11 +584,11 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 			if (stream->ip_addr.s && stream->ip_addr.len) {
 				if (stream->ip_addr.len == HOLD_IP_LEN &&
 					strncmp(stream->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0)
-					stream->is_on_hold = 1;
+					stream->is_on_hold = RFC2543_HOLD;
 			} else if (session->ip_addr.s && session->ip_addr.len) {
 				if (session->ip_addr.len == HOLD_IP_LEN &&
 					strncmp(session->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0)
-					stream->is_on_hold = 1;
+					stream->is_on_hold = RFC2543_HOLD;
 			}
 		}
 		++stream_num;

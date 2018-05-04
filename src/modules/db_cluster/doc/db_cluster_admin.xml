@@ -80,9 +80,9 @@
 		<programlisting format="linespecific">
 ...
 modparam("db_cluster", "connection",
-             "con1=>mysql://kamailio:kamailiorw@localhost/kamailio1")
+             "con1=>&defaultdb;1")
 modparam("db_cluster", "connection",
-             "con2=>mysql://kamailio:kamailiorw@localhost/kamailio2")
+             "con2=>&defaultdb;2")
 ...
 </programlisting>
 		</example>
@@ -177,7 +177,7 @@ modparam("db_cluster", "max_query_length", 5)
 			their db_url parameter to "cluster://clusterid".
 		</para>
 		<para>
-			Following rules apply when doing DB commands: the connecions with highest
+			Following rules apply when doing DB commands: the connections with highest
 			priority are chosen first and the operations are performed according
 			to the command mode. Note that for same priority, only one command mode
 			is used (the one from the first connection with that priority found
@@ -199,9 +199,9 @@ modparam("db_cluster", "max_query_length", 5)
 		<programlisting format="linespecific">
 ...
 modparam("db_cluster", "connection",
-             "c1=&gt;mysql://kamailio:kamailiorw@localhost/kamailio1")
+             "c1=&gt;&defaultdb;1")
 modparam("db_cluster", "connection",
-             "c2=&gt;mysql://kamailio:kamailiorw@localhost/kamailio2")
+             "c2=&gt;&defaultdb;2")
 modparam("db_cluster", "cluster", "k1=&gt;c1=9r9p;c2=9r9p")
 
 modparam("acc", "db_url", "cluster://k1")

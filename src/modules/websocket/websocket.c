@@ -48,30 +48,31 @@
 MODULE_VERSION
 
 /* Maximum number of connections to display when using the ws.dump command */
-#define MAX_WS_CONNS_DUMP		50
+#define MAX_WS_CONNS_DUMP 50
 
 static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
-static int ws_close_fixup(void** param, int param_no);
+static int ws_close_fixup(void **param, int param_no);
 static int pv_get_ws_conid_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 static int ws_init_rpc(void);
 
 sl_api_t ws_slb;
 
-#define DEFAULT_KEEPALIVE_INTERVAL	1
+#define DEFAULT_KEEPALIVE_INTERVAL 1
 static int ws_keepalive_interval = DEFAULT_KEEPALIVE_INTERVAL;
 
 static int ws_keepalive_timeout = DEFAULT_KEEPALIVE_TIMEOUT;
 
-#define DEFAULT_KEEPALIVE_PROCESSES	1
+#define DEFAULT_KEEPALIVE_PROCESSES 1
 static int ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
 
 int ws_verbose_list = 0;
 
 str ws_event_callback = STR_NULL;
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
 	/* ws_frame.c */
 	{ "ws_close", (cmd_function)w_ws_close0,
@@ -167,121 +168,104 @@ struct module_exports exports = {
 	destroy,		/* destroy function */
 	child_init		/* per-child initialization function */
 };
+/* clang-format on */
 
 static int mod_init(void)
 {
-	if (sl_load_api(&ws_slb) != 0)
-	{
+	if(sl_load_api(&ws_slb) != 0) {
 		LM_ERR("binding to SL\n");
 		goto error;
 	}
 
-	if (sr_event_register_cb(SREV_TCP_WS_FRAME_IN, ws_frame_receive) != 0)
-	{
+	if(sr_event_register_cb(SREV_TCP_WS_FRAME_IN, ws_frame_receive) != 0) {
 		LM_ERR("registering WebSocket receive call-back\n");
 		goto error;
 	}
 
-	if (sr_event_register_cb(SREV_TCP_WS_FRAME_OUT, ws_frame_transmit) != 0)
-	{
+	if(sr_event_register_cb(SREV_TCP_WS_FRAME_OUT, ws_frame_transmit) != 0) {
 		LM_ERR("registering WebSocket transmit call-back\n");
 		goto error;
 	}
 
-	if (register_module_stats(exports.name, stats) != 0)
-	{
+	if(register_module_stats(exports.name, stats) != 0) {
 		LM_ERR("registering core statistics\n");
 		goto error;
 	}
 
-	if(ws_init_rpc()<0)
-	{
+	if(ws_init_rpc() < 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
-	if (wsconn_init() < 0)
-	{
+	if(wsconn_init() < 0) {
 		LM_ERR("initialising WebSocket connections table\n");
 		goto error;
 	}
 
-	if (ws_ping_application_data.len < 1
-		|| ws_ping_application_data.len > 125)
-	{
+	if(ws_ping_application_data.len < 1 || ws_ping_application_data.len > 125) {
 		ws_ping_application_data.s = DEFAULT_PING_APPLICATION_DATA + 8;
-		ws_ping_application_data.len =
-					DEFAULT_PING_APPLICATION_DATA_LEN - 8;
+		ws_ping_application_data.len = DEFAULT_PING_APPLICATION_DATA_LEN - 8;
 	}
 
-	if (ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE)
-	{
-		if (ws_keepalive_timeout < 1 || ws_keepalive_timeout > 3600)
+	if(ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE) {
+		if(ws_keepalive_timeout < 1 || ws_keepalive_timeout > 3600)
 			ws_keepalive_timeout = DEFAULT_KEEPALIVE_TIMEOUT;
 
-		switch(ws_keepalive_mechanism)
-		{
-		case KEEPALIVE_MECHANISM_PING:
-		case KEEPALIVE_MECHANISM_PONG:
-			break;
-		default:
-			ws_keepalive_mechanism = DEFAULT_KEEPALIVE_MECHANISM;
-			break;
+		switch(ws_keepalive_mechanism) {
+			case KEEPALIVE_MECHANISM_PING:
+			case KEEPALIVE_MECHANISM_PONG:
+				break;
+			default:
+				ws_keepalive_mechanism = DEFAULT_KEEPALIVE_MECHANISM;
+				break;
 		}
 
-		if (ws_keepalive_interval < 1 || ws_keepalive_interval > 60)
+		if(ws_keepalive_interval < 1 || ws_keepalive_interval > 60)
 			ws_keepalive_interval = DEFAULT_KEEPALIVE_INTERVAL;
 
-		if (ws_keepalive_processes < 1 || ws_keepalive_processes > 16)
+		if(ws_keepalive_processes < 1 || ws_keepalive_processes > 16)
 			ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
 
 		/* Add extra process/timer for the keepalive process */
 		register_sync_timers(ws_keepalive_processes);
 	}
 
-	if (ws_sub_protocols & SUB_PROTOCOL_MSRP
-		&& !sr_event_enabled(SREV_TCP_MSRP_FRAME))
+	if(ws_sub_protocols & SUB_PROTOCOL_MSRP
+			&& !sr_event_enabled(SREV_TCP_MSRP_FRAME))
 		ws_sub_protocols &= ~SUB_PROTOCOL_MSRP;
 
-	if ((ws_sub_protocols & SUB_PROTOCOL_ALL) == 0)
-	{
+	if((ws_sub_protocols & SUB_PROTOCOL_ALL) == 0) {
 		LM_ERR("no sub-protocols enabled\n");
 		goto error;
 	}
 
-	if ((ws_sub_protocols | SUB_PROTOCOL_ALL) != SUB_PROTOCOL_ALL)
-	{
+	if((ws_sub_protocols | SUB_PROTOCOL_ALL) != SUB_PROTOCOL_ALL) {
 		LM_ERR("unrecognised sub-protocols enabled\n");
 		goto error;
 	}
 
-	if (ws_cors_mode < 0 || ws_cors_mode > 2)
-	{
+	if(ws_cors_mode < 0 || ws_cors_mode > 2) {
 		LM_ERR("bad value for cors_mode\n");
 		goto error;
 	}
 
-	if (cfg_declare("websocket", ws_cfg_def, &default_ws_cfg,
-			cfg_sizeof(websocket), &ws_cfg))
-	{
+	if(cfg_declare("websocket", ws_cfg_def, &default_ws_cfg,
+			   cfg_sizeof(websocket), &ws_cfg)) {
 		LM_ERR("declaring configuration\n");
 		return -1;
 	}
 	cfg_get(websocket, ws_cfg, keepalive_timeout) = ws_keepalive_timeout;
 
-	if (!module_loaded("xhttp"))
-	{
+	if(!module_loaded("xhttp")) {
 		LM_ERR("\"xhttp\" must be loaded to use WebSocket.\n");
 		return -1;
 	}
 
-	if (((ws_sub_protocols & SUB_PROTOCOL_SIP) == SUB_PROTOCOL_SIP)
-			&& !module_loaded("nathelper")
-			&& !module_loaded("outbound"))
-	{
+	if(((ws_sub_protocols & SUB_PROTOCOL_SIP) == SUB_PROTOCOL_SIP)
+			&& !module_loaded("nathelper") && !module_loaded("outbound")) {
 		LM_WARN("neither \"nathelper\" nor \"outbound\" modules are"
-			" loaded. At least one of these is required for correct"
-			" routing of SIP over WebSocket.\n");
+				" loaded. At least one of these is required for correct"
+				" routing of SIP over WebSocket.\n");
 	}
 
 	return 0;
@@ -295,23 +279,19 @@ static int child_init(int rank)
 {
 	int i;
 
-	if (rank == PROC_INIT || rank == PROC_TCP_MAIN)
+	if(rank == PROC_INIT || rank == PROC_TCP_MAIN)
 		return 0;
 
-	if (rank == PROC_MAIN
-		&& ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE)
-	{
-		for (i = 0; i < ws_keepalive_processes; i++)
-		{
-			if (fork_sync_timer(PROC_TIMER, "WEBSOCKET KEEPALIVE",
-						1, ws_keepalive, NULL,
-						ws_keepalive_interval) < 0)
-			{
+	if(rank == PROC_MAIN
+			&& ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE) {
+		for(i = 0; i < ws_keepalive_processes; i++) {
+			if(fork_sync_timer(PROC_TIMER, "WEBSOCKET KEEPALIVE", 1,
+					   ws_keepalive, NULL, ws_keepalive_interval)
+					< 0) {
 				LM_ERR("starting keepalive process\n");
 				return -1;
 			}
 		}
-
 	}
 
 	return 0;
@@ -322,27 +302,29 @@ static void destroy(void)
 	wsconn_destroy();
 }
 
-static int ws_close_fixup(void** param, int param_no)
+static int ws_close_fixup(void **param, int param_no)
 {
 	switch(param_no) {
-	case 1:
-	case 3:
-		return fixup_var_int_1(param, 1);
-	case 2:
-		return fixup_spve_null(param, 1);
-	default:
-		return 0;
+		case 1:
+		case 3:
+			return fixup_var_int_1(param, 1);
+		case 2:
+			return fixup_spve_null(param, 1);
+		default:
+			return 0;
 	}
 }
 
-static int pv_get_ws_conid_f(struct sip_msg *msg, pv_param_t *param,
-			     pv_value_t *res)
+static int pv_get_ws_conid_f(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-    if (msg == NULL) return -1;
+	if(msg == NULL)
+		return -1;
 
-    return pv_get_sintval(msg, param, res, msg->rcv.proto_reserved1);
+	return pv_get_sintval(msg, param, res, msg->rcv.proto_reserved1);
 }
 
+/* clang-format off */
 static const char* ws_rpc_dump_doc[2] = {
 	"List websocket connections",
 	0
@@ -382,14 +364,14 @@ rpc_export_t ws_rpc_cmds[] = {
 	{"ws.disable", ws_rpc_disable, ws_rpc_disable_doc, 0},
 	{0, 0, 0, 0}
 };
+/* clang-format on */
 
 /**
  * register RPC commands
  */
 static int ws_init_rpc(void)
 {
-	if (rpc_register_array(ws_rpc_cmds)!=0)
-	{
+	if(rpc_register_array(ws_rpc_cmds) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}

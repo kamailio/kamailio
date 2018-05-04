@@ -35,7 +35,7 @@
 #include <strings.h>
 #include <stdint.h>
 #include <string.h>
-#include <time.h>   /* strptime, XOPEN issue must be >= 4 */
+#include <time.h> /* strptime, XOPEN issue must be >= 4 */
 
 #include "../../lib/srdb2/db_drv.h"
 #include "../../core/mem/mem.h"
@@ -44,33 +44,37 @@
 
 #include "bdb_fld.h"
 
-static void bdb_fld_free(db_fld_t* fld, bdb_fld_t* payload)
+static void bdb_fld_free(db_fld_t *fld, bdb_fld_t *payload)
 {
 	db_drv_free(&payload->gen);
-	if (payload->buf.s) pkg_free(payload->buf.s);
-	if (payload->name) pkg_free(payload->name);
+	if(payload->buf.s)
+		pkg_free(payload->buf.s);
+	if(payload->name)
+		pkg_free(payload->name);
 	pkg_free(payload);
 }
 
 
-int bdb_fld(db_fld_t* fld, char* table)
+int bdb_fld(db_fld_t *fld, char *table)
 {
 	bdb_fld_t *res;
 
-	res = (bdb_fld_t*)pkg_malloc(sizeof(bdb_fld_t));
-	if (res == NULL) {
+	res = (bdb_fld_t *)pkg_malloc(sizeof(bdb_fld_t));
+	if(res == NULL) {
 		ERR("oracle: No memory left\n");
 		return -1;
 	}
 	memset(res, '\0', sizeof(bdb_fld_t));
 	res->col_pos = -1;
-	if (db_drv_init(&res->gen, bdb_fld_free) < 0) goto error;
+	if(db_drv_init(&res->gen, bdb_fld_free) < 0)
+		goto error;
 
 	DB_SET_PAYLOAD(fld, res);
 	return 0;
 
 error:
-	if (res) pkg_free(res);
+	if(res)
+		pkg_free(res);
 	return -1;
 }
 

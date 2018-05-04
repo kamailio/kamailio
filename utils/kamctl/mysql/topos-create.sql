@@ -27,6 +27,8 @@ CREATE TABLE `topos_d` (
 
 CREATE INDEX rectime_idx ON topos_d (`rectime`);
 CREATE INDEX a_callid_idx ON topos_d (`a_callid`);
+CREATE INDEX a_uuid_idx ON topos_d (`a_uuid`);
+CREATE INDEX b_uuid_idx ON topos_d (`b_uuid`);
 
 INSERT INTO version (table_name, table_version) values ('topos_d','1');
 
@@ -60,6 +62,8 @@ CREATE TABLE `topos_t` (
 
 CREATE INDEX rectime_idx ON topos_t (`rectime`);
 CREATE INDEX a_callid_idx ON topos_t (`a_callid`);
+CREATE INDEX x_vbranch_idx ON topos_t (`x_vbranch`);
+CREATE INDEX a_uuid_idx ON topos_t (`a_uuid`);
 
 INSERT INTO version (table_name, table_version) values ('topos_t','1');
 

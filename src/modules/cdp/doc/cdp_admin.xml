@@ -112,7 +112,7 @@ modparam("cdp", "config_file", "/etc/kamailio/diametercfg.xml")
     <section>
       <title>latency_threshold (int)</title>
 
-      <para>The time in ms above which a log error is wrtten to log file for
+      <para>The time in ms above which a log error is written to log file for
       long CDP transactions.</para>
 
       <para><emphasis> Default value is <quote>500</quote>. </emphasis></para>
@@ -180,7 +180,7 @@ modparam("cdp", "debug_heavy", 1)
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>fqdn</emphasis> - the Fully qualified domai
+			<emphasis>fqdn</emphasis> - the Fully qualified domain
 				name of the peer, that should be checked.
 				The parameter may contain pseudovariables.
 			</para>
@@ -276,8 +276,8 @@ if(!cdp_has_app("16777216")) {
 &lt;!-- 
 
  DiameterPeer Parameters 
-  - FQDN - FQDN of this peer, as it should apper in the Origin-Host AVP
-  - Realm - Realm of this peer, as it should apper in the Origin-Realm AVP
+  - FQDN - FQDN of this peer, as it should appear in the Origin-Host AVP
+  - Realm - Realm of this peer, as it should appear in the Origin-Realm AVP
   - Vendor_Id - Default Vendor-Id to appear in the Capabilities Exchange
   - Product_Name - Product Name to appear in the Capabilities Exchange 
   - AcceptUnknownPeers - Whether to accept (1) or deny (0) connections from peers with FQDN 
@@ -324,7 +324,7 @@ if(!cdp_has_app("16777216")) {
 
         &lt;!--
                 Definition of peers to connect to and accept connections from. For each peer found in here
-                a dedicated receiver process will be forked. All other unkwnown peers will share a single
+                a dedicated receiver process will be forked. All other unknown peers will share a single
                 receiver. NB: You must have a peer definition for each peer listed in the realm routing section
         --&gt;
         &lt;Peer FQDN="pcrf1.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
@@ -365,11 +365,11 @@ if(!cdp_has_app("16777216")) {
                 Each Realm can have a different table of peers to route towards. In case the Destination
                 Realm AVP contains a Realm not defined here, the DefaultRoute entries will be used.
 
-                Note: In case a message already contains a Destination-Host AVP, Realm Routeing will not be
+                Note: In case a message already contains a Destination-Host AVP, Realm Routing will not be
                 applied.
                 Note: Routing will only happen towards connected and application id supporting peers.
                 
-                The metric is used to order the list of prefered peers, while looking for a connected and
+                The metric is used to order the list of preferred peers, while looking for a connected and
                 application id supporting peer. In the end, of course, just one peer will be selected.
         --&gt;
         &lt;Realm name="ims.smilecoms.com"&gt;

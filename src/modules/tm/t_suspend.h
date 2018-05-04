@@ -32,6 +32,11 @@ int t_continue(unsigned int hash_index, unsigned int label,
 typedef int (*t_continue_f)(unsigned int hash_index, unsigned int label,
 		struct action *route);
 
+int t_continue_cb(unsigned int hash_index, unsigned int label,
+		str *cbname, str *cbparam);
+typedef int (*t_continue_cb_f)(unsigned int hash_index, unsigned int label,
+		str *cbname, str *cbparam);
+
 int t_cancel_suspend(unsigned int hash_index, unsigned int label);
 typedef int (*t_cancel_suspend_f)(unsigned int hash_index, unsigned int label);
 

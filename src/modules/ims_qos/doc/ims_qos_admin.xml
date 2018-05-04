@@ -25,7 +25,7 @@
     <section>
       <title>&kamailio; Modules</title>
 
-      <para>The Following mouldes must be loaded before this module:</para>
+      <para>The Following modules must be loaded before this module:</para>
 
       <itemizedlist>
         <listitem>

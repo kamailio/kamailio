@@ -701,7 +701,7 @@ static int xl_printstr(struct sip_msg* msg, xl_elog_t* format, char** res, int* 
 
 	len = xlbuf_size;
 	if (xl_print(msg, format, xlbuf, &len)<0) {
-		LOG(L_ERR, "xl_printstr: Error while formating result\n");
+		LOG(L_ERR, "xl_printstr: Error while formatting result\n");
 		return -1;
 	}
 

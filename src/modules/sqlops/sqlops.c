@@ -452,18 +452,36 @@ static int ki_sqlops_query(sip_msg_t *msg, str *scon, str *squery, str *sres)
 	return sqlops_do_query(scon, squery, sres);
 }
 
+static int ki_sqlops_query_async(sip_msg_t *msg, str *scon, str *squery)
+{
+	sql_con_t *con = NULL;
+
+	if (scon == NULL || scon->s == NULL || scon->len<=0) {
+		LM_ERR("invalid connection name\n");
+		return -1;
+	}
+
+	con = sql_get_connection(scon);
+	if(con==NULL) {
+		LM_ERR("invalid connection [%.*s]\n", scon->len, scon->s);
+		return -1;
+	}
+
+	return sql_do_query_async(con, squery);
+}
+
 static int ki_sqlops_reset_result(sip_msg_t *msg, str *sres)
 {
 	sqlops_reset_result(sres);
 	return 1;
 }
 
-static int ki_sqlops_num_rows(str *sres)
+static int ki_sqlops_num_rows(sip_msg_t *msg, str *sres)
 {
 	return sqlops_num_rows(sres);
 }
 
-static int ki_sqlops_num_columns(str *sres)
+static int ki_sqlops_num_columns(sip_msg_t *msg, str *sres)
 {
 	return sqlops_num_columns(sres);
 }
@@ -506,6 +524,11 @@ static sr_kemi_t sr_kemi_sqlops_exports[] = {
 	{ str_init("sqlops"), str_init("sql_xquery"),
 		SR_KEMIP_INT, sqlops_do_xquery,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_query_async"),
+		SR_KEMIP_INT, ki_sqlops_query_async,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

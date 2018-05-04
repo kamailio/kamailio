@@ -16,7 +16,7 @@
 	<section>
 		<title>Overview</title>
 		<para>The module provides an NSQ consumer for &kamailio; configuration file.
-			NSQ is a real time distributed messaging platofrm, more details about it
+			NSQ is a real time distributed messaging platform, more details about it
 			can be found at <ulink url="http://nsq.io">nsq.io</ulink>.
 		</para>
 		<para>
@@ -34,7 +34,7 @@
 					<para>
 						Rely on a distributed messaging layer, such that machines processing
 						requests/responses/events can go up/down or share the workload,
-						whithout impacting Kamailio's activity.
+						without impacting Kamailio's activity.
 					</para>
 				</listitem>
 			</itemizedlist>
@@ -62,10 +62,10 @@
 		<para>
 			The module creates an additional NSQ manager process that does the communication
 			with NSQ for consuming messages. This one defers the message for processing to
-			other NSQ worker processs so that it doesn't block itself, nor the SIP worker processes.
+			other NSQ worker process so that it doesn't block itself, nor the SIP worker processes.
 		</para>
 		<section>
-			<title>Aknowledge Messages</title>
+			<title>Acknowledge Messages</title>
 			<para>
 				Consumed messages have the option of being acknowledge in two ways:
 				<itemizedlist>

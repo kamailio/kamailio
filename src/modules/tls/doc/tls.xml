@@ -271,6 +271,7 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 	</section>
 
 	<xi:include href="certs_howto.xml"/>
+	<xi:include href="hsm_howto.xml"/>
 	<xi:include href="params.xml"/>
 	<xi:include href="functions.xml"/>
 	<xi:include href="rpc.xml"/>

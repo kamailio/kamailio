@@ -323,13 +323,17 @@ void clear_branches(void)
 
 
 /**  Add a new branch to the current transaction.
- * @param msg - sip message, used for getting the uri if not specified (0).
- * @param uri - uri, can be 0 (in which case the uri is taken from msg)
- * @param dst_uri - destination uri, can be 0.
- * @param path - path vector (passed in a string), can be 0.
- * @param q  - q value.
- * @param flags - per branch flags.
- * @param force_socket - socket that should be used when sending.
+ * @param msg sip message, used for getting the uri if not specified (0).
+ * @param uri uri, can be 0 (in which case the uri is taken from msg)
+ * @param dst_uri destination uri, can be 0.
+ * @param path path vector (passed in a string), can be 0.
+ * @param q  q value.
+ * @param flags per branch flags.
+ * @param force_socket socket that should be used when sending.
+ * @param instance sip instance contact header param value
+ * @param reg_id reg-id contact header param value
+ * @param ruid ruid value from usrloc
+ * @param location_ua location user agent
  *
  * @return  <0 (-1) on failure, 1 on success (script convention).
  */

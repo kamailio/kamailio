@@ -541,7 +541,7 @@ modparam("tls", "ssl_freelist_max_len", 0)
 		Sets the maximum number of bytes (from the clear text) sent into
 		one TLS record. Valid values are between 512 and 16384.
 		Note however that even valid low values might not be big enough to
-		allow a succesfull handshake (try minimum 1024).
+		allow a successful handshake (try minimum 1024).
 	</para>
 	<para>
 		Lower values would lead to less memory usage, but values lower then
@@ -553,7 +553,7 @@ modparam("tls", "ssl_freelist_max_len", 0)
 	<note>
 		<para>
 			Values on the lower side, even if valid (> 512), might not allow
-			for a succesfull initial handshake. This happens if the
+			for a successful initial handshake. This happens if the
 			certificate does not fit inside one send fragment.
 			Values lower then 1024 should not be used.
 			Even with higher values, if the handshake fails,
@@ -717,7 +717,7 @@ modparam("tls", "ct_wq_max", 4194304)
 	<title><varname>ct_wq_blk_size</varname> (integer)</title>
 	<para>
 		Minimum block size for the internal clear-text send queues
-		(debugging / advanced tunning).
+		(debugging / advanced tuning).
 		Good values are multiple of typical datagram sizes.
 	</para>
 	<para>
@@ -819,7 +819,7 @@ modparam("tls", "tls_debug", 10)
 		As of this writing this is not true for any OpenSSL version (including 0.9.8e).
 	</para>
 	<para>
-		If an ill-behaved OpenSSL version is detected, a very conservative value is choosed,
+		If an ill-behaved OpenSSL version is detected, a very conservative value is chosen,
 		which depends on the maximum possible number of simultaneously created TLS connections
 		(and hence on the process number).
 	</para>
@@ -873,7 +873,7 @@ modparam("tls", "low_mem_threshold1", -1)
 		As of this writing this is not true for any OpenSSL version (including 0.9.8e).
 	</para>
 	<para>
-		If an ill-behaved OpenSSL version is detected, a very conservative value is choosed,
+		If an ill-behaved OpenSSL version is detected, a very conservative value is chosen,
 		which depends on the maximum possible number of simultaneously created
 		TLS connections (and hence on the process number).
 	</para>
@@ -921,7 +921,7 @@ modparam("tls", "low_mem_threshold2", -1)
 		If enabled &kamailio; will start even if some of the OpenSSL sanity checks fail (turn it on at your own risk).
 	</para>
 	<para>
-		If any of the following sanity checks fal, Kamailio will not start:
+		If any of the following sanity checks fail, Kamailio will not start:
 	</para>
 	<itemizedlist>
 		<listitem>
@@ -1196,4 +1196,56 @@ end
 	    </example>
 	</section>
 
-</section>
+	<section id="tls.p.engine">
+	<title><varname>engine</varname> (string)</title>
+	<para>
+	        If OpenSSL is compiled with engine support this will allow algorithms to be offloaded and
+	        private keys from HSM to be used. Currently only a single global engine is supported.
+		However, private keys can be specified per_domain.
+	</para>
+
+	<para>
+	        To use private keys from the HSM, the name is the HSM key label prefixed by <varname>/engine:</varname>.
+	</para>
+		<programlisting format="linespecific">
+...
+## example for the Gem engine
+modparam("tls", "engine", "gem")
+# can also be set per-domain in tls.cfg
+modparam("tls", "private_key", "/engine:my_HSM_key_label")
+
+## example for engine_pkcs11
+modparam("tls", "engine", "pkcs11")
+modparam("tls", "private_key", "/engine:pkcs11:token=MYTOKEN;object=MYKEYLABEL")
+
+modparam("tls", "engine_conf", "/usr/local/etc/kamailio/openssl.cnf")
+modparam("tls", "engine_algorithms", "ALL")
+...
+                </programlisting>
+	<para>
+		By default OpenSSL engine support  is disabled (NONE). This global param is not supported in the tls config file.
+	</para>
+        </section>
+
+	<section id="tls.p.engine_config">
+	<title><varname>engine_config</varname> (string)</title>
+	<para>
+	        A OpenSSL configuration file to initialize the engine. Typically used to send PIN to HSMs to unlock
+	        private keys. See the HSM howto for an example. This global param is not supported in the tls config file.
+	</para>
+        </section>
+
+
+	<section id="tls.p.engine_algorithms">
+	<title><varname>engine_algorithms</varname> (string)</title>
+	<para>
+	        A list of cryptographic methods to be set as default in the engine.
+	        This is a comma-separated list of values
+	        from ALL RSA DSA DH EC RAND CIPHERS DIGESTS PKEY PKEY_CRYPTO PKEY_ASN1.
+		Not all methods are supported by every engine.
+	</para>
+	<para>
+	        The default is not to set any methods as default. This global param is not supported in the tls config file.
+	</para>
+        </section>
+ </section>

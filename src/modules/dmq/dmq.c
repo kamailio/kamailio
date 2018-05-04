@@ -38,6 +38,7 @@
 #include "../../core/hashes.h"
 #include "../../core/mod_fix.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 
 #include "dmq.h"
 #include "dmq_funcs.h"
@@ -74,35 +75,34 @@ sl_api_t slb;
 
 /** module variables */
 str dmq_request_method = str_init("KDMQ");
-dmq_worker_t* workers = NULL;
-dmq_peer_list_t* peer_list = 0;
+dmq_worker_t *workers = NULL;
+dmq_peer_list_t *peer_list = 0;
 /* the list of dmq servers */
-dmq_node_list_t* node_list = NULL;
+dmq_node_list_t *node_list = NULL;
 // the dmq module is a peer itself for receiving notifications regarding nodes
-dmq_peer_t* dmq_notification_peer = NULL;
+dmq_peer_t *dmq_notification_peer = NULL;
 
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
-static int handle_dmq_fixup(void** param, int param_no);
-static int send_dmq_fixup(void** param, int param_no);
-static int bcast_dmq_fixup(void** param, int param_no);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-	{"dmq_handle_message",  (cmd_function)dmq_handle_message, 0, handle_dmq_fixup, 0,
-		REQUEST_ROUTE},
-	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4, send_dmq_fixup, 0,
-		ANY_ROUTE},
-        {"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3, bcast_dmq_fixup, 0,
-                ANY_ROUTE},
-	{"dmq_t_replicate",  (cmd_function)cfg_dmq_t_replicate, 0, 0, 0,
-		REQUEST_ROUTE},
-        {"dmq_t_replicate",  (cmd_function)cfg_dmq_t_replicate, 1, fixup_spve_null, 0,
-                REQUEST_ROUTE},
-        {"dmq_is_from_node",  (cmd_function)cfg_dmq_is_from_node, 0, 0, 0,
-                REQUEST_ROUTE},
-        {"bind_dmq",        (cmd_function)bind_dmq,       0, 0,              0},
+	{"dmq_handle_message", (cmd_function)dmq_handle_message, 0,
+		0, 0, REQUEST_ROUTE},
+	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"dmq_t_replicate", (cmd_function)cfg_dmq_t_replicate, 0,
+		0, 0, REQUEST_ROUTE},
+	{"dmq_t_replicate", (cmd_function)cfg_dmq_t_replicate, 1,
+		fixup_spve_null, 0, REQUEST_ROUTE},
+	{"dmq_is_from_node", (cmd_function)cfg_dmq_is_from_node, 0,
+		0, 0, REQUEST_ROUTE},
+	{"bind_dmq", (cmd_function)bind_dmq, 0,
+		0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -133,9 +133,11 @@ struct module_exports exports = {
 	(destroy_function) destroy, 	/* destroy function */
 	child_init                  	/* per-child init function */
 };
+/* clang-format on */
 
 
-static int make_socket_str_from_uri(struct sip_uri *uri, str *socket) {
+static int make_socket_str_from_uri(struct sip_uri *uri, str *socket)
+{
 	if(!uri->host.s || !uri->host.len) {
 		LM_ERR("no host in uri\n");
 		return -1;
@@ -143,7 +145,7 @@ static int make_socket_str_from_uri(struct sip_uri *uri, str *socket) {
 
 	socket->len = uri->host.len + uri->port.len + 6;
 	socket->s = pkg_malloc(socket->len);
-	if(socket->s==NULL) {
+	if(socket->s == NULL) {
 		LM_ERR("no more pkg\n");
 		return -1;
 	}
@@ -170,32 +172,32 @@ static int make_socket_str_from_uri(struct sip_uri *uri, str *socket) {
 static int mod_init(void)
 {
 	/* bind the SL API */
-	if (sl_load_api(&slb)!=0) {
+	if(sl_load_api(&slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
 	/* load all TM stuff */
-	if(load_tm_api(&tmb)==-1) {
+	if(load_tm_api(&tmb) == -1) {
 		LM_ERR("can't load tm functions. TM module probably not loaded\n");
 		return -1;
 	}
 
 	/* load peer list - the list containing the module callbacks for dmq */
 	peer_list = init_peer_list();
-	if(peer_list==NULL) {
+	if(peer_list == NULL) {
 		LM_ERR("cannot initialize peer list\n");
 		return -1;
 	}
 
 	/* load the dmq node list - the list containing the dmq servers */
 	node_list = init_dmq_node_list();
-	if(node_list==NULL) {
+	if(node_list == NULL) {
 		LM_ERR("cannot initialize node list\n");
 		return -1;
 	}
 
-	if (rpc_register_array(rpc_methods)!=0) {
+	if(rpc_register_array(rpc_methods) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
@@ -204,12 +206,15 @@ static int mod_init(void)
 	register_procs(num_workers);
 
 	/* check server_address and notification_address are not empty and correct */
-	if(parse_uri(dmq_server_address.s, dmq_server_address.len, &dmq_server_uri) < 0) {
+	if(parse_uri(dmq_server_address.s, dmq_server_address.len, &dmq_server_uri)
+			< 0) {
 		LM_ERR("server address invalid\n");
 		return -1;
 	}
 
-	if(parse_uri(dmq_notification_address.s, dmq_notification_address.len, &dmq_notification_uri) < 0) {
+	if(parse_uri(dmq_notification_address.s, dmq_notification_address.len,
+			   &dmq_notification_uri)
+			< 0) {
 		LM_ERR("notification address invalid\n");
 		return -1;
 	}
@@ -219,7 +224,7 @@ static int mod_init(void)
 		LM_ERR("failed to create socket out of server_uri\n");
 		return -1;
 	}
-	if (lookup_local_socket(&dmq_server_socket) == NULL) {
+	if(lookup_local_socket(&dmq_server_socket) == NULL) {
 		LM_ERR("server_uri is not a socket the proxy is listening on\n");
 		return -1;
 	}
@@ -232,7 +237,7 @@ static int mod_init(void)
 	}
 
 	dmq_init_callback_done = shm_malloc(sizeof(int));
-	if (!dmq_init_callback_done) {
+	if(!dmq_init_callback_done) {
 		LM_ERR("no more shm\n");
 		return -1;
 	}
@@ -242,12 +247,12 @@ static int mod_init(void)
 	 * add the dmq notification peer.
 	 * the dmq is a peer itself so that it can receive node notifications
 	 */
-	if(add_notification_peer()<0) {
+	if(add_notification_peer() < 0) {
 		LM_ERR("cannot add notification peer\n");
 		return -1;
 	}
 
-	startup_time = (int) time(NULL);
+	startup_time = (int)time(NULL);
 
 	/**
 	 * add the ping timer
@@ -256,7 +261,7 @@ static int mod_init(void)
 	if(ping_interval < MIN_PING_INTERVAL) {
 		ping_interval = MIN_PING_INTERVAL;
 	}
-	if(register_timer(ping_servers, 0, ping_interval)<0) {
+	if(register_timer(ping_servers, 0, ping_interval) < 0) {
 		LM_ERR("cannot register timer callback\n");
 		return -1;
 	}
@@ -269,8 +274,8 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-  	int i, newpid;
-	if (rank == PROC_MAIN) {
+	int i, newpid;
+	if(rank == PROC_MAIN) {
 		/* fork worker processes */
 		for(i = 0; i < num_workers; i++) {
 			init_worker(&workers[i]);
@@ -293,10 +298,11 @@ static int child_init(int rank)
 		 * a master in this architecture
 		 */
 		if(dmq_notification_address.s) {
-			notification_node = add_server_and_notify(&dmq_notification_address);
+			notification_node =
+					add_server_and_notify(&dmq_notification_address);
 			if(!notification_node) {
 				LM_ERR("cannot retrieve initial nodelist from %.*s\n",
-				       STR_FMT(&dmq_notification_address));
+						STR_FMT(&dmq_notification_address));
 				return -1;
 			}
 		}
@@ -314,53 +320,39 @@ static int child_init(int rank)
 /*
  * destroy function
  */
-static void destroy(void) {
+static void destroy(void)
+{
 	/* TODO unregister dmq node, free resources */
 	if(dmq_notification_address.s && notification_node && self_node) {
 		LM_DBG("unregistering node %.*s\n", STR_FMT(&self_node->orig_uri));
 		self_node->status = DMQ_NODE_DISABLED;
 		request_nodelist(notification_node, 1);
 	}
-	if (dmq_server_socket.s) {
+	if(dmq_server_socket.s) {
 		pkg_free(dmq_server_socket.s);
 	}
-	if (dmq_init_callback_done) {
+	if(dmq_init_callback_done) {
 		shm_free(dmq_init_callback_done);
 	}
-}
-
-static int handle_dmq_fixup(void** param, int param_no)
-{
- 	return 0;
-}
-
-static int send_dmq_fixup(void** param, int param_no)
-{
-	return fixup_spve_null(param, 1);
-}
-
-static int bcast_dmq_fixup(void** param, int param_no)
-{
-        return fixup_spve_null(param, 1);
 }
 
 static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
 {
 	void *h;
-	dmq_node_t* cur = node_list->nodes;
+	dmq_node_t *cur = node_list->nodes;
 	char ip[IP6_MAX_STR_SIZE + 1];
 
 	while(cur) {
 		memset(ip, 0, IP6_MAX_STR_SIZE + 1);
 		ip_addr2sbuf(&cur->ip_address, ip, IP6_MAX_STR_SIZE);
-		if (rpc->add(c, "{", &h) < 0) goto error;
-		if (rpc->struct_add(h, "SSsSdd",
-			"host", &cur->uri.host,
-			"port", &cur->uri.port,
-			"resolved_ip", ip,
-			"status", get_status_str(cur->status),
-			"last_notification", cur->last_notification,
-			"local", cur->local) < 0) goto error;
+		if(rpc->add(c, "{", &h) < 0)
+			goto error;
+		if(rpc->struct_add(h, "SSsSdd", "host", &cur->uri.host, "port",
+				   &cur->uri.port, "resolved_ip", ip, "status",
+				   dmq_get_status_str(cur->status), "last_notification",
+				   cur->last_notification, "local", cur->local)
+				< 0)
+			goto error;
 		cur = cur->next;
 	}
 	return;
@@ -368,14 +360,57 @@ error:
 	LM_ERR("Failed to add item to RPC response\n");
 	rpc->fault(c, 500, "Server failure");
 	return;
-
 }
 
-static const char *dmq_rpc_list_nodes_doc[2] = {
-	"Print all nodes", 0
-};
+static const char *dmq_rpc_list_nodes_doc[2] = {"Print all nodes", 0};
 
 static rpc_export_t rpc_methods[] = {
 	{"dmq.list_nodes", dmq_rpc_list_nodes, dmq_rpc_list_nodes_doc, RET_ARRAY},
 	{0, 0, 0, 0}
 };
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_dmq_exports[] = {
+	{ str_init("dmq"), str_init("handle_message"),
+		SR_KEMIP_INT, ki_dmq_handle_message,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("is_from_node"),
+		SR_KEMIP_INT, is_from_remote_node,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("t_replicate"),
+		SR_KEMIP_INT, ki_dmq_t_replicate,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("t_replicate_mode"),
+		SR_KEMIP_INT, ki_dmq_t_replicate_mode,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("send_message"),
+		SR_KEMIP_INT, ki_dmq_send_message,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("bcast_message"),
+		SR_KEMIP_INT, ki_dmq_bcast_message,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_dmq_exports);
+	return 0;
+}

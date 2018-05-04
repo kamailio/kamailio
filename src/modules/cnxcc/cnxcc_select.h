@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Carlos Ruiz Díaz (caruizdiaz.com),
  *                    ConexionGroup (www.conexiongroup.com)
  *
@@ -25,8 +23,8 @@
 #ifndef CNXCC_SELECT_H_
 #define CNXCC_SELECT_H_
 
-int sel_root(str* res, select_t* s, struct sip_msg* msg);
-int sel_channels(str* res, select_t* s, struct sip_msg* msg);
-int sel_channels_count(str* res, select_t* s, struct sip_msg* msg);
+int sel_root(str *res, select_t *s, struct sip_msg *msg);
+int sel_channels(str *res, select_t *s, struct sip_msg *msg);
+int sel_channels_count(str *res, select_t *s, struct sip_msg *msg);
 
 #endif /* CNXCC_SELECT_H_ */

@@ -409,7 +409,228 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 </programlisting>
 		</example>
 	</section>
+		<section id="corex.f.setxflag">
+		<title><function moreinfo="none">setxflag(flag)</function></title>
+		<para>
+			Set the extended message (transaction) flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be set. Can be integer or pseudo-variable with integer value
+				(range 0-63).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>setxflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+setxflag("1");
+...
+$var(flag) = 11;
+setxflag("$var(flag)");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.isxflagset">
+		<title><function moreinfo="none">isxflagset(flag)</function></title>
+		<para>
+			Return true of the extended message (transaction) flag is set.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be tested. Can be integer or pseudo-variable with integer value
+				(range 0-63).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>isxflagset</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(isxflagset("1"))
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.resetxflag">
+		<title><function moreinfo="none">resetxflag(flag)</function></title>
+		<para>
+			Reset the extended message (transaction) flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be reset. Can be integer or pseudo-variable with integer value
+				(range 0-63).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>resetxflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+resetxflag("1");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.set_send_socket">
+		<title><function moreinfo="none">set_send_socket(saddr)</function></title>
+		<para>
+			Set the socket for sending out.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>saddr</emphasis> - the address of the local socket
+				(listen address). Can be a static string or contain
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_send_socket</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_send_socket("udp:127.0.0.1:5060");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.set_recv_socket">
+		<title><function moreinfo="none">set_recv_socket(saddr)</function></title>
+		<para>
+			Switch local socket used for receiving the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>saddr</emphasis> - the address of the local socket
+				(listen address). Can be a static string or contain
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_recv_socket</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_recv_socket("udp:127.0.0.1:5060");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.set_source_address">
+		<title><function moreinfo="none">set_source_address(saddr)</function></title>
+		<para>
+			Set the source address for the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>saddr</emphasis> - the source address in socket format.
+				Can be a static string or contain pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_source_address</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_source_address("udp:127.0.0.1:5080");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.via_add_srvid">
+		<title><function moreinfo="none">via_add_srvid(flags)</function></title>
+		<para>
+			Control if srvid parameter is added or not to local Via. If yes,
+			the value is server_id, added only if it is different than 0.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - add srvid parameter; 0 - do not
+				add srvid parameter.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_add_srvid</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_add_srv("1");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.via_add_xavp_params">
+		<title><function moreinfo="none">via_add_xavp_params(flags)</function></title>
+		<para>
+			Control if fields of the xavp with the name specified by
+			xavp_via_params global parameter are added or not to local Via.
 
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - add xavp parameters; 0 - do not
+				add xavp parameters.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_add_xavp_params</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_add_xavp_params("1");
+...
+</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>
@@ -531,7 +752,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
             After executing of this event route, if msg_avp was defined and set then
             its value is used for further processing, otherwise, original value of
             $mb is used. If message was received from remote host, then it is parsed
-            and proceeds to appropriate route. Oterhwise if message set to send out,
+            and proceeds to appropriate route. Otherwise if message set to send out,
             then is sent to remote host per configured SIP timers in config script.
         </para>
         <para>
@@ -565,7 +786,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 			server. The SIP messages received from end-user at SIP edge proxy may be decrypted
 			and sent to SIP application server at remote location unencrypted, where they are
 			processed as normal. One the way back, the messages received from SIP application
-			server at edge proxy can be encrpyted before being sent to actual destination.
+			server at edge proxy can be encrypted before being sent to actual destination.
 			The edge proxy can check whether received message came from end-user or SIP 
 			application server by using simple regular expressions.
         </para>
@@ -587,7 +808,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 			For example, the client app running on Android or iPhone, may send device UUID along
 			with ITV key, encrypted using RSA or AES256 with pre-shared secret, as first packet,
 			which is set as cookie by server in e.g. memcache. This cookie is referred by client
-			app in each next packet, so server can retrive encyption key from cache and use that
+			app in each next packet, so server can retrieve encryption key from cache and use that
 			for decryption. Same can be done for server at client app side, so messages encrypted
 			by server can be decrypted at client app.
         </para>

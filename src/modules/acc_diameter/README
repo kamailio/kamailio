@@ -10,7 +10,7 @@ Ramona-Elena Modroiu
    rosdev.ro
    <ramona@rosdev.ro>
 
-   Copyright � 2002, 2003 FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -73,7 +73,7 @@ Chapter 1. Admin Guide
 
    NOTE: This was developed based on some very early version of the
    Diameter protocol, and has not been really tested for many years. It is
-   verly likely to be deleted in upcoming releases. If you want to revive
+   very likely to be deleted in upcoming releases. If you want to revive
    this module, you are welcome, be sure you do proper testing before
    using in production -- it also may need to be updated first to match
    the exported API by 'acc' module.
@@ -143,7 +143,7 @@ modparam("acc_diameter", "diameter_missed_flag", 3)
    Hostname of the machine where the DIAMETER Client is running --
    DIAMETER specific.
 
-   Default value is "localhost".
+   Default value is “localhost”.
 
    Example 1.3. diameter_client_host example
 ...
@@ -179,7 +179,7 @@ email)")
 
    4.1. acc_diam_request(comment)
 
-4.1. acc_diam_request(comment)
+4.1.  acc_diam_request(comment)
 
    Like acc_log_request, acc_diam_request reports on a request. It reports
    to the configured Diameter server.

@@ -320,7 +320,7 @@ resetbflag("1");
      * uri - Valid SIP URI representing the address where to send the
        request. It must be a static string, no variables are evaluated at
        runtime. If you need to set outbound proxy address via a variable,
-       use assginment to $du.
+       use assignment to $du.
 
    This function can be used from ANY_ROUTE.
 
@@ -356,7 +356,7 @@ if(isdsturiset())
 
 3.10. pv_printf(var, str)
 
-   Evalues the str and sets the resulting value to variable var. For
+   Evaluates the str and sets the resulting value to variable var. For
    backward compatibility reasons, the same function can be executed via
    'avp_printf(var, str)'.
 
@@ -614,7 +614,7 @@ kamcmd core.modules
 4.22.  pkg.stats
 
    Print private memory (pkg) usage statistics per process. It can take
-   optinally a filter to print statistics only for a specific process or
+   optionally a filter to print statistics only for a specific process or
    set of processes. If no filter is given, it prints statistics for all
    processes.
 
@@ -715,7 +715,7 @@ kamcmd system.listMethods
    module or by all modules.
 
    NOTE: Processing is done only when the command is issued and involves
-   iterating throug the list of memory fragments and printing details
+   iterating through the list of memory fragments and printing details
    about them.
 
    NOTE: Only the module functions that directly calls shm_alloc or

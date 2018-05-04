@@ -40,7 +40,7 @@ db.getCollection("version").insert({ table_name: "mtree", table_version: NumberI
 db.getCollection("version").insert({ table_name: "mtrees", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "pdt", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "pl_pipes", table_version: NumberInt(1) });
-db.getCollection("version").insert({ table_name: "presentity", table_version: NumberInt(4) });
+db.getCollection("version").insert({ table_name: "presentity", table_version: NumberInt(5) });
 db.getCollection("version").insert({ table_name: "pua", table_version: NumberInt(7) });
 db.getCollection("version").insert({ table_name: "purplemap", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "re_grp", table_version: NumberInt(1) });

@@ -507,7 +507,7 @@ tate")
 
    Check if the client is behind NAT. What tests are performed is
    specified by the type parameter which is an integer given by the sum of
-   the numbers corresponsing to the tests that one wishes to perform. The
+   the numbers corresponding to the tests that one wishes to perform. The
    numbers corresponding to individual tests are shown below:
 
      * 1 - tests if client has a private IP address (as defined by
@@ -536,7 +536,7 @@ if (client_nat_test("3")) {
 5.2.  fix_contact()
 
    Will replace the IP and port in the Contact header with the IP and port
-   the SIP message was received from. Usually called after a succesful
+   the SIP message was received from. Usually called after a successful
    call to client_nat_test(type)
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,

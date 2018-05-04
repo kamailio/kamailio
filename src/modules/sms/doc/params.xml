@@ -76,7 +76,7 @@ modem_param      = name "=" value
 		    s=scan (optional) - Values: 
 		        	0: NOT SCAN uri from body sms, use URI in t=to.
 			1: SCAN uri from body sms (normal mode,
-			default mode, clasic mode)
+			default mode, classic mode)
 			2: SCAN MIX (both modes), First SCAN 
 			Default is 1 (SCAN).
 		</para>

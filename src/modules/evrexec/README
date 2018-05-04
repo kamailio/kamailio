@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
    The parameter can be set multiple times to get more exec tasks in same
    configuration file.
      * name - name of the event route to be executed. When used with a
-       KEMI embedded laguage, this has to be the name of a function from
+       KEMI embedded language, this has to be the name of a function from
        the KEMI script. The function must have a string parameter, which
        will retrieve the index of the works in string format.
      * workers - if set to 0 or 1 the task is executed in a dedicated

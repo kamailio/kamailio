@@ -37,7 +37,7 @@
 #include "../../lib/srdb2/db_gen.h"
 
 
-void bdb_res_free(db_res_t* res, bdb_res_t *payload)
+void bdb_res_free(db_res_t *res, bdb_res_t *payload)
 {
 	bdb_cmd_t *bcmd;
 
@@ -45,8 +45,7 @@ void bdb_res_free(db_res_t* res, bdb_res_t *payload)
 
 	/* free bdb result */
 
-	if(bcmd->dbcp!=NULL)
-	{
+	if(bcmd->dbcp != NULL) {
 		bcmd->dbcp->CLOSE_CURSOR(bcmd->dbcp);
 		bcmd->dbcp = NULL;
 	}
@@ -60,21 +59,22 @@ void bdb_res_free(db_res_t* res, bdb_res_t *payload)
  * to bdb_res_free which releases the result stored in the oracle statement
  * and if there is a cursor open in the statement then it will be closed as well
  */
-int bdb_res(db_res_t* res)
+int bdb_res(db_res_t *res)
 {
 	bdb_res_t *br;
 
-	br = (bdb_res_t*)pkg_malloc(sizeof(bdb_res_t));
-	if (br == NULL) {
+	br = (bdb_res_t *)pkg_malloc(sizeof(bdb_res_t));
+	if(br == NULL) {
 		ERR("bdb: No memory left\n");
 		return -1;
 	}
-	if (db_drv_init(&br->gen, bdb_res_free) < 0) goto error;
+	if(db_drv_init(&br->gen, bdb_res_free) < 0)
+		goto error;
 	DB_SET_PAYLOAD(res, br);
 	return 0;
-	
+
 error:
-	if (br) {
+	if(br) {
 		db_drv_free(&br->gen);
 		pkg_free(br);
 	}

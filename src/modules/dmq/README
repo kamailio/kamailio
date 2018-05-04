@@ -129,7 +129,7 @@ Chapter 1. Admin Guide
    directly to a specific node). The system transparently deals with node
    discovery, consistency, retransmissions, etc.
 
-   Other entities ("peers") are then able to utlize the DMQ bus to pass
+   Other entities ("peers") are then able to utilize the DMQ bus to pass
    messages between themselves. Peers are grouped by name in order to
    ensure the correct messages are passed to the relevant peers. This
    grouping of peers can be compared to a topic in a typical pub/sub

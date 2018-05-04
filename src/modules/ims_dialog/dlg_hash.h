@@ -232,7 +232,6 @@ void free_dlg_out_cell(struct dlg_cell_out *dlg_out);
  * \brief Create a new dialog structure for a SIP dialog
  * \param callid dialog callid
  * \param from_uri dialog from uri
- * \param to_uri dialog to uri
  * \param from_tag dialog from tag
  * \param req_uri dialog r-uri
  * \return created dialog structure on success, NULL otherwise
@@ -248,6 +247,7 @@ struct dlg_cell* build_new_dlg(str *callid, str *from_uri,
  * \param rr record-routing information
  * \param contact caller or callee contact
  * \param cseq CSEQ of caller or callee
+ * \param bind_addr binded address
  * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
  * \return 0 on success, -1 on failure
  */
@@ -261,6 +261,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
  * \param dlg dialog
  * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
  * \param cseq CSEQ of caller or callee
+ * \param to_tag dialog to tag
  * \return 0 on success, -1 on failure
  */
 int dlg_update_cseq(struct dlg_cell *dlg, unsigned int leg, str *cseq, str *to_tag);
@@ -270,6 +271,7 @@ int dlg_update_cseq(struct dlg_cell *dlg, unsigned int leg, str *cseq, str *to_t
  * \param dlg dialog
  * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
  * \param contact CONTACT of caller or callee
+ * \param to_tag dialog to tag
  * \return 0 on success, -1 on failure
  */
 int dlg_update_contact(struct dlg_cell * dlg, unsigned int leg, str *contact, str *to_tag);
@@ -357,6 +359,12 @@ struct dlg_cell* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
 void link_dlg(struct dlg_cell *dlg, int n, int mode);
 
 
+/*!
+ * \brief Link a dialog structure
+ * \param dlg dialog
+ * \param dlg_out dialog out
+ * \param n extra increments for the reference counter
+ */
 void link_dlg_out(struct dlg_cell *dlg, struct dlg_cell_out *dlg_out, int n);
 
 /*!
@@ -389,6 +397,7 @@ void ref_dlg(struct dlg_cell *dlg, unsigned int cnt);
  * \param old_state old dialog state
  * \param new_state new dialog state
  * \param unref set to 1 when the dialog was deleted, 0 otherwise
+ * \param to_tag dialog to tag
  */
 void next_state_dlg(struct dlg_cell *dlg, int event,
         int *old_state, int *new_state, int *unref, str *to_tag);
@@ -553,7 +562,10 @@ static inline int match_downstream_dialog(struct dlg_cell *dlg, str *callid, str
 
 /*!
  * \brief Create a new dialog out structure for a SIP dialog
- * \param to_tag - dialog to_tag
+ * \param dlg dialog
+ * \param to_uri dialog to from_uri
+ * \param to_tag dialog to_tag
+ * \param branch dialog branch
  * \return created dlg_out structure on success, NULL otherwise
  */
 
@@ -561,8 +573,9 @@ struct dlg_cell_out* build_new_dlg_out(struct dlg_cell *dlg, str *to_uri, str* t
 
 /*!
  * \brief Remove all dlg_out entries from dlg structure expect that identified as dlg_do_not_remove
- * \param dlg_out cell - struture to not remove
- * \param mark_only - 1 then only mark for delection, if 0 then delete
+ * \param dlg_out_do_not_remove cell - structure to not remove
+ * \param dlg dialog
+ * \param only_mark - 1 then only mark for deletion, if 0 then delete
  * \return void
  */
 
@@ -570,8 +583,8 @@ void dlg_remove_dlg_out(struct dlg_cell_out *dlg_out_do_not_remove, struct dlg_c
 
 /*!
  * \brief Remove dlg_out entry identified by to_tag from dlg structure
- * \param dlg structure
- * \param dlg_out to_tag
+ * \param dlg dialog structure
+ * \param to_tag dialog to tag
  * \return void
  */
 
@@ -579,8 +592,8 @@ void dlg_remove_dlg_out_tag(struct dlg_cell *dlg, str *to_tag);
 
 /*!
  * \brief Takes the did of the dialog and appends an "x" to it to make a different did for concurrent calls
- * \param dlg_cell - dlg_cell whose did we use
- * \param new_did - empty container for new_did
+ * \param dlg dlg_cell whose did we use
+ * \param new_did empty container for new_did
  * \return void
  */
 
@@ -588,8 +601,8 @@ void create_concurrent_did(struct dlg_cell *dlg, str *new_did);
 
 /*!
  * \brief Update the did of the dlg_out structure
- * \param dlg_cell_out - structure to update
- * \param new_did - new did to use
+ * \param dlg_out structure to update
+ * \param new_did new did to use
  * \return 1 success, 0 failure
  */
 
@@ -597,8 +610,8 @@ int update_dlg_out_did(struct dlg_cell_out *dlg_out, str *new_did);
 
 /*!
  * \brief Update the did of the dlg structure
- * \param dlg_cell - structure to update
- * \param new_did - new did to use
+ * \param dlg structure to update
+ * \param new_did new did to use
  * \return 1 success, 0 failure
  */
 

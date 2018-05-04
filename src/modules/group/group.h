@@ -87,4 +87,6 @@ int group_db_bind(const str* db_url);
  */
 void group_db_close(void);
 
+int ki_is_user_in(sip_msg_t *msg, str *uri, str *grp);
+
 #endif

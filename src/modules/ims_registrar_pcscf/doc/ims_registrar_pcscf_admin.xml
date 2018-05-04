@@ -22,7 +22,7 @@
     <section>
       <title>&kamailio; Modules</title>
 
-      <para>The Following mouldes must be loaded before this module:</para>
+      <para>The Following modules must be loaded before this module:</para>
 
       <itemizedlist>
         <listitem>
@@ -324,7 +324,7 @@ pcscf_save("location");
    <section>
       <title><function moreinfo="none">pcscf_follows_service_routes(domain)</function></title>
       <para>Returns true, if the request is following the "learned"
-	service-routes during registratin.</para>
+	service-routes during registration.</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>

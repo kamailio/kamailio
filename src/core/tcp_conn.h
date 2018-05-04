@@ -162,23 +162,23 @@ struct tcp_req{
 struct tcp_connection;
 
 /* tcp port alias structure */
-struct tcp_conn_alias{
+typedef struct tcp_conn_alias {
 	struct tcp_connection* parent;
 	struct tcp_conn_alias* next;
 	struct tcp_conn_alias* prev;
 	unsigned short port; /* alias port */
 	unsigned short hash; /* hash index in the address hash */
-};
+} tcp_conn_alias_t;
 
 
 #ifdef TCP_ASYNC
-	struct tcp_wbuffer{
+	typedef struct tcp_wbuffer {
 		struct tcp_wbuffer* next;
 		unsigned int b_size;
 		char buf[1];
-	};
+	} tcp_wbuffer_t;
 
-	struct tcp_wbuffer_queue{
+	typedef struct tcp_wbuffer_queue {
 		struct tcp_wbuffer* first;
 		struct tcp_wbuffer* last;
 		ticks_t wr_timeout; /* write timeout*/
@@ -186,11 +186,11 @@ struct tcp_conn_alias{
 		unsigned int offset; /* offset in the first wbuffer were data
 								starts */
 		unsigned int last_used; /* how much of the last buffer is used */
-	};
+	} tcp_wbuffer_queue_t;
 #endif
 
 
-struct tcp_connection{
+typedef struct tcp_connection {
 	int s; /*socket, used by "tcp main" */
 	int fd; /* used only by "children", don't modify it! private data! */
 	gen_lock_t write_lock;
@@ -218,7 +218,7 @@ struct tcp_connection{
 #ifdef TCP_ASYNC
 	struct tcp_wbuffer_queue wbuf_q;
 #endif
-};
+} tcp_connection_t;
 
 
 /* helper macros */

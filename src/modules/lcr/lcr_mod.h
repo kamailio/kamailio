@@ -51,48 +51,53 @@
 
 typedef enum sip_protos uri_transport;
 
-struct rule_info {
-    unsigned int rule_id;
-    char prefix[MAX_PREFIX_LEN];
-    unsigned short prefix_len;
-    char from_uri[MAX_URI_LEN + 1];
-    unsigned short from_uri_len;
-    char mt_tvalue[MAX_MT_TVALUE_LEN + 1];
-    unsigned short mt_tvalue_len;
-    pcre *from_uri_re;
-    char request_uri[MAX_URI_LEN + 1];
-    unsigned short request_uri_len;
-    pcre *request_uri_re;
-    unsigned short stopper;
-    unsigned int enabled;
-    struct target *targets;
-    struct rule_info *next;
+struct rule_info
+{
+	unsigned int rule_id;
+	char prefix[MAX_PREFIX_LEN];
+	unsigned short prefix_len;
+	char from_uri[MAX_URI_LEN + 1];
+	unsigned short from_uri_len;
+	char mt_tvalue[MAX_MT_TVALUE_LEN + 1];
+	unsigned short mt_tvalue_len;
+	pcre *from_uri_re;
+	char request_uri[MAX_URI_LEN + 1];
+	unsigned short request_uri_len;
+	pcre *request_uri_re;
+	unsigned short stopper;
+	unsigned int enabled;
+	struct target *targets;
+	struct rule_info *next;
 };
 
-struct rule_id_info {
-    unsigned int rule_id;
-    struct rule_info *rule_addr;
-    struct rule_id_info *next;
+struct rule_id_info
+{
+	unsigned int rule_id;
+	struct rule_info *rule_addr;
+	struct rule_id_info *next;
 };
 
-struct matched_gw_info {
-    unsigned short gw_index;
-    unsigned short prefix_len;
-    unsigned short priority;
-    unsigned int weight;
-    unsigned short duplicate;
+struct matched_gw_info
+{
+	unsigned short gw_index;
+	unsigned short prefix_len;
+	unsigned short priority;
+	unsigned int weight;
+	unsigned short duplicate;
 };
 
-struct target {
-    unsigned short gw_index;
-    unsigned short priority;
-    unsigned short weight;
-    struct target *next;
+struct target
+{
+	unsigned short gw_index;
+	unsigned short priority;
+	unsigned short weight;
+	struct target *next;
 };
 
-struct instance {
-    unsigned short instance_id;
-    struct instance *next;
+struct instance
+{
+	unsigned short instance_id;
+	struct instance *next;
 };
 
 /* gw states */
@@ -101,31 +106,32 @@ struct instance {
 #define GW_PINGING 1
 #define GW_INACTIVE 2
 
-struct gw_info {
-    unsigned int gw_id;
-    char gw_name[MAX_NAME_LEN];
-    unsigned short gw_name_len;
-    char scheme[5];
-    unsigned short scheme_len;
-    struct ip_addr ip_addr;
-    char hostname[MAX_HOST_LEN];
-    unsigned short hostname_len;
-    unsigned int port;
-    uri_transport transport_code;
-    char transport[15];
-    unsigned int transport_len;
-    char params[MAX_PARAMS_LEN];
-    unsigned short params_len;
-    unsigned int strip;
-    char prefix[MAX_PREFIX_LEN];
-    unsigned short prefix_len;
-    char tag[MAX_TAG_LEN];
-    unsigned short tag_len;
-    unsigned int flags;
-    unsigned short state;
-    char uri[MAX_URI_LEN];
-    unsigned short uri_len;
-    unsigned int defunct_until;
+struct gw_info
+{
+	unsigned int gw_id;
+	char gw_name[MAX_NAME_LEN];
+	unsigned short gw_name_len;
+	char scheme[5];
+	unsigned short scheme_len;
+	struct ip_addr ip_addr;
+	char hostname[MAX_HOST_LEN];
+	unsigned short hostname_len;
+	unsigned int port;
+	uri_transport transport_code;
+	char transport[15];
+	unsigned int transport_len;
+	char params[MAX_PARAMS_LEN];
+	unsigned short params_len;
+	unsigned int strip;
+	char prefix[MAX_PREFIX_LEN];
+	unsigned short prefix_len;
+	char tag[MAX_TAG_LEN];
+	unsigned short tag_len;
+	unsigned int flags;
+	unsigned short state;
+	char uri[MAX_URI_LEN];
+	unsigned short uri_len;
+	unsigned int defunct_until;
 };
 
 extern unsigned int lcr_rule_hash_size_param;
@@ -138,8 +144,8 @@ extern struct gw_info **gw_pt;
 extern struct rule_info ***rule_pt;
 extern struct rule_id_info **rule_id_hash_table;
 
-extern int load_gws_dummy(int lcr_id, str* ruri_user, str* from_uri,
-			  str* request_uri, unsigned int* gw_ids);
+extern int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri,
+		str *request_uri, unsigned int *gw_ids);
 extern int reload_tables();
 extern int rpc_defunct_gw(unsigned int, unsigned int, unsigned int);
 

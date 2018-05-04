@@ -57,7 +57,7 @@ Chapter 1. Admin Guide
    information on sites with extremely high traffic. If MySQL is too slow
    or if you get a huge amount of accounting data then you can consider
    using this module. Please note that the acc module is the only module
-   that was tested with the flastore module.
+   that was tested with the flatstore module.
 
    The format of the files produced by this module is plain text. Each
    line consists of several fields, fields are separated by the "|"
@@ -77,7 +77,7 @@ modparam("acc", "db_url", "flatstore:/var/log/acc")
    Name of files in that directory will follow the following pattern:
 <table_name>_<process_name>.log
 
-   For example, entries writen by the Kamailio process 8 into the acc
+   For example, entries written by the Kamailio process 8 into the acc
    table would be written in file acc_8.log. For each table there will be
    several files, one file for every Kamailio process that wrote some data
    into that table. The main reason why there are several files for each
@@ -126,8 +126,8 @@ kamcmd flatstore.k_rotate
 
 2.2. encode_delimiter (integer)
 
-   Enable or disable encoding tof the escaped character using ""%" HEX
-   HEX" mechanism for escaping from RFC 2396
+   Enable or disable encoding of the escaped character using ""%" HEX HEX"
+   mechanism for escaping from RFC 2396
 
    Default value is 1. Default delimiter '|' is replaced with %7C if found
    in any string

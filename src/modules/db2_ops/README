@@ -206,7 +206,7 @@ tra_ops ]
 
    Executes query and in case of SELECT returns result via handle, seeks
    the first record and returns TRUE if table is not empty. The result is
-   accesible using @db.fetch select. See also declare_handle. Query_id
+   accessible using @db.fetch select. See also declare_handle. Query_id
    references to query declared using declare_query, handle references to
    query declared using declare_handle.
 

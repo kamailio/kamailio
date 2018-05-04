@@ -41,6 +41,7 @@
 #include "../../core/timer.h"
 #include "../../core/timer_proc.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 
 #include "sca.h"
 #include "sca_appearance.h"
@@ -70,10 +71,10 @@ static int sca_mod_init(void);
 static int sca_child_init(int);
 static void sca_mod_destroy(void);
 static int sca_set_config(sca_mod *);
-static int sca_call_info_update_0_f(sip_msg_t* msg);
-static int sca_call_info_update_1_f(sip_msg_t* msg, char*);
-static int sca_call_info_update_2_f(sip_msg_t* msg, char* , char*);
-static int sca_call_info_update_3_f(sip_msg_t* msg, char* , char*, char *);
+static int sca_call_info_update_0_f(sip_msg_t* msg, char*, char*);
+static int sca_call_info_update_1_f(sip_msg_t* msg, char*, char*);
+static int sca_call_info_update_2_f(sip_msg_t* msg, char*, char*);
+static int sca_call_info_update_3_f(sip_msg_t* msg, char*, char*, char *);
 int fixup_ciu(void **, int);
 int fixup_free_ciu(void **param, int param_no);
 
@@ -418,26 +419,54 @@ void sca_mod_destroy(void)
 	sca_db_disconnect();
 }
 
-static int sca_call_info_update_0_f(sip_msg_t* msg) {
-	return sca_call_info_update(msg, NULL, NULL, NULL);
+static int sca_call_info_update_0_f(sip_msg_t* msg, char* p1, char* p2)
+{
+	return sca_call_info_update(msg, SCA_CALL_INFO_SHARED_BOTH, NULL, NULL);
 }
-static int sca_call_info_update_1_f(sip_msg_t* msg, char* p1) {
-	return sca_call_info_update(msg, p1, NULL, NULL);
+
+static int sca_call_info_update_1_f(sip_msg_t* msg, char* p1, char* p2)
+{
+	int update_mask = SCA_CALL_INFO_SHARED_BOTH;
+
+	if (get_int_fparam(&update_mask, msg, (fparam_t *) p1) < 0) {
+		LM_ERR("sca_call_info_update: argument 1: bad value "
+				"(integer expected)\n");
+		return (-1);
+	}
+
+	return sca_call_info_update(msg, update_mask, NULL, NULL);
 }
-static int sca_call_info_update_2_f(sip_msg_t* msg, char* p1, char* p2) {
+
+static int sca_call_info_update_2_f(sip_msg_t* msg, char* p1, char* p2)
+{
 	str uri_to = STR_NULL;
+	int update_mask = SCA_CALL_INFO_SHARED_BOTH;
+
+	if (get_int_fparam(&update_mask, msg, (fparam_t *) p1) < 0) {
+		LM_ERR("sca_call_info_update: argument 1: bad value "
+				"(integer expected)\n");
+		return (-1);
+	}
 	if(get_str_fparam(&uri_to, msg, (gparam_p)p2)!=0)
 	{
 		LM_ERR("unable to get value from param pvar_to\n");
 		return -1;
 	}
-	return sca_call_info_update(msg, p1, &uri_to, NULL);
+	return sca_call_info_update(msg, update_mask, &uri_to, NULL);
 }
+
 static int sca_call_info_update_3_f(sip_msg_t* msg,
 	char* p1, char* p2, char * p3)
 {
 	str uri_to = STR_NULL;
 	str uri_from = STR_NULL;
+	int update_mask = SCA_CALL_INFO_SHARED_BOTH;
+
+	if (get_int_fparam(&update_mask, msg, (fparam_t *) p1) < 0) {
+		LM_ERR("sca_call_info_update: argument 1: bad value "
+				"(integer expected)\n");
+		return (-1);
+	}
 	if(get_str_fparam(&uri_to, msg, (gparam_p)p2)!=0)
 	{
 		LM_ERR("unable to get value from param pvar_to\n");
@@ -448,7 +477,20 @@ static int sca_call_info_update_3_f(sip_msg_t* msg,
 		LM_ERR("unable to get value from param pvar_from\n");
 		return -1;
 	}
-	return sca_call_info_update(msg, p1, &uri_to, &uri_from);
+	return sca_call_info_update(msg, update_mask, &uri_to, &uri_from);
+}
+
+int ki_sca_call_info_update_default(sip_msg_t *msg)
+{
+	return sca_call_info_update(msg, SCA_CALL_INFO_SHARED_BOTH, NULL, NULL);
+}
+int ki_sca_call_info_update_mask(sip_msg_t *msg, int umask)
+{
+	return sca_call_info_update(msg, umask, NULL, NULL);
+}
+int ki_sca_call_info_update_turi(sip_msg_t *msg, int umask, str *sto)
+{
+	return sca_call_info_update(msg, umask, sto, NULL);
 }
 
 int fixup_ciu(void **param, int param_no)
@@ -475,4 +517,45 @@ int fixup_free_ciu(void **param, int param_no)
 		default:
 			return E_UNSPEC;
 	}
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_sca_exports[] = {
+	{ str_init("sca"), str_init("handle_subscribe"),
+		SR_KEMIP_INT, ki_sca_handle_subscribe,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sca"), str_init("call_info_update_default"),
+		SR_KEMIP_INT, ki_sca_call_info_update_default,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sca"), str_init("call_info_update_mask"),
+		SR_KEMIP_INT, ki_sca_call_info_update_mask,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sca"), str_init("call_info_update_turi"),
+		SR_KEMIP_INT, ki_sca_call_info_update_turi,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sca"), str_init("call_info_update"),
+		SR_KEMIP_INT, sca_call_info_update,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_sca_exports);
+	return 0;
 }

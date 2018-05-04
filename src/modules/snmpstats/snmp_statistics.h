@@ -50,9 +50,8 @@
 stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int in_codes);
 
 #else
-	#define get_stat_var_from_num_code( _n_code, _in_code) NULL
+#define get_stat_var_from_num_code(_n_code, _in_code) NULL
 #endif
-
 
 
 /*!
@@ -93,7 +92,8 @@ int get_socket_list_from_proto(int **ipList, int protocol);
  *
  * For documentation see \ref get_socket_list_from_proto()
  */
-int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family);
+int get_socket_list_from_proto_and_family(
+		int **ipList, int protocol, int family);
 
 
 /*!

@@ -36,7 +36,7 @@ cat > ../app_lua_kemi_export.h <<EOF
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-#include "../../kemi.h"
+#include "../../core/kemi.h"
 
 #define SR_KEMI_LUA_EXPORT_SIZE	${KEMI_MAX_SIZE}
 
@@ -87,7 +87,7 @@ cat > ../app_lua_kemi_export.c <<EOF
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 #include "app_lua_sr.h"
 #include "app_lua_kemi_export.h"
@@ -140,6 +140,9 @@ lua_CFunction sr_kemi_lua_export_associate(sr_kemi_t *ket)
 	for(i=0; i<SR_KEMI_LUA_EXPORT_SIZE; i++) {
 		if(_sr_kemi_lua_export_list[i].ket==NULL) {
 			_sr_kemi_lua_export_list[i].ket = ket;
+			return _sr_kemi_lua_export_list[i].pfunc;
+		}
+		if(_sr_kemi_lua_export_list[i].ket==ket) {
 			return _sr_kemi_lua_export_list[i].pfunc;
 		}
 	}

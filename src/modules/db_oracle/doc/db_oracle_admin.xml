@@ -123,7 +123,7 @@ modparam("db_oracle", "reconnect", 0.5)
 	<section>
 	<title>Installation</title>
 		<para>
-		Because it dependes on an external library, the oracle module is not
+		Because it depends on an external library, the oracle module is not
 		compiled and installed by default. You can use one of the next options.
 		</para>
 		<itemizedlist>
@@ -150,7 +150,7 @@ modparam("db_oracle", "reconnect", 0.5)
 		Oracle client (sqlplus) is not quite suitable for this, as it cannot align 
 		row width to real (received) data's (it always prints a cell width as 
 		described in the db scheme). This problem has been solved by inclusion the 
-		utility openser_orasel, which formats printing approximately in the same 
+		utility openser_oracle, which formats printing approximately in the same 
 		way as the 'mysql' client utility. In addition, this utility known about 
 		the "agreements and types" in DB that are used in &kamailio; for the work 
 		with Oracle and formats printing taking these into account.

@@ -819,7 +819,7 @@ int init_fifo_fd(char* fifo, int fifo_mode, int fifo_uid, int fifo_gid,
 		return -1;
 	}
 	if (strlen(fifo) == 0) {
-		ERR("emtpy fifo: fifo disabled\n");
+		ERR("empty fifo: fifo disabled\n");
 		return -1;
 	}
 	

@@ -159,7 +159,7 @@
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>str* hdrs</emphasis> - string containg extra headers (full format) 
+			<para><emphasis>str* hdrs</emphasis> - string containing extra headers (full format) 
 			to be added to the BYE requests of the dialog.
 			</para>
 		</listitem>

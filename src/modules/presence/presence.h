@@ -34,6 +34,7 @@
 #include "../../modules/sl/sl.h"
 #include "../../lib/srdb1/db.h"
 #include "../../core/parser/parse_from.h"
+#include "../../lib/srutils/sruid.h"
 #include "event_list.h"
 #include "hash.h"
 
@@ -94,14 +95,18 @@ extern int pres_startup_mode;
 extern str pres_xavp_cfg;
 extern int pres_retrieve_order;
 extern str pres_retrieve_order_by;
+extern int pres_enable_dmq;
 
 extern int phtable_size;
 extern phtable_t* pres_htable;
+
+extern sruid_t pres_sruid;
 
 extern db_locking_t db_table_lock;
 
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri);
+int _api_pres_refresh_watchers(str *pres, str *event, int type);
 
 typedef int (*sip_uri_match_f) (str* s1, str* s2);
 extern sip_uri_match_f presence_sip_uri_match;

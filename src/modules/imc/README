@@ -115,7 +115,7 @@ Chapter 1. Admin Guide
    conference's URI.
 
    To ease the integration in the configuration file, the interpreter of
-   the IMC commands are embeded in the module. From a configuration point
+   the IMC commands are embedded in the module. From a configuration point
    of view, there is only one function which has to be executed for both
    messages and commands.
 

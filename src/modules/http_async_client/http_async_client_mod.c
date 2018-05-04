@@ -50,6 +50,7 @@
 #include "../../core/pvar.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/pv/pv_api.h"
@@ -70,9 +71,9 @@ int tls_version = 0; // Use default SSL version in HTTPS requests (see curl/curl
 int tls_verify_host = 1; // By default verify host in HTTPS requests
 int tls_verify_peer = 1; // By default verify peer in HTTPS requests
 int curl_verbose = 0;
-char* tls_client_cert = ""; // client SSL certificate path, defaults to NULL
-char* tls_client_key = ""; // client SSL certificate key path, defaults to NULL
-char* tls_ca_path = ""; // certificate authority dir path, defaults to NULL
+char* tls_client_cert = NULL; // client SSL certificate path, defaults to NULL
+char* tls_client_key = NULL; // client SSL certificate key path, defaults to NULL
+char* tls_ca_path = NULL; // certificate authority dir path, defaults to NULL
 static char *memory_manager = "shm";
 extern int curl_memory_manager;
 unsigned int default_authmethod = CURLAUTH_BASIC | CURLAUTH_DIGEST;
@@ -83,7 +84,6 @@ static void mod_destroy(void);
 
 static int w_http_async_query(sip_msg_t* msg, char* query, char* rt);
 static int set_query_param(str* param, str input);
-static int fixup_http_async_query(void** param, int param_no);
 
 /* pv api binding */
 static int ah_get_reason(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
@@ -125,7 +125,7 @@ enum http_req_name_t {
 };
 
 static cmd_export_t cmds[]={
-	{"http_async_query",  (cmd_function)w_http_async_query, 2, fixup_http_async_query,
+	{"http_async_query",  (cmd_function)w_http_async_query, 2, fixup_spve_spve,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -207,19 +207,6 @@ struct module_exports exports = {
 	child_init      /* per child init function */
 };
 
-
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	pv_register_api_t pvra;
-
-	pvra = (pv_register_api_t)find_export("pv_register_api", NO_SCRIPT, 0);
-	if (!pvra) {
-		LM_ERR("Cannot import pv functions (pv module must be loaded before this module)\n");
-		return -1;
-	}
-	pvra(&pv_api);
-	return 0;
-}
 
 /**
  * init module function
@@ -384,9 +371,7 @@ static void mod_destroy(void)
 static int w_http_async_query(sip_msg_t *msg, char *query, char* rt)
 {
 	str sdata;
-	cfg_action_t *act;
 	str rn;
-	int ri;
 
 	if(msg==NULL)
 		return -1;
@@ -405,22 +390,29 @@ static int w_http_async_query(sip_msg_t *msg, char *query, char* rt)
 		LM_ERR("no route block name\n");
 		return -1;
 	}
-
-	ri = route_get(&main_rt, rn.s);
-	if(ri<0)
-	{
-		LM_ERR("unable to find route block [%.*s]\n", rn.len, rn.s);
+	if(rn.s==NULL || rn.len == 0) {
+		LM_ERR("invalid route name parameter\n");
 		return -1;
 	}
-	act = main_rt.rlist[ri];
-	if(act==NULL)
-	{
-		LM_ERR("empty action lists in route block [%.*s]\n", rn.len, rn.s);
+	return async_send_query(msg, &sdata, &rn);
+}
+
+/**
+ *
+ */
+static int ki_http_async_query(sip_msg_t *msg, str *sdata, str *rn)
+{
+	if(msg==NULL)
+		return -1;
+	if(sdata==NULL || sdata->len <= 0) {
+		LM_ERR("invalid data parameter\n");
 		return -1;
 	}
-
-	return async_send_query(msg, &sdata, act);
-
+	if(rn->s==NULL || rn->len <= 0) {
+		LM_ERR("invalid route name parameter\n");
+		return -1;
+	}
+	return async_send_query(msg, sdata, rn);
 }
 
 #define _IVALUE_ERROR(NAME) LM_ERR("invalid parameter '" #NAME "' (must be a number)\n")
@@ -477,22 +469,6 @@ static int set_query_cparam(char** param, str input)
 	}
 
 	return 1;
-}
-
-/**
- *
- */
-static int fixup_http_async_query(void** param, int param_no)
-{
-	if (param_no == 1) {
-		return fixup_spve_null(param, 1);
-	}
-	if (param_no == 2) {
-		return fixup_var_str_12(param, param_no);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
 }
 
 /* module PVs */
@@ -752,4 +728,33 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 	}
 
 	return 1;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_http_async_client_exports[] = {
+	{ str_init("http_async_client"), str_init("query"),
+		SR_KEMIP_INT, ki_http_async_query,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	pv_register_api_t pvra;
+
+	pvra = (pv_register_api_t)find_export("pv_register_api", NO_SCRIPT, 0);
+	if (!pvra) {
+		LM_ERR("Cannot import pv functions (pv module must be loaded before this module)\n");
+		return -1;
+	}
+	pvra(&pv_api);
+	sr_kemi_modules_add(sr_kemi_http_async_client_exports);	
+	return 0;
 }

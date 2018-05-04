@@ -21,10 +21,10 @@
  */
 
 /**
- * \file
+ * \defgroup dtrie Kamailio generic trie data structure
  * \brief Trie datastructure with utility functions
  *
- * Provides a generic trie datastructure and utility functions to
+ * Provides a generic trie data structure and utility functions to
  * initialize and manage individual nodes. Its optimized towards
  * the usecase of a matching tree that contains only digits, e.g.
  * for LCR or blacklist modules. Nevertheless it also supports the
@@ -34,6 +34,7 @@
  * available for matching. The trie is setup in shared memory.
  * - Module: \ref carrierroute
  * - Module: \ref userblacklist
+ * @{ 
  */
 
 #ifndef _DTRIE_H_
@@ -104,7 +105,7 @@ void dtrie_clear(struct dtrie_node_t *root, dt_delete_func_t delete_payload,
  * \param number inserted number string
  * \param numberlen number of individual numbers in number
  * \param data pointer to some custom data
- * \param branches number of branches in the trie
+ * \param dtrie_size size of the trie
  * \return 0 on success, -1 otherwise.
  */
 int dtrie_insert(struct dtrie_node_t *root, const char *number, const unsigned int numberlen,
@@ -171,4 +172,5 @@ void **dtrie_contains(struct dtrie_node_t *root, const char *number,
 		const unsigned int numberlen, const unsigned int branches);
 
 
+/** @} */
 #endif

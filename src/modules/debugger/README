@@ -304,7 +304,7 @@ modparam("debugger", "step_loops", 100)
    levels per module (e.g., if its set to 4, internal hash table has 16
    slots). One must set it's value grater than 0 such that memory to be
    allocated to save the module specific debug levels or facility
-   configured by mod_level or mod_facility. This parameter is accesible
+   configured by mod_level or mod_facility. This parameter is accessible
    readonly via the Kamailio config framework.
 
    Default value is “0” - feature disabled.
@@ -634,7 +634,7 @@ P-Hint: My hint
    Resets the message sequence ($mi). Internally there is no real change.
    This can be useful for unit test cases in order to be able to replicate
    exactly the same kamailio output. You need to set the debugger
-   parameter reset_msgid to 1 to activate this functionallity.
+   parameter reset_msgid to 1 to activate this functionality.
 
    Name: dbg.reset_msgid
 
@@ -701,7 +701,7 @@ P-Hint: My hint
    A process blocked at a breakpoint is waiting for a command. Use 'dbg.bp
    next pid' to execute the current action and stop at the next one.
    'dbg.bp eval pid PV' can be used to retrieve the value of PV. Once you
-   are done and want to continue the execution of the config wihtout
+   are done and want to continue the execution of the config without
    interaction use 'dbg.bp move pid'.
 
    Example of a session:

@@ -293,6 +293,7 @@ LOGPREFIX	log_prefix
 LOGPREFIXMODE	log_prefix_mode
 LOGENGINETYPE	log_engine_type
 LOGENGINEDATA	log_engine_data
+XAVPVIAPARAMS	xavp_via_params
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
 ALIAS		alias
@@ -337,7 +338,7 @@ DST_BLST_TCP_IMASK	dst_blacklist_tcp_imask
 DST_BLST_TLS_IMASK	dst_blacklist_tls_imask
 DST_BLST_SCTP_IMASK	dst_blacklist_sctp_imask
 
-IP_FREE_BIND		ip_free_bind|ip_freebind|ipfreebind
+IP_FREE_BIND		ip_free_bind|ipfreebind|ip_nonlocal_bind
 
 PORT	port
 STAT	statistics
@@ -437,11 +438,19 @@ KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
 MAX_WLOOPS		"max_while_loops"
 PVBUFSIZE		"pv_buffer_size"
 PVBUFSLOTS		"pv_buffer_slots"
+PVCACHELIMIT	"pv_cache_limit"
+PVCACHEACTION	"pv_cache_action"
 HTTP_REPLY_PARSE	"http_reply_hack"|"http_reply_parse"
 VERSION_TABLE_CFG	"version_table"
 VERBOSE_STARTUP		"verbose_startup"
 
 SERVER_ID     "server_id"
+ROUTE_LOCKS_SIZE     "route_locks_size"
+
+KEMI     "kemi"
+ONSEND_ROUTE_CALLBACK	"onsend_route_callback"
+REPLY_ROUTE_CALLBACK	"reply_route_callback"
+EVENT_ROUTE_CALLBACK	"event_route_callback"
 
 MAX_RECURSIVE_LEVEL		"max_recursive_level"
 MAX_BRANCHES_PARAM		"max_branches"|"max_branches"
@@ -686,6 +695,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGPREFIXMODE}	{ yylval.strval=yytext; return LOGPREFIXMODE; }
 <INITIAL>{LOGENGINETYPE}	{ yylval.strval=yytext; return LOGENGINETYPE; }
 <INITIAL>{LOGENGINEDATA}	{ yylval.strval=yytext; return LOGENGINEDATA; }
+<INITIAL>{XAVPVIAPARAMS}	{ yylval.strval=yytext; return XAVPVIAPARAMS; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
@@ -917,12 +927,21 @@ IMPORTFILE      "import_file"
 									return PVBUFSIZE; }
 <INITIAL>{PVBUFSLOTS}			{	count(); yylval.strval=yytext;
 									return PVBUFSLOTS; }
+<INITIAL>{PVCACHELIMIT}			{	count(); yylval.strval=yytext;
+									return PVCACHELIMIT; }
+<INITIAL>{PVCACHEACTION}		{	count(); yylval.strval=yytext;
+									return PVCACHEACTION; }
 <INITIAL>{HTTP_REPLY_PARSE}		{	count(); yylval.strval=yytext;
 									return HTTP_REPLY_PARSE; }
 <INITIAL>{VERSION_TABLE_CFG}  { count(); yylval.strval=yytext; return VERSION_TABLE_CFG;}
 <INITIAL>{VERBOSE_STARTUP}		{	count(); yylval.strval=yytext;
 									return VERBOSE_STARTUP; }
+<INITIAL>{ROUTE_LOCKS_SIZE}  { count(); yylval.strval=yytext; return ROUTE_LOCKS_SIZE; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
+<INITIAL>{KEMI}  { count(); yylval.strval=yytext; return KEMI;}
+<INITIAL>{REPLY_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return REPLY_ROUTE_CALLBACK;}
+<INITIAL>{ONSEND_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return ONSEND_ROUTE_CALLBACK;}
+<INITIAL>{EVENT_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return EVENT_ROUTE_CALLBACK;}
 <INITIAL>{MAX_RECURSIVE_LEVEL}  { count(); yylval.strval=yytext; return MAX_RECURSIVE_LEVEL;}
 <INITIAL>{MAX_BRANCHES_PARAM}  { count(); yylval.strval=yytext; return MAX_BRANCHES_PARAM;}
 <INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}

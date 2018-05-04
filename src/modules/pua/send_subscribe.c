@@ -803,7 +803,7 @@ ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 	hentity->contact.len= subs->contact->len;
 	size+= subs->contact->len;
 
-	if(subs->outbound_proxy)
+	if(subs->outbound_proxy && subs->outbound_proxy->s)
 	{
 		hentity->outbound_proxy= (str*)((char*)hentity+ size);
 		size+= sizeof(str);
@@ -821,7 +821,7 @@ ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 	{
 		CONT_COPY(hentity, hentity->id, subs->id);
 	}
-	if(subs->extra_headers)
+	if(subs->extra_headers && subs->extra_headers->s)
 	{
 		hentity->extra_headers= (str*)((char*)hentity+ size);
 		size+= sizeof(str);

@@ -69,7 +69,7 @@
 static int keep_running;
 
 /*! The function handles Handles shutting down of the sub_agent process. */
-static void sigterm_handler(int signal) 
+static void sigterm_handler(int signal)
 {
 	/* Just exit.  The master agent will clean everything up for us */
 	exit(0);
@@ -86,13 +86,13 @@ static void sigterm_handler(int signal)
  * \note This function never returns, so it should always be called from a 
  *       sub-process.
  */
-static int initialize_agentx(void) 
+static int initialize_agentx(void)
 {
 	/* We register with a master agent */
 	register_with_master_agent(AGENT_PROCESS_NAME);
 
 	LM_DBG("Initializing Kamailio OID's for SNMPD MasterX\n");
-	
+
 	/* Initialize all scalars, and let the master agent know we want to
 	 * handle all OID's pertaining to these scalars. */
 	init_kamailioSIPCommonObjects();
@@ -125,7 +125,7 @@ static int initialize_agentx(void)
 	LM_DBG("Shutting down Kamailio SNMPD MasterX sub agent.\n");
 	snmp_shutdown(AGENT_PROCESS_NAME);
 	SOCK_CLEANUP;
-	exit (0);
+	exit(0);
 
 	return 0;
 }
@@ -141,7 +141,7 @@ void agentx_child(int rank)
 
 	/* Setup a SIGTERM handler */
 	sigfillset(&new_sigterm_handler.sa_mask);
-	new_sigterm_handler.sa_flags   = 0;
+	new_sigterm_handler.sa_flags = 0;
 	new_sigterm_handler.sa_handler = sigterm_handler;
 	sigaction(SIGTERM, &new_sigterm_handler, NULL);
 
@@ -153,8 +153,8 @@ void agentx_child(int rank)
 	default_handlers.sa_handler = SIG_DFL;
 
 	sigaction(SIGCHLD, &default_handlers, NULL);
-	sigaction(SIGINT,  &default_handlers, NULL);
-	sigaction(SIGHUP,  &default_handlers, NULL);
+	sigaction(SIGINT, &default_handlers, NULL);
+	sigaction(SIGHUP, &default_handlers, NULL);
 	sigaction(SIGUSR1, &default_handlers, NULL);
 	sigaction(SIGUSR2, &default_handlers, NULL);
 
@@ -167,6 +167,7 @@ void agentx_child(int rank)
 	 * need to be fatal however, because we can re-establish our
 	 * connection.  Therefore we set ourselves up to ignore the
 	 * SIGPIPE. */
+	sigemptyset(&sigpipe_handler.sa_mask);
 	sigpipe_handler.sa_flags = SA_RESTART;
 	sigpipe_handler.sa_handler = SIG_IGN;
 
@@ -176,10 +177,9 @@ void agentx_child(int rank)
 }
 
 
-
 /*! This function opens up a connection with the master agent specified in
  * the snmpstats modules configuration file */
-void register_with_master_agent(char *name_to_register_under) 
+void register_with_master_agent(char *name_to_register_under)
 {
 	/* Set ourselves up as an AgentX Client. */
 	netsnmp_ds_set_boolean(NETSNMP_DS_APPLICATION_ID, NETSNMP_DS_AGENT_ROLE, 1);

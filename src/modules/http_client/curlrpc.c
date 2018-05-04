@@ -32,75 +32,62 @@
 #include "curlcon.h"
 
 
-static const char* curl_rpc_listcon_doc[2] = {
-	"List all CURL connection definitions",
-	0
-};
+static const char *curl_rpc_listcon_doc[2] = {
+		"List all CURL connection definitions", 0};
 
 
 /*
  * RPC command to print curl destination sets
  */
-static void curl_rpc_listcon(rpc_t* rpc, void* ctx)
+static void curl_rpc_listcon(rpc_t *rpc, void *ctx)
 {
-	void* th;
-	void* rh;
+	void *th;
+	void *rh;
 	curl_con_t *cc;
 
 	cc = _curl_con_root;
-	if(cc==NULL)
-	{
+	if(cc == NULL) {
 		LM_ERR("no connection definitions\n");
 		rpc->fault(ctx, 500, "No Connection Definitions");
 		return;
 	}
 
 	/* add entry node */
-	if (rpc->add(ctx, "{", &th) < 0)
-	{
+	if(rpc->add(ctx, "{", &th) < 0) {
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
 
-        while(cc)
-        {
-		int timeout = (int) cc->timeout;
-		if (rpc->struct_add(th, "{", "CONNECTION", &rh) < 0)
-		{
+	while(cc) {
+		int timeout = (int)cc->timeout;
+		if(rpc->struct_add(th, "{", "CONNECTION", &rh) < 0) {
 			rpc->fault(ctx, 500, "Internal error set structure");
 			return;
 		}
 
-		if(rpc->struct_add(rh, "SSSSSSd", 
-				"NAME", &cc->name,
-				"SCHEMA", &cc->schema,
-				"URI", &cc->url,
-				"USERNAME", &cc->username,
-				"PASSWORD", &cc->password,
-				"FAILOVER", &cc->failover,
-				"TIMEOUT", timeout
-				) < 0) {
+		if(rpc->struct_add(rh, "SSSSSSd", "NAME", &cc->name, "SCHEMA",
+				   &cc->schema, "URI", &cc->url, "USERNAME", &cc->username,
+				   "PASSWORD", &cc->password, "FAILOVER", &cc->failover,
+				   "TIMEOUT", timeout)
+				< 0) {
 			rpc->fault(ctx, 500, "Internal error set structure");
 			return;
 		}
-                cc = cc->next;
-        }
+		cc = cc->next;
+	}
 	return;
 }
 
 rpc_export_t curl_rpc_cmds[] = {
-	{"httpclient.listcon",   curl_rpc_listcon,
-		curl_rpc_listcon_doc,   0},
-	{0, 0, 0, 0}
-};
+		{"httpclient.listcon", curl_rpc_listcon, curl_rpc_listcon_doc, 0},
+		{0, 0, 0, 0}};
 
 /**
  * register RPC commands
  */
 int curl_init_rpc(void)
 {
-	if (rpc_register_array(curl_rpc_cmds)!=0)
-	{
+	if(rpc_register_array(curl_rpc_cmds) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}

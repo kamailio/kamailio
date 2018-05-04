@@ -241,7 +241,7 @@ sdp_keep_codecs_by_id("0,8,3", "audio");
    comma separated list of codec names. The parameter can be a static
    string or a variable holding the list of codec names.
 
-   Note that you have to explicitely keep 'telephone-event' in the list of
+   Note that you have to explicitly keep 'telephone-event' in the list of
    names if you want to keep DTMF attributes.
 
    Optional parameter mtype can be provided to apply the operations only

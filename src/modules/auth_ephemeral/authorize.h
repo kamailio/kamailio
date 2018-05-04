@@ -33,10 +33,16 @@
 
 int autheph_verify_timestamp(str *_username);
 
-int autheph_check(struct sip_msg *_m, char *_realm);
-int autheph_www(struct sip_msg *_m, char *_realm);
+int autheph_check(struct sip_msg *_m, char *_realm, char *_p2);
+int autheph_www(struct sip_msg *_m, char *_realm, char *_p2);
 int autheph_www2(struct sip_msg *_m, char *_realm, char *_method);
-int autheph_proxy(struct sip_msg *_m, char *_realm);
+int autheph_proxy(struct sip_msg *_m, char *_realm, char *_p2);
 int autheph_authenticate(struct sip_msg *_m, char *_username, char *_password);
+
+int ki_autheph_check(sip_msg_t *_m, str *srealm);
+int ki_autheph_www(sip_msg_t *_m, str *srealm);
+int ki_autheph_www_method(sip_msg_t *_m, str *srealm, str *smethod);
+int ki_autheph_proxy(sip_msg_t *_m, str *srealm);
+int ki_autheph_authenticate(sip_msg_t *_m, str *susername, str *spassword);
 
 #endif /* AUTHORIZE_H */

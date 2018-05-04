@@ -5,6 +5,7 @@ OUT?= $(SQUIRREL)/lib/libsqstdlib.a
 INCZ?= -I$(SQUIRREL)/include -I. -Iinclude
 DEFS= $(CC_EXTRA_FLAGS)
 LIB=
+SQMARCH64?= -m64
 
 OBJS= \
 	sqstdblob.o \
@@ -38,6 +39,6 @@ sqprof:
 	rm *.o
 
 sq64:
-	$(CC) -O2 -m64 -fno-exceptions -D_SQ64 -fno-rtti -Wall -fno-strict-aliasing -c $(SRCS) $(INCZ) $(DEFS)
+	$(CC) -O2 $(SQMARCH64) -fno-exceptions -D_SQ64 -fno-rtti -Wall -fno-strict-aliasing -c $(SRCS) $(INCZ) $(DEFS)
 	$(AR) rc $(OUT) *.o
 	rm *.o

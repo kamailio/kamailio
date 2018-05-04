@@ -16,7 +16,7 @@
 
     <section>
 	<title>Overview</title>
-	<para>Module for updating ISUP encapuslated in SIP (SIP-T/SIP-I)</para>
+	<para>Module for updating ISUP encapsulated in SIP (SIP-T/SIP-I)</para>
 	<para>
 	The sipt module can be used to update various ss7 headers contained inside
 	a message. 
@@ -43,7 +43,7 @@
 			updates the IAM in the body if it exists, setting the called party number to <quote>destination</quote>
 			with the nature address specified in <quote>nai</quote> and decrementing the hop counter value if present.
 			If the hop counter header is missing it will be added with the value of <quote>hops</quote>.  If
-			<quote>terminator</quote> is set to 1, then F will be appened to digit string to indicate the number
+			<quote>terminator</quote> is set to 1, then F will be appended to digit string to indicate the number
 			is complete (default).
 		</para>
 		<example>

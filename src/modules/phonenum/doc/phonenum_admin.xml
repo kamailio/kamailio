@@ -68,7 +68,7 @@
     </section>
     <section>
 	<title>Parameters</title>
-	<section>
+	<section id="phonenum.p.smode">
 	    <title><varname>smode</varname> (int)</title>
 	    <para>
 		Phone number search mode.
@@ -92,7 +92,7 @@ modparam("phonenum", "smode", 0)
 
     <section>
 	<title>Functions</title>
- 	<section>
+	<section id="phonenum.f.phonenum_match">
 	    <title>
 		<function moreinfo="none">phonenum_match(num, pvc)</function>
 	    </title>
@@ -111,13 +111,48 @@ modparam("phonenum", "smode", 0)
 		<title><function>phonenum_match</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(phonenum_match("1-484-555-8888", "src"))
-    xlog("number normalized to: $phn(src=&gt;num)\n");
+if(phonenum_match("1-484-555-8888", "src")) {
+    if($phn(src=&gt;valid)==1) {
+        xlog("number normalized to: $phn(src=&gt;normalized)\n");
+    } else {
+        xlog("number normalization error: $phn(src=&gt;error)\n");
+    }
+}
 ...
 </programlisting>
 	    </example>
 	</section>
-
+	<section id="phonenum.f.phonenum_match_cn">
+	    <title>
+		<function moreinfo="none">phonenum_match(num, cnc, pvc)</function>
+	    </title>
+	    <para>
+			Match num against the libphonenumber and set the attributes inside
+			the pvc container, restricting the rules with a country name code
+			(two letter, e.g: "DE", "US", "ES"). The function has to be called
+			before accessing a key via: $phn(pvc=&gt;key).
+	    </para>
+	    <para>
+			The parameters can be static strings or strings with variables.
+	    </para>
+	    <para>
+			It can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>phonenum_match_cn</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(phonenum_match_cn("1-484-555-8888", "US", "src")) {
+    if($phn(src=&gt;valid)==1) {
+        xlog("number normalized to: $phn(src=&gt;normalized)\n");
+    } else {
+        xlog("number normalization error: $phn(src=&gt;error)\n");
+    }
+}
+...
+</programlisting>
+	    </example>
+	</section>
     </section>
 
 	<section>
@@ -131,16 +166,27 @@ if(phonenum_match("1-484-555-8888", "src"))
 				</para>
 			<itemizedlist>
 				<listitem><para>
-					<emphasis>number</emphasis> - normalized phone number
+					<emphasis>number</emphasis> - phone number that is matched
 				</para></listitem>
 				<listitem><para>
-					<emphasis>country</emphasis> - country for phone number
+					<emphasis>valid</emphasis> - 1 if the matched number has a
+					valid result; 0 otherwise
 				</para></listitem>
 				<listitem><para>
-					<emphasis>region</emphasis> - region for phone number
+					<emphasis>normalized</emphasis> - normalized phone number
 				</para></listitem>
 				<listitem><para>
-					<emphasis>operator</emphasis> - operator for phone number
+					<emphasis>cctel</emphasis> - country code for phone number
+				</para></listitem>
+				<listitem><para>
+					<emphasis>ltype</emphasis> - local network type
+				</para></listitem>
+				<listitem><para>
+					<emphasis>ndesc</emphasis> - phone number description
+				</para></listitem>
+				<listitem><para>
+					<emphasis>error</emphasis> - error string if phone number
+					matching fails.
 				</para></listitem>
 			</itemizedlist>
 			</listitem>

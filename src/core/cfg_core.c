@@ -120,7 +120,9 @@ struct cfg_group_core default_core_cfg = {
 	L_DBG, /*!< latency cfg log */
 	L_ERR, /*!< latency log */
 	0, /*!< latency limit db */
-	0 /*!< latency limit action */
+	0, /*!< latency limit action */
+	2048,  /*!< pv_cache_limit */
+	0  /*!< pv_cache_action */
 };
 
 void	*core_cfg = &default_core_cfg;
@@ -323,8 +325,12 @@ cfg_def_t core_cfg_def[] = {
 	{"latency_log",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for latency limits alert messages"},
 	{"latency_limit_db",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
-		"limit is ms for alerting on time consuming db commands"},
+		"limit in ms for alerting on time consuming db commands"},
 	{"latency_limit_action",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
-		"limit is ms for alerting on time consuming config actions"},
+		"limit in ms for alerting on time consuming config actions"},
+	{"pv_cache_limit",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"limit to alert if too many vars in pv cache"},
+	{"pv_cache_action",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"action to do if too many vars in pv cache"},
 	{0, 0, 0, 0, 0, 0}
 };

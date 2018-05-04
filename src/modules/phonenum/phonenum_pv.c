@@ -165,19 +165,19 @@ int pv_parse_phonenum_name(pv_spec_p sp, str *in)
 
 	switch(pvs.len) {
 		case 5:
-			if(strncmp(pvs.s, "ltype", 6) == 0)
+			if(strncmp(pvs.s, "ltype", 5) == 0)
 				gpv->type = 2;
-			else if(strncmp(pvs.s, "ndesc", 6) == 0)
+			else if(strncmp(pvs.s, "ndesc", 5) == 0)
 				gpv->type = 3;
-			else if(strncmp(pvs.s, "error", 6) == 0)
+			else if(strncmp(pvs.s, "error", 5) == 0)
 				gpv->type = 4;
-			else if(strncmp(pvs.s, "cctel", 6) == 0)
+			else if(strncmp(pvs.s, "cctel", 5) == 0)
 				gpv->type = 5;
-			else if(strncmp(pvs.s, "valid", 6) == 0)
+			else if(strncmp(pvs.s, "valid", 5) == 0)
 				gpv->type = 6;
 			else
 				goto error;
-			break;		
+			break;
 		case 6:
 			if(strncmp(pvs.s, "number", 6) == 0)
 				gpv->type = 0;
@@ -289,7 +289,7 @@ void phonenum_pv_reset(str *name)
 	memset(gr, 0, sizeof(sr_phonenum_record_t));
 }
 
-int phonenum_update_pv(str *tomatch, str *name)
+int phonenum_update_pv(str *tomatch, str *cncode, str *name)
 {
 	sr_phonenum_record_t *gr = NULL;
 
@@ -310,12 +310,16 @@ int phonenum_update_pv(str *tomatch, str *name)
 	strncpy(gr->tomatch, tomatch->s, tomatch->len);
 	gr->tomatch[tomatch->len] = '\0';
 	LM_DBG("attempt to match: %s\n", gr->tomatch);
-	gr->record = telnum_parse(gr->tomatch, "ZZ");
+	gr->record = telnum_parse(gr->tomatch,
+			(cncode && cncode->len>0)?cncode->s:"ZZ");
 	if(gr->record == NULL) {
 		LM_DBG("no match for: %s\n", gr->tomatch);
 		return -2;
 	}
-	LM_DBG("phonenum PV updated for: %s\n", gr->tomatch);
+	LM_DBG("phonenum PV updated for: %s (%d/%s/%s)\n", gr->tomatch,
+			gr->record->valid,
+			(gr->record->normalized)?gr->record->normalized:"none",
+			(gr->record->error)?gr->record->error:"none");
 
 	return 1;
 }

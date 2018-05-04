@@ -128,7 +128,7 @@ int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* m
 					break;
 
 				default:
-					LM_ERR("Recevied unknown event [%d] in state [%d]\n", event, x->state);
+					LM_ERR("Received unknown event [%d] in state [%d]\n", event, x->state);
 					break;
 			}
 			break;

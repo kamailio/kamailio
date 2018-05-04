@@ -24,6 +24,7 @@
 
 #include "../../core/sr_module.h"
 #include "../../core/pvar.h"
+#include "../../core/pvapi.h"
 #include "../../core/lvalue.h"
 #include "../../core/mod_fix.h"
 #include "../../core/xavp.h"
@@ -262,6 +263,9 @@ static pv_export_t mod_pvs[] = {
 	{{"mb", (sizeof("mb")-1)}, /* */
 		PVT_OTHER, pv_get_msg_buf, 0,
 		0, 0, 0, 0},
+	{{"mbu", (sizeof("mbu")-1)}, /* */
+		PVT_OTHER, pv_get_msg_buf_updated, 0,
+		0, 0, 0, 0},
 	{{"mf", (sizeof("mf")-1)}, /* */
 		PVT_OTHER, pv_get_flags, pv_set_mflags,
 		0, 0, 0, 0},
@@ -400,6 +404,9 @@ static pv_export_t mod_pvs[] = {
 	{{"RAut", (sizeof("RAut")-1)}, /* */
 		PVT_OTHER, pv_get_rcvadv_uri_full, 0,
 		0, 0, 0, 0},
+	{{"sas", (sizeof("sas")-1)}, /* */
+		PVT_OTHER, pv_get_srcaddr_socket, 0,
+		0, 0, 0, 0},
 	{{"sf", (sizeof("sf")-1)}, /* */
 		PVT_OTHER, pv_get_sflags, pv_set_sflags,
 		0, 0, 0, 0},
@@ -525,6 +532,7 @@ static int is_int(struct sip_msg* msg, char* pvar, char* s2);
 static int pv_typeof(sip_msg_t *msg, char *pv, char *t);
 static int pv_not_empty(sip_msg_t *msg, char *pv, char *s2);
 static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
+static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname);
 static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
@@ -560,6 +568,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"xavp_params_explode", (cmd_function)w_xavp_params_explode,
 		2, fixup_spve_spve, fixup_free_spve_spve,
+		ANY_ROUTE},
+	{"xavp_params_implode", (cmd_function)w_xavp_params_implode,
+		2, fixup_spve_str, fixup_free_spve_str,
 		ANY_ROUTE},
 	{"sbranch_set_ruri",  (cmd_function)w_sbranch_set_ruri,  0, 0, 0,
 		ANY_ROUTE },
@@ -816,6 +827,63 @@ static int ki_xavp_params_explode(sip_msg_t *msg, str *sparams, str *sxname)
 /**
  *
  */
+static int ki_xavp_params_implode(sip_msg_t *msg, str *sxname, str *svname)
+{
+	pv_spec_t *vspec=NULL;
+	pv_value_t val;
+
+	if(sxname==NULL || sxname->s==NULL || sxname->len<=0) {
+		LM_ERR("invalid xavp name\n");
+		return -1;
+	}
+	if(svname==NULL || svname->s==NULL || svname->len<=0) {
+		LM_ERR("invalid output var name\n");
+		return -1;
+	}
+
+	vspec = pv_cache_get(svname);
+	if(vspec==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", svname->len, svname->s);
+		return -1;
+	}
+	if(vspec->setf==NULL) {
+		LM_ERR("read only output variable [%.*s]\n", svname->len, svname->s);
+		return -1;
+	}
+
+	val.rs.s = pv_get_buffer();
+	val.rs.len = xavp_serialize_fields(sxname, val.rs.s, pv_get_buffer_size());
+	if(val.rs.len<=0) {
+		return -1;
+	}
+
+	val.flags = PV_VAL_STR;
+	if(vspec->setf(msg, &vspec->pvp, EQ_T, &val)<0) {
+		LM_ERR("setting PV failed [%.*s]\n", svname->len, svname->s);
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname)
+{
+	str sxname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pxname, &sxname)!=0) {
+		LM_ERR("cannot get the xavp name\n");
+		return -1;
+	}
+
+	return ki_xavp_params_implode(msg, &sxname, (str*)pvname);
+}
+
+/**
+ *
+ */
 static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2)
 {
 	if(sbranch_set_ruri(msg)<0)
@@ -1051,6 +1119,11 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	},
 	{ str_init("pvx"), str_init("xavp_params_explode"),
 		SR_KEMIP_INT, ki_xavp_params_explode,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_params_implode"),
+		SR_KEMIP_INT, ki_xavp_params_implode,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

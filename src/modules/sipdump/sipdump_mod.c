@@ -229,7 +229,8 @@ int ki_sipdump_send(sip_msg_t *msg, str *stag)
 	}
 
 	sdi.af.len = 4;
-	if(msg->rcv.bind_address->address.af==AF_INET6) {
+	if(msg->rcv.bind_address!=NULL
+			&& msg->rcv.bind_address->address.af==AF_INET6) {
 		sdi.af.s = "ipv6";
 	} else {
 		sdi.af.s = "ipv4";
@@ -298,7 +299,8 @@ int sipdump_msg_received(sr_event_param_t *evp)
 		sdi.dst_port = (int)evp->rcv->bind_address->port_no;
 	}
 	sdi.af.len = 4;
-	if(evp->rcv->bind_address->address.af==AF_INET6) {
+	if(evp->rcv->bind_address!=NULL
+			&& evp->rcv->bind_address->address.af==AF_INET6) {
 		sdi.af.s = "ipv6";
 	} else {
 		sdi.af.s = "ipv4";

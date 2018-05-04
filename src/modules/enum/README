@@ -37,7 +37,7 @@ Otmar Lendl
    1.1. Setting domain_suffix module parameter
    1.2. Setting tel_uri_params module parameter
    1.3. Setting i_enum_suffix module parameter
-   1.4. Setting brachlabel module parameter
+   1.4. Setting branchlabel module parameter
    1.5. Zone file example
    1.6. Zone file example
    1.7. Setting the bl_algorithm module parameter
@@ -108,7 +108,7 @@ Chapter 1. Admin Guide
    parameter starts with a '+' sign, the ENUM lookup also supports
    compound NAPTRs (e.g. "e2u+voice:sip+video:sip") and searching for
    multiple service types within one lookup. Multiple service types must
-   be separeted by a '+' sign.
+   be separated by a '+' sign.
 
    Most of the time you want to route based on the RURI. On rare occasions
    you may wish to route based on something else. The function
@@ -180,7 +180,7 @@ modparam("enum", "i_enum_suffix", "e1234.arpa.")
 
    Default value is “"i"”
 
-   Example 1.4. Setting brachlabel module parameter
+   Example 1.4. Setting branchlabel module parameter
 modparam("enum", "branchlabel", "i")
 
 3.5. bl_algorithm (string)

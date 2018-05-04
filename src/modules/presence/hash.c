@@ -199,7 +199,7 @@ subs_t* mem_copy_subs_noc(subs_t* s)
 	size= sizeof(subs_t)+ (s->pres_uri.len+ s->to_user.len
 		+ s->to_domain.len+ s->from_user.len+ s->from_domain.len+ s->callid.len
 		+ s->to_tag.len+ s->from_tag.len+s->sockinfo_str.len+s->event_id.len
-		+ s->local_contact.len + s->record_route.len+
+		+ s->local_contact.len
 		+ s->reason.len+ s->watcher_user.len+ s->watcher_domain.len
 		+ s->user_agent.len
 		+ 1)*sizeof(char);
@@ -224,7 +224,6 @@ subs_t* mem_copy_subs_noc(subs_t* s)
 	CONT_COPY(dest, dest->callid, s->callid);
 	CONT_COPY(dest, dest->sockinfo_str, s->sockinfo_str);
 	CONT_COPY(dest, dest->local_contact, s->local_contact);
-	CONT_COPY(dest, dest->record_route, s->record_route);
 	CONT_COPY(dest, dest->user_agent, s->user_agent);
 	if(s->event_id.s)
 		CONT_COPY(dest, dest->event_id, s->event_id);
@@ -248,6 +247,14 @@ subs_t* mem_copy_subs_noc(subs_t* s)
 	}
 	memcpy(dest->contact.s, s->contact.s, s->contact.len);
 	dest->contact.len= s->contact.len;
+
+	dest->record_route.s= (char*)shm_malloc((s->record_route.len + 1) * sizeof(char));
+	if(dest->record_route.s== NULL)
+	{
+		ERR_MEM(SHARE_MEM);
+	}
+	memcpy(dest->record_route.s, s->record_route.s, s->record_route.len);
+	dest->record_route.len= s->record_route.len;
 
 	return dest;
 
@@ -315,6 +322,10 @@ int delete_shtable(shtable_t htable,unsigned int hash_code,subs_t* subs)
 			if(s->contact.s!=NULL) {
 				shm_free(s->contact.s);
 				s->contact.s = NULL;
+			}
+			if(s->record_route.s!=NULL) {
+				shm_free(s->record_route.s);
+				s->record_route.s = NULL;
 			}
 			if (s) {
 				shm_free(s);
@@ -399,6 +410,17 @@ int update_shtable(shtable_t htable,unsigned int hash_code,
 		memcpy(s->contact.s, subs->contact.s, subs->contact.len);
 		s->contact.len= subs->contact.len;
 	}
+
+	shm_free(s->record_route.s);
+	s->record_route.s= (char*)shm_malloc(subs->record_route.len* sizeof(char));
+	if(s->record_route.s== NULL)
+	{
+		lock_release(&htable[hash_code].lock);
+		LM_ERR("no more shared memory\n");
+		return -1;
+	}
+	memcpy(s->record_route.s, subs->record_route.s, subs->record_route.len);
+	s->record_route.len= subs->record_route.len;
 
 	s->status= subs->status;
 	s->event= subs->event;

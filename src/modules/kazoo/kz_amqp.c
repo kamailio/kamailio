@@ -71,6 +71,7 @@ extern int kz_cmd_pipe;
 extern struct timeval kz_amqp_tv;
 extern struct timeval kz_qtimeout_tv;
 extern struct timeval kz_timer_tv;
+extern struct timeval kz_amqp_connect_timeout_tv;
 
 extern str kz_amqps_ca_cert;
 extern str kz_amqps_cert;
@@ -841,7 +842,7 @@ int kz_amqp_connection_open_ssl(kz_amqp_conn_ptr rmq) {
     amqp_ssl_socket_set_verify_hostname(rmq->socket, kz_amqps_verify_hostname);
 #endif
 
-    if (amqp_socket_open(rmq->socket, rmq->server->connection->info.host, rmq->server->connection->info.port)) {
+    if (amqp_socket_open_noblock(rmq->socket, rmq->server->connection->info.host, rmq->server->connection->info.port, &kz_amqp_connect_timeout_tv)) {
 	LM_ERR("Failed to open SSL socket to AMQP broker : %s : %i\n",
 	rmq->server->connection->info.host, rmq->server->connection->info.port);
 	goto nosocket;
@@ -895,7 +896,7 @@ int kz_amqp_connection_open(kz_amqp_conn_ptr rmq) {
     	goto nosocket;
     }
 
-    if (amqp_socket_open(rmq->socket, rmq->server->connection->info.host, rmq->server->connection->info.port)) {
+    if (amqp_socket_open_noblock(rmq->socket, rmq->server->connection->info.host, rmq->server->connection->info.port, &kz_amqp_connect_timeout_tv)) {
     	LM_DBG("Failed to open TCP socket to AMQP broker\n");
     	goto nosocket;
     }
@@ -2656,12 +2657,13 @@ void kz_amqp_reconnect_cb(int fd, short event, void *arg)
 	LM_DBG("attempting to reconnect now.\n");
 	kz_amqp_conn_ptr connection = (kz_amqp_conn_ptr)arg;
 
+	kz_amqp_timer_destroy(&connection->reconnect);
+
 	if (connection->state == KZ_AMQP_CONNECTION_OPEN) {
 		LM_WARN("trying to connect an already connected server.\n");
 		return;
 	}
 
-	kz_amqp_timer_destroy(&connection->reconnect);
 	kz_amqp_connect(connection);
 }
 
@@ -2684,9 +2686,10 @@ int kz_amqp_publisher_send(kz_amqp_cmd_ptr cmd)
 	int sent = 0;
 	kz_amqp_zone_ptr g;
 	kz_amqp_server_ptr s;
+	kz_amqp_zone_ptr primary = kz_amqp_get_primary_zone();
 	for (g = kz_amqp_get_zones(); g != NULL && sent == 0; g = g->next) {
 		for (s = g->servers->head; s != NULL && sent == 0; s = s->next) {
-			if(cmd->server_id == s->id || cmd->server_id == 0) {
+			if(cmd->server_id == s->id || (cmd->server_id == 0 && g == primary)) {
 				if(s->producer->state == KZ_AMQP_CONNECTION_OPEN) {
 					if(cmd->type == KZ_AMQP_CMD_PUBLISH
 							|| cmd->type == KZ_AMQP_CMD_PUBLISH_BROADCAST
@@ -3124,26 +3127,24 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
 		LM_DBG("CONSUMER INIT DONE\n");
 
 		while(OK) {
-//			payload = NULL;
 			amqp_envelope_t envelope;
 			amqp_maybe_release_buffers(consumer->conn);
 			amqp_rpc_reply_t reply = amqp_consume_message(consumer->conn, &envelope, NULL, 0);
 			switch(reply.reply_type) {
 			case AMQP_RESPONSE_LIBRARY_EXCEPTION:
+				OK=0;
 				switch(reply.library_error) {
 				case AMQP_STATUS_HEARTBEAT_TIMEOUT:
 					LM_ERR("AMQP_STATUS_HEARTBEAT_TIMEOUT\n");
-					OK=0;
 					break;
 				case AMQP_STATUS_TIMEOUT:
 					break;
 				case AMQP_STATUS_UNEXPECTED_STATE:
 					LM_DBG("AMQP_STATUS_UNEXPECTED_STATE\n");
-					OK = kz_amqp_consume_error(consumer);
+					kz_amqp_consume_error(consumer);
 					break;
 				default:
 					LM_ERR("AMQP_RESPONSE_LIBRARY_EXCEPTION %i\n", reply.library_error);
-					OK = 0;
 					break;
 				};
 				break;
@@ -3163,6 +3164,7 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
 					if(OK)
 						kz_amqp_send_worker_event(server_ptr, &envelope, consumer_channels[idx].consumer);
 				}
+				amqp_destroy_envelope(&envelope);
 				break;
 			case AMQP_RESPONSE_SERVER_EXCEPTION:
 				LM_ERR("AMQP_RESPONSE_SERVER_EXCEPTION in consume\n");
@@ -3174,7 +3176,6 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
 				OK = 0;
 				break;
 			};
-			amqp_destroy_envelope(&envelope);
 		}
 
     	kz_amqp_connection_close(consumer);
@@ -3233,6 +3234,8 @@ int kz_amqp_consumer_worker_proc(int cmd_pipe)
 
 void kz_amqp_timer_destroy(kz_amqp_timer_ptr* pTimer)
 {
+	if(!pTimer)
+		return;
 	kz_amqp_timer_ptr timer = *pTimer;
 	if (timer->ev != NULL) {
 		event_del(timer->ev);

@@ -248,7 +248,7 @@ if(mongodb_find_one("mgs1", "kamailio", "subscriber", "{ \"username\" : \"111\"
 4.5.  mongodb_next(replyid)
 
    Moves to next document in a MongoDB reply. This function can be used
-   after a succesful mongodb_cmd() or mongodb_find(). It returns true if
+   after a successful mongodb_cmd() or mongodb_find(). It returns true if
    there is a shift to document. The current document becomes available
    via $mongodb(key) variable.
 

@@ -36,7 +36,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/ut.h"
 
-int ldap_connect_ex(char* _ld_name, int llevel)
+int ldap_connect_ex(char *_ld_name, int llevel)
 {
 	int rc;
 	int ldap_bind_result_code;
@@ -44,66 +44,56 @@ int ldap_connect_ex(char* _ld_name, int llevel)
 	int ldap_proto_version;
 	int msgid;
 	LDAPMessage *result;
-	struct ld_session* lds;
+	struct ld_session *lds;
 	struct berval ldap_cred;
 
 	/*
 	* get ld session and session config parameters
 	*/
-	
-	if ((lds = get_ld_session(_ld_name)) == NULL)
-	{
+
+	if((lds = get_ld_session(_ld_name)) == NULL) {
 		LM_ERR("ld_session [%s] not found\n", _ld_name);
 		return -1;
 	}
-	
+
 	/*
 	 * ldap_initialize
 	 */
 
 	rc = ldap_initialize(&lds->handle, lds->host_name);
-	if (rc != LDAP_SUCCESS)
-	{
-		LM_ERR(	"[%s]: ldap_initialize (%s) failed: %s\n",
-			_ld_name,
-			lds->host_name,
-			ldap_err2string(rc));
+	if(rc != LDAP_SUCCESS) {
+		LM_ERR("[%s]: ldap_initialize (%s) failed: %s\n", _ld_name,
+				lds->host_name, ldap_err2string(rc));
 		return -1;
 	}
-	
+
 	/*
 	 * set LDAP OPTIONS
 	 */
 
 	/* LDAP_OPT_PROTOCOL_VERSION */
-	switch (lds->version) {
-	case 2:
-		ldap_proto_version = LDAP_VERSION2;
-		break;
-	case 3:
-		ldap_proto_version = LDAP_VERSION3;
-		break;
-	default:
-		LM_ERR(	"[%s]: Invalid LDAP protocol version [%d]\n",
-			_ld_name, 
-			lds->version);
-		return -1;
+	switch(lds->version) {
+		case 2:
+			ldap_proto_version = LDAP_VERSION2;
+			break;
+		case 3:
+			ldap_proto_version = LDAP_VERSION3;
+			break;
+		default:
+			LM_ERR("[%s]: Invalid LDAP protocol version [%d]\n", _ld_name,
+					lds->version);
+			return -1;
 	}
-	if (ldap_set_option(lds->handle,
-				LDAP_OPT_PROTOCOL_VERSION,
-				&ldap_proto_version)
-			!= LDAP_OPT_SUCCESS) 
-	{
-		LM_ERR(	"[%s]: Could not set LDAP_OPT_PROTOCOL_VERSION [%d]\n",
-			_ld_name, 
-			ldap_proto_version);
+	if(ldap_set_option(
+			   lds->handle, LDAP_OPT_PROTOCOL_VERSION, &ldap_proto_version)
+			!= LDAP_OPT_SUCCESS) {
+		LM_ERR("[%s]: Could not set LDAP_OPT_PROTOCOL_VERSION [%d]\n", _ld_name,
+				ldap_proto_version);
 		return -1;
 	}
 
 	/* LDAP_OPT_RESTART */
-	if (ldap_set_option(lds->handle,
-				LDAP_OPT_RESTART,
-				LDAP_OPT_ON)
+	if(ldap_set_option(lds->handle, LDAP_OPT_RESTART, LDAP_OPT_ON)
 			!= LDAP_OPT_SUCCESS) {
 		LM_ERR("[%s]: Could not set LDAP_OPT_RESTART to ON\n", _ld_name);
 		return -1;
@@ -122,23 +112,20 @@ int ldap_connect_ex(char* _ld_name, int llevel)
 		}
 	}
 	*/
-	
+
 	/* LDAP_OPT_NETWORK_TIMEOUT */
-	if ((lds->network_timeout.tv_sec > 0) || (lds->network_timeout.tv_usec > 0))
-	{
-		if (ldap_set_option(lds->handle,
-					LDAP_OPT_NETWORK_TIMEOUT,
-					(const void *)&lds->network_timeout)
-				!= LDAP_OPT_SUCCESS)
-		{
-			LM_ERR(	"[%s]: Could not set"
-				" LDAP_NETWORK_TIMEOUT to [%d.%d]\n",
-				_ld_name, 
-				(int)lds->network_timeout.tv_sec,
-				(int)lds->network_timeout.tv_usec);
+	if((lds->network_timeout.tv_sec > 0)
+			|| (lds->network_timeout.tv_usec > 0)) {
+		if(ldap_set_option(lds->handle, LDAP_OPT_NETWORK_TIMEOUT,
+				   (const void *)&lds->network_timeout)
+				!= LDAP_OPT_SUCCESS) {
+			LM_ERR("[%s]: Could not set"
+				   " LDAP_NETWORK_TIMEOUT to [%d.%d]\n",
+					_ld_name, (int)lds->network_timeout.tv_sec,
+					(int)lds->network_timeout.tv_usec);
 		}
 	}
-	
+
 	/*
 	  * ldap_sasl_bind (LDAP_SASL_SIMPLE)
 	 */
@@ -146,73 +133,44 @@ int ldap_connect_ex(char* _ld_name, int llevel)
 
 	ldap_cred.bv_val = lds->bind_pwd;
 	ldap_cred.bv_len = strlen(lds->bind_pwd);
-	rc = ldap_sasl_bind(
-		lds->handle,
-		lds->bind_dn,
-		LDAP_SASL_SIMPLE,
-		&ldap_cred,
-		NULL,
-		NULL,
-		&msgid);
-	if (rc != LDAP_SUCCESS)
-	{
-		LM_ERR(	"[%s]: ldap bind failed: %s\n",
-			_ld_name,
-			ldap_err2string(rc));
+	rc = ldap_sasl_bind(lds->handle, lds->bind_dn, LDAP_SASL_SIMPLE, &ldap_cred,
+			NULL, NULL, &msgid);
+	if(rc != LDAP_SUCCESS) {
+		LM_ERR("[%s]: ldap bind failed: %s\n", _ld_name, ldap_err2string(rc));
 		return -1;
 	}
 
 
-
-	
-	if ((lds->client_bind_timeout.tv_sec == 0) 
-			&& (lds->client_bind_timeout.tv_usec == 0))
-	{
+	if((lds->client_bind_timeout.tv_sec == 0)
+			&& (lds->client_bind_timeout.tv_usec == 0)) {
 		rc = ldap_result(lds->handle, msgid, 1, NULL, &result);
-	} else
-	{
-		rc = ldap_result(lds->handle, msgid, 1, &lds->client_bind_timeout,
-				&result);
+	} else {
+		rc = ldap_result(
+				lds->handle, msgid, 1, &lds->client_bind_timeout, &result);
 	}
 
 
-	if (rc == -1)
-	{
+	if(rc == -1) {
 		ldap_get_option(lds->handle, LDAP_OPT_ERROR_NUMBER, &rc);
 		ldap_err_str = ldap_err2string(rc);
-		LM_ERR(	"[%s]: ldap_result failed: %s\n",
-			_ld_name,
-			ldap_err_str);
+		LM_ERR("[%s]: ldap_result failed: %s\n", _ld_name, ldap_err_str);
 		return -1;
-	} 
-	else if (rc == 0)
-	{
+	} else if(rc == 0) {
 		LM_ERR("[%s]: bind operation timed out\n", _ld_name);
 		return -1;
 	}
 
 
-	rc = ldap_parse_result(
-		lds->handle,
-		result,
-		&ldap_bind_result_code,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		1);
-	if (rc != LDAP_SUCCESS)
-	{
-		LM_ERR(	"[%s]: ldap_parse_result failed: %s\n",
-			_ld_name, 
-			ldap_err2string(rc));
+	rc = ldap_parse_result(lds->handle, result, &ldap_bind_result_code, NULL,
+			NULL, NULL, NULL, 1);
+	if(rc != LDAP_SUCCESS) {
+		LM_ERR("[%s]: ldap_parse_result failed: %s\n", _ld_name,
+				ldap_err2string(rc));
 		return -1;
 	}
-	if (ldap_bind_result_code != LDAP_SUCCESS)
-	{
-		LM_ERR(	"[%s]: ldap bind failed: %s\n",
-			_ld_name, 
-			ldap_err2string(ldap_bind_result_code));
+	if(ldap_bind_result_code != LDAP_SUCCESS) {
+		LM_ERR("[%s]: ldap bind failed: %s\n", _ld_name,
+				ldap_err2string(ldap_bind_result_code));
 		return -1;
 	}
 
@@ -221,33 +179,31 @@ int ldap_connect_ex(char* _ld_name, int llevel)
 	/* ldap_msgfree(result); */
 
 
-	LOG(llevel, "[%s]: LDAP bind successful (ldap_host [%s])\n",
-		_ld_name, 
-		lds->host_name);
+	LOG(llevel, "[%s]: LDAP bind successful (ldap_host [%s])\n", _ld_name,
+			lds->host_name);
 
 	return 0;
 }
 
-int ldap_connect(char* _ld_name)
+int ldap_connect(char *_ld_name)
 {
 	return ldap_connect_ex(_ld_name, L_DBG);
 }
 
-int ldap_disconnect(char* _ld_name)
+int ldap_disconnect(char *_ld_name)
 {
-	struct ld_session* lds;
+	struct ld_session *lds;
 
 	/*
 		* get ld session
 		*/
 
-	if ((lds = get_ld_session(_ld_name)) == NULL)
-	{
+	if((lds = get_ld_session(_ld_name)) == NULL) {
 		LM_ERR("ld_session [%s] not found\n", _ld_name);
 		return -1;
 	}
 
-	if (lds->handle == NULL) {
+	if(lds->handle == NULL) {
 		return 0;
 	}
 
@@ -257,30 +213,24 @@ int ldap_disconnect(char* _ld_name)
 	return 0;
 }
 
-int ldap_reconnect(char* _ld_name)
+int ldap_reconnect(char *_ld_name)
 {
 	int rc;
-	
-	if (ldap_disconnect(_ld_name) != 0)
-	{
+
+	if(ldap_disconnect(_ld_name) != 0) {
 		LM_ERR("[%s]: disconnect failed\n", _ld_name);
 		return -1;
 	}
 
-	if ((rc = ldap_connect_ex(_ld_name, L_INFO)) != 0)
-	{
-		LM_ERR("[%s]: reconnect failed\n",
-				_ld_name);
-	}
-	else
-	{
-		LM_NOTICE("[%s]: LDAP reconnect successful\n",
-				_ld_name);
+	if((rc = ldap_connect_ex(_ld_name, L_INFO)) != 0) {
+		LM_ERR("[%s]: reconnect failed\n", _ld_name);
+	} else {
+		LM_NOTICE("[%s]: LDAP reconnect successful\n", _ld_name);
 	}
 	return rc;
 }
 
-int ldap_get_vendor_version(char** _version)
+int ldap_get_vendor_version(char **_version)
 {
 	static char version[128];
 	LDAPAPIInfo api;
@@ -291,17 +241,15 @@ int ldap_get_vendor_version(char** _version)
 #else
 	api.ldapai_info_version = 1;
 #endif
-	
-	if (ldap_get_option(NULL, LDAP_OPT_API_INFO, &api) != LDAP_SUCCESS)
-	{
+
+	if(ldap_get_option(NULL, LDAP_OPT_API_INFO, &api) != LDAP_SUCCESS) {
 		LM_ERR("ldap_get_option(API_INFO) failed\n");
 		return -1;
 	}
 
 	rc = snprintf(version, 128, "%s - %d", api.ldapai_vendor_name,
 			api.ldapai_vendor_version);
-	if ((rc >= 128) || (rc < 0))
-	{
+	if((rc >= 128) || (rc < 0)) {
 		LM_ERR("snprintf failed\n");
 		return -1;
 	}

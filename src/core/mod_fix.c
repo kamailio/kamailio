@@ -259,14 +259,14 @@ FIXUP_F1T(pvar_null, 1, 1, FPARAM_PVS)
 FIXUP_F1T(pvar_pvar, 1, 2, FPARAM_PVS)
 */
 
-struct pvs_fixup {
+typedef struct pvs_fixup {
 	pv_spec_t pvs; /* parsed pv spec */
 	void* orig;    /* original pointer */
-};
+} pvs_fixup_t;
 
 int fixup_pvar_all(void** param, int param_no)
 {
-	struct pvs_fixup* pvs_f;
+	pvs_fixup_t* pvs_f;
 	str name;
 	
 	pvs_f = 0;
@@ -296,14 +296,14 @@ error:
 
 int fixup_free_pvar_all(void** param, int param_no)
 {
-	struct pvs_fixup* pvs_f;
+	pvs_fixup_t* pvs_f;
 	
 	if (*param) {
 		pvs_f = *param;
 		*param = pvs_f->orig;
 		/* free only the contents (don't attempt to free &pvs_f->pvs)*/
 		pv_spec_destroy(&pvs_f->pvs);
-		/* free the whole pvs_fixup */
+		/* free the whole pvs_fixup_t */
 		pkg_free(pvs_f);
 	}
 	return 0;

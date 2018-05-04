@@ -3804,6 +3804,7 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 	ticks_t now;
 	str s;
 	int i;
+	int n;
 
 	now=get_ticks_raw();
 	expires = (s_ticks_t)(e->expire-now)<0?-1: TICKS_TO_S(e->expire-now);
@@ -3824,8 +3825,9 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 						TICKS_TO_S(now-e->last_used));
 	rpc->rpl_printf(ctx, "%snegative entry: %s", SPACE_FORMAT,
 						(e->ent_flags & DNS_FLAG_BAD_NAME) ? "yes" : "no");
-	
+	n = 0;
 	for (rr=e->rr_lst; rr; rr=rr->next) {
+		rpc->rpl_printf(ctx, "%srr idx: %d", SPACE_FORMAT, n++);
 		switch(e->type) {
 			case T_A:
 			case T_AAAA:
@@ -4365,7 +4367,7 @@ int dns_cache_add_record(unsigned short type,
 					);
 				}
 				if (!rr_p) {
-					LM_ERR("Failed to correct the orderd list of SRV resource records\n");
+					LM_ERR("Failed to correct the ordered list of SRV resource records\n");
 					goto error;
 				}
 

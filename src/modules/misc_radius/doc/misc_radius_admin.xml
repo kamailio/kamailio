@@ -42,7 +42,7 @@
 	</itemizedlist>
 	</para>
 	<example>
-	<title><quote>SIP-AVP</quote> RADIUS AVP exmaples</title>
+	<title><quote>SIP-AVP</quote> RADIUS AVP examples</title>
 		<programlisting format="linespecific">
 ....
 "email:joe@yahoo.com"
@@ -368,7 +368,7 @@ $avp(session-protocol) has string value "SIP"
 $avp(SIP-AVP) has string value  "email:sr-users@lists.sip-router.org session-timeout#161 next-hop-ip:h323/0001111@myvoip-gate.kamailio.org"
 
 ...
-    When recieving negative response, check appropriate avp's:
+    When receiving negative response, check appropriate avp's:
     $avp(Reply-Message) = "Not enough money on deposit '-89.83'. Rejected"
     $avp(Filter-Id) = "neg_deposit"
 ...

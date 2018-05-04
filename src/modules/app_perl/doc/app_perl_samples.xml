@@ -133,7 +133,7 @@
 				<para>
 				When processing SIP messages, you may want to use persistent data across multiple calls to your
 				Perl functions. Your first option is to use global variables in your script. Unfortunately,
-				these globals are not visible from the mulitple instances of Kamailio. You may want to use a
+				these globals are not visible from the multiple instances of Kamailio. You may want to use a
 				mechanism such as the IPC::Shareable shared memory access package to correct this.
 				</para>
 			</section>

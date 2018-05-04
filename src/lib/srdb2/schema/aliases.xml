@@ -13,7 +13,7 @@
   <description>
 	This table is used to implement group aliases. Group aliases are SIP URIs
 	that resolve to multiple destination SIP URIs. The proxy server then can
-	determine whether it should use serial or paralell forking.
+	determine whether it should use serial or parallel forking.
   </description>
   
   <column id="username">

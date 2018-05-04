@@ -28,6 +28,7 @@
 #include "../../core/mem/mem.h"
 #include "../../lib/srutils/sruid.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../core/kemi.h"
 #include "rd_funcs.h"
 #include "rd_filter.h"
 
@@ -258,6 +259,7 @@ static int redirect_init(void)
 {
 	regex_t *filter;
 	void *p;
+	cmd_function fct;
 
 	/* load the TM API */
 	if (load_tm_api(&rd_tmb)!=0) {
@@ -303,6 +305,21 @@ static int redirect_init(void)
 
 	if(sruid_init(&_redirect_sruid, '-', "rdir", SRUID_INC)<0)
 		return -1;
+
+	if(rd_acc_fct == 0) {
+		/* import the acc stuff */
+		if(acc_fct_s != 0 && acc_fct_s[0] == '\0') {
+			fct = find_export(acc_fct_s, 2, REQUEST_ROUTE);
+			if(fct == 0)
+				fct = find_export(acc_fct_s, 1, REQUEST_ROUTE);
+			if(fct == 0) {
+				LM_ERR("cannot import %s function; is acc loaded and"
+						" configured\n", acc_fct_s);
+				return E_UNSPEC;
+			}
+			rd_acc_fct = fct;
+		}
+	}
 
 	return 0;
 error:
@@ -374,3 +391,83 @@ static int w_get_redirect1(struct sip_msg* msg, char *max_c, char *foo)
 	return w_get_redirect2(msg, max_c, 0);
 }
 
+static int ki_get_redirects_acc(sip_msg_t* msg, int max_c, int max_b,
+		str *reason)
+{
+	int n;
+	acc_param_t accp;
+
+	if(reason && reason->len>0) {
+		memset(&accp, 0, sizeof(acc_param_t));
+		accp.reason.s = reason->s;
+		accp.reason.len = reason->len;
+	}
+	msg_tracer(msg, 0);
+	/* get the contacts */
+	n = get_redirect(msg, max_c, max_b, (reason && reason->len>0)?&accp:NULL,
+			bflags);
+	reset_filters();
+	/* reset the tracer */
+	msg_tracer(msg, 1);
+
+	return n;
+}
+
+static int ki_get_redirects(sip_msg_t* msg, int max_c, int max_b)
+{
+	int n;
+
+	msg_tracer(msg, 0);
+	/* get the contacts */
+	n = get_redirect(msg, max_c, max_b, NULL, bflags);
+	reset_filters();
+	/* reset the tracer */
+	msg_tracer(msg, 1);
+
+	return n;
+}
+
+static int ki_get_redirects_all(sip_msg_t* msg)
+{
+	int n;
+
+	msg_tracer(msg, 0);
+	/* get the contacts */
+	n = get_redirect(msg, 0, 0, NULL, bflags);
+	reset_filters();
+	/* reset the tracer */
+	msg_tracer(msg, 1);
+
+	return n;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_uac_redirect_exports[] = {
+	{ str_init("uac_redirect"), str_init("get_redirects_all"),
+		SR_KEMIP_INT, ki_get_redirects_all,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac_redirect"), str_init("get_redirects"),
+		SR_KEMIP_INT, ki_get_redirects,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac_redirect"), str_init("get_redirects_acc"),
+		SR_KEMIP_INT, ki_get_redirects_acc,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_uac_redirect_exports);
+	return 0;
+}

@@ -155,7 +155,7 @@ modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,enable");
 				<varname>declare_timer</varname>.
 				</listitem>
 				<listitem>
-				<emphasis>enable_distable</emphasis> - set to 1 to enable timer,
+				<emphasis>enable_disable</emphasis> - set to 1 to enable timer,
 				to 0 to disable.
 				</listitem>
 				</itemizedlist>

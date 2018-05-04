@@ -40,6 +40,9 @@
 #include "usrloc.h"
 #include "utime.h"
 #include "usrloc.h"
+#include "urecord.h"
+
+extern int ul_rm_expired_delay;
 
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
@@ -761,7 +764,7 @@ done:
  * \brief Loads from DB all contacts for a RUID
  * \param _c database connection
  * \param _d domain
- * \param _aor address of record
+ * \param _ruid record unique id
  * \return pointer to the record on success, 0 on errors or if nothing is found
  */
 urecord_t* db_load_urecord_by_ruid(db1_con_t* _c, udomain_t* _d, str *_ruid)
@@ -892,26 +895,36 @@ done:
  */
 int db_timer_udomain(udomain_t* _d)
 {
-	db_key_t keys[2];
-	db_op_t  ops[2];
-	db_val_t vals[2];
+	db_key_t keys[3];
+	db_op_t  ops[3];
+	db_val_t vals[3];
+	int key_num = 2;
 
 	keys[0] = &expires_col;
 	ops[0] = "<";
 	vals[0].nul = 0;
-	UL_DB_EXPIRES_SET(&vals[0], act_time + 1);
+	UL_DB_EXPIRES_SET(&vals[0], act_time + 1 - ul_rm_expired_delay);
 
 	keys[1] = &expires_col;
 	ops[1] = OP_NEQ;
 	vals[1].nul = 0;
 	UL_DB_EXPIRES_SET(&vals[1], 0);
 
+	if (ul_db_srvid != 0) {
+		keys[2] = &srv_id_col;
+		ops[2] = OP_EQ;
+		vals[2].type = DB1_INT;
+		vals[2].nul = 0;
+		vals[2].val.int_val = server_id;
+		key_num = 3;
+	}
+
 	if (ul_dbf.use_table(ul_dbh, _d->name) < 0) {
 		LM_ERR("use_table failed\n");
 		return -1;
 	}
-
-	if (ul_dbf.delete(ul_dbh, keys, ops, vals, 2) < 0) {
+	
+	if (ul_dbf.delete(ul_dbh, keys, ops, vals, key_num) < 0) {
 		LM_ERR("failed to delete from table %s\n",_d->name->s);
 		return -1;
 	}
@@ -997,8 +1010,10 @@ void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
 
 
 /*!
- * \brief Run timer handler for given domain
+ * \brief Run timer handler for given domain, delete urecords
  * \param _d domain
+ * \param istart start of run
+ * \param istep loop steps
  */
 void mem_timer_udomain(udomain_t* _d, int istart, int istep)
 {
@@ -1116,6 +1131,7 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 {
 	unsigned int sl, i, aorhash;
 	urecord_t* r;
+	ucontact_t* ptr = NULL;
 
 	if (db_mode!=DB_ONLY) {
 		/* search in cache */
@@ -1125,7 +1141,18 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 
 		for(i = 0; r!=NULL && i < _d->table[sl].n; i++) {
 			if((r->aorhash==aorhash) && (r->aor.len==_aor->len)
-						&& !memcmp(r->aor.s,_aor->s,_aor->len)){
+						&& !memcmp(r->aor.s,_aor->s,_aor->len))
+			{
+				if (handle_lost_tcp)
+				{
+					for (ptr = r->contacts;ptr;ptr = ptr->next)
+					{
+						if (ptr->expires == UL_EXPIRED_TIME )
+							continue;
+						if (is_valid_tcpconn(ptr) && !is_tcp_alive(ptr))
+							ptr->expires = UL_EXPIRED_TIME;
+					}
+				}
 				*_r = r;
 				return 0;
 			}

@@ -254,6 +254,7 @@ error0:
 
 /*!
  * \brief Clone dialog internal unique id to shared memory
+ * \param dlg dialog
  */
 dlg_iuid_t *dlg_get_iuid_shm_clone(dlg_cell_t *dlg) {
     dlg_iuid_t *iuid = NULL;
@@ -276,6 +277,7 @@ dlg_iuid_t *dlg_get_iuid_shm_clone(dlg_cell_t *dlg) {
 
 /*!
  * \brief Free dialog internal unique id stored in shared memory
+ * \param iuid dialog iuid
  */
 void dlg_iuid_sfree(void *iuid) {
     if (iuid) {
@@ -617,11 +619,12 @@ static inline char* tm_type_to_string(int type) {
     return "UNKNOWN";
 }
 
-/*!
+/*
  * \brief Unreference a dialog (small wrapper to take care of shutdown)
  * \see unref_dlg
  * \param dialog unreferenced dialog
  */
+
 /*static void unreference_dialog(void *dialog) {
     // if the dialog table is gone, it means the system is shutting down.
     if (!dialog || !d_table)
@@ -694,12 +697,13 @@ static inline int parse_dlg_rr_param(char *p, char *end, int *h_entry, int *h_id
     return 0;
 }*/
 
-/*!
+/*
  * \brief Callback to register a transaction on a dialog
  * \param t transaction, unused
  * \param type type of the entered callback
  * \param param saved dialog structure in the callback
  */
+
 /*static void store_dlg_in_tm_cb(struct cell* t,
         int type,
         struct tmcb_params *param) {
@@ -718,6 +722,7 @@ static inline int parse_dlg_rr_param(char *p, char *end, int *h_entry, int *h_id
  * \param dlg updated dialog
  * \param req SIP request
  * \param dir direction of request, must DLG_DIR_UPSTREAM or DLG_DIR_DOWNSTREAM
+ * \param to_tag dialog to tag
  * \return 0 on success, -1 on failure
  */
 static inline int update_cseqs(struct dlg_cell *dlg, struct sip_msg *req,
@@ -1929,6 +1934,12 @@ void print_all_dlgs() {
     LM_DBG("********************");
 
 }
+
+/*!
+ * \brief Get the current dialog based on the current SIP message
+ * \param msg SIP message
+ * \return current dialog, null if none.
+ */
 
 struct dlg_cell *dlg_get_msg_dialog(sip_msg_t *msg) {
     struct dlg_cell *dlg = NULL;

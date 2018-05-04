@@ -21,7 +21,7 @@ Luis Azedo
         2. How it works
 
               2.1. event routes
-              2.2. aknowledge messages
+              2.2. acknowledge messages
 
         3. Dependencies
 
@@ -51,7 +51,7 @@ Luis Azedo
 
                     4.3.1. amqp_consumer_ack_timeout(str)
                     4.3.2. amqp_interprocess_timeout(str)
-                    4.3.3. amqp_waitframe_tiemout(str)
+                    4.3.3. amqp_waitframe_timeout(str)
                     4.3.4. amqp_query_timeout(str)
                     4.3.5. amqp_query_timeout_avp(str)
 
@@ -128,7 +128,7 @@ Chapter 1. Admin Guide
    2. How it works
 
         2.1. event routes
-        2.2. aknowledge messages
+        2.2. acknowledge messages
 
    3. Dependencies
 
@@ -158,7 +158,7 @@ Chapter 1. Admin Guide
 
               4.3.1. amqp_consumer_ack_timeout(str)
               4.3.2. amqp_interprocess_timeout(str)
-              4.3.3. amqp_waitframe_tiemout(str)
+              4.3.3. amqp_waitframe_timeout(str)
               4.3.4. amqp_query_timeout(str)
               4.3.5. amqp_query_timeout_avp(str)
 
@@ -221,7 +221,7 @@ Chapter 1. Admin Guide
 2. How it works
 
    2.1. event routes
-   2.2. aknowledge messages
+   2.2. acknowledge messages
 
    The module works with a main forked process that does the communication
    with rabbitmq for issuing publishes, waiting for replies and consuming
@@ -285,7 +285,7 @@ event_route[kazoo:consumer-event]
 # this event route is executed if we can't find the previous
 }
 
-2.2. aknowledge messages
+2.2. acknowledge messages
 
    Consumed messages have the option of being acknowledge in two ways:
      * immediately when received
@@ -330,7 +330,7 @@ event_route[kazoo:consumer-event]
 
         4.3.1. amqp_consumer_ack_timeout(str)
         4.3.2. amqp_interprocess_timeout(str)
-        4.3.3. amqp_waitframe_tiemout(str)
+        4.3.3. amqp_waitframe_timeout(str)
         4.3.4. amqp_query_timeout(str)
         4.3.5. amqp_query_timeout_avp(str)
 
@@ -495,7 +495,7 @@ modparam("kazoo", "single_consumer_on_reconnect", 0)
 
 4.3.1. amqp_consumer_ack_timeout(str)
 
-   Timeout when checking for aknowledge from workers.
+   Timeout when checking for acknowledge from workers.
 
    Default value is 100000 micro.
 
@@ -518,7 +518,7 @@ modparam("kazoo", "amqp_interprocess_timeout_sec", 1)
 modparam("kazoo", "amqp_interprocess_timeout_micro", 200000)
 ...
 
-4.3.3. amqp_waitframe_tiemout(str)
+4.3.3. amqp_waitframe_timeout(str)
 
    Timeout when checking for messages from rabbitmq.
 

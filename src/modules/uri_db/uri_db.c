@@ -31,6 +31,7 @@
 #include "../../core/error.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "uri_db.h"
 #include "checks.h"
 
@@ -202,4 +203,45 @@ static int fixup_exist(void** param, int param_no)
 static int w_check_uri1(struct sip_msg* msg, char* uri, char* _s)
 {
 	return check_uri(msg, uri, NULL, NULL);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_uri_db_exports[] = {
+	{ str_init("uri_db"), str_init("check_from"),
+		SR_KEMIP_INT, ki_check_from,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uri_db"), str_init("check_to"),
+		SR_KEMIP_INT, ki_check_to,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uri_db"), str_init("does_uri_exist"),
+		SR_KEMIP_INT, ki_does_uri_exist,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uri_db"), str_init("check_uri"),
+		SR_KEMIP_INT, ki_check_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uri_db"), str_init("check_uri_realm"),
+		SR_KEMIP_INT, ki_check_uri_realm,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_uri_db_exports);
+	return 0;
 }

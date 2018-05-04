@@ -31,6 +31,7 @@ In order to be easily able to track the changes and have a coherent ChangLog
 and commit history, there are several *rules* required for each contribution.
 
 ## Contributing Code Or Content ##
+
 ### Basic Rules ###
 
   * github pull requests are the favourited mechanism to submit contributions
@@ -47,7 +48,7 @@ and commit history, there are several *rules* required for each contribution.
     * a module (code inside subfolder modules/)
     * a tool (code inside subfolder utils/)
     * an example or main configs (files inside subfolders etc/ or examples/)
-  * commit messages **should** be formatted as specified in the next section
+  * commit messages **has to be formatted** as specified in the next section
   * commit message must describe the changes done by the patch
     * other details (e.g., how to reproduce, backtrace, sip packets, ...) belong
     to content (comments) of the pull request
@@ -73,6 +74,9 @@ and commit history, there are several *rules* required for each contribution.
     likely to rise merge conflicts. With separate commit, that won't be
     backported, only the commit to xml doc file, then README will be manually
     regenerated in the corresponding branch.
+  * code **should** be formatted with **clang-format** or to match the style of
+  the component that the commit applies to. The `.clang-format` file is part of
+  Kamailio source code tree, in the root folder.
 
 
 ### Commit Message Format ###
@@ -89,12 +93,12 @@ as "Subject" in the generated commit emails and it will also be used when
 generating the Changelog (e.g. git log --pretty=oneline).
 
 Please start always with the prefix of the component (subsystem) that is modified by the commit, for example:
-  * core: typo fixes to log messages
-  * tcp: stun fixes
-  * mem: added faster malloc
-  * module_name: support for foo rfc extension
-  * lib_name: critical bug fix for abc case
-  * kamctl: added support for management of module xyz
+  * `core`: typo fixes to log messages
+  * `tcp`: stun fixes
+  * `mem`: added faster malloc
+  * `module_name`: support for foo rfc extension
+  * `lib_name`: critical bug fix for abc case
+  * `kamctl`: added support for management of module xyz
 
 #### Examples Of Commit Messages ####
 
@@ -127,6 +131,25 @@ core: loadpath can now use a list of directories
 The above content about commit message format is taken from Kamailio wiki page:
   * https://www.kamailio.org/wiki/devel/git-commit-guidelines
   * it is recommended you read that one as well.
+
+### Developer Access ###
+
+  * developer access (commit rights) to Kamailio GIT repository is granted to
+  people that contribute relevant components (e.g., modules) or have consistent
+  contributions over a long interval of time
+  * each developer has to create an account on github.com portal. The
+  `developerid` is the username on github.com portal
+  * after getting developer access, it is still recommended to use pull request
+  for commits done to other components of Kamailio, to allow the main developer
+  of the component as well as the other developers to review the changes
+  * commits to own components can be pushed directly, without a pull request.
+  However, if the developer wants other people to review the changes, using a
+  pull request is the way to do it
+  * personal branches of developers done inside Kamailio GIT repository must be
+  prefixed with `developerid/`, e.g., `alice/new-feature`. Do not use just
+  `new-feature` or `alice-new-feature` or other variant without `developerid/`
+  * the [Contributions Basic Rules](#basic-rules) from the sections above have
+  to be followed as well after getting developer access
 
 ## Reporting Issues ##
 

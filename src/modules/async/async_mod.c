@@ -170,7 +170,7 @@ static int w_async_sleep(sip_msg_t *msg, char *sec, char *str2)
 			LM_ERR("cannot be executed as last action in a route block\n");
 			return -1;
 		}
-		if(async_sleep(msg, s, ap->u.paction->next) < 0)
+		if(async_sleep(msg, s, ap->u.paction->next, NULL) < 0)
 			return -1;
 		/* force exit in config */
 		return 0;
@@ -208,21 +208,27 @@ static int fixup_async_sleep(void **param, int param_no)
  */
 int ki_async_route(sip_msg_t *msg, str *rn, int s)
 {
-	cfg_action_t *act;
+	cfg_action_t *act = NULL;
 	int ri;
+	sr_kemi_eng_t *keng = NULL;
 
-	ri = route_get(&main_rt, rn->s);
-	if(ri < 0) {
-		LM_ERR("unable to find route block [%.*s]\n", rn->len, rn->s);
-		return -1;
-	}
-	act = main_rt.rlist[ri];
-	if(act == NULL) {
-		LM_ERR("empty action lists in route block [%.*s]\n", rn->len, rn->s);
-		return -1;
+	keng = sr_kemi_eng_get();
+	if(keng == NULL) {
+		ri = route_lookup(&main_rt, rn->s);
+		if(ri >= 0) {
+			act = main_rt.rlist[ri];
+			if(act == NULL) {
+				LM_ERR("empty action lists in route block [%.*s]\n", rn->len,
+						rn->s);
+				return -1;
+			}
+		} else {
+			LM_ERR("route block not found: %.*s\n", rn->len, rn->s);
+			return -1;
+		}
 	}
 
-	if(async_sleep(msg, s, act) < 0)
+	if(async_sleep(msg, s, act, rn) < 0)
 		return -1;
 	/* force exit in config */
 	return 0;
@@ -277,21 +283,27 @@ static int fixup_async_route(void **param, int param_no)
  */
 int ki_async_task_route(sip_msg_t *msg, str *rn)
 {
-	cfg_action_t *act;
+	cfg_action_t *act = NULL;
 	int ri;
+	sr_kemi_eng_t *keng = NULL;
 
-	ri = route_get(&main_rt, rn->s);
-	if(ri < 0) {
-		LM_ERR("unable to find route block [%.*s]\n", rn->len, rn->s);
-		return -1;
-	}
-	act = main_rt.rlist[ri];
-	if(act == NULL) {
-		LM_ERR("empty action lists in route block [%.*s]\n", rn->len, rn->s);
-		return -1;
+	keng = sr_kemi_eng_get();
+	if(keng == NULL) {
+		ri = route_lookup(&main_rt, rn->s);
+		if(ri >= 0) {
+			act = main_rt.rlist[ri];
+			if(act == NULL) {
+				LM_ERR("empty action lists in route block [%.*s]\n", rn->len,
+						rn->s);
+				return -1;
+			}
+		} else {
+			LM_ERR("route block not found: %.*s\n", rn->len, rn->s);
+			return -1;
+		}
 	}
 
-	if(async_send_task(msg, act) < 0)
+	if(async_send_task(msg, act, rn) < 0)
 		return -1;
 	/* force exit in config */
 	return 0;

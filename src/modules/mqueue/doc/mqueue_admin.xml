@@ -91,7 +91,7 @@
 				<para>
 				<emphasis>size</emphasis>: size of the queue.
 				Specifies the maximum number of items in queue.
-				If execeeded the oldest one is removed.
+				If exceeded the oldest one is removed.
 				If not set the queue will be limitless.
 				</para>
 			</listitem>

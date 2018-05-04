@@ -223,7 +223,7 @@ int cdp_sessions_destroy()
  * @param hash_size - value to % with
  * @returns the hash % hash_size
  */
-inline unsigned int get_str_hash(str x,int hash_size)
+unsigned int get_str_hash(str x,int hash_size)
 {
 #define h_inc h+=v^(v>>3)
 	char* p;

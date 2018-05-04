@@ -29,11 +29,11 @@
 /**
  * @brief bind dmq module api
  */
-int bind_dmq(dmq_api_t* api) {
+int bind_dmq(dmq_api_t *api)
+{
 	api->register_dmq_peer = register_dmq_peer;
 	api->send_message = dmq_send_message;
 	api->bcast_message = bcast_dmq_message;
 	api->find_dmq_node_uri = find_dmq_node_uri2;
 	return 0;
 }
-

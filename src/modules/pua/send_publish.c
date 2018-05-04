@@ -247,8 +247,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	{
 		find_and_delete_record(hentity, hash_code);
 
-		if(ps->code== 412 && hentity->body && hentity->flag!= MI_PUBLISH
-				&& hentity->flag!= MI_ASYN_PUBLISH)
+		if(ps->code== 412 && hentity->body && hentity->flag!= RPC_PUBLISH
+				&& hentity->flag!= RPC_ASYN_PUBLISH)
 		{
 			/* sent a PUBLISH within a dialog that no longer exists
 			 * send again an intial PUBLISH */

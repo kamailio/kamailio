@@ -42,7 +42,7 @@ int km_bdb_is_database(str *_s)
 {
 	DIR *dirp = NULL;
 	char buf[512];
-	
+
 	if(!_s || !_s->s || _s->len <= 0 || _s->len > 510)
 		return 0;
 	strncpy(buf, _s->s, _s->len);
@@ -54,4 +54,3 @@ int km_bdb_is_database(str *_s)
 
 	return 1;
 }
-

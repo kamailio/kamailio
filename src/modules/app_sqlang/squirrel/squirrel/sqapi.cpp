@@ -947,8 +947,11 @@ SQRESULT sq_newmember(HSQUIRRELVM v,SQInteger idx,SQBool bstatic)
     if(sq_type(self) != OT_CLASS) return sq_throwerror(v, _SC("new member only works with classes"));
     SQObjectPtr &key = v->GetUp(-3);
     if(sq_type(key) == OT_NULL) return sq_throwerror(v, _SC("null key"));
-    if(!v->NewSlotA(self,key,v->GetUp(-2),v->GetUp(-1),bstatic?true:false,false))
+    if(!v->NewSlotA(self,key,v->GetUp(-2),v->GetUp(-1),bstatic?true:false,false)) {
+        v->Pop(3);
         return SQ_ERROR;
+    }
+    v->Pop(3);
     return SQ_OK;
 }
 
@@ -958,8 +961,11 @@ SQRESULT sq_rawnewmember(HSQUIRRELVM v,SQInteger idx,SQBool bstatic)
     if(sq_type(self) != OT_CLASS) return sq_throwerror(v, _SC("new member only works with classes"));
     SQObjectPtr &key = v->GetUp(-3);
     if(sq_type(key) == OT_NULL) return sq_throwerror(v, _SC("null key"));
-    if(!v->NewSlotA(self,key,v->GetUp(-2),v->GetUp(-1),bstatic?true:false,true))
+    if(!v->NewSlotA(self,key,v->GetUp(-2),v->GetUp(-1),bstatic?true:false,true)) {
+        v->Pop(3);
         return SQ_ERROR;
+    }
+    v->Pop(3);
     return SQ_OK;
 }
 
@@ -1186,6 +1192,25 @@ SQRESULT sq_call(HSQUIRRELVM v,SQInteger params,SQBool retval,SQBool raiseerror)
     if(!v->_suspended)
         v->Pop(params);
     return sq_throwerror(v,_SC("call failed"));
+}
+
+SQRESULT sq_tailcall(HSQUIRRELVM v, SQInteger nparams)
+{
+	SQObjectPtr &res = v->GetUp(-(nparams + 1));
+	if (sq_type(res) != OT_CLOSURE) {
+		return sq_throwerror(v, _SC("only closure can be tail called"));
+	}
+	SQClosure *clo = _closure(res);
+	if (clo->_function->_bgenerator)
+	{
+		return sq_throwerror(v, _SC("generators cannot be tail called"));
+	}
+	
+	SQInteger stackbase = (v->_top - nparams) - v->_stackbase;
+	if (!v->TailCall(clo, stackbase, nparams)) {
+		return SQ_ERROR;
+	}
+	return SQ_TAILCALL_FLAG;
 }
 
 SQRESULT sq_suspendvm(HSQUIRRELVM v)

@@ -84,7 +84,10 @@ Chapter 1. Admin Guide
    The module is transparent for the configuration writer. It only needs
    to be loaded (tune the parameters if needed).
 
-   It works for SIP MESSAGE requests.
+   It also works for SIP MESSAGE or other requests that do not create a
+   call dialog -- record_route() must be used for them as well, the
+   headers are not going to be in the messages sent to the network, they
+   are needed to know local addresses used to communicate with each side.
 
 2. Dependencies
 
@@ -95,7 +98,8 @@ Chapter 1. Admin Guide
 
    The following modules must be loaded before this module:
      * rr module - server must perform record routing to ensure in-dialog
-       requests are encoded/decoded.
+       requests are encoded/decoded (it must be done for all initial
+       requests).
      * database module - to store the data for topology stripping and
        restoring.
 
@@ -159,7 +163,7 @@ modparam("topos", "mask_callid", 1)
 
    If set to 1, topoh module will bind to sanity module in order to
    perform sanity checks over received SIP request. Default sanity checks
-   are done. It is useful to check if received request is well formated
+   are done. It is useful to check if received request is well formatted
    before proceeding to encoding/decoding.
 
    Default value is 0 (do not bind to sanity module).

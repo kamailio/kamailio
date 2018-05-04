@@ -287,7 +287,7 @@ modparam("mediaproxy", "media_relay_avp", "$avp(media_relay)")
       <para>
         Indicates the type of ICE candidate that will be added to the SDP.
         It can take 3 values: 'none', 'low-priority' or 'high-priority'.
-        If 'none' is selected no candidate will be adeed to the SDP. If
+        If 'none' is selected no candidate will be added to the SDP. If
         'low-priority' is selected then a low priority candidate will be
         added and if 'high-priority' is selected a high priority one.
       </para>

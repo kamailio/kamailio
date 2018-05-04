@@ -64,7 +64,7 @@ MODULE_VERSION
 /*
  * timer interval length in seconds, tunable via modparam
  */
-#define RL_TIMER_INTERVAL 10
+#define PL_TIMER_INTERVAL 10
 
 /** SL API structure */
 sl_api_t slb;
@@ -107,7 +107,7 @@ static int load_source_mp = LOAD_SOURCE_CPU;
 static int * load_source;
 
 /* these only change in the mod_init() process -- no locking needed */
-static int timer_interval = RL_TIMER_INTERVAL;
+static int timer_interval = PL_TIMER_INTERVAL;
 int _pl_cfg_setpoint;        /* desired load, used when reading modparams */
 /* === */
 
@@ -565,7 +565,7 @@ static int pipe_push_direct(pl_pipe_t *pipe)
 			ret = 2;
 			break;
 		case PIPE_ALGO_TAILDROP:
-			ret = (pipe->counter <= pipe->limit * timer_interval) ? 1 : -1;
+			ret = (pipe->counter <= pipe->limit) ? 1 : -1;
 			break;
 		case PIPE_ALGO_RED:
 			if (pipe->load == 0)
@@ -700,7 +700,7 @@ static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
 	if(fixup_get_svalue(msg, (gparam_t*)p2alg, &alg)!=0
 			|| alg.s == 0)
 	{
-		LM_ERR("invalid algoritm parameter");
+		LM_ERR("invalid algorithm parameter");
 		return -1;
 	}
 

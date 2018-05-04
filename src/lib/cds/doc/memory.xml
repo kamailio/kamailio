@@ -12,7 +12,7 @@ together with SER's memory management and must work without it too, there are
 wrapper macros for memory allocation/deallocation.</para>
 
 <para>These macros were functions and it may change in the future, but macros
-are probably better - they allow better debuging than functions. There are
+are probably better - they allow better debugging than functions. There are
 defined another macros (see <xref linkend="cds_malloc_ptr"/>, <xref
 linkend="cds_free_ptr"/>), which point and will point to allocation/deallocation
 functions, thus they may be used as function pointers.

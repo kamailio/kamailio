@@ -119,6 +119,7 @@ int load_tm( struct tm_binds *tmb)
 #endif
 	tmb->t_suspend = t_suspend;
 	tmb->t_continue = t_continue;
+	tmb->t_continue_cb = t_continue_cb;
 	tmb->t_cancel_suspend = t_cancel_suspend;
 	tmb->t_get_reply_totag = t_get_reply_totag;
 	tmb->t_get_picked_branch = t_get_picked_branch;

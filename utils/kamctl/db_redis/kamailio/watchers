@@ -1,0 +1,2 @@
+id/int,presentity_uri/string,watcher_username/string,watcher_domain/string,event/string,status/int,reason/string,inserted_time/int,
+3

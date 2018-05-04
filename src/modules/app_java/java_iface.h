@@ -21,7 +21,7 @@
  */
 
 #ifndef __JAVA_IFACE_H__
-#define	__JAVA_IFACE_H__
+#define __JAVA_IFACE_H__
 
 #include "../../core/parser/msg_parser.h"
 
@@ -36,7 +36,6 @@ int j_s_st_exec_0(struct sip_msg *, char *, char *);
 int j_s_st_exec_1(struct sip_msg *, char *, char *, char *);
 
 int java_exec(struct sip_msg *, int, int, char *, char *, char *);
-
 
 
 #endif

@@ -39,7 +39,7 @@ typedef enum auth_diam_result {
 	INVALID_PASSWORD,   /*!< Invalid password */
 	USER_UNKNOWN,       /*!< User non existant */
 	ERROR,              /*!< Error occurred, a reply has been sent out,
-	                        return 0 to the openser core */
+	                        return 0 to the kamailio core */
 	AUTHORIZED,         /*!< Authorized. If returned by pre_auth,
 	                         no digest authorization necessary */
 	DO_AUTHORIZATION,   /*!< Can only be returned by pre_auth. */

@@ -25,14 +25,37 @@
 #define _MISC_RADIUS_H_
 
 /* Static attribute indexes */
-enum {SA_SERVICE_TYPE = 0, SA_USER_NAME, SA_SIP_AVP, SA_SIP_GROUP,
-      SA_SIP_URI_HOST, SA_STATIC_MAX};
+enum
+{
+	SA_SERVICE_TYPE = 0,
+	SA_USER_NAME,
+	SA_SIP_AVP,
+	SA_SIP_GROUP,
+	SA_SIP_URI_HOST,
+	SA_STATIC_MAX
+};
 
 /* Caller and callee value indexes */
-enum {RV_SIP_CALLER_AVPS = 0, RV_STATIC_MAX};
-enum {EV_SIP_CALLEE_AVPS = 0, EV_STATIC_MAX};
-enum {GV_GROUP_CHECK = 0, GV_STATIC_MAX};
-enum {UV_CALL_CHECK = 0, UV_STATIC_MAX};
+enum
+{
+	RV_SIP_CALLER_AVPS = 0,
+	RV_STATIC_MAX
+};
+enum
+{
+	EV_SIP_CALLEE_AVPS = 0,
+	EV_STATIC_MAX
+};
+enum
+{
+	GV_GROUP_CHECK = 0,
+	GV_STATIC_MAX
+};
+enum
+{
+	UV_CALL_CHECK = 0,
+	UV_STATIC_MAX
+};
 
 extern int use_sip_uri_host;
 extern int common_response;

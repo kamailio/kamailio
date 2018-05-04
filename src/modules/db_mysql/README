@@ -90,7 +90,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * mysql - the development libraries forthe Mysql database. In some
+     * mysql - the development libraries for the MySQL database. In some
        Linux distributions named "libmysqlclient-dev".
 
 3. Parameters
@@ -116,7 +116,7 @@ modparam("db_mysql", "ping_interval", 600)
 
 3.2. server_timezone (integer)
 
-   Control if kamailio convers a time to string using the local timezone
+   Control if kamailio converts a time to string using the local timezone
    or if MySQL will convert it using FROM_UNIXTIME. This option is useful
    if kamailio and the database are configured for different timezones.
 
@@ -187,7 +187,7 @@ modparam("db_mysql", "update_affected_found", 1)
 
 5. Installation
 
-   Because it dependes on an external library, the mysql module is not
+   Because it depends on an external library, the mysql module is not
    compiled and installed by default. You can use one of these options.
      * - edit the "Makefile" and remove "db_mysql" from "excluded_modules"
        list. Then follow the standard procedure to install Kamailio: "make

@@ -1,11 +1,11 @@
-#!/bin/bash 
+#!/bin/bash
 #
 # control tool for maintaining Kamailio databases
 #
 #===================================================================
 
 ### version for this script
-VERSION='4.4.0'
+VERSION='5.2.0'
 
 PATH=$PATH:/usr/local/sbin/
 
@@ -288,29 +288,6 @@ kamailio_pframework() #pars: <action>
 
 
 case $1 in
-	migrate)
-		if [ "$USED_DBENGINE" != "mysql" ] ; then
-			merr "$USED_DBENGINE don't support migrate operation"
-			exit 1
-		fi
-		if [ $# -ne 3 ] ; then
-			merr "migrate requires 2 parameters: old and new database"
-			exit 1
-		fi
-		# create new database
-		minfo "Creating new Database $3...."
-		NO_USER_INIT="yes"
-		kamailio_create $3
-		if [ "$?" -ne 0 ] ; then
-			echo "migrate: creating new database failed"
-			exit 1
-		fi
-		# migrate data
-		minfo "Migrating data from $2 to $3...."
-		migrate_db $2 $3
-		minfo "Migration successfully completed."
-		exit 0;
-		;;
 	copy)
 		# copy database to some other name
 		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then

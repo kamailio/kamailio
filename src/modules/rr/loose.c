@@ -60,6 +60,7 @@ static unsigned int routed_msg_id = 0;
 static int routed_msg_pid = 0;
 static str routed_params = {0,0};
 
+extern int rr_force_send_socket;
 
 /*!
  * \brief Test whether we are processing pre-loaded route set by looking at the To tag
@@ -736,7 +737,7 @@ static inline int after_strict(struct sip_msg* _m)
 			return RR_ERROR;
 		}
 	}
-	
+
 	/* run RR callbacks only if we have Route URI parameters */
 	if(routed_params.len > 0)
 		run_rr_callbacks( _m, &routed_params );
@@ -744,6 +745,30 @@ static inline int after_strict(struct sip_msg* _m)
 	return RR_DRIVEN;
 }
 
+
+static inline void rr_do_force_send_socket(sip_msg_t *_m, sip_uri_t *puri,
+		rr_t* rt, int rr2on)
+{
+	socket_info_t *si;
+
+	if ((si = grep_sock_info(&puri->host,
+				puri->port_no?puri->port_no:proto_default_port(puri->proto),
+				puri->proto)) != 0) {
+		set_force_socket(_m, si);
+	} else if ((si = grep_sock_info(&puri->host, puri->port_no,
+					puri->proto)) != 0) {
+		set_force_socket(_m, si);
+	} else {
+		if (enable_socket_mismatch_warning && rr2on) {
+			LM_WARN("no socket found to match second RR (%.*s)\n",
+					rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
+			if(!is_myself(puri)) {
+				LM_WARN("second RR uri is not myself (%.*s)\n",
+						rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
+			}
+		}
+	}
+}
 
 /*!
  * \brief Previous hop was a loose router, handle this case
@@ -759,7 +784,6 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	int res;
 	int status = RR_DRIVEN;
 	str uri;
-	struct socket_info *si;
 	int uri_is_myself;
 	int use_ob = 0;
 	str rparams;
@@ -795,6 +819,11 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			return FLOW_TOKEN_BROKEN;
 		}
 
+		if (rr_force_send_socket && !use_ob) {
+			if (!enable_double_rr || !is_2rr(&puri.params)) {
+				rr_do_force_send_socket(_m, &puri, rt, 0);
+			}
+		}
 		if (!rt->next) {
 			/* No next route in the same header, remove the whole header
 			 * field immediately
@@ -827,20 +856,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			}
 
 			if (!use_ob) {
-				if ((si = grep_sock_info( &puri.host, puri.port_no?puri.port_no:proto_default_port(puri.proto), puri.proto)) != 0) {
-					set_force_socket(_m, si);
-				} else if ((si = grep_sock_info( &puri.host, puri.port_no, puri.proto)) != 0) {
-					set_force_socket(_m, si);
-				} else {
-					if (enable_socket_mismatch_warning) {
-						LM_WARN("no socket found to match second RR (%.*s)\n",
-								rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
-						if(!is_myself(&puri)) {
-							LM_WARN("second RR uri is not myself (%.*s)\n",
-								rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
-						}
-					}
-				}
+				rr_do_force_send_socket(_m, &puri, rt, 1);
 			}
 
 			if (!rt->next) {

@@ -327,7 +327,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* check uri */
 		if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
 		{
-			LM_ERR("incomplet uri <%.*s>\n", uuid.len, uuid.s);
+			LM_ERR("incomplete uri <%.*s>\n", uuid.len, uuid.s);
 			goto error;
 		}
 		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
@@ -468,7 +468,7 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* check uri */
 		if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
 		{
-			LM_ERR("incomplet uri <%.*s>\n", uuid.len, uuid.s);
+			LM_ERR("incomplete uri <%.*s>\n", uuid.len, uuid.s);
 			goto error;
 		}
 		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
@@ -588,7 +588,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* check uri */
 		if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
 		{
-			LM_ERR("incomplet uri <%.*s>\n", uuid.len, uuid.s);
+			LM_ERR("incomplete uri <%.*s>\n", uuid.len, uuid.s);
 			goto error;
 		}
 		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))

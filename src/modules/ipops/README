@@ -302,7 +302,7 @@ switch($rc) {
 
    Return value:
      * 1 - successful operation
-     * negative value - error occured
+     * negative value - error occurred
 
    This function can be used from ALL ROUTES
 
@@ -326,7 +326,7 @@ switch($rc) {
 
    Return value:
      * 1 - successful operation
-     * negative value - error occured
+     * negative value - error occurred
 
    This function can be used from ALL ROUTES
 
@@ -354,7 +354,7 @@ switch($rc) {
 
    Return value:
      * 1 - successful operation
-     * negative value - error occured
+     * negative value - error occurred
 
    This function can be used from ALL ROUTES
 
@@ -483,7 +483,7 @@ if (!dns_sys_match_ip("myhost.com", "1.2.3.4")) {
    because the internal resolver targets to discover the first address to
    be used for relaying SIP traffic. Thus is better to use
    dns_sys_match_ip() if the host you want to check has many IP addresses,
-   in different address famililies (IPv4/6).
+   in different address families (IPv4/6).
 
    Parameters:
      * hostname - string or pseudo-variable containing the hostname. The

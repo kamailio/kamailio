@@ -413,7 +413,7 @@ static int jsdt_sr_exit (duk_context *J)
  */
 static int jsdt_sr_drop (duk_context *J)
 {
-	sr_kemi_core_drop(NULL);
+	sr_kemi_core_set_drop(NULL);
 	duk_eval_string_noresult(J, JSDT_SR_EXIT_EXEC_STR);
 	return 0;
 }

@@ -88,11 +88,11 @@ Chapter 1. Admin Guide
 
 3.1. retries (integer)
 
-   How many retries to attept to reconnect if connection to Postgres
+   How many retries to attempt to reconnect if connection to Postgres
    server becomes broken.
 
-   Default value is 2 (that means three attepts to submit the query, first
-   will triger the connection error and two more (the value of this
+   Default value is 2 (that means three attempts to submit the query,
+   first will trigger the connection error and two more (the value of this
    parameter) after resetting the connection).
 
    Example 1.1. Set retries parameter

@@ -13,7 +13,7 @@
 	    <function>xplog(level, format)</function>
 	</title>
 	<para>
-	    Print a formated message using LOG function.
+	    Print a formatted message using LOG function.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>

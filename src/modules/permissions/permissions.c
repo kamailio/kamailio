@@ -1030,7 +1030,7 @@ static sr_kemi_t sr_kemi_permissions_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("permissions"), str_init("allow_address"),
-		SR_KEMIP_INT, allow_source_address,
+		SR_KEMIP_INT, allow_address,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

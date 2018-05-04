@@ -191,6 +191,7 @@ int insert_subs_db(subs_t* s, int type)
 		contact_col, local_contact_col, version_col,socket_info_col,reason_col,
 		watcher_user_col, watcher_domain_col, updated_col, updated_winfo_col,
 		user_agent_col, flags_col;
+	str sval_empty = str_init("");
 
 	if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
 	{
@@ -353,7 +354,8 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[updated_col].val.int_val = s->updated;
 	query_vals[updated_winfo_col].val.int_val = s->updated_winfo;
 	query_vals[flags_col].val.int_val = s->flags;
-	query_vals[user_agent_col].val.str_val= s->user_agent;
+	query_vals[user_agent_col].val.str_val=
+		(s->user_agent.s && s->user_agent.len>0)?s->user_agent:sval_empty;
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
@@ -372,8 +374,8 @@ int insert_subs_db(subs_t* s, int type)
 
 int update_subs_db(subs_t* subs, int type)
 {
-	db_key_t query_cols[3], update_keys[8];
-	db_val_t query_vals[3], update_vals[8];
+	db_key_t query_cols[3], update_keys[10];
+	db_val_t query_vals[3], update_vals[10];
 	int n_update_cols= 0;
 	int n_query_cols = 0;
 
@@ -420,6 +422,19 @@ int update_subs_db(subs_t* subs, int type)
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->updated_winfo;
 		n_update_cols++;
+
+		update_keys[n_update_cols] = &str_contact_col;
+		update_vals[n_update_cols].type = DB1_STR;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.str_val = subs->contact;
+		n_update_cols++;
+
+		update_keys[n_update_cols] = &str_record_route_col;
+		update_vals[n_update_cols].type = DB1_STR;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.str_val = subs->record_route;
+		n_update_cols++;
+
 	}
 	if(type & LOCAL_TYPE)
 	{
@@ -1168,6 +1183,7 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 			LM_INFO("getting stored info\n");
 			goto error;
 		}
+		found = 1;
 		reason= subs.reason;
 	}
 
@@ -2208,20 +2224,20 @@ void update_db_subs_timer_dbnone(int no_lock)
 
 
 
-void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
+void update_db_subs_timer(db1_con_t *db,db_func_t *dbf, shtable_t hash_table,
 		int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
 {
-	db_key_t query_cols[24], update_cols[6];
-	db_val_t query_vals[24], update_vals[6];
+	db_key_t query_cols[25], update_cols[8];
+	db_val_t query_vals[25], update_vals[8];
 	db_op_t update_ops[1];
 	subs_t* del_s;
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
 		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col,
 		local_cseq_col, remote_cseq_col, expires_col, record_route_col,
 		contact_col, local_contact_col, version_col,socket_info_col,reason_col,
-		watcher_user_col, watcher_domain_col, updated_col, updated_winfo_col;
+		watcher_user_col, watcher_domain_col, updated_col, updated_winfo_col, user_agent_col;
 	int u_expires_col, u_local_cseq_col, u_remote_cseq_col, u_version_col,
-		u_reason_col, u_status_col;
+		u_reason_col, u_status_col, u_contact_col, u_record_route_col;
 	int i;
 	subs_t* s= NULL, *prev_s= NULL;
 	int n_query_cols= 0, n_update_cols= 0;
@@ -2352,6 +2368,11 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	query_vals[updated_winfo_col].nul = 0;
 	n_query_cols++;
 
+	query_cols[user_agent_col= n_query_cols]=&str_user_agent_col;
+	query_vals[user_agent_col].type = DB1_STR;
+	query_vals[user_agent_col].nul = 0;
+	n_query_cols++;
+
 	/* cols and values used for update */
 	update_cols[u_expires_col= n_update_cols]= &str_expires_col;
 	update_vals[u_expires_col].type = DB1_INT;
@@ -2383,6 +2404,16 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	update_vals[u_version_col].nul = 0;
 	n_update_cols++;
 
+	update_cols[u_contact_col= n_update_cols]= &str_contact_col;
+	update_vals[u_contact_col].type = DB1_STR;
+	update_vals[u_contact_col].nul = 0;
+	n_update_cols++;
+
+	update_cols[u_record_route_col= n_update_cols]= &str_record_route_col;
+	update_vals[u_record_route_col].type = DB1_STR;
+	update_vals[u_record_route_col].nul = 0;
+	n_update_cols++;
+
 	for(i=0; i<htable_size; i++)
 	{
 		if(!no_lock)
@@ -2409,6 +2440,8 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 				/* need for a struct free/destroy? */
 				if (del_s->contact.s)
 					shm_free(del_s->contact.s);
+				if (del_s->record_route.s)
+					shm_free(del_s->record_route.s);
 				shm_free(del_s);
 				continue;
 			}
@@ -2434,8 +2467,10 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 					update_vals[u_version_col].val.int_val= s->version;
 					update_vals[u_status_col].val.int_val= s->status;
 					update_vals[u_reason_col].val.str_val= s->reason;
+					update_vals[u_contact_col].val.str_val = s->contact;
+					update_vals[u_record_route_col].val.str_val = s->record_route;
 
-					if(dbf.update(db, query_cols, 0, query_vals, update_cols,
+					if(dbf->update(db, query_cols, 0, query_vals, update_cols,
 								update_vals, n_query_update, n_update_cols)< 0)
 					{
 						LM_ERR("updating in database\n");
@@ -2471,8 +2506,10 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 					query_vals[socket_info_col].val.str_val= s->sockinfo_str;
 					query_vals[updated_col].val.int_val = -1;
 					query_vals[updated_winfo_col].val.int_val = -1;
+					query_vals[user_agent_col].val.str_val = s->user_agent;
 
-					if(dbf.insert(db,query_cols,query_vals,n_query_cols )<0)
+
+					if(dbf->insert(db,query_cols,query_vals,n_query_cols )<0)
 					{
 						LM_ERR("unsuccessful sql insert\n");
 					} else {
@@ -2489,7 +2526,7 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 
 	update_vals[0].val.int_val= (int)time(NULL) - expires_offset;
 	update_ops[0]= OP_LT;
-	if(dbf.delete(db, update_cols, update_ops, update_vals, 1) < 0)
+	if(dbf->delete(db, update_cols, update_ops, update_vals, 1) < 0)
 	{
 		LM_ERR("deleting expired information from database\n");
 	}
@@ -2526,7 +2563,7 @@ void timer_db_update(unsigned int ticks,void *param)
 				LM_ERR("sql use table failed\n");
 				return;
 			}
-			update_db_subs_timer(pa_db, pa_dbf, subs_htable, shtable_size,
+			update_db_subs_timer(pa_db, &pa_dbf, subs_htable, shtable_size,
 					no_lock, handle_expired_subs);
 	}
 }

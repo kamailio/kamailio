@@ -100,7 +100,7 @@ extern str ul_xavp_contact_name;
 extern db1_con_t* ul_dbh;   /* Database connection handle */
 extern db_func_t ul_dbf;
 
-/* filter on load by server id */
+/* filter on load and during cleanup by server id */
 extern unsigned int ul_db_srvid;
 
 /*
@@ -111,7 +111,7 @@ extern unsigned int ul_db_srvid;
 #define CONTACT_PATH         (2)
 #define CONTACT_CALLID_ONLY  (3)
 
-extern int matching_mode;
+extern int ul_matching_mode;
 
 extern int ul_db_ops_ruid;
 

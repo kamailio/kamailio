@@ -137,7 +137,7 @@ static int mod_init( void )
 
 	/* parse the extra string, if any */
 	if (diameter_extra_str
-			&& (diameter_extra=parse_acc_extra(diameter_extra_str))==0 ) {
+			&& (diameter_extra=accb.parse_extra(diameter_extra_str))==0 ) {
 		LM_ERR("failed to parse diameter_extra param\n");
 		return -1;
 	}
@@ -191,11 +191,22 @@ static int child_init(int rank)
 }
 
 
+static void diam_destroy_extras(acc_extra_t *extra)
+{
+	acc_extra_t *foo;
+
+	while (extra) {
+		foo = extra;
+		extra = extra->next;
+		pkg_free(foo);
+	}
+}
+
 static void destroy(void)
 {
 	close_tcp_connection(sockfd);
 	if (diameter_extra)
-		destroy_extras( diameter_extra);
+		diam_destroy_extras(diameter_extra);
 }
 
 /************************** FIXUP functions ****************************/
@@ -287,7 +298,7 @@ int acc_diam_init(acc_extra_t *leg_info)
 }
 
 
-inline unsigned long diam_status(struct sip_msg *rq, int code)
+int diam_status(struct sip_msg *rq, int code)
 {
 	if ((rq->REQ_METHOD==METHOD_INVITE || rq->REQ_METHOD==METHOD_ACK)
 			&& code>=200 && code<300)

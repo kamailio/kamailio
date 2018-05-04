@@ -59,7 +59,7 @@ typedef struct _sca_call_info sca_call_info;
 
 extern const str SCA_CALL_INFO_HEADER_STR;
 
-int sca_call_info_update(sip_msg_t *, char *, str*, str*);
+int sca_call_info_update(sip_msg_t *, int, str*, str*);
 void sca_call_info_sl_reply_cb(void *);
 void sca_call_info_ack_cb(struct cell *, int, struct tmcb_params *);
 

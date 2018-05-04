@@ -513,7 +513,7 @@ modparam("snmpstats", "export_registrar", 1)
 	The specifics of what is returned depends on how the system was configured. If
 	your NetSNMP installation was installed from an RPM (or another packaged
 	version), then there is a good chance that net-snmp-config will return
-	something unecessarily longer.  It is highly recommended you install NetSNMP
+	something unnecessarily longer.  It is highly recommended you install NetSNMP
 	from source to avoid bringing in excessive dependencies to the SNMPStats
 	module.
 	</para>
@@ -606,7 +606,7 @@ modparam("snmpstats", "export_registrar", 1)
 	Testing for a proper Configuration
 	</title>
 	<para>
-	As a quick test to make sure that the SNMPStats module sub-agent can succesfully
+	As a quick test to make sure that the SNMPStats module sub-agent can successfully
 	connect to the NetSNMP Master agent, start snmpd with the following:
 
 	<programlisting format="linespecific">

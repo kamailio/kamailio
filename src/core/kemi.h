@@ -37,6 +37,10 @@
 
 #define SR_KEMI_PARAMS_MAX	6
 
+extern str kemi_onsend_route_callback;
+extern str kemi_reply_route_callback;
+extern str kemi_event_route_callback;
+
 typedef struct sr_kemi {
 	str mname; /* sub-module name */
 	str fname; /* function name */
@@ -124,6 +128,6 @@ run_act_ctx_t* sr_kemi_act_ctx_get(void);
 str *sr_kemi_param_map_get_name(int ptype);
 str *sr_kemi_param_map_get_params(int *ptypes);
 
-int sr_kemi_core_drop(sip_msg_t *msg);
+int sr_kemi_core_set_drop(sip_msg_t *msg);
 
 #endif

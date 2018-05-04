@@ -606,7 +606,7 @@ int delete_scontact(struct ucontact* _c) {
 }
 
 /* function to convert contact aor to only have data after @ - ie strip user part */
-inline int aor_to_contact(str* aor, str* contact) {
+int aor_to_contact(str* aor, str* contact) {
     char* p;
     int ret = 0; //success
 

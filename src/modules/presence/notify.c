@@ -79,6 +79,7 @@ str str_watcher_domain_col = str_init("watcher_domain");
 str str_event_id_col = str_init("event_id");
 str str_event_col = str_init("event");
 str str_etag_col = str_init("etag");
+str str_ruid_col = str_init("ruid");
 str str_from_tag_col = str_init("from_tag");
 str str_to_tag_col = str_init("to_tag");
 str str_callid_col = str_init("callid");

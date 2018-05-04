@@ -214,7 +214,7 @@ if (is_method("REGISTER")) {
        pseudo-variable.
      * domain - Name of table that should be used for looking up new
        contacts for r-uri.
-     * uri (optiona) - uri for which to do lookup for new destinations.
+     * uri (optional) - uri for which to do lookup for new destinations.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 

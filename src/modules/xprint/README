@@ -94,7 +94,7 @@ Chapter 1. Admin Guide
      * %ft : 'From' tag
      * %Hn : host's hostname (if system hostname is FQDN, part before
        first .)
-     * %Hd : host's domain (if system hosntame is FQDN, part behind first
+     * %Hd : host's domain (if system hostname is FQDN, part behind first
        .)
      * %Hf : host's FQDN hostname
      * %Hi : host's IP address
@@ -133,7 +133,7 @@ Chapter 1. Admin Guide
        headers of that type are printed.
        The module should identify most of compact header names (the ones
        recognized by ser which should be all at this moment), if not, the
-       compact form has to be specified explicitely. It is recommended to
+       compact form has to be specified explicitly. It is recommended to
        use dedicated specifiers for headers (e.g., %ua for user agent
        header), if they are available -- they are faster.
      * %<name[N]> : print the value of AVP optionally %indexed by the [N]
@@ -147,8 +147,8 @@ Chapter 1. Admin Guide
        extend select framework calls).
      * %| or %(space) : end of %@select.framework identifier. If you need
        to concatenate select framework call and another non-whitespace
-       literal, you need to explicitelly set the end of the select
-       framework identifier.
+       literal, you need to explicitly set the end of the select framework
+       identifier.
        E.g. %@ruri.user%|@%@ruri.host converts all featured request uri
        into user@host form only.
 
@@ -174,7 +174,7 @@ modparam("xprint", "buf_size", 8192)
 
 4.1.  xplog(level, format)
 
-   Print a formated message using LOG function.
+   Print a formatted message using LOG function.
 
    Meaning of the parameters is as follows:
      * level - The level that will be used in LOG function. It can be:

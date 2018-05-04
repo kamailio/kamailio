@@ -511,8 +511,8 @@ my $phonenumbers = new Kamailio::Utils::PhoneNumbers(
 $canonical = $phonenumbers->canonicalForm("07612034567");
 $number    = $phonenumbers->dialNumber("+497612034567");]]></screen>
     <para>
-      A telphone number starting with a plus sign and containing all dial
-      prefixes is in canonical form. This is usally not the number to dial
+      A telephone number starting with a plus sign and containing all dial
+      prefixes is in canonical form. This is usually not the number to dial
       at any location, so the dialing number depends on the context of the
       user/system.
     </para>
@@ -533,7 +533,7 @@ $number    = $phonenumbers->dialNumber("+497612034567");]]></screen>
       (area) 4514 (pbx) and 829, the number itself =&gt; +497614514829
     </para>
     <para>
-      To get the dialing number from a canonical phone number, we substract
+      To get the dialing number from a canonical phone number, we subtract
       all general prefixes until we have something
     </para>
     <para>
@@ -595,8 +595,8 @@ my $conf = new Kamailio::LDAPUtils::LDAPConf();]]></screen>
       role="code"><![CDATA[/etc/openldap/ldap.conf]]></literal>
     </para>
     <para>
-      When used from an account with sufficient privilegs (e.g. root), the
-      ldap manager passwort is also retrieved.
+      When used from an account with sufficient privileges (e.g. root), the
+      ldap manager password is also retrieved.
     </para>
     <section id="ID-77bbb24cd07a34db564171c3072c9f8c"><title>Constructor new()</title>
       <para>
@@ -624,7 +624,7 @@ my $conf = new Kamailio::LDAPUtils::LDAPConf();]]></screen>
       <para>
 	Returns an uri to contact the ldap server. When there is no
 	ldap_uri in the configuration file, an <literal
-	role="code"><![CDATA[ldap:]]></literal> uri is constucted from host
+	role="code"><![CDATA[ldap:]]></literal> uri is constructed from host
 	and port.
       </para>
     </section>
@@ -634,7 +634,7 @@ my $conf = new Kamailio::LDAPUtils::LDAPConf();]]></screen>
       </para>
       <para>
 	Note that the <literal role="code"><![CDATA[rootbindpw]]></literal>
-	is only available when the current account has sufficient privilegs
+	is only available when the current account has sufficient privileges
 	to access <literal
 	role="code"><![CDATA[/etc/openldap/ldap.secret]]></literal>.
       </para>
@@ -712,7 +712,7 @@ my @rows = $ldap->search(
       <para>
 	perform an ldap search, return the dn of the first matching
 	directory entry, unless a specific attribute has been requested, in
-	wich case the values(s) fot this attribute are returned.
+	which case the values(s) for this attribute are returned.
       </para>
       <para>
 	When the first argument (conf) is a <literal
@@ -779,7 +779,7 @@ my @rows = $ldap->search(
         <para>
 	  When some <literal
 	  role="code"><![CDATA[requested_attributes]]></literal> are given,
-	  return an array with those attibutes. When multiple entries match
+	  return an array with those attributes. When multiple entries match
 	  the query, the attribute lists are concatenated.
         </para>
       </section>
@@ -890,7 +890,7 @@ my @rows = $ldap->search(
     <para>
       This package handles virtual tables and is used by the Kamailio::VDB
       class to store information about valid tables. The package is not
-      inteded for end user access.
+      intended for end user access.
     </para>
     <section id="ID-a42ddb87d67983028cf8d1b7d6f46baa"><title>new()</title>
       <screen><![CDATA[Constructs a new VTab object]]></screen>

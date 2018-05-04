@@ -302,7 +302,7 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 
 4.1.  http_async_query(url, route_name)
 
-   Sends HTTP(S) request asyncronously to the URL given in “url”
+   Sends HTTP(S) request asynchronously to the URL given in “url”
    parameter, which is a string that may contain pseudo variables.
 
    Parameter “route_name” defines the route to be executed upon reception

@@ -215,7 +215,7 @@ int msrp_cmap_save(msrp_frame_t *mf)
 						ip_addr2a(&mf->tcpinfo->rcv->src_ip),
 						(int)mf->tcpinfo->rcv->src_port);
 	if(srcaddr.len<0 || srcaddr.len>=MSRP_SBUF_SIZE) {
-		LM_ERR("failure or address lenght too big (%d)\n", srcaddr.len);
+		LM_ERR("failure or address length too big (%d)\n", srcaddr.len);
 		return -1;
 	}
 	srcaddr.s = sbuf;

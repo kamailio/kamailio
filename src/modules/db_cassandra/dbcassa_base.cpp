@@ -39,8 +39,8 @@
 #include <transport/TTransportUtils.h>
 
 extern "C" {
-#include "../../timer.h"
-#include "../../mem/mem.h"
+#include "../../core/timer.h"
+#include "../../core/mem/mem.h"
 #include "dbcassa_table.h"
 }
 
@@ -75,7 +75,8 @@ struct cassa_con {
 
 /*!
  * \brief Open connection to Cassandra cluster
- * \param db_id
+ * \param id database id
+ * \return zero on succes
  */
 oac::CassandraClient* dbcassa_open(struct db_id* id)
 {
@@ -133,7 +134,7 @@ oac::CassandraClient* dbcassa_open(struct db_id* id)
 
 /*!
  * \brief Create new DB connection structure
- * \param db_id
+ * \param id database id
  */
 void* db_cassa_new_connection(struct db_id* id)
 {
@@ -179,7 +180,7 @@ void* db_cassa_new_connection(struct db_id* id)
 
 /*!
  * \brief Close Cassandra connection
- * \param CassandraConnection
+ * \param con Cassandra connection
  */
 void dbcassa_close(oac::CassandraClient* con)
 {
@@ -190,7 +191,7 @@ void dbcassa_close(oac::CassandraClient* con)
 
 /*!
  * \brief Close the connection and release memory
- * \param connection
+ * \param con connection structure
  */
 void db_cassa_free_connection(struct pool_con* con)
 {
@@ -205,7 +206,7 @@ void db_cassa_free_connection(struct pool_con* con)
 
 /*!
  * \brief Reconnect to Cassandra cluster
- * \param connection
+ * \param con connection structure
  */
 void dbcassa_reconnect(struct cassa_con* con)
 {
@@ -309,6 +310,9 @@ static int cassa_convert_result(db_key_t qcol, std::vector<oac::ColumnOrSuperCol
 				return -1;
 			}
 			break;
+		default:
+			LM_ERR("unknown data type\n");
+			return -1;
 	}
 	return 0;
 }
@@ -334,6 +338,7 @@ static char* dbval_to_string(db_val_t dbval, char* pk)
 						   break;
 		case DB1_DATETIME:pk+= sprintf(pk, "%ld", (long int)dbval.val.time_val);
 						  break;
+		default: LM_ERR("unknown data type\n");
 	}
 	return pk;
 }
@@ -592,6 +597,7 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
  *
  * \param _cql_res  handle for the CQLResult
  * \param _r result set for storage
+ * \param tbc cassandra database table
  * \return zero on success, negative value on failure
  */
 int cql_get_columns(oac::CqlResult& _cql_res, db1_res_t* _r, dbcassa_table_p tbc)
@@ -716,6 +722,9 @@ static int cassa_convert_result_raw(db_val_t* sr_cell, str *col_val) {
 				return -1;
 			}
 			break;
+		default:
+			LM_ERR("unknown data type\n");
+			return -1;
 	}
 	return 0;
 }
@@ -1149,7 +1158,8 @@ int db_cassa_modify(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 								break;
 				case DB1_BLOB:	value = std::string(_uv[i].val.blob_val.s, _uv[i].val.blob_val.len);
 								break;
-				case DB1_DATETIME:	unsigned int exp_time = (unsigned int)_uv[i].val.time_val;
+				case DB1_DATETIME: { /* own block because we declare a variable here */
+					unsigned int exp_time = (unsigned int)_uv[i].val.time_val;
 									out << exp_time;
 									value = out.str();
 									if(ts_col_name.s && ts_col_name.len==_uk[i]->len &&
@@ -1157,7 +1167,14 @@ int db_cassa_modify(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 										ts = exp_time;
 										LM_DBG("Found timestamp col [%.*s]\n", ts_col_name.len, ts_col_name.s);
 									}
-									break;
+				} break;
+				case DB1_UNKNOWN:
+									LM_ERR("unknown data type\n");
+									/* needs probably more errors handling, free at least the memory */
+									if(ts_col_name.s)
+										pkg_free(ts_col_name.s);
+									ts_col_name.s = 0;
+									return -1;
 			}
 			if (cont)
 				continue;

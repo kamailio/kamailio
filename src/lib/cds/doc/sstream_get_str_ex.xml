@@ -31,7 +31,7 @@
 <refsect1><title>Description</title>
 <para>Returns data buffer of requested length (<parameter>len</parameter>). If
 there is not enough data to read (less than <parameter>len</parameter> bytes), 
-the function returns error. The memory can NOT be freed becausse it is a part of
+the function returns error. The memory can NOT be freed because it is a part of
 input buffer!
 <!-- detailed description -->
 </para>

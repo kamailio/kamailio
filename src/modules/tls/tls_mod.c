@@ -131,6 +131,23 @@ tls_domain_t srv_defaults = {
 };
 
 
+#ifndef OPENSSL_NO_ENGINE
+
+typedef struct tls_engine {
+        str engine;
+        str engine_config;
+        str engine_algorithms;
+} tls_engine_t;
+#include <openssl/conf.h>
+#include <openssl/engine.h>
+
+static ENGINE *ksr_tls_engine;
+static tls_engine_t tls_engine_settings = {
+	STR_STATIC_INIT("NONE"),
+	STR_STATIC_INIT("NONE"),
+	STR_STATIC_INIT("ALL"),
+};
+#endif /* OPENSSL_NO_ENGINE */
 /*
  * Default settings for client domains when using external config file
  */
@@ -189,6 +206,11 @@ static param_export_t params[] = {
 	{"crl",                 PARAM_STR,    &default_tls_cfg.crl          },
 	{"cipher_list",         PARAM_STR,    &default_tls_cfg.cipher_list  },
 	{"connection_timeout",  PARAM_INT,    &default_tls_cfg.con_lifetime },
+#ifndef OPENSSL_NO_ENGINE
+	{"engine",              PARAM_STR,    &tls_engine_settings.engine  },
+	{"engine_config",       PARAM_STR,    &tls_engine_settings.engine_config },
+	{"engine_algorithms",   PARAM_STR,    &tls_engine_settings.engine_algorithms },
+#endif /* OPENSSL_NO_ENGINE */
 	{"tls_log",             PARAM_INT,    &default_tls_cfg.log          },
 	{"tls_debug",           PARAM_INT,    &default_tls_cfg.debug        },
 	{"session_cache",       PARAM_INT,    &default_tls_cfg.session_cache},
@@ -361,10 +383,15 @@ error:
 }
 
 
+#ifndef OPENSSL_NO_ENGINE
+static int tls_engine_init();
+int tls_fix_engine_keys(tls_domains_cfg_t*, tls_domain_t*, tls_domain_t*);
+#endif
 static int mod_child(int rank)
 {
 	if (tls_disable || (tls_domains_cfg==0))
 		return 0;
+
 	/* fix tls config only from the main proc/PROC_INIT., when we know
 	 * the exact process number and before any other process starts*/
 	if (rank == PROC_INIT){
@@ -378,6 +405,21 @@ static int mod_child(int rank)
 				return -1;
 		}
 	}
+#ifndef OPENSSL_NO_ENGINE
+	/*
+	 * after the child is fork()ed we go through the TLS domains
+	 * and fix up private keys from engine
+	 */
+	if (!strncmp(tls_engine_settings.engine.s, "NONE", 4)) return 0;
+
+	if (rank > 0) {
+		if (tls_engine_init() < 0)
+			return -1;
+		if (tls_fix_engine_keys(*tls_domains_cfg, &srv_defaults, &cli_defaults)<0)
+			return -1;
+		LM_INFO("OpenSSL Engine loaded private keys in child: %d\n", rank);
+	}
+#endif
 	return 0;
 }
 
@@ -496,3 +538,54 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 
 	return 0;
 }
+
+
+
+#ifndef OPENSSL_NO_ENGINE
+/*
+ * initialize OpenSSL engine in child process
+ * PKCS#11 libraries are not guaranteed to be fork() safe
+ *
+ */
+static int tls_engine_init()
+{
+	LM_DBG("With OpenSSL engine support\n");
+	if (strncmp(tls_engine_settings.engine.s, "NONE", 4)) {
+		int err = 0;
+		ENGINE_load_builtin_engines();
+		OPENSSL_load_builtin_modules();
+		if (strncmp(tls_engine_settings.engine_config.s, "NONE", 4)) {
+			err = CONF_modules_load_file(tls_engine_settings.engine_config.s, "kamailio", 0);
+			if (!err) {
+				LM_ERR("OpenSSL failed to load ENGINE configuration file: %*s\n", tls_engine_settings.engine_config.len, tls_engine_settings.engine_config.s);
+				goto error;
+			}
+		}
+		ksr_tls_engine = ENGINE_by_id(tls_engine_settings.engine.s);
+		if (!ksr_tls_engine) {
+			LM_ERR("OpenSSL failed to obtain ENGINE: %*s\n", tls_engine_settings.engine_config.len, tls_engine_settings.engine_config.s);
+			goto error;
+		}
+		err = ENGINE_init(ksr_tls_engine);
+		if (!err) {
+			LM_ERR("OpenSSL ENGINE_init() failed\n");
+			goto error;
+		}
+		if (strncmp(tls_engine_settings.engine_algorithms.s, "NONE", 4)) {
+			err = ENGINE_set_default_string(ksr_tls_engine, tls_engine_settings.engine_algorithms.s);
+			if (!err) {
+				LM_ERR("OpenSSL ENGINE could not set algorithms\n");
+				goto error;
+			}
+		}
+		LM_INFO("OpenSSL engine %*s initialized\n", tls_engine_settings.engine.len, tls_engine_settings.engine.s);
+	}
+	return 0;
+error:
+	return -1;
+}
+
+EVP_PKEY *tls_engine_private_key(const char* key_id) {
+	return ENGINE_load_private_key(ksr_tls_engine, key_id, NULL, NULL);
+}
+#endif

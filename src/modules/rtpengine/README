@@ -62,72 +62,74 @@ Richard Fuchs
 
               4.1. rtpengine_sock (string)
               4.2. rtpengine_disable_tout (integer)
-              4.3. rtpengine_tout_ms (integer)
-              4.4. rtpengine_allow_op (integer)
-              4.5. queried_nodes_limit (integer)
-              4.6. rtpengine_retr (integer)
-              4.7. extra_id_pv (string)
-              4.8. setid_avp (string)
-              4.9. force_send_interface (string)
-              4.10. read_sdp_pv (string)
-              4.11. write_sdp_pv (string)
-              4.12. rtp_inst_pvar (string)
-              4.13. hash_table_size (integer)
-              4.14. hash_table_tout (integer)
-              4.15. db_url (string)
-              4.16. table_name (string)
-              4.17. setid_col (string)
-              4.18. url_col (string)
-              4.19. weight_col (string)
-              4.20. disabled_col (string)
-              4.21. setid_default (integer)
-              4.22. mos_min_pv (string)
-              4.23. mos_min_at_pv (string)
-              4.24. mos_min_packetloss_pv (string)
-              4.25. mos_min_jitter_pv (string)
-              4.26. mos_min_roundtrip_pv (string)
-              4.27. mos_max_pv (string)
-              4.28. mos_max_at_pv (string)
-              4.29. mos_max_packetloss_pv (string)
-              4.30. mos_max_jitter_pv (string)
-              4.31. mos_max_roundtrip_pv (string)
-              4.32. mos_average_pv (string)
-              4.33. mos_average_packetloss_pv (string)
-              4.34. mos_average_jitter_pv (string)
-              4.35. mos_average_roundtrip_pv (string)
-              4.36. mos_average_samples_pv (string)
-              4.37. mos_A_label_pv (string)
-              4.38. mos_min_A_pv (string)
-              4.39. mos_min_at_A_pv (string)
-              4.40. mos_min_packetloss_A_pv (string)
-              4.41. mos_min_jitter_A_pv (string)
-              4.42. mos_min_roundtrip_A_pv (string)
-              4.43. mos_max_A_pv (string)
-              4.44. mos_max_at_A_pv (string)
-              4.45. mos_max_packetloss_A_pv (string)
-              4.46. mos_max_jitter_A_pv (string)
-              4.47. mos_max_roundtrip_A_pv (string)
-              4.48. mos_average_A_pv (string)
-              4.49. mos_average_packetloss_A_pv (string)
-              4.50. mos_average_jitter_A_pv (string)
-              4.51. mos_average_roundtrip_A_pv (string)
-              4.52. mos_average_samples_A_pv (string)
-              4.53. mos_B_label_pv (string)
-              4.54. mos_min_B_pv (string)
-              4.55. mos_min_at_B_pv (string)
-              4.56. mos_min_packetloss_B_pv (string)
-              4.57. mos_min_jitter_B_pv (string)
-              4.58. mos_min_roundtrip_B_pv (string)
-              4.59. mos_max_B_pv (string)
-              4.60. mos_max_at_B_pv (string)
-              4.61. mos_max_packetloss_B_pv (string)
-              4.62. mos_max_jitter_B_pv (string)
-              4.63. mos_max_roundtrip_B_pv (string)
-              4.64. mos_average_B_pv (string)
-              4.65. mos_average_packetloss_B_pv (string)
-              4.66. mos_average_jitter_B_pv (string)
-              4.67. mos_average_roundtrip_B_pv (string)
-              4.68. mos_average_samples_B_pv (string)
+              4.3. aggressive_redetection (integer)
+              4.4. rtpengine_tout_ms (integer)
+              4.5. rtpengine_allow_op (integer)
+              4.6. queried_nodes_limit (integer)
+              4.7. rtpengine_retr (integer)
+              4.8. extra_id_pv (string)
+              4.9. setid_avp (string)
+              4.10. force_send_interface (string)
+              4.11. read_sdp_pv (string)
+              4.12. write_sdp_pv (string)
+              4.13. rtp_inst_pvar (string)
+              4.14. hash_table_size (integer)
+              4.15. hash_table_tout (integer)
+              4.16. db_url (string)
+              4.17. table_name (string)
+              4.18. setid_col (string)
+              4.19. url_col (string)
+              4.20. weight_col (string)
+              4.21. disabled_col (string)
+              4.22. setid_default (integer)
+              4.23. mos_min_pv (string)
+              4.24. mos_min_at_pv (string)
+              4.25. mos_min_packetloss_pv (string)
+              4.26. mos_min_jitter_pv (string)
+              4.27. mos_min_roundtrip_pv (string)
+              4.28. mos_max_pv (string)
+              4.29. mos_max_at_pv (string)
+              4.30. mos_max_packetloss_pv (string)
+              4.31. mos_max_jitter_pv (string)
+              4.32. mos_max_roundtrip_pv (string)
+              4.33. mos_average_pv (string)
+              4.34. mos_average_packetloss_pv (string)
+              4.35. mos_average_jitter_pv (string)
+              4.36. mos_average_roundtrip_pv (string)
+              4.37. mos_average_samples_pv (string)
+              4.38. mos_A_label_pv (string)
+              4.39. mos_min_A_pv (string)
+              4.40. mos_min_at_A_pv (string)
+              4.41. mos_min_packetloss_A_pv (string)
+              4.42. mos_min_jitter_A_pv (string)
+              4.43. mos_min_roundtrip_A_pv (string)
+              4.44. mos_max_A_pv (string)
+              4.45. mos_max_at_A_pv (string)
+              4.46. mos_max_packetloss_A_pv (string)
+              4.47. mos_max_jitter_A_pv (string)
+              4.48. mos_max_roundtrip_A_pv (string)
+              4.49. mos_average_A_pv (string)
+              4.50. mos_average_packetloss_A_pv (string)
+              4.51. mos_average_jitter_A_pv (string)
+              4.52. mos_average_roundtrip_A_pv (string)
+              4.53. mos_average_samples_A_pv (string)
+              4.54. mos_B_label_pv (string)
+              4.55. mos_min_B_pv (string)
+              4.56. mos_min_at_B_pv (string)
+              4.57. mos_min_packetloss_B_pv (string)
+              4.58. mos_min_jitter_B_pv (string)
+              4.59. mos_min_roundtrip_B_pv (string)
+              4.60. mos_max_B_pv (string)
+              4.61. mos_max_at_B_pv (string)
+              4.62. mos_max_packetloss_B_pv (string)
+              4.63. mos_max_jitter_B_pv (string)
+              4.64. mos_max_roundtrip_B_pv (string)
+              4.65. mos_average_B_pv (string)
+              4.66. mos_average_packetloss_B_pv (string)
+              4.67. mos_average_jitter_B_pv (string)
+              4.68. mos_average_roundtrip_B_pv (string)
+              4.69. mos_average_samples_B_pv (string)
+              4.70. control_cmd_tos (integer)
 
         5. Functions
 
@@ -158,87 +160,89 @@ Richard Fuchs
 
    1.1. Set rtpengine_sock parameter
    1.2. Set rtpengine_disable_tout parameter
-   1.3. Set rtpengine_tout_ms parameter
-   1.4. Set rtpengine_allow_op parameter
-   1.5. Set queried_nodes_limit parameter
-   1.6. Set rtpengine_retr parameter
-   1.7. Set extra_id_pv parameter
-   1.8. Set setid_avp parameter
-   1.9. Set force_send_interface parameter
-   1.10. Set read_sdp_pv parameter
-   1.11. Set write_sdp_pv parameter
-   1.12. Set rtp_inst_pvar parameter
-   1.13. Set hash_table_size parameter
-   1.14. Set hash_table_tout parameter
-   1.15. Set db_url parameter
-   1.16. Set table_name parameter
-   1.17. Setup rtpengine table
-   1.18. Set setid_col parameter
-   1.19. Set url_col parameter
-   1.20. Set weight_col parameter
-   1.21. Set disabled_col parameter
-   1.22. Set setid_default parameter
-   1.23. Set mos_min_pv parameter
-   1.24. Set mos_min_at_pv parameter
-   1.25. Set mos_min_packetloss_pv parameter
-   1.26. Set mos_min_jitter_pv parameter
-   1.27. Set mos_min_roundtrip_pv parameter
-   1.28. Set mos_max_pv parameter
-   1.29. Set mos_max_at_pv parameter
-   1.30. Set mos_max_packetloss_pv parameter
-   1.31. Set mos_max_jitter_pv parameter
-   1.32. Set mos_max_roundtrip_pv parameter
-   1.33. Set mos_average_pv parameter
-   1.34. Set mos_average_packetloss_pv parameter
-   1.35. Set mos_average_jitter_pv parameter
-   1.36. Set mos_average_roundtrip_pv parameter
-   1.37. Set mos_average_samples_pv parameter
-   1.38. Set mos_A_label_pv parameter
-   1.39. Set mos_min_A_pv parameter
-   1.40. Set mos_min_at_A_pv parameter
-   1.41. Set mos_min_packetloss_A_pv parameter
-   1.42. Set mos_min_jitter_A_pv parameter
-   1.43. Set mos_min_roundtrip_A_pv parameter
-   1.44. Set mos_max_A_pv parameter
-   1.45. Set mos_max_at_A_pv parameter
-   1.46. Set mos_max_packetloss_A_pv parameter
-   1.47. Set mos_max_jitter_A_pv parameter
-   1.48. Set mos_max_roundtrip_A_pv parameter
-   1.49. Set mos_average_A_pv parameter
-   1.50. Set mos_average_packetloss_A_pv parameter
-   1.51. Set mos_average_jitter_A_pv parameter
-   1.52. Set mos_average_roundtrip_A_pv parameter
-   1.53. Set mos_average_samples_A_pv parameter
-   1.54. Set mos_B_label_pv parameter
-   1.55. Set mos_min_B_pv parameter
-   1.56. Set mos_min_at_B_pv parameter
-   1.57. Set mos_min_packetloss_B_pv parameter
-   1.58. Set mos_min_jitter_B_pv parameter
-   1.59. Set mos_min_roundtrip_B_pv parameter
-   1.60. Set mos_max_B_pv parameter
-   1.61. Set mos_max_at_B_pv parameter
-   1.62. Set mos_max_packetloss_B_pv parameter
-   1.63. Set mos_max_jitter_B_pv parameter
-   1.64. Set mos_max_roundtrip_B_pv parameter
-   1.65. Set mos_average_B_pv parameter
-   1.66. Set mos_average_packetloss_B_pv parameter
-   1.67. Set mos_average_jitter_B_pv parameter
-   1.68. Set mos_average_roundtrip_B_pv parameter
-   1.69. Set mos_average_samples_B_pv parameter
-   1.70. set_rtpengine_set usage
-   1.71. rtpengine_offer usage
-   1.72. rtpengine_answer usage
-   1.73. rtpengine_delete usage
-   1.74. rtpengine_query usage
-   1.75. rtpengine_manage usage
-   1.76. start_recording usage
-   1.77. stop_recording usage
-   1.78. $rtpstat Usage
-   1.79. rtpengine.reload usage
-   1.80. rtpengine.enable usage
-   1.81. rtpengine.show usage
-   1.82. rtpengine.ping usage
-   1.83. rtpengine.get_hash_total usage
+   1.3. Set aggressive_redetection parameter
+   1.4. Set rtpengine_tout_ms parameter
+   1.5. Set rtpengine_allow_op parameter
+   1.6. Set queried_nodes_limit parameter
+   1.7. Set rtpengine_retr parameter
+   1.8. Set extra_id_pv parameter
+   1.9. Set setid_avp parameter
+   1.10. Set force_send_interface parameter
+   1.11. Set read_sdp_pv parameter
+   1.12. Set write_sdp_pv parameter
+   1.13. Set rtp_inst_pvar parameter
+   1.14. Set hash_table_size parameter
+   1.15. Set hash_table_tout parameter
+   1.16. Set db_url parameter
+   1.17. Set table_name parameter
+   1.18. Setup rtpengine table
+   1.19. Set setid_col parameter
+   1.20. Set url_col parameter
+   1.21. Set weight_col parameter
+   1.22. Set disabled_col parameter
+   1.23. Set setid_default parameter
+   1.24. Set mos_min_pv parameter
+   1.25. Set mos_min_at_pv parameter
+   1.26. Set mos_min_packetloss_pv parameter
+   1.27. Set mos_min_jitter_pv parameter
+   1.28. Set mos_min_roundtrip_pv parameter
+   1.29. Set mos_max_pv parameter
+   1.30. Set mos_max_at_pv parameter
+   1.31. Set mos_max_packetloss_pv parameter
+   1.32. Set mos_max_jitter_pv parameter
+   1.33. Set mos_max_roundtrip_pv parameter
+   1.34. Set mos_average_pv parameter
+   1.35. Set mos_average_packetloss_pv parameter
+   1.36. Set mos_average_jitter_pv parameter
+   1.37. Set mos_average_roundtrip_pv parameter
+   1.38. Set mos_average_samples_pv parameter
+   1.39. Set mos_A_label_pv parameter
+   1.40. Set mos_min_A_pv parameter
+   1.41. Set mos_min_at_A_pv parameter
+   1.42. Set mos_min_packetloss_A_pv parameter
+   1.43. Set mos_min_jitter_A_pv parameter
+   1.44. Set mos_min_roundtrip_A_pv parameter
+   1.45. Set mos_max_A_pv parameter
+   1.46. Set mos_max_at_A_pv parameter
+   1.47. Set mos_max_packetloss_A_pv parameter
+   1.48. Set mos_max_jitter_A_pv parameter
+   1.49. Set mos_max_roundtrip_A_pv parameter
+   1.50. Set mos_average_A_pv parameter
+   1.51. Set mos_average_packetloss_A_pv parameter
+   1.52. Set mos_average_jitter_A_pv parameter
+   1.53. Set mos_average_roundtrip_A_pv parameter
+   1.54. Set mos_average_samples_A_pv parameter
+   1.55. Set mos_B_label_pv parameter
+   1.56. Set mos_min_B_pv parameter
+   1.57. Set mos_min_at_B_pv parameter
+   1.58. Set mos_min_packetloss_B_pv parameter
+   1.59. Set mos_min_jitter_B_pv parameter
+   1.60. Set mos_min_roundtrip_B_pv parameter
+   1.61. Set mos_max_B_pv parameter
+   1.62. Set mos_max_at_B_pv parameter
+   1.63. Set mos_max_packetloss_B_pv parameter
+   1.64. Set mos_max_jitter_B_pv parameter
+   1.65. Set mos_max_roundtrip_B_pv parameter
+   1.66. Set mos_average_B_pv parameter
+   1.67. Set mos_average_packetloss_B_pv parameter
+   1.68. Set mos_average_jitter_B_pv parameter
+   1.69. Set mos_average_roundtrip_B_pv parameter
+   1.70. Set mos_average_samples_B_pv parameter
+   1.71. Set control_cmd_tos parameter
+   1.72. set_rtpengine_set usage
+   1.73. rtpengine_offer usage
+   1.74. rtpengine_answer usage
+   1.75. rtpengine_delete usage
+   1.76. rtpengine_query usage
+   1.77. rtpengine_manage usage
+   1.78. start_recording usage
+   1.79. stop_recording usage
+   1.80. $rtpstat Usage
+   1.81. rtpengine.reload usage
+   1.82. rtpengine.enable usage
+   1.83. rtpengine.show usage
+   1.84. rtpengine.ping usage
+   1.85. rtpengine.get_hash_total usage
 
 Chapter 1. Admin Guide
 
@@ -255,72 +259,74 @@ Chapter 1. Admin Guide
 
         4.1. rtpengine_sock (string)
         4.2. rtpengine_disable_tout (integer)
-        4.3. rtpengine_tout_ms (integer)
-        4.4. rtpengine_allow_op (integer)
-        4.5. queried_nodes_limit (integer)
-        4.6. rtpengine_retr (integer)
-        4.7. extra_id_pv (string)
-        4.8. setid_avp (string)
-        4.9. force_send_interface (string)
-        4.10. read_sdp_pv (string)
-        4.11. write_sdp_pv (string)
-        4.12. rtp_inst_pvar (string)
-        4.13. hash_table_size (integer)
-        4.14. hash_table_tout (integer)
-        4.15. db_url (string)
-        4.16. table_name (string)
-        4.17. setid_col (string)
-        4.18. url_col (string)
-        4.19. weight_col (string)
-        4.20. disabled_col (string)
-        4.21. setid_default (integer)
-        4.22. mos_min_pv (string)
-        4.23. mos_min_at_pv (string)
-        4.24. mos_min_packetloss_pv (string)
-        4.25. mos_min_jitter_pv (string)
-        4.26. mos_min_roundtrip_pv (string)
-        4.27. mos_max_pv (string)
-        4.28. mos_max_at_pv (string)
-        4.29. mos_max_packetloss_pv (string)
-        4.30. mos_max_jitter_pv (string)
-        4.31. mos_max_roundtrip_pv (string)
-        4.32. mos_average_pv (string)
-        4.33. mos_average_packetloss_pv (string)
-        4.34. mos_average_jitter_pv (string)
-        4.35. mos_average_roundtrip_pv (string)
-        4.36. mos_average_samples_pv (string)
-        4.37. mos_A_label_pv (string)
-        4.38. mos_min_A_pv (string)
-        4.39. mos_min_at_A_pv (string)
-        4.40. mos_min_packetloss_A_pv (string)
-        4.41. mos_min_jitter_A_pv (string)
-        4.42. mos_min_roundtrip_A_pv (string)
-        4.43. mos_max_A_pv (string)
-        4.44. mos_max_at_A_pv (string)
-        4.45. mos_max_packetloss_A_pv (string)
-        4.46. mos_max_jitter_A_pv (string)
-        4.47. mos_max_roundtrip_A_pv (string)
-        4.48. mos_average_A_pv (string)
-        4.49. mos_average_packetloss_A_pv (string)
-        4.50. mos_average_jitter_A_pv (string)
-        4.51. mos_average_roundtrip_A_pv (string)
-        4.52. mos_average_samples_A_pv (string)
-        4.53. mos_B_label_pv (string)
-        4.54. mos_min_B_pv (string)
-        4.55. mos_min_at_B_pv (string)
-        4.56. mos_min_packetloss_B_pv (string)
-        4.57. mos_min_jitter_B_pv (string)
-        4.58. mos_min_roundtrip_B_pv (string)
-        4.59. mos_max_B_pv (string)
-        4.60. mos_max_at_B_pv (string)
-        4.61. mos_max_packetloss_B_pv (string)
-        4.62. mos_max_jitter_B_pv (string)
-        4.63. mos_max_roundtrip_B_pv (string)
-        4.64. mos_average_B_pv (string)
-        4.65. mos_average_packetloss_B_pv (string)
-        4.66. mos_average_jitter_B_pv (string)
-        4.67. mos_average_roundtrip_B_pv (string)
-        4.68. mos_average_samples_B_pv (string)
+        4.3. aggressive_redetection (integer)
+        4.4. rtpengine_tout_ms (integer)
+        4.5. rtpengine_allow_op (integer)
+        4.6. queried_nodes_limit (integer)
+        4.7. rtpengine_retr (integer)
+        4.8. extra_id_pv (string)
+        4.9. setid_avp (string)
+        4.10. force_send_interface (string)
+        4.11. read_sdp_pv (string)
+        4.12. write_sdp_pv (string)
+        4.13. rtp_inst_pvar (string)
+        4.14. hash_table_size (integer)
+        4.15. hash_table_tout (integer)
+        4.16. db_url (string)
+        4.17. table_name (string)
+        4.18. setid_col (string)
+        4.19. url_col (string)
+        4.20. weight_col (string)
+        4.21. disabled_col (string)
+        4.22. setid_default (integer)
+        4.23. mos_min_pv (string)
+        4.24. mos_min_at_pv (string)
+        4.25. mos_min_packetloss_pv (string)
+        4.26. mos_min_jitter_pv (string)
+        4.27. mos_min_roundtrip_pv (string)
+        4.28. mos_max_pv (string)
+        4.29. mos_max_at_pv (string)
+        4.30. mos_max_packetloss_pv (string)
+        4.31. mos_max_jitter_pv (string)
+        4.32. mos_max_roundtrip_pv (string)
+        4.33. mos_average_pv (string)
+        4.34. mos_average_packetloss_pv (string)
+        4.35. mos_average_jitter_pv (string)
+        4.36. mos_average_roundtrip_pv (string)
+        4.37. mos_average_samples_pv (string)
+        4.38. mos_A_label_pv (string)
+        4.39. mos_min_A_pv (string)
+        4.40. mos_min_at_A_pv (string)
+        4.41. mos_min_packetloss_A_pv (string)
+        4.42. mos_min_jitter_A_pv (string)
+        4.43. mos_min_roundtrip_A_pv (string)
+        4.44. mos_max_A_pv (string)
+        4.45. mos_max_at_A_pv (string)
+        4.46. mos_max_packetloss_A_pv (string)
+        4.47. mos_max_jitter_A_pv (string)
+        4.48. mos_max_roundtrip_A_pv (string)
+        4.49. mos_average_A_pv (string)
+        4.50. mos_average_packetloss_A_pv (string)
+        4.51. mos_average_jitter_A_pv (string)
+        4.52. mos_average_roundtrip_A_pv (string)
+        4.53. mos_average_samples_A_pv (string)
+        4.54. mos_B_label_pv (string)
+        4.55. mos_min_B_pv (string)
+        4.56. mos_min_at_B_pv (string)
+        4.57. mos_min_packetloss_B_pv (string)
+        4.58. mos_min_jitter_B_pv (string)
+        4.59. mos_min_roundtrip_B_pv (string)
+        4.60. mos_max_B_pv (string)
+        4.61. mos_max_at_B_pv (string)
+        4.62. mos_max_packetloss_B_pv (string)
+        4.63. mos_max_jitter_B_pv (string)
+        4.64. mos_max_roundtrip_B_pv (string)
+        4.65. mos_average_B_pv (string)
+        4.66. mos_average_packetloss_B_pv (string)
+        4.67. mos_average_jitter_B_pv (string)
+        4.68. mos_average_roundtrip_B_pv (string)
+        4.69. mos_average_samples_B_pv (string)
+        4.70. control_cmd_tos (integer)
 
    5. Functions
 
@@ -393,9 +399,9 @@ Chapter 1. Admin Guide
    nodes are shared memory(shm), so all processes can see a common list of
    nodes. There is no locking when setting the nodes enabled/disabled (to
    keep the memory access as fast as possible). Thus, problems related to
-   node state might appear for concurent processes that might set the
+   node state might appear for concurrent processes that might set the
    nodes enabled/disabled(e.g. by fifo command). This robustness problems
-   are overcomed as follows.
+   are overcome as follows.
 
    If the current process sees the selected node as disabled, the node is
    force tested before the current process actually takes the disabled
@@ -408,8 +414,8 @@ Chapter 1. Admin Guide
    machine is actually broken. The process will set the node as disabled
    (but other concurrent process might still see it as enabled).
 
-   The 'kamctl fifo' commands (including rtpengin ones) are executed by an
-   exclusive process which operate on the same shared memory node list.
+   The 'kamctl fifo' commands (including rtpengine ones) are executed by
+   an exclusive process which operate on the same shared memory node list.
 
    All the nodes are pinged in the beginning by all the processes, even if
    the node list is shared memory.
@@ -435,72 +441,74 @@ Chapter 1. Admin Guide
 
    4.1. rtpengine_sock (string)
    4.2. rtpengine_disable_tout (integer)
-   4.3. rtpengine_tout_ms (integer)
-   4.4. rtpengine_allow_op (integer)
-   4.5. queried_nodes_limit (integer)
-   4.6. rtpengine_retr (integer)
-   4.7. extra_id_pv (string)
-   4.8. setid_avp (string)
-   4.9. force_send_interface (string)
-   4.10. read_sdp_pv (string)
-   4.11. write_sdp_pv (string)
-   4.12. rtp_inst_pvar (string)
-   4.13. hash_table_size (integer)
-   4.14. hash_table_tout (integer)
-   4.15. db_url (string)
-   4.16. table_name (string)
-   4.17. setid_col (string)
-   4.18. url_col (string)
-   4.19. weight_col (string)
-   4.20. disabled_col (string)
-   4.21. setid_default (integer)
-   4.22. mos_min_pv (string)
-   4.23. mos_min_at_pv (string)
-   4.24. mos_min_packetloss_pv (string)
-   4.25. mos_min_jitter_pv (string)
-   4.26. mos_min_roundtrip_pv (string)
-   4.27. mos_max_pv (string)
-   4.28. mos_max_at_pv (string)
-   4.29. mos_max_packetloss_pv (string)
-   4.30. mos_max_jitter_pv (string)
-   4.31. mos_max_roundtrip_pv (string)
-   4.32. mos_average_pv (string)
-   4.33. mos_average_packetloss_pv (string)
-   4.34. mos_average_jitter_pv (string)
-   4.35. mos_average_roundtrip_pv (string)
-   4.36. mos_average_samples_pv (string)
-   4.37. mos_A_label_pv (string)
-   4.38. mos_min_A_pv (string)
-   4.39. mos_min_at_A_pv (string)
-   4.40. mos_min_packetloss_A_pv (string)
-   4.41. mos_min_jitter_A_pv (string)
-   4.42. mos_min_roundtrip_A_pv (string)
-   4.43. mos_max_A_pv (string)
-   4.44. mos_max_at_A_pv (string)
-   4.45. mos_max_packetloss_A_pv (string)
-   4.46. mos_max_jitter_A_pv (string)
-   4.47. mos_max_roundtrip_A_pv (string)
-   4.48. mos_average_A_pv (string)
-   4.49. mos_average_packetloss_A_pv (string)
-   4.50. mos_average_jitter_A_pv (string)
-   4.51. mos_average_roundtrip_A_pv (string)
-   4.52. mos_average_samples_A_pv (string)
-   4.53. mos_B_label_pv (string)
-   4.54. mos_min_B_pv (string)
-   4.55. mos_min_at_B_pv (string)
-   4.56. mos_min_packetloss_B_pv (string)
-   4.57. mos_min_jitter_B_pv (string)
-   4.58. mos_min_roundtrip_B_pv (string)
-   4.59. mos_max_B_pv (string)
-   4.60. mos_max_at_B_pv (string)
-   4.61. mos_max_packetloss_B_pv (string)
-   4.62. mos_max_jitter_B_pv (string)
-   4.63. mos_max_roundtrip_B_pv (string)
-   4.64. mos_average_B_pv (string)
-   4.65. mos_average_packetloss_B_pv (string)
-   4.66. mos_average_jitter_B_pv (string)
-   4.67. mos_average_roundtrip_B_pv (string)
-   4.68. mos_average_samples_B_pv (string)
+   4.3. aggressive_redetection (integer)
+   4.4. rtpengine_tout_ms (integer)
+   4.5. rtpengine_allow_op (integer)
+   4.6. queried_nodes_limit (integer)
+   4.7. rtpengine_retr (integer)
+   4.8. extra_id_pv (string)
+   4.9. setid_avp (string)
+   4.10. force_send_interface (string)
+   4.11. read_sdp_pv (string)
+   4.12. write_sdp_pv (string)
+   4.13. rtp_inst_pvar (string)
+   4.14. hash_table_size (integer)
+   4.15. hash_table_tout (integer)
+   4.16. db_url (string)
+   4.17. table_name (string)
+   4.18. setid_col (string)
+   4.19. url_col (string)
+   4.20. weight_col (string)
+   4.21. disabled_col (string)
+   4.22. setid_default (integer)
+   4.23. mos_min_pv (string)
+   4.24. mos_min_at_pv (string)
+   4.25. mos_min_packetloss_pv (string)
+   4.26. mos_min_jitter_pv (string)
+   4.27. mos_min_roundtrip_pv (string)
+   4.28. mos_max_pv (string)
+   4.29. mos_max_at_pv (string)
+   4.30. mos_max_packetloss_pv (string)
+   4.31. mos_max_jitter_pv (string)
+   4.32. mos_max_roundtrip_pv (string)
+   4.33. mos_average_pv (string)
+   4.34. mos_average_packetloss_pv (string)
+   4.35. mos_average_jitter_pv (string)
+   4.36. mos_average_roundtrip_pv (string)
+   4.37. mos_average_samples_pv (string)
+   4.38. mos_A_label_pv (string)
+   4.39. mos_min_A_pv (string)
+   4.40. mos_min_at_A_pv (string)
+   4.41. mos_min_packetloss_A_pv (string)
+   4.42. mos_min_jitter_A_pv (string)
+   4.43. mos_min_roundtrip_A_pv (string)
+   4.44. mos_max_A_pv (string)
+   4.45. mos_max_at_A_pv (string)
+   4.46. mos_max_packetloss_A_pv (string)
+   4.47. mos_max_jitter_A_pv (string)
+   4.48. mos_max_roundtrip_A_pv (string)
+   4.49. mos_average_A_pv (string)
+   4.50. mos_average_packetloss_A_pv (string)
+   4.51. mos_average_jitter_A_pv (string)
+   4.52. mos_average_roundtrip_A_pv (string)
+   4.53. mos_average_samples_A_pv (string)
+   4.54. mos_B_label_pv (string)
+   4.55. mos_min_B_pv (string)
+   4.56. mos_min_at_B_pv (string)
+   4.57. mos_min_packetloss_B_pv (string)
+   4.58. mos_min_jitter_B_pv (string)
+   4.59. mos_min_roundtrip_B_pv (string)
+   4.60. mos_max_B_pv (string)
+   4.61. mos_max_at_B_pv (string)
+   4.62. mos_max_packetloss_B_pv (string)
+   4.63. mos_max_jitter_B_pv (string)
+   4.64. mos_max_roundtrip_B_pv (string)
+   4.65. mos_average_B_pv (string)
+   4.66. mos_average_packetloss_B_pv (string)
+   4.67. mos_average_jitter_B_pv (string)
+   4.68. mos_average_roundtrip_B_pv (string)
+   4.69. mos_average_samples_B_pv (string)
+   4.70. control_cmd_tos (integer)
 
 4.1. rtpengine_sock (string)
 
@@ -540,7 +548,25 @@ t 20
 modparam("rtpengine", "rtpengine_disable_tout", 20)
 ...
 
-4.3. rtpengine_tout_ms (integer)
+4.3. aggressive_redetection (integer)
+
+   This parameter determines what happens when all potential rtpengines
+   are found to be unreachable. If enabled, the sip server will send pings
+   to all rtpengines, else no rtpengine will be queried until its
+   rtpengine_disable_tout timeout passes.
+
+   Default value is “1”.
+
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int rtpengine aggressive_redetectio
+n 0
+
+   Example 1.3. Set aggressive_redetection parameter
+...
+modparam("rtpengine", "aggressive_redetection", 0)
+...
+
+4.4. rtpengine_tout_ms (integer)
 
    Timeout value expressed in milliseconds in waiting for reply from RTP
    proxy.
@@ -551,19 +577,19 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
                         $ kamcmd cfg.set_now_int rtpengine rtpengine_tout_ms 100
 0
 
-   Example 1.3. Set rtpengine_tout_ms parameter
+   Example 1.4. Set rtpengine_tout_ms parameter
 ...
 modparam("rtpengine", "rtpengine_tout_ms", 2000)
 ...
 
-4.4. rtpengine_allow_op (integer)
+4.5. rtpengine_allow_op (integer)
 
    Enable this to allow finishing the current sessions while denying new
    sessions for the manually deactivated nodes via kamctl command i.e.
    "disabled(permanent)" nodes. Probably the manually deactivated machine
    is still running(did not crash).
 
-   This is useful when deactivating a node for maintanance and reject new
+   This is useful when deactivating a node for maintenance and reject new
    sessions but allow current ones to finish.
 
    The behaviour is the same for a rtpengine deleted table node. When the
@@ -574,12 +600,12 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
 
    Default value is “0” to keep the current behaviour.
 
-   Example 1.4. Set rtpengine_allow_op parameter
+   Example 1.5. Set rtpengine_allow_op parameter
 ...
 modparam("rtpengine", "rtpengine_allow_op", 1)
 ...
 
-4.5. queried_nodes_limit (integer)
+4.6. queried_nodes_limit (integer)
 
    The total number of nodes inside a set (sets are configurable via
    rtpengine_sock function) to be queried before giving up establishing a
@@ -592,12 +618,12 @@ modparam("rtpengine", "rtpengine_allow_op", 1)
    Can be set at runtime, e.g.:
                         $ kamcmd cfg.set_now_int rtpengine queried_nodes_limit 5
 
-   Example 1.5. Set queried_nodes_limit parameter
+   Example 1.6. Set queried_nodes_limit parameter
 ...
 modparam("rtpengine", "queried_nodes_limit", 5)
 ...
 
-4.6. rtpengine_retr (integer)
+4.7. rtpengine_retr (integer)
 
    How many times the module should retry to send and receive after
    timeout was generated.
@@ -607,25 +633,25 @@ modparam("rtpengine", "queried_nodes_limit", 5)
    Can be set at runtime, e.g.:
                         $ kamcmd cfg.set_now_int rtpengine rtpengine_retr 5
 
-   Example 1.6. Set rtpengine_retr parameter
+   Example 1.7. Set rtpengine_retr parameter
 ...
 modparam("rtpengine", "rtpengine_retr", 2)
 ...
 
-4.7. extra_id_pv (string)
+4.8. extra_id_pv (string)
 
-   The parameter sets the PV defination to use when the “b” parameter is
+   The parameter sets the PV definition to use when the “b” parameter is
    used on rtpengine_delete(), rtpengine_offer(), rtpengine_answer() or
    rtpengine_manage() command.
 
    Default is empty, the “b” parameter may not be used then.
 
-   Example 1.7. Set extra_id_pv parameter
+   Example 1.8. Set extra_id_pv parameter
 ...
 modparam("rtpengine", "extra_id_pv", "$avp(extra_id)")
 ...
 
-4.8. setid_avp (string)
+4.9. setid_avp (string)
 
    The parameter defines an AVP that, if set, determines which RTP proxy
    set rtpengine_offer(), rtpengine_answer(), rtpengine_delete(), and
@@ -633,12 +659,12 @@ modparam("rtpengine", "extra_id_pv", "$avp(extra_id)")
 
    There is no default value.
 
-   Example 1.8. Set setid_avp parameter
+   Example 1.9. Set setid_avp parameter
 ...
 modparam("rtpengine", "setid_avp", "$avp(setid)")
 ...
 
-4.9. force_send_interface (string)
+4.10. force_send_interface (string)
 
    Forces all control messages between the SIP proxy and the RTP proxy to
    be sent from the specified local interface. Both IPv4 and IPv6
@@ -646,20 +672,20 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
    selected by the operating system will be used. Note: when
    rtpengine_sock is a IPv6 link-local address, one _must_ set this
    parameter in order to successfully connect to RTP engine. This is
-   necessarely because OS needs additional scope_id hint to communicate
+   necessarily because OS needs additional scope_id hint to communicate
    over IPv6 link locals. The scope_id is resolved based on the given
    IPv6.
 
    There is no default value.
 
-   Example 1.9. Set force_send_interface parameter
+   Example 1.10. Set force_send_interface parameter
 ...
 modparam("rtpengine", "force_send_interface", "10.3.7.123")
 modparam("rtpengine", "force_send_interface", "2001:8d8:1ff:10c0:9a90:96ff:fea8:
 fd99")
 ...
 
-4.10. read_sdp_pv (string)
+4.11. read_sdp_pv (string)
 
    If this parameter is set to a valid AVP or script var specifier,
    rtpengine will take the input SDP from this pv instead of the message
@@ -667,7 +693,7 @@ fd99")
 
    There is no default value.
 
-   Example 1.10. Set read_sdp_pv parameter
+   Example 1.11. Set read_sdp_pv parameter
 ...
 modparam("rtpengine", "read_sdp_pv", "$var(sdp)")
 ...
@@ -677,7 +703,7 @@ route {
         rtpengine_manage();
 }
 
-4.11. write_sdp_pv (string)
+4.12. write_sdp_pv (string)
 
    If this parameter is set to a valid AVP or script var specifier, the
    SDP returned by rtpengine in the offer/answer operations is returned in
@@ -685,7 +711,7 @@ route {
 
    There is no default value.
 
-   Example 1.11. Set write_sdp_pv parameter
+   Example 1.12. Set write_sdp_pv parameter
 ...
 modparam("rtpengine", "write_sdp_pv", "$avp(sdp)")
 ...
@@ -695,7 +721,7 @@ route {
         set_body("$avp(sdp)a=baz123\r\n", "application/sdp");
 }
 
-4.12. rtp_inst_pvar (string)
+4.13. rtp_inst_pvar (string)
 
    A pseudo variable to store the chosen RTP Engine IP address. If this
    parameter is set, the IP address and port of the instance chosen will
@@ -703,24 +729,24 @@ route {
 
    By default, this parameter is not set.
 
-   Example 1.12. Set rtp_inst_pvar parameter
+   Example 1.13. Set rtp_inst_pvar parameter
 ...
 modparam("rtpengine", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 ...
 
-4.13. hash_table_size (integer)
+4.14. hash_table_size (integer)
 
    Size of the hash table. Default value is 256.
 
    NOTE: If configured size is less than 1, the size will be defaulted to
    1.
 
-   Example 1.13. Set hash_table_size parameter
+   Example 1.14. Set hash_table_size parameter
 ...
 modparam("rtpengine", "hash_table_size", "123")
 ...
 
-4.14. hash_table_tout (integer)
+4.15. hash_table_tout (integer)
 
    Number of seconds after an rtpengine hash table entry is marked for
    deletion. By default, this parameter is set to 3600 (seconds).
@@ -738,24 +764,24 @@ modparam("rtpengine", "hash_table_size", "123")
    NOTE: When configuring this parameter, one should consider maximum call
    time VS share memory for unfinished calls.
 
-   Example 1.14. Set hash_table_tout parameter
+   Example 1.15. Set hash_table_tout parameter
 ...
 modparam("rtpengine", "hash_table_tout", "300")
 ...
 
-4.15. db_url (string)
+4.16. db_url (string)
 
    The rtpengine datablase url. If present and valid, it activates
    database mode. Node information is read from database, not from config.
 
    By default, the datablase url is NULL (not set).
 
-   Example 1.15. Set db_url parameter
+   Example 1.16. Set db_url parameter
 ...
 modparam("rtpengine", "db_url", "mysql://pass@localhost/db")
 ...
 
-4.16. table_name (string)
+4.17. table_name (string)
 
    The rtpengine table name. If database mode is activated (i.e. valid
    db_url), set the name of rtpengine table, on startup.
@@ -765,12 +791,12 @@ modparam("rtpengine", "db_url", "mysql://pass@localhost/db")
    NOTE: One needs to add the version of the rtpengine table in the
    version table. The current version is version 1.
 
-   Example 1.16. Set table_name parameter
+   Example 1.17. Set table_name parameter
 ...
 modparam("rtpengine", "table_name", "rtpengine_table_name")
 ...
 
-   Example 1.17. Setup rtpengine table
+   Example 1.18. Setup rtpengine table
 mysql> describe rtpengine;
 +----------+------------------+------+-----+---------------------+-------+
 | Field    | Type             | Null | Key | Default             | Extra |
@@ -797,7 +823,7 @@ mysql> select * from version;
 | rtpengine                 |             1 |
 +---------------------------+---------------+
 
-4.17. setid_col (string)
+4.18. setid_col (string)
 
    Column name in the rtpengine table. If database mode is activated (i.e.
    valid db_url), set the setid of rtp nodes according to this column, on
@@ -805,12 +831,12 @@ mysql> select * from version;
 
    By default, the column name is "setid".
 
-   Example 1.18. Set setid_col parameter
+   Example 1.19. Set setid_col parameter
 ...
 modparam("rtpengine", "setid_col", "setid_column_name")
 ...
 
-4.18. url_col (string)
+4.19. url_col (string)
 
    Column name in the rtpengine table. If database mode is activated (i.e.
    valid db_url), set the url of rtp nodes according to this column, on
@@ -818,12 +844,12 @@ modparam("rtpengine", "setid_col", "setid_column_name")
 
    By default, the column name is "url".
 
-   Example 1.19. Set url_col parameter
+   Example 1.20. Set url_col parameter
 ...
 modparam("rtpengine", "url_col", "url_column_name")
 ...
 
-4.19. weight_col (string)
+4.20. weight_col (string)
 
    Column name in the rtpengine table. If database mode is activated (i.e.
    valid db_url), set the weight of rtp nodes according to this column, on
@@ -832,12 +858,12 @@ modparam("rtpengine", "url_col", "url_column_name")
 
    By default, the column name is "weight".
 
-   Example 1.20. Set weight_col parameter
+   Example 1.21. Set weight_col parameter
 ...
 modparam("rtpengine", "weight_col", "weight_column_name")
 ...
 
-4.20. disabled_col (string)
+4.21. disabled_col (string)
 
    Column name in the rtpengine table. If database mode is activated (i.e.
    valid db_url), set the state of rtp nodes according to this column, on
@@ -845,12 +871,12 @@ modparam("rtpengine", "weight_col", "weight_column_name")
 
    By default, the column name is "disabled".
 
-   Example 1.21. Set disabled_col parameter
+   Example 1.22. Set disabled_col parameter
 ...
 modparam("rtpengine", "disabled_col", "disabled_column_name")
 ...
 
-4.21. setid_default (integer)
+4.22. setid_default (integer)
 
    The default set of nodes to be used.
 
@@ -859,12 +885,12 @@ modparam("rtpengine", "disabled_col", "disabled_column_name")
    NOTE that if setid_avp is configured, this value will be ignored and
    the active set will be chosen according to the setid_avp.
 
-   Example 1.22. Set setid_default parameter
+   Example 1.23. Set setid_default parameter
 ...
 modparam("rtpengine", "setid_default", 11)
 ...
 
-4.22. mos_min_pv (string)
+4.23. mos_min_pv (string)
 
    The name of a pseudovariable to hold the minimum encountered MOS value
    for the call. The value typically has a range of 1.0 through 5.0.
@@ -875,12 +901,12 @@ modparam("rtpengine", "setid_default", 11)
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.23. Set mos_min_pv parameter
+   Example 1.24. Set mos_min_pv parameter
 ...
 modparam("rtpengine", "mos_min_pv", "$avp(mos_min)")
 ...
 
-4.23. mos_min_at_pv (string)
+4.24. mos_min_at_pv (string)
 
    The name of a pseudovariable to hold the timestamp of when the minimum
    MOS value was encountered during the call, such as “0:30” for 30
@@ -892,12 +918,12 @@ modparam("rtpengine", "mos_min_pv", "$avp(mos_min)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.24. Set mos_min_at_pv parameter
+   Example 1.25. Set mos_min_at_pv parameter
 ...
 modparam("rtpengine", "mos_min_at_pv", "$avp(mos_min_at)")
 ...
 
-4.24. mos_min_packetloss_pv (string)
+4.25. mos_min_packetloss_pv (string)
 
    The name of a pseudovariable to hold the amount of packetloss in
    percent at the time the minimum MOS value was encountered;
@@ -908,12 +934,12 @@ modparam("rtpengine", "mos_min_at_pv", "$avp(mos_min_at)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.25. Set mos_min_packetloss_pv parameter
+   Example 1.26. Set mos_min_packetloss_pv parameter
 ...
 modparam("rtpengine", "mos_min_packetloss_pv", "$avp(mos_min_packetloss)")
 ...
 
-4.25. mos_min_jitter_pv (string)
+4.26. mos_min_jitter_pv (string)
 
    The name of a pseudovariable to hold the amount of jitter in
    milliseconds at the time the minimum MOS value was encountered;
@@ -924,12 +950,12 @@ modparam("rtpengine", "mos_min_packetloss_pv", "$avp(mos_min_packetloss)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.26. Set mos_min_jitter_pv parameter
+   Example 1.27. Set mos_min_jitter_pv parameter
 ...
 modparam("rtpengine", "mos_min_jitter_pv", "$avp(mos_min_jitter)")
 ...
 
-4.26. mos_min_roundtrip_pv (string)
+4.27. mos_min_roundtrip_pv (string)
 
    The name of a pseudovariable to hold the packet round-trip time in
    milliseconds at the time the minimum MOS value was encountered;
@@ -940,12 +966,12 @@ modparam("rtpengine", "mos_min_jitter_pv", "$avp(mos_min_jitter)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.27. Set mos_min_roundtrip_pv parameter
+   Example 1.28. Set mos_min_roundtrip_pv parameter
 ...
 modparam("rtpengine", "mos_min_roundtrip_pv", "$avp(mos_min_roundtrip)")
 ...
 
-4.27. mos_max_pv (string)
+4.28. mos_max_pv (string)
 
    The name of a pseudovariable to hold the maximum encountered MOS value
    for the call. The value typically has a range of 1.0 through 5.0.
@@ -956,12 +982,12 @@ modparam("rtpengine", "mos_min_roundtrip_pv", "$avp(mos_min_roundtrip)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.28. Set mos_max_pv parameter
+   Example 1.29. Set mos_max_pv parameter
 ...
 modparam("rtpengine", "mos_max_pv", "$avp(mos_max)")
 ...
 
-4.28. mos_max_at_pv (string)
+4.29. mos_max_at_pv (string)
 
    The name of a pseudovariable to hold the timestamp of when the maximum
    MOS value was encountered during the call, such as “0:30” for 30
@@ -973,12 +999,12 @@ modparam("rtpengine", "mos_max_pv", "$avp(mos_max)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.29. Set mos_max_at_pv parameter
+   Example 1.30. Set mos_max_at_pv parameter
 ...
 modparam("rtpengine", "mos_max_at_pv", "$avp(mos_max_at)")
 ...
 
-4.29. mos_max_packetloss_pv (string)
+4.30. mos_max_packetloss_pv (string)
 
    The name of a pseudovariable to hold the amount of packetloss in
    percent at the time the maximum MOS value was encountered;
@@ -989,12 +1015,12 @@ modparam("rtpengine", "mos_max_at_pv", "$avp(mos_max_at)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.30. Set mos_max_packetloss_pv parameter
+   Example 1.31. Set mos_max_packetloss_pv parameter
 ...
 modparam("rtpengine", "mos_max_packetloss_pv", "$avp(mos_max_packetloss)")
 ...
 
-4.30. mos_max_jitter_pv (string)
+4.31. mos_max_jitter_pv (string)
 
    The name of a pseudovariable to hold the amount of jitter in
    milliseconds at the time the maximum MOS value was encountered;
@@ -1005,12 +1031,12 @@ modparam("rtpengine", "mos_max_packetloss_pv", "$avp(mos_max_packetloss)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.31. Set mos_max_jitter_pv parameter
+   Example 1.32. Set mos_max_jitter_pv parameter
 ...
 modparam("rtpengine", "mos_max_jitter_pv", "$avp(mos_max_jitter)")
 ...
 
-4.31. mos_max_roundtrip_pv (string)
+4.32. mos_max_roundtrip_pv (string)
 
    The name of a pseudovariable to hold the packet round-trip time in
    milliseconds at the time the maximum MOS value was encountered;
@@ -1021,12 +1047,12 @@ modparam("rtpengine", "mos_max_jitter_pv", "$avp(mos_max_jitter)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.32. Set mos_max_roundtrip_pv parameter
+   Example 1.33. Set mos_max_roundtrip_pv parameter
 ...
 modparam("rtpengine", "mos_max_roundtrip_pv", "$avp(mos_max_roundtrip)")
 ...
 
-4.32. mos_average_pv (string)
+4.33. mos_average_pv (string)
 
    The name of a pseudovariable to hold the average (median) MOS value for
    the call. The value typically has a range of 1.0 through 5.0.
@@ -1037,12 +1063,12 @@ modparam("rtpengine", "mos_max_roundtrip_pv", "$avp(mos_max_roundtrip)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.33. Set mos_average_pv parameter
+   Example 1.34. Set mos_average_pv parameter
 ...
 modparam("rtpengine", "mos_average_pv", "$avp(mos_average)")
 ...
 
-4.33. mos_average_packetloss_pv (string)
+4.34. mos_average_packetloss_pv (string)
 
    The name of a pseudovariable to hold the average (median) amount of
    packetloss in percent present throughout the call.
@@ -1053,13 +1079,13 @@ modparam("rtpengine", "mos_average_pv", "$avp(mos_average)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.34. Set mos_average_packetloss_pv parameter
+   Example 1.35. Set mos_average_packetloss_pv parameter
 ...
 modparam("rtpengine", "mos_average_packetloss_pv", "$avp(mos_average_packetloss)
 ")
 ...
 
-4.34. mos_average_jitter_pv (string)
+4.35. mos_average_jitter_pv (string)
 
    The name of a pseudovariable to hold the average (median) amount of
    jitter in milliseconds present throughout the call.
@@ -1070,12 +1096,12 @@ modparam("rtpengine", "mos_average_packetloss_pv", "$avp(mos_average_packetloss)
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.35. Set mos_average_jitter_pv parameter
+   Example 1.36. Set mos_average_jitter_pv parameter
 ...
 modparam("rtpengine", "mos_average_jitter_pv", "$avp(mos_average_jitter)")
 ...
 
-4.35. mos_average_roundtrip_pv (string)
+4.36. mos_average_roundtrip_pv (string)
 
    The name of a pseudovariable to hold the average (median) packet
    round-trip time in milliseconds present throughout the call.
@@ -1086,12 +1112,12 @@ modparam("rtpengine", "mos_average_jitter_pv", "$avp(mos_average_jitter)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.36. Set mos_average_roundtrip_pv parameter
+   Example 1.37. Set mos_average_roundtrip_pv parameter
 ...
 modparam("rtpengine", "mos_average_roundtrip_pv", "$avp(mos_average_roundtrip)")
 ...
 
-4.36. mos_average_samples_pv (string)
+4.37. mos_average_samples_pv (string)
 
    The name of a pseudovariable to hold the number of samples used to
    determine the other “average” MOS data points.
@@ -1102,12 +1128,12 @@ modparam("rtpengine", "mos_average_roundtrip_pv", "$avp(mos_average_roundtrip)")
    “rtpengine_query”, or “rtpengine_manage” if the command resulted in a
    deletion of the call (or call branch).
 
-   Example 1.37. Set mos_average_samples_pv parameter
+   Example 1.38. Set mos_average_samples_pv parameter
 ...
 modparam("rtpengine", "mos_average_samples_pv", "$avp(mos_average_samples)")
 ...
 
-4.37. mos_A_label_pv (string)
+4.38. mos_A_label_pv (string)
 
    The name of a pseudovariable to hold a custom label used in rtpengine
    signalling. If set, all the statistics pseudovariables with the “_A”
@@ -1116,12 +1142,12 @@ modparam("rtpengine", "mos_average_samples_pv", "$avp(mos_average_samples)")
 
    There is no default value.
 
-   Example 1.38. Set mos_A_label_pv parameter
+   Example 1.39. Set mos_A_label_pv parameter
 ...
 modparam("rtpengine", "mos_A_label_pv", "$avp(mos_A_label)")
 ...
 
-4.38. mos_min_A_pv (string)
+4.39. mos_min_A_pv (string)
 
    The name of a pseudovariable to hold the minimum encountered MOS value
    for the call. The value typically has a range of 1.0 through 5.0.
@@ -1135,12 +1161,12 @@ modparam("rtpengine", "mos_A_label_pv", "$avp(mos_A_label)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.39. Set mos_min_A_pv parameter
+   Example 1.40. Set mos_min_A_pv parameter
 ...
 modparam("rtpengine", "mos_min_A_pv", "$avp(mos_min_A)")
 ...
 
-4.39. mos_min_at_A_pv (string)
+4.40. mos_min_at_A_pv (string)
 
    The name of a pseudovariable to hold the timestamp of when the minimum
    MOS value was encountered during the call, such as “0:30” for 30
@@ -1155,12 +1181,12 @@ modparam("rtpengine", "mos_min_A_pv", "$avp(mos_min_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.40. Set mos_min_at_A_pv parameter
+   Example 1.41. Set mos_min_at_A_pv parameter
 ...
 modparam("rtpengine", "mos_min_at_A_pv", "$avp(mos_min_at_A)")
 ...
 
-4.40. mos_min_packetloss_A_pv (string)
+4.41. mos_min_packetloss_A_pv (string)
 
    The name of a pseudovariable to hold the amount of packetloss in
    percent at the time the minimum MOS value was encountered;
@@ -1174,12 +1200,12 @@ modparam("rtpengine", "mos_min_at_A_pv", "$avp(mos_min_at_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.41. Set mos_min_packetloss_A_pv parameter
+   Example 1.42. Set mos_min_packetloss_A_pv parameter
 ...
 modparam("rtpengine", "mos_min_packetloss_A_pv", "$avp(mos_min_packetloss_A)")
 ...
 
-4.41. mos_min_jitter_A_pv (string)
+4.42. mos_min_jitter_A_pv (string)
 
    The name of a pseudovariable to hold the amount of jitter in
    milliseconds at the time the minimum MOS value was encountered;
@@ -1193,12 +1219,12 @@ modparam("rtpengine", "mos_min_packetloss_A_pv", "$avp(mos_min_packetloss_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.42. Set mos_min_jitter_A_pv parameter
+   Example 1.43. Set mos_min_jitter_A_pv parameter
 ...
 modparam("rtpengine", "mos_min_jitter_A_pv", "$avp(mos_min_jitter_A)")
 ...
 
-4.42. mos_min_roundtrip_A_pv (string)
+4.43. mos_min_roundtrip_A_pv (string)
 
    The name of a pseudovariable to hold the packet round-trip time in
    milliseconds at the time the minimum MOS value was encountered;
@@ -1212,12 +1238,12 @@ modparam("rtpengine", "mos_min_jitter_A_pv", "$avp(mos_min_jitter_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.43. Set mos_min_roundtrip_A_pv parameter
+   Example 1.44. Set mos_min_roundtrip_A_pv parameter
 ...
 modparam("rtpengine", "mos_min_roundtrip_A_pv", "$avp(mos_min_roundtrip_A)")
 ...
 
-4.43. mos_max_A_pv (string)
+4.44. mos_max_A_pv (string)
 
    The name of a pseudovariable to hold the maximum encountered MOS value
    for the call. The value typically has a range of 1.0 through 5.0.
@@ -1231,12 +1257,12 @@ modparam("rtpengine", "mos_min_roundtrip_A_pv", "$avp(mos_min_roundtrip_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.44. Set mos_max_A_pv parameter
+   Example 1.45. Set mos_max_A_pv parameter
 ...
 modparam("rtpengine", "mos_max_A_pv", "$avp(mos_max_A)")
 ...
 
-4.44. mos_max_at_A_pv (string)
+4.45. mos_max_at_A_pv (string)
 
    The name of a pseudovariable to hold the timestamp of when the maximum
    MOS value was encountered during the call, such as “0:30” for 30
@@ -1251,12 +1277,12 @@ modparam("rtpengine", "mos_max_A_pv", "$avp(mos_max_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.45. Set mos_max_at_A_pv parameter
+   Example 1.46. Set mos_max_at_A_pv parameter
 ...
 modparam("rtpengine", "mos_max_at_A_pv", "$avp(mos_max_at_A)")
 ...
 
-4.45. mos_max_packetloss_A_pv (string)
+4.46. mos_max_packetloss_A_pv (string)
 
    The name of a pseudovariable to hold the amount of packetloss in
    percent at the time the maximum MOS value was encountered;
@@ -1270,12 +1296,12 @@ modparam("rtpengine", "mos_max_at_A_pv", "$avp(mos_max_at_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.46. Set mos_max_packetloss_A_pv parameter
+   Example 1.47. Set mos_max_packetloss_A_pv parameter
 ...
 modparam("rtpengine", "mos_max_packetloss_A_pv", "$avp(mos_max_packetloss_A)")
 ...
 
-4.46. mos_max_jitter_A_pv (string)
+4.47. mos_max_jitter_A_pv (string)
 
    The name of a pseudovariable to hold the amount of jitter in
    milliseconds at the time the maximum MOS value was encountered;
@@ -1289,12 +1315,12 @@ modparam("rtpengine", "mos_max_packetloss_A_pv", "$avp(mos_max_packetloss_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.47. Set mos_max_jitter_A_pv parameter
+   Example 1.48. Set mos_max_jitter_A_pv parameter
 ...
 modparam("rtpengine", "mos_max_jitter_A_pv", "$avp(mos_max_jitter_A)")
 ...
 
-4.47. mos_max_roundtrip_A_pv (string)
+4.48. mos_max_roundtrip_A_pv (string)
 
    The name of a pseudovariable to hold the packet round-trip time in
    milliseconds at the time the maximum MOS value was encountered;
@@ -1308,12 +1334,12 @@ modparam("rtpengine", "mos_max_jitter_A_pv", "$avp(mos_max_jitter_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.48. Set mos_max_roundtrip_A_pv parameter
+   Example 1.49. Set mos_max_roundtrip_A_pv parameter
 ...
 modparam("rtpengine", "mos_max_roundtrip_A_pv", "$avp(mos_max_roundtrip_A)")
 ...
 
-4.48. mos_average_A_pv (string)
+4.49. mos_average_A_pv (string)
 
    The name of a pseudovariable to hold the average (median) MOS value for
    the call. The value typically has a range of 1.0 through 5.0.
@@ -1327,12 +1353,12 @@ modparam("rtpengine", "mos_max_roundtrip_A_pv", "$avp(mos_max_roundtrip_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.49. Set mos_average_A_pv parameter
+   Example 1.50. Set mos_average_A_pv parameter
 ...
 modparam("rtpengine", "mos_average_A_pv", "$avp(mos_average_A)")
 ...
 
-4.49. mos_average_packetloss_A_pv (string)
+4.50. mos_average_packetloss_A_pv (string)
 
    The name of a pseudovariable to hold the average (median) amount of
    packetloss in percent present throughout the call.
@@ -1346,13 +1372,13 @@ modparam("rtpengine", "mos_average_A_pv", "$avp(mos_average_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.50. Set mos_average_packetloss_A_pv parameter
+   Example 1.51. Set mos_average_packetloss_A_pv parameter
 ...
 modparam("rtpengine", "mos_average_packetloss_A_pv", "$avp(mos_average_packetlos
 s_A)")
 ...
 
-4.50. mos_average_jitter_A_pv (string)
+4.51. mos_average_jitter_A_pv (string)
 
    The name of a pseudovariable to hold the average (median) amount of
    jitter in milliseconds present throughout the call.
@@ -1366,12 +1392,12 @@ s_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.51. Set mos_average_jitter_A_pv parameter
+   Example 1.52. Set mos_average_jitter_A_pv parameter
 ...
 modparam("rtpengine", "mos_average_jitter_A_pv", "$avp(mos_average_jitter_A)")
 ...
 
-4.51. mos_average_roundtrip_A_pv (string)
+4.52. mos_average_roundtrip_A_pv (string)
 
    The name of a pseudovariable to hold the average (median) packet
    round-trip time in milliseconds present throughout the call.
@@ -1385,13 +1411,13 @@ modparam("rtpengine", "mos_average_jitter_A_pv", "$avp(mos_average_jitter_A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.52. Set mos_average_roundtrip_A_pv parameter
+   Example 1.53. Set mos_average_roundtrip_A_pv parameter
 ...
 modparam("rtpengine", "mos_average_roundtrip_A_pv", "$avp(mos_average_roundtrip_
 A)")
 ...
 
-4.52. mos_average_samples_A_pv (string)
+4.53. mos_average_samples_A_pv (string)
 
    The name of a pseudovariable to hold the number of samples used to
    determine the other “average” MOS data points.
@@ -1405,12 +1431,12 @@ A)")
    Only call legs matching the rtpengine label given in the
    “mos_A_label_pv” will be used in calculating this statistics value.
 
-   Example 1.53. Set mos_average_samples_A_pv parameter
+   Example 1.54. Set mos_average_samples_A_pv parameter
 ...
 modparam("rtpengine", "mos_average_samples_A_pv", "$avp(mos_average_samples_A)")
 ...
 
-4.53. mos_B_label_pv (string)
+4.54. mos_B_label_pv (string)
 
    The name of a pseudovariable to hold a custom label used in rtpengine
    signalling. If set, all the statistics pseudovariables with the “_B”
@@ -1419,12 +1445,12 @@ modparam("rtpengine", "mos_average_samples_A_pv", "$avp(mos_average_samples_A)")
 
    There is no default value.
 
-   Example 1.54. Set mos_B_label_pv parameter
+   Example 1.55. Set mos_B_label_pv parameter
 ...
 modparam("rtpengine", "mos_B_label_pv", "$avp(mos_B_label)")
 ...
 
-4.54. mos_min_B_pv (string)
+4.55. mos_min_B_pv (string)
 
    The name of a pseudovariable to hold the minimum encountered MOS value
    for the call. The value typically has a range of 1.0 through 5.0.
@@ -1438,12 +1464,12 @@ modparam("rtpengine", "mos_B_label_pv", "$avp(mos_B_label)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.55. Set mos_min_B_pv parameter
+   Example 1.56. Set mos_min_B_pv parameter
 ...
 modparam("rtpengine", "mos_min_B_pv", "$avp(mos_min_B)")
 ...
 
-4.55. mos_min_at_B_pv (string)
+4.56. mos_min_at_B_pv (string)
 
    The name of a pseudovariable to hold the timestamp of when the minimum
    MOS value was encountered during the call, such as “0:30” for 30
@@ -1458,12 +1484,12 @@ modparam("rtpengine", "mos_min_B_pv", "$avp(mos_min_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.56. Set mos_min_at_B_pv parameter
+   Example 1.57. Set mos_min_at_B_pv parameter
 ...
 modparam("rtpengine", "mos_min_at_B_pv", "$avp(mos_min_at_B)")
 ...
 
-4.56. mos_min_packetloss_B_pv (string)
+4.57. mos_min_packetloss_B_pv (string)
 
    The name of a pseudovariable to hold the amount of packetloss in
    percent at the time the minimum MOS value was encountered;
@@ -1477,12 +1503,12 @@ modparam("rtpengine", "mos_min_at_B_pv", "$avp(mos_min_at_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.57. Set mos_min_packetloss_B_pv parameter
+   Example 1.58. Set mos_min_packetloss_B_pv parameter
 ...
 modparam("rtpengine", "mos_min_packetloss_B_pv", "$avp(mos_min_packetloss_B)")
 ...
 
-4.57. mos_min_jitter_B_pv (string)
+4.58. mos_min_jitter_B_pv (string)
 
    The name of a pseudovariable to hold the amount of jitter in
    milliseconds at the time the minimum MOS value was encountered;
@@ -1496,12 +1522,12 @@ modparam("rtpengine", "mos_min_packetloss_B_pv", "$avp(mos_min_packetloss_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.58. Set mos_min_jitter_B_pv parameter
+   Example 1.59. Set mos_min_jitter_B_pv parameter
 ...
 modparam("rtpengine", "mos_min_jitter_B_pv", "$avp(mos_min_jitter_B)")
 ...
 
-4.58. mos_min_roundtrip_B_pv (string)
+4.59. mos_min_roundtrip_B_pv (string)
 
    The name of a pseudovariable to hold the packet round-trip time in
    milliseconds at the time the minimum MOS value was encountered;
@@ -1515,12 +1541,12 @@ modparam("rtpengine", "mos_min_jitter_B_pv", "$avp(mos_min_jitter_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.59. Set mos_min_roundtrip_B_pv parameter
+   Example 1.60. Set mos_min_roundtrip_B_pv parameter
 ...
 modparam("rtpengine", "mos_min_roundtrip_B_pv", "$avp(mos_min_roundtrip_B)")
 ...
 
-4.59. mos_max_B_pv (string)
+4.60. mos_max_B_pv (string)
 
    The name of a pseudovariable to hold the maximum encountered MOS value
    for the call. The value typically has a range of 1.0 through 5.0.
@@ -1534,12 +1560,12 @@ modparam("rtpengine", "mos_min_roundtrip_B_pv", "$avp(mos_min_roundtrip_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.60. Set mos_max_B_pv parameter
+   Example 1.61. Set mos_max_B_pv parameter
 ...
 modparam("rtpengine", "mos_max_B_pv", "$avp(mos_max_B)")
 ...
 
-4.60. mos_max_at_B_pv (string)
+4.61. mos_max_at_B_pv (string)
 
    The name of a pseudovariable to hold the timestamp of when the maximum
    MOS value was encountered during the call, such as “0:30” for 30
@@ -1554,12 +1580,12 @@ modparam("rtpengine", "mos_max_B_pv", "$avp(mos_max_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.61. Set mos_max_at_B_pv parameter
+   Example 1.62. Set mos_max_at_B_pv parameter
 ...
 modparam("rtpengine", "mos_max_at_B_pv", "$avp(mos_max_at_B)")
 ...
 
-4.61. mos_max_packetloss_B_pv (string)
+4.62. mos_max_packetloss_B_pv (string)
 
    The name of a pseudovariable to hold the amount of packetloss in
    percent at the time the maximum MOS value was encountered;
@@ -1573,12 +1599,12 @@ modparam("rtpengine", "mos_max_at_B_pv", "$avp(mos_max_at_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.62. Set mos_max_packetloss_B_pv parameter
+   Example 1.63. Set mos_max_packetloss_B_pv parameter
 ...
 modparam("rtpengine", "mos_max_packetloss_B_pv", "$avp(mos_max_packetloss_B)")
 ...
 
-4.62. mos_max_jitter_B_pv (string)
+4.63. mos_max_jitter_B_pv (string)
 
    The name of a pseudovariable to hold the amount of jitter in
    milliseconds at the time the maximum MOS value was encountered;
@@ -1592,12 +1618,12 @@ modparam("rtpengine", "mos_max_packetloss_B_pv", "$avp(mos_max_packetloss_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.63. Set mos_max_jitter_B_pv parameter
+   Example 1.64. Set mos_max_jitter_B_pv parameter
 ...
 modparam("rtpengine", "mos_max_jitter_B_pv", "$avp(mos_max_jitter_B)")
 ...
 
-4.63. mos_max_roundtrip_B_pv (string)
+4.64. mos_max_roundtrip_B_pv (string)
 
    The name of a pseudovariable to hold the packet round-trip time in
    milliseconds at the time the maximum MOS value was encountered;
@@ -1611,12 +1637,12 @@ modparam("rtpengine", "mos_max_jitter_B_pv", "$avp(mos_max_jitter_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.64. Set mos_max_roundtrip_B_pv parameter
+   Example 1.65. Set mos_max_roundtrip_B_pv parameter
 ...
 modparam("rtpengine", "mos_max_roundtrip_B_pv", "$avp(mos_max_roundtrip_B)")
 ...
 
-4.64. mos_average_B_pv (string)
+4.65. mos_average_B_pv (string)
 
    The name of a pseudovariable to hold the average (median) MOS value for
    the call. The value typically has a range of 1.0 through 5.0.
@@ -1630,12 +1656,12 @@ modparam("rtpengine", "mos_max_roundtrip_B_pv", "$avp(mos_max_roundtrip_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.65. Set mos_average_B_pv parameter
+   Example 1.66. Set mos_average_B_pv parameter
 ...
 modparam("rtpengine", "mos_average_B_pv", "$avp(mos_average_B)")
 ...
 
-4.65. mos_average_packetloss_B_pv (string)
+4.66. mos_average_packetloss_B_pv (string)
 
    The name of a pseudovariable to hold the average (median) amount of
    packetloss in percent present throughout the call.
@@ -1649,13 +1675,13 @@ modparam("rtpengine", "mos_average_B_pv", "$avp(mos_average_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.66. Set mos_average_packetloss_B_pv parameter
+   Example 1.67. Set mos_average_packetloss_B_pv parameter
 ...
 modparam("rtpengine", "mos_average_packetloss_B_pv", "$avp(mos_average_packetlos
 s_B)")
 ...
 
-4.66. mos_average_jitter_B_pv (string)
+4.67. mos_average_jitter_B_pv (string)
 
    The name of a pseudovariable to hold the average (median) amount of
    jitter in milliseconds present throughout the call.
@@ -1669,12 +1695,12 @@ s_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.67. Set mos_average_jitter_B_pv parameter
+   Example 1.68. Set mos_average_jitter_B_pv parameter
 ...
 modparam("rtpengine", "mos_average_jitter_B_pv", "$avp(mos_average_jitter_B)")
 ...
 
-4.67. mos_average_roundtrip_B_pv (string)
+4.68. mos_average_roundtrip_B_pv (string)
 
    The name of a pseudovariable to hold the average (median) packet
    round-trip time in milliseconds present throughout the call.
@@ -1688,13 +1714,13 @@ modparam("rtpengine", "mos_average_jitter_B_pv", "$avp(mos_average_jitter_B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.68. Set mos_average_roundtrip_B_pv parameter
+   Example 1.69. Set mos_average_roundtrip_B_pv parameter
 ...
 modparam("rtpengine", "mos_average_roundtrip_B_pv", "$avp(mos_average_roundtrip_
 B)")
 ...
 
-4.68. mos_average_samples_B_pv (string)
+4.69. mos_average_samples_B_pv (string)
 
    The name of a pseudovariable to hold the number of samples used to
    determine the other “average” MOS data points.
@@ -1708,9 +1734,24 @@ B)")
    Only call legs matching the rtpengine label given in the
    “mos_B_label_pv” will be used in calculating this statistics value.
 
-   Example 1.69. Set mos_average_samples_B_pv parameter
+   Example 1.70. Set mos_average_samples_B_pv parameter
 ...
 modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
+...
+
+4.70. control_cmd_tos (integer)
+
+   The parameter is used to set the value of “type of service (tos)” for
+   the control commands (such as rtpengine_offer(), rtpengine_answer()
+   etc).
+
+   There is no default value. By default this feature is not used.
+
+   The values not falling into the range “0-255” will be simply ignored.
+
+   Example 1.71. Set control_cmd_tos parameter
+...
+modparam("rtpengine", "control_cmd_tos", "144")
 ...
 
 5. Functions
@@ -1746,7 +1787,7 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.70. set_rtpengine_set usage
+   Example 1.72. set_rtpengine_set usage
 ...
 set_rtpengine_set("2");
 rtpengine_offer();
@@ -1883,20 +1924,21 @@ rtpengine_offer();
             otherwise the RTP proxy will only insert itself as additional
             ICE candidate. Other SDP substitutions (c=, m=, etc) are
             unaffected by this flag.
-          + RTP, SRTP, AVP, AVPF - These flags control the RTP transport
-            protocol that should be used towards the recipient of the SDP.
-            If none of them are specified, the protocol given in the SDP
-            is left untouched. Otherwise, the “SRTP” flag indicates that
-            SRTP should be used, while “RTP” indicates that SRTP should
-            not be used. “AVPF” indicates that the advanced RTCP profile
-            with feedback messages should be used, and “AVP” indicates
-            that the regular RTCP profile should be used. See also the
-            next set of flags below.
-          + RTP/AVP, RTP/SAVP, RTP/AVPF, RTP/SAVPF - these serve as an
-            alternative, more explicit way to select between the different
-            RTP protocols and profiles supported by the RTP proxy. For
-            example, giving the flag “RTP/SAVPF” has the same effect as
-            giving the two flags “SRTP AVPF”.
+          + RTP, SRTP, DTLS, AVP, AVPF - These flags control the RTP
+            transport protocol that should be used towards the recipient
+            of the SDP. If none of them are specified, the protocol given
+            in the SDP is left untouched. Otherwise, the “SRTP” flag
+            indicates that SRTP should be used, while “RTP” indicates that
+            SRTP should not be used. “AVPF” indicates that the advanced
+            RTCP profile with feedback messages should be used, and “AVP”
+            indicates that the regular RTCP profile should be used. See
+            also the next set of flags below.
+          + RTP/AVP, RTP/SAVP, UDP/TLS/RTP/SAVP, RTP/AVPF, RTP/SAVPF,
+            UDP/TLS/RTP/SAVPF - these serve as an alternative, more
+            explicit way to select between the different RTP protocols and
+            profiles supported by the RTP proxy. For example, giving the
+            flag “RTP/SAVPF” has the same effect as giving the two flags
+            “SRTP AVPF”.
           + to-tag - force inclusion of the “To” tag. Normally, the “To”
             tag is always included when present, except for “delete”
             messages. Including the “To” tag in a “delete” messages allows
@@ -1966,12 +2008,16 @@ rtpengine_offer();
           + record-call=on - instructs RTPEngine to record the session.
             Use it in rtpengine_offer() to start recording immediately and
             save the call metadata, as alternative to start_recording().
+          + metadata - a generic metadata string. The metadata will be
+            used when recording calls to provide custom additional
+            information. More details about this are found in the
+            rtpengine README.
        Check also the documentation of RTPEngine, these flags are
        documented there as well: https://github.com/sipwise/rtpengine.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.71. rtpengine_offer usage
+   Example 1.73. rtpengine_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -2015,7 +2061,7 @@ onreply_route[2]
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.72. rtpengine_answer usage
+   Example 1.74. rtpengine_answer usage
 
    See rtpengine_offer() function example above for example.
 
@@ -2029,7 +2075,7 @@ onreply_route[2]
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.73. rtpengine_delete usage
+   Example 1.75. rtpengine_delete usage
 ...
 rtpengine_delete();
 ...
@@ -2045,7 +2091,7 @@ rtpengine_delete();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.74. rtpengine_query usage
+   Example 1.76. rtpengine_query usage
 ...
 rtpengine_query();
 ...
@@ -2079,7 +2125,7 @@ rtpengine_query();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.75. rtpengine_manage usage
+   Example 1.77. rtpengine_manage usage
 ...
 rtpengine_manage();
 ...
@@ -2098,7 +2144,7 @@ rtpengine_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.76. start_recording usage
+   Example 1.78. start_recording usage
 ...
 start_recording();
 ...
@@ -2117,7 +2163,7 @@ start_recording();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.77. stop_recording usage
+   Example 1.79. stop_recording usage
 ...
 stop_recording();
 ...
@@ -2133,7 +2179,7 @@ stop_recording();
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.78. $rtpstat Usage
+   Example 1.80. $rtpstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -2156,7 +2202,7 @@ stop_recording();
    is enabled, the sessions are still allowed to finish for the hidden old
    nodes.
 
-   Example 1.79.  rtpengine.reload usage
+   Example 1.81.  rtpengine.reload usage
 ...
 $ kamcmd rtpengine.reload
 ...
@@ -2187,7 +2233,7 @@ $ kamcmd rtpengine.reload
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.80.  rtpengine.enable usage
+   Example 1.82.  rtpengine.enable usage
 ...
 $ kamcmd rtpengine.enable udp:192.168.2.133:8081 0
 $ kamcmd rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
@@ -2210,7 +2256,7 @@ $ kamcmd rtpengine.enable all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.81.  rtpengine.show usage
+   Example 1.83.  rtpengine.show usage
 ...
 $ kamcmd rtpengine.show udp:192.168.2.133:8081
 $ kamcmd rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2230,7 +2276,7 @@ $ kamcmd rtpengine.show all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.82.  rtpengine.ping usage
+   Example 1.84.  rtpengine.ping usage
 ...
 $ kamcmd rtpengine.ping udp:192.168.2.133:8081
 $ kamcmd rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2242,7 +2288,7 @@ $ kamcmd rtpengine.ping all
    Print the total number of hash entries in the hash table at a given
    moment.
 
-   Example 1.83.  rtpengine.get_hash_total usage
+   Example 1.85.  rtpengine.get_hash_total usage
 ...
 $ kamcmd rtpengine.get_hash_total
 ...
@@ -2276,7 +2322,7 @@ Chapter 2. Frequently Asked Questions
 rtpengine_offer("force trust-address symmetric replace-origin replace-session-co
 nnection ICE=force RTP/SAVPF");
 
-   Finally, if you were using the second paramater (explicit media
+   Finally, if you were using the second parameter (explicit media
    address) to any of these functions, this has been replaced by the
    “media-address=...” option within the first string of flags.
 
@@ -2300,9 +2346,6 @@ nnection ICE=force RTP/SAVPF");
    E-mails regarding any stable Kamailio release should be sent to
    <sr-users@lists.kamailio.org> and e-mails regarding development
    versions should be sent to <sr-dev@lists.kamailio.org>.
-
-   If you want to keep the mail private, send it to
-   <sr-users@lists.kamailio.org>.
 
    2.4.
 

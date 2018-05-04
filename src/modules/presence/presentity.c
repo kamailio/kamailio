@@ -44,6 +44,7 @@
 #include "publish.h"
 #include "hash.h"
 #include "utils_func.h"
+#include "presence_dmq.h"
 
 
 /* base priority value (20150101T000000) */
@@ -72,7 +73,7 @@ char* generate_ETag(int publ_count)
 	size = snprintf (etag, ETAG_LEN, "%c.%d.%d.%d.%d",prefix, startup_time, pid, counter, publ_count);
 	if( size <0 )
 	{
-		LM_ERR("unsuccessfull snprintf\n ");
+		LM_ERR("unsuccessful snprintf\n ");
 		pkg_free(etag);
 		return NULL;
 	}
@@ -280,7 +281,7 @@ int check_if_dialog(str body, int *is_dialog, char **dialog_id)
 	doc = xmlParseMemory(body.s, body.len);
 	if(doc== NULL)
 	{
-		LM_ERR("failed to parse xml document\n");
+		LM_INFO("failed to parse xml document\n");
 		return -1;
 	}
 
@@ -303,27 +304,32 @@ int check_if_dialog(str body, int *is_dialog, char **dialog_id)
 	return 0;
 }
 
-int parse_dialog_state_from_body(str body, int *is_dialog, char **state)
+/**
+ * return 1 if all dialog nodes have the vstate
+ *   * 0 if at least one state is different
+ *   * -1 in case of error
+ */
+int ps_match_dialog_state_from_body(str body, int *is_dialog, char *vstate)
 {
 	xmlDocPtr doc;
 	xmlNodePtr node;
+	xmlNodePtr fnode;
 	xmlNodePtr childNode;
 	char *tmp_state;
+	int rmatch = 0;
 
-	*state = NULL;
 	*is_dialog = 0;
 
 	doc = xmlParseMemory(body.s, body.len);
-	if(doc== NULL)
+	if(doc == NULL || doc->children == NULL)
 	{
 		LM_ERR("failed to parse xml document\n");
 		return -1;
 	}
 
-	node = doc->children;
-	node = xmlNodeGetChildByName(node, "dialog");
+	fnode = node = xmlNodeGetChildByName(doc->children, "dialog");
 
-	if(node != NULL)
+	while(node != NULL)
 	{
 		*is_dialog = 1;
 
@@ -332,16 +338,34 @@ int parse_dialog_state_from_body(str body, int *is_dialog, char **state)
 
 		if (tmp_state != NULL)
 		{
-			*state = strdup(tmp_state);
+			if(strcmp(tmp_state, vstate)!=0) {
+				/* state not matched */
+				xmlFree(tmp_state);
+				rmatch = 0;
+				goto done;
+			}
+			rmatch = 1;
 			xmlFree(tmp_state);
 		}
+		/* search for next dialog node */
+		do {
+			if(node->next != NULL && node->next->name != NULL
+					&& xmlStrcmp(fnode->name, node->next->name) == 0) {
+				node = node->next;
+				break;
+			}
+			node = node->next;
+		} while(node != NULL);
 	}
 
+done:
 	xmlFreeDoc(doc);
-	return 0;
+	return rmatch;
 }
 
-int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog_id) {
+int delete_presentity_if_dialog_id_exists(presentity_t* presentity,
+		char* dialog_id)
+{
 	db_key_t query_cols[13], result_cols[6];
 	db_op_t  query_ops[13];
 	db_val_t query_vals[13];
@@ -425,7 +449,7 @@ int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog
 
 				LM_WARN("Presentity already exists - deleting it\n");
 
-				if(delete_presentity(&old_presentity)<0) {
+				if(delete_presentity(&old_presentity, NULL)<0) {
 					LM_ERR("failed to delete presentity\n");
 				}
 
@@ -447,7 +471,10 @@ int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog
 	return 0;
 }
 
-int get_dialog_state(presentity_t* presentity, char** state)
+/**
+ * check if the states of all related dialogs match vstate
+ */
+int ps_match_dialog_state(presentity_t* presentity, char* vstate)
 {
 	db_key_t query_cols[13], result_cols[6];
 	db_op_t  query_ops[13];
@@ -459,9 +486,7 @@ int get_dialog_state(presentity_t* presentity, char** state)
 	db_val_t *row_vals = NULL;
 	int db_is_dialog = 0;
 	str tmp_db_body;
-	int i = 0, parse_state_result = 0;
-
-	*state = NULL;
+	int i = 0, rmatch = 0;
 
 	query_cols[n_query_cols] = &str_domain_col;
 	query_ops[n_query_cols] = OP_EQ;
@@ -515,7 +540,7 @@ int get_dialog_state(presentity_t* presentity, char** state)
 		return 0;
 	}
 
-	parse_state_result = 0;
+	rmatch = 0;
 	// Loop the rows returned from the DB
 	for (i=0; i < result->n; i++)
 	{
@@ -524,51 +549,38 @@ int get_dialog_state(presentity_t* presentity, char** state)
 		tmp_db_body.s = (char*)row_vals[rez_body_col].val.string_val;
 		tmp_db_body.len = strlen(tmp_db_body.s);
 
-		parse_state_result = parse_dialog_state_from_body(tmp_db_body,
-				&db_is_dialog, state);
+		rmatch = ps_match_dialog_state_from_body(tmp_db_body,
+				&db_is_dialog, vstate);
 
-		if(parse_state_result==0) {
-			/* successful parsing */
+		if(rmatch==1) {
+			/* having a full match */
 			pa_dbf.free_result(pa_db, result);
 			result = NULL;
-			return parse_state_result;
+			return rmatch;
 		}
 	}
 
 	pa_dbf.free_result(pa_db, result);
 	result = NULL;
-	return parse_state_result;
-}
-
-int is_dialog_terminated(presentity_t* presentity)
-{
-	char *state = NULL;
-	int rtn;
-
-	get_dialog_state(presentity, &state);
-
-	rtn = state && !strcasecmp(state, "terminated");
-
-	free(state);
-
-	return rtn;
+	return rmatch;
 }
 
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
-		int new_t, int* sent_reply, char* sphere)
+		int new_t, int* sent_reply, char* sphere, str* etag_override, str* ruid, int replace)
 {
-	db_key_t query_cols[13], update_keys[9], result_cols[6];
-	db_op_t  query_ops[13];
-	db_val_t query_vals[13], update_vals[9];
+	db_key_t query_cols[14], rquery_cols[2], update_keys[9], result_cols[7];
+	db_op_t  query_ops[14], rquery_ops[2];
+	db_val_t query_vals[14], rquery_vals[2], update_vals[9];
 	db1_res_t *result= NULL;
 	int n_query_cols = 0;
+	int n_rquery_cols = 0;
 	int n_update_cols = 0;
 	char* dot= NULL;
 	str etag= {0, 0};
 	str cur_etag= {0, 0};
 	str* rules_doc= NULL;
 	str pres_uri= {0, 0};
-	int rez_body_col, rez_sender_col, n_result_cols= 0;
+	int rez_body_col, rez_sender_col, rez_ruid_col, n_result_cols= 0;
 	db_row_t *row = NULL ;
 	db_val_t *row_vals = NULL;
 	str old_body, sender;
@@ -578,6 +590,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	int db_record_exists = 0;
 	int num_watchers = 0;
 	char *old_dialog_id = NULL, *dialog_id = NULL;
+	str cur_ruid= {0, 0};
+	str p_ruid = {0, 0};
 
 	if (sent_reply) *sent_reply= 0;
 	if(pres_notifier_processes == 0 && presentity->event->req_auth)
@@ -628,9 +642,22 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 	result_cols[rez_body_col= n_result_cols++] = &str_body_col;
 	result_cols[rez_sender_col= n_result_cols++] = &str_sender_col;
+	result_cols[rez_ruid_col= n_result_cols++] = &str_ruid_col;
 
 	if(new_t)
 	{
+		LM_DBG("new presentity with etag %.*s\n", presentity->etag.len, presentity->etag.s);
+
+		if (ruid) {
+			/* use the provided ruid */
+			p_ruid = *ruid;
+		} else {
+			/* generate a new ruid */
+			if(sruid_next(&pres_sruid)<0)
+				goto error;
+			p_ruid = pres_sruid.uid;
+		}
+
 		/* insert new record in hash_table */
 
 		if ( publ_cache_enabled &&
@@ -638,6 +665,11 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		{
 			LM_ERR("inserting record in hash table\n");
 			goto error;
+		}
+
+		LM_DBG("new htable record added\n");
+		if (presentity->expires == -1) {
+			replace = 1;
 		}
 
 		/* insert new record into database */
@@ -672,7 +704,13 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		query_vals[n_query_cols].val.int_val = presentity->priority;
 		n_query_cols++;
 
-		if (presentity->expires != -1)
+		query_cols[n_query_cols] = &str_ruid_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = p_ruid;
+		n_query_cols++;
+
+		if (!replace)
 		{
 			/* A real PUBLISH */
 			query_cols[n_query_cols] = &str_expires_col;
@@ -696,17 +734,18 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 					goto error;
 				}
 			}
+			if (presentity->event->evp->type == EVENT_DIALOG) {
+				check_if_dialog(*body, &is_dialog, &dialog_id);
+				if (dialog_id) {
+					if (delete_presentity_if_dialog_id_exists(presentity, dialog_id) < 0) {
+						free(dialog_id);
+						dialog_id = NULL;
+						goto error;
+					}
 
-			check_if_dialog(*body, &is_dialog, &dialog_id);
-			if ( dialog_id ) {
-				if (delete_presentity_if_dialog_id_exists(presentity, dialog_id) < 0) {
 					free(dialog_id);
 					dialog_id = NULL;
-					goto error;
 				}
-
-				free(dialog_id);
-				dialog_id = NULL;
 			}
 			LM_DBG("inserting %d cols into table\n",n_query_cols);
 
@@ -723,6 +762,10 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			query_vals[n_query_cols].type = DB1_INT;
 			query_vals[n_query_cols].nul = 0;
 			query_vals[n_query_cols].val.int_val = -1;
+			if(presentity->expires != -1) {
+				query_vals[n_query_cols].val.int_val =
+						presentity->expires + (int)time(NULL);
+			}
 			n_query_cols++;
 
 			if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
@@ -765,6 +808,21 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	else
 	{
 
+		LM_DBG("updating existing presentity with etag %.*s\n", presentity->etag.len, presentity->etag.s);
+
+		if (ruid) {
+			p_ruid = *ruid;
+
+			rquery_cols[n_rquery_cols] = &str_ruid_col;
+			rquery_ops[n_rquery_cols] = OP_EQ;
+			rquery_vals[n_rquery_cols].type = DB1_STR;
+			rquery_vals[n_rquery_cols].nul = 0;
+			rquery_vals[n_rquery_cols].val.str_val = p_ruid;
+			n_rquery_cols++;
+
+			// TODO: check for out-of-sequence updates
+		}
+
 		if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 		{
 			LM_ERR("unsuccessful sql use table\n");
@@ -783,8 +841,10 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		if(EVENT_DIALOG_SLA(presentity->event->evp))
 		{
 
-			if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
-					result_cols, n_query_cols, n_result_cols, 0, &result) < 0)
+			if (pa_dbf.query (pa_db, ruid?rquery_cols:query_cols, 
+					ruid?rquery_ops:query_ops, ruid?rquery_vals:query_vals,
+					result_cols, ruid?n_rquery_cols:n_query_cols, n_result_cols,
+					0, &result) < 0)
 			{
 				LM_ERR("unsuccessful sql query\n");
 				goto error;
@@ -799,6 +859,19 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			/* analize if previous body has a dialog */
 			row = &result->rows[0];
 			row_vals = ROW_VALUES(row);
+
+			/* store current ruid if we don't already know it */
+			if (!p_ruid.s && row_vals[rez_ruid_col].val.string_val) {
+				cur_ruid.len = strlen((char *) row_vals[rez_ruid_col].val.string_val);
+				cur_ruid.s = (char *) pkg_malloc(sizeof(char) * cur_ruid.len);
+				if (!cur_ruid.s)
+				{
+					LM_ERR("no private memory\n");
+					goto error;
+				}
+				memcpy(cur_ruid.s, (char *) row_vals[rez_ruid_col].val.string_val, cur_ruid.len);
+				p_ruid = cur_ruid;
+			}
 
 			old_body.s = (char*)row_vals[rez_body_col].val.string_val;
 			old_body.len = strlen(old_body.s);
@@ -864,8 +937,10 @@ after_dialog_check:
 
 			if (!db_record_exists)
 			{
-				if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
-					result_cols, n_query_cols, n_result_cols, 0, &result) < 0)
+				if (pa_dbf.query (pa_db, ruid?rquery_cols:query_cols, 
+						ruid?rquery_ops:query_ops, ruid?rquery_vals:query_vals,
+						result_cols, ruid?n_rquery_cols:n_query_cols, n_result_cols,
+						0, &result) < 0)
 				{
 					LM_ERR("unsuccessful sql query\n");
 					goto error;
@@ -877,6 +952,22 @@ after_dialog_check:
 					goto send_412;
 
 				db_record_exists = 1;
+
+				row = &result->rows[0];
+				row_vals = ROW_VALUES(row);
+
+				/* store current ruid if we don't already know it */
+				if (!p_ruid.s && row_vals[rez_ruid_col].val.string_val) {
+					cur_ruid.len = strlen((char *) row_vals[rez_ruid_col].val.string_val);
+					cur_ruid.s = (char *) pkg_malloc(sizeof(char) * cur_ruid.len);
+					if (!cur_ruid.s)
+					{
+						LM_ERR("no private memory\n");
+						goto error;
+					}
+					memcpy(cur_ruid.s, (char *) row_vals[rez_ruid_col].val.string_val, cur_ruid.len);
+					p_ruid = cur_ruid;
+				}
 
 				pa_dbf.free_result(pa_db, result);
 				result = NULL;
@@ -899,7 +990,7 @@ after_dialog_check:
 
 				if (num_watchers > 0)
 				{
-					if (mark_presentity_for_delete(presentity) < 0)
+					if (mark_presentity_for_delete(presentity, &p_ruid) < 0)
 					{
 						LM_ERR("Marking presentities\n");
 						goto error;
@@ -917,7 +1008,7 @@ after_dialog_check:
 
 			if (pres_notifier_processes == 0 || num_watchers == 0)
 			{
-				if (delete_presentity(presentity) < 0)
+				if (delete_presentity(presentity, &p_ruid) < 0)
 				{
 					LM_ERR("Deleting presentity\n");
 					goto error;
@@ -953,8 +1044,15 @@ after_dialog_check:
 			goto done;
 		}
 
-		if(presentity->event->etag_not_new== 0)
+		if(presentity->event->etag_not_new== 0 || etag_override)
 		{
+			if (etag_override) {
+				/* use the supplied etag */
+				LM_DBG("updating with supplied etag %.*s\n", etag_override->len, etag_override->s);
+				cur_etag = *etag_override;
+				goto after_etag_generation;
+			}
+
 			/* generate another etag */
 			unsigned int publ_nr;
 			str str_publ_nr= {0, 0};
@@ -988,10 +1086,12 @@ after_dialog_check:
 
 			cur_etag= etag;
 
+after_etag_generation:
+
 			update_keys[n_update_cols] = &str_etag_col;
 			update_vals[n_update_cols].type = DB1_STR;
 			update_vals[n_update_cols].nul = 0;
-			update_vals[n_update_cols].val.str_val = etag;
+			update_vals[n_update_cols].val.str_val = cur_etag;
 			n_update_cols++;
 
 		}
@@ -999,7 +1099,7 @@ after_dialog_check:
 			cur_etag= presentity->etag;
 
 		if (presentity->event->evp->type==EVENT_DIALOG) {
-			if(is_dialog_terminated(presentity))
+			if(ps_match_dialog_state(presentity, "terminated")==1)
 			{
 				LM_WARN("Trying to update an already terminated state."
 						" Skipping update.\n");
@@ -1010,10 +1110,6 @@ after_dialog_check:
 					goto error;
 				}
 				if (sent_reply) *sent_reply= 1;
-
-				if(etag.s)
-					pkg_free(etag.s);
-				etag.s= NULL;
 
 				goto done;
 			}
@@ -1068,11 +1164,14 @@ after_dialog_check:
 			n_update_cols++;
 		}
 
-		/* if there is no support for affected_rows and no previous query has been done, do query */
-		if (!pa_dbf.affected_rows && !db_record_exists)
+		/* if there is no support for affected_rows and no previous query has been done,
+		 * or dmq replication is enabled and we don't already know the ruid, do query */
+		if ((!pa_dbf.affected_rows && !db_record_exists) || (pres_enable_dmq > 0 && !p_ruid.s))
 		{
-			if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
-					result_cols, n_query_cols, n_result_cols, 0, &result) < 0)
+			if (pa_dbf.query (pa_db, ruid?rquery_cols:query_cols, 
+					ruid?rquery_ops:query_ops, ruid?rquery_vals:query_vals,
+					result_cols, ruid?n_rquery_cols:n_query_cols, n_result_cols,
+					0, &result) < 0)
 			{
 				LM_ERR("unsuccessful sql query\n");
 				goto error;
@@ -1084,12 +1183,33 @@ after_dialog_check:
 				goto send_412;
 
 			db_record_exists = 1;
+			affected_rows = result->n;
+
+			row = &result->rows[0];
+			row_vals = ROW_VALUES(row);
+
+			/* store current ruid if we don't already know it */
+			if (!p_ruid.s && row_vals[rez_ruid_col].val.string_val) {
+				cur_ruid.len = strlen((char *) row_vals[rez_ruid_col].val.string_val);
+				cur_ruid.s = (char *) pkg_malloc(sizeof(char) * cur_ruid.len);
+				if (!cur_ruid.s)
+				{
+					LM_ERR("no private memory\n");
+					goto error;
+				}
+				memcpy(cur_ruid.s, (char *) row_vals[rez_ruid_col].val.string_val, cur_ruid.len);
+				p_ruid = cur_ruid;
+
+				LM_DBG("existing ruid %.*s\n", p_ruid.len, p_ruid.s);
+			}
+
 			pa_dbf.free_result(pa_db, result);
 			result = NULL;
 		}
 
-		if( pa_dbf.update( pa_db,query_cols, query_ops, query_vals,
-				update_keys, update_vals, n_query_cols, n_update_cols )<0)
+		if (pa_dbf.update (pa_db, ruid?rquery_cols:query_cols, 
+				ruid?rquery_ops:query_ops, ruid?rquery_vals:query_vals,
+				update_keys, update_vals, ruid?n_rquery_cols:n_query_cols, n_update_cols) < 0)
 		{
 			LM_ERR("updating published info in database\n");
 			goto error;
@@ -1108,7 +1228,7 @@ after_dialog_check:
 
 
 		/*if either affected_rows (if exists) or select query show that there is no line in database*/
-		if ((pa_dbf.affected_rows && !affected_rows) || (!pa_dbf.affected_rows && !db_record_exists))
+		if ((pa_dbf.affected_rows && !affected_rows && !db_record_exists) || (!pa_dbf.affected_rows && !db_record_exists))
 			goto send_412;
 
 		/* send 200OK */
@@ -1118,10 +1238,6 @@ after_dialog_check:
 			goto error;
 		}
 		if (sent_reply) *sent_reply= 1;
-
-		if(etag.s)
-			pkg_free(etag.s);
-		etag.s= NULL;
 
 		if(!body)
 			goto done;
@@ -1148,6 +1264,19 @@ send_notify:
 	}
 
 done:
+
+	if (pres_enable_dmq>0) {
+		pres_dmq_replicate_presentity(presentity, body, new_t, &cur_etag, sphere, &p_ruid, NULL);
+	}
+
+	if(etag.s)
+		pkg_free(etag.s);
+	etag.s= NULL;
+
+	if(cur_ruid.s)
+		pkg_free(cur_ruid.s);
+	cur_ruid.s= NULL;
+
 	if(rules_doc)
 	{
 		if(rules_doc->s)
@@ -1173,7 +1302,12 @@ done:
 
 send_412:
 
-	LM_ERR("No E_Tag match %*s\n", presentity->etag.len, presentity->etag.s);
+	if (!ruid) {
+		LM_ERR("No E_Tag match %*s\n", presentity->etag.len, presentity->etag.s);
+	} else {
+		LM_ERR("No ruid match %*s\n", ruid->len, ruid->s);
+	}
+	
 	if (msg != NULL)
 	{
 		if (slb.freply(msg, 412, &pu_412_rpl) < 0)
@@ -1198,6 +1332,8 @@ error:
 	if(pres_uri.s) {
 		pkg_free(pres_uri.s);
 	}
+	if(cur_ruid.s)
+		pkg_free(cur_ruid.s);
 
 	if (pa_dbf.abort_transaction) {
 		if (pa_dbf.abort_transaction(pa_db) < 0) {
@@ -1521,7 +1657,7 @@ error:
 
 }
 
-int mark_presentity_for_delete(presentity_t *pres)
+int mark_presentity_for_delete(presentity_t *pres, str *ruid)
 {
 	db_key_t query_cols[4], result_cols[1], update_cols[3];
 	db_val_t query_vals[4], update_vals[3], *value;
@@ -1535,7 +1671,7 @@ int mark_presentity_for_delete(presentity_t *pres)
 	if (pres->event->agg_nbody == NULL)
 	{
 		/* Nothing clever to do here... just delete */
-		if (delete_presentity(pres) < 0)
+		if (delete_presentity(pres, NULL) < 0)
 		{
 			LM_ERR("deleting presentity\n");
 			goto error;
@@ -1549,29 +1685,37 @@ int mark_presentity_for_delete(presentity_t *pres)
 		goto error;
 	}
 
-	query_cols[n_query_cols] = &str_username_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = pres->user;
-	n_query_cols++;
+	if (!ruid) {
+		query_cols[n_query_cols] = &str_username_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = pres->user;
+		n_query_cols++;
 
-	query_cols[n_query_cols] = &str_domain_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = pres->domain;
-	n_query_cols++;
+		query_cols[n_query_cols] = &str_domain_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = pres->domain;
+		n_query_cols++;
 
-	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = pres->event->name;
-	n_query_cols++;
+		query_cols[n_query_cols] = &str_event_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = pres->event->name;
+		n_query_cols++;
 
-	query_cols[n_query_cols] = &str_etag_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = pres->etag;
-	n_query_cols++;
+		query_cols[n_query_cols] = &str_etag_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = pres->etag;
+		n_query_cols++;
+	} else {
+		query_cols[n_query_cols] = &str_ruid_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = *ruid;
+		n_query_cols++;
+	}
 
 	result_cols[0] = &str_body_col;
 
@@ -1601,7 +1745,7 @@ int mark_presentity_for_delete(presentity_t *pres)
 		 * it anyway */
 		LM_ERR("Found %d presentities - expected 1\n", RES_ROW_N(result));
 
-		if (delete_presentity(pres) < 0)
+		if (delete_presentity(pres, ruid) < 0)
 		{
 			LM_ERR("deleting presentity\n");
 			goto error;
@@ -1669,7 +1813,7 @@ error:
 	return ret;
 }
 
-int delete_presentity(presentity_t *pres)
+int delete_presentity(presentity_t *pres, str *ruid)
 {
 	db_key_t query_cols[4];
 	db_val_t query_vals[4];
@@ -1681,29 +1825,37 @@ int delete_presentity(presentity_t *pres)
 		goto error;
 	}
 
-	query_cols[n_query_cols] = &str_username_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = pres->user;
-	n_query_cols++;
+	if (!ruid) {
+		query_cols[n_query_cols] = &str_username_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = pres->user;
+		n_query_cols++;
 
-	query_cols[n_query_cols] = &str_domain_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = pres->domain;
-	n_query_cols++;
+		query_cols[n_query_cols] = &str_domain_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = pres->domain;
+		n_query_cols++;
 
-	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = pres->event->name;
-	n_query_cols++;
+		query_cols[n_query_cols] = &str_event_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = pres->event->name;
+		n_query_cols++;
 
-	query_cols[n_query_cols] = &str_etag_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = pres->etag;
-	n_query_cols++;
+		query_cols[n_query_cols] = &str_etag_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = pres->etag;
+		n_query_cols++;
+	} else {
+		query_cols[n_query_cols] = &str_ruid_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = *ruid;
+		n_query_cols++;		
+	}
 
 	if(pa_dbf.delete(pa_db, query_cols, 0, query_vals, n_query_cols) < 0)
 	{
@@ -1776,4 +1928,34 @@ int delete_offline_presentities(str *pres_uri, pres_ev_t *event)
 
 error:
 	return -1;
+}
+
+// used for API updates to the presentity table
+int _api_update_presentity(str *event, str *realm, str *user, str *etag,
+		str *sender, str *body, int expires, int new_t, int replace)
+{
+	int ret;
+	presentity_t *pres = NULL;
+	pres_ev_t *ev;
+	char *sphere = NULL;
+
+	ev = contains_event(event, NULL);
+	if(ev == NULL) {
+		LM_ERR("wrong event parameter\n");
+		return -1;
+	}
+
+	pres = new_presentity(realm, user, expires, ev, etag, sender);
+
+	if(sphere_enable) {
+		sphere = extract_sphere(*body);
+	}
+	ret = update_presentity(NULL, pres, body, new_t, NULL, sphere, NULL, NULL, replace);
+
+	if(pres)
+		pkg_free(pres);
+	if(sphere)
+		pkg_free(sphere);
+
+	return ret;
 }

@@ -386,7 +386,7 @@ int extract_sendrecv_mode(str *body, str *sendrecv_mode, int *is_on_hold)
 		(strncasecmp(cp1, "a=recvonly", 10) == 0))) {
 		if ((strncasecmp(cp1, "a=inactive", 10) == 0) ||
 		    (strncasecmp(cp1, "a=sendonly", 10) == 0) ) {
-			*is_on_hold = 1;
+			*is_on_hold = RFC3264_HOLD;
 		} else {
 			return -1;
 		}
@@ -469,7 +469,7 @@ int extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 		return -1;
 	}
 	/* safety checks:
-	 * - for lenght, at least 6: ' IP[4|6] x...'
+	 * - for length, at least 6: ' IP[4|6] x...'
 	 * - white space after
 	 */
 	if(cp + 6 > mediaip->s + mediaip->len && cp[4]!=' ') {

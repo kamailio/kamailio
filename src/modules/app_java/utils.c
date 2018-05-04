@@ -45,35 +45,32 @@ char **split(char *str, char *sep)
 	int i;
 
 	buf = (char **)pkg_malloc(sizeof(char *));
-	if (!buf)
-	{
+	if(!buf) {
 		LM_ERR("%s: pkg_malloc() has failed. Not enough memory!\n", APP_NAME);
 		return NULL;
 	}
 	memset(&buf, 0, sizeof(char *));
 
-	if (str == NULL)
+	if(str == NULL)
 		return buf;
 
-	if (strncmp(str, sep, strlen(sep)) <= 0)
-	{
+	if(strncmp(str, sep, strlen(sep)) <= 0) {
 		// string doesn't contains a separator
 		buf[0] = strdup(str);
 		return buf;
 	}
 
 	token = strdup(str);
-	for (i=0; token != NULL; token = saveptr, i++)
-	{
+	for(i = 0; token != NULL; token = saveptr, i++) {
 		token = strtok_r(token, (const char *)sep, &saveptr);
 
-		if (token == NULL || !strcmp(token, ""))
+		if(token == NULL || !strcmp(token, ""))
 			break;
 
-		buf = (char **)pkg_reallocxf(buf, (i+2) * sizeof(char *));
-		if (!buf)
-		{
-			LM_ERR("%s: pkg_realloc() has failed. Not enough memory!\n", APP_NAME);
+		buf = (char **)pkg_reallocxf(buf, (i + 2) * sizeof(char *));
+		if(!buf) {
+			LM_ERR("%s: pkg_realloc() has failed. Not enough memory!\n",
+					APP_NAME);
 			return NULL;
 		}
 		buf[i] = strdup(token);
@@ -84,4 +81,3 @@ char **split(char *str, char *sep)
 
 	return buf;
 }
-

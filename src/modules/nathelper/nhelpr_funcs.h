@@ -21,14 +21,14 @@
 
 
 #ifndef _NHLPR_FUNCS_H
-#define  _NHLPR_FUNCS_H
+#define _NHLPR_FUNCS_H
 
 #include "../../core/str.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/contact/contact.h"
 
-int extract_body(struct sip_msg * , str *);
-int check_content_type(struct sip_msg * );
+int extract_body(struct sip_msg *, str *);
+int check_content_type(struct sip_msg *);
 int get_contact_uri(struct sip_msg *, struct sip_uri *, contact_t **);
 
 #endif

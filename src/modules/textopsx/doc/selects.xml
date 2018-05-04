@@ -13,7 +13,7 @@
 		@hf_value.HFNAME[IDX]    # idx value, negative value counts from bottom
 		@hf_value.HFNAME.PARAM_NAME
 		@hf_value.HFNAME[IDX].PARAM_NAME
-		@hf_value.HFNAME.p.PARAM_NAME  # or .param., useful if requred called "uri", "p", "param"
+		@hf_value.HFNAME.p.PARAM_NAME  # or .param., useful if required called "uri", "p", "param"
 		@hf_value.HFNAME[IDX].p.PARAM_NAME # dtto
 		@hf_value.HFNAME[IDX].uri # (&lt; &amp; &gt; excluded)
 		@hf_value.HFNAME[*]     # return comma delimited list of all values (combines headers)

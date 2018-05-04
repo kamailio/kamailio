@@ -14,7 +14,7 @@
 	<title>Overview</title>
 	<para>
 	The matrix module can be used to arbitrary lookup operations over an array.
-	One possible usecase is to define which routing tree should
+	One possible use-case is to define which routing tree should
   	be used depending on the preferred carrier of the source number and
   	the carrier id of the destination number.
 

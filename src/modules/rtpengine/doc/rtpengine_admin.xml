@@ -78,8 +78,8 @@
 		are shared memory(shm), so all processes can see a common list of nodes.
 		There is no locking when setting the nodes enabled/disabled (to keep the
 		memory access as fast as possible). Thus, problems related to node state
-		might appear for concurent processes that might set the nodes
-		enabled/disabled(e.g. by fifo command). This robustness problems are overcomed as follows.
+		might appear for concurrent processes that might set the nodes
+		enabled/disabled(e.g. by fifo command). This robustness problems are overcome as follows.
 	</para>
 
 	<para>
@@ -97,7 +97,7 @@
 	</para>
 
 	<para>
-		The 'kamctl fifo' commands (including rtpengin ones) are executed by an exclusive
+		The 'kamctl fifo' commands (including rtpengine ones) are executed by an exclusive
 		process which operate on the same shared memory node list.
 	</para>
 
@@ -197,6 +197,33 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
 </programlisting>
 		</example>
 	</section>
+	<section id="rtpengine.p.aggressive_redetection">
+		<title><varname>aggressive_redetection</varname> (integer)</title>
+		<para>
+		This parameter determines what happens when all potential rtpengines are found
+		to be unreachable. If enabled, the sip server will send pings to all rtpengines,
+		else no rtpengine will be queried until its rtpengine_disable_tout timeout passes.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int rtpengine aggressive_redetection 0
+			</programlisting>
+		</para>
+		<example>
+		<title>Set <varname>aggressive_redetection</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "aggressive_redetection", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="rtpengine.p.rtpengine_tout_ms">
 		<title><varname>rtpengine_tout_ms</varname> (integer)</title>
 		<para>
@@ -230,7 +257,7 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
 		Probably the manually deactivated machine is still running(did not crash).
 		</para>
 		<para>
-		This is <emphasis>useful</emphasis> when deactivating a node for maintanance and reject new sessions but allow current ones to finish.
+		This is <emphasis>useful</emphasis> when deactivating a node for maintenance and reject new sessions but allow current ones to finish.
 		</para>
 		<para>
 		The behaviour is the same for a rtpengine deleted table node.
@@ -307,7 +334,7 @@ modparam("rtpengine", "rtpengine_retr", 2)
 	<section id="rtpengine.p.extra_id_pv">
 		<title><varname>extra_id_pv</varname> (string)</title>
 		<para>
-			The parameter sets the PV defination to use when the <quote>b</quote>
+			The parameter sets the PV definition to use when the <quote>b</quote>
 			parameter is used on rtpengine_delete(), rtpengine_offer(),
 			rtpengine_answer() or rtpengine_manage() command.
 		</para><para>
@@ -355,7 +382,7 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
 			operating system will be used.
 			Note: when rtpengine_sock is a IPv6 link-local address,
 			one _must_ set this parameter in order to successfully connect to RTP engine.
-			This is necessarely because OS needs additional scope_id hint to communicate
+			This is necessarily because OS needs additional scope_id hint to communicate
 			over IPv6 link locals. The scope_id is resolved based on the given IPv6.
 		</para>
 		<para>
@@ -1938,6 +1965,27 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
 		</example>
 	</section>
 
+	<section id="rtpengine.p.control_cmd_tos">
+		<title><varname>control_cmd_tos</varname> (integer)</title>
+		<para>
+			The parameter is used to set the value of <quote>type of service (tos)</quote> for the control commands (such as rtpengine_offer(), rtpengine_answer() etc).
+		</para>
+		<para>
+			There is no default value. By default this feature is not used.
+		</para>
+		<para>
+			The values not falling into the range <quote>0-255</quote> will be simply ignored.
+		</para>
+		<example>
+		<title>Set <varname>control_cmd_tos</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "control_cmd_tos", "144")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
@@ -2159,7 +2207,7 @@ rtpengine_offer();
 				&sdp; substitutions (c=, m=, etc) are unaffected by this flag.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>RTP, SRTP, AVP, AVPF</emphasis> - These flags control the &rtp;
+				<emphasis>RTP, SRTP, DTLS, AVP, AVPF</emphasis> - These flags control the &rtp;
 				transport protocol that should be used towards the recipient of
 				the &sdp;. If none of them are specified, the protocol given in
 				the &sdp; is left untouched. Otherwise, the <quote>SRTP</quote> flag indicates that
@@ -2169,8 +2217,8 @@ rtpengine_offer();
 				should be used. See also the next set of flags below.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>RTP/AVP, RTP/SAVP, RTP/AVPF, RTP/SAVPF</emphasis> - these serve as
-				an alternative, more explicit way to select between the different &rtp; protocols
+				<emphasis>RTP/AVP, RTP/SAVP, UDP/TLS/RTP/SAVP, RTP/AVPF, RTP/SAVPF, UDP/TLS/RTP/SAVPF</emphasis> - these 
+				serve as an alternative, more explicit way to select between the different &rtp; protocols
 				and profiles supported by the &rtp; proxy. For example, giving the flag
 				<quote>RTP/SAVPF</quote> has the same effect as giving the two flags
 				<quote>SRTP AVPF</quote>.
@@ -2277,6 +2325,11 @@ rtpengine_offer();
 				<emphasis>record-call=on</emphasis> - instructs RTPEngine to record the session. Use
 				it in rtpengine_offer() to start recording immediately and save the call metadata,
 				as alternative to start_recording().
+				</para></listitem>
+				<listitem><para>
+				<emphasis>metadata</emphasis> - a generic metadata string. The metadata will be  used when
+                                recording calls to provide custom additional information. More details about this are found
+                                in the rtpengine README.
 				</para></listitem>
 			</itemizedlist>
 			<para>

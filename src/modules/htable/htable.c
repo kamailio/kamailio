@@ -53,6 +53,7 @@ int  ht_timer_interval = 20;
 int  ht_db_expires_flag = 0;
 int  ht_enable_dmq = 0;
 int  ht_timer_procs = 0;
+static int ht_event_callback_mode = 0;
 
 str ht_event_callback = STR_NULL;
 
@@ -131,20 +132,21 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"htable",             PARAM_STRING|USE_FUNC_PARAM, (void*)ht_param},
-	{"db_url",             PARAM_STR, &ht_db_url},
-	{"key_name_column",    PARAM_STR, &ht_db_name_column},
-	{"key_type_column",    PARAM_STR, &ht_db_ktype_column},
-	{"value_type_column",  PARAM_STR, &ht_db_vtype_column},
-	{"key_value_column",   PARAM_STR, &ht_db_value_column},
-	{"expires_column",     PARAM_STR, &ht_db_expires_column},
-	{"array_size_suffix",  PARAM_STR, &ht_array_size_suffix},
-	{"fetch_rows",         INT_PARAM, &ht_fetch_rows},
-	{"timer_interval",     INT_PARAM, &ht_timer_interval},
-	{"db_expires",         INT_PARAM, &ht_db_expires_flag},
-	{"enable_dmq",         INT_PARAM, &ht_enable_dmq},
-	{"timer_procs",        PARAM_INT, &ht_timer_procs},
-	{"event_callback",     PARAM_STR, &ht_event_callback},
+	{"htable",              PARAM_STRING|USE_FUNC_PARAM, (void*)ht_param},
+	{"db_url",              PARAM_STR, &ht_db_url},
+	{"key_name_column",     PARAM_STR, &ht_db_name_column},
+	{"key_type_column",     PARAM_STR, &ht_db_ktype_column},
+	{"value_type_column",   PARAM_STR, &ht_db_vtype_column},
+	{"key_value_column",    PARAM_STR, &ht_db_value_column},
+	{"expires_column",      PARAM_STR, &ht_db_expires_column},
+	{"array_size_suffix",   PARAM_STR, &ht_array_size_suffix},
+	{"fetch_rows",          INT_PARAM, &ht_fetch_rows},
+	{"timer_interval",      INT_PARAM, &ht_timer_interval},
+	{"db_expires",          INT_PARAM, &ht_db_expires_flag},
+	{"enable_dmq",          INT_PARAM, &ht_enable_dmq},
+	{"timer_procs",         PARAM_INT, &ht_timer_procs},
+	{"event_callback",      PARAM_STR, &ht_event_callback},
+	{"event_callback_mode", PARAM_STR, &ht_event_callback_mode},
 	{0,0,0}
 };
 
@@ -219,7 +221,9 @@ static int mod_init(void)
 	return 0;
 }
 
-
+/**
+ *
+ */
 static int child_init(int rank)
 {
 	struct sip_msg *fmsg;
@@ -243,9 +247,11 @@ static int child_init(int rank)
 		}
 	}
 
-	if (rank!=PROC_INIT)
+	if (ht_event_callback_mode==0 && rank!=PROC_INIT)
 		return 0;
 
+	if (ht_event_callback_mode==1 && rank!=PROC_SIPINIT)
+		return 0;
 
 	rt = -1;
 	if(ht_event_callback.s==NULL || ht_event_callback.len<=0) {

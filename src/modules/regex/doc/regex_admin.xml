@@ -184,7 +184,7 @@ modparam("regex", "pcre_multiline", 1)
 		<section id="regex.p.pcre_dotall">
 			<title><varname>pcre_dotall</varname> (int)</title>
 			<para>
-				If this option is set, a dot metacharater in the pattern matches all characters,
+				If this option is set, a dot metacharacter in the pattern matches all characters,
 				including those that indicate newline. Without it, a dot does not match when
 				the current position is at a newline. This option is equivalent to Perl's /s
 				option, and it can be changed within a pattern by a (?s) or (?-s) option setting.
@@ -403,7 +403,7 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 				group starts with "[number]" line. Lines starting by space, tab,
 				CR, LF or # (comments) are ignored. Each regular expression must
 				take up just one line, this means that a regular expression can't
-				be splitted in various lines.
+				be split in various lines.
 			</para>
 			
 			<para>

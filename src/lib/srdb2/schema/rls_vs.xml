@@ -22,7 +22,7 @@
   </column>
   
   <!-- id of "parent" resource list subscription 
-	   (related to rls_susbscription.id) -->
+	   (related to rls_subscription.id) -->
   <column>
 	<name>rls_id</name>
 	<type>string</type>

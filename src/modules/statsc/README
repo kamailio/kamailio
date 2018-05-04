@@ -113,15 +113,15 @@ modparam("statsc", "items", 200)
 3.3. track (str)
 
    Specify the statistics to track. The parameter can be set many times
-   and one value can speficy many statistics.
+   and one value can specify many statistics.
 
    The format is "rname=sname", where the rname is the name for report and
    sname is internal Kamailio statistic name.
 
    Next statistics are tracked by default:
-     * shm.free - the internal statistc 'free_size' (from group 'shmem').
-     * shm.used - the internal statistc 'used_size' (from group 'shmem').
-     * shm.real_used - the internal statistc 'real_used_size' (from group
+     * shm.free - the internal statistic 'free_size' (from group 'shmem').
+     * shm.used - the internal statistic 'used_size' (from group 'shmem').
+     * shm.real_used - the internal statistic 'real_used_size' (from group
        'shmem').
 
    Default value is "".

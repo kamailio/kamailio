@@ -87,7 +87,7 @@ Chapter 1. Admin Guide
 
    The immediate benefit of compressing the body is to reduce the size of
    the SIP message, increasing the chances to stay under MTU for UDP
-   packts. From observation, the compressed body is in between 50% to 67%
+   packets. From observation, the compressed body is in between 50% to 67%
    smaller than the original size (e.g., a body of 431 bytes was
    compressed to 230).
 
@@ -145,7 +145,7 @@ modparam("gzcompress", "header_value", "gzip")
 
    If set to 1, gzcompress module will bind to sanity module in order to
    perform sanity checks over received SIP request. Default sanity checks
-   are done. It is useful to check if received request is well formated
+   are done. It is useful to check if received request is well formatted
    before proceeding to encoding/decoding.
 
    Default value is 0 (do not bind to sanity module).
@@ -163,7 +163,7 @@ modparam("gzcompress", "sanity_checks", 1)
 
    Next example shows how to enable compression for forwarded requests, as
    well as replying with compressed body for HTTP requests. For SIP, the
-   request is recevied and forwarded to itself once, just for the sake of
+   request is received and forwarded to itself once, just for the sake of
    showing a simple example.
 
    Example 1.4. Enable body compression

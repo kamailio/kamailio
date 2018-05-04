@@ -145,7 +145,7 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The Following mouldes must be loaded before this module:
+   The Following modules must be loaded before this module:
      * Dialog2
      * Usrloc PCSCF
      * TM - Transaction Manager

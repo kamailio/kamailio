@@ -135,6 +135,7 @@
 #include "core/dset.h"
 #include "core/timer_proc.h"
 #include "core/srapi.h"
+#include "core/receive.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -161,7 +162,7 @@ Options:\n\
                   [proto:]addr_lst[:port], where proto=udp|tcp|tls|sctp, \n\
                   addr_lst= addr|(addr, addr_lst) and \n\
                   addr= host|ip_address|interface_name. \n\
-                  E.g: -l locahost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
+                  E.g: -l localhost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
                   -l \"sctp:(eth0)\", -l \"(eth0, eth1, 127.0.0.1):5065\".\n\
                   The default behaviour is to listen on all the interfaces.\n\
     -n processes Number of child processes to fork per interface\n\
@@ -197,11 +198,11 @@ Options:\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
     -w dir       Change the working directory to \"dir\" (default: \"/\")\n\
     -t dir       Chroot to \"dir\"\n\
-    -u uid       Change uid \n\
-    -g gid       Change gid \n\
+    -u uid       Change uid (user id)\n\
+    -g gid       Change gid (group id)\n\
     -P file      Create a pid file\n\
     -G file      Create a pgid file\n\
-    -Y dir       Runtime dir\n\
+    -Y dir       Runtime dir path\n\
     -O nr        Script optimization level (debugging option)\n\
     -a mode      Auto aliases mode: enable with yes or on,\n\
                   disable with no or off\n\
@@ -211,7 +212,7 @@ Options:\n\
     -X name      Specify internal manager for private memory (pkg)\n\
                   - if omitted, the one for shm is used\n"
 #ifdef STATS
-"    -s file     File to which statistics is dumped (disabled otherwise)\n"
+"    -s file     File where to write internal statistics on SIGUSR1\n"
 #endif
 ;
 
@@ -554,6 +555,7 @@ void cleanup(int show_status)
 #endif
 	destroy_timer();
 	pv_destroy_api();
+	ksr_route_locks_set_destroy();
 	destroy_script_cb();
 	destroy_nonsip_hooks();
 	destroy_routes();
@@ -2324,6 +2326,9 @@ try_again:
 	if (pv_reinit_buffer()<0)
 		goto error;
 
+	if (ksr_route_locks_set_init()<0)
+		goto error;
+
 	/* init lookup for core event routes */
 	sr_core_ert_init();
 
@@ -2633,8 +2638,7 @@ try_again:
 
 	/* fix routing lists */
 	if ( (r=fix_rls())!=0){
-		fprintf(stderr, "ERROR: error %d while trying to fix configuration\n",
-						r);
+		fprintf(stderr, "error %d while trying to fix configuration\n", r);
 		goto error;
 	};
 	fixup_complete=1;
@@ -2650,7 +2654,7 @@ try_again:
 	if (is_main) shutdown_children(SIGTERM, 0);
 	if (!dont_daemonize) {
 		if (daemon_status_send(0) < 0)
-			ERR("error sending exit status: %s [%d]\n",
+			fprintf(stderr, "error sending exit status: %s [%d]\n",
 					strerror(errno), errno);
 	}
 	/* else terminate process */
@@ -2661,7 +2665,7 @@ error:
 	if (is_main) shutdown_children(SIGTERM, 0);
 	if (!dont_daemonize) {
 		if (daemon_status_send((char)-1) < 0)
-			ERR("error sending exit status: %s [%d]\n",
+			fprintf(stderr, "error sending exit status: %s [%d]\n",
 					strerror(errno), errno);
 	}
 	return -1;

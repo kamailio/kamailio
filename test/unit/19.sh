@@ -34,6 +34,7 @@ UAC=5080
 
 
 # add an registrar entry to the db;
+$MYSQL "DELETE FROM location WHERE ruid=\"kamailio-unit-uid\""
 $MYSQL "INSERT INTO location (ruid,username,contact,socket,user_agent,cseq,q) VALUES (\"kamailio-unit-uid\", \"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"kamailio_test\",1,-1);"
 
 $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
@@ -46,5 +47,5 @@ ret=$?
 killall -9 sipp > /dev/null 2>&1
 kill_kamailio
 
-$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"kamailio_test\"));"
+$MYSQL "DELETE FROM location WHERE ruid=\"kamailio-unit-uid\""
 exit $ret;

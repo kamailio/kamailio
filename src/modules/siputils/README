@@ -806,8 +806,8 @@ append_rpid_hf();  # Append Remote-Party-ID header field
 
    Meaning of the parameters is as follows:
      * prefix - Prefix of the Remote-Party-ID URI. The string will be
-       added at the begining of body of the header field, just before the
-       URI.
+       added at the beginning of the body of the header field, just before
+       the URI.
      * suffix - Suffix of the Remote-Party-ID header field. The string
        will be appended at the end of the header field. It can be used to
        set various URI parameters, for example.
@@ -929,7 +929,7 @@ if (is_supported("outbound")) { ... }
    'myself' and source address is not matching it (to avoid detecting in
    case of local loops). Note that it does not detect spirals, which can
    have the condition for replies true also in the case of additional SIP
-   reply receival.
+   reply reception.
 
    This function can be used from ANY_ROUTE.
 

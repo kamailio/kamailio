@@ -68,7 +68,7 @@
 		"e2u+parameter:sip". When the second parameter starts with a '+' sign,
 		the ENUM lookup also supports compound NAPTRs
 		(e.g. "e2u+voice:sip+video:sip") and searching for multiple service
-		types within one lookup. Multiple service types must be separeted
+		types within one lookup. Multiple service types must be separated
 		by a '+' sign.
 	</para>
 	<para>
@@ -171,7 +171,7 @@ modparam("enum", "i_enum_suffix", "e1234.arpa.")
                 Default value is <quote>"i"</quote>
                 </para>
                 <example>
-                <title>Setting brachlabel module parameter</title>
+                <title>Setting branchlabel module parameter</title>
                 <programlisting format="linespecific">
 modparam("enum", "branchlabel", "i")
 </programlisting>

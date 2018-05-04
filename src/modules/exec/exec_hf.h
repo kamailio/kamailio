@@ -13,15 +13,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
  * \file
  * \brief Exec module:: Header Field handling
- * \ingroup exec 
+ * \ingroup exec
  * Module: \ref exec
  */
 
@@ -33,7 +33,7 @@
 /* prefix prepended to header field name in env var name */
 #define SIP "SIP_"
 #define HF_PREFIX SIP "HF_"
-#define HF_PREFIX_LEN (sizeof(HF_PREFIX)-1)
+#define HF_PREFIX_LEN (sizeof(HF_PREFIX) - 1)
 /* well known variable names */
 #define EV_SRCIP SIP "SRCIP"
 #define EV_RURI SIP "RURI"
@@ -49,32 +49,31 @@
 /* RFC3261 -- characters legal in header names; a really
  * _bloated_ thing
  */
-#define UNRESERVED_MARK	"-_.!~*'()"
-#define HNV_UNRESERVED	"[]/?:+$"
+#define UNRESERVED_MARK "-_.!~*'()"
+#define HNV_UNRESERVED "[]/?:+$"
 #define ESCAPE '%'
 /* and this is what all such crazy symbols in header field
  * name will be replaced with in env vars */
 #define HFN_SYMBOL '_'
 
 #define VAR_VIA "VIA"
-#define VAR_VIA_LEN (sizeof(VAR_VIA)-1)
+#define VAR_VIA_LEN (sizeof(VAR_VIA) - 1)
 #define VAR_CTYPE "CONTENT_TYPE"
-#define VAR_CTYPE_LEN (sizeof(VAR_CTYPE)-1)
+#define VAR_CTYPE_LEN (sizeof(VAR_CTYPE) - 1)
 #define VAR_FROM "FROM"
-#define VAR_FROM_LEN (sizeof(VAR_FROM)-1)
+#define VAR_FROM_LEN (sizeof(VAR_FROM) - 1)
 #define VAR_CALLID "CALLID"
-#define VAR_CALLID_LEN (sizeof(VAR_CALLID)-1)
+#define VAR_CALLID_LEN (sizeof(VAR_CALLID) - 1)
 #define VAR_SUPPORTED "SUPPORTED"
-#define VAR_SUPPORTED_LEN (sizeof(VAR_SUPPORTED)-1)
+#define VAR_SUPPORTED_LEN (sizeof(VAR_SUPPORTED) - 1)
 #define VAR_CLEN "CONTENT_LENGTH"
-#define VAR_CLEN_LEN (sizeof(VAR_CLEN)-1)
+#define VAR_CLEN_LEN (sizeof(VAR_CLEN) - 1)
 #define VAR_CONTACT "CONTACT"
-#define VAR_CONTACT_LEN (sizeof(VAR_CONTACT)-1)
+#define VAR_CONTACT_LEN (sizeof(VAR_CONTACT) - 1)
 #define VAR_TO "TO"
-#define VAR_TO_LEN (sizeof(VAR_TO)-1)
+#define VAR_TO_LEN (sizeof(VAR_TO) - 1)
 #define VAR_EVENT "EVENT"
-#define VAR_EVENT_LEN (sizeof(VAR_EVENT)-1)
-
+#define VAR_EVENT_LEN (sizeof(VAR_EVENT) - 1)
 
 
 #if 0
@@ -88,21 +87,29 @@ struct hdr_field {
 };
 #endif
 
-typedef struct env {
-	char** env;
+typedef struct env
+{
+	char **env;
 	int old_cnt;
 } environment_t;
 
-struct attrval {
+struct attrval
+{
 	str attr;
 	str val;
 };
 
-enum wrapper_type { W_HF=1, W_AV };
+enum wrapper_type
+{
+	W_HF = 1,
+	W_AV
+};
 
-struct hf_wrapper {
+struct hf_wrapper
+{
 	enum wrapper_type var_type;
-	union {
+	union
+	{
 		struct hdr_field *hf;
 		struct attrval av;
 	} u;

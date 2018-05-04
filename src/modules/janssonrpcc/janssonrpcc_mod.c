@@ -225,7 +225,7 @@ void mod_destroy(void)
 int parse_server_param(modparam_t type, void* val)
 {
 	if(global_server_group == NULL) {
-		global_server_group = shm_malloc(sizeof(void*));
+		global_server_group = (jsonrpc_server_group_t**)shm_malloc(sizeof(jsonrpc_server_group_t*));
 		*global_server_group = NULL;
 	}
 	return jsonrpc_parse_server((char*)val, global_server_group);

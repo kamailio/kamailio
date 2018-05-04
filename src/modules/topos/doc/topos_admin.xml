@@ -26,7 +26,10 @@
 		loaded (tune the parameters if needed).
 	</para>
 	<para>
-		It works for SIP MESSAGE requests.
+		It also works for SIP MESSAGE or other requests that do not create
+		a call dialog -- record_route() must be used for them as well, the
+		headers are not going to be in the messages sent to the network, they
+		are needed to know local addresses used to communicate with each side.
 	</para>
 	</section>
 	<section>
@@ -39,7 +42,8 @@
 			<listitem>
 			<para>
 				<emphasis>rr module</emphasis> - server must perform record
-				routing to ensure in-dialog requests are encoded/decoded.
+				routing to ensure in-dialog requests are encoded/decoded (it
+				must be done for all initial requests).
 			</para>
 			</listitem>
 			<listitem>
@@ -149,7 +153,7 @@ modparam("topos", "mask_callid", 1)
 			If set to 1, topoh module will bind to sanity module in order
 			to perform sanity checks over received SIP request. Default
 			sanity checks are done. It is useful to check if received request
-			is well formated before proceeding to encoding/decoding.
+			is well formatted before proceeding to encoding/decoding.
 		</para>
 		<para>
 		<emphasis>

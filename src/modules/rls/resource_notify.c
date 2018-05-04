@@ -524,7 +524,7 @@ error:
 	return -1;
 }
 
-int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
+int ki_rls_handle_notify(sip_msg_t* msg)
 {
 	struct to_body *pto, TO = {0}, *pfrom = NULL;
 	str body= {0, 0};
@@ -881,6 +881,11 @@ error:
 	}
 
 	return -1;
+}
+
+int w_rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
+{
+	return ki_rls_handle_notify(msg);
 }
 
 #define EXTRACT_STRING(strng, chars)\

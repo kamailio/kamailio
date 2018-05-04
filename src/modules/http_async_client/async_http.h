@@ -38,6 +38,7 @@
 #define ERROR_AVP_NAME "http_error"
 #define ERROR_AVP_NAME_LENGTH 10
 #define MAX_ID_LEN 32
+#define MAX_CBNAME_LEN	64
 
 #include <curl/curl.h>
 #include <event2/event.h>
@@ -107,14 +108,15 @@ typedef struct async_query {
 	unsigned int tindex;
 	unsigned int tlabel;
 	struct query_params query_params;
-	void *param;
+	char cbname[MAX_CBNAME_LEN];
+	int cbname_len;
 } async_query_t;
 
 int async_http_init_sockets(async_http_worker_t *worker);
 int async_http_init_worker(int prank, async_http_worker_t* worker);
 void async_http_run_worker(async_http_worker_t* worker);
 
-int async_send_query(sip_msg_t *msg, str *query, cfg_action_t *act);
+int async_send_query(sip_msg_t *msg, str *query, str *cbname);
 int async_push_query(async_query_t *aq);
 
 void notification_socket_cb(int fd, short event, void *arg);

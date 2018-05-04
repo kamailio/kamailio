@@ -37,7 +37,7 @@
  * All this default values (for flags and data-type) are correct/set by this
  * function.
  */
-inline void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
+void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
 {
 	switch (code) {
 		case   1: /*AVP_User_Name*/

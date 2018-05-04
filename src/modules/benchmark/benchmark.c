@@ -48,6 +48,7 @@
 #include "../../core/ut.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 
 
 #include "benchmark.h"
@@ -58,6 +59,8 @@
 MODULE_VERSION
 
 static int bm_init_rpc(void);
+static int bm_init_mycfg(void);
+int bm_register_timer_param(modparam_t type, void* val);
 
 /* Exported functions */
 int bm_start_timer(struct sip_msg* _msg, char* timer, char *foobar);
@@ -128,6 +131,8 @@ static param_export_t params[] = {
 	{"enable",      INT_PARAM, &bm_enable_global},
 	{"granularity", INT_PARAM, &bm_granularity},
 	{"loglevel",    INT_PARAM, &bm_loglevel},
+	{"register",    PARAM_STRING|USE_FUNC_PARAM, (void*)bm_register_timer_param},
+
 	{ 0, 0, 0 }
 };
 
@@ -162,23 +167,21 @@ struct module_exports exports = {
 
 /****************/
 
-
 /*
  * mod_init
  * Called by Kamailio at init time
  */
-static int mod_init(void) {
+static int mod_init(void)
+{
 
 	if(bm_init_rpc()<0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
-	bm_mycfg = (bm_cfg_t*)shm_malloc(sizeof(bm_cfg_t));
-	memset(bm_mycfg, 0, sizeof(bm_cfg_t));
-	bm_mycfg->enable_global = bm_enable_global;
-	bm_mycfg->granularity   = bm_granularity;
-	bm_mycfg->loglevel      = bm_loglevel;
+	if(bm_init_mycfg()<0) {
+		return -1;
+	}
 
 	return 0;
 }
@@ -206,6 +209,28 @@ static void destroy(void)
 		if(bm_mycfg->tindex) shm_free(bm_mycfg->tindex);
 		shm_free(bm_mycfg);
 	}
+}
+
+/**
+ * 
+ */
+static int bm_init_mycfg(void)
+{
+	if(bm_mycfg!=NULL) {
+		LM_DBG("config structure initialized\n");
+		return 0;
+	}
+	bm_mycfg = (bm_cfg_t*)shm_malloc(sizeof(bm_cfg_t));
+	if(bm_mycfg==NULL) {
+		LM_ERR("failed to allocated shared memory\n");
+		return -1;
+	}
+	memset(bm_mycfg, 0, sizeof(bm_cfg_t));
+	bm_mycfg->enable_global = bm_enable_global;
+	bm_mycfg->granularity   = bm_granularity;
+	bm_mycfg->loglevel      = bm_loglevel;
+
+	return 0;
 }
 
 void bm_reset_timer(int i)
@@ -349,6 +374,7 @@ int bm_log_timer(struct sip_msg* _msg, char* timer, char* mystr)
 	return _bm_log_timer((unsigned int)(unsigned long)timer);
 }
 
+
 int _bm_register_timer(char *tname, int mode, unsigned int *id)
 {
 	benchmark_timer_t *bmt = 0;
@@ -429,6 +455,44 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 	LM_DBG("timer [%s] added with index <%u>\n", bmt->name, bmt->id);
 
 	return 0;
+}
+
+int bm_register_timer_param(modparam_t type, void* val)
+{
+	unsigned int tid;
+
+	if(bm_init_mycfg()<0) {
+		return -1;
+	}
+	if((_bm_register_timer((char*)val, 1, &tid))!=0) {
+		LM_ERR("cannot find timer [%s]\n", (char*)val);
+		return -1;
+	}
+	LM_ERR("timer [%s] registered: %u\n", (char*)val, tid);
+	return 0;
+}
+
+static int ki_bm_start_timer(struct sip_msg* _msg, str* tname)
+{
+	unsigned int tid;
+
+	if((_bm_register_timer(tname->s, 0, &tid))!=0) {
+			LM_ERR("cannot find timer [%s]\n", tname->s);
+			return -1;
+	}
+
+	return _bm_start_timer(tid);
+}
+
+static int ki_bm_log_timer(sip_msg_t* _msg, str* tname)
+{
+	unsigned int tid;
+
+	if((_bm_register_timer(tname->s, 0, &tid))!=0) {
+			LM_ERR("cannot find timer [%s]\n", tname->s);
+			return -1;
+	}
+	return _bm_log_timer(tid);
 }
 
 /*! \brief API Binding */
@@ -591,7 +655,32 @@ static int bm_init_rpc(void)
 	return 0;
 }
 
-/*@} */
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_benchmark_exports[] = {
+	{ str_init("benchmark"), str_init("bm_start_timer"),
+		SR_KEMIP_INT, ki_bm_start_timer,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("benchmark"), str_init("bm_log_timer"),
+		SR_KEMIP_INT, ki_bm_log_timer,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_benchmark_exports);
+	return 0;
+}
+
+/*@} */
 
 /* End of file */

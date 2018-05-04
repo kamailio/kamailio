@@ -31,7 +31,7 @@
 <para>Initializes message queue structure. The value of
 <parameter>synchronized</parameter> may be 0 or 1. Zero means, that the message
 queue will not use mutex for internal data access (will be NOT synchronized), 1
-means that message queue will be synchronized by mutex created internaly.
+means that message queue will be synchronized by mutex created internally.
 <!-- detailed description -->
 </para>
 

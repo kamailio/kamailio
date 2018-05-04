@@ -259,17 +259,35 @@ static inline int via_matching( struct via_body *inv_via,
 	 * different senders generating the same tid
 	 */
 	if (inv_via->host.len!=ack_via->host.len)
-		return 0;;
+		return 0;
 	if (memcmp(inv_via->host.s, ack_via->host.s,
 				ack_via->host.len)!=0)
 		return 0;
-	if (inv_via->port!=ack_via->port)
-		return 0;
+	if (inv_via->port!=ack_via->port) {
+		if(inv_via->port==0
+				&& ack_via->port!=SIP_PORT && ack_via->port!=SIPS_PORT)
+			return 0;
+		if(ack_via->port==0
+				&& inv_via->port!=SIP_PORT && inv_via->port!=SIPS_PORT)
+			return 0;
+	}
 	if (inv_via->transport.len!=ack_via->transport.len)
 		return 0;
 	if (memcmp(inv_via->transport.s, ack_via->transport.s,
 				ack_via->transport.len)!=0)
 		return 0;
+
+	if (inv_via->port!=ack_via->port
+			&& (inv_via->port==0 || ack_via->port==0)) {
+		/* test SIPS_PORT (5061) is used with TLS transport */
+		if(inv_via->port==SIPS_PORT || ack_via->port==SIPS_PORT) {
+			if(inv_via->transport.len!=3
+					|| memcmp(inv_via->transport.s, "TLS", 3)!=0) {
+				return 0;
+			}
+		}
+	}
+
 	/* everything matched -- we found it */
 	return 1;
 }
@@ -1308,8 +1326,11 @@ int t_newtran( struct sip_msg* p_msg )
 		/* t_newtran() has been already called, and the script
 		 * might changed the flags after it, so we must update the flags
 		 * in shm memory -- Miklos */
-		if (T->uas.request)
+		if (T->uas.request) {
 			T->uas.request->flags = p_msg->flags;
+			memcpy(T->uas.request->xflags, p_msg->xflags,
+					KSR_XFLAGS_SIZE * sizeof(flag_t));
+		}
 
 		return E_SCRIPT;
 	}

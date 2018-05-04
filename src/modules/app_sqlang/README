@@ -1,4 +1,3 @@
-
 app_sqlang Module
 
 Daniel-Constantin Mierla
@@ -95,7 +94,7 @@ Chapter 1. Admin Guide
        Therefore sqlang_run() cannot execute functions from scripts loaded
        via sqlang_dofile() in config. This is kind of caching mode,
        avoiding reading file every time, but you must be sure you do not
-       have someting that is executed by default and requires access to
+       have something that is executed by default and requires access to
        SIP message. This environment is also used by KEMI framework for
        the config SIP routing functions.
 

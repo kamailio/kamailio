@@ -108,81 +108,77 @@ static int child_init(int rank);
 
 
 /* exported functions */
-inline static int w_t_check(struct sip_msg* msg, char* str, char* str2);
-inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2);
-inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
-inline static int w_t_release(struct sip_msg* msg, char* str, char* str2);
-inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo,
-		char* bar );
-inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
-inline static int w_t_relay( struct sip_msg  *p_msg , char *_foo, char *_bar);
-inline static int w_t_relay2( struct sip_msg  *p_msg , char *proxy, char*);
-inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , char *proxy,
-		char *);
-inline static int w_t_relay_to_udp_uri( struct sip_msg  *p_msg , char*, char*);
+static int w_t_check(struct sip_msg* msg, char* str, char* str2);
+static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2);
+static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
+static int w_t_send_reply(struct sip_msg* msg, char* p1, char* p2);
+static int w_t_release(struct sip_msg* msg, char* str, char* str2);
+static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo, char* bar );
+static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
+static int w_t_relay( struct sip_msg  *p_msg , char *_foo, char *_bar);
+static int w_t_relay2( struct sip_msg  *p_msg , char *proxy, char*);
+static int w_t_relay_to_udp( struct sip_msg  *p_msg , char *proxy, char *);
+static int w_t_relay_to_udp_uri( struct sip_msg  *p_msg , char*, char*);
 #ifdef USE_TCP
-inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , char *proxy,
-		char *);
-inline static int w_t_relay_to_tcp_uri( struct sip_msg  *p_msg , char*, char*);
+static int w_t_relay_to_tcp( struct sip_msg  *p_msg , char *proxy, char *);
+static int w_t_relay_to_tcp_uri( struct sip_msg  *p_msg , char*, char*);
 #endif
 #ifdef USE_TLS
-inline static int w_t_relay_to_tls( struct sip_msg  *p_msg , char *proxy,
-		char *);
-inline static int w_t_relay_to_tls_uri( struct sip_msg  *p_msg , char*, char*);
+static int w_t_relay_to_tls( struct sip_msg  *p_msg , char *proxy, char *);
+static int w_t_relay_to_tls_uri( struct sip_msg  *p_msg , char*, char*);
 #endif
 #ifdef USE_SCTP
-inline static int w_t_relay_to_sctp( struct sip_msg  *p_msg , char *proxy,
-		char *);
-inline static int w_t_relay_to_sctp_uri( struct sip_msg*, char*, char*);
+static int w_t_relay_to_sctp( struct sip_msg  *p_msg , char *proxy, char *);
+static int w_t_relay_to_sctp_uri( struct sip_msg*, char*, char*);
 #endif
-inline static int w_t_relay_to_avp(struct sip_msg* msg, char* str,char*);
-inline static int w_t_relay_to(struct sip_msg* msg, char* str,char*);
-inline static int w_t_replicate_uri( struct sip_msg  *p_msg ,
+static int w_t_relay_to_avp(struct sip_msg* msg, char* str,char*);
+static int w_t_relay_to(struct sip_msg* msg, char* str,char*);
+static int w_t_replicate_uri( struct sip_msg  *p_msg ,
 		char *uri,       /* sip uri as string or variable */
 		char *_foo       /* nothing expected */ );
-inline static int w_t_replicate( struct sip_msg  *p_msg ,
+static int w_t_replicate( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l *proxy expected */
 		char *_foo       /* nothing expected */ );
-inline static int w_t_replicate_udp( struct sip_msg  *p_msg ,
+static int w_t_replicate_udp( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l *proxy expected */
 		char *_foo       /* nothing expected */ );
 #ifdef USE_TCP
-inline static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
+static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l *proxy expected */
 		char *_foo       /* nothing expected */ );
 #endif
 #ifdef USE_TLS
-inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
+static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l *proxy expected */
 		char *_foo       /* nothing expected */ );
 #endif
 #ifdef USE_SCTP
-inline static int w_t_replicate_sctp( struct sip_msg  *p_msg ,
+static int w_t_replicate_sctp( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l *proxy expected */
 		char *_foo       /* nothing expected */ );
 #endif
-inline static int w_t_replicate_to(struct sip_msg* msg, char* str,char*);
-inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
-inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char* str,char*);
-inline static int w_t_forward_nonack_udp(struct sip_msg* msg, char* str,char*);
+static int w_t_replicate_to(struct sip_msg* msg, char* str,char*);
+static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
+static int w_t_forward_nonack_uri(struct sip_msg* msg, char* str,char*);
+static int w_t_forward_nonack_udp(struct sip_msg* msg, char* str,char*);
 #ifdef USE_TCP
-inline static int w_t_forward_nonack_tcp(struct sip_msg*, char* str,char*);
+static int w_t_forward_nonack_tcp(struct sip_msg*, char* str,char*);
 #endif
 #ifdef USE_TLS
-inline static int w_t_forward_nonack_tls(struct sip_msg*, char* str,char*);
+static int w_t_forward_nonack_tls(struct sip_msg*, char* str,char*);
 #endif
 #ifdef USE_SCTP
-inline static int w_t_forward_nonack_sctp(struct sip_msg*, char* str,char*);
+static int w_t_forward_nonack_sctp(struct sip_msg*, char* str,char*);
 #endif
-inline static int w_t_forward_nonack_to(struct sip_msg* msg, char* str,char*);
-inline static int w_t_relay_cancel(struct sip_msg *p_msg, char *_foo,
+static int w_t_forward_nonack_to(struct sip_msg* msg, char* str,char*);
+static int w_t_relay_cancel(struct sip_msg *p_msg, char *_foo,
 		char *_bar);
-inline static int w_t_on_failure(struct sip_msg* msg, char *go_to, char *foo);
-inline static int w_t_on_branch_failure(struct sip_msg* msg, char *go_to,
+static int w_t_on_failure(struct sip_msg* msg, char *go_to, char *foo);
+static int w_t_on_branch_failure(struct sip_msg* msg, char *go_to,
 		char *foo);
-inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo);
-inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
-inline static int t_check_status(struct sip_msg* msg, char *match, char *foo);
+static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo);
+static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
+static int t_check_status(struct sip_msg* msg, char *match, char *foo);
 static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo);
 static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr);
 static int w_t_reset_fr(struct sip_msg* msg, char* foo, char* bar);
@@ -246,7 +242,9 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE},
 	{"t_lookup_cancel",    w_t_lookup_cancel,       1, fixup_int_1,
 		REQUEST_ROUTE},
-	{"t_reply",              w_t_reply,               2, fixup_t_reply,
+	{"t_reply",              w_t_reply,             2, fixup_t_reply,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"t_send_reply",         w_t_send_reply,        2, fixup_t_reply,
 		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0,
 		REQUEST_ROUTE},
@@ -852,7 +850,6 @@ static int child_init(int rank)
 }
 
 
-
 /**************************** wrapper functions ***************************/
 static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 {
@@ -984,8 +981,102 @@ error:
 	return -1;
 }
 
+static int ki_t_check_status(sip_msg_t* msg, str *sexp)
+{
+	regmatch_t pmatch;
+	struct cell *t;
+	char *status, *s = NULL;
+	char backup;
+	int lowest_status, n, ret;
+	regex_t re;
 
-inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
+	/* first get the transaction */
+	if (t_check(msg, 0 ) == -1) return -1;
+
+	backup = 0;
+	if ((t = get_t()) == 0) {
+		LM_ERR("cannot check status for a reply"
+				" which has no T-state established\n");
+		goto error0;
+	}
+
+	memset(&re, 0, sizeof(regex_t));
+	if (regcomp(&re, sexp->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+		LM_ERR("Bad regular expression '%s'\n", s);
+		goto error0;
+	}
+
+	switch(get_route_type()) {
+		case REQUEST_ROUTE:
+			/* use the status of the last sent reply */
+			status = int2str(t->uas.status, 0);
+			break;
+
+		case TM_ONREPLY_ROUTE:
+		case CORE_ONREPLY_ROUTE:
+			/* use the status of the current reply */
+			status = msg->first_line.u.reply.status.s;
+			backup = status[msg->first_line.u.reply.status.len];
+			status[msg->first_line.u.reply.status.len] = 0;
+			break;
+
+		case FAILURE_ROUTE:
+			/* use the status of the winning reply */
+			ret = t_pick_branch( -1, 0, t, &lowest_status);
+			if (ret == -1) {
+				/* t_pick_branch() retuns error also when there are only
+				 * blind UACs. Let us give it another chance including the
+				 * blind branches. */
+				LM_DBG("t_pick_branch returned error,"
+						" trying t_pick_branch_blind\n");
+				ret = t_pick_branch_blind(t, &lowest_status);
+			}
+			if (ret < 0) {
+				LM_CRIT("BUG: t_pick_branch failed to get"
+						" a final response in FAILURE_ROUTE\n");
+				goto error;
+			}
+			status = int2str(lowest_status, 0);
+			break;
+		case BRANCH_FAILURE_ROUTE:
+			status = int2str(t->uac[get_t_branch()].last_received, 0);
+			break;
+		default:
+			LM_ERR("unsupported route type %d\n",
+					get_route_type());
+			goto error;
+	}
+
+	LM_DBG("checked status is <%s>\n",status);
+	/* do the checking */
+	n = regexec(&re, status, 1, &pmatch, 0);
+
+	if (backup) status[msg->first_line.u.reply.status.len] = backup;
+	regfree(&re);
+
+	if (unlikely(t && is_route_type(CORE_ONREPLY_ROUTE))){
+		/* t_check() above has the side effect of setting T and
+		 * REFerencing T => we must unref and unset it.  */
+		UNREF( t );
+		set_t(T_UNDEFINED, T_BR_UNDEFINED);
+	}
+	if (n!=0) return -1;
+	return 1;
+
+error:
+	regfree(&re);
+error0:
+	if (unlikely(t && is_route_type(CORE_ONREPLY_ROUTE))){
+		/* t_check() above has the side effect of setting T and
+		 * REFerencing T => we must unref and unset it.  */
+		UNREF( t );
+		set_t(T_UNDEFINED, T_BR_UNDEFINED);
+	}
+
+	return -1;
+}
+
+static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 {
 	return (t_check_msg( msg , 0  )==1) ? 1 : -1;
 }
@@ -1023,7 +1114,7 @@ static int ki_t_lookup_cancel(sip_msg_t* msg)
 	return ki_t_lookup_cancel_flags(msg, 0);
 }
 
-inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
+static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 {
 	int i = 0;
 
@@ -1138,7 +1229,7 @@ inline static struct proxy_l* t_protoaddr2proxy(char *proto_par, char *addr_par)
 	return proxy;
 }
 
-inline static int _w_t_forward_nonack(struct sip_msg* msg, struct proxy_l* proxy,
+static int _w_t_forward_nonack(struct sip_msg* msg, struct proxy_l* proxy,
 		int proto)
 {
 	struct cell *t;
@@ -1160,21 +1251,21 @@ inline static int _w_t_forward_nonack(struct sip_msg* msg, struct proxy_l* proxy
 }
 
 
-inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
+static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
 		char* foo)
 {
 	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_NONE);
 }
 
 
-inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char *foo,
+static int w_t_forward_nonack_uri(struct sip_msg* msg, char *foo,
 		char *bar)
 {
 	return _w_t_forward_nonack(msg, 0, PROTO_NONE);
 }
 
 
-inline static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
+static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
 		char* foo)
 {
 	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_UDP);
@@ -1182,7 +1273,7 @@ inline static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
 
 
 #ifdef USE_TCP
-inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
+static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 		char* foo)
 {
 	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_TCP);
@@ -1191,7 +1282,7 @@ inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 
 
 #ifdef USE_TLS
-inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
+static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 		char* foo)
 {
 	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_TLS);
@@ -1200,7 +1291,7 @@ inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 
 
 #ifdef USE_SCTP
-inline static int w_t_forward_nonack_sctp( struct sip_msg* msg, char* proxy,
+static int w_t_forward_nonack_sctp( struct sip_msg* msg, char* proxy,
 		char* foo)
 {
 	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_SCTP);
@@ -1208,7 +1299,7 @@ inline static int w_t_forward_nonack_sctp( struct sip_msg* msg, char* proxy,
 #endif
 
 
-inline static int w_t_forward_nonack_to( struct sip_msg  *p_msg ,
+static int w_t_forward_nonack_to( struct sip_msg  *p_msg ,
 		char *proto_par,
 		char *addr_par   )
 {
@@ -1223,18 +1314,19 @@ inline static int w_t_forward_nonack_to( struct sip_msg  *p_msg ,
 	return r;
 }
 
-
-inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
+/**
+ *
+ */
+static int ki_t_reply(sip_msg_t* msg, int code, str* reason)
 {
-	struct cell *t;
-	int code, ret = -1;
-	str reason;
-	char* r;
+	tm_cell_t *t = NULL;
+	int ret = -1;
 
 	if (msg->REQ_METHOD==METHOD_ACK) {
 		LM_DBG("ACKs are not replied\n");
 		return -1;
 	}
+
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
 	if (!t) {
@@ -1243,34 +1335,23 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 		return -1;
 	}
 
-	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
-		code = cfg_get(tm, tm_cfg, default_code);
-	}
-
-	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
-		r = cfg_get(tm, tm_cfg, default_reason);
-	} else {
-		r = as_asciiz(&reason);
-		if (r == NULL) r = cfg_get(tm, tm_cfg, default_reason);
-	}
-
 	/* if called from reply_route, make sure that unsafe version
 	 * is called; we are already in a mutex and another mutex in
 	 * the safe version would lead to a deadlock
 	 */
-
 	t->flags |= T_ADMIN_REPLY;
 	if (is_route_type(FAILURE_ROUTE)) {
 		LM_DBG("t_reply_unsafe called from w_t_reply\n");
-		ret = t_reply_unsafe(t, msg, code, r);
+		ret = t_reply_str_unsafe(t, msg, (unsigned int)code, reason);
 	} else if (is_route_type(REQUEST_ROUTE)) {
-		ret = t_reply( t, msg, code, r);
+		ret = t_reply_str( t, msg, (unsigned int)code, reason);
 	} else if (is_route_type(ONREPLY_ROUTE)) {
 		if (likely(t->uas.request)){
 			if (is_route_type(CORE_ONREPLY_ROUTE))
-				ret=t_reply(t, t->uas.request, code, r);
+				ret=t_reply_str(t, t->uas.request, (unsigned int)code, reason);
 			else
-				ret=t_reply_unsafe(t, t->uas.request, code, r);
+				ret=t_reply_str_unsafe(t, t->uas.request, (unsigned int)code,
+							reason);
 		}else
 			ret=-1;
 		/* t_check() above has the side effect of setting T and
@@ -1287,11 +1368,85 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 		ret = -1;
 	}
 
-	if (r && (r != cfg_get(tm, tm_cfg, default_reason))) pkg_free(r);
 	return ret;
 }
 
+static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
+{
+	int code, ret = -1;
+	str reason;
 
+	if (msg->REQ_METHOD==METHOD_ACK) {
+		LM_DBG("ACKs are not replied\n");
+		return -1;
+	}
+
+	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+		code = cfg_get(tm, tm_cfg, default_code);
+	}
+
+	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+		reason.s = cfg_get(tm, tm_cfg, default_reason);
+		reason.len = strlen(reason.s);
+	}
+
+	return ki_t_reply(msg, code, &reason);
+}
+
+/* wrapper for inter-module api */
+int w_t_reply_wrp(struct sip_msg *msg, unsigned int code, char *txt)
+{
+	str reason;
+
+	reason.s = txt;
+	reason.len = strlen(reason.s);
+
+	return ki_t_reply(msg, code, &reason);
+}
+
+/**
+ *
+ */
+static int ki_t_send_reply(sip_msg_t* msg, int code, str* reason)
+{
+	int ret;
+
+	ret = t_newtran(msg);
+	if (ret==0) {
+		LM_NOTICE("transaction already in process %p\n", get_t());
+	}
+
+	return ki_t_reply(msg, code, reason);
+}
+
+/**
+ *
+ */
+static int w_t_send_reply(struct sip_msg* msg, char* p1, char* p2)
+{
+	int code;
+	str reason;
+
+	if (msg->REQ_METHOD==METHOD_ACK) {
+		LM_DBG("ACKs are not replied\n");
+		return -1;
+	}
+
+	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+		code = cfg_get(tm, tm_cfg, default_code);
+	}
+
+	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+		reason.s = cfg_get(tm, tm_cfg, default_reason);
+		reason.len = strlen(reason.s);
+	}
+
+	return ki_t_send_reply(msg, code, &reason);
+}
+
+/**
+ *
+ */
 static int t_release(sip_msg_t* msg)
 {
 	struct cell *t;
@@ -1313,7 +1468,7 @@ static int t_release(sip_msg_t* msg)
 	return 1;
 }
 
-inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)
+static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 {
 	return t_release(msg);
 }
@@ -1335,12 +1490,12 @@ static int ki_t_retransmit_reply(struct sip_msg* p_msg)
 		return -1;
 }
 
-inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar)
+static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar)
 {
 	return ki_t_retransmit_reply(p_msg);
 }
 
-inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar )
+static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar )
 {
 	/* t_newtran returns 0 on error (negative value means
 	 * 'transaction exists' */
@@ -1353,28 +1508,28 @@ inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar )
 }
 
 
-inline static int w_t_on_failure( struct sip_msg* msg, char *go_to, char *foo)
+static int w_t_on_failure( struct sip_msg* msg, char *go_to, char *foo)
 {
 	t_on_failure( (unsigned int )(long) go_to );
 	return 1;
 }
 
 
-inline static int w_t_on_branch_failure( struct sip_msg* msg, char *go_to, char *foo)
+static int w_t_on_branch_failure( struct sip_msg* msg, char *go_to, char *foo)
 {
 	t_on_branch_failure( (unsigned int )(long) go_to );
 	return 1;
 }
 
 
-inline static int w_t_on_branch( struct sip_msg* msg, char *go_to, char *foo)
+static int w_t_on_branch( struct sip_msg* msg, char *go_to, char *foo)
 {
 	t_on_branch( (unsigned int )(long) go_to );
 	return 1;
 }
 
 
-inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
+static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 {
 	t_on_reply( (unsigned int )(long) go_to );
 	return 1;
@@ -1439,7 +1594,7 @@ static int fixup_t_is_set(void** param, int param_no)
 	return 0;
 }
 
-inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
+static int _w_t_relay_to(struct sip_msg  *p_msg ,
 		struct proxy_l *proxy, int force_proto)
 {
 	struct cell *t;
@@ -1471,7 +1626,7 @@ inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 }
 
 
-inline static int w_t_relay_to_udp( struct sip_msg  *p_msg ,
+static int w_t_relay_to_udp( struct sip_msg  *p_msg ,
 		char *proxy,/* struct proxy_l * expected */
 		char *_foo       /* nothing expected */ )
 {
@@ -1479,7 +1634,7 @@ inline static int w_t_relay_to_udp( struct sip_msg  *p_msg ,
 }
 
 /* forward to uri, but force udp as transport */
-inline static int w_t_relay_to_udp_uri( struct sip_msg  *p_msg ,
+static int w_t_relay_to_udp_uri( struct sip_msg  *p_msg ,
 		char *_foo, char *_bar   )
 {
 	return _w_t_relay_to(p_msg, (struct proxy_l *)0, PROTO_UDP);
@@ -1487,7 +1642,7 @@ inline static int w_t_relay_to_udp_uri( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_TCP
-inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg ,
+static int w_t_relay_to_tcp( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l* */
 		char *_foo       /* nothing expected */ )
 {
@@ -1495,7 +1650,7 @@ inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg ,
 }
 
 /* forward to uri, but force tcp as transport */
-inline static int w_t_relay_to_tcp_uri( struct sip_msg  *p_msg ,
+static int w_t_relay_to_tcp_uri( struct sip_msg  *p_msg ,
 		char *_foo, char *_bar   )
 {
 	return _w_t_relay_to(p_msg, (struct proxy_l *)0, PROTO_TCP);
@@ -1504,7 +1659,7 @@ inline static int w_t_relay_to_tcp_uri( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_TLS
-inline static int w_t_relay_to_tls( struct sip_msg  *p_msg ,
+static int w_t_relay_to_tls( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l* expected */
 		char *_foo       /* nothing expected */ )
 {
@@ -1512,7 +1667,7 @@ inline static int w_t_relay_to_tls( struct sip_msg  *p_msg ,
 }
 
 /* forward to uri, but force tls as transport */
-inline static int w_t_relay_to_tls_uri( struct sip_msg  *p_msg ,
+static int w_t_relay_to_tls_uri( struct sip_msg  *p_msg ,
 		char *_foo, char *_bar   )
 {
 	return _w_t_relay_to(p_msg, (struct proxy_l *)0, PROTO_TLS);
@@ -1521,7 +1676,7 @@ inline static int w_t_relay_to_tls_uri( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_SCTP
-inline static int w_t_relay_to_sctp( struct sip_msg  *p_msg ,
+static int w_t_relay_to_sctp( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l* */
 		char *_foo       /* nothing expected */ )
 {
@@ -1529,7 +1684,7 @@ inline static int w_t_relay_to_sctp( struct sip_msg  *p_msg ,
 }
 
 /* forward to uri, but force tcp as transport */
-inline static int w_t_relay_to_sctp_uri( struct sip_msg  *p_msg ,
+static int w_t_relay_to_sctp_uri( struct sip_msg  *p_msg ,
 		char *_foo, char *_bar   )
 {
 	return _w_t_relay_to(p_msg, (struct proxy_l *)0, PROTO_SCTP);
@@ -1537,7 +1692,7 @@ inline static int w_t_relay_to_sctp_uri( struct sip_msg  *p_msg ,
 #endif
 
 
-inline static int w_t_relay_to_avp( struct sip_msg  *p_msg ,
+static int w_t_relay_to_avp( struct sip_msg  *p_msg ,
 		char *proto_par,
 		char *addr_par   )
 {
@@ -1584,7 +1739,7 @@ int t_replicate_uri(struct sip_msg *msg, str *suri)
 	return r;
 }
 
-inline static int w_t_replicate_uri(struct sip_msg  *msg ,
+static int w_t_replicate_uri(struct sip_msg  *msg ,
 		char *uri,       /* sip uri as string or variable */
 		char *_foo       /* nothing expected */ )
 {
@@ -1601,14 +1756,14 @@ inline static int w_t_replicate_uri(struct sip_msg  *msg ,
 	return t_replicate_uri(msg, &suri);
 }
 
-inline static int w_t_replicate( struct sip_msg  *p_msg ,
+static int w_t_replicate( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l *proxy expected */
 		char *_foo       /* nothing expected */ )
 {
 	return t_replicate(p_msg, ( struct proxy_l *) proxy, p_msg->rcv.proto );
 }
 
-inline static int w_t_replicate_udp( struct sip_msg  *p_msg ,
+static int w_t_replicate_udp( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l *proxy expected */
 		char *_foo       /* nothing expected */ )
 {
@@ -1617,7 +1772,7 @@ inline static int w_t_replicate_udp( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_TCP
-inline static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
+static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l *proxy expected */
 		char *_foo       /* nothing expected */ )
 {
@@ -1627,7 +1782,7 @@ inline static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_TLS
-inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
+static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l *proxy expected */
 		char *_foo       /* nothing expected */ )
 {
@@ -1637,7 +1792,7 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_SCTP
-inline static int w_t_replicate_sctp( struct sip_msg  *p_msg ,
+static int w_t_replicate_sctp( struct sip_msg  *p_msg ,
 		char *proxy, /* struct proxy_l *proxy expected */
 		char *_foo       /* nothing expected */ )
 {
@@ -1646,7 +1801,7 @@ inline static int w_t_replicate_sctp( struct sip_msg  *p_msg ,
 #endif
 
 
-inline static int w_t_replicate_to( struct sip_msg  *p_msg ,
+static int w_t_replicate_to( struct sip_msg  *p_msg ,
 		char *proto_par,
 		char *addr_par   )
 {
@@ -1661,7 +1816,7 @@ inline static int w_t_replicate_to( struct sip_msg  *p_msg ,
 	return r;
 }
 
-inline static int w_t_relay( struct sip_msg  *p_msg ,
+static int w_t_relay( struct sip_msg  *p_msg ,
 		char *_foo, char *_bar)
 {
 	return _w_t_relay_to(p_msg, (struct proxy_l *)0, PROTO_NONE);
@@ -1678,7 +1833,7 @@ static int w_t_relay2( struct sip_msg  *p_msg , char *proxy,
 
 
 /* relays CANCEL at the beginning of the script */
-inline static int w_t_relay_cancel( struct sip_msg  *p_msg ,
+static int w_t_relay_cancel( struct sip_msg  *p_msg ,
 		char *_foo, char *_bar)
 {
 	if (p_msg->REQ_METHOD!=METHOD_CANCEL)
@@ -2160,24 +2315,6 @@ static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
 	return ki_t_save_lumps(msg);
 }
 
-/* wrapper function needed after changes in w_t_reply */
-int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt)
-{
-	fparam_t c;
-	fparam_t r;
-
-	c.type = FPARAM_INT;
-	c.orig = NULL; /* ? */
-	c.v.i = code;
-
-	r.type = FPARAM_STRING;
-	r.orig = NULL; /* ? */
-	r.v.asciiz = txt;
-
-	return w_t_reply(m, (char *)&c, (char*)&r);
-}
-
-
 
 /** script function, check if a msg is assoc. to a transaction.
  * @return -1 (not), 1 (reply, e2e ack or cancel for an existing transaction),
@@ -2374,7 +2511,7 @@ static int fixup_t_relay_to(void** param, int param_no)
 }
 
 
-inline static int w_t_relay_to(struct sip_msg *msg, char *proxy, char *flags)
+static int w_t_relay_to(struct sip_msg *msg, char *proxy, char *flags)
 {
 	unsigned int fl;
 	struct proxy_l *px;
@@ -2649,14 +2786,6 @@ static int ki_t_relay(sip_msg_t *msg)
 /**
  *
  */
-static int ki_t_reply(sip_msg_t *msg, int code, str *reason)
-{
-	return w_t_reply_wrp(msg, (unsigned int)code, reason->s);
-}
-
-/**
- *
- */
 static sr_kemi_t tm_kemi_exports[] = {
 	{ str_init("tm"), str_init("t_relay"),
 		SR_KEMIP_INT, ki_t_relay,
@@ -2685,6 +2814,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 	},
 	{ str_init("tm"), str_init("t_reply"),
 		SR_KEMIP_INT, ki_t_reply,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_send_reply"),
+		SR_KEMIP_INT, ki_t_send_reply,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -2816,6 +2950,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 	{ str_init("tm"), str_init("t_is_expired"),
 		SR_KEMIP_INT, t_is_expired,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_check_status"),
+		SR_KEMIP_INT, ki_t_check_status,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tm"), str_init("t_grep_status"),

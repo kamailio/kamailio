@@ -155,7 +155,7 @@ struct dns_hash_entry{
 	unsigned char ent_flags; /* entry flags: unresolvable/permanent */
 	unsigned char name_len; /* can be maximum 255 bytes */
 	char name[1]; /* variable length, name, null terminated
-	                 (actual lenght = name_len +1)*/
+	                 (actual length = name_len +1)*/
 };
 
 

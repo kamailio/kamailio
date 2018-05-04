@@ -92,11 +92,13 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 
 /*!
  * \brief Clone dialog internal unique id to shared memory
+ * \param dlg dialog
  */
 dlg_iuid_t *dlg_get_iuid_shm_clone(dlg_cell_t *dlg);
 
 /*!
  * \brief Free dialog internal unique id stored in shared memory
+ * \param iuid dialog iuid
  */
 void dlg_iuid_sfree(void *iuid);
 
@@ -140,11 +142,12 @@ void dlg_ontimeout( struct dlg_tl *tl);
  * from the dlg_manage function in the configuration script.
  * \see dlg_onreq
  * \see w_dlg_manage
- * \param msg SIP message
+ * \param req SIP message
  * \param t transaction
+ * \param run_initial_cbs if set zero, initial callbacks are not executed
  * \return 0 on success, -1 on failure
  */ 
-int dlg_new_dialog(struct sip_msg *msg, struct cell *t, const int run_initial_cbs);
+int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cbs);
 
 /*!
  * \brief add dlg structure to tm callbacks
@@ -202,7 +205,7 @@ void print_all_dlgs();
 void internal_print_all_dlg(struct dlg_cell *dlg);
 
 /*!
- * \get the current dialog based on the current SIP message
+ * \brief Get the current dialog based on the current SIP message
  * \param msg SIP message
  * \return current dialog, null if none.
  */

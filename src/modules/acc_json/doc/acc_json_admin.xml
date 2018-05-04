@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Acc Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		ACC_JSON module is used to account transaction information in a JSON dictionary.
+		It binds to ACC module API and uses the same accounting mechanisms as for other
+		backends.
+	</para>
+	<para>
+		It can output the JSON dictionary to MQUEUE or
+		SYSLOG (even if Kamailio is not using syslog)
+	</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>acc</emphasis> - accounting module</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>mqueue</emphasis> - mqueue module (optional)</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed
+			before running &kamailio; with this module loaded:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para>
+				<emphasis>jansson</emphasis> http://www.digip.org/jansson/
+				</para><para>
+				Jansson is a C library for encoding, decoding and manipulating JSON data.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+	<section id="ACC-param-id">
+	<title>Parameters</title>
+
+	<section id="acc_json.p.acc_flag">
+	<title><varname>acc_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a transaction in acc_json.
+		See output_mqueue and output_syslog
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>acc_flag example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "acc_flag", 2)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="acc_json.p.acc_missed_flag">
+		<title><varname>acc_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed calls in acc_json.
+		See output_mqueue and output_syslog
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>acc_missed_flag example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "acc_missed_flag", 3)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="acc_json.p.acc_extra">
+		<title><varname>acc_extra</varname> (integer)</title>
+		<para>
+		Extra values to be added to the json dictionary.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>acc_extra example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "acc_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="acc_json.p.acc_time_mode">
+	<title><varname>acc_time_mode</varname> (integer)</title>
+		<para>
+		Store additional value related to the time of event.
+		</para>
+		<para>
+		Values can be:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>0</emphasis> -  (default), save only unix
+				timestamp for syslog and datetime for database.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>1</emphasis> - save seconds in time_attr and
+				microseconds in time_exten.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>2</emphasis> - save seconds.milliseconds
+				in time_attr.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>3</emphasis> - save formatted time according
+				to time_format parameter, using the output of localtime(). Used for cdr entries too.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>4</emphasis> - save formatted time according
+				to time_format parameter, using the output of gmtime(). Used for cdr entries too.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title>acc_time_mode example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "acc_time_mode", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="acc.p.acc_time_format">
+		<title><varname>acc_time_format</varname> (str)</title>
+		<para>
+		Specify the format to print the time for time_mode 3 or 4.
+		</para>
+		<para>
+		Default value is %Y-%m-%d %H:%M:%S".
+		</para>
+		<example>
+		<title>acc_time_format example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "acc_time_format", "%Y/%m/%d %H:%M:%S")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="acc_json.p.output_mqueue">
+		<title><varname>output_mqueue</varname> (integer)</title>
+		<para>
+                Requires the mqueue module.
+                The acc module will queue json acc events in the specified mqueue.
+                Using a rtimer module exec you can access the queue and process them.
+		</para>
+		<para>
+		Default value is not-set mqueue will not be required
+		</para>
+		<example>
+		<title>output_mqueue usage example</title>
+		<programlisting format="linespecific">
+...
+# example using json_mqueue/http_client to publish to NSQD
+max_while_loops=100000
+modparam("mqueue", "mqueue", "name=acc_events;size=100000")
+modparam("acc_json", "output_mqueue", "acc_events")
+modparam("acc_json", "acc_flag", 2)
+modparam("acc_json", "acc_extra", "caller_ip_port=$avp(caller_ip_port);")
+modparam("rtimer", "timer", "name=nsqt;interval=1;mode=1;")
+modparam("rtimer", "exec", "timer=nsqt;route=RUN_CDR_PUBLISH")
+modparam("http_client", "keep_connections", 1)
+modparam("http_client", "httpcon", "nsqd=>http://localhost:4151/pub?topic=acc")
+
+route[RUN_CDR_PUBLISH] {
+   $var(count) = 0;
+   while (mq_fetch("acc_events")) {
+      $var(q_size) = mq_size("acc_events");
+      $var(count) = $var(count) + 1;
+      xinfo("[RUN_CDR_PUBLISH][$var(q_size)][$var(count)][$mqk(acc_events)][$mqv(acc_events)]\n");
+      $var(res) = http_connect("nsqd", "", "application/json", $mqv(acc_events), "$var(nsq_res)");
+      if ($var(res) != "200") {
+         mq_add("acc_events", "acc_key", "$mqv(acc_events)");
+         return;
+      }
+   }
+   if ($var(count) > 0 ) {
+      xinfo("[RUN_CDR_PUBLISH]done count[$var(count)]\n");
+   }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc_json.p.output_syslog">
+		<title><varname>output_syslog</varname> (integer)</title>
+		<para>
+		Control if the output of acc json should be sent to syslog.
+                This is not dependent on Kamailio global logging settings,
+                we can use syslog even if Kamailio is not daemonized and/or
+                logging is done to sdtout stderr.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>output_syslog example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "output_syslog", 1)
+modparam("acc_json", "log_level", 2)
+modparam("acc_json", "log_facility", "LOG_DAEMON")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="acc_json.p.log_facility">
+		<title><varname>log_facility</varname> (integer)</title>
+		<para>
+		Log facility to which accounting messages are issued to syslog.
+                This allows to easily separate the accounting specific logging
+                from the other log messages.
+		</para>
+		<para>
+		Default value is LOG_DAEMON.
+		</para>
+		<example>
+		<title>log_facility example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "log_facility", "LOG_LOCAL0")
+
+# modify you syslog/rsyslog config
+# /etc/rsyslog.d/default.conf
+# remove local0 from default log file
+# *.*;local0,auth,authpriv.none /var/log/syslog
+# add local0 to another log file
+# local0.*                      /var/log/json_acc.log
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="acc_json.p.log_level">
+		<title><varname>log_level</varname> (integer)</title>
+		<para>
+		Log level at which accounting messages are issued to syslog.
+		</para>
+		<para>
+		Default value is 1 (L_NOTICE).
+		</para>
+		<example>
+			<title>log_level example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "log_level", 2) # Set log_level to 2 (L_INFO)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+</chapter>

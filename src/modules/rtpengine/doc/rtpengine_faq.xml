@@ -43,7 +43,7 @@
 rtpengine_offer("force trust-address symmetric replace-origin replace-session-connection ICE=force RTP/SAVPF");
 		</programlisting>
 		<para>
-			Finally, if you were using the second paramater (explicit media address) to any of
+			Finally, if you were using the second parameter (explicit media address) to any of
 			these functions, this has been replaced by the <quote>media-address=...</quote>
 			option within the first string of flags.
 		</para>
@@ -80,10 +80,6 @@ rtpengine_offer("force trust-address symmetric replace-origin replace-session-co
 			E-mails regarding any stable &kamailio; release should be sent to
 			&kamailiousersmail; and e-mails regarding development versions
 			should be sent to &kamailiodevmail;.
-		</para>
-		<para>
-			If you want to keep the mail private, send it to
-			&kamailiohelpmail;.
 		</para>
 	    </answer>
 	</qandaentry>

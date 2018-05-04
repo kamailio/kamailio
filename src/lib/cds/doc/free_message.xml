@@ -30,7 +30,7 @@
 <para>Frees message. If data is allocated explicitly it frees it using
 <function>cds_free</function>,
 if they are allocated implicitly, it is freed together with message. Thus simple
-data strutures are deallocated automaticaly in both cases. There might be a
+data structures are deallocated automatically in both cases. There might be a
 problem with more complicated structures with internal pointers to other
 structures - for these you can set destroy function using
 <function>set_data_destroy_function</function>.

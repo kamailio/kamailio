@@ -100,7 +100,7 @@ int rls_update_shtable(shtable_t htable,unsigned int hash_code,
 
 /******************************************************************************/
 
-void rls_update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
+void rls_update_db_subs_timer(db1_con_t *db,db_func_t *dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
 {
 	LM_ERR( "rls_update_db_subs_timer shouldn't be called in RLS_DB_ONLY mode\n" );

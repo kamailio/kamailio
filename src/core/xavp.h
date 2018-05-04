@@ -101,6 +101,8 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold);
 sr_xavp_t* xavp_get_child(str *rname, str *cname);
 sr_xavp_t* xavp_get_child_with_ival(str *rname, str *cname);
 sr_xavp_t* xavp_get_child_with_sval(str *rname, str *cname);
+int xavp_serialize_fields(str *rname, char *obuf, int olen);
+
 #endif
 
 #endif

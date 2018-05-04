@@ -146,5 +146,6 @@ typedef struct _sr_phostp {
 } sr_phostp_t;
 
 struct socket_info* lookup_local_socket(str *phostp);
+int parse_protohostport(str* ins, sr_phostp_t *r);
 
 #endif

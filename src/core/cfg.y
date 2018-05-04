@@ -324,6 +324,7 @@ extern char *default_routename;
 %token LOGPREFIXMODE
 %token LOGENGINETYPE
 %token LOGENGINEDATA
+%token XAVPVIAPARAMS
 %token LISTEN
 %token ADVERTISE
 %token ALIAS
@@ -475,11 +476,18 @@ extern char *default_routename;
 %token MAX_WLOOPS
 %token PVBUFSIZE
 %token PVBUFSLOTS
+%token PVCACHELIMIT
+%token PVCACHEACTION
 %token HTTP_REPLY_PARSE
 %token VERSION_TABLE_CFG
 %token VERBOSE_STARTUP
+%token ROUTE_LOCKS_SIZE
 %token CFG_DESCRIPTION
 %token SERVER_ID
+%token KEMI
+%token ONSEND_ROUTE_CALLBACK
+%token REPLY_ROUTE_CALLBACK
+%token EVENT_ROUTE_CALLBACK
 %token MAX_RECURSIVE_LEVEL
 %token MAX_BRANCHES_PARAM
 %token LATENCY_CFG_LOG
@@ -790,6 +798,10 @@ assign_stm:
 	| LOGENGINETYPE EQUAL error { yyerror("string value expected"); }
 	| LOGENGINEDATA EQUAL STRING { _km_log_engine_data=$3; }
 	| LOGENGINEDATA EQUAL error { yyerror("string value expected"); }
+	| XAVPVIAPARAMS EQUAL STRING { _ksr_xavp_via_params.s=$3;
+			_ksr_xavp_via_params.len=strlen($3);
+		}
+	| XAVPVIAPARAMS EQUAL error { yyerror("string value expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
@@ -1556,12 +1568,48 @@ assign_stm:
 	| PVBUFSIZE EQUAL error { yyerror("number expected"); }
 	| PVBUFSLOTS EQUAL NUMBER { pv_set_buffer_slots($3); }
 	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
+	| PVCACHELIMIT EQUAL NUMBER { default_core_cfg.pv_cache_limit=$3; }
+	| PVCACHELIMIT EQUAL error { yyerror("number expected"); }
+	| PVCACHEACTION EQUAL NUMBER { default_core_cfg.pv_cache_action=$3; }
+	| PVCACHEACTION EQUAL error { yyerror("number expected"); }
 	| HTTP_REPLY_PARSE EQUAL NUMBER { http_reply_parse=$3; }
 	| HTTP_REPLY_PARSE EQUAL error { yyerror("boolean value expected"); }
 	| VERBOSE_STARTUP EQUAL NUMBER { ksr_verbose_startup=$3; }
 	| VERBOSE_STARTUP EQUAL error { yyerror("boolean value expected"); }
+	| ROUTE_LOCKS_SIZE EQUAL NUMBER { ksr_route_locks_size=$3; }
+	| ROUTE_LOCKS_SIZE EQUAL error { yyerror("number expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
-	| SERVER_ID EQUAL error  { yyerror("number  expected"); }
+	| SERVER_ID EQUAL error  { yyerror("number expected"); }
+	| KEMI DOT ONSEND_ROUTE_CALLBACK EQUAL STRING {
+			kemi_onsend_route_callback.s = $5;
+			kemi_onsend_route_callback.len = strlen($5);
+			if(kemi_onsend_route_callback.len==4
+					&& strcasecmp(kemi_onsend_route_callback.s, "none")==0) {
+				kemi_onsend_route_callback.s = "";
+				kemi_onsend_route_callback.len = 0;
+			}
+		}
+	| KEMI DOT ONSEND_ROUTE_CALLBACK EQUAL error { yyerror("string expected"); }
+	| KEMI DOT REPLY_ROUTE_CALLBACK EQUAL STRING {
+			kemi_reply_route_callback.s = $5;
+			kemi_reply_route_callback.len = strlen($5);
+			if(kemi_reply_route_callback.len==4
+					&& strcasecmp(kemi_reply_route_callback.s, "none")==0) {
+				kemi_reply_route_callback.s = "";
+				kemi_reply_route_callback.len = 0;
+			}
+		}
+	| KEMI DOT REPLY_ROUTE_CALLBACK EQUAL error { yyerror("string expected"); }
+	| KEMI DOT EVENT_ROUTE_CALLBACK EQUAL STRING {
+			kemi_event_route_callback.s = $5;
+			kemi_event_route_callback.len = strlen($5);
+			if(kemi_event_route_callback.len==4
+					&& strcasecmp(kemi_event_route_callback.s, "none")==0) {
+				kemi_event_route_callback.s = "";
+				kemi_event_route_callback.len = 0;
+			}
+		}
+	| KEMI DOT EVENT_ROUTE_CALLBACK EQUAL error { yyerror("string expected"); }
     | MAX_RECURSIVE_LEVEL EQUAL NUMBER { set_max_recursive_level($3); }
     | MAX_BRANCHES_PARAM EQUAL NUMBER { sr_dst_max_branches = $3; }
     | LATENCY_LOG EQUAL intno { default_core_cfg.latency_log=$3; }

@@ -37,7 +37,7 @@
 	  <type db="postgres">SERIAL</type>
 	  <type db="dbtext">int,auto</type>
 	  <description>
-	    ID that uniquely identifies each row. This is automaticaly generated
+	    ID that uniquely identifies each row. This is automatically generated
 	    by the database server. This id is useful for post processing.
 	  </description>
     </column>
@@ -83,7 +83,7 @@
 	  <null/>
 	  <description>
 	    The unique identifier of destination domain in SER. This identifier is
-	    usualy based on the domain name present in the Request-URI of the SIP
+	    usually based on the domain name present in the Request-URI of the SIP
 	    request. This value is empty for outbound requests to 3rd party
 	    domains.
 	  </description>
@@ -96,8 +96,8 @@
 	  <null/>
 	  <description>
 	    The unique identifier of originating domain in SER. This identifier is
-	    usualy based on the domain name present in the From header field of
-	    the SIP request. This value is empty for inbound reqeusts from 3rd
+	    usually based on the domain name present in the From header field of
+	    the SIP request. This value is empty for inbound requests from 3rd
 	    party domains.
 	  </description>
     </column>

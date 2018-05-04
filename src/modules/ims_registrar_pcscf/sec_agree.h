@@ -30,7 +30,7 @@
  * @param params - ptr to struct sec_agree_params, where parsed values will be saved
  * @returns 0 on success, error code on failure
  */
-int cscf_get_security(struct sip_msg *msg, security_t *params);
+security_t* cscf_get_security(struct sip_msg *msg);
 
 void free_security_t(security_t *params);
 

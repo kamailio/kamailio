@@ -47,6 +47,11 @@
 ## database super user (for ORACLE this is 'scheme-creator' user)
 # DBROOTUSER="root"
 
+## password for database super user
+## - important: this is insecure, targeting the use only for automatic testing
+## - known to work for: mysql
+# DBROOTPW="dbrootpw"
+
 ## database character set (used by MySQL when creating database)
 #CHARSET="latin1"
 
@@ -137,6 +142,10 @@
 ## are accepted
 # ACL_GROUPS="local ld int voicemail free-pstn"
 
+## check if user exists (used by some commands such as acl);
+## - default on (1); off (0)
+# VERIFY_USER=1
+
 ## verbose - debug purposes - default '0'
 # VERBOSE=1
 
@@ -145,7 +154,7 @@
 # STORE_PLAINTEXT_PW=0
 
 ## Kamailio START Options
-## PID file path - default is: /var/run/kamailio.pid
+## PID file path - default is: /var/run/kamailio/kamailio.pid
 # PID_FILE=/var/run/kamailio/kamailio.pid
 
 ## Extra start options - default is: not set

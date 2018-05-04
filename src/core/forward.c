@@ -450,6 +450,8 @@ int check_self_port(unsigned short port, unsigned short proto)
  * WARNING: don't forget to zero-fill all the  unused members (a non-zero
  * random id along with proto==PROTO_TCP can have bad consequences, same for
  *   a bogus send_socket value)
+ *
+ * return: 0 (E_OK) on success; negative (E_*) on failure
  */
 int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 							struct dest_info* send_info)

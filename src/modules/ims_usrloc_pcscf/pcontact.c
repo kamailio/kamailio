@@ -112,6 +112,38 @@ void free_ppublic(ppublic_t* _p)
 	shm_free(_p);
 }
 
+void free_security(security_t* _p)
+{
+    if (!_p)
+        return;
+
+    shm_free(_p->sec_header.s);
+
+    switch (_p->type)
+    {
+        case SECURITY_IPSEC:
+            shm_free(_p->data.ipsec->ealg.s);
+            shm_free(_p->data.ipsec->r_ealg.s);
+            shm_free(_p->data.ipsec->ck.s);
+            shm_free(_p->data.ipsec->alg.s);
+            shm_free(_p->data.ipsec->r_alg.s);
+            shm_free(_p->data.ipsec->ik.s);
+            shm_free(_p->data.ipsec->prot.s);
+            shm_free(_p->data.ipsec->mod.s);
+
+            shm_free(_p->data.ipsec);
+        break;
+
+        case SECURITY_TLS:
+            shm_free(_p->data.tls);
+        break;
+
+        //default: Nothing to deallocate
+    }
+
+    shm_free(_p);
+}
+
 int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, struct pcontact** _c)
 {
 	int i, has_rinstance=0;
@@ -274,6 +306,10 @@ void free_pcontact(pcontact_t* _c) {
 		_c->service_routes = 0;
 		_c->num_service_routes = 0;
 	}
+
+    // free_security() checks for NULL ptr
+    free_security(_c->security_temp);
+    free_security(_c->security);
 
 	if (_c->rx_session_id.len > 0 && _c->rx_session_id.s)
 		shm_free(_c->rx_session_id.s);

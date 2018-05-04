@@ -255,8 +255,10 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 	return 0;
 
 err:
-	if(prev_token)
-		pkg_free(prev_token);
+	if(prev_token) {
+		if(res==NULL || (res->username!=prev_token && res->host!=prev_token))
+			pkg_free(prev_token);
+	}
 	if(res == NULL)
 		return -1;
 	if(res->username) {

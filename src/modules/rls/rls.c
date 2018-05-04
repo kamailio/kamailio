@@ -42,6 +42,7 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
 #include "../presence/bind_presence.h"
@@ -118,7 +119,7 @@ extern subs_t* rls_search_shtable(shtable_t htable,str callid,str to_tag,
 extern int rls_delete_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs);
 extern int rls_update_shtable(shtable_t htable,unsigned int hash_code,
 		subs_t* subs, int type);
-extern void rls_update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
+extern void rls_update_db_subs_timer(db1_con_t *db,db_func_t *dbf, shtable_t hash_table,
 		int htable_size, int no_lock, handle_expired_func_t handle_expired_func);
 
 static int rls_rpc_init(void);
@@ -208,13 +209,13 @@ int fixup_update_subs(void** param, int param_no);
 
 static cmd_export_t cmds[]=
 {
-	{"rls_handle_subscribe",  (cmd_function)rls_handle_subscribe0,  0,
+	{"rls_handle_subscribe",  (cmd_function)w_rls_handle_subscribe0,  0,
 		0, 0, REQUEST_ROUTE},
-	{"rls_handle_subscribe",  (cmd_function)w_rls_handle_subscribe, 1,
+	{"rls_handle_subscribe",  (cmd_function)w_rls_handle_subscribe1, 1,
 		fixup_spve_null, 0, REQUEST_ROUTE},
-	{"rls_handle_notify",     (cmd_function)rls_handle_notify,      0,
+	{"rls_handle_notify",     (cmd_function)w_rls_handle_notify,      0,
 		0, 0, REQUEST_ROUTE},
-	{"rls_update_subs",       (cmd_function)rls_update_subs,	2,
+	{"rls_update_subs",       (cmd_function)w_rls_update_subs,	2,
 		fixup_update_subs, 0, ANY_ROUTE},
 	{"bind_rls",              (cmd_function)bind_rls,		1,
 		0, 0, 0},
@@ -836,7 +837,7 @@ void rlsubs_table_update(unsigned int ticks,void *param)
 		LM_ERR("sql use table failed\n");
 		return;
 	}
-	pres_update_db_subs_timer(rls_db, rls_dbf, rls_table, hash_size,
+	pres_update_db_subs_timer(rls_db, &rls_dbf, rls_table, hash_size,
 			no_lock, handle_expired_record);
 
 }
@@ -1059,8 +1060,8 @@ int bind_rls(struct rls_binds *pxb)
 	}
 
 	pxb->rls_handle_subscribe = rls_handle_subscribe;
-	pxb->rls_handle_subscribe0 = rls_handle_subscribe0;
-	pxb->rls_handle_notify = rls_handle_notify;
+	pxb->rls_handle_subscribe0 = ki_rls_handle_subscribe;
+	pxb->rls_handle_notify = w_rls_handle_notify;
 	return 0;
 }
 
@@ -1089,5 +1090,41 @@ static int rls_rpc_init(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_rls_exports[] = {
+	{ str_init("rls"), str_init("handle_subscribe"),
+		SR_KEMIP_INT, ki_rls_handle_subscribe,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rls"), str_init("handle_subscribe_uri"),
+		SR_KEMIP_INT, ki_rls_handle_subscribe_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rls"), str_init("handle_notify"),
+		SR_KEMIP_INT, ki_rls_handle_notify,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rls"), str_init("update_subs"),
+		SR_KEMIP_INT, ki_rls_update_subs,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_rls_exports);
 	return 0;
 }

@@ -182,19 +182,19 @@ my $val = new Kamailio::VDB::Value(DB_STRING, "foobar");
    contains a column name (key). A new variable may be created with
 my $pair = new Kamailio::VDB::Pair("foo", DB_STRING, "bar");
 
-   where foo is the key and bar is the value. Additonally to the methods
+   where foo is the key and bar is the value. Additionally to the methods
    of the Value class, it contains a key() method to get or set the key
    attribute.
 
 3.3. Kamailio::VDB::ReqCond
 
    The ReqCond class is used for select condition and is derived from the
-   Pair class. It contains an addtional operator attribute. A new variable
-   may be created with
+   Pair class. It contains an additional operator attribute. A new
+   variable may be created with
 my $cond = new Kamailio::VDB::ReqCond("foo", ">", DB_INT, 5);
 
    where foo is the key, "greater" is the operator and 5 is the value to
-   compare. Additonally to the methods of the Pair class, it contains an
+   compare. Additionally to the methods of the Pair class, it contains an
    op() method to get or set the operator attribute.
 
 3.4. Kamailio::VDB::Column
@@ -274,7 +274,7 @@ my $cols = new Kamailio::VDB::Column(\@types, \@names);
        namespace.
 
      * Package/class. The defined class needs to have an init() function.
-       It will be called during the first call of that VTab. Addtionally,
+       It will be called during the first call of that VTab. Additionally,
        the package has to define the necessary functions insert, replace,
        update, delete and/or query. These functions will be called in a
        function context (first parameter is the class name).

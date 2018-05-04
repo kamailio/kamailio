@@ -1,0 +1,269 @@
+ACC_JSON Module
+
+Julien Chavanton
+
+   <jchavanton@gmail.com>
+
+Julien Chavanton
+
+   flowroute.com
+   <jchavanton@gmail.com>
+
+Edited by
+
+Julien Chavanton
+
+   flowroute.com
+   <jchavanton@gmail.com>
+
+   Copyright © 2018 Flowroute.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. acc_flag (integer)
+              3.2. acc_missed_flag (integer)
+              3.3. acc_extra (integer)
+              3.4. acc_time_mode (integer)
+              3.5. acc_time_format (str)
+              3.6. output_mqueue (integer)
+              3.7. output_syslog (integer)
+              3.8. log_facility (integer)
+              3.9. log_level (integer)
+
+   List of Examples
+
+   1.1. acc_flag example
+   1.2. acc_missed_flag example
+   1.3. acc_extra example
+   1.4. acc_time_mode example
+   1.5. acc_time_format example
+   1.6. output_mqueue usage example
+   1.7. output_syslog example
+   1.8. log_facility example
+   1.9. log_level example
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. acc_flag (integer)
+        3.2. acc_missed_flag (integer)
+        3.3. acc_extra (integer)
+        3.4. acc_time_mode (integer)
+        3.5. acc_time_format (str)
+        3.6. output_mqueue (integer)
+        3.7. output_syslog (integer)
+        3.8. log_facility (integer)
+        3.9. log_level (integer)
+
+1. Overview
+
+   ACC_JSON module is used to account transaction information in a JSON
+   dictionary. It binds to ACC module API and uses the same accounting
+   mechanisms as for other backends.
+
+   It can output the JSON dictionary to MQUEUE or SYSLOG (even if Kamailio
+   is not using syslog)
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The module depends on the following modules (in the other words the
+   listed modules must be loaded before this module):
+     * acc - accounting module
+     * mqueue - mqueue module (optional)
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * jansson http://www.digip.org/jansson/
+       Jansson is a C library for encoding, decoding and manipulating JSON
+       data.
+
+3. Parameters
+
+   3.1. acc_flag (integer)
+   3.2. acc_missed_flag (integer)
+   3.3. acc_extra (integer)
+   3.4. acc_time_mode (integer)
+   3.5. acc_time_format (str)
+   3.6. output_mqueue (integer)
+   3.7. output_syslog (integer)
+   3.8. log_facility (integer)
+   3.9. log_level (integer)
+
+3.1. acc_flag (integer)
+
+   Request flag which needs to be set to account a transaction in
+   acc_json. See output_mqueue and output_syslog
+
+   Default value is not-set (no flag).
+
+   Example 1.1. acc_flag example
+...
+modparam("acc_json", "acc_flag", 2)
+...
+
+3.2. acc_missed_flag (integer)
+
+   Request flag which needs to be set to account missed calls in acc_json.
+   See output_mqueue and output_syslog
+
+   Default value is not-set (no flag).
+
+   Example 1.2. acc_missed_flag example
+...
+modparam("acc_json", "acc_missed_flag", 3)
+...
+
+3.3. acc_extra (integer)
+
+   Extra values to be added to the json dictionary.
+
+   Default value is NULL.
+
+   Example 1.3. acc_extra example
+...
+modparam("acc_json", "acc_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
+...
+
+3.4. acc_time_mode (integer)
+
+   Store additional value related to the time of event.
+
+   Values can be:
+     * 0 - (default), save only unix timestamp for syslog and datetime for
+       database.
+     * 1 - save seconds in time_attr and microseconds in time_exten.
+     * 2 - save seconds.milliseconds in time_attr.
+     * 3 - save formatted time according to time_format parameter, using
+       the output of localtime(). Used for cdr entries too.
+     * 4 - save formatted time according to time_format parameter, using
+       the output of gmtime(). Used for cdr entries too.
+
+   Example 1.4. acc_time_mode example
+...
+modparam("acc_json", "acc_time_mode", 1)
+...
+
+3.5. acc_time_format (str)
+
+   Specify the format to print the time for time_mode 3 or 4.
+
+   Default value is %Y-%m-%d %H:%M:%S".
+
+   Example 1.5. acc_time_format example
+...
+modparam("acc_json", "acc_time_format", "%Y/%m/%d %H:%M:%S")
+...
+
+3.6. output_mqueue (integer)
+
+   Requires the mqueue module. The acc module will queue json acc events
+   in the specified mqueue. Using a rtimer module exec you can access the
+   queue and process them.
+
+   Default value is not-set mqueue will not be required
+
+   Example 1.6. output_mqueue usage example
+...
+# example using json_mqueue/http_client to publish to NSQD
+max_while_loops=100000
+modparam("mqueue", "mqueue", "name=acc_events;size=100000")
+modparam("acc_json", "output_mqueue", "acc_events")
+modparam("acc_json", "acc_flag", 2)
+modparam("acc_json", "acc_extra", "caller_ip_port=$avp(caller_ip_port);")
+modparam("rtimer", "timer", "name=nsqt;interval=1;mode=1;")
+modparam("rtimer", "exec", "timer=nsqt;route=RUN_CDR_PUBLISH")
+modparam("http_client", "keep_connections", 1)
+modparam("http_client", "httpcon", "nsqd=>http://localhost:4151/pub?topic=acc")
+
+route[RUN_CDR_PUBLISH] {
+   $var(count) = 0;
+   while (mq_fetch("acc_events")) {
+      $var(q_size) = mq_size("acc_events");
+      $var(count) = $var(count) + 1;
+      xinfo("[RUN_CDR_PUBLISH][$var(q_size)][$var(count)][$mqk(acc_events)][$mqv
+(acc_events)]\n");
+      $var(res) = http_connect("nsqd", "", "application/json", $mqv(acc_events),
+ "$var(nsq_res)");
+      if ($var(res) != "200") {
+         mq_add("acc_events", "acc_key", "$mqv(acc_events)");
+         return;
+      }
+   }
+   if ($var(count) > 0 ) {
+      xinfo("[RUN_CDR_PUBLISH]done count[$var(count)]\n");
+   }
+}
+...
+
+3.7. output_syslog (integer)
+
+   Control if the output of acc json should be sent to syslog. This is not
+   dependent on Kamailio global logging settings, we can use syslog even
+   if Kamailio is not daemonized and/or logging is done to sdtout stderr.
+
+   Default value is not-set (no flag).
+
+   Example 1.7. output_syslog example
+...
+modparam("acc_json", "output_syslog", 1)
+modparam("acc_json", "log_level", 2)
+modparam("acc_json", "log_facility", "LOG_DAEMON")
+...
+
+3.8. log_facility (integer)
+
+   Log facility to which accounting messages are issued to syslog. This
+   allows to easily separate the accounting specific logging from the
+   other log messages.
+
+   Default value is LOG_DAEMON.
+
+   Example 1.8. log_facility example
+...
+modparam("acc_json", "log_facility", "LOG_LOCAL0")
+
+# modify you syslog/rsyslog config
+# /etc/rsyslog.d/default.conf
+# remove local0 from default log file
+# *.*;local0,auth,authpriv.none /var/log/syslog
+# add local0 to another log file
+# local0.*                      /var/log/json_acc.log
+...
+
+3.9. log_level (integer)
+
+   Log level at which accounting messages are issued to syslog.
+
+   Default value is 1 (L_NOTICE).
+
+   Example 1.9. log_level example
+...
+modparam("acc_json", "log_level", 2) # Set log_level to 2 (L_INFO)
+...

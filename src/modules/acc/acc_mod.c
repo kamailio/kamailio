@@ -115,6 +115,7 @@ struct acc_extra *log_extra = 0; /*!< Log extra attributes */
 /*@{*/
 
 int cdr_enable  = 0;
+int cdr_extra_nullable  = 0;
 int cdr_log_enable  = 1;
 int cdr_start_on_confirmed = 0;
 int cdr_expired_dlg_enable = 0;
@@ -204,6 +205,7 @@ static param_export_t params[] = {
 	{"cdr_start_on_confirmed", INT_PARAM, &cdr_start_on_confirmed   },
 	{"cdr_facility",         PARAM_STRING, &cdr_facility_str           },
 	{"cdr_extra",            PARAM_STRING, &cdr_log_extra_str          },
+	{"cdr_extra_nullable",   INT_PARAM, &cdr_extra_nullable            },
 	{"cdr_start_id",	 PARAM_STR, &cdr_start_str		},
 	{"cdr_end_id",		 PARAM_STR, &cdr_end_str		},
 	{"cdr_duration_id",	 PARAM_STR, &cdr_duration_str	},
@@ -471,6 +473,12 @@ static int mod_init( void )
 	if( cdr_enable < 0 || cdr_enable > 1)
 	{
 		LM_ERR("cdr_enable is out of range\n");
+		return -1;
+	}
+
+	if( cdr_extra_nullable < 0 || cdr_extra_nullable > 1)
+	{
+		LM_ERR("cdr_extra_nullable is out of range\n");
 		return -1;
 	}
 

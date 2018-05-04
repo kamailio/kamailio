@@ -43,7 +43,7 @@ Carsten Bock
    1.2. jansson_set usage
    1.3. jansson_append usage
    1.4. jansson_array_size usage
-   1.5. array concatination
+   1.5. array concatenation
    1.6. jansson_get_field usage
 
 Chapter 1. Admin Guide
@@ -127,7 +127,7 @@ xlog("L_INFO", "foo is $var(n)");
    The path string works the same as in jansson_get.
 
    Valid 'type' parameters are 'integer', 'real', 'string', 'object',
-   'array', 'true', 'false', and 'null' as well as abbriviated names such
+   'array', 'true', 'false', and 'null' as well as abbreviated names such
    as 'int', 'str', and 'obj'. 'value' is ignored when type is 'true',
    'false', or 'null'.
 
@@ -212,7 +212,7 @@ while($var(count) < $var(size)) {
 }
 ...
 
-   Example 1.5. array concatination
+   Example 1.5. array concatenation
 ...
 $var(count) = 0;
 $var(appendme) = '[0,1]';

@@ -711,7 +711,7 @@ inline static int handle_io(struct fd_map* fm, short events, int idx)
 			break;
 #endif
 		case F_T_RESERVED:
-			LOG(L_CRIT, "BUG: io listen handle_io: emtpy fd map\n");
+			LOG(L_CRIT, "BUG: io listen handle_io: empty fd map\n");
 			goto error;
 		default:
 			LOG(L_CRIT, "BUG: io listen handle_io: unknown fd type %d\n",

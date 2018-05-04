@@ -33,7 +33,7 @@
 		</question>
 		<answer>
 		<para>
-			The ims_dialog module addresses shortcomings in the intial dialog
+			The ims_dialog module addresses shortcomings in the initial dialog
                         module design.  It makes some large changes to the API and
                         therefore must be introduced slowly.  It is currently in the
                         early development stages.  Eventually the ims_dialog module should
@@ -72,10 +72,6 @@
 			E-mails regarding any stable &kamailio; release should be sent to
 			&kamailiousersmail; and e-mails regarding development versions
 			should be sent to &kamailiodevmail;.
-		</para>
-		<para>
-			If you want to keep the mail private, send it to
-			&kamailiohelpmail;.
 		</para>
 		</answer>
 	</qandaentry>

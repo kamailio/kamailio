@@ -360,17 +360,17 @@ static int mod_init(void)
 
 	if (sock_hdr_name.s) {
 		if (sock_hdr_name.len==0 || sock_flag==-1) {
-			LM_WARN("empty sock_hdr_name or sock_flag not set -> resetting\n");
+			LM_INFO("empty sock_hdr_name or sock_flag not set -> resetting\n");
 			sock_hdr_name.len = 0;
 			sock_flag = -1;
 		}
 	} else if (reg_xavp_cfg.s) {
 		if (reg_xavp_cfg.len == 0 || sock_flag == -1) {
-			LM_WARN("empty reg_xavp_cfg or sock_flag not set -> resetting\n");
+			LM_DBG("empty reg_xavp_cfg or sock_flag not set -> resetting\n");
 			sock_flag = -1;
 		}
 	} else if (sock_flag!=-1) {
-		LM_WARN("sock_flag defined but no sock_hdr_name or no reg_xavp_cfg -> resetting flag\n");
+		LM_INFO("sock_flag defined but no sock_hdr_name or no reg_xavp_cfg -> resetting flag\n");
 		sock_flag = -1;
 	}
 

@@ -744,7 +744,8 @@ exception_restore:
                         continue;
                     case OT_NATIVECLOSURE: {
                         bool suspend;
-                        _GUARD(CallNative(_nativeclosure(clo), arg3, _stackbase+arg2, clo,suspend));
+						bool tailcall;
+                        _GUARD(CallNative(_nativeclosure(clo), arg3, _stackbase+arg2, clo, (SQInt32)sarg0, suspend, tailcall));
                         if(suspend){
                             _suspended = SQTrue;
                             _suspended_target = sarg0;
@@ -753,7 +754,7 @@ exception_restore:
                             outres = clo;
                             return true;
                         }
-                        if(sarg0 != -1) {
+                        if(sarg0 != -1 && !tailcall) {
                             STK(arg0) = clo;
                         }
                                            }
@@ -772,10 +773,10 @@ exception_restore:
                                 _GUARD(StartCall(_closure(clo), -1, arg3, stkbase, false));
                                 break;
                             case OT_NATIVECLOSURE:
-                                bool suspend;
+                                bool dummy;
                                 stkbase = _stackbase+arg2;
                                 _stack._vals[stkbase] = inst;
-                                _GUARD(CallNative(_nativeclosure(clo), arg3, stkbase, clo,suspend));
+                                _GUARD(CallNative(_nativeclosure(clo), arg3, stkbase, clo, -1, dummy, dummy));
                                 break;
                             default: break; //shutup GCC 4.x
                         }
@@ -1139,7 +1140,7 @@ void SQVM::CallDebugHook(SQInteger type,SQInteger forcedline)
     _debughook = true;
 }
 
-bool SQVM::CallNative(SQNativeClosure *nclosure, SQInteger nargs, SQInteger newbase, SQObjectPtr &retval, bool &suspend)
+bool SQVM::CallNative(SQNativeClosure *nclosure, SQInteger nargs, SQInteger newbase, SQObjectPtr &retval, SQInt32 target,bool &suspend, bool &tailcall)
 {
     SQInteger nparamscheck = nclosure->_nparamscheck;
     SQInteger newtop = newbase + nargs + nclosure->_noutervalues;
@@ -1169,6 +1170,7 @@ bool SQVM::CallNative(SQNativeClosure *nclosure, SQInteger nargs, SQInteger newb
 
     if(!EnterFrame(newbase, newtop, false)) return false;
     ci->_closure  = nclosure;
+	ci->_target = target;
 
     SQInteger outers = nclosure->_noutervalues;
     for (SQInteger i = 0; i < outers; i++) {
@@ -1183,7 +1185,12 @@ bool SQVM::CallNative(SQNativeClosure *nclosure, SQInteger nargs, SQInteger newb
     _nnativecalls--;
 
     suspend = false;
-    if (ret == SQ_SUSPEND_FLAG) {
+	tailcall = false;
+	if (ret == SQ_TAILCALL_FLAG) {
+		tailcall = true;
+		return true;
+	}
+    else if (ret == SQ_SUSPEND_FLAG) {
         suspend = true;
     }
     else if (ret < 0) {
@@ -1200,6 +1207,23 @@ bool SQVM::CallNative(SQNativeClosure *nclosure, SQInteger nargs, SQInteger newb
     //retval = ret ? _stack._vals[_top-1] : _null_;
     LeaveFrame();
     return true;
+}
+
+bool SQVM::TailCall(SQClosure *closure, SQInteger parambase,SQInteger nparams)
+{
+	SQInteger last_top = _top;
+	SQObjectPtr clo = closure;
+	if (ci->_root)
+	{
+		Raise_Error("root calls cannot invoke tailcalls");
+		return false;
+	}
+	for (SQInteger i = 0; i < nparams; i++) STK(i) = STK(parambase + i);
+	bool ret = StartCall(closure, ci->_target, nparams, _stackbase, true);
+	if (last_top >= _top) {
+		_top = last_top;
+	}
+	return ret;
 }
 
 #define FALLBACK_OK         0
@@ -1551,8 +1575,8 @@ SQInteger prevstackbase = _stackbase;
         return Execute(closure, nparams, stackbase, outres, raiseerror);
         break;
     case OT_NATIVECLOSURE:{
-        bool suspend;
-        return CallNative(_nativeclosure(closure), nparams, stackbase, outres,suspend);
+        bool dummy;
+        return CallNative(_nativeclosure(closure), nparams, stackbase, outres, -1, dummy, dummy);
 
                           }
         break;
@@ -1723,7 +1747,7 @@ void SQVM::dumpstack(SQInteger stackbase,bool dumpall)
         SQObjectPtr &obj=_stack[i];
         if(stackbase==i)scprintf(_SC(">"));else scprintf(_SC(" "));
         scprintf(_SC("[" _PRINT_INT_FMT "]:"),n);
-        switch(type(obj)){
+        switch(sq_type(obj)){
         case OT_FLOAT:          scprintf(_SC("FLOAT %.3f"),_float(obj));break;
         case OT_INTEGER:        scprintf(_SC("INTEGER " _PRINT_INT_FMT),_integer(obj));break;
         case OT_BOOL:           scprintf(_SC("BOOL %s"),_integer(obj)?"true":"false");break;

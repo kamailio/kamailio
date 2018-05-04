@@ -158,8 +158,8 @@ modparam("registrar", "default_expires", 1800)
 		<para>
 		This parameter specifies that the expiry used for newly created usrloc records
 		are not fixed, but a random value in the interval <quote>[default_expires-default_expires_range%, default_expires]</quote>.
-		The value is between 0 and 100 and represent the maximim percentage from expires that
-		will be substracted when computing the value. Default is 0, meaning default_expires
+		The value is between 0 and 100 and represent the maximum percentage from expires that
+		will be subtracted when computing the value. Default is 0, meaning default_expires
 		is left unmodified. This parameter can be modified via the &kamailio; config framework.
 		</para>
 		<para>
@@ -703,7 +703,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		<listitem>
 			<para>
 				<emphasis>socket</emphasis> - the string representing the
-				socket on which the register rquest was received, as alternative
+				socket on which the register request was received, as alternative
 				to using the sock_hdr.
 			</para>
 		</listitem>
@@ -1017,7 +1017,7 @@ modparam("registrar", "contact_max_size", 1024)
 					</para>
 				</listitem>
 			</itemizedlist>
-			<para>The flags may be given in decimal or hexa format.</para>
+			<para>The flags may be given in decimal or hexadecimal format.</para>
 		</listitem>
 		<listitem>
 			<para>

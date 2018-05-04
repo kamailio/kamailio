@@ -106,7 +106,7 @@ int jsonrpc_dgram_mod_init(void)
 	int sep;
 
 	/* checking the mi_socket module param */
-	LM_DBG("testing socket existance...\n");
+	LM_DBG("testing socket existence...\n");
 
 	if( jsonrpc_dgram_socket==NULL || *jsonrpc_dgram_socket == 0) {
 		LM_ERR("no DATAGRAM_ socket configured\n");
@@ -118,7 +118,7 @@ int jsonrpc_dgram_mod_init(void)
 	memset( &jsonrpc_dgram_addr, 0, sizeof(jsonrpc_dgram_sockaddr_t) );
 
 	if(strlen(jsonrpc_dgram_socket)<6) {
-		LM_ERR("lenght of socket address is too short: %s\n",
+		LM_ERR("length of socket address is too short: %s\n",
 				jsonrpc_dgram_socket);
 		return -1;
 	}

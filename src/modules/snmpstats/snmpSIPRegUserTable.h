@@ -78,9 +78,9 @@ extern "C" {
 #include "../../core/config.h"
 
 /* Defines what each SNMP Row is made of. */
-typedef struct kamailioSIPRegUserTable_context_s 
+typedef struct kamailioSIPRegUserTable_context_s
 {
-	netsnmp_index index; 
+	netsnmp_index index;
 
 	unsigned long kamailioSIPUserIndex;
 
@@ -93,7 +93,7 @@ typedef struct kamailioSIPRegUserTable_context_s
 
 	unsigned long kamailioSIPUserAuthenticationFailures;
 
-	void * data;
+	void *data;
 
 } kamailioSIPRegUserTable_context;
 
@@ -113,16 +113,16 @@ int registerForUSRLOCCallbacks(void);
  *
  * Returns: The rows userIndex on success, and 0 otherwise. 
  */
-int  createRegUserRow(char *stringToRegister);
+int createRegUserRow(char *stringToRegister);
 
 
 /* Removes an SNMP row indexed by userIndex, and frees the string and index it
  * pointed to. */
-void  deleteRegUserRow(int userIndex);
+void deleteRegUserRow(int userIndex);
 
 /* Creates an 'aor to userindex' record from stringName and userIndex, and pushes
  * them onto the hash table. */
-void  pushUserIntoHashTable(int userIndex, char *stringName);
+void pushUserIntoHashTable(int userIndex, char *stringName);
 
 /*
  * Adds or updates a user:
@@ -139,35 +139,33 @@ void updateUser(char *userName);
 /*******************************/
 
 /* Initializes the kamailioSIPRegUserTable module.  */
-void  init_kamailioSIPRegUserTable(void);
+void init_kamailioSIPRegUserTable(void);
 
 /*
  * Initialize the kamailioSIPRegUserTable table by defining its contents and how
  * it's structured
  */
-void  initialize_table_kamailioSIPRegUserTable(void);
+void initialize_table_kamailioSIPRegUserTable(void);
 
-const kamailioSIPRegUserTable_context * kamailioSIPRegUserTable_get_by_idx(
+const kamailioSIPRegUserTable_context *kamailioSIPRegUserTable_get_by_idx(
 		netsnmp_index *);
 
-const kamailioSIPRegUserTable_context * kamailioSIPRegUserTable_get_by_idx_rs(
+const kamailioSIPRegUserTable_context *kamailioSIPRegUserTable_get_by_idx_rs(
 		netsnmp_index *, int row_status);
 
 /* Handles SNMP GET requests. */
-int   kamailioSIPRegUserTable_get_value(
-		netsnmp_request_info *, 
-		netsnmp_index *, 
-		netsnmp_table_request_info *);
+int kamailioSIPRegUserTable_get_value(
+		netsnmp_request_info *, netsnmp_index *, netsnmp_table_request_info *);
 
 /* OID Declarations. */
 extern oid kamailioSIPRegUserTable_oid[];
 extern size_t kamailioSIPRegUserTable_oid_len;
 
-#define kamailioSIPRegUserTable_TABLE_OID KAMAILIO_OID,3,1,2,1,5,6
-    
+#define kamailioSIPRegUserTable_TABLE_OID KAMAILIO_OID, 3, 1, 2, 1, 5, 6
+
 /* Column Definitions */
-#define COLUMN_KAMAILIOSIPUSERINDEX                  1
-#define COLUMN_KAMAILIOSIPUSERURI                    2
+#define COLUMN_KAMAILIOSIPUSERINDEX 1
+#define COLUMN_KAMAILIOSIPUSERURI 2
 #define COLUMN_KAMAILIOSIPUSERAUTHENTICATIONFAILURES 3
 
 #define kamailioSIPRegUserTable_COL_MIN 2

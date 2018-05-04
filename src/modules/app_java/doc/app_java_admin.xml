@@ -201,7 +201,7 @@ modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni
 		<section id="app_java.p.force_cmd_exec">
 			<title><varname>force_cmd_exec</varname> (int)</title>
 			<para>
-				This parameter forces execution a &kamailiobinary; comnmand with java native method <quote>KamExec</quote>.
+				This parameter forces execution a &kamailiobinary; command with java native method <quote>KamExec</quote>.
 				# Note: this is an untested yet feature, may cause (but may not) a memory leaks if used from embedded languages.
 			</para>
 			<para>
@@ -268,7 +268,7 @@ modparam("app_java", "force_cmd_exec", 1)
 
 	Each parameter passed to function will be cast according to given signature.
 	
-	Parameters are optional, ommitting a parameter meant the passed value is NULL.
+	Parameters are optional, omitting a parameter meant the passed value is NULL.
 	Parameters count should be exactly the same as signature count.
 	Note 1: Arrays representation (symbol '[') is not supported yet.
 	Note 2: You shall use a correct signature, e.g. the following examples of
@@ -323,7 +323,7 @@ public int ExampleMethod()
 java_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 
 # Java
-public int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
+public int ExampleMethod(String SipMessageBuffer, int SipMessageLength)
 {
     ... do something with buffer;
     return 1;
@@ -404,7 +404,7 @@ public static int ExampleMethod()
 java_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 
 # Java
-public static int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
+public static int ExampleMethod(String SipMessageBuffer, int SipMessageLength)
 {
     ... do something with buffer;
     return 1;
@@ -486,7 +486,7 @@ public synchronized int ExampleMethod()
 java_s_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 
 # Java
-public synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
+public synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLength)
 {
     ... do something with buffer;
     return 1;
@@ -568,7 +568,7 @@ public static synchronized int ExampleMethod()
 java_s_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 
 # Java
-public static synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
+public static synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLength)
 {
     ... do something with buffer;
     return 1;

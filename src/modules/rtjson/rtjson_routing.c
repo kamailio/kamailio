@@ -54,11 +54,11 @@ static uac_api_t uacb;
 int rtjson_init(void)
 {
 	if (load_tm_api( &tmb ) == -1) {
-		LM_NOTICE("cannot load the TM API - some features are diabled\n");
+		LM_NOTICE("cannot load the TM API - some features are disabled\n");
 		memset(&tmb, 0, sizeof(struct tm_binds));
 	}
 	if (load_uac_api(&uacb) < 0) {
-		LM_NOTICE("cannot bind to UAC API - some features are diabled\n");
+		LM_NOTICE("cannot bind to UAC API - some features are disabled\n");
 		memset(&uacb, 0, sizeof(uac_api_t));
 	}
 	return 0;

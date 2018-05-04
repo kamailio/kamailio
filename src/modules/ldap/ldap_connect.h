@@ -31,10 +31,9 @@
 #include "../../core/str.h"
 #include "../../core/dprint.h"
 
-extern int ldap_connect(char* _ld_name);
-extern int ldap_disconnect(char* _ld_name);
-extern int ldap_reconnect(char* _ld_name);
-extern int ldap_get_vendor_version(char** _version);
+extern int ldap_connect(char *_ld_name);
+extern int ldap_disconnect(char *_ld_name);
+extern int ldap_reconnect(char *_ld_name);
+extern int ldap_get_vendor_version(char **_version);
 
 #endif /* LDAP_CONNECT_H */
-

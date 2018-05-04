@@ -735,17 +735,17 @@ static int cfg_lock_helper(str *lkey, int mode)
 	return 1;
 }
 
-static int cfg_lock(str *lkey)
+static int cfg_lock(sip_msg_t *msg, str *lkey)
 {
 	return cfg_lock_helper(lkey, 0);
 }
 
-static int cfg_unlock(str *lkey)
+static int cfg_unlock(sip_msg_t *msg, str *lkey)
 {
 	return cfg_lock_helper(lkey, 1);
 }
 
-static int cfg_trylock(str *lkey)
+static int cfg_trylock(sip_msg_t *msg, str *lkey)
 {
 	return cfg_lock_helper(lkey, 2);
 }
@@ -801,11 +801,10 @@ static int w_check_route_exists(struct sip_msg *msg, char *route)
 static int w_route_exists(struct sip_msg *msg, char *route)
 {
 	struct run_act_ctx ctx;
-	int newroute, backup_rt, ret;
+	int newroute, ret;
 	str s;
 
-	if (fixup_get_svalue(msg, (gparam_p) route, &s) != 0)
-	{
+	if (fixup_get_svalue(msg, (gparam_p) route, &s) != 0) {
 			LM_ERR("invalid route parameter\n");
 			return -1;
 	}
@@ -814,12 +813,8 @@ static int w_route_exists(struct sip_msg *msg, char *route)
 	if (newroute<0) {
 		return -1;
 	}
-	backup_rt = get_route_type();
-	set_route_type(REQUEST_ROUTE);
-
 	init_run_actions_ctx(&ctx);
-	ret = run_top_route(main_rt.rlist[newroute], msg, &ctx);
-	set_route_type(backup_rt);
+	ret=run_actions(&ctx, main_rt.rlist[newroute], msg);
 	if (ctx.run_flags & EXIT_R_F) {
 		return 0;
 	}

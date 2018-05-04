@@ -174,7 +174,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 
 5. Installation
 
-   Because the db_cassandra module dependes on an external library, it is
+   Because the db_cassandra module depends on an external library, it is
    not compiled and installed by default. You can use one of these
    options:
      * - edit the "Makefile" and remove "db_cassandra" from

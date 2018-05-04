@@ -100,6 +100,8 @@ typedef enum request_method {
 #define FL_BODY_MULTIPART    (1<<17)  /* body modified is multipart */
 #define FL_RR_ADDED          (1<<18)  /* Record-Route header was added */
 #define FL_UAC_AUTH          (1<<19)  /* Proxy UAC-like authentication */
+#define FL_ADD_SRVID         (1<<20) /*!< add 'srvid' to local via hdr */
+#define FL_ADD_XAVP_VIA      (1<<21) /*!< add xavp fields to local via params */
 
 /* WARNING: Value (1 << 28) is temporarily reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
@@ -359,6 +361,7 @@ typedef struct sip_msg {
 								to avoid unnecessary calculations */
 	unsigned int msg_flags; /*!< internal flags used by core */
 	flag_t flags; /*!< config flags */
+	flag_t xflags[KSR_XFLAGS_SIZE]; /*!< config extended flags */
 	str set_global_address;
 	str set_global_port;
 	struct socket_info* force_send_socket; /*!< force sending on this socket */
@@ -497,6 +500,11 @@ void msg_ldata_reset(sip_msg_t*);
  * get source ip, port and protocol in SIP URI format
  */
 int get_src_uri(sip_msg_t *m, int tmode, str *uri);
+
+/**
+ * get source proto:ip:port (socket address format)
+ */
+int get_src_address_socket(sip_msg_t *m, str *ssock);
 
 /**
  * get received-on-socket ip, port and protocol in SIP URI format

@@ -422,7 +422,7 @@ $var(mohq) = "operators";
 
 7.1.  mohqueue.debug
 
-   Turns debugging on or off for a queue. The first paramater is the queue
+   Turns debugging on or off for a queue. The first parameter is the queue
    name and the second is a number indicating whether debugging should be
    turned off or on (0=off, <>0=on).
 
@@ -436,7 +436,7 @@ rpc.debug main 0
 
 7.2.  mohqueue.drop_call
 
-   Drops a call from a queue. The first paramater is the queue name and
+   Drops a call from a queue. The first parameter is the queue name and
    the second is the call ID. Using a call ID of "*" (asterisk) drops all
    calls from the queue.
 

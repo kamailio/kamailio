@@ -25,6 +25,8 @@
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
+#include "../../core/socket_info.h"
+#include "../../core/resolve.h"
 #include "../../core/lvalue.h"
 #include "../../core/pvar.h"
 #include "../../core/kemi.h"
@@ -46,6 +48,14 @@ static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2);
 static int w_file_read(sip_msg_t *msg, char *fn, char *vn);
 static int w_file_write(sip_msg_t *msg, char *fn, char *vn);
+static int w_isxflagset(struct sip_msg *msg, char *flag, char *s2);
+static int w_resetxflag(struct sip_msg *msg, char *flag, char *s2);
+static int w_setxflag(struct sip_msg *msg, char *flag, char *s2);
+static int w_set_send_socket(sip_msg_t *msg, char *psock, char *p2);
+static int w_set_recv_socket(sip_msg_t *msg, char *psock, char *p2);
+static int w_set_source_address(sip_msg_t *msg, char *paddr, char *p2);
+static int w_via_add_srvid(sip_msg_t *msg, char *pflags, char *p2);
+static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *p2);
 
 static int fixup_file_op(void** param, int param_no);
 
@@ -91,6 +101,22 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE },
 	{"file_write", (cmd_function)w_file_write, 2, fixup_spve_spve,
 		0, ANY_ROUTE },
+	{"setxflag", (cmd_function)w_setxflag,          1,fixup_igp_null,
+		0, ANY_ROUTE },
+	{"resetxflag", (cmd_function)w_resetxflag,      1,fixup_igp_null,
+		0, ANY_ROUTE },
+	{"isxflagset", (cmd_function)w_isxflagset,      1,fixup_igp_null,
+		0, ANY_ROUTE },
+	{"set_send_socket", (cmd_function)w_set_send_socket, 1, fixup_spve_null,
+		0, ANY_ROUTE },
+	{"set_recv_socket", (cmd_function)w_set_recv_socket, 1, fixup_spve_null,
+		0, ANY_ROUTE },
+	{"set_source_address", (cmd_function)w_set_source_address, 1, fixup_spve_null,
+		0, ANY_ROUTE },
+	{"via_add_srvid", (cmd_function)w_via_add_srvid, 1, fixup_igp_null,
+		0, ANY_ROUTE },
+	{"via_add_xavp_params", (cmd_function)w_via_add_xavp_params, 1, fixup_igp_null,
+		0, ANY_ROUTE },
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -100,7 +126,7 @@ static param_export_t params[]={
 		(void*)corex_alias_subdomains_param},
 	{"network_io_intercept",	INT_PARAM, &nio_intercept},
 	{"min_msg_len",				INT_PARAM, &nio_min_msg_len},
-	{"msg_avp",			  		PARAM_STR, &nio_msg_avp_param},
+	{"msg_avp",					PARAM_STR, &nio_msg_avp_param},
 
 	{0, 0, 0}
 };
@@ -465,6 +491,267 @@ static int ki_append_branch_uri_q(sip_msg_t *msg, str *uri, str *q)
 /**
  *
  */
+static int ki_isxflagset(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval>KSR_MAX_XFLAG)
+		return -1;
+	return isxflagset(msg, (flag_t)fval);
+}
+
+/**
+ *
+ */
+static int w_isxflagset(sip_msg_t *msg, char *flag, char *s2)
+{
+	int fval=0;
+	if(fixup_get_ivalue(msg, (gparam_t*)flag, &fval)!=0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_isxflagset(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_resetxflag(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval>KSR_MAX_XFLAG)
+		return -1;
+	return resetxflag(msg, (flag_t)fval);
+}
+
+/**
+ *
+ */
+static int w_resetxflag(sip_msg_t *msg, char *flag, char *s2)
+{
+	int fval=0;
+	if(fixup_get_ivalue(msg, (gparam_t*)flag, &fval)!=0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_resetxflag(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_setxflag(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval>KSR_MAX_XFLAG)
+		return -1;
+	return setxflag(msg, (flag_t)fval);
+}
+
+/**
+ *
+ */
+static int w_setxflag(sip_msg_t *msg, char *flag, char *s2)
+{
+	int fval=0;
+	if(fixup_get_ivalue(msg, (gparam_t*)flag, &fval)!=0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_setxflag(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_set_socket_helper(sip_msg_t *msg, str *ssock, int smode)
+{
+	socket_info_t *si;
+	int port, proto;
+	str host;
+
+	if(msg==NULL) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	if(ssock==NULL || ssock->len<=0) {
+		reset_force_socket(msg);
+		return 1;
+	}
+
+	if (parse_phostport(ssock->s, &host.s, &host.len, &port, &proto) < 0) {
+		LM_ERR("invalid socket specification [%.*s] (%d)\n",
+				ssock->len, ssock->s, smode);
+		goto error;
+	}
+	si = grep_sock_info(&host, (unsigned short)port, (unsigned short)proto);
+	if (si!=NULL) {
+		if(smode==0) {
+			/* send socket */
+			set_force_socket(msg, si);
+		} else {
+			/* recv socket */
+			msg->rcv.bind_address = si;
+			msg->rcv.dst_port = si->port_no;
+			msg->rcv.dst_ip = si->address;
+			msg->rcv.proto = si->proto;
+			msg->rcv.proto_reserved1 = 0;
+			msg->rcv.proto_reserved2 = 0;
+		}
+	} else {
+		LM_WARN("no socket found to match [%.*s] (%d)\n",
+				ssock->len, ssock->s, smode);
+	}
+	return 1;
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_set_send_socket(sip_msg_t *msg, str *ssock)
+{
+	return ki_set_socket_helper(msg, ssock, 0);
+}
+
+/**
+ *
+ */
+static int w_set_send_socket(sip_msg_t *msg, char *psock, char *p2)
+{
+	str ssock;
+	if (fixup_get_svalue(msg, (gparam_t*)psock, &ssock) != 0 || ssock.len<=0) {
+		LM_ERR("cannot get socket address value\n");
+		return -1;
+	}
+	return ki_set_send_socket(msg, &ssock);
+}
+
+/**
+ *
+ */
+static int ki_set_recv_socket(sip_msg_t *msg, str *ssock)
+{
+	return ki_set_socket_helper(msg, ssock, 1);
+}
+
+/**
+ *
+ */
+static int w_set_recv_socket(sip_msg_t *msg, char *psock, char *p2)
+{
+	str ssock;
+	if (fixup_get_svalue(msg, (gparam_t*)psock, &ssock) != 0 || ssock.len<=0) {
+		LM_ERR("cannot get socket address value\n");
+		return -1;
+	}
+	return ki_set_recv_socket(msg, &ssock);
+}
+
+/**
+ *
+ */
+static int ki_set_source_address(sip_msg_t *msg, str *saddr)
+{
+	sr_phostp_t rp;
+	union sockaddr_union faddr;
+	char cproto;
+	int ret;
+
+	if(msg==NULL || saddr==NULL || saddr->len<=0) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	if(parse_protohostport(saddr, &rp)<0) {
+		LM_ERR("failed to parse the address [%.*s]\n", saddr->len, saddr->s);
+		return -1;
+	}
+
+	cproto = (char)rp.proto;
+	ret = sip_hostport2su(&faddr, &rp.host, (unsigned short)rp.port, &cproto);
+	if(ret!=0) {
+		LM_ERR("failed to resolve address [%.*s]\n", saddr->len, saddr->s);
+		return -1;
+	}
+
+	msg->rcv.src_su=faddr;
+	su2ip_addr(&msg->rcv.src_ip, &faddr);
+	msg->rcv.src_port=rp.port;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_set_source_address(sip_msg_t *msg, char *paddr, char *p2)
+{
+	str saddr;
+	if (fixup_get_svalue(msg, (gparam_t*)paddr, &saddr) != 0 || saddr.len<=0) {
+		LM_ERR("cannot get source address value\n");
+		return -1;
+	}
+	return ki_set_source_address(msg, &saddr);
+}
+
+/**
+ *
+ */
+static int ki_via_add_srvid(sip_msg_t *msg, int fval)
+{
+	if(msg==NULL)
+		return -1;
+	if(fval) {
+		msg->msg_flags |= FL_ADD_SRVID;
+	} else {
+		msg->msg_flags &= ~(FL_ADD_SRVID);
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_via_add_srvid(sip_msg_t *msg, char *pflags, char *s2)
+{
+	int fval=0;
+	if(fixup_get_ivalue(msg, (gparam_t*)pflags, &fval)!=0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_via_add_srvid(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_via_add_xavp_params(sip_msg_t *msg, int fval)
+{
+	if(msg==NULL)
+		return -1;
+	if(fval) {
+		msg->msg_flags |= FL_ADD_XAVP_VIA;
+	} else {
+		msg->msg_flags &= ~(FL_ADD_XAVP_VIA);
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *s2)
+{
+	int fval=0;
+	if(fixup_get_ivalue(msg, (gparam_t*)pflags, &fval)!=0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_via_add_xavp_params(msg, fval);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_corex_exports[] = {
 	{ str_init("corex"), str_init("append_branch"),
@@ -482,7 +769,46 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("corex"), str_init("setxflag"),
+		SR_KEMIP_INT, ki_setxflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("resetxflag"),
+		SR_KEMIP_INT, ki_resetxflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("isxflagset"),
+		SR_KEMIP_INT, ki_isxflagset,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("set_send_socket"),
+		SR_KEMIP_INT, ki_set_send_socket,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("set_recv_socket"),
+		SR_KEMIP_INT, ki_set_recv_socket,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("set_source_address"),
+		SR_KEMIP_INT, ki_set_source_address,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("via_add_srvid"),
+		SR_KEMIP_INT, ki_via_add_srvid,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("via_add_xavp_params"),
+		SR_KEMIP_INT, ki_via_add_xavp_params,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */

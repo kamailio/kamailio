@@ -193,7 +193,7 @@ modparam("rtpproxy", "rtpproxy_retr", 2)
 		<title><varname>nortpproxy_str</varname> (string)</title>
 		<para>
 		This parameter sets the SDP attribute used by rtpproxy to mark
-		the message's SDP attachemnt with information that it have
+		the message's SDP attachment with information that it have
 		already been changed.
 		</para>
 		<para>
@@ -271,7 +271,7 @@ modparam("rtpproxy", "ice_candidate_priority_avp", "$avp(ice_priority)")
 	<section id="rtpproxy.p.extra_id_pv">
 		<title><varname>extra_id_pv</varname> (string)</title>
 		<para>
-			The parameter sets the PV defination to use when the <quote>b</quote>
+			The parameter sets the PV definition to use when the <quote>b</quote>
 			parameter is used on unforce_rtp_proxy(), rtpproxy_offer(),
 			rtpproxy_answer() or rtpproxy_manage() command.
 		</para><para>
@@ -427,7 +427,7 @@ rtpproxy_offer();
 				<emphasis>b</emphasis> - append branch specific variable to Call-ID when sending
 				command to rtpproxy. This creates one rtpproxy session per unique variable.
 
-				Works similar to the 1, 2 and 3 parameter, but is usefull when forking to multiple
+				Works similar to the 1, 2 and 3 parameter, but is useful when forking to multiple
 				destinations on different address families or network segments, requiring different
 				rtpproxy parameters.
 
@@ -506,9 +506,9 @@ rtpproxy_offer();
 				be in 10ms increments, however for some codecs the increment
 				could differ (e.g. 30ms for GSM or 20ms for G.723).  The
 				RTPproxy would select the closest value supported by the codec.
-				This feature could be used for significantly reducing bandwith
+				This feature could be used for significantly reducing bandwidth
 				overhead for low bitrate codecs, for example with G.729 going
-				from 10ms to 100ms saves two thirds of the network bandwith.
+				from 10ms to 100ms saves two thirds of the network bandwidth.
 				</para></listitem>
 			</itemizedlist>
 		</listitem>

@@ -27,6 +27,13 @@
 #include <stdlib.h>
 #include <openssl/ssl.h>
 #include <openssl/opensslv.h>
+
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#include "tls_map.h"
+extern EVP_PKEY * tls_engine_private_key(const char* key_id);
+#endif
+
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 # include <openssl/ui.h>
 #endif
@@ -1113,7 +1120,109 @@ err:
 #endif
 }
 
+#ifndef OPENSSL_NO_ENGINE
+/*
+ * Implement a hash map from SSL_CTX to private key
+ * as HSM keys need to be process local
+ */
+static map_void_t private_key_map;
 
+/**
+ * @brief Return a private key from the lookup table
+ * @param p SSL_CTX*
+ * @return EVP_PKEY on success, NULL on error
+ */
+EVP_PKEY* tls_lookup_private_key(SSL_CTX* ctx)
+{
+	void *pkey;
+	char ctx_str[64];
+	snprintf(ctx_str, 64, "SSL_CTX-%p", ctx);
+	pkey =  map_get(&private_key_map, ctx_str);
+	LM_DBG("Private key lookup for %s: %p\n", ctx_str, pkey);
+	if (pkey)
+		return *(EVP_PKEY**)pkey;
+	else
+		return NULL;
+}
+
+
+
+/**
+ * @brief Load a private key from an OpenSSL engine
+ * @param d TLS domain
+ * @return 0 on success, -1 on error
+ *
+ * Do this in mod_child() as PKCS#11 libraries are not guaranteed
+ * to be fork() safe
+ *
+ * private_key setting which starts with /engine: is assumed to be
+ * an HSM key and not a file-based key
+ *
+ * We store the private key in a local memory hash table as
+ * HSM keys must be process-local. We use the SSL_CTX* address
+ * as the key. We cannot put the key into d->ctx[i] as that is
+ * in shared memory.
+ */
+static int load_engine_private_key(tls_domain_t* d)
+{
+	int idx, ret_pwd, i;
+	EVP_PKEY *pkey;
+	int procs_no;
+	char ctx_str[64];
+
+	if (!d->pkey_file.s || !d->pkey_file.len) {
+		DBG("%s: No private key specified\n", tls_domain_str(d));
+		return 0;
+	}
+	if (strncmp(d->pkey_file.s, "/engine:", 8) != 0)
+		return 0;
+	procs_no = get_max_procs();
+	for (i = 0; i<procs_no; i++) {
+		snprintf(ctx_str, 64, "SSL_CTX-%p", d->ctx[i]);
+		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
+			if (i) {
+				map_set(&private_key_map, ctx_str, pkey);
+				ret_pwd = 1;
+			} else {
+				pkey = tls_engine_private_key(d->pkey_file.s+8);
+				if (pkey) {
+					map_set(&private_key_map, ctx_str, pkey);
+					// store the key for i = 0 to perform certificate sanity check
+					ret_pwd = SSL_CTX_use_PrivateKey(d->ctx[i], pkey);
+				} else {
+					ret_pwd = 0;
+				}
+			}
+			if (ret_pwd) {
+				break;
+			} else {
+				ERR("%s: Unable to load private key '%s'\n",
+				    tls_domain_str(d), d->pkey_file.s);
+				TLS_ERR("load_private_key:");
+				continue;
+			}
+		}
+
+		if (!ret_pwd) {
+			ERR("%s: Unable to load engine key label '%s'\n",
+			    tls_domain_str(d), d->pkey_file.s);
+			TLS_ERR("load_private_key:");
+			return -1;
+		}
+		if (i == 0 && !SSL_CTX_check_private_key(d->ctx[i])) {
+			ERR("%s: Key '%s' does not match the public key of the"
+			    " certificate\n", tls_domain_str(d), d->pkey_file.s);
+			TLS_ERR("load_engine_private_key:");
+			return -1;
+		}
+	}
+
+
+	LM_INFO("%s: Key '%s' successfully loaded\n",
+		tls_domain_str(d), d->pkey_file.s);
+	return 0;
+}
+#endif
 /**
  * @brief Load a private key from a file 
  * @param d TLS domain
@@ -1137,8 +1246,19 @@ static int load_private_key(tls_domain_t* d)
 		SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file.s);
 		
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
+#ifndef OPENSSL_NO_ENGINE
+			// in PROC_INIT skip loading HSM keys due to
+			// fork() issues with PKCS#11 libaries
+			if (strncmp(d->pkey_file.s, "/engine:", 8) != 0) {
+				ret_pwd = SSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file.s,
+					SSL_FILETYPE_PEM);
+			} else {
+				ret_pwd = 1;
+			}
+#else
 			ret_pwd = SSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file.s,
 					SSL_FILETYPE_PEM);
+#endif
 			if (ret_pwd) {
 				break;
 			} else {
@@ -1155,7 +1275,12 @@ static int load_private_key(tls_domain_t* d)
 			TLS_ERR("load_private_key:");
 			return -1;
 		}
-		
+#ifndef OPENSSL_NO_ENGINE
+		if (strncmp(d->pkey_file.s, "/engine:", 8) == 0) {
+			// skip private key validity check for HSM keys
+			continue;
+		}
+#endif
 		if (!SSL_CTX_check_private_key(d->ctx[i])) {
 			ERR("%s: Key '%s' does not match the public key of the"
 					" certificate\n", tls_domain_str(d), d->pkey_file.s);
@@ -1170,6 +1295,36 @@ static int load_private_key(tls_domain_t* d)
 }
 
 
+#ifndef OPENSSL_NO_ENGINE
+/**
+ * @brief Initialize engine private keys
+ *
+ * PKCS#11 libraries are not guaranteed to be fork() safe
+ * so we fix private keys in the child
+ */
+int tls_fix_engine_keys(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
+				tls_domain_t* cli_defaults)
+{
+	tls_domain_t* d;
+	d = cfg->srv_list;
+	while(d) {
+		if (load_engine_private_key(d) < 0) return -1;
+		d = d->next;
+	}
+
+	d = cfg->cli_list;
+	while(d) {
+		if (load_engine_private_key(d) < 0) return -1;
+		d = d->next;
+	}
+
+	if (load_engine_private_key(cfg->srv_default) < 0) return -1;
+	if (load_engine_private_key(cfg->cli_default) < 0) return -1;
+
+	return 0;
+
+}
+#endif
 /**
  * @brief Initialize attributes of all domains from default domains if necessary
  *

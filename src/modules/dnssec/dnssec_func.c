@@ -22,12 +22,11 @@
  */
 /*!
  * \brief DNSsec support
- * \ingroup DNSsec
  * \author mariuszbi@gmail.com
  */
 /*!
  * \defgroup DNSsec DNS security extensions support
- *
+ * @{
  */
 
 
@@ -153,3 +152,4 @@ dnssec_res_search(const char *dname, int class_h, int type_h,
  	return -1;
 }
 
+/*! @} */

@@ -196,7 +196,7 @@ modparam("debugger", "cfgtest", 1)
 		</para>
 		<para>
 		The flow of the configuration routes is defined by an array of routes with
-		the content of the variables controled by <quote>mask</quote> module parameter.
+		the content of the variables controlled by <quote>mask</quote> module parameter.
 		</para>
 		<para>Each routename has a prefix as <quote>start|</quote>,
 		<quote>return|</quote>,	when the route finish its execution and <quote>exit|</quote> or

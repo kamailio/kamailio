@@ -272,12 +272,10 @@ int rls_get_service_list(str *service_uri, str *user, str *domain,
 		LM_DBG("service uri %.*s not found in rl document for user"
 				" sip:%.*s@%.*s\n", service_uri->len, service_uri->s,
 				user->len, user->s, domain->len, domain->s);
-		rootdoc = NULL;
 		if(xmldoc!=NULL)
 			xmlFreeDoc(xmldoc);
-	}
-	else
-	{
+		*rootdoc = NULL;
+	} else {
 		*rootdoc = xmldoc;
 	}
 
@@ -290,8 +288,6 @@ int rls_get_service_list(str *service_uri, str *user, str *domain,
 error:
 	if(result!=NULL)
 		rls_xcap_dbf.free_result(rls_xcap_db, result);
-	if(xmldoc!=NULL)
-		xmlFreeDoc(xmldoc);
 	if(xcapdoc!=NULL)
 		pkg_free(xcapdoc);
 
@@ -424,7 +420,7 @@ int reply_489(struct sip_msg * msg)
 /**
  * handle RLS subscription
  */
-int rls_handle_subscribe0(struct sip_msg* msg)
+int ki_rls_handle_subscribe(struct sip_msg* msg)
 {
 	struct to_body *pfrom;
 
@@ -444,18 +440,19 @@ int rls_handle_subscribe0(struct sip_msg* msg)
 			pfrom->parsed_uri.host);
 }
 
-int w_rls_handle_subscribe(struct sip_msg* msg, char* watcher_uri)
+/**
+ * handle RLS subscription
+ */
+int w_rls_handle_subscribe0(struct sip_msg* msg, char *p1, char *p2)
 {
-	str wuri;
+	return ki_rls_handle_subscribe(msg);
+}
+
+int ki_rls_handle_subscribe_uri(sip_msg_t* msg, str *wuri)
+{
 	struct sip_uri parsed_wuri;
 
-	if (fixup_get_svalue(msg, (gparam_p)watcher_uri, &wuri) != 0)
-	{
-		LM_ERR("invalid uri parameter\n");
-		return -1;
-	}
-
-	if (parse_uri(wuri.s, wuri.len, &parsed_wuri) < 0)
+	if (parse_uri(wuri->s, wuri->len, &parsed_wuri) < 0)
 	{
 		LM_ERR("failed to parse watcher URI\n");
 		return -1;
@@ -464,13 +461,24 @@ int w_rls_handle_subscribe(struct sip_msg* msg, char* watcher_uri)
 	return rls_handle_subscribe(msg, parsed_wuri.user, parsed_wuri.host);
 }
 
+int w_rls_handle_subscribe1(struct sip_msg* msg, char* watcher_uri, char *p2)
+{
+	str wuri;
+
+	if (fixup_get_svalue(msg, (gparam_p)watcher_uri, &wuri) != 0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+	return ki_rls_handle_subscribe_uri(msg, &wuri);
+}
+
 int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 {
 	subs_t subs;
 	pres_ev_t* event = NULL;
 	int err_ret = -1;
 	int ret = to_presence_code;
-	str* contact = NULL;
 	xmlDocPtr doc = NULL;
 	xmlNodePtr service_node = NULL;
 	unsigned int hash_code=0;
@@ -793,13 +801,6 @@ done:
 	ret = 1;
 stop:
 forpresence:
-	if(contact!=NULL)
-	{
-		if(contact->s!=NULL)
-			pkg_free(contact->s);
-		pkg_free(contact);
-	}
-
 	if(subs.pres_uri.s!=NULL)
 		pkg_free(subs.pres_uri.s);
 	if(subs.record_route.s!=NULL)
@@ -820,13 +821,6 @@ bad_event:
 
 error:
 	LM_ERR("occurred in rls_handle_subscribe\n");
-
-	if(contact!=NULL)
-	{
-		if(contact->s!=NULL)
-			pkg_free(contact->s);
-		pkg_free(contact);
-	}
 	if(subs.pres_uri.s!=NULL)
 		pkg_free(subs.pres_uri.s);
 
@@ -1201,48 +1195,34 @@ done:
 	pkg_free(subs_copy);
 }
 
-int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
+int ki_rls_update_subs(struct sip_msg *msg, str *uri, str *event)
 {
-	str uri;
-	str event;
 	struct sip_uri parsed_uri;
 	event_t e;
 	int i;
 
-	if (fixup_get_svalue(msg, (gparam_p)puri, &uri) != 0)
+	if (event_parser(event->s, event->len, &e) < 0)
 	{
-		LM_ERR("invalid uri parameter\n");
-		return -1;
-	}
-
-	if (fixup_get_svalue(msg, (gparam_p)pevent, &event) != 0)
-	{
-		LM_ERR("invalid event parameter\n");
-		return -1;
-	}
-
-	if (event_parser(event.s, event.len, &e) < 0)
-	{
-		LM_ERR("while parsing event: %.*s\n", event.len, event.s);
+		LM_ERR("while parsing event: %.*s\n", event->len, event->s);
 		return -1;
 	}
 
 	if (e.type & EVENT_OTHER)
 	{
-		LM_ERR("unrecognised event: %.*s\n", event.len, event.s);
+		LM_ERR("unrecognised event: %.*s\n", event->len, event->s);
 		return -1;
 	}
 
 	if (!(e.type & rls_events))
 	{
-		LM_ERR("event not supported by RLS: %.*s\n", event.len,
-				event.s);
+		LM_ERR("event not supported by RLS: %.*s\n", event->len,
+				event->s);
 		return -1;
 	}
 
-	if (parse_uri(uri.s, uri.len, &parsed_uri) < 0)
+	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0)
 	{
-		LM_ERR("bad uri: %.*s\n", uri.len, uri.s);
+		LM_ERR("bad uri: %.*s\n", uri->len, uri->s);
 		return -1;
 	}
 
@@ -1254,7 +1234,7 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 	{
 		int ret;
 		lock_get(rls_update_subs_lock);
-		ret = (update_all_subs_rlsdb(&parsed_uri.user, &parsed_uri.host, &event));
+		ret = (update_all_subs_rlsdb(&parsed_uri.user, &parsed_uri.host, event));
 		lock_release(rls_update_subs_lock);
 		return ret;
 	}
@@ -1303,4 +1283,24 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 	}
 
 	return 1;
+}
+
+int w_rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
+{
+	str uri;
+	str event;
+
+	if (fixup_get_svalue(msg, (gparam_p)puri, &uri) != 0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	if (fixup_get_svalue(msg, (gparam_p)pevent, &event) != 0)
+	{
+		LM_ERR("invalid event parameter\n");
+		return -1;
+	}
+
+	return ki_rls_update_subs(msg, &uri, &event);
 }

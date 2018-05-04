@@ -337,7 +337,7 @@ modparam("cpl-c","realm_prefix","sip.")
    value of the Final Response INVITE timeout - it's used by the TIMEOUT
    attribute from the PROXY tag.
 
-   NOTE: take care and syncronize this value with the similar parameters
+   NOTE: take care and synchronize this value with the similar parameters
    in TM module.
 
    Default value of this parameter is NULL.

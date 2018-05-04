@@ -150,7 +150,7 @@
 			<para>
 				Executes query and in case of SELECT returns result via <emphasis>handle</emphasis>, seeks the first 
 				record and returns TRUE if table is not empty.
-				The result is accesible using <function>@db.fetch</function> select. See also <varname>declare_handle</varname>.
+				The result is accessible using <function>@db.fetch</function> select. See also <varname>declare_handle</varname>.
 				<emphasis>Query_id</emphasis> references to query declared using <varname>declare_query</varname>,
 				<emphasis>handle</emphasis> references to query declared using <varname>declare_handle</varname>.
 			</para>

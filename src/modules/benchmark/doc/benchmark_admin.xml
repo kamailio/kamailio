@@ -156,6 +156,29 @@ modparam("benchmark", "loglevel", 4)
 		</para>
 	</section>
 
+	<section id="benchmark.p.register">
+		<title><varname>register</varname> (str)</title>
+		<para>
+			Register a timer id at startup. Required when using the start/log
+			functions via Kemi framework. This parameter can be set many
+			times to register several timer ids.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NONE</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>register</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("benchmark", "register", "test")
+modparam("benchmark", "register", "auth")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 	<section>
 	<title>Functions</title>
@@ -279,7 +302,7 @@ bm_log_timer("test");
 			<title><function moreinfo="none">benchmark.enable_global</function></title>
 			<para>
 				Enables/disables the module. Parameter may be -1, 0 or 1. See
-				discription of "enable" parameter.
+				description of "enable" parameter.
 			</para>
 		</section>
 		<section id="benchmark.rpc.enable_timer">

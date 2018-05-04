@@ -64,6 +64,9 @@ int close_extra_socks(int proc_id, int proc_no);
 /* return processes pid */
 int my_pid(void);
 
+/* return processes description */
+char* my_desc(void);
+
 /**
  * Forks a new process.
  * @param desc - text description for the process table
@@ -72,14 +75,16 @@ int my_pid(void);
  */
 int fork_process(int child_id,char *desc,int make_sock);
 
+
+#ifdef USE_TCP
 /**
  * Forks a new TCP process.
+ * @param child_id child id of the new process
  * @param desc - text description for the process table
  * @param r - index in the tcp_children array
  * @param *reader_fd_1 - pointer to return the reader_fd[1]
  * @returns the pid of the new process
  */
-#ifdef USE_TCP
 int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1);
 #endif
 

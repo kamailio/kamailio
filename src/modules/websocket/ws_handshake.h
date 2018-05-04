@@ -32,13 +32,13 @@
 #include "../../core/parser/msg_parser.h"
 #include "websocket.h"
 
-#define DEFAULT_SUB_PROTOCOLS	(SUB_PROTOCOL_SIP | SUB_PROTOCOL_MSRP)
-#define SUB_PROTOCOL_ALL	(SUB_PROTOCOL_SIP | SUB_PROTOCOL_MSRP)
+#define DEFAULT_SUB_PROTOCOLS (SUB_PROTOCOL_SIP | SUB_PROTOCOL_MSRP)
+#define SUB_PROTOCOL_ALL (SUB_PROTOCOL_SIP | SUB_PROTOCOL_MSRP)
 extern int ws_sub_protocols;
 
-#define CORS_MODE_NONE		0
-#define CORS_MODE_ANY		1
-#define CORS_MODE_ORIGIN	2
+#define CORS_MODE_NONE 0
+#define CORS_MODE_ANY 1
+#define CORS_MODE_ORIGIN 2
 extern int ws_cors_mode;
 
 extern stat_var *ws_failed_handshakes;
@@ -49,7 +49,7 @@ extern stat_var *ws_msrp_successful_handshakes;
 int ws_handle_handshake(struct sip_msg *msg);
 int w_ws_handle_handshake(sip_msg_t *msg, char *p1, char *p2);
 
-void ws_rpc_disable(rpc_t* rpc, void* ctx);
-void ws_rpc_enable(rpc_t* rpc, void* ctx);
+void ws_rpc_disable(rpc_t *rpc, void *ctx);
+void ws_rpc_enable(rpc_t *rpc, void *ctx);
 
 #endif /* _WS_HANDSHAKE_H */

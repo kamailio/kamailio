@@ -615,7 +615,7 @@ http_follow_redirect = no
 
    Sends HTTP GET or POST request to a given connection. For a POST
    request, content-type can be specified.
-     * connection - the name of an existing HTTP connection, definied by a
+     * connection - the name of an existing HTTP connection, defined by a
        httpcon modparam.
        url - the part of the URL to add to the predefined URL in the
        connection definition.
@@ -655,7 +655,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
    to follow redirects (301,302) then the target URL, the result of the
    redirects can be retrieved with this function after a successful
    connection.
-     * connection - the name of an existing HTTP connection, definied by a
+     * connection - the name of an existing HTTP connection, defined by a
        httpcon modparam.
        result - The name of a pseudo variable that will contain the last
        used URL.
