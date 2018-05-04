@@ -1044,7 +1044,7 @@ static rpc_export_t core_rpc_methods[] = {
 	{"dns.debug_all",      dns_cache_debug_all,       dns_cache_debug_all_doc,
 		0	},
 	{"dns.view",               dns_cache_view,        dns_cache_view_doc,
-		0	},
+		RET_ARRAY	},
 	{"dns.lookup",             dns_cache_rpc_lookup,  dns_cache_rpc_lookup_doc,
 		0	},
 	{"dns.delete_all",         dns_cache_delete_all,  dns_cache_delete_all_doc,
