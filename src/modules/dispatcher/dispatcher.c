@@ -1273,16 +1273,7 @@ static const char *dispatcher_rpc_list_doc[2] = {
  */
 int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 {
-	if(!node)
-		return 0;
-
 	int i = 0, rc = 0;
-	for(; i < 2; ++i) {
-		rc = ds_rpc_print_set(node->next[i], rpc, ctx, rpc_handle);
-		if(rc != 0)
-			return rc;
-	}
-
 	void *rh;
 	void *sh;
 	void *vh;
@@ -1291,6 +1282,15 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 	int j;
 	char c[3];
 	str data = STR_NULL;
+
+	if(!node)
+		return 0;
+
+	for(; i < 2; ++i) {
+		rc = ds_rpc_print_set(node->next[i], rpc, ctx, rpc_handle);
+		if(rc != 0)
+			return rc;
+	}
 
 	if(rpc->struct_add(rpc_handle, "{", "SET", &sh) < 0) {
 		rpc->fault(ctx, 500, "Internal error set structure");
