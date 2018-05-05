@@ -3796,7 +3796,7 @@ static int dns_get_type(str* s)
 
 /** rpc-prints a dns cache entry.
   */
-void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
+int dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 {
 	int expires;
 	struct dns_rr* rr;
@@ -3805,104 +3805,173 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 	str s;
 	int i;
 	int n;
+	void *th;
+	void *rh;
+	void *sh;
+	void *ih;
+	void *ah;
+
+	/* add entry node */
+	if(rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return -1;
+	}
 
 	now=get_ticks_raw();
 	expires = (s_ticks_t)(e->expire-now)<0?-1: TICKS_TO_S(e->expire-now);
-	
-	rpc->rpl_printf(ctx, "%sname: %s", SPACE_FORMAT, e->name);
-	rpc->rpl_printf(ctx, "%stype: %s", SPACE_FORMAT, print_type(e->type));
-	rpc->rpl_printf(ctx, "%ssize (bytes): %d", SPACE_FORMAT,
-						e->total_size);
-	rpc->rpl_printf(ctx, "%sreference counter: %d", SPACE_FORMAT,
-						e->refcnt.val);
-	if (e->ent_flags & DNS_FLAG_PERMANENT) {
-		rpc->rpl_printf(ctx, "%spermanent: yes", SPACE_FORMAT);
-	} else {
-		rpc->rpl_printf(ctx, "%spermanent: no", SPACE_FORMAT);
-		rpc->rpl_printf(ctx, "%sexpires in (s): %d", SPACE_FORMAT, expires);
+	if(rpc->struct_add(th, "ssddsdds",
+			"name", e->name,
+			"type", print_type(e->type),
+			"size_bytes", e->total_size,
+			"reference_counter", e->refcnt.val,
+			"permanent", (e->ent_flags & DNS_FLAG_PERMANENT) ? "yes" : "no",
+			"expires", (e->ent_flags & DNS_FLAG_PERMANENT)?0:expires, /* seconds */
+			"last_used", TICKS_TO_S(now-e->last_used), /* seconds */
+			"negative_entry", (e->ent_flags & DNS_FLAG_BAD_NAME) ? "yes" : "no")
+				<0) {
+		rpc->fault(ctx, 500, "Internal error building structure");
+		return -1;
 	}
-	rpc->rpl_printf(ctx, "%slast used (s): %d", SPACE_FORMAT,
-						TICKS_TO_S(now-e->last_used));
-	rpc->rpl_printf(ctx, "%snegative entry: %s", SPACE_FORMAT,
-						(e->ent_flags & DNS_FLAG_BAD_NAME) ? "yes" : "no");
 	n = 0;
 	for (rr=e->rr_lst; rr; rr=rr->next) {
-		rpc->rpl_printf(ctx, "%srr idx: %d", SPACE_FORMAT, n++);
+		if(n==0) {
+			if(rpc->struct_add(th, "[", "records", &rh)<0) {
+				rpc->fault(ctx, 500, "Internal error building records");
+				return -1;
+			}
+		}
+		if(rpc->array_add(rh, "{", &sh) < 0) {
+			rpc->fault(ctx, 500, "Internal error adding record");
+			return -1;
+		}
+		if(rpc->struct_add(sh, "d", "rr_idx", n)<0) {
+			rpc->fault(ctx, 500, "Internal error adding rr_idx");
+			return -1;
+		}
+		n++;
 		switch(e->type) {
 			case T_A:
 			case T_AAAA:
 				if (dns_rr2ip(e->type, rr, &ip)==0){
-				  rpc->rpl_printf(ctx, "%srr ip: %s", SPACE_FORMAT,
-									ip_addr2a(&ip) );
+					if(rpc->struct_add(sh, "s", "rr_ip", ip_addr2a(&ip))<0) {
+						rpc->fault(ctx, 500, "Internal error adding rr_ip");
+						return -1;
+					}
 				}else{
-				  rpc->rpl_printf(ctx, "%srr ip: <error: bad rr>", 
-									SPACE_FORMAT);
+					if(rpc->struct_add(sh, "s", "rr_ip", "error-bad-rr")<0) {
+						rpc->fault(ctx, 500, "Internal error adding rr_ip");
+						return -1;
+					}
 				}
 				break;
 			case T_SRV:
-				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
-							((struct srv_rdata*)(rr->rdata))->name);
-				rpc->rpl_printf(ctx, "%srr port: %d", SPACE_FORMAT,
-							((struct srv_rdata*)(rr->rdata))->port);
-				rpc->rpl_printf(ctx, "%srr priority: %d", SPACE_FORMAT,
-						((struct srv_rdata*)(rr->rdata))->priority);
-				rpc->rpl_printf(ctx, "%srr weight: %d", SPACE_FORMAT,
-							((struct srv_rdata*)(rr->rdata))->weight);
+				if(rpc->struct_add(sh, "sddd",
+						"rr_name", ((struct srv_rdata*)(rr->rdata))->name,
+						"rr_port", ((struct srv_rdata*)(rr->rdata))->port,
+						"rr_priority", ((struct srv_rdata*)(rr->rdata))->priority,
+						"rr_weight", ((struct srv_rdata*)(rr->rdata))->weight)<0) {
+					rpc->fault(ctx, 500, "Internal error adding rr srv fields");
+					return -1;
+				}
 				break;
 			case T_NAPTR:
-				rpc->rpl_printf(ctx, "%srr order: %d", SPACE_FORMAT,
-							((struct naptr_rdata*)(rr->rdata))->order);
-				rpc->rpl_printf(ctx, "%srr preference: %d", SPACE_FORMAT,
-							((struct naptr_rdata*)(rr->rdata))->pref);
+				if(rpc->struct_add(sh, "ds",
+						"rr_order", ((struct naptr_rdata*)(rr->rdata))->order,
+						"rr_preference", ((struct naptr_rdata*)(rr->rdata))->pref)
+							<0) {
+					rpc->fault(ctx, 500, "Internal error adding naptr order");
+					return -1;
+				}
 				s.s = ((struct naptr_rdata*)(rr->rdata))->flags;
 				s.len = ((struct naptr_rdata*)(rr->rdata))->flags_len;
-				rpc->rpl_printf(ctx, "%srr flags: %.*s", SPACE_FORMAT,
-									s.len, s.s);
+				if(rpc->struct_add(sh, "S", "rr_flags", &s)<0) {
+					rpc->fault(ctx, 500, "Internal error adding naptre rr_flags");
+					return -1;
+				}
 				s.s=((struct naptr_rdata*)(rr->rdata))->services;
 				s.len=((struct naptr_rdata*)(rr->rdata))->services_len;
-				rpc->rpl_printf(ctx, "%srr service: %.*s", SPACE_FORMAT,
-									s.len, s.s);
+				if(rpc->struct_add(sh, "S", "rr_service", &s)<0) {
+					rpc->fault(ctx, 500, "Internal error adding naptre rr_service");
+					return -1;
+				}
 				s.s = ((struct naptr_rdata*)(rr->rdata))->regexp;
 				s.len = ((struct naptr_rdata*)(rr->rdata))->regexp_len;
-				rpc->rpl_printf(ctx, "%srr regexp: %.*s", SPACE_FORMAT,
-									s.len, s.s);
+				if(rpc->struct_add(sh, "S", "rr_regexp", &s)<0) {
+					rpc->fault(ctx, 500, "Internal error adding naptre rr_regexp");
+					return -1;
+				}
 				s.s = ((struct naptr_rdata*)(rr->rdata))->repl;
 				s.len = ((struct naptr_rdata*)(rr->rdata))->repl_len;
-				rpc->rpl_printf(ctx, "%srr replacement: %.*s", 
-									SPACE_FORMAT, s.len, s.s);
+				if(rpc->struct_add(sh, "S", "rr_regexp", &s)<0) {
+					rpc->fault(ctx, 500, "Internal error adding naptre rr_replacement");
+					return -1;
+				}
 				break;
 			case T_CNAME:
-				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
-							((struct cname_rdata*)(rr->rdata))->name);
+				if(rpc->struct_add(sh, "s", "rr_name",
+						((struct cname_rdata*)(rr->rdata))->name)<0) {
+					rpc->fault(ctx, 500, "Internal error adding cname rr_name");
+					return -1;
+				}
 				break;
 			case T_TXT:
+				if(rpc->struct_add(sh, "[", "txt", &ih)<0) {
+					rpc->fault(ctx, 500, "Internal error txt record");
+					return -1;
+				}
 				for (i=0; i<((struct txt_rdata*)(rr->rdata))->cstr_no;
 						i++){
-					rpc->rpl_printf(ctx, "%stxt[%d]: %s", SPACE_FORMAT, i,
-						((struct txt_rdata*)(rr->rdata))->txt[i].cstr);
+					if(rpc->array_add(ih, "{", &ah) < 0) {
+						rpc->fault(ctx, 500, "Internal error adding txt record");
+						return -1;
+					}
+					if(rpc->struct_add(ah, "ds", "idx", i,
+							"rr_txt",
+							((struct txt_rdata*)(rr->rdata))->txt[i].cstr)<0) {
+						rpc->fault(ctx, 500, "Internal error adding rr_txt");
+						return -1;
+					}
 				}
 				break;
 			case T_EBL:
-				rpc->rpl_printf(ctx, "%srr position: %d", SPACE_FORMAT,
-							((struct ebl_rdata*)(rr->rdata))->position);
-				rpc->rpl_printf(ctx, "%srr separator: %s", SPACE_FORMAT,
-							((struct ebl_rdata*)(rr->rdata))->separator);
-				rpc->rpl_printf(ctx, "%srr apex: %s", SPACE_FORMAT,
-							((struct ebl_rdata*)(rr->rdata))->apex);
+				if(rpc->struct_add(sh, "dss",
+						"rr_position", ((struct ebl_rdata*)(rr->rdata))->position,
+						"rr_separator", ((struct ebl_rdata*)(rr->rdata))->separator,
+						"rr_apex", ((struct ebl_rdata*)(rr->rdata))->apex)<0) {
+					rpc->fault(ctx, 500, "Internal error adding ebl fields");
+					return -1;
+				}
 				break;
 			case T_PTR:
-				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
-							((struct ptr_rdata*)(rr->rdata))->ptrdname);
+				if(rpc->struct_add(sh, "s", "rr_name",
+						((struct ptr_rdata*)(rr->rdata))->ptrdname)<0) {
+					rpc->fault(ctx, 500, "Internal error adding ptr rr_name");
+					return -1;
+				}
 				break;
 			default:
-				rpc->rpl_printf(ctx, "%sresource record: unknown",
-									SPACE_FORMAT);
+				if(rpc->struct_add(sh, "s", "rr_type", "unknown" )<0) {
+					rpc->fault(ctx, 500, "Internal error adding rr unknown");
+					return -1;
+				}
 		}
-		if ((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
-			rpc->rpl_printf(ctx, "%srr expires in (s): %d", SPACE_FORMAT,
-						(s_ticks_t)(rr->expire-now)<0?-1 : 
-						TICKS_TO_S(rr->expire-now));
+		if ((e->ent_flags & DNS_FLAG_PERMANENT) == 0) {
+			if(rpc->struct_add(sh, "sd", "rr_permanent", "no",
+					"rr_expires",
+					(s_ticks_t)(rr->expire-now)<0?-1 : 
+						TICKS_TO_S(rr->expire-now))<0) {
+				rpc->fault(ctx, 500, "Internal error adding rr_expires");
+				return -1;
+			}
+		} else {
+			if(rpc->struct_add(sh, "sd", "rr_permanent", "yes",
+					"rr_expires", 0)<0) {
+				rpc->fault(ctx, 500, "Internal error adding rr_expires");
+				return -1;
+			}
+		}
 	}
+	return 0;
 }
 
 
@@ -3927,9 +3996,10 @@ void dns_cache_view(rpc_t* rpc, void* ctx)
 			) {
 				continue;
 			}
-			rpc->rpl_printf(ctx, "{\n");
-			dns_cache_print_entry(rpc, ctx, e);
-			rpc->rpl_printf(ctx, "}");
+			if(dns_cache_print_entry(rpc, ctx, e)<0) {
+				LM_DBG("failed to print dns entry\n");
+				return;
+			}
 		}
 	}
 	UNLOCK_DNS_HASH();
@@ -4612,7 +4682,9 @@ void dns_cache_rpc_lookup(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 400, "Not found");
 		return;
 	}
-	dns_cache_print_entry(rpc, ctx, e);
+	if(dns_cache_print_entry(rpc, ctx, e)<0) {
+		LM_DBG("failed to print the dns entry\n");
+	}
 	dns_hash_put(e);
 }
 
