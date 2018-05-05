@@ -75,8 +75,8 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	if (!module_loaded("perl")) {
-		LM_CRIT("perl module not loaded. Exiting.\n");
+	if (!module_loaded("app_perl")) {
+		LM_CRIT("app_perl module not loaded. Exiting.\n");
 		return -1;
 	}
 
