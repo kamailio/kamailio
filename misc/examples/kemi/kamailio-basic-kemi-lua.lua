@@ -325,7 +325,7 @@ end
 function ksr_route_sipout()
 	if KSR.is_myself(KSR.pv.get("$ru")) then return 1; end
 
-	KSR.hdr.append_hf("P-Hint: outbound\r\n");
+	KSR.hdr.append("P-Hint: outbound\r\n");
 	ksr_route_relay();
 	KSR.x.exit();
 end
