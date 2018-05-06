@@ -1373,7 +1373,7 @@ static int ki_t_reply(sip_msg_t* msg, int code, str* reason)
 
 static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 {
-	int code, ret = -1;
+	int code;
 	str reason;
 
 	if (msg->REQ_METHOD==METHOD_ACK) {
