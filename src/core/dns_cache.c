@@ -3968,24 +3968,44 @@ void dns_cache_flush(int del_permanent)
 /* deletes all the non-permanent entries from the cache */
 void dns_cache_delete_all(rpc_t* rpc, void* ctx)
 {
+	void *th;
+
 	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
 	dns_cache_flush(0);
-	rpc->rpl_printf(ctx, "OK");
+
+	if(rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error - root structure");
+		return;
+	}
+	if(rpc->struct_add(th, "s", "status", "ok") < 0) {
+		rpc->fault(ctx, 500, "Internal error - status");
+		return;
+	}
 }
 
 /* deletes all the entries from the cache,
  * even the permanent ones */
 void dns_cache_delete_all_force(rpc_t* rpc, void* ctx)
 {
+	void *th;
+
 	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
 	dns_cache_flush(1);
-	rpc->rpl_printf(ctx, "OK");
+
+	if(rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error - root structure");
+		return;
+	}
+	if(rpc->struct_add(th, "s", "status", "ok") < 0) {
+		rpc->fault(ctx, 500, "Internal error - status");
+		return;
+	}
 }
 
 /* clones an entry and extends its memory area to hold a new rr.
