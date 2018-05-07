@@ -76,7 +76,7 @@ SV *newvdbobj(const char* cn) {
 	return obj;
 }
 
-SV *getobj(db1_con_t *con) {
+SV *getobj(const db1_con_t *con) {
 	return ((SV*)CON_TAIL(con));
 }
 
@@ -179,8 +179,8 @@ void perlvdb_db_close(db1_con_t* h) {
  * v: values of the keys
  * n: number of key=value pairs
  */
-int perlvdb_db_insertreplace(db1_con_t* h, db_key_t* k, db_val_t* v,
-		int n, char *insertreplace) {
+int perlvdb_db_insertreplace(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
+		const int n, char *insertreplace) {
 	AV *arr;
 	SV *arrref;
 	SV *ret;
