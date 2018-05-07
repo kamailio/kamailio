@@ -33,7 +33,7 @@
 /* Converts a set of pairs to perl SVs.
  * For insert, and update (second half)
  */
-AV *pairs2perlarray(db_key_t* keys, db_val_t* vals, int n) {
+AV *pairs2perlarray(const db_key_t* keys, const db_val_t* vals, const int n) {
 
 	AV *array = newAV();
 	SV *element;
@@ -50,7 +50,7 @@ AV *pairs2perlarray(db_key_t* keys, db_val_t* vals, int n) {
 /* Converts a set of cond's to perl SVs.
  * For delete, update (first half), query
  */
-AV *conds2perlarray(db_key_t* keys, db_op_t* ops, db_val_t* vals, int n) {
+AV *conds2perlarray(const db_key_t* keys, const db_op_t* ops, const db_val_t* vals, const int n) {
 	AV *array = newAV();
 	SV *element = NULL;
 	int i = 0;
@@ -80,7 +80,7 @@ AV *conds2perlarray(db_key_t* keys, db_op_t* ops, db_val_t* vals, int n) {
 /* Converts a set of key names to a perl array.
  * Needed in query.
  */
-AV *keys2perlarray(db_key_t* keys, int n) {
+AV *keys2perlarray(const db_key_t* keys, const int n) {
 	AV *array = newAV();
 	SV *element;
 	int i;
@@ -92,7 +92,7 @@ AV *keys2perlarray(db_key_t* keys, int n) {
 	return array;
 }
 
-SV *valdata(db_val_t* val) {
+SV *valdata(const db_val_t* val) {
 	SV *data = &PL_sv_undef;
 	const char* stringval;
 
@@ -167,7 +167,7 @@ SV *val2perlval(db_val_t* val) {
 
 }
 
-SV *pair2perlpair(db_key_t key, db_val_t* val) {
+SV *pair2perlpair(db_key_t key, const db_val_t* val) {
 	SV* retval;
 	SV *class;
 
@@ -190,7 +190,7 @@ SV *pair2perlpair(db_key_t key, db_val_t* val) {
 	
 }
 
-SV *cond2perlcond(db_key_t key, db_op_t op, db_val_t* val) {
+SV *cond2perlcond(const db_key_t key, const db_op_t op, const db_val_t* val) {
 	SV* retval;
 	SV *class;
 	
