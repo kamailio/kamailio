@@ -48,7 +48,7 @@ void perlvdb_db_close(db1_con_t* h);
 int perlvdb_use_table(db1_con_t* h, const str* t);
 
 int perlvdb_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v, const int n);
-int perlvdb_db_replace(db1_con_t* h, db_key_t* k, db_val_t* v, int n);
+int perlvdb_db_replace(const db1_con_t* h, const db_key_t* k, const db_val_t* v, const int n);
 int perlvdb_db_delete(const db1_con_t* h, const db_key_t* k, const db_op_t* o,
 		const db_val_t* v, const int n);
 int perlvdb_db_update(const db1_con_t* h, const db_key_t* k, const db_op_t* o,
