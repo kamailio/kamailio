@@ -2367,7 +2367,7 @@ char * build_res_buf_from_sip_req( unsigned int code, str *text ,str *new_tag,
 			case HDR_TO_T:
 				if (new_tag && new_tag->len) {
 					to_tag=get_to(msg)->tag_value;
-					if ( to_tag.len || to_tag.s )
+					if ( to_tag.len && to_tag.s )
 						len+=new_tag->len-to_tag.len;
 					else
 						len+=new_tag->len+TOTAG_TOKEN_LEN/*";tag="*/;
@@ -2495,7 +2495,7 @@ char * build_res_buf_from_sip_req( unsigned int code, str *text ,str *new_tag,
 				break;
 			case HDR_TO_T:
 				if (new_tag && new_tag->len){
-					if (to_tag.s ) { /* replacement */
+					if (to_tag.len && to_tag.s) { /* replacement */
 						/* before to-tag */
 						append_str( p, hdr->name.s, to_tag.s-hdr->name.s);
 						/* to tag replacement */
