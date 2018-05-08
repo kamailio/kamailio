@@ -56,8 +56,8 @@ AV *conds2perlarray(const db_key_t* keys, const db_op_t* ops, const db_val_t* va
  */
 AV *keys2perlarray(const db_key_t* keys, const int n);
 
-SV *val2perlval(db_val_t* val);
-SV *pair2perlpair(db_key_t key, const db_val_t* val);
+SV *val2perlval(const db_val_t* val);
+SV *pair2perlpair(const db_key_t key, const db_val_t* val);
 SV *cond2perlcond(const db_key_t key, const db_op_t op, const db_val_t* val);
 
 int perlresult2dbres(SV *perlres, db1_res_t **r);

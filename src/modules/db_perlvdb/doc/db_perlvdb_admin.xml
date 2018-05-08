@@ -31,7 +31,7 @@
 		operations is supported.
 	</para>
 	<para>
-		Modules can be configured to use the perlvdb module as
+		Modules can be configured to use the db_perlvdb module as
 		database backend using the db_url_parameter:
 	</para>
 	<programlisting>
@@ -39,7 +39,7 @@ modparam("acc", "db_url", "perlvdb:Kamailio::VDB::Adapter::AccountingSIPtrace")
 </programlisting>
 	<para>
 		This configuration options tells acc module that it should use the
-		perlvdb module which will in turn use the Perl class
+		db_perlvdb module which will in turn use the Perl class
 		Kamailio::VDB::Adapter::AccountingSIPtrace
 		to relay the database requests.
 	</para>
@@ -53,7 +53,7 @@ modparam("acc", "db_url", "perlvdb:Kamailio::VDB::Adapter::AccountingSIPtrace")
 		The following  modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>perl</emphasis> -- Perl module</para>
+				<para><emphasis>app_perl</emphasis> -- Perl Application module</para>
 			</listitem>
 			</itemizedlist>
 		</para>
@@ -66,7 +66,7 @@ modparam("acc", "db_url", "perlvdb:Kamailio::VDB::Adapter::AccountingSIPtrace")
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>None</emphasis> (Besides the ones mentioned in the perl
+				<emphasis>None</emphasis> (Besides the ones mentioned in the app_perl
 				module documentation).
 			</para>
 			</listitem>
