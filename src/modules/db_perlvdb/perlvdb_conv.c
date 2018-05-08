@@ -148,7 +148,7 @@ SV *valdata(const db_val_t* val) {
 	return data;
 }
 
-SV *val2perlval(db_val_t* val) {
+SV *val2perlval(const db_val_t* val) {
 	SV* retval;
 	SV *class;
 
@@ -167,7 +167,7 @@ SV *val2perlval(db_val_t* val) {
 
 }
 
-SV *pair2perlpair(db_key_t key, const db_val_t* val) {
+SV *pair2perlpair(const db_key_t key, const db_val_t* val) {
 	SV* retval;
 	SV *class;
 
@@ -290,11 +290,9 @@ int perlresult2dbres(SV *perlres, db1_res_t **r) {
 		currentstring = SvPV(d1, len);
 		charbuf = pkg_malloc(len+1);
 		strncpy(charbuf, currentstring, len+1);
-		(*r)->col.names[i]->s = charbuf;
-		(*r)->col.names[i]->len = strlen(charbuf);
+		(*r)->col.names[i] = (db_key_t)charbuf;
 
 		SvREFCNT_dec(d1);
-
 	}
 
 	rowarrayref = perlvdb_perlmethod(perlres, PERL_VDB_ROWSMETHOD,
@@ -405,13 +403,11 @@ int perlresult2dbres(SV *perlres, db1_res_t **r) {
 	}
 
 end:
-	av_undef(colarray);
-	av_undef(rowarray);
+	if (colarray) av_undef(colarray);
+	if (rowarray) av_undef(rowarray);
 	return retval;
 error:
 	LM_CRIT("broken result set. Exiting, leaving Kamailio in unknown state.\n");
 	return -1;
 }
-
-
 

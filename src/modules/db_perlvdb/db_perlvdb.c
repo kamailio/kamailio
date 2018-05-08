@@ -95,7 +95,7 @@ static int db_perlvdb_bind_api(db_func_t *dbb)
 	dbb->insert           = perlvdb_db_insert;
 	dbb->delete           = perlvdb_db_delete; 
 	dbb->update           = perlvdb_db_update;
-	dbb->replace          = 0;
+	dbb->replace          = perlvdb_db_replace;
 
 	return 0;
 }
