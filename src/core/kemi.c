@@ -733,6 +733,12 @@ static int sr_kemi_core_is_method_in(sip_msg_t *msg, str *vmethod)
 					return SR_KEMI_TRUE;
 				}
 			break;
+			case 'M':
+			case 'm':
+				if(imethod==METHOD_MESSAGE) {
+					return SR_KEMI_TRUE;
+				}
+			break;
 			case 'R':
 			case 'r':
 				if(imethod==METHOD_REGISTER) {
