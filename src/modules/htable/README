@@ -53,6 +53,7 @@ Ovidiu Sas
               3.12. enable_dmq (integer)
               3.13. timer_procs (integer)
               3.14. event_callback (str)
+              3.15. event_callback_mode (int)
 
         4. Functions
 
@@ -104,17 +105,18 @@ Ovidiu Sas
    1.15. Set enable_dmq parameter
    1.16. Set timer_procs parameter
    1.17. Set event_callback parameter
-   1.18. sht_print usage
-   1.19. sht_rm_name_re usage
-   1.20. sht_rm_value_re usage
-   1.21. sht_rm_name usage
-   1.22. sht_rm_value usage
-   1.23. sht_reset usage
-   1.24. sht_lock usage
-   1.25. sht_unlock usage
-   1.26. sht_iterator_start usage
-   1.27. sht_iterator_end usage
-   1.28. sht_iterator_next usage
+   1.18. Set event_callback_mode parameter
+   1.19. sht_print usage
+   1.20. sht_rm_name_re usage
+   1.21. sht_rm_value_re usage
+   1.22. sht_rm_name usage
+   1.23. sht_rm_value usage
+   1.24. sht_reset usage
+   1.25. sht_lock usage
+   1.26. sht_unlock usage
+   1.27. sht_iterator_start usage
+   1.28. sht_iterator_end usage
+   1.29. sht_iterator_next usage
 
 Chapter 1. Admin Guide
 
@@ -143,6 +145,7 @@ Chapter 1. Admin Guide
         3.12. enable_dmq (integer)
         3.13. timer_procs (integer)
         3.14. event_callback (str)
+        3.15. event_callback_mode (int)
 
    4. Functions
 
@@ -412,6 +415,7 @@ $ kamcmd htable.dump htable
    3.12. enable_dmq (integer)
    3.13. timer_procs (integer)
    3.14. event_callback (str)
+   3.15. event_callback_mode (int)
 
 3.1. htable (str)
 
@@ -643,6 +647,21 @@ function ksr_htable_event(evname)
 end
 ...
 
+3.15. event_callback_mode (int)
+
+   Control when event_route[htable:init] is executed: 0 - after all
+   modules were initialized; 1 - in first worker process.
+
+   Set it to 1 if used in a KEMI script or when needing to use database
+   (e.g., via sqlops) inside event_route[htable:init].
+
+   Default value is 0.
+
+   Example 1.18. Set event_callback_mode parameter
+...
+modparam("htable", "event_callback_mode", 1)
+...
+
 4. Functions
 
    4.1. sht_print()
@@ -665,7 +684,7 @@ end
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.18. sht_print usage
+   Example 1.19. sht_print usage
 ...
 sht_print();
 ...
@@ -678,7 +697,7 @@ sht_print();
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.19. sht_rm_name_re usage
+   Example 1.20. sht_rm_name_re usage
 ...
 sht_rm_name_re("ha=>.*");
 ...
@@ -691,7 +710,7 @@ sht_rm_name_re("ha=>.*");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.20. sht_rm_value_re usage
+   Example 1.21. sht_rm_value_re usage
 ...
 sht_rm_value_re("ha=>.*");
 ...
@@ -709,7 +728,7 @@ sht_rm_value_re("ha=>.*");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.21. sht_rm_name usage
+   Example 1.22. sht_rm_name usage
 ...
 sht_rm_name("ha", "re", ".*");
 ...
@@ -727,7 +746,7 @@ sht_rm_name("ha", "re", ".*");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. sht_rm_value usage
+   Example 1.23. sht_rm_value usage
 ...
 sht_rm_value("ha", "re", ".*");
 ...
@@ -739,7 +758,7 @@ sht_rm_value("ha", "re", ".*");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. sht_reset usage
+   Example 1.24. sht_reset usage
 ...
 sht_reset("ha$var(x)");
 ...
@@ -752,7 +771,7 @@ sht_reset("ha$var(x)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.24. sht_lock usage
+   Example 1.25. sht_lock usage
 ...
 sht_lock("ha=>test");
 ...
@@ -765,7 +784,7 @@ sht_lock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. sht_unlock usage
+   Example 1.26. sht_unlock usage
 ...
 sht_lock("ha=>test");
 $sht(ha=>test) = $sht(ha=>test) + 10;
@@ -787,7 +806,7 @@ sht_unlock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. sht_iterator_start usage
+   Example 1.27. sht_iterator_start usage
 ...
 sht_iterator_start("i1", "h1");
 ...
@@ -802,7 +821,7 @@ sht_iterator_start("i1", "h1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.27. sht_iterator_end usage
+   Example 1.28. sht_iterator_end usage
 ...
 sht_iterator_end("i1");
 ...
@@ -824,7 +843,7 @@ sht_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.28. sht_iterator_next usage
+   Example 1.29. sht_iterator_next usage
 ...
     sht_iterator_start("i1", "h1");
     while(sht_iterator_next("i1")) {

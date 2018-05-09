@@ -69,12 +69,12 @@ Chapter 1. Admin Guide
    database access. Relaying of insert, update, query and delete
    operations is supported.
 
-   Modules can be configured to use the perlvdb module as database backend
-   using the db_url_parameter:
+   Modules can be configured to use the db_perlvdb module as database
+   backend using the db_url_parameter:
 modparam("acc", "db_url", "perlvdb:Kamailio::VDB::Adapter::AccountingSIPtrace")
 
    This configuration options tells acc module that it should use the
-   perlvdb module which will in turn use the Perl class
+   db_perlvdb module which will in turn use the Perl class
    Kamailio::VDB::Adapter::AccountingSIPtrace to relay the database
    requests.
 
@@ -86,13 +86,14 @@ modparam("acc", "db_url", "perlvdb:Kamailio::VDB::Adapter::AccountingSIPtrace")
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * perl -- Perl module
+     * app_perl -- Perl Application module
 
 2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * None (Besides the ones mentioned in the perl module documentation).
+     * None (Besides the ones mentioned in the app_perl module
+       documentation).
 
 3. Parameters
 
@@ -136,7 +137,7 @@ Chapter 2. Developer Guide
 
 2. Base class Kamailio::VDB
 
-   A client module has to be configured to use the perlvdb module in
+   A client module has to be configured to use the db_perlvdb module in
    conjunction with a Perl class to provide the functions. The configured
    class needs to inherit from the base class Kamailio::VDB.
 
