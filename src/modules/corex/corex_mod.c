@@ -751,7 +751,7 @@ static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *s2)
 }
 
 /**
- * 
+ *
  */
 static int ki_has_ruri_user(sip_msg_t *msg)
 {
@@ -767,6 +767,28 @@ static int ki_has_ruri_user(sip_msg_t *msg)
 	}
 
 	if(msg->parsed_uri.user.s!=NULL && msg->parsed_uri.user.len>0) {
+		return 1;
+	}
+
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_has_user_agent(sip_msg_t *msg)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->user_agent==NULL && ((parse_headers(msg, HDR_USERAGENT_F, 0)==-1)
+			|| (msg->user_agent==NULL)))
+	{
+		LM_DBG("no User-Agent header\n");
+		return -1;
+	}
+
+	if(msg->user_agent->body.s!=NULL && msg->user_agent->body.len>0) {
 		return 1;
 	}
 
@@ -835,6 +857,11 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	},
 	{ str_init("corex"), str_init("has_ruri_user"),
 		SR_KEMIP_INT, ki_has_ruri_user,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("has_user_agent"),
+		SR_KEMIP_INT, ki_has_user_agent,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
