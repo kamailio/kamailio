@@ -795,7 +795,6 @@ static int sr_kemi_core_is_method_in(sip_msg_t *msg, str *vmethod)
 static int sr_kemi_core_is_method_type(sip_msg_t *msg, int mtype)
 {
 	int imethod;
-	int i;
 
 	if(msg==NULL) {
 		LM_WARN("invalid parameters\n");
