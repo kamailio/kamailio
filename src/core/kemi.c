@@ -792,6 +792,132 @@ static int sr_kemi_core_is_method_in(sip_msg_t *msg, str *vmethod)
 /**
  *
  */
+static int sr_kemi_core_is_method_type(sip_msg_t *msg, int mtype)
+{
+	int imethod;
+	int i;
+
+	if(msg==NULL) {
+		LM_WARN("invalid parameters\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg->first_line.type==SIP_REQUEST) {
+		imethod = msg->first_line.u.request.method_value;
+	} else {
+		if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL) {
+			LM_ERR("cannot parse cseq header\n");
+			return SR_KEMI_FALSE;
+		}
+		imethod = get_cseq(msg)->method_id;
+	}
+
+	if(imethod==mtype) {
+		return SR_KEMI_TRUE;
+	}
+
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_invite(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_INVITE);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_ack(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_ACK);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_bye(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_BYE);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_cancel(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_CANCEL);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_register(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_REGISTER);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_options(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_OPTIONS);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_update(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_UPDATE);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_subscribe(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_SUBSCRIBE);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_publish(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_PUBLISH);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_notify(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_NOTIFY);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_info(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_INFO);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_prack(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_PRACK);
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_forward_uri(sip_msg_t *msg, str *vuri)
 {
 	int ret;
@@ -1224,6 +1350,66 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("add_tcp_alias_via"),
 		SR_KEMIP_INT, sr_kemi_core_add_tcp_alias_via,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_invite"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_invite,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_ack"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_ack,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_bye"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_bye,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_cancel"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_cancel,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_register"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_register,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_options"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_options,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_subscribe"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_subscribe,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_publish"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_publish,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_notify"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_notify,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_info"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_info,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_update"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_update,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_prack"),
+		SR_KEMIP_INT, sr_kemi_core_is_method_prack,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
