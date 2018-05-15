@@ -138,7 +138,8 @@ void free_security(security_t* _p)
             shm_free(_p->data.tls);
         break;
 
-        //default: Nothing to deallocate
+        default: // Nothing to deallocate
+        break;
     }
 
     shm_free(_p);
