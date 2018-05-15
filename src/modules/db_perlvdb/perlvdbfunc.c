@@ -202,7 +202,8 @@ int perlvdb_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v, 
 /*
  * Just like insert, but replace the row if it exists
  */
-int perlvdb_db_replace(const db1_con_t* h, const db_key_t* k, const db_val_t* v, const int n) {
+int perlvdb_db_replace(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
+		const int n, const int un, const int m) {
 	return perlvdb_db_insertreplace(h, k, v, n, PERL_VDB_REPLACEMETHOD);
 }
 
