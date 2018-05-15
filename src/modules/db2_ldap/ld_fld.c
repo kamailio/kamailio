@@ -828,7 +828,7 @@ static inline int db_float2ldap_str(struct sbuf* buf, db_fld_t* fld)
 }
 
 
-static inline int db_double2ldap_str(struct sbuf* buf, db_fld_t* fld)
+/*static inline int db_double2ldap_str(struct sbuf* buf, db_fld_t* fld)
 {
 	char tmp[16];
 	int len;
@@ -839,7 +839,7 @@ static inline int db_double2ldap_str(struct sbuf* buf, db_fld_t* fld)
 		return -1;
 	}
 	return sb_add(buf, tmp, len);
-}
+}*/
 
 static inline int ld_db2ldap(struct sbuf* buf, db_fld_t* fld) {
 	struct ld_fld* lfld;
