@@ -662,7 +662,20 @@ static sr_kemi_t _sr_apy_kemi_test[] = {
 /**
  *
  */
-static PyObject *sr_apy_kemi_f_pv_get(PyObject *self, PyObject *args)
+PyObject *sr_apy_kemi_return_none_mode(int rmode)
+{
+	if(rmode) {
+		return sr_apy_kemi_return_str(NULL, "<<null>>", 8);
+	} else {
+		return sr_apy_kemi_return_none();
+	}
+}
+
+/**
+ *
+ */
+static PyObject *sr_apy_kemi_f_pv_get_mode(PyObject *self, PyObject *args,
+		int rmode)
 {
 	str pvn;
 	pv_spec_t *pvs;
@@ -675,7 +688,7 @@ static PyObject *sr_apy_kemi_f_pv_get(PyObject *self, PyObject *args)
 
 	if(env_P==NULL) {
 		LM_ERR("invalid Python environment attributes\n");
-		return sr_apy_kemi_return_none();
+		return sr_apy_kemi_return_none_mode(rmode);
 	}
 	if(env_P->msg==NULL) {
 		lmsg = faked_msg_next();
@@ -685,12 +698,12 @@ static PyObject *sr_apy_kemi_f_pv_get(PyObject *self, PyObject *args)
 
 	if(!PyArg_ParseTuple(args, "s:pv.get", &pvn.s)) {
 		LM_ERR("unable to retrieve str param\n");
-		return sr_apy_kemi_return_none();
+		return sr_apy_kemi_return_none_mode(rmode);
 	}
 
 	if(pvn.s==NULL || lmsg==NULL) {
 		LM_ERR("invalid context attributes\n");
-		return sr_apy_kemi_return_none();
+		return sr_apy_kemi_return_none_mode(rmode);
 	}
 
 	pvn.len = strlen(pvn.s);
@@ -698,26 +711,42 @@ static PyObject *sr_apy_kemi_f_pv_get(PyObject *self, PyObject *args)
 	pl = pv_locate_name(&pvn);
 	if(pl != pvn.len) {
 		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return sr_apy_kemi_return_none();
+		return sr_apy_kemi_return_none_mode(rmode);
 	}
 	pvs = pv_cache_get(&pvn);
 	if(pvs==NULL) {
 		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return sr_apy_kemi_return_none();
+		return sr_apy_kemi_return_none_mode(rmode);
 	}
 	memset(&val, 0, sizeof(pv_value_t));
 	if(pv_get_spec_value(lmsg, pvs, &val) != 0)
 	{
 		LM_ERR("unable to get pv value for [%s]\n", pvn.s);
-		return sr_apy_kemi_return_none();
+		return sr_apy_kemi_return_none_mode(rmode);
 	}
 	if(val.flags&PV_VAL_NULL) {
-		return sr_apy_kemi_return_none();
+		return sr_apy_kemi_return_none_mode(rmode);
 	}
 	if(val.flags&PV_TYPE_INT) {
 		return sr_kemi_apy_return_int(NULL, val.ri);
 	}
 	return sr_apy_kemi_return_str(NULL, val.rs.s, val.rs.len);
+}
+
+/**
+ *
+ */
+static PyObject *sr_apy_kemi_f_pv_get(PyObject *self, PyObject *args)
+{
+	return sr_apy_kemi_f_pv_get_mode(self, args, 0);
+}
+
+/**
+ *
+ */
+static PyObject *sr_apy_kemi_f_pv_getw(PyObject *self, PyObject *args)
+{
+	return sr_apy_kemi_f_pv_get_mode(self, args, 1);
 }
 
 /**
@@ -951,6 +980,8 @@ static PyObject *sr_apy_kemi_f_pv_is_null(PyObject *self, PyObject *args)
 static PyMethodDef _sr_apy_kemi_pv_Methods[] = {
 	{"get",		sr_apy_kemi_f_pv_get,		METH_VARARGS,
 		NAME " - pv get value"},
+	{"getw",	sr_apy_kemi_f_pv_getw,		METH_VARARGS,
+		NAME " - pv get value or <<null>>"},
 	{"seti",	sr_apy_kemi_f_pv_seti,		METH_VARARGS,
 		NAME " - pv set int value"},
 	{"sets",	sr_apy_kemi_f_pv_sets,		METH_VARARGS,
