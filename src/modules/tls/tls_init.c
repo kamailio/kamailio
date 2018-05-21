@@ -857,7 +857,7 @@ void destroy_tls_h(void)
 	tls_destroy_cfg();
 	tls_destroy_locks();
 	tls_ct_wq_destroy();
-#if OPENSSL_VERSION_NUMBER >= 0x010100000L
+#if OPENSSL_VERSION_NUMBER >= 0x010100000L && !defined(LIBRESSL_VERSION_NUMBER)
 	/* explicit execution of libssl cleanup to avoid being executed again
 	 * by atexit(), when shm is gone */
 	LM_DBG("executing openssl v1.1+ cleanup\n");
