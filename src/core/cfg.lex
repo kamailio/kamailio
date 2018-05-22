@@ -446,7 +446,7 @@ VERBOSE_STARTUP		"verbose_startup"
 SERVER_ID     "server_id"
 
 MAX_RECURSIVE_LEVEL		"max_recursive_level"
-MAX_BRANCHES_PARAM		"max_branches"|"max_branches"
+MAX_BRANCHES_PARAM		"max_branches"
 
 LATENCY_CFG_LOG			latency_cfg_log
 LATENCY_LOG				latency_log
