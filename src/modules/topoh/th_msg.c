@@ -749,14 +749,19 @@ int th_unmask_ruri(sip_msg_t *msg)
 	}
 
 	if(th_get_uri_param_value(&REQ_LINE(msg).uri, &th_uparam_name, &eval)<0
-			|| eval.len<=0)
+			|| eval.len<=0) {
+		LM_DBG("no uri param [%.*s] in [%.*s]\n",
+				th_uparam_name.len, th_uparam_name.s,
+				REQ_LINE(msg).uri.len,REQ_LINE(msg).uri.s);
 		return -1;
+	}
 
 	out.s = th_mask_decode(eval.s, eval.len,
 				&th_uparam_prefix, 0, &out.len);
 	if(out.s==NULL)
 	{
-		LM_ERR("cannot decode r-uri\n");
+		LM_ERR("cannot decode r-uri [%.*s]\n",
+				REQ_LINE(msg).uri.len,REQ_LINE(msg).uri.s);
 		return -1;
 	}
 
