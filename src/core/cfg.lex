@@ -453,7 +453,7 @@ REPLY_ROUTE_CALLBACK	"reply_route_callback"
 EVENT_ROUTE_CALLBACK	"event_route_callback"
 
 MAX_RECURSIVE_LEVEL		"max_recursive_level"
-MAX_BRANCHES_PARAM		"max_branches"|"max_branches"
+MAX_BRANCHES_PARAM		"max_branches"
 
 LATENCY_CFG_LOG			latency_cfg_log
 LATENCY_LOG				latency_log
