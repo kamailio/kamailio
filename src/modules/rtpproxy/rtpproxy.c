@@ -169,7 +169,7 @@ static int_str ice_candidate_priority_avp;
 static str rtp_inst_pv_param = {NULL, 0};
 static pv_spec_t *rtp_inst_pvar = NULL;
 
-/* array with the sockets used by rtpporxy (per process)*/
+/* array with the sockets used by rtpproxy (per process)*/
 static unsigned int rtpp_no = 0;
 static int *rtpp_socks = 0;
 

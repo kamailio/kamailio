@@ -98,7 +98,7 @@
 	<section id="rtpproxy.p.rtpproxy_sock">
 		<title><varname>rtpproxy_sock</varname> (string)</title>
 		<para>
-		Used to define the list of RTPPRoxy instances to connect to.
+		Used to define the list of RTPProxy instances to connect to.
 		These can be UNIX sockets or IPv4/IPv6 UDP sockets.
 
 		Each modparam entry will insert sockets into a single set. If no set ID is given, the default set ID '0' will be used. To define multiple sets add the set number at the beginning of each parameter followed by '=='.
@@ -873,7 +873,7 @@ start_recording();
 	<section>
 		<title>RPC Commands</title>
 		<section id="rtpproxy.r.enable">
-			<title>rtpproxy.enable</title>
+			<title><function>rtpproxy.enable</function></title>
 			<para>
 			Enables a rtp proxy if parameter value is greater than 0.
 			Disables it if a zero value is given.
