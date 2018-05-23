@@ -991,6 +991,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		t->on_failure=0;
 		/* if continuing on timeout of a suspended transaction, reset the flag */
 		t->flags &= ~T_ASYNC_SUSPENDED;
+		log_prefix_set(faked_req);
 		if (exec_pre_script_cb(faked_req, FAILURE_CB_TYPE)>0) {
 			/* run a failure_route action if some was marked */
 			keng = sr_kemi_eng_get();
@@ -1005,6 +1006,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 			}
 			exec_post_script_cb(faked_req, FAILURE_CB_TYPE);
 		}
+		log_prefix_set(NULL);
 		/* update message flags, if changed in failure route */
 		t->uas.request->flags = faked_req->flags;
 	}
