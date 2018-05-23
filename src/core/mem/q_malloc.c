@@ -112,15 +112,18 @@ inline static unsigned long big_hash_idx(unsigned long s)
 #define END_CHECK_PATTERN2 0xabcdefed
 
 
-static  void qm_debug_frag(struct qm_block* qm, struct qm_frag* f,
-		const char* file, unsigned int line)
+#define qm_debug_frag(qm, f, file, line)	\
+			qm_debug_check_frag((qm), (f), (file), (line), __FILE__, __LINE__)
+static  void qm_debug_check_frag(struct qm_block* qm, struct qm_frag* f,
+		const char* file, unsigned int line,
+		const char* efile, unsigned int eline)
 {
 	if (f->check!=ST_CHECK_PATTERN){
 		LM_CRIT("BUG: qm: fragm. %p (address %p) "
 				"beginning overwritten (%lx)! Memory allocator was called "
-				"from %s:%u. Fragment marked by %s:%lu.\n",
+				"from %s:%u. Fragment marked by %s:%lu. Exec from %s:%u.\n",
 				f, (char*)f+sizeof(struct qm_frag),
-				f->check, file, line, f->file, f->line);
+				f->check, file, line, f->file, f->line, efile, eline);
 		qm_status(qm);
 		abort();
 	};
@@ -128,10 +131,10 @@ static  void qm_debug_frag(struct qm_block* qm, struct qm_frag* f,
 			(FRAG_END(f)->check2!=END_CHECK_PATTERN2)){
 		LM_CRIT("BUG: qm: fragm. %p (address %p) "
 				"end overwritten (%lx, %lx)! Memory allocator was called "
-				"from %s:%u. Fragment marked by %s:%lu.\n",
+				"from %s:%u. Fragment marked by %s:%lu. Exec from %s:%u.\n",
 				f, (char*)f+sizeof(struct qm_frag),
 				FRAG_END(f)->check1, FRAG_END(f)->check2,
-				file, line, f->file, f->line);
+				file, line, f->file, f->line, efile, eline);
 		qm_status(qm);
 		abort();
 	}
@@ -140,9 +143,10 @@ static  void qm_debug_frag(struct qm_block* qm, struct qm_frag* f,
 				(PREV_FRAG_END(f)->check2!=END_CHECK_PATTERN2) ) ){
 		LM_CRIT("BUG: qm: prev. fragm. tail overwritten(%lx, %lx)[%p:%p]! "
 				"Memory allocator was called from %s:%u. Fragment marked by "
-				"%s:%lu.\n",
+				"%s:%lu. Exec from %s:%u.\n",
 				PREV_FRAG_END(f)->check1, PREV_FRAG_END(f)->check2, f,
-				(char*)f+sizeof(struct qm_frag), file, line, f->file, f->line);
+				(char*)f+sizeof(struct qm_frag), file, line, f->file, f->line,
+				efile, eline);
 		qm_status(qm);
 		abort();
 	}
