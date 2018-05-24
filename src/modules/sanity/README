@@ -120,10 +120,10 @@ Chapter 1. Admin Guide
    of the sanity_check function. The integer value is the sum of the check
    numbers which should be executed by default.
 
-   Default value is “999”. This resolves to the following list of checks:
+   Default value is “3047”. This resolves to the following list of checks:
    ruri_sip_version (1), ruri_scheme (2), required_headers (4),
-   cseq_method (32), cseq_value (64), cotent_length (128), expires_value
-   (256), proxy_require (512).
+   cseq_method (32), cseq_value (64), content_length (128), expires_value
+   (256), proxy_require (512), digest credentials (2048).
 
    Example 1.1. Set default_checks parameter
 ...
