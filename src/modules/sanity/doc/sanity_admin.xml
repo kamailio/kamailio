@@ -152,10 +152,10 @@
 		is the sum of the check numbers which should be executed by default.
 	</para>
 	<para>
-	    Default value is <quote>999</quote>. This resolves to the following list of
+	    Default value is <quote>3047</quote>. This resolves to the following list of
 		checks: ruri_sip_version (1), ruri_scheme (2), required_headers (4),
-		cseq_method (32), cseq_value (64), cotent_length (128), 
-		expires_value (256), proxy_require (512).
+		cseq_method (32), cseq_value (64), content_length (128), 
+		expires_value (256), proxy_require (512), digest credentials (2048).
 	</para>
 	<example>
 	    <title>Set <varname>default_checks</varname> parameter</title>
