@@ -560,20 +560,36 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 		break;
 		case 4:
 			if(ket->ptypes[0]==SR_KEMIP_STR
-					|| ket->ptypes[1]==SR_KEMIP_STR
-					|| ket->ptypes[2]==SR_KEMIP_STR
-					|| ket->ptypes[3]==SR_KEMIP_STR) {
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_STR) {
 				/* ssss */
 				ret = ((sr_kemi_fmssss_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s);
 				return sr_kemi_apy_return_int(ket, ret);
 			} else if(ket->ptypes[0]==SR_KEMIP_STR
-					|| ket->ptypes[1]==SR_KEMIP_STR
-					|| ket->ptypes[2]==SR_KEMIP_INT
-					|| ket->ptypes[3]==SR_KEMIP_INT) {
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_INT) {
+				/* ssnn */
+				ret = ((sr_kemi_fmsssn_f)(ket->func))(lmsg,
+						&vps[0].s, &vps[1].s, &vps[2].s, vps[3].n);
+				return sr_kemi_apy_return_int(ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_STR
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_INT
+					&& ket->ptypes[3]==SR_KEMIP_INT) {
 				/* ssnn */
 				ret = ((sr_kemi_fmssnn_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, vps[2].n, vps[3].n);
+				return sr_kemi_apy_return_int(ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_STR) {
+				/* ssnn */
+				ret = ((sr_kemi_fmnsss_f)(ket->func))(lmsg,
+						vps[0].n, &vps[1].s, &vps[2].s, &vps[3].s);
 				return sr_kemi_apy_return_int(ket, ret);
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
@@ -583,10 +599,10 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 		break;
 		case 5:
 			if(ket->ptypes[0]==SR_KEMIP_STR
-					|| ket->ptypes[1]==SR_KEMIP_STR
-					|| ket->ptypes[2]==SR_KEMIP_STR
-					|| ket->ptypes[3]==SR_KEMIP_STR
-					|| ket->ptypes[4]==SR_KEMIP_STR) {
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_STR
+					&& ket->ptypes[4]==SR_KEMIP_STR) {
 				/* sssss */
 				ret = ((sr_kemi_fmsssss_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s,
@@ -600,11 +616,11 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 		break;
 		case 6:
 			if(ket->ptypes[0]==SR_KEMIP_STR
-					|| ket->ptypes[1]==SR_KEMIP_STR
-					|| ket->ptypes[2]==SR_KEMIP_STR
-					|| ket->ptypes[3]==SR_KEMIP_STR
-					|| ket->ptypes[4]==SR_KEMIP_STR
-					|| ket->ptypes[5]==SR_KEMIP_STR) {
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_STR
+					&& ket->ptypes[4]==SR_KEMIP_STR
+					&& ket->ptypes[5]==SR_KEMIP_STR) {
 				/* ssssss */
 				ret = ((sr_kemi_fmssssss_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s,
