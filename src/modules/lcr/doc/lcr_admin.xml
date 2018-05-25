@@ -127,7 +127,8 @@
 	As a side effect of gateway selection, selected gateway's tag and flags
 	(that may contain information about the gateway and its capabilities)
 	are stored to tag_avp and flags_avp, respectively, if the corresponding
-	module parameter has been defined.
+	module parameter has been defined. In the same way, rule_id_avp, if defined,
+	contains the id of the rule that selected the gateway.
 	</para>
 	</section>
 
@@ -867,6 +868,28 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 		</example>
 	</section>
 
+	<section id="lcr.p.rule_id_avp">
+		<title><varname>rule_id_avp</varname> (AVP string)</title>
+		<para>
+			If defined, an AVP where successful next_gw and from_gw
+			functions store matching rule's id.
+		</para>
+		<para>
+			<emphasis>
+				There is NO default value, i.e, if not defined,
+				matching rule's id is not stored anywhere.
+			</emphasis>
+		</para>
+		<example>
+			<title>Setting <varname>rule_id_avp</varname> module parameter</title>
+			<programlisting format="linespecific">
+				...
+				modparam("lcr", "rule_id_avp", "$avp(i:712)")
+				...
+			</programlisting>
+		</example>
+	</section>
+
 	<section id="lcr.p.mt_pv_values">
 		<title><varname>mt_pv_values</varname> (AVP string)</title>
 		<para>
@@ -1302,7 +1325,8 @@ if (!load_gws(1, $rU, $var(caller_uri))) {
 		<para>
 		As a side effect, stores gateway's tag and flags to
 		tag_avp and flags_avp, respectively, if the corresponding
-		module parameter has been defined.
+		module parameter has been defined.  In the same way, rule_id_avp,
+		if defined, contains the id of the rule that selected the gateway.
 		</para>
 		<para>
 		Returns 1 on success and -1 if there were no gateways
@@ -1425,7 +1449,8 @@ defunct_gw(60);
 		If request comes from a gateway, gateway's tag and flags are
 		stored as a side effect to
 		tag_avp and flags_avp, respectively, if the corresponding
-		module parameter has been defined.
+		module parameter has been defined. In the same way, rule_id_avp,
+		if defined, contains the id of the rule that selected the gateway.
 		</para>
 		<para>
 		Returns 1 on success and -1 on failure or on error.
@@ -1475,7 +1500,8 @@ if (from_gw(1, $avp(s:real_source_addr), 2) {
 		If request comes from a gateway, gateway's tag and flags are
 		stored as a side effect to
 		tag_avp and flags_avp, respectively, if the corresponding
-		module parameter has been defined.
+		module parameter has been defined. In the same way, rule_id_avp,
+		if defined, contains the id of the rule that selected the gateway.
 		</para>
 		<para>
 		Execution time of from_gw() function is M * O(log N),
