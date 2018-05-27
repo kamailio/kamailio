@@ -985,6 +985,8 @@ int send_resource_subs(char* uri, void* param)
 				pres_uri.len, pres_uri.s);
 		return -1;
 	}
+	LM_DBG("pres uri [%.*s] - normalized uri [%.*s]\n",
+			pres_uri.len, pres_uri.s, normalized_uri->len, normalized_uri->s);
 
 	if (parse_uri(normalized_uri->s, normalized_uri->len, &parsed_pres_uri)
 			< 0) {
@@ -1016,7 +1018,8 @@ int send_resource_subs(char* uri, void* param)
 		LM_ERR("out of private memory\n");
 		return -1;
 	}
-	if ((tmp_str->s = (char *)pkg_malloc(sizeof(char) * pres_uri.len)) == NULL)
+	if ((tmp_str->s = (char *)pkg_malloc(sizeof(char)
+							* normalized_uri->len)) == NULL)
 	{
 		pkg_free(tmp_str);
 		LM_ERR("out of private memory\n");
