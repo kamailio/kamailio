@@ -60,7 +60,7 @@
 #include "db_query.h"
 #include "db.h"
 
-static unsigned int MAX_URL_LENGTH = 255;	/*!< maximum length of a SQL URL */
+static unsigned int MAX_URL_LENGTH = 1023;	/*!< maximum length of a SQL URL */
 
 
 int db_check_api(db_func_t* dbf, char *mname)
