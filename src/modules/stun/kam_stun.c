@@ -165,8 +165,12 @@ static int stun_parse_header(struct stun_msg* req, USHORT_T* error_code)
 {
 	
 	if (sizeof(req->hdr) > req->msg.buf.len) {
+		if(req->msg.buf.len==4 && *((int*)req->msg.buf.s)==0) {
+			/* likely the UDP ping 0000 */
+			return FATAL_ERROR;
+		}
 		/* the received message does not contain whole header */
-		LOG(L_INFO, "INFO: stun_parse_header: incomplete header of STUN message\n");
+		LM_DBG("incomplete header of STUN message\n");
 		/* Any better solution? IMHO it's not possible to send error response
 		 * because the transaction ID is not available.
 		 */
