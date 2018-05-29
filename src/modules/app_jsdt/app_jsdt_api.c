@@ -424,6 +424,7 @@ static int jsdt_sr_pv_is_null (duk_context *J)
 
 const duk_function_list_entry _sr_kemi_pv_J_Map[] = {
 	{ "get", jsdt_sr_pv_get, 1 /* 1 args */ },
+	{ "getw", jsdt_sr_pv_getw, 1 /* 1 args */ },
 	{ "seti", jsdt_sr_pv_seti, 2 /* 2 args */ },
 	{ "sets", jsdt_sr_pv_sets, 2 /* 2 args */ },
 	{ "unset", jsdt_sr_pv_unset, 1 /* 1 args */ },
