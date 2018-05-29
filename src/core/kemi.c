@@ -95,6 +95,36 @@ static int sr_kemi_core_info(sip_msg_t *msg, str *txt)
 /**
  *
  */
+static int sr_kemi_core_warn(sip_msg_t *msg, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL)
+		LM_WARN("%.*s", txt->len, txt->s);
+	return 0;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_notice(sip_msg_t *msg, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL)
+		LM_NOTICE("%.*s", txt->len, txt->s);
+	return 0;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_crit(sip_msg_t *msg, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL)
+		LM_CRIT("%.*s", txt->len, txt->s);
+	return 0;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_log(sip_msg_t *msg, str *level, str *txt)
 {
 	if(txt!=NULL && txt->s!=NULL) {
@@ -712,6 +742,21 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("info"),
 		SR_KEMIP_NONE, sr_kemi_core_info,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("warn"),
+		SR_KEMIP_NONE, sr_kemi_core_warn,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("notice"),
+		SR_KEMIP_NONE, sr_kemi_core_notice,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("crit"),
+		SR_KEMIP_NONE, sr_kemi_core_crit,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
