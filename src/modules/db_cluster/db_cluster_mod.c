@@ -1,6 +1,4 @@
 /* 
- * $Id$ 
- *
  * Generic db cluster module interface
  *
  * Copyright (C) 2012 Daniel-Constantin Mierla (asipto.com)
