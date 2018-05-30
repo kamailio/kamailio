@@ -12,9 +12,9 @@
 
 <chapter>
 
-    <title>&adminguide;</title>
+	<title>&adminguide;</title>
 
-    <section>
+	<section>
 	<title>Overview</title>
 	<para>
 		This module allows executing Ruby scripts from the Kamailio
@@ -23,8 +23,14 @@
 		currently processed SIP message. These functions are available within
 		the Ruby module 'KSR'.
 	</para>
-    </section>
-    <section>
+	<para>
+		IMPORTANT: because of Ruby language policy (which require that a public
+		submodule name has to start with an uppercase leter), the KSR submodule
+		names are with all leters uppercase. For example, what is documented as
+		KSR.sl in KEMI docs, must be used as KSR::SL in Ruby scripts.
+	</para>
+	</section>
+	<section>
 	<title>Dependencies</title>
 	<section>
 	    <title>&kamailio; Modules</title>
@@ -181,7 +187,7 @@ modparam("app_ruby", "load", "/usr/local/etc/kamailio/ruby/myscript.rb")
 ...
 request_route {
     ...
-    if(!jsdt_run("ksr_sl_reply")) {
+    if(!ruby_run("ksr_sl_reply")) {
         xdbg("SCRIPT: failed to execute ruby function!\n");
     }
     ...
