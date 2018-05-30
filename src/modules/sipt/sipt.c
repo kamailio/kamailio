@@ -344,7 +344,6 @@ static int sipt_get_redirection_number_nai(struct sip_msg *msg, pv_param_t *para
 static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	char *sb_s_buf = pkg_malloc(sizeof(char) * (26));
-//	str* sb_s;
 	str body;
 	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
@@ -361,34 +360,13 @@ static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, p
 	}
 	
 	isup_get_redirection_number((unsigned char*)body.s, body.len, sb_s_buf);
-//	sb_s_buf[0]='a';
-//	sb_s_buf[1]='b';
-//	sb_s_buf[2]='\0';
-//	memset(ss, 0, 25);
-//	strcpy(ss,sb_s_buf);
-//	sb_s = (str*)pkg_malloc(sizeof(str));
-
-//	if (!sb_s)
-//	{
-//		LOG(L_ERR, "fixup_char2str: No memory left\n");
-//		return E_UNSPEC;
-//	}
-//	strcpy(sb_s, sb_s_buf);
-//	sb_s->s = sb_s_buf;
-//	sb_s->len = strlen(sb_s->s);
-	
-	
-	LM_INFO("SBWWW : %s end %d\n", sb_s_buf, (int)strlen(sb_s_buf));
 	
 	if (strlen(sb_s_buf) > 0)
 	{
-//		pv_get_strval(msg, param, res, sb_s);
 		pv_get_strzval(msg, param, res, sb_s_buf);
-//		pv_get_strlval(msg, param, res, sb_s_buf, 2);
 	} else {
 		pv_get_sintval(msg, param, res, -1);
 	}
-//	free(sb_s_buf);
 	return 0;
 }
 
