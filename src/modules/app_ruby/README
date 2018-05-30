@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2018 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2018 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -75,6 +75,11 @@ Chapter 1. Admin Guide
    access the currently processed SIP message. These functions are
    available within the Ruby module 'KSR'.
 
+   IMPORTANT: because of Ruby language policy (which require that a public
+   submodule name has to start with an uppercase leter), the KSR submodule
+   names are with all leters uppercase. For example, what is documented as
+   KSR.sl in KEMI docs, must be used as KSR::SL in Ruby scripts.
+
 2. Dependencies
 
    2.1. Kamailio Modules
@@ -103,7 +108,7 @@ Chapter 1. Admin Guide
    runtime. If you use it for KEMI configuration, then it has to include
    the requited functions.
 
-   Default value is "null".
+   Default value is “null”.
 
    Example 1.1. Set load parameter
 ...
@@ -114,7 +119,7 @@ modparam("app_ruby", "load", "/usr/local/etc/kamailio/ruby/myscript.rb")
 
    4.1. ruby_run(function, params)
 
-4.1. ruby_run(function, params)
+4.1.  ruby_run(function, params)
 
    Execute the Ruby function 'func' giving params as parameters. There can
    be up to 3 string parameters. The function must exist in the script
@@ -136,7 +141,7 @@ ruby_run("rb_funcx", "$rU", "2");
    5.1. app_ruby.reload
    5.2. ruby_jsdt.api_list
 
-5.1. app_ruby.reload
+5.1.  app_ruby.reload
 
    Marks the need to reload the js script. The actual reload is done by
    every working process when the next call to ruby_run() function or KEMI
@@ -151,7 +156,7 @@ ruby_run("rb_funcx", "$rU", "2");
 kamcmd app_ruby.reload
 ...
 
-5.2. ruby_jsdt.api_list
+5.2.  ruby_jsdt.api_list
 
    List the functions available via Kemi framework.
 
@@ -182,7 +187,7 @@ modparam("app_ruby", "load", "/usr/local/etc/kamailio/ruby/myscript.rb")
 ...
 request_route {
     ...
-    if(!jsdt_run("ksr_sl_reply")) {
+    if(!ruby_run("ksr_sl_reply")) {
         xdbg("SCRIPT: failed to execute ruby function!\n");
     }
     ...
