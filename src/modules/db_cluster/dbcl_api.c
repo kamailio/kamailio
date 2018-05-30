@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * DB CLuster core functions
  *
  * Copyright (C) 2012 Daniel-Constantin Mierla (asipto.com)
