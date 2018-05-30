@@ -372,7 +372,7 @@ int isup_get_redirection_number_nai(unsigned char *buf, int len)
        return -1;
 }
 
-int isup_get_redirection_number(unsigned char *buf, int len, unsigned char *sb_buf, int sb_len)
+int isup_get_redirection_number(unsigned char *buf, int len, char* sb_buf)
 {
        int sbparamlen;
        int sb_i=0;
@@ -391,7 +391,7 @@ int isup_get_redirection_number(unsigned char *buf, int len, unsigned char *sb_b
                    sb_j++;
                }
                sb_buf[sb_i] = '\x0';
-               return sb_i;
+               return 1;
        }
        return -1;
 }

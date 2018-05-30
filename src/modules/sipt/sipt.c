@@ -102,6 +102,13 @@ static sipt_header_map_t sipt_header_mapping[] =
 		{{"CHARGE_INDICATOR", 1}, 
 			{NULL, 0}
 		}},
+        {"REDIRECTION_INFO", ISUP_PARM_REDIRECTION_INFO, 
+                {{NULL, 0}}  },
+        {"REDIRECTION_NUMBER", ISUP_PARM_REDIRECTION_NUMBER, 
+            		{{"NATURE_OF_ADDRESS", 1}, 
+			{"NAI", 1},
+			{NULL, 0}
+		}},
 	{ NULL, 0, {}}
 };
 
@@ -336,8 +343,8 @@ static int sipt_get_redirection_number_nai(struct sip_msg *msg, pv_param_t *para
 
 static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	char sb_s_buf[25];
-	str sb_s = {0, 0};
+	char *sb_s_buf = pkg_malloc(sizeof(char) * (26));
+//	str* sb_s;
 	str body;
 	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
@@ -353,16 +360,35 @@ static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, p
 		return -1;
 	}
 	
-	sb_s.len = isup_get_redirection_number((unsigned char*)body.s, body.len, (unsigned char*)sb_s_buf, sizeof(sb_s_buf));
-	sb_s.s = sb_s_buf;
+	isup_get_redirection_number((unsigned char*)body.s, body.len, sb_s_buf);
+//	sb_s_buf[0]='a';
+//	sb_s_buf[1]='b';
+//	sb_s_buf[2]='\0';
+//	memset(ss, 0, 25);
+//	strcpy(ss,sb_s_buf);
+//	sb_s = (str*)pkg_malloc(sizeof(str));
+
+//	if (!sb_s)
+//	{
+//		LOG(L_ERR, "fixup_char2str: No memory left\n");
+//		return E_UNSPEC;
+//	}
+//	strcpy(sb_s, sb_s_buf);
+//	sb_s->s = sb_s_buf;
+//	sb_s->len = strlen(sb_s->s);
 	
-	if (sb_s.len > 0)
+	
+	LM_INFO("SBWWW : %s end %d\n", sb_s_buf, (int)strlen(sb_s_buf));
+	
+	if (strlen(sb_s_buf) > 0)
 	{
-		pv_get_strval(msg, param, res, &sb_s);
+//		pv_get_strval(msg, param, res, sb_s);
+		pv_get_strzval(msg, param, res, sb_s_buf);
+//		pv_get_strlval(msg, param, res, sb_s_buf, 2);
 	} else {
 		pv_get_sintval(msg, param, res, -1);
 	}
-	
+//	free(sb_s_buf);
 	return 0;
 }
 
@@ -598,6 +624,17 @@ static int sipt_get_pv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			{
 				case 1: /* charge_indicator */
 				return sipt_get_charge_indicator(msg, param, res);
+			}
+			break;
+		case ISUP_PARM_REDIRECTION_INFO:
+			return sipt_get_redirection_info(msg, param, res);
+                case ISUP_PARM_REDIRECTION_NUMBER:
+			switch(spv->sub_type)
+			{
+				case 0: /* NUMBER */
+					return sipt_get_redirection_number(msg, param, res);
+				case 1: /* NAI */
+					return sipt_get_redirection_number_nai(msg, param, res);
 			}
 			break;
 	}

@@ -208,6 +208,6 @@ int isup_update_forwarding(struct sdp_mangler * mangle, char * forwardn, int nai
 
 int isup_get_redirection_info(unsigned char *buf, int len);
 int isup_get_redirection_number_nai(unsigned char *buf, int len);
-int isup_get_redirection_number(unsigned char *buf, int len, unsigned char *sb_buf, int sb_len);
+int isup_get_redirection_number(unsigned char *buf, int len, char* sb_buf);
 
 #endif
