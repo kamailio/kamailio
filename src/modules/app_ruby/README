@@ -76,9 +76,10 @@ Chapter 1. Admin Guide
    available within the Ruby module 'KSR'.
 
    IMPORTANT: because of Ruby language policy (which require that a public
-   submodule name has to start with an uppercase leter), the KSR submodule
-   names are with all leters uppercase. For example, what is documented as
-   KSR.sl in KEMI docs, must be used as KSR::SL in Ruby scripts.
+   submodule name has to start with an uppercase letter), the KSR
+   submodule names are with all letters uppercase. For example, what is
+   documented as KSR.sl in KEMI docs, must be used as KSR::SL in Ruby
+   scripts.
 
 2. Dependencies
 
