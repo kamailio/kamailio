@@ -175,7 +175,7 @@ kamcmd app_ruby.api_list
    '/usr/local/etc/kamailio/ruby/myscript.rb'.
 ...
 def ksr_sl_reply()
-        KSR.dbg("==== from ruby\n")
+        KSR.dbg("==== from ruby - src ip: " + KSR::PV.get("$si") + "\n")
         KSR::SL.sl_send_reply(200, "OK-Ruby")
 end
 ...
