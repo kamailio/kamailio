@@ -172,7 +172,7 @@ ruby_run("rb_funcx", "$rU", "2");
 <programlisting format="linespecific">
 ...
 def ksr_sl_reply()
-	KSR.dbg("==== from ruby\n")
+	KSR.dbg("==== from ruby - src ip: " + KSR::PV.get("$si") + "\n")
 	KSR::SL.sl_send_reply(200, "OK-Ruby")
 end
 ...
