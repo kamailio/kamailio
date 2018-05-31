@@ -242,6 +242,322 @@ int sr_kemi_ruby_return_int(sr_kemi_t *ket, int rc)
 /**
  *
  */
+static VALUE sr_kemi_ruby_return_none(int rmode)
+{
+	if(rmode==0) {
+		return Qnil;
+	}
+	return rb_str_new_cstr("<<null>>");
+}
+
+/**
+ *
+ */
+static VALUE app_ruby_pv_get_mode(int argc, VALUE* argv, VALUE self, int rmode)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	sr_ruby_env_t *env_R;
+	int pl;
+
+	env_R = app_ruby_sr_env_get();
+
+	if(env_R==NULL || env_R->msg==NULL || argc!=1) {
+		LM_ERR("invalid ruby environment attributes or parameters\n");
+		return sr_kemi_ruby_return_none(rmode);
+	}
+
+	if(!RB_TYPE_P(argv[0], T_STRING)) {
+		LM_ERR("invalid parameter type\n");
+		return sr_kemi_ruby_return_none(rmode);
+	}
+
+	pvn.s = StringValuePtr(argv[0]);
+	if(pvn.s==NULL)
+		return sr_kemi_ruby_return_none(rmode);
+	pvn.len = strlen(pvn.s);
+
+	LM_DBG("pv get: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return sr_kemi_ruby_return_none(rmode);
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return sr_kemi_ruby_return_none(rmode);
+	}
+	memset(&val, 0, sizeof(pv_value_t));
+	if(pv_get_spec_value(env_R->msg, pvs, &val) != 0) {
+		LM_ERR("unable to get pv value for [%s]\n", pvn.s);
+		return sr_kemi_ruby_return_none(rmode);
+	}
+	if(val.flags&PV_VAL_NULL) {
+		return sr_kemi_ruby_return_none(rmode);
+	}
+	if(val.flags&PV_TYPE_INT) {
+		return INT2NUM(val.ri);
+	}
+	return rb_str_new(val.rs.s, val.rs.len);
+}
+
+/**
+ *
+ */
+static VALUE app_ruby_pv_get(int argc, VALUE* argv, VALUE self)
+{
+	return app_ruby_pv_get_mode(argc, argv, self, 0);
+}
+
+/**
+ *
+ */
+static VALUE app_ruby_pv_getw(int argc, VALUE* argv, VALUE self)
+{
+	return app_ruby_pv_get_mode(argc, argv, self, 1);
+}
+
+/**
+ *
+ */
+static VALUE app_ruby_pv_seti(int argc, VALUE* argv, VALUE self)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	sr_ruby_env_t *env_R;
+	int pl;
+
+	env_R = app_ruby_sr_env_get();
+
+	if(env_R==NULL || env_R->msg==NULL || argc!=2) {
+		LM_ERR("invalid ruby environment attributes or parameters\n");
+		return Qfalse;
+	}
+
+	if(!RB_TYPE_P(argv[0], T_STRING)) {
+		LM_ERR("invalid pv name parameter type\n");
+		return Qfalse;
+	}
+
+	if(!RB_TYPE_P(argv[2], T_FIXNUM)) {
+		LM_ERR("invalid pv val parameter type\n");
+		return Qfalse;
+	}
+
+	pvn.s = StringValuePtr(argv[0]);
+	if(pvn.s==NULL)
+		return Qfalse;
+	pvn.len = strlen(pvn.s);
+
+	LM_DBG("pv get: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return Qfalse;
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return Qfalse;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	val.ri = NUM2INT(argv[1]);
+	val.flags |= PV_TYPE_INT|PV_VAL_INT;
+
+	if(pv_set_spec_value(env_R->msg, pvs, 0, &val)<0) {
+		LM_ERR("unable to set pv [%s]\n", pvn.s);
+		return Qfalse;
+	}
+
+	return Qtrue;
+}
+
+/**
+ *
+ */
+static VALUE app_ruby_pv_sets(int argc, VALUE* argv, VALUE self)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	sr_ruby_env_t *env_R;
+	int pl;
+
+	env_R = app_ruby_sr_env_get();
+
+	if(env_R==NULL || env_R->msg==NULL || argc!=2) {
+		LM_ERR("invalid ruby environment attributes or parameters\n");
+		return Qfalse;
+	}
+
+	if(!RB_TYPE_P(argv[0], T_STRING)) {
+		LM_ERR("invalid pv name parameter type\n");
+		return Qfalse;
+	}
+
+	if(!RB_TYPE_P(argv[2], T_FIXNUM)) {
+		LM_ERR("invalid pv val parameter type\n");
+		return Qfalse;
+	}
+
+	pvn.s = StringValuePtr(argv[0]);
+	if(pvn.s==NULL)
+		return Qfalse;
+	pvn.len = strlen(pvn.s);
+
+	LM_DBG("pv get: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return Qfalse;
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return Qfalse;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	val.rs.s = StringValuePtr(argv[1]);
+	if(val.rs.s==NULL) {
+		LM_ERR("invalid str value\n");
+		return Qfalse;
+	}
+	val.rs.len = strlen(val.rs.s);
+	val.flags |= PV_VAL_STR;
+
+	if(pv_set_spec_value(env_R->msg, pvs, 0, &val)<0) {
+		LM_ERR("unable to set pv [%s]\n", pvn.s);
+		return Qfalse;
+	}
+
+	return Qtrue;
+}
+
+/**
+ *
+ */
+static VALUE app_ruby_pv_unset(int argc, VALUE* argv, VALUE self)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	sr_ruby_env_t *env_R;
+	int pl;
+
+	env_R = app_ruby_sr_env_get();
+
+	if(env_R==NULL || env_R->msg==NULL || argc!=1) {
+		LM_ERR("invalid ruby environment attributes or parameters\n");
+		return Qfalse;
+	}
+
+	if(!RB_TYPE_P(argv[0], T_STRING)) {
+		LM_ERR("invalid parameter type\n");
+		return Qfalse;
+	}
+
+	pvn.s = StringValuePtr(argv[0]);
+	if(pvn.s==NULL)
+		return Qfalse;
+	pvn.len = strlen(pvn.s);
+
+	LM_DBG("pv get: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return Qfalse;
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return Qfalse;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags |= PV_VAL_NULL;
+	if(pv_set_spec_value(env_R->msg, pvs, 0, &val)<0)
+	{
+		LM_ERR("unable to unset pv [%s]\n", pvn.s);
+		return Qfalse;
+	}
+
+	return Qtrue;
+}
+
+/**
+ *
+ */
+static VALUE app_ruby_pv_is_null(int argc, VALUE* argv, VALUE self)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	sr_ruby_env_t *env_R;
+	int pl;
+
+	env_R = app_ruby_sr_env_get();
+
+	if(env_R==NULL || env_R->msg==NULL || argc!=1) {
+		LM_ERR("invalid ruby environment attributes or parameters\n");
+		return Qfalse;
+	}
+
+	if(!RB_TYPE_P(argv[0], T_STRING)) {
+		LM_ERR("invalid parameter type\n");
+		return Qfalse;
+	}
+
+	pvn.s = StringValuePtr(argv[0]);
+	if(pvn.s==NULL)
+		return Qfalse;
+	pvn.len = strlen(pvn.s);
+
+	LM_DBG("pv get: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return Qfalse;
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return Qfalse;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	if(pv_get_spec_value(env_R->msg, pvs, &val) != 0) {
+		LM_NOTICE("unable to get pv value for [%s]\n", pvn.s);
+		return Qtrue;
+	}
+	if(val.flags&PV_VAL_NULL) {
+		return Qtrue;
+	} else {
+		pv_value_destroy(&val);
+		return Qfalse;
+	}
+}
+
+/**
+ * 
+ */
+static ksr_ruby_export_t _sr_kemi_pv_R_Map[] = {
+	{"PV", "get", app_ruby_pv_get},
+	{"PV", "getw", app_ruby_pv_getw},
+	{"PV", "seti", app_ruby_pv_seti},
+	{"PV", "sets", app_ruby_pv_sets},
+	{"PV", "unset", app_ruby_pv_unset},
+	{"PV", "is_null", app_ruby_pv_is_null},
+	{0, 0, 0}
+};
+
+/**
+ *
+ */
 static VALUE ksr_ruby_exec_callback(VALUE ptr)
 {
 	ksr_ruby_data_t *data = (ksr_ruby_data_t *)ptr;
@@ -303,7 +619,7 @@ VALUE sr_kemi_ruby_exec_func(ksr_ruby_context_t *R, int eidx, int argc,
 			LM_DBG("param[%d] for: %.*s.%.*s is str: %.*s\n", i,
 				mname->len, mname->s, fname->len, fname->s, vps[i].s.len, vps[i].s.s);
 		} else if(ket->ptypes[i]==SR_KEMIP_INT) {
-			if(!RB_INTEGER_TYPE_P(argv[i])) {
+			if(!RB_TYPE_P(argv[i], T_FIXNUM)) {
 				LM_ERR("invalid int parameter type %d (%d)\n", ket->ptypes[i], i);
 				return Qfalse;
 			}
@@ -526,8 +842,18 @@ int app_ruby_kemi_export_libs(void)
 		n++;
 	}
 
-	/* registered kemi modules */
 	m = 0;
+	/* pv submodule */
+	_ksr_mSMD[m] = rb_define_module_under(_ksr_mKSR, "PV");
+	for(i=0; _sr_kemi_pv_R_Map[i].fname!=0; i++) {
+		LM_DBG("exporting KSR.PV.%s(...)\n", _sr_kemi_pv_R_Map[i].fname);
+		rb_define_singleton_method(_ksr_mSMD[m], _sr_kemi_pv_R_Map[i].fname,
+				_sr_kemi_pv_R_Map[i].func, -1);
+	}
+	LM_DBG("initialized kemi sub-module: KSR.PV\n");
+	m++;
+
+	/* registered kemi modules */
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
 			n++;
@@ -554,7 +880,7 @@ int app_ruby_kemi_export_libs(void)
 				n++;
 			}
 			m++;
-			LM_DBG("initializing kemi sub-module: KSR.%s\n", rmname);
+			LM_DBG("initialized kemi sub-module: KSR.%s\n", rmname);
 		}
 	}
 	LM_DBG("module 'KSR' has been initialized\n");
