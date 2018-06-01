@@ -39,6 +39,7 @@
 
 /* ruby.h defines xmalloc macro, replacing the shm.xmalloc field name */
 #undef xmalloc
+#undef xfree
 
 int app_ruby_kemi_export_libs(void);
 
@@ -543,7 +544,7 @@ static VALUE app_ruby_pv_is_null(int argc, VALUE* argv, VALUE self)
 }
 
 /**
- * 
+ *
  */
 static ksr_ruby_export_t _sr_kemi_pv_R_Map[] = {
 	{"PV", "get", app_ruby_pv_get},
@@ -552,6 +553,171 @@ static ksr_ruby_export_t _sr_kemi_pv_R_Map[] = {
 	{"PV", "sets", app_ruby_pv_sets},
 	{"PV", "unset", app_ruby_pv_unset},
 	{"PV", "is_null", app_ruby_pv_is_null},
+	{0, 0, 0}
+};
+
+/**
+ *
+ */
+static VALUE app_ruby_sr_modf(int argc, VALUE* argv, VALUE self)
+{
+	int ret;
+	char *rbv[MAX_ACTIONS];
+	char *paramv[MAX_ACTIONS];
+	int i;
+	int mod_type;
+	struct run_act_ctx ra_ctx;
+	unsigned modver;
+	struct action *act;
+	sr31_cmd_export_t* expf;
+	sr_ruby_env_t *env_R;
+
+	ret = 1;
+	act = NULL;
+	argc = 0;
+	memset(rbv, 0, MAX_ACTIONS*sizeof(char*));
+	memset(paramv, 0, MAX_ACTIONS*sizeof(char*));
+	env_R = app_ruby_sr_env_get();
+	if(env_R->msg==NULL)
+		goto error;
+
+	if(argc==0) {
+		LM_ERR("name of module function not provided\n");
+		goto error;
+	}
+	if(argc>=MAX_ACTIONS) {
+		LM_ERR("too many parameters\n");
+		goto error;
+	}
+	/* first is function name, then parameters */
+	for(i=0; i<argc; i++) {
+		if(!RB_TYPE_P(argv[0], T_STRING)) {
+			LM_ERR("invalid parameter type (%d)\n", i);
+			return INT2NUM(-1);
+		}
+		rbv[i] = (char*)StringValuePtr(argv[0]);
+	}
+	LM_ERR("request to execute cfg function '%s'\n", rbv[0]);
+	/* pkg copy only parameters */
+	for(i=1; i<MAX_ACTIONS; i++) {
+		if(rbv[i]!=NULL) {
+			paramv[i] = (char*)pkg_malloc(strlen(rbv[i])+1);
+			if(paramv[i]==NULL) {
+				LM_ERR("no more pkg\n");
+				goto error;
+			}
+			strcpy(paramv[i], rbv[i]);
+		}
+	}
+
+	expf = find_export_record(rbv[0], argc-1, 0, &modver);
+	if (expf==NULL) {
+		LM_ERR("function '%s' is not available\n", rbv[0]);
+		goto error;
+	}
+	/* check fixups */
+	if (expf->fixup!=NULL && expf->free_fixup==NULL) {
+		LM_ERR("function '%s' has fixup - cannot be used\n", rbv[0]);
+		goto error;
+	}
+	switch(expf->param_no) {
+		case 0:
+			mod_type = MODULE0_T;
+			break;
+		case 1:
+			mod_type = MODULE1_T;
+			break;
+		case 2:
+			mod_type = MODULE2_T;
+			break;
+		case 3:
+			mod_type = MODULE3_T;
+			break;
+		case 4:
+			mod_type = MODULE4_T;
+			break;
+		case 5:
+			mod_type = MODULE5_T;
+			break;
+		case 6:
+			mod_type = MODULE6_T;
+			break;
+		case VAR_PARAM_NO:
+			mod_type = MODULEX_T;
+			break;
+		default:
+			LM_ERR("unknown/bad definition for function '%s' (%d params)\n",
+					rbv[0], expf->param_no);
+			goto error;
+	}
+
+	act = mk_action(mod_type,  argc+1   /* number of (type, value) pairs */,
+					MODEXP_ST, expf,    /* function */
+					NUMBER_ST, argc-1,  /* parameter number */
+					STRING_ST, paramv[1], /* param. 1 */
+					STRING_ST, paramv[2], /* param. 2 */
+					STRING_ST, paramv[3], /* param. 3 */
+					STRING_ST, paramv[4], /* param. 4 */
+					STRING_ST, paramv[5], /* param. 5 */
+					STRING_ST, paramv[6]  /* param. 6 */
+			);
+
+	if (act==NULL) {
+		LM_ERR("action structure could not be created for '%s'\n", rbv[0]);
+		goto error;
+	}
+
+	/* handle fixups */
+	if (expf->fixup) {
+		if(argc==1) {
+			/* no parameters */
+			if(expf->fixup(0, 0)<0) {
+				LM_ERR("Error in fixup (0) for '%s'\n", rbv[0]);
+				goto error;
+			}
+		} else {
+			for(i=1; i<argc; i++) {
+				if(expf->fixup(&(act->val[i+1].u.data), i)<0) {
+					LM_ERR("Error in fixup (%d) for '%s'\n", i, rbv[0]);
+					goto error;
+				}
+				act->val[i+1].type = MODFIXUP_ST;
+			}
+		}
+	}
+	init_run_actions_ctx(&ra_ctx);
+	ret = do_action(&ra_ctx, act, env_R->msg);
+
+	/* free fixups */
+	if (expf->fixup) {
+		for(i=1; i<argc; i++) {
+			if ((act->val[i+1].type == MODFIXUP_ST) && (act->val[i+1].u.data)) {
+				expf->free_fixup(&(act->val[i+1].u.data), i);
+			}
+		}
+	}
+	pkg_free(act);
+	for(i=0; i<MAX_ACTIONS; i++) {
+		if(paramv[i]!=NULL) pkg_free(paramv[i]);
+		paramv[i] = 0;
+	}
+	return INT2NUM(ret);
+
+error:
+	if(act!=NULL)
+		pkg_free(act);
+	for(i=0; i<MAX_ACTIONS; i++) {
+		if(paramv[i]!=NULL) pkg_free(paramv[i]);
+		paramv[i] = 0;
+	}
+	return INT2NUM(-1);
+}
+
+/**
+ *
+ */
+static ksr_ruby_export_t _sr_kemi_x_R_Map[] = {
+	{"X", "modf", app_ruby_sr_modf},
 	{0, 0, 0}
 };
 
@@ -851,6 +1017,16 @@ int app_ruby_kemi_export_libs(void)
 				_sr_kemi_pv_R_Map[i].func, -1);
 	}
 	LM_DBG("initialized kemi sub-module: KSR.PV\n");
+	m++;
+
+	/* x submodule */
+	_ksr_mSMD[m] = rb_define_module_under(_ksr_mKSR, "X");
+	for(i=0; _sr_kemi_x_R_Map[i].fname!=0; i++) {
+		LM_DBG("exporting KSR.X.%s(...)\n", _sr_kemi_x_R_Map[i].fname);
+		rb_define_singleton_method(_ksr_mSMD[m], _sr_kemi_x_R_Map[i].fname,
+				_sr_kemi_x_R_Map[i].func, -1);
+	}
+	LM_DBG("initialized kemi sub-module: KSR.X\n");
 	m++;
 
 	/* registered kemi modules */
