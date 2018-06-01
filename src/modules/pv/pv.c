@@ -933,6 +933,7 @@ int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt)
 		goto error;
 	}
 
+	LM_DBG("preparing to evaluate: [%.*s]\n", tstr.len, tstr.s);
 	if(pv_eval_str(msg, &val.rs, &tstr)<0){
 		LM_ERR("cannot eval reparsed value of second parameter\n");
 		return -1;
