@@ -73,7 +73,8 @@ static int dlg_cseq_prepare_msg(sip_msg_t *msg)
 		return 1;
 	}
 
-	if (parse_headers(msg, HDR_CSEQ_F, 0)==-1) {
+	if((!msg->cseq && (parse_headers(msg,HDR_CSEQ_F,0)<0 || !msg->cseq))
+		|| !msg->cseq->parsed){
 		LM_DBG("parsing cseq header failed\n");
 		return 2;
 	}
