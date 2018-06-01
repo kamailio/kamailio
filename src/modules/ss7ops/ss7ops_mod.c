@@ -327,6 +327,7 @@ static int ki_isup_to_json(sip_msg_t *_m, int proto)
 	srjson_DeleteDoc(isup_json);
 	isup_last = NULL;
 	isup_json = NULL;
+	mtp_type = 0;
 
 	data = fetch_payload(_m, "$var(payload)", &int_len);
 	if (!data)
