@@ -177,14 +177,12 @@ struct isup_iam_fixed {
 struct isup_acm_fixed {
 	unsigned char type;
 	unsigned char backwards_call_ind[2];
-	unsigned char fixed_pointer;
 	unsigned char optional_pointer;
 };
 
 struct isup_cpg_fixed {
 	unsigned char type;
 	unsigned char event_info;
-	unsigned char fixed_pointer;
 	unsigned char optional_pointer;
 };
 
@@ -206,6 +204,10 @@ int isup_get_charging_indicator(unsigned char *buf, int len);
 int isup_update_destination(struct sdp_mangler * mangle, char * dest, int hops, int nai, unsigned char *buf, int len);
 int isup_update_bci_1(struct sdp_mangler * mangle, int charge_indicator, int called_status, int called_category, int e2e_indicator, unsigned char *buf, int len);
 int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int presentation, int screening, unsigned char * buf, int len);
+int isup_update_forwarding(struct sdp_mangler * mangle, char * forwardn, int nai, unsigned char *buf, int len);
 
+int isup_get_redirection_info(unsigned char *buf, int len);
+int isup_get_redirection_number_nai(unsigned char *buf, int len);
+int isup_get_redirection_number(unsigned char *buf, int len, char* sb_buf);
 
 #endif
