@@ -191,6 +191,12 @@ static pv_export_t mod_items[] = {
                 0, 0, 0, 0 },
         { {"sipt",  sizeof("sipt")-1}, PVT_OTHER,  sipt_get_pv,    0,
                 sipt_parse_pv_name, 0, 0, 0 },
+        { {"sipt_redirection_info",  sizeof("sipt_redirection_info")-1}, PVT_OTHER,  sipt_get_redirection_info,    0,
+               0, 0, 0, 0 },
+        { {"sipt_redirection_number_nai",  sizeof("sipt_redirection_number_nai")-1}, PVT_OTHER,  sipt_get_redirection_number_nai,    0,
+                0, 0, 0, 0 },
+        { {"sipt_redirection_number",  sizeof("sipt_redirection_number")-1}, PVT_OTHER,  sipt_get_redirection_number,    0,
+                0, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
