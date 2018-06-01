@@ -371,7 +371,7 @@ error:
  */
 int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog)
 {
-	int ret;
+	int ret = -1; /* error if dialog == 0 */
 	str suid;
 
 	if(dialog==0) {
