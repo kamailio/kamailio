@@ -208,7 +208,7 @@ struct module_exports exports = {
 /**************************** fixup functions ******************************/
 static int fixup_prob( void** param, int param_no)
 {
-	unsigned int myint;
+	unsigned int myint = 1000; /* stop if str2int later fail */
 	str param_str;
 
 	/* we only fix the parameter #1 */
