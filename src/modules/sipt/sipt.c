@@ -689,7 +689,7 @@ static int sipt_destination2(struct sip_msg *msg, char *_destination, char *_hop
 	unsigned int int_nai = 0;
 	str2int(nai, &int_nai);
 	str * terminator = (str*)_terminator;
-	unsigned int int_terminator;
+	unsigned int int_terminator = 0; /* if the str2int later fail */
 	str2int(terminator, &int_terminator);
 	str * destination = (str*)_destination;
 	struct sdp_mangler mangle;
