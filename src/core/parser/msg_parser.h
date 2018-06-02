@@ -74,7 +74,12 @@ typedef enum request_method {
 	METHOD_UPDATE=2048,       /*!< 2048 - 2^11 */
 	METHOD_REFER=4096,        /*!< 4096 - 2^12 */
 	METHOD_PUBLISH=8192,      /*!< 8192 - 2^13 */
-	METHOD_OTHER=16384        /*!< 16384 - 2^14 */
+	METHOD_KDMQ=16384,        /*!< 16384 - 2^14 */
+	METHOD_GET=32768,         /*!< 32768 - 2^15 */
+	METHOD_POST=65536,        /*!< 65536 - 2^16 */
+	METHOD_PUT=131072,        /*!< 131072 - 2^17 */
+	METHOD_DELETE=262144,     /*!< 262144 - 2^18 */
+	METHOD_OTHER=524288       /*!< 524288 - 2^19 */
 } request_method_t;
 
 #define FL_FORCE_RPORT  (1 << 0)  /*!< force rport */

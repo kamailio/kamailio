@@ -65,7 +65,7 @@ int parse_method_name(const str* const s, enum request_method* const method)
 	}
 
 	switch ((s->s)[0]) {
-		/* ordered after probability of aparition on a normal proxy */
+		/* ordered after probability of apparition on a normal proxy */
 		case 'R':
 		case 'r':
 			if (likely((s->len == 8) &&
