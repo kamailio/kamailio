@@ -44,6 +44,7 @@ static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
 static int w_send(sip_msg_t *msg, char *su, char *sq);
 static int w_send_tcp(sip_msg_t *msg, char *su, char *sq);
 static int w_send_data(sip_msg_t *msg, char *suri, char *sdata);
+static int w_sendx(sip_msg_t *msg, char *suri, char *ssock, char *sdata);
 static int w_msg_iflag_set(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2);
@@ -89,6 +90,8 @@ static cmd_export_t cmds[]={
 	{"send_tcp", (cmd_function)w_send_tcp, 1, fixup_spve_null,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"send_data", (cmd_function)w_send_data, 2, fixup_spve_spve,
+		0, ANY_ROUTE },
+	{"sendx", (cmd_function)w_sendx, 3, fixup_spve_all,
 		0, ANY_ROUTE },
 	{"is_incoming",    (cmd_function)nio_check_incoming, 0, 0,
 		0, ANY_ROUTE },
@@ -233,7 +236,33 @@ static int w_send_data(sip_msg_t *msg, char *suri, char *sdata)
 		LM_ERR("cannot get the destination parameter\n");
 		return -1;
 	}
-	if(corex_send_data(&uri, &data) < 0)
+	if(corex_send_data(&uri, NULL, &data) < 0)
+		return -1;
+	return 1;
+}
+
+static int w_sendx(sip_msg_t *msg, char *suri, char *ssock, char *sdata)
+{
+	str uri;
+	str sock;
+	str data;
+
+	if (fixup_get_svalue(msg, (gparam_t*)suri, &uri))
+	{
+		LM_ERR("cannot get the destination parameter\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)ssock, &sock))
+	{
+		LM_ERR("cannot get the socket parameter\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)sdata, &data))
+	{
+		LM_ERR("cannot get the destination parameter\n");
+		return -1;
+	}
+	if(corex_send_data(&uri, &sock, &data) < 0)
 		return -1;
 	return 1;
 }
