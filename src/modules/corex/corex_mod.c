@@ -41,7 +41,7 @@ MODULE_VERSION
 
 static int nio_intercept = 0;
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
-static int w_send(sip_msg_t *msg, char *su, char *sq);
+static int w_send_udp(sip_msg_t *msg, char *su, char *sq);
 static int w_send_tcp(sip_msg_t *msg, char *su, char *sq);
 static int w_send_data(sip_msg_t *msg, char *suri, char *sdata);
 static int w_sendx(sip_msg_t *msg, char *suri, char *ssock, char *sdata);
@@ -81,9 +81,9 @@ static cmd_export_t cmds[]={
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"append_branch", (cmd_function)w_append_branch, 2, fixup_spve_spve,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"send", (cmd_function)w_send, 0, 0,
+	{"send_udp", (cmd_function)w_send_udp, 0, 0,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"send", (cmd_function)w_send, 1, fixup_spve_spve,
+	{"send_udp", (cmd_function)w_send_udp, 1, fixup_spve_null,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"send_tcp", (cmd_function)w_send_tcp, 0, 0,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
@@ -206,14 +206,18 @@ static int w_append_branch(sip_msg_t *msg, char *su, char *sq)
 }
 
 /**
- * config wrapper for send() and send_tcp()
+ * config wrapper for send_udp()
  */
-static int w_send(sip_msg_t *msg, char *su, char *sq)
+static int w_send_udp(sip_msg_t *msg, char *su, char *sq)
 {
 	if(corex_send(msg, (gparam_t*)su, PROTO_UDP) < 0)
 		return -1;
 	return 1;
 }
+
+/**
+ * config wrapper for send_tcp()
+ */
 static int w_send_tcp(sip_msg_t *msg, char *su, char *sq)
 {
 	if(corex_send(msg, (gparam_t*)su, PROTO_TCP) < 0)
