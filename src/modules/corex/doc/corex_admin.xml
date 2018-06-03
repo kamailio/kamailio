@@ -272,7 +272,32 @@ modparam("corex", "msg_avp", "$avp(msg)")
 </programlisting>
 		</example>
 	</section>
-    <section id="corex.f.is_incoming">
+
+	<section id="corex.f.sendx">
+		<title>
+			<function moreinfo="none">sendx(uri, sock, data)</function>
+		</title>
+		<para>
+			Send the data to address specified by uri using a specific local
+			socket. All parameters can contain pseudo-variables. The uri
+			parameter has to be a valid SIP URI. The sock parameter has to be
+			a valid socket specifier (like values assigned to $fs). The data
+			parameter can by any arbitrary content.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sendx</function> usage</title>
+		<programlisting format="linespecific">
+...
+sendx("sip:example.com:5070;transport=sctp", "sctp:2.3.4.5:5060", "Message at $Ts");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.is_incoming">
 		<title>
 			<function moreinfo="none">is_incoming()</function>
 		</title>
