@@ -245,6 +245,13 @@ static int w_send_data(sip_msg_t *msg, char *suri, char *sdata)
 	return 1;
 }
 
+static int ki_send_data(sip_msg_t *msg, str *uri, str *data)
+{
+	if(corex_send_data(uri, NULL, data) < 0)
+		return -1;
+	return 1;
+}
+
 static int w_sendx(sip_msg_t *msg, char *suri, char *ssock, char *sdata)
 {
 	str uri;
@@ -267,6 +274,13 @@ static int w_sendx(sip_msg_t *msg, char *suri, char *ssock, char *sdata)
 		return -1;
 	}
 	if(corex_send_data(&uri, &sock, &data) < 0)
+		return -1;
+	return 1;
+}
+
+static int ki_sendx(sip_msg_t *msg, str *uri, str *sock, str *data)
+{
+	if(corex_send_data(uri, sock, data) < 0)
 		return -1;
 	return 1;
 }
@@ -896,6 +910,16 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	{ str_init("corex"), str_init("has_user_agent"),
 		SR_KEMIP_INT, ki_has_user_agent,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("send_data"),
+		SR_KEMIP_INT, ki_send_data,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("sendx"),
+		SR_KEMIP_INT, ki_sendx,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
