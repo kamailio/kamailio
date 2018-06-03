@@ -231,6 +231,8 @@ void crcitt_string_array( char *dst, str src[], int size )
 	ccitt = 0xFFFF;
 	str_len=CRC16_LEN;
 	for (i=0; i<size; i++ ) {
+		/* invalid str with positive length and null char pointer */
+		if( unlikely(src[i].s==NULL)) break;
 		c=src[i].s;
 		len=src[i].len;
 		while(len) {
