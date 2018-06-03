@@ -168,12 +168,17 @@ static int check_via_address(struct ip_addr* ip, str *name,
 						(name->s[name->len-1]==']')&&
 						(strncasecmp(name->s+1, s, len)==0))
 				)
-		   )
+		   ) {
 			return 0;
-		else
-
+		}
+		else {
+			if (unlikely(name->s==NULL)) {
+				LM_CRIT("invalid Via host name\n");
+				return -1;
+			}
 			if (strncmp(name->s, s, name->len)==0)
 				return 0;
+		}
 	}else{
 		LM_CRIT("could not convert ip address\n");
 		return -1;
