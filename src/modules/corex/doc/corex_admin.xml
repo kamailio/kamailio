@@ -205,9 +205,9 @@ modparam("corex", "msg_avp", "$avp(msg)")
 	    </example>
 	</section>
 
-	<section id="corex.f.send">
+	<section id="corex.f.send_udp">
 		<title>
-			<function moreinfo="none">send([ host [ :port ] ])</function>
+			<function moreinfo="none">send_udp([ host [ :port ] ])</function>
 		</title>
 		<para>
 			Send the original SIP message to a specific destination in stateless
@@ -228,13 +228,13 @@ modparam("corex", "msg_avp", "$avp(msg)")
 			This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>send</function> usage</title>
+		<title><function>send_udp</function> usage</title>
 		<programlisting format="linespecific">
 ...
-	send();
-	send("10.20.15.10");
-	send("sip.example.com:5070");
-	send("$var(res)");
+	send_udp();
+	send_udp("10.20.15.10");
+	send_udp("sip.example.com:5070");
+	send_udp("$var(res)");
 ...
 </programlisting>
 		</example>
@@ -245,10 +245,21 @@ modparam("corex", "msg_avp", "$avp(msg)")
 			<function moreinfo="none">send_tcp([ host [ :port ] ])</function>
 		</title>
 		<para>
-			This function is identical to <emphasis>send()</emphasis>
+			This function is identical to <emphasis>send_udp()</emphasis>
 			described above, except that it sends the SIP message using the
 			TCP protocol instead of UDP.
 		</para>
+		<example>
+		<title><function>send_tcp</function> usage</title>
+		<programlisting format="linespecific">
+...
+	send_tcp();
+	send_tcp("10.20.15.10");
+	send_tcp("sip.example.com:5070");
+	send_tcp("$var(res)");
+...
+</programlisting>
+		</example>
 	</section>
 
 	<section id="corex.f.send_data">
