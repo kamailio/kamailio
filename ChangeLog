@@ -1,3 +1,560 @@
+===================== 2018-06-05 Version 5.1.4 Released ==================
+
+===================== Changes Since Version 5.1.3 ===========================
+
+commit 35b0e3887935d9702fb3e704f07699508f823e1b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 5 12:52:27 2018 +0200
+
+    Makefile.defs: version set to 5.1.4
+
+commit c3eec978f6456eb238d446686e1db3b5b6de4b7b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 5 12:11:28 2018 +0200
+
+    pkg/rpm: version set to 5.1.4
+
+commit 574a0d245bf1864ca6b855081fd76c721fd19532
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 1 18:48:27 2018 +0200
+
+    pv: debug message with intermediate message to evaluate by pv_evalx()
+    
+    (cherry picked from commit 03698a4b2ec49896c08a3989403d7e33ff9fb844)
+
+commit 12ddd127343f1be98a4556aadd9ccfeafc3fbdc7
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Fri Jun 1 10:38:40 2018 +0300
+
+    dialog: check CSeq careful with track_cseq_updates
+    
+    to avoid null pointer access for malformed messages
+    
+    (cherry picked from commit 59c7bf4f43a8cd5dcb0555835a064d88679956c5)
+
+commit fa87c0be79e7e12f3ec57c8ec532f0240b7cdb31
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jun 5 11:16:16 2018 +0200
+
+    pkg/kamailio/deb: version set to 5.1.4
+
+commit 942445c2c3844ae5d2692d7c734cb1375caed849
+Author: valentin <christoph.valentin@kapsch.net>
+Date:   Tue Mar 20 16:15:57 2018 +0100
+
+    ims_isc: initial fix of issue #1168
+    
+    Function isc_match_filter() got a new local variable firstflag in
+    order to handle the case where a FAILURE_ROUTE callback is
+    received before the first AS has been contacted.
+    The firstflag is also forwarded to function isc_forward() as
+    parameter.
+
+commit d67b2f9874ca23bd69f18df71b8f53b1b6151f6d
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Sun Jun 3 20:59:32 2018 +0200
+
+    core: improve header safe guards for Via handling
+    
+    (cherry picked from commit ad68e402ece8089f133c10de6ce319f9e28c0692)
+
+commit 7de9b687355f714d327b3c74a0fc63c85c9d1aee
+Author: Christoph Valentin <christoph.valentin@kapsch.net>
+Date:   Fri Apr 6 15:29:11 2018 +0200
+
+    ims_usrloc_scscf: bugfix Contct is removed when old Contct expires
+    
+    in function unlink_contact_from_impu() (in file impurecord.c) an
+    assignment "=" is used instead of a comparision operator "==". This
+    leads to mess, when old contact expires.
+
+commit 9aee0374e1db8733a220d37fbc53517353aee4dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 30 20:17:11 2018 +0200
+
+    carrierroute: rename boolean type conflicting with clang sdtbool
+    
+    In file included from carrierroute.c:51:
+    ./cr_db.h:92:2: error: expected identifier
+            false = 0,
+            ^
+    /usr/lib/clang/9.1.0/include/stdbool.h:33:15: note: expanded from
+          macro 'false'
+     #define false 0
+    
+    (cherry picked from commit 0a14914fc1f98c18b9b75f66fe2e71f15147c9bf)
+
+commit e3a78848857ee4a12211f10e091209ee2431b4b6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 30 18:04:44 2018 +0200
+
+    topos: skip handling local DMQ messages
+    
+    (cherry picked from commit 7ff8d4284f20763e8e47f9b24e4604867a242e4a)
+
+commit 0c17c1c8ba43967025f13a87507e6877490ed229
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Wed May 30 12:48:26 2018 +0200
+
+    db_cluster remove old svn ID tags
+    
+    (cherry picked from commit be82892a68342287d37de90ddb74c1f66a37e28f)
+
+commit 4cf3f3e84bcd45eb32545de9fa71d80769bd9603
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 29 22:49:42 2018 +0200
+
+    core: kemi - more log-level message shortcut functions
+    
+    (cherry picked from commit f854f2c27bee1b1e4f43565ff1865b88c27387c9)
+
+commit fd163baf20ab28354bb7cbf92ffd7e7c4d7eff3b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 29 13:39:04 2018 +0200
+
+    app_jsdt: exported KSR.pv.getw(...)
+    
+    (cherry picked from commit 616b68904e0741ebcdb70e3c7f66b3b6d1254a8d)
+
+commit 7d6dddfbf2ccadaf749496a4288f176b191350f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 29 13:29:36 2018 +0200
+
+    stun: catch udp ping 0000 when trying to parse stun headers
+    
+    - avoid useless debug message
+    - info message made debug if the size of received packet is too small
+    for a stun header
+    
+    (cherry picked from commit 7e08fc8d2b74657d6e6171effbab2770482d693e)
+
+commit 7e763c727076af3a3a35db4fc840e857ba00ae46
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 28 15:33:21 2018 +0200
+
+    lib/srdb1: increased the safety check for max db url to 1023
+    
+    - was 255, too small for large connection strings needed for no-sql
+    - reported by GH #1545
+    
+    (cherry picked from commit 0a9ebbbdfe0cd4c137338adbacf5c5890222708a)
+
+commit 96eec5f5aaa99288ef59097cc39c6322993521ab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 27 10:56:00 2018 +0200
+
+    rls: allocate size for normalized uri for cloning buffer
+    
+    - it can be longer than pres uri, when proto prefix needs to be added
+    
+    (cherry picked from commit 93932a4ff18760d8fc8c59bd08984fd00cfd7759)
+
+commit 71f328f8ab2f41ed83749c77eb4b9c3b9ca378c2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 25 12:01:00 2018 +0200
+
+    app_sqlang: fix for executing kemi functions with 4 or more params
+    
+    - more combinations for 4 params
+    
+    (cherry picked from commit d86b67bbde300e4aa1be7ea7c5bdb21469ece03c)
+
+commit 7999ddc6b9b7289cd1f1fe620719e1486649ed87
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 25 11:57:15 2018 +0200
+
+    app_python: fix for executing kemi functions with 4 or more params
+    
+    - more combinations for 4 params
+    
+    (cherry picked from commit 551e4d372892d1d5c7803c3812d0bd4613efaf36)
+
+commit b25d7002fe58fff7e876fa3e9818ec0cec873c1a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 25 11:49:25 2018 +0200
+
+    app_jsdt: fix for executing kemi functions with 4 or more params
+    
+    - more combinations for 4 params
+    
+    (cherry picked from commit 81d517f0a3dcd769dc84ff019c58e248ef7eb466)
+
+commit f1fbf3d6d6e4461e6f0440b042121fe45eb04730
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 25 11:41:37 2018 +0200
+
+    app_lua: fix for running kemi functions with 4 or more parameters
+    
+    - added new combinations for 4 params case
+    - reported by GH #1544
+    
+    (cherry picked from commit 52f246fbcc9097f77b6a64d15a4ff74e03577ba8)
+
+commit dace75ab9a294c34bec07d07b328be9474b7e4f3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 25 11:34:11 2018 +0200
+
+    core: kemi - more combinations for function prototypes
+    
+    (cherry picked from commit 6528c9cbc5a89128d4892f1a526c76747b42448c)
+
+commit a1a397bbf6cd6a01ccd505b7b85d448478d27cbe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 24 10:08:17 2018 +0200
+
+    sanity: updated docs to reflect default value for default_checks param
+    
+    - reported by GH #1542
+    
+    (cherry picked from commit 6ff985605b3fbb6aa350af4c21fc73afb8cf122f)
+
+commit 5fc19fd9159c649a6a21ad20193f69eb9e34509d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 23 20:43:48 2018 +0200
+
+    topos_redis: proper length value when comparing to insert INVITE branch
+    
+    (cherry picked from commit 2a3ca5942291d29de05b14338a36cecbec11f129)
+
+commit cc1ff15335a81971aa891231cbea7c8fd03261e0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 23 20:42:51 2018 +0200
+
+    tm: set msg for log_prefix before running failure_route
+    
+    - reported by GH #1531
+    
+    (cherry picked from commit eb2f25ca0810f966d089da3aa1e32e3e98a4ab16)
+
+commit 0cd09d42878ed0125bfad480e9706a81b96ab2bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 23 18:43:22 2018 +0200
+
+    core: qm malloc - wrapper to print execution file and line for qm_debug_frag()
+    
+    (cherry picked from commit f3109d4dcdc4ef810ccf4a8d17f28f7fce42271c)
+
+commit ad9817f9d6df0aabe4888b8b2d489a5ca061bd14
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 22 20:21:02 2018 +0200
+
+    topoh: more verbose debug messages when decoding r-uri
+    
+    (cherry picked from commit 5a0086fb5d54cf0411180a8426ea49ad440f147a)
+
+commit 4cf03cdac8f4f31dbc5fa716ac9b5416a99c4a60
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 22 13:46:58 2018 +0200
+
+    core: cfg.lex - removed redundant token defining max_branches
+    
+    (cherry picked from commit 420fa5e581af5668cdecd0c97b555f4d673105f7)
+
+commit 44a31db68237ca3a43382a20a75e95e6e800bd3e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 20 21:17:47 2018 +0200
+
+    app_jsdt: implemented kemi KSR.pv.getw(...)
+    
+    (cherry picked from commit 3647cc1a9b2e85e71657ba3dd3bba21c6bdc5ff5)
+
+commit b8602fc0f3ea9f3e7bba593c2d8486e5bd60a882
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 19 19:33:56 2018 +0200
+
+    app_sqlang: added KSR.pv.getw(...)
+    
+    (cherry picked from commit cb97be77664625a4fb454bdd6d5c84c8a2c7adb3)
+
+commit e62762cb657912f22c7a0e97f9a43b63d4c8dce3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 18 09:03:04 2018 +0200
+
+    app_python: added KSR.pv.getw() to kemi expors
+    
+    - wrapper function for returning the value
+    
+    (cherry picked from commit e8b434f13f56b2f34d5b30bf728c4685c488e63c)
+
+commit 8f3d8495297d459e5802a5dc86dab4f57e047941
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 18 08:48:37 2018 +0200
+
+    app_python: added KSR.pv.getw(...)
+    
+    (cherry picked from commit 115fa38f427b1bc3730add9078c44219b25960cb)
+
+commit 91649cd46bf88d80f4fbcaccecb03e3a8fbae577
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 15 22:11:52 2018 +0200
+
+    db2_ldap: fix compilation warning
+    
+    > ld_fld.c:831:19: warning: unused function 'db_double2ldap_str' [-Wunused-function]
+    > static inline int db_double2ldap_str(struct sbuf* buf, db_fld_t* fld)
+    >                   ^
+    > 1 warning generated.
+    
+    (cherry picked from commit 5b1355aa3d9404a5165b0afbfdac384fe9cf785a)
+
+commit 0c04b6f8b7f532147e03c1c4bb706e4a6501ab35
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 15 20:18:02 2018 +0200
+
+    db_perlvdb: fix compilation warning
+    
+    > db_perlvdb.c: In function 'db_perlvdb_bind_api':
+    > db_perlvdb.c:98:24: warning: assignment from incompatible pointer type [-Wincompatible-pointer-types]
+    >  dbb->replace          = perlvdb_db_replace;
+    >                        ^
+    
+    (cherry picked from commit dbae2561720c97200d8e58e1e6c408a943e3c07b)
+
+commit f42886f1ab9bb61610fca462ee6dc5698fef3ec6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 15 07:54:24 2018 +0200
+
+    app_lua: kemi - exported KSR.pv.getw("$...")
+    
+    - get the value of the pseudo-variable if it is not $null and the string
+    "<<null>>" if it is $null
+    - useful to use in building log messages without testing if the variable
+    is set, otherwise lua throws error while trying to concatenate null
+    value
+    
+    (cherry picked from commit c3e36a1eb2ff70f94b83a42de3e901f4ba142813)
+
+commit 649e3766f4159a366a1befe49f132637239e7e9a
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon May 21 21:43:31 2018 +0000
+
+    tls: Fixed build tls module on Alpine dist
+    
+    (cherry picked from commit 9bdc1eba76f03cd009d7f04906f13bdb6579f511)
+
+commit e5745ca3d058f82e957a761b4b800f869a7ca2a9
+Author: Muhammad Shahzad <shaheryarkh@gmail.com>
+Date:   Tue May 8 08:15:47 2018 +0200
+
+    db_perlvdb: updated code and documentation for latest db api
+    
+    - GH #1525
+    
+    (cherry picked from commit 1a15e985de8cc4a5c836dacd0df4afdb6b6efb1b)
+
+commit 256d06bc1902f59354fb0bee37a1e34510714318
+Author: uts09 <uttamhoode@gmail.com>
+Date:   Mon May 7 22:30:04 2018 +0200
+
+    misc/examples/ims: replaced deprecated mi_fifo with jsonrpcs
+    
+    - submitted via PR #1524
+    
+    (cherry picked from commit e17853d8804fa7f10688676d313014ac6e313215)
+
+commit fcd3974e85b549c85cb7fb3a11e9d019b6adaf1d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 7 08:55:46 2018 +0200
+
+    db_perlvdb: added const specifiers to get rid of warnings
+    
+    (cherry picked from commit 6a152024a40abdb89842aaee418088fe3fb23ae2)
+
+commit 052cfbd844b662cac17910f55111ad8c4388fd44
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 6 09:19:09 2018 +0200
+
+    core: dns cache - print status as field in rpc structure
+    
+    (cherry picked from commit 1822d974ff1704cca3a1db5fce0507be47af3928)
+
+commit 1cac068d1acdd44081a1c4e65a317a4b208a08bb
+Author: surendratiwari3 <surendratiwari3@gmail.com>
+Date:   Sat May 5 12:48:31 2018 +0530
+
+    misc:kemi_lua append_hf to append
+    
+    (cherry picked from commit 5ceb3b857d448fed1e819812dcb4a9724243cdb8)
+
+commit 7998b253bd6ed2e589f94d18a85aec99914a31ce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 5 09:21:14 2018 +0200
+
+    db_perlvdb: updated the db api exported fields
+    
+    (cherry picked from commit c7aa0a9e3796b1fcd70305a2878d62bf251a9b5e)
+
+commit e86116142f4c30ba5f9afbeebf558506e775986f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 5 08:49:32 2018 +0200
+
+    db_perlvdb: proper lookup for app_perl module
+    
+    - reported by shaheryarkh@gmail.com
+    
+    (cherry picked from commit 1226ae471627547ef00c651b78b37e1c397adc23)
+
+commit ed235c5a5671fa9011e489e2ab1ff0307a18d1cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 5 08:44:41 2018 +0200
+
+    core: rpc dns.view outputs proper formatted structure
+    
+    - previously it was doing sort of printf to emulate structures
+    
+    (cherry picked from commit ab9e9eba2bdd70a6bac296b88331a137c6a3cbd0)
+
+commit 04bd1288ba84223695c5e01e8f587fd3d2f08440
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 5 07:36:56 2018 +0200
+
+    dispatcher: declare vars at beginning of the block in rpc command
+    
+    (cherry picked from commit c73a22abb1691e3c25b5f599e5f387540f152913)
+
+commit e4cca93ff255b391ae5c4cfedf3ccc5f0b41456c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 4 14:18:11 2018 +0200
+
+    core: rpc dns.view returns an array of records
+    
+    (cherry picked from commit 648dd937831654d40a9d615319693b87db31ef94)
+
+commit 75e29b91ebb54fc5ad3ce5ccbdc9230cf2b4f11d
+Author: surendratiwari3 <surendratiwari3@gmail.com>
+Date:   Fri May 4 09:33:36 2018 +0530
+
+    Module: htable:: event_callback_mode to int
+    
+    (cherry picked from commit 896c5e1c76e6836bedaf66f9b832020a0d70c04b)
+
+commit 1295aadf9055be1542b4436d84fd7595ca616f1c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 3 21:19:59 2018 +0200
+
+    htable: docs for event_callback_mode parameter
+    
+    (cherry picked from commit e72a41906da417cedb81ef8216c3c084fbb4902d)
+
+commit 89a91f11f5bdb87d91f5b2003ef7bfe15329c9e7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 3 21:10:12 2018 +0200
+
+    htable: added parameter event_callback_mode
+    
+    - control when event_route[htable:init] is executed: 0 - after all
+    modules were initialized; 1 - in first worker process; (default 0)
+    - fixes use with kemi framework by using value 1, because after module
+    initialization the kemi framework is not ready, being set up per child
+    process
+    - reported by GH #1519
+    
+    (cherry picked from commit 1b8ab8458806106a51de26afd06be5e3a15188b0)
+
+commit 981fd4dc2ca4ef49544385b1b82b0dce57a673a0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 3 20:47:37 2018 +0200
+
+    core: dns - print index and remove per record type printing added previously
+    
+    - type is already printed at the top of the structure
+    
+    (cherry picked from commit 6285b5ebe02d39bf77baa8f29d16de246dc1ad77)
+
+commit 4b174a25e895545e4e101b23ad4d6cd4b399f38f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 3 14:39:10 2018 +0200
+
+    core: print rr type for rpc dns.view
+    
+    (cherry picked from commit b72e0b6984e87b42f0a578a6b220a28a80e67737)
+
+commit b30e500576ba1e4e31b530c5bee6369c7d37f336
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 2 08:18:40 2018 +0200
+
+    usrloc: removed useless set of db type for expire column
+    
+    (cherry picked from commit 943724e62c2b3bb98a37d9f496cc6c76ecb976cb)
+
+commit e0c84fcd3159ed81d66461c9b14f3859069fc773
+Author: Konstantin Poliakov <k.polyakov@mightycall.com>
+Date:   Wed May 2 08:15:39 2018 +0200
+
+    usrloc: use UL_DB_EXPIRES_SET() inside get_all_db_ucontacts()
+    
+    - fix matching date field for some backends, such as mongodb, as well as
+    obey ul_expires_type value
+    
+    (cherry picked from commit 944dc1dc1e6261a3c179ff11bf3531e379eb9f35)
+
+commit d75068d2ecd12189c0cc238ed0737856a4e34d73
+Author: Konstantin Poliakov <k.polyakov@mightycall.com>
+Date:   Mon Apr 30 23:57:19 2018 +0300
+
+    nathelper: moved var declaration into the begining of function.
+    
+    (cherry picked from commit 2fb84e5e101b61bbaedc18d8b37188cbc6b1cee8)
+
+commit c5df8556f2c4189c01e4ddf3f9a1309916750286
+Author: Konstantin Poliakov <k.polyakov@mightycall.com>
+Date:   Sun Apr 29 21:07:19 2018 +0300
+
+    nathelper: it doesn't ping contacts if ping_nated_only=0
+    
+    - nathelper sends ping only if nat flag is specified, but if ping_nated_only=0 it should ping all contact in any case.
+    
+    (cherry picked from commit b34cf58a3a88e5ed2b2aa6aa9e5df0e5bb1808f9)
+
+commit cefd474c13756b2a37b5969620ab8c0153fa9ed8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 27 08:56:32 2018 +0200
+
+    cfgutils: update route_if_exists() to have same behaviour as route()
+    
+    - do not run the route block as a top route
+    - related to GH #1503
+    
+    (cherry picked from commit 9670bd80550b9e0c2af1d5d61df618292346ba28)
+
+commit 03dd59249d17c55c749d4a4e806843f7f407e4ea
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Mon May 7 09:36:53 2018 +0200
+
+    core: improve to header check guards, str consists of length and pointer
+    
+    (cherry picked from commit 281a6c6b6eaaf30058b603325e8ded20b99e1456)
+
+commit f0dce0c9992929b57bc1a9161af73e3692119926
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Thu Apr 26 11:38:44 2018 +0200
+
+    ims_charging: Use the "custom_user_avp" also in other places, where the user is retrieved (aligning request with the docs)
+
+commit f0fbe297a47c658b63623b2c5912cdf379b3f7fd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 25 14:43:42 2018 +0200
+
+    db_mongodb: clone bson UTF8 value into DB val structure
+    
+    - the bson iterator invalidates or reuses the memory after several interations
+    - initial patch by Konstantin Poliakov <k.polyakov@mightycall.com>, GH #1508
+    
+    (cherry picked from commit 1ef70d68599db092fa71b9b8b7cd3fdcd54f8a99)
+
+commit 7fdace3485a20de08ffc99a090987b81ac9a9e10
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 25 14:08:00 2018 +0200
+
+    tls: condition on libressl version for declaring BIO data functions
+    
+    - it is required only for LIBRESSL_VERSION_NUMBER < 0x20700000L
+    - fixes compilation on Alpine linux
+    - part of GH #1511
+    
+    (cherry picked from commit cffd8bd88f140487db8149184e15e08ff3d71f44)
+
+
 ===================== 2018-04-24 Version 5.1.3 Released ==================
 
 ===================== Changes Since Version 5.1.2 ===========================
