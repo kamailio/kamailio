@@ -31,13 +31,13 @@
 	</section>
 
 	<section>
-	<title>Multiple &rtp; proxy usage</title>
+	<title>Usage With Multiple RTPEngine Instances</title>
 	<para>
-		The rtpengine module can support multiple &rtp; proxies for
+		The rtpengine module can support multiple RTPEngine instances for
 		balancing/distribution and control/selection purposes.
 	</para>
 	<para>
-		The module allows definition of several sets of rtpproxies.
+		The module allows definition of several sets of RTPEngines.
 		Load-balancing will be performed over a set and the admin has the
 		ability to choose what set should be used. The set is selected via
 		its id - the id being defined with the set. Refer to the
@@ -46,7 +46,7 @@
 	</para>
 	<para>
 		The balancing inside a set is done automatically by the module based on
-		the weight of each &rtp; proxy from the set.
+		the weight of each RTPEngine from the set.
 	</para>
 	<para>
 		The selection of the set is done from script prior using
@@ -74,8 +74,8 @@
 		set only once before rtpengine_offer() or rtpengine_manage() call.
 	</para>
 	<para>
-		From the current implementation point of view, the sets of rtpproxy nodes
-		are shared memory(shm), so all processes can see a common list of nodes.
+		From the current implementation point of view, the sets of rtpengine nodes
+		are in shared memory(shm), so all processes can see a common list of nodes.
 		There is no locking when setting the nodes enabled/disabled (to keep the
 		memory access as fast as possible). Thus, problems related to node state
 		might appear for concurent processes that might set the nodes
@@ -546,12 +546,12 @@ mysql> describe rtpengine;
 +----------+------------------+------+-----+---------------------+-------+
 
 mysql> select * from rtpengine;
-+-------+---------------------------+--------+----------+---------------------+
-| setid | url                       | weight | disabled | stamp               |
-+-------+---------------------------+--------+----------+---------------------+
-|     0 | udp:rtpproxy1.domain:8800 |      1 |        0 | 2016-03-10 10:30:54 |
-|     0 | udp:rtpproxy2.domain:8800 |      1 |        1 | 2016-03-10 10:30:54 |
-+-------+---------------------------+--------+----------+---------------------+
++-------+----------------------------+--------+----------+---------------------+
+| setid | url                        | weight | disabled | stamp               |
++-------+----------------------------+--------+----------+---------------------+
+|     0 | udp:rtpengine1.domain:8800 |      1 |        0 | 2016-03-10 10:30:54 |
+|     0 | udp:rtpengine2.domain:8800 |      1 |        1 | 2016-03-10 10:30:54 |
++-------+----------------------------+--------+----------+---------------------+
 
 mysql> select * from version;
 +---------------------------+---------------+
