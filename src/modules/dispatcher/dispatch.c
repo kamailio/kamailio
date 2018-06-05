@@ -269,6 +269,9 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 	for(pit = params_list; pit; pit = pit->next) {
 		if(pit->name.len == 4 && strncasecmp(pit->name.s, "duid", 4) == 0) {
 			dest->attrs.duid = pit->body;
+		} else if(pit->name.len == 2
+				  && strncasecmp(pit->name.s, "cc", 2) == 0) {
+			str2sint(&pit->body, &dest->attrs.congestion_control);
 		} else if(pit->name.len == 6
 				  && strncasecmp(pit->name.s, "weight", 6) == 0) {
 			str2sint(&pit->body, &dest->attrs.weight);
@@ -520,6 +523,7 @@ int dp_init_relative_weights(ds_set_t *dset)
 	if(dset == NULL || dset->dlist == NULL)
 		return -1;
 
+	lock_get(&dset->lock);
 	int rw_sum = 0;
 	/* find the sum of relative weights*/
 	for(j = 0; j < dset->nr; j++) {
@@ -529,6 +533,7 @@ int dp_init_relative_weights(ds_set_t *dset)
 	}
 
 	if(rw_sum == 0) {
+		lock_release(&dset->lock);
 		return 0;
 	}
 
@@ -540,11 +545,13 @@ int dp_init_relative_weights(ds_set_t *dset)
 
 		int current_slice =
 				dset->dlist[j].attrs.rweight * 100 / rw_sum; //truncate here;
+		LM_DBG("rw_sum[%d][%d][%d]\n",j, rw_sum, current_slice);
 		for(k = 0; k < current_slice; k++) {
 			dset->rwlist[t] = (unsigned int)j;
 			t++;
 		}
 	}
+
 	/* if the array was not completely filled (i.e., the sum of rweights is
 	 * less than 100 due to truncated), then use last address to fill the rest */
 	unsigned int last_insert =
@@ -557,7 +564,7 @@ int dp_init_relative_weights(ds_set_t *dset)
 	 * sending first 20 calls to it, but ensure that within a 100 calls,
 	 * 20 go to first address */
 	shuffle_uint100array(dset->rwlist);
-
+	lock_release(&dset->lock);
 	return 0;
 }
 
@@ -2290,6 +2297,8 @@ static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int l
 		latency_stats->average = latency;
 		latency_stats->estimate = latency;
 	}
+	/* train the average if stable after 10 samples */
+	if (latency_stats->count > 10 && latency_stats->stdev < 0.5) latency_stats->count = 500000;
 	if (latency_stats->min > latency)
 		latency_stats->min = latency;
 	if (latency_stats->max < latency)
@@ -2329,29 +2338,81 @@ int ds_update_latency(int group, str *address, int code)
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
-
-	while(i < idx->nr) {
-		if(idx->dlist[i].uri.len == address->len
-				&& strncasecmp(idx->dlist[i].uri.s, address->s, address->len)
-						   == 0) {
-
-			/* destination address found */
-			state = idx->dlist[i].flags;
-			ds_latency_stats_t *latency_stats = &idx->dlist[i].latency_stats;
-			if (code == 408 && latency_stats->timeout < UINT32_MAX) {
+	int apply_rweights = 0;
+	int all_gw_congested = 1;
+	int total_congestion_ms = 0;
+	lock_get(&idx->lock);
+	while (i < idx->nr) {
+		ds_dest_t *ds_dest = &idx->dlist[i];
+		ds_latency_stats_t *latency_stats = &ds_dest->latency_stats;
+		if (ds_dest->uri.len == address->len
+				&& strncasecmp(ds_dest->uri.s, address->s, address->len) == 0) {
+			/* Destination address found, this is the gateway that was pinged. */
+			state = ds_dest->flags;
+			if (code == 408 && latency_stats->timeout < UINT32_MAX)
 				latency_stats->timeout++;
-			} else {
-				struct timeval now;
-				gettimeofday(&now, NULL);
-				int latency_ms = (now.tv_sec - latency_stats->start.tv_sec)*1000
-			            + (now.tv_usec - latency_stats->start.tv_usec)/1000;
-				latency_stats_update(latency_stats, latency_ms);
-				LM_DBG("[%d]latency[%d]avg[%.2f][%.*s]code[%d]\n", latency_stats->count, latency_ms,
-					 latency_stats->average, address->len, address->s, code);
+			struct timeval now;
+			gettimeofday(&now, NULL);
+			int latency_ms = (now.tv_sec - latency_stats->start.tv_sec)*1000
+		            + (now.tv_usec - latency_stats->start.tv_usec)/1000;
+			latency_stats_update(latency_stats, latency_ms);
+
+			int congestion_ms = latency_stats->estimate - latency_stats->average;
+			if (congestion_ms < 0) congestion_ms = 0;
+			total_congestion_ms += congestion_ms;
+
+			/* Adjusting weight using congestion detection based on latency estimator. */
+			if (ds_dest->attrs.congestion_control && ds_dest->attrs.weight) {
+				int active_weight = ds_dest->attrs.weight - congestion_ms;
+				if (active_weight <= 0) {
+					active_weight = 0;
+				} else {
+					all_gw_congested = 0;
+				}
+				if (ds_dest->attrs.rweight != active_weight) {
+					apply_rweights = 1;
+					ds_dest->attrs.rweight = active_weight;
+				}
+				LM_DBG("[%d]latency[%d]avg[%.2f][%.*s]code[%d]rweight[%d]cms[%d]\n",
+					latency_stats->count, latency_ms,
+					latency_stats->average, address->len, address->s,
+					code, ds_dest->attrs.rweight, congestion_ms);
 			}
+		} else {
+			/* Another gateway in the set, we verify if it is congested. */
+			int congestion_ms = latency_stats->estimate - latency_stats->average;
+			if (congestion_ms < 0) congestion_ms = 0;
+			total_congestion_ms += congestion_ms;
+			int active_weight = ds_dest->attrs.weight - congestion_ms;
+			if (active_weight > 0) all_gw_congested = 0;
 		}
+		if (!ds_dest->attrs.congestion_control) all_gw_congested = 0;
 		i++;
 	}
+	/* All the GWs are above their congestion threshold, load distribution will now be based on
+	 * the ratio of congestion_ms each GW is facing. */
+	if (all_gw_congested) {
+		i = 0;
+		while (i < idx->nr) {
+			ds_dest_t *ds_dest = &idx->dlist[i];
+			ds_latency_stats_t *latency_stats = &ds_dest->latency_stats;
+			int congestion_ms = latency_stats->estimate - latency_stats->average;
+			/* We multiply by 2^4 to keep enough precision */
+			int active_weight = (total_congestion_ms << 4) / congestion_ms;
+			if (ds_dest->attrs.rweight != active_weight) {
+				apply_rweights = 1;
+				ds_dest->attrs.rweight = active_weight;
+			}
+			LM_DBG("all gw congested[%d][%d]latency_avg[%.2f][%.*s]code[%d]rweight[%d/%d:%d]cms[%d]\n",
+				        total_congestion_ms, latency_stats->count, latency_stats->average,
+				        address->len, address->s, code, total_congestion_ms, congestion_ms,
+				        ds_dest->attrs.rweight, congestion_ms);
+		i++;
+		}
+	}
+
+	lock_release(&idx->lock);
+	if (apply_rweights) dp_init_relative_weights(idx);
 	return state;
 }
 
@@ -3099,7 +3160,7 @@ ds_set_t *ds_avl_insert(ds_set_t **root, int id, int *setn)
 		node->id = id;
 		node->longer = AVL_NEITHER;
 		*root = node;
-
+		lock_init(&node->lock);
 		avl_rebalance(rotation_top, id);
 
 		(*setn)++;

@@ -155,6 +155,7 @@ typedef struct _ds_attrs {
 	int maxload;
 	int weight;
 	int rweight;
+	int congestion_control;
 } ds_attrs_t;
 
 typedef struct _ds_latency_stats {
@@ -195,6 +196,7 @@ typedef struct _ds_set {
 	unsigned int rwlist[100];
 	struct _ds_set *next[2];
 	int longer;
+	gen_lock_t lock;
 } ds_set_t;
 /* clang-format on */
 
