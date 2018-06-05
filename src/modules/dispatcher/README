@@ -48,7 +48,7 @@ Julien Chavanton
 
    Copyright © 2015 Alessandro Arrichiello, Hewlett Packard
 
-   Copyright © 2017 Julien chavanton, Flowroute
+   Copyright © 2017, 2018 Julien chavanton, Flowroute
      __________________________________________________________________
 
    Table of Contents
@@ -178,14 +178,15 @@ Julien Chavanton
    1.37. Set the “ds_timer_mode” parameter
    1.38. Set event_callback parameter
    1.39. ds_select_dst usage
-   1.40. ds_select_domain usage
-   1.41. ds_select usage
-   1.42. ds_mark_dst usage
-   1.43. ds_list_exists usage
-   1.44. ds_is_from_list usage
-   1.45. ds_load_unset usage
-   1.46. dispatcher list file
-   1.47. Kamailio config script - sample dispatcher usage
+   1.40. configuring load balancing with congestion detection
+   1.41. ds_select_domain usage
+   1.42. ds_select usage
+   1.43. ds_mark_dst usage
+   1.44. ds_list_exists usage
+   1.45. ds_is_from_list usage
+   1.46. ds_load_unset usage
+   1.47. dispatcher list file
+   1.48. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -977,6 +978,18 @@ end
             For example, 100 calls in 3-hosts group with rweight params
             1/2/1 will be distributed as 25/50/25. After third host
             failing distribution will be changed to 33/67/0.
+            Using this algorithm, you can also enable congestion control
+            by setting the attibute 'cc=1', when 'cc' is enabled the
+            'rweight' attribute will also be used to control congestion
+            tolerance. When facing congestion the weight of a gateway is
+            lowered by 1 for every ms of estimated congestion, a 'rweight'
+            value of 50 is recommended. See the example "configuring load
+            balancing with congestion detection" bellow.
+            The congestion estimation is done using an EWMA (see
+            ds_latency_estimator_alpha). If all the gateways in a set are
+            above their congestion threshold(weight), the load
+            distribution is instead done using the ratio of estimated
+            congestion ms.
           + “12” - dispatch to all destination in setid at once (parallel
             forking). Note that the AVPs are no longer set with the values
             of the destination records, no re-routing making sense in this
@@ -999,6 +1012,45 @@ ds_select_dst("1", "$var(a)");
 ds_select_dst("1", "4", "3");
 ...
 
+   Example 1.40. configuring load balancing with congestion detection
+...
+# sample of SQL provisionning statements
+INSERT INTO "dispatcher"
+VALUES(1,1,'sip:192.168.0.1:5060',0,12,'rweight=50;weight=50;cc=1;','');
+INSERT INTO "dispatcher"
+VALUES(2,1,'sip:192.168.0.2:5060',0,12,'rweight=50;weight=50;cc=1;','');
+...
+modparam("dispatcher", "ds_ping_interval", 1) # ping gateways once/second
+modparam("dispatcher", "ds_ping_latency_stats", 1) # update congestion metrics
+# configure the latency estimator
+modparam("dispatcher", "ds_latency_estimator_alpha", 900)
+...
+if (!ds_select_dst("1", "11")) { # use relative weight based load distribution
+...
+# sample of output from 'kamcmd dispatcher.list'
+DEST: {
+        URI: sip:192.168.0.1:5060
+        FLAGS: AP
+        PRIORITY: 12
+        ATTRS: {
+                BODY: rweight=50;weight=50;cc=1 # configuration values
+                DUID:
+                MAXLOAD: 0
+                WEIGHT: 50
+                RWEIGHT: 50
+                SOCKET:
+        }
+        LATENCY: {
+                AVG: 20.104000
+                STD: 1.273000
+                # estimated congestion is currently 25ms = 45ms(EST) -20ms(AVG)
+                EST: 45.005000
+                MAX: 132
+                TIMEOUT: 3
+        }
+}
+...
+
 4.2.  ds_select_domain(set, alg[, limit])
 
    The method selects a destination from addresses set and rewrites the
@@ -1012,7 +1064,7 @@ ds_select_dst("1", "4", "3");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.40. ds_select_domain usage
+   Example 1.41. ds_select_domain usage
 ...
 $var(a) = 4;
 if(ds_select_domain("1", "$var(a)")) {
@@ -1036,7 +1088,7 @@ if(ds_select_domain("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.41. ds_select usage
+   Example 1.42. ds_select usage
 ...
 $var(a) = 4;
 if(ds_select("1", "$var(a)")) {
@@ -1087,7 +1139,7 @@ if(ds_select("1", "$var(a)")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.42. ds_mark_dst usage
+   Example 1.43. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1106,7 +1158,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.43. ds_list_exists usage
+   Example 1.44. ds_list_exists usage
 ...
 if(ds_list_exists("10")) {
     ...
@@ -1149,7 +1201,7 @@ if(ds_list_exists("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.44. ds_is_from_list usage
+   Example 1.45. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1183,7 +1235,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.45. ds_load_unset usage
+   Example 1.46. ds_load_unset usage
 ...
 route {
     ...
@@ -1357,7 +1409,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.46. dispatcher list file
+   Example 1.47. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -1382,7 +1434,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.47. Kamailio config script - sample dispatcher usage
+   Example 1.48. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
