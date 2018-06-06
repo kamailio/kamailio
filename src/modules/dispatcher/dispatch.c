@@ -89,6 +89,7 @@ extern int ds_force_dst;
 extern str ds_event_callback;
 extern int ds_ping_latency_stats;
 extern float ds_latency_estimator_alpha;
+extern int ds_attrs_none;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -241,27 +242,35 @@ int init_data(void)
 /**
  *
  */
-int ds_set_attrs(ds_dest_t *dest, str *attrs)
+int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 {
 	param_t *params_list = NULL;
 	param_hooks_t phooks;
 	param_t *pit = NULL;
 	str param;
 	int tmp_rweight = 0;
+	str sattrs;
 
-	if(attrs == NULL || attrs->len <= 0)
-		return 0;
-	if(attrs->s[attrs->len - 1] == ';')
-		attrs->len--;
+	if(vattrs == NULL || vattrs->len <= 0) {
+		if(ds_attrs_none==0) {
+			return 0;
+		}
+		sattrs.s = "none=yes";
+		sattrs.len = 8;
+	} else {
+		sattrs = *vattrs;
+	}
+	if(sattrs.s[sattrs.len - 1] == ';')
+		sattrs.len--;
 	/* clone in shm */
-	dest->attrs.body.s = (char *)shm_malloc(attrs->len + 1);
+	dest->attrs.body.s = (char *)shm_malloc(sattrs.len + 1);
 	if(dest->attrs.body.s == NULL) {
 		LM_ERR("no more shm\n");
 		return -1;
 	}
-	memcpy(dest->attrs.body.s, attrs->s, attrs->len);
-	dest->attrs.body.s[attrs->len] = '\0';
-	dest->attrs.body.len = attrs->len;
+	memcpy(dest->attrs.body.s, sattrs.s, sattrs.len);
+	dest->attrs.body.s[sattrs.len] = '\0';
+	dest->attrs.body.len = sattrs.len;
 
 	param = dest->attrs.body;
 	if(parse_params(&param, CLASS_ANY, &phooks, &params_list) < 0)

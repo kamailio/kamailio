@@ -120,6 +120,7 @@ int ds_hash_expire = 7200;
 int ds_hash_initexpire = 7200;
 int ds_hash_check_interval = 30;
 int ds_timer_mode = 0;
+int ds_attrs_none = 0;
 
 str ds_outbound_proxy = STR_NULL;
 
@@ -259,6 +260,7 @@ static param_export_t params[]={
 	{"ds_default_socket",  PARAM_STR, &ds_default_socket},
 	{"ds_timer_mode",      PARAM_INT, &ds_timer_mode},
 	{"event_callback",     PARAM_STR, &ds_event_callback},
+	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
 	{0,0,0}
 };
 
