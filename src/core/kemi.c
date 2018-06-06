@@ -814,6 +814,36 @@ static int sr_kemi_core_is_method_in(sip_msg_t *msg, str *vmethod)
 					return SR_KEMI_TRUE;
 				}
 			break;
+			case 'G':
+			case 'g':
+				if(imethod==METHOD_GET) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'K':
+			case 'k':
+				if(imethod==METHOD_KDMQ) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'D':
+			case 'd':
+				if(imethod==METHOD_DELETE) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'T':
+			case 't':
+				if(imethod==METHOD_POST) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'V':
+			case 'v':
+				if(imethod==METHOD_PUT) {
+					return SR_KEMI_TRUE;
+				}
+			break;
 		}
 	}
 	return SR_KEMI_FALSE;
