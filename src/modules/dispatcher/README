@@ -99,6 +99,7 @@ Julien Chavanton
               3.34. ds_default_socket (str)
               3.35. ds_timer_mode (int)
               3.36. event_callback (str)
+              3.37. ds_attrs_none (int)
 
         4. Functions
 
@@ -177,16 +178,17 @@ Julien Chavanton
    1.36. Set the “ds_default_socket” parameter
    1.37. Set the “ds_timer_mode” parameter
    1.38. Set event_callback parameter
-   1.39. ds_select_dst usage
-   1.40. configuring load balancing with congestion detection
-   1.41. ds_select_domain usage
-   1.42. ds_select usage
-   1.43. ds_mark_dst usage
-   1.44. ds_list_exists usage
-   1.45. ds_is_from_list usage
-   1.46. ds_load_unset usage
-   1.47. dispatcher list file
-   1.48. Kamailio config script - sample dispatcher usage
+   1.39. Set the “ds_attrs_none” parameter
+   1.40. ds_select_dst usage
+   1.41. configuring load balancing with congestion detection
+   1.42. ds_select_domain usage
+   1.43. ds_select usage
+   1.44. ds_mark_dst usage
+   1.45. ds_list_exists usage
+   1.46. ds_is_from_list usage
+   1.47. ds_load_unset usage
+   1.48. dispatcher list file
+   1.49. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -236,6 +238,7 @@ Chapter 1. Admin Guide
         3.34. ds_default_socket (str)
         3.35. ds_timer_mode (int)
         3.36. event_callback (str)
+        3.37. ds_attrs_none (int)
 
    4. Functions
 
@@ -345,6 +348,7 @@ Chapter 1. Admin Guide
    3.34. ds_default_socket (str)
    3.35. ds_timer_mode (int)
    3.36. event_callback (str)
+   3.37. ds_attrs_none (int)
 
 3.1. list_file (string)
 
@@ -905,6 +909,19 @@ function ksr_dispatcher_event(evname)
 end
 ...
 
+3.37. ds_attrs_none (int)
+
+   If set to 1, "none=yes" is set in the attrs for those records that have
+   no attrs value, to ensure that corresponding avps for records do not
+   get mixed up.
+
+   Default value is “0”.
+
+   Example 1.39. Set the “ds_attrs_none” parameter
+ ...
+ modparam("dispatcher", "ds_attrs_none", 1)
+ ...
+
 4. Functions
 
    4.1. ds_select_dst(set, alg[, limit])
@@ -1002,7 +1019,7 @@ end
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.39. ds_select_dst usage
+   Example 1.40. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -1012,7 +1029,7 @@ ds_select_dst("1", "$var(a)");
 ds_select_dst("1", "4", "3");
 ...
 
-   Example 1.40. configuring load balancing with congestion detection
+   Example 1.41. configuring load balancing with congestion detection
 ...
 # sample of SQL provisionning statements
 INSERT INTO "dispatcher"
@@ -1064,7 +1081,7 @@ DEST: {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.41. ds_select_domain usage
+   Example 1.42. ds_select_domain usage
 ...
 $var(a) = 4;
 if(ds_select_domain("1", "$var(a)")) {
@@ -1088,7 +1105,7 @@ if(ds_select_domain("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.42. ds_select usage
+   Example 1.43. ds_select usage
 ...
 $var(a) = 4;
 if(ds_select("1", "$var(a)")) {
@@ -1139,7 +1156,7 @@ if(ds_select("1", "$var(a)")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.43. ds_mark_dst usage
+   Example 1.44. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1158,7 +1175,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.44. ds_list_exists usage
+   Example 1.45. ds_list_exists usage
 ...
 if(ds_list_exists("10")) {
     ...
@@ -1201,7 +1218,7 @@ if(ds_list_exists("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.45. ds_is_from_list usage
+   Example 1.46. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1235,7 +1252,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.46. ds_load_unset usage
+   Example 1.47. ds_load_unset usage
 ...
 route {
     ...
@@ -1409,7 +1426,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.47. dispatcher list file
+   Example 1.48. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -1434,7 +1451,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.48. Kamailio config script - sample dispatcher usage
+   Example 1.49. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
