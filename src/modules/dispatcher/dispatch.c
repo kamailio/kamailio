@@ -955,9 +955,9 @@ int ds_load_db(void)
 
 		attrs.s = 0;
 		attrs.len = 0;
-		if(nrcols >= 5) {
+		if(nrcols >= 5 && !VAL_NULL(values + 4)) {
 			attrs.s = VAL_STR(values + 4).s;
-			attrs.len = strlen(attrs.s);
+			if(attrs.s) attrs.len = strlen(attrs.s);
 		}
 		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn)
 				!= 0) {
