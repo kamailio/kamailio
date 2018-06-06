@@ -975,6 +975,28 @@ end
 		</example>
 	</section>
 
+ 	<section id="dispatcher.p.ds_attrs_none">
+ 		<title><varname>ds_attrs_none</varname> (int)</title>
+ 		<para>
+		If set to 1, "none=yes" is set in the attrs for those records that
+		have no attrs value, to ensure that corresponding avps for records do
+		not get mixed up.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>0</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_attrs_none</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_attrs_none", 1)
+ ...
+ </programlisting>
+ 		</example>
+	</section>
+
 	</section>
 
 	<section>
