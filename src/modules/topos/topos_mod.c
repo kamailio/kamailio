@@ -405,7 +405,7 @@ int tps_msg_sent(sr_event_param_t *evp)
 				goto done;
 			}
 			if(get_cseq(&msg)->method.len==4
-					&& strncmp(get_cseq(&msg)->method.s, "KDMQ", 4)) {
+					&& strncmp(get_cseq(&msg)->method.s, "KDMQ", 4)==0) {
 				goto done;
 			}
 		}
