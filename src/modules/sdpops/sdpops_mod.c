@@ -1874,7 +1874,13 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 
 	return -1;
 }
-
+/**
+ *
+ */
+static int ki_sdp_get_line_startswith(sip_msg_t *msg, str *avp, str *s_line)
+{
+   return w_sdp_get_line_startswith(msg, avp->s, s_line->s); 
+}
 /**
  *
  */
@@ -2017,7 +2023,11 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("sdpops"), str_init("sdp_get_line_startswith"),
+                SR_KEMIP_INT, ki_sdp_get_line_startswith,
+                { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+                        SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+        },
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 
