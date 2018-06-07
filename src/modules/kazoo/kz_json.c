@@ -132,7 +132,7 @@ struct json_object * kz_json_get_field_object(str* json, str* field)
   struct json_object *j = json_tokener_parse(dup);
   pkg_free(dup);
 
-  if (is_error(j)) {
+  if (j==NULL) {
 	  LM_ERR("empty or invalid JSON\n");
 	  return NULL;
   }
