@@ -400,12 +400,9 @@ int tps_msg_sent(sr_event_param_t *evp)
 		}
 
 		if(local==1 && dialog==0) {
-			if((get_cseq(&msg)->method_id) & (METHOD_OPTIONS|METHOD_NOTIFY)) {
-				/* skip local out-of-dialog requests (e.g., keepalive) */
-				goto done;
-			}
-			if(get_cseq(&msg)->method.len==4
-					&& strncmp(get_cseq(&msg)->method.s, "KDMQ", 4)==0) {
+			if((get_cseq(&msg)->method_id)
+						& (METHOD_OPTIONS|METHOD_NOTIFY|METHOD_KDMQ)) {
+				/* skip local out-of-dialog requests (e.g., keepalive, dmq) */
 				goto done;
 			}
 		}
