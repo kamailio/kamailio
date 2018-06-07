@@ -130,9 +130,9 @@ int checkcontact(struct sip_msg* _m, pcontact_t * c) {
 			break;
 		}
 	} else if (c->security_temp) {
-		switch (c->security->type) {
+		switch (c->security_temp->type) {
 		case SECURITY_IPSEC:
-			security_server_port = c->security->data.ipsec->port_uc;
+			security_server_port = c->security_temp->data.ipsec->port_uc;
 			break;
 		case SECURITY_TLS:
 		case SECURITY_NONE:
