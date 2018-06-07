@@ -1282,7 +1282,8 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 	void *sh;
 	void *vh;
 	void *wh;
-	void *lh; // latency stats handle
+	void *lh;
+	void *dh;
 	int j;
 	char c[3];
 	str data = STR_NULL;
@@ -1327,23 +1328,22 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 			c[1] = 'X';
 
 		if(node->dlist[j].attrs.body.s) {
-			if(rpc->struct_add(vh, "Ssd{", "URI", &node->dlist[j].uri, "FLAGS",
-					   c, "PRIORITY", node->dlist[j].priority, "ATTRS", &wh)
-					< 0) {
+			if(rpc->struct_add(vh, "Ssd{", "URI", &node->dlist[j].uri,
+					"FLAGS", c,
+					"PRIORITY", node->dlist[j].priority,
+					"ATTRS", &wh) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSdddS", "BODY",
-					   &(node->dlist[j].attrs.body), "DUID",
-					   (node->dlist[j].attrs.duid.s)
-							   ? &(node->dlist[j].attrs.duid)
-							   : &data,
-					   "MAXLOAD", node->dlist[j].attrs.maxload, "WEIGHT",
-					   node->dlist[j].attrs.weight, "RWEIGHT",
-					   node->dlist[j].attrs.rweight, "SOCKET",
-					   (node->dlist[j].attrs.socket.s)
-							   ? &(node->dlist[j].attrs.socket)
-							   : &data)
+			if(rpc->struct_add(wh, "SSdddS",
+						"BODY", &(node->dlist[j].attrs.body),
+						"DUID", (node->dlist[j].attrs.duid.s)
+									? &(node->dlist[j].attrs.duid) : &data,
+						"MAXLOAD", node->dlist[j].attrs.maxload,
+						"WEIGHT", node->dlist[j].attrs.weight,
+						"RWEIGHT", node->dlist[j].attrs.rweight,
+						"SOCKET", (node->dlist[j].attrs.socket.s)
+									? &(node->dlist[j].attrs.socket) : &data)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating attrs struct");
 				return -1;
@@ -1368,6 +1368,16 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 					  "TIMEOUT", node->dlist[j].latency_stats.timeout)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
+				return -1;
+			}
+		}
+		if (ds_hash_size>0) {
+			if(rpc->struct_add(vh, "{", "RUNTIME", &dh) < 0) {
+				rpc->fault(ctx, 500, "Internal error creating runtime struct");
+				return -1;
+			}
+			if (rpc->struct_add(dh, "d", "DLGLOAD", node->dlist[j].dload) < 0) {
+				rpc->fault(ctx, 500, "Internal error creating runtime attrs");
 				return -1;
 			}
 		}
