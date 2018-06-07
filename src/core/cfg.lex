@@ -562,23 +562,23 @@ IMPORTFILE      "import_file"
 <INITIAL>{ISAVPFLAGSET}	{ count(); yylval.strval=yytext; return ISAVPFLAGSET; }
 <INITIAL>{AVPFLAGS_DECL}	{ count(); yylval.strval=yytext; return AVPFLAGS_DECL; }
 <INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
-<INITIAL>{ROUTE}	{ count(); default_routename="DEFAULT_ROUTE";
+<INITIAL>{ROUTE}	{ count(); routename=0; default_routename="DEFAULT_ROUTE";
 						yylval.strval=yytext; return ROUTE; }
-<INITIAL>{ROUTE_REQUEST}	{ count(); default_routename="DEFAULT_ROUTE";
+<INITIAL>{ROUTE_REQUEST}	{ count(); routename=0; default_routename="DEFAULT_ROUTE";
 								yylval.strval=yytext; return ROUTE_REQUEST; }
-<INITIAL>{ROUTE_ONREPLY}	{ count(); default_routename="DEFAULT_ONREPLY";
+<INITIAL>{ROUTE_ONREPLY}	{ count(); routename=0; default_routename="DEFAULT_ONREPLY";
 								yylval.strval=yytext;
 								return ROUTE_ONREPLY; }
-<INITIAL>{ROUTE_REPLY}	{ count(); default_routename="DEFAULT_ONREPLY";
+<INITIAL>{ROUTE_REPLY}	{ count(); routename=0; default_routename="DEFAULT_ONREPLY";
 							yylval.strval=yytext; return ROUTE_REPLY; }
-<INITIAL>{ROUTE_FAILURE}	{ count(); default_routename="DEFAULT_FAILURE";
+<INITIAL>{ROUTE_FAILURE}	{ count(); routename=0; default_routename="DEFAULT_FAILURE";
 								yylval.strval=yytext;
 								return ROUTE_FAILURE; }
-<INITIAL>{ROUTE_BRANCH} { count(); default_routename="DEFAULT_BRANCH";
+<INITIAL>{ROUTE_BRANCH} { count(); routename=0; default_routename="DEFAULT_BRANCH";
 							yylval.strval=yytext; return ROUTE_BRANCH; }
-<INITIAL>{ROUTE_SEND} { count(); default_routename="DEFAULT_SEND";
+<INITIAL>{ROUTE_SEND} { count(); routename=0; default_routename="DEFAULT_SEND";
 							yylval.strval=yytext; return ROUTE_SEND; }
-<INITIAL>{ROUTE_EVENT} { count(); default_routename="DEFAULT_EVENT";
+<INITIAL>{ROUTE_EVENT} { count(); routename=0; default_routename="DEFAULT_EVENT";
 							yylval.strval=yytext;
 							state=EVRT_NAME_S; BEGIN(EVRTNAME);
 							return ROUTE_EVENT; }
