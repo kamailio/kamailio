@@ -25,6 +25,12 @@
 
 #include "str.h"
 
+typedef struct ksr_ppdefine {
+	str name;
+	str value;
+	int type;
+} ksr_ppdefine_t;
+
 str* pp_get_define_name(int idx);
 
 int pp_subst_add(char *data);
