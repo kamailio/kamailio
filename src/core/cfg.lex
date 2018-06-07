@@ -1724,6 +1724,13 @@ str* pp_get_define_name(int idx)
 	return &pp_defines[idx].name;
 }
 
+ksr_ppdefine_t* pp_get_define(int idx)
+{
+	if(idx<0 || idx>=pp_num_defines)
+		return NULL;
+	return &pp_defines[idx];
+}
+
 static int pp_lookup(int len, const char * text)
 {
 	str var = {(char *)text, len};
@@ -1768,7 +1775,7 @@ int pp_define(int len, const char * text)
 				pp_defines[ppos].value.len = 0;
 				pp_defines[ppos].value.s = NULL;
 			}
-			pp_defines[ppos].type = pp_define_type;
+			pp_defines[ppos].dtype = pp_define_type;
 			return 0;
 		} else {
 			LM_CRIT("already defined: %.*s\n", len, text);
@@ -1786,7 +1793,7 @@ int pp_define(int len, const char * text)
 	pp_defines[pp_num_defines].name.s[len] = '\0';
 	pp_defines[pp_num_defines].value.len = 0;
 	pp_defines[pp_num_defines].value.s = NULL;
-	pp_defines[pp_num_defines].type = pp_define_type;
+	pp_defines[pp_num_defines].dtype = pp_define_type;
 	pp_define_index = pp_num_defines;
 	pp_num_defines++;
 
