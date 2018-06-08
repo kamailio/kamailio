@@ -229,6 +229,10 @@ static inline struct ip_addr* str2ip(str* st)
 	static struct ip_addr ip;
 	unsigned char* s;
 
+	/* just in case that e.g. the VIA parser get confused */
+	if(unlikely(!st->s || st->len <= 0)) {
+		LM_ERR("invalid name, no conversion to IP address possible\n");
+	}
 	s=(unsigned char*)st->s;
 
 	/*init*/
@@ -281,6 +285,10 @@ static inline struct ip_addr* str2ip6(str* st)
 	unsigned char* limit;
 	unsigned char* s;
 	
+	/* just in case that e.g. the VIA parser get confused */
+	if(unlikely(!st->s || st->len <= 0)) {
+		LM_ERR("invalid name, no conversion to IP address possible\n");
+	}
 	/* init */
 	if ((st->len) && (st->s[0]=='[')){
 		/* skip over [ ] */
