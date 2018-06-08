@@ -120,7 +120,7 @@ static cmd_export_t cmds[] = {
 	{"sdp_with_ice",                (cmd_function)w_sdp_with_ice,
 		0, 0,  0, ANY_ROUTE},
 	{"sdp_get_line_startswith", (cmd_function)w_sdp_get_line_startswith,
-		2, 0,  0, ANY_ROUTE},
+		2, fixup_none_spve,  0, ANY_ROUTE},
 	{"bind_sdpops",                (cmd_function)bind_sdpops,
 		1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -1761,28 +1761,26 @@ static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar)
 /**
  *
  */
-static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
+static int ki_sdp_get_line_startswith(sip_msg_t *msg, str *aname, str *sline)
 {
 	sdp_info_t *sdp = NULL;
 	str body = {NULL, 0};
 	str line = {NULL, 0};
 	char* p = NULL;
-	str s;
-	str sline;
 	int_str avp_val;
 	int_str avp_name;
 	pv_spec_t *avp_spec = NULL;
 	static unsigned short avp_type = 0;
 	int sdp_missing=1;
 
-	if (s_line == NULL || strlen(s_line) <= 0)
-	{
+	if (sline == NULL || sline->len <= 0) {
 		LM_ERR("Search string is null or empty\n");
 		return -1;
 	}
-	sline.s = s_line;
-	sline.len = strlen(s_line);
-
+	if (aname == NULL || aname->len <= 0) {
+		LM_ERR("avp variable name is null or empty\n");
+		return -1;
+	}
 	sdp_missing = parse_sdp(msg);
 
 	if(sdp_missing < 0) {
@@ -1792,8 +1790,7 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 
 	sdp = (sdp_info_t *)msg->body;
 
-	if (sdp_missing || sdp == NULL)
-	{
+	if (sdp_missing || sdp == NULL) {
 		LM_DBG("No SDP\n");
 		return -2;
 	}
@@ -1812,56 +1809,41 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 		return -1;
 	}
 
-	if (avp == NULL || strlen(avp) <= 0)
-	{
-		LM_ERR("avp variable is null or empty\n");
+	if (pv_locate_name(aname) != aname->len) {
+		LM_ERR("invalid parameter - cannot locate pv name\n");
 		return -1;
 	}
 
-	s.s = avp;
-	s.len = strlen(s.s);
-
-	if (pv_locate_name(&s) != s.len)
-	{
-		LM_ERR("invalid parameter\n");
-		return -1;
-	}
-
-	if (((avp_spec = pv_cache_get(&s)) == NULL)
+	if (((avp_spec = pv_cache_get(aname)) == NULL)
 			|| avp_spec->type!=PVT_AVP) {
-		LM_ERR("malformed or non AVP %s AVP definition\n", avp);
+		LM_ERR("malformed or non AVP %.*s AVP definition\n",
+				aname->len, aname->s);
 		return -1;
 	}
 
-	if(pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type)!=0)
-	{
-		LM_ERR("[%s]- invalid AVP definition\n", avp);
+	if(pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type)!=0) {
+		LM_ERR("[%.*s]- invalid AVP definition\n", aname->len, aname->s);
 		return -1;
 	}
 
-	p = find_sdp_line(body.s, body.s+body.len, sline.s[0]);
-	while (p != NULL)
-	{
-		if (sdp_locate_line(msg, p, &line) != 0)
-		{
+	p = find_sdp_line(body.s, body.s+body.len, sline->s[0]);
+	while (p != NULL) {
+		if (sdp_locate_line(msg, p, &line) != 0) {
 			LM_ERR("sdp_locate_line fail\n");
 			return -1;
 		}
 
-		if (strncmp(line.s, sline.s, sline.len) == 0)
-		{
+		if (strncmp(line.s, sline->s, sline->len) == 0) {
 			avp_val.s.s = line.s;
 			avp_val.s.len = line.len;
 
 			/* skip ending \r\n if exists */
-			if (avp_val.s.s[line.len-2] == '\r' && avp_val.s.s[line.len-1] == '\n')
-			{
+			if (avp_val.s.s[line.len-2] == '\r' && avp_val.s.s[line.len-1] == '\n') {
 				/* add_avp() clones to shm and adds 0-terminating char */
 				avp_val.s.len -= 2;
 			}
 
-			if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0)
-			{
+			if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0) {
 				LM_ERR("Failed to add SDP line avp");
 				return -1;
 			}
@@ -1869,10 +1851,28 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 			return 1;
 		}
 
-		p = find_sdp_line(line.s + line.len, body.s + body.len, sline.s[0]);
+		p = find_sdp_line(line.s + line.len, body.s + body.len, sline->s[0]);
 	}
 
 	return -1;
+}
+
+/**
+ *
+ */
+static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *pline)
+{
+	str sline;
+	str aname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pline, &sline)<0) {
+		LM_ERR("failed to evaluate start line parameter\n");
+		return -1;
+	}
+	aname.s = avp;
+	aname.len = strlen(aname.s);
+
+	return ki_sdp_get_line_startswith(msg, &aname, &sline);
 }
 
 /**
@@ -2015,6 +2015,11 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 	{ str_init("sdpops"), str_init("sdp_transport"),
 		SR_KEMIP_INT, ki_sdp_transport,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_get_line_startswith"),
+		SR_KEMIP_INT, ki_sdp_get_line_startswith,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
