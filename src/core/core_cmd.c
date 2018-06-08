@@ -1072,9 +1072,9 @@ static rpc_export_t core_rpc_methods[] = {
 		0},
 	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc, 0},
 	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc, 0},
-	{"core.modules",           core_modules,           core_modules_doc,    RET_ARRAY},
-	{"core.ppdefines",         core_ppdefines,         core_ppdefines_doc,  RET_ARRAY},
-	{"core.ppdefines_full",    core_ppdefines_full,    core_ppdefines_doc,  RET_ARRAY},
+	{"core.modules",           core_modules,           core_modules_doc,         RET_ARRAY},
+	{"core.ppdefines",         core_ppdefines,         core_ppdefines_doc,       RET_ARRAY},
+	{"core.ppdefines_full",    core_ppdefines_full,    core_ppdefines_full_doc,  RET_ARRAY},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},
