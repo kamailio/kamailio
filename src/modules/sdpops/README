@@ -481,7 +481,8 @@ if(sdp_with_ice()) {
 
    Store the search part of SDP body message with line beginning with
    'string' in an AVP. Return 1 if 'string' is found in SDP, -1 on error
-   and -2 if there is no SDP part in the message body.
+   and -2 if there is no SDP part in the message body. The second
+   parameter can contain psudeo-variables.
 
    This function can be used from ANY_ROUTE.
 
