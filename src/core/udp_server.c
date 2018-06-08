@@ -515,19 +515,6 @@ int udp_rcv_loop()
 				continue;
 			}
 		}
-/* historically, zero-terminated packets indicated a bug in clients
- * that calculated wrongly packet length and included string-terminating
- * zero; today clients exist with legitimate binary payloads and we
- * shall not check for zero-terminated payloads
- */
-#ifdef TRASH_ZEROTERMINATED_PACKETS
-		if (buf[len-1]==0) {
-			tmp=ip_addr2a(&ri.src_ip);
-			LM_WARN("upstream bug - 0-terminated packet from %s %d\n",
-					tmp, htons(ri.src_port));
-			len--;
-		}
-#endif
 #endif
 #ifdef DBG_MSG_QA
 		if (!dbg_msg_qa(buf, len)) {
