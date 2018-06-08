@@ -146,6 +146,9 @@ int fixup_free_spve_igp(void** param, int param_no);
 int fixup_spve_pvar(void** param, int param_no);
 int fixup_free_spve_pvar(void** param, int param_no);
 
+int fixup_none_spve(void** param, int param_no);
+int fixup_free_none_spve(void** param, int param_no);
+
 /** get the corresp. free fixup function.*/
 free_fixup_function mod_fix_get_fixup_free(fixup_function f);
 

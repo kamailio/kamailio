@@ -664,3 +664,23 @@ int fixup_free_spve_pvar(void** param, int param_no)
 		return fixup_free_pvar_null(param, 1);
 	return E_UNSPEC;
 }
+
+/**
+ *
+ */
+int fixup_none_spve(void** param, int param_no)
+{
+	if(param_no==2)
+		return fixup_spve_null(param, 1);
+	return 0;
+}
+
+/**
+ *
+ */
+int fixup_free_none_spve(void** param, int param_no)
+{
+	if(param_no==2)
+		return fixup_free_spve_null(param, 1);
+	return 0;
+}
