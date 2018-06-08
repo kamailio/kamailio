@@ -101,9 +101,7 @@ struct dns_hash_head{
 	struct dns_hash_entry* prev;
 };
 
-#ifdef DNS_LU_LST
 struct dns_lu_lst* dns_last_used_lst=0;
-#endif
 
 static struct dns_hash_head* dns_hash=0;
 
@@ -228,12 +226,10 @@ void destroy_dns_cache()
 		shm_free(dns_hash);
 		dns_hash=0;
 	}
-#ifdef DNS_LU_LST
 	if (dns_last_used_lst){
 		shm_free(dns_last_used_lst);
 		dns_last_used_lst=0;
 	}
-#endif
 #ifdef USE_DNS_CACHE_STATS
 	if (dns_cache_stats)
 		shm_free(dns_cache_stats);
@@ -342,17 +338,15 @@ int init_dns_cache()
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
-
 	*dns_cache_mem_used=0;
 
-#ifdef DNS_LU_LST
 	dns_last_used_lst=shm_malloc(sizeof(*dns_last_used_lst));
 	if (dns_last_used_lst==0){
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
 	clist_init(dns_last_used_lst, next, prev);
-#endif
+
 	dns_hash=shm_malloc(sizeof(struct dns_hash_head)*DNS_HASH_SIZE);
 	if (dns_hash==0){
 		ret=E_OUT_OF_MEM;
@@ -479,12 +473,10 @@ inline static void _dns_hash_remove(struct dns_hash_entry* e)
 {
 	clist_rm(e, next, prev);
 	e->next=e->prev=0;
-#ifdef DNS_LU_LST
 	debug_lu_lst("_dns_hash_remove: pre rm:", &e->last_used_lst);
 	clist_rm(&e->last_used_lst, next, prev);
 	debug_lu_lst("_dns_hash_remove: post rm:", &e->last_used_lst);
 	e->last_used_lst.next=e->last_used_lst.prev=0;
-#endif
 	*dns_cache_mem_used-=e->total_size;
 	dns_hash_put(e);
 }
@@ -535,13 +527,11 @@ again:
 		}else if ((e->type==type) && (e->name_len==name->len) &&
 			(strncasecmp(e->name, name->s, e->name_len)==0)){
 			e->last_used=now;
-#ifdef DNS_LU_LST
 			/* add it at the end */
 			debug_lu_lst("_dns_hash_find: pre rm:", &e->last_used_lst);
 			clist_rm(&e->last_used_lst, next, prev);
 			clist_append(dns_last_used_lst, &e->last_used_lst, next, prev);
 			debug_lu_lst("_dns_hash_find: post append:", &e->last_used_lst);
-#endif
 			return e;
 		}else if ((e->type==T_CNAME) &&
 					!((e->rr_lst==0) || (e->ent_flags & DNS_FLAG_BAD_NAME)) &&
@@ -550,14 +540,12 @@ again:
 			/*if CNAME matches and CNAME is entry is not a neg. cache entry
 			  (could be produced by a specific CNAME lookup)*/
 			e->last_used=now;
-#ifdef DNS_LU_LST
 			/* add it at the end */
 			debug_lu_lst("_dns_hash_find: cname: pre rm:", &e->last_used_lst);
 			clist_rm(&e->last_used_lst, next, prev);
 			clist_append(dns_last_used_lst, &e->last_used_lst, next, prev);
 			debug_lu_lst("_dns_hash_find: cname: post append:",
 							&e->last_used_lst);
-#endif
 			ret=e; /* if this is an unfinished cname chain, we try to
 					  return the last cname */
 			/* this is a cname => retry using its value */
@@ -593,20 +581,13 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 	ticks_t now;
 	unsigned int n;
 	unsigned int deleted;
-#ifdef DNS_LU_LST
 	struct dns_lu_lst* l;
 	struct dns_lu_lst* tmp;
-#else
-	struct dns_hash_entry* t;
-	unsigned int h;
-	static unsigned int start=0;
-#endif
 
 	n=0;
 	deleted=0;
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
-#ifdef DNS_LU_LST
 	clist_foreach_safe(dns_last_used_lst, l, tmp, next){
 		e=(struct dns_hash_entry*)(((char*)l)-
 				(char*)&((struct dns_hash_entry*)(0))->last_used_lst);
@@ -619,35 +600,6 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 		n++;
 		if (n>=no) break;
 	}
-#else
-	for(h=start; h!=(start+DNS_HASH_SIZE); h++){
-		clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-			if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
-				&& ((s_ticks_t)(now-e->expire)>=0)
-			) {
-				_dns_hash_remove(e);
-				deleted++;
-			}
-			n++;
-			if (n>=no) goto skip;
-		}
-	}
-	/* not fair, but faster then random() */
-	if (!expired_only){
-		for(h=start; h!=(start+DNS_HASH_SIZE); h++){
-			clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-				if ((e->ent_flags & DNS_FLAG_PERMANENT) == 0) {
-					_dns_hash_remove(e);
-					deleted++;
-				}
-				n++;
-				if (n>=no) goto skip;
-			}
-		}
-	}
-skip:
-	start=h;
-#endif
 	UNLOCK_DNS_HASH();
 	return deleted;
 }
@@ -664,19 +616,12 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 	struct dns_hash_entry* e;
 	ticks_t now;
 	unsigned int deleted;
-#ifdef DNS_LU_LST
 	struct dns_lu_lst* l;
 	struct dns_lu_lst* tmp;
-#else
-	struct dns_hash_entry* t;
-	unsigned int h;
-	static unsigned int start=0;
-#endif
 
 	deleted=0;
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
-#ifdef DNS_LU_LST
 	clist_foreach_safe(dns_last_used_lst, l, tmp, next){
 		if (*dns_cache_mem_used<=target) break;
 		e=(struct dns_hash_entry*)(((char*)l)-
@@ -688,37 +633,6 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 				deleted++;
 		}
 	}
-#else
-	for(h=start; h!=(start+DNS_HASH_SIZE); h++){
-		clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-			if (*dns_cache_mem_used<=target)
-				goto skip;
-			if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
-				&& ((s_ticks_t)(now-e->expire)>=0)
-			) {
-				_dns_hash_remove(e);
-				deleted++;
-			}
-		}
-	}
-	/* not fair, but faster then random() */
-	if (!expired_only){
-		for(h=start; h!=(start+DNS_HASH_SIZE); h++){
-			clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-				if (*dns_cache_mem_used<=target)
-					goto skip;
-				if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
-					&& ((s_ticks_t)(now-e->expire)>=0)
-				) {
-					_dns_hash_remove(e);
-					deleted++;
-				}
-			}
-		}
-	}
-skip:
-	start=h;
-#endif
 	UNLOCK_DNS_HASH();
 	return deleted;
 }
@@ -778,9 +692,7 @@ inline static int dns_cache_add(struct dns_hash_entry* e)
 		*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
 										 only from within a lock */
 		clist_append(&dns_hash[h], e, next, prev);
-#ifdef DNS_LU_LST
 		clist_append(dns_last_used_lst, &e->last_used_lst, next, prev);
-#endif
 	UNLOCK_DNS_HASH();
 	return 0;
 }
@@ -817,9 +729,8 @@ inline static int dns_cache_add_unsafe(struct dns_hash_entry* e)
 	*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
 										 only from within a lock */
 	clist_append(&dns_hash[h], e, next, prev);
-#ifdef DNS_LU_LST
 	clist_append(dns_last_used_lst, &e->last_used_lst, next, prev);
-#endif
+
 	return 0;
 }
 
@@ -4078,9 +3989,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 	memcpy(new, e, size);
 	/* fix the values and pointers */
 	new->next = new->prev = NULL;
-#ifdef DNS_LU_LST
 	new->last_used_lst.next = new->last_used_lst.prev = NULL;
-#endif
 	new->rr_lst = (struct dns_rr*)translate_pointer((char*)new, (char*)e,
 														(char*)new->rr_lst);
 	atomic_set(&new->refcnt, 0);

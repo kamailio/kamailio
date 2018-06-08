@@ -58,7 +58,6 @@
 /** @brief uncomment the define below for SRV weight based load balancing */
 #define DNS_SRV_LB
 
-#define DNS_LU_LST
 
 /** @brief dns functions return them as negative values (e.g. return -E_DNS_NO_IP)
  *
@@ -132,20 +131,16 @@ struct dns_rr{
 
 
 
-#ifdef DNS_LU_LST
 struct dns_lu_lst{  /* last used ordered list */
 	struct dns_lu_lst* next;
 	struct dns_lu_lst* prev;
 };
-#endif
 
 struct dns_hash_entry{
 	/* hash table links */
 	struct dns_hash_entry* next;
 	struct dns_hash_entry* prev;
-#ifdef DNS_LU_LST
 	struct dns_lu_lst last_used_lst;
-#endif
 	struct dns_rr* rr_lst;
 	atomic_t refcnt;
 	ticks_t last_used;
