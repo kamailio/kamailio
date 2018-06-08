@@ -57,7 +57,6 @@
 
 
 
-#define DNS_CACHE_DEBUG /* extra sanity checks and debugging */
 
 
 #ifndef MAX
@@ -150,9 +149,7 @@ const char* dns_strerror(int err)
 /* "internal" only, don't use unless you really know waht you're doing */
 inline static void dns_destroy_entry(struct dns_hash_entry* e)
 {
-#ifdef DNS_CACHE_DEBUG
 	memset(e, 0, e->total_size);
-#endif
 	shm_free(e); /* nice having it in one block isn't it? :-) */
 }
 
@@ -160,9 +157,7 @@ inline static void dns_destroy_entry(struct dns_hash_entry* e)
 /* "internal" only, same as above, asumes shm_lock() held (tm optimization) */
 inline static void dns_destroy_entry_shm_unsafe(struct dns_hash_entry* e)
 {
-#ifdef DNS_CACHE_DEBUG
 	memset(e, 0, e->total_size);
-#endif
 	shm_free_unsafe(e); /* nice having it in one block isn't it? :-) */
 }
 
@@ -444,9 +439,6 @@ int init_dns_cache_stats(int iproc_num)
 
 
 
-#ifdef DNS_CACHE_DEBUG
-#define DEBUG_LU_LST
-#ifdef DEBUG_LU_LST
 
 #include <stdlib.h> /* abort() */
 #define check_lu_lst(l) ((((l)->next==(l)) || ((l)->prev==(l))) && \
@@ -478,8 +470,6 @@ int init_dns_cache_stats(int iproc_num)
 		} \
 	}while(0)
 
-#endif
-#endif /* DNS_CACHE_DEBUG */
 
 
 /* must be called with the DNS_LOCK hold
@@ -488,20 +478,12 @@ int init_dns_cache_stats(int iproc_num)
 inline static void _dns_hash_remove(struct dns_hash_entry* e)
 {
 	clist_rm(e, next, prev);
-#ifdef DNS_CACHE_DEBUG
 	e->next=e->prev=0;
-#endif
 #ifdef DNS_LU_LST
-#ifdef DEBUG_LU_LST
 	debug_lu_lst("_dns_hash_remove: pre rm:", &e->last_used_lst);
-#endif
 	clist_rm(&e->last_used_lst, next, prev);
-#ifdef DEBUG_LU_LST
 	debug_lu_lst("_dns_hash_remove: post rm:", &e->last_used_lst);
-#endif
-#ifdef DNS_CACHE_DEBUG
 	e->last_used_lst.next=e->last_used_lst.prev=0;
-#endif
 #endif
 	*dns_cache_mem_used-=e->total_size;
 	dns_hash_put(e);
@@ -538,9 +520,7 @@ inline static struct dns_hash_entry* _dns_hash_find(str* name, int type,
 	*err=0;
 again:
 	*h=dns_hash_no(name->s, name->len, type);
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("(%.*s(%d), %d), h=%d\n", name->len, name->s, name->len, type, *h);
-#endif
 	clist_foreach_safe(&dns_hash[*h], e, tmp, next){
 		if (
 #ifdef DNS_WATCHDOG_SUPPORT
@@ -557,14 +537,10 @@ again:
 			e->last_used=now;
 #ifdef DNS_LU_LST
 			/* add it at the end */
-#ifdef DEBUG_LU_LST
 			debug_lu_lst("_dns_hash_find: pre rm:", &e->last_used_lst);
-#endif
 			clist_rm(&e->last_used_lst, next, prev);
 			clist_append(dns_last_used_lst, &e->last_used_lst, next, prev);
-#ifdef DEBUG_LU_LST
 			debug_lu_lst("_dns_hash_find: post append:", &e->last_used_lst);
-#endif
 #endif
 			return e;
 		}else if ((e->type==T_CNAME) &&
@@ -576,15 +552,11 @@ again:
 			e->last_used=now;
 #ifdef DNS_LU_LST
 			/* add it at the end */
-#ifdef DEBUG_LU_LST
 			debug_lu_lst("_dns_hash_find: cname: pre rm:", &e->last_used_lst);
-#endif
 			clist_rm(&e->last_used_lst, next, prev);
 			clist_append(dns_last_used_lst, &e->last_used_lst, next, prev);
-#ifdef DEBUG_LU_LST
 			debug_lu_lst("_dns_hash_find: cname: post append:",
 							&e->last_used_lst);
-#endif
 #endif
 			ret=e; /* if this is an unfinished cname chain, we try to
 					  return the last cname */
@@ -800,10 +772,8 @@ inline static int dns_cache_add(struct dns_hash_entry* e)
 	}
 	atomic_inc(&e->refcnt);
 	h=dns_hash_no(e->name, e->name_len, e->type);
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("adding %.*s(%d) %d (flags=%0x) at %d\n",
 			e->name_len, e->name, e->name_len, e->type, e->ent_flags, h);
-#endif
 	LOCK_DNS_HASH();
 		*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
 										 only from within a lock */
@@ -842,10 +812,8 @@ inline static int dns_cache_add_unsafe(struct dns_hash_entry* e)
 	}
 	atomic_inc(&e->refcnt);
 	h=dns_hash_no(e->name, e->name_len, e->type);
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("adding %.*s(%d) %d (flags=%0x) at %d\n",
 			e->name_len, e->name, e->name_len, e->type, e->ent_flags, h);
-#endif
 	*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
 										 only from within a lock */
 	clist_append(&dns_hash[h], e, next, prev);
@@ -867,9 +835,7 @@ inline static struct dns_hash_entry* dns_cache_mk_bad_entry(str* name,
 	int size;
 	ticks_t now;
 
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("(%.*s, %d, %d, %d)\n", name->len, name->s, type, ttl, flags);
-#endif
 	size=sizeof(struct dns_hash_entry)+name->len-1+1;
 	e=shm_malloc(size);
 	if (e==0){
@@ -1213,9 +1179,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	}
 	*tail=0; /* mark the end of our tmp_lst */
 	if (size==0){
-#ifdef DNS_CACHE_DEBUG
 		LM_DBG("entry %.*s (%d) not found\n", name->len, name->s, type);
-#endif
 		return 0;
 	}
 	/* compute size */
@@ -1743,10 +1707,8 @@ inline static struct dns_hash_entry* dns_get_related(struct dns_hash_entry* e,
 
 	ret=0;
 	l=e;
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("(%p (%.*s, %d), %d, *%p) (%d)\n", e,
 			e->name_len, e->name, e->type, type, *records, cname_chain_len);
-#endif
 	clist_init(l, next, prev);
 	if (type==e->type){
 		ret=e;
@@ -2334,7 +2296,6 @@ retry:
 	for (i=0; (i<idx) && (r_sums[i].r_sum<rand_w); i++);
 found:
 	if(i<MAX_SRV_GRP_IDX) {
-#ifdef DNS_CACHE_DEBUG
 		LM_DBG("(%p, %lx, %d, %u): selected %d/%d in grp. %d"
 			   " (rand_w=%d, rr=%p rd=%p p=%d w=%d rsum=%d)\n",
 				e, (unsigned long)*tried, *no, now, i, idx, n, rand_w,
@@ -2346,7 +2307,6 @@ found:
 						? ((struct srv_rdata *)r_sums[i].rr->rdata)->weight
 						: 0,
 				r_sums[i].r_sum);
-#endif
 		/* i is the winner */
 		*no = n; /* grp. start */
 		if(i < 8 * sizeof(*tried))
@@ -2758,10 +2718,8 @@ struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head,
 			i++;
 			continue; /* already tried */
 		}
-#ifdef DNS_CACHE_DEBUG
 		LM_DBG("found a valid sip NAPTR rr %.*s, proto %d\n",
 				naptr->repl_len, naptr->repl, (int)naptr_proto);
-#endif
 		if ((naptr_proto_supported(naptr_proto))){
 			if (naptr_choose(&naptr_saved, &saved_proto,
 								naptr, naptr_proto))
@@ -2771,10 +2729,8 @@ struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head,
 	}
 	if (naptr_saved){
 		/* found something */
-#ifdef DNS_CACHE_DEBUG
 		LM_DBG("choosed NAPTR rr %.*s, proto %d tried: 0x%x\n",
 			naptr_saved->repl_len, naptr_saved->repl, (int)saved_proto, *tried);
-#endif
 		*tried|=1<<idx;
 		*proto=saved_proto;
 		srv_name->s=naptr_saved->repl;
@@ -2837,10 +2793,8 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 		while(dns_naptr_sip_iterate(e->rr_lst, &tried_bmp,
 												&srv_name, &n_proto)){
 			if ((he=dns_srv_get_he(&srv_name, port, dns_flags))!=0){
-#ifdef DNS_CACHE_DEBUG
 				LM_DBG("(%.*s, %d, %d) srv, ret=%p\n",
 							name->len, name->s, (int)*port, (int)*proto, he);
-#endif
 				dns_hash_put(e);
 				*proto=n_proto;
 				return he;
@@ -3191,11 +3145,9 @@ inline static int dns_srv_resolve_ip(struct dns_srv_handle* h,
 		}
 	}while(ret<0);
 error:
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("(\"%.*s\", %d, %d), ret=%d, ip=%s\n",
 			name->len, name->s, h->srv_no, h->ip_no, ret,
 			ip?ZSW(ip_addr2a(ip)):"");
-#endif
 	return ret;
 }
 
@@ -3288,10 +3240,8 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 						{
 							h->proto = srv_proto_list[i].proto;
 							if(proto) *proto = h->proto;
-#ifdef DNS_CACHE_DEBUG
 							LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n",
 								name->len, name->s, h->srv_no, h->ip_no, ret);
-#endif
 							return ret;
 						}
 					}
@@ -3321,10 +3271,8 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 		*port=h->port;
 	if (proto)
 		*proto=h->proto;
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("(%.*s, %d, %d), ip, ret=%d\n",
 			name->len, name->s, h->srv_no, h->ip_no, ret);
-#endif
 	return ret;
 }
 
@@ -3396,10 +3344,8 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 			dns_srv_handle_init(h); /* make sure h does not contain garbage
 									from previous dns_srv_sip_resolve calls */
 			if ((ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags))>=0){
-#ifdef DNS_CACHE_DEBUG
 				LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n",
 								name->len, name->s, h->srv_no, h->ip_no, ret);
-#endif
 				dns_hash_put(e);
 				*proto=n_proto;
 				h->proto=*proto;
