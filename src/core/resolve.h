@@ -50,12 +50,6 @@
 #endif
 
 
-/* define RESOLVE_DBG for debugging info (very noisy) */
-#define RESOLVE_DBG
-/* define NAPTR_DBG for naptr related debugging info (very noisy) */
-#define NAPTR_DBG
-
-
 #define MAX_QUERY_SIZE 8192
 #define ANS_SIZE       8192
 #define DNS_HDR_SIZE     12
@@ -257,10 +251,8 @@ static inline struct ip_addr* str2ip(str* st)
 	
 	return &ip;
 error_dots:
-#ifdef RESOLVE_DBG
 	DBG("str2ip: ERROR: too %s dots in [%.*s]\n", (i>3)?"many":"few", 
 			st->len, st->s);
-#endif
 	return 0;
  error_char:
 	/*
@@ -353,21 +345,15 @@ static inline struct ip_addr* str2ip6(str* st)
 	return &ip;
 
 error_too_many_colons:
-#ifdef RESOLVE_DBG
 	DBG("str2ip6: ERROR: too many colons in [%.*s]\n", st->len, st->s);
-#endif
 	return 0;
 
 error_too_few_colons:
-#ifdef RESOLVE_DBG
 	DBG("str2ip6: ERROR: too few colons in [%.*s]\n", st->len, st->s);
-#endif
 	return 0;
 
 error_colons:
-#ifdef RESOLVE_DBG
 	DBG("str2ip6: ERROR: too many double colons in [%.*s]\n", st->len, st->s);
-#endif
 	return 0;
 
 error_char:

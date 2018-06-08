@@ -950,9 +950,7 @@ again:
 	if (flags & RES_AR){
 		flags&=~RES_AR;
 		answers_no=ntohs((unsigned short)buff.hdr.nscount);
-#ifdef RESOLVE_DBG
 		LM_DBG("skipping %d NS (p=%p, end=%p)\n", answers_no, p, end);
-#endif
 		for (r=0; (r<answers_no) && (p<end); r++){
 			/* skip over the ns records */
 			if ((p=dns_skipname(p, end))==0) {
@@ -965,9 +963,7 @@ again:
 			p+=2+2+4+2+ntohs(rdlength);
 		}
 		answers_no=ntohs((unsigned short)buff.hdr.arcount);
-#ifdef RESOLVE_DBG
 		LM_DBG("parsing %d ARs (p=%p, end=%p)\n", answers_no, p, end);
-#endif
 		goto again; /* add also the additional records */
 	}
 
@@ -1152,12 +1148,10 @@ int naptr_proto_preferred(char new_proto, char old_proto)
 int naptr_choose (struct naptr_rdata** crt, char* crt_proto,
 									struct naptr_rdata* n , char n_proto)
 {
-#ifdef NAPTR_DBG
 	LM_DBG("o:%d w:%d p:%d, o:%d w:%d p:%d\n",
 			*crt?(int)(*crt)->order:-1, *crt?(int)(*crt)->pref:-1,
 			(int)*crt_proto,
 			(int)n->order, (int)n->pref, (int)n_proto);
-#endif
 	if ((*crt==0) || ((*crt_proto!=n_proto) && 
 						( naptr_proto_preferred(n_proto, *crt_proto))) )
 			goto change;
@@ -1166,14 +1160,10 @@ int naptr_choose (struct naptr_rdata** crt, char* crt_proto,
 								(n->pref < (*crt)->pref)))){
 			goto change;
 	}
-#ifdef NAPTR_DBG
 	LM_DBG("no change\n");
-#endif
 	return 0;
 change:
-#ifdef NAPTR_DBG
 	LM_DBG("changed\n");
-#endif
 	*crt_proto=n_proto;
 	*crt=n;
 	return 1;
@@ -1220,10 +1210,8 @@ struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
 		he=0;
 		goto end;
 	}
-#ifdef RESOLVE_DBG
 	LM_DBG("%.*s:%d proto=%d\n", name->len, name->s,
 			port?(int)*port:-1, proto?(int)*proto:-1);
-#endif
 	if (is_srv){
 		/* skip directly to srv resolving */
 		srv_proto=(proto)?*proto:0;
@@ -1289,10 +1277,8 @@ do_srv:
 				he=resolvehost(srv->name);
 				if (he!=0){
 					/* we found it*/
-#ifdef RESOLVE_DBG
 					LM_DBG("found SRV(%s) = %s:%d in AR\n",
 							srv_target, srv->name, srv->port);
-#endif
 					*port=srv->port;
 					/* cleanup on exit */
 					goto end;
@@ -1310,10 +1296,8 @@ do_srv:
 				he=resolvehost(srv->name);
 				if (he!=0){
 					/* we found it*/
-#ifdef RESOLVE_DBG
 					LM_DBG("SRV(%s) = %s:%d\n",
 							srv_target, srv->name, srv->port);
-#endif
 					*port=srv->port;
 					/* cleanup on exit */
 					goto end;
@@ -1326,10 +1310,8 @@ do_srv:
 				goto end;
 			}
 			/* cleanup on exit */
-#ifdef RESOLVE_DBG
 			LM_DBG("no SRV record found for %.*s," 
 					" trying 'normal' lookup...\n", name->len, name->s);
-#endif
 		}
 	}
 	if (likely(!zt)){
@@ -1340,11 +1322,9 @@ do_srv:
 		he=resolvehost(name->s);
 	}
 end:
-#ifdef RESOLVE_DBG
 	LM_DBG("returning %p (%.*s:%d proto=%d)\n",
 			he, name->len, name->s,
 			port?(int)*port:-1, proto?(int)*proto:-1);
-#endif
 	if (srv_head)
 		free_rdata_list(srv_head);
 	return he;
@@ -1402,10 +1382,8 @@ struct rdata* naptr_sip_iterate(struct rdata* naptr_head,
 			i++;
 			continue; /* already tried */
 		}
-#ifdef NAPTR_DBG
 		LM_DBG("found a valid sip NAPTR rr %.*s, proto %d\n",
 					naptr->repl_len, naptr->repl, (int)naptr_proto);
-#endif
 		if ((naptr_proto_supported(naptr_proto))){
 			if (naptr_choose(&naptr_saved, &saved_proto,
 								naptr, naptr_proto)) {
@@ -1417,11 +1395,9 @@ struct rdata* naptr_sip_iterate(struct rdata* naptr_head,
 	}
 	if (naptr_saved){
 		/* found something */
-#ifdef NAPTR_DBG
 		LM_DBG("choosed NAPTR rr %.*s, proto %d tried: 0x%x\n",
 					naptr_saved->repl_len,
 					naptr_saved->repl, (int)saved_proto, *tried);
-#endif
 		*tried|=1<<idx;
 		*proto=saved_proto;
 		srv_name->s=naptr_saved->repl;
@@ -1645,10 +1621,8 @@ struct hostent* naptr_sip_resolvehost(str* name,  unsigned short* port,
 			}
 		}
 		/*clean up on exit*/
-#ifdef RESOLVE_DBG
 		LM_DBG("no NAPTR record found for %.*s, trying SRV lookup...\n",
 					name->len, name->s);
-#endif
 	}
 	/* fallback to srv lookup */
 	if(proto) *proto = origproto;
