@@ -170,12 +170,6 @@ DNS Resolver Compile Options
       NAPTR support still has to be enabled from Kamailio's config file (it's
       off by default).
 
-   RESOLVE_DBG - if defined, the resolver will be very verbose: it will log
-      a lot of debugging information at L_DBG level.
-
-   NAPTR_DBG - if defined the NAPTR related resolver functions will be very
-       verbose.
-
 
 DNS Cache and Failover Config Variables
 ---------------------------------------
@@ -307,9 +301,6 @@ DNS Cache Compile Options
        If this option is not defined (experimental), everything in the AR
        section will be added to the cache.
 
-   DNS_CACHE_DEBUG - if defined the DNS cache will be very verbose (it will
-       log lots of messages at the L_DBG levell).
- 
  Note: To remove a compile options,  edit Kamailio's Makefile.defs and remove it 
    from DEFS list. To add a compile options add it to the make command line,
      e.g.: make proper; make all extra_defs=-DUSE_DNS_FAILOVER
