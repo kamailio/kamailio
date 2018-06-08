@@ -15,7 +15,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_without rebbitmq
+%bcond_without rabbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -35,7 +35,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_without rebbitmq
+%bcond_without rabbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -55,7 +55,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_without rebbitmq
+%bcond_without rabbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -75,7 +75,7 @@
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_with rebbitmq
+%bcond_with rabbitmq
 %bcond_with redis
 %bcond_without sctp
 %bcond_without websocket
@@ -96,7 +96,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_without rebbitmq
+%bcond_without rabbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -116,7 +116,7 @@
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_with rebbitmq
+%bcond_with rabbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -136,7 +136,7 @@
 %bcond_with kazoo
 %bcond_with memcached
 %bcond_with perl
-%bcond_with rebbitmq
+%bcond_with rabbitmq
 %bcond_with redis
 %bcond_with sctp
 %bcond_with websocket
@@ -156,7 +156,7 @@
 %bcond_with kazoo
 %bcond_with memcached
 %bcond_without perl
-%bcond_without rebbitmq
+%bcond_without rabbitmq
 %bcond_without redis
 %bcond_with sctp
 %bcond_with websocket
