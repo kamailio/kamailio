@@ -66,7 +66,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="topoh.p.mask_key">
 		<title><varname>mask_key</varname> (str)</title>
 		<para>
 		Keyword to mask the headers.
@@ -85,7 +85,7 @@ modparam("topoh", "mask_key", "some secret here")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="topoh.p.mask_ip">
 		<title><varname>mask_ip</varname> (str)</title>
 		<para>
 		IP address to be used in masked headers to build valid
@@ -108,7 +108,7 @@ modparam("topoh", "mask_ip", "192.168.0.1")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="topoh.p.mask_callid">
 		<title><varname>mask_callid</varname> (integer)</title>
 		<para>
 			Whether to encode the Call-id: header. Some SIP extensions include
@@ -136,7 +136,7 @@ modparam("topoh", "mask_callid", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="topoh.p.uparam_name">
 		<title><varname>uparam_name</varname> (str)</title>
 		<para>
 		Name of URI parameter where to store encoded value.
@@ -155,7 +155,7 @@ modparam("topoh", "uparam_name", "myparam")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="topoh.p.uparam_prefix">
 		<title><varname>uparam_prefix</varname> (str)</title>
 		<para>
 		Prefix to be added in encoded URI parameters.
@@ -174,7 +174,7 @@ modparam("topoh", "uparam_prefix", "xyz")
 </programlisting>
 		</example>
 	</section>
-		<section>
+	<section id="topoh.p.vparam_name">
 		<title><varname>vparam_name</varname> (str)</title>
 		<para>
 		Name of Via: parameter used to store encoded value.
@@ -193,7 +193,7 @@ modparam("topoh", "vparam_name", "myv")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="topoh.p.vparam_prefix">
 		<title><varname>vparam_prefix</varname> (str)</title>
 		<para>
 		Prefix to be added in encoded Via: parameters.
@@ -212,7 +212,7 @@ modparam("topoh", "vparam_prefix", "xyz")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="topoh.p.callid_prefix">
 		<title><varname>callid_prefix</varname> (str)</title>
 		<para>
 		Prefix to be added in encoded Call-ID: headers.
@@ -231,7 +231,7 @@ modparam("topoh", "callid_prefix", "***")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="topoh.p.sanity_checks">
 		<title><varname>sanity_checks</varname> (integer)</title>
 		<para>
 			If set to 1, topoh module will bind to sanity module in order
@@ -253,7 +253,7 @@ modparam("topoh", "sanity_checks", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="topoh.p.uri_prefix_checks">
 		<title><varname>uri_prefix_checks</varname> (integer)</title>
 		<para>
 			If set to 1, topoh module will check if URIs to be decoded match
