@@ -96,13 +96,18 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 
 #ifdef TM_DEL_UNREF
 
-#define UNREF_FREE(_T_cell) \
+#define UNREF_FREE(_T_cell, _T_unlinked) \
 	do{\
 		if (atomic_dec_and_test(&(_T_cell)->ref_count)){ \
 			unlink_timers((_T_cell)); \
 			free_cell((_T_cell)); \
-		}else \
-			t_stats_delayed_free(); \
+		}else{ \
+			if(_T_unlinked){ \
+				free_cell((_T_cell)); \
+			}else{ \
+				t_stats_delayed_free(); \
+			} \
+		} \
 	}while(0)
 
 #define UNREF_NOSTATS(_T_cell) \

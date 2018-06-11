@@ -375,5 +375,24 @@ inline static void unlink_timers(struct cell *t)
 	cleanup_localcancel_timers(t);
 }
 
+inline static int t_linked_timers(tm_cell_t *t)
+{
+	int i;
+
+	if(t->uas.response.timer.next!=NULL || t->uas.response.timer.prev!=NULL) {
+		return 1;
+	}
+	for(i = 0; i < t->nr_of_outgoings; i++) {
+		if(t->uac[i].request.timer.next!=NULL
+				|| t->uac[i].request.timer.prev!=NULL) {
+			return 1;
+		}
+		if(t->uac[i].local_cancel.timer.next!=NULL
+				|| t->uac[i].local_cancel.timer.prev!=NULL) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
 #endif

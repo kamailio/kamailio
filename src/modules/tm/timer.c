@@ -648,7 +648,11 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void *data)
 	remove_from_hash_table_unsafe(p_cell);
 	UNLOCK_HASH(p_cell->hash_index);
 	p_cell->flags |= T_IN_AGONY;
-	UNREF_FREE(p_cell);
+	if(t_linked_timers(p_cell)) {
+		UNREF_FREE(p_cell, 0);
+	} else {
+		UNREF_FREE(p_cell, 1);
+	}
 	ret = 0;
 #else  /* TM_DEL_UNREF */
 	if(p_cell->flags & T_IN_AGONY) {

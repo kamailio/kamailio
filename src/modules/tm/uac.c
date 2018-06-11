@@ -589,7 +589,7 @@ error2:
 		if(atomic_get_int(&new_cell->ref_count)==0) {
 			free_cell(new_cell);
 		} else {
-			UNREF_FREE(new_cell);
+			UNREF_FREE(new_cell, 0);
 		}
 	}
 #else
