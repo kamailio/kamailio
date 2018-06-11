@@ -348,7 +348,7 @@ modules-cfg modules-list modules-lst:
 	rm -f modules.lst
 	$(MAKE) modules.lst
 
-ifneq ($(wildcard .git),)
+ifneq ($(wildcard ../.git),)
 # if .git/ exists
 repo_ver=$(shell  RV=`git rev-parse --verify --short=6 HEAD 2>/dev/null`;\
 					[ -n "$$RV" ] && \
@@ -358,7 +358,7 @@ repo_ver=$(shell  RV=`git rev-parse --verify --short=6 HEAD 2>/dev/null`;\
 						RV="$$RV"-dirty; echo "$$RV")
 repo_hash=$(subst -dirty,,$(repo_ver))
 repo_state=$(subst %-dirty,dirty,$(findstring -dirty,$(repo_ver)))
-autover_h_dep=.git $(filter-out $(auto_gen), $(sources)) core/cfg.y core/cfg.lex Makefile
+autover_h_dep=../.git $(filter-out $(auto_gen), $(sources)) core/cfg.y core/cfg.lex Makefile
 else
 # else if .git/ does not exist
 repo_ver=
