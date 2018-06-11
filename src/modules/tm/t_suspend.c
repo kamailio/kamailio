@@ -166,7 +166,9 @@ int t_suspend(struct sip_msg *msg,
 int t_continue_helper(unsigned int hash_index, unsigned int label,
 		struct action *rtact, str *cbname, str *cbparam)
 {
-	struct cell	*t;
+	tm_cell_t *t;
+	tm_cell_t *backup_T = T_UNDEFINED;
+	int backup_T_branch = T_BR_UNDEFINED;
 	sip_msg_t *faked_req;
 	sip_msg_t *brpl;
 	void *erpl;
@@ -187,13 +189,18 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 
 	cfg_update();
 
+	backup_T = get_t();
+	backup_T_branch = get_t_branch();
+
 	if (t_lookup_ident(&t, hash_index, label) < 0) {
+		set_t(backup_T, backup_T_branch);
 		LM_ERR("transaction not found\n");
 		return -1;
 	}
 
 	if (!(t->flags & T_ASYNC_SUSPENDED)) {
 		LM_WARN("transaction is not suspended [%u:%u]\n", hash_index, label);
+		set_t(backup_T, backup_T_branch);
 		return -2;
 	}
 
@@ -203,7 +210,7 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 		 * needless to continue */
 		UNREF(t); /* t_unref would kill the transaction */
 		/* reset T as we have no working T anymore */
-		set_t(T_UNDEFINED, T_BR_UNDEFINED);
+		set_t(backup_T, backup_T_branch);
 		return 1;
 	}
 
@@ -248,6 +255,7 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 				t->flags &= ~T_ASYNC_CONTINUE;
 				UNLOCK_ASYNC_CONTINUE(t);
 				UNREF(t); /* t_unref would kill the transaction */
+				set_t(backup_T, backup_T_branch);
 				return 1;
 			}
 
@@ -387,7 +395,6 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 						if(keng->froute(t->uac[branch].reply, TM_ONREPLY_ROUTE,
 								cbname, &evname)<0) {
 							LM_ERR("error running event route kemi callback\n");
-							return -1;
 						}
 					} else {
 						LM_DBG("event callback (%.*s) set, but no cfg engine\n",
@@ -539,7 +546,7 @@ done:
 		sip_msg_free(brpl);
 	}
 
-
+	set_t(backup_T, backup_T_branch);
 	return 0;
 
 kill_trans:
@@ -566,6 +573,7 @@ kill_trans:
 		/* response handling */
 		t_unref(t->uac[branch].reply);
 	}
+	set_t(backup_T, backup_T_branch);
 	return ret;
 }
 
