@@ -195,6 +195,26 @@ sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
 	return avp;
 }
 
+sr_xavp_t *xavp_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavp)
+{
+	sr_xavp_t *avp=0;
+
+	avp = xavp_new_value(name, val);
+	if (avp==NULL)
+		return NULL;
+
+	/* link new xavp */
+	if(pxavp) {
+		avp->next = pxavp->next;
+		pxavp->next = avp;
+	} else {
+		avp->next = *_xavp_list_crt;
+		*_xavp_list_crt = avp;
+	}
+
+	return avp;
+}
+
 sr_xavp_t *xavp_add_xavp_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list)
 {
 	sr_xavp_t *ravp=0;
