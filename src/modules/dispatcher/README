@@ -73,33 +73,31 @@ Julien Chavanton
               3.8. force_dst (int)
               3.9. flags (int)
               3.10. use_default (int)
-              3.11. dst_avp (str)
-              3.12. grp_avp (str)
-              3.13. cnt_avp (str)
-              3.14. dstid_avp (str)
-              3.15. attrs_avp (str)
-              3.16. sock_avp (str)
-              3.17. hash_pvar (str)
-              3.18. setid_pvname (str)
-              3.19. attrs_pvname (str)
-              3.20. ds_ping_method (string)
-              3.21. ds_ping_from (string)
-              3.22. ds_ping_interval (int)
-              3.23. ds_probing_threshold (int)
-              3.24. ds_inactive_threshold (int)
-              3.25. ds_ping_reply_codes (string)
-              3.26. ds_probing_mode (int)
-              3.27. ds_ping_latency_stats (int)
-              3.28. ds_latency_estimator_alpha (int)
-              3.29. ds_hash_size (int)
-              3.30. ds_hash_expire (int)
-              3.31. ds_hash_initexpire (int)
-              3.32. ds_hash_check_interval (int)
-              3.33. outbound_proxy (str)
-              3.34. ds_default_socket (str)
-              3.35. ds_timer_mode (int)
-              3.36. event_callback (str)
-              3.37. ds_attrs_none (int)
+              3.11. xavp_dst (str)
+              3.12. xavp_dst_mode (int)
+              3.13. xavp_ctx (str)
+              3.14. xavp_ctx_mode (int)
+              3.15. hash_pvar (str)
+              3.16. setid_pvname (str)
+              3.17. attrs_pvname (str)
+              3.18. ds_ping_method (string)
+              3.19. ds_ping_from (string)
+              3.20. ds_ping_interval (int)
+              3.21. ds_probing_threshold (int)
+              3.22. ds_inactive_threshold (int)
+              3.23. ds_ping_reply_codes (string)
+              3.24. ds_probing_mode (int)
+              3.25. ds_ping_latency_stats (int)
+              3.26. ds_latency_estimator_alpha (int)
+              3.27. ds_hash_size (int)
+              3.28. ds_hash_expire (int)
+              3.29. ds_hash_initexpire (int)
+              3.30. ds_hash_check_interval (int)
+              3.31. outbound_proxy (str)
+              3.32. ds_default_socket (str)
+              3.33. ds_timer_mode (int)
+              3.34. event_callback (str)
+              3.35. ds_attrs_none (int)
 
         4. Functions
 
@@ -150,45 +148,43 @@ Julien Chavanton
    1.8. Set the “force_dst” parameter
    1.9. Set the “flags” parameter
    1.10. Set the “use_default” parameter
-   1.11. Set the “dst_avp” parameter
-   1.12. Set the “grp_avp” parameter
-   1.13. Set the “cnt_avp” parameter
-   1.14. Set the “dstid_avp” parameter
-   1.15. Set the “attrs_avp” parameter
-   1.16. Set the “sock_avp” parameter
-   1.17. Use $avp(hash) for hashing:
-   1.18. Use combination of PVs for hashing:
-   1.19. Set the “setid_pvname” parameter
-   1.20. Set the “attrs_pvname” parameter
-   1.21. Set the “ds_ping_method” parameter
-   1.22. Set the “ds_ping_from” parameter
-   1.23. Set the “ds_ping_interval” parameter
-   1.24. Set the “ds_probing_threshold” parameter
-   1.25. Set the “ds_inactive_threshold” parameter
-   1.26. Set the “ds_ping_reply_codes” parameter
-   1.27. Set the “ds_probing_mode” parameter
-   1.28. accessing the metrics
-   1.29. Set the “ds_ping_latency_stats” parameter
-   1.30. Set the “ds_hash_size” parameter
-   1.31. Set the “ds_hash_size” parameter
-   1.32. Set the “ds_hash_expire” parameter
-   1.33. Set the “ds_hash_initexpire” parameter
-   1.34. Set the “ds_hash_check_interval” parameter
-   1.35. Set the “outbound_proxy” parameter
-   1.36. Set the “ds_default_socket” parameter
-   1.37. Set the “ds_timer_mode” parameter
-   1.38. Set event_callback parameter
-   1.39. Set the “ds_attrs_none” parameter
-   1.40. ds_select_dst usage
-   1.41. configuring load balancing with congestion detection
-   1.42. ds_select_domain usage
-   1.43. ds_select usage
-   1.44. ds_mark_dst usage
-   1.45. ds_list_exists usage
-   1.46. ds_is_from_list usage
-   1.47. ds_load_unset usage
-   1.48. dispatcher list file
-   1.49. Kamailio config script - sample dispatcher usage
+   1.11. Set the “xavp_dst” parameter
+   1.12. Set the “xavp_dst_mode” parameter
+   1.13. Set the “xavp_ctx” parameter
+   1.14. Set the “xavp_ctx_mode” parameter
+   1.15. Use $avp(hash) for hashing:
+   1.16. Use combination of PVs for hashing:
+   1.17. Set the “setid_pvname” parameter
+   1.18. Set the “attrs_pvname” parameter
+   1.19. Set the “ds_ping_method” parameter
+   1.20. Set the “ds_ping_from” parameter
+   1.21. Set the “ds_ping_interval” parameter
+   1.22. Set the “ds_probing_threshold” parameter
+   1.23. Set the “ds_inactive_threshold” parameter
+   1.24. Set the “ds_ping_reply_codes” parameter
+   1.25. Set the “ds_probing_mode” parameter
+   1.26. accessing the metrics
+   1.27. Set the “ds_ping_latency_stats” parameter
+   1.28. Set the “ds_hash_size” parameter
+   1.29. Set the “ds_hash_size” parameter
+   1.30. Set the “ds_hash_expire” parameter
+   1.31. Set the “ds_hash_initexpire” parameter
+   1.32. Set the “ds_hash_check_interval” parameter
+   1.33. Set the “outbound_proxy” parameter
+   1.34. Set the “ds_default_socket” parameter
+   1.35. Set the “ds_timer_mode” parameter
+   1.36. Set event_callback parameter
+   1.37. Set the “ds_attrs_none” parameter
+   1.38. ds_select_dst usage
+   1.39. configuring load balancing with congestion detection
+   1.40. ds_select_domain usage
+   1.41. ds_select usage
+   1.42. ds_mark_dst usage
+   1.43. ds_list_exists usage
+   1.44. ds_is_from_list usage
+   1.45. ds_load_unset usage
+   1.46. dispatcher list file
+   1.47. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -212,33 +208,31 @@ Chapter 1. Admin Guide
         3.8. force_dst (int)
         3.9. flags (int)
         3.10. use_default (int)
-        3.11. dst_avp (str)
-        3.12. grp_avp (str)
-        3.13. cnt_avp (str)
-        3.14. dstid_avp (str)
-        3.15. attrs_avp (str)
-        3.16. sock_avp (str)
-        3.17. hash_pvar (str)
-        3.18. setid_pvname (str)
-        3.19. attrs_pvname (str)
-        3.20. ds_ping_method (string)
-        3.21. ds_ping_from (string)
-        3.22. ds_ping_interval (int)
-        3.23. ds_probing_threshold (int)
-        3.24. ds_inactive_threshold (int)
-        3.25. ds_ping_reply_codes (string)
-        3.26. ds_probing_mode (int)
-        3.27. ds_ping_latency_stats (int)
-        3.28. ds_latency_estimator_alpha (int)
-        3.29. ds_hash_size (int)
-        3.30. ds_hash_expire (int)
-        3.31. ds_hash_initexpire (int)
-        3.32. ds_hash_check_interval (int)
-        3.33. outbound_proxy (str)
-        3.34. ds_default_socket (str)
-        3.35. ds_timer_mode (int)
-        3.36. event_callback (str)
-        3.37. ds_attrs_none (int)
+        3.11. xavp_dst (str)
+        3.12. xavp_dst_mode (int)
+        3.13. xavp_ctx (str)
+        3.14. xavp_ctx_mode (int)
+        3.15. hash_pvar (str)
+        3.16. setid_pvname (str)
+        3.17. attrs_pvname (str)
+        3.18. ds_ping_method (string)
+        3.19. ds_ping_from (string)
+        3.20. ds_ping_interval (int)
+        3.21. ds_probing_threshold (int)
+        3.22. ds_inactive_threshold (int)
+        3.23. ds_ping_reply_codes (string)
+        3.24. ds_probing_mode (int)
+        3.25. ds_ping_latency_stats (int)
+        3.26. ds_latency_estimator_alpha (int)
+        3.27. ds_hash_size (int)
+        3.28. ds_hash_expire (int)
+        3.29. ds_hash_initexpire (int)
+        3.30. ds_hash_check_interval (int)
+        3.31. outbound_proxy (str)
+        3.32. ds_default_socket (str)
+        3.33. ds_timer_mode (int)
+        3.34. event_callback (str)
+        3.35. ds_attrs_none (int)
 
    4. Functions
 
@@ -322,33 +316,31 @@ Chapter 1. Admin Guide
    3.8. force_dst (int)
    3.9. flags (int)
    3.10. use_default (int)
-   3.11. dst_avp (str)
-   3.12. grp_avp (str)
-   3.13. cnt_avp (str)
-   3.14. dstid_avp (str)
-   3.15. attrs_avp (str)
-   3.16. sock_avp (str)
-   3.17. hash_pvar (str)
-   3.18. setid_pvname (str)
-   3.19. attrs_pvname (str)
-   3.20. ds_ping_method (string)
-   3.21. ds_ping_from (string)
-   3.22. ds_ping_interval (int)
-   3.23. ds_probing_threshold (int)
-   3.24. ds_inactive_threshold (int)
-   3.25. ds_ping_reply_codes (string)
-   3.26. ds_probing_mode (int)
-   3.27. ds_ping_latency_stats (int)
-   3.28. ds_latency_estimator_alpha (int)
-   3.29. ds_hash_size (int)
-   3.30. ds_hash_expire (int)
-   3.31. ds_hash_initexpire (int)
-   3.32. ds_hash_check_interval (int)
-   3.33. outbound_proxy (str)
-   3.34. ds_default_socket (str)
-   3.35. ds_timer_mode (int)
-   3.36. event_callback (str)
-   3.37. ds_attrs_none (int)
+   3.11. xavp_dst (str)
+   3.12. xavp_dst_mode (int)
+   3.13. xavp_ctx (str)
+   3.14. xavp_ctx_mode (int)
+   3.15. hash_pvar (str)
+   3.16. setid_pvname (str)
+   3.17. attrs_pvname (str)
+   3.18. ds_ping_method (string)
+   3.19. ds_ping_from (string)
+   3.20. ds_ping_interval (int)
+   3.21. ds_probing_threshold (int)
+   3.22. ds_inactive_threshold (int)
+   3.23. ds_ping_reply_codes (string)
+   3.24. ds_probing_mode (int)
+   3.25. ds_ping_latency_stats (int)
+   3.26. ds_latency_estimator_alpha (int)
+   3.27. ds_hash_size (int)
+   3.28. ds_hash_expire (int)
+   3.29. ds_hash_initexpire (int)
+   3.30. ds_hash_check_interval (int)
+   3.31. outbound_proxy (str)
+   3.32. ds_default_socket (str)
+   3.33. ds_timer_mode (int)
+   3.34. event_callback (str)
+   3.35. ds_attrs_none (int)
 
 3.1. list_file (string)
 
@@ -456,8 +448,8 @@ modparam("dispatcher", "force_dst", 1)
 
    If flag 2 is set, then failover support is enabled. The functions
    exported by the module will store the rest of addresses from the
-   destination set in the AVP, and use these AVPs to contact next address
-   if the current-tried destination fails.
+   destination set in XAPVs, and use these XAVPs to try next address if
+   the current-tried destination fails.
 
    Default value is “0”.
 
@@ -480,106 +472,69 @@ modparam("dispatcher", "force_dst", 1)
  modparam("dispatcher", "use_default", 1)
  ...
 
-3.11. dst_avp (str)
+3.11. xavp_dst (str)
 
-   The name of the avp which will hold the list with addresses, in the
-   order they have been selected by the chosen algorithm. If use_default
-   is 1, the value of last dst_avp_id is the last address in destination
-   set. The first dst_avp_id is the selected destinations. All the other
-   addresses from the destination set will be added in the avp list to be
-   able to implement serial forking.
-
-Note
-
-   You must set this parameter if you want to do load balancing fail over.
-
-   Default value is “null” - don't add AVPs.
-
-   Example 1.11. Set the “dst_avp” parameter
- ...
- modparam("dispatcher", "dst_avp", "$avp(dsdst)")
- ...
-
-3.12. grp_avp (str)
-
-   The name of the avp storing the group id of the destination set. Good
-   to have it for later usage or checks.
+   The name of the XAVP which will hold the list with addresses and
+   associated properties, in the order they have been selected by the
+   chosen algorithm. If use_default is 1, the values of last XAVP
+   correspond to the last address in destination set. The first XAVP is
+   the current selected destination. All the other addresses from the
+   destination set will be added in the XAVP list to be able to implement
+   serial forking.
 
 Note
 
    You must set this parameter if you want to do load balancing fail over.
 
-   Default value is “null” - don't add AVP.
+   Default value is “_dsdst_”.
 
-   Example 1.12. Set the “grp_avp” parameter
+   Example 1.11. Set the “xavp_dst” parameter
  ...
- modparam("dispatcher", "grp_avp", "$avp(dsgrp)")
- ...
-
-3.13. cnt_avp (str)
-
-   The name of the avp storing the number of destination addresses kept in
-   dst_avp AVPs.
-
-Note
-
-   You must set this parameter if you want to do load balancing fail over.
-
-   Default value is “null” - don't add AVP.
-
-   Example 1.13. Set the “cnt_avp” parameter
- ...
- modparam("dispatcher", "cnt_avp", "$avp(dscnt)")
+ modparam("dispatcher", "xavp_dst", "_dsdst_")
  ...
 
-3.14. dstid_avp (str)
+3.12. xavp_dst_mode (int)
 
-   The name of the avp storing the destination unique ID used for call
-   load based dispatching.
+   Control what fields are added to the XAVP specified by xavp_dst
+   parameter. The addeded fields are: the set id (group id), the URI
+   address, socket pointer, and destination unique id in case of call load
+   distribution algorithm. The attributes are added if xavp_dst_mode does
+   not have the bit 1 set.
 
-Note
+   Default value is “0” (add all fields).
 
-   You must set this parameter if you want to do load balancing on call
-   load (alg 10).
-
-   Default value is “null” - don't add AVP.
-
-   Example 1.14. Set the “dstid_avp” parameter
+   Example 1.12. Set the “xavp_dst_mode” parameter
  ...
- modparam("dispatcher", "dstid_avp", "$avp(dsdstid)")
+ modparam("dispatcher", "xavp_dst_mode", 1)
  ...
 
-3.15. attrs_avp (str)
+3.13. xavp_ctx (str)
 
-   The name of the avp storing destination's attributes value.
+   The name of the XAVP which will hold some attributes specific to
+   dispatcher routing context. The XAVP can hold the next fields: cnt -
+   the number of addresses selected for routing.
 
-Note
+   Default value is “_dsctx_”.
 
-   Default value is “null” - don't add AVP.
-
-   Example 1.15. Set the “attrs_avp” parameter
+   Example 1.13. Set the “xavp_ctx” parameter
  ...
- modparam("dispatcher", "attrs_avp", "$avp(dsattrs)")
- ...
-
-3.16. sock_avp (str)
-
-   The name of the avp which will hold the list with the sockets
-   associated to the addresses stored in dst_avp avp.
-
-Note
-
-   If you want to do load balancing fail over, you have to set this
-   parameter to use the correct socket for each gateway.
-
-   Default value is “null” - don't add AVPs.
-
-   Example 1.16. Set the “sock_avp” parameter
- ...
- modparam("dispatcher", "sock_avp", "$avp(dssocket)")
+ modparam("dispatcher", "xavp_ctx", "_dsctx_")
  ...
 
-3.17. hash_pvar (str)
+3.14. xavp_ctx_mode (int)
+
+   Control what fields are added to the XAVP specified by xavp_ctx
+   parameter. The cnt field is added if xavp_cnt_mode does not have the
+   bit 1 set.
+
+   Default value is “0” (add all fields).
+
+   Example 1.14. Set the “xavp_ctx_mode” parameter
+ ...
+ modparam("dispatcher", "xavp_ctx_mode", 1)
+ ...
+
+3.15. hash_pvar (str)
 
    String with PVs used for the hashing algorithm 7.
 
@@ -590,41 +545,41 @@ Note
 
    Default value is “null” - disabled.
 
-   Example 1.17. Use $avp(hash) for hashing:
+   Example 1.15. Use $avp(hash) for hashing:
  ...
  modparam("dispatcher", "hash_pvar", "$avp(hash)")
  ...
 
-   Example 1.18. Use combination of PVs for hashing:
+   Example 1.16. Use combination of PVs for hashing:
  ...
  modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
  ...
 
-3.18. setid_pvname (str)
+3.16. setid_pvname (str)
 
    The name of the PV where to store the set ID (group ID) when calling
    ds_is_from_list() with no parameter.
 
    Default value is “null” - don't set PV.
 
-   Example 1.19. Set the “setid_pvname” parameter
+   Example 1.17. Set the “setid_pvname” parameter
  ...
  modparam("dispatcher", "setid_pvname", "$var(setid)")
  ...
 
-3.19. attrs_pvname (str)
+3.17. attrs_pvname (str)
 
    The name of the PV where to store the attributes of matching address
    when calling ds_is_from_list().
 
    Default value is “null” - don't set PV.
 
-   Example 1.20. Set the “attrs_pvname” parameter
+   Example 1.18. Set the “attrs_pvname” parameter
  ...
  modparam("dispatcher", "attrs_pvname", "$var(attrs)")
  ...
 
-3.20. ds_ping_method (string)
+3.18. ds_ping_method (string)
 
    With this method you can define, with which method you want to probe
    the gateways. Pinging gateways feature depends on ds_ping_interval
@@ -632,12 +587,12 @@ Note
 
    Default value is “OPTIONS”.
 
-   Example 1.21. Set the “ds_ping_method” parameter
+   Example 1.19. Set the “ds_ping_method” parameter
  ...
  modparam("dispatcher", "ds_ping_method", "INFO")
  ...
 
-3.21. ds_ping_from (string)
+3.19. ds_ping_from (string)
 
    With this Method you can define the "From:"-Line for the request, sent
    to the failed gateways. This method is only available, if compiled with
@@ -645,12 +600,12 @@ Note
 
    Default value is “sip:dispatcher@localhost”.
 
-   Example 1.22. Set the “ds_ping_from” parameter
+   Example 1.20. Set the “ds_ping_from” parameter
  ...
  modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
  ...
 
-3.22. ds_ping_interval (int)
+3.20. ds_ping_interval (int)
 
    With this parameter you can define the interval for sending a request
    to a gateway marked as inactive upon a failed request routing to it.
@@ -659,12 +614,12 @@ Note
 
    Default value is “0”.
 
-   Example 1.23. Set the “ds_ping_interval” parameter
+   Example 1.21. Set the “ds_ping_interval” parameter
  ...
  modparam("dispatcher", "ds_ping_interval", 30)
  ...
 
-3.23. ds_probing_threshold (int)
+3.21. ds_probing_threshold (int)
 
    If you want to set a gateway into inactive mode, there can be a
    specific number of failed requests until it will change from "active"
@@ -675,12 +630,12 @@ Note
 
    Default value is “1” (set inactive with first failure).
 
-   Example 1.24. Set the “ds_probing_threshold” parameter
+   Example 1.22. Set the “ds_probing_threshold” parameter
  ...
  modparam("dispatcher", "ds_probing_threshold", 10)
  ...
 
-3.24. ds_inactive_threshold (int)
+3.22. ds_inactive_threshold (int)
 
    If you want to set a gateway into active mode (after being inactive),
    there can be a specific number of successful requests until it will
@@ -690,12 +645,12 @@ Note
 
    Default value is “1” (set active with first success).
 
-   Example 1.25. Set the “ds_inactive_threshold” parameter
+   Example 1.23. Set the “ds_inactive_threshold” parameter
  ...
  modparam("dispatcher", "ds_inactive_threshold", 10)
  ...
 
-3.25. ds_ping_reply_codes (string)
+3.23. ds_ping_reply_codes (string)
 
    This parameter defines the valid response codes, which are accepted as
    a valid reply to the PING-Method. It is a list separated by colons,
@@ -714,13 +669,13 @@ Note
 
    Default value is “” (only 200 OK is accepted).
 
-   Example 1.26. Set the “ds_ping_reply_codes” parameter
+   Example 1.24. Set the “ds_ping_reply_codes” parameter
  ...
  modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=
 3")
  ...
 
-3.26. ds_probing_mode (int)
+3.24. ds_probing_mode (int)
 
    Controls what gateways are tested to see if they are reachable.
      * Value 0: If set to 0, only the gateways with state PROBING are
@@ -738,12 +693,12 @@ Note
 
    Default value is “0”.
 
-   Example 1.27. Set the “ds_probing_mode” parameter
+   Example 1.25. Set the “ds_probing_mode” parameter
  ...
  modparam("dispatcher", "ds_probing_mode", 1)
  ...
 
-3.27. ds_ping_latency_stats (int)
+3.25. ds_ping_latency_stats (int)
 
    Enable latency measurement when pinging nodes
      * If set to 0, disable latency measurement.
@@ -751,7 +706,7 @@ Note
 
    Default value is “0”.
 
-   Example 1.28. accessing the metrics
+   Example 1.26. accessing the metrics
 # using the command :
 kamcmd dispatcher.list
  ...
@@ -770,12 +725,12 @@ estimator_alpha
 }
  ...
 
-   Example 1.29. Set the “ds_ping_latency_stats” parameter
+   Example 1.27. Set the “ds_ping_latency_stats” parameter
  ...
  modparam("dispatcher", "ds_ping_latency_stats", 1)
  ...
 
-3.28. ds_latency_estimator_alpha (int)
+3.26. ds_latency_estimator_alpha (int)
 
    The value to be used to control the memory of the estimator EWMA
    "exponential weighted moving average" or "the speed at which the older
@@ -787,12 +742,12 @@ estimator_alpha
 
    Default value is “900 => 0.9”.
 
-   Example 1.30. Set the “ds_hash_size” parameter
+   Example 1.28. Set the “ds_hash_size” parameter
  ...
  modparam("dispatcher", "ds_latency_estimator_alpha", 900)
  ...
 
-3.29. ds_hash_size (int)
+3.27. ds_hash_size (int)
 
    The value to be used as power of two to set the number of slots to hash
    table storing data for call load dispatching (e.g., value 8 will create
@@ -801,24 +756,24 @@ estimator_alpha
 
    Default value is “0”.
 
-   Example 1.31. Set the “ds_hash_size” parameter
+   Example 1.29. Set the “ds_hash_size” parameter
  ...
  modparam("dispatcher", "ds_hash_size", 9)
  ...
 
-3.30. ds_hash_expire (int)
+3.28. ds_hash_expire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    BYE was received meanwhile.
 
    Default value is “7200”.
 
-   Example 1.32. Set the “ds_hash_expire” parameter
+   Example 1.30. Set the “ds_hash_expire” parameter
  ...
  modparam("dispatcher", "ds_hash_expire", 3600)
  ...
 
-3.31. ds_hash_initexpire (int)
+3.29. ds_hash_initexpire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    200 for INVITE was received meanwhile and state updated with
@@ -826,35 +781,35 @@ estimator_alpha
 
    Default value is “7200”.
 
-   Example 1.33. Set the “ds_hash_initexpire” parameter
+   Example 1.31. Set the “ds_hash_initexpire” parameter
  ...
  modparam("dispatcher", "ds_hash_initexpire", 60)
  ...
 
-3.32. ds_hash_check_interval (int)
+3.30. ds_hash_check_interval (int)
 
    Time interval in seconds to scan internal hash table with call load
    dispatching data for expired items.
 
    Default value is “30”.
 
-   Example 1.34. Set the “ds_hash_check_interval” parameter
+   Example 1.32. Set the “ds_hash_check_interval” parameter
  ...
  modparam("dispatcher", "ds_hash_check_interval", 60)
  ...
 
-3.33. outbound_proxy (str)
+3.31. outbound_proxy (str)
 
    SIP URI of outbound proxy to be used when sending pings.
 
    By default no outbound proxy is defined.
 
-   Example 1.35. Set the “outbound_proxy” parameter
+   Example 1.33. Set the “outbound_proxy” parameter
  ...
  modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
  ...
 
-3.34. ds_default_socket (str)
+3.32. ds_default_socket (str)
 
    Default socket to be used for sending pings and dispatching requests
    when a gateway has no send socket configured.
@@ -862,12 +817,12 @@ estimator_alpha
    By default no default socket is defined, the first configuration script
    listen directive is used.
 
-   Example 1.36. Set the “ds_default_socket” parameter
+   Example 1.34. Set the “ds_default_socket” parameter
  ...
  modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
  ...
 
-3.35. ds_timer_mode (int)
+3.33. ds_timer_mode (int)
 
    Specify the timer process to be used by the module for keepalives and
    active dialogs tracking.
@@ -882,12 +837,12 @@ estimator_alpha
 
    Default value is “0”.
 
-   Example 1.37. Set the “ds_timer_mode” parameter
+   Example 1.35. Set the “ds_timer_mode” parameter
  ...
  modparam("dispatcher", "ds_timer_mode", 1)
  ...
 
-3.36. event_callback (str)
+3.34. event_callback (str)
 
    The name of the function in the kemi configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
@@ -898,7 +853,7 @@ estimator_alpha
 
    Default value is 'empty' (no function is executed for events).
 
-   Example 1.38. Set event_callback parameter
+   Example 1.36. Set event_callback parameter
 ...
 modparam("dispatcher", "event_callback", "ksr_dispatcher_event")
 ...
@@ -909,15 +864,15 @@ function ksr_dispatcher_event(evname)
 end
 ...
 
-3.37. ds_attrs_none (int)
+3.35. ds_attrs_none (int)
 
    If set to 1, "none=yes" is set in the attrs for those records that have
-   no attrs value, to ensure that corresponding avps for records do not
-   get mixed up.
+   no attrs value, to ensure that corresponding XAVP fields for records do
+   not get mixed up.
 
    Default value is “0”.
 
-   Example 1.39. Set the “ds_attrs_none” parameter
+   Example 1.37. Set the “ds_attrs_none” parameter
  ...
  modparam("dispatcher", "ds_attrs_none", 1)
  ...
@@ -944,7 +899,7 @@ end
    in the SIP request.
 
    If the bit 2 in 'flags' parameter is set, the rest of the addresses
-   from the destination set is stored in AVP list (limited with an
+   from the destination set are stored in XAVP list (limited with an
    optional 'limit' parameter). You can use 'ds_next_dst()' to use next
    address in order to achieve serial forking to all possible
    destinations.
@@ -972,7 +927,7 @@ end
             attribute 'weight' per each address in destination set.
           + “10” - use call load distribution. You have to set the
             attribute 'duid' (as an unique string id) per each address in
-            destination set. Also, you must set parameters 'dstid_avp' and
+            destination set. Also, you must set the parameter
             'ds_hash_size'.
             The algorithm can be used even with stateless proxy mode,
             there is no SIP dialog tracking depending on other modules,
@@ -1008,18 +963,18 @@ end
             distribution is instead done using the ratio of estimated
             congestion ms.
           + “12” - dispatch to all destination in setid at once (parallel
-            forking). Note that the AVPs are no longer set with the values
-            of the destination records, no re-routing making sense in this
-            case.
+            forking). Note that the XAVPs are no longer set with the
+            values of the destination records, no re-routing making sense
+            in this case.
           + “X” - if the algorithm is not implemented, the first entry in
             set is chosen.
-     * limit - the maximum number of items to be stored in AVP list for
+     * limit - the maximum number of items to be stored in XAVP list for
        further fail-overs (the first selected destination and default
        destination are the first to be put in the list)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.40. ds_select_dst usage
+   Example 1.38. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -1029,7 +984,7 @@ ds_select_dst("1", "$var(a)");
 ds_select_dst("1", "4", "3");
 ...
 
-   Example 1.41. configuring load balancing with congestion detection
+   Example 1.39. configuring load balancing with congestion detection
 ...
 # sample of SQL provisionning statements
 INSERT INTO "dispatcher"
@@ -1075,13 +1030,13 @@ DEST: {
    ds_select_dst().
 
    If the bit 2 in 'flags' is set, the rest of the addresses from the
-   destination set is stored in AVP list (limited with an optional 'limit'
-   parameter). You can use 'ds_next_domain()' to use next address to
-   achieve serial forking to all possible destinations.
+   destination set are stored in XAVP list (limited with an optional
+   'limit' parameter). You can use 'ds_next_domain()' to use next address
+   to achieve serial forking to all possible destinations.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.42. ds_select_domain usage
+   Example 1.40. ds_select_domain usage
 ...
 $var(a) = 4;
 if(ds_select_domain("1", "$var(a)")) {
@@ -1093,19 +1048,19 @@ if(ds_select_domain("1", "$var(a)")) {
 4.3.  ds_select(set, alg [, limit])
 
    The method selects a destination from addresses set and adds it in the
-   AVPs specified for this module. It is not updating R-URI nor the
+   XAVP specified for this module. It is not updating R-URI nor the
    destination URI. The parameters have same meaning as for
    ds_select_dst().
 
    If the bit 2 in 'flags' is set, the rest of the addresses from the
-   destination set is stored in AVP list (limited with an optional 'limit'
-   parameter). You can execute 'ds_next_domain()' or 'ds_next_dst()' to
-   use next address to achieve serial forking to all possible
-   destinations.
+   destination set are stored in XAVP list (limited with an optional
+   'limit' parameter). You can execute 'ds_next_domain()' or
+   'ds_next_dst()' to use next address to achieve serial forking to all
+   possible destinations.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.43. ds_select usage
+   Example 1.41. ds_select usage
 ...
 $var(a) = 4;
 if(ds_select("1", "$var(a)")) {
@@ -1117,15 +1072,15 @@ if(ds_select("1", "$var(a)")) {
 
 4.4.  ds_next_dst()
 
-   Takes the next destination address from the AVPs with id 'dst_avp_id'
-   and sets the dst_uri (outbound proxy address).
+   Takes the next destination address from the corresponding XAVPs and
+   sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
 4.5.  ds_next_domain()
 
-   Takes the next destination address from the AVPs with id 'dst_avp_id'
-   and sets the domain part of the request URI.
+   Takes the next destination address from the corresponding XAVPs and
+   sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -1156,7 +1111,7 @@ if(ds_select("1", "$var(a)")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.44. ds_mark_dst usage
+   Example 1.42. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1175,7 +1130,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.45. ds_list_exists usage
+   Example 1.43. ds_list_exists usage
 ...
 if(ds_list_exists("10")) {
     ...
@@ -1218,7 +1173,7 @@ if(ds_list_exists("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.46. ds_is_from_list usage
+   Example 1.44. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1252,7 +1207,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.47. ds_load_unset usage
+   Example 1.45. ds_load_unset usage
 ...
 route {
     ...
@@ -1426,7 +1381,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.48. dispatcher list file
+   Example 1.46. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -1451,7 +1406,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.49. Kamailio config script - sample dispatcher usage
+   Example 1.47. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
