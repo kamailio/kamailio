@@ -73,26 +73,21 @@ char *dslistfile = CFG_DIR"dispatcher.list";
 int  ds_force_dst   = 1;
 int  ds_flags       = 0;
 int  ds_use_default = 0;
-static str dst_avp_param = STR_NULL;
-static str grp_avp_param = STR_NULL;
-static str cnt_avp_param = STR_NULL;
-static str dstid_avp_param = STR_NULL;
-static str attrs_avp_param = STR_NULL;
-static str sock_avp_param = STR_NULL;
+str ds_xavp_dst = str_init("_dsdst_");
+int ds_xavp_dst_mode = 0;
+str ds_xavp_ctx = str_init("_dsctx_");
+int ds_xavp_ctx_mode = 0;
+
 str hash_pvar_param = STR_NULL;
 
-int_str dst_avp_name;
-unsigned short dst_avp_type;
-int_str grp_avp_name;
-unsigned short grp_avp_type;
-int_str cnt_avp_name;
-unsigned short cnt_avp_type;
-int_str dstid_avp_name;
-unsigned short dstid_avp_type;
-int_str attrs_avp_name;
-unsigned short attrs_avp_type;
-int_str sock_avp_name;
-unsigned short sock_avp_type;
+str ds_xavp_dst_addr = str_init("uri");
+str ds_xavp_dst_grp = str_init("grp");
+str ds_xavp_dst_dstid = str_init("dstid");
+str ds_xavp_dst_attrs = str_init("attrs");
+str ds_xavp_dst_sock = str_init("sock");
+
+str ds_xavp_ctx_cnt = str_init("cnt");
+
 
 pv_elem_t * hash_param_model = NULL;
 
@@ -234,12 +229,10 @@ static param_export_t params[]={
 	{"force_dst",       INT_PARAM, &ds_force_dst},
 	{"flags",           INT_PARAM, &ds_flags},
 	{"use_default",     INT_PARAM, &ds_use_default},
-	{"dst_avp",         PARAM_STR, &dst_avp_param},
-	{"grp_avp",         PARAM_STR, &grp_avp_param},
-	{"cnt_avp",         PARAM_STR, &cnt_avp_param},
-	{"dstid_avp",       PARAM_STR, &dstid_avp_param},
-	{"attrs_avp",       PARAM_STR, &attrs_avp_param},
-	{"sock_avp",        PARAM_STR, &sock_avp_param},
+	{"xavp_dst",        PARAM_STR, &ds_xavp_dst},
+	{"xavp_dst_mode",   PARAM_INT, &ds_xavp_dst_mode},
+	{"xavp_ctx",        PARAM_STR, &ds_xavp_ctx},
+	{"xavp_ctx_mode",   PARAM_INT, &ds_xavp_ctx_mode},
 	{"hash_pvar",       PARAM_STR, &hash_pvar_param},
 	{"setid_pvname",    PARAM_STR, &ds_setid_pvname},
 	{"attrs_pvname",    PARAM_STR, &ds_attrs_pvname},
@@ -287,7 +280,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	pv_spec_t avp_spec;
 	str host;
 	int port, proto;
 
@@ -359,117 +351,6 @@ static int mod_init(void)
 		}
 	}
 
-	if(dst_avp_param.s && dst_avp_param.len > 0) {
-		if(pv_parse_spec(&dst_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					dst_avp_param.len, dst_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &dst_avp_name, &dst_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", dst_avp_param.len,
-					dst_avp_param.s);
-			return -1;
-		}
-	} else {
-		dst_avp_name.n = 0;
-		dst_avp_type = 0;
-	}
-	if(grp_avp_param.s && grp_avp_param.len > 0) {
-		if(pv_parse_spec(&grp_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					grp_avp_param.len, grp_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &grp_avp_name, &grp_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", grp_avp_param.len,
-					grp_avp_param.s);
-			return -1;
-		}
-	} else {
-		grp_avp_name.n = 0;
-		grp_avp_type = 0;
-	}
-	if(cnt_avp_param.s && cnt_avp_param.len > 0) {
-		if(pv_parse_spec(&cnt_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					cnt_avp_param.len, cnt_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &cnt_avp_name, &cnt_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", cnt_avp_param.len,
-					cnt_avp_param.s);
-			return -1;
-		}
-	} else {
-		cnt_avp_name.n = 0;
-		cnt_avp_type = 0;
-	}
-	if(dstid_avp_param.s && dstid_avp_param.len > 0) {
-		if(pv_parse_spec(&dstid_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					dstid_avp_param.len, dstid_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &dstid_avp_name, &dstid_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", dstid_avp_param.len,
-					dstid_avp_param.s);
-			return -1;
-		}
-	} else {
-		dstid_avp_name.n = 0;
-		dstid_avp_type = 0;
-	}
-
-	if(attrs_avp_param.s && attrs_avp_param.len > 0) {
-		if(pv_parse_spec(&attrs_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					attrs_avp_param.len, attrs_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &attrs_avp_name, &attrs_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", attrs_avp_param.len,
-					attrs_avp_param.s);
-			return -1;
-		}
-	} else {
-		attrs_avp_name.n = 0;
-		attrs_avp_type = 0;
-	}
-
-	if(sock_avp_param.s && sock_avp_param.len > 0) {
-		if(pv_parse_spec(&sock_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					sock_avp_param.len, sock_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &sock_avp_name, &sock_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", sock_avp_param.len,
-					sock_avp_param.s);
-			return -1;
-		}
-	} else {
-		sock_avp_name.n = 0;
-		sock_avp_type = 0;
-	}
-
 	if(hash_pvar_param.s && *hash_pvar_param.s) {
 		if(pv_parse_format(&hash_pvar_param, &hash_param_model) < 0
 				|| hash_param_model == NULL) {
@@ -496,26 +377,21 @@ static int mod_init(void)
 		}
 	}
 
-	if(dstid_avp_param.s && dstid_avp_param.len > 0) {
-		if(ds_hash_size > 0) {
-			if(ds_hash_load_init(
-					   1 << ds_hash_size, ds_hash_expire, ds_hash_initexpire)
+	if(ds_hash_size > 0) {
+		if(ds_hash_load_init(
+					1 << ds_hash_size, ds_hash_expire, ds_hash_initexpire)
+				< 0)
+			return -1;
+		if(ds_timer_mode == 1) {
+			if(sr_wtimer_add(ds_ht_timer, NULL, ds_hash_check_interval) < 0)
+				return -1;
+		} else {
+			if(register_timer(ds_ht_timer, NULL, ds_hash_check_interval)
 					< 0)
 				return -1;
-			if(ds_timer_mode == 1) {
-				if(sr_wtimer_add(ds_ht_timer, NULL, ds_hash_check_interval) < 0)
-					return -1;
-			} else {
-				if(register_timer(ds_ht_timer, NULL, ds_hash_check_interval)
-						< 0)
-					return -1;
-			}
-		} else {
-			LM_ERR("call load dispatching DSTID_AVP set but no size"
-				   " for hash table (see ds_hash_size parameter)\n");
-			return -1;
 		}
 	}
+
 	/* Only, if the Probing-Timer is enabled the TM-API needs to be loaded: */
 	if(ds_ping_interval > 0) {
 		/*****************************************************
@@ -812,9 +688,8 @@ static int w_ds_load_update(struct sip_msg *msg, char *str1, char *str2)
  */
 static int ds_warn_fixup(void **param, int param_no)
 {
-	if(!dst_avp_param.s || !grp_avp_param.s || !cnt_avp_param.s
-			|| !sock_avp_param.s) {
-		LM_ERR("failover functions used, but required AVP parameters"
+	if(ds_xavp_dst.len<=0 || ds_xavp_ctx.len<=0) {
+		LM_ERR("failover functions used, but required XAVP parameters"
 			   " are NULL -- feature disabled\n");
 	}
 	return 0;
