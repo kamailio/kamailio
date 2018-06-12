@@ -56,6 +56,10 @@
 #define DS_MATCH_NOPORT		1
 #define DS_MATCH_NOPROTO	2
 
+#define DS_SETOP_DSTURI		0
+#define DS_SETOP_RURI		1
+#define DS_SETOP_XAVP		2
+
 #define DS_XAVP_DST_SKIP_ATTRS	1
 #define DS_XAVP_CTX_SKIP_CNT	1
 

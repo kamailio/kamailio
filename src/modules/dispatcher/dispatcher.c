@@ -540,8 +540,8 @@ static int w_ds_select_addr(
  */
 static int w_ds_select(struct sip_msg *msg, char *set, char *alg)
 {
-	return w_ds_select_addr(
-			msg, set, alg, 0 /* limit number of dst*/, 2 /*set no dst/uri*/);
+	return w_ds_select_addr(msg, set, alg, 0 /* limit number of dst*/,
+					DS_SETOP_XAVP /*set no dst/uri*/);
 }
 
 /**
@@ -551,7 +551,7 @@ static int w_ds_select_limit(
 		struct sip_msg *msg, char *set, char *alg, char *limit)
 {
 	return w_ds_select_addr(msg, set, alg, limit /* limit number of dst*/,
-			2 /*set no dst/uri*/);
+			DS_SETOP_XAVP /*set no dst/uri*/);
 }
 
 /**
@@ -559,8 +559,8 @@ static int w_ds_select_limit(
  */
 static int w_ds_select_dst(struct sip_msg *msg, char *set, char *alg)
 {
-	return w_ds_select_addr(
-			msg, set, alg, 0 /* limit number of dst*/, 0 /*set dst uri*/);
+	return w_ds_select_addr(msg, set, alg, 0 /* limit number of dst*/,
+				DS_SETOP_DSTURI /*set dst uri*/);
 }
 
 /**
@@ -569,8 +569,8 @@ static int w_ds_select_dst(struct sip_msg *msg, char *set, char *alg)
 static int w_ds_select_dst_limit(
 		struct sip_msg *msg, char *set, char *alg, char *limit)
 {
-	return w_ds_select_addr(
-			msg, set, alg, limit /* limit number of dst*/, 0 /*set dst uri*/);
+	return w_ds_select_addr(msg, set, alg, limit /* limit number of dst*/,
+			DS_SETOP_DSTURI /*set dst uri*/);
 }
 
 /**
@@ -578,8 +578,8 @@ static int w_ds_select_dst_limit(
  */
 static int w_ds_select_domain(struct sip_msg *msg, char *set, char *alg)
 {
-	return w_ds_select_addr(
-			msg, set, alg, 0 /* limit number of dst*/, 1 /*set host port*/);
+	return w_ds_select_addr(msg, set, alg, 0 /* limit number of dst*/,
+			DS_SETOP_RURI /*set host port*/);
 }
 
 /**
@@ -588,8 +588,8 @@ static int w_ds_select_domain(struct sip_msg *msg, char *set, char *alg)
 static int w_ds_select_domain_limit(
 		struct sip_msg *msg, char *set, char *alg, char *limit)
 {
-	return w_ds_select_addr(
-			msg, set, alg, limit /* limit number of dst*/, 1 /*set host port*/);
+	return w_ds_select_addr(msg, set, alg, limit /* limit number of dst*/,
+			DS_SETOP_RURI /*set host port*/);
 }
 
 /**
@@ -597,7 +597,7 @@ static int w_ds_select_domain_limit(
  */
 static int w_ds_next_dst(struct sip_msg *msg, char *str1, char *str2)
 {
-	return ds_next_dst(msg, 0 /*set dst uri*/);
+	return ds_next_dst(msg, DS_SETOP_DSTURI /*set dst uri*/);
 }
 
 /**
@@ -605,7 +605,7 @@ static int w_ds_next_dst(struct sip_msg *msg, char *str1, char *str2)
  */
 static int w_ds_next_domain(struct sip_msg *msg, char *str1, char *str2)
 {
-	return ds_next_dst(msg, 1 /*set host port*/);
+	return ds_next_dst(msg, DS_SETOP_RURI /*set host port*/);
 }
 
 /**

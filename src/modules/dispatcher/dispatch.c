@@ -1669,7 +1669,7 @@ static inline int ds_update_dst(
 	struct action act;
 	struct run_act_ctx ra_ctx;
 	switch(mode) {
-		case 1:
+		case DS_SETOP_RURI:
 			memset(&act, '\0', sizeof(act));
 			act.type = SET_HOSTALL_T;
 			act.val[0].type = STRING_ST;
@@ -1688,7 +1688,7 @@ static inline int ds_update_dst(
 			}
 			break;
 
-		case 2:
+		case DS_SETOP_XAVP:
 			/* no update to d-uri/r-uri */
 			return 0;
 
@@ -1703,8 +1703,9 @@ static inline int ds_update_dst(
 			ruri_mark_new(); /* re-use uri for serial forking */
 			break;
 	}
-	if(sock)
+	if(sock) {
 		msg->force_send_socket = sock;
+	}
 	return 0;
 }
 
@@ -1718,12 +1719,12 @@ int ds_add_branches(sip_msg_t *msg, ds_set_t *idx, unsigned int hash, int mode)
 	sip_uri_t *puri = NULL;
 	char buri[MAX_URI_SIZE];
 
-	if(hash+1>=idx->nr) {
+	if(mode!=DS_SETOP_XAVP && hash+1>=idx->nr) {
 		/* nothing to add */
 		return 0;
 	}
 
-	if(mode==1) {
+	if(mode==DS_SETOP_RURI) {
 		/* ruri updates */
 		LM_DBG("adding branches with ruri\n");
 		if(parse_sip_msg_uri(msg)<0) {
@@ -1735,8 +1736,13 @@ int ds_add_branches(sip_msg_t *msg, ds_set_t *idx, unsigned int hash, int mode)
 		/* duri updates */
 		LM_DBG("adding branches with duri\n");
 	}
-	for(i=hash+1; i<idx->nr; i++) {
-		if(mode==1) {
+	if(mode!=DS_SETOP_XAVP) {
+		i = hash + 1;
+	} else {
+		i = hash;
+	}
+	for(; i<idx->nr; i++) {
+		if(mode==DS_SETOP_RURI) {
 			/* ruri updates */
 			if(puri->user.len<=0) {
 				/* no username to preserve */
@@ -1911,7 +1917,7 @@ int ds_select_dst_limit(
 	}
 	--limit; /* reserving 1 slot for selected dst */
 
-	if((mode == 0) && (ds_force_dst == 0)
+	if((mode == DS_SETOP_DSTURI) && (ds_force_dst == 0)
 			&& (msg->dst_uri.s != NULL || msg->dst_uri.len > 0)) {
 		LM_ERR("destination already set [%.*s]\n", msg->dst_uri.len,
 				msg->dst_uri.s);
@@ -2140,7 +2146,7 @@ int ds_select_dst_limit(
 		cnt++;
 	}
 
-	if(crt_added==0 && mode!=2) {
+	if(crt_added==0) {
 		LM_DBG("using entry [%d/%d]\n", set, hash);
 		if(ds_add_xavp_record(idx, hash, set, alg)<0) {
 			LM_ERR("failed to add destination in the xavp (%d/%d)\n", hash, set);
