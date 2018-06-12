@@ -162,6 +162,19 @@ int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list)
 	return 0;
 }
 
+int xavp_add_after(sr_xavp_t *nxavp, sr_xavp_t *pxavp)
+{
+	if(pxavp==NULL) {
+		nxavp->next = *_xavp_list_crt;
+		*_xavp_list_crt = nxavp;
+	} else {
+		nxavp->next = pxavp->next;
+		pxavp->next = nxavp;
+	}
+
+	return 0;
+}
+
 sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
 {
 	sr_xavp_t *avp=0;
@@ -305,6 +318,22 @@ sr_xavp_t *xavp_get_next(sr_xavp_t *start)
 	return NULL;
 }
 
+sr_xavp_t *xavp_get_last(str *xname, sr_xavp_t **list)
+{
+	sr_xavp_t *prev;
+	sr_xavp_t *crt;
+
+	crt = xavp_get_internal(xname, list, 0, 0);
+
+	prev = NULL;
+
+	while(crt) {
+		prev = crt;
+		crt = xavp_get_next(prev);
+	}
+
+	return prev;
+}
 
 int xavp_rm(sr_xavp_t *xa, sr_xavp_t **head)
 {
