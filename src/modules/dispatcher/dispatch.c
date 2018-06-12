@@ -1797,7 +1797,8 @@ int ds_add_branches(sip_msg_t *msg, ds_set_t *idx, unsigned int hash, int mode)
 /**
  *
  */
-int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg)
+int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg,
+		sr_xavp_t **pxavp)
 {
 	sr_xavp_t *nxavp=NULL;
 	sr_xval_t nxval;
@@ -1867,7 +1868,7 @@ int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg)
 	memset(&nxval, 0, sizeof(sr_xval_t));
 	nxval.type = SR_XTYPE_XAVP;
 	nxval.v.xavp = nxavp;
-	if(xavp_add_value(&ds_xavp_dst, &nxval, NULL)==NULL) {
+	if((*pxavp = xavp_add_value_after(&ds_xavp_dst, &nxval, *pxavp))==NULL) {
 		LM_ERR("cannot add dst xavp to root list\n");
 		xavp_destroy_list(&nxavp);
 		return -1;
@@ -1895,10 +1896,10 @@ int ds_select_dst_limit(
 		sip_msg_t *msg, int set, int alg, unsigned int limit, int mode)
 {
 	int i, cnt;
-	int crt_added;
 	unsigned int hash;
 	ds_set_t *idx = NULL;
 	sr_xval_t nxval;
+	sr_xavp_t *pxavp = NULL;
 
 	if(msg == NULL) {
 		LM_ERR("bad parameters\n");
@@ -2063,11 +2064,13 @@ int ds_select_dst_limit(
 
 	hash = i;
 
-	if(ds_update_dst(msg, &idx->dlist[hash].uri, idx->dlist[hash].sock, mode)
-			!= 0) {
-		LM_ERR("cannot set next hop address with: %.*s\n",
-				idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
-		return -1;
+	if(mode!=DS_SETOP_XAVP) {
+		if(ds_update_dst(msg, &idx->dlist[hash].uri, idx->dlist[hash].sock,
+					mode) != 0) {
+			LM_ERR("cannot set next hop address with: %.*s\n",
+					idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
+			return -1;
+		}
 	}
 	/* if alg is round-robin then update the shortcut to next to be used */
 	if(alg == DS_ALG_ROUNDROBIN)
@@ -2093,17 +2096,14 @@ int ds_select_dst_limit(
 		return 1;
 	}
 
-	/* add default dst to last position in XAVP list */
-	if(ds_use_default != 0 && hash != idx->nr - 1 && cnt < limit) {
-		if(ds_add_xavp_record(idx, idx->nr - 1, set, alg)<0) {
-			LM_ERR("failed to add default destination in the xavp\n");
-			return -1;
-		}
-		cnt++;
+	LM_DBG("using first entry [%d/%d]\n", set, hash);
+	if(ds_add_xavp_record(idx, hash, set, alg, &pxavp)<0) {
+		LM_ERR("failed to add destination in the xavp (%d/%d)\n", hash, set);
+		return -1;
 	}
 
-	/* add to xavp in reverse order - index from hash-1 to 0 */
-	for(i = hash - 1; i >= 0 && cnt < limit; i--) {
+	/* add to xavp the destinations after the selected one */
+	for(i = hash + 1; i < idx->nr && cnt < limit; i++) {
 		if(ds_skip_dst(idx->dlist[i].flags)
 				|| (ds_use_default != 0 && i == (idx->nr - 1))) {
 			continue;
@@ -2114,43 +2114,40 @@ int ds_select_dst_limit(
 			continue;
 		}
 		LM_DBG("using entry [%d/%d]\n", set, i);
-		if(ds_add_xavp_record(idx, i, set, alg)<0) {
+		if(ds_add_xavp_record(idx, i, set, alg, &pxavp)<0) {
 			LM_ERR("failed to add destination in the xavp (%d/%d)\n", i, set);
 			return -1;
 		}
 		cnt++;
 	}
-	/* add to xavp in reverse order - index from idx->nr-1 to hash
-	 * top selected destination is at index hash
-	 * -- added last to be first in xavp list */
-	crt_added = 0;
-	for(i = idx->nr - 1; i >= hash && cnt < limit; i--) {
+
+	/* add to xavp the destinations before the selected one */
+	for(i = 0; i < hash && cnt < limit; i++) {
 		if(ds_skip_dst(idx->dlist[i].flags)
 				|| (ds_use_default != 0 && i == (idx->nr - 1))) {
 			continue;
 		}
-		/* max load exceeded per destination - skip */
+		/* max load exceeded per destination */
 		if(alg == DS_ALG_CALLLOAD
 				&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload) {
 			continue;
 		}
 		LM_DBG("using entry [%d/%d]\n", set, i);
-		if(ds_add_xavp_record(idx, i, set, alg)<0) {
+		if(ds_add_xavp_record(idx, i, set, alg, &pxavp)<0) {
 			LM_ERR("failed to add destination in the xavp (%d/%d)\n", i, set);
 			return -1;
-		}
-		if(i == hash) {
-			crt_added = 1;
 		}
 		cnt++;
 	}
 
-	if(crt_added==0) {
-		LM_DBG("using entry [%d/%d]\n", set, hash);
-		if(ds_add_xavp_record(idx, hash, set, alg)<0) {
-			LM_ERR("failed to add destination in the xavp (%d/%d)\n", hash, set);
+	/* add default dst to last position in XAVP list */
+	if(ds_use_default != 0 && hash != idx->nr - 1 && cnt < limit) {
+		LM_DBG("using default entry [%d/%d]\n", set, idx->nr - 1);
+		if(ds_add_xavp_record(idx, idx->nr - 1, set, alg, &pxavp)<0) {
+			LM_ERR("failed to add default destination in the xavp\n");
 			return -1;
 		}
+		cnt++;
 	}
 
 	if(((ds_xavp_ctx_mode & DS_XAVP_CTX_SKIP_CNT)==0)
