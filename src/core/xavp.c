@@ -522,6 +522,9 @@ void xavp_print_list_content(sr_xavp_t **head, int level)
 				LM_INFO("     XAVP value: <xavp:%p>\n", avp->val.v.xavp);
 				xavp_print_list_content(&avp->val.v.xavp, level+1);
 			break;
+			case SR_XTYPE_VPTR:
+				LM_INFO("     XAVP value: <vptr:%p>\n", avp->val.v.vptr);
+			break;
 			case SR_XTYPE_DATA:
 				LM_INFO("     XAVP value: <data:%p>\n", avp->val.v.data);
 			break;
