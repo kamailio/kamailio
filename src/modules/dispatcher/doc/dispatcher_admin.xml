@@ -256,7 +256,7 @@ modparam("dispatcher", "force_dst", 1)
  		<para>
 		If flag 2 is set, then failover support is enabled. The functions
 		exported by the module will store the rest of addresses from the
-		destination set in the AVP, and use these AVPs to contact next address if
+		destination set in XAPVs, and use these XAVPs to try next address if
 		the current-tried destination fails.
  		</para>
  		<para>
@@ -295,16 +295,15 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
- 	<section id="dispatcher.p.dst_avp">
- 		<title><varname>dst_avp</varname> (str)</title>
+ 	<section id="dispatcher.p.xavp_dst">
+ 		<title><varname>xavp_dst</varname> (str)</title>
  		<para>
- 		The name of the avp which will hold the list with addresses, in the
-		order
-		they have been selected by the chosen algorithm. If use_default is 1,
-		the value of last dst_avp_id is the last address in destination set. The
-		first dst_avp_id is the selected destinations. All the other addresses
-		from the destination set will be added in the avp list to be able to
-		implement serial forking.
+ 		The name of the XAVP which will hold the list with addresses and
+		associated properties, in the order they have been selected by the
+		chosen algorithm. If use_default is 1, the values of last XAVP correspond
+		to the last address in destination set. The first XAVP is the current
+		selected destination. All the other addresses from the destination set
+		will be added in the XAVP list to be able to implement serial forking.
  		</para>
 		<note>
  		<para>
@@ -313,141 +312,83 @@ modparam("dispatcher", "force_dst", 1)
 		</note>
  		<para>
  		<emphasis>
- 			Default value is <quote>null</quote> - don't add AVPs.
+ 			Default value is <quote>_dsdst_</quote>.
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>dst_avp</quote> parameter</title>
+ 		<title>Set the <quote>xavp_dst</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "dst_avp", "$avp(dsdst)")
+ modparam("dispatcher", "xavp_dst", "_dsdst_")
  ...
  </programlisting>
  		</example>
  	</section>
- 	<section id="dispatcher.p.grp_avp">
- 		<title><varname>grp_avp</varname> (str)</title>
+ 	<section id="dispatcher.p.xavp_dst_mode">
+ 		<title><varname>xavp_dst_mode</varname> (int)</title>
  		<para>
- 		The name of the avp storing the group id of the destination set. Good
-		to have it for later usage or checks.
+ 		Control what fields are added to the XAVP specified by xavp_dst
+		parameter. The addeded fields are: the set id (group id), the URI
+		address, socket pointer, and destination unique id in case of call load
+		distribution algorithm. The attributes are added if xavp_dst_mode does
+		not have the bit 1 set.
  		</para>
-		<note>
- 		<para>
-		You must set this parameter if you want to do load balancing fail over.
- 		</para>
-		</note>
  		<para>
  		<emphasis>
- 			Default value is <quote>null</quote> - don't add AVP.
+ 			Default value is <quote>0</quote> (add all fields).
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>grp_avp</quote> parameter</title>
+ 		<title>Set the <quote>xavp_dst_mode</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "grp_avp", "$avp(dsgrp)")
+ modparam("dispatcher", "xavp_dst_mode", 1)
  ...
  </programlisting>
  		</example>
  	</section>
- 	<section id="dispatcher.p.cnt_avp">
- 		<title><varname>cnt_avp</varname> (str)</title>
+ 	<section id="dispatcher.p.xavp_ctx">
+ 		<title><varname>xavp_ctx</varname> (str)</title>
  		<para>
- 		The name of the avp storing the number of destination addresses kept in
-		dst_avp AVPs.
+ 		The name of the XAVP which will hold some attributes specific to
+		dispatcher routing context. The XAVP can hold the next fields: cnt -
+		the number of addresses selected for routing.
  		</para>
-		<note>
- 		<para>
-		You must set this parameter if you want to do load balancing fail over.
- 		</para>
-		</note>
  		<para>
  		<emphasis>
- 			Default value is <quote>null</quote> - don't add AVP.
+ 			Default value is <quote>_dsctx_</quote>.
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>cnt_avp</quote> parameter</title>
+ 		<title>Set the <quote>xavp_ctx</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "cnt_avp", "$avp(dscnt)")
+ modparam("dispatcher", "xavp_ctx", "_dsctx_")
  ...
  </programlisting>
  		</example>
  	</section>
- 	<section id="dispatcher.p.dstid_avp">
- 		<title><varname>dstid_avp</varname> (str)</title>
+ 	<section id="dispatcher.p.xavp_ctx_mode">
+ 		<title><varname>xavp_ctx_mode</varname> (int)</title>
  		<para>
-		The name of the avp storing the destination unique ID used for
-		call load based dispatching.
+ 		Control what fields are added to the XAVP specified by xavp_ctx
+		parameter. The cnt field is added if xavp_cnt_mode does not have the
+		bit 1 set.
  		</para>
-		<note>
- 		<para>
-		You must set this parameter if you want to do load balancing on
-		call load (alg 10).
- 		</para>
-		</note>
  		<para>
  		<emphasis>
- 			Default value is <quote>null</quote> - don't add AVP.
+ 			Default value is <quote>0</quote> (add all fields).
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>dstid_avp</quote> parameter</title>
+ 		<title>Set the <quote>xavp_ctx_mode</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "dstid_avp", "$avp(dsdstid)")
+ modparam("dispatcher", "xavp_ctx_mode", 1)
  ...
  </programlisting>
  		</example>
  	</section>
- 	<section id="dispatcher.p.attrs_avp">
- 		<title><varname>attrs_avp</varname> (str)</title>
- 		<para>
-		The name of the avp storing destination's attributes value.
- 		</para>
-		<note>
-		</note>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>null</quote> - don't add AVP.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>attrs_avp</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "attrs_avp", "$avp(dsattrs)")
- ...
- </programlisting>
- 		</example>
- 	</section>
-	<section id="dispatcher.p.sock_avp">
-		<title><varname>sock_avp</varname> (str)</title>
-		<para>
-			The name of the avp which will hold the list with the sockets
-			associated to the addresses stored in dst_avp avp.
-		</para>
-		<note>
-		<para>
-			If you want to do load balancing fail over, you have to set
-			this parameter to use the correct socket for each gateway.
-		</para>
-		</note>
-		<para>
-		<emphasis>
-			Default value is <quote>null</quote> - don't add AVPs.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set the <quote>sock_avp</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "sock_avp", "$avp(dssocket)")
- ...
- </programlisting>
-		</example>
-	</section>
  	<section id="dispatcher.p.hash_pvar">
  		<title><varname>hash_pvar</varname> (str)</title>
  		<para>
@@ -979,8 +920,8 @@ end
  		<title><varname>ds_attrs_none</varname> (int)</title>
  		<para>
 		If set to 1, "none=yes" is set in the attrs for those records that
-		have no attrs value, to ensure that corresponding avps for records do
-		not get mixed up.
+		have no attrs value, to ensure that corresponding XAVP fields for
+		records do not get mixed up.
  		</para>
  		<para>
  		<emphasis>
@@ -1013,7 +954,7 @@ end
 		</para>
 		<para>
 		If the bit 2 in 'flags' parameter is set, the rest of the addresses from
-		the destination set is stored in AVP list (limited with an optional 'limit'
+		the destination set are stored in XAVP list (limited with an optional 'limit'
 		parameter). You can use 'ds_next_dst()' to use next address in order to
 		achieve serial forking to all possible destinations.
 		</para>
@@ -1095,7 +1036,7 @@ end
 				<quote>10</quote> - use call load distribution. You have
 				to set the attribute 'duid' (as an unique string id)
 				per each address in destination set. Also, you must set
-				parameters 'dstid_avp' and 'ds_hash_size'.
+				the parameter 'ds_hash_size'.
 				</para>
 				<para>
 				The algorithm can be used even with stateless proxy mode,
@@ -1149,7 +1090,7 @@ end
 			<listitem>
 				<para>
 				<quote>12</quote> - dispatch to all destination in setid at
-				once (parallel forking). Note that the AVPs are no longer set
+				once (parallel forking). Note that the XAVPs are no longer set
 				with the values of the destination records, no re-routing
 				making sense in this case.
 				</para>
@@ -1165,7 +1106,7 @@ end
 		<listitem>
 			<para>
 			<emphasis>limit</emphasis> - the maximum number of items to be
-			stored in AVP list for further fail-overs (the first selected
+			stored in XAVP list for further fail-overs (the first selected
 			destination and default destination are the first to be put in
 			the list)
 			</para>
@@ -1241,7 +1182,7 @@ DEST: {
  		</para>
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
-		destination set is stored in AVP list (limited with an optional 'limit'
+		destination set are stored in XAVP list (limited with an optional 'limit'
 		parameter). You can use 'ds_next_domain()' to use next address to
 		achieve serial forking to all possible destinations.
 		</para>
@@ -1267,13 +1208,13 @@ if(ds_select_domain("1", "$var(a)")) {
 		</title>
 		<para>
 		The method selects a destination from addresses set and adds it
-		in the AVPs specified for this module. It is not updating R-URI
+		in the XAVP specified for this module. It is not updating R-URI
 		nor the destination URI. The parameters have same
 		meaning as for ds_select_dst().
 		</para>
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
-		destination set is stored in AVP list (limited with an optional 'limit'
+		destination set are stored in XAVP list (limited with an optional 'limit'
 		parameter). You can execute 'ds_next_domain()' or 'ds_next_dst()' to use
 		next address to achieve serial forking to all possible destinations.
 		</para>
@@ -1299,7 +1240,7 @@ if(ds_select("1", "$var(a)")) {
 		<function moreinfo="none">ds_next_dst()</function>
 		</title>
 		<para>
-		Takes the next destination address from the AVPs with id 'dst_avp_id'
+		Takes the next destination address from the corresponding XAVPs
 		and sets the dst_uri (outbound proxy address).
  		</para>
 		<para>
@@ -1311,7 +1252,7 @@ if(ds_select("1", "$var(a)")) {
  		<function moreinfo="none">ds_next_domain()</function>
  		</title>
  		<para>
- 		Takes the next destination address from the AVPs with id 'dst_avp_id'
+ 		Takes the next destination address from the corresponding XAVPs
 		and sets the domain part of the request URI.
  		</para>
 		<para>
