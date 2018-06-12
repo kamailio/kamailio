@@ -1836,9 +1836,8 @@ int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg)
 
 	if(dsidx->dlist[pos].sock) {
 		memset(&nxval, 0, sizeof(sr_xval_t));
-		nxval.type = SR_XTYPE_STR;
-		nxval.v.s.len = 1 + sprintf(buf, "%p", dsidx->dlist[pos].sock);
-		nxval.v.s.s = buf;
+		nxval.type = SR_XTYPE_VPTR;
+		nxval.v.vptr = dsidx->dlist[pos].sock;
 		if(xavp_add_value(&ds_xavp_dst_sock, &nxval, &nxavp)==NULL) {
 			xavp_destroy_list(&nxavp);
 			LM_ERR("failed to add destination sock xavp field\n");
@@ -2203,11 +2202,9 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	}
 
 	lxavp = xavp_get(&ds_xavp_dst_sock, rxavp);
-	if(lxavp!=NULL && lxavp->val.type==SR_XTYPE_STR) {
+	if(lxavp!=NULL && lxavp->val.type==SR_XTYPE_VPTR) {
 		LM_DBG("socket enforced in next destination record\n");
-		if(sscanf(lxavp->val.v.s.s, "%p", (void **)&sock) != 1) {
-			sock = NULL;
-		}
+		sock = lxavp->val.v.vptr;
 	}
 
 	lxavp = xavp_get(&ds_xavp_dst_addr, rxavp);
