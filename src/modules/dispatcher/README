@@ -496,10 +496,16 @@ Note
 3.12. xavp_dst_mode (int)
 
    Control what fields are added to the XAVP specified by xavp_dst
-   parameter. The addeded fields are: the set id (group id), the URI
-   address, socket pointer, and destination unique id in case of call load
-   distribution algorithm. The attributes are added if xavp_dst_mode does
-   not have the bit 1 set.
+   parameter.
+
+   The addeded fields are:
+     * grp - the set id (group id).
+     * uri - the URI address.
+     * sock - the socket pointer.
+     * dstid - the destination unique id (in case of call load
+       distribution algorithm).
+     * attrs - the attributes - they are added if xavp_dst_mode does not
+       have the bit 1 set.
 
    Default value is “0” (add all fields).
 
@@ -1529,10 +1535,8 @@ modparam("tm", "fr_inv_timer", 40000)
 modparam("dispatcher", "db_url", DBURL)
 modparam("dispatcher", "table_name", "dispatcher")
 modparam("dispatcher", "flags", 2)
-modparam("dispatcher", "dst_avp", "$avp(AVP_DST)")
-modparam("dispatcher", "grp_avp", "$avp(AVP_GRP)")
-modparam("dispatcher", "cnt_avp", "$avp(AVP_CNT)")
-modparam("dispatcher", "sock_avp", "$avp(AVP_SOCK)")
+modparam("dispatcher", "xavp_dst", "_dsdst_")
+modparam("dispatcher", "xavp_ctx", "_dsctx_")
 
 ####### Routing Logic ########
 
@@ -1544,25 +1548,27 @@ request_route {
         # per request initial checks
         route(REQINIT);
 
-        # handle requests within SIP dialogs
-        route(WITHINDLG);
-
-        ### only initial requests (no To tag)
-
         # CANCEL processing
-        if (is_method("CANCEL"))
-        {
-                if (t_check_trans())
-                        t_relay();
+        if (is_method("CANCEL")) {
+                if (t_check_trans()) {
+                        route(RELAY);
+                }
                 exit;
         }
 
         # handle retransmissions
-        if(t_precheck_trans()) {
+        if (!is_method("ACK")) {
+                if(t_precheck_trans()) {
+                        t_check_trans();
+                        exit;
+                }
                 t_check_trans();
-                exit;
         }
-        t_check_trans();
+
+        # handle requests within SIP dialogs
+        route(WITHINDLG);
+
+        ### only initial requests (no To tag)
 
         # record routing for dialog forming requests (in case they are routed)
         # - remove preloaded route headers
@@ -1673,7 +1679,8 @@ route[DISPATCH] {
                 send_reply("404", "No destination");
                 exit;
         }
-        xlog("L_DBG", "--- SCRIPT: going to <$ru> via <$du>\n");
+        xdbg("--- SCRIPT: going to <$ru> via <$du> (attrs: $xavp(_dsdst_=>attrs)
+)\n");
         t_on_failure("RTF_DISPATCH");
         route(RELAY);
         exit;
@@ -1688,6 +1695,8 @@ failure_route[RTF_DISPATCH] {
         if (t_check_status("500")
                         or (t_branch_timeout() and !t_branch_replied())) {
                 if(ds_next_dst()) {
+                        xdbg("--- SCRIPT: retrying to <$ru> via <$du> (attrs: $x
+avp(_dsdst_=>attrs))\n");
                         t_on_failure("RTF_DISPATCH");
                         route(RELAY);
                         exit;
