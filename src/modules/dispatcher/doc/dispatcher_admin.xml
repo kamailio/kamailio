@@ -328,10 +328,27 @@ modparam("dispatcher", "force_dst", 1)
  		<title><varname>xavp_dst_mode</varname> (int)</title>
  		<para>
  		Control what fields are added to the XAVP specified by xavp_dst
-		parameter. The addeded fields are: the set id (group id), the URI
-		address, socket pointer, and destination unique id in case of call load
-		distribution algorithm. The attributes are added if xavp_dst_mode does
-		not have the bit 1 set.
+		parameter.
+		</para>
+		<para>
+		The addeded fields are:
+		<itemizedlist>
+			<listitem>
+			grp - the set id (group id).
+			</listitem>
+			<listitem>
+			uri - the URI address.
+			</listitem>
+			<listitem>
+			sock - the socket pointer.
+			</listitem>
+			<listitem>
+			dstid - the destination unique id (in case of call load distribution algorithm).
+			</listitem>
+			<listitem>
+			attrs - the attributes - they are added if xavp_dst_mode does not have the bit 1 set.
+			</listitem>
+		</itemizedlist>
  		</para>
  		<para>
  		<emphasis>
