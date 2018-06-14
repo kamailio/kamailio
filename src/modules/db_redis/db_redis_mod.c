@@ -93,10 +93,10 @@ static int db_redis_bind_api(db_func_t *dbb) {
 
 int keys_param(modparam_t type, void *val)
 {
-	if (val == NULL)
-		return -1;
-	else
-		return db_redis_keys_spec((char*)val);
+    if (val == NULL)
+        return -1;
+    else
+        return db_redis_keys_spec((char*)val);
 }
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2) {

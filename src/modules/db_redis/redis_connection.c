@@ -403,3 +403,11 @@ void db_redis_consume_replies(km_redis_con_t *con) {
         db_redis_key_free(&query);
     }
 }
+
+const char *db_redis_get_error(km_redis_con_t *con) {
+    if (con && con->con && con->con->errstr) {
+        return con->con->errstr;
+    } else {
+        return "<broken redis connection>";
+    }
+}

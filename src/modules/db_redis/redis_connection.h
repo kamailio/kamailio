@@ -77,5 +77,6 @@ int db_redis_append_command_argv(km_redis_con_t *con, redis_key_t *query, int qu
 int db_redis_get_reply(km_redis_con_t *con, void **reply);
 void db_redis_consume_replies(km_redis_con_t *con);
 void db_redis_free_reply(redisReply **reply);
+const char *db_redis_get_error(km_redis_con_t *con);
 
 #endif /* _REDIS_CONNECTION_H_ */

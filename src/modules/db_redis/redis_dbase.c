@@ -236,6 +236,7 @@ static int db_redis_build_entry_manual_keys(redis_table_t *table, const db_key_t
     for (key = table->entry_keys; key; key = key->next) {
         int subkey_found = 0;
         int i;
+        *manual_key_count = 0;
         LM_DBG("checking for existence of entry key '%.*s' in query to get manual key\n",
                 key->key.len, key->key.s);
         for (i = 0; i < _n; ++i) {
@@ -1080,7 +1081,12 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
     RES_COL_N(*_r) = _nc;
 
     if (!(*keys_count) && do_table_scan) {
-        LM_DBG("performing full table scan\n");
+        LM_WARN("performing full table scan on table '%.*s' while performing query\n",
+                CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+        for(i = 0; i < _n; ++i) {
+            LM_WARN("  scan key %d is '%.*s'\n",
+                    i, _k[i]->len, _k[i]->s);
+        }
         if (db_redis_scan_query_keys(con, CON_TABLE(_h), _k, _n,
                     keys, keys_count,
                     manual_keys, manual_keys_count) != 0) {
@@ -1119,7 +1125,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
             LM_ERR("Failed to append redis command\n");
             goto error;
         }
-        tmp = db_redis_key_unshift(&query_v);
+        tmp = db_redis_key_shift(&query_v);
         if (tmp)
             db_redis_key_free(&tmp);
 
@@ -1174,7 +1180,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
                 // get reply for EXISTS query
                 if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
                     LM_ERR("Failed to get reply for query: %s\n",
-                            con->con->errstr);
+                            db_redis_get_error(con));
                     goto error;
                 }
                 db_redis_check_reply(con, reply, error);
@@ -1182,7 +1188,11 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
                     LM_DBG("key does not exist, returning no row for query\n");
                     db_redis_free_reply(&reply);
                     // also free next reply, as this is a null row for the HMGET
-                    db_redis_get_reply(con, (void**)&reply);
+                    if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
+                        LM_ERR("Failed to get reply for query: %s\n",
+                                db_redis_get_error(con));
+                        goto error;
+                    }
                     db_redis_check_reply(con, reply, error);
                     db_redis_free_reply(&reply);
                     continue;
@@ -1192,7 +1202,7 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
                 // get reply for actual HMGET query
                 if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
                     LM_ERR("Failed to get reply for query: %s\n",
-                            con->con->errstr);
+                            db_redis_get_error(con));
                     goto error;
                 }
                 db_redis_check_reply(con, reply, error);
@@ -1228,10 +1238,10 @@ error:
 
 static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, const db_key_t* _k,
         const db_val_t* _v, const db_op_t *_op, const int _n,
-        redis_key_t *keys, int keys_count,
-        int *manual_keys, int manual_keys_count, int do_table_scan) {
+        redis_key_t **keys, int *keys_count,
+        int **manual_keys, int *manual_keys_count, int do_table_scan) {
 
-    int j = 0;
+    int i = 0, j = 0;
     redis_key_t *k = NULL;
     int type_keys_count = 0;
     int all_type_keys_count = 0;
@@ -1245,11 +1255,16 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
     db_key_t *db_keys = NULL;
     redis_key_t *type_key;
 
-    if (!keys_count && do_table_scan) {
-        LM_DBG("performing full table scan\n");
+    if (!*keys_count && do_table_scan) {
+        LM_WARN("performing full table scan on table '%.*s' while performing delete\n",
+                CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+        for(i = 0; i < _n; ++i) {
+            LM_WARN("  scan key %d is '%.*s'\n",
+                    i, _k[i]->len, _k[i]->s);
+        }
         if (db_redis_scan_query_keys(con, CON_TABLE(_h), _k, _n,
-                    &keys, &keys_count,
-                    &manual_keys, &manual_keys_count) != 0) {
+                    keys, keys_count,
+                    manual_keys, manual_keys_count) != 0) {
             LM_ERR("failed to scan query keys\n");
             goto error;
         }
@@ -1266,7 +1281,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
     }
 
     LM_DBG("delete all keys\n");
-    for (k = keys; k; k = k->next) {
+    for (k = *keys; k; k = k->next) {
         redis_key_t *all_type_key;
         str *key = &k->key;
         redis_key_t *tmp = NULL;
@@ -1288,10 +1303,11 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
         if (reply->integer == 0) {
             LM_DBG("key does not exist in redis, skip deleting\n");
             db_redis_free_reply(&reply);
+            db_redis_key_free(&query_v);
             continue;
         }
         db_redis_free_reply(&reply);
-        tmp = db_redis_key_unshift(&query_v);
+        tmp = db_redis_key_shift(&query_v);
         if (tmp)
             db_redis_key_free(&tmp);
 
@@ -1301,8 +1317,8 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
         }
 
         // add all manual keys to query
-        for (j = 0; j < manual_keys_count; ++j) {
-            int idx = manual_keys[j];
+        for (j = 0; j < *manual_keys_count; ++j) {
+            int idx = (*manual_keys)[j];
             str *col = _k[idx];
 
             if (db_redis_key_add_str(&query_v, col) != 0) {
@@ -1327,8 +1343,8 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
         // manually filter non-matching replies
         row_match = 1;
         for (col = 0; col < reply->elements; ++col) {
-            if (col < manual_keys_count) {
-                int idx = manual_keys[col];
+            if (col < *manual_keys_count) {
+                int idx = (*manual_keys)[col];
                 db_key_t k = _k[idx];
                 db_val_t v = _v[idx];
                 db_op_t o = _op[idx];
@@ -1366,7 +1382,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
         for (j = 0, all_type_key = all_type_keys; all_type_key; ++j, all_type_key = all_type_key->next) {
             db_val_t *v = &(db_vals[j]);
             str *key = &all_type_key->key;
-            char *value = reply->element[manual_keys_count + j]->str;
+            char *value = reply->element[*manual_keys_count + j]->str;
             int coltype = db_redis_schema_get_column_type(con, CON_TABLE(_h), key);
             if (value == NULL) {
                 VAL_NULL(v) = 1;
@@ -1418,11 +1434,9 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
             db_redis_check_reply(con, reply, error);
             db_redis_free_reply(&reply);
         }
-
-        //db_redis_key_free(&type_keys);
         LM_DBG("done with loop '%.*s'\n", k->key.len, k->key.s);
+        db_redis_key_free(&type_keys);
     }
-    db_redis_key_free(&type_keys);
     db_redis_key_free(&all_type_keys);
     db_redis_key_free(&query_v);
 
@@ -1457,7 +1471,12 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
     size_t col;
 
     if (!(*keys_count) && do_table_scan) {
-        LM_DBG("performing full table scan\n");
+        LM_WARN("performing full table scan on table '%.*s' while performing update\n",
+                CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+        for(i = 0; i < _n; ++i) {
+            LM_WARN("  scan key %d is '%.*s'\n",
+                    i, _k[i]->len, _k[i]->s);
+        }
         if (db_redis_scan_query_keys(con, CON_TABLE(_h), _k, _n,
                     keys, keys_count,
                     manual_keys, manual_keys_count) != 0) {
@@ -1547,7 +1566,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
         // get reply for EXISTS query
         if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
             LM_ERR("Failed to get reply for query: %s\n",
-                    con->con->errstr);
+                    db_redis_get_error(con));
             goto error;
         }
         db_redis_check_reply(con, reply, error);
@@ -1556,7 +1575,11 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
             db_redis_free_reply(&reply);
             // also free next reply, as this is a null row for the HMGET
             LM_DBG("also fetch hmget reply after non-existent key\n");
-            db_redis_get_reply(con, (void**)&reply);
+            if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
+                LM_ERR("Failed to get reply for query: %s\n",
+                        db_redis_get_error(con));
+                goto error;
+            }
             db_redis_check_reply(con, reply, error);
             db_redis_free_reply(&reply);
             LM_DBG("continue fetch reply loop\n");
@@ -1567,7 +1590,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
         // get reply for actual HMGET query
         if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
             LM_ERR("Failed to get reply for query: %s\n",
-                    con->con->errstr);
+                    db_redis_get_error(con));
             goto error;
         }
         db_redis_check_reply(con, reply, error);
@@ -1644,7 +1667,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
     for (i = 0; i < update_queries; ++i) {
         if (db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
             LM_ERR("Failed to get reply for query: %s\n",
-                    con->con->errstr);
+                    db_redis_get_error(con));
             goto error;
         }
         db_redis_check_reply(con, reply, error);
@@ -2019,7 +2042,7 @@ int db_redis_delete(const db1_con_t* _h, const db_key_t* _k,
     }
 
     if (db_redis_perform_delete(_h, con, _k, _v, query_ops, _n,
-        keys, keys_count, manual_keys, manual_keys_count, do_table_scan) != 0) {
+        &keys, &keys_count, &manual_keys, &manual_keys_count, do_table_scan) != 0) {
         goto error;
     }
 

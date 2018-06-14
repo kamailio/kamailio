@@ -103,7 +103,7 @@ err:
     return -1;
 }
 
-redis_key_t * db_redis_key_unshift(redis_key_t **list) {
+redis_key_t * db_redis_key_shift(redis_key_t **list) {
     redis_key_t *k;
 
     k = *list;
