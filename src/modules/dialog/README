@@ -1941,12 +1941,12 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
    Parameters:
      * callid - callid of dialog to be terminated
      * from_tag - from tag of the dialog to terminated
-     * totag - to tag of the dialog to terminated
+     * to_tag - to tag of the dialog to terminated
 
    The command works only for confirmed dialogs.
 
    RPC Command Format:
-                kamcmd dlg.dlg_terminate_dlg callid12345 fromtag123 totag123
+                kamcmd dlg.terminate_dlg callid12345 fromtag123 totag123
 
 9.6. dlg.end_dlg
 
