@@ -112,6 +112,7 @@ int ul_db_ops_ruid = 1;
 int ul_expires_type = 0;
 int ul_db_raw_fetch_type = 0;
 int ul_rm_expired_delay = 0;
+int ul_version_table = 1;
 
 str ul_xavp_contact_name = {0};
 
@@ -240,6 +241,7 @@ static param_export_t params[] = {
 	{"server_id_filter",    PARAM_INT, &ul_db_srvid},
 	{"db_timer_clean",      PARAM_INT, &ul_db_timer_clean},
 	{"rm_expired_delay",    PARAM_INT, &ul_rm_expired_delay},
+	{"version_table",       PARAM_INT, &ul_version_table},
 	{0, 0, 0}
 };
 
