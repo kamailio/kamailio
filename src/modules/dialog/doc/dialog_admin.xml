@@ -2354,7 +2354,7 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 				<emphasis>from_tag</emphasis> -  from tag of the dialog to terminated
 			</para></listitem>
 			<listitem><para>
-				<emphasis>totag</emphasis> -  to tag of the dialog to terminated
+				<emphasis>to_tag</emphasis> -  to tag of the dialog to terminated
 			</para></listitem>
 		</itemizedlist>
 		<para>
@@ -2362,7 +2362,7 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 		</para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg.dlg_terminate_dlg callid12345 fromtag123 totag123
+		kamcmd dlg.terminate_dlg callid12345 fromtag123 totag123
 		</programlisting>
 		</section>
 		<section>
