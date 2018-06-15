@@ -2165,17 +2165,18 @@ int ds_select_dst_limit(
 	return 1;
 }
 
-int ds_next_dst(struct sip_msg *msg, int mode)
+int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 {
 
 	socket_info_t *sock = NULL;
 	sr_xavp_t *rxavp = NULL;
 	sr_xavp_t *lxavp = NULL;
-	int alg = 0;
 
-	if(!(ds_flags & DS_FAILOVER_ON) || ds_xavp_dst.len <= 0) {
-		LM_WARN("failover support disabled\n");
-		return -1;
+	if(upos == DS_USE_NEXT) {
+		if(!(ds_flags & DS_FAILOVER_ON) || ds_xavp_dst.len <= 0) {
+			LM_WARN("failover support disabled\n");
+			return -1;
+		}
 	}
 
 	rxavp = xavp_get(&ds_xavp_dst, NULL);
@@ -2184,18 +2185,15 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 		return -1;
 	}
 
-	lxavp = xavp_get(&ds_xavp_dst_dstid, rxavp);
-	if(lxavp!=NULL) {
-		LM_DBG("call load distribution algorithm was used\n");
-		alg = DS_ALG_CALLLOAD;
-	}
+	if(upos == DS_USE_NEXT) {
+		/* use next destination - delete the current one and search the next */
+		xavp_rm(rxavp, NULL);
 
-	xavp_rm(rxavp, NULL);
-
-	rxavp = xavp_get(&ds_xavp_dst, NULL);
-	if(rxavp == NULL) {
-		LM_DBG("no xavp with next destination record\n");
-		return -1;
+		rxavp = xavp_get(&ds_xavp_dst, NULL);
+		if(rxavp == NULL) {
+			LM_DBG("no xavp with next destination record\n");
+			return -1;
+		}
 	}
 
 	lxavp = xavp_get(&ds_xavp_dst_sock, rxavp);
@@ -2217,12 +2215,14 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	}
 	LM_DBG("using next dst uri [%.*s]\n", lxavp->val.v.s.len,
 				lxavp->val.v.s.s);
-	if(alg == DS_ALG_CALLLOAD) {
-		lxavp = xavp_get(&ds_xavp_dst_dstid, rxavp);
-		if(lxavp!=NULL || lxavp->val.type!=SR_XTYPE_STR) {
-			LM_ERR("cannot find uid xavp for current destination address\n");
-			return -1;
-		}
+
+	/* call load update if dstid field is set */
+	lxavp = xavp_get(&ds_xavp_dst_dstid, rxavp);
+	if(lxavp==NULL || lxavp->val.type!=SR_XTYPE_STR) {
+		/* no dstid field - done */
+		return 1;
+	}
+	if(upos == DS_USE_NEXT) {
 		if(ds_load_replace(msg, &lxavp->val.v.s) < 0) {
 			LM_ERR("cannot update load distribution\n");
 			return -1;

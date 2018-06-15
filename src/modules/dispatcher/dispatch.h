@@ -60,7 +60,11 @@
 #define DS_SETOP_RURI		1
 #define DS_SETOP_XAVP		2
 
+#define DS_USE_CRT			0
+#define DS_USE_NEXT			1
+
 #define DS_XAVP_DST_SKIP_ATTRS	1
+
 #define DS_XAVP_CTX_SKIP_CNT	1
 
 /* clang-format on */
@@ -120,7 +124,7 @@ int ds_destroy_list(void);
 int ds_select_dst_limit(
 		struct sip_msg *msg, int set, int alg, unsigned int limit, int mode);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
-int ds_next_dst(struct sip_msg *msg, int mode);
+int ds_update_dst(struct sip_msg *msg, int upos, int mode);
 int ds_update_state(sip_msg_t *msg, int group, str *address, int state);
 int ds_reinit_state(int group, str *address, int state);
 int ds_reinit_state_all(int group, int state);

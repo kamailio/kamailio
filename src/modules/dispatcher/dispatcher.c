@@ -153,6 +153,8 @@ static int w_ds_select_domain(struct sip_msg*, char*, char*);
 static int w_ds_select_domain_limit(struct sip_msg*, char*, char*, char*);
 static int w_ds_next_dst(struct sip_msg*, char*, char*);
 static int w_ds_next_domain(struct sip_msg*, char*, char*);
+static int w_ds_set_dst(struct sip_msg*, char*, char*);
+static int w_ds_set_domain(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst0(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst1(struct sip_msg*, char*, char*);
 static int w_ds_load_unset(struct sip_msg*, char*, char*);
@@ -188,6 +190,10 @@ static cmd_export_t cmds[]={
 	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0,
+		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_set_dst",       (cmd_function)w_ds_set_dst,      0,
+		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_set_domain",    (cmd_function)w_ds_set_domain,   0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_mark_dst",      (cmd_function)w_ds_mark_dst0,     0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
@@ -597,7 +603,7 @@ static int w_ds_select_domain_limit(
  */
 static int w_ds_next_dst(struct sip_msg *msg, char *str1, char *str2)
 {
-	return ds_next_dst(msg, DS_SETOP_DSTURI /*set dst uri*/);
+	return ds_update_dst(msg, DS_USE_NEXT, DS_SETOP_DSTURI /*set dst uri*/);
 }
 
 /**
@@ -605,7 +611,23 @@ static int w_ds_next_dst(struct sip_msg *msg, char *str1, char *str2)
  */
 static int w_ds_next_domain(struct sip_msg *msg, char *str1, char *str2)
 {
-	return ds_next_dst(msg, DS_SETOP_RURI /*set host port*/);
+	return ds_update_dst(msg, DS_USE_NEXT, DS_SETOP_RURI /*set host port*/);
+}
+
+/**
+ *
+ */
+static int w_ds_set_dst(struct sip_msg *msg, char *str1, char *str2)
+{
+	return ds_update_dst(msg, DS_USE_CRT, DS_SETOP_DSTURI /*set dst uri*/);
+}
+
+/**
+ *
+ */
+static int w_ds_set_domain(struct sip_msg *msg, char *str1, char *str2)
+{
+	return ds_update_dst(msg, DS_USE_CRT, DS_SETOP_RURI /*set host port*/);
 }
 
 /**
@@ -997,7 +1019,7 @@ static int ki_ds_select_domain_limit(sip_msg_t *msg, int set, int alg, int limit
  */
 static int ki_ds_next_dst(sip_msg_t *msg)
 {
-	return ds_next_dst(msg, 0 /*set dst uri*/);
+	return ds_update_dst(msg, DS_USE_NEXT, DS_SETOP_DSTURI /*set dst uri*/);
 }
 
 /**
@@ -1005,9 +1027,24 @@ static int ki_ds_next_dst(sip_msg_t *msg)
  */
 static int ki_ds_next_domain(sip_msg_t *msg)
 {
-	return ds_next_dst(msg, 1 /*set host port*/);
+	return ds_update_dst(msg, DS_USE_NEXT, DS_SETOP_RURI /*set host port*/);
 }
 
+/**
+ *
+ */
+static int ki_ds_set_dst(sip_msg_t *msg)
+{
+	return ds_update_dst(msg, DS_USE_CRT, DS_SETOP_DSTURI /*set dst uri*/);
+}
+
+/**
+ *
+ */
+static int ki_ds_set_domain(sip_msg_t *msg)
+{
+	return ds_update_dst(msg, DS_USE_CRT, DS_SETOP_RURI /*set host port*/);
+}
 
 /**
  *
@@ -1039,6 +1076,11 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dispatcher"), str_init("ds_set_domain"),
+		SR_KEMIP_INT, ki_ds_set_domain,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dispatcher"), str_init("ds_select_dst"),
 		SR_KEMIP_INT, ki_ds_select_dst,
 		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
@@ -1051,6 +1093,11 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 	},
 	{ str_init("dispatcher"), str_init("ds_next_dst"),
 		SR_KEMIP_INT, ki_ds_next_dst,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_set_dst"),
+		SR_KEMIP_INT, ki_ds_set_dst,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
