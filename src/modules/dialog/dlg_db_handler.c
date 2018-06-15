@@ -80,8 +80,6 @@ static db1_con_t* dialog_db_handle    = 0; /* database connection handle */
 static db_func_t dialog_dbf;
 
 extern int dlg_enable_stats;
-extern int active_dlgs_cnt;
-extern int early_dlgs_cnt;
 extern int dlg_h_id_start;
 extern int dlg_h_id_step;
 
@@ -414,10 +412,8 @@ int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows,
 			dlg->state 		= VAL_INT(values+8);
 			if (dlg->state==DLG_STATE_CONFIRMED_NA ||
 			dlg->state==DLG_STATE_CONFIRMED) {
-				active_dlgs_cnt++;
 				if_update_stat(dlg_enable_stats, active_dlgs, 1);
 			} else if (dlg->state==DLG_STATE_EARLY) {
-				early_dlgs_cnt++;
 				if_update_stat(dlg_enable_stats, early_dlgs, 1);
 			}
 
