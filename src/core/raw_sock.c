@@ -228,6 +228,7 @@ int recvpkt4(int sock, char* buf, int len, union sockaddr_union* from,
 
 	iov[0].iov_base=buf;
 	iov[0].iov_len=len;
+	memset(&rcv_msg, 0, sizeof(struct msghdr));
 	rcv_msg.msg_name=from;
 	rcv_msg.msg_namelen=sockaddru_len(*from);
 	rcv_msg.msg_control=msg_ctrl_buf;
@@ -603,7 +604,7 @@ int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
 	int ret;
 
 	totlen = len + sizeof(hdr);
-	if (unlikely(totlen) > 65535)
+	if (unlikely(totlen > 65535))
 		return -2;
 	memset(&snd_msg, 0, sizeof(snd_msg));
 	snd_msg.msg_name=&to->sin;
