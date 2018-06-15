@@ -1276,6 +1276,30 @@ if(ds_select("1", "$var(a)")) {
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
  	</section>
+	<section id="dispatcher.f.ds_set_dst">
+		<title>
+		<function moreinfo="none">ds_set_dst()</function>
+		</title>
+		<para>
+		Takes the current destination address from the corresponding XAVPs
+		and sets the dst_uri (outbound proxy address).
+ 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+ 	</section>
+  	<section id="dispatcher.f.ds_set_domain">
+ 		<title>
+ 		<function moreinfo="none">ds_set_domain()</function>
+ 		</title>
+ 		<para>
+ 		Takes the current destination address from the corresponding XAVPs
+		and sets the domain part of the request URI.
+ 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+ 	</section>
   	<section id="dispatcher.f.ds_mark_dst">
  		<title>
  		<function moreinfo="none">ds_mark_dst([state])</function>
