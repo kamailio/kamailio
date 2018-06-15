@@ -1663,7 +1663,7 @@ int ds_load_unset(struct sip_msg *msg)
 /**
  *
  */
-static inline int ds_update_dst(
+static inline int ds_push_dst(
 		struct sip_msg *msg, str *uri, struct socket_info *sock, int mode)
 {
 	struct action act;
@@ -2065,7 +2065,7 @@ int ds_select_dst_limit(
 	hash = i;
 
 	if(mode!=DS_SETOP_XAVP) {
-		if(ds_update_dst(msg, &idx->dlist[hash].uri, idx->dlist[hash].sock,
+		if(ds_push_dst(msg, &idx->dlist[hash].uri, idx->dlist[hash].sock,
 					mode) != 0) {
 			LM_ERR("cannot set next hop address with: %.*s\n",
 					idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
@@ -2208,7 +2208,7 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 		return -1;
 	}
 
-	if(ds_update_dst(msg, &lxavp->val.v.s, sock, mode) != 0) {
+	if(ds_push_dst(msg, &lxavp->val.v.s, sock, mode) != 0) {
 		LM_ERR("cannot set dst addr: %.*s\n", lxavp->val.v.s.len,
 				lxavp->val.v.s.s);
 		return -1;
@@ -3053,6 +3053,11 @@ void ds_ht_timer(unsigned int ticks, void *param)
 	return;
 }
 
+int ds_next_dst_api(sip_msg_t *msg, int mode)
+{
+	return ds_update_dst(msg, DS_USE_NEXT, mode);
+}
+
 int bind_dispatcher(dispatcher_api_t *api)
 {
 	if(!api) {
@@ -3060,7 +3065,7 @@ int bind_dispatcher(dispatcher_api_t *api)
 		return -1;
 	}
 	api->select = ds_select_dst;
-	api->next = ds_next_dst;
+	api->next = ds_next_dst_api;
 	api->mark = ds_mark_dst;
 	api->is_from = ds_is_from_list;
 	return 0;
