@@ -1802,7 +1802,6 @@ int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg,
 {
 	sr_xavp_t *nxavp=NULL;
 	sr_xval_t nxval;
-	char buf[2 + 16 + 1];
 
 	/* add destination uri field */
 	memset(&nxval, 0, sizeof(sr_xval_t));
