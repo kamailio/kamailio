@@ -536,6 +536,13 @@ inline static struct dns_hash_entry* _dns_hash_find(str* name, int type,
 	ret=0;
 	now=get_ticks_raw();
 	*err=0;
+
+	/* just in case that e.g. the VIA parser get confused */
+	if(unlikely(!name->s || name->len <= 0)) {
+		LM_ERR("invalid name, no cache lookup possible\n");
+		*err=-1;
+		return 0;
+	}
 again:
 	*h=dns_hash_no(name->s, name->len, type);
 #ifdef DNS_CACHE_DEBUG
