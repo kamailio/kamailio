@@ -574,7 +574,6 @@ static VALUE app_ruby_sr_modf(int argc, VALUE* argv, VALUE self)
 
 	ret = 1;
 	act = NULL;
-	argc = 0;
 	memset(rbv, 0, MAX_ACTIONS*sizeof(char*));
 	memset(paramv, 0, MAX_ACTIONS*sizeof(char*));
 	env_R = app_ruby_sr_env_get();
