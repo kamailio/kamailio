@@ -263,9 +263,9 @@ int perlresult2dbres(SV *perlres, db1_res_t **r) {
 	/* Fetch column definitions */
 	colarrayref = perlvdb_perlmethod(perlres, PERL_VDB_COLDEFSMETHOD,
 			NULL, NULL, NULL, NULL);
-	if (!(SvROK(colarrayref))) goto error;
+	if (colarrayref==NULL || !(SvROK(colarrayref))) goto error;
 	colarray = (AV *)SvRV(colarrayref);
-	if (!(SvTYPE(colarray) == SVt_PVAV)) goto error;
+	if (colarray==NULL || !(SvTYPE(colarray) == SVt_PVAV)) goto error;
 
 	colcount = av_len(colarray) + 1;
 
@@ -305,7 +305,7 @@ int perlresult2dbres(SV *perlres, db1_res_t **r) {
 	}
 
 	rowarray = (AV *)SvRV(rowarrayref);
-	if (!(SvTYPE(rowarray) == SVt_PVAV)) goto error;
+	if (rowarray == NULL || !(SvTYPE(rowarray) == SVt_PVAV)) goto error;
 
 	rowcount = av_len(rowarray) + 1;
 
@@ -403,10 +403,12 @@ int perlresult2dbres(SV *perlres, db1_res_t **r) {
 	}
 
 end:
-	if (colarray) av_undef(colarray);
+	if(colarray) av_undef(colarray);
 	if (rowarray) av_undef(rowarray);
 	return retval;
 error:
+	if(colarray) av_undef(colarray);
+	if (rowarray) av_undef(rowarray);
 	LM_CRIT("broken result set. Exiting, leaving Kamailio in unknown state.\n");
 	return -1;
 }
