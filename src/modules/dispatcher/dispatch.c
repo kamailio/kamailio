@@ -90,6 +90,7 @@ extern str ds_event_callback;
 extern int ds_ping_latency_stats;
 extern float ds_latency_estimator_alpha;
 extern int ds_attrs_none;
+extern param_t *ds_db_extra_attrs_list;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -913,17 +914,35 @@ int ds_load_db(void)
 	db1_res_t *res;
 	db_val_t *values;
 	db_row_t *rows;
+#define DS_DB_MAX_COLS	32
+	db_key_t query_cols[DS_DB_MAX_COLS];
+	param_t *pit=NULL;
+	int nc;
+	int plen;
+#define DS_ATTRS_MAXSIZE	1024
+	char ds_attrs_buf[DS_ATTRS_MAXSIZE];
 
-	db_key_t query_cols[5] = {&ds_set_id_col, &ds_dest_uri_col,
-			&ds_dest_flags_col, &ds_dest_priority_col, &ds_dest_attrs_col};
+	query_cols[0] = &ds_set_id_col;
+	query_cols[1] = &ds_dest_uri_col;
+	query_cols[2] = &ds_dest_flags_col;
+	query_cols[3] = &ds_dest_priority_col;
+	query_cols[4] = &ds_dest_attrs_col;
 
 	nrcols = 2;
-	if(_ds_table_version == DS_TABLE_VERSION2)
+	if(_ds_table_version == DS_TABLE_VERSION2) {
 		nrcols = 3;
-	else if(_ds_table_version == DS_TABLE_VERSION3)
+	} else if(_ds_table_version == DS_TABLE_VERSION3) {
 		nrcols = 4;
-	else if(_ds_table_version == DS_TABLE_VERSION4)
+	} else if(_ds_table_version == DS_TABLE_VERSION4) {
 		nrcols = 5;
+		for(pit = ds_db_extra_attrs_list; pit!=NULL; pit=pit->next) {
+			if(nrcols>=DS_DB_MAX_COLS) {
+				LM_ERR("too many db columns: %d\n", nrcols);
+				return -1;
+			}
+			query_cols[nrcols++] = &pit->body; 
+		}
+	}
 
 	if((*crt_idx) != (*next_idx)) {
 		LM_WARN("load command already generated, aborting reload...\n");
@@ -940,6 +959,8 @@ int ds_load_db(void)
 		return -1;
 	}
 
+	LM_DBG("loading dispatcher db records - nrcols: %d\n", nrcols);
+
 	/*select the whole table and all the columns*/
 	if(ds_dbf.query(ds_db_handle, 0, 0, 0, query_cols, 0, nrcols, 0, &res)
 			< 0) {
@@ -949,8 +970,9 @@ int ds_load_db(void)
 
 	nr_rows = RES_ROW_N(res);
 	rows = RES_ROWS(res);
-	if(nr_rows == 0)
+	if(nr_rows == 0) {
 		LM_WARN("no dispatching data in the db -- empty destination set\n");
+	}
 
 	setn = 0;
 	*next_idx = (*crt_idx + 1) % 2;
@@ -971,10 +993,37 @@ int ds_load_db(void)
 
 		attrs.s = 0;
 		attrs.len = 0;
-		if(nrcols >= 5 && !VAL_NULL(values + 4)) {
-			attrs.s = VAL_STR(values + 4).s;
-			if(attrs.s) attrs.len = strlen(attrs.s);
+		if(nrcols >= 5) {
+			if(!VAL_NULL(values + 4)) {
+				attrs.s = VAL_STR(values + 4).s;
+				if(attrs.s) attrs.len = strlen(attrs.s);
+			}
+			if(ds_db_extra_attrs_list!=NULL && nrcols > 5) {
+				if(attrs.len>0) {
+					memcpy(ds_attrs_buf, attrs.s, attrs.len);
+					if(ds_attrs_buf[attrs.len-1]!=';') {
+						ds_attrs_buf[attrs.len++] = ';';
+					}
+				}
+				attrs.s = ds_attrs_buf;
+				pit = ds_db_extra_attrs_list;
+				for(nc = 5; nc<nrcols && pit!=NULL; nc++) {
+					if(!VAL_NULL(values + nc) && strlen(VAL_STRING(values + nc))>0) {
+						plen = snprintf(attrs.s + attrs.len,
+								DS_ATTRS_MAXSIZE - attrs.len - 1,
+								"%.*s=%s;", pit->name.len, pit->name.s,
+								VAL_STRING(values + nc));
+						if(plen<=0 || plen>=DS_ATTRS_MAXSIZE - attrs.len - 1) {
+							LM_ERR("cannot build attrs buffer\n");
+							goto err2;
+						}
+						attrs.len+=plen;
+					}
+					pit = pit->next;
+				}
+			}
 		}
+		LM_DBG("attributes string: [%.*s]\n", attrs.len, (attrs.s)?attrs.s:"");
 		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn)
 				!= 0) {
 			dest_errs++;

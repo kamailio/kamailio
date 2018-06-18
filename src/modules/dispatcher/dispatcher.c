@@ -137,6 +137,8 @@ str ds_attrs_pvname   = STR_NULL;
 pv_spec_t ds_attrs_pv;
 
 str ds_event_callback = STR_NULL;
+str ds_db_extra_attrs = STR_NULL;
+param_t *ds_db_extra_attrs_list = NULL;
 
 /** module functions */
 static int mod_init(void);
@@ -255,11 +257,12 @@ static param_export_t params[]={
 	{"ds_hash_expire",     INT_PARAM, &ds_hash_expire},
 	{"ds_hash_initexpire", INT_PARAM, &ds_hash_initexpire},
 	{"ds_hash_check_interval", INT_PARAM, &ds_hash_check_interval},
-	{"outbound_proxy",  PARAM_STR, &ds_outbound_proxy},
+	{"outbound_proxy",     PARAM_STR, &ds_outbound_proxy},
 	{"ds_default_socket",  PARAM_STR, &ds_default_socket},
 	{"ds_timer_mode",      PARAM_INT, &ds_timer_mode},
 	{"event_callback",     PARAM_STR, &ds_event_callback},
 	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
+	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
 	{0,0,0}
 };
 
@@ -288,6 +291,8 @@ static int mod_init(void)
 {
 	str host;
 	int port, proto;
+	param_hooks_t phooks;
+	param_t *pit = NULL;
 
 	if(ds_ping_active_init() < 0) {
 		return -1;
@@ -344,6 +349,22 @@ static int mod_init(void)
 		return -1;
 
 	if(ds_db_url.s) {
+		if(ds_db_extra_attrs.s!=NULL && ds_db_extra_attrs.len>2) {
+			if(ds_db_extra_attrs.s[ds_db_extra_attrs.len-1]==';') {
+				ds_db_extra_attrs.len--;
+			}
+			if (parse_params(&ds_db_extra_attrs, CLASS_ANY, &phooks,
+						&ds_db_extra_attrs_list)<0) {
+				LM_ERR("failed to parse extra attrs parameter\n");
+				return -1;
+			}
+			for(pit = ds_db_extra_attrs_list; pit!=NULL; pit=pit->next) {
+				if(pit->body.s==NULL || pit->body.len<=0) {
+					LM_ERR("invalid db extra attrs parameter\n");
+					return -1;
+				}
+			}
+		}
 		if(init_ds_db() != 0) {
 			LM_ERR("could not initiate a connect to the database\n");
 			return -1;
