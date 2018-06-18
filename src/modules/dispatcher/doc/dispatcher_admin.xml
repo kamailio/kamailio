@@ -955,6 +955,33 @@ end
  		</example>
 	</section>
 
+	<section id="dispatcher.p.ds_db_extra_attrs">
+		<title><varname>ds_db_extra_attrs</varname> (str)</title>
+		<para>
+		Set a list of column names to be loaded from database dispatcher table
+		and be concatenated to 'attrs' field. The format is:
+		'aname1=cname1;aname2=cname2;...;anameN=cnameN'.
+		</para>
+		<para>
+		The 'anameX' is the attribute name and 'cnameX' is column name. The
+		additional columns must be added to database dispatcher table and their
+		type must be VARCHAR (string).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>empty</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_db_extra_attrs</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
