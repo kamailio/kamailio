@@ -148,7 +148,9 @@ void _lc_core_log_udp(int lpriority, const char *format, ...)
 	n += snprintf(obuf + n, LC_LOG_MSG_MAX_SIZE - n, "(%d) ", my_pid());
 	n += vsnprintf(obuf + n, LC_LOG_MSG_MAX_SIZE - n, format, arglist);
 	va_end(arglist);
-	udp_send(&_lc_udp_dst, obuf, n);
+	if(udp_send(&_lc_udp_dst, obuf, n)!=0) {
+		LM_DBG("udp send returned non zero\n");
+	}
 }
 
 int ki_log_udp(sip_msg_t *msg, str *txt)
