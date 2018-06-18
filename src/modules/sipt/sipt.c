@@ -337,7 +337,7 @@ static int sipt_get_redirection_number_nai(struct sip_msg *msg, pv_param_t *para
 
 static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	char *sb_s_buf = pkg_malloc(sizeof(char) * (26));
+	static char sb_s_buf[26];
 	str body;
 	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
