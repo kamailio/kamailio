@@ -642,7 +642,11 @@ int ki_t_next_contacts(struct sip_msg* msg)
 		}
 
 		vavp = xavp_get(&flags_name, xavp->val.v.xavp);
-		flags = vavp->val.v.i;
+		if (vavp != NULL) {
+			flags = vavp->val.v.i;
+		} else {
+			flags = 0;
+		}
 
 		vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
 		if (vavp != NULL) {
@@ -774,8 +778,7 @@ int ki_t_next_contact_flow(struct sip_msg* msg)
 	/* Load Request-URI and branches */
 	t_get_this_branch_instance(msg, &this_instance);
 
-	if (this_instance.len == 0)
-	{
+	if (this_instance.len == 0) {
 		LM_DBG("No instance on this branch\n");
 		return -2;
 	}
@@ -792,13 +795,10 @@ int ki_t_next_contact_flow(struct sip_msg* msg)
 		next_xavp = xavp_get_next(xavp);
 
 		vavp = xavp_get(&instance_name, xavp->val.v.xavp);
-		if (vavp == NULL)
-		{
+		if (vavp == NULL) {
 			/* Does not match this instance */
 			goto next_xavp;
-		}
-		else
-		{
+		} else {
 			instance = vavp->val.v.s;
 			if ((instance.len != this_instance.len) ||
 					(strncmp(instance.s, this_instance.s, instance.len) != 0))
@@ -807,7 +807,11 @@ int ki_t_next_contact_flow(struct sip_msg* msg)
 		}
 
 		vavp = xavp_get(&uri_name, xavp->val.v.xavp);
-		uri = vavp->val.v.s;
+		if (vavp == NULL) {
+			goto next_xavp;
+		} else {
+			uri = vavp->val.v.s;
+		}
 
 		vavp = xavp_get(&dst_uri_name, xavp->val.v.xavp);
 		if (vavp != NULL) {
@@ -842,13 +846,27 @@ int ki_t_next_contact_flow(struct sip_msg* msg)
 		}
 
 		vavp = xavp_get(&flags_name, xavp->val.v.xavp);
-		flags = vavp->val.v.i;
+		if (vavp != NULL) {
+			flags = vavp->val.v.i;
+		} else {
+			flags = 0;
+		}
 
 		vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
-		ruid = vavp->val.v.s;
+		if (vavp != NULL) {
+			ruid = vavp->val.v.s;
+		} else {
+			ruid.s = "";
+			ruid.len = 0;
+		}
 
 		vavp = xavp_get(&ua_name, xavp->val.v.xavp);
-		location_ua = vavp->val.v.s;
+		if (vavp != NULL) {
+			location_ua = vavp->val.v.s;
+		} else {
+			location_ua.s = "";
+			location_ua.len = 0;
+		}
 
 		LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s'"
 				" inst-'%.*s' ruid-'%.*s' location_ua-'%.*s'\n",
