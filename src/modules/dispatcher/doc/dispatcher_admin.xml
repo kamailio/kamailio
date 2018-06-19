@@ -1316,7 +1316,7 @@ if(ds_select("1", "$var(a)")) {
 			a variable holding an integer value.
 			</para>
 		</listitem>
-		<itemizedlist>
+		</itemizedlist>
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
 		destination groups are stored in XAVP list (limited with an optional 'limit'
