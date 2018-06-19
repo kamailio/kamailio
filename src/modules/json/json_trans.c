@@ -282,11 +282,13 @@ int json_tr_eval(
 					LM_ERR("cannot get spve_value from TR_PARAM_STRING : "
 						   "%.*s\n",
 							tp->v.s.len, tp->v.s.s);
+					pkg_free(pv);
 					return -1;
 				}
 				if(fixup_get_svalue(msg, (gparam_p)v1, &v2) != 0) {
 					LM_ERR("cannot get value from TR_PARAM_STRING\n");
 					fixup_free_spve_null(&v1, 1);
+					pkg_free(pv);
 					return -1;
 				}
 				fixup_free_spve_null(&v1, 1);
