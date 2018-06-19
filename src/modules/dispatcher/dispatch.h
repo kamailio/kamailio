@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include "../../core/pvar.h"
+#include "../../core/xavp.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/rand/kam_rand.h"
 #include "../../modules/tm/tm_load.h"
@@ -121,8 +122,8 @@ void ds_disconnect_db(void);
 int ds_load_db(void);
 int ds_reload_db(void);
 int ds_destroy_list(void);
-int ds_select_dst_limit(
-		struct sip_msg *msg, int set, int alg, unsigned int limit, int mode);
+int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
+		int mode);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_update_dst(struct sip_msg *msg, int upos, int mode);
 int ds_update_state(sip_msg_t *msg, int group, str *address, int state);
@@ -210,6 +211,16 @@ typedef struct _ds_set {
 	int longer;
 	gen_lock_t lock;
 } ds_set_t;
+
+typedef struct _ds_select_state {
+	int setid;
+	int alg;
+	int umode;
+	uint32_t limit;
+	int cnt;
+	sr_xavp_t *lxavp;
+} ds_select_state_t;
+
 /* clang-format on */
 
 #define AVL_LEFT 0
@@ -228,5 +239,7 @@ int ds_ping_active_set(int v);
 ds_set_t *ds_avl_insert(ds_set_t **root, int id, int *setn);
 ds_set_t *ds_avl_find(ds_set_t *node, int id);
 void ds_avl_destroy(ds_set_t **node);
+
+int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate);
 
 #endif
