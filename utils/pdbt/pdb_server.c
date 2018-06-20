@@ -40,8 +40,8 @@
 
 void print_usage(char *program) {
 	set_log_level(LOG_INFO);
-	LINFO("Listens on a UDP port for queries and sends answer UDP\n");
-	LINFO("packets back.\n");
+	LINFO("version: pdb_server %d\n", PDB_VERSION);
+	LINFO("Listens on a UDP port for queries and sends answer UDP packets back.\n");
 	LINFO("\n");
 	LINFO("Usage: %s [<option>...]\n", program);
 	LINFO("  %s -m <data file> [-i <bind addr>] [-p <port>] [-d <log level>]\n", program);
@@ -62,6 +62,7 @@ void print_usage(char *program) {
 	LINFO("                      %ld for emergency level.\n", LOG_EMERG);
 	LINFO("                      %ld to disable all messages.\n", LOG_EMERG-1);
 	LINFO("                      Default is warning level.\n");
+	LINFO("    -v: Print the version\n");
 	LINFO("    -h: Print this help.\n");
 }
 
@@ -212,7 +213,7 @@ int main(int argc, char *argv[]) {
 	int so;
 	struct sockaddr_in sa;
 		
-	while ((opt = getopt(argc, argv, "m:i:p:hdl:")) != -1) {
+	while ((opt = getopt(argc, argv, "m:i:p:vhdl:")) != -1) {
 		switch (opt) {
 		case 'm':
 			backend_data_filename = optarg;
@@ -228,6 +229,11 @@ int main(int argc, char *argv[]) {
 				return -1;
 			}
 			bind_port=ret;
+			break;
+		case 'v':
+			set_log_level(LOG_INFO);
+			LINFO("version: pdb_server %d\n", PDB_VERSION);
+			return 0;
 			break;
 		case 'h':
 			init_log("pdb_server", use_syslog);
