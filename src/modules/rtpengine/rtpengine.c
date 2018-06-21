@@ -1696,14 +1696,15 @@ static int build_rtpp_socks() {
 			if((0 <= control_cmd_tos) && (control_cmd_tos < 256)) {
 				unsigned char tos = control_cmd_tos;
 				if (pnode->rn_umode == 6) {
-					setsockopt(rtpp_socks[pnode->idx], IPPROTO_IPV6,
+					if(setsockopt(rtpp_socks[pnode->idx], IPPROTO_IPV6,
 							IPV6_TCLASS, &control_cmd_tos,
-							sizeof(control_cmd_tos));
+							sizeof(control_cmd_tos)))
+						LM_WARN("Failed to set IPv6 TOS socket option\n");
 
 				} else {
-					setsockopt(rtpp_socks[pnode->idx], IPPROTO_IP,
-							IP_TOS, &tos,
-							sizeof(tos));
+					if(setsockopt(rtpp_socks[pnode->idx], IPPROTO_IP,
+							IP_TOS, &tos, sizeof(tos)))
+						LM_WARN("Failed to set IPv4 TOS socket option\n");
 				}
 			}
 
