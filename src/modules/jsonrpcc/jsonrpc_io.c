@@ -33,6 +33,8 @@
 #include "../../core/route.h"
 #include "../../core/route_struct.h"
 #include "../../core/lvalue.h"
+#include "../../core/cfg/cfg_struct.h"
+
 #include "../tm/tm_load.h"
 
 #include "jsonrpc_io.h"
@@ -155,6 +157,8 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 		LM_ERR("failed to read from command pipe: %s\n", strerror(errno));
 		return;
 	}
+
+	cfg_update();
 
 	params = json_tokener_parse(cmd->params);
 
