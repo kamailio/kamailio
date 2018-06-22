@@ -601,13 +601,45 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 				ret = ((sr_kemi_fmssnn_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, vps[2].n, vps[3].n);
 				return sr_kemi_apy_return_int(ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_STR
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_INT
+					&& ket->ptypes[3]==SR_KEMIP_INT) {
+				/* snnn */
+				ret = ((sr_kemi_fmsnnn_f)(ket->func))(lmsg,
+						&vps[0].s, vps[1].n, vps[2].n, vps[3].n);
+				return sr_kemi_apy_return_int(ket, ret);
 			} else if(ket->ptypes[0]==SR_KEMIP_INT
 					&& ket->ptypes[1]==SR_KEMIP_STR
 					&& ket->ptypes[2]==SR_KEMIP_STR
 					&& ket->ptypes[3]==SR_KEMIP_STR) {
-				/* ssnn */
+				/* nsss */
 				ret = ((sr_kemi_fmnsss_f)(ket->func))(lmsg,
 						vps[0].n, &vps[1].s, &vps[2].s, &vps[3].s);
+				return sr_kemi_apy_return_int(ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_STR) {
+				/* nnss */
+				ret = ((sr_kemi_fmnnss_f)(ket->func))(lmsg,
+						vps[0].n, vps[1].n, &vps[2].s, &vps[3].s);
+				return sr_kemi_apy_return_int(ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_INT
+					&& ket->ptypes[3]==SR_KEMIP_STR) {
+				/* nnns */
+				ret = ((sr_kemi_fmnnns_f)(ket->func))(lmsg,
+						vps[0].n, vps[1].n, vps[2].n, &vps[3].s);
+				return sr_kemi_apy_return_int(ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_INT
+					&& ket->ptypes[3]==SR_KEMIP_INT) {
+				/* nnnn */
+				ret = ((sr_kemi_fmnnnn_f)(ket->func))(lmsg,
+						vps[0].n, vps[1].n, vps[2].n, vps[3].n);
 				return sr_kemi_apy_return_int(ket, ret);
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
