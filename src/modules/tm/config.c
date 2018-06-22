@@ -93,8 +93,9 @@ struct cfg_group_tm	default_tm_cfg = {
 	0,  /* local_ack_mode, default 0 (rfc3261 conformant) */
 	1, /* local_cancel_reason -- add Reason header to locally generated
 		  CANCELs; on by default */
-	1  /* e2e_cancel_reason -- copy the Reason headers from incoming CANCELs
+	1,  /* e2e_cancel_reason -- copy the Reason headers from incoming CANCELs
 		  into the corresp. hop-by-hop CANCELs, on by default */
+	0   /* relay_100 -- by default, assume stateful proxy and do not relay SIP 100 */
 };
 
 void	*tm_cfg = &default_tm_cfg;
@@ -204,5 +205,7 @@ cfg_def_t	tm_cfg_def[] = {
 	{"e2e_cancel_reason",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"if set to 1, Reason headers from received CANCELs are copied into"
 		" the corresponding generated hop-by-hop CANCELs"},
+	{"relay_100",		CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
+		"if set to 1, relay SIP 100 messages as a stateless proxy"},
 	{0, 0, 0, 0, 0, 0}
 };

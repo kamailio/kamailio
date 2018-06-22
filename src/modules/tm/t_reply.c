@@ -1494,9 +1494,10 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 #else
 		*should_store=0;
 #endif
-		/* 1xx and 2xx except 100 will be relayed */
+		/* By default, 1xx and 2xx (except 100) will be relayed. 100 relaying can be
+		 * controlled via relay_100 parameter */
 		Trans->uac[branch].last_received=new_code;
-		*should_relay= new_code==100? -1 : branch;
+		*should_relay= (new_code==100 && !cfg_get(tm, tm_cfg, relay_100)) ? -1 : branch;
 		if (new_code>=200 ) {
 			prepare_to_cancel( Trans, &cancel_data->cancel_bitmap, 0);
 #ifdef CANCEL_REASON_SUPPORT
