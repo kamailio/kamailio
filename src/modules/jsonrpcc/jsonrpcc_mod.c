@@ -28,6 +28,8 @@
 #include "../../core/mod_fix.h"
 #include "../../core/trim.h"
 #include "../../core/sr_module.h"
+#include "../../core/cfg/cfg_struct.h"
+
 #include "../tm/tm_load.h"
 
 #include "jsonrpc_request.h"
@@ -139,6 +141,9 @@ static int child_init(int rank)
 	if(pid==0){
 		/* child */
 		close(pipe_fds[1]);
+		/* initialize the config framework */
+		if (cfg_child_init())
+			return -1;
 		return jsonrpc_io_child_process(pipe_fds[0], servers_param);
 	}
 	return 0;
