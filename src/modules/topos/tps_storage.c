@@ -360,6 +360,11 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		}
 	}
 
+	LM_DBG("downstream: %s acontact: [%.*s] bcontact: [%.*s]\n",
+			(dir==TPS_DIR_DOWNSTREAM)?"yes":"no",
+			td->a_contact.len, (td->a_contact.len>0)?td->a_contact.s:"",
+			td->b_contact.len, (td->b_contact.len>0)?td->b_contact.s:"");
+
 	return 0;
 
 error:
