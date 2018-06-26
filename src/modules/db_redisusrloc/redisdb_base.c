@@ -301,10 +301,14 @@ int db_redis_delete(const db1_con_t* _h, const db_key_t* _k,
 	memset(field_temp_storage_value, '\0', sizeof(field_temp_storage_value));
 	//getting the table name
 	table_name = (char*)pkg_malloc((CON_TABLE(_h)->len+1) * sizeof(char));
-	return_code = snprintf(table_name,(CON_TABLE(_h)->len+1) * sizeof(char),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
+	if (!table_name) {
+			LM_ERR("no private memory left\n");
+			goto error;
+	}
+	return_code = snprintf(table_name, sizeof(table_name),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
 	if(return_code<0)
 	{
-		LM_ERR("no private memory left\n");
+		LM_ERR("Error While Getting Table Name\n");
 		goto error;
 	}
 
@@ -601,7 +605,7 @@ int db_redis_update(const db1_con_t* _h, const db_key_t* _k,
 {
 	int i;
 	int ret;
-	char table_name[50];
+	char *table_name;
 	//char redis_input [600]="";
 	km_redis_con_t* _context;
 	_context = REDIS_CON(_h);
@@ -618,11 +622,18 @@ int db_redis_update(const db1_con_t* _h, const db_key_t* _k,
 	memset(field_temp_storage_value, '\0', sizeof(field_temp_storage_value));
 
 	LM_INFO("in db_redis_update table name  %s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
-	ret = snprintf(table_name,50,"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
-	if(ret<0) {
-		LM_ERR("no private memory left\n");
-		return -1;
-	}
+	//getting the table name
+        table_name = (char*)pkg_malloc((CON_TABLE(_h)->len+1) * sizeof(char));
+        if (!table_name) {
+                        LM_ERR("no private memory left\n");
+                        goto error;
+        }
+        return_code = snprintf(table_name, sizeof(table_name),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
+        if(return_code<0)
+        {
+                LM_ERR("Error While Getting Table Name\n");
+                goto error;
+        }
 	tv.tv_sec = 0;
         tv.tv_usec = 100000;
         redisSetTimeout(_context->con,tv);
@@ -762,13 +773,17 @@ int db_redis_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
         redisSetTimeout(_context->con,tv);
 	LM_DBG("in db_redis_query table name  %s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
 	//getting the table name
-	table_name = (char*)pkg_malloc((CON_TABLE(_h)->len+1) * sizeof(char));
-	return_code = snprintf(table_name,(CON_TABLE(_h)->len+1) * sizeof(char),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
-	if(return_code<0)
-	{
-		LM_ERR("no private memory left\n");
-		goto error;
-	}
+        table_name = (char*)pkg_malloc((CON_TABLE(_h)->len+1) * sizeof(char));
+        if (!table_name) {
+                        LM_ERR("no private memory left\n");
+                        goto error;
+        }
+        return_code = snprintf(table_name, sizeof(table_name),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
+        if(return_code<0)
+        {
+                LM_ERR("Error While Getting Table Name\n");
+                goto error;
+        }
 	LM_DBG("SELECT Query: %s",table_name);
 	//allocating the result set
 	*_r = db_redis_new_result();
@@ -1016,13 +1031,17 @@ int db_redis_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	memset(field_temp_storage_value, '\0', sizeof(field_temp_storage_value));
 
 	//getting the table name
-	table_name = (char*)pkg_malloc((CON_TABLE(_h)->len+1) * sizeof(char));
-	return_code = snprintf(table_name,(CON_TABLE(_h)->len+1) * sizeof(char),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
-	if(return_code<0)
-	{
-		LM_ERR("no private memory left\n");
-		goto error;
-	}
+        table_name = (char*)pkg_malloc((CON_TABLE(_h)->len+1) * sizeof(char));
+        if (!table_name) {
+                        LM_ERR("no private memory left\n");
+                        goto error;
+        }
+        return_code = snprintf(table_name, sizeof(table_name),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
+        if(return_code<0)
+        {
+                LM_ERR("Error While Getting Table Name\n");
+                goto error;
+        }
 
 	LM_INFO("INSERT Query: %s",table_name);
 	tv.tv_sec = 0;
