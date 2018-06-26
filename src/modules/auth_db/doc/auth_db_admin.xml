@@ -558,8 +558,8 @@ if (!auth_check("$fd", "subscriber", "1")) {
 		</example>
 	</section>
 
-	<section>
-		<title id="auth_db.f.is_subscriber">
+	<section id="auth_db.f.is_subscriber">
+		<title>
 			<function moreinfo="none">is_subscriber(uri, dbtable, flags)</function>
 		</title>
 		<para>The function checks if there is a subscriber corresponding to
