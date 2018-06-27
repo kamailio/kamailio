@@ -192,7 +192,7 @@ auth_xkeys_add("X-My-Key", "abc", "sha256", "$Ri:$fu:$ru:$hdr(CSeq)");
 		<title><function>auth_xkeys_check</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(!auth_xkeys_add("X-My-Key", "abc", "sha256", "$si:$fu:$ru:$hdr(CSeq)")) {
+if(!auth_xkeys_check("X-My-Key", "abc", "sha256", "$si:$fu:$ru:$hdr(CSeq)")) {
     send_reply("403", "Forbidden");
     exit;
 }
