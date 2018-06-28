@@ -1554,28 +1554,34 @@ static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar)
 /**
  *
  */
-static int w_sdp_print(sip_msg_t* msg, char* level, char *bar)
+static int ki_sdp_print(sip_msg_t* msg, int llevel)
 {
 	sdp_info_t *sdp = NULL;
-	int llevel = L_DBG;
 
 	if(parse_sdp(msg) < 0) {
 		LM_ERR("Unable to parse sdp\n");
 		return -1;
 	}
 
-	if(fixup_get_ivalue(msg, (gparam_p)level, &llevel)!=0)
-	{
-		LM_ERR("unable to get the debug level value\n");
-		return -1;
-	}
-
-	sdp = (sdp_info_t*)msg->body;
-
 	print_sdp(sdp, llevel);
 	return 1;
 }
 
+
+/**
+ *
+ */
+static int w_sdp_print(sip_msg_t* msg, char* level, char *bar)
+{
+	int llevel = L_DBG;
+
+	if(fixup_get_ivalue(msg, (gparam_p)level, &llevel)!=0) {
+		LM_ERR("unable to get the debug level value\n");
+		return -1;
+	}
+
+	return ki_sdp_print(msg, llevel);
+}
 
 /**
  *
@@ -2020,6 +2026,11 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 	{ str_init("sdpops"), str_init("sdp_get_line_startswith"),
 		SR_KEMIP_INT, ki_sdp_get_line_startswith,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_print"),
+		SR_KEMIP_INT, ki_sdp_print,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
