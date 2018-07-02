@@ -332,6 +332,86 @@ bm_log_timer("test");
 				Modifies the module log level. See "loglevel" variable.
 			</para>
 		</section>
+		<section id="benchmark.rpc.timer_list">
+			<title><function moreinfo="none">benchmark.timer_list</function></title>
+			<para>
+				List data for all timers (Last complete period and global data)
+				Displays info close to the one output in the log by using a RPC structure.
+				period_sum, period_min and period_media show data for last granularity
+				period already completed.
+			</para>
+			<example>
+				<title>List all timers</title>
+				<programlisting format="linespecific">
+...
+&kamcmd; benchmark.timer_list
+{
+	name: test
+	state: enabled
+	id: 0
+	granularity: 2
+	period_sum: 69
+	period_min: 22
+	period_max: 47
+	period_media: 34.500000
+	calls: 4
+	sum: 217
+	global_min: 22
+	global_max: 88
+	global_media: 54.250000
+}
+{
+	name: test2
+	state: enabled
+	id: 1
+	granularity: 2
+	period_sum: 122
+	period_min: 25
+	period_max: 97
+	period_media: 61.000000
+	calls: 4
+	sum: 349
+	global_min: 25
+	global_max: 151
+	global_media: 87.250000
+}
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="benchmark.rpc.timer_name_list">
+			<title><function moreinfo="none">benchmark.timer_name_list</function></title>
+			<para>
+				List data for one timer based on its name (Last complete period and global data)
+				It displays info close to the one output in the log by using a RPC structure.
+				period_sum, period_min and period_media show data for last granularity
+				period already completed.
+			</para>
+			<example>
+				<title>List one timer</title>
+				<programlisting format="linespecific">
+...
+&kamcmd; benchmark.timer_name_list test
+{
+	name: test
+	state: enabled
+	id: 0
+	granularity: 2
+	period_sum: 69
+	period_min: 22
+	period_max: 47
+	period_media: 34.500000
+	calls: 4
+	sum: 217
+	global_min: 22
+	global_max: 88
+	global_media: 54.250000
+}
+...
+</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 	<section>
