@@ -50,32 +50,32 @@ static int blst_rpl_clear_ignore_f(struct sip_msg*, char*, char*);
 
 
 static cmd_export_t cmds[]={
-	{"blst_add",           blst_add_f,               0,  0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{"blst_add",           blst_add_f,               1, fixup_var_int_1,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{"blst_add_retry_after", blst_add_retry_after_f, 2, fixup_var_int_12,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{"blst_del",           blst_del_f,               0, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{"blst_is_blacklisted",   blst_is_blacklisted_f, 0, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{"blst_set_ignore",         blst_set_ignore_f,   0,  0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
-	{"blst_set_ignore",         blst_set_ignore_f,   1,  fixup_var_int_1,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
-	{"blst_clear_ignore",         blst_clear_ignore_f,   0,  0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
-	{"blst_clear_ignore",         blst_clear_ignore_f,   1,  fixup_var_int_1,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
-	{"blst_rpl_set_ignore",       blst_rpl_set_ignore_f, 0,  0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"blst_rpl_set_ignore",      blst_rpl_set_ignore_f,  1,  fixup_var_int_1,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"blst_rpl_clear_ignore",   blst_rpl_clear_ignore_f, 0,  0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"blst_rpl_clear_ignore",   blst_rpl_clear_ignore_f, 1,  fixup_var_int_1,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"blst_add",              blst_add_f,              0,  0,
+			ANY_ROUTE},
+	{"blst_add",              blst_add_f,              1, fixup_var_int_1,
+			ANY_ROUTE},
+	{"blst_add_retry_after",  blst_add_retry_after_f,  2, fixup_var_int_12,
+			ANY_ROUTE},
+	{"blst_del",              blst_del_f,              0, 0,
+			ANY_ROUTE},
+	{"blst_is_blacklisted",   blst_is_blacklisted_f,   0, 0,
+			ANY_ROUTE},
+	{"blst_set_ignore",       blst_set_ignore_f,       0,  0,
+			ANY_ROUTE},
+	{"blst_set_ignore",       blst_set_ignore_f,       1,  fixup_var_int_1,
+			ANY_ROUTE},
+	{"blst_clear_ignore",     blst_clear_ignore_f,     0,  0,
+			ANY_ROUTE},
+	{"blst_clear_ignore",     blst_clear_ignore_f,     1,  fixup_var_int_1,
+			ANY_ROUTE},
+	{"blst_rpl_set_ignore",   blst_rpl_set_ignore_f,   0,  0,
+			ANY_ROUTE},
+	{"blst_rpl_set_ignore",   blst_rpl_set_ignore_f,   1,  fixup_var_int_1,
+			ANY_ROUTE},
+	{"blst_rpl_clear_ignore", blst_rpl_clear_ignore_f, 0,  0,
+			ANY_ROUTE},
+	{"blst_rpl_clear_ignore", blst_rpl_clear_ignore_f, 1,  fixup_var_int_1,
+			ANY_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -96,7 +96,9 @@ struct module_exports exports= {
 };
 
 
-
+/**
+ *
+ */
 static int blst_add_f(struct sip_msg* msg, char* to, char* foo)
 {
 #ifdef USE_DST_BLACKLIST
@@ -129,7 +131,9 @@ static int blst_add_f(struct sip_msg* msg, char* to, char* foo)
 
 
 
-/* returns error if no retry_after hdr field is present */
+/**
+ * returns error if no retry_after hdr field is present
+ */
 static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
 {
 #ifdef USE_DST_BLACKLIST
@@ -182,7 +186,9 @@ static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
 }
 
 
-
+/**
+ *
+ */
 static int blst_del_f(struct sip_msg* msg, char* foo, char* bar)
 {
 #ifdef USE_DST_BLACKLIST
@@ -208,7 +214,9 @@ static int blst_del_f(struct sip_msg* msg, char* foo, char* bar)
 }
 
 
-
+/**
+ *
+ */
 static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
 {
 #ifdef USE_DST_BLACKLIST
@@ -234,7 +242,9 @@ static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
 }
 
 
-
+/**
+ *
+ */
 static int blst_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 {
 #ifdef USE_DST_BLACKLIST
@@ -254,7 +264,9 @@ static int blst_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 }
 
 
-
+/**
+ *
+ */
 static int blst_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 {
 #ifdef USE_DST_BLACKLIST
@@ -274,7 +286,9 @@ static int blst_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 }
 
 
-
+/**
+ *
+ */
 static int blst_rpl_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 {
 #ifdef USE_DST_BLACKLIST
@@ -294,7 +308,9 @@ static int blst_rpl_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 }
 
 
-
+/**
+ *
+ */
 static int blst_rpl_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 {
 #ifdef USE_DST_BLACKLIST
