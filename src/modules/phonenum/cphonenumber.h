@@ -34,6 +34,7 @@ typedef struct telnum {
   char* normalized;
   char* ltype;
   char* ndesc;
+  char* ccname;
   char* error;
   int cctel;
   int valid;
