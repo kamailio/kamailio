@@ -882,13 +882,13 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 
 	/* sanity check */
 	if (unlikely(reverse_hex2int(hashi, hashl, &hash_index)<0
-				||hash_index>=TABLE_ENTRIES
+				|| hash_index>=TABLE_ENTRIES
 				|| reverse_hex2int(branchi, branchl, &branch_id)<0
 				|| branch_id>=sr_dst_max_branches
 				|| loopl!=MD5_LEN)
 			) {
-		LM_DBG("poor reply labels %d label %d branch %d\n",
-				hash_index, entry_label, branch_id );
+		LM_DBG("poor reply ids - index %d label %d branch %d loopl %d/%d\n",
+				hash_index, entry_label, branch_id, loopl, MD5_LEN);
 		goto nomatch2;
 	}
 
