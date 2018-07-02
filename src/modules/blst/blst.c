@@ -32,13 +32,15 @@
 #include "../../core/ut.h"
 #include "../../core/globals.h"
 #include "../../core/cfg_core.h"
+#include "../../core/kemi.h"
 
 
 MODULE_VERSION
 
 
 
-static int blst_add_f(struct sip_msg*, char*, char*);
+static int blst_add0_f(struct sip_msg*, char*, char*);
+static int blst_add1_f(struct sip_msg*, char*, char*);
 static int blst_add_retry_after_f(struct sip_msg*, char*, char*);
 static int blst_del_f(struct sip_msg*, char*, char*);
 static int blst_is_blacklisted_f(struct sip_msg*, char*, char*);
@@ -50,9 +52,9 @@ static int blst_rpl_clear_ignore_f(struct sip_msg*, char*, char*);
 
 
 static cmd_export_t cmds[]={
-	{"blst_add",              blst_add_f,              0,  0,
+	{"blst_add",              blst_add0_f,             0,  0,
 			ANY_ROUTE},
-	{"blst_add",              blst_add_f,              1, fixup_var_int_1,
+	{"blst_add",              blst_add1_f,             1, fixup_var_int_1,
 			ANY_ROUTE},
 	{"blst_add_retry_after",  blst_add_retry_after_f,  2, fixup_var_int_12,
 			ANY_ROUTE},
@@ -99,16 +101,12 @@ struct module_exports exports= {
 /**
  *
  */
-static int blst_add_f(struct sip_msg* msg, char* to, char* foo)
+static int ki_blst_add(sip_msg_t* msg, int t)
 {
 #ifdef USE_DST_BLACKLIST
-	int t;
 	struct dest_info src;
 	
 	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
-		t=0;
-		if (unlikely( to && (get_int_fparam(&t, msg, (fparam_t*)to)<0)))
-			return -1;
 		if (t==0)
 			t=cfg_get(core, core_cfg, blst_timeout);
 		init_dest_info(&src);
@@ -129,27 +127,46 @@ static int blst_add_f(struct sip_msg* msg, char* to, char* foo)
 	return 1;
 }
 
+/**
+ *
+ */
+static int ki_blst_add_default(sip_msg_t* msg)
+{
+	return ki_blst_add(msg, 0);
+}
+
+/**
+ *
+ */
+static int blst_add0_f(struct sip_msg* msg, char* to, char* foo)
+{
+	return ki_blst_add(msg, 0);
+}
+
+
+/**
+ *
+ */
+static int blst_add1_f(struct sip_msg* msg, char* to, char* foo)
+{
+	int t = 0;
+	if (unlikely( to && (get_int_fparam(&t, msg, (fparam_t*)to)<0)))
+		return -1;
+	return ki_blst_add(msg, t);
+}
 
 
 /**
  * returns error if no retry_after hdr field is present
  */
-static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
+static int ki_blst_add_retry_after(sip_msg_t* msg, int t_min, int t_max)
 {
 #ifdef USE_DST_BLACKLIST
-	int t_min, t_max, t;
+	int t;
 	struct dest_info src;
 	struct hdr_field* hf;
 	
 	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
-		if (unlikely(get_int_fparam(&t_min, msg, (fparam_t*)min)<0)) return -1;
-		if (likely(max)){
-			if (unlikely(get_int_fparam(&t_max, msg, (fparam_t*)max)<0))
-				return -1;
-		}else{
-			t_max=0;
-		}
-	
 		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
@@ -187,9 +204,28 @@ static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
 
 
 /**
+ * returns error if no retry_after hdr field is present
+ */
+static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
+{
+	int t_min, t_max;
+
+	if (unlikely(get_int_fparam(&t_min, msg, (fparam_t*)min)<0)) return -1;
+	if (likely(max)){
+		if (unlikely(get_int_fparam(&t_max, msg, (fparam_t*)max)<0))
+			return -1;
+	}else{
+		t_max=0;
+	}
+
+	return ki_blst_add_retry_after(msg, t_min, t_max);
+}
+
+
+/**
  *
  */
-static int blst_del_f(struct sip_msg* msg, char* foo, char* bar)
+static int ki_blst_del(sip_msg_t* msg)
 {
 #ifdef USE_DST_BLACKLIST
 	struct dest_info src;
@@ -217,7 +253,16 @@ static int blst_del_f(struct sip_msg* msg, char* foo, char* bar)
 /**
  *
  */
-static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
+static int blst_del_f(struct sip_msg* msg, char* foo, char* bar)
+{
+	return ki_blst_del(msg);
+}
+
+
+/**
+ *
+ */
+static int ki_blst_is_blacklisted(sip_msg_t* msg)
 {
 #ifdef USE_DST_BLACKLIST
 	struct dest_info src;
@@ -239,6 +284,15 @@ static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
 				" blacklist support not compiled-in - no effect -\n");
 #endif /* USE_DST_BLACKLIST */
 	return -1;
+}
+
+
+/**
+ *
+ */
+static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
+{
+	return ki_blst_is_blacklisted(msg);
 }
 
 
@@ -327,4 +381,48 @@ static int blst_rpl_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 				" not compiled-in - no effect -\n");
 #endif /* USE_DST_BLACKLIST */
 	return 1;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_blst_exports[] = {
+	{ str_init("blst"), str_init("blst_add"),
+		SR_KEMIP_INT, ki_blst_add,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_add_default"),
+		SR_KEMIP_INT, ki_blst_add_default,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_add_retry_after"),
+		SR_KEMIP_INT, ki_blst_add_retry_after,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_del"),
+		SR_KEMIP_INT, ki_blst_del,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_is_blacklisted"),
+		SR_KEMIP_INT, ki_blst_is_blacklisted,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_blst_exports);
+	return 0;
 }
