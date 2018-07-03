@@ -66,6 +66,9 @@ typedef struct benchmark_timer
 	unsigned long long last_min;	/* Maximum ... */
 	unsigned long long global_max;	/* Global minimum, since start */
 	unsigned long long global_min;	/* ...    maximum ... */
+	unsigned long long period_sum;  /* Sum for last completed period (between granularity) */
+	unsigned long long period_max;   /* Maximum for last completed period ... */
+	unsigned long long period_min;   /* Minimum for last completed period ... */
 	struct benchmark_timer *next;
 } benchmark_timer_t;
 
