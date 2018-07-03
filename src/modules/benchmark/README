@@ -52,6 +52,8 @@ Bastian Friedrich
               6.2. benchmark.enable_timer
               6.3. benchmark.granularity
               6.4. benchmark.loglevel
+              6.5. benchmark.timer_list
+              6.6. benchmark.timer_name_list
 
         7. Example of usage
 
@@ -74,7 +76,9 @@ Bastian Friedrich
    1.5. bm_start_timer usage
    1.6. bm_log_timer usage
    1.7. Enabling a timer
-   1.8. benchmark usage
+   1.8. List all timers
+   1.9. List one timer
+   1.10. benchmark usage
    2.1. Using the benchmark module's API from another module
 
 Chapter 1. Admin Guide
@@ -109,6 +113,8 @@ Chapter 1. Admin Guide
         6.2. benchmark.enable_timer
         6.3. benchmark.granularity
         6.4. benchmark.loglevel
+        6.5. benchmark.timer_list
+        6.6. benchmark.timer_name_list
 
    7. Example of usage
 
@@ -276,6 +282,8 @@ bm_log_timer("test");
    6.2. benchmark.enable_timer
    6.3. benchmark.granularity
    6.4. benchmark.loglevel
+   6.5. benchmark.timer_list
+   6.6. benchmark.timer_name_list
 
 6.1. benchmark.enable_global
 
@@ -300,11 +308,80 @@ kamcmd benchmark.enable_timer test 1
 
    Modifies the module log level. See "loglevel" variable.
 
+6.5. benchmark.timer_list
+
+   List data for all timers (Last complete period and global data)
+   Displays info close to the one output in the log by using a RPC
+   structure. period_sum, period_min and period_media show data for last
+   granularity period already completed.
+
+   Example 1.8. List all timers
+...
+kamcmd benchmark.timer_list
+{
+        name: test
+        state: enabled
+        id: 0
+        granularity: 2
+        period_sum: 69
+        period_min: 22
+        period_max: 47
+        period_media: 34.500000
+        calls: 4
+        sum: 217
+        global_min: 22
+        global_max: 88
+        global_media: 54.250000
+}
+{
+        name: test2
+        state: enabled
+        id: 1
+        granularity: 2
+        period_sum: 122
+        period_min: 25
+        period_max: 97
+        period_media: 61.000000
+        calls: 4
+        sum: 349
+        global_min: 25
+        global_max: 151
+        global_media: 87.250000
+}
+...
+
+6.6. benchmark.timer_name_list
+
+   List data for one timer based on its name (Last complete period and
+   global data) It displays info close to the one output in the log by
+   using a RPC structure. period_sum, period_min and period_media show
+   data for last granularity period already completed.
+
+   Example 1.9. List one timer
+...
+kamcmd benchmark.timer_name_list test
+{
+        name: test
+        state: enabled
+        id: 0
+        granularity: 2
+        period_sum: 69
+        period_min: 22
+        period_max: 47
+        period_media: 34.500000
+        calls: 4
+        sum: 217
+        global_min: 22
+        global_max: 88
+        global_media: 54.250000
+}
+...
+
 7. Example of usage
 
    Measure the duration of user location lookup.
 
-   Example 1.8. benchmark usage
+   Example 1.10. benchmark usage
 ...
 bm_start_timer("usrloc-lookup");
 lookup("location");
