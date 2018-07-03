@@ -399,7 +399,7 @@ static int ki_blst_rpl_set_ignore(sip_msg_t* msg, int mask)
 /**
  *
  */
-static int ki_blst_rpl_set_ignore_all(sip_msg_t* msg, int mask)
+static int ki_blst_rpl_set_ignore_all(sip_msg_t* msg)
 {
 	return ki_blst_rpl_set_ignore(msg, 0xff);
 }
