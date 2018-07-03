@@ -257,6 +257,27 @@ end
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.event_mode">
+		<title><varname>event_mode</varname> (int)</title>
+		<para>
+			Control what event_route blocks to be executed. It is a bitmask of:
+			1 - execute event_route[topos:outgoing]; 2 - execute
+			event_route[topos:sending].
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3 (execute both event_route blocks).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "event_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Event Routes</title>
@@ -280,6 +301,30 @@ end
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
+    drop;
+  }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>event_route[topos:msg-sending]</title>
+		<para>
+		It is executed before doing topology stripping processing for a SIP
+		message to be sent out, being executed after event_route[topos:sending].
+		</para>
+		<para>
+		Inside the event route the variables $sndto(ip), $sndto(port) and
+		$sndto(proto) point to the destination. The SIP message is the one
+		to be sent out.
+		</para>
+		<example>
+		<title>Usage of event_route[topos:msg-sending]</title>
+		<programlisting format="linespecific">
+...
+event_route[topos:msg-sending] {
+  if(is_request() and $fU=="alice") {
     drop;
   }
 }
