@@ -299,15 +299,12 @@ static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
 /**
  *
  */
-static int blst_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+static int ki_blst_set_ignore(sip_msg_t* msg, int mask)
 {
 #ifdef USE_DST_BLACKLIST
 	unsigned char blst_imask;
-	int mask;
-	
-	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
-		return -1;
-	blst_imask=flags?mask:0xff;
+
+	blst_imask=mask;
 	msg->fwd_send_flags.blst_imask|=blst_imask;
 	return 1;
 #else /* USE_DST_BLACKLIST */
@@ -317,19 +314,37 @@ static int blst_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 	return 1;
 }
 
+/**
+ *
+ */
+static int ki_blst_set_ignore_all(sip_msg_t* msg)
+{
+	return ki_blst_set_ignore(msg, 0xff);
+}
+
 
 /**
  *
  */
-static int blst_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+static int blst_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+	int mask = 0xff;
+
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+
+	return ki_blst_set_ignore(msg, mask);
+}
+
+/**
+ *
+ */
+static int ki_blst_clear_ignore(sip_msg_t* msg, int mask)
 {
 #ifdef USE_DST_BLACKLIST
 	unsigned char blst_imask;
-	int mask;
-	
-	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
-		return -1;
-	blst_imask=flags?mask:0xff;
+
+	blst_imask=mask;
 	msg->fwd_send_flags.blst_imask&=~blst_imask;
 	return 1;
 #else /* USE_DST_BLACKLIST */
@@ -343,15 +358,34 @@ static int blst_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 /**
  *
  */
-static int blst_rpl_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+static int ki_blst_clear_ignore_all(sip_msg_t* msg)
+{
+	return ki_blst_clear_ignore(msg, 0xff);
+}
+
+/**
+ *
+ */
+static int blst_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+	int mask = 0xff;
+
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+
+	return ki_blst_clear_ignore(msg, mask);
+}
+
+
+/**
+ *
+ */
+static int ki_blst_rpl_set_ignore(sip_msg_t* msg, int mask)
 {
 #ifdef USE_DST_BLACKLIST
 	unsigned char blst_imask;
-	int mask;
-	
-	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
-		return -1;
-	blst_imask=flags?mask:0xff;
+
+	blst_imask=mask;
 	msg->rpl_send_flags.blst_imask|=blst_imask;
 	return 1;
 #else /* USE_DST_BLACKLIST */
@@ -365,15 +399,35 @@ static int blst_rpl_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 /**
  *
  */
-static int blst_rpl_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+static int ki_blst_rpl_set_ignore_all(sip_msg_t* msg, int mask)
+{
+	return ki_blst_rpl_set_ignore(msg, 0xff);
+}
+
+
+/**
+ *
+ */
+static int blst_rpl_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+	int mask = 0xff;
+
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+
+	return ki_blst_rpl_set_ignore(msg, mask);
+}
+
+
+/**
+ *
+ */
+static int ki_blst_rpl_clear_ignore(sip_msg_t* msg, int mask)
 {
 #ifdef USE_DST_BLACKLIST
 	unsigned char blst_imask;
-	int mask;
-	
-	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
-		return -1;
-	blst_imask=flags?mask:0xff;
+
+	blst_imask=mask;
 	msg->rpl_send_flags.blst_imask&=~blst_imask;
 	return 1;
 #else /* USE_DST_BLACKLIST */
@@ -381,6 +435,29 @@ static int blst_rpl_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
 				" not compiled-in - no effect -\n");
 #endif /* USE_DST_BLACKLIST */
 	return 1;
+}
+
+
+/**
+ *
+ */
+static int ki_blst_rpl_clear_ignore_all(sip_msg_t* msg)
+{
+	return ki_blst_rpl_clear_ignore(msg, 0xff);
+}
+
+
+/**
+ *
+ */
+static int blst_rpl_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+	int mask = 0xff;
+
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+
+	return ki_blst_rpl_clear_ignore(msg, mask);
 }
 
 /**
@@ -410,6 +487,46 @@ static sr_kemi_t sr_kemi_blst_exports[] = {
 	},
 	{ str_init("blst"), str_init("blst_is_blacklisted"),
 		SR_KEMIP_INT, ki_blst_is_blacklisted,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_set_ignore"),
+		SR_KEMIP_INT, ki_blst_set_ignore,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_set_ignore_all"),
+		SR_KEMIP_INT, ki_blst_set_ignore_all,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_clear_ignore"),
+		SR_KEMIP_INT, ki_blst_clear_ignore,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_clear_ignore_all"),
+		SR_KEMIP_INT, ki_blst_clear_ignore_all,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_rpl_set_ignore"),
+		SR_KEMIP_INT, ki_blst_rpl_set_ignore,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_rpl_set_ignore_all"),
+		SR_KEMIP_INT, ki_blst_rpl_set_ignore_all,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_rpl_clear_ignore"),
+		SR_KEMIP_INT, ki_blst_rpl_clear_ignore,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("blst"), str_init("blst_rpl_clear_ignore_all"),
+		SR_KEMIP_INT, ki_blst_rpl_clear_ignore_all,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
