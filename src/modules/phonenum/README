@@ -165,6 +165,7 @@ if(phonenum_match_cn("1-484-555-8888", "US", "src")) {
             otherwise
           + normalized - normalized phone number
           + cctel - country code for phone number
+          + ccname - country code name
           + ltype - local network type
           + ndesc - phone number description
           + error - error string if phone number matching fails.
