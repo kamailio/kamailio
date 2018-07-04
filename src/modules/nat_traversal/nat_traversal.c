@@ -2094,15 +2094,15 @@ static int pv_get_keepalive_socket(
 }
 
 
-static int pv_get_source_uri(
-		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+static int pv_get_source_uri(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	static char uri[128];
 
 	if(msg == NULL || res == NULL)
 		return -1;
 
-	snprintf(uri, 64, "sip:%s:%d", ip_addr2a(&msg->rcv.src_ip),
+	uri[0] = '\0';
+	snprintf(uri, 64, "sip:%s:%d", ip_addr2strz(&msg->rcv.src_ip),
 			msg->rcv.src_port);
 
 	switch(msg->rcv.proto) {
