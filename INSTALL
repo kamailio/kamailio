@@ -545,14 +545,6 @@ C) Quick Start
     		rpm -i <package_name>
 	debian:
     		dpkg -i <package_name>
-	gentoo:
-		emerge kamailio
-		(or if use only stable packets:
-		ACCEPT_KEYWORDS="~x86" emerge kamailio )
-	tar.gz:
-    		cd /; tar zxvf <package_name>_os_arch.tar.gz
-    		(it will install in /usr/local/, and the configuration file in
-		/usr/local/etc/kamailio/kamailio.cfg)
 	Solaris:
     		gunzip <package_name>.gz ; pkgadd -d <package_name>
 	*BSD:
@@ -560,7 +552,7 @@ C) Quick Start
 
   3) Start the server
 
-	RPM + gentoo:
+	RPM:
     		/etc/init.d/kamailio start
 	debian:
     		Kamailio is started automatically after the install
@@ -621,8 +613,6 @@ D) Kamailio With Persistent Data Storage
     (rpm and deb provided, most of the binary tar.gz distributions and the
      solaris package include it; if it is not present you'll have to rebuild
      from the source).
-	For gentoo please include 'mysql' to your USE variable in /etc/make.conf
-	or give it as variable to the emerge command.
 
   2) install the package
     rpm -i <package_name>
