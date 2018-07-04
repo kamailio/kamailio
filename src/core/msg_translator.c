@@ -644,7 +644,10 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 			case SUBST_RCV_ALL: \
 				if (msg->rcv.bind_address){ \
 					new_len+=recv_address_str->len; \
-					if (msg->rcv.bind_address->address.af!=AF_INET) \
+					if ((msg->rcv.bind_address->address.af==AF_INET6)\
+							&& (recv_address_str->s[0]!='[')\
+							&& (memchr(recv_address_str->s, ':',\
+								recv_address_str->len)!=NULL))\
 						new_len+=2; \
 					if (recv_port_no!=SIP_PORT){ \
 						/* add :port_no */ \
@@ -730,7 +733,9 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				if (send_sock){ \
 					new_len+=send_address_str->len; \
 					if ((send_sock->address.af==AF_INET6) && \
-							(send_address_str->s[0]!='[')) \
+							(send_address_str->s[0]!='[')\
+							&& (memchr(send_address_str->s, ':',\
+								send_address_str->len)!=NULL)) \
 						new_len+=2; \
 					if ((send_sock->port_no!=SIP_PORT) || \
 							(send_port_str!=&(send_sock->port_no_str))){ \
@@ -998,13 +1003,19 @@ void process_lumps( struct sip_msg* msg,
 		case SUBST_RCV_ALL: \
 			if (msg->rcv.bind_address){  \
 				/* address */ \
-				if (msg->rcv.bind_address->address.af!=AF_INET){\
+				if ((msg->rcv.bind_address->address.af==AF_INET6)\
+						&& (recv_address_str->s[0]!='[')\
+						&& (memchr(recv_address_str->s, ':',\
+								recv_address_str->len)!=NULL)){\
 					new_buf[offset]='['; offset++; \
 				}\
 				memcpy(new_buf+offset, recv_address_str->s, \
 						recv_address_str->len); \
 				offset+=recv_address_str->len; \
-				if (msg->rcv.bind_address->address.af!=AF_INET){\
+				if ((msg->rcv.bind_address->address.af==AF_INET6)\
+						&& (recv_address_str->s[0]!='[')\
+						&& (memchr(recv_address_str->s, ':',\
+								recv_address_str->len)!=NULL)){\
 					new_buf[offset]=']'; offset++; \
 				}\
 				/* :port */ \
@@ -1090,15 +1101,19 @@ void process_lumps( struct sip_msg* msg,
 		case SUBST_SND_ALL: \
 			if (send_sock){  \
 				/* address */ \
-				if ((send_sock->address.af!=AF_INET) && \
-						(send_address_str->s[0]!='[')){\
+				if ((send_sock->address.af==AF_INET6)\
+						&& (send_address_str->s[0]!='[')\
+						&& (memchr(send_address_str->s, ':',\
+								send_address_str->len)!=NULL)){\
 					new_buf[offset]='['; offset++; \
 				}\
 				memcpy(new_buf+offset, send_address_str->s, \
 						send_address_str->len); \
 				offset+=send_address_str->len; \
-				if ((send_sock->address.af!=AF_INET) && \
-						(send_address_str->s[0]!='[')){\
+				if ((send_sock->address.af==AF_INET6)\
+						&& (send_address_str->s[0]!='[')\
+						&& (memchr(send_address_str->s, ':',\
+								send_address_str->len)!=NULL)){\
 					new_buf[offset]=']'; offset++; \
 				}\
 				/* :port */ \
