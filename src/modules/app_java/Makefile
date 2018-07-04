@@ -7,7 +7,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=app_java.so
 
-USE_GCJ=?no
+USE_GCJ ?= yes
 
 #DEFS += -DEXTRA_DEBUG
 
