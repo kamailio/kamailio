@@ -101,6 +101,7 @@ static int w_uac_reg_status(struct sip_msg* msg, char* src, char* dst);
 static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s);
 static int w_uac_reg_enable(struct sip_msg* msg, char* pfilter, char* pval);
 static int w_uac_reg_disable(struct sip_msg* msg, char* pfilter, char* pval);
+static int w_uac_reg_refresh(struct sip_msg* msg, char* pluuid, char* p2);
 static int mod_init(void);
 static void mod_destroy(void);
 static int child_init(int rank);
@@ -136,10 +137,12 @@ static cmd_export_t cmds[]={
 	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2,
 		fixup_spve_igp, fixup_free_spve_igp,
 		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
-	{"uac_reg_enable",   (cmd_function)w_uac_reg_enable,   1, fixup_spve_spve,
+	{"uac_reg_enable",   (cmd_function)w_uac_reg_enable,   2, fixup_spve_spve,
 		fixup_free_spve_spve, ANY_ROUTE },
-	{"uac_reg_disable",  (cmd_function)w_uac_reg_disable,  1, fixup_spve_spve,
+	{"uac_reg_disable",  (cmd_function)w_uac_reg_disable,  2, fixup_spve_spve,
 		fixup_free_spve_spve, ANY_ROUTE },
+	{"uac_reg_refresh",  (cmd_function)w_uac_reg_refresh,  1, fixup_spve_null,
+		fixup_free_spve_null, ANY_ROUTE },
 	{"bind_uac", (cmd_function)bind_uac,		  1,  0, 0, 0},
 	{0,0,0,0,0,0}
 };
@@ -659,6 +662,17 @@ static int w_uac_reg_disable(struct sip_msg* msg, char* pfilter, char* pval)
 	return uac_reg_disable(msg, &sfilter, &sval);
 }
 
+static int w_uac_reg_refresh(struct sip_msg* msg, char* pluuid, char* p2)
+{
+	str sluuid;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pluuid, &sluuid)<0) {
+		LM_ERR("cannot get the local uuid parameter\n");
+		return -1;
+	}
+	return uac_reg_refresh(msg, &sluuid);
+}
+
 static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* pmode)
 {
 	str sval;
@@ -773,6 +787,11 @@ static sr_kemi_t sr_kemi_uac_exports[] = {
 	{ str_init("uac"), str_init("uac_reg_disable"),
 		SR_KEMIP_INT, uac_reg_disable,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_reg_refresh"),
+		SR_KEMIP_INT, uac_reg_refresh,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

@@ -1486,6 +1486,31 @@ error:
 /**
  *
  */
+int uac_reg_refresh(sip_msg_t *msg, str *l_uuid)
+{
+	int ret;
+
+	if(l_uuid==NULL || l_uuid->s==NULL || l_uuid->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	ret = uac_reg_db_refresh(l_uuid);
+	if(ret==0) {
+		LM_WARN("record not found: %.*s\n", l_uuid->len, l_uuid->s);
+		return -1;
+	} else if(ret<0) {
+		LM_WARN("failed to refresh record: %.*s - check log messages\n",
+				l_uuid->len, l_uuid->s);
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
 int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode)
 {
 	char  b_ruri[MAX_URI_SIZE];
