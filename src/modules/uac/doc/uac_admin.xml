@@ -901,6 +901,51 @@ failure_route[REMOTE_AUTH] {
 				</programlisting>
 			</example>
 		</section>
+		<section id="uac.f.uac_reg_enable">
+			<title>
+				<function moreinfo="none">uac_reg_enable(attr, val)</function>
+			</title>
+		<para>
+			Enable a remote registration record based on a filter specified by
+			attribute and value. The attribute can be: l_uuid, l_username,
+			r_username or auth_username. The value is what should be matched
+			against the value of the attribute in the remote registration record.
+		</para>
+		<para>
+			The SIP processing is done on the next timer routine.
+		</para>
+		<example>
+		<title><function>uac_reg_enable</function> usage</title>
+			<programlisting format="linespecific">
+...
+   uac_reg_enable("l_uuid", "account123");
+...
+			</programlisting>
+		</example>
+		</section>
+
+		<section id="uac.f.uac_reg_disable">
+			<title>
+				<function moreinfo="none">uac_reg_disable(attr, val)</function>
+			</title>
+		<para>
+			Disable a remote registration record based on a filter specified by
+			attribute and value. The attribute can be: l_uuid, l_username,
+			r_username or auth_username. The value is what should be matched
+			against the value of the attribute in the remote registration record.
+		</para>
+		<para>
+			The SIP processing is done on the next timer routine.
+		</para>
+		<example>
+		<title><function>uac_reg_disable</function> usage</title>
+			<programlisting format="linespecific">
+...
+   uac_reg_disable("l_uuid", "account123");
+...
+			</programlisting>
+		</example>
+		</section>
 	</section>
 	<section>
 		<title>Pseudo Variables</title>
