@@ -1674,6 +1674,67 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+static int uac_reg_update_flag(str *attr, str *val, int mode, int fval)
+{
+	reg_uac_t *reg = NULL;
+	int ret;
+
+	if(_reg_htable==NULL) {
+		LM_ERR("uac remote registrations not enabled\n");
+		return -1;
+	}
+
+	if(attr->len<=0 || attr->s==NULL || val->len<=0 || val->s==NULL) {
+		LM_ERR("bad parameter values\n");
+		return -1;
+	}
+
+	ret = reg_ht_get_byfilter(&reg, attr, val);
+	if (ret == 0) {
+		LM_DBG("record not found for %.*s = %.*s\n", attr->len, attr->s,
+				val->len, val->s);
+		return -2;
+	} else if (ret < 0) {
+		LM_DBG("unsupported filter attribute %.*s = %.*s\n", attr->len, attr->s,
+				val->len, val->s);
+		return -3;
+	}
+
+	if(mode==1) {
+		reg->flags |= fval;
+	} else {
+		reg->flags &= ~fval;
+	}
+	reg->timer_expires = time(NULL) + 1;
+
+	lock_release(reg->lock);
+	return 1;
+}
+
+/**
+ *
+ */
+int uac_reg_enable(sip_msg_t *msg, str *attr, str *val)
+{
+	counter_add(regdisabled, -1);
+	return uac_reg_update_flag(attr, val, 0, UAC_REG_DISABLED);
+}
+
+/**
+ *
+ */
+int uac_reg_disable(sip_msg_t *msg, str *attr, str *val)
+{
+	counter_inc(regdisabled);
+	return uac_reg_update_flag(attr, val, 1, UAC_REG_DISABLED);
+}
+
+/**
+ *
+ */
 static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, time_t tn)
 {
 	void* th;

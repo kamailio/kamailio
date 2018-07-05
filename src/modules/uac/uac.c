@@ -99,6 +99,8 @@ static int w_uac_auth(struct sip_msg* msg, char* str, char* str2);
 static int w_uac_reg_lookup(struct sip_msg* msg, char* src, char* dst);
 static int w_uac_reg_status(struct sip_msg* msg, char* src, char* dst);
 static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s);
+static int w_uac_reg_enable(struct sip_msg* msg, char* pfilter, char* pval);
+static int w_uac_reg_disable(struct sip_msg* msg, char* pfilter, char* pval);
 static int mod_init(void);
 static void mod_destroy(void);
 static int child_init(int rank);
@@ -134,6 +136,10 @@ static cmd_export_t cmds[]={
 	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2,
 		fixup_spve_igp, fixup_free_spve_igp,
 		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
+	{"uac_reg_enable",   (cmd_function)w_uac_reg_enable,   1, fixup_spve_spve,
+		fixup_free_spve_spve, ANY_ROUTE },
+	{"uac_reg_disable",  (cmd_function)w_uac_reg_disable,  1, fixup_spve_spve,
+		fixup_free_spve_spve, ANY_ROUTE },
 	{"bind_uac", (cmd_function)bind_uac,		  1,  0, 0, 0},
 	{0,0,0,0,0,0}
 };
@@ -621,6 +627,38 @@ static int ki_uac_reg_status(sip_msg_t *msg, str *sruuid)
 	return uac_reg_status(msg, sruuid, 0);
 }
 
+static int w_uac_reg_enable(struct sip_msg* msg, char* pfilter, char* pval)
+{
+	str sfilter;
+	str sval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pfilter, &sfilter)<0) {
+		LM_ERR("cannot get the filter parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pval, &sval)<0) {
+		LM_ERR("cannot get the value parameter\n");
+		return -1;
+	}
+	return uac_reg_enable(msg, &sfilter, &sval);
+}
+
+static int w_uac_reg_disable(struct sip_msg* msg, char* pfilter, char* pval)
+{
+	str sfilter;
+	str sval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pfilter, &sfilter)<0) {
+		LM_ERR("cannot get the filter parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pval, &sval)<0) {
+		LM_ERR("cannot get the value parameter\n");
+		return -1;
+	}
+	return uac_reg_disable(msg, &sfilter, &sval);
+}
+
 static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* pmode)
 {
 	str sval;
@@ -725,6 +763,16 @@ static sr_kemi_t sr_kemi_uac_exports[] = {
 	{ str_init("uac"), str_init("uac_reg_request_to"),
 		SR_KEMIP_INT, ki_uac_reg_request_to,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_reg_enable"),
+		SR_KEMIP_INT, uac_reg_enable,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_reg_disable"),
+		SR_KEMIP_INT, uac_reg_disable,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
