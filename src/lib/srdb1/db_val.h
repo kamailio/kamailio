@@ -55,6 +55,8 @@ typedef enum {
 	DB1_DATETIME,   /**< represents date and time                 */
 	DB1_BLOB,       /**< represents a large binary object         */
 	DB1_BITMAP,     /**< an one-dimensional array of 32 flags     */
+	DB1_UINT,       /**< represents an 32 bit unsigned int number */
+	DB1_UBIGINT,    /**< represents an 64 bit unsigned int number */
 	DB1_UNKNOWN     /**< represents an unknown type               */
 } db_type_t;
 
@@ -79,14 +81,16 @@ typedef struct {
 	int free;		/**< Means that the value should be freed */
 	/** Column value structure that holds the actual data in a union.  */
 	union {
-		int           int_val;    /**< integer value              */
-		long long     ll_val;     /**< long long value            */
-		double        double_val; /**< double value               */
-		time_t        time_val;   /**< unix time_t value          */
-		const char*   string_val; /**< zero terminated string     */
-		str           str_val;    /**< str type string value      */
-		str           blob_val;   /**< binary object data         */
-		unsigned int  bitmap_val; /**< Bitmap data type           */
+		int            int_val;    /**< integer value              */
+		long long      ll_val;     /**< long long value            */
+		double         double_val; /**< double value               */
+		time_t         time_val;   /**< unix time_t value          */
+		const char*    string_val; /**< zero terminated string     */
+		str            str_val;    /**< str type string value      */
+		str            blob_val;   /**< binary object data         */
+		unsigned int   bitmap_val; /**< Bitmap data type           */
+		unsigned int   uint_val;   /**< unsigned integer value     */
+		unsigned long long ull_val;  /**< unsigned long long value */
 	} val;
 } db_val_t;
 
@@ -125,10 +129,10 @@ typedef struct {
 
 
 /**
- * Use this macro if you need to access the integer value in the db_val_t structure
- * casted to unsigned int.
+ * Use this macro if you need to access the unsigned integer value in
+ * the db_val_t structure.
  */
-#define VAL_UINT(dv)    ((unsigned int)(dv)->val.int_val)
+#define VAL_UINT(dv)    ((dv)->val.uint_val)
 
 
 /**
@@ -136,6 +140,11 @@ typedef struct {
  */
 #define VAL_BIGINT(dv)    ((dv)->val.ll_val)
 
+/**
+ * Use this macro if you need to access the unsigned long long value in
+ * the db_val_t structure.
+ */
+#define VAL_UBIGINT(dv)   ((dv)->val.ull_val)
 
 /**
  * Use this macro if you need to access the double value in the db_val_t structure.
