@@ -946,6 +946,25 @@ failure_route[REMOTE_AUTH] {
 			</programlisting>
 		</example>
 		</section>
+
+		<section id="uac.f.uac_reg_refresh">
+			<title>
+				<function moreinfo="none">uac_reg_refresh(luuid)</function>
+			</title>
+		<para>
+			Refresh the uac remote registration record based on local uuid. If
+			the record was already loaded, new values are taken from database,
+			otherwise a new record is created.
+		</para>
+		<example>
+		<title><function>uac_reg_refresh</function> usage</title>
+			<programlisting format="linespecific">
+...
+   uac_reg_refresh("account123");
+...
+			</programlisting>
+		</example>
+		</section>
 	</section>
 	<section>
 		<title>Pseudo Variables</title>
