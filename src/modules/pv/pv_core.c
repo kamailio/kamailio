@@ -3522,6 +3522,58 @@ int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	}
 }
 
+/**
+ *
+ */
+int pv_parse_ksr_attrs_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len) {
+		case 3:
+			if(strncmp(in->s, "ver", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 6:
+			if(strncmp(in->s, "verval", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV ksr key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+
+/**
+ *
+ */
+int pv_get_ksr_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(param==NULL)
+		return pv_get_null(msg, param, res);
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* version */
+			return pv_get_strzval(msg, param, res, VERSION);
+		case 1: /* version value */
+			return pv_get_uintval(msg, param, res, VERSIONVAL);
+
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
 int pv_parse_env_name(pv_spec_p sp, str *in)
 {
 	char *csname;
