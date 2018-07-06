@@ -119,7 +119,7 @@ MEMMNG ?= 0
 # 1 - on (debug mode)
 MEMDBG ?= 1
 
-SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
+VERSIONVAL = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
 RELEASE:=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS := $(shell uname -s | sed -e s/SunOS/solaris/ -e s/CYGWIN.*/cygwin/ \
@@ -653,7 +653,7 @@ C_DEFS= $(extra_defs) \
 	 -DNAME='"$(MAIN_NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='$(OS)_' -DOS_QUOTED='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
 	 -D__CPU_$(ARCH) $(os_defs) \
-	 -DSER_VER=$(SER_VER) \
+	 -DVERSIONVAL=$(VERSIONVAL) \
 	 -DCFG_DIR='"$(cfg_target)"'\
 	 -DRUN_DIR='"$(run_target)"'
 
