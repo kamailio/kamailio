@@ -27,7 +27,7 @@
 
 #include "../rr/api.h"
 
-#if SER_VER < 5000000
+#if VERSIONVAL < 5000000
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../dprint.h"
