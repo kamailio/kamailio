@@ -1952,6 +1952,8 @@ int main(int argc, char** argv)
 	init_tcp_options(); /* set the defaults before the config */
 #endif
 
+	pp_define_core();
+
 	/* process command line (cfg. file path etc) */
 	optind = 1;  /* reset getopt */
 	/* switches required before script processing */
@@ -2155,7 +2157,6 @@ try_again:
 	}
 	if (debug_flag) default_core_cfg.debug = debug_save;
 	pp_ifdef_level_check();
-	pp_define_core();
 	print_rls();
 
 	if(init_dst_set()<0) {
