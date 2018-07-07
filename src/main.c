@@ -2155,6 +2155,7 @@ try_again:
 	}
 	if (debug_flag) default_core_cfg.debug = debug_save;
 	pp_ifdef_level_check();
+	pp_define_core();
 	print_rls();
 
 	if(init_dst_set()<0) {
