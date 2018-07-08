@@ -27,6 +27,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/ut.h"
 #include "../../core/error.h"
+#include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 
 MODULE_VERSION
@@ -44,8 +45,7 @@ strl* proxyrequire_list = NULL;
 sl_api_t slb;
 
 static int mod_init(void);
-static int sanity_fixup(void** param, int param_no);
-static int w_sanity_check(struct sip_msg* _msg, char* _foo, char* _bar);
+static int w_sanity_check(sip_msg_t* _msg, char* _msg_check, char* _uri_check);
 static int bind_sanity(sanity_api_t* api);
 
 /*
@@ -54,9 +54,9 @@ static int bind_sanity(sanity_api_t* api);
 static cmd_export_t cmds[] = {
 	{"sanity_check", (cmd_function)w_sanity_check, 0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"sanity_check", (cmd_function)w_sanity_check, 1, sanity_fixup,
+	{"sanity_check", (cmd_function)w_sanity_check, 1, fixup_igp_null,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"sanity_check", (cmd_function)w_sanity_check, 2, sanity_fixup,
+	{"sanity_check", (cmd_function)w_sanity_check, 2, fixup_igp_igp,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"bind_sanity",  (cmd_function)bind_sanity,    0, 0, 0},
 	{0, 0, 0, 0}
@@ -116,40 +116,6 @@ static int mod_init(void) {
 	return 0;
 }
 
-static int sanity_fixup(void** param, int param_no) {
-	int checks;
-	str in;
-
-	if (param_no == 1) {
-		in.s = (char*)*param;
-		in.len = strlen(in.s);
-		if (str2int(&in, (unsigned int*)&checks) < 0) {
-			LM_ERR("failed to convert input integer\n");
-			return E_UNSPEC;
-		}
-		if ((checks < 1) || (checks >= (SANITY_MAX_CHECKS))) {
-			LM_ERR("input parameter (%i) outside of valid range <1-%i)\n",
-					checks, SANITY_MAX_CHECKS);
-			return E_UNSPEC;
-		}
-		*param = (void*)(long)checks;
-	}
-	if (param_no == 2) {
-		in.s = (char*)*param;
-		in.len = strlen(in.s);
-		if (str2int(&in, (unsigned int*)&checks) < 0) {
-			LM_ERR("failed to convert second integer argument\n");
-			return E_UNSPEC;
-		}
-		if ((checks < 1) || (checks >= (SANITY_URI_MAX_CHECKS))) {
-			LM_ERR("second input parameter (%i) outside of valid range <1-%i\n",
-					checks, SANITY_URI_MAX_CHECKS);
-			return E_UNSPEC;
-		}
-		*param = (void*)(long)checks;
-	}
-	return 0;
-}
 
 /**
  * perform SIP message sanity check
@@ -236,23 +202,39 @@ int sanity_check_defaults(struct sip_msg* msg)
 /**
  * wrapper for sanity_check() to be used from config file
  */
-static int w_sanity_check(struct sip_msg* _msg, char* _number, char* _arg) {
-	int ret, check, arg;
+static int w_sanity_check(sip_msg_t* _msg, char* _msg_check, char* _uri_check)
+{
+	int ret, msg_check, uri_check;
 
-	if (_number == NULL) {
-		check = default_msg_checks;
+	if (_msg_check == NULL) {
+		msg_check = default_msg_checks;
+	} else {
+		if(fixup_get_ivalue(_msg, (gparam_t*)_msg_check, &msg_check)<0) {
+			LM_ERR("failed to get msg check flags parameter\n");
+			return -1;
+		}
 	}
-	else {
-		check = (int)(long)_number;
+	if (_uri_check == NULL) {
+		uri_check = default_uri_checks;
+	} else {
+		if(fixup_get_ivalue(_msg, (gparam_t*)_uri_check, &uri_check)<0) {
+			LM_ERR("failed to get uri check flags parameter\n");
+			return -1;
+		}
 	}
-	if (_arg == NULL) {
-		arg = default_uri_checks;
-	}
-	else {
-		arg = (int)(long)_arg;
-	}
-	ret = sanity_check(_msg, check, arg);
 
+	if ((msg_check < 1) || (msg_check >= (SANITY_MAX_CHECKS))) {
+		LM_ERR("input parameter (%i) outside of valid range <1-%i)\n",
+				msg_check, SANITY_MAX_CHECKS);
+		return -1;
+	}
+	if ((uri_check < 1) || (uri_check >= (SANITY_URI_MAX_CHECKS))) {
+		LM_ERR("second input parameter (%i) outside of valid range <1-%i\n",
+				uri_check, SANITY_URI_MAX_CHECKS);
+		return -1;
+	}
+
+	ret = sanity_check(_msg, msg_check, uri_check);
 	LM_DBG("sanity checks result: %d\n", ret);
 	if(_sanity_drop!=0)
 		return ret;
