@@ -244,6 +244,9 @@ modparam("sanity", "autodrop", 1)
 		reply via SL <function>send_reply()</function>. Thus there is no need to reply with a generic 
 		error message.
 	</para>
+	<para>
+		The parameters can be static integers or variables holding integer values.
+	</para>
 	<example>
 	    <title><function>sanity_check</function> usage</title>
 	    <programlisting>
