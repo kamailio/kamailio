@@ -395,7 +395,45 @@ replace_body_all("openser", "&kamailio; SIP Proxy");
 ...
 # strip the whole body from the message:
 if(has_body() &amp;&amp; replace_body_atonce("^.+$", ""))
-        remove_hf("Content-Type"); 
+        remove_hf("Content-Type");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.replace_str">
+		<title>
+		<function moreinfo="none">replace_str(match, repl, mode)</function>
+		</title>
+		<para>
+		Replaces the first or all occurrence of 'match' with 'repl' by doing
+		string comparison for matching. It is applied over headers and message
+		body (not over the first line).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>match</emphasis> - string to be matched.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>repl</emphasis> - string to be used as replacement.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>mode</emphasis> - 'f' - replace only first match;
+				'a' - replace all matches.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_str("&kamailio;", "&kamailio; SIP Proxy", "a");
 ...
 </programlisting>
 		</example>
