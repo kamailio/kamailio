@@ -561,18 +561,23 @@ static int load_ca_list(tls_domain_t* d)
 		return -1;
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-		if (SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file.s, 0) != 1) {
-			ERR("%s: Unable to load CA list '%s'\n", tls_domain_str(d),
-					d->ca_file.s);
-			TLS_ERR("load_ca_list:");
-			return -1;
-		}
-		SSL_CTX_set_client_CA_list(d->ctx[i],
-				SSL_load_client_CA_file(d->ca_file.s));
-		if (SSL_CTX_get_client_CA_list(d->ctx[i]) == 0) {
-			ERR("%s: Error while setting client CA list\n", tls_domain_str(d));
-			TLS_ERR("load_ca_list:");
-			return -1;
+		if (i > 0) {
+			LM_DBG("[SSL_CTX_set_cert_store][%s]\n", tls_domain_str(d));
+			SSL_CTX_set_cert_store(d->ctx[i], SSL_CTX_get_cert_store(d->ctx[0]));
+		} else {
+			LM_DBG("[SSL_CTX_load_verify_locations][%s]\n", tls_domain_str(d));
+			if (SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file.s, 0) != 1) {
+				ERR("%s: Unable to load CA list '%s'\n", tls_domain_str(d),
+						d->ca_file.s);
+				TLS_ERR("load_ca_list:");
+				return -1;
+			}
+			SSL_CTX_set_client_CA_list(d->ctx[i], SSL_load_client_CA_file(d->ca_file.s));
+			if (SSL_CTX_get_client_CA_list(d->ctx[i]) == 0) {
+				ERR("%s: Error while setting client CA list\n", tls_domain_str(d));
+				TLS_ERR("load_ca_list:");
+				return -1;
+			}
 		}
 	}
 	return 0;
