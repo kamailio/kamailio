@@ -127,6 +127,10 @@ static inline char *build_sipping(str *curi, struct socket_info *s, str *path,
 	str vaddr;
 	str vport;
 
+	if(sipping_from.s==NULL || sipping_from.len<=0) {
+		LM_WARN("SIP ping enabled but no SIP ping From address\n");
+		return NULL;
+	}
 	if(s->useinfo.name.len > 0)
 		vaddr = s->useinfo.name;
 	else
