@@ -297,8 +297,8 @@ int lua_sr_init_child(void)
 
 		/* set SR lib version */
 #if LUA_VERSION_NUM >= 502
-		lua_pushstring(_sr_L_env.L, SRVERSION);
-		lua_setglobal(_sr_L_env.L, "SRVERSION");
+		lua_pushstring(_sr_L_env.LL, SRVERSION);
+		lua_setglobal(_sr_L_env.LL, "SRVERSION");
 #else
 		lua_pushstring(_sr_L_env.LL, "SRVERSION");
 		lua_pushstring(_sr_L_env.LL, SRVERSION);
