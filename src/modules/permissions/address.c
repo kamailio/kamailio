@@ -525,7 +525,7 @@ int w_allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
  * subnet table in any group. If yes, returns that group. If not returns -1.
  * Port value 0 in cached address and group table matches any port.
  */
-int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2)
+int ki_allow_source_address_group(sip_msg_t* _msg)
 {
 	int group = -1;
 
@@ -548,6 +548,16 @@ int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2)
 	LM_DBG("Found <%d>\n", group);
 	return group;
 
+}
+
+/*
+ * Checks if source address/port is found in cached address or
+ * subnet table in any group. If yes, returns that group. If not returns -1.
+ * Port value 0 in cached address and group table matches any port.
+ */
+int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2)
+{
+	return ki_allow_source_address_group(_msg);
 }
 
 /*

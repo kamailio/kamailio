@@ -88,6 +88,7 @@ int w_allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
  */
 int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2);
 
+int ki_allow_source_address_group(sip_msg_t* _msg);
 
 /*
  * Checks if address/port is found in cached address or
