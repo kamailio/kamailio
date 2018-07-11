@@ -250,9 +250,10 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
  * Returns number of matches or -1 if none matched.
  */
 int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
-		char *src_ip_c_str, int proto, char *uri)
+		char *src_ip_c_str, int proto, char *from_uri)
 {
-	LM_DBG("match_hash_table src_ip: %s, proto: %d, uri: %s\n", src_ip_c_str, proto, uri);
+	LM_DBG("match_hash_table src_ip: %s, proto: %d, uri: %s\n", src_ip_c_str,
+			proto, from_uri);
 	str ruri;
 	char ruri_string[MAX_URI_SIZE + 1];
 	regex_t preg;
@@ -281,7 +282,10 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 				((np->proto == PROTO_NONE) || (proto == PROTO_NONE) ||
 				(np->proto == proto))) {
 
-			LM_DBG("match_hash_table: %d, %s, %s, %s\n", np->proto, (np->pattern ? np->pattern : "null"), (np->ruri_pattern ? np->ruri_pattern : "null"), (np->tag.s ? np->tag.s : "null"));
+			LM_DBG("match_hash_table: %d, %s, %s, %s\n", np->proto,
+					(np->pattern ? np->pattern : "null"),
+					(np->ruri_pattern ? np->ruri_pattern : "null"),
+					(np->tag.s ? np->tag.s : "null"));
 
 			if (IS_SIP(msg)) {
 				if (np->pattern) {
@@ -291,7 +295,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 							continue;
 						}
 					}
-					if (regexec(&preg, uri, 0, (regmatch_t *)0, 0)) {
+					if (regexec(&preg, from_uri, 0, (regmatch_t *)0, 0)) {
 						regfree(&preg);
 						continue;
 					}
