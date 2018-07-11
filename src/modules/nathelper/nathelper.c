@@ -1921,7 +1921,7 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 	unsigned int path_ip = 0;
 	unsigned short path_port = 0;
 	int options = 0;
-	int should_send_ping = 0;
+	int send_sip_ping = 0;
 
 	if((*natping_state) == 0)
 		goto done;
@@ -2060,9 +2060,11 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 		dst.proto = PROTO_UDP;
 		dst.send_sock = send_sock;
 
-		should_send_ping = (flags & sipping_flag) != 0 || ping_nated_only == 0;
+		send_sip_ping = ((flags & sipping_flag) != 0)
+							|| (ping_nated_only == 0 && sipping_flag != 0);
 
-		if ( should_send_ping && (opt.s = build_sipping(&c, send_sock, &path, &ruid, aorhash, &opt.len)) != 0) {
+		if ( send_sip_ping && (opt.s = build_sipping(&c, send_sock, &path,
+						&ruid, aorhash, &opt.len)) != 0) {
 			if(udp_send(&dst, opt.s, opt.len) < 0) {
 				LM_ERR("sip udp_send failed\n");
 			}
