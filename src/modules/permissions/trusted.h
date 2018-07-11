@@ -75,6 +75,11 @@ int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2);
  */
 int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp);
 
+/*
+ * Checks based on source address and protocol given in pvar arguments and
+ * provided URI, if request can be trusted without authentication.
+ */
+int allow_trusted_3(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp, char* uri);
 
 int reload_trusted_table_cmd(void);
 
