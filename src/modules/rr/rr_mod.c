@@ -418,6 +418,27 @@ static int w_is_direction(struct sip_msg *msg,char *dir, char *foo)
 	return ((is_direction(msg,(int)(long)dir)==0)?1:-1);
 }
 
+static int ki_is_direction(struct sip_msg *msg,str *dir)
+{
+	char *s;
+        int n;
+
+        if (!append_fromtag) {
+                LM_ERR("usage of \"is_direction\" function requires parameter"
+                                "\"append_fromtag\" enabled!!");
+                return E_CFG;
+        }
+       	s = (char*) dir->s;
+        if ( strcasecmp(s,"downstream")==0 ) {
+        	n = RR_FLOW_DOWNSTREAM;
+      	} else if ( strcasecmp(s,"upstream")==0 ) {
+                n = RR_FLOW_UPSTREAM;
+        } else {
+         	LM_ERR("unknown direction '%s'\n",s);
+                        return E_CFG;
+        }
+	return ((is_direction(msg,n)==0)?1:-1);
+}
 
 /*
  * Return the URI of the topmost Route-Header.
@@ -720,7 +741,11 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("rr"), str_init("is_direction"),
+                SR_KEMIP_INT, ki_is_direction,
+                { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+                        SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+        },
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 
