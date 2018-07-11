@@ -600,6 +600,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	str aor = {0, 0};
 	str contact = {0, 0};
 	str path = {0, 0};
+	str received = {0, 0};
 	str socket = {0, 0};
 	str temp = {0, 0};
 	double dtemp;
@@ -612,7 +613,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	memset(&ci, 0, sizeof(ucontact_info_t));
 
 	ret = rpc->scan(ctx, "SSSdfSddd*SS", &table, &aor, &contact, &ci.expires,
-			&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods, &ci.received,
+			&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods, &received,
 			&socket);
 	if (ret < 9) {
 		LM_ERR("not enough parameters - read so far: %d\n", ret);
@@ -626,9 +627,9 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	}
 	if(ret>9) {
 		/* received parameter */
-		if(!ul_rpc_is_param_set(&ci.received)) {
-			ci.received.s = 0;
-			ci.received.len = 0;
+		if(ul_rpc_is_param_set(&received)) {
+			ci.received.s = received.s;
+			ci.received.len = received.len;
 		}
 	}
 	if(ret>10) {
