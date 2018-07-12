@@ -97,4 +97,6 @@ int ki_allow_source_address_group(sip_msg_t* _msg);
  */
 int allow_address_group(struct sip_msg* _msg, char* _addr, char* _port);
 
+int ki_allow_address_group(sip_msg_t* _msg, str* _addr, int _port);
+
 #endif /* ADDRESS_H */
