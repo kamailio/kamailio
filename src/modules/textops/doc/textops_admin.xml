@@ -439,6 +439,43 @@ replace_str("&kamailio;", "&kamailio; SIP Proxy", "a");
 		</example>
 	</section>
 
+	<section id="textops.f.replace_body_str">
+		<title>
+		<function moreinfo="none">replace_body_str(match, repl, mode)</function>
+		</title>
+		<para>
+		Replaces the first or all occurrence of 'match' with 'repl' by doing
+		string comparison for matching. It is applied over the message body.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>match</emphasis> - string to be matched.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>repl</emphasis> - string to be used as replacement.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>mode</emphasis> - 'f' - replace only first match;
+				'a' - replace all matches.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_body_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_body_str("&kamailio;", "&kamailio; SIP Proxy", "a");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.subst">
 		<title>
 		<function moreinfo="none">subst('/re/repl/flags')</function>
