@@ -2324,6 +2324,7 @@ static void rpc_profile_print_dlgs(rpc_t *rpc, void *c) {
 	}
 	return;
 }
+
 static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 	str from = {NULL,0};
 	str to = {NULL,0};
@@ -2362,6 +2363,60 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 	dlg_bridge(&from, &to, &op, &bd);
 }
 
+static const char *rpc_dlg_stats_active_doc[2] = {
+	"Get stats about active dialogs", 0
+};
+
+/*!
+ * \brief Print stats of active dialogs
+ */
+static void rpc_dlg_stats_active(rpc_t *rpc, void *c)
+{
+	dlg_cell_t *dlg;
+	unsigned int i;
+	int dlg_starting = 0;
+	int dlg_connecting = 0;
+	int dlg_answering = 0;
+	int dlg_ongoing = 0;
+	void *h;
+
+	for( i=0 ; i<d_table->size ; i++ ) {
+		dlg_lock( d_table, &(d_table->entries[i]) );
+
+		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
+			switch(dlg->state) {
+				case DLG_STATE_UNCONFIRMED:
+					dlg_starting++;
+				break;
+				case DLG_STATE_EARLY:
+					dlg_connecting++;
+				break;
+				case DLG_STATE_CONFIRMED_NA:
+					dlg_answering++;
+				break;
+				case DLG_STATE_CONFIRMED:
+					dlg_ongoing++;
+				break;
+				default:
+					LM_DBG("not active - state: %d\n", dlg->state);
+			}
+		}
+		dlg_unlock( d_table, &(d_table->entries[i]) );
+	}
+
+	if (rpc->add(c, "{", &h) < 0) {
+		rpc->fault(c, 500, "Server failure");
+		return;
+	}
+
+	rpc->struct_add(h, "ddddd",
+		"starting", dlg_starting,
+		"connecting", dlg_connecting,
+		"answering", dlg_answering,
+		"ongoing", dlg_ongoing,
+		"all", dlg_starting + dlg_connecting + dlg_answering + dlg_ongoing);
+}
+
 static rpc_export_t rpc_methods[] = {
 	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, RET_ARRAY},
 	{"dlg.list_ctx", rpc_print_dlgs_ctx, rpc_print_dlgs_ctx_doc, RET_ARRAY},
@@ -2372,5 +2427,6 @@ static rpc_export_t rpc_methods[] = {
 	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, RET_ARRAY},
 	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
 	{"dlg.terminate_dlg", rpc_dlg_terminate_dlg, rpc_dlg_terminate_dlg_doc, 0},
+	{"dlg.stats_active", rpc_dlg_stats_active, rpc_dlg_stats_active_doc, 0},
 	{0, 0, 0, 0}
 };
