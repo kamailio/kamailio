@@ -2601,7 +2601,6 @@ if(has_totag()) {
 ...
 		</programlisting>
 		</section>
-	</section>
 
 		<section id="dlg.r.stats_active">
 		<title>dlg.stats_active</title>
