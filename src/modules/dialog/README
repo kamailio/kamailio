@@ -1832,8 +1832,15 @@ kamcmd dlg.profile_list inbound_calls
    Parameters:
      * from - SIP address to initiate the call
      * to - SIP address to refer 'from' to
-     * op (optional) - outbound proxy SIP address
-     * body (optional) - SDP body for initial INVITE
+     * op (optional) - outbound proxy SIP address. If its value is set to
+       '.' (dot), then it is ignored (like it would not have been
+       provided).
+     * body (optional) - SDP body for initial INVITE. If its value is set
+       to '.' (dot), then it is ignored (like it would not have been
+       provided). If body is not set via RPC command parameter, then an
+       internal generated SDP with G711a and G711u is used. If its value
+       is set to '' (empty string) or '_' (underline), then the INVITE is
+       sent without an SDP body.
 
    RPC Command Format:
 ...
