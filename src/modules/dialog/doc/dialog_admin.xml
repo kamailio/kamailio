@@ -2473,11 +2473,17 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 				<emphasis>to</emphasis> - SIP address to refer 'from' to
 			</para></listitem>
 			<listitem><para>
-				<emphasis>op</emphasis> (optional) - outbound proxy SIP address
+				<emphasis>op</emphasis> (optional) - outbound proxy SIP address.
+				If its value is set to '.' (dot), then it is ignored (like it
+				would not have been provided).
 			</para></listitem>
 			<listitem><para>
 				<emphasis>body</emphasis> (optional) - SDP body for initial
-				INVITE
+				INVITE. If its value is set to '.' (dot), then it is ignored
+				(like it would not have been provided). If body is not set via
+				RPC command parameter, then an internal generated SDP with G711a
+				and G711u is used. If its value is set to '' (empty string) or
+				'_' (underline), then the INVITE is sent without an SDP body.
 			</para></listitem>
 		</itemizedlist>
 		<para>RPC Command Format:</para>
