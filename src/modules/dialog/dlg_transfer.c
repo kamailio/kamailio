@@ -357,7 +357,7 @@ int dlg_bridge(str *from, str *to, str *op, str *bd)
 
 	LM_DBG("bridge <%.*s> to <%.*s>\n", dtc->from.len, dtc->from.s,
 			dtc->to.len, dtc->to.s);
-	if(bd!=NULL && bd->s!=NULL && bd->len>0) {
+	if(bd!=NULL && bd->s!=NULL) {
 		s_body.s = bd->s;
 		s_body.len = bd->len;
 	} else {
