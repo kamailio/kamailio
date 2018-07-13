@@ -91,6 +91,7 @@ static int replace_f(struct sip_msg*, char*, char*);
 static int replace_str_f(struct sip_msg*, char*, char*, char*);
 static int replace_body_f(struct sip_msg*, char*, char*);
 static int replace_body_str_f(struct sip_msg*, char*, char*, char*);
+static int replace_hdrs_str_f(struct sip_msg*, char*, char*, char*);
 static int replace_all_f(struct sip_msg*, char*, char*);
 static int replace_body_all_f(struct sip_msg*, char*, char*);
 static int replace_body_atonce_f(struct sip_msg*, char*, char*);
@@ -187,6 +188,9 @@ static cmd_export_t cmds[]={
 		fixup_regexp_none, fixup_free_regexp_none,
 		ANY_ROUTE},
 	{"replace_body_str", (cmd_function)replace_body_str_f,3,
+		fixup_spve_all, fixup_free_spve_all,
+		ANY_ROUTE},
+	{"replace_hdrs_str", (cmd_function)replace_hdrs_str_f,3,
 		fixup_spve_all, fixup_free_spve_all,
 		ANY_ROUTE},
 	{"replace_all",      (cmd_function)replace_all_f,     2,
@@ -1008,6 +1012,50 @@ static int replace_body_str_f(sip_msg_t* msg, char* pmkey, char* prval, char* pr
 	}
 
 	return ki_replace_body_str(msg, &mkey, &rval, &rmode);
+}
+
+static int ki_replace_hdrs_str(sip_msg_t* msg, str* mkey, str* rval, str *rmode)
+{
+	str lbuf;
+
+	if ( parse_headers(msg, HDR_EOH_F, 0)==-1 ) {
+		LM_ERR("failed to parse to end of headers\n");
+		return -1;
+	}
+
+	lbuf.s = get_header(msg);
+	lbuf.len = (int)(msg->unparsed - lbuf.s);
+
+	if (lbuf.len==0) {
+		LM_DBG("message headers part has zero length\n");
+		return -1;
+	}
+
+	return ki_replace_str_helper(msg, &lbuf, mkey, rval, rmode);
+}
+
+static int replace_hdrs_str_f(sip_msg_t* msg, char* pmkey, char* prval, char* prmode)
+{
+	str mkey;
+	str rval;
+	str rmode;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pmkey, &mkey)<0) {
+		LM_ERR("failed to get the matching string parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)prval, &rval)<0) {
+		LM_ERR("failed to get the replacement string parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)prmode, &rmode)<0) {
+		LM_ERR("failed to get the replacement mode parameter\n");
+		return -1;
+	}
+
+	return ki_replace_hdrs_str(msg, &mkey, &rval, &rmode);
 }
 
 /* sed-perl style re: s/regular expression/replacement/flags */
@@ -4417,6 +4465,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("replace_body_str"),
 		SR_KEMIP_INT, ki_replace_body_str,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("replace_hdrs_str"),
+		SR_KEMIP_INT, ki_replace_hdrs_str,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
