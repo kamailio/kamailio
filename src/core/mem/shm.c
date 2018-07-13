@@ -168,6 +168,28 @@ void* shm_core_get_pool(void)
 /**
  *
  */
+int shm_address_in(void *p)
+{
+	int i;
+
+	for(i = 0; i < _shm_core_pools_num; i++) {
+		if(_shm_core_pools_mem[i] == (void *)-1) {
+			continue;
+		}
+		if(((char*)p >= (char*)_shm_core_pools_mem[i])
+				&& ((char*)p < ((char*)_shm_core_pools_mem[i]) + shm_mem_size)) {
+			/* address in shm zone */
+			return 1;
+		}
+	}
+
+	/* address not in shm zone */
+	return 0;
+}
+
+/**
+ *
+ */
 void shm_core_destroy(void)
 {
 	int i;
