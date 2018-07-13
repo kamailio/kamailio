@@ -2348,6 +2348,14 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 		if(rpc->scan(c, "*S", &bd)<1) {
 			bd.s = NULL;
 			bd.len = 0;
+		} else {
+			if(bd.len==1 && *bd.s=='.') {
+				bd.s = NULL;
+				bd.len = 0;
+			} else if(bd.len==1 && *bd.s=='_') {
+				bd.s = "";
+				bd.len = 0;
+			}
 		}
 	}
 
