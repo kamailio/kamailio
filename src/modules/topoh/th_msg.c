@@ -108,17 +108,25 @@ int th_get_param_value(str *in, str *name, str *value)
 
 int th_get_uri_param_value(str *uri, str *name, str *value)
 {
-	struct sip_uri puri;
+	sip_uri_t puri;
 
 	memset(value, 0, sizeof(str));
 	if(parse_uri(uri->s, uri->len, &puri)<0)
 		return -1;
+
+	LM_DBG("uri params: [%.*s] - sip uri params: [%.*s]\n",
+			puri.params.len, (puri.params.s)?puri.params.s:"",
+			puri.sip_params.len, (puri.sip_params.s)?puri.sip_params.s:"");
+
+	if(puri.sip_params.len>0)
+		return th_get_param_value(&puri.sip_params, name, value);
+
 	return th_get_param_value(&puri.params, name, value);
 }
 
 int th_get_uri_type(str *uri, int *mode, str *value)
 {
-	struct sip_uri puri;
+	sip_uri_t puri;
 	int ret;
 	str r2 = {"r2", 2};
 
