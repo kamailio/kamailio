@@ -327,7 +327,7 @@ replace_body("openser", "&kamailio; SIP Proxy");
 		<title><function>replace_hdrs</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_body("&kamailio;", "&kamailio; SIP Proxy");
+replace_hdrs("&kamailio;", "&kamailio; SIP Proxy");
 ...
 </programlisting>
 		</example>
