@@ -301,6 +301,38 @@ replace_body("openser", "&kamailio; SIP Proxy");
 		</example>
 	</section>
 
+	<section id="textops.f.replace_hdrs">
+		<title>
+		<function moreinfo="none">replace_hdrs(re, txt)</function>
+		</title>
+		<para>
+		Replaces the first occurrence of re in the SIP headers of the message
+		with txt.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_hdrs</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_body("&kamailio;", "&kamailio; SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.replace_all">
 		<title>
 		<function moreinfo="none">replace_all(re, txt)</function>
