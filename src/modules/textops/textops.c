@@ -91,6 +91,7 @@ static int replace_f(struct sip_msg*, char*, char*);
 static int replace_str_f(struct sip_msg*, char*, char*, char*);
 static int replace_body_f(struct sip_msg*, char*, char*);
 static int replace_body_str_f(struct sip_msg*, char*, char*, char*);
+static int replace_hdrs_f(struct sip_msg*, char*, char*);
 static int replace_hdrs_str_f(struct sip_msg*, char*, char*, char*);
 static int replace_all_f(struct sip_msg*, char*, char*);
 static int replace_body_all_f(struct sip_msg*, char*, char*);
@@ -189,6 +190,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"replace_body_str", (cmd_function)replace_body_str_f,3,
 		fixup_spve_all, fixup_free_spve_all,
+		ANY_ROUTE},
+	{"replace_hdrs",     (cmd_function)replace_hdrs_f,    2,
+		fixup_regexp_none, fixup_free_regexp_none,
 		ANY_ROUTE},
 	{"replace_hdrs_str", (cmd_function)replace_hdrs_str_f,3,
 		fixup_spve_all, fixup_free_spve_all,
@@ -1012,6 +1016,87 @@ static int replace_body_str_f(sip_msg_t* msg, char* pmkey, char* prval, char* pr
 	}
 
 	return ki_replace_body_str(msg, &mkey, &rval, &rmode);
+}
+
+static int replace_hdrs_helper(sip_msg_t* msg, regex_t *re, str *val)
+{
+	struct lump* l;
+	regmatch_t pmatch;
+	char* s;
+	int off;
+	str lbuf;
+	char bk;
+
+	if ( parse_headers(msg, HDR_EOH_F, 0)==-1 ) {
+		LM_ERR("failed to parse to end of headers\n");
+		return -1;
+	}
+
+	lbuf.s = get_header(msg);
+	lbuf.len = (int)(msg->unparsed - lbuf.s);
+
+	if (lbuf.len==0) {
+		LM_DBG("message headers part has zero length\n");
+		return -1;
+	}
+
+	bk = lbuf.s[lbuf.len];
+	lbuf.s[lbuf.len] = '\0';
+	if (regexec(re, lbuf.s, 1, &pmatch, 0)!=0) {
+		lbuf.s[lbuf.len] = bk;
+		return -1;
+	}
+	lbuf.s[lbuf.len] = bk;
+
+	off=lbuf.s-msg->buf;
+
+	if (pmatch.rm_so!=-1){
+		if ((l=del_lump(msg, pmatch.rm_so+off,
+						pmatch.rm_eo-pmatch.rm_so, 0))==0)
+			return -1;
+		s=pkg_malloc(val->len+1);
+		if (s==0){
+			LM_ERR("memory allocation failure\n");
+			return -1;
+		}
+		memcpy(s, val->s, val->len);
+		if (insert_new_lump_after(l, s, val->len, 0)==0){
+			LM_ERR("could not insert new lump\n");
+			pkg_free(s);
+			return -1;
+		}
+
+		return 1;
+	}
+	return -1;
+}
+
+static int replace_hdrs_f(struct sip_msg* msg, char* key, char* str2)
+{
+	str val;
+
+	val.s = str2;
+	val.len = strlen(val.s);
+
+	return replace_hdrs_helper(msg, (regex_t*)key, &val);
+}
+
+static int ki_replace_hdrs(sip_msg_t* msg, str* sre, str* sval)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+
+	ret = replace_hdrs_helper(msg, &mre, sval);
+
+	regfree(&mre);
+
+	return ret;
 }
 
 static int ki_replace_hdrs_str(sip_msg_t* msg, str* mkey, str* rval, str *rmode)
@@ -4466,6 +4551,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	{ str_init("textops"), str_init("replace_body_str"),
 		SR_KEMIP_INT, ki_replace_body_str,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("replace_hdrs"),
+		SR_KEMIP_INT, ki_replace_hdrs,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textops"), str_init("replace_hdrs_str"),
