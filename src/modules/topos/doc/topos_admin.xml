@@ -278,6 +278,31 @@ modparam("topos", "event_mode", 2)
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.contact_host">
+		<title><varname>contact_host</varname> (str)</title>
+		<para>
+			You may need to control the host part of the Contact header added
+			by topos.
+
+			For example when using TLS with TOPOS the remote UAS must be able to open
+			a new TLS socket to the contact header.
+			In this case, the contact header must contain a domain name with a trusted CA
+			signed certitificate.
+		</para>
+		<para>
+		<emphasis>
+			Default value is taken from the Record-Route URI.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contact_host</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "contact_host", "proxy.domain.com")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Event Routes</title>

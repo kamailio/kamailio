@@ -53,6 +53,8 @@ extern sruid_t _tps_sruid;
 extern db1_con_t* _tps_db_handle;
 extern db_func_t _tpsdbf;
 
+extern str _tps_contact_host;
+
 #define TPS_STORAGE_LOCK_SIZE	1<<9
 static gen_lock_set_t *_tps_storage_lock_set = NULL;
 
@@ -219,14 +221,20 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 		return 0;
 	}
 
-	if(td->cp + 8 + (2*uuid->len) + sv.len >= td->cbuf + TPS_DATA_SIZE) {
-		LM_ERR("insufficient data buffer\n");
-		return -1;
-	}
 	if (parse_uri(sv.s, sv.len, &puri) < 0) {
 		LM_ERR("failed to parse the uri\n");
 		return -1;
 	}
+
+	int contact_len = sv.len;
+	if (_tps_contact_host.len)
+		contact_len = sv.len - puri.host.len + _tps_contact_host.len;
+
+	if(td->cp + 8 + (2*uuid->len) + contact_len >= td->cbuf + TPS_DATA_SIZE) {
+		LM_ERR("insufficient data buffer\n");
+		return -1;
+	}
+
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		td->b_uuid.s = td->cp;
 		*td->cp = 'b';
@@ -263,8 +271,15 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 	td->cp += uuid->len;
 	*td->cp = '@';
 	td->cp++;
-	memcpy(td->cp, puri.host.s, puri.host.len);
-	td->cp += puri.host.len;
+
+	if (_tps_contact_host.len) { // using configured hostname in the contact header
+		memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
+		td->cp += _tps_contact_host.len;
+	} else {
+		memcpy(td->cp, puri.host.s, puri.host.len);
+		td->cp += puri.host.len;
+	}
+
 	if(puri.port.len>0) {
 		*td->cp = ':';
 		td->cp++;
