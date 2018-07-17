@@ -433,7 +433,7 @@ replace_body("openser", "Kamailio SIP Proxy");
 
    Example 1.8. replace_hdrs usage
 ...
-replace_body("Kamailio", "Kamailio SIP Proxy");
+replace_hdrs("Kamailio", "Kamailio SIP Proxy");
 ...
 
 4.9.  replace_all(re, txt)
