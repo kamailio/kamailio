@@ -794,6 +794,10 @@ struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
 	struct dlg_cell *dlg;
 	unsigned int he;
 
+	if(d_table==NULL) {
+		LM_ERR("dialog hash table not available\n");
+		return 0;
+	}
 	he = core_hash(callid, 0, d_table->size);
 	dlg = internal_get_dlg(he, callid, ftag, ttag, dir, 0);
 
