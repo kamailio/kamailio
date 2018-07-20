@@ -1900,6 +1900,8 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			if (tv.ri==hf->type)
 				break;
 		} else {
+			if(tv.rs.len==1 && tv.rs.s[0]=='*')
+				break;
 			if (cmp_hdrname_str(&hf->name, &tv.rs)==0)
 				break;
 		}
@@ -1953,8 +1955,10 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 					if (tv.ri==hf->type)
 						break;
 				} else {
+					if(tv.rs.len==1 && tv.rs.s[0]=='*')
+						break;
 					if (cmp_hdrname_str(&hf->name, &tv.rs)==0)
-					break;
+						break;
 				}
 			}
 		} while (hf);
@@ -1976,8 +1980,11 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 				if (tv.ri==hf0->type)
 					n++;
 			} else {
-				if (cmp_hdrname_str(&hf0->name, &tv.rs)==0)
+				if(tv.rs.len==1 && tv.rs.s[0]=='*') {
 					n++;
+				} else if (cmp_hdrname_str(&hf0->name, &tv.rs)==0) {
+					n++;
+				}
 			}
 		}
 		idx = -idx;
@@ -2003,8 +2010,11 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 				if (tv.ri==hf0->type)
 					n++;
 			} else {
-				if (cmp_hdrname_str(&hf0->name, &tv.rs)==0)
+				if(tv.rs.len==1 && tv.rs.s[0]=='*') {
 					n++;
+				} else if (cmp_hdrname_str(&hf0->name, &tv.rs)==0) {
+					n++;
+				}
 			}
 			if(n==idx)
 				break;
@@ -3111,6 +3121,14 @@ int pv_parse_hdr_name(pv_spec_p sp, str *in)
 		//pv_print_spec(nsp);
 		sp->pvp.pvn.type = PV_NAME_PVAR;
 		sp->pvp.pvn.u.dname = (void*)nsp;
+		return 0;
+	}
+
+	if(in->len==1 && in->s[0]=='*') {
+		/* match any header name */
+		sp->pvp.pvn.type = PV_NAME_INTSTR;
+		sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
+		sp->pvp.pvn.u.isname.name.s = *in;
 		return 0;
 	}
 
