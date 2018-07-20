@@ -376,7 +376,9 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 3.11. is_myself(uri)
 
    Check if the parameter matches the 'myself' condition (i.e., is a local
-   IP or domain).
+   IP or domain). Note that if the port is missing in the URI, then no
+   port matching is done (in other words, port matching is skipped -- it
+   does not use default SIP ports 5060 or 5061 for matching).
 
    Meaning of the parameters is as follows:
      * uri - Valid SIP URI or IP address to check against the list of
