@@ -358,10 +358,10 @@ $http_req(suspend) = 0;
 
 http_async_query("https://example.com/test.php", "HTTP_REPLY");
 
-xlog("L_INFO", "Query id: $http_query_id");
+xlog("L_INFO", "Query id: $http_req_id");
 ...
 route[HTTP_REPLY] {
-xlog("L_INFO", "received reply for query $http_query_id\n");
+xlog("L_INFO", "received reply for query $http_req_id\n");
 }
 ...
 		</programlisting>
