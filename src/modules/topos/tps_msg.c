@@ -1074,12 +1074,17 @@ int tps_response_sent(sip_msg_t *msg)
 	mtsd.direction = direction;
 
 	tps_remove_headers(msg, HDR_RECORDROUTE_T);
-	tps_remove_headers(msg, HDR_CONTACT_T);
 
-	if(direction==TPS_DIR_DOWNSTREAM) {
-		tps_reinsert_contact(msg, &stsd, &stsd.as_contact);
-	} else {
-		tps_reinsert_contact(msg, &stsd, &stsd.bs_contact);
+	/* keep contact without updates for redirect responses sent out */
+	if(msg->first_line.u.reply.statuscode<300
+			|| msg->first_line.u.reply.statuscode>=400) {
+		tps_remove_headers(msg, HDR_CONTACT_T);
+
+		if(direction==TPS_DIR_DOWNSTREAM) {
+			tps_reinsert_contact(msg, &stsd, &stsd.as_contact);
+		} else {
+			tps_reinsert_contact(msg, &stsd, &stsd.bs_contact);
+		}
 	}
 
 	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
