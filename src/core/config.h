@@ -45,8 +45,6 @@
 #define TLS_CA_FILE 0			/*!< no CA list file by default */
 #define TLS_CRL_FILE 0 /*!< no CRL by default */
 
-#define MAX_LISTEN 16			/*!< maximum number of addresses on which we will listen */
-
 #define CHILD_NO    8			/*!< default number of child processes started */
 
 #define RT_NO 2 			/*!< routing tables number */
