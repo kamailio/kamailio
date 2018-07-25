@@ -734,13 +734,17 @@ static ticks_t pl_timer_handle(ticks_t ticks, struct timer_ln* tl, void* data)
 
 /* rpc function documentation */
 const char *rpc_pl_stats_doc[2] = {
-	"Print pipelimit statistics: \
+	"Print pipelimit statistics (string output): \
 <id> <load> <counter>", 0
 };
 
 const char *rpc_pl_get_pipes_doc[2] = {
-	"Print pipes info: \
+	"Print pipes info (string output): \
 <id> <algorithm> <limit> <counter>", 0
+};
+
+const char *rpc_pl_list_doc[2] = {
+	"List details for one or all pipes", 0
 };
 
 const char *rpc_pl_set_pipe_doc[2] = {
@@ -764,6 +768,7 @@ const char *rpc_pl_push_load_doc[2] = {
 
 /* rpc function implementations */
 void rpc_pl_stats(rpc_t *rpc, void *c);
+void rpc_pl_list(rpc_t *rpc, void *c);
 void rpc_pl_get_pipes(rpc_t *rpc, void *c);
 void rpc_pl_set_pipe(rpc_t *rpc, void *c);
 
@@ -804,6 +809,7 @@ void rpc_pl_push_load(rpc_t *rpc, void *c) {
 
 static rpc_export_t rpc_methods[] = {
 	{"pl.stats",      rpc_pl_stats,     rpc_pl_stats_doc,     RET_ARRAY},
+	{"pl.list",       rpc_pl_list,      rpc_pl_list_doc,      RET_ARRAY},
 	{"pl.get_pipes",  rpc_pl_get_pipes, rpc_pl_get_pipes_doc, RET_ARRAY},
 	{"pl.set_pipe",   rpc_pl_set_pipe,  rpc_pl_set_pipe_doc,  0},
 	{"pl.get_pid",    rpc_pl_get_pid,   rpc_pl_get_pid_doc,   0},
