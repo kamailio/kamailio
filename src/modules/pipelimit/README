@@ -51,12 +51,13 @@ Daniel-Constantin Mierla
 
         5. RPC Commands
 
-              5.1. pl.stats
-              5.2. pl.set_pipe
-              5.3. pl.get_pipes
-              5.4. pl.set_pid
-              5.5. pl.get_pid
-              5.6. pl.push_load
+              5.1. pl.list
+              5.2. pl.stats
+              5.3. pl.set_pipe
+              5.4. pl.get_pipes
+              5.5. pl.set_pid
+              5.6. pl.get_pid
+              5.7. pl.push_load
 
    List of Examples
 
@@ -106,12 +107,13 @@ Chapter 1. Admin Guide
 
    5. RPC Commands
 
-        5.1. pl.stats
-        5.2. pl.set_pipe
-        5.3. pl.get_pipes
-        5.4. pl.set_pid
-        5.5. pl.get_pid
-        5.6. pl.push_load
+        5.1. pl.list
+        5.2. pl.stats
+        5.3. pl.set_pipe
+        5.4. pl.get_pipes
+        5.5. pl.set_pid
+        5.6. pl.get_pid
+        5.7. pl.push_load
 
 1. Overview
 
@@ -441,14 +443,30 @@ with unexpected retcode=$var(check_result)\n");
 
 5. RPC Commands
 
-   5.1. pl.stats
-   5.2. pl.set_pipe
-   5.3. pl.get_pipes
-   5.4. pl.set_pid
-   5.5. pl.get_pid
-   5.6. pl.push_load
+   5.1. pl.list
+   5.2. pl.stats
+   5.3. pl.set_pipe
+   5.4. pl.get_pipes
+   5.5. pl.set_pid
+   5.6. pl.get_pid
+   5.7. pl.push_load
 
-5.1.  pl.stats
+5.1.  pl.list
+
+   Lists the details of one or all pipes, respectively the attributes pipe
+   name (id), algorithm, limit and counter.
+
+   Name: pl.list
+
+   Parameters: name - (optional) pipe name
+
+   RPC Command Format:
+...
+kamctl rpc pl.list
+kamctl rpc pl.list testid
+...
+
+5.2.  pl.stats
 
    Lists the parameters and variables in the pipelimit module: pipe id,
    pipe load and pipe counter.
@@ -458,9 +476,11 @@ with unexpected retcode=$var(check_result)\n");
    Parameters: none
 
    RPC Command Format:
-        kamcmd pl.stats
+...
+kamcmd pl.stats
+...
 
-5.2.  pl.set_pipe
+5.3.  pl.set_pipe
 
    Sets the pipe parameters for the given pipe id.
 
@@ -472,9 +492,11 @@ with unexpected retcode=$var(check_result)\n");
      * pipe_limit - the limit assigned to the given pipe id.
 
    RPC Command Format:
-        kamcmd pl.set_pipe 2 RED 10
+...
+kamcmd pl.set_pipe 2 RED 10
+...
 
-5.3.  pl.get_pipes
+5.4.  pl.get_pipes
 
    Gets the list of in use pipes.
 
@@ -483,9 +505,11 @@ with unexpected retcode=$var(check_result)\n");
    Parameters: none
 
    RPC Command Format:
-        kamcmd pl.get_pipes
+...
+kamcmd pl.get_pipes
+...
 
-5.4.  pl.set_pid
+5.5.  pl.set_pid
 
    Sets the PID Controller parameters for the Feedback Algorithm.
 
@@ -497,9 +521,11 @@ with unexpected retcode=$var(check_result)\n");
      * kd - the derivative parameter.
 
    RPC Command Format:
-        kamcmd pl.set_pid 0.5 0.5 0.5
+...
+kamcmd pl.set_pid 0.5 0.5 0.5
+...
 
-5.5.  pl.get_pid
+5.6.  pl.get_pid
 
    Gets the list of in use PID Controller parameters.
 
@@ -508,9 +534,11 @@ with unexpected retcode=$var(check_result)\n");
    Parameters: none
 
    RPC Command Format:
-        kamcmd pl.get_pid
+...
+kamcmd pl.get_pid
+...
 
-5.6.  pl.push_load
+5.7.  pl.push_load
 
    Force the value of the load parameter. This command is useful for
    testing the Feedback algorithm.
@@ -522,4 +550,6 @@ with unexpected retcode=$var(check_result)\n");
        smaller then 1.0).
 
    RPC Command Format:
-        kamcmd pl.push_load 0.85
+...
+kamcmd pl.push_load 0.85
+...
