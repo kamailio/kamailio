@@ -301,9 +301,8 @@ static int child_init(int rank)
 			notification_node =
 					add_server_and_notify(&dmq_notification_address);
 			if(!notification_node) {
-				LM_ERR("cannot retrieve initial nodelist from %.*s\n",
+				LM_WARN("cannot retrieve initial nodelist from %.*s\n",
 						STR_FMT(&dmq_notification_address));
-				return -1;
 			}
 		}
 		return 0;
