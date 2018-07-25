@@ -227,9 +227,9 @@ void print_ct_constants(void)
 	printf("SHM_MEM_SIZE=%d, ", SHM_MEM_SIZE);
 #endif
 */
-	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d,"
+	printf("MAX_RECV_BUFFER_SIZE %d"
 			" MAX_URI_SIZE %d, BUF_SIZE %d, DEFAULT PKG_SIZE %uMB\n",
-		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE,
+		MAX_RECV_BUFFER_SIZE, MAX_URI_SIZE,
 		BUF_SIZE, PKG_MEM_SIZE);
 #ifdef USE_TCP
 	printf("poll method support: %s.\n", poll_support);
@@ -245,7 +245,6 @@ void print_internals(void)
 	printf("  Default paths to modules: %s\n", MODS_DIR);
 	printf("  Compile flags: %s\n", ver_flags );
 	printf("  MAX_RECV_BUFFER_SIZE=%d\n", MAX_RECV_BUFFER_SIZE);
-	printf("  MAX_LISTEN=%d\n", MAX_LISTEN);
 	printf("  MAX_URI_SIZE=%d\n", MAX_URI_SIZE);
 	printf("  BUF_SIZE=%d\n", BUF_SIZE);
 	printf("  DEFAULT PKG_SIZE=%uMB\n", PKG_MEM_SIZE);
@@ -421,12 +420,6 @@ int pmtu_discovery = 0;
 
 int auto_bind_ipv6 = 0;
 
-#if 0
-char* names[MAX_LISTEN];              /* our names */
-int names_len[MAX_LISTEN];            /* lengths of the names*/
-struct ip_addr addresses[MAX_LISTEN]; /* our ips */
-int addresses_no=0;                   /* number of names/ips */
-#endif
 struct socket_info* udp_listen=0;
 #ifdef USE_TCP
 int tcp_main_pid=0; /* set after the tcp main process is started */
