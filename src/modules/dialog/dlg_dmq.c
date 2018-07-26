@@ -365,6 +365,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 			}
 			/* prevent DB sync */
 			dlg->dflags |= DLG_FLAG_NEW;
+			dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
 			unref++;
 			break;
 
