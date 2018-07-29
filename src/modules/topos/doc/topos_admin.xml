@@ -281,7 +281,7 @@ modparam("topos", "event_mode", 2)
 	</section>
 	<section>
 	<title>Event Routes</title>
-	<section>
+	<section id="topos.e.msg_outgoing">
 		<title>event_route[topos:msg-outgoing]</title>
 		<para>
 		It is executed before doing topology stripping processing for an outgoing
@@ -308,7 +308,7 @@ event_route[topos:msg-outgoing] {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="topos.e.msg_sending">
 		<title>event_route[topos:msg-sending]</title>
 		<para>
 		It is executed before doing topology stripping processing for a SIP
