@@ -711,7 +711,6 @@ static int mod_init(void)
 			LM_ERR("failed to initialize the DB support\n");
 			return -1;
 		}
-		run_load_callbacks();
 	}
 
 	destroy_dlg_callbacks( DLGCB_LOADED );
@@ -741,6 +740,13 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	dlg_db_mode = dlg_db_mode_param;
+
+
+	if(rank==PROC_INIT) {
+		if (dlg_db_mode!=DB_MODE_NONE) {
+			run_load_callbacks();
+		}
+	}
 
 	if(rank==PROC_MAIN) {
 		if(dlg_timer_procs>0) {
