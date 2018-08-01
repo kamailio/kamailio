@@ -770,6 +770,10 @@ static int child_init(int rank)
 			LM_ERR("failed to start clean timer routine as process\n");
 			return -1; /* error */
 		}
+
+		if (dlg_db_mode!=DB_MODE_NONE) {
+			run_load_callbacks();
+		}
 	}
 
 	if ( ((dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
