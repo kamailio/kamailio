@@ -133,7 +133,7 @@ int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f,
 	cb->callback_param_free = ff;
 
 	if ( types==DLGCB_CREATED ) {
-		if (load_cbs==POINTER_CLOSED_MARKER) {
+		if (create_cbs==POINTER_CLOSED_MARKER) {
 			LM_CRIT("DLGCB_CREATED type registered after shutdown!?!\n");
 			goto error;
 		}
