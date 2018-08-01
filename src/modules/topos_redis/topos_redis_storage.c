@@ -1314,6 +1314,10 @@ int tps_redis_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	int32_t liflags;
 	unsigned long lval = 0;
 
+	if(md->s_method_id != METHOD_BYE) {
+		return 0;
+	}
+
 	if(sd->a_uuid.len<=0 && sd->b_uuid.len<=0) {
 		LM_INFO("no uuid for this message\n");
 		return -1;
