@@ -2026,14 +2026,14 @@ void update_db_subs_timer_dbonly(void)
 	db_val_t qvals[1];
 	db_key_t result_cols[18];
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
-		callid_col, totag_col, fromtag_col, event_col, event_id_col,
-		local_cseq_col, expires_col, rr_col, sockinfo_col,
-		contact_col, lcontact_col, watcher_user_col, watcher_domain_col;
+	callid_col, totag_col, fromtag_col, event_col, event_id_col,
+	local_cseq_col, expires_col, rr_col, sockinfo_col,
+	contact_col, lcontact_col, watcher_user_col, watcher_domain_col;
 	int n_result_cols = 0;
 	db1_res_t *result= NULL;
-	db_row_t *row = NULL;
+	db_row_t *rows;
 	db_val_t *row_vals= NULL;
-	int i;
+	int i, res;
 	subs_t s, *s_new, *s_array = NULL, *s_del;
 	str ev_name;
 	pres_ev_t* event;
@@ -2072,27 +2072,26 @@ void update_db_subs_timer_dbonly(void)
 		return;
 	}
 
-	if (pa_dbf.query(pa_db, qcols, qops, qvals, result_cols,
-				1, n_result_cols, 0, &result) < 0) {
-		LM_ERR("failed to query database for expired subscriptions\n");
-		if(result)
-			pa_dbf.free_result(pa_db, result);
-		return;
-	}
-
-	if(result== NULL)
-		return;
-
-	if(result->n <=0 ) {
-		pa_dbf.free_result(pa_db, result);
-		return;
-	}
-	LM_DBG("found %d dialogs\n", result->n);
-
-	for(i=0; i<result->n; i++)
+	res = db_fetch_query(&pa_dbf, pres_fetch_rows, pa_db, qcols, qops, qvals, result_cols,1, n_result_cols, 0, &result );
+	if (res < 0)
 	{
-		row = &result->rows[i];
-		row_vals = ROW_VALUES(row);
+		LM_ERR("failed to query database for expired subscriptions\n");
+		if (result) {
+			pa_dbf.free_result(pa_db, result);
+		}
+		return;
+	}
+
+	if(result == NULL) {
+		LM_DBG("no results returned\n");
+		return;
+	}
+
+	LM_DBG("processing %d dialogs\n", RES_ROW_N(result));
+	s_array = NULL;
+	rows = RES_ROWS(result);
+	for (i = 0; i < RES_ROW_N(result); i++) {
+		row_vals = ROW_VALUES(&rows[i]);
 
 		memset(&s, 0, sizeof(subs_t));
 
@@ -2172,12 +2171,6 @@ void update_db_subs_timer_dbonly(void)
 		s_del = s_new;
 		s_new = s_new->next;
 		pkg_free(s_del);
-	}
-
-	/* delete the expired subscriptions */
-	if(pa_dbf.delete(pa_db, qcols, qops, qvals, 1) < 0)
-	{
-		LM_ERR("deleting expired information from database\n");
 	}
 }
 
