@@ -67,6 +67,11 @@
 #define UPDATE_LEN 6
 #define REFER_LEN 5
 #define PUBLISH_LEN 7
+#define KDMQ_LEN 4
+#define GET_LEN 3
+#define POST_LEN 4
+#define PUT_LEN 3
+#define DELETE_LEN 6
 
 typedef struct msg_start {
 	short type;					/*!< Type of the message - request/response */
