@@ -29,6 +29,7 @@
 #include "km_my_con.h"
 #include "km_db_mysql.h"
 #include <mysql.h>
+#include <stdbool.h>
 #include "../../core/mem/mem.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
@@ -44,7 +45,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	char *host, *grp, *egrp;
 	unsigned int connection_flag = 0;
 #if MYSQL_VERSION_ID > 50012
-	my_bool rec;
+	bool rec;
 #endif
 
 	if (!id) {
