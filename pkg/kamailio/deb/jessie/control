@@ -27,6 +27,7 @@ Build-Depends:
  libldap2-dev,
  liblua5.1-0-dev,
  libmemcached-dev,
+ libmnl-dev,
  libmono-2.0-dev,
  libmysqlclient-dev,
  libncurses5-dev,

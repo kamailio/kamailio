@@ -27,6 +27,7 @@ Build-Depends:
  liblua5.1-0-dev,
  libmaxminddb-dev,
  libmemcached-dev,
+ libmnl-dev,
  libmongoc-dev,
  libmono-2.0-dev,
  libncurses5-dev,
