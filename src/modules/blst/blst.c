@@ -105,7 +105,7 @@ static int ki_blst_add(sip_msg_t* msg, int t)
 {
 #ifdef USE_DST_BLACKLIST
 	struct dest_info src;
-	
+
 	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
 		if (t==0)
 			t=cfg_get(core, core_cfg, blst_timeout);
@@ -165,7 +165,7 @@ static int ki_blst_add_retry_after(sip_msg_t* msg, int t_min, int t_max)
 	int t;
 	struct dest_info src;
 	struct hdr_field* hf;
-	
+
 	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
 		init_dest_info(&src);
 		src.send_sock=0;
@@ -173,7 +173,7 @@ static int ki_blst_add_retry_after(sip_msg_t* msg, int t_min, int t_max)
 		src.id=msg->rcv.proto_reserved1;
 		src.proto=msg->rcv.proto;
 		t=-1;
-		if ((parse_headers(msg, HDR_RETRY_AFTER_F, 0)==0) && 
+		if ((parse_headers(msg, HDR_RETRY_AFTER_F, 0)==0) &&
 			(msg->parsed_flag & HDR_RETRY_AFTER_F)){
 			for (hf=msg->headers; hf; hf=hf->next)
 				if (hf->type==HDR_RETRY_AFTER_T){
@@ -184,7 +184,7 @@ static int ki_blst_add_retry_after(sip_msg_t* msg, int t_min, int t_max)
 		}
 		if (t<0)
 			return -1;
-		
+
 		t=MAX_unsigned(t, t_min);
 		t=MIN_unsigned(t, t_max);
 		if (likely(t))
@@ -229,9 +229,9 @@ static int ki_blst_del(sip_msg_t* msg)
 {
 #ifdef USE_DST_BLACKLIST
 	struct dest_info src;
-	
+
 	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
-	
+
 		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
@@ -266,7 +266,7 @@ static int ki_blst_is_blacklisted(sip_msg_t* msg)
 {
 #ifdef USE_DST_BLACKLIST
 	struct dest_info src;
-	
+
 	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
 		init_dest_info(&src);
 		src.send_sock=0;
