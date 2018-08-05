@@ -3458,6 +3458,8 @@ int pv_parse_msg_attrs_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "hdrs", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "hdrc", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 6;
 			else goto error;
 		break;
 		case 5:
@@ -3489,6 +3491,9 @@ error:
 int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	str s;
+	hdr_field_t* hdr;
+	int n;
+
 	if(msg==NULL)
 		return pv_get_null(msg, param, res);
 
@@ -3534,6 +3539,13 @@ int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			if (s.s != NULL)
 				s.len = msg->buf + msg->len - s.s;
 			return pv_get_sintval(msg, param, res, s.len);
+
+		case 6: /* headers count */
+			n = 0;
+			for(hdr=msg->headers; hdr!=NULL; hdr=hdr->next) {
+				n++;
+			}
+			return pv_get_sintval(msg, param, res, n);
 
 		default:
 			return pv_get_null(msg, param, res);
