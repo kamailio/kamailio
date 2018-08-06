@@ -3465,6 +3465,8 @@ int pv_parse_msg_attrs_name(pv_spec_p sp, str *in)
 		case 5:
 			if(strncmp(in->s, "fline", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "fpart", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 7;
 			else goto error;
 		break;
 		case 8:
@@ -3546,6 +3548,14 @@ int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				n++;
 			}
 			return pv_get_sintval(msg, param, res, n);
+
+		case 7: /* first part - first line + headers */
+			if(msg->unparsed==NULL)
+				return pv_get_null(msg, param, res);
+			s.s = msg->buf;
+			s.len = msg->unparsed - s.s;
+			trim(&s);
+			return pv_get_strval(msg, param, res, &s);
 
 		default:
 			return pv_get_null(msg, param, res);
