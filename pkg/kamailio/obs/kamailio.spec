@@ -567,8 +567,8 @@ Requires:   kamailio = %ver
 Requires:   perl
 BuildRequires:  perl
 %else
-Requires:   mod_perl
-BuildRequires:  mod_perl-devel
+Requires:   perl-libs
+BuildRequires:  perl-ExtUtils-Embed
 %endif
 
 %description    perl
