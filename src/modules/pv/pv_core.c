@@ -3472,6 +3472,8 @@ int pv_parse_msg_attrs_name(pv_spec_p sp, str *in)
 		case 8:
 			if(strncmp(in->s, "body_len", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
+			else if(strncmp(in->s, "hdrs_len", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 8;
 			else goto error;
 		break;
 		default:
@@ -3541,14 +3543,12 @@ int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			if (s.s != NULL)
 				s.len = msg->buf + msg->len - s.s;
 			return pv_get_sintval(msg, param, res, s.len);
-
 		case 6: /* headers count */
 			n = 0;
 			for(hdr=msg->headers; hdr!=NULL; hdr=hdr->next) {
 				n++;
 			}
 			return pv_get_sintval(msg, param, res, n);
-
 		case 7: /* first part - first line + headers */
 			if(msg->unparsed==NULL)
 				return pv_get_null(msg, param, res);
@@ -3556,6 +3556,13 @@ int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			s.len = msg->unparsed - s.s;
 			trim(&s);
 			return pv_get_strval(msg, param, res, &s);
+		case 8: /* headers size */
+			if(msg->unparsed==NULL)
+				return pv_get_sintval(msg, param, res, 0);
+			s.s = msg->buf + msg->first_line.len;
+			s.len = msg->unparsed - s.s;
+			trim(&s);
+			return pv_get_sintval(msg, param, res, s.len);
 
 		default:
 			return pv_get_null(msg, param, res);
