@@ -67,6 +67,9 @@ enum SMS_DATA {
 	SMS_TPDU_REFERENCE,
 	SMS_TPDU_ORIGINATING_ADDRESS,
 	SMS_TPDU_DESTINATION,
+	SMS_UDH_CONCATSM_REF,
+	SMS_UDH_CONCATSM_MAX_NUM_SM,
+	SMS_UDH_CONCATSM_SEQ
 };
 
 // Types of the PDU-Message
@@ -83,6 +86,34 @@ typedef enum _pdu_message_type {
 #define TP_UDHI 0x64;
 #define TP_RP 0x128;
 
+// Information element identifiers and corresponding structs.
+// Only the supported ones are listed.
+// Defined in TS 23.040, Sec. 9.2.3.24 and 9.2.3.24.1
+#define TP_UDH_IE_CONCAT_SM_8BIT_REF 0x00	// 9.2.3.24
+struct ie_concat_sm_8bit_ref {
+	unsigned char ref;			//Concatenated short message reference number
+	unsigned char max_num_sm;	//Maximum number of short messages in the concatenated short message.
+	unsigned char seq;			//Sequence number of the current short message
+};
+
+// Information element in User Data Header
+typedef struct _tp_udh_inf_element tp_udh_inf_element_t;
+struct _tp_udh_inf_element {
+	unsigned char identifier;
+	union {
+		str data;
+		struct ie_concat_sm_8bit_ref concat_sm_8bit_ref;
+	};
+
+	tp_udh_inf_element_t* next;
+};
+
+// TS 23.040, Sec. 9.2.3.24
+typedef struct _tp_user_data {
+	tp_udh_inf_element_t* header;
+	str sm;
+} tp_user_data_t;
+
 // PDU (GSM 03.40) of the SMS
 typedef struct _sms_pdu {
 	pdu_message_type_t msg_type;
@@ -93,7 +124,7 @@ typedef struct _sms_pdu {
 	unsigned char validity;
 	str originating_address;
 	str destination;
-	str payload;
+	tp_user_data_t payload;
 } sms_pdu_t;
 
 // RP-Data of the message
@@ -102,7 +133,7 @@ typedef struct _sms_rp_data {
 	unsigned char reference;
 	str originator;
 	str destination;
-	int pdu_len;
+	unsigned char pdu_len;
 	sms_pdu_t pdu;
 } sms_rp_data_t;
 
@@ -125,7 +156,15 @@ void freeRP_DATA(sms_rp_data_t * rpdata) {
 		if (rpdata->destination.s) pkg_free(rpdata->destination.s);
 		if (rpdata->pdu.originating_address.s) pkg_free(rpdata->pdu.originating_address.s);
 		if (rpdata->pdu.destination.s) pkg_free(rpdata->pdu.destination.s);
-		if (rpdata->pdu.payload.s) pkg_free(rpdata->pdu.payload.s);
+		while (rpdata->pdu.payload.header) {
+			tp_udh_inf_element_t* next = rpdata->pdu.payload.header->next;
+			if(rpdata->pdu.payload.header->identifier != TP_UDH_IE_CONCAT_SM_8BIT_REF) {
+				if(rpdata->pdu.payload.header->data.s) pkg_free(rpdata->pdu.payload.header->data.s);
+			}
+			pkg_free(rpdata->pdu.payload.header);
+			rpdata->pdu.payload.header = next;
+		}
+		if (rpdata->pdu.payload.sm.s) pkg_free(rpdata->pdu.payload.sm.s);
 	}
 }
 
@@ -133,6 +172,7 @@ void freeRP_DATA(sms_rp_data_t * rpdata) {
 #define BITMASK_8BITS 0xFF
 #define BITMASK_HIGH_4BITS 0xF0
 #define BITMASK_LOW_4BITS 0x0F
+#define BITMASK_TP_UDHI 0x40
 
 // Encode SMS-Message by merging 7 bit ASCII characters into 8 bit octets.
 static int ascii_to_gsm(str sms, char * output_buffer, int buffer_size) {
@@ -162,82 +202,136 @@ static int ascii_to_gsm(str sms, char * output_buffer, int buffer_size) {
 }
 
 // Decode 7bit encoded message by splitting 8 bit encoded buffer into 7 bit ASCII characters.
-int gsm_to_ascii(char* buffer, int buffer_length, str sms) {
-        int output_text_length = 0;
-        if (buffer_length > 0)
-                sms.s[output_text_length++] = BITMASK_7BITS & buffer[0];
+int gsm_to_ascii(char* buffer, int buffer_length, str sms, const int fill_bits) {
+		int output_text_length = 0;
 
-        int carry_on_bits = 1;
-        int i = 1;
-        for (; i < buffer_length; ++i) {
-                sms.s[output_text_length++] = BITMASK_7BITS & ((buffer[i] << carry_on_bits) | (buffer[i - 1] >> (8 - carry_on_bits)));
+		if(buffer_length <= 2)
+			return 0;
 
-                if (output_text_length == sms.len) break;
+		// How many bits we have carried from the next octet. This number can be positive or negative:
+		// positive: We have carried n bits FROM the next octet.
+		// negative: We have to carry n bits TO the next octet.
+		// 0: Nothing carried. Default value!
+		int carry_on_bits = 0;
 
-                carry_on_bits++;
+		// Used to iterate over buffer. Declared here, because if there are fill_bits it have to be incremented
+		int i = 0;
 
-                if (carry_on_bits == 8) {
-                        carry_on_bits = 1;
-                        sms.s[output_text_length++] = buffer[i] & BITMASK_7BITS;
-                        if (output_text_length == sms.len) break;
-                }
+		// First remove the fill bits, if any
+		if(fill_bits) {
+			// We need 7 bits in the first octet, so if there is only 1 fill bit, we don't have to
+			// carry from the next octet.
 
-        }
-        if (output_text_length < sms.len)  // Add last remainder.
-                sms.s[output_text_length++] = buffer[i - 1] >> (8 - carry_on_bits);
+			// cmask stands for carry mask or how many bits to carry from the 2nd octet
+			unsigned char cmask = (1 << (fill_bits - 1)) - 1;
 
-        return output_text_length;
+			sms.s[output_text_length++] = ( (buffer[0] >> fill_bits) |	// remove the fill bits from the first octet
+											(buffer[1] & cmask << (8 - fill_bits)) // mask the required number of bits
+																					//and shift them accordingly
+										) & BITMASK_7BITS;	// mask just 7 bits from the first octet
+
+			carry_on_bits = fill_bits - 1;
+			i++;
+		}
+
+
+		for (; i < buffer_length; ++i) {
+			if(carry_on_bits > 0) {
+				unsigned char cmask = (1 << (carry_on_bits - 1)) - 1;	//mask for the rightmost carry_on_bits
+																		//E.g. carry_on_bits=3 -> _ _ _ _ _ X X X
+				sms.s[output_text_length++] = ( (buffer[i] >> carry_on_bits) | //shift right to remove carried bits
+												(buffer[i+1] & cmask) << (8 - carry_on_bits)	// carry from the next
+																								// and shift accordingly
+												) & BITMASK_7BITS;	// mask just 7 bits from the first octet
+			}
+			else if(carry_on_bits < 0) {
+				carry_on_bits = carry_on_bits * -1;	//make carry_on_bits positive for the bitwise ops
+				unsigned char cmask = ((1 << carry_on_bits) - 1) << (8 - carry_on_bits);	//mask for the leftmost carry_on_bits.
+																						//E.g. carry_on_bits=3 -> X X X _ _ _ _ _
+				sms.s[output_text_length++] = ( (buffer[i] << carry_on_bits) | //shift left to make space for the carried bits
+												(buffer[i-1] & cmask) >> (8 - carry_on_bits)	// get the bits from the previous octet
+																								// and shift accordingly
+												) & BITMASK_7BITS;	// mask just 7 bits from the first octet
+
+				carry_on_bits = carry_on_bits * -1;	//return the original value
+			}
+			else {// carry_on_bits == 0
+				sms.s[output_text_length++] = buffer[i] & BITMASK_7BITS;
+			}
+
+			//Update carry_on bits. It is always decremented, because we iterate over octests but read just septets
+			carry_on_bits--;
+
+			if (output_text_length == sms.len) break;
+
+			if (carry_on_bits == -8) {
+				carry_on_bits = -1;
+				sms.s[output_text_length++] = buffer[i] & BITMASK_7BITS;
+				if (output_text_length == sms.len) break;
+			}
+
+			if(carry_on_bits > 0 && (i + 2 >= buffer_length)) {
+				//carry_on_bits is positive, which means thah we have to borrow from the next octet on next iteration
+				//However i + 2 >= buffer_length so there is no next octet. This is error.
+				break;
+			}
+		}
+
+		if (output_text_length < sms.len)  // Add last remainder.
+			sms.s[output_text_length++] = buffer[i - 1] >> (8 - carry_on_bits);
+
+		return output_text_length;
 }
 
 // Decode UCS2 message by splitting the buffer into utf8 characters
 int ucs2_to_utf8 (int ucs2, char * utf8) {
-    if (ucs2 < 0x80) {
-        utf8[0] = ucs2;
+	if (ucs2 < 0x80) {
+		utf8[0] = ucs2;
 	utf8[1] = 0;
-        return 1;
-    }
-    if (ucs2 >= 0x80  && ucs2 < 0x800) {
-        utf8[0] = (ucs2 >> 6)   | 0xC0;
-        utf8[1] = (ucs2 & 0x3F) | 0x80;
-        return 2;
-    }
-    if (ucs2 >= 0x800 && ucs2 < 0xFFFF) {
-	if (ucs2 >= 0xD800 && ucs2 <= 0xDFFF) return -1;
-        utf8[0] = ((ucs2 >> 12)       ) | 0xE0;
-        utf8[1] = ((ucs2 >> 6 ) & 0x3F) | 0x80;
-        utf8[2] = ((ucs2      ) & 0x3F) | 0x80;
-        return 3;
-    }
-    if (ucs2 >= 0x10000 && ucs2 < 0x10FFFF) {
+		return 1;
+	}
+	if (ucs2 >= 0x80  && ucs2 < 0x800) {
+		utf8[0] = (ucs2 >> 6)   | 0xC0;
+		utf8[1] = (ucs2 & 0x3F) | 0x80;
+		return 2;
+	}
+	if (ucs2 >= 0x800 && ucs2 < 0xFFFF) {
+		if (ucs2 >= 0xD800 && ucs2 <= 0xDFFF) return -1;
+		utf8[0] = ((ucs2 >> 12)       ) | 0xE0;
+		utf8[1] = ((ucs2 >> 6 ) & 0x3F) | 0x80;
+		utf8[2] = ((ucs2      ) & 0x3F) | 0x80;
+		return 3;
+	}
+	if (ucs2 >= 0x10000 && ucs2 < 0x10FFFF) {
 	utf8[0] = 0xF0 | (ucs2 >> 18);
 	utf8[1] = 0x80 | ((ucs2 >> 12) & 0x3F);
 	utf8[2] = 0x80 | ((ucs2 >> 6) & 0x3F);
 	utf8[3] = 0x80 | ((ucs2 & 0x3F));
-        return 4;
-    }
-    return -1;
+		return 4;
+	}
+	return -1;
 }
 
 // Decode UTF8 to UCS2
 int utf8_to_ucs2 (const unsigned char * input, const unsigned char ** end_ptr) {
-    *end_ptr = input;
-    if (input[0] == 0)
-        return -1;
-    if (input[0] < 0x80) {
-        * end_ptr = input + 1;
-        return input[0];
-    }
-    if ((input[0] & 0xE0) == 0xE0) {
-        if (input[1] == 0 || input[2] == 0) return -1;
-        *end_ptr = input + 3;
-        return (input[0] & 0x0F) << 12 | (input[1] & 0x3F) << 6  | (input[2] & 0x3F);
-    }
-    if ((input[0] & 0xC0) == 0xC0) {
-        if (input[1] == 0) return -1;
-        * end_ptr = input + 2;
-        return (input[0] & 0x1F) << 6 | (input[1] & 0x3F);
-    }
-    return -1;
+	*end_ptr = input;
+	if (input[0] == 0)
+		return -1;
+	if (input[0] < 0x80) {
+		* end_ptr = input + 1;
+		return input[0];
+	}
+	if ((input[0] & 0xE0) == 0xE0) {
+		if (input[1] == 0 || input[2] == 0) return -1;
+		*end_ptr = input + 3;
+		return (input[0] & 0x0F) << 12 | (input[1] & 0x3F) << 6  | (input[2] & 0x3F);
+	}
+	if ((input[0] & 0xC0) == 0xC0) {
+		if (input[1] == 0) return -1;
+		* end_ptr = input + 2;
+		return (input[0] & 0x1F) << 6 | (input[1] & 0x3F);
+	}
+	return -1;
 }
 
 // Encode a digit based phone number for SMS based format.
@@ -254,7 +348,7 @@ static int EncodePhoneNumber(str phone, char * output_buffer, int buffer_size) {
 		if (i % 2 == 0) {
 			output_buffer[output_buffer_length++] =	BITMASK_HIGH_4BITS | (phone.s[i] - '0');
 		} else {
-			output_buffer[output_buffer_length - 1] = (output_buffer[output_buffer_length - 1] & BITMASK_LOW_4BITS) | ((phone.s[i] - '0') << 4); 
+			output_buffer[output_buffer_length - 1] = (output_buffer[output_buffer_length - 1] & BITMASK_LOW_4BITS) | ((phone.s[i] - '0') << 4);
 		}
 	}
 
@@ -267,7 +361,7 @@ static int DecodePhoneNumber(char* buffer, int len, str phone) {
 	for (; i < len; ++i) {
 		if (i % 2 == 0)
 			phone.s[i] = (buffer[i / 2] & BITMASK_LOW_4BITS) + '0';
-	        else
+		else
 			phone.s[i] = ((buffer[i / 2] & BITMASK_HIGH_4BITS) >> 4) + '0';
 	}
 	return i;
@@ -296,6 +390,44 @@ static void EncodeTime(char * buffer) {
 	i = now->tm_sec;
 	buffer[5] = (unsigned char)((((i % 10) << 4) | (i / 10)) & 0xff);
 	buffer[6] = 0; // Timezone, we use no time offset.
+}
+
+//The function is called GetXXX but it actually creates the IE if it doesn't exist
+static struct ie_concat_sm_8bit_ref* GetConcatShortMsg8bitRefIE(sms_rp_data_t* rp_data)
+{
+	tp_udh_inf_element_t* ie = rp_data->pdu.payload.header;
+	tp_udh_inf_element_t* prev = rp_data->pdu.payload.header;
+	//Look for Concatenated SM 8bit Reference IE
+	while(ie) {
+		if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF)
+			break;
+		prev = ie;
+		ie = ie->next;
+	}
+
+	if(ie == NULL) {
+		//If not found - create it
+		ie = pkg_malloc(sizeof(tp_udh_inf_element_t));
+		if(ie == NULL) {
+			LM_ERR("no more pkg\n");
+			return NULL;
+		}
+		memset(ie, 0, sizeof(tp_udh_inf_element_t));
+		ie->identifier = TP_UDH_IE_CONCAT_SM_8BIT_REF;
+
+		if(prev) {
+			//If the previous IE is not NULL - link to it
+			prev->next = ie;
+		}
+		else {
+			//There are not IEs at all
+			rp_data->pdu.payload.header = ie;
+			//Set TP-UDHI flag to 1
+			rp_data->pdu.flags |= BITMASK_TP_UDHI;
+		}
+	}
+
+	return &(ie->concat_sm_8bit_ref);
 }
 
 // Decode SMS-Body into the given structure:
@@ -394,26 +526,103 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 				rp_data->pdu.pid = (unsigned char)body.s[p++];
 				rp_data->pdu.coding = (unsigned char)body.s[p++];
 				rp_data->pdu.validity = (unsigned char)body.s[p++];
-				len = body.s[p++];
+
+				//TP-User-Data-Length and TP-User-Data
+				len = (unsigned char)body.s[p++];
+				int fill_bits = 0;
 				if (len > 0) {
+					if((unsigned char)rp_data->pdu.flags & BITMASK_TP_UDHI) { //TP-UDHI
+						int udh_len = (unsigned char)body.s[p++];
+						int udh_read = 0;
+
+						if(rp_data->pdu.coding == 0) {
+							//calcucate padding size for 7bit coding
+							//udh_len + 1, because the length field itself should be included
+							fill_bits = (7 - (udh_len + 1) % 7) % 7; //padding size is in bits!
+						}
+
+						// Check for malicious length, which might cause buffer overflow
+						if(udh_len > body.len - p) {
+							LM_ERR("TP-User-Data-Lenght is bigger than the remaining message buffer!\n");
+							return -1;
+						}
+
+						//User-Data-Header
+						tp_udh_inf_element_t* prev_ie = NULL;
+						// IE 'Concatenated short messages, 8-bit reference number' should not be repeated
+						int contains_8bit_refnum = 0;
+						while(udh_read < udh_len) {
+							tp_udh_inf_element_t* ie = pkg_malloc(sizeof(tp_udh_inf_element_t));
+							if(ie == NULL) {
+								LM_ERR("no more pkg\n");
+								return -1;
+							}
+							memset(ie, 0, sizeof(tp_udh_inf_element_t));
+
+							ie->identifier = (unsigned char)body.s[p++];
+							ie->data.len = (unsigned char)body.s[p++];
+
+							// Check for malicious length, which might cause buffer overflow
+							if(udh_read + ie->data.len + 2 /* two octets are read so far */ > udh_len) {
+								LM_ERR("IE Lenght for IE id %d is bigger than the remaining User-Data element!\n",
+																									ie->identifier);
+								return -1;
+							}
+
+							if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF) {
+								if(contains_8bit_refnum) {
+									LM_ERR("IE Concatenated Short Message 8bit Reference occured more than once in UDH\n");
+									return -1;
+								}
+
+								ie->concat_sm_8bit_ref.ref = body.s[p++];
+								ie->concat_sm_8bit_ref.max_num_sm = body.s[p++];
+								ie->concat_sm_8bit_ref.seq = body.s[p++];
+
+								contains_8bit_refnum = 1;
+							}
+							else { /* Unsupported IE, save it as binary */
+								ie->data.s = pkg_malloc(ie->data.len);
+								if(ie->data.s == NULL) {
+									LM_ERR("no more pkg\n");
+									return -1;
+								}
+								memset(ie->data.s, 0, ie->data.len);
+								memcpy(ie->data.s, &body.s[p], ie->data.len);
+								p += ie->data.len;
+							}
+
+							if(prev_ie == NULL) {
+								rp_data->pdu.payload.header = ie;
+							}
+							else {
+								prev_ie->next = ie;
+							}
+
+							prev_ie = ie;
+							udh_read += (1 /* IE ID */ + 1 /* IE Len */ + ie->data.len /* IE data */);
+						}
+
+					}
+
 					blen = 2 + len*4;
-					rp_data->pdu.payload.s = pkg_malloc(blen);
-					if(rp_data->pdu.payload.s==NULL) {
+					rp_data->pdu.payload.sm.s = pkg_malloc(blen);
+					if(rp_data->pdu.payload.sm.s==NULL) {
 						LM_ERR("no more pkg\n");
 						return -1;
 					}
-					memset(rp_data->pdu.payload.s, 0, blen);
+					memset(rp_data->pdu.payload.sm.s, 0, blen);
 					// Coding: 7 Bit
 					if (rp_data->pdu.coding == 0x00) {
 						// We don't care about the extra used bytes here.
-						rp_data->pdu.payload.len = gsm_to_ascii(&body.s[p], blen, rp_data->pdu.payload);
+						rp_data->pdu.payload.sm.len = gsm_to_ascii(&body.s[p], len, rp_data->pdu.payload.sm, fill_bits);
 					} else {
 						// Length is worst-case 2 * len (UCS2 is 2 Bytes, UTF8 is worst-case 4 Bytes)
-						rp_data->pdu.payload.len = 0;
+						rp_data->pdu.payload.sm.len = 0;
 						while (len > 0) {
 							j = (body.s[p] << 8) + body.s[p + 1];
 							p += 2;
-							rp_data->pdu.payload.len += ucs2_to_utf8(j, &rp_data->pdu.payload.s[rp_data->pdu.payload.len]);
+							rp_data->pdu.payload.sm.len += ucs2_to_utf8(j, &rp_data->pdu.payload.sm.s[rp_data->pdu.payload.sm.len]);
 							len -= 2;
 						}
 					}
@@ -446,7 +655,7 @@ int dumpRPData(sms_rp_data_t * rpdata, int level) {
 		LOG(level, "  Coding:                     %x (%i)\n", rpdata->pdu.coding, rpdata->pdu.coding);
 		LOG(level, "  Validity:                   %x (%i)\n", rpdata->pdu.validity, rpdata->pdu.validity);
 
-		LOG(level, "  Payload:                    %.*s (%i)\n", rpdata->pdu.payload.len, rpdata->pdu.payload.s, rpdata->pdu.payload.len);
+		LOG(level, "  Payload:                    %.*s (%i)\n", rpdata->pdu.payload.sm.len, rpdata->pdu.payload.sm.s, rpdata->pdu.payload.sm.len);
 	}
 	return 1;
 }
@@ -534,7 +743,7 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	// Store the position of the length for later usage:
 	lenpos = sms_body.len;
 	sms_body.s[sms_body.len++] = 0x00;
-	
+
 	///////////////////////////////////////////////////
 	// T-PDU
 	///////////////////////////////////////////////////
@@ -550,13 +759,13 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	// Service-Center-Timestamp (always 7 octets)
 	EncodeTime(&sms_body.s[sms_body.len]);
 	sms_body.len += 7;
-	sms_body.s[sms_body.len++] = rp_send_data->pdu.payload.len;
-	i = ascii_to_gsm(rp_send_data->pdu.payload, &sms_body.s[sms_body.len], buffer_size - sms_body.len);
+	sms_body.s[sms_body.len++] = rp_send_data->pdu.payload.sm.len;
+	i = ascii_to_gsm(rp_send_data->pdu.payload.sm, &sms_body.s[sms_body.len], buffer_size - sms_body.len);
 	sms_body.len += i - 1;
 
 	// Update the len of the PDU
 	sms_body.s[lenpos] = (unsigned char)(sms_body.len - lenpos - 1);
-	
+
 	return pv_get_strval(msg, param, res, &sms_body);
 }
 
@@ -591,11 +800,38 @@ int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 		case SMS_TPDU_REFERENCE:
 			return  pv_get_sintval(msg, param, res, (int)rp_data->pdu.reference);
 		case SMS_TPDU_PAYLOAD:
-			return pv_get_strval(msg, param, res, &rp_data->pdu.payload);
+			return pv_get_strval(msg, param, res, &rp_data->pdu.payload.sm);
 		case SMS_TPDU_DESTINATION:
 			return pv_get_strval(msg, param, res, &rp_data->pdu.destination);
 		case SMS_TPDU_ORIGINATING_ADDRESS:
 			return pv_get_strval(msg, param, res, &rp_data->pdu.originating_address);
+		case SMS_UDH_CONCATSM_REF: {
+			tp_udh_inf_element_t* ie = rp_data->pdu.payload.header;
+			while(ie) {
+				if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF)
+					return pv_get_uintval(msg, param, res, (unsigned int)ie->concat_sm_8bit_ref.ref);
+				ie = ie->next;
+			}
+			return -1;
+		}
+		case SMS_UDH_CONCATSM_MAX_NUM_SM: {
+			tp_udh_inf_element_t* ie = rp_data->pdu.payload.header;
+			while(ie) {
+				if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF)
+					return pv_get_uintval(msg, param, res, (unsigned int)ie->concat_sm_8bit_ref.max_num_sm);
+				ie = ie->next;
+			}
+			return -1;
+		}
+		case SMS_UDH_CONCATSM_SEQ: {
+			tp_udh_inf_element_t* ie = rp_data->pdu.payload.header;
+			while(ie) {
+				if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF)
+					return pv_get_uintval(msg, param, res, (unsigned int)ie->concat_sm_8bit_ref.seq);
+				ie = ie->next;
+			}
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -750,10 +986,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 			rp_send_data->pdu.validity = (unsigned char)val->ri;
 			break;
 		case SMS_TPDU_PAYLOAD:
-			if (rp_send_data->pdu.payload.s) {
-				pkg_free(rp_send_data->pdu.payload.s);
-				rp_send_data->pdu.payload.s = 0;
-				rp_send_data->pdu.payload.len = 0;
+			if (rp_send_data->pdu.payload.sm.s) {
+				pkg_free(rp_send_data->pdu.payload.sm.s);
+				rp_send_data->pdu.payload.sm.s = 0;
+				rp_send_data->pdu.payload.sm.len = 0;
 			}
 			if (val == NULL)
 				return 0;
@@ -761,13 +997,13 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				LM_ERR("Invalid type\n");
 				return -1;
 			}
-			rp_send_data->pdu.payload.s = pkg_malloc(val->rs.len);
-			if(rp_send_data->pdu.payload.s==NULL) {
+			rp_send_data->pdu.payload.sm.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->pdu.payload.sm.s==NULL) {
 				LM_ERR("no more pkg\n");
 				return -1;
 			}
-			rp_send_data->pdu.payload.len = val->rs.len;
-			memcpy(rp_send_data->pdu.payload.s, val->rs.s, val->rs.len);
+			rp_send_data->pdu.payload.sm.len = val->rs.len;
+			memcpy(rp_send_data->pdu.payload.sm.s, val->rs.s, val->rs.len);
 			break;
 		case SMS_TPDU_DESTINATION:
 			if (rp_send_data->pdu.destination.s) {
@@ -809,7 +1045,48 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 			rp_send_data->pdu.originating_address.len = val->rs.len;
 			memcpy(rp_send_data->pdu.originating_address.s, val->rs.s, val->rs.len);
 			break;
+		case SMS_UDH_CONCATSM_REF: {
+			if (val == NULL)
+				return 0;
+			if (!(val->flags&PV_VAL_INT)) {
+				LM_ERR("Invalid type\n");
+				return -1;
+			}
+			struct ie_concat_sm_8bit_ref* concat = GetConcatShortMsg8bitRefIE(rp_data);
+			if(concat == NULL)
+				return -1;
 
+			concat->ref = (unsigned char)val->ri;
+			break;
+		}
+		case SMS_UDH_CONCATSM_MAX_NUM_SM: {
+			if (val == NULL)
+				return 0;
+			if (!(val->flags&PV_VAL_INT)) {
+				LM_ERR("Invalid type\n");
+				return -1;
+			}
+			struct ie_concat_sm_8bit_ref* concat = GetConcatShortMsg8bitRefIE(rp_data);
+			if(concat == NULL)
+				return -1;
+
+			concat->max_num_sm = (unsigned char)val->ri;
+			break;
+		}
+		case SMS_UDH_CONCATSM_SEQ: {
+			if (val == NULL)
+				return 0;
+			if (!(val->flags&PV_VAL_INT)) {
+				LM_ERR("Invalid type\n");
+				return -1;
+			}
+			struct ie_concat_sm_8bit_ref* concat = GetConcatShortMsg8bitRefIE(rp_data);
+			if(concat == NULL)
+				return -1;
+
+			concat->seq = (unsigned char)val->ri;
+			break;
+		}
 	}
 	return 0;
 }
@@ -818,23 +1095,23 @@ int pv_parse_rpdata_name(pv_spec_p sp, str *in) {
 	if (sp==NULL || in==NULL || in->len<=0) return -1;
 
 	switch(in->len) {
-		case 3: 
+		case 3:
 			if (strncmp(in->s, "all", 3) == 0) sp->pvp.pvn.u.isname.name.n = SMS_ALL;
 			else goto error;
 			break;
-		case 4: 
+		case 4:
 			if (strncmp(in->s, "type", 4) == 0) sp->pvp.pvn.u.isname.name.n = SMS_RPDATA_TYPE;
 			else goto error;
 			break;
-		case 9: 
+		case 9:
 			if (strncmp(in->s, "reference", 9) == 0) sp->pvp.pvn.u.isname.name.n = SMS_RPDATA_REFERENCE;
 			else goto error;
 			break;
-		case 10: 
+		case 10:
 			if (strncmp(in->s, "originator", 10) == 0) sp->pvp.pvn.u.isname.name.n = SMS_RPDATA_ORIGINATOR;
 			else goto error;
 			break;
-		case 11: 
+		case 11:
 			if (strncmp(in->s, "destination", 11) == 0) sp->pvp.pvn.u.isname.name.n = SMS_RPDATA_DESTINATION;
 			else goto error;
 			break;
@@ -855,38 +1132,41 @@ int pv_parse_tpdu_name(pv_spec_p sp, str *in) {
 	if (sp==NULL || in==NULL || in->len<=0) return -1;
 
 	switch(in->len) {
-		case 3: 
+		case 3:
 			if (strncmp(in->s, "all", 3) == 0) sp->pvp.pvn.u.isname.name.n = SMS_ALL;
 			else goto error;
 			break;
-		case 4: 
+		case 4:
 			if (strncmp(in->s, "type", 4) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_TYPE;
 			else goto error;
 			break;
-		case 5: 
+		case 5:
 			if (strncmp(in->s, "flags", 5) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_FLAGS;
+			else if (strncmp(in->s, "mp_id", 5) == 0) sp->pvp.pvn.u.isname.name.n = SMS_UDH_CONCATSM_REF;
 			else goto error;
 			break;
-		case 6: 
+		case 6:
 			if (strncmp(in->s, "coding", 6) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_CODING;
 			else if (strncmp(in->s, "origen", 6) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_ORIGINATING_ADDRESS;
 			else goto error;
 			break;
-		case 7: 
+		case 7:
 			if (strncmp(in->s, "payload", 7) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_PAYLOAD;
 			else goto error;
 			break;
-		case 8: 
+		case 8:
 			if (strncmp(in->s, "protocol", 8) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_PROTOCOL;
 			else if (strncmp(in->s, "validity", 8) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_VALIDITY;
+			else if (strncmp(in->s, "mp_parts", 8) == 0) sp->pvp.pvn.u.isname.name.n = SMS_UDH_CONCATSM_MAX_NUM_SM;
 			else goto error;
 			break;
-		case 9: 
+		case 9:
 			if (strncmp(in->s, "reference", 9) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_REFERENCE;
 			else goto error;
 			break;
-		case 11: 
+		case 11:
 			if (strncmp(in->s, "destination", 11) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_DESTINATION;
+			else if (strncmp(in->s, "mp_part_num", 11) == 0) sp->pvp.pvn.u.isname.name.n = SMS_UDH_CONCATSM_SEQ;
 			else goto error;
 			break;
 		default:
