@@ -585,6 +585,11 @@ error:
 
 int reload_trusted_table_cmd(void)
 {
+	if(!db_url.s) {
+		LM_ERR("db_url not set\n");
+		return -1;
+	}
+
 	if (!db_handle) {
 		db_handle = perm_dbf.init(&db_url);
 		if (!db_handle) {
