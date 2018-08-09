@@ -2641,7 +2641,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer,
 			LM_DBG("alter port body1='%.*s'\n", body1.len, body1.s);
 #endif
 			/* do not do it if old port was 0 (means media disable)
-			 * - check if actually should be better done in rtpptoxy,
+			 * - check if actually should be better done in rtpproxy,
 			 *   by returning also 0
 			 * - or by not sending to rtpproxy the old port if 0
 			 */
