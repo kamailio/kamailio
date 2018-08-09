@@ -45,4 +45,7 @@ int remove_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_para
 int add_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir);
 int remove_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir);
 
+int clean_sa(struct mnl_socket*  mnl_socket);
+int clean_policy(struct mnl_socket*  mnl_socket);
+
 #endif /* IMS_IPSEC_PCSCF_IPSEC */

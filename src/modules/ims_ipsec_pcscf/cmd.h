@@ -52,5 +52,6 @@ struct udomain_t;
 int ipsec_create(struct sip_msg* m, udomain_t* d);
 int ipsec_forward(struct sip_msg* m, udomain_t* d);
 int ipsec_destroy(struct sip_msg* m, udomain_t* d);
+int ipsec_cleanall();
 
 #endif /* IPSEC_CMD_H */

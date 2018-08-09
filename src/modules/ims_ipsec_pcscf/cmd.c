@@ -626,3 +626,23 @@ cleanup:
     pkg_free(ci.received_host.s);
     return ret;
 }
+
+int ipsec_cleanall()
+{
+    struct mnl_socket* nlsock = init_mnl_socket();
+    if(!nlsock) {
+        return -1;
+    }
+
+    if(clean_sa(nlsock) != 0) {
+        LM_WARN("Error cleaning IPSec Security associations during startup.\n");
+    }
+
+    if(clean_policy(nlsock) != 0) {
+        LM_WARN("Error cleaning IPSec Policies during startup.\n");
+    }
+
+    close_mnl_socket(nlsock);
+
+    return 0;
+}

@@ -40,6 +40,7 @@ int ipsec_client_port =  5062;
 int ipsec_server_port =  5063;
 int spi_id_start = 100;
 int spi_id_range = 1000;
+int xfrm_user_selector = 143956232;
 
 /*! \brief Module init & destroy function */
 static int  mod_init(void);
@@ -179,7 +180,10 @@ static int mod_init(void) {
         return -1;
     }
 
-    //TODO: cleanup ipsec tunnels here
+    if(ipsec_cleanall() != 0) {
+        LM_ERR("Error ipsec tunnels during for module initialisation\n");
+        return -1;
+	}
 
     int res = 0;
     if((res = init_spi_gen(spi_id_start, spi_id_start + spi_id_range)) != 0) {
@@ -192,7 +196,9 @@ static int mod_init(void) {
 
 static void mod_destroy(void)
 {
-    //TODO: cleanup ipsec tunnels here
+    if(ipsec_cleanall() != 0) {
+        LM_ERR("Error ipsec tunnels during for module cleanup\n");
+	}
 
     if(destroy_spi_gen() != 0) {
         LM_ERR("Error destroying spi generator\n");

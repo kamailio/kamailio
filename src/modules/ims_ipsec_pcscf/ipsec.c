@@ -32,8 +32,24 @@
 #include <libmnl/libmnl.h>
 #include <linux/xfrm.h>
 #include <time.h>
+//#include <stdio.h>
+//#include <string.h>
+
 
 #define XFRM_TMPLS_BUF_SIZE 1024
+#define NLMSG_BUF_SIZE 4096
+#define NLMSG_DELETEALL_BUF_SIZE 8192
+
+
+extern int xfrm_user_selector;
+extern int spi_id_start;
+extern int spi_id_range;
+
+struct xfrm_buffer {
+    char buf[NLMSG_DELETEALL_BUF_SIZE];
+    int offset;
+};
+
 
 //
 // This file contains all Linux specific IPSec code.
@@ -128,6 +144,7 @@ int add_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_param, 
     l_xsainfo->sel.sport_mask   = 0xFFFF;
     l_xsainfo->sel.prefixlen_s  = 32;
     l_xsainfo->sel.proto        = IPPROTO_UDP;
+    l_xsainfo->sel.user         = htonl(xfrm_user_selector);
 
     l_xsainfo->saddr.a4         = inet_addr(src_addr);
     l_xsainfo->id.daddr.a4      = inet_addr(dest_addr);
@@ -290,6 +307,7 @@ int add_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_
     l_xpinfo->sel.sport_mask    = 0xFFFF;
     l_xpinfo->sel.prefixlen_s   = 32;
     l_xpinfo->sel.proto         = IPPROTO_UDP;
+    l_xpinfo->sel.user          = htonl(xfrm_user_selector);
 
     l_xpinfo->lft.soft_byte_limit   = XFRM_INF;
     l_xpinfo->lft.hard_byte_limit   = XFRM_INF;
@@ -404,6 +422,159 @@ int remove_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_ad
     {
         LM_ERR("Failed to send Netlink message, error: %s\n", strerror(errno));
         return -1;
+    }
+
+    return 0;
+}
+
+static int delsa_data_cb(const struct nlmsghdr *nlh, void *data)
+{
+    struct xfrm_usersa_info *xsinfo = NLMSG_DATA(nlh);
+    int xfrm_userid = ntohl(xsinfo->sel.user);
+
+    //Check if user id is different from Kamailio's
+    if(xfrm_userid != xfrm_user_selector)
+        return MNL_CB_OK;
+
+    struct xfrm_buffer* delmsg_buf = (struct xfrm_buffer*)data;
+    uint32_t new_delmsg_len = NLMSG_LENGTH(sizeof(struct xfrm_usersa_id));
+
+    if(delmsg_buf->offset + new_delmsg_len > sizeof(delmsg_buf->buf)/sizeof(delmsg_buf->buf[0])) {
+        LM_ERR("Not enough memory allocated for delete SAs netlink command\n");
+        return MNL_CB_ERROR;
+    }
+
+    struct nlmsghdr *new_delmsg = (struct nlmsghdr *)&delmsg_buf->buf[delmsg_buf->offset];
+    new_delmsg->nlmsg_len = new_delmsg_len;
+    new_delmsg->nlmsg_flags = NLM_F_REQUEST;
+    new_delmsg->nlmsg_type = XFRM_MSG_DELSA;
+    new_delmsg->nlmsg_seq = time(NULL);
+
+    struct xfrm_usersa_id *xsid = NLMSG_DATA(new_delmsg);
+    xsid->family = xsinfo->family;
+    memcpy(&xsid->daddr, &xsinfo->id.daddr, sizeof(xsid->daddr));
+    xsid->spi = xsinfo->id.spi;
+    xsid->proto = xsinfo->id.proto;
+
+    mnl_attr_put(new_delmsg, XFRMA_SRCADDR, sizeof(xsid->daddr), &xsinfo->saddr);
+
+    delmsg_buf->offset += new_delmsg->nlmsg_len;
+
+    return MNL_CB_OK;
+}
+
+static int delpolicy_data_cb(const struct nlmsghdr *nlh, void *data)
+{
+    struct xfrm_userpolicy_info *xpinfo = NLMSG_DATA(nlh);
+    int xfrm_userid = ntohl(xpinfo->sel.user);
+
+    //Check if user id is different from Kamailio's
+    if(xfrm_userid != xfrm_user_selector)
+        return MNL_CB_OK;
+
+    struct xfrm_buffer* delmsg_buf = (struct xfrm_buffer*)data;
+    uint32_t new_delmsg_len = NLMSG_LENGTH(sizeof(struct xfrm_userpolicy_id));
+
+    if(delmsg_buf->offset + new_delmsg_len > sizeof(delmsg_buf->buf)/sizeof(delmsg_buf->buf[0])) {
+        LM_ERR("Not enough memory allocated for delete policies netlink command\n");
+        return MNL_CB_ERROR;
+    }
+
+    struct nlmsghdr *new_delmsg = (struct nlmsghdr *)&delmsg_buf->buf[delmsg_buf->offset];
+    new_delmsg->nlmsg_len = new_delmsg_len;
+    new_delmsg->nlmsg_flags = NLM_F_REQUEST;
+    new_delmsg->nlmsg_type = XFRM_MSG_DELPOLICY;
+    new_delmsg->nlmsg_seq = time(NULL);
+
+    struct xfrm_userpolicy_id *xpid = NLMSG_DATA(new_delmsg);
+    memcpy(&xpid->sel, &xpinfo->sel, sizeof(xpid->sel));
+    xpid->dir = xpinfo->dir;
+    xpid->index = xpinfo->index;
+
+    delmsg_buf->offset += new_delmsg->nlmsg_len;
+
+    return MNL_CB_OK;
+}
+
+int clean_sa(struct mnl_socket*  mnl_socket)
+{
+    struct {
+        struct nlmsghdr n;
+        //char buf[NLMSG_BUF_SIZE];
+    } req = {
+        .n.nlmsg_len = NLMSG_HDRLEN,
+        .n.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+        .n.nlmsg_type = XFRM_MSG_GETSA,
+        .n.nlmsg_seq = time(NULL),
+    };
+
+    if(mnl_socket_sendto(mnl_socket, &req, req.n.nlmsg_len) == -1) {
+        LM_ERR("Error sending get all SAs command via netlink socket: %s\n", strerror(errno));
+        return 1;
+    }
+
+    char buf[NLMSG_BUF_SIZE];
+    memset(&buf, 0, sizeof(buf));
+
+    struct xfrm_buffer delmsg_buf;
+    memset(&delmsg_buf, 0, sizeof(struct xfrm_buffer));
+
+    int ret = mnl_socket_recvfrom(mnl_socket, buf, sizeof(buf));
+    while (ret > 0) {
+        ret = mnl_cb_run(buf, ret, req.n.nlmsg_seq, mnl_socket_get_portid(mnl_socket), delsa_data_cb, &delmsg_buf);
+        if (ret <= MNL_CB_STOP) {
+
+            break;
+        }
+        ret = mnl_socket_recvfrom(mnl_socket, buf, sizeof(buf));
+    }
+
+    // DELETE SAs
+    if(mnl_socket_sendto(mnl_socket, &delmsg_buf.buf, delmsg_buf.offset) == -1) {
+        LM_ERR("Error sending delete SAs command via netlink socket: %s\n", strerror(errno));
+        return 1;
+    }
+
+    return 0;
+}
+
+int clean_policy(struct mnl_socket*  mnl_socket)
+{
+    struct {
+        struct nlmsghdr n;
+        //char buf[NLMSG_BUF_SIZE];
+    } req = {
+        .n.nlmsg_len = NLMSG_HDRLEN,
+        .n.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+        .n.nlmsg_type = XFRM_MSG_GETPOLICY,
+        .n.nlmsg_seq = time(NULL),
+    };
+
+    if(mnl_socket_sendto(mnl_socket, &req, req.n.nlmsg_len) == -1) {
+        LM_ERR("Error sending get all policies command via netlink socket: %s\n", strerror(errno));
+        return 1;
+    }
+
+    char buf[NLMSG_BUF_SIZE];
+    memset(&buf, 0, sizeof(buf));
+
+    struct xfrm_buffer delmsg_buf;
+    memset(&delmsg_buf, 0, sizeof(struct xfrm_buffer));
+
+    int ret = mnl_socket_recvfrom(mnl_socket, buf, sizeof(buf));
+    while (ret > 0) {
+        ret = mnl_cb_run(buf, ret, req.n.nlmsg_seq, mnl_socket_get_portid(mnl_socket), delpolicy_data_cb, &delmsg_buf);
+        if (ret <= MNL_CB_STOP) {
+
+            break;
+        }
+        ret = mnl_socket_recvfrom(mnl_socket, buf, sizeof(buf));
+    }
+
+    // DELETE POLICIES
+    if(mnl_socket_sendto(mnl_socket, &delmsg_buf.buf, delmsg_buf.offset) == -1) {
+        LM_ERR("Error sending delete policies command via netlink socket: %s\n", strerror(errno));
+        return 1;
     }
 
     return 0;
