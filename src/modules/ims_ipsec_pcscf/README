@@ -24,11 +24,11 @@ Tsvetomir Dimitrov
 
    <tsv.dimitrov@gmail.com>
 
-   Copyright © 2007 FhG FOKUS
+   Copyright Â© 2007 FhG FOKUS
 
-   Copyright © 2012 Smile Communications
+   Copyright Â© 2012 Smile Communications
 
-   Copyright © 2015 ng-voice GmbH
+   Copyright Â© 2015 ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -94,20 +94,6 @@ Chapter 1. Admin Guide
 
    This module contains methods for IPSec initialisation/deinitialisation
    related for usage of Kamailio as a Proxy-CSCF.
-
-   Important notice!!! Currently the module doesn't clear the IPSec
-   tunnels( Policies and Security associations, in XFRM terms) on startup
-   and shutdown. This will be fixed in future releases. For the moment the
-   following command can be used to clear the tunnels manually:
-
-   ip xfrm state deleteall
-
-   ip xfrm policy deleteall
-
-   Please note that this will clear ALL xfrm states and policies. This
-   means that it will interfere with other IPSec applications on the
-   machine. If this is the case, Kamailio's states and policies should be
-   cleared manually.
 
 2. Dependencies
 
