@@ -987,7 +987,7 @@ event_route[uac:reply] {
 			Return the details of a remote registration record based on
 			a filter. The command has two parameter: attribute and value.
 			The attribute can be: l_uuid, l_username, r_username or auth_username.
-			The value is what should be matcheg against the value of the attribute
+			The value is what should be matched against the value of the attribute
 			in the remote registration record.
 		</para>
 		<para>
@@ -1029,7 +1029,7 @@ event_route[uac:reply] {
 			Enable a remote registration record based on
 			a filter. The command has two parameter: attribute and value.
 			The attribute can be: l_uuid, l_username, r_username or auth_username.
-			The value is what should be matcheg against the value of the attribute
+			The value is what should be matched against the value of the attribute
 			in the remote registration record.
 		</para>
 		<example>
@@ -1050,7 +1050,7 @@ event_route[uac:reply] {
 			Disable a remote registration record based on
 			a filter. The command has two parameter: attribute and value.
 			The attribute can be: l_uuid, l_username, r_username or auth_username.
-			The value is what should be matcheg against the value of the attribute
+			The value is what should be matched against the value of the attribute
 			in the remote registration record.
 		</para>
 		<example>
