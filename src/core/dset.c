@@ -759,7 +759,8 @@ int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri)
 	/*uri;alias=[ip]~port~proto*/
 	len = uri->len+ip.len+port.len+12;
 	if(len>=nuri->len) {
-		LM_ERR("not enough space for new uri: %d\n", len);
+		LM_ERR("not enough space - new uri len: %d (buf size: %d)\n",
+				len, nuri->len);
 		return -1;
 	}
 	p = nuri->s;
