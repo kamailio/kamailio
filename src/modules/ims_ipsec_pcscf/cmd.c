@@ -195,7 +195,7 @@ static int get_ck_ik(const struct sip_msg* m, str* ck, str* ik)
     str www_auth;
     memset(&www_auth, 0, sizeof(str));
 
-    www_auth = cscf_get_authenticate(m, &www_auth_hdr);
+    www_auth = cscf_get_authenticate((sip_msg_t*)m, &www_auth_hdr);
 
     *ck = get_www_auth_param("ck", www_auth);
     if (ck->len == 0) {
