@@ -318,6 +318,8 @@ static int t_cancel_branches_helper(sip_msg_t* msg, int n)
 	if(tcx != NULL)
 		idx = tcx->branch_index;
 	init_cancel_info(&cancel_data);
+	/* tm function: prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm,
+	                                                branch_bm_t skip_branches) */
 	switch(n) {
 		case 1:
 			/* prepare cancel for every branch except idx (others) */
@@ -329,6 +331,7 @@ static int t_cancel_branches_helper(sip_msg_t* msg, int n)
 			if(msg->first_line.u.reply.statuscode>=200)
 				break;
 			cancel_data.cancel_bitmap = 1<<idx;
+			 _tmx_tmb.prepare_to_cancel(t, &cancel_data.cancel_bitmap, 0);
 			break;
 		default:
 			/* prepare cancel for all branches */
