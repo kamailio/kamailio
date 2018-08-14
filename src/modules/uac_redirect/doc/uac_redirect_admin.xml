@@ -211,14 +211,14 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
 		<section>
 			<title><varname>acc_function</varname> (string)</title>
 			<para>
-			Specifies the accounting function to be used. Just be defining 
+			Specifies the accounting function to be used. Just by defining 
 			this parameter, the accounting support will not be enabled. 
 			Accounting may only be enabled via two parameters 
 			<function moreinfo="none">set_accept_filter()</function> 
 			scripting function.
 			</para>
 			<para>
-			Its values my be:
+			Its values may be:
 			</para>
 			<itemizedlist>
 				<listitem>
@@ -253,7 +253,7 @@ modparam("uac_redirect","acc_function","acc_db_request")
 			<para>
 			Specifies the accounting table to be used if DB accounting was 
 			chosen (<varname>acc_function</varname> was set to 
-			<quote>acc_db_request</quote>). Just be defining 
+			<quote>acc_db_request</quote>). Just by defining 
 			this parameter, the accounting support will not be enabled. 
 			Accounting may only be enabled via two parameters 
 			<function moreinfo="none">set_accept_filter()</function> 
