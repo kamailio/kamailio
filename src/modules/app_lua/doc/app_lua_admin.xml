@@ -351,10 +351,10 @@ if(!lua_run("sr_append_fu_to_reply")) {
     xdbg("SCRIPT: failed to execute lua function!\n");
 }
 ...
-lua_run("lua_funcx0");
-lua_run("lua_funcx1", "$rU");
-lua_run("lua_funcx2", "$rU", "2");
-lua_run("lua_funcx3", "$rU", "2", "$si");
+lua_run("lua_func0");
+lua_run("lua_func1", "$rU");
+lua_run("lua_func2", "$rU", "2");
+lua_run("lua_func3", "$rU", "2", "$si");
 ...
 </programlisting>
 	    </example>
