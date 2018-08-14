@@ -34,6 +34,7 @@ Daniel-Constantin Mierla
               3.7. clean_interval (int)
               3.8. event_callback (str)
               3.9. event_mode (int)
+              3.10. contact_host (str)
 
         4. Event Routes
 
@@ -51,8 +52,9 @@ Daniel-Constantin Mierla
    1.7. Set clean_interval parameter
    1.8. Set event_callback parameter
    1.9. Set event_mode parameter
-   1.10. Usage of event_route[topos:msg-outgoing]
-   1.11. Usage of event_route[topos:msg-sending]
+   1.10. Set contact_host parameter
+   1.11. Usage of event_route[topos:msg-outgoing]
+   1.12. Usage of event_route[topos:msg-sending]
 
 Chapter 1. Admin Guide
 
@@ -75,6 +77,7 @@ Chapter 1. Admin Guide
         3.7. clean_interval (int)
         3.8. event_callback (str)
         3.9. event_mode (int)
+        3.10. contact_host (str)
 
    4. Event Routes
 
@@ -126,6 +129,7 @@ Chapter 1. Admin Guide
    3.7. clean_interval (int)
    3.8. event_callback (str)
    3.9. event_mode (int)
+   3.10. contact_host (str)
 
 3.1. storage (str)
 
@@ -247,6 +251,21 @@ end
 modparam("topos", "event_mode", 2)
 ...
 
+3.10. contact_host (str)
+
+   You may need to control the host part of the Contact header added by
+   topos. For example when using TLS with TOPOS the remote UAS must be
+   able to open a new TLS socket to the contact header. In this case, the
+   contact header must contain a domain name with a trusted CA signed
+   certitificate.
+
+   Default value is taken from the Record-Route URI.
+
+   Example 1.10. Set contact_host parameter
+...
+modparam("topos", "contact_host", "proxy.domain.com")
+...
+
 4. Event Routes
 
    4.1. event_route[topos:msg-outgoing]
@@ -264,7 +283,7 @@ modparam("topos", "event_mode", 2)
    reparsing the outgoing SIP message for the cases when topology hiding
    is not wanted.
 
-   Example 1.10. Usage of event_route[topos:msg-outgoing]
+   Example 1.11. Usage of event_route[topos:msg-outgoing]
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
@@ -283,7 +302,7 @@ event_route[topos:msg-outgoing] {
    $sndto(proto) point to the destination. The SIP message is the one to
    be sent out.
 
-   Example 1.11. Usage of event_route[topos:msg-sending]
+   Example 1.12. Usage of event_route[topos:msg-sending]
 ...
 event_route[topos:msg-sending] {
   if(is_request() and $fU=="alice") {
