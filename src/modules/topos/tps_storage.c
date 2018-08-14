@@ -210,6 +210,7 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 	str sv;
 	sip_uri_t puri;
 	int i;
+	int contact_len;
 
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		sv = td->bs_contact;
@@ -226,7 +227,7 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 		return -1;
 	}
 
-	int contact_len = sv.len;
+	contact_len = sv.len;
 	if (_tps_contact_host.len)
 		contact_len = sv.len - puri.host.len + _tps_contact_host.len;
 
