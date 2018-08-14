@@ -267,7 +267,8 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 		if(unlikely(main_rt.rlist[DEFAULT_RT] == NULL)) {
 			keng = sr_kemi_eng_get();
 			if(keng == NULL) {
-				LM_ERR("no config routing engine registered\n");
+				LM_ERR("no request_route {...} and no other config routing"
+						" engine registered\n");
 				goto error_req;
 			}
 			if(keng->froute(msg, REQUEST_ROUTE, NULL, NULL) < 0) {
