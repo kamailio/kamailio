@@ -26,6 +26,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/dset.h"
 #include "../../core/parser/msg_parser.h"
+#include "../../core/lvalue.h"
 
 #include "msgobj_struct.h"
 #include "structmember.h"
@@ -181,6 +182,93 @@ static PyObject *msg_getHeader(msgobject *self, PyObject *args)
 	return PyString_FromStringAndSize(hbody->s, hbody->len);
 }
 
+static PyObject *
+msg_get_pv(msgobject *self, PyObject *args)
+{
+    str pvname;
+    pv_spec_t pv_spec; 
+    pv_value_t pv_val;
+    char tmp[200];
+    int avp_id;
+    int_str id_val;
+    struct usr_avp *avp;
+
+    if (self->msg == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
+        return NULL;
+    }
+
+    if(!PyArg_ParseTuple(args, "s:get_pv", &pvname.s))
+        return NULL;
+    pvname.len = strlen(pvname.s);
+    if (pv_parse_spec(&pvname, &pv_spec)==0 || pv_spec.type==PVT_NULL) {
+            snprintf(tmp, sizeof(tmp), "Invalid PV name %s", pvname.s);
+            PyErr_SetString(PyExc_RuntimeError, tmp);
+            return NULL;
+    } 
+    
+    if (pv_get_spec_value( self->msg, (pv_spec_p) &pv_spec, &pv_val)!=0) {
+        snprintf(tmp, sizeof(tmp), "Failed to get pv value for %s", pvname.s);
+        PyErr_SetString(PyExc_RuntimeError, tmp);
+        return NULL;
+    }
+    if (pv_val.flags & PV_VAL_INT) {
+        return PyLong_FromLong(pv_val.ri);
+    }
+    else if (pv_val.flags & PV_VAL_STR) {
+        return PyString_FromStringAndSize(pv_val.rs.s, pv_val.rs.len);
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject *
+msg_set_pv(msgobject *self, PyObject *args)
+{
+    str pvname, value;
+    pv_spec_t pv_spec; 
+    pv_value_t pv_val, pv_val_tmp;
+    int int_val;
+    char tmp[200];
+
+    if (self->msg == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
+        return NULL;
+    }
+
+    if(PyArg_ParseTuple(args, "ss:set_pv", &pvname.s, &value.s)) {
+        pvname.len = strlen(pvname.s);
+        value.len = strlen(value.s);
+
+        pv_val.flags = PV_VAL_STR;
+        pv_val.rs = value;
+    }
+    else if(PyArg_ParseTuple(args, "si:set_pv", &pvname.s, &int_val)) {
+        PyErr_Clear();
+        pvname.len = strlen(pvname.s);
+
+        pv_val.flags = PV_TYPE_INT | PV_VAL_INT;
+        pv_val.ri = int_val;
+    }
+    else {
+        return NULL;
+    }
+    
+    if (pv_parse_spec(&pvname, &pv_spec)==0 || pv_spec.type==PVT_NULL) {
+            snprintf(tmp, sizeof(tmp), "Invalid PV name %s", pvname.s);
+            PyErr_SetString(PyExc_RuntimeError, tmp);
+            return NULL;
+    }
+
+    if (pv_spec.setf(self->msg, &pv_spec.pvp, (int) EQ_T, &pv_val) != 0) {
+        snprintf(tmp, sizeof(tmp), "Failed to set pv value for %s", pvname.s);
+        PyErr_SetString(PyExc_RuntimeError, tmp);
+        return NULL;
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 PyObject *msg_call_function(msgobject *self, PyObject *args)
 {
 	int i, rval;
@@ -296,6 +384,10 @@ static PyMethodDef msg_methods[] = {
 		"Set destination URI."},
 	{"getHeader",     (PyCFunction)msg_getHeader,     METH_VARARGS,
 		"Get SIP header field by name."},
+        {"get_pv", (PyCFunction)msg_get_pv, METH_VARARGS,
+                "Get value of a pseudo variable."},
+        {"set_pv", (PyCFunction)msg_set_pv, METH_VARARGS,
+                "Set value of a pseudo variable."},
 	{"call_function", (PyCFunction)msg_call_function, METH_VARARGS,
 		"Invoke function exported by the other module."},
 	{NULL, NULL, 0, NULL} /* sentinel */
