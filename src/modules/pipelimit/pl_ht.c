@@ -477,7 +477,6 @@ void rpc_pl_list(rpc_t *rpc, void *c)
 	int i;
 	pl_pipe_t *it;
 	str pipeid = STR_NULL;
-	int ret;
 
 	if (rpc->scan(c, "*S", &pipeid) < 1) {
 		pipeid.s = NULL;
