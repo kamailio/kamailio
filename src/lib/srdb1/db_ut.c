@@ -113,7 +113,7 @@ int db_str2uint(const char* _s, unsigned int* _v)
 
 	tmp = strtoul(_s, &p, 10);
 	if ((tmp == ULONG_MAX && errno == ERANGE) ||
-				(tmp < INT_MIN) || (tmp > UINT_MAX)) {
+				((long)tmp < INT_MIN) || (tmp > UINT_MAX)) {
 		LM_ERR("Value out of range\n");
 		return -1;
 	}
