@@ -56,22 +56,12 @@ Lucian Balaceanu
               5.1. cr.reload_routes
               5.2. cr.dump_routes
 
-        6. MI Commands
+        6. Configuration examples
+        7. Installation and Running
 
-              6.1. cr_reload_routes
-              6.2. cr_dump_routes
-              6.3. cr_replace_host
-              6.4. cr_deactivate_host
-              6.5. cr_activate_host
-              6.6. cr_add_host
-              6.7. cr_delete_host
-
-        7. Configuration examples
-        8. Installation and Running
-
-              8.1. Database setup
-              8.2. Database examples
-              8.3. User specific routing
+              7.1. Database setup
+              7.2. Database examples
+              7.3. User specific routing
 
    2. Module parameter for database access.
 
@@ -122,20 +112,15 @@ Lucian Balaceanu
    1.11. Unset db_load_description parameter
    1.12. Set match_mode parameter
    1.13. Set avoid_failed_destinations parameter
-   1.14. cr_replace_host usage
-   1.15. cr_deactivate_host usage
-   1.16. cr_activate_host usage
-   1.17. cr_add_host usage
-   1.18. cr_delete_host usage
-   1.19. Configuration example - Routing to default tree
-   1.20. Configuration example - Routing to user tree
-   1.21. Configuration example - module configuration
-   1.22. Example database content - carrierroute table
-   1.23. Example database content - simple carrierfailureroute table
-   1.24. Example database content - more complex carrierfailureroute table
-   1.25. Example database content - carrier_name table
-   1.26. Example database content - domain_name table
-   1.27. Necessary extensions for the user table
+   1.14. Configuration example - Routing to default tree
+   1.15. Configuration example - Routing to user tree
+   1.16. Configuration example - module configuration
+   1.17. Example database content - carrierroute table
+   1.18. Example database content - simple carrierfailureroute table
+   1.19. Example database content - more complex carrierfailureroute table
+   1.20. Example database content - carrier_name table
+   1.21. Example database content - domain_name table
+   1.22. Necessary extensions for the user table
    2.1. Set db_url parameter
    2.2. Set carrierroute_table parameter
    2.3. Set carrierroute_id_col parameter
@@ -210,22 +195,12 @@ Chapter 1. Admin Guide
         5.1. cr.reload_routes
         5.2. cr.dump_routes
 
-   6. MI Commands
+   6. Configuration examples
+   7. Installation and Running
 
-        6.1. cr_reload_routes
-        6.2. cr_dump_routes
-        6.3. cr_replace_host
-        6.4. cr_deactivate_host
-        6.5. cr_activate_host
-        6.6. cr_add_host
-        6.7. cr_delete_host
-
-   7. Configuration examples
-   8. Installation and Running
-
-        8.1. Database setup
-        8.2. Database examples
-        8.3. User specific routing
+        7.1. Database setup
+        7.2. Database examples
+        7.3. User specific routing
 
 1. Overview
 
@@ -683,121 +658,9 @@ dstavp)
    Parameters:
      * none
 
-6. MI Commands
+6. Configuration examples
 
-   6.1. cr_reload_routes
-   6.2. cr_dump_routes
-   6.3. cr_replace_host
-   6.4. cr_deactivate_host
-   6.5. cr_activate_host
-   6.6. cr_add_host
-   6.7. cr_delete_host
-
-   All commands understand the "-?" parameter to print a short help
-   message. The options have to be quoted as one string to be passed to MI
-   interface. Each option except host and new host can be wildcarded by *
-   (but only * and not things like "-d prox*").
-
-6.1. cr_reload_routes
-
-6.2. cr_dump_routes
-
-6.3. cr_replace_host
-
-   This command can replace the rewrite_host of a route rule, it is only
-   usable in file mode. Following options are possible:
-     * -d - the domain containing the host
-     * -p - the prefix containing the host
-     * -h - the host to be replaced
-     * -t - the new host
-
-   Use the "null" prefix to specify an empty prefix.
-
-   Example 1.14. cr_replace_host usage
-...
-kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
-...
-
-6.4. cr_deactivate_host
-
-   This command deactivates the specified host, i.e. it sets its status to
-   0. It is only usable in file mode. Following options are possible:
-     * -d - the domain containing the host
-     * -p - the prefix containing the host
-     * -h - the host to be deactivated
-     * -t - the new host used as backup
-
-   When -t (new_host) is specified, the portion of traffic for the
-   deactivated host is routed to the host given by -t. This is indicated
-   in the output of dump_routes. The backup route is deactivated if the
-   host is activated again.
-
-   Use the "null" prefix to specify an empty prefix.
-
-   Example 1.15. cr_deactivate_host usage
-...
-kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
-...
-
-6.5. cr_activate_host
-
-   This command activates the specified host, i.e. it sets its status to
-   1. It is only usable in file mode. Following options are possible:
-     * -d - the domain containing the host
-     * -p - the prefix containing the host
-     * -h - the host to be activated
-
-   Use the "null" prefix to specify an empty prefix.
-
-   Example 1.16. cr_activate_host usage
-...
-kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
-...
-
-6.6. cr_add_host
-
-   This command adds a route rule, it is only usable in file mode.
-   Following options are possible:
-     * -d - the domain containing the host
-     * -p - the prefix containing the host
-     * -h - the host to be added
-     * -w - the weight of the rule
-     * -P - an optional rewrite prefix
-     * -S - an optional rewrite suffix
-     * -i - an optional hash index
-     * -s - an optional strip value
-
-   Use the "null" prefix to specify an empty prefix.
-
-   Example 1.17. cr_add_host usage
-...
-kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
-...
-
-6.7. cr_delete_host
-
-   This command delete the specified hosts or rules, i.e. remove them from
-   the route tree. It is only usable in file mode. Following options are
-   possible:
-     * -d - the domain containing the host
-     * -p - the prefix containing the host
-     * -h - the host to be added
-     * -w - the weight of the rule
-     * -P - an optional rewrite prefix
-     * -S - an optional rewrite suffix
-     * -i - an optional hash index
-     * -s - an optional strip value
-
-   Use the "null" prefix to specify an empty prefix.
-
-   Example 1.18. cr_delete_host usage
-...
-kamctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
-...
-
-7. Configuration examples
-
-   Example 1.19. Configuration example - Routing to default tree
+   Example 1.14. Configuration example - Routing to default tree
 ...
 route {
         # route calls based on hash over callid
@@ -831,7 +694,7 @@ failure_route[2] {
         # further processing
 }
 
-   Example 1.20. Configuration example - Routing to user tree
+   Example 1.15. Configuration example - Routing to user tree
 ...
 route[1] {
         cr_user_carrier("$fU", "$fd", "$avp(s:carrier)");
@@ -873,7 +736,7 @@ failure_route[1] {
 }
 ...
 
-   Example 1.21. Configuration example - module configuration
+   Example 1.16. Configuration example - module configuration
 
    The following config file specifies within the default carrier two
    domains, each with an prefix that contains two hosts. It is not
@@ -929,13 +792,13 @@ domain register {
 }
 ...
 
-8. Installation and Running
+7. Installation and Running
 
-   8.1. Database setup
-   8.2. Database examples
-   8.3. User specific routing
+   7.1. Database setup
+   7.2. Database examples
+   7.3. User specific routing
 
-8.1. Database setup
+7.1. Database setup
 
    Before running Kamailio with carrierroute, you have to setup the
    database table where the module will store the routing data. For that,
@@ -954,9 +817,9 @@ domain register {
    For a minimal configuration either use the config file given above, or
    insert some data into the tables of the module.
 
-8.2. Database examples
+7.2. Database examples
 
-   Example 1.22. Example database content - carrierroute table
+   Example 1.17. Example database content - carrierroute table
 ...
 +----+---------+--------+-------------+-------+------+---------------+
 | id | carrier | domain | scan_prefix | flags | prob | rewrite_host  |
@@ -993,7 +856,7 @@ domain register {
    flags are not set, the other two rules are used. The “strip”, “mask”
    and “comment” colums are omitted for brevity.
 
-   Example 1.23. Example database content - simple carrierfailureroute
+   Example 1.18. Example database content - simple carrierfailureroute
    table
 ...
 +----+---------+--------+---------------+------------+-------------+
@@ -1015,7 +878,7 @@ domain register {
    entry in the carrierroute table, otherwise the module will not load the
    routing data.
 
-   Example 1.24. Example database content - more complex
+   Example 1.19. Example database content - more complex
    carrierfailureroute table
 ...
 +----+---------+-----------+------------+--------+-----+-------------+
@@ -1042,7 +905,7 @@ domain register {
    that holds domain entries for this routing rules. Not all table colums
    are show here for brevity.
 
-   Example 1.25. Example database content - carrier_name table
+   Example 1.20. Example database content - carrier_name table
 ...
 +----+----------+
 | id | carrier  |
@@ -1055,7 +918,7 @@ domain register {
 
    This table contains the mapping of the carrier id to actual names.
 
-   Example 1.26. Example database content - domain_name table
+   Example 1.21. Example database content - domain_name table
 ...
 +----+----------+
 | id | domain   |
@@ -1068,14 +931,14 @@ domain register {
 
    This table contains the mapping of the domain id to actual names.
 
-8.3. User specific routing
+7.3. User specific routing
 
    For a functional routing the “cr_preferred_carrier” column must be
    added to the subscriber table (or to the table and column that you
    specified as modul parameter) to choose the actual carrier for the
    users.
 
-   Example 1.27. Necessary extensions for the user table
+   Example 1.22. Necessary extensions for the user table
 
    Suggested changes:
 ...

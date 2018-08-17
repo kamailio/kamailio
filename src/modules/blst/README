@@ -147,7 +147,9 @@ Note
    the message that caused the connection establishment.
 
    Example 1.5. blst_set_ignore usage
+...
     blst_set_ignore(6); # ignore send and connect errors
+...
 
 2.6.  blst_rpl_set_ignore([flags])
 
@@ -161,7 +163,9 @@ Note
    See also blst_set_ignore.
 
    Example 1.6. blst_clear_ignore usage
+...
     blst_clear_ignore(4); # ignore connect errors
+...
 
 2.8.  blst_rpl_clear_ignore([flags])
 
