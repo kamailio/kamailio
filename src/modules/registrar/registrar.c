@@ -126,6 +126,9 @@ str sock_hdr_name = {0,0};
 
 /* where to go for event route ("usrloc:contact-expired") */
 int reg_expire_event_rt = -1; /* default disabled */
+str reg_event_callback = STR_NULL;
+
+sr_kemi_eng_t *keng = NULL;
 
 #define RCV_NAME "received"
 str rcv_param = str_init(RCV_NAME);
@@ -228,6 +231,7 @@ static param_export_t params[] = {
 	{"regid_mode",         INT_PARAM, &reg_regid_mode					},
 	{"flow_timer",         INT_PARAM, &reg_flow_timer					},
 	{"contact_max_size",   INT_PARAM, &contact_max_size					},
+	{"event_callback",     PARAM_STR, &reg_event_callback				},
 	{0, 0, 0}
 };
 
@@ -339,12 +343,19 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(ul.register_ulcb != NULL)
-	{
-		reg_expire_event_rt = route_lookup(&event_rt, "usrloc:contact-expired");
-		if (reg_expire_event_rt>=0 && event_rt.rlist[reg_expire_event_rt]==0)
-			reg_expire_event_rt=-1; /* disable */
-		if (reg_expire_event_rt>=0) {
+	if(ul.register_ulcb != NULL) {
+		if (reg_event_callback.s==NULL || reg_event_callback.len<=0 ) {
+			reg_expire_event_rt = route_lookup(&event_rt, "usrloc:contact-expired");
+			if (reg_expire_event_rt>=0 && event_rt.rlist[reg_expire_event_rt]==0)
+				reg_expire_event_rt=-1; /* disable */
+		} else {
+			keng = sr_kemi_eng_get();
+			if(keng==NULL) {
+				LM_DBG("event callback (%s) set, but no cfg engine\n",
+					reg_event_callback.s);
+			}
+		}
+		if (reg_expire_event_rt>=0 || (reg_event_callback.s!=NULL && keng !=NULL)) {
 			set_child_rpc_sip_mode();
 			if(ul.register_ulcb(UL_CONTACT_EXPIRE, reg_ul_expired_contact, 0)< 0)
 			{

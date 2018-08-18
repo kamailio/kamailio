@@ -34,10 +34,13 @@
 #include "../../core/route.h"
 #include "../../core/action.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 #include "../usrloc/usrloc.h"
 #include "registrar.h"
 #include "common.h"
 #include "regpv.h"
+
+extern str reg_event_callback;
 
 typedef struct _regpv_profile {
 	str pname;
@@ -629,8 +632,9 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 	int olen;
 	int ilen;
 	char *p;
+	sr_kemi_eng_t *keng = NULL;
 
-	if(reg_expire_event_rt<0)
+	if(reg_expire_event_rt<0 && reg_event_callback.s==NULL)
 		return;
 
 	if (faked_msg_init() < 0)
@@ -733,11 +737,22 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 	backup_rt = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
-	run_top_route(event_rt.rlist[reg_expire_event_rt], fmsg, 0);
+
+	if (reg_expire_event_rt >= 0) {
+		run_top_route(event_rt.rlist[reg_expire_event_rt], fmsg, 0);
+	} else {
+		keng = sr_kemi_eng_get();
+		if (keng!=NULL) {
+			str evname = str_init("usrloc:contact-expired");
+			if(keng->froute(fmsg, EVENT_ROUTE,
+					&reg_event_callback, &evname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
+	}
 	set_route_type(backup_rt);
 
 	return;
 error:
 	regpv_free_profile(rpp);
-	return;
-}
+	return; }
