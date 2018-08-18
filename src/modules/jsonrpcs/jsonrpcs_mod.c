@@ -387,15 +387,26 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 			ctx->rpl_node = 0;
 		}
 	}
-	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "id");
-	if(nj!=NULL) {
-		if(nj->valuestring!=NULL) {
+	if(ctx->jreq!=NULL && ctx->jreq->root!=NULL) {
+		nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "id");
+		if(nj!=NULL) {
+			if(nj->valuestring!=NULL) {
+				srjson_AddStrStrToObject(ctx->jrpl, ctx->jrpl->root,
+						"id", 2,
+						nj->valuestring, strlen(nj->valuestring));
+			} else {
+				srjson_AddNumberToObject(ctx->jrpl, ctx->jrpl->root, "id",
+						nj->valuedouble);
+			}
+		}
+	} else {
+		if(ctx->jsrid_type == 1) {
 			srjson_AddStrStrToObject(ctx->jrpl, ctx->jrpl->root,
 					"id", 2,
-					nj->valuestring, strlen(nj->valuestring));
-		} else {
+					ctx->jsrid_val, strlen(ctx->jsrid_val));
+		} else if(ctx->jsrid_type == 2) {
 			srjson_AddNumberToObject(ctx->jrpl, ctx->jrpl->root, "id",
-					nj->valuedouble);
+					(double)(*(long*)ctx->jsrid_val));
 		}
 	}
 
@@ -970,6 +981,7 @@ static struct rpc_delayed_ctx* jsonrpc_delayed_ctx_new(jsonrpc_ctx_t* ctx)
 	jsonrpc_ctx_t* r_ctx;
 	sip_msg_t* shm_msg;
 	int len;
+	srjson_t *nj = NULL;
 
 	ret=0;
 	shm_msg=0;
@@ -982,6 +994,22 @@ static struct rpc_delayed_ctx* jsonrpc_delayed_ctx_new(jsonrpc_ctx_t* ctx)
 
 	if (ctx->transport!=JSONRPC_TRANS_HTTP) {
 		LM_ERR("delayed response implemented only for HTTP transport\n");
+		return 0;
+	}
+
+	if(ctx->jreq==NULL || ctx->jreq->root==NULL) {
+		LM_ERR("invalid context attributes\n");
+		return 0;
+	}
+
+	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "id");
+	if(nj==NULL) {
+		LM_ERR("id attribute is missing\n");
+		return 0;
+	}
+	if(nj->valuestring!=NULL && strlen(nj->valuestring)>JSONRPC_ID_SIZE-1) {
+		LM_ERR("id attribute is too long (%lu/%d)\n", strlen(nj->valuestring),
+				JSONRPC_ID_SIZE);
 		return 0;
 	}
 	/* clone the sip msg */
@@ -1004,6 +1032,14 @@ static struct rpc_delayed_ctx* jsonrpc_delayed_ctx_new(jsonrpc_ctx_t* ctx)
 	ctx->flags |= JSONRPC_DELAYED_REPLY_F;
 	r_ctx->msg=shm_msg;
 	r_ctx->msg_shm_block_size=len;
+
+	if(nj->valuestring!=NULL) {
+		strcpy(r_ctx->jsrid_val, nj->valuestring);
+		r_ctx->jsrid_type = 1;
+	} else {
+		*(long*)r_ctx->jsrid_val = (long)nj->valuedouble;
+		r_ctx->jsrid_type = 2;
+	}
 
 	return ret;
 error:
