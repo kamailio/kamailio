@@ -29,6 +29,7 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../lib/srutils/srjson.h"
 
+#define JSONRPC_ID_SIZE	64
 
 /** The context of the jsonrpc request being processed.
  *
@@ -54,6 +55,8 @@ typedef struct jsonrpc_ctx {
 	int http_code;         /**< http reply code */
 	str http_text;         /**< http reply reason text */
 	int transport;         /**< RPC transport */
+	int jsrid_type;        /**< type for Json RPC id value */
+	char jsrid_val[JSONRPC_ID_SIZE]; /**< value for Json RPC id */
 } jsonrpc_ctx_t;
 
 /* extra rpc_ctx_t flags */
