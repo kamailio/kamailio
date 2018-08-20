@@ -169,7 +169,9 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 			hdr->body.len=tmp-hdr->body.s;
 			DBG("<%.*s> [%d]; uri=[%.*s]\n", hdr->name.len, ZSW(hdr->name.s),
 					hdr->body.len, to_b->uri.len, ZSW(to_b->uri.s));
-			DBG("to body [%.*s], to tag [%.*s]\n", to_b->body.len, ZSW(to_b->body.s), to_b->tag_value.len, ZSW(to_b->tag_value.s));
+			DBG("to body [%.*s], to tag [%.*s]\n", to_b->body.len,
+					ZSW(to_b->body.s), to_b->tag_value.len,
+					ZSW(to_b->tag_value.s));
 			break;
 		case HDR_CONTENTLENGTH_T:
 			hdr->body.s=tmp;
@@ -251,8 +253,10 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 				match=q_memchr(tmp, '\n', end-tmp);
 				if (match){
 					match++;
-				}else {
-					ERR("bad body for <%s>(%d)\n", hdr->name.s, hdr->type);
+				} else {
+					ERR("no eol - bad body for <%.*s> (hdr type: %d) [%.*s]\n",
+							 hdr->name.len, hdr->name.s,
+							hdr->type, ((end-tmp)>128)?128:(int)(end-tmp), tmp);
 					/* abort(); */
 					tmp=end;
 					goto error;
@@ -263,7 +267,8 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 			hdr->body.len=match-hdr->body.s;
 			break;
 		default:
-			BUG("unknown header type %d\n", hdr->type);
+			BUG("unknown header type %d [%.*s]\n", hdr->type,
+					 ((end-buf)>128)?128:(int)(end-buf), buf);
 			goto error;
 	}
 	/* jku: if \r covered by current length, shrink it */
@@ -328,7 +333,8 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 		rest=get_hdr_field(tmp, end, hf);
 		switch (hf->type){
 			case HDR_ERROR_T:
-				ERR("bad header field [%.*s]\n", (end-tmp>20)?20:(int)(end-tmp), tmp);
+				ERR("bad header field [%.*s]\n",
+						(end-tmp>100)?100:(int)(end-tmp), tmp);
 				goto  error;
 			case HDR_EOH_T:
 				msg->eoh=tmp; /* or rest?*/
