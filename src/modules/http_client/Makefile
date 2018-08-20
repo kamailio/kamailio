@@ -9,7 +9,6 @@ auto_gen=
 NAME=http_client.so
 
 ifeq ($(CROSS_COMPILE),)
-XML2CFG=$(shell which xml2-config)
 CURL_BUILDER=$(shell \
 	if pkg-config --exists libcurl; then \
 		echo 'pkg-config libcurl'; \
