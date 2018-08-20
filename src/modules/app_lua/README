@@ -28,6 +28,7 @@ Daniel-Constantin Mierla
               3.1. load (string)
               3.2. register (string)
               3.3. reload (boolean)
+              3.4. log_mode (int)
 
         4. Functions
 
@@ -50,10 +51,11 @@ Daniel-Constantin Mierla
    1.2. Set load parameter
    1.3. Set register parameter
    1.4. Set reload parameter
-   1.5. lua_dofile usage
-   1.6. lua_dostring usage
-   1.7. lua_run usage
-   1.8. lua_runstring usage
+   1.5. Set log_mode parameter
+   1.6. lua_dofile usage
+   1.7. lua_dostring usage
+   1.8. lua_run usage
+   1.9. lua_runstring usage
 
 Chapter 1. Admin Guide
 
@@ -70,6 +72,7 @@ Chapter 1. Admin Guide
         3.1. load (string)
         3.2. register (string)
         3.3. reload (boolean)
+        3.4. log_mode (int)
 
    4. Functions
 
@@ -138,6 +141,7 @@ Chapter 1. Admin Guide
    3.1. load (string)
    3.2. register (string)
    3.3. reload (boolean)
+   3.4. log_mode (int)
 
 3.1. load (string)
 
@@ -209,6 +213,18 @@ modparam("app_lua", "register", "sl")
 modparam("app_lua", "reload", 0)
 ...
 
+3.4. log_mode (int)
+
+   Control what is printed in log messages. If bit 1 is set, then the
+   module prints debug messages for each KEMI export.
+
+   Default value is “0”.
+
+   Example 1.5. Set log_mode parameter
+...
+modparam("app_lua", "log_mode", 1)
+...
+
 4. Functions
 
    4.1. lua_dofile(path)
@@ -221,7 +237,7 @@ modparam("app_lua", "reload", 0)
    Execute the Lua script stored in 'path'. The parameter can be a string
    with pseudo-variables evaluated at runtime.
 
-   Example 1.5. lua_dofile usage
+   Example 1.6. lua_dofile usage
 ...
 lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 ...
@@ -231,7 +247,7 @@ lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
    Execute the Lua script stored in parameter. The parameter can be a
    string with pseudo-variables.
 
-   Example 1.6. lua_dostring usage
+   Example 1.7. lua_dostring usage
 ...
 if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
@@ -247,7 +263,7 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
    loaded at startup via parameter 'load'. Parameters can be strings with
    pseudo-variables that are evaluated at runtime.
 
-   Example 1.7. lua_run usage
+   Example 1.8. lua_run usage
 ...
 if(!lua_run("sr_append_fu_to_reply")) {
     xdbg("SCRIPT: failed to execute lua function!\n");
@@ -265,7 +281,7 @@ lua_run("lua_func3", "$rU", "2", "$si");
    string with pseudo-variables. The script is executed in Lua context
    specific to loaded Lua files at startup.
 
-   Example 1.8. lua_runstring usage
+   Example 1.9. lua_runstring usage
 ...
 if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
