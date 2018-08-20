@@ -26,6 +26,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "python_exec.h"
 #include "python_iface.h"
@@ -179,6 +180,9 @@ static int child_init(int rank)
 	}
 	_apy_process_rank = rank;
 	PyOS_AfterFork();
+	if (cfg_child_init()) {
+		return -1;
+	}
 	return apy_init_script(rank);
 }
 
