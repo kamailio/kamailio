@@ -44,6 +44,10 @@
 #include "app_lua_kemi_export.h"
 #include "app_lua_sr.h"
 
+#define KSR_APP_LUA_LOG_EXPORTS (1<<0)
+
+extern int _ksr_app_lua_log_mode;
+
 /**
  *
  */
@@ -2029,7 +2033,9 @@ void lua_sr_kemi_register_libs(lua_State *L)
 	}
 
 	for(i=0; emods[0].kexp[i].func!=NULL; i++) {
-		LM_DBG("exporting KSR.%s(...)\n", emods[0].kexp[i].fname.s);
+		if(_ksr_app_lua_log_mode & KSR_APP_LUA_LOG_EXPORTS) {
+			LM_DBG("exporting KSR.%s(...)\n", emods[0].kexp[i].fname.s);
+		}
 		_sr_crt_KSRMethods[i].name = emods[0].kexp[i].fname.s;
 		_sr_crt_KSRMethods[i].func =
 			sr_kemi_lua_export_associate(&emods[0].kexp[i]);
@@ -2055,8 +2061,10 @@ void lua_sr_kemi_register_libs(lua_State *L)
 			_sr_crt_KSRMethods = _sr_KSRMethods + n;
 			snprintf(mname, 128, "KSR.%s", emods[k].kexp[0].mname.s);
 			for(i=0; emods[k].kexp[i].func!=NULL; i++) {
-				LM_DBG("exporting %s.%s(...)\n", mname,
-						emods[k].kexp[i].fname.s);
+				if(_ksr_app_lua_log_mode & KSR_APP_LUA_LOG_EXPORTS) {
+					LM_DBG("exporting %s.%s(...)\n", mname,
+							emods[k].kexp[i].fname.s);
+				}
 				_sr_crt_KSRMethods[i].name = emods[k].kexp[i].fname.s;
 				_sr_crt_KSRMethods[i].func =
 					sr_kemi_lua_export_associate(&emods[k].kexp[i]);
@@ -2073,8 +2081,10 @@ void lua_sr_kemi_register_libs(lua_State *L)
 				exit(-1);
 			}
 			luaL_openlib(L, mname, _sr_crt_KSRMethods, 0);
-			LM_DBG("initializing kemi sub-module: %s (%s) (%d/%d/%d)\n", mname,
-					emods[k].kexp[0].mname.s, i, k, n);
+			if(_ksr_app_lua_log_mode & KSR_APP_LUA_LOG_EXPORTS) {
+				LM_DBG("initializing kemi sub-module: %s (%s) (%d/%d/%d)\n",
+						mname, emods[k].kexp[0].mname.s, i, k, n);
+			}
 		}
 	}
 	LM_DBG("module 'KSR' has been initialized (%d/%d)\n", emods_size, n);

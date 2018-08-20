@@ -65,10 +65,13 @@ int app_lua_load_param(modparam_t type, void *val);
 int app_lua_register_param(modparam_t type, void *val);
 int app_lua_reload_param(modparam_t type, void *val);
 
+int _ksr_app_lua_log_mode = 0;
+
 static param_export_t params[]={
 	{"load",     PARAM_STRING|USE_FUNC_PARAM, (void*)app_lua_load_param},
 	{"register", PARAM_STRING|USE_FUNC_PARAM, (void*)app_lua_register_param},
 	{"reload",   INT_PARAM|USE_FUNC_PARAM, (void*)app_lua_reload_param},
+	{"log_mode", PARAM_INT, &_ksr_app_lua_log_mode},
 	{0, 0, 0}
 };
 
