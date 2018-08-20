@@ -289,6 +289,27 @@ modparam("app_lua", "reload", 0)
 	    </example>
 	</section>
 
+	<section id="app_lua.p.log_mode">
+	    <title><varname>log_mode</varname> (int)</title>
+	    <para>
+			Control what is printed in log messages. If bit 1 is set, then
+			the module prints debug messages for each KEMI export.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_lua", "log_mode", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 
     <section>
