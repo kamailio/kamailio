@@ -180,6 +180,9 @@ static int child_init(int rank)
 	}
 	_apy_process_rank = rank;
 	PyOS_AfterFork();
+	if (cfg_child_init()) {
+		return -1;
+	}
 	return apy_init_script(rank);
 }
 
@@ -433,10 +436,6 @@ int apy_init_script(int rank)
 		python_handle_exception("child_init");
 		Py_DECREF(format_exc_obj);
 		Py_XDECREF(pFunc);
-		goto err;
-	}
-
-	if (cfg_child_init()) {
 		goto err;
 	}
 
