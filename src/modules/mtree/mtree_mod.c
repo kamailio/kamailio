@@ -930,7 +930,8 @@ static const char* rpc_mtree_summary_doc[2] = {
 void rpc_mtree_reload(rpc_t* rpc, void* c)
 {
 	str tname = {0, 0};
-	m_tree_t *pt;
+	m_tree_t *pt = NULL;
+	int treloaded = 0;
 
 	if(db_table.len>0)
 	{
@@ -949,8 +950,13 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 
 		/* read tree name */
 		if (rpc->scan(c, "S", &tname) != 1) {
-			rpc->fault(c, 500, "Failed to get table name parameter");
-			return;
+			tname.s = 0;
+			tname.len = 0;
+		} else {
+			if(*tname.s=='.') {
+				tname.s = 0;
+				tname.len = 0;
+			}
 		}
 
 		pt = mt_get_first_tree();
@@ -967,8 +973,12 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 					LM_ERR("cannot re-load mtree from database\n");
 					goto error;
 				}
+				treloaded = 1;
 			}
 			pt = pt->next;
+		}
+		if(treloaded == 0) {
+			rpc->fault(c, 500, "No Mtree Name Matching");
 		}
 	}
 
