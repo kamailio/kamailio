@@ -1164,7 +1164,7 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 	if(nht.entries == NULL)
 	{
 		ht_db_close_con();
-		rpc->fault(c, 500, "Mtree reload failed");
+		rpc->fault(c, 500, "No resources for htable reload");
 		return;
 	}
 	memset(nht.entries, 0, nht.htsize*sizeof(ht_entry_t));
@@ -1184,7 +1184,7 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 		}
 		free(nht.entries);
 		ht_db_close_con();
-		rpc->fault(c, 500, "Mtree reload failed");
+		rpc->fault(c, 500, "Htable reload failed");
 		return;
 	}
 
