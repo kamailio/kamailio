@@ -552,6 +552,22 @@ EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_ksr_srv"
 
+usage_mtree() {
+	echo
+	mecho " -- command 'add|dump|reload|rm|show' - manage mtree"
+	echo
+cat <<EOF
+ mtree show <tname> .................. show db content
+ mtree dump [<tname>] ................ show cache content
+ mtree reload [<tname>] .............. reload db table into cache
+ mtree add <tname> <tprefix> <tvalue>
+             ......................... add a new entry
+ mtree rm <tname> <tprefix> .......... remove entries for given tname and tprefix
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_mtree"
+
+
 ##### ----------------------------------------------- #####
 #### Common functions
 

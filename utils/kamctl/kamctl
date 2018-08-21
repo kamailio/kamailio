@@ -1364,6 +1364,64 @@ permissions_address() {
 
 #
 ##### ------------------------------------------------ #####
+### mtree management
+#
+mtree_management() {
+	case $1 in
+		reload)
+			require_ctlengine
+			ctl_cmd_run mtree.reload $2
+			;;
+		dump)
+			require_ctlengine
+			ctl_cmd_run mtree.list $2
+			;;
+		showdb)
+			require_dbengine
+			QUERY="select * FROM $2 ; "
+			$DBROCMD "$QUERY"
+			;;
+		add)
+			require_dbengine
+			if [ $# -lt 4 ] ; then
+				usage_mtree
+				exit 1
+			fi
+
+			QUERY="INSERT INTO $2 \
+				(tprefix, tvalue) \
+				VALUES ($3, '$4');"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "mtree - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 mtree reload' to synchronize cache and database"
+			;;
+		rm)
+			require_dbengine
+			shift
+			if [ $# -ne 3 ] ; then
+				usage_address
+				exit 1
+			fi
+			QUERY="DELETE FROM $2 where tprefix='$3';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "mtree - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 mtree reload' to synchronize cache and database"
+			;;
+		*)
+			usage_mtree
+			exit 1
+	esac
+}
+
+
+#
+##### ------------------------------------------------ #####
 ### LCR management
 #
 lcr() {
@@ -2874,6 +2932,11 @@ case $1 in
 	address)
 		shift
 		permissions_address "$@"
+		;;
+
+	mtree)
+		shift
+		mtree_management "$@"
 		;;
 
 	rpc)
