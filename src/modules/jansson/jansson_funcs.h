@@ -31,5 +31,7 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 		char* path_in, char* value_in, char* result);
 int janssonmod_array_size(struct sip_msg* msg, char* json_in,
 		char* path_in, char* dst);
+int janssonmod_get_helper(sip_msg_t* msg, str *path_s, str *src_s,
+		pv_spec_t *dst_pv);
 
 #endif

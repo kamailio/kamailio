@@ -31,38 +31,23 @@
 #include "jansson_funcs.h"
 #include "jansson_utils.h"
 
-int janssonmod_get(struct sip_msg* msg, char* path_in, char* src_in, char* dst)
+int janssonmod_get_helper(sip_msg_t* msg, str *path_s, str *src_s, pv_spec_t *dst_pv)
 {
-	str src_s;
-	str path_s;
-	pv_spec_t *dst_pv;
+
 	pv_value_t dst_val;
-
-	if (fixup_get_svalue(msg, (gparam_p)src_in, &src_s) != 0) {
-		ERR("cannot get json string value\n");
-		return -1;
-	}
-
-	if (fixup_get_svalue(msg, (gparam_p)path_in, &path_s) != 0) {
-		ERR("cannot get path string value\n");
-		return -1;
-	}
-
-	dst_pv = (pv_spec_t *)dst;
-
 	json_t* json = NULL;
 	json_error_t parsing_error;
 
-	json = json_loads(src_s.s, JSON_REJECT_DUPLICATES, &parsing_error);
+	json = json_loads(src_s->s, JSON_REJECT_DUPLICATES, &parsing_error);
 
 	if(!json) {
-		ERR("failed to parse: %.*s\n", src_s.len, src_s.s);
+		ERR("failed to parse: %.*s\n", src_s->len, src_s->s);
 		ERR("json error at line %d: %s\n",
 				parsing_error.line, parsing_error.text);
 		goto fail;
 	}
 
-	char* path = path_s.s;
+	char* path = path_s->s;
 
 	json_t* v = json_path_get(json, path);
 	if(!v) {
@@ -85,6 +70,24 @@ int janssonmod_get(struct sip_msg* msg, char* path_in, char* src_in, char* dst)
 fail:
 	json_decref(json);
 	return -1;
+}
+
+int janssonmod_get(struct sip_msg* msg, char* path_in, char* src_in, char* dst)
+{
+	str src_s;
+	str path_s;
+
+	if (fixup_get_svalue(msg, (gparam_p)src_in, &src_s) != 0) {
+		ERR("cannot get json string value\n");
+		return -1;
+	}
+
+	if (fixup_get_svalue(msg, (gparam_p)path_in, &path_s) != 0) {
+		ERR("cannot get path string value\n");
+		return -1;
+	}
+
+	return janssonmod_get_helper(msg, &path_s, &src_s, (pv_spec_t *)dst);
 }
 
 #define STR_EQ_STATIC(a,b) ((a.len == sizeof(b)-1) && (strncmp(a.s, b, sizeof(b)-1)==0))
