@@ -161,7 +161,7 @@ static int fill_contact(struct pcontact_info* ci, struct sip_msg* m)
         cb = cscf_parse_contacts(req);
         if (!cb || (!cb->contacts)) {
             LM_ERR("fill_contact(): No contact headers\n");
-            return -3;
+            return -1;
         }
 
         // populate CI with bare minimum
@@ -172,8 +172,11 @@ static int fill_contact(struct pcontact_info* ci, struct sip_msg* m)
     }
 
 
-    char* srcip;
-    srcip = pkg_malloc(50);
+    char* srcip = NULL;
+    if((srcip = pkg_malloc(50)) == NULL) {
+        LM_ERR("Error allocating memory for source IP address\n");
+        return -1;
+    }
 
     ci->received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, 50);
     ci->received_host.s = srcip;
@@ -386,6 +389,7 @@ int add_security_server_header(struct sip_msg* m, ipsec_t* s)
     // copy to the header and add
     if((sec_header->s = pkg_malloc(sec_header->len)) == NULL) {
         LM_ERR("Error allocating pkg memory for security header payload\n");
+        pkg_free(sec_header);
         return -1;
     }
     memcpy(sec_header->s, sec_hdr_buf, sec_header->len);
@@ -393,6 +397,8 @@ int add_security_server_header(struct sip_msg* m, ipsec_t* s)
     // add security-server header in reply
     if(cscf_add_header(m, sec_header, HDR_OTHER_T) != 1) {
         LM_ERR("Error adding security header to reply!\n");
+        pkg_free(sec_header->s);
+        pkg_free(sec_header);
         return -1;
     }
 
