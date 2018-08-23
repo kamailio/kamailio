@@ -326,16 +326,16 @@ radius_load_caller_avps($fU);
     Sending Access-Accept of id 60 to 192.168.25.32 port 59736
     Session-Timeout = 4261674
     next-hop-ip = "SIP/00111222333444@cisco-out"
-    SIP-AVP = "email:sr-users@lists.sip-router.org session-timeout#161 next-hop-
-ip:h323/0001111@myvoip-gate.kamailio.org"
+    SIP-AVP = "email:sr-users@lists.kamailio.org session-timeout#161 next-hop-ip
+:h323/0001111@myvoip-gate.kamailio.org"
     session-protocol = "SIP"
 ...
 
 $avp(Session-Timeout) has integer value 4261674
 $avp(next-hop-ip) has string value "SIP/005555777888@cisco-out"
 $avp(session-protocol) has string value "SIP"
-$avp(SIP-AVP) has string value  "email:sr-users@lists.sip-router.org session-tim
-eout#161 next-hop-ip:h323/0001111@myvoip-gate.kamailio.org"
+$avp(SIP-AVP) has string value  "email:sr-users@lists.kamailio.org session-timeo
+ut#161 next-hop-ip:h323/0001111@myvoip-gate.kamailio.org"
 
 ...
     When receiving negative response, check appropriate avp's:
