@@ -41,13 +41,13 @@ to do this or that, you can:
 <itemizedlist>
 	<listitem><para>Try to search for similar problem in mailing lists on
 	<ulink url="http://www.sip-router.org/">SIP-router's main page</ulink> or in
-	<ulink url="http://lists.sip-router.org/cgi-bin/mailman/listinfo/">list archives</ulink>.
+	<ulink url="http://lists.kamailio.org/cgi-bin/mailman/listinfo/">list archives</ulink>.
 	</para></listitem>
 
 	<listitem><para>Send an email to <ulink
-	url="mailto:sr-users@lists.sip-router.org">sr-users@lists.sip-router.org</ulink> for
+	url="mailto:sr-users@lists.kamailio.org">sr-users@lists.kamailio.org</ulink> for
 	user related problem or
-	<ulink url="mailto:sr-dev@lists.sip-router.org">sr-dev@lists.sip-router.org</ulink>
+	<ulink url="mailto:sr-dev@lists.kamailio.org">sr-dev@lists.kamailio.org</ulink>
 	for development related things. There are lots of interesting people on
 	these lists with lots of experiences with SIP related stuff ;-).
 	</para></listitem>
