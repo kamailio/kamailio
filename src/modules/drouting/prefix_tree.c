@@ -115,7 +115,7 @@ get_prefix(
 
 	if(NULL == ptree)
 		goto err_exit;
-	if(NULL == prefix)
+	if(NULL == prefix || NULL == prefix->s)
 		goto err_exit;
 	tmp = prefix->s;
 	/* go the tree down to the last digit in the
