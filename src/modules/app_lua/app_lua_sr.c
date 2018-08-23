@@ -896,8 +896,11 @@ static int lua_sr_pv_get_val (lua_State *L, int rmode)
 
 	pvn.s = (char*)lua_tostring(L, -1);
 	if(pvn.s==NULL || env_L->msg==NULL) {
-		if(rmode) {
+		if(rmode==1) {
 			lua_pushlstring(L, "<<null>>", 8);
+			return 1;
+		} else if(rmode==2) {
+			lua_pushlstring(L, "", 0);
 			return 1;
 		} else {
 			return 0;
@@ -909,8 +912,11 @@ static int lua_sr_pv_get_val (lua_State *L, int rmode)
 	pl = pv_locate_name(&pvn);
 	if(pl != pvn.len) {
 		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		if(rmode) {
+		if(rmode==1) {
 			lua_pushlstring(L, "<<null>>", 8);
+			return 1;
+		} else if(rmode==2) {
+			lua_pushlstring(L, "", 0);
 			return 1;
 		} else {
 			return 0;
@@ -919,8 +925,11 @@ static int lua_sr_pv_get_val (lua_State *L, int rmode)
 	pvs = pv_cache_get(&pvn);
 	if(pvs==NULL) {
 		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		if(rmode) {
+		if(rmode==1) {
 			lua_pushlstring(L, "<<null>>", 8);
+			return 1;
+		} else if(rmode==2) {
+			lua_pushlstring(L, "", 0);
 			return 1;
 		} else {
 			return 0;
@@ -929,16 +938,22 @@ static int lua_sr_pv_get_val (lua_State *L, int rmode)
 	memset(&val, 0, sizeof(pv_value_t));
 	if(pv_get_spec_value(env_L->msg, pvs, &val) != 0) {
 		LM_ERR("unable to get pv value for [%s]\n", pvn.s);
-		if(rmode) {
+		if(rmode==1) {
 			lua_pushlstring(L, "<<null>>", 8);
+			return 1;
+		} else if(rmode==2) {
+			lua_pushlstring(L, "", 0);
 			return 1;
 		} else {
 			return 0;
 		}
 	}
 	if(val.flags&PV_VAL_NULL) {
-		if(rmode) {
+		if(rmode==1) {
 			lua_pushlstring(L, "<<null>>", 8);
+			return 1;
+		} else if(rmode==2) {
+			lua_pushlstring(L, "", 0);
 			return 1;
 		} else {
 			return 0;
@@ -966,6 +981,14 @@ static int lua_sr_pv_get (lua_State *L)
 static int lua_sr_pv_getw (lua_State *L)
 {
 	return lua_sr_pv_get_val(L, 1);
+}
+
+/**
+ *
+ */
+static int lua_sr_pv_gete (lua_State *L)
+{
+	return lua_sr_pv_get_val(L, 2);
 }
 
 /**
@@ -1175,6 +1198,7 @@ static int lua_sr_pv_is_null (lua_State *L)
 static const luaL_Reg _sr_pv_Map [] = {
 	{"get",      lua_sr_pv_get},
 	{"getw",     lua_sr_pv_getw},
+	{"gete",     lua_sr_pv_gete},
 	{"seti",     lua_sr_pv_seti},
 	{"sets",     lua_sr_pv_sets},
 	{"unset",    lua_sr_pv_unset},
