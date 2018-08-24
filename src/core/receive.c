@@ -346,10 +346,11 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				goto error_rpl;
 			} else
 #endif /* NO_ONREPLY_ROUTE_ERROR */
-					if(unlikely(ret == 0 || (ctx.run_flags & DROP_R_F))) {
-				STATS_RPL_FWD_DROP();
-				goto skip_send_reply; /* drop the message, no error */
-			}
+				if(unlikely(ret == 0 || (ctx.run_flags & DROP_R_F))) {
+					STATS_RPL_FWD_DROP();
+					LM_DBG("drop flag set - skip forwarding the reply\n");
+					goto skip_send_reply; /* drop the message, no error */
+				}
 		}
 		/* send the msg */
 		forward_reply(msg);
