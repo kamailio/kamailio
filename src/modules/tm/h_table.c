@@ -143,7 +143,10 @@ void free_cell_helper(
 		unlink_timers(dead_cell);
 		remove_from_hash_table_unsafe(dead_cell);
 	}
-	release_cell_lock(dead_cell);
+	release_cell_lock(dead_cell); /* does nothing */
+
+	dead_cell->fcount++;
+
 	if(unlikely(has_tran_tmcbs(dead_cell, TMCB_DESTROY)))
 		run_trans_callbacks(TMCB_DESTROY, dead_cell, 0, 0, 0);
 
