@@ -366,6 +366,9 @@ typedef struct cell
 	/* number of forks */
 	short nr_of_outgoings;
 
+	/* free operations counter - debug */
+	int fcount;
+
 #ifdef TM_DEL_UNREF
 	/* every time the transaction/cell is referenced from somewhere this
 	 * ref_count should be increased (via REF()) and every time the reference
