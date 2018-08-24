@@ -888,6 +888,22 @@ static const luaL_Reg _sr_hdr_Map [] = {
 /**
  *
  */
+static int lua_sr_pv_push_val_null (lua_State *L, int rmode)
+{
+	if(rmode==1) {
+		lua_pushlstring(L, "<<null>>", 8);
+		return 1;
+	} else if(rmode==2) {
+		lua_pushlstring(L, "", 0);
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+/**
+ *
+ */
 static int lua_sr_pv_get_val (lua_State *L, int rmode)
 {
 	str pvn;
@@ -900,15 +916,7 @@ static int lua_sr_pv_get_val (lua_State *L, int rmode)
 
 	pvn.s = (char*)lua_tostring(L, -1);
 	if(pvn.s==NULL || env_L->msg==NULL) {
-		if(rmode==1) {
-			lua_pushlstring(L, "<<null>>", 8);
-			return 1;
-		} else if(rmode==2) {
-			lua_pushlstring(L, "", 0);
-			return 1;
-		} else {
-			return 0;
-		}
+		return lua_sr_pv_push_val_null(L, rmode);
 	}
 
 	pvn.len = strlen(pvn.s);
@@ -916,52 +924,20 @@ static int lua_sr_pv_get_val (lua_State *L, int rmode)
 	pl = pv_locate_name(&pvn);
 	if(pl != pvn.len) {
 		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		if(rmode==1) {
-			lua_pushlstring(L, "<<null>>", 8);
-			return 1;
-		} else if(rmode==2) {
-			lua_pushlstring(L, "", 0);
-			return 1;
-		} else {
-			return 0;
-		}
+		return lua_sr_pv_push_val_null(L, rmode);
 	}
 	pvs = pv_cache_get(&pvn);
 	if(pvs==NULL) {
 		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		if(rmode==1) {
-			lua_pushlstring(L, "<<null>>", 8);
-			return 1;
-		} else if(rmode==2) {
-			lua_pushlstring(L, "", 0);
-			return 1;
-		} else {
-			return 0;
-		}
+		return lua_sr_pv_push_val_null(L, rmode);
 	}
 	memset(&val, 0, sizeof(pv_value_t));
 	if(pv_get_spec_value(env_L->msg, pvs, &val) != 0) {
 		LM_ERR("unable to get pv value for [%s]\n", pvn.s);
-		if(rmode==1) {
-			lua_pushlstring(L, "<<null>>", 8);
-			return 1;
-		} else if(rmode==2) {
-			lua_pushlstring(L, "", 0);
-			return 1;
-		} else {
-			return 0;
-		}
+		return lua_sr_pv_push_val_null(L, rmode);
 	}
 	if(val.flags&PV_VAL_NULL) {
-		if(rmode==1) {
-			lua_pushlstring(L, "<<null>>", 8);
-			return 1;
-		} else if(rmode==2) {
-			lua_pushlstring(L, "", 0);
-			return 1;
-		} else {
-			return 0;
-		}
+		return lua_sr_pv_push_val_null(L, rmode);
 	}
 	if(val.flags&PV_TYPE_INT) {
 		lua_pushinteger(L, val.ri);
