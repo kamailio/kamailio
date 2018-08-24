@@ -315,7 +315,7 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 		return 0;
 	}
 	memset(n, 0, sizeof(struct totag_elem));
-	memcpy(s, tag->s, tag->len );
+	memcpy(s, tag->s, tag->len);
 	n->tag.s=s;n->tag.len=tag->len;
 	n->next=t->fwded_totags;
 	membar_write(); /* make sure all the changes to n are visible on all cpus
@@ -328,7 +328,7 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 					 * the "readers" (unmatched_tags()) do not use locks and
 					 * can be called simultaneously on another cpu.*/
 	t->fwded_totags=n;
-	LM_DBG("new totag \n");
+	LM_DBG("new totag [%.*s]\n", tag->len, tag->s);
 	return 0;
 }
 
@@ -1977,6 +1977,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 		if (likely(uas_rb->dst.send_sock)) {
 			if (SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0){
+				LM_DBG("reply buffer sent out\n");
 				if (unlikely(!totag_retr
 							&& has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
 					LOCK_REPLIES( t );
@@ -2041,6 +2042,7 @@ error01:
 	/* a serious error occurred -- attempt to send an error reply;
 	 * it will take care of clean-ups  */
 
+	LM_DBG("reply relay failure\n");
 	/* failure */
 	return RPS_ERROR;
 }
