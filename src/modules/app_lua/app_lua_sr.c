@@ -892,13 +892,12 @@ static int lua_sr_pv_push_val_null (lua_State *L, int rmode)
 {
 	if(rmode==1) {
 		lua_pushlstring(L, "<<null>>", 8);
-		return 1;
 	} else if(rmode==2) {
 		lua_pushlstring(L, "", 0);
-		return 1;
 	} else {
-		return 0;
+		lua_pushnil(L);
 	}
+	return 1;
 }
 
 /**
