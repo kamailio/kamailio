@@ -728,8 +728,10 @@ static sr_kemi_t _sr_apy_kemi_test[] = {
  */
 PyObject *sr_apy_kemi_return_none_mode(int rmode)
 {
-	if(rmode) {
+	if(rmode==1) {
 		return sr_apy_kemi_return_str(NULL, "<<null>>", 8);
+	} else if(rmode==2) {
+		return sr_apy_kemi_return_str(NULL, "", 0);
 	} else {
 		return sr_apy_kemi_return_none();
 	}
@@ -811,6 +813,14 @@ static PyObject *sr_apy_kemi_f_pv_get(PyObject *self, PyObject *args)
 static PyObject *sr_apy_kemi_f_pv_getw(PyObject *self, PyObject *args)
 {
 	return sr_apy_kemi_f_pv_get_mode(self, args, 1);
+}
+
+/**
+ *
+ */
+static PyObject *sr_apy_kemi_f_pv_gete(PyObject *self, PyObject *args)
+{
+	return sr_apy_kemi_f_pv_get_mode(self, args, 2);
 }
 
 /**
@@ -1046,6 +1056,8 @@ static PyMethodDef _sr_apy_kemi_pv_Methods[] = {
 		NAME " - pv get value"},
 	{"getw",	sr_apy_kemi_f_pv_getw,		METH_VARARGS,
 		NAME " - pv get value or <<null>>"},
+	{"gete",	sr_apy_kemi_f_pv_gete,		METH_VARARGS,
+		NAME " - pv get value or empty string"},
 	{"seti",	sr_apy_kemi_f_pv_seti,		METH_VARARGS,
 		NAME " - pv set int value"},
 	{"sets",	sr_apy_kemi_f_pv_sets,		METH_VARARGS,
