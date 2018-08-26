@@ -1418,6 +1418,11 @@ static sr_kemi_t sr_kemi_ipops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("ipops"), str_init("is_in_subnet"),
+		SR_KEMIP_INT, ki_ip_is_in_subnet,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("ipops"), str_init("is_ip_rfc1918"),
 		SR_KEMIP_INT, ki_is_ip_rfc1918,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
