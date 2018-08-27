@@ -741,7 +741,7 @@ PyObject *sr_apy_kemi_return_none_mode(int rmode)
  *
  */
 static PyObject *sr_apy_kemi_f_pv_get_mode(PyObject *self, PyObject *args,
-		int rmode)
+		char *pfmt, int rmode)
 {
 	str pvn;
 	pv_spec_t *pvs;
@@ -762,7 +762,7 @@ static PyObject *sr_apy_kemi_f_pv_get_mode(PyObject *self, PyObject *args,
 		lmsg = env_P->msg;
 	}
 
-	if(!PyArg_ParseTuple(args, "s:pv.get", &pvn.s)) {
+	if(!PyArg_ParseTuple(args, pfmt, &pvn.s)) {
 		LM_ERR("unable to retrieve str param\n");
 		return sr_apy_kemi_return_none_mode(rmode);
 	}
@@ -804,7 +804,7 @@ static PyObject *sr_apy_kemi_f_pv_get_mode(PyObject *self, PyObject *args,
  */
 static PyObject *sr_apy_kemi_f_pv_get(PyObject *self, PyObject *args)
 {
-	return sr_apy_kemi_f_pv_get_mode(self, args, 0);
+	return sr_apy_kemi_f_pv_get_mode(self, args, "s:pv.get", 0);
 }
 
 /**
@@ -812,7 +812,7 @@ static PyObject *sr_apy_kemi_f_pv_get(PyObject *self, PyObject *args)
  */
 static PyObject *sr_apy_kemi_f_pv_getw(PyObject *self, PyObject *args)
 {
-	return sr_apy_kemi_f_pv_get_mode(self, args, 1);
+	return sr_apy_kemi_f_pv_get_mode(self, args, "s:pv.getw", 1);
 }
 
 /**
@@ -820,7 +820,7 @@ static PyObject *sr_apy_kemi_f_pv_getw(PyObject *self, PyObject *args)
  */
 static PyObject *sr_apy_kemi_f_pv_gete(PyObject *self, PyObject *args)
 {
-	return sr_apy_kemi_f_pv_get_mode(self, args, 2);
+	return sr_apy_kemi_f_pv_get_mode(self, args, "s:pv.gete", 2);
 }
 
 /**
