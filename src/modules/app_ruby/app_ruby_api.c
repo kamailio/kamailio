@@ -245,10 +245,12 @@ int sr_kemi_ruby_return_int(sr_kemi_t *ket, int rc)
  */
 static VALUE sr_kemi_ruby_return_none(int rmode)
 {
-	if(rmode==0) {
-		return Qnil;
+	if(rmode==1) {
+		return rb_str_new_cstr("<<null>>");
+	} else if(rmode==2) {
+		return rb_str_new_cstr("");
 	}
-	return rb_str_new_cstr("<<null>>");
+	return Qnil;
 }
 
 /**
@@ -318,6 +320,14 @@ static VALUE app_ruby_pv_get(int argc, VALUE* argv, VALUE self)
 static VALUE app_ruby_pv_getw(int argc, VALUE* argv, VALUE self)
 {
 	return app_ruby_pv_get_mode(argc, argv, self, 1);
+}
+
+/**
+ *
+ */
+static VALUE app_ruby_pv_gete(int argc, VALUE* argv, VALUE self)
+{
+	return app_ruby_pv_get_mode(argc, argv, self, 2);
 }
 
 /**
@@ -549,6 +559,7 @@ static VALUE app_ruby_pv_is_null(int argc, VALUE* argv, VALUE self)
 static ksr_ruby_export_t _sr_kemi_pv_R_Map[] = {
 	{"PV", "get", app_ruby_pv_get},
 	{"PV", "getw", app_ruby_pv_getw},
+	{"PV", "gete", app_ruby_pv_gete},
 	{"PV", "seti", app_ruby_pv_seti},
 	{"PV", "sets", app_ruby_pv_sets},
 	{"PV", "unset", app_ruby_pv_unset},
