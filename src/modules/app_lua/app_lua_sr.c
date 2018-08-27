@@ -902,9 +902,9 @@ static int lua_sr_pv_push_val_null (lua_State *L, int rmode)
 static int lua_sr_pv_push_valx (lua_State *L, int rmode, int vi, str *vs)
 {
 	if(rmode==1) {
-		lua_pushlstring(L, vs->s, vs->len);
-	} else {
 		lua_pushinteger(L, vi);
+	} else {
+		lua_pushlstring(L, vs->s, vs->len);
 	}
 	return 1;
 }
