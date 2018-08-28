@@ -1,0 +1,97 @@
+SIPJSON Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2018 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Functions
+
+              3.1. sj_serialize(opt, ovar)
+
+   List of Examples
+
+   1.1. sj_serialize usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Functions
+
+        3.1. sj_serialize(opt, ovar)
+
+1. Overview
+
+   This module serializes SIP message attributes into a JSON document.
+
+   It can facilitate getting the SIP attributes in a structure inside one
+   of the embedded interpreters (e.g., KEMI interpreters).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Functions
+
+   3.1. sj_serialize(opt, ovar)
+
+3.1. sj_serialize(opt, ovar)
+
+   Do the serialization of SIP messagge attributes into a JSON document.
+
+   When there is a match, it uses the corresponding pseudo-variable name
+   for JSON attribute (e.g., 'ru' is the R-URI attribute name).
+
+   Meaning of the parameters:
+     * opt - list of optional groups of attributes to be serialized. Each
+       group of attributes has a corresponding character. These are:
+          + 0 - (zero) default attributes to be serialized. They are added
+            even if '0' is not provided as parameter, however, because
+            'opt' parameter cannot be empty, '0' can be given when only
+            default attributes are wanted.
+          + B - (uppercase B) SIP message body
+     * ovar - name of the output pseduo-variable
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.1. sj_serialize usage
+...
+sj_serialize("0B", "$var(json)");
+...

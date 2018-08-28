@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module serializes SIP message attributes into a JSON document.
+	</para>
+	<para>
+		It can facilitate getting the SIP attributes in a structure inside one
+		of the embedded interpreters (e.g., KEMI interpreters).
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="sipjson.f.sj_serialize">
+	    <title>
+		<function moreinfo="none">sj_serialize(opt, ovar)</function>
+	    </title>
+	    <para>
+			Do the serialization of SIP messagge attributes into a JSON document.
+		</para>
+		<para>
+			When there is a match, it uses the corresponding pseudo-variable name
+			for JSON attribute (e.g., 'ru' is the R-URI attribute name).
+		</para>
+		<para>
+			Meaning of the parameters:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				opt - list of optional groups of attributes to be serialized.
+				Each group of attributes has a corresponding character. These
+				are:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+					0 - (zero) default attributes to be serialized. They are
+					added even if '0' is not provided as parameter, however,
+					because 'opt' parameter cannot be empty, '0' can be given
+					when only default attributes are wanted.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					B - (uppercase B) SIP message body
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para>
+				ovar - name of the output pseduo-variable
+			</para>
+		</listitem>
+		</itemizedlist>
+
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sj_serialize</function> usage</title>
+		<programlisting format="linespecific">
+...
+sj_serialize("0B", "$var(json)");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+</chapter>
+
