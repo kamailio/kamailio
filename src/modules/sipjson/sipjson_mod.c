@@ -80,24 +80,19 @@ static int ki_sj_serialize_helper(sip_msg_t* msg, str* smode, pv_spec_t *pvs)
 		return -1;
 	}
 
+	LM_DBG("sip to json serialization...\n");
 	srjson_InitDoc(&jdoc, NULL);
 
 	if(sj_serialize_data(msg, &jdoc, smode)<0) {
+		LM_ERR("json serialization failure\n");
 		goto error;
 	}
 
-	if(jdoc.buf.s != NULL) {
-		jdoc.free_fn(jdoc.buf.s);
-		jdoc.buf.s = NULL;
-		jdoc.buf.len = 0;
-	}
 	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
-	if(jdoc.buf.s!=NULL){
-		jdoc.buf.len = strlen(jdoc.buf.s);
-	}
 
 	memset(&val, 0, sizeof(pv_value_t));
 	if(jdoc.buf.s!=NULL) {
+		jdoc.buf.len = strlen(jdoc.buf.s);
 		val.flags = PV_VAL_STR;
 		val.rs = jdoc.buf;
 
@@ -115,6 +110,7 @@ static int ki_sj_serialize_helper(sip_msg_t* msg, str* smode, pv_spec_t *pvs)
 		}
 	}
 	srjson_DestroyDoc(&jdoc);
+	LM_DBG("sip to json serialization done...\n");
 
 	return 1;
 
@@ -225,6 +221,7 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 		LM_ERR("cannot create json root obj\n");
 		goto error;
 	}
+	jdoc->root = jr;
 
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("failed to parse headers\n");
@@ -345,10 +342,10 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 			break;
 		}
 	}
-
 	return 1;
 
 error:
+	LM_ERR("failed to build the json serialization document\n");
 	return -1;
 }
 
