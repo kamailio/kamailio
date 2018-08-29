@@ -347,3 +347,26 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 error:
 	return -1;
 }
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_sipjson_exports[] = {
+	{ str_init("sipjson"), str_init("sj_serialize"),
+		SR_KEMIP_INT, ki_sj_serialize,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_sipjson_exports);
+	return 0;
+}
