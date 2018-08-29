@@ -33,6 +33,10 @@
 
 #include "../../lib/srutils/srjson.h"
 
+
+MODULE_VERSION
+
+
 static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode);
 
 static int  w_sj_serialize(sip_msg_t* msg, char* mode, char* vout);
