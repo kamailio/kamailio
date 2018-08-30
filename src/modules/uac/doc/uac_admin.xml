@@ -507,6 +507,27 @@ modparam("uac", "reg_keep_callid", 1)
 			</example>
 		</section>
 
+
+		<section id="uac.p.reg_active">
+			<title><varname>reg_active</varname> (int)</title>
+			<para>
+				If set to 0, no remote regisrations are done. In other words,
+				it can control at once if the module should do remote registratios
+				or not. It can be changed at runtime via rpc command
+				'uac.reg_active 0|1'.
+			</para>
+			<para>The default value is 1 (active).</para>
+			<example>
+				<title>Set <varname>reg_active</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_active", 0)
+...
+				</programlisting>
+			</example>
+		</section>
+
+
 	</section>
 
 	<section>
@@ -1160,6 +1181,26 @@ event_route[uac:reply] {
 			<programlisting format="linespecific">
 ...
    kamcmd uac.reg_refresh account123
+...
+			</programlisting>
+		</example>
+		</section>
+
+		<section id="uac.r.uac.reg_active">
+			<title>
+				<function moreinfo="none">uac.reg_active</function>
+			</title>
+		<para>
+			Control if the module should do remote registrations or not. Setting
+			to 1 enables remote registrations for all records and 0 disables
+			doing them.
+		</para>
+		<example>
+		<title><function>uac.reg_active</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamctl rpc uac.reg_active 0
+   kamctl rpc uac.reg_active 1
 ...
 			</programlisting>
 		</example>
