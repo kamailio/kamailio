@@ -285,6 +285,9 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 		srjson_AddStrStrToObject(jdoc, jr, "rU", 2, "", 0);
 		srjson_AddStrStrToObject(jdoc, jr, "rd", 2, "", 0);
 		srjson_AddNumberToObject(jdoc, jr, "rp", 0);
+		srjson_AddNumberToObject(jdoc, jr, "rs", msg->first_line.u.reply.statuscode);
+		srjson_AddStrStrToObject(jdoc, jr, "rr", 2,
+				msg->first_line.u.reply.reason.s, msg->first_line.u.reply.reason.len);
 	} else {
 		if(msg->parsed_uri_ok==0 && parse_sip_msg_uri(msg)<0) {
 			srjson_AddStrStrToObject(jdoc, jr, "rU", 2, "", 0);
@@ -296,6 +299,8 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 			sj_add_xuri_attr(puri, 2, "rd", 2, jdoc, jr);
 			sj_add_xuri_attr(puri, 3, "rp", 2, jdoc, jr);
 		}
+		srjson_AddNumberToObject(jdoc, jr, "rs", 0);
+		srjson_AddStrStrToObject(jdoc, jr, "rr", 2, "", 0);
 	}
 
 	puri = parse_from_uri(msg);
