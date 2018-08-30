@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2018 asipto.com
+   Copyright Â© 2018 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -27,9 +27,12 @@ Daniel-Constantin Mierla
 
               3.1. sj_serialize(opt, ovar)
 
+        4. Output Samples
+
    List of Examples
 
    1.1. sj_serialize usage
+   1.2. sj_serialize output
 
 Chapter 1. Admin Guide
 
@@ -45,12 +48,15 @@ Chapter 1. Admin Guide
 
         3.1. sj_serialize(opt, ovar)
 
+   4. Output Samples
+
 1. Overview
 
    This module serializes SIP message attributes into a JSON document.
 
    It can facilitate getting the SIP attributes in a structure inside one
-   of the embedded interpreters (e.g., KEMI interpreters).
+   of the embedded interpreters (e.g., KEMI interpreters, Lua can parse
+   JSON in an internal hash table).
 
 2. Dependencies
 
@@ -72,7 +78,7 @@ Chapter 1. Admin Guide
 
    3.1. sj_serialize(opt, ovar)
 
-3.1. sj_serialize(opt, ovar)
+3.1.  sj_serialize(opt, ovar)
 
    Do the serialization of SIP messagge attributes into a JSON document.
 
@@ -94,4 +100,49 @@ Chapter 1. Admin Guide
    Example 1.1. sj_serialize usage
 ...
 sj_serialize("0B", "$var(json)");
+...
+
+4. Output Samples
+
+   The content of the output variable is a JSON. Next are some samples.
+
+   Example 1.2. sj_serialize output
+...
+# the content of $var(json) after sj_serialize("0B", "$var(json)")
+#  - the content is compacted, next it has been pretty-formatted for better view
+ing
+...
+{
+  "mt":2,
+  "rm":"OPTIONS",
+  "pr":"udp",
+  "si":"127.0.0.1",
+  "sp":36747,
+  "Ri":"127.0.0.1",
+  "Rp":5060,
+  "ru":"sip:alice@127.0.0.1",
+  "rU":"alice",
+  "rd":"127.0.0.1",
+  "rp":0,
+  "fU":"sipsak",
+  "fd":"172.17.0.2",
+  "ua":"sipsak 0.9.7pre",
+  "ci":"482215126@172.17.0.2",
+  "rb":""
+}
+...
+# the sip message sent to Kamailio:
+...
+OPTIONS sip:alice@127.0.0.1 SIP/2.0
+Via: SIP/2.0/UDP 127.0.0.1:65502;branch=z9hG4bK.79e78613;rport;alias
+From: sip:sipsak@172.17.0.2;tag=74806173
+To: sip:alice@127.0.0.1
+Call-ID: 482215126@172.17.0.2
+CSeq: 1 OPTIONS
+Contact: sip:sipsak@127.0.0.1:65502
+Content-Length: 0
+Max-Forwards: 70
+User-Agent: sipsak 0.9.7pre
+Accept: text/plain
+
 ...
