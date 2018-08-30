@@ -43,12 +43,12 @@ Ramona-Elena Modroiu
               3.10. auth_username_avp (string)
               3.11. auth_password_avp (string)
               3.12. reg_db_url (string)
-              3.13. reg_timer_interval (string)
+              3.13. reg_timer_interval (int)
               3.14. reg_retry_interval (int)
               3.15. reg_random_delay (int)
               3.16. reg_db_table (string)
               3.17. reg_contact_addr (string)
-              3.18. reg_keep_callid (string)
+              3.18. reg_keep_callid (int)
               3.19. reg_active (int)
 
         4. Functions
@@ -155,12 +155,12 @@ Chapter 1. Admin Guide
         3.10. auth_username_avp (string)
         3.11. auth_password_avp (string)
         3.12. reg_db_url (string)
-        3.13. reg_timer_interval (string)
+        3.13. reg_timer_interval (int)
         3.14. reg_retry_interval (int)
         3.15. reg_random_delay (int)
         3.16. reg_db_table (string)
         3.17. reg_contact_addr (string)
-        3.18. reg_keep_callid (string)
+        3.18. reg_keep_callid (int)
         3.19. reg_active (int)
 
    4. Functions
@@ -259,12 +259,12 @@ Chapter 1. Admin Guide
    3.10. auth_username_avp (string)
    3.11. auth_password_avp (string)
    3.12. reg_db_url (string)
-   3.13. reg_timer_interval (string)
+   3.13. reg_timer_interval (int)
    3.14. reg_retry_interval (int)
    3.15. reg_random_delay (int)
    3.16. reg_db_table (string)
    3.17. reg_contact_addr (string)
-   3.18. reg_keep_callid (string)
+   3.18. reg_keep_callid (int)
    3.19. reg_active (int)
 
 3.1. rr_from_store_param (string)
@@ -443,7 +443,7 @@ modparam("uac", "reg_db_url",
     "mysql://kamailio:kamailiorw@localhost/kamailio")
 ...
 
-3.13. reg_timer_interval (string)
+3.13. reg_timer_interval (int)
 
    Timer interval (in seconds) at which registrations are managed, e.g.
    renewed as needed.
@@ -504,7 +504,7 @@ modparam("uac", "reg_db_table", "uacreg")
 modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
 ...
 
-3.18. reg_keep_callid (string)
+3.18. reg_keep_callid (int)
 
    If set to 0 (default), a new Call-Id will be generated for each
    registration attempt. If set to non-zero, the same Call-Id will be used
