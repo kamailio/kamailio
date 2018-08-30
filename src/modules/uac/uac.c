@@ -76,6 +76,7 @@ int_str restore_from_avp_name;
 unsigned short restore_to_avp_type;
 int_str restore_to_avp_name;
 static int uac_restore_dlg = 0;
+static int reg_active_param = 1;
 
 /* global param variables */
 str rr_from_param = str_init("vsf");
@@ -169,6 +170,7 @@ static param_export_t params[] = {
 	{"reg_retry_interval",	INT_PARAM,	  		&reg_retry_interval    },
 	{"reg_keep_callid",	INT_PARAM,			&reg_keep_callid       },
 	{"reg_random_delay",	INT_PARAM,			&reg_random_delay      },
+	{"reg_active",	INT_PARAM,			&reg_active_param      },
 	{0, 0, 0}
 };
 
@@ -319,6 +321,10 @@ static int mod_init(void)
 		if(!reg_contact_addr.s || reg_contact_addr.len<=0)
 		{
 			LM_ERR("contact address parameter not set\n");
+			goto error;
+		}
+		if(reg_active_init(reg_active_param)<0) {
+			LM_ERR("failed to init reg active mode\n");
 			goto error;
 		}
 		if(reg_htable_size>14)

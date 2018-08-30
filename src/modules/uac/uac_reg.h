@@ -59,4 +59,6 @@ int uac_reg_enable(sip_msg_t *msg, str *attr, str *val);
 int uac_reg_disable(sip_msg_t *msg, str *attr, str *val);
 int uac_reg_refresh(sip_msg_t *msg, str *l_uuid);
 
+int reg_active_init(int mode);
+
 #endif
