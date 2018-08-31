@@ -91,6 +91,8 @@ static void destroy(void);
 static cmd_export_t cmds[] = {
 	{"dmq_handle_message", (cmd_function)dmq_handle_message, 0,
 		0, 0, REQUEST_ROUTE},
+	{"dmq_handle_message", (cmd_function)w_dmq_handle_message, 1,
+		fixup_int_1, 0, REQUEST_ROUTE},
 	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4,
 		fixup_spve_all, 0, ANY_ROUTE},
 	{"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3,

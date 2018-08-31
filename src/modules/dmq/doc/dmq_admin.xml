@@ -219,12 +219,22 @@ modparam("dmq", "ping_interval", 90)
         <title>Functions</title>
         <section id="dmq.f.dmq_handle_message">
                 <title>
-                <function moreinfo="none">dmq_handle_message()</function>
+                <function moreinfo="none">dmq_handle_message([continue])</function>
                 </title>
                 <para>
                 Handles a DMQ message by passing it to the appropriate local peer (module).
 		The peer is identified by the user part of the To header.
                 </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para>
+                                <emphasis>continue</emphasis> - by default, dmq_handle_message() will end
+                                execution of routing script. If this optional parameter is set to "1", dmq_handle_message()
+                                will continue executing the routing script after it's been called.
+                                </para>
+                        </listitem>
+                </itemizedlist>
                 <para>
                 This function can be used from REQUEST_ROUTE.
                 </para>
