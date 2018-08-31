@@ -46,7 +46,7 @@ Charles Chance
 
         4. Functions
 
-              4.1. dmq_handle_message()
+              4.1. dmq_handle_message([continue])
               4.2. dmq_send_message(peer, node, body, content_type)
               4.3. dmq_bcast_message(peer, body, content_type)
               4.4. dmq_t_replicate([skip_loop_test])
@@ -109,7 +109,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. dmq_handle_message()
+        4.1. dmq_handle_message([continue])
         4.2. dmq_send_message(peer, node, body, content_type)
         4.3. dmq_bcast_message(peer, body, content_type)
         4.4. dmq_t_replicate([skip_loop_test])
@@ -269,16 +269,22 @@ modparam("dmq", "ping_interval", 90)
 
 4. Functions
 
-   4.1. dmq_handle_message()
+   4.1. dmq_handle_message([continue])
    4.2. dmq_send_message(peer, node, body, content_type)
    4.3. dmq_bcast_message(peer, body, content_type)
    4.4. dmq_t_replicate([skip_loop_test])
    4.5. dmq_is_from_node()
 
-4.1.  dmq_handle_message()
+4.1.  dmq_handle_message([continue])
 
    Handles a DMQ message by passing it to the appropriate local peer
    (module). The peer is identified by the user part of the To header.
+
+   Meaning of parameters:
+     * continue - by default, dmq_handle_message() will end execution of
+       routing script. If this optional parameter is set to "1",
+       dmq_handle_message() will continue executing the routing script
+       after it's been called.
 
    This function can be used from REQUEST_ROUTE.
 
