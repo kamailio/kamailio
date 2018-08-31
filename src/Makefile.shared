@@ -43,8 +43,8 @@ sh_err_fail=
 try_err=$(1) ; if [ $$? != 0 ]; then echo ERROR: $(1) failed ; fi
 endif
 
-DOCBOOK = $(shell which docbook2x-man 2>/dev/null)
-ifeq ($(DOCBOOK),)
-	DOCBOOK = $(shell which db2x_docbook2man 2>/dev/null)
+DOCBOOKMAN = $(shell which docbook2x-man 2>/dev/null)
+ifeq ($(DOCBOOKMAN),)
+	DOCBOOKMAN = $(shell which db2x_docbook2man 2>/dev/null)
 endif
 
