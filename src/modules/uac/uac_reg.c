@@ -2107,7 +2107,6 @@ static void rpc_uac_reg_active(rpc_t* rpc, void* ctx)
 	}
 	omode = *reg_active;
 	*reg_active = (nmode)?1:0;
-	str none = {"none", 4};
 
 	/* add entry node */
 	if (rpc->add(ctx, "{", &th) < 0) {
