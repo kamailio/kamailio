@@ -299,6 +299,7 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 
 	for (i=t->fwded_totags; i; i=i->next) {
 		if (i->tag.len==tag->len
+				&& i->tag.s
 				&& memcmp(i->tag.s, tag->s, tag->len) ==0 ){
 			/* to tag already recorded */
 			LM_DBG("to-tag retransmission\n");
