@@ -93,6 +93,16 @@
 					B - (uppercase B) SIP message body
 				</para>
 			</listitem>
+			<listitem>
+				<para>
+					c - (lowercase c) CSeq attributes
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					t - (lowercase t) To header attributes
+				</para>
+			</listitem>
 			</itemizedlist>
 		</listitem>
 		<listitem>
@@ -120,7 +130,12 @@ sj_serialize("0B", "$var(json)");
 	<section>
 	<title>Output Samples</title>
 		<para>
-		The content of the output variable is a JSON. Next are some samples.
+		The content of the output variable is a JSON. Next are some samples. Note
+		that the content might change with future development and this example
+		become outdated, simply print the document when you start testing your
+		config and match the name of the attribute with the name of pseudo-variables
+		to understand what values can be there. Unlike pseudo-variables, the
+		$null values might converted to empty strings.
 		</para>
 		<example>
 		<title><function>sj_serialize</function> output</title>
@@ -146,6 +161,7 @@ sj_serialize("0B", "$var(json)");
   "ua":"sipsak 0.9.7pre",
   "ci":"482215126@172.17.0.2",
   "rb":""
+  ...
 }
 ...
 # the sip message sent to &kamailio;:
