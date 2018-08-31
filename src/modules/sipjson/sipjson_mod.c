@@ -345,6 +345,26 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 					srjson_AddStrStrToObject(jdoc, jr, "rb", 2, s.s, s.len);
 				}
 			break;
+			case 'c':
+				if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
+						|| (msg->cseq==NULL)) ) {
+					s.s = "";
+					s.len = 0;
+				} else {
+					s = get_cseq(msg)->number;
+				}
+				srjson_AddStrStrToObject(jdoc, jr, "cs", 2, s.s, s.len);
+			break;
+			case 't':
+				puri = parse_to_uri(msg);
+				if(puri==NULL) {
+					srjson_AddStrStrToObject(jdoc, jr, "tU", 2, "", 0);
+					srjson_AddStrStrToObject(jdoc, jr, "td", 2, "", 0);
+				} else {
+					sj_add_xuri_attr(puri, 1, "tU", 2, jdoc, jr);
+					sj_add_xuri_attr(puri, 2, "td", 2, jdoc, jr);
+				}
+			break;
 		}
 	}
 	return 1;
