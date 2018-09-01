@@ -8,7 +8,7 @@ pkgver=5.1.5
 pkgrel=0
 
 # If building from a git snapshot, specify the gitcommit
-# If building a proper release, leave gitcommit blank
+# If building a proper release, leave gitcommit blank or commented
 _gitcommit=991fe9b28e0e201309048f3b38a135037e40357a
 
 [ ! -z "${_gitcommit}" ] && pkgver="${pkgver}.$(date +%Y%m%d)"
@@ -24,6 +24,7 @@ pkggroups="kamailio"
 arch="all"
 license="GPL2+"
 depends="gawk"
+options="!check"
 makedepends="bison db-dev flex freeradius-client-dev expat-dev lksctp-tools-dev perl-dev postgresql-dev python2-dev pcre-dev mariadb-dev
 	libxml2-dev curl-dev unixodbc-dev confuse-dev ncurses-dev sqlite-dev
 	lua-dev openldap-dev libressl-dev net-snmp-dev libuuid libev-dev
@@ -250,11 +251,22 @@ source="${pkgname}-${pkgver}${_suffix}.tar.gz::https://github.com/kamailio/$pkgn
 	kamailio.initd
 	"
 
+get_source_from_local_git(){
+        cd ../../.. && git archive --format=tar.gz --prefix=${pkgname}-${_gitcommit}/ -o "$SRCDEST"/${pkgname}-${pkgver}${_suffix}.tar.gz ${_gitcommit} && cd pkg/kamailio/alpine || return 1
+        echo Created dist archive "$SRCDEST"/${pkgname}-${pkgver}${_suffix}.tar.gz
+}
+
+get_source_from_github(){
+        echo Cannot create archive using local git repo. Trying create source from GutHub.
+        wget -O "$SRCDEST"/${pkgname}-${pkgver}${_suffix}.tar.gz https://github.com/kamailio/$pkgname/archive/${_gitcommit}.tar.gz || return 1
+        echo Created dist archive "$SRCDEST"/${pkgname}-${pkgver}${_suffix}.tar.gz
+}
+
 snapshot() {
         if [ ! -f "$SRCDEST"/${pkgname}-${pkgver}${_suffix}.tar.gz ]; then
-            wget -O "$SRCDEST"/${pkgname}-${pkgver}${_suffix}.tar.gz https://github.com/kamailio/$pkgname/archive/$_gitcommit.tar.gz
+            get_source_from_local_git || get_source_from_github
         fi
-        SHA512SUM=$(sha512sum "$SRCDEST"/${pkgname}-${pkgver}${_suffix}.tar.gz | sed -e "s:$SRCDEST/::")
+        SHA512SUM=$(sha512sum "$SRCDEST"/${pkgname}-${pkgver}${_suffix}.tar.gz | sed -e "s:${SRCDEST}/::")
         sed -i -e "s/^\(sha512sums=.\).*/\1$SHA512SUM/" APKBUILD
 }
 
