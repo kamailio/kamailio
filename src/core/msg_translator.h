@@ -180,4 +180,15 @@ void process_lumps( struct sip_msg* msg,
                     unsigned int* orig_offs,
                     struct dest_info* send_info,
                     int flag);
+
+/**
+ * set the internal buffer for sip msg with obuf and reparse
+ */
+int sip_msg_update_buffer(sip_msg_t *msg, str *obuf);
+
+/**
+ * apply changes to sip msg buffer and reparse
+ */
+int sip_msg_apply_changes(sip_msg_t *msg);
+
 #endif
