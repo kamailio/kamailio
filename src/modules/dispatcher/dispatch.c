@@ -2250,6 +2250,7 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 	sr_xavp_t *rxavp = NULL;
 	sr_xavp_t *lxavp = NULL;
 
+	LM_DBG("updating dst\n");
 	if(upos == DS_USE_NEXT) {
 		if(!(ds_flags & DS_FAILOVER_ON) || ds_xavp_dst.len <= 0) {
 			LM_WARN("failover support disabled\n");
@@ -2264,6 +2265,7 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 	}
 
 	if(upos == DS_USE_NEXT) {
+		LM_DBG("updating dst with next record\n");
 		/* use next destination - delete the current one and search the next */
 		xavp_rm(rxavp, NULL);
 
@@ -2282,7 +2284,7 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 
 	lxavp = xavp_get(&ds_xavp_dst_addr, rxavp);
 	if(lxavp==NULL || lxavp->val.type!=SR_XTYPE_STR) {
-		LM_WARN("no xavp uri field in next destination record\n");
+		LM_WARN("no xavp uri field in next destination record (%p)\n", lxavp);
 		return -1;
 	}
 
