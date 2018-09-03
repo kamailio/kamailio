@@ -293,6 +293,26 @@ modparam("rr", "force_send_socket", 1)
 </programlisting>
       </example>
     </section>
+    <section id="rr.p.ignore_sips">
+      <title><varname>ignore_sips</varname> (int)</title>
+
+	  <para>
+		  If set to 1, the Record-Route header are build with 'sip' schema
+		  always, ignoring the presence of 'sips' schema in request URI.
+	  </para>
+
+      <para><emphasis>Default value is 0 (use 'sips' if present in R-URI).</emphasis></para>
+
+      <example>
+        <title>Set <varname>ignore_sips</varname> parameter</title>
+
+        <programlisting format="linespecific">
+...
+modparam("rr", "ignore_sips", 1)
+...
+</programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
