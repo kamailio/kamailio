@@ -5,8 +5,6 @@ CREATE TABLE subscriber (
     password VARCHAR2(64) DEFAULT '',
     ha1 VARCHAR2(128) DEFAULT '',
     ha1b VARCHAR2(128) DEFAULT '',
-    email_address VARCHAR2(128) DEFAULT NULL,
-    rpid VARCHAR2(128) DEFAULT NULL,
     CONSTRAINT subscriber_account_idx  UNIQUE (username, domain)
 );
 
