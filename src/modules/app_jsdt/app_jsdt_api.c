@@ -242,6 +242,102 @@ static int jsdt_sr_pv_gete(duk_context *J)
 /**
  *
  */
+static int jsdt_sr_pv_push_valx (duk_context *J, int rmode, int vi, str *vs)
+{
+	if(rmode==1) {
+		duk_push_int(J, vi);
+	} else {
+		duk_push_lstring(J, vs->s, vs->len);
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int jsdt_sr_pv_get_valx (duk_context *J, int rmode)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	sr_jsdt_env_t *env_J;
+	int pl;
+	int xival = 0;
+	str xsval = str_init("");
+	env_J = jsdt_sr_env_get();
+
+	if(duk_get_top(J)<2) {
+		LM_ERR("too few parameters [%d]\n", duk_get_top(J));
+		return jsdt_sr_return_pv_null(J, 0);
+	}
+	if(rmode==1) {
+		if(!duk_is_number(J, 1)) {
+			LM_ERR("invalid int parameter\n");
+			return jsdt_sr_return_pv_null(J, 0);
+		}
+		xival = duk_to_int(J, 1);
+	} else {
+		if(!duk_is_string(J, 1)) {
+			LM_ERR("invalid str parameter\n");
+			return jsdt_sr_return_pv_null(J, 0);
+		}
+		xsval.s = (char*)duk_to_string(J, 1);
+		xsval.len = strlen(val.rs.s);
+	}
+
+	pvn.s = (char*)duk_to_string(J, 0);
+	if(pvn.s==NULL || env_J->msg==NULL) {
+		return jsdt_sr_pv_push_valx(J, rmode, xival, &xsval);
+	}
+
+	pvn.len = strlen(pvn.s);
+	LM_DBG("pv get: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return jsdt_sr_pv_push_valx(J, rmode, xival, &xsval);
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return jsdt_sr_pv_push_valx(J, rmode, xival, &xsval);
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	if(pv_get_spec_value(env_J->msg, pvs, &val) != 0) {
+		LM_ERR("unable to get pv value for [%s]\n", pvn.s);
+		return jsdt_sr_pv_push_valx(J, rmode, xival, &xsval);
+	}
+	if(val.flags&PV_VAL_NULL) {
+		return jsdt_sr_pv_push_valx(J, rmode, xival, &xsval);
+	}
+	if(val.flags&PV_TYPE_INT) {
+		duk_push_int(J, val.ri);
+		return 1;
+	}
+	duk_push_lstring(J, val.rs.s, val.rs.len);
+	return 1;
+}
+
+/**
+ *
+ */
+static int jsdt_sr_pv_getvs (duk_context *J)
+{
+	return jsdt_sr_pv_get_valx(J, 0);
+}
+
+/**
+ *
+ */
+static int jsdt_sr_pv_getvn (duk_context *J)
+{
+	return jsdt_sr_pv_get_valx(J, 1);
+}
+
+/**
+ *
+ */
 static int jsdt_sr_pv_seti (duk_context *J)
 {
 	str pvn;
@@ -431,6 +527,8 @@ const duk_function_list_entry _sr_kemi_pv_J_Map[] = {
 	{ "get", jsdt_sr_pv_get, 1 /* 1 args */ },
 	{ "getw", jsdt_sr_pv_getw, 1 /* 1 args */ },
 	{ "gete", jsdt_sr_pv_gete, 1 /* 1 args */ },
+	{ "getvn", jsdt_sr_pv_getvn, 2 /* 2 args */ },
+	{ "getvd", jsdt_sr_pv_getvs, 2 /* 2 args */ },
 	{ "seti", jsdt_sr_pv_seti, 2 /* 2 args */ },
 	{ "sets", jsdt_sr_pv_sets, 2 /* 2 args */ },
 	{ "unset", jsdt_sr_pv_unset, 1 /* 1 args */ },
