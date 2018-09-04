@@ -528,7 +528,7 @@ const duk_function_list_entry _sr_kemi_pv_J_Map[] = {
 	{ "getw", jsdt_sr_pv_getw, 1 /* 1 args */ },
 	{ "gete", jsdt_sr_pv_gete, 1 /* 1 args */ },
 	{ "getvn", jsdt_sr_pv_getvn, 2 /* 2 args */ },
-	{ "getvd", jsdt_sr_pv_getvs, 2 /* 2 args */ },
+	{ "getvs", jsdt_sr_pv_getvs, 2 /* 2 args */ },
 	{ "seti", jsdt_sr_pv_seti, 2 /* 2 args */ },
 	{ "sets", jsdt_sr_pv_sets, 2 /* 2 args */ },
 	{ "unset", jsdt_sr_pv_unset, 1 /* 1 args */ },
