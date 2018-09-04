@@ -59,7 +59,7 @@ static param_t* _tr_uri_params = NULL;
 
 /*! transformation buffer size */
 #define TR_BUFFER_SIZE 65536
-#define TR_BUFFER_SLOTS	4
+#define TR_BUFFER_SLOTS	8
 
 /*! transformation buffer */
 static char **_tr_buffer_list = NULL;
