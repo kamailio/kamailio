@@ -525,6 +525,17 @@ static int w_ht_rm_value(sip_msg_t* msg, char* hname, char* op, char *val)
 	return w_ht_rm_items(msg, hname, op, val, 1);
 }
 
+static int ki_ht_rm_name(sip_msg_t* msg, str* sname, str* sop, str *sval)
+{
+	return ht_rm_items(msg, sname, sop, sval, 0);
+
+}
+
+static int ki_ht_rm_value(sip_msg_t* msg, str* sname, str* sop, str *sval)
+{
+	return ht_rm_items(msg, sname, sop, sval, 1);
+}
+
 static int ht_reset_by_name(str *hname)
 {
 	ht_t *ht;
@@ -1319,6 +1330,16 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	{ str_init("htable"), str_init("sht_rm_value_re"),
 		SR_KEMIP_INT, ki_ht_rm_value_re,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_rm_name"),
+		SR_KEMIP_INT, ki_ht_rm_name,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_rm_value"),
+		SR_KEMIP_INT, ki_ht_rm_value,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
