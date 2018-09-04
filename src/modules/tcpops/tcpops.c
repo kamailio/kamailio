@@ -204,6 +204,7 @@ static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 	sip_msg_t *fmsg;
 
 	rt = tcp_closed_routes[tev->reason];
+	LM_DBG("event reason id: %d rt: %d\n", tev->reason, rt);
 	if (rt == -1) return;
 
 	if (faked_msg_init() < 0)
@@ -229,11 +230,13 @@ int tcpops_handle_tcp_closed(sr_event_param_t *evp)
 		LM_WARN("received bad TCP closed event\n");
 		return -1;
 	}
+	LM_DBG("received TCP closed event\n");
 
 	/* run event route if tcp_closed_event == 1 or if the
 	 * F_CONN_CLOSE_EV flag is explicitly set */
-	if (tcp_closed_event == 1 || (tev->con->flags & F_CONN_CLOSE_EV))
+	if (tcp_closed_event == 1 || (tev->con->flags & F_CONN_CLOSE_EV)) {
 		tcpops_tcp_closed_run_route(tev);
+	}
 
 	return 0;
 }
