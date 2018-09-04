@@ -1156,6 +1156,30 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->ri = 0;
 			break;
 
+		case TR_S_UNQUOTE:
+			if(!(val->flags&PV_VAL_STR)) {
+				val->rs.s = int2str(val->ri, &val->rs.len);
+				break;
+			}
+			if(val->rs.len<2) {
+				break;
+			}
+			if(val->rs.len>TR_BUFFER_SIZE-2) {
+				LM_ERR("value too large: %d\n", val->rs.len);
+				return -1;
+			}
+			if((val->rs.s[0] == val->rs.s[val->rs.len-1])
+					&& (val->rs.s[0] == '"' || val->rs.s[0] == '\'')) {
+				memcpy(_tr_buffer, val->rs.s+1, val->rs.len-2);
+				val->rs.len -= 2;
+			} else {
+				memcpy(_tr_buffer, val->rs.s, val->rs.len);
+			}
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.s[val->rs.len] = '\0';
+			break;
+
 		default:
 			LM_ERR("unknown subtype %d (cfg line: %d)\n",
 					subtype, get_cfg_crt_line());
@@ -2507,6 +2531,9 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==15 && strncasecmp(name.s, "urldecode.param", 15)==0) {
 		t->subtype = TR_S_URLDECODEPARAM;
+		goto done;
+	} else if(name.len==7 && strncasecmp(name.s, "unquote", 7)==0) {
+		t->subtype = TR_S_UNQUOTE;
 		goto done;
 	}
 
