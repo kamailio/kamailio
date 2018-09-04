@@ -68,6 +68,8 @@ Ovidiu Sas
               4.9. sht_iterator_start(iname, hname)
               4.10. sht_iterator_end(iname)
               4.11. sht_iterator_next(iname)
+              4.12. sht_has_name(htable, op, mval)
+              4.13. sht_has_str_value(htable, op, mval)
 
         5. Exported pseudo-variables
         6. RPC Commands
@@ -117,6 +119,8 @@ Ovidiu Sas
    1.27. sht_iterator_start usage
    1.28. sht_iterator_end usage
    1.29. sht_iterator_next usage
+   1.30. sht_has_name usage
+   1.31. sht_has_name usage
 
 Chapter 1. Admin Guide
 
@@ -160,6 +164,8 @@ Chapter 1. Admin Guide
         4.9. sht_iterator_start(iname, hname)
         4.10. sht_iterator_end(iname)
         4.11. sht_iterator_next(iname)
+        4.12. sht_has_name(htable, op, mval)
+        4.13. sht_has_str_value(htable, op, mval)
 
    5. Exported pseudo-variables
    6. RPC Commands
@@ -675,6 +681,8 @@ modparam("htable", "event_callback_mode", 1)
    4.9. sht_iterator_start(iname, hname)
    4.10. sht_iterator_end(iname)
    4.11. sht_iterator_next(iname)
+   4.12. sht_has_name(htable, op, mval)
+   4.13. sht_has_str_value(htable, op, mval)
 
 4.1.  sht_print()
 
@@ -850,6 +858,50 @@ sht_iterator_end("i1");
         xlog("h1[$shtitkey(i1)] is: $shtitval(i1)\n");
     }
     sht_iterator_end("i1");
+...
+
+4.12.  sht_has_name(htable, op, mval)
+
+   Return greater than 0 (true) if the htable has an item that matches the
+   name against the mval parameter.
+
+   The op parameter can be:
+     * eq - match the val parameter as string equal expression.
+     * ne - match the val parameter as string not-equal expression.
+     * re - match the val parameter as regular expression.
+     * sw - match the val parameter as 'starts with' expression.
+
+   All parameters can be static strings or contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.30. sht_has_name usage
+...
+if(sht_has_name("ha", "eq", "alice")) {
+  ...
+}
+...
+
+4.13.  sht_has_str_value(htable, op, mval)
+
+   Return greater than 0 (true) if the htable has an item that matches the
+   string value against the mval parameter.
+
+   The op parameter can be:
+     * eq - match the val parameter as string equal expression.
+     * ne - match the val parameter as string not-equal expression.
+     * re - match the val parameter as regular expression.
+     * sw - match the val parameter as 'starts with' expression.
+
+   All parameters can be static strings or contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.31. sht_has_name usage
+...
+if(sht_has_str_value("ha", "eq", "alice")) {
+  ...
+}
 ...
 
 5. Exported pseudo-variables
