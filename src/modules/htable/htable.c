@@ -70,6 +70,8 @@ static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo);
 static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
 static int w_ht_rm_name(struct sip_msg* msg, char* hname, char* op, char *val);
 static int w_ht_rm_value(struct sip_msg* msg, char* hname, char* op, char *val);
+static int w_ht_has_name(struct sip_msg* msg, char* hname, char* op, char *val);
+static int w_ht_has_str_value(struct sip_msg* msg, char* hname, char* op, char *val);
 static int w_ht_slot_lock(struct sip_msg* msg, char* key, char* foo);
 static int w_ht_slot_unlock(struct sip_msg* msg, char* key, char* foo);
 static int ht_reset(struct sip_msg* msg, char* htname, char* foo);
@@ -113,6 +115,10 @@ static cmd_export_t cmds[]={
 	{"sht_rm_name",  (cmd_function)w_ht_rm_name,   3, fixup_spve_all, 0,
 		ANY_ROUTE},
 	{"sht_rm_value", (cmd_function)w_ht_rm_value,  3, fixup_spve_all, 0,
+		ANY_ROUTE},
+	{"sht_has_name",  (cmd_function)w_ht_has_name,   3, fixup_spve_all, 0,
+		ANY_ROUTE},
+	{"sht_has_str_value", (cmd_function)w_ht_has_str_value,  3, fixup_spve_all, 0,
 		ANY_ROUTE},
 	{"sht_lock",        (cmd_function)w_ht_slot_lock,    1, fixup_ht_key, 0,
 		ANY_ROUTE},
@@ -534,6 +540,86 @@ static int ki_ht_rm_name(sip_msg_t* msg, str* sname, str* sop, str *sval)
 static int ki_ht_rm_value(sip_msg_t* msg, str* sname, str* sop, str *sval)
 {
 	return ht_rm_items(msg, sname, sop, sval, 1);
+}
+
+static int ht_has_str_items(sip_msg_t* msg, str* hname, str* op, str *val,
+		int mkey)
+{
+	ht_t *ht;
+	int vop;
+
+	ht = ht_get_table(hname);
+	if(ht==NULL) {
+		LM_ERR("cannot get hash table [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	switch(op->len) {
+		case 2:
+			if(strncmp(op->s, "eq", 2)==0) {
+				vop = HT_RM_OP_EQ;
+			} else if(strncmp(op->s, "ne", 2)==0) {
+				vop = HT_RM_OP_NE;
+			} else if(strncmp(op->s, "re", 2)==0) {
+				vop = HT_RM_OP_RE;
+			} else if(strncmp(op->s, "sw", 2)==0) {
+				vop = HT_RM_OP_SW;
+			} else {
+				LM_WARN("unsupported match operator: %.*s\n", op->len, op->s);
+				return -1;
+			}
+			if(ht_has_cell_op_str(val, ht, mkey, vop)<0) {
+				return -1;
+			}
+			return 1;
+		default:
+			LM_WARN("unsupported match operator: %.*s\n", op->len, op->s);
+			return -1;
+	}
+}
+
+static int w_ht_has_str_items(sip_msg_t* msg, char* hname, char* op, char *val,
+		int mkey)
+{
+	str sname;
+	str sop;
+	str sval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)hname, &sname)<0 || sname.len<=0) {
+		LM_ERR("cannot get the hash table name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)op, &sop)<0 || sop.len<=0) {
+		LM_ERR("cannot get the match operation\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)val, &sval)<0 || sval.len<=0) {
+		LM_ERR("cannot the get match value\n");
+		return -1;
+	}
+
+	return ht_has_str_items(msg, &sname, &sop, &sval, mkey);
+}
+
+static int w_ht_has_name(sip_msg_t* msg, char* hname, char* op, char *val)
+{
+	return w_ht_has_str_items(msg, hname, op, val, 0);
+}
+
+static int w_ht_has_str_value(sip_msg_t* msg, char* hname, char* op, char *val)
+{
+	return w_ht_has_str_items(msg, hname, op, val, 1);
+}
+
+static int ki_ht_has_name(sip_msg_t* msg, str* sname, str* sop, str *sval)
+{
+	return ht_has_str_items(msg, sname, sop, sval, 0);
+
+}
+
+static int ki_ht_has_str_value(sip_msg_t* msg, str* sname, str* sop, str *sval)
+{
+	return ht_has_str_items(msg, sname, sop, sval, 1);
 }
 
 static int ht_reset_by_name(str *hname)
@@ -1339,6 +1425,16 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	},
 	{ str_init("htable"), str_init("sht_rm_value"),
 		SR_KEMIP_INT, ki_ht_rm_value,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_has_name"),
+		SR_KEMIP_INT, ki_ht_has_name,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_has_str_value"),
+		SR_KEMIP_INT, ki_ht_has_str_value,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

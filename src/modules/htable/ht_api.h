@@ -114,8 +114,12 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode);
 ht_t *ht_get_root(void);
 int ht_reset_content(ht_t *ht);
 
-#define HT_RM_OP_SW	1
+#define HT_RM_OP_EQ	1
+#define HT_RM_OP_NE	2
+#define HT_RM_OP_SW	3
+#define HT_RM_OP_RE	4
 int ht_rm_cell_op(str *sre, ht_t *ht, int mode, int op);
+int ht_has_cell_op_str(str *sre, ht_t *ht, int mode, int op);
 
 void ht_iterator_init(void);
 int ht_iterator_start(str *iname, str *hname);

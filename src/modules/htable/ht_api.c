@@ -1304,6 +1304,94 @@ int ht_rm_cell_op(str *sre, ht_t *ht, int mode, int op)
 	return 0;
 }
 
+int ht_has_cell_op_str(str *sre, ht_t *ht, int mode, int op)
+{
+	ht_cell_t *it;
+	str sm;
+	int i;
+	int nomatch;
+	regex_t re;
+	regmatch_t pmatch;
+
+	if(sre==NULL || sre->len<=0 || ht==NULL)
+		return -1;
+
+	if(op == HT_RM_OP_RE) {
+		if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+			LM_ERR("bad re %s\n", sre->s);
+			return -1;
+		}
+	}
+
+	for(i=0; i<ht->htsize; i++) {
+		/* free entries */
+		ht_slot_lock(ht, i);
+		it = ht->entries[i].first;
+		while(it) {
+			nomatch = 0;
+			if(mode==0) {
+				sm = it->name;
+			} else {
+				if(it->flags&AVP_VAL_STR) {
+					sm = it->value.s;
+				} else {
+					/* no str value - skip matching */
+					nomatch = 1;
+				}
+			}
+			if(nomatch==0) {
+				switch(op) {
+					case HT_RM_OP_EQ:
+						if(sre->len==sm.len
+									&& strncmp(sm.s, sre->s, sre->len)==0) {
+							goto matched;
+						}
+					break;
+					case HT_RM_OP_NE:
+						if(sre->len!=sm.len
+									|| strncmp(sm.s, sre->s, sre->len)!=0) {
+							goto matched;
+						}
+					break;
+					case HT_RM_OP_SW:
+						if(sre->len<=sm.len
+									&& strncmp(sm.s, sre->s, sre->len)==0) {
+							goto matched;
+						}
+					break;
+					case HT_RM_OP_RE:
+						if (regexec(&re, sm.s, 1, &pmatch, 0)==0) {
+							goto matched;
+						}
+					break;
+					default:
+						goto notmatched;
+				}
+			}
+			it = it->next;
+		}
+		ht_slot_unlock(ht, i);
+	}
+	if(op==HT_RM_OP_RE) {
+		regfree(&re);
+	}
+	return -1;
+
+matched:
+	ht_slot_unlock(ht, i);
+	if(op==HT_RM_OP_RE) {
+		regfree(&re);
+	}
+	return 1;
+
+notmatched:
+	ht_slot_unlock(ht, i);
+	if(op==HT_RM_OP_RE) {
+		regfree(&re);
+	}
+	return -1;
+}
+
 int ht_reset_content(ht_t *ht)
 {
 	ht_cell_t *it;
