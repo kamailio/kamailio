@@ -356,7 +356,7 @@ int tcp_read(struct tcp_connection *c, int* flags)
 	fd=c->fd;
 	bytes_free=r->b_size- (int)(r->pos - r->buf);
 	
-	if (unlikely(bytes_free==0)){
+	if (unlikely(bytes_free<=0)){
 		LM_ERR("buffer overrun, dropping ([%s]:%u -> [%s]:%u)\n",
 				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
