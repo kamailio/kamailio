@@ -88,7 +88,9 @@ enum tls_domain_type {
 	TLS_DOMAIN_ANY = (1 << 3)  /**< Any address */
 };
 
-
+#define KSR_TLS_SNM_STRICT 0 /**< Match server_name only */
+#define KSR_TLS_SNM_INCDOM 1 /**< Match server_name and subdomains */
+#define KSR_TLS_SNM_SUBDOM 2 /**< Match subdomains only */
 /**
  * separate configuration per ip:port
  */
@@ -107,6 +109,7 @@ typedef struct tls_domain {
 	enum tls_method method;
 	str crl_file;
 	str server_name;
+	int server_name_mode;
 	str server_id;
 	struct tls_domain* next;
 } tls_domain_t;

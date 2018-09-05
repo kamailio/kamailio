@@ -1498,6 +1498,7 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 		struct ip_addr* ip, unsigned short port, str *sname, str *srvid)
 {
 	tls_domain_t *p;
+	int dotpos;
 
 	if (type & TLS_DOMAIN_DEF) {
 		if (type & TLS_DOMAIN_SRV) return cfg->srv_default;
@@ -1521,22 +1522,41 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 
 		}
 		if(sname) {
-			LM_DBG("comparing addr: [%s:%d]  [%s:%d] -- sni: [%.*s] [%.*s] -- %d\n",
+			LM_DBG("comparing addr: l[%s:%d]  r[%s:%d] -- sni: l[%.*s] r[%.*s] %d"
+				" -- type: %d\n",
 				ip_addr2a(&p->ip), p->port, ip_addr2a(ip), port,
 				p->server_name.len, ZSW(p->server_name.s),
-				sname->len, ZSW(sname->s), p->type);
+				sname->len, ZSW(sname->s), p->server_name_mode, p->type);
 		}
 		if ((p->type & TLS_DOMAIN_ANY)
 				|| ((p->port==0 || p->port == port)
 						&& ip_addr_cmp(&p->ip, ip))) {
-			if(sname && sname->len>0) {
-				if(p->server_name.s && p->server_name.len==sname->len
-					&& strncasecmp(p->server_name.s, sname->s, sname->len)==0) {
-					LM_DBG("socket+server_name based TLS server domain found\n");
-					return p;
+			if(sname && sname->s && sname->len>0
+						&& p->server_name.s && p->server_name.len>0) {
+				if (p->server_name_mode!=KSR_TLS_SNM_SUBDOM) {
+					/* match sni domain */
+					if(p->server_name.len==sname->len
+								&& strncasecmp(p->server_name.s, sname->s,
+									sname->len)==0) {
+						LM_DBG("socket+server_name based TLS server domain found\n");
+						return p;
+					}
+				}
+				if ((p->server_name_mode==KSR_TLS_SNM_INCDOM
+							|| p->server_name_mode==KSR_TLS_SNM_SUBDOM)
+						&& (p->server_name.len<sname->len)) {
+					dotpos = sname->len - p->server_name.len;
+					if(sname->s[dotpos] == '.'
+							&& strncasecmp(p->server_name.s,
+									sname->s + dotpos + 1,
+									p->server_name.len)==0) {
+						LM_DBG("socket+server_name based TLS server sub-domain found\n");
+						return p;
+					}
 				}
 			} else {
 				if (!(p->type & TLS_DOMAIN_ANY)) {
+					LM_DBG("socket based TLS server domain found\n");
 					return p;
 				}
 			}
