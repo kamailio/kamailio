@@ -146,6 +146,12 @@ static cfg_option_t token_default[] = {
 	{0}
 };
 
+static cfg_option_t ksr_tls_token_any[] = {
+	{"any"},
+	{"all"},
+	{0}
+};
+
 
 static cfg_option_t options[] = {
 	{"method",              .param = methods, .f = cfg_parse_enum_opt},
@@ -193,7 +199,7 @@ static void update_opt_variables(void)
 }
 
 
-static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
+static int ksr_tls_parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 		cfg_token_t* token, cfg_parser_t* st)
 {
 	int ret;
@@ -217,7 +223,14 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 			/* Default domain */
 			return 0;
 		} else {
-			if (parse_ipv4(ip, &t, st) < 0) return -1;
+			opt = cfg_lookup_token(ksr_tls_token_any, &t.val);
+			if (opt) {
+				*type = TLS_DOMAIN_ANY;
+				/* Default domain */
+				return 0;
+			} else {
+				if (parse_ipv4(ip, &t, st) < 0) return -1;
+			}
 		}
 	} else {
 		LM_ERR("%s:%d:%d: Syntax error, IP address expected\n",
@@ -299,7 +312,7 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 	}
 
 	port = 0;
-	if (parse_hostport(&type, &ip, &port, &t, st) < 0) return -1;
+	if (ksr_tls_parse_hostport(&type, &ip, &port, &t, st) < 0) return -1;
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;

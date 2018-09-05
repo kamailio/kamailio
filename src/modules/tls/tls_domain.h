@@ -84,7 +84,8 @@ enum tls_method {
 enum tls_domain_type {
 	TLS_DOMAIN_DEF = (1 << 0), /**< Default domain */
 	TLS_DOMAIN_SRV = (1 << 1), /**< Server domain */
-	TLS_DOMAIN_CLI = (1 << 2)  /**< Client domain */
+	TLS_DOMAIN_CLI = (1 << 2), /**< Client domain */
+	TLS_DOMAIN_ANY = (1 << 3)  /**< Any address */
 };
 
 

@@ -1521,12 +1521,14 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 
 		}
 		if(sname) {
-			LM_DBG("comparing addr: [%s:%d]  [%s:%d] -- sni: [%.*s] [%.*s]\n",
+			LM_DBG("comparing addr: [%s:%d]  [%s:%d] -- sni: [%.*s] [%.*s] -- %d\n",
 				ip_addr2a(&p->ip), p->port, ip_addr2a(ip), port,
 				p->server_name.len, ZSW(p->server_name.s),
-				sname->len, ZSW(sname->s));
+				sname->len, ZSW(sname->s), p->type);
 		}
-		if ((p->port==0 || p->port == port) && ip_addr_cmp(&p->ip, ip)) {
+		if ((p->type & TLS_DOMAIN_ANY)
+				|| ((p->port==0 || p->port == port)
+						&& ip_addr_cmp(&p->ip, ip))) {
 			if(sname && sname->len>0) {
 				if(p->server_name.s && p->server_name.len==sname->len
 					&& strncasecmp(p->server_name.s, sname->s, sname->len)==0) {
@@ -1534,13 +1536,15 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 					return p;
 				}
 			} else {
-				return p;
+				if (!(p->type & TLS_DOMAIN_ANY)) {
+					return p;
+				}
 			}
 		}
 		p = p->next;
 	}
 
-	     /* No matching domain found, return default */
+	/* No matching domain found, return default */
 	if (type & TLS_DOMAIN_SRV) return cfg->srv_default;
 	else return cfg->cli_default;
 }
@@ -1564,10 +1568,21 @@ static int domain_exists(tls_domains_cfg_t* cfg, tls_domain_t* d)
 		else p = cfg->cli_list;
 	}
 
+	if(d->type & TLS_DOMAIN_ANY) {
+		/* any address, it must have server_name for SNI */
+		if(d->server_name.len==0) {
+			LM_WARN("duplicate definition for a tls profile (same address)"
+					" and no server name provided\n");
+			return 1;
+		}
+	} else {
+		return 0;
+	}
+
 	while (p) {
 		if ((p->port == d->port) && ip_addr_cmp(&p->ip, &d->ip)) {
-			if(p->server_name.len==0) {
-				LM_WARN("another tls domain with same address was defined"
+			if(d->server_name.len==0 || p->server_name.len==0) {
+				LM_WARN("duplicate definition for a tls profile (same address)"
 						" and no server name provided\n");
 				return 1;
 			}
