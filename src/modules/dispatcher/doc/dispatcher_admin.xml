@@ -1829,6 +1829,10 @@ onreply_route {
 					It is used for sending the SIP traffic as well as
 					OPTIONS keepalives.
 				</listitem>
+				<listitem>
+					'ping_from' - used to set the From URI in OPTIONS keepalives.
+					It overwrites the general ds_ping_from parameter.
+				</listitem>
 			</itemizedlist>
 		</para>
 		</section>
@@ -1848,7 +1852,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 		</para>
 		<programlisting format="linespecific">
 ...
-1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:192.168.0.125:5060;my=xyz
+1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:192.168.0.125:5060;my=xyz;ping_from=sip:myproxy.com
 ...
 </programlisting>
 
