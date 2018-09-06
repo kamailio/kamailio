@@ -1469,6 +1469,8 @@ kamcmd dispatcher.ping_active 0
        type).
      * 'socket' - used to set the sending socket for the gateway. It is
        used for sending the SIP traffic as well as OPTIONS keepalives.
+     * 'ping_from' - used to set the From URI in OPTIONS keepalives. It
+       overwrites the general ds_ping_from parameter.
 
 6.1.2. File Format
 
@@ -1479,7 +1481,8 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 
    Full line example:
 ...
-1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:192.168.0.125:5060;my=xyz
+1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:192.168.0.125:5060;my=xyz;ping_from
+=sip:myproxy.com
 ...
 
    For database, each element of a line resides in a different column.
@@ -1523,7 +1526,7 @@ r,opt)
 #     - web: http://www.kamailio.org
 #     - git: http://github.com/kamailio/
 #
-# Direct your questions about this file to: sr-users@lists.sip-router.org
+# Direct your questions about this file to: sr-users@lists.kamailio.org
 #
 # Refer to the Core CookBook at http://www.kamailio.org/dokuwiki/doku.php
 # for an explanation of possible statements, functions and parameters.
@@ -1584,11 +1587,12 @@ sip_warning=no
 ####### Modules Section ########
 
 # set module path
-mpath="/usr/local/lib/kamailio/modules/"
+#mpath="/usr/local/lib/kamailio/modules/"
 
 loadmodule "db_mysql.so"
 loadmodule "jsonrpcs.so"
 loadmodule "kex.so"
+loadmodule "corex.so"
 loadmodule "tm.so"
 loadmodule "tmx.so"
 loadmodule "sl.so"
@@ -1671,8 +1675,9 @@ request_route {
         # record routing for dialog forming requests (in case they are routed)
         # - remove preloaded route headers
         remove_hf("Route");
-        if (is_method("INVITE|SUBSCRIBE"))
+        if (is_method("INVITE|SUBSCRIBE")) {
                 record_route();
+        }
 
         # account only INVITEs
         if (is_method("INVITE")) {
@@ -1757,6 +1762,7 @@ gnore and discard.
 route[REGISTRAR] {
         if(!is_method("REGISTER"))
                 return;
+
         sl_send_reply("404", "No registrar");
         exit;
 }
