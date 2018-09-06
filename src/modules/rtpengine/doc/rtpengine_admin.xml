@@ -2613,6 +2613,7 @@ block_dtmf();
 		</title>
 		<para>
 		Reverses the effects of a previously issued <function>block_dtmf</function> call.
+		</para>
 		<example>
 		<title><function>unblock_dtmf</function> usage</title>
 		<programlisting format="linespecific">
