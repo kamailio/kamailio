@@ -300,6 +300,9 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 			} else {
 				LM_ERR("rweight %d not in 1-100 range; skipped", tmp_rweight);
 			}
+		} else if(pit->name.len == 9
+				&& strncasecmp(pit->name.s, "ping_from", 9) == 0) {
+			dest->attrs.ping_from = pit->body;
 		}
 	}
 	if(params_list)
@@ -3020,6 +3023,7 @@ void ds_ping_set(ds_set_t *node)
 {
 	uac_req_t uac_r;
 	int i, j;
+	str ping_from;
 
 	if(!node)
 		return;
@@ -3051,10 +3055,21 @@ void ds_ping_set(ds_set_t *node)
 				uac_r.ssock = &ds_default_socket;
 			}
 
+			/* Overwrite default ping From URI with attribute */
+			if(node->dlist[j].attrs.ping_from.s != NULL
+					&& node->dlist[j].attrs.ping_from.len > 0) {
+				ping_from = node->dlist[j].attrs.ping_from;
+				LM_DBG("ping_from: %.*s\n", ping_from.len, ping_from.s);
+			}
+			else {
+				ping_from = ds_ping_from;
+				LM_DBG("Default ping_from: %.*s\n", ping_from.len, ping_from.s);
+			}
+
 			gettimeofday(&node->dlist[j].latency_stats.start, NULL);
 
 			if(tmb.t_request(&uac_r, &node->dlist[j].uri, &node->dlist[j].uri,
-					   &ds_ping_from, &ds_outbound_proxy)
+					   &ping_from, &ds_outbound_proxy)
 					< 0) {
 				LM_ERR("unable to ping [%.*s]\n", node->dlist[j].uri.len,
 						node->dlist[j].uri.s);

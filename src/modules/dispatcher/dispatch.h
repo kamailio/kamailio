@@ -169,6 +169,7 @@ typedef struct _ds_attrs {
 	int weight;
 	int rweight;
 	int congestion_control;
+	str ping_from;
 } ds_attrs_t;
 
 typedef struct _ds_latency_stats {
