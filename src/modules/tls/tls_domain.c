@@ -272,6 +272,12 @@ char* tls_domain_str(tls_domain_t* d)
 	p = strcat(p, d->type & TLS_DOMAIN_SRV ? "TLSs<" : "TLSc<");
 	if (d->type & TLS_DOMAIN_DEF) {
 		p = strcat(p, "default>");
+	} else if (d->type & TLS_DOMAIN_ANY) {
+		p = strcat(p, "any:");
+		if(d->server_name.s && d->server_name.len>0) {
+			p = strncat(p, d->server_name.s, d->server_name.len);
+		}
+		p = strcat(p, ">");
 	} else {
 		p = strcat(p, ip_addr2a(&d->ip));
 		p = strcat(p, ":");
@@ -291,7 +297,7 @@ char* tls_domain_str(tls_domain_t* d)
  * @param parent parent domain
  * @return 0 on success, -1 on error
  */
-static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
+static int ksr_tls_fill_missing(tls_domain_t* d, tls_domain_t* parent)
 {
 	if (d->method == TLS_METHOD_UNSPEC) d->method = parent->method;
 	LOG(L_INFO, "%s: tls_method=%d\n", tls_domain_str(d), d->method);
@@ -983,12 +989,20 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
  * @param d initialized TLS domain
  * @param def default TLS domains
  */
-static int fix_domain(tls_domain_t* d, tls_domain_t* def)
+static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 {
 	int i;
 	int procs_no;
 
-	if (fill_missing(d, def) < 0) return -1;
+	if (ksr_tls_fill_missing(d, def) < 0) return -1;
+
+	if(d->type & TLS_DOMAIN_ANY) {
+		if(d->server_name.s==NULL || d->server_name.len<0) {
+			LM_ERR("%s: tls domain for any address but no server name\n",
+					tls_domain_str(d));
+			return -1;
+		}
+	}
 
 	procs_no=get_max_procs();
 	d->ctx = (SSL_CTX**)shm_malloc(sizeof(SSL_CTX*) * procs_no);
@@ -1354,18 +1368,18 @@ int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 											0, 0);
 	}
 
-	if (fix_domain(cfg->srv_default, srv_defaults) < 0) return -1;
-	if (fix_domain(cfg->cli_default, cli_defaults) < 0) return -1;
+	if (ksr_tls_fix_domain(cfg->srv_default, srv_defaults) < 0) return -1;
+	if (ksr_tls_fix_domain(cfg->cli_default, cli_defaults) < 0) return -1;
 
 	d = cfg->srv_list;
 	while (d) {
-		if (fix_domain(d, srv_defaults) < 0) return -1;
+		if (ksr_tls_fix_domain(d, srv_defaults) < 0) return -1;
 		d = d->next;
 	}
 
 	d = cfg->cli_list;
 	while (d) {
-		if (fix_domain(d, cli_defaults) < 0) return -1;
+		if (ksr_tls_fix_domain(d, cli_defaults) < 0) return -1;
 		d = d->next;
 	}
 
@@ -1571,18 +1585,27 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 
 
 /**
- * @brief Check whether configuration domain exists
+ * @brief Check whether configuration domain is duplicated
  * @param cfg configuration set
  * @param d checked domain
- * @return 1 if domain exists, 0 if its not exists
+ * @return 1 if domain is duplicated, 0 if it's not
  */
-static int domain_exists(tls_domains_cfg_t* cfg, tls_domain_t* d)
+int ksr_tls_domain_duplicated(tls_domains_cfg_t* cfg, tls_domain_t* d)
 {
 	tls_domain_t *p;
 
 	if (d->type & TLS_DOMAIN_DEF) {
-		if (d->type & TLS_DOMAIN_SRV) return cfg->srv_default != NULL;
-		else return cfg->cli_default != NULL;
+		if (d->type & TLS_DOMAIN_SRV) {
+			if(cfg->srv_default==d) {
+				return 0;
+			}
+			return cfg->srv_default != NULL;
+		} else {
+			if(cfg->cli_default==d) {
+				return 0;
+			}
+			return cfg->cli_default != NULL;
+		}
 	} else {
 		if (d->type & TLS_DOMAIN_SRV) p = cfg->srv_list;
 		else p = cfg->cli_list;
@@ -1594,17 +1617,19 @@ static int domain_exists(tls_domains_cfg_t* cfg, tls_domain_t* d)
 			LM_WARN("duplicate definition for a tls profile (same address)"
 					" and no server name provided\n");
 			return 1;
+		} else {
+			return 0;
 		}
-	} else {
-		return 0;
 	}
 
 	while (p) {
-		if ((p->port == d->port) && ip_addr_cmp(&p->ip, &d->ip)) {
-			if(d->server_name.len==0 || p->server_name.len==0) {
-				LM_WARN("duplicate definition for a tls profile (same address)"
-						" and no server name provided\n");
-				return 1;
+		if(p!=d) {
+			if ((p->port == d->port) && ip_addr_cmp(&p->ip, &d->ip)) {
+				if(d->server_name.len==0 || p->server_name.len==0) {
+					LM_WARN("duplicate definition for a tls profile (same address)"
+							" and no server name provided\n");
+					return 1;
+				}
 			}
 		}
 		p = p->next;
@@ -1626,9 +1651,6 @@ int tls_add_domain(tls_domains_cfg_t* cfg, tls_domain_t* d)
 		ERR("TLS configuration structure missing\n");
 		return -1;
 	}
-
-	     /* Make sure the domain does not exist */
-	if (domain_exists(cfg, d)) return 1;
 
 	if (d->type & TLS_DOMAIN_DEF) {
 		if (d->type & TLS_DOMAIN_CLI) {

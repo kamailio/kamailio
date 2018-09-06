@@ -214,4 +214,9 @@ void tls_free_cfg(tls_domains_cfg_t* cfg);
  */
 void tls_destroy_cfg(void);
 
+/**
+ * @brief Check if a TLS configuration domain exists
+ */
+int ksr_tls_domain_duplicated(tls_domains_cfg_t* cfg, tls_domain_t* d);
+
 #endif /* _TLS_DOMAIN_H */
