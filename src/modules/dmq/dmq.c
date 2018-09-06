@@ -380,6 +380,11 @@ static sr_kemi_t sr_kemi_dmq_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dmq"), str_init("handle_message_rc"),
+		SR_KEMIP_INT, ki_dmq_handle_message_rc,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dmq"), str_init("is_from_node"),
 		SR_KEMIP_INT, is_from_remote_node,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
