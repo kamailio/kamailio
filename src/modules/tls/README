@@ -130,7 +130,7 @@ Olle E. Johansson
    1.37. Set session_cache parameter
    1.38. Set session_id parameter
    1.39. Set renegotiation parameter
-   1.40. Short config file
+   1.40. Sample TLS Config File
    1.41. Set config parameter
    1.42. Change and reload the TLS configuration at runtime
    1.43. Set xavp_cfg parameter
@@ -1231,17 +1231,23 @@ modparam("tls", "renegotiation", 1)
 
    The following parameters can be set in the config file, for each
    domain:
-     * tls_method
-     * verify_certificate
-     * require_certificate
-     * private_key
-     * certificate
-     * verify_depth
-     * ca_list
-     * crl
-     * cipher_list
-     * server_name
-     * server_id
+     * tls_method - (str) - TLS methods
+     * verify_certificate - (bool) - see modparam
+     * require_certificate - (bool) - see modparam
+     * private_key - (str) - see modparam
+     * certificate - (str) - see modparam
+     * verify_depth - (int) - see modparam
+     * ca_list - (str) - see modparam
+     * crl - (str) - see modparam
+     * cipher_list - (str) - see modparam
+     * server_name - (str) - SNI (server name identification)
+     * server_name_mode - (int) - how to match server_name
+     * server_id - (str) - server id
+
+   The value for server_name_mode specifies how to match the server_name
+   (SNI). If set to 1, match the domain and all its subdomains. If set to
+   2, match only the subdomains. If set to 0 (or anything else), match
+   only the domain given in server_name.
 
    The value for server_id can be any string, being used to match TLS
    client config profile, overriding the match on ip:port and server_name.
@@ -1259,7 +1265,28 @@ modparam("tls", "renegotiation", 1)
    when it initiates a new connection by itself (it connects to
    something).
 
-   Example 1.40. Short config file
+   The tls.cfg consists on a set of server and client TLS domain profiles.
+   A server TLS domain profile starts with [server:domain]. A client TLS
+   domain profile starts with [client:domain]. The tokens 'server' and
+   'client' are static values. The 'domain' part can be: 'ip:port' - the
+   IP address and port to match with the TLS connection; 'default' -
+   (static string) for client and server profiles to be used when no other
+   profile is matched; 'any' - (static string) for client and server
+   profiles to be matched based on 'server_name', no matter of IP and port
+   of the TLS connection.
+
+   There can be only one of each [server:default] and [client:default]
+   profile definitions. Other profiles can be defined many times with the
+   same domain ('ip:port' or 'any'), but in that case they must have
+   'server_name' set for matching SNI.
+
+   It is highly recommended to have [server:default] and [client:default]
+   profile definitions. They are needed when SNI is not yet available. If
+   SNI is provided, then the profile definition is searched again to match
+   on 'server_name'.
+
+   Example 1.40. Sample TLS Config File
+...
 [server:default]
 method = TLSv1
 verify_certificate = yes
@@ -1273,13 +1300,13 @@ crl = default_crl.pem
 verify_certificate = yes
 require_certificate = yes
 
-#more relaxed for connection on the loopback interface
+# more relaxed for connection on the loopback interface
 [server:127.0.0.1:5061]
-method = SSLv23
+method = TLSv1
 verify_certificate = yes
 require_certificate = no
-private_key = local_key.pem
-certificate = local_cert.pem
+private_key = local_kamailio_org_key.pem
+certificate = local_kamailio_org_cert.pem
 verify_depth = 3
 ca_list = local_ca.pem
 server_name = kamailio.org
@@ -1294,6 +1321,19 @@ ca_list = default_ca.pem
 crl = default_crl.pem
 server_name = kamailio.org
 server_id = kamailio.org
+
+# server profile on any address
+[server:any]
+method = TLSv1
+verify_certificate = yes
+require_certificate = no
+private_key = kamailio_net_key.pem
+certificate = kamailio_net_cert.pem
+verify_depth = 3
+ca_list = local_ca.pem
+server_name = kamailio.net
+server_name_mode = 1
+...
 
    For a more complete example check the tls.cfg distributed with the
    Kamailio source (kamailio/modules/tls/tls.cfg).
