@@ -128,6 +128,8 @@ static const char *command_strings[] = {
 	[OP_QUERY]		= "query",
 	[OP_PING]		= "ping",
 	[OP_STOP_RECORDING]	= "stop recording",
+	[OP_BLOCK_DTMF]		= "block DTMF",
+	[OP_UNBLOCK_DTMF]	= "unblock DTMF",
 };
 
 struct minmax_mos_stats {
@@ -169,6 +171,8 @@ static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
 static int start_recording_f(struct sip_msg *, char *, char *);
 static int stop_recording_f(struct sip_msg *, char *, char *);
+static int block_dtmf_f(struct sip_msg *, char *, char *);
+static int unblock_dtmf_f(struct sip_msg *, char *, char *);
 static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
@@ -294,6 +298,12 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE },
 	{"stop_recording",	(cmd_function)stop_recording_f, 	1,
 		fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"block_dtmf",		(cmd_function)block_dtmf_f,	 	0,
+		0, 0,
+		ANY_ROUTE },
+	{"unblock_dtmf",	(cmd_function)unblock_dtmf_f, 		0,
+		0, 0,
 		ANY_ROUTE},
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	0,
 		0, 0,
@@ -3524,6 +3534,27 @@ stop_recording_f(struct sip_msg* msg, char *str1, char *str2)
 	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_recording_wrap, flags.s, 1);
+}
+
+
+static int rtpengine_block_dtmf_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_BLOCK_DTMF, d);
+}
+
+static int rtpengine_unblock_dtmf_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_UNBLOCK_DTMF, d);
+}
+
+static int
+block_dtmf_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_block_dtmf_wrap, NULL, 1);
+}
+
+static int
+unblock_dtmf_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_unblock_dtmf_wrap, NULL, 1);
 }
 
 static int rtpengine_rtpstat_wrap(struct sip_msg *msg, void *d, int more) {

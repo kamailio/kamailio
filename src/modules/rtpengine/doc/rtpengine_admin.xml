@@ -2582,6 +2582,47 @@ stop_recording();
 		</example>
 	</section>
 
+	<section id="rtpengine.f.block_dtmf">
+		<title>
+		<function moreinfo="none">block_dtmf([flags])</function>
+		</title>
+		<para>
+		This function will instruct the &rtp; proxy to start blocking DTMF
+		event packets (RFC 4733). DTMF events will still be processed by the
+		&rtp; proxy, but they won't be forwarded to the receiving peer.
+		</para>
+		<para>
+		The call-id flag can be used to stop recording for a different call.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>block_dtmf</function> usage</title>
+		<programlisting format="linespecific">
+...
+block_dtmf();
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.f.unblock_dtmf">
+		<title>
+		<function moreinfo="none">unblock_dtmf([flags])</function>
+		</title>
+		<para>
+		Reverses the effects of a previously issued <function>block_dtmf</function> call.
+		<example>
+		<title><function>unblock_dtmf</function> usage</title>
+		<programlisting format="linespecific">
+...
+unblock_dtmf();
+...
+		</programlisting>
+		</example>
+	</section>
+
 
 	</section>
 
