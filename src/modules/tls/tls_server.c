@@ -998,8 +998,8 @@ int tls_read_f(struct tcp_connection* c, int* flags)
 	 * If it's != 0 is changed only on destroy. It's not possible to have
 	 * parallel reads.*/
 	tls_c = c->extra_data;
-	bytes_free = c->req.b_size - (int)(r->pos - r->buf);
-	if (unlikely(bytes_free == 0)) {
+	bytes_free = c->req.b_size - (unsigned int)(r->pos - r->buf);
+	if (unlikely(bytes_free <= 0)) {
 		ERR("Buffer overrun, dropping\n");
 		r->error = TCP_REQ_OVERRUN;
 		return -1;
