@@ -39,5 +39,22 @@ event_route[tm:branch-failure:myroute] {
 	    </programlisting>
 	</example>
     </section>
-
+	<section id="tm.e.local-response">
+		<title>
+			<function moreinfo="none">event_route[tm:local-response]</function>
+		</title>
+		<para>
+			Executed after the tm module has sent a local generated, transaction stateful response.
+		</para>
+		<example>
+			<title><function>event_route[tm:local-response]</function> usage</title>
+			<programlisting  format="linespecific">
+...
+event_route[tm:local-response] {
+    xlog("tm:local-response replied locally\n");
+}
+...
+			</programlisting>
+		</example>
+	</section>
 </section>
