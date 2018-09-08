@@ -66,6 +66,7 @@ static int child_init(int rank);
 static void destroy(void);
 
 static int fixup_ht_key(void** param, int param_no);
+static int w_ht_rm(sip_msg_t* msg, char* htname, char* itname);
 static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo);
 static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
 static int w_ht_rm_name(struct sip_msg* msg, char* hname, char* op, char *val);
@@ -106,7 +107,9 @@ static pv_export_t mod_pvs[] = {
 
 
 static cmd_export_t cmds[]={
-	{"sht_print",       (cmd_function)ht_print,        0, 0, 0,
+	{"sht_print",       (cmd_function)ht_print,       0, 0, 0,
+		ANY_ROUTE},
+	{"sht_rm",	(cmd_function)w_ht_rm,	2, fixup_spve_spve, 0,
 		ANY_ROUTE},
 	{"sht_rm_name_re",  (cmd_function)ht_rm_name_re,   1, fixup_ht_key, 0,
 		ANY_ROUTE},
@@ -541,6 +544,43 @@ static int ki_ht_rm_name(sip_msg_t* msg, str* sname, str* sop, str *sval)
 static int ki_ht_rm_value(sip_msg_t* msg, str* sname, str* sop, str *sval)
 {
 	return ht_rm_items(msg, sname, sop, sval, 1);
+}
+
+static int ki_ht_rm(sip_msg_t* msg, str* hname, str* iname)
+{
+	ht_t *ht;
+
+	ht = ht_get_table(hname);
+	if(ht==NULL) {
+		LM_ERR("cannot get hash table [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	/* delete it */
+	if (ht->dmqreplicate>0
+			&& ht_dmq_replicate_action(HT_DMQ_DEL_CELL, hname,
+				iname, 0, NULL, 0)!=0) {
+		LM_ERR("dmq relication failed\n");
+	}
+	ht_del_cell(ht, iname);
+	return 1;
+}
+
+static int w_ht_rm(sip_msg_t* msg, char* htname, char* itname)
+{
+	str shtname;
+	str sitname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)htname, &shtname)<0 || shtname.len<=0) {
+		LM_ERR("cannot get the hash table name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)itname, &sitname)<0 || sitname.len<=0) {
+		LM_ERR("cannot get the item table name\n");
+		return -1;
+	}
+
+	return ki_ht_rm(msg, &shtname, &sitname);
 }
 
 static int ht_has_str_items(sip_msg_t* msg, str* hname, str* op, str *val,
@@ -1407,6 +1447,11 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	{ str_init("htable"), str_init("sht_iterator_end"),
 		SR_KEMIP_INT, ki_ht_iterator_end,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_rm"),
+		SR_KEMIP_INT, ki_ht_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("htable"), str_init("sht_rm_name_re"),
