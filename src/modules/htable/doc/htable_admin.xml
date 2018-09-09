@@ -752,6 +752,26 @@ sht_print();
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.f.sht_rm">
+		<title>
+		<function moreinfo="none">sht_rm(htname, itname)</function>
+		</title>
+		<para>
+			Delete the item with the name 'itname' from hash table 'htname'.
+			This API function equivaluent to '$sht(htname=&gt;itname) = $null'.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_rm("ha", "test"");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="htable.f.sht_rm_name_re">
 		<title>
 		<function moreinfo="none">sht_rm_name_re(htable=>regexp)</function>
