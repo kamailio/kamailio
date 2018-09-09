@@ -58,18 +58,19 @@ Ovidiu Sas
         4. Functions
 
               4.1. sht_print()
-              4.2. sht_rm_name_re(htable=>regexp)
-              4.3. sht_rm_value_re(htable=>regexp)
-              4.4. sht_rm_name(htable, op, val)
-              4.5. sht_rm_value(htable, op, val)
-              4.6. sht_reset(htable)
-              4.7. sht_lock(htable=>key)
-              4.8. sht_unlock(htable=>key)
-              4.9. sht_iterator_start(iname, hname)
-              4.10. sht_iterator_end(iname)
-              4.11. sht_iterator_next(iname)
-              4.12. sht_has_name(htable, op, mval)
-              4.13. sht_has_str_value(htable, op, mval)
+              4.2. sht_rm(htname, itname)
+              4.3. sht_rm_name_re(htable=>regexp)
+              4.4. sht_rm_value_re(htable=>regexp)
+              4.5. sht_rm_name(htable, op, val)
+              4.6. sht_rm_value(htable, op, val)
+              4.7. sht_reset(htable)
+              4.8. sht_lock(htable=>key)
+              4.9. sht_unlock(htable=>key)
+              4.10. sht_iterator_start(iname, hname)
+              4.11. sht_iterator_end(iname)
+              4.12. sht_iterator_next(iname)
+              4.13. sht_has_name(htable, op, mval)
+              4.14. sht_has_str_value(htable, op, mval)
 
         5. Exported pseudo-variables
         6. RPC Commands
@@ -109,18 +110,19 @@ Ovidiu Sas
    1.17. Set event_callback parameter
    1.18. Set event_callback_mode parameter
    1.19. sht_print usage
-   1.20. sht_rm_name_re usage
-   1.21. sht_rm_value_re usage
-   1.22. sht_rm_name usage
-   1.23. sht_rm_value usage
-   1.24. sht_reset usage
-   1.25. sht_lock usage
-   1.26. sht_unlock usage
-   1.27. sht_iterator_start usage
-   1.28. sht_iterator_end usage
-   1.29. sht_iterator_next usage
-   1.30. sht_has_name usage
+   1.20. sht_rm usage
+   1.21. sht_rm_name_re usage
+   1.22. sht_rm_value_re usage
+   1.23. sht_rm_name usage
+   1.24. sht_rm_value usage
+   1.25. sht_reset usage
+   1.26. sht_lock usage
+   1.27. sht_unlock usage
+   1.28. sht_iterator_start usage
+   1.29. sht_iterator_end usage
+   1.30. sht_iterator_next usage
    1.31. sht_has_name usage
+   1.32. sht_has_name usage
 
 Chapter 1. Admin Guide
 
@@ -154,18 +156,19 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. sht_print()
-        4.2. sht_rm_name_re(htable=>regexp)
-        4.3. sht_rm_value_re(htable=>regexp)
-        4.4. sht_rm_name(htable, op, val)
-        4.5. sht_rm_value(htable, op, val)
-        4.6. sht_reset(htable)
-        4.7. sht_lock(htable=>key)
-        4.8. sht_unlock(htable=>key)
-        4.9. sht_iterator_start(iname, hname)
-        4.10. sht_iterator_end(iname)
-        4.11. sht_iterator_next(iname)
-        4.12. sht_has_name(htable, op, mval)
-        4.13. sht_has_str_value(htable, op, mval)
+        4.2. sht_rm(htname, itname)
+        4.3. sht_rm_name_re(htable=>regexp)
+        4.4. sht_rm_value_re(htable=>regexp)
+        4.5. sht_rm_name(htable, op, val)
+        4.6. sht_rm_value(htable, op, val)
+        4.7. sht_reset(htable)
+        4.8. sht_lock(htable=>key)
+        4.9. sht_unlock(htable=>key)
+        4.10. sht_iterator_start(iname, hname)
+        4.11. sht_iterator_end(iname)
+        4.12. sht_iterator_next(iname)
+        4.13. sht_has_name(htable, op, mval)
+        4.14. sht_has_str_value(htable, op, mval)
 
    5. Exported pseudo-variables
    6. RPC Commands
@@ -671,18 +674,19 @@ modparam("htable", "event_callback_mode", 1)
 4. Functions
 
    4.1. sht_print()
-   4.2. sht_rm_name_re(htable=>regexp)
-   4.3. sht_rm_value_re(htable=>regexp)
-   4.4. sht_rm_name(htable, op, val)
-   4.5. sht_rm_value(htable, op, val)
-   4.6. sht_reset(htable)
-   4.7. sht_lock(htable=>key)
-   4.8. sht_unlock(htable=>key)
-   4.9. sht_iterator_start(iname, hname)
-   4.10. sht_iterator_end(iname)
-   4.11. sht_iterator_next(iname)
-   4.12. sht_has_name(htable, op, mval)
-   4.13. sht_has_str_value(htable, op, mval)
+   4.2. sht_rm(htname, itname)
+   4.3. sht_rm_name_re(htable=>regexp)
+   4.4. sht_rm_value_re(htable=>regexp)
+   4.5. sht_rm_name(htable, op, val)
+   4.6. sht_rm_value(htable, op, val)
+   4.7. sht_reset(htable)
+   4.8. sht_lock(htable=>key)
+   4.9. sht_unlock(htable=>key)
+   4.10. sht_iterator_start(iname, hname)
+   4.11. sht_iterator_end(iname)
+   4.12. sht_iterator_next(iname)
+   4.13. sht_has_name(htable, op, mval)
+   4.14. sht_has_str_value(htable, op, mval)
 
 4.1.  sht_print()
 
@@ -697,7 +701,19 @@ modparam("htable", "event_callback_mode", 1)
 sht_print();
 ...
 
-4.2.  sht_rm_name_re(htable=>regexp)
+4.2.  sht_rm(htname, itname)
+
+   Delete the item with the name 'itname' from hash table 'htname'. This
+   API function equivaluent to '$sht(htname=>itname) = $null'.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.20. sht_rm usage
+...
+sht_rm("ha", "test"");
+...
+
+4.3.  sht_rm_name_re(htable=>regexp)
 
    Delete all entries in the htable that match the name against regular
    expression.
@@ -705,12 +721,12 @@ sht_print();
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.20. sht_rm_name_re usage
+   Example 1.21. sht_rm_name_re usage
 ...
 sht_rm_name_re("ha=>.*");
 ...
 
-4.3.  sht_rm_value_re(htable=>regexp)
+4.4.  sht_rm_value_re(htable=>regexp)
 
    Delete all entries in the htable that match the value against regular
    expression.
@@ -718,12 +734,12 @@ sht_rm_name_re("ha=>.*");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.21. sht_rm_value_re usage
+   Example 1.22. sht_rm_value_re usage
 ...
 sht_rm_value_re("ha=>.*");
 ...
 
-4.4.  sht_rm_name(htable, op, val)
+4.5.  sht_rm_name(htable, op, val)
 
    Delete all entries in the htable that match the name against the val
    parameter.
@@ -736,12 +752,12 @@ sht_rm_value_re("ha=>.*");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. sht_rm_name usage
+   Example 1.23. sht_rm_name usage
 ...
 sht_rm_name("ha", "re", ".*");
 ...
 
-4.5.  sht_rm_value(htable, op, val)
+4.6.  sht_rm_value(htable, op, val)
 
    Delete all entries in the htable that match the value against the val
    parameter.
@@ -754,24 +770,24 @@ sht_rm_name("ha", "re", ".*");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. sht_rm_value usage
+   Example 1.24. sht_rm_value usage
 ...
 sht_rm_value("ha", "re", ".*");
 ...
 
-4.6.  sht_reset(htable)
+4.7.  sht_reset(htable)
 
    Delete all entries in the htable. The name of the hash table can be a
    dynamic string with variables.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.24. sht_reset usage
+   Example 1.25. sht_reset usage
 ...
 sht_reset("ha$var(x)");
 ...
 
-4.7.  sht_lock(htable=>key)
+4.8.  sht_lock(htable=>key)
 
    Lock the slot in htable corresponding to the key item. Note that the
    locking is re-entrant for the process, therefore the lock and unlock
@@ -779,12 +795,12 @@ sht_reset("ha$var(x)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. sht_lock usage
+   Example 1.26. sht_lock usage
 ...
 sht_lock("ha=>test");
 ...
 
-4.8.  sht_unlock(htable=>key)
+4.9.  sht_unlock(htable=>key)
 
    Unlock the slot in htable corresponding to the key item. Note that the
    locking is re-entrant for the process, therefore the lock and unlock
@@ -792,14 +808,14 @@ sht_lock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. sht_unlock usage
+   Example 1.27. sht_unlock usage
 ...
 sht_lock("ha=>test");
 $sht(ha=>test) = $sht(ha=>test) + 10;
 sht_unlock("ha=>test");
 ...
 
-4.9.  sht_iterator_start(iname, hname)
+4.10.  sht_iterator_start(iname, hname)
 
    Start an iterator for hash table named by the value of parameter hname.
    The parameter iname is used to identify the iterator. There can be up
@@ -814,12 +830,12 @@ sht_unlock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.27. sht_iterator_start usage
+   Example 1.28. sht_iterator_start usage
 ...
 sht_iterator_start("i1", "h1");
 ...
 
-4.10.  sht_iterator_end(iname)
+4.11.  sht_iterator_end(iname)
 
    Close the iterator identified by iname parameter and release the hash
    table slot acquired by the iterator. The iname value must be the same
@@ -829,12 +845,12 @@ sht_iterator_start("i1", "h1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.28. sht_iterator_end usage
+   Example 1.29. sht_iterator_end usage
 ...
 sht_iterator_end("i1");
 ...
 
-4.11.  sht_iterator_next(iname)
+4.12.  sht_iterator_next(iname)
 
    Move the iterator to the next item in hash table. It must be called
    also after sht_iterator_start() to get the first item in the hash
@@ -851,7 +867,7 @@ sht_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.29. sht_iterator_next usage
+   Example 1.30. sht_iterator_next usage
 ...
     sht_iterator_start("i1", "h1");
     while(sht_iterator_next("i1")) {
@@ -860,7 +876,7 @@ sht_iterator_end("i1");
     sht_iterator_end("i1");
 ...
 
-4.12.  sht_has_name(htable, op, mval)
+4.13.  sht_has_name(htable, op, mval)
 
    Return greater than 0 (true) if the htable has an item that matches the
    name against the mval parameter.
@@ -875,14 +891,14 @@ sht_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.30. sht_has_name usage
+   Example 1.31. sht_has_name usage
 ...
 if(sht_has_name("ha", "eq", "alice")) {
   ...
 }
 ...
 
-4.13.  sht_has_str_value(htable, op, mval)
+4.14.  sht_has_str_value(htable, op, mval)
 
    Return greater than 0 (true) if the htable has an item that matches the
    string value against the mval parameter.
@@ -897,7 +913,7 @@ if(sht_has_name("ha", "eq", "alice")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.31. sht_has_name usage
+   Example 1.32. sht_has_name usage
 ...
 if(sht_has_str_value("ha", "eq", "alice")) {
   ...
