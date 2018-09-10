@@ -411,27 +411,40 @@ static inline int should_acc_reply(struct sip_msg *req, struct sip_msg *rpl,
 {
 	unsigned int i;
 
+	LM_DBG("probing acc state - code: %d flags: 0x%x\n", code,
+			(req)?req->flags:0);
 	/* negative transactions reported otherwise only if explicitly
 	 * demanded */
-
 	if (code >= 300) {
-		if (!is_failed_acc_on(req)) return 0;
+		if (!is_failed_acc_on(req)) {
+			LM_DBG("failed acc is off\n");
+			return 0;
+		}
 		i = 0;
 		while (failed_filter[i] != 0) {
-			if (failed_filter[i] == code) return 0;
+			if (failed_filter[i] == code) {
+				LM_DBG("acc code in filter: %d\n", code);
+				return 0;
+			}
 			i++;
 		}
+		LM_DBG("failed acc is on\n");
 		return 1;
 	}
 
-	if ( !is_acc_on(req) )
+	if ( !is_acc_on(req) ) {
+		LM_DBG("acc is off\n");
 		return 0;
+	}
 
 	if ( code<200 && !(early_media &&
 				parse_headers(rpl,HDR_CONTENTLENGTH_F, 0) == 0 &&
-				rpl->content_length && get_content_length(rpl) > 0))
+				rpl->content_length && get_content_length(rpl) > 0)) {
+		LM_DBG("early media acc is off\n");
 		return 0;
+	}
 
+	LM_DBG("acc is on\n");
 	return 1; /* seed is through, we will account this reply */
 }
 
@@ -461,6 +474,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	int flags_to_reset = 0;
 	int br = -1;
 
+	LM_DBG("preparing to report the record\n");
 	/* get winning branch index, if set */
 	if (t->relayed_reply_branch>=0) {
 		br = t->relayed_reply_branch;
