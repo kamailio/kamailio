@@ -147,11 +147,12 @@ enum kill_reason
 
 typedef struct retr_buf
 {
-	short activ_type;
-	/* set to status code if the buffer is a reply,
-	 * 0 if request or -1 if local CANCEL */
+	/* rbtype is set to status code if the buffer is a reply,
+	 * 0 (TYPE_REQUEST) if request, -1 if local CANCEL (TYPE_LOCAL_CANCEL),
+	 * -2 if local ACK (TYPE_LOCAL_ACK) */
+	short rbtype;
 	volatile unsigned short flags;   /* DISABLED, T2 */
-	volatile unsigned char t_active; /* timer active */
+	volatile unsigned short t_active; /* timer active */
 	unsigned short branch;			 /* no more than 64k branches */
 	int buffer_len;
 	char *buffer;

@@ -483,7 +483,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	}
 
 	rb = & trans->uas.response;
-	rb->activ_type=code;
+	rb->rbtype=code;
 
 	trans->uas.status = code;
 	buf_len = rb->buffer ? len : len + REPLY_OVERBUFFER_LEN;
@@ -1799,7 +1799,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	uas_rb = & t->uas.response;
 	if (relay >= 0 ) {
 		/* initialize sockets for outbound reply */
-		uas_rb->activ_type=msg_status;
+		uas_rb->rbtype=msg_status;
 		/* only messages known to be relayed immediately will be
 		 * be called on; we do not evoke this callback on messages
 		 * stored in shmem -- they are fixed and one cannot change them
@@ -1816,7 +1816,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			if(t->flags & T_CANCELED) {
 				/* transaction canceled - send 487 */
 				relayed_code = 487;
-				uas_rb->activ_type = 487;
+				uas_rb->rbtype = 487;
 			} else {
 				relayed_code = (branch==relay)
 					? msg_status : t->uac[relay].last_received;
@@ -1871,7 +1871,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				buf=build_res_buf_from_sip_req(500, &reason,
 									to_tag, t->uas.request, &res_len, &bm);
 				relayed_code=500;
-				uas_rb->activ_type = 500;
+				uas_rb->rbtype = 500;
 			}else if (cfg_get(tm, tm_cfg, tm_aggregate_auth) &&
 						(relayed_code==401 || relayed_code==407) &&
 						(auth_reply_count(t, p_msg)>1)){
@@ -1985,13 +1985,13 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				if (unlikely(!totag_retr
 							&& has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
 					LOCK_REPLIES( t );
-					if(relayed_code==uas_rb->activ_type) {
+					if(relayed_code==uas_rb->rbtype) {
 						run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb,
 								t->uas.request, relayed_msg, TMCB_NONE_F);
 					} else {
 						LM_DBG("skip tm callback %d - relay code %d active %d\n",
 								TMCB_RESPONSE_OUT, relayed_code,
-								uas_rb->activ_type);
+								uas_rb->rbtype);
 					}
 					UNLOCK_REPLIES( t );
 				}
