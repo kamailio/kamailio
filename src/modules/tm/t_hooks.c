@@ -300,7 +300,7 @@ void run_trans_callbacks_with_buf(int type, struct retr_buf* rbuf,
 			((trans->tmcb_hl.reg_types)&type)==0 )
 		return;
 	INIT_TMCB_ONSEND_PARAMS(params, req, repl, rbuf, &rbuf->dst, rbuf->buffer,
-					rbuf->buffer_len, flags, rbuf->branch, rbuf->activ_type);
+					rbuf->buffer_len, flags, rbuf->branch, rbuf->rbtype);
 	/* req, rpl */
 	run_trans_callbacks_internal(&trans->tmcb_hl, type, trans, &params);
 }
