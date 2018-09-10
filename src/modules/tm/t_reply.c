@@ -1777,7 +1777,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	buf=0;
 	relayed_msg=0;
 	relayed_code=0;
-
 	totag_retr=0;
 
 	/* remember, what was sent upstream to know whether we are
@@ -1790,16 +1789,15 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		branch, save_clone, relay, t->uac[branch].icode, msg_status);
 
 	/* store the message if needed */
-	if (save_clone) /* save for later use, typically branch picking */
-	{
+	if (save_clone) {
+		/* save for later use, typically branch picking */
 		if (!store_reply( t, branch, p_msg ))
 			goto error01;
 	}
 
-	uas_rb = & t->uas.response;
+	/* initialize for outbound reply */
+	uas_rb = &t->uas.response;
 	if (relay >= 0 ) {
-		/* initialize sockets for outbound reply */
-		uas_rb->rbtype=msg_status;
 		/* only messages known to be relayed immediately will be
 		 * be called on; we do not evoke this callback on messages
 		 * stored in shmem -- they are fixed and one cannot change them
@@ -1811,12 +1809,11 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		/* try building the outbound reply from either the current
 		 * or a stored message */
-		relayed_msg = branch==relay ? p_msg :  t->uac[relay].reply;
+		relayed_msg = (branch==relay) ? p_msg :  t->uac[relay].reply;
 		if (relayed_msg==FAKED_REPLY) {
 			if(t->flags & T_CANCELED) {
 				/* transaction canceled - send 487 */
 				relayed_code = 487;
-				uas_rb->rbtype = 487;
 			} else {
 				relayed_code = (branch==relay)
 					? msg_status : t->uac[relay].last_received;
@@ -1871,7 +1868,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				buf=build_res_buf_from_sip_req(500, &reason,
 									to_tag, t->uas.request, &res_len, &bm);
 				relayed_code=500;
-				uas_rb->rbtype = 500;
 			}else if (cfg_get(tm, tm_cfg, tm_aggregate_auth) &&
 						(relayed_code==401 || relayed_code==407) &&
 						(auth_reply_count(t, p_msg)>1)){
@@ -1926,6 +1922,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			LM_ERR("cannot alloc reply shmem\n");
 			goto error03;
 		}
+		uas_rb->rbtype = relayed_code;
 		uas_rb->buffer_len = res_len;
 		memcpy( uas_rb->buffer, buf, res_len );
 		if (relayed_msg==FAKED_REPLY) { /* to-tags for local replies */
@@ -1938,13 +1935,13 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		t->relayed_reply_branch = relay;
 
 		if ( unlikely(is_invite(t) && relayed_msg!=FAKED_REPLY
-		&& relayed_code>=200 && relayed_code < 300
-		&& has_tran_tmcbs( t,
-				TMCB_RESPONSE_OUT|TMCB_RESPONSE_READY
-				|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN))) {
+				&& relayed_code>=200 && relayed_code < 300
+				&& has_tran_tmcbs( t,
+					TMCB_RESPONSE_OUT|TMCB_RESPONSE_READY
+					|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN))) {
 			totag_retr=update_totag_set(t, relayed_msg);
 		}
-	}; /* if relay ... */
+	} /* if relay ... */
 
 	UNLOCK_REPLIES( t );
 
