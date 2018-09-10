@@ -781,9 +781,11 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 
 	if (dlg!=NULL) {
 		if (!initial_cbs_inscript) {
-			if (spiral_detected == 1)
+			if (spiral_detected == 1) {
 				run_dlg_callbacks( DLGCB_SPIRALED, dlg,
 						req, NULL, DLG_DIR_DOWNSTREAM, 0);
+				LM_NOTICE("spiral_detected: ci[%.*s]\n", dlg->callid.len, dlg->callid.s);
+			}
 			else if (spiral_detected == 0)
 				run_create_callbacks(dlg, req);
 		}
