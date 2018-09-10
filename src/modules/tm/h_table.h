@@ -162,7 +162,7 @@ typedef struct retr_buf
 	struct dest_info dst;
 	ticks_t retr_expire;
 	ticks_t fr_expire; /* ticks value after which fr. will fire */
-} retr_buf_type;
+} tm_retr_buf_t;
 
 
 /* User Agent Server content */
@@ -181,7 +181,7 @@ typedef struct ua_server
 										* for e2e cancels */
 #endif /* CANCEL_REASON_SUPPORT */
 	unsigned int status;
-} ua_server_type;
+} tm_ua_server_t;
 
 
 /* User Agent Client content */
@@ -244,15 +244,15 @@ typedef struct ua_client
 	unsigned short on_reply;
 	/* unused - keep the structure aligned to 32b */
 	unsigned short on_unused;
-} ua_client_type;
+} tm_ua_client_t;
 
 
-struct totag_elem
+typedef struct totag_elem
 {
 	struct totag_elem *next;
 	str tag;
 	volatile int acked;
-};
+} tm_totag_elem_t;
 
 /* structure for storing transaction state prior to suspending
  * of async transactions */
@@ -262,7 +262,7 @@ typedef struct async_state
 	unsigned int backup_branch;
 	unsigned int blind_uac;
 	unsigned int ruri_new;
-} async_state_type;
+} tm_async_state_t;
 
 /* transaction's flags */
 /* is the transaction's request an INVITE? */
@@ -506,7 +506,7 @@ typedef struct entry
 	unsigned long cur_entries;
 #endif
 	char _pad[ENTRY_PAD_BYTES];
-} entry_type;
+} tm_entry_t;
 
 
 /* transaction table */
