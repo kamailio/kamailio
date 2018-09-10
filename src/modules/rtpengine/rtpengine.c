@@ -2740,6 +2740,7 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 {
 	int method;
 	int nosdp;
+	tm_cell_t *t = NULL;
 
 	if (msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
 	   (msg->cseq==NULL)))
@@ -2769,9 +2770,12 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0);
 		if(method==METHOD_INVITE && nosdp==0) {
 			msg->msg_flags |= FL_SDP_BODY;
-			if(tmb.t_gett!=NULL && tmb.t_gett()!=NULL
-					&& tmb.t_gett()!=T_UNDEFINED)
-				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
+			if(tmb.t_gett!=NULL) {
+				t = tmb.t_gett();
+				if(t!=NULL && t!=T_UNDEFINED && t->uas.request!=NULL) {
+					t->uas.request->msg_flags |= FL_SDP_BODY;
+				}
+			}
 			if(route_type==FAILURE_ROUTE)
 				return rtpengine_delete(msg, flags);
 			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0);
