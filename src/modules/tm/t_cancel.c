@@ -316,7 +316,7 @@ int cancel_branch( struct cell *t, int branch,
 	crb->branch = branch;
 	/* label it as cancel so that FR timer can better know how to
 	   deal with it */
-	crb->activ_type = TYPE_LOCAL_CANCEL;
+	crb->rbtype = TYPE_LOCAL_CANCEL;
 	/* be extra carefully and check for bugs (the below if could be replaced
 	 *  by an atomic_set((void*)&crb->buffer, cancel) */
 	if (unlikely(atomic_cmpxchg_long((void*)&crb->buffer, (long)BUSY_BUFFER,

@@ -765,7 +765,7 @@ struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
 	}
 
 	/* TODO: need next 2? */
-	lack->activ_type = TYPE_LOCAL_ACK;
+	lack->rbtype = TYPE_LOCAL_ACK;
 	lack->my_T = trans;
 
 	return lack;
