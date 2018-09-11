@@ -775,7 +775,8 @@ static int jsonrpc_struct_add(srjson_t *jnode, char* fmt, ...)
 
 	ctx = &_jsonrpc_ctx;
 	if(ctx->jrpl==NULL) {
-		LM_ERR("reply object not initialized in rpl context\n");
+		LM_ERR("reply object not initialized in rpl context - flags 0x%x\n",
+				ctx->flags);
 		return -1;
 	}
 
@@ -845,7 +846,8 @@ static int jsonrpc_array_add(srjson_t *jnode, char* fmt, ...)
 
 	ctx = &_jsonrpc_ctx;
 	if(ctx->jrpl==NULL) {
-		LM_ERR("reply object not initialized in rpl context\n");
+		LM_ERR("reply object not initialized in rpl context - flags 0x%x\n",
+				ctx->flags);
 		return -1;
 	}
 
@@ -905,7 +907,8 @@ static int jsonrpc_struct_printf(srjson_t *jnode, char* mname, char* fmt, ...)
 
 	ctx = &_jsonrpc_ctx;
 	if(ctx->jrpl==NULL) {
-		LM_ERR("reply object not initialized in rpl context\n");
+		LM_ERR("reply object not initialized in rpl context - flags 0x%x\n",
+				ctx->flags);
 		return -1;
 	}
 
