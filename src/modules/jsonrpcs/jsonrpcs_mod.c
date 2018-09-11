@@ -119,7 +119,8 @@ extern int jsonrpc_dgram_destroy(void);
  * being currently processed.
  * @sa rpc_ctx
  */
-static jsonrpc_ctx_t _jsonrpc_ctx;
+static jsonrpc_ctx_t _jsonrpc_ctx_global;
+static jsonrpc_ctx_t *_jsonrpc_ctx_active = NULL;
 
 static xhttp_api_t xhttp_api;
 
@@ -276,6 +277,7 @@ static int jsonrpc_delayed_reply_ctx_init(jsonrpc_ctx_t* ctx)
 		if (jsonrpc_init_reply(ctx) < 0)
 			return -1;
 		jsonrpc_reset_plain_reply(ctx->jrpl->free_fn);
+		_jsonrpc_ctx_active = ctx;
 	}
 	return 0;
 }
@@ -761,10 +763,10 @@ static int jsonrpc_struct_add(srjson_t *jnode, char* fmt, ...)
 	}
 	isobject = (jnode->type==srjson_Object);
 
-	ctx = &_jsonrpc_ctx;
-	if(ctx->jrpl==NULL) {
-		LM_ERR("reply object not initialized in rpl context - flags 0x%x\n",
-				ctx->flags);
+	ctx = _jsonrpc_ctx_active;
+	if(ctx==NULL || ctx->jrpl==NULL) {
+		LM_ERR("reply object not initialized in rpl context %p - flags 0x%x\n",
+				ctx, (ctx)?ctx->flags:0);
 		return -1;
 	}
 
@@ -832,10 +834,10 @@ static int jsonrpc_array_add(srjson_t *jnode, char* fmt, ...)
 		return -1;
 	}
 
-	ctx = &_jsonrpc_ctx;
-	if(ctx->jrpl==NULL) {
-		LM_ERR("reply object not initialized in rpl context - flags 0x%x\n",
-				ctx->flags);
+	ctx = _jsonrpc_ctx_active;
+	if(ctx==NULL || ctx->jrpl==NULL) {
+		LM_ERR("reply object not initialized in rpl context %p - flags 0x%x\n",
+				ctx, (ctx)?ctx->flags:0);
 		return -1;
 	}
 
@@ -893,10 +895,10 @@ static int jsonrpc_struct_printf(srjson_t *jnode, char* mname, char* fmt, ...)
 		return -1;
 	}
 
-	ctx = &_jsonrpc_ctx;
-	if(ctx->jrpl==NULL) {
-		LM_ERR("reply object not initialized in rpl context - flags 0x%x\n",
-				ctx->flags);
+	ctx = _jsonrpc_ctx_active;
+	if(ctx==NULL || ctx->jrpl==NULL) {
+		LM_ERR("reply object not initialized in rpl context %p - flags 0x%x\n",
+				ctx, (ctx)?ctx->flags:0);
 		return -1;
 	}
 
@@ -1063,6 +1065,7 @@ error:
 	r_ctx->msg=0;
 	dctx->reply_ctx=0;
 	shm_free(dctx);
+	_jsonrpc_ctx_active = NULL;
 
 	return;
 }
@@ -1196,7 +1199,8 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 	}
 
 	/* initialize jsonrpc context */
-	ctx = &_jsonrpc_ctx;
+	_jsonrpc_ctx_active = &_jsonrpc_ctx_global;
+	ctx = _jsonrpc_ctx_active;
 	memset(ctx, 0, sizeof(jsonrpc_ctx_t));
 	ctx->msg = msg;
 	/* parse the jsonrpc request */
@@ -1275,7 +1279,8 @@ int jsonrpc_exec_ex(str *cmd, str *rpath)
 	scmd = *cmd;
 
 	/* initialize jsonrpc context */
-	ctx = &_jsonrpc_ctx;
+	_jsonrpc_ctx_active = &_jsonrpc_ctx_global;
+	ctx = _jsonrpc_ctx_active;
 	memset(ctx, 0, sizeof(jsonrpc_ctx_t));
 	ctx->msg = NULL; /* mark it not send a reply out */
 	/* parse the jsonrpc request */
