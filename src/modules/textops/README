@@ -150,10 +150,11 @@ Ovidiu Sas
    1.42. starts_with usage
    1.43. set_body_multipart usage
    1.44. append_body_part usage
-   1.45. append_body_part_hex usage
-   1.46. get_body_part usage
-   1.47. get_body_part_raw usage
-   1.48. remove_body_part usage
+   1.45. append_body_part with headers
+   1.46. append_body_part_hex usage
+   1.47. get_body_part usage
+   1.48. get_body_part_raw usage
+   1.49. remove_body_part usage
 
 Chapter 1. Admin Guide
 
@@ -1196,9 +1197,30 @@ text
 
    Example 1.44. append_body_part usage
 ...
-$var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c"
+$var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c";
 append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext", "signal;handling
 =required");
+...
+
+# Will append this to the body:
+
+...
+Content-Type: application/vnd.cirpack.isdn-ext
+Content-Disposition: signal;handling=required
+
+7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c
+
+--unique-boundary-1
+...
+
+   If other headers are wanted to be added for a body part, they can be
+   appended after the value of the content-type parameter, separated by
+   `\r\n` (at the very end do not add the '\r\n').
+
+   Example 1.45. append_body_part with headers
+...
+$var(b) = "";
+append_body_part("$var(b)", "application/xml\r\nX-Header: xyz");
 ...
 
 # Will append this to the body:
@@ -1233,7 +1255,7 @@ Content-Disposition: signal;handling=required
    The core will take care of the last boundary ending "--". Detecting
    wich one is the last and fixing the others if needed.
 
-   Example 1.45. append_body_part_hex usage
+   Example 1.46. append_body_part_hex usage
 ...
 $var(b) = "6b 61 6d 61 69 6c 69 6f";
 append_body_part_hex("$var(b)", "application/my-custom-ext");
@@ -1249,6 +1271,9 @@ kamailio
 --unique-boundary-1
 ...
 
+   If other headers are wanted to be added for a body part, see the docs
+   for append_body_part(...) function.
+
 4.46.  get_body_part(content_type, opv)
 
    Return the content of a multipart body SIP message, storing it in opv.
@@ -1262,7 +1287,7 @@ kamailio
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.46. get_body_part usage
+   Example 1.47. get_body_part usage
 ...
 get_body_part("application/vnd.cirpack.isdn-ext", "$var(pbody)");
 ...
@@ -1281,7 +1306,7 @@ get_body_part("application/vnd.cirpack.isdn-ext", "$var(pbody)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.47. get_body_part_raw usage
+   Example 1.48. get_body_part_raw usage
 ...
 get_body_part("application/vnd.cirpack.isdn-ext", "$var(hbody)");
 ...
@@ -1301,7 +1326,7 @@ get_body_part("application/vnd.cirpack.isdn-ext", "$var(hbody)");
    The core will take care of the last boundary ending "--". Detecting
    wich one is the last and fixing the others if needed.
 
-   Example 1.48. remove_body_part usage
+   Example 1.49. remove_body_part usage
 ...
 remove_body_part("application/vnd.cirpack.isdn-ext");
 ...
