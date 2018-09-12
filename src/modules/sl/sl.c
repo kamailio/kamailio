@@ -250,6 +250,11 @@ int send_reply(struct sip_msg *msg, int code, str *reason)
 	struct cell *t;
 	int ret = 1;
 
+	if(msg->msg_flags & FL_MSG_NOREPLY) {
+		LM_INFO("message marked with no-reply flag\n");
+		return -2;
+	}
+
 	if(reason->s[reason->len-1]=='\0') {
 		r = reason->s;
 	} else {
