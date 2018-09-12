@@ -1694,8 +1694,33 @@ text
 		<title><function>append_body_part</function> usage</title>
 		<programlisting format="linespecific">
 ...
-$var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c"
+$var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c";
 append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext", "signal;handling=required");
+...
+
+# Will append this to the body:
+
+...
+Content-Type: application/vnd.cirpack.isdn-ext
+Content-Disposition: signal;handling=required
+
+7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c
+
+--unique-boundary-1
+...
+</programlisting>
+		</example>
+		<para>
+		If other headers are wanted to be added for a body part, they can be
+		appended after the value of the content-type parameter, separated by
+		`\r\n` (at the very end do not add the '\r\n').
+		</para>
+		<example>
+		<title><function>append_body_part</function> with headers</title>
+		<programlisting format="linespecific">
+...
+$var(b) = "<info>active</info>";
+append_body_part("$var(b)", "application/xml\r\nX-Header: xyz");
 ...
 
 # Will append this to the body:
@@ -1767,6 +1792,10 @@ kamailio
 ...
 </programlisting>
 		</example>
+		<para>
+		If other headers are wanted to be added for a body part, see the docs
+		for append_body_part(...) function.
+		</para>
 	</section>
 
 	<section id="textops.f.get_body_part">
