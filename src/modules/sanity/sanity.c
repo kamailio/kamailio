@@ -67,9 +67,7 @@ int str2valid_uint(str* _number, unsigned int* _result) {
 
 	*_result = 0;
 	if (_number->len > 10) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("number is too long\n");
-#endif
 		return -1;
 	}
 	if (_number->len < 10) {
@@ -77,9 +75,7 @@ int str2valid_uint(str* _number, unsigned int* _result) {
 	}
 	for (i=0; i < _number->len; i++) {
 		if (_number->s[i] < '0' || _number->s[i] > '9') {
-#ifdef EXTRA_DEBUG
 			LM_DBG("number contains non-number char\n");
-#endif
 			return -1;
 		}
 		if (equal == 1) {
@@ -87,9 +83,7 @@ int str2valid_uint(str* _number, unsigned int* _result) {
 				equal = 0;
 			}
 			else if (_number->s[i] > mui[i]) {
-#ifdef EXTRA_DEBUG
 				LM_DBG("number exceeds uint\n");
-#endif
 				return -1;
 			}
 		}
@@ -113,9 +107,7 @@ strl* parse_str_list(str* _string) {
 	trim(&input);
 
 	if (input.len == 0) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("list is empty\n");
-#endif
 		return NULL;
 	}
 	parsed_list = pkg_malloc(sizeof(strl));
@@ -184,9 +176,7 @@ int check_ruri_sip_version(struct sip_msg* _msg) {
 	char *sep;
 	str version;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_ruri_sip_version entered\n");
-#endif
 
 	if (_msg->first_line.u.request.version.len != 0) {
 		sep = q_memchr(_msg->first_line.u.request.version.s, '/',
@@ -207,24 +197,18 @@ int check_ruri_sip_version(struct sip_msg* _msg) {
 					LM_WARN("failed to send 505 via sl reply\n");
 				}
 			}
-#ifdef EXTRA_DEBUG
 			LM_DBG("check_ruri_sip_version failed\n");
-#endif
 			return SANITY_CHECK_FAILED;
 		}
 	}
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_ruri_sip_version passed\n");
-#endif
 	return SANITY_CHECK_PASSED;
 }
 
 /* check if the r-uri scheme */
 int check_ruri_scheme(struct sip_msg* _msg) {
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_ruri_scheme entered\n");
-#endif
 
 	if (_msg->parsed_uri_ok == 0 &&
 			parse_sip_msg_uri(_msg) != 1) {
@@ -248,9 +232,7 @@ int check_ruri_scheme(struct sip_msg* _msg) {
 		LM_DBG("check_ruri_scheme failed\n");
 		return SANITY_CHECK_FAILED;
 	}
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_ruri_scheme passed\n");
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
@@ -258,9 +240,7 @@ int check_ruri_scheme(struct sip_msg* _msg) {
 /* check for the presence of the minimal required headers */
 int check_required_headers(struct sip_msg* _msg) {
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_required_headers entered\n");
-#endif
 
 	if (!check_transaction_quadruple(_msg)) {
 		if (_msg->REQ_METHOD != METHOD_ACK) {
@@ -273,9 +253,7 @@ int check_required_headers(struct sip_msg* _msg) {
 		return SANITY_CHECK_FAILED;
 	}
 	/* TODO: check for other required headers according to request type */
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_required_headers passed\n");
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
@@ -310,9 +288,7 @@ int check_via_sip_version(struct sip_msg* _msg) {
 	DBG("check_via_sip_version failed\n");
 	return SANITY_CHECK_FAILED;
 	}
-#ifdef EXTRA_DEBUG
 DBG("check_via_sip_version passed\n");
-#endif
 
 return SANITY_CHECK_PASSED;
 */
@@ -431,9 +407,7 @@ LOG(L_WARN, "sanity_check(): check_via_protocol():"
 		" unknown protocol in received structure\n");
 return SANITY_CHECK_FAILED;
 }
-#ifdef EXTRA_DEBUG
 DBG("check_via_protocol passed\n");
-#endif
 
 return SANITY_CHECK_PASSED;
 */
@@ -442,9 +416,7 @@ return SANITY_CHECK_PASSED;
 /* compare the method in the CSeq header with the request line value */
 int check_cseq_method(struct sip_msg* _msg) {
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_cseq_method entered\n");
-#endif
 
 	if (parse_headers(_msg, HDR_CSEQ_F, 0) != 0) {
 		LM_WARN("failed to parse the CSeq header\n");
@@ -481,9 +453,7 @@ int check_cseq_method(struct sip_msg* _msg) {
 		LM_WARN("missing CSeq header\n");
 		return SANITY_CHECK_FAILED;
 	}
-#ifdef EXTRA_DEBUG
 	DBG("check_cseq_method passed\n");
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
@@ -492,9 +462,7 @@ int check_cseq_method(struct sip_msg* _msg) {
 int check_cseq_value(struct sip_msg* _msg) {
 	unsigned int cseq;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_cseq_value entered\n");
-#endif
 
 	if (parse_headers(_msg, HDR_CSEQ_F, 0) != 0) {
 		LM_WARN("failed to parse the CSeq header\n");
@@ -525,9 +493,7 @@ int check_cseq_value(struct sip_msg* _msg) {
 		LM_WARN("missing CSeq header\n");
 		return SANITY_CHECK_FAILED;
 	}
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_cseq_value passed\n");
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
@@ -536,9 +502,7 @@ int check_cseq_value(struct sip_msg* _msg) {
 int check_cl(struct sip_msg* _msg) {
 	char *body;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_cl entered\n");
-#endif
 
 	if (parse_headers(_msg, HDR_CONTENTLENGTH_F, 0) != 0) {
 		LM_WARN("failed to parse content-length header\n");
@@ -547,9 +511,7 @@ int check_cl(struct sip_msg* _msg) {
 	if (_msg->content_length != NULL) {
 		//dump_hdr_field(_msg->content_length);
 		if ((body = get_body(_msg)) == NULL) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("check_cl(): no body\n");
-#endif
 			return SANITY_CHECK_FAILED;
 		}
 		if ((_msg->len - (body - _msg->buf)) != get_content_length(_msg)) {
@@ -561,15 +523,10 @@ int check_cl(struct sip_msg* _msg) {
 			LM_DBG("check_cl failed\n");
 			return SANITY_CHECK_FAILED;
 		}
-#ifdef EXTRA_DEBUG
 		LM_DBG("check_cl passed\n");
-#endif
-	}
-#ifdef EXTRA_DEBUG
-	else {
+	} else {
 		LM_WARN("content length header missing in request\n");
 	}
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
@@ -578,9 +535,7 @@ int check_cl(struct sip_msg* _msg) {
 int check_expires_value(struct sip_msg* _msg) {
 	unsigned int expires;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_expires_value entered\n");
-#endif
 
 	if (parse_headers(_msg, HDR_EXPIRES_F, 0) != 0) {
 		LM_WARN("failed to parse expires header\n");
@@ -612,15 +567,10 @@ int check_expires_value(struct sip_msg* _msg) {
 			LM_DBG("check_expires_value failed\n");
 			return SANITY_CHECK_FAILED;
 		}
-#ifdef EXTRA_DEBUG
 		LM_DBG("check_expires_value passed\n");
-#endif
-	}
-#ifdef EXTRA_DEBUG
-	else {
+	} else {
 		LM_DBG("no expires header found\n");
 	}
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
@@ -631,9 +581,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 	char *u;
 	int u_len;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("checking proxy require\n");
-#endif
 
 	if (parse_headers(_msg, HDR_PROXYREQUIRE_F, 0) != 0) {
 		LM_WARN("failed to parse proxy require header\n");
@@ -650,11 +598,9 @@ int check_proxy_require(struct sip_msg* _msg) {
 		while (r_pr != NULL) {
 			l_pr = proxyrequire_list;
 			while (l_pr != NULL) {
-#ifdef EXTRA_DEBUG
 				LM_DBG("comparing r='%.*s' l='%.*s'\n",
 						r_pr->string.len, r_pr->string.s, l_pr->string.len,
 						l_pr->string.s);
-#endif
 				if (l_pr->string.len == r_pr->string.len &&
 						/* FIXME tokens are case in-sensitive */
 						memcmp(l_pr->string.s, r_pr->string.s,
@@ -686,9 +632,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 						LM_WARN("failed to send 420 via sl reply\n");
 					}
 				}
-#ifdef EXTRA_DEBUG
 				LM_DBG("checking proxy require failed\n");
-#endif
 				if (u) pkg_free(u);
 				return SANITY_CHECK_FAILED;
 			}
@@ -696,9 +640,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 				r_pr = r_pr->next;
 			}
 		}
-#ifdef EXTRA_DEBUG
 		LM_DBG("checking proxy require passed\n");
-#endif
 		if (_msg->proxy_require->parsed) {
 			/* TODO we have to free it here, because it is not automatically
 			 * freed when the message freed. Lets hope nobody needs to access
@@ -706,12 +648,9 @@ int check_proxy_require(struct sip_msg* _msg) {
 			free_str_list(_msg->proxy_require->parsed);
 			_msg->proxy_require->parsed = NULL;
 		}
-	}
-#ifdef EXTRA_DEBUG
-	else {
+	} else {
 		LM_DBG("no proxy-require header found\n");
 	}
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
@@ -722,15 +661,11 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 	struct to_body *ft_body = NULL;
 	struct sip_uri uri;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_parse_uris entered\n");
-#endif
 
 	/* check R-URI */
 	if (SANITY_URI_CHECK_RURI & checks) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("parsing ruri\n");
-#endif
 		if (_msg->parsed_uri_ok == 0 &&
 				parse_sip_msg_uri(_msg) != 1) {
 			LM_WARN("failed to parse request uri\n");
@@ -746,9 +681,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 	}
 	/* check From URI */
 	if (SANITY_URI_CHECK_FROM & checks) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("looking up From header\n");
-#endif
 		if ((!_msg->from && parse_headers(_msg, HDR_FROM_F, 0) != 0)
 				|| !_msg->from) {
 			LM_WARN("missing from header\n");
@@ -760,9 +693,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 			return SANITY_CHECK_FAILED;
 		}
 		if (!_msg->from->parsed) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("parsing From header\n");
-#endif
 			ft_body = pkg_malloc(sizeof(struct to_body));
 			if (!ft_body) {
 				LM_ERR("out of pkg_memory (From)\n");
@@ -787,9 +718,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 			ft_body = NULL;
 		}
 		if (((struct to_body*)_msg->from->parsed)->uri.s) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("parsing From URI\n");
-#endif
 			if (parse_uri(((struct to_body*)_msg->from->parsed)->uri.s,
 						((struct to_body*)_msg->from->parsed)->uri.len, &uri) != 0) {
 				LM_WARN("failed to parse From uri\n");
@@ -809,9 +738,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 	}
 	/* check To URI */
 	if (SANITY_URI_CHECK_TO & checks) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("looking up To header\n");
-#endif
 		if ((!_msg->to && parse_headers(_msg, HDR_TO_F, 0) != 0)
 				|| !_msg->to) {
 			LM_WARN("missing to header\n");
@@ -833,9 +760,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 			return SANITY_CHECK_FAILED;
 		}
 		if (((struct to_body*)_msg->to->parsed)->uri.s) {
-#ifdef EXTRA_DEBUG
 			DBG("check_parse_uris(): parsing To URI\n");
-#endif
 			if (parse_uri(((struct to_body*)_msg->to->parsed)->uri.s,
 						((struct to_body*)_msg->to->parsed)->uri.len, &uri) != 0) {
 				LM_WARN("failed to parse To uri\n");
@@ -855,17 +780,13 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 	}
 	/* check Contact URI */
 	if (SANITY_URI_CHECK_CONTACT & checks) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("looking up Contact header\n");
-#endif
 		if ((!_msg->contact && parse_headers(_msg, HDR_CONTACT_F, 0) != 0)
 				|| !_msg->contact) {
 			LM_WARN("missing contact header\n");
 		}
 		if (_msg->contact) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("parsing Contact header\n");
-#endif
 			if (parse_contact(_msg->contact) < 0) {
 				LM_WARN("failed to parse Contact header\n");
 				if (_msg->REQ_METHOD != METHOD_ACK) {
@@ -892,9 +813,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 		}
 	}
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_parse_uris passed\n");
-#endif
 	return SANITY_CHECK_PASSED;
 }
 
@@ -914,9 +833,7 @@ static int check_digest_only(struct sip_msg* msg, int checks)
 	}
 
 	if (!msg->authorization && !msg->proxy_auth) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("Nothing to check\n");
-#endif
 		return SANITY_CHECK_PASSED;
 	}
 
@@ -941,30 +858,22 @@ static int check_digest_only(struct sip_msg* msg, int checks)
 		cred = &((auth_body_t*)ptr->parsed)->digest;
 
 		if (check_dig_cred(cred) != E_DIG_OK) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("Digest credentials malformed\n");
-#endif
 			return SANITY_CHECK_FAILED;
 		}
 
 		if (cred->username.whole.len == 0) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("Empty username\n");
-#endif
 			return SANITY_CHECK_FAILED;
 		}
 
 		if (cred->nonce.len == 0) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("Empty nonce attribute\n");
-#endif
 			return SANITY_CHECK_FAILED;
 		}
 
 		if (cred->response.len == 0) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("Empty response attribute\n");
-#endif
 			return SANITY_CHECK_FAILED;
 		}
 
@@ -1038,5 +947,3 @@ int check_duptags(sip_msg_t* _msg)
 
 	return SANITY_CHECK_PASSED;
 }
-
-
