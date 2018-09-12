@@ -1327,6 +1327,10 @@ static int ki_t_reply(sip_msg_t* msg, int code, str* reason)
 		LM_DBG("ACKs are not replied\n");
 		return -1;
 	}
+	if(msg->msg_flags & FL_MSG_NOREPLY) {
+		LM_INFO("message marked with no-reply flag\n");
+		return -2;
+	}
 
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
