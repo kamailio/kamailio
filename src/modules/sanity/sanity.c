@@ -52,8 +52,10 @@ int sanity_reply(sip_msg_t *msg, int code, char *reason)
 	if(msg->REQ_METHOD == METHOD_ACK) {
 		return 1;
 	}
-	if(slb.zreply(msg, code, reason) < 0) {
-		return -1;
+	if(!(msg->msg_flags&FL_MSG_NOREPLY)) {
+		if(slb.zreply(msg, code, reason) < 0) {
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -684,11 +686,12 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 		LM_DBG("looking up From header\n");
 		if ((!_msg->from && parse_headers(_msg, HDR_FROM_F, 0) != 0)
 				|| !_msg->from) {
-			LM_WARN("missing from header\n");
+			LM_WARN("invalid from header\n");
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Missing From Header") < 0) {
+				if (sanity_reply(_msg, 400, "Invalid From Header") < 0) {
 					LM_WARN("failed to send 400 via sl reply (missing From)\n");
 				}
+				_msg->msg_flags |= FL_MSG_NOREPLY;
 			}
 			return SANITY_CHECK_FAILED;
 		}
@@ -741,11 +744,12 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 		LM_DBG("looking up To header\n");
 		if ((!_msg->to && parse_headers(_msg, HDR_TO_F, 0) != 0)
 				|| !_msg->to) {
-			LM_WARN("missing to header\n");
+			LM_WARN("invalid To header\n");
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Missing To Header") < 0) {
+				if (sanity_reply(_msg, 400, "Ivalid To Header") < 0) {
 					LM_WARN("failed to send 400 via sl reply (missing To)\n");
 				}
+				_msg->msg_flags |= FL_MSG_NOREPLY;
 			}
 			return SANITY_CHECK_FAILED;
 		}
