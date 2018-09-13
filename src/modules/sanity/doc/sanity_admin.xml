@@ -229,6 +229,27 @@ modparam("sanity", "autodrop", 1)
 	    </programlisting>
 	</example>
 	</section>
+
+	<section id="sanity.p.noreply">
+	<title><varname>noreply</varname> (int)</title>
+	<para>
+		If set to 1, then the module does not send a SIP reply internally in
+		case there is an error detected when performing the sanity checks.
+		There is the option to send the reply from config file with functions
+		from sl or tm module as well as sanity_reply() from this module.
+	</para>
+	<para>
+		Default value: 0.
+	</para>
+	<example>
+	    <title>Set <varname>noreply</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "noreply", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
 </section>
 
    <section id="sanity.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -302,6 +323,28 @@ if (method=="INVITE" && !sanity_check("1024", "6")) {
 ]]>
 		</programlisting>
 	</example>
-    </section>
+	</section>
+	<section id="sanity.f.sanity_reply">
+	    <title>
+		<function>sanity_reply()</function>
+	    </title>
+	<para>
+	Send a SIP reply using the code and reason text set internally by the module
+	when detecting errors while performing the sanity checks. It is done only
+	when parameter noreply is set to 1.
+	</para>
+	<example>
+		<title><function>sanity_reply</function> usage</title>
+		<programlisting>
+...
+if(!sanity_check("1024", "6")) {
+   xdbg("sanity checks failed\n");
+   sanity_reply();
+   exit;
+}
+...
+		</programlisting>
+	</example>
+	</section>
 </section>
 </chapter>
