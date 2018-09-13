@@ -49,14 +49,12 @@
 		</listitem>
 		<listitem>
 			<para>
-			via sip version - (8) - not working because parser fails already 
-			when another version then 2.0 is present.
+			via sip version - (8) - disabled.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			via protocol - (16) - not working because parser fails already if an
-			unsupported transport is present.
+			via protocol - (16) - disabled.
 			</para>
 		</listitem>
 		<listitem>
@@ -86,7 +84,7 @@
 		<listitem>
 			<para>
 			proxy require - (512) - checks if all items of the proxy require header
-			are present in the list of the extensions from the module 
+			are present in the list of the extensions from the module
 			parameter proxy_require.
 			</para>
 		</listitem>
@@ -116,6 +114,12 @@
 			authorization header (8192) - checks if the Authorization is valid
 			if the scheme is "digest" (see "digest credentials" above), always
 			returns success for other schemes.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			first via header (16384) - checks if the first Via header is
+			available, can be parsed and has an address value.
 			</para>
 		</listitem>
 		</itemizedlist>
