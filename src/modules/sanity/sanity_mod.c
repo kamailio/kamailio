@@ -135,6 +135,10 @@ int sanity_check(struct sip_msg* _msg, int msg_checks, int uri_checks)
 {
 	int ret;
 
+	if(ksr_sanity_noreply!=0) {
+		ksr_sanity_info_init();
+	}
+
 	ret = SANITY_CHECK_PASSED;
 	if (SANITY_RURI_SIP_VERSION & msg_checks &&
 			(ret = check_ruri_sip_version(_msg)) != SANITY_CHECK_PASSED) {
