@@ -42,7 +42,8 @@
 #define SANITY_CHECK_DIGEST            (1<<11)
 #define SANITY_CHECK_DUPTAGS           (1<<12)
 #define SANITY_CHECK_AUTHORIZATION     (1<<13)
-#define SANITY_MAX_CHECKS              (1<<14)  /* Make sure this is the highest value */
+#define SANITY_VIA1_HEADER             (1<<14)
+#define SANITY_MAX_CHECKS              (1<<15)  /* Make sure this is the highest value */
 
 /* VIA_SIP_VERSION and VIA_PROTOCOL do not work yet
  * and PARSE_URIS is very expensive */

@@ -250,6 +250,25 @@ int check_required_headers(sip_msg_t* msg) {
 }
 
 /* check if the SIP version in the Via header is 2.0 */
+int check_via1_header(sip_msg_t* msg)
+{
+	LM_DBG("check via1 header\n");
+	if (parse_headers(msg, HDR_VIA1_F, 0) != 0) {
+		LM_WARN("failed to parse the Via1 header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	if (msg->via1->host.s==NULL || msg->via1->host.len<0) {
+		LM_WARN("failed to parse the Via1 host\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	return SANITY_CHECK_PASSED;
+}
+
+/* check if the SIP version in the Via header is 2.0 */
 int check_via_sip_version(sip_msg_t* msg) {
 
 	LM_DBG("this is a useless check"

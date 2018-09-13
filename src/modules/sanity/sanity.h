@@ -36,6 +36,9 @@ int str2valid_uint(str* _number, unsigned int* _result);
 /* parses the given comma seperated string into a string list */
 strl* parse_str_list(str* _string);
 
+/* check top Via header */
+int check_via1_header(sip_msg_t* msg);
+
 /* compare the protocol string in the Via header with the transport */
 int check_via_protocol(struct sip_msg* _msg);
 
