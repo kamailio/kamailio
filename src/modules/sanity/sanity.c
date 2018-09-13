@@ -38,6 +38,55 @@
 #define UNSUPPORTED_HEADER "Unsupported: "
 #define UNSUPPORTED_HEADER_LEN (sizeof(UNSUPPORTED_HEADER)-1)
 
+extern int ksr_sanity_noreply;
+
+#define KSR_SANITY_REASON_SIZE 128
+typedef struct ksr_sanity_info {
+	int code;
+	char reason[KSR_SANITY_REASON_SIZE];
+	unsigned int msgid;
+	int msgpid;
+} ksr_sanity_info_t;
+
+static ksr_sanity_info_t _ksr_sanity_info = {0};
+
+/**
+ *
+ */
+void ksr_sanity_info_init(void)
+{
+	memset(&_ksr_sanity_info, 0, sizeof(ksr_sanity_info_t));
+}
+
+/**
+ *
+ */
+int ki_sanity_reply(sip_msg_t *msg)
+{
+	if(msg->first_line.type == SIP_REPLY) {
+		return 1;
+	}
+
+	if(msg->REQ_METHOD == METHOD_ACK) {
+		return 1;
+	}
+
+	if(ksr_sanity_noreply == 0) {
+		return 1;
+	}
+
+	if(!(msg->msg_flags&FL_MSG_NOREPLY)) {
+		if(msg->id != _ksr_sanity_info.msgid
+				|| msg->pid != _ksr_sanity_info.msgpid) {
+			LM_INFO("reply sending invoked for a different sip request\n");
+			return -1;
+		}
+		if(slb.zreply(msg, _ksr_sanity_info.code, _ksr_sanity_info.reason) < 0) {
+			return -1;
+		}
+	}
+	return 1;
+}
 
 /**
  * wrapper to SL send reply function
@@ -52,11 +101,24 @@ int sanity_reply(sip_msg_t *msg, int code, char *reason)
 	if(msg->REQ_METHOD == METHOD_ACK) {
 		return 1;
 	}
-	if(!(msg->msg_flags&FL_MSG_NOREPLY)) {
-		if(slb.zreply(msg, code, reason) < 0) {
-			return -1;
+
+	if(ksr_sanity_noreply!=0) {
+		_ksr_sanity_info.code = code;
+		if(strlen(reason)>=KSR_SANITY_REASON_SIZE) {
+			strncpy(_ksr_sanity_info.reason, reason, KSR_SANITY_REASON_SIZE-1);
+		} else {
+			strcpy(_ksr_sanity_info.reason, reason);
+		}
+		_ksr_sanity_info.msgid = msg->id;
+		_ksr_sanity_info.msgpid = msg->pid;
+	} else {
+		if(!(msg->msg_flags&FL_MSG_NOREPLY)) {
+			if(slb.zreply(msg, code, reason) < 0) {
+				return -1;
+			}
 		}
 	}
+
 	return 0;
 }
 

@@ -29,6 +29,9 @@
 #define SIP_VERSION_TWO_POINT_ZERO "2.0"
 #define SIP_VERSION_TWO_POINT_ZERO_LENGTH 3
 
+void ksr_sanity_info_init(void);
+int ki_sanity_reply(sip_msg_t *msg);
+
 /* check if the given string is a valid unsigned int value
  * and converts it into _result. returns -1 on error and 0 on success*/
 int str2valid_uint(str* _number, unsigned int* _result);

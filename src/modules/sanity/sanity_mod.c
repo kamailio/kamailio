@@ -39,6 +39,7 @@ str pr_str 	= STR_STATIC_INIT(PROXY_REQUIRE_DEF);
 int default_msg_checks = SANITY_DEFAULT_CHECKS;
 int default_uri_checks = SANITY_DEFAULT_URI_CHECKS;
 int _sanity_drop = 1;
+int ksr_sanity_noreply = 0;
 
 strl* proxyrequire_list = NULL;
 
@@ -46,6 +47,7 @@ sl_api_t slb;
 
 static int mod_init(void);
 static int w_sanity_check(sip_msg_t* _msg, char* _msg_check, char* _uri_check);
+static int w_sanity_reply(sip_msg_t* _msg, char* _p1, char* _p2);
 static int bind_sanity(sanity_api_t* api);
 
 /*
@@ -57,6 +59,8 @@ static cmd_export_t cmds[] = {
 	{"sanity_check", (cmd_function)w_sanity_check, 1, fixup_igp_null,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"sanity_check", (cmd_function)w_sanity_check, 2, fixup_igp_igp,
+		REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"sanity_check", (cmd_function)w_sanity_reply, 0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"bind_sanity",  (cmd_function)bind_sanity,    0, 0, 0},
 	{0, 0, 0, 0}
@@ -70,6 +74,7 @@ static param_export_t params[] = {
 	{"uri_checks",		PARAM_INT,	&default_uri_checks	},
 	{"proxy_require",	PARAM_STR,	&pr_str			},
 	{"autodrop",		PARAM_INT,	&_sanity_drop	},
+	{"noreply",			PARAM_INT,	&ksr_sanity_noreply	},
 	{0, 0, 0}
 };
 
@@ -95,6 +100,8 @@ static int mod_init(void) {
 	strl* ptr;
 
 	LM_DBG("sanity initializing\n");
+
+	ksr_sanity_info_init();
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
@@ -266,6 +273,14 @@ static int ki_sanity_check_defaults(sip_msg_t *msg)
 }
 
 /**
+ *
+ */
+static int w_sanity_reply(sip_msg_t* _msg, char* _p1, char* _p2)
+{
+	return ki_sanity_reply(_msg);
+}
+
+/**
  * load sanity module API
  */
 static int bind_sanity(sanity_api_t* api)
@@ -291,6 +306,11 @@ static sr_kemi_t sr_kemi_sanity_exports[] = {
 	},
 	{ str_init("sanity"), str_init("sanity_check_defaults"),
 		SR_KEMIP_INT, ki_sanity_check_defaults,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sanity"), str_init("sanity_reply"),
+		SR_KEMIP_INT, ki_sanity_reply,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
