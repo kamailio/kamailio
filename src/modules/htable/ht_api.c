@@ -455,7 +455,8 @@ int ht_destroy(void)
 }
 
 
-int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
+int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
+		int exv)
 {
 	unsigned int idx;
 	unsigned int hid;
@@ -497,8 +498,13 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 						memcpy(it->value.s.s, val->s.s, val->s.len);
 						it->value.s.s[it->value.s.len] = '\0';
 
-						if(ht->updateexpire)
-							it->expire = now + ht->htexpire;
+						if(exv<=0) {
+							if(ht->updateexpire) {
+								it->expire = now + ht->htexpire;
+							}
+						} else {
+							it->expire = now + exv;
+						}
 					} else {
 						/* new */
 						cell = ht_cell_new(name, type, val, hid);
@@ -510,10 +516,15 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 						}
 						cell->next = it->next;
 						cell->prev = it->prev;
-						if(ht->updateexpire)
-							cell->expire = now + ht->htexpire;
-						else
-							cell->expire = it->expire;
+						if(exv<=0) {
+							if(ht->updateexpire) {
+								cell->expire = now + ht->htexpire;
+							} else {
+								cell->expire = it->expire;
+							}
+						} else {
+							it->expire = now + exv;
+						}
 						if(it->prev)
 							it->prev->next = cell;
 						else
@@ -526,8 +537,13 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 					it->flags &= ~AVP_VAL_STR;
 					it->value.n = val->n;
 
-					if(ht->updateexpire)
-						it->expire = now + ht->htexpire;
+					if(exv<=0) {
+						if(ht->updateexpire) {
+							it->expire = now + ht->htexpire;
+						}
+					} else {
+						it->expire = now + exv;
+					}
 				}
 				if(mode) ht_slot_unlock(ht, idx);
 				return 0;
@@ -542,10 +558,16 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 						if(mode) ht_slot_unlock(ht, idx);
 						return -1;
 					}
-					if(ht->updateexpire)
-						cell->expire = now + ht->htexpire;
-					else
-						cell->expire = it->expire;
+					if(exv<=0) {
+						if(ht->updateexpire) {
+							cell->expire = now + ht->htexpire;
+						} else {
+							cell->expire = it->expire;
+						}
+					} else {
+						it->expire = now + exv;
+					}
+
 					cell->next = it->next;
 					cell->prev = it->prev;
 					if(it->prev)
@@ -558,8 +580,13 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 				} else {
 					it->value.n = val->n;
 
-					if(ht->updateexpire)
-						it->expire = now + ht->htexpire;
+					if(exv<=0) {
+						if(ht->updateexpire) {
+							it->expire = now + ht->htexpire;
+						}
+					} else {
+						it->expire = now + exv;
+					}
 				}
 				if(mode) ht_slot_unlock(ht, idx);
 				return 0;
@@ -576,7 +603,11 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 		if(mode) ht_slot_unlock(ht, idx);
 		return -1;
 	}
-	cell->expire = now + ht->htexpire;
+	if(exv<=0) {
+		cell->expire = now + ht->htexpire;
+	} else {
+		it->expire = now + exv;
+	}
 	if(prev==NULL)
 	{
 		if(ht->entries[idx].first!=NULL)
@@ -595,6 +626,11 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 	ht->entries[idx].esize++;
 	if(mode) ht_slot_unlock(ht, idx);
 	return 0;
+}
+
+int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
+{
+	return ht_set_cell_ex(ht, name, type, val, mode, 0);
 }
 
 int ht_del_cell(ht_t *ht, str *name)
