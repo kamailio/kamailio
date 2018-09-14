@@ -976,6 +976,40 @@ static int ki_ht_seti(sip_msg_t *msg, str *htname, str *itname, int itval)
 	return 1;
 }
 
+/**
+ *
+ */
+static int ki_ht_setex(sip_msg_t *msg, str *htname, str *itname, int itval)
+{
+	int_str isval;
+	ht_t *ht;
+
+	/* Find the htable */
+	ht = ht_get_table(htname);
+	if (!ht) {
+		LM_ERR("No such htable: %.*s\n", htname->len, htname->s);
+		return -1;
+	}
+
+	isval.n = itval;
+
+	LM_DBG("set expire value for  sht: %.*s key: %.*s exp: %d\n", htname->len,
+			htname->s, itname->len, itname->s, itval);
+
+	if (ht->dmqreplicate>0
+				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, htname,
+				itname, 0, &isval, 0)!=0) {
+		LM_ERR("dmq relication failed\n");
+	}
+	if(ht_set_cell_expire(ht, itname, 0, &isval)!=0) {
+		LM_ERR("cannot set expire for sht: %.*s key: %.*s\n", htname->len,
+				htname->s, itname->len, itname->s);
+		return -1;
+	}
+
+	return 0;
+}
+
 #define RPC_DATE_BUF_LEN 21
 
 static const char* htable_dump_doc[2] = {
@@ -1555,6 +1589,11 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	},
 	{ str_init("htable"), str_init("sht_seti"),
 		SR_KEMIP_INT, ki_ht_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_setex"),
+		SR_KEMIP_INT, ki_ht_setex,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
