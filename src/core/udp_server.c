@@ -604,7 +604,8 @@ again:
 #endif
 		if (unlikely(n==-1)){
 			su2ip_addr(&ip, &dst->to);
-			LM_ERR("sendto(sock,%p,%u,0,%s:%d,%d): %s(%d)\n",
+			LM_ERR("sendto(sock, buf: %p, len: %u, 0, dst: (%s:%d), tolen: %d)"
+					" - err: %s (%d)\n",
 					buf,len, ip_addr2a(&ip),
 					su_getport(&dst->to), tolen, strerror(errno), errno);
 			if (errno==EINTR) goto again;
