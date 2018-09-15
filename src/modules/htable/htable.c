@@ -991,11 +991,10 @@ static int ki_ht_setex(sip_msg_t *msg, str *htname, str *itname, int itval)
 		return -1;
 	}
 
-	isval.n = itval;
-
-	LM_DBG("set expire value for  sht: %.*s key: %.*s exp: %d\n", htname->len,
+	LM_DBG("set expire value for sht: %.*s key: %.*s exp: %d\n", htname->len,
 			htname->s, itname->len, itname->s, itval);
 
+	isval.n = itval;
 	if (ht->dmqreplicate>0
 				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, htname,
 				itname, 0, &isval, 0)!=0) {
@@ -1004,6 +1003,49 @@ static int ki_ht_setex(sip_msg_t *msg, str *htname, str *itname, int itval)
 	if(ht_set_cell_expire(ht, itname, 0, &isval)!=0) {
 		LM_ERR("cannot set expire for sht: %.*s key: %.*s\n", htname->len,
 				htname->s, itname->len, itname->s);
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int ki_ht_setiex(sip_msg_t *msg, str *htname, str *itname, int itval,
+	int exval)
+{
+	int_str isval;
+	ht_t *ht;
+
+	/* Find the htable */
+	ht = ht_get_table(htname);
+	if (!ht) {
+		LM_ERR("No such htable: %.*s\n", htname->len, htname->s);
+		return -1;
+	}
+
+	LM_DBG("set value and expire for sht: %.*s key: %.*s val: %d exp: %d\n",
+			htname->len, htname->s, itname->len, itname->s, itval, exval);
+
+	if (ht->dmqreplicate>0) {
+		isval.n = itval;
+		if(ht_dmq_replicate_action(HT_DMQ_SET_CELL,
+				&ht->name, itname, 0, &isval, 1)!=0) {
+			LM_ERR("dmq set value relication failed\n");
+		} else {
+			isval.n = exval;
+			if(ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, htname,
+					itname, 0, &isval, 0)!=0) {
+				LM_ERR("dmq set expire relication failed\n");
+			}
+		}
+	}
+	isval.n = itval;
+
+	if(ht_set_cell_ex(ht, itname, 0, &isval, 1, exval)!=0) {
+		LM_ERR("cannot set value and expire for sht: %.*s key: %.*s\n",
+				htname->len, htname->s, itname->len, itname->s);
 		return -1;
 	}
 
@@ -1596,6 +1638,11 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 		SR_KEMIP_INT, ki_ht_setex,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_setiex"),
+		SR_KEMIP_INT, ki_ht_setiex,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
