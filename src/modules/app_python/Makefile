@@ -9,7 +9,7 @@ NAME=app_python.so
 # the following to point to the correct instance. Module has been tested
 # to work with 2.6 and 2.5. Python 2.4 has been only confirmed to compile,
 # but no testing has been done with that.
-PYTHON?=python
+PYTHON?=python2
 
 PYTHON_VERSION=${shell ${PYTHON} -c "import distutils.sysconfig;print distutils.sysconfig.get_config_var('VERSION')"}
 PYTHON_LIBDIR=${shell ${PYTHON} -c "import distutils.sysconfig;print distutils.sysconfig.get_config_var('LIBDIR')"}
