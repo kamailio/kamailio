@@ -935,7 +935,7 @@ static int ki_ht_sets(sip_msg_t *msg, str *htname, str *itname, str *itval)
 	}
 
 	if(ht_set_cell(ht, itname, AVP_VAL_STR, &isvalue, 1)!=0) {
-		LM_ERR("cannot set hash table: %.*s key: %.*s\n", htname->len, htname->s,
+		LM_ERR("cannot set sht: %.*s key: %.*s\n", htname->len, htname->s,
 				itname->len, itname->s);
 		return -1;
 	}
@@ -967,8 +967,6 @@ static int ki_ht_seti(sip_msg_t *msg, str *htname, str *itname, int itval)
 
 	if(ht_set_cell(ht, itname, 0, &isvalue, 1)!=0) {
 		LM_ERR("cannot set sht: %.*s key: %.*s\n", htname->len, htname->s,
-				itname->len, itname->s);
-		LM_ERR("cannot set hash table: %.*s key: %.*s\n", htname->len, htname->s,
 				itname->len, itname->s);
 		return -1;
 	}
@@ -1006,13 +1004,56 @@ static int ki_ht_setex(sip_msg_t *msg, str *htname, str *itname, int itval)
 		return -1;
 	}
 
-	return 0;
+	return 1;
 }
 
 /**
  *
  */
-static int ki_ht_setiex(sip_msg_t *msg, str *htname, str *itname, int itval,
+static int ki_ht_setxs(sip_msg_t *msg, str *htname, str *itname, str *itval,
+	int exval)
+{
+	int_str isval;
+	ht_t *ht;
+
+	/* Find the htable */
+	ht = ht_get_table(htname);
+	if (!ht) {
+		LM_ERR("No such htable: %.*s\n", htname->len, htname->s);
+		return -1;
+	}
+
+	LM_DBG("set value and expire for sht: %.*s key: %.*s val: %.*s exp: %d\n",
+			htname->len, htname->s, itname->len, itname->s,
+			(itval->len>100)?100:itval->len, itval->s, exval);
+
+	if (ht->dmqreplicate>0) {
+		isval.s = *itval;
+		if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL,
+				&ht->name, itname, AVP_VAL_STR, &isval, 1)!=0) {
+			LM_ERR("dmq set value replication failed\n");
+		} else {
+			isval.n = exval;
+			if(ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, htname,
+					itname, 0, &isval, 0)!=0) {
+				LM_ERR("dmq set expire relication failed\n");
+			}
+		}
+	}
+	isval.s = *itval;
+	if(ht_set_cell(ht, itname, AVP_VAL_STR, &isval, 1)!=0) {
+		LM_ERR("cannot set hash table: %.*s key: %.*s\n", htname->len, htname->s,
+				itname->len, itname->s);
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_ht_setxi(sip_msg_t *msg, str *htname, str *itname, int itval,
 	int exval)
 {
 	int_str isval;
@@ -1037,7 +1078,7 @@ static int ki_ht_setiex(sip_msg_t *msg, str *htname, str *itname, int itval,
 			isval.n = exval;
 			if(ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, htname,
 					itname, 0, &isval, 0)!=0) {
-				LM_ERR("dmq set expire relication failed\n");
+				LM_ERR("dmq set expire replication failed\n");
 			}
 		}
 	}
@@ -1639,8 +1680,13 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("htable"), str_init("sht_setiex"),
-		SR_KEMIP_INT, ki_ht_setiex,
+	{ str_init("htable"), str_init("sht_setxi"),
+		SR_KEMIP_INT, ki_ht_setxi,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_setxs"),
+		SR_KEMIP_INT, ki_ht_setxs,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
