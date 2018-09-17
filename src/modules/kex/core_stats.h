@@ -69,6 +69,8 @@ extern stat_var* rcv_rpls_480;
 extern stat_var* rcv_rpls_486;
 extern stat_var* rcv_rpls_5xx;
 extern stat_var* rcv_rpls_6xx;
+extern stat_var* rcv_rpls_2xx_invite;
+extern stat_var* rcv_rpls_4xx_invite;
 
 /*! \brief forwarded requests */
 extern stat_var* fwd_reqs;
