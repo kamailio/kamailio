@@ -1398,7 +1398,9 @@ int ht_has_cell_op_str(str *sre, ht_t *ht, int mode, int op)
 						}
 					break;
 					default:
-						goto notmatched;
+						ht_slot_unlock(ht, i);
+						LM_ERR("unsupported matching operator: %d\n", op);
+						return -1;
 				}
 			}
 			it = it->next;
@@ -1416,13 +1418,6 @@ matched:
 		regfree(&re);
 	}
 	return 1;
-
-notmatched:
-	ht_slot_unlock(ht, i);
-	if(op==HT_RM_OP_RE) {
-		regfree(&re);
-	}
-	return -1;
 }
 
 int ht_reset_content(ht_t *ht)
