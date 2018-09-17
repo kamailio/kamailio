@@ -137,6 +137,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	sr_net_info_t netinfo;
 	sr_kemi_eng_t *keng = NULL;
 	sr_event_param_t evp = {0};
+	int errsipmsg = 0;
 
 	if(sr_event_enabled(SREV_NET_DATA_RECV)) {
 		if(sip_check_fline(buf, len) == 0) {
@@ -182,15 +183,22 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 		msg_set_time(msg);
 
 	if(parse_msg(buf, len, msg) != 0) {
+		errsipmsg = 1;
 		evp.data = (void *)msg;
 		if((ret = sr_event_exec(SREV_RCV_NOSIP, &evp)) < NONSIP_MSG_DROP) {
-			LOG(cfg_get(core, core_cfg, corelog),
-					"core parsing of SIP message failed (%s:%d/%d)\n",
-					ip_addr2a(&msg->rcv.src_ip), (int)msg->rcv.src_port,
-					(int)msg->rcv.proto);
-			sr_core_ert_run(msg, SR_CORE_ERT_RECEIVE_PARSE_ERROR);
-		} else if(ret == NONSIP_MSG_DROP)
+			LM_DBG("attempt of nonsip message processing failed\n");
+		} else if(ret == NONSIP_MSG_DROP) {
+			LM_DBG("nonsip message processing completed\n");
 			goto error02;
+		}
+	}
+	if(errsipmsg==1) {
+		LOG(cfg_get(core, core_cfg, corelog),
+				"core parsing of SIP message failed (%s:%d/%d)\n",
+				ip_addr2a(&msg->rcv.src_ip), (int)msg->rcv.src_port,
+				(int)msg->rcv.proto);
+		sr_core_ert_run(msg, SR_CORE_ERT_RECEIVE_PARSE_ERROR);
+		goto error02;
 	}
 
 	if(parse_headers(msg, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
