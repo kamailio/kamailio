@@ -597,8 +597,7 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 	}
 	/* add */
 	cell = ht_cell_new(name, type, val, hid);
-	if(cell == NULL)
-	{
+	if(cell == NULL) {
 		LM_ERR("cannot create new cell.\n");
 		if(mode) ht_slot_unlock(ht, idx);
 		return -1;
@@ -606,12 +605,10 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 	if(exv<=0) {
 		cell->expire = now + ht->htexpire;
 	} else {
-		it->expire = now + exv;
+		cell->expire = now + exv;
 	}
-	if(prev==NULL)
-	{
-		if(ht->entries[idx].first!=NULL)
-		{
+	if(prev==NULL) {
+		if(ht->entries[idx].first!=NULL) {
 			cell->next = ht->entries[idx].first;
 			ht->entries[idx].first->prev = cell;
 		}
