@@ -164,12 +164,12 @@ int app_ruby_kemi_reload_script(void)
 }
 
 /**
- * 
+ *
  */
 int ruby_sr_init_child(void)
 {
 	int state = 0;
-	VALUE result;
+	VALUE rbres;
 
 	/* construct the VM */
 	ruby_init();
@@ -177,12 +177,12 @@ int ruby_sr_init_child(void)
 	ruby_script(_sr_ruby_load_file.s);
 
 	/* Ruby goes here */
-	result = rb_eval_string_protect("puts 'Hello " NAME "!'", &state);
+	rbres = rb_eval_string_protect("puts 'Hello " NAME "!'", &state);
 
 	if (state) {
 		/* handle exception */
 		app_ruby_print_last_exception();
-		LM_ERR("test execution with error\n");
+		LM_ERR("test execution with error (res type: %d)\n", TYPE(rbres));
 		return -1;
 	} else {
 		LM_DBG("test execution without error\n");
@@ -1032,7 +1032,7 @@ VALUE sr_kemi_ruby_exec_func(ksr_ruby_context_t *R, int eidx, int argc,
 }
 
 /**
- * 
+ *
  */
 int app_ruby_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 		char *p3, int emode)
@@ -1075,7 +1075,8 @@ int app_ruby_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 
 	if (rberr) {
 		app_ruby_print_last_exception();
-		LM_ERR("ruby exception (%d) on callback for: %s\n", rberr, func);
+		LM_ERR("ruby exception (%d) on callback for: %s (res type: %d)\n",
+				rberr, func, TYPE(rbres));
 		return -1;
 	}
 
@@ -1083,7 +1084,7 @@ int app_ruby_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 }
 
 /**
- * 
+ *
  */
 int app_ruby_run(sip_msg_t *msg, char *func, char *p1, char *p2,
 		char *p3)
