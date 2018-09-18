@@ -1687,7 +1687,7 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	},
 	{ str_init("htable"), str_init("sht_setxs"),
 		SR_KEMIP_INT, ki_ht_setxs,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
