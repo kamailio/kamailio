@@ -404,7 +404,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 				goto error;
 			}
 		}
-		if(sruid_next(&_reg_sruid)<0)
+		if(sruid_next_safe(&_reg_sruid)<0)
 			goto error;
 		ci.ruid = _reg_sruid.uid;
 		LM_DBG("generated ruid is: %.*s\n", ci.ruid.len, ci.ruid.s);
