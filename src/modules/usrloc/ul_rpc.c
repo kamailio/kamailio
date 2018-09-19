@@ -660,7 +660,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	if(sruid_next(&_ul_sruid)<0)
+	if(sruid_next_safe(&_ul_sruid)<0)
 	{
 		rpc->fault(ctx, 500, "Can't obtain next uid");
 		return;
