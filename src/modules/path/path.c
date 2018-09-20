@@ -406,8 +406,8 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 		}
 	} else {
 		/* received=ip~port~proto */
-		strncpy(dst_uri_buf, "sip:", 4);
-		strncpy(dst_uri_buf+4, hooks.contact.received->body.s,
+		memcpy(dst_uri_buf, "sip:", 4);
+		memcpy(dst_uri_buf+4, hooks.contact.received->body.s,
 					hooks.contact.received->body.len);
 		dst_uri_buf[4+hooks.contact.received->body.len] = '\0';
 		p = dst_uri_buf + 4;
@@ -433,7 +433,7 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 							LM_ERR("unknown proto in received param\n");
 							goto done;
 						}
-						strncpy(p, "transport=", 10);
+						memcpy(p, "transport=", 10);
 						p += 10;
 						memcpy(p, sproto.s, sproto.len);
 						p += sproto.len;
