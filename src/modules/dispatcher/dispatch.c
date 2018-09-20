@@ -461,6 +461,8 @@ err:
 	if(dp != NULL) {
 		if(dp->uri.s != NULL)
 			shm_free(dp->uri.s);
+		if(dp->attrs.body.s != NULL)
+			shm_free(dp->attrs.body.s);
 		shm_free(dp);
 	}
 
@@ -517,6 +519,8 @@ err:
 	if(dp != NULL) {
 		if(dp->uri.s != NULL)
 			shm_free(dp->uri.s);
+		if(dp->attrs.body.s != NULL)
+			shm_free(dp->attrs.body.s);
 		shm_free(dp);
 	}
 
@@ -3305,6 +3309,10 @@ void ds_avl_destroy(ds_set_t **node_ptr)
 		if(dest->uri.s != NULL) {
 			shm_free(dest->uri.s);
 			dest->uri.s = NULL;
+		}
+		if (dest->attrs.body.s != NULL) {
+			shm_free(dest->attrs.body.s);
+			dest->attrs.body.s = NULL;
 		}
 	}
 	if(node->dlist != NULL)
