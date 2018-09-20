@@ -827,7 +827,7 @@ int select_uri_hostport(str* res, select_t* s, struct sip_msg* msg)
 {
 	char* p;
 	int size;
-	
+
 	if (select_uri_p == NULL) {
 		if (parse_uri(res->s, res->len, &uri)<0)
 			return -1;
@@ -836,27 +836,27 @@ int select_uri_hostport(str* res, select_t* s, struct sip_msg* msg)
 
 	if (!select_uri_p->host.len)
 		return -1;
-	
+
 	if (select_uri_p->port.len) {
 		res->s=select_uri_p->host.s;
 		res->len=select_uri_p->host.len+select_uri_p->port.len+1;
 		return 0;
 	}
-	
+
 	size=select_uri_p->host.len+5;
 	if (!(p = get_static_buffer(size)))
 		return -1;
-			
-	strncpy(p, select_uri_p->host.s, select_uri_p->host.len);
+
+	memcpy(p, select_uri_p->host.s, select_uri_p->host.len);
 	switch (select_uri_p->type) {
 		case SIPS_URI_T:
 		case TELS_URI_T:
-			strncpy(p+select_uri_p->host.len, ":5061", 5); 
+			memcpy(p+select_uri_p->host.len, ":5061", 5);
 			break;
 		case SIP_URI_T:
 		case TEL_URI_T:
 		case URN_URI_T:
-			strncpy(p+select_uri_p->host.len, ":5060", 5);
+			memcpy(p+select_uri_p->host.len, ":5060", 5);
 			break;
 		case ERROR_URI_T:
 			return -1;
