@@ -1216,6 +1216,7 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 	if(ctx->jreq->root == NULL)
 	{
 		LM_ERR("invalid json doc [[%s]]\n", ctx->jreq->buf.s);
+		srjson_DeleteDoc(ctx->jreq);
 		return NONSIP_MSG_ERROR;
 	}
 	ctx->transport = JSONRPC_TRANS_HTTP;
@@ -1261,6 +1262,7 @@ send_reply:
 	if (!ctx->reply_sent && !(ctx->flags&JSONRPC_DELAYED_REPLY_F)) {
 		ret = jsonrpc_send(ctx);
 	}
+	srjson_DeleteDoc(ctx->jreq);
 	jsonrpc_clean_context(ctx);
 	if (ret < 0) return -1;
 	return 1;
