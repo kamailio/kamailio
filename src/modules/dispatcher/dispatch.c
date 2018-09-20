@@ -330,8 +330,8 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs)
 	/* check uri */
 	if(parse_uri(uri.s, uri.len, &puri) != 0) {
 		if(iuri.len>4 && strncmp(iuri.s, "sip:", 4)!=0 && iuri.len<500) {
-			strncpy(ub, "sip:", 4);
-			strncpy(ub+4, iuri.s, iuri.len);
+			memcpy(ub, "sip:", 4);
+			memcpy(ub+4, iuri.s, iuri.len);
 			ub[iuri.len+4] = '\0';
 			uri.s = ub;
 			uri.len = iuri.len+4;
