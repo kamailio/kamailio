@@ -314,13 +314,14 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 	if (unlikely(n<0)) goto error;
 
 	end=*buf+n;
-	if (unlikely(n<((sizeof(struct ip) * raw_ipip ? 2 : 1)+sizeof(struct udphdr)))) {
+	if (unlikely(n<((sizeof(struct ip) * (raw_ipip ? 2 : 1))+sizeof(struct udphdr)))) {
 		n=-3;
 		goto error;
 	}
 
-	if(raw_ipip)
-        	*buf = *buf + sizeof(struct ip);
+	if(raw_ipip) {
+		*buf = *buf + sizeof(struct ip);
+	}
 
 	/* FIXME: if initial buffer is aligned, one could skip the memcpy
 	   and directly cast ip and udphdr pointer to the memory */
