@@ -41,9 +41,9 @@ int janssonmod_get_helper(sip_msg_t* msg, str *path_s, str *src_s, pv_spec_t *ds
 	json = json_loads(src_s->s, JSON_REJECT_DUPLICATES, &parsing_error);
 
 	if(!json) {
-		ERR("failed to parse: %.*s\n", src_s->len, src_s->s);
-		ERR("json error at line %d: %s\n",
-				parsing_error.line, parsing_error.text);
+		ERR("failed to parse json: %.*s\n", src_s->len, src_s->s);
+		ERR("json error at line %d, col %d: %s\n",
+				parsing_error.line, parsing_error.column, parsing_error.text);
 		goto fail;
 	}
 
