@@ -533,31 +533,36 @@ int dp_init_relative_weights(ds_set_t *dset)
 	int k;
 	int t;
 
-	if(dset == NULL || dset->dlist == NULL)
+	if(dset == NULL || dset->dlist == NULL || dset->nr < 2)
 		return -1;
 
+	/* local copy to avoid syncronization problems */
+	int *ds_dests_flags = pkg_malloc(sizeof(int) * dset->nr);
+	int *ds_dests_rweights = pkg_malloc(sizeof(int) * dset->nr);
+
+	/* needed to sync the rwlist access */
 	lock_get(&dset->lock);
 	int rw_sum = 0;
-	/* find the sum of relative weights*/
+	/* find the sum of relative weights */
 	for(j = 0; j < dset->nr; j++) {
-		if(ds_skip_dst(dset->dlist[j].flags))
+		ds_dests_flags[j] = dset->dlist[j].flags;
+		ds_dests_rweights[j] = dset->dlist[j].attrs.rweight;
+		if(ds_skip_dst(ds_dests_flags[j]))
 			continue;
-		rw_sum += dset->dlist[j].attrs.rweight;
+		rw_sum += ds_dests_rweights[j];
 	}
 
-	if(rw_sum == 0) {
-		lock_release(&dset->lock);
-		return 0;
-	}
+	if(rw_sum == 0)
+		goto ret;
 
 	/* fill the array based on the relative weight of each destination */
 	t = 0;
 	for(j = 0; j < dset->nr; j++) {
-		if(ds_skip_dst(dset->dlist[j].flags))
+		if(ds_skip_dst(ds_dests_flags[j]))
 			continue;
 
 		int current_slice =
-				dset->dlist[j].attrs.rweight * 100 / rw_sum; //truncate here;
+				ds_dests_rweights[j] * 100 / rw_sum; //truncate here;
 		LM_DBG("rw_sum[%d][%d][%d]\n",j, rw_sum, current_slice);
 		for(k = 0; k < current_slice; k++) {
 			dset->rwlist[t] = (unsigned int)j;
@@ -577,7 +582,12 @@ int dp_init_relative_weights(ds_set_t *dset)
 	 * sending first 20 calls to it, but ensure that within a 100 calls,
 	 * 20 go to first address */
 	shuffle_uint100array(dset->rwlist);
+	goto ret;
+
+ret:
 	lock_release(&dset->lock);
+	pkg_free(ds_dests_flags);
+	pkg_free(ds_dests_rweights);
 	return 0;
 }
 
