@@ -2859,7 +2859,7 @@ char* via_builder( unsigned int *len,
 	return line_buf;
 }
 
-/* creates a via header honoring the protocol of the incomming socket
+/* creates a via header honoring the protocol of the incoming socket
  * msg is an optional parameter */
 char* create_via_hf( unsigned int *len,
 	struct sip_msg *msg,
