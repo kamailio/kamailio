@@ -146,6 +146,9 @@ void free_cell_helper(
 	release_cell_lock(dead_cell); /* does nothing */
 
 	dead_cell->fcount++;
+	if(dead_cell->fcount!=1) {
+		LM_WARN("unexpected fcount value: %d\n", dead_cell->fcount);
+	}
 
 	if(unlikely(has_tran_tmcbs(dead_cell, TMCB_DESTROY)))
 		run_trans_callbacks(TMCB_DESTROY, dead_cell, 0, 0, 0);
