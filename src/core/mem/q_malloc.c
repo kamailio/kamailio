@@ -486,11 +486,15 @@ void qm_free(void* qmp, void* p)
 
 #ifdef DBG_QM_MALLOC
 	if (p>(void*)qm->last_frag_end || p<(void*)qm->first_frag){
-		LM_CRIT("BUG: bad pointer %p (out of memory block!)"
+		if(likely(cfg_get(core, core_cfg, mem_safety)==0))  {
+			LM_CRIT("BUG: bad pointer %p (out of memory block!)"
 				" called from %s: %s(%d) - aborting\n", p, file, func, line);
-		if(likely(cfg_get(core, core_cfg, mem_safety)==0))
 			abort();
-		else return;
+		} else {
+			LM_CRIT("BUG: bad pointer %p (out of memory block!)"
+				" called from %s: %s(%d) - ignoring\n", p, file, func, line);
+			return;
+		}
 	}
 #endif
 
@@ -499,12 +503,17 @@ void qm_free(void* qmp, void* p)
 #ifdef DBG_QM_MALLOC
 	qm_debug_frag(qm, f, file, line);
 	if (f->u.is_free){
-		LM_CRIT("BUG: freeing already freed pointer (%p),"
+		if(likely(cfg_get(core, core_cfg, mem_safety)==0)) {
+			LM_CRIT("BUG: freeing already freed pointer (%p),"
 				" called from %s: %s(%d), first free %s: %s(%ld) - aborting\n",
 				p, file, func, line, f->file, f->func, f->line);
-		if(likely(cfg_get(core, core_cfg, mem_safety)==0))
 			abort();
-		else return;
+		} else {
+			LM_CRIT("BUG: freeing already freed pointer (%p),"
+				" called from %s: %s(%d), first free %s: %s(%ld) - ignoring\n",
+				p, file, func, line, f->file, f->func, f->line);
+			return;
+		}
 	}
 	MDBG("freeing frag. %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
