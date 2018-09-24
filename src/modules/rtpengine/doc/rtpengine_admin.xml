@@ -2592,7 +2592,17 @@ stop_recording();
 		&rtp; proxy, but they won't be forwarded to the receiving peer.
 		</para>
 		<para>
-		The call-id flag can be used to stop recording for a different call.
+		The call-id flag can be used to block DTMF for a different call.
+		</para>
+		<para>
+		Without any flags given, DTMF events will be blocked for the entire call.
+		It's possible to block DTMF directionally only for individual participants.
+		If the <quote>directional</quote> flag is given, DTMF events will be
+		blocked for the UA with the currently matching <quote>From</quote> tag.
+		Events can be blocked for a different UA either by specifying an alternative
+		<quote>from-tag=...</quote>, or by matching UAs against the media address
+		they advertised in the &sdp; using the <quote>address=...</quote> flag
+		(which can contain either an IPv4 or IPv6 address).
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
@@ -2602,6 +2612,8 @@ stop_recording();
 		<programlisting format="linespecific">
 ...
 block_dtmf();
+block_dtmf("directional");
+block_dtmf("address=192.168.42.42");
 ...
 		</programlisting>
 		</example>
@@ -2613,12 +2625,65 @@ block_dtmf();
 		</title>
 		<para>
 		Reverses the effects of a previously issued <function>block_dtmf</function> call.
+		See above for a description of which flags can be used.
+		</para>
+		<para>
+		If DTMF events were previously blocked for individual UAs, then unblocking DTMF
+		events for the entire call (i.e. no flags given) will not remove these blocks.
+		The flag <quote>all</quote> can be used to achieve this.
 		</para>
 		<example>
 		<title><function>unblock_dtmf</function> usage</title>
 		<programlisting format="linespecific">
 ...
 unblock_dtmf();
+unblock_dtmf("all");
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.f.block_media">
+		<title>
+		<function moreinfo="none">block_media([flags])</function>
+		</title>
+		<para>
+		Analogous to <quote>block_dtmf</quote>, but blocks media &rtp; packets
+		instead of DTMF events. When media is blocked, DTMF events still pass
+		through the &rtp; proxy.
+		</para>
+		<para>
+		See <quote>block_dtmf</quote> for a description of the flags that can be used.
+		</para>
+		<example>
+		<title><function>block_media</function> usage</title>
+		<programlisting format="linespecific">
+...
+block_media();
+block_media("directional");
+block_media("address=192.168.42.42");
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.f.unblock_media">
+		<title>
+		<function moreinfo="none">unblock_media([flags])</function>
+		</title>
+		<para>
+		Analogous to <quote>unblock_dtmf</quote>, but applies to media &rtp; packets instead
+		of DTMF events.
+		</para>
+		<para>
+		See <quote>unblock_dtmf</quote> for a description of the flags that can be used.
+		</para>
+		<example>
+		<title><function>unblock_media</function> usage</title>
+		<programlisting format="linespecific">
+...
+unblock_media();
+unblock_media("all");
 ...
 		</programlisting>
 		</example>

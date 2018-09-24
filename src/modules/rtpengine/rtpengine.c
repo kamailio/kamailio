@@ -114,7 +114,7 @@ enum {
 #define	CPORT					"22222"
 
 struct ng_flags_parse {
-	int via, to, packetize, transport;
+	int via, to, packetize, transport, directional;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux, *sdes,
 		       *codec, *codec_strip, *codec_offer, *codec_transcode, *codec_mask;
 	str call_id, from_tag, to_tag;
@@ -130,6 +130,8 @@ static const char *command_strings[] = {
 	[OP_STOP_RECORDING]	= "stop recording",
 	[OP_BLOCK_DTMF]		= "block DTMF",
 	[OP_UNBLOCK_DTMF]	= "unblock DTMF",
+	[OP_BLOCK_MEDIA]	= "block media",
+	[OP_UNBLOCK_MEDIA]	= "unblock media",
 };
 
 struct minmax_mos_stats {
@@ -173,6 +175,8 @@ static int start_recording_f(struct sip_msg *, char *, char *);
 static int stop_recording_f(struct sip_msg *, char *, char *);
 static int block_dtmf_f(struct sip_msg *, char *, char *);
 static int unblock_dtmf_f(struct sip_msg *, char *, char *);
+static int block_media_f(struct sip_msg *, char *, char *);
+static int unblock_media_f(struct sip_msg *, char *, char *);
 static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
@@ -304,6 +308,24 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE },
 	{"unblock_dtmf",	(cmd_function)unblock_dtmf_f, 		0,
 		0, 0,
+		ANY_ROUTE},
+	{"block_media",		(cmd_function)block_media_f,	 	0,
+		0, 0,
+		ANY_ROUTE },
+	{"unblock_media",	(cmd_function)unblock_media_f, 		0,
+		0, 0,
+		ANY_ROUTE},
+	{"block_dtmf",		(cmd_function)block_dtmf_f,	 	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE },
+	{"unblock_dtmf",	(cmd_function)unblock_dtmf_f, 		1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"block_media",		(cmd_function)block_media_f,	 	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE },
+	{"unblock_media",	(cmd_function)unblock_media_f, 		1,
+		fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	0,
 		0, 0,
@@ -2076,6 +2098,7 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 					if (!val.s)
 						goto error;
 					ng_flags->from_tag = val;
+					ng_flags->directional = 1;
 				}
 				else
 					goto generic;
@@ -2125,8 +2148,12 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 					if (!ng_flags->packetize)
 						goto error;
 					bencode_dictionary_add_integer(ng_flags->dict, "repacketize", ng_flags->packetize);
-					goto next;
 				}
+				else if (str_eq(&key, "directional"))
+					ng_flags->directional = 1;
+				else
+					goto generic;
+				goto next;
 				break;
 
 			case 12:
@@ -2242,6 +2269,11 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		else
 			bencode_dictionary_add_str(ng_flags.dict, "sdp", &body);
 	}
+	else if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
+			|| op == OP_UNBLOCK_MEDIA)
+	{
+		ng_flags.flags = bencode_list(bencbuf);
+	}
 
 	/*** parse flags & build dictionary ***/
 
@@ -2291,7 +2323,13 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	) );
 	bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
 
-	if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
+	if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
+			|| op == OP_UNBLOCK_MEDIA)
+	{
+		if (ng_flags.directional)
+			bencode_dictionary_add_str(ng_flags.dict, "from-tag", &ng_flags.from_tag);
+	}
+	else if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_DELETE)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_ANSWER))
 	{
@@ -3552,13 +3590,69 @@ static int rtpengine_unblock_dtmf_wrap(struct sip_msg *msg, void *d, int more) {
 static int
 block_dtmf_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_block_dtmf_wrap, NULL, 1);
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_block_dtmf_wrap, flags.s, 1);
 }
 
 static int
 unblock_dtmf_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_unblock_dtmf_wrap, NULL, 1);
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_unblock_dtmf_wrap, flags.s, 1);
+}
+
+static int rtpengine_block_media_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_BLOCK_MEDIA, d);
+}
+
+static int rtpengine_unblock_media_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_UNBLOCK_MEDIA, d);
+}
+
+static int
+block_media_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_block_media_wrap, flags.s, 1);
+}
+
+static int
+unblock_media_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_unblock_media_wrap, flags.s, 1);
 }
 
 static int rtpengine_rtpstat_wrap(struct sip_msg *msg, void *d, int more) {
