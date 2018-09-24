@@ -82,6 +82,29 @@ stat_var* rcv_rpls_486;
 stat_var* rcv_rpls_5xx;
 stat_var* rcv_rpls_6xx;
 
+#define VAR_NAME(method) rcv_rpls_ ## method
+
+#define STAT_NAME(method, group) "rcv_replies_" #group "xx_" #method
+
+#define DECLARE_STAT_VARS(method) stat_var* VAR_NAME(method)[6];
+
+#define DECLARE_STATS(method) \
+      { STAT_NAME(method, 1), 0, &VAR_NAME(method)[0] }, \
+      { STAT_NAME(method, 2), 0, &VAR_NAME(method)[1] }, \
+      { STAT_NAME(method, 3), 0, &VAR_NAME(method)[2] }, \
+      { STAT_NAME(method, 4), 0, &VAR_NAME(method)[3] }, \
+      { STAT_NAME(method, 5), 0, &VAR_NAME(method)[4] }, \
+      { STAT_NAME(method, 6), 0, &VAR_NAME(method)[5] }
+
+DECLARE_STAT_VARS(invite);
+DECLARE_STAT_VARS(cancel);
+DECLARE_STAT_VARS(bye);
+DECLARE_STAT_VARS(reg);
+DECLARE_STAT_VARS(message);
+DECLARE_STAT_VARS(prack);
+DECLARE_STAT_VARS(update);
+DECLARE_STAT_VARS(refer);
+
 /*! exported core statistics */
 stat_export_t core_stats[] = {
 	{"rcv_requests" ,         0,  &rcv_reqs              },
@@ -121,6 +144,14 @@ stat_export_t core_stats[] = {
 	{"bad_URIs_rcvd",         0,  &bad_URIs              },
 	{"unsupported_methods",   0,  &unsupported_methods   },
 	{"bad_msg_hdr",           0,  &bad_msg_hdr           },
+      DECLARE_STATS(invite),
+      DECLARE_STATS(cancel),
+      DECLARE_STATS(bye),
+      DECLARE_STATS(reg),
+      DECLARE_STATS(message),
+      DECLARE_STATS(prack),
+      DECLARE_STATS(update),
+      DECLARE_STATS(refer),
 	{0,0,0}
 };
 
@@ -198,6 +229,28 @@ static int km_cb_req_stats(struct sip_msg *msg,
 		break;
 	}
 	return 1;
+}
+
+static int km_cb_rpl_stats_by_method(struct sip_msg *msg,
+		unsigned int flags, void *param)
+{
+      int method = get_cseq(msg)->method_id;
+      int group = msg->first_line.u.reply.statuscode / 100 - 1;
+
+      if (group >= 1 && group <= 6) {
+            switch(method) {
+                  case METHOD_INVITE: update_stat( VAR_NAME(invite)[group], 1); break;
+                  case METHOD_CANCEL: update_stat( VAR_NAME(cancel)[group], 1); break;
+                  case METHOD_BYE: update_stat( VAR_NAME(bye)[group], 1); break;
+                  case METHOD_REGISTER: update_stat( VAR_NAME(reg)[group], 1); break;
+                  case METHOD_MESSAGE: update_stat( VAR_NAME(message)[group], 1); break;
+                  case METHOD_PRACK: update_stat( VAR_NAME(prack)[group], 1); break;
+                  case METHOD_UPDATE: update_stat( VAR_NAME(update)[group], 1); break;
+                  case METHOD_REFER: update_stat( VAR_NAME(refer)[group], 1); break;
+             }
+      }
+
+      return 1;
 }
 
 static int km_cb_rpl_stats(struct sip_msg *msg,
@@ -318,6 +371,10 @@ int register_core_stats(void)
 		return -1;
 	}
 	if (register_script_cb(km_cb_rpl_stats, PRE_SCRIPT_CB|ONREPLY_CB, 0)<0 ) {
+		LM_ERR("failed to register PRE request callback\n");
+		return -1;
+	}
+	if (register_script_cb(km_cb_rpl_stats_by_method, PRE_SCRIPT_CB|ONREPLY_CB, 0)<0 ) {
 		LM_ERR("failed to register PRE request callback\n");
 		return -1;
 	}
