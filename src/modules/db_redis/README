@@ -231,9 +231,9 @@ HMSET address:entry::4 id 4 grp 2 ip_addr "127.0.0.4" mask 32 port 0 tag "test"
 ...
 
    Note that is some cases, the optional values in database tables can be
-   ommitted. For 'address' table, the 'tag' value may be ommitted. To
-   avoid any issues, set unused fields to their default values as defined
-   by database schema. When definition allows 'NULL', that field can be
+   omitted. For 'address' table, the 'tag' value may be omitted. To avoid
+   any issues, set unused fields to their default values as defined by
+   database schema. When definition allows 'NULL', that field can be
    unset.
 
 7. Module specific considerations

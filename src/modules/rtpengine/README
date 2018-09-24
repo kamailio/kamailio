@@ -143,6 +143,8 @@ Richard Fuchs
               5.8. stop_recording([flags])
               5.9. block_dtmf([flags])
               5.10. unblock_dtmf([flags])
+              5.11. block_media([flags])
+              5.12. unblock_media([flags])
 
         6. Exported Pseudo Variables
 
@@ -241,12 +243,14 @@ Richard Fuchs
    1.79. stop_recording usage
    1.80. block_dtmf usage
    1.81. unblock_dtmf usage
-   1.82. $rtpstat Usage
-   1.83. rtpengine.reload usage
-   1.84. rtpengine.enable usage
-   1.85. rtpengine.show usage
-   1.86. rtpengine.ping usage
-   1.87. rtpengine.get_hash_total usage
+   1.82. block_media usage
+   1.83. unblock_media usage
+   1.84. $rtpstat Usage
+   1.85. rtpengine.reload usage
+   1.86. rtpengine.enable usage
+   1.87. rtpengine.show usage
+   1.88. rtpengine.ping usage
+   1.89. rtpengine.get_hash_total usage
 
 Chapter 1. Admin Guide
 
@@ -344,6 +348,8 @@ Chapter 1. Admin Guide
         5.8. stop_recording([flags])
         5.9. block_dtmf([flags])
         5.10. unblock_dtmf([flags])
+        5.11. block_media([flags])
+        5.12. unblock_media([flags])
 
    6. Exported Pseudo Variables
 
@@ -1772,6 +1778,8 @@ modparam("rtpengine", "control_cmd_tos", "144")
    5.8. stop_recording([flags])
    5.9. block_dtmf([flags])
    5.10. unblock_dtmf([flags])
+   5.11. block_media([flags])
+   5.12. unblock_media([flags])
 
 5.1.  set_rtpengine_set(setid[, setid])
 
@@ -2182,22 +2190,67 @@ stop_recording();
    packets (RFC 4733). DTMF events will still be processed by the RTP
    proxy, but they won't be forwarded to the receiving peer.
 
-   The call-id flag can be used to stop recording for a different call.
+   The call-id flag can be used to block DTMF for a different call.
+
+   Without any flags given, DTMF events will be blocked for the entire
+   call. It's possible to block DTMF directionally only for individual
+   participants. If the “directional” flag is given, DTMF events will be
+   blocked for the UA with the currently matching “From” tag. Events can
+   be blocked for a different UA either by specifying an alternative
+   “from-tag=...”, or by matching UAs against the media address they
+   advertised in the SDP using the “address=...” flag (which can contain
+   either an IPv4 or IPv6 address).
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
    Example 1.80. block_dtmf usage
 ...
 block_dtmf();
+block_dtmf("directional");
+block_dtmf("address=192.168.42.42");
 ...
 
 5.10.  unblock_dtmf([flags])
 
-   Reverses the effects of a previously issued block_dtmf call.
+   Reverses the effects of a previously issued block_dtmf call. See above
+   for a description of which flags can be used.
+
+   If DTMF events were previously blocked for individual UAs, then
+   unblocking DTMF events for the entire call (i.e. no flags given) will
+   not remove these blocks. The flag “all” can be used to achieve this.
 
    Example 1.81. unblock_dtmf usage
 ...
 unblock_dtmf();
+unblock_dtmf("all");
+...
+
+5.11.  block_media([flags])
+
+   Analogous to “block_dtmf”, but blocks media RTP packets instead of DTMF
+   events. When media is blocked, DTMF events still pass through the RTP
+   proxy.
+
+   See “block_dtmf” for a description of the flags that can be used.
+
+   Example 1.82. block_media usage
+...
+block_media();
+block_media("directional");
+block_media("address=192.168.42.42");
+...
+
+5.12.  unblock_media([flags])
+
+   Analogous to “unblock_dtmf”, but applies to media RTP packets instead
+   of DTMF events.
+
+   See “unblock_dtmf” for a description of the flags that can be used.
+
+   Example 1.83. unblock_media usage
+...
+unblock_media();
+unblock_media("all");
 ...
 
 6. Exported Pseudo Variables
@@ -2211,7 +2264,7 @@ unblock_dtmf();
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.82. $rtpstat Usage
+   Example 1.84. $rtpstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -2234,7 +2287,7 @@ unblock_dtmf();
    is enabled, the sessions are still allowed to finish for the hidden old
    nodes.
 
-   Example 1.83.  rtpengine.reload usage
+   Example 1.85.  rtpengine.reload usage
 ...
 $ kamcmd rtpengine.reload
 ...
@@ -2265,7 +2318,7 @@ $ kamcmd rtpengine.reload
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.84.  rtpengine.enable usage
+   Example 1.86.  rtpengine.enable usage
 ...
 $ kamcmd rtpengine.enable udp:192.168.2.133:8081 0
 $ kamcmd rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
@@ -2288,7 +2341,7 @@ $ kamcmd rtpengine.enable all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.85.  rtpengine.show usage
+   Example 1.87.  rtpengine.show usage
 ...
 $ kamcmd rtpengine.show udp:192.168.2.133:8081
 $ kamcmd rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2308,7 +2361,7 @@ $ kamcmd rtpengine.show all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.86.  rtpengine.ping usage
+   Example 1.88.  rtpengine.ping usage
 ...
 $ kamcmd rtpengine.ping udp:192.168.2.133:8081
 $ kamcmd rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2320,7 +2373,7 @@ $ kamcmd rtpengine.ping all
    Print the total number of hash entries in the hash table at a given
    moment.
 
-   Example 1.87.  rtpengine.get_hash_total usage
+   Example 1.89.  rtpengine.get_hash_total usage
 ...
 $ kamcmd rtpengine.get_hash_total
 ...
