@@ -405,7 +405,7 @@ void db_redis_consume_replies(km_redis_con_t *con) {
 }
 
 const char *db_redis_get_error(km_redis_con_t *con) {
-    if (con && con->con && con->con->errstr) {
+    if (con && con->con && con->con->errstr[0]) {
         return con->con->errstr;
     } else {
         return "<broken redis connection>";
