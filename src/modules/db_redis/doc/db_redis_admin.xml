@@ -68,6 +68,15 @@ username/string,domain/string,contact/string,received/string,path/string,expires
 			correlate start and stop records faster).
 		</para>
 		<para>
+			The key is always prefixed with 'tablename:entry::'. For example the record in
+			'subscriber' table for user 'alice@sip.com' has the key:
+			'subscriber:entry::alice:sip.com'. If all the records are just loaded at
+			startup (or all reloaded at runtime), the key can just be made unique using whatever
+			values added after 'tablename:entry::' prefix. For example, keys for 'address' table
+			records can be: 'address:entry::1', address:entry::2', address:entry::3', ... No
+			'keys' modparam of 'db_redis' for 'address' table needs to be defined.
+		</para>
+		<para>
 			The mappings can be freely defined in the "keys" module parameter, which is
 			composed of a semi-colon separated list of definitions in the format
 			&lt;table-name&gt;=&lt;entry&gt;:&lt;column-name&gt;[&amp;&lt;map-name&gt;:&lt;column-name&gt;,&lt;column-name&gt;...].
@@ -165,7 +174,7 @@ modparam("db_redis", "keys", "version=entry:table_name;location=entry:ruid&amp;u
 		<title>Usage</title>
 		<para>
 			Load the module and set the "db_url" modparam for specific modules to:
-			redis://[username]@host:port/database. Username is optional.
+			'redis://[username]@host:port/database'. Username is optional.
 			The database portion must be a valid Redis database number.
 		</para>
 		<example>
@@ -177,17 +186,44 @@ loadmodule "db_redis.so"
 #!define DBURL_USRLOC "redis://127.0.0.1:6379/5"
 #!define DBURL_ACC    "redis://127.0.0.1:6379/6"
 #!define DBURL_AUTH   "redis://127.0.0.1:6379/7"
+#!define DBURL_PERM   "redis://127.0.0.1:6379/8"
 ...
 modparam("db_redis", "schema_path", "/usr/share/kamailio/db_redis/kamailio")
 modparam("db_redis", "keys", "location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive")
 modparam("db_redis", "keys", "acc=entry:callid,time_hires&amp;cid:callid")
 modparam("db_redis", "keys", "subscriber=entry:username,domain")
+...
 modparam("usrloc", "db_url", DBURL_USRLOC)
+...
 modparam("acc_db", "db_url", DBURL_ACC)
+...
 modparam("auth_db", "db_url", DBURL_AUTH)
+...
+modparam("permissions", "db_url", DBURL_PERM)
 ...
 			</programlisting>
 		</example>
+		<para>
+		Samples adding records for address table using 'redis-cli':
+		</para>
+		<example>
+			<title>Usage</title>
+			<programlisting format="linespecific">
+...
+SELECT 8
+HMSET address:entry::1 id 1 grp 1 ip_addr "127.0.0.1" mask 32 port 0
+HMSET address:entry::2 id 2 grp 1 ip_addr "127.0.0.2" mask 32 port 0
+HMSET address:entry::3 id 3 grp 2 ip_addr "127.0.0.3" mask 32 port 0
+HMSET address:entry::4 id 4 grp 2 ip_addr "127.0.0.4" mask 32 port 0 tag "test"
+...
+			</programlisting>
+		</example>
+		<para>
+		Note that is some cases, the optional values in database tables can be
+		ommitted. For 'address' table, the 'tag' value may be ommitted. To avoid
+		any issues, set unused fields to their default values as defined by database
+		schema. When definition allows 'NULL', that field can be unset.
+		</para>
 	</section>
 
 	<section>
