@@ -404,7 +404,7 @@ modparam("http_client", "tlsversion", 6)
 				<programlisting format="linespecific">
 ...
 # Use the best of BASIC and Digest authentication.
-modparam("http_client", "authmetod", 3)
+modparam("http_client", "authmethod", 3)
 ...
 				</programlisting>
 			</example>
