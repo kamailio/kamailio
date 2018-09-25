@@ -186,7 +186,7 @@ static param_export_t params[] = {
 	{"maxdatasize", PARAM_INT,  &default_maxdatasize },
 	{"config_file", PARAM_STR,  &http_client_config_file },
 	{"httpcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
-	{"authmetod", PARAM_INT, &default_authmethod },
+	{"authmethod", PARAM_INT, &default_authmethod },
 	{"keep_connections", PARAM_INT, &default_keep_connections },
 	{0, 0, 0}
 };
