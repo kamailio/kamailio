@@ -362,6 +362,10 @@ modparam("ndb_redis", "allow_dynamic_nodes", 1)
 			the above keys, after a value[n] key. The first value[n] references the element in the
 			first array, while the next key references an element of the referenced array.
 		</para>
+		<para>
+			The result type can be compared with $redisd(key) variable to test
+			its value. The key can be: rpl_str, rpl_arr, rpl_int, rpl_err, rpl_sts, rpl_nil.
+		</para>
 		<example>
 		<title><function>redis_cmd</function> usage</title>
 		<programlisting format="linespecific">
@@ -413,23 +417,23 @@ if (redis_cmd("srvN", "EXEC", "r")) {
 		<function moreinfo="none">redis_pipe_cmd(srvname, command, ..., replyid)</function>
 		</title>
 		<para>
-			Add a command to be sent to REDIS server identified by srvname. 
-			All the commands will be stored in a buffer until a call to 
-			redis_execute is made. When calling redis_execute the stored commands 
+			Add a command to be sent to REDIS server identified by srvname.
+			All the commands will be stored in a buffer until a call to
+			redis_execute is made. When calling redis_execute the stored commands
 			are sent using the pipelining functionality of redis. The replies
-			will be stored in local containers identified by the replyid of each 
+			will be stored in local containers identified by the replyid of each
 			added command. All the parameters can be strings with pseudo-variables
 			that are evaluated at runtime.
 		</para>
 		<para>
-			This command is similar in syntax with redis_cmd, the only difference 
+			This command is similar in syntax with redis_cmd, the only difference
 			is that it does not send the command but instead appends it to a buffer.
 		</para>
 		<para>
 			See examples from redis_execute.
 		</para>
 		<para>
-			Note: Pipelining feature is incompatible with the clustering feature. 
+			Note: Pipelining feature is incompatible with the clustering feature.
 			If cluster parameter is set to 1, this function will log an error and do nothing.
 		</para>
 	</section>
@@ -438,20 +442,20 @@ if (redis_cmd("srvN", "EXEC", "r")) {
 		<function moreinfo="none">redis_execute(srvname)</function>
 	</title>
 	<para>
-		Sends commands to REDIS server identified by srvname. Commands are added 
+		Sends commands to REDIS server identified by srvname. Commands are added
 		with redis_pipe_cmd function, and will be stored for an existing REDIS server.
 		When this function is called all the commands will be sent in a single message
 		to the REDIS server.
 
 	</para>
 	<para>
-		When using redis_cmd together with redis_pipe_cmd it is recommended that a call to 
+		When using redis_cmd together with redis_pipe_cmd it is recommended that a call to
 		redis_execute is made before calling redis_cmd in case there are pipelined commands,
 		otherwise when calling redis_cmd, if pipelined messages exist, a call to redis_execute
-		is made automatically and a warning message is logged. 
+		is made automatically and a warning message is logged.
 	</para>
 	<para>
-		Note: Pipelining feature is incompatible with the clustering feature. 
+		Note: Pipelining feature is incompatible with the clustering feature.
 		If cluster parameter is set to 1, this function will log an error and do nothing.
 	</para>
 	<example>
@@ -475,7 +479,7 @@ Using both redis_cmd and redis_pipe_cmd:
 
 	redis_pipe_cmd("srvA", "SET ruri $ru", "r2");
 
-	redis_execute("srvA"); //send commands to srvA and wait for reply. Store replies in r1 and r2 
+	redis_execute("srvA"); //send commands to srvA and wait for reply. Store replies in r1 and r2
 
 	redis_cmd("srvA", "GET foo", "r3"); //send command, wait for reply and store it in r3
 
