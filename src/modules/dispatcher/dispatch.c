@@ -532,17 +532,32 @@ int dp_init_relative_weights(ds_set_t *dset)
 	int j;
 	int k;
 	int t;
+	int *ds_dests_flags = NULL;
+	int *ds_dests_rweights = NULL;
+	int current_slice;
+	int rw_sum;
+	unsigned int last_insert;
 
 	if(dset == NULL || dset->dlist == NULL || dset->nr < 2)
 		return -1;
 
 	/* local copy to avoid syncronization problems */
-	int *ds_dests_flags = pkg_malloc(sizeof(int) * dset->nr);
-	int *ds_dests_rweights = pkg_malloc(sizeof(int) * dset->nr);
+	ds_dests_flags = pkg_malloc(sizeof(int) * dset->nr);
+	if(ds_dests_flags == NULL) {
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+	ds_dests_rweights = pkg_malloc(sizeof(int) * dset->nr);
+	if(ds_dests_rweights == NULL) {
+		LM_ERR("no more pkg\n");
+		pkg_free(ds_dests_flags);
+		return -1;
+	}
+
 
 	/* needed to sync the rwlist access */
 	lock_get(&dset->lock);
-	int rw_sum = 0;
+	rw_sum = 0;
 	/* find the sum of relative weights */
 	for(j = 0; j < dset->nr; j++) {
 		ds_dests_flags[j] = dset->dlist[j].flags;
@@ -561,8 +576,8 @@ int dp_init_relative_weights(ds_set_t *dset)
 		if(ds_skip_dst(ds_dests_flags[j]))
 			continue;
 
-		int current_slice =
-				ds_dests_rweights[j] * 100 / rw_sum; //truncate here;
+		current_slice =
+				ds_dests_rweights[j] * 100 / rw_sum; /* truncate here */
 		LM_DBG("rw_sum[%d][%d][%d]\n",j, rw_sum, current_slice);
 		for(k = 0; k < current_slice; k++) {
 			dset->rwlist[t] = (unsigned int)j;
@@ -572,8 +587,7 @@ int dp_init_relative_weights(ds_set_t *dset)
 
 	/* if the array was not completely filled (i.e., the sum of rweights is
 	 * less than 100 due to truncated), then use last address to fill the rest */
-	unsigned int last_insert =
-			t > 0 ? dset->rwlist[t - 1] : (unsigned int)(dset->nr - 1);
+	last_insert = t > 0 ? dset->rwlist[t - 1] : (unsigned int)(dset->nr - 1);
 	for(j = t; j < 100; j++)
 		dset->rwlist[j] = last_insert;
 
