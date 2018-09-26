@@ -24,6 +24,8 @@
 #include "redis_connection.h"
 #include "redis_table.h"
 
+extern int db_redis_verbosity;
+
 static void print_query(redis_key_t *query) {
     redis_key_t *k;
 
@@ -217,7 +219,7 @@ km_redis_con_t* db_redis_new_connection(const struct db_id* id) {
         goto err;
     }
 
-    db_redis_print_all_tables(ptr);
+    if(db_redis_verbosity > 0) db_redis_print_all_tables(ptr);
 
     ptr->ref = 1;
     ptr->append_counter = 0;

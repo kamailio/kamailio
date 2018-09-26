@@ -33,6 +33,7 @@ MODULE_VERSION
 
 str redis_keys = str_init("");
 str redis_schema_path = str_init("/usr/share/kamailio/db_redis/kamailio");
+int db_redis_verbosity = 1;
 
 static int db_redis_bind_api(db_func_t *dbb);
 static int mod_init(void);
@@ -51,6 +52,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
     {"keys",        PARAM_STRING|USE_FUNC_PARAM, (void*)keys_param},
     {"schema_path", PARAM_STR, &redis_schema_path },
+	{"verbosity",	PARAM_INT, &db_redis_verbosity },
     {0, 0, 0}
 };
 
