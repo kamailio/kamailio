@@ -23,7 +23,11 @@
 #ifndef _REDIS_CONNECTION_H_
 #define _REDIS_CONNECTION_H_
 
+#ifdef WITH_HIREDIS_PATH
+#include <hiredis/hiredis.h>
+#else
 #include <hiredis.h>
+#endif
 
 #include "db_redis_mod.h"
 
