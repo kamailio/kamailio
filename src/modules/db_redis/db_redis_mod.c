@@ -32,7 +32,7 @@
 MODULE_VERSION
 
 str redis_keys = str_init("");
-str redis_schema_path = str_init("/usr/share/kamailio/db_redis/kamailio");
+str redis_schema_path = str_init(SHARE_DIR "db_redis/kamailio");
 int db_redis_verbosity = 1;
 
 static int db_redis_bind_api(db_func_t *dbb);
