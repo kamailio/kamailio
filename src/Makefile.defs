@@ -495,6 +495,7 @@ bin_target = $(prefix)/$(bin_dir)
 #modules_target = $(prefix)/$(modules_dir)
 lib_target = $(prefix)/$(lib_dir)
 run_target = $(run_prefix)/$(run_dir)
+share_target = $(share_prefix)/$(share_dir)
 doc_target = $(prefix)/$(doc_dir)
 data_target = $(prefix)/$(data_dir)
 
@@ -655,6 +656,7 @@ C_DEFS= $(extra_defs) \
 	 -D__CPU_$(ARCH) $(os_defs) \
 	 -DVERSIONVAL=$(VERSIONVAL) \
 	 -DCFG_DIR='"$(cfg_target)"'\
+	 -DSHARE_DIR='"$(share_target)"'\
 	 -DRUN_DIR='"$(run_target)"'
 
 ifneq ($(MEMPKG), sys)
