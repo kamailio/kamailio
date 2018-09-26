@@ -11,7 +11,7 @@
 
 <chapter>
 	<title>&adminguide;</title>
-	<section>
+	<section id="db_redis.sec.overview">
 		<title>Overview</title>
 		<para>
 			This module provides a DB APIv1 connector for the Redis server (<ulink url="https://www.redis.io">https://www.redis.io</ulink>).
@@ -26,8 +26,8 @@
 		</para>
 		<para>
 			Since Redis does not provide a schema by itself, db_redis ships with
-			schema files. The path to these has to be defined using the module parameter 
-			"schema_path". The schema definition is defined in one file per table, such that 
+			schema files. The path to these has to be defined using the module parameter
+			"schema_path". The schema definition is defined in one file per table, such that
 			the file name corresponds to the table name, and each file is composed of a
 			comma-separated list of column definitions in the format
 			&lt;column-name&gt;/&lt;type&gt;[,&lt;column-name&gt;/&lt;type&gt; ...]
@@ -42,15 +42,15 @@ username/string,domain/string,contact/string,received/string,path/string,expires
 		</para>
 		<para>
 			Because Redis is a key-value store, it requires unique keys. This means
-			that tables and rows from a relational SQL database, e.g. from MySQL, can 
+			that tables and rows from a relational SQL database, e.g. from MySQL, can
 			not be ported one a 1:1 basis to Redis.
 		</para>
 		<para>
 			For instance, usrloc relies on a key of "username@domain", but in order to store
-			multiple contacts per AoR, it cannot be constrained to uniqueness. To 
+			multiple contacts per AoR, it cannot be constrained to uniqueness. To
 			work around this, db_redis supports mapping sets in such a way as to, in the case of
-			the usrloc module, have a set with a key of "username@domain" and its entries being 
-			unique keys per contact based on the ruid of a contact. Thus, one contact in usrloc 
+			the usrloc module, have a set with a key of "username@domain" and its entries being
+			unique keys per contact based on the ruid of a contact. Thus, one contact in usrloc
 			consists of a unique key "location:entry::example-ruid-1" being a hash with the columns like
 			username, domain, contact, path etc. In addition, this unique key is stored
 			in a set "location:usrdom::exampleuser:exampledomain.org". When usrloc does
@@ -89,7 +89,7 @@ location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive;acc
 			</programlisting>
 		</para>
 		<para>
-			For readability purposes, definitions of keys per table can span multiple Kamailio 
+			For readability purposes, definitions of keys per table can span multiple Kamailio
 			config lines by providing multiple "keys" modparams.
 		</para>
 	</section>
@@ -102,7 +102,7 @@ location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive;acc
 					This module has implemented equivalent underlying Redis operations for INSERT,
 					UPDATE, DELETE and SELECT. The ORDER BY clause for SELECT is not implemented.
 					Raw querying is not implemented inside this module; for sending literal commands
-					to the Redis server, use ndb_redis. 
+					to the Redis server, use ndb_redis.
 				</para>
 			</listitem>
 		</itemizedlist>
@@ -123,54 +123,84 @@ location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive;acc
 				</itemizedlist>
 			</para>
 		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed before running
+				&kamailio; with this module loaded:
+				<itemizedlist>
+					<listitem>
+						<para>
+						<emphasis>hiredis</emphasis> - available at
+						<ulink url="https://github.com/redis/hiredis">https://github.com/redis/hiredis</ulink>
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
 	</section>
 
 	<section>
 		<title>Parameters</title>
-		<section>
+		<section id="db_redis.p.schema_path">
 			<title><varname>schema_path</varname> (string)</title>
 			<para>
-				The path to the table schemas (default /usr/share/kamailio/db_redis).
+				The path to the table schemas.
+			</para>
+			<para>
+				Default value: "/usr/share/kamailio/db_redis".
 			</para>
 			<example>
 				<title>Setting schema_path module parameter</title>
 				<programlisting format="linespecific">
+...
 modparam("db_redis", "schema_path", "/usr/local/share/kamailio/db_redis/kamailio")
+...
 				</programlisting>
 			</example>
 		</section>
 
-		<section>
+		<section id="db_redis.p.keys">
 			<title><varname>keys</varname> (string)</title>
 			<para>
 				The entry and mapping keys of tables.
 			</para>
+			<para>
+				Default value: "" (empty).
+			</para>
 			<example>
 				<title>Setting keys module parameter</title>
 				<programlisting format="linespecific">
+...
 modparam("db_redis", "keys", "version=entry:table_name;location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive")
+...
 				</programlisting>
 			</example>
 		</section>
+
+		<section id="db_redis.p.verbosity">
+			<title><varname>verbosity</varname> (int)</title>
+			<para>
+				Control the verbosity of debug messages printed by the module.
+				If set to 1, the module prints schema details for all tables
+				on each connect operation to Redis server.
+			</para>
+			<para>
+				Default value: 1.
+			</para>
+			<example>
+				<title>Setting verbosity module parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "verbosity", 0)
+...
+				</programlisting>
+			</example>
+		</section>
+
 	</section>
 
-	<section>
-		<title>External Libraries or Applications</title>
-		<para>
-			The following libraries or applications must be installed before running
-			&kamailio; with this module loaded:
-			<itemizedlist>
-				<listitem>
-					<para>
-						<emphasis>hiredis</emphasis> - available at
-						<ulink url="https://github.com/redis/hiredis">https://github.com/redis/hiredis</ulink>
-					</para>
-				</listitem>
-			</itemizedlist>
-		</para>
-	</section>
-
-	<section>
+	<section id="db_redis.sec.usage">
 		<title>Usage</title>
 		<para>
 			Load the module and set the "db_url" modparam for specific modules to:
@@ -227,7 +257,7 @@ HMSET address:entry::4 id 4 grp 2 ip_addr "127.0.0.4" mask 32 port 0 tag "test"
 	</section>
 
 	<section>
-		<title>Module specific considerations</title>
+		<title>Module Specific Considerations</title>
 		<section>
 			<title>usrloc</title>
 			<para>
