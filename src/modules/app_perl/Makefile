@@ -19,9 +19,6 @@ ifeq ($(PERLCCOPTS),)
 endif
 DEFS+=$(PERLCCOPTS)
 
-
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 
 PODFILES=kamailioxs.xs `find lib/perl -name *.pm`
