@@ -138,7 +138,6 @@ static void yyerror(char* s, ...);
 static void yyerror_at(struct cfg_pos* pos, char* s, ...);
 static char* tmp;
 static int i_tmp;
-static unsigned u_tmp;
 static struct socket_id* lst_tmp;
 static struct name_lst*  nl_tmp;
 static int rt;  /* Type of route block for find_export */
