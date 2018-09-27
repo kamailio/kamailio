@@ -3340,11 +3340,9 @@ cmd:
 	| ID {mod_func_action = mk_action(MODULE0_T, 2, MODEXP_ST, NULL, NUMBER_ST,
 			0); } LPAREN func_params RPAREN	{
 		mod_func_action->val[0].u.data =
-			find_export_record($1, mod_func_action->val[1].u.number, rt,
-								&u_tmp);
+			find_export_record($1, mod_func_action->val[1].u.number, rt);
 		if (mod_func_action->val[0].u.data == 0) {
-			if (find_export_record($1, mod_func_action->val[1].u.number, 0,
-									&u_tmp) ) {
+			if (find_export_record($1, mod_func_action->val[1].u.number, 0) ) {
 					LM_ERR("misused command %s\n", $1);
 					yyerror("Command cannot be used in the block\n");
 			} else {
@@ -3841,7 +3839,7 @@ static int case_check_default(struct case_stms* stms)
  */
 static int mod_f_params_pre_fixup(struct action* a)
 {
-	sr31_cmd_export_t* cmd_exp;
+	ksr_cmd_export_t* cmd_exp;
 	action_u_t* params;
 	int param_no;
 	struct rval_expr* rve;

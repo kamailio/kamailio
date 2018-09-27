@@ -603,7 +603,7 @@ int fix_actions(struct action* a)
 	void *tmp_p;
 	int ret;
 	int i;
-	sr31_cmd_export_t* cmd;
+	ksr_cmd_export_t* cmd;
 	str s;
 	struct hostent* he;
 	struct ip_addr ip;
