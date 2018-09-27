@@ -273,18 +273,16 @@ static param_export_t params[] = {
 };
 
 struct module_exports exports = {
-	"rtpproxy",
+	"rtpproxy",      /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	mod_pvs,     /* exported pseudo-variables */
-	0,           /* extra processes */
-	mod_init,
-	0,           /* reply processing */
-	mod_destroy, /* destroy function */
-	child_init
+	cmds,            /* cmd exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* reply processing */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	mod_destroy,     /* destroy function */
 };
 
 
