@@ -32,7 +32,7 @@
 MODULE_VERSION
 
 static int mod_init(void);
-static int mod_destroy(void);
+void mod_destroy(void);
 static int func_gauge(struct sip_msg *msg, char *key, char* val);
 static int func_set(struct sip_msg *msg, char *key, char* val);
 static int func_time_start(struct sip_msg *msg, char *key);
@@ -65,18 +65,16 @@ static param_export_t parameters[] = {
 };
 
 struct module_exports exports = {
-    "statsd",    // module name
+    "statsd",        // module name
     DEFAULT_DLFLAGS, // dlopen flags
     commands,        // exported functions
     parameters,      // exported parameters
-    NULL,            // exported statistics
-    NULL,            // exported MI functions
+    NULL,            // exported RPC methods
     NULL,            // exported seudo-variables
-    NULL,            // extra processes
-    mod_init,        // module init function (before fork. kids will inherit)
     NULL,            // reply processing function
-    (destroy_function) mod_destroy,     // destroy function
-    NULL       // child init function
+    mod_init,        // module init function (before fork. kids will inherit)
+    0,               // child init function
+    mod_destroy      // destroy function
 };
 
 
@@ -108,10 +106,10 @@ static int mod_init(void)
 /**
 * destroy module function
 */
-static int mod_destroy(void)
+void mod_destroy(void)
 {
     statsd_destroy();
-    return 0;
+    return;
 }
 
 static int func_gauge(struct sip_msg* msg, char* key, char* val)
