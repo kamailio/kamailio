@@ -155,18 +155,16 @@ static pv_export_t mod_pvs[] = {
 };
 
 struct module_exports exports = {
-	"websocket",
+	"websocket",		/* module name */
 	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,			/* Exported functions */
-	params,			/* Exported parameters */
-	stats,			/* exported statistics */
-	0,				/* exported MI functions */
-	mod_pvs,		/* exported pseudo-variables */
-	0,			/* extra processes */
-	mod_init,		/* module initialization function */
-	0,			/* response function */
-	destroy,		/* destroy function */
-	child_init		/* per-child initialization function */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* exported rpc functions */
+	mod_pvs,			/* exported pseudo-variables */
+	0,					/* response handlin function */
+	mod_init,			/* module init function */
+	child_init,			/* per-child init function */
+	destroy				/* destroy function */
 };
 /* clang-format on */
 
