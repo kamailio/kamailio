@@ -691,12 +691,13 @@ static rpc_export_t rpc_calls[] = {
 /* Module interface */
 struct module_exports exports = {
 	"cfg_rpc",
-	0,		/* Exported functions */
-	rpc_calls,	/* RPC methods */
-	0,		/* Exported parameters */
-	mod_init,	/* module initialization function */
-	0,		/* response function */
-	0,		/* destroy function */
-	0,		/* oncancel function */
-	0		/* child initialization function */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	0,		 /* Exported functions */
+	0,		 /* Exported parameters */
+	rpc_calls,	 /* RPC methods */
+	0,		 /* exported pseudo-variables */
+	0,		 /* response function */
+	mod_init,	 /* module initialization function */
+	0,		 /* child initialization function */
+	0		 /* destroy function */
 };
