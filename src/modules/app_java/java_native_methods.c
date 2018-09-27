@@ -348,8 +348,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_NativeMethods_KamExec(
 
 int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
 {
-	sr31_cmd_export_t *fexport;
-	unsigned mod_ver;
+	ksr_cmd_export_t *fexport;
 	int rval;
 	int mod_type;
 	struct action *act;
@@ -359,7 +358,7 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
 	if(!_aj_msg)
 		return -1;
 
-	fexport = find_export_record(fname, argc, 0, &mod_ver);
+	fexport = find_export_record(fname, argc, 0);
 	if(!fexport) {
 		LM_ERR("%s: KamExec(): '%s' - no such function\n", APP_NAME, fname);
 		return -1;
