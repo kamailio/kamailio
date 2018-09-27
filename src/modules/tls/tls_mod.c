@@ -244,18 +244,16 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"tls",
+	"tls",           /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,        /* Exported functions */
-	params,      /* Exported parameters */
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	tls_pv,      /* exported pseudo-variables */
-	0,           /* extra processes */
-	mod_init,    /* module initialization function */
-	0,           /* response function */
-	destroy,     /* destroy function */
-	mod_child    /* child initialization function */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc command */
+	tls_pv,          /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	mod_child,       /* child initi function */
+	destroy          /* destroy function */
 };
 
 
