@@ -91,7 +91,7 @@ Olle E. Johansson
 
    List of Examples
 
-   1.1. Quick start config
+   1.1. Quick Start Basic Config
    1.2. Compiling TLS with Debug Messages
    1.3. Set tls_method parameter
    1.4. Set certificate parameter
@@ -223,24 +223,38 @@ Chapter 1. Admin Guide
 
 2. Quick Start
 
-   Make sure you have a proper certificate and private key and either use
-   the certificate and private_key module parameters, or make sure the
-   certificate and key are in the same PEM file, named cert.pem an placed
-   in [your-cfg-install-prefix]/etc/kamailio/. Don't forget to load the
-   tls module and to enable TLS (add enable_tls=yes to your config).
+   The default kamailio.cfg file has basic tls support included, it has to
+   be enabled with "#!define WITH_TLS" directive.
 
-   Example 1.1. Quick start config
+   The most important parameters to set the path to the public certificate
+   and private key files. You can either have them in different file or in
+   the same file in PEM format. The parameters for them are certificate
+   and private_key. They can be given as modparam or or provided in the
+   profiles of tls.cfg file.
+
+   When installing tls module of kamailio, a sample 'tls.cfg' file is
+   deployed in the same folder with 'kamailio.cfg', along with freshly
+   generated self signed certificates.
+
+   HINT: be sure you have enable_tls=yes to your kamailio.cfg.
+
+   Example 1.1. Quick Start Basic Config
 #...
-loadmodule "modules/tls/tls.so"
+loadmodule "sl.so"
+loadmodule "tls.so"
 
-modparam("tls", "private_key", "./andrei-test.pem")
-modparam("tls", "certificate", "./andrei-test.pem")
+modparam("tls", "private_key", "./server-test.pem")
+modparam("tls", "certificate", "./server-test.pem")
 modparam("tls", "ca_list", "./calist.pem")
 
 enable_tls=yes
 
-route{
-        # ....
+request_route {
+        if(proto != TLS) {
+                sl_send_reply("403", "Accepting TLS Only");
+                exit;
+        }
+        ...
 }
 
 3. Important Notes
@@ -1445,14 +1459,16 @@ modparam("tls", "engine_algorithms", "ALL")
 
 11.1. is_peer_verified()
 
-   Returns true if the connection on which the message was received is TLS
-   , the peer presented an X509 certificate and the certificate chain
-   verified ok. It can be used only in a request route.
+   Returns true if the connection on which the message was received is
+   TLS, the peer presented an X509 certificate and the certificate chain
+   verified ok.
+
+   It can be used only in a request route.
 
    Example 1.45. is_peer_verified usage
-        if (proto==TLS && !is_peer_verified()){
+        if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
-                drop;
+                exit;
         }
 
 12. RPC Commands
