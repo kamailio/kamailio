@@ -63,18 +63,16 @@ static param_export_t params[]={
 
 
 struct module_exports exports= {
-	"dnssec",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	0,
-	params,
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	0,           /* exported pseudo-variables */
-	0,           /* extra processes */
-	dnssec_init,   /* module initialization function */
-	0,
-	(destroy_function) dnssec_exit,   /* module exit function */
-	0  /* per-child init function */
+	"dnssec",			/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	0,					/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	dnssec_init,		/* module initialization function */
+	0,					/* per-child init function */
+	dnssec_exit			/* module destroy function */
 };
 
 
