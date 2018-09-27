@@ -71,14 +71,14 @@ static int send_2XX_reply(sip_msg_t *msg, int reply_code,
 	{
 		ERR_MEM(PKG_MEM_STR);
 	}
-	strncpy(hdr_append.s, "Expires: ", 9);
-	strncpy(hdr_append.s+9, tmp.s, tmp.len);
+	memcpy(hdr_append.s, "Expires: ", 9);
+	memcpy(hdr_append.s+9, tmp.s, tmp.len);
 	tmp.s = hdr_append.s+9+tmp.len;
-	strncpy(tmp.s, CRLF, CRLF_LEN);
+	memcpy(tmp.s, CRLF, CRLF_LEN);
 	tmp.s += CRLF_LEN;
-	strncpy(tmp.s, "Contact: <", 10);
+	memcpy(tmp.s, "Contact: <", 10);
 	tmp.s += 10;
-	strncpy(tmp.s, local_contact->s, local_contact->len);
+	memcpy(tmp.s, local_contact->s, local_contact->len);
 	tmp.s[local_contact->len] = '\0';
 	t = strstr(tmp.s, ";transport=");
 	tmp.s += local_contact->len;
@@ -87,22 +87,22 @@ static int send_2XX_reply(sip_msg_t *msg, int reply_code,
 		switch (msg->rcv.proto)
 		{
 			case PROTO_TCP:
-				strncpy(tmp.s, ";transport=tcp", 14);
+				memcpy(tmp.s, ";transport=tcp", 14);
 				tmp.s += 14;
 				hdr_append.len -= 1;
 				break;
 			case PROTO_TLS:
-				strncpy(tmp.s, ";transport=tls", 14);
+				memcpy(tmp.s, ";transport=tls", 14);
 				tmp.s += 14;
 				hdr_append.len -= 1;
 				break;
 			case PROTO_SCTP:
-				strncpy(tmp.s, ";transport=sctp", 15);
+				memcpy(tmp.s, ";transport=sctp", 15);
 				tmp.s += 15;
 				break;
 			case PROTO_WS:
 			case PROTO_WSS:
-				strncpy(tmp.s, ";transport=ws", 13);
+				memcpy(tmp.s, ";transport=ws", 13);
 				tmp.s += 13;
 				hdr_append.len -= 2;
 				break;
@@ -113,7 +113,7 @@ static int send_2XX_reply(sip_msg_t *msg, int reply_code,
 		hdr_append.len -= 15;
 	}
 	*tmp.s = '>';
-	strncpy(tmp.s+1, CRLF, CRLF_LEN);
+	memcpy(tmp.s+1, CRLF, CRLF_LEN);
 
 	hdr_append.s[hdr_append.len]= '\0';
 
