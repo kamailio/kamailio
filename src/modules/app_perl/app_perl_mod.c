@@ -149,14 +149,12 @@ struct module_exports _app_perl_exports = {
 	RTLD_NOW | RTLD_GLOBAL,
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
+	0,          /* exported RPC methods */
 	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
 	0,          /* response function */
-	destroy,    /* destroy function */
-	0           /* child initialization function */
+	mod_init,   /* module initialization function */
+	0,          /* child initialization function */
+	destroy    /* destroy function */
 };
 
 
