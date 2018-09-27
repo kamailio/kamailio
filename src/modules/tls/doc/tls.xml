@@ -68,27 +68,41 @@
 	<section id="tls.quick_start">
 		<title>Quick Start</title>
 		<para>
-			Make sure you have a proper certificate and private key and either
-			use the <varname>certificate</varname> and <varname>private_key</varname>
-			module parameters, or make sure the certificate and key are in the same PEM file,
-			named <emphasis>cert.pem</emphasis> an placed in [your-cfg-install-prefix]/etc/kamailio/.
-			Don't forget to load the tls module and to enable TLS
-			(add <emphasis>enable_tls=yes</emphasis> to your config).
+		The default kamailio.cfg file has basic tls support included, it has to
+		be enabled with "#!define WITH_TLS" directive.
+		</para>
+		<para>
+		The most important parameters to set the path to the public certificate and private key
+		files. You can either have them in different file or in the same file in PEM format.
+		The parameters for them are <varname>certificate</varname> and <varname>private_key</varname>.
+		They can be given as modparam or or provided in the profiles of tls.cfg file.
+		</para>
+		<para>
+		When installing tls module of kamailio, a sample 'tls.cfg' file is deployed in the same
+		folder with 'kamailio.cfg', along with freshly generated self signed certificates.
+		</para>
+		<para>
+		HINT: be sure you have <emphasis>enable_tls=yes</emphasis> to your kamailio.cfg.
 		</para>
 		<example>
-		<title>Quick start config</title>
+		<title>Quick Start Basic Config</title>
 		<programlisting>
 #...
-loadmodule "modules/tls/tls.so"
+loadmodule "sl.so"
+loadmodule "tls.so"
 
-modparam("tls", "private_key", "./andrei-test.pem")
-modparam("tls", "certificate", "./andrei-test.pem")
+modparam("tls", "private_key", "./server-test.pem")
+modparam("tls", "certificate", "./server-test.pem")
 modparam("tls", "ca_list", "./calist.pem")
 
 enable_tls=yes
 
-route{
-	# ....
+request_route {
+	if(proto != TLS) {
+		sl_send_reply("403", "Accepting TLS Only");
+		exit;
+	}
+	...
 }
 		</programlisting>
 		</example>
