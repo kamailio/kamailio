@@ -55,9 +55,9 @@ void 	cdp_avp_destroy();
 cdp_avp_bind_t*	cdp_avp_get_bind();
 	
 static cmd_export_t cdp_avp_cmds[] = {
-	{"cdp_avp_get_bind",			(cmd_function)cdp_avp_get_bind, 	NO_SCRIPT, 0, 0},
+	{"cdp_avp_get_bind",			(cmd_function)cdp_avp_get_bind, 	NO_SCRIPT, 0, 0, 0},
 	
-	{ 0, 0, 0, 0, 0 }
+	{ 0, 0, 0, 0, 0, 0 }
 };
 	
 /**
@@ -65,14 +65,15 @@ static cmd_export_t cdp_avp_cmds[] = {
  */
 struct module_exports exports = {
 	"cdp_avp",
-	cdp_avp_cmds,                   /**< Exported functions */
+	DEFAULT_DLFLAGS, 	/* dlopen flags */
+	cdp_avp_cmds,    	/**< Exported functions */
+	0,               	/**< Exported parameters */
+	0,               	/* RPC method exports */
+        0,       		/* pseudo-variables exports */
 	0,
-	0,                     			/**< Exported parameters */
-	cdp_avp_init,                   /**< Module initialization function */
-	(response_function) 0,
-	(destroy_function) cdp_avp_destroy,
-	0,
-	(child_init_function) cdp_avp_child_init /**< per-child init function */
+	cdp_avp_init,    	/**< Module initialization function */
+	cdp_avp_child_init, 	/**< per-child init function */
+	cdp_avp_destroy
 };
 
 
