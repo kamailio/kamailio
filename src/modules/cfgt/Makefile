@@ -8,8 +8,6 @@ auto_gen=
 NAME=cfgt.so
 LIBS=
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srutils/srutils
 
