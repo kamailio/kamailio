@@ -47,7 +47,7 @@ static int mod_child(int rank);
 static void mod_destroy(void);
 
 static cmd_export_t cmds[]={
-		{0,0,0,0,0}
+		{0,0,0,0,0,0}
 };
 
 
@@ -101,16 +101,17 @@ static param_export_t params[]={
 	{0,0,0} 
 }; /* no params */
 
-struct module_exports exports= {
-	"ctl",
-	cmds,
-	ctl_rpc,        /* RPC methods */
-	params,
-	mod_init, /* module initialization function */
-	0, /* response function */
-	mod_destroy,  /* destroy function */
-	0, /* on_cancel function */
-	mod_child, /* per-child init function */
+struct module_exports exports = {
+	"ctl",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	ctl_rpc,         /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	mod_child,       /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 
