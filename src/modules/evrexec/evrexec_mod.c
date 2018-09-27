@@ -64,18 +64,16 @@ static param_export_t params[]={
 
 /** module exports */
 struct module_exports exports= {
-	"evrexec",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	0,
-	params,
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,
-	0,
-	child_init  /* per-child init function */
+	"evrexec",			/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	0,					/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	mod_init,			/* module initialization function */
+	child_init,			/* per-child init function */
+	0					/* module destroy function */
 };
 
 
