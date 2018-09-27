@@ -67,7 +67,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/digest/digest.h"
 #include "../../core/parser/parse_ppi_pai.h"
-#include "../../core/parser//parse_rpid.h"
+#include "../../core/parser/parse_rpid.h"
 #include "../../core/forward.h"
 #include "../../core/pvar.h"
 #include "../../core/str.h"
