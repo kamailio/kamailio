@@ -10,8 +10,6 @@ include ../../Makefile.radius
 auto_gen=
 NAME=auth_radius.so
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
 
 install-cfg:
