@@ -119,36 +119,36 @@ static int avpgroup_fixup(void**, int);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"set_iattr",         set_iattr,            2, set_iattr_fixup,            REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"set_sattr",         set_sattr,            2, fixup_var_str_12,           REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"set_attr",          set_sattr,            2, fixup_var_str_12,           REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"print_attr",        print_attr,           1, avpid_fixup,                REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"del_attr",          del_attr,             1, avpid_fixup,                REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"del_attrs",         del_attrs,            1, avpgroup_fixup,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"subst_attr",        subst_attr,           2, subst_attr_fixup,           REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"flags2attr",        flags2attr,           1, avpid_fixup,                REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"attr2uri",          attr2uri,             1, fixup_part,                 REQUEST_ROUTE | FAILURE_ROUTE},
-	{"attr2uri",          attr2uri,             2, fixup_part,                 REQUEST_ROUTE | FAILURE_ROUTE},
-	{"dump_attrs",	  dump_attrs,           0, 0,                          REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"dump_attrs",	  dump_attrs,           1, avpgroup_fixup,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"attr_equals",       attr_equals,          2, fixup_var_str_12,           REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"attr_exists",       attr_exists,          1 , fixup_var_str_1,           REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"attr_equals_xl",    attr_equals_xl,       2, fixup_attr_1_xl_2,          REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"xlset_attr",        xlset_attr,           2, fixup_attr_1_xl_2,          REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"xlfix_attr",        xlfix_attr,           1, xlfix_attr_fixup,           REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"insert_attr_hf",    insert_req,           2, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
-	{"insert_attr_hf",    insert_req,           1, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
-	{"append_attr_hf",    append_req,           2, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
-	{"append_attr_hf",    append_req,           1, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
-	{"replace_attr_hf",   replace_req,          2, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
-	{"replace_attr_hf",   replace_req,          1, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
-	{"attr_to_reply",     append_reply,         2, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
-	{"attr_to_reply",     append_reply,         1, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
-	{"attr_destination",  attr_destination,     1, avpid_fixup,                REQUEST_ROUTE | FAILURE_ROUTE},
-	{"xlset_destination", xlset_destination,    1, fixup_xl_1,                 REQUEST_ROUTE},
-	{"hdr_body2attrs",    attr_hdr_body2attrs,  2, attr_hdr_body2attrs_fixup,  REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"hdr_body2attrs2",   attr_hdr_body2attrs2, 2, attr_hdr_body2attrs2_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"set_iattr",         set_iattr,            2, set_iattr_fixup,            0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"set_sattr",         set_sattr,            2, fixup_var_str_12,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"set_attr",          set_sattr,            2, fixup_var_str_12,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"print_attr",        print_attr,           1, avpid_fixup,                0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"del_attr",          del_attr,             1, avpid_fixup,                0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"del_attrs",         del_attrs,            1, avpgroup_fixup,             0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"subst_attr",        subst_attr,           2, subst_attr_fixup,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"flags2attr",        flags2attr,           1, avpid_fixup,                0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"attr2uri",          attr2uri,             1, fixup_part,                 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"attr2uri",          attr2uri,             2, fixup_part,                 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"dump_attrs",	      dump_attrs,           0, 0,                          0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"dump_attrs",	      dump_attrs,           1, avpgroup_fixup,             0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"attr_equals",       attr_equals,          2, fixup_var_str_12,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"attr_exists",       attr_exists,          1 , fixup_var_str_1,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"attr_equals_xl",    attr_equals_xl,       2, fixup_attr_1_xl_2,          0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"xlset_attr",        xlset_attr,           2, fixup_attr_1_xl_2,          0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"xlfix_attr",        xlfix_attr,           1, xlfix_attr_fixup,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"insert_attr_hf",    insert_req,           2, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"insert_attr_hf",    insert_req,           1, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"append_attr_hf",    append_req,           2, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"append_attr_hf",    append_req,           1, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"replace_attr_hf",   replace_req,          2, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"replace_attr_hf",   replace_req,          1, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"attr_to_reply",     append_reply,         2, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"attr_to_reply",     append_reply,         1, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"attr_destination",  attr_destination,     1, avpid_fixup,                0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"xlset_destination", xlset_destination,    1, fixup_xl_1,                 0, REQUEST_ROUTE},
+	{"hdr_body2attrs",    attr_hdr_body2attrs,  2, attr_hdr_body2attrs_fixup,  0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"hdr_body2attrs2",   attr_hdr_body2attrs2, 2, attr_hdr_body2attrs2_fixup, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -163,14 +163,15 @@ static param_export_t params[] = {
 
 struct module_exports exports = {
 	"avp",
-	cmds,       /* Exported commands */
-	0,          /* RPC */
-	params,     /* Exported parameters */
-	mod_init,          /* module initialization function */
-	0,          /* response function*/
-	0,          /* destroy function */
-	0,          /* oncancel function */
-	0           /* per-child init function */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,       	 /* Exported commands */
+	params,     	 /* Exported parameters */
+	0,          	 /* RPC */
+	0,       	 /* pseudo-variables exports */
+	0,          	 /* response function*/
+	mod_init,        /* module initialization function */
+	0,		 /* per-child init function */
+	0	         /* destroy function */
 };
 
 
