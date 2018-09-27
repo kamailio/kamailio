@@ -48,13 +48,13 @@ static int cnt_int_fixup(void** param, int param_no);
 
 
 static cmd_export_t cmds[] = {
-	{"cnt_inc",    cnt_inc_f,   1,  cnt_fixup1,
+	{"cnt_inc",    cnt_inc_f,   1,  cnt_fixup1,    0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{"cnt_add",    cnt_add_f,   2,  cnt_int_fixup,
+	{"cnt_add",    cnt_add_f,   2,  cnt_int_fixup, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{"cnt_reset", cnt_reset_f,  1, cnt_fixup1,
+	{"cnt_reset", cnt_reset_f,  1, cnt_fixup1,     0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{0,0,0,0,0}
+	{0,0,0,0,0,0}
 };
 
 static param_export_t params[] = {
@@ -117,16 +117,17 @@ static rpc_export_t counters_rpc[] = {
 
 
 
-struct module_exports exports= {
-	"counters",
-	cmds,
-	counters_rpc,        /* RPC methods */
-	params,
-	0, /* module initialization function */
-	0, /* response function */
-	0, /* destroy function */
-	0, /* on_cancel function */
-	0, /* per-child init function */
+struct module_exports exports = {
+	"counters",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	counters_rpc,    /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	0,               /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
 
 
