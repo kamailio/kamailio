@@ -57,7 +57,7 @@ mod_name=$(subst db_,,$(lastword $(subst /, ,$(1))))
 define PACKAGE_GRP_BUILD_template
 	# package all the modules in PACKAGE_GROUPS in separate packages
 	$(foreach grp,$(PACKAGE_GROUPS),\
-		$(MAKE) every-module group_include="k$(grp)"
+		$(MAKE) every-module group_include="k$(grp)" quiet=verbose
 	)
 endef
 
@@ -66,7 +66,7 @@ define PACKAGE_GRP_INSTALL_template
 		$(MAKE) install-modules-all LIBDIR=$(LIBDIR) group_include="k$(grp)" \
 		BASEDIR=$(CURDIR)/debian/kamailio-$(grp)-modules \
 		cfg_prefix=$(CURDIR)/debian/kamailio-$(grp)-modules \
-		doc-dir=share/doc/kamailio-$(grp)-modules
+		doc-dir=share/doc/kamailio-$(grp)-modules quiet=verbose
 		# eliminate duplicate libs
 		-for d in $(DUP_LIBS_DIRS); do \
 			test "$$d" != "$(CURDIR)/debian/kamailio-$(grp)-modules/usr/$(LIBDIR)/kamailio" &&\
@@ -82,7 +82,7 @@ endef
 define PACKAGE_EXTRA_BUILD_template
 	# package all the modules in EXTRA_GROUPS in separate packages
 	$(foreach grp,$(EXTRA_GROUPS),\
-		$(MAKE) every-module group_include="k$(grp)"
+		$(MAKE) every-module group_include="k$(grp)" quiet=verbose
 	)
 endef
 
@@ -91,7 +91,7 @@ define PACKAGE_EXTRA_INSTALL_template
 		$(MAKE) install-modules-all LIBDIR=$(LIBDIR) group_include="k$(grp)" \
 		BASEDIR=$(CURDIR)/debian/kamailio-extra-modules \
 		cfg_prefix=$(CURDIR)/debian/kamailio-extra-modules \
-		doc-dir=share/doc/kamailio-extra-modules
+		doc-dir=share/doc/kamailio-extra-modules quiet=verbose
 	)
 	# eliminate duplicate libs
 	-for d in $(DUP_LIBS_DIRS); do \
@@ -124,7 +124,7 @@ configure-stamp:
 			skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
 			CC_EXTRA_OPTS="$(CC_EXTRA_OPTS)" \
 			LD_EXTRA_OPTS="$(LD_EXTRA_OPTS)" \
-			group_include="kstandard"
+			group_include="kstandard" quiet=verbose
 
 	touch configure-stamp
 
@@ -135,7 +135,7 @@ build-indep: build-stamp
 build-stamp: configure-stamp
 	dh_testdir
 	# Add here commands to compile the package.
-	$(MAKE) all
+	$(MAKE) all quiet=verbose
 	# make groups
 	$(call PACKAGE_GRP_BUILD_template)
 	$(call PACKAGE_EXTRA_BUILD_template)
