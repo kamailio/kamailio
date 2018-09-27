@@ -189,18 +189,16 @@ static param_export_t params[] = {
 
 /* Module interface */
 struct module_exports exports = {
-	"permissions",
+	"permissions",   /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,      /* Exported functions */
-	params,    /* Exported parameters */
-	0,         /* exported statistics */
-	0,         /* exported MI functions */
-	0,         /* exported pseudo-variables */
-	0,         /* extra processes */
-	mod_init,  /* module initialization function */
-	0,         /* response function */
-	mod_exit,  /* destroy function */
-	child_init /* child initialization function */
+	cmds,            /* Exported functions */
+	params,          /* Exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module initialization function */
+	child_init,      /* child initialization function */
+	mod_exit         /* destroy function */
 };
 
 
