@@ -139,7 +139,7 @@ static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 
 	p = contact->s;
 	if(strncmp(ip.s, "sip:", 4)!=0) {
-		strncpy(p, "sip:", 4);
+		memcpy(p, "sip:", 4);
 		contact->len += 4;
 		p += 4;
 	}
