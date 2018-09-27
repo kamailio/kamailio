@@ -195,18 +195,16 @@ static pv_export_t mod_items[] = {
 };
 
 struct module_exports exports = {
-	"sipt",
+	"sipt",          /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,        /* exported functions */
-	params,      /* exported parameters */
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	mod_items,   /* exported pseudo-variables */
-	0,           /* extra processes */
-	mod_init,    /* module initialization function */
-	0,           /* response function*/
-	mod_destroy, /* destroy function */
-	0            /* per-child init function */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported RPC methods */
+	mod_items,       /* exported pseudo-variables */
+	0,               /* response function*/
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	mod_destroy      /* destroy function */
 };
 
 static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
