@@ -25,6 +25,4 @@ else
 	LIBS+=-L$(LOCALBASE)/lib -lcurl
 endif
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules

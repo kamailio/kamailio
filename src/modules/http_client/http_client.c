@@ -204,18 +204,16 @@ static pv_export_t mod_pvs[] = {
 
 /* Module interface */
 struct module_exports exports = {
-	"http_client",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,      /* Exported functions */
-	params,    /* Exported parameters */
-	0,         /* exported statistics */
-	0,         /* exported MI functions */
-	mod_pvs,         /* exported pseudo-variables */
-	0,         /* extra processes */
-	mod_init,  /* module initialization function */
-	0,         /* response function*/
-	destroy,   /* destroy function */
-	child_init /* per-child init function */
+	"http_client",		/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	mod_pvs,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	mod_init,			/* module initialization function */
+	child_init,			/* per-child init function */
+	destroy				/* module destroy function */
 };
 /* clang-format on */
 
