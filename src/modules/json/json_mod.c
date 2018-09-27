@@ -54,9 +54,10 @@ static param_export_t params[] = {
 		{"json_escape_char", PARAM_STR, &tr_json_escape_str}, {0, 0, 0}};
 
 struct module_exports exports = {
-		"json", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,					 /* Exported functions */
-		params,					 /* Exported parameters */
+		"json",
+		DEFAULT_DLFLAGS,                                 /* dlopen flags */
+		cmds,					         /* Exported functions */
+		params,					         /* Exported parameters */
 		0,						 /* exported statistics */
 		0,						 /* exported MI functions */
 		0,						 /* exported pseudo-variables */
