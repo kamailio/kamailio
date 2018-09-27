@@ -52,33 +52,33 @@ static int blst_rpl_clear_ignore_f(struct sip_msg*, char*, char*);
 
 
 static cmd_export_t cmds[]={
-	{"blst_add",              blst_add0_f,             0,  0,
+	{"blst_add",              blst_add0_f,             0,  0, 0,
 			ANY_ROUTE},
-	{"blst_add",              blst_add1_f,             1, fixup_var_int_1,
+	{"blst_add",              blst_add1_f,             1, fixup_var_int_1, 0,
 			ANY_ROUTE},
-	{"blst_add_retry_after",  blst_add_retry_after_f,  2, fixup_var_int_12,
+	{"blst_add_retry_after",  blst_add_retry_after_f,  2, fixup_var_int_12, 0,
 			ANY_ROUTE},
-	{"blst_del",              blst_del_f,              0, 0,
+	{"blst_del",              blst_del_f,              0, 0, 0,
 			ANY_ROUTE},
-	{"blst_is_blacklisted",   blst_is_blacklisted_f,   0, 0,
+	{"blst_is_blacklisted",   blst_is_blacklisted_f,   0, 0, 0,
 			ANY_ROUTE},
-	{"blst_set_ignore",       blst_set_ignore_f,       0,  0,
+	{"blst_set_ignore",       blst_set_ignore_f,       0,  0, 0,
 			ANY_ROUTE},
-	{"blst_set_ignore",       blst_set_ignore_f,       1,  fixup_var_int_1,
+	{"blst_set_ignore",       blst_set_ignore_f,       1,  fixup_var_int_1, 0,
 			ANY_ROUTE},
-	{"blst_clear_ignore",     blst_clear_ignore_f,     0,  0,
+	{"blst_clear_ignore",     blst_clear_ignore_f,     0,  0, 0,
 			ANY_ROUTE},
-	{"blst_clear_ignore",     blst_clear_ignore_f,     1,  fixup_var_int_1,
+	{"blst_clear_ignore",     blst_clear_ignore_f,     1,  fixup_var_int_1, 0,
 			ANY_ROUTE},
-	{"blst_rpl_set_ignore",   blst_rpl_set_ignore_f,   0,  0,
+	{"blst_rpl_set_ignore",   blst_rpl_set_ignore_f,   0,  0, 0,
 			ANY_ROUTE},
-	{"blst_rpl_set_ignore",   blst_rpl_set_ignore_f,   1,  fixup_var_int_1,
+	{"blst_rpl_set_ignore",   blst_rpl_set_ignore_f,   1,  fixup_var_int_1, 0,
 			ANY_ROUTE},
-	{"blst_rpl_clear_ignore", blst_rpl_clear_ignore_f, 0,  0,
+	{"blst_rpl_clear_ignore", blst_rpl_clear_ignore_f, 0,  0, 0,
 			ANY_ROUTE},
-	{"blst_rpl_clear_ignore", blst_rpl_clear_ignore_f, 1,  fixup_var_int_1,
+	{"blst_rpl_clear_ignore", blst_rpl_clear_ignore_f, 1,  fixup_var_int_1, 0,
 			ANY_ROUTE},
-	{0,0,0,0,0}
+	{0,0,0,0,0,0}
 };
 
 static param_export_t params[]={
@@ -87,14 +87,15 @@ static param_export_t params[]={
 
 struct module_exports exports= {
 	"blst",
+        DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
-	0,        /* RPC methods */
 	params,
-	0, /* module initialization function */
-	0, /* response function */
-	0, /* destroy function */
-	0, /* on_cancel function */
-	0, /* per-child init function */
+	0,        /* RPC methods */
+	0, 	  /* pseudo-variables exports */
+	0, 	  /* response function */
+	0, 	  /* module initialization function */
+	0, 	  /* per-child init function */
+	0 	  /* destroy function */
 };
 
 
