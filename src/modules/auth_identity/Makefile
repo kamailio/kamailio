@@ -42,7 +42,5 @@ LIBS+= $(TLS_EXTRA_LIBS)
 #
 #LIBS+= /usr/lib/libcurl.a /usr/lib/libssl.a /usr/lib/libcrypto.a -lkrb5 -lidn -lz -lgssapi_krb5 -lrt -lldap
 
-DEFS+=-DSER_MOD_INTERFACE
-
 include ../../Makefile.modules
 
