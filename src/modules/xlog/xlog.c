@@ -176,18 +176,16 @@ static param_export_t params[]={
 
 /** module exports */
 struct module_exports exports= {
-	"xlog",
+	"xlog",          /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,          /* exported statistics */
-	0  ,        /* exported MI functions */
-	mod_items,  /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,
-	(destroy_function) destroy,
-	0           /* per-child init function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_items,       /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	destroy          /* module destroy function */
 };
 
 /**
