@@ -75,17 +75,16 @@ static param_export_t params[] = {{"acc_flag", INT_PARAM, &acc_flag},
 
 
 struct module_exports exports = {
-		"acc_json", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,						 /* exported functions */
-		params,						 /* exported params */
-		0,							 /* exported statistics */
-		0,							 /* exported MI functions */
-		0,							 /* exported pseudo-variables */
-		0,							 /* extra processes */
-		mod_init,					 /* initialization module */
-		0,							 /* response function */
-		destroy,					 /* destroy function */
-		child_init					 /* per-child init function */
+		"acc_json", 
+                DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,		 /* exported functions */
+		params,		 /* exported params */
+		0,		 /* exported RPC methods */
+		0,		 /* exported pseudo-variables */
+		0,		 /* response function */
+		mod_init,	 /* initialization module */
+		child_init,	 /* per-child init function */
+		destroy	 	 /* destroy function */
 };
 
 

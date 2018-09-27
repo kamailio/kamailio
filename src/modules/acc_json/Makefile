@@ -22,6 +22,4 @@ else
 	LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -ljansson
 endif
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
