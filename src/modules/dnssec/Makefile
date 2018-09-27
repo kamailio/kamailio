@@ -13,6 +13,4 @@ DEFS+=-I$(LOCALBASE)/include
 LIBS+=-L$(LOCALBASE)/lib
 LIBS+= -lval-threads -lcrypto -lsres -lpthread -lssl
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
