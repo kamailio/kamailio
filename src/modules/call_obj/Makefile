@@ -5,6 +5,4 @@ include ../../Makefile.defs
 auto_gen=
 NAME=call_obj.so
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
