@@ -6,6 +6,4 @@ auto_gen=
 NAME=geoip.so
 LIBS= -lGeoIP
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
