@@ -66,7 +66,5 @@ INCLUDE += -O0 -g
 INCLUDES += -O0 -g
 endif
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
 
