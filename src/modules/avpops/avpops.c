@@ -137,17 +137,15 @@ static param_export_t params[] = {
 
 struct module_exports exports = {
 	"avpops",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       /* Exported functions */
-	params,     /* Exported parameters */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	avpops_init,/* Module initialization function */
-	0,
-	0,
-	(child_init_function) avpops_child_init /* per-child init function */
+	DEFAULT_DLFLAGS, 	/* dlopen flags */
+	cmds,       		/* Exported functions */
+	params,     		/* Exported parameters */
+	0,          		/* exported RPC methods */
+	0,          		/* exported pseudo-variables */
+	0,	    		/* response handling function */
+	avpops_init,		/* Module initialization function */
+	avpops_child_init, 	/* per-child init function */
+	0			/* module destroy function */
 };
 
 
