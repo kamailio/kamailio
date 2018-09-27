@@ -12,7 +12,5 @@ DEFS+=-DUSE_FIFO
 # use system malloc
 DEFS+=-DCTL_SYSTEM_MALLOC
 
-DEFS+=-DSER_MOD_INTERFACE
-
 include ../../Makefile.modules
 
