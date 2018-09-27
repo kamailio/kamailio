@@ -5,8 +5,6 @@ auto_gen=
 NAME=userblacklist.so
 LIBS=
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/trie/trie
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
