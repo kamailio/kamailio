@@ -192,16 +192,14 @@ static param_export_t cdp_params[] = {
 struct module_exports exports = {
 	"cdp",
 	DEFAULT_DLFLAGS,
-	cdp_cmds,                       		/**< Exported functions */
-	cdp_params,                     		/**< Exported parameters */
+	cdp_cmds,		/**< Exported functions */
+	cdp_params,             /**< Exported parameters */
+	0,			/**< RPC cmds */
+	0,			/**< pseudovariables */
 	0,
-	0,										/**< MI cmds */
-	0,										/**< pseudovariables */
-	0,										/**< extra processes */
-	cdp_init,                   			/**< Module initialization function */
-	(response_function) 0,
-	(destroy_function) cdp_exit,
-	(child_init_function) cdp_child_init 	/**< per-child init function */
+	cdp_init,               /**< Module initialization function */
+	cdp_child_init,		/**< per-child init function */
+	cdp_exit
 };
 
 /**
@@ -252,12 +250,12 @@ static int cdp_child_init( int rank )
  *	Module termination function.
  * - stop the DiameterPeer processes in a civilized manner
  */
-static int cdp_exit( void )
+static void cdp_exit( void )
 {
 	LM_INFO("CDiameterPeer child stopping ...\n");
 	diameter_peer_destroy();
 	LM_INFO("... CDiameterPeer child stopped\n");
-	return 0;
+	return;
 }
 
 int w_cdp_check_peer(sip_msg_t *msg, char *peer, char *p2) {
