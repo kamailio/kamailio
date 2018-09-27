@@ -67,6 +67,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/digest/digest.h"
 #include "../../core/parser/parse_ppi_pai.h"
+#include "../../core/parser/parse_rpid.h"
 #include "../../core/forward.h"
 #include "../../core/pvar.h"
 #include "../../core/str.h"
@@ -1920,6 +1921,16 @@ static int sip_capture(sip_msg_t *msg, str *_table,
 		} else {
 			LM_DBG("PARSE PPI: (%.*s)\n", ppi->uri.len, ppi->uri.s);
 			sco.pid_user = ppi->parsed_uri.user;
+		}
+	} else if((parse_rpid_header(msg) == 0) && (msg->rpid) && (msg->rpid->parsed)) {
+		to_body_t *rpid = get_rpid(msg);
+		if((rpid->parsed_uri.user.s == NULL)
+				&& (parse_uri(rpid->uri.s, rpid->uri.len, &rpid->parsed_uri) < 0)) {
+			LM_DBG("DEBUG: do_action: bad rpid: method:[%.*s] CID: [%.*s]\n",
+					sco.method.len, sco.method.s, sco.callid.len, sco.callid.s);
+		} else {
+			LM_DBG("PARSE RPID: (%.*s)\n",rpid->uri.len, rpid->uri.s);
+			sco.pid_user = rpid->parsed_uri.user;
 		}
 	} else {
 		EMPTY_STR(sco.pid_user);
