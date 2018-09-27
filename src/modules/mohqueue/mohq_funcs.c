@@ -1469,10 +1469,10 @@ if (!pbody->s)
   LM_ERR ("%sNo more memory!\n", pfncname);
   return;
   }
-strncpy (pbody->s, pfrag, pbody->len);
+memcpy (pbody->s, pfrag, pbody->len);
 if (pbody->s [pbody->len - 1] != '\n')
   {
-  strncpy (&pbody->s [pbody->len], SIPEOL, 2);
+  memcpy (&pbody->s [pbody->len], SIPEOL, 2);
   pbody->len += 2;
   }
 struct msg_start pstart [1];
