@@ -119,14 +119,14 @@ ttimeparams glb_ttimeparams={0,0,0};
  * Exported functions
  */
 static cmd_export_t glb_cmds[] = {
-	{"auth_date_proc", date_proc, 0, 0, REQUEST_ROUTE},
-	{"auth_add_identity", add_identity, 0, 0, REQUEST_ROUTE},
-	{"vrfy_get_certificate", get_certificate, 0, 0, REQUEST_ROUTE},
-	{"vrfy_check_msgvalidity", check_validity, 0, 0, REQUEST_ROUTE},
-	{"vrfy_check_certificate", check_certificate, 0, 0, REQUEST_ROUTE},
-	{"vrfy_check_date", check_date, 0, 0, REQUEST_ROUTE},
-	{"vrfy_check_callid", check_callid, 0, 0, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"auth_date_proc", date_proc, 0, 0, 0, REQUEST_ROUTE},
+	{"auth_add_identity", add_identity, 0, 0, 0, REQUEST_ROUTE},
+	{"vrfy_get_certificate", get_certificate, 0, 0, 0, REQUEST_ROUTE},
+	{"vrfy_check_msgvalidity", check_validity, 0, 0, 0, REQUEST_ROUTE},
+	{"vrfy_check_certificate", check_certificate, 0, 0, 0, REQUEST_ROUTE},
+	{"vrfy_check_date", check_date, 0, 0, 0, REQUEST_ROUTE},
+	{"vrfy_check_callid", check_callid, 0, 0, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -152,14 +152,15 @@ static param_export_t glb_params[] = {
  */
 struct module_exports exports = {
 	"auth_identity",
+        DEFAULT_DLFLAGS, /* dlopen flags */
 	glb_cmds,   /* Exported functions */
-	0,          /* RPC methods */
 	glb_params, /* Exported parameters */
-	mod_init,   /* module initialization function */
+	0,          /* RPC methods */
+        0,          /* pseudo-variables exports */
 	0,          /* response function */
-	mod_deinit, /* destroy function */
-	0,          /* oncancel function */
-	0			/* child initialization function */
+	mod_init,   /* module initialization function */
+	0,	    /* child initialization function */
+	mod_deinit  /* destroy function */
 };
 
 
