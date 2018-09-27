@@ -47,7 +47,7 @@ MODULE_VERSION
 
 
 static int pike_init(void);
-static int pike_exit(void);
+void pike_exit(void);
 
 
 
@@ -77,18 +77,16 @@ static param_export_t params[]={
 
 
 struct module_exports exports= {
-	"pike",
+	"pike",          /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	0,           /* exported pseudo-variables */
-	0,           /* extra processes */
-	pike_init,   /* module initialization function */
-	0,
-	(destroy_function) pike_exit,   /* module exit function */
-	0  /* per-child init function */
+	cmds,            /* cmd exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	pike_init,       /* module initialization function */
+	0,               /* per-child init function */
+	pike_exit        /* module exit function */
 };
 
 
@@ -149,7 +147,7 @@ error1:
 
 
 
-static int pike_exit(void)
+void pike_exit(void)
 {
 	/* destroy semaphore */
 	if (timer_lock) {
@@ -166,7 +164,7 @@ static int pike_exit(void)
 	/* destroy the IP tree */
 	destroy_ip_tree();
 
-	return 0;
+	return;
 }
 
 /**
