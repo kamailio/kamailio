@@ -9,8 +9,6 @@ auto_gen=
 NAME=htable.so
 LIBS=
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 SER_LIBS+=$(SERLIBPATH)/srutils/srutils
