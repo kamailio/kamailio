@@ -75,16 +75,14 @@ static param_export_t params[]={
 struct module_exports exports = {
 	"app_ruby",
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,
-	0,              /* exported MI functions */
-	0,              /* exported pseudo-variables */
-	0,              /* extra processes */
-	mod_init,       /* module initialization function */
-	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per child init function */
+	mod_destroy      /* module destroy function */
 };
 /* clang-format on */
 
