@@ -172,14 +172,12 @@ struct module_exports exports = {
     DEFAULT_DLFLAGS, // dlopen flags
     commands,        // exported functions
     parameters,      // exported parameters
-    NULL,            // exported statistics
-    NULL,            // exported MI functions
-    NULL,            // exported pseudo-variables
-    NULL,            // extra processes
+    0,               // exported RPC commands
+    0,               // exported pseudo-variables
+    0,               // reply processing function
     mod_init,        // module init function (before fork. kids will inherit)
-    NULL,            // reply processing function
-    destroy,         // destroy function
-    child_init       // child init function
+    child_init,      // child init function
+    destroy          // destroy function
 };
 
 
