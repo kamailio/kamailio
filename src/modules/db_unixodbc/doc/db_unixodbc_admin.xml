@@ -64,7 +64,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="db_unixodbc.p.ping_interval">
 		<title><varname>ping_interval</varname> (int)</title>
 		<para>
 		Sets the ping time interval.
@@ -84,7 +84,7 @@ modparam("db_unixodbc", "ping_interval", 600)
 		</example>
 	</section>
 
-    <section>
+    <section id="db_unixodbc.p.auto_reconnect">
 		<title><varname>auto_reconnect</varname> (int)</title>
 		<para>
 		Turns on or off the auto_reconnect mode.
@@ -104,7 +104,7 @@ modparam("db_unixodbc", "auto_reconnect", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="db_unixodbc.p.use_escape_common">
 		<title><varname>use_escape_common</varname> (int)</title>
 		<para>
 		Escape values in query using internal escape_common() function.
@@ -131,7 +131,7 @@ modparam("db_unixodbc", "use_escape_common", 1)
 </programlisting>
 		</example>
 	</section>
-       <section>
+       <section id="db_unixodbc.p.replace_query">
                 <title><varname>replace_query</varname> (int)</title>
                 <para>
                 Tells if the ODBC replace query is supported by the DB odbc driver.
@@ -169,6 +169,7 @@ modparam("db_unixodbc", "replace_query", 0)
 modparam("db_unixodbc", "quote_char", "`")
 ...
 </programlisting>
+
 		</example>
 	</section>
 
@@ -197,7 +198,7 @@ modparam("db_unixodbc", "quote_char", "`")
 	<section>
 	<title>Configuring and Running</title>
 	<para>
-	In the openser.conf file, add the line:
+	In the &kamailio;.cfg file, add the line:
 	</para>
 	<programlisting format="linespecific">
 ....
@@ -223,7 +224,7 @@ modparam("auth_db", "password_column", "password")
 	<programlisting format="linespecific">
 ....
 modparam("usrloc|auth_db", "db_url", 
-    "unixodbc://openser:openserrw@localhost/my_dsn")
+    "unixodbc://kamailio:kamailiorw@localhost/my_dsn")
 ....
 </programlisting>
 	<para>
