@@ -373,13 +373,14 @@ static param_export_t params[] = {
 /* Module interface */
 struct module_exports exports = {
 	MODULE_NAME,
+	DEFAULT_DLFLAGS, 	/* dlopen flags */
 	0,			/* Exported functions */
+	params,			/* Exported parameters */
 	0,			/* RPC methods */
-	params,		/* Exported parameters */
-	mod_init,	/* module initialization function */
+	0,			/* exported pseudo-variables */
 	0,			/* response function */
-	0,			/* destroy function */
-	0,			/* oncancel function */
-	0			/* child initialization function */
+	mod_init,		/* module initialization function */
+	0,			/* child initialization function */
+	0			/* destroy function */
 };
 
