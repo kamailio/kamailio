@@ -7,6 +7,4 @@ auto_gen=
 NAME=geoip2.so
 LIBS= -lmaxminddb
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
