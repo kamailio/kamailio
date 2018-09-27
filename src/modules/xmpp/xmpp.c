@@ -22,14 +22,14 @@
  *
  */
 
-/*! \defgroup xmpp XMPP: The SIP/Simple - XMPP integration core 
- *  This module implements gateway functionality between SIP and XMPP. 
+/*! \defgroup xmpp XMPP: The SIP/Simple - XMPP integration core
+ *  This module implements gateway functionality between SIP and XMPP.
  *
  *  This module in parts replace the older \ref jabber module.
  */
 
 /*! \file
- * \brief Kamailio XMPP module :: 
+ * \brief Kamailio XMPP module ::
  *  \ingroup xmpp
  *
  * - \ref XMPProuting
@@ -57,7 +57,7 @@
  * Where '*' is the domain_separator, and gateway_domain and
  * xmpp_domain are defined below.
  *
- * 
+ *
  * 2-way dialback sequence with xmppd2:
 \verbatim
  *
@@ -160,12 +160,6 @@ param_t *_xmpp_gwmap_list = NULL;
 #define DEFAULT_COMPONENT_PORT 5347
 #define DEFAULT_SERVER_PORT 5269
 
-static proc_export_t procs[] = {
-	{"XMPP receiver",  0,  0, xmpp_process, 1 },
-	{0,0,0,0,0}
-};
-
-
 /*
  * Exported functions
  */
@@ -195,18 +189,16 @@ static param_export_t params[] = {
  * Module description
  */
 struct module_exports exports = {
-	"xmpp",          /* Module name */
+	"xmpp",          /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* Exported functions */
-	params,          /* Exported parameters */
-	0,               /* exported statistics */
-	0,               /* exported MI functions */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
 	0,               /* exported pseudo-variables */
-	procs,           /* extra processes */
-	mod_init,        /* Initialization function */
-	0,               /* Response function */
-	0,               /* Destroy function */
-	child_init,      /* Child init function */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* child init function */
+	0                /* module destroy function */
 };
 
 /*
@@ -218,7 +210,7 @@ static int mod_init(void) {
 		LM_ERR("failed to load tm API\n");
 		return -1;
 	}
-	
+
 	if (strcmp(backend, "component") && strcmp(backend, "server")) {
 		LM_ERR("invalid backend '%s'\n", backend);
 		return -1;
