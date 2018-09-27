@@ -6,8 +6,6 @@ auto_gen=
 NAME=ims_dialog.so
 LIBS=
 
-DEFS += -DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 SER_LIBS+=$(SERLIBPATH)/srutils/srutils
