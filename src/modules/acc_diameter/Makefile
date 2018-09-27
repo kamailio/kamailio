@@ -8,6 +8,4 @@ auto_gen=
 NAME=acc_diameter.so
 LIBS=
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
