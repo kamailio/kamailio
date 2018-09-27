@@ -275,18 +275,16 @@ static param_export_t params[]={
 
 /** module exports */
 struct module_exports exports= {
-	"dispatcher",
+	"dispatcher",    /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,
-	(destroy_function) destroy,
-	child_init  /* per-child init function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	destroy          /* module destroy function */
 };
 /* clang-format on */
 
