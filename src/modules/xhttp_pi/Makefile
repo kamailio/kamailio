@@ -1,5 +1,4 @@
 #
-# 
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
@@ -20,8 +19,6 @@ else
 		-I$(LOCALBASE)/include
 	LIBS += -L$(LOCALBASE)/lib -lxml2
 endif
-
-DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
