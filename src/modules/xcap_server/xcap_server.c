@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -138,18 +138,16 @@ static cmd_export_t cmds[]={
 
 /** module exports */
 struct module_exports exports= {
-	"xcap_server",				/* module name */
-	DEFAULT_DLFLAGS,			/* dlopen flags */
-	cmds,  						/* exported functions */
-	params,						/* exported parameters */
-	0,      					/* exported statistics */
-	0,							/* exported MI functions */
-	mod_pvs,					/* exported pseudo-variables */
-	0,							/* extra processes */
-	mod_init,					/* module initialization function */
-	0,							/* response handling function */
-	destroy,                    /* destroy function */
-	child_init					/* per-child init function */
+	"xcap_server",			/* module name */
+	DEFAULT_DLFLAGS,		/* dlopen flags */
+	cmds,					/* exported functions */
+	params,					/* exported parameters */
+	0,						/* exported rpc functions */
+	mod_pvs,				/* exported pseudo-variables */
+	0,						/* response handling function */
+	mod_init,				/* module initialization function */
+	child_init,				/* per-child init function */
+	destroy					/* destroy function */
 };
 
 /**
@@ -163,7 +161,7 @@ static int mod_init(void)
 		LM_ERR("invalid xcaps_directory_scheme\n");
 		return -1;
 	}
-	
+
 	if(xcaps_buf.len<=0)
 	{
 		LM_ERR("invalid buffer size\n");
@@ -183,7 +181,7 @@ static int mod_init(void)
 		LM_ERR("Database module not found\n");
 		return -1;
 	}
-	
+
 	if (!DB_CAPABILITY(xcaps_dbf, DB_CAP_ALL)) {
 		LM_ERR("Database module does not implement all functions"
 				" needed by the module\n");
