@@ -60,22 +60,22 @@ MODULE_VERSION
  * LDAP module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_ctx",    (cmd_function)NULL, 0, 0, 0},
-	{"db_con",    (cmd_function)ld_con, 0, 0, 0},
-	{"db_uri",    (cmd_function)ld_uri, 0, 0, 0},
-	{"db_cmd",    (cmd_function)ld_cmd, 0, 0, 0},
-	{"db_put",    (cmd_function)ld_cmd_exec, 0, 0, 0},
-	{"db_del",    (cmd_function)ld_cmd_exec, 0, 0, 0},
-	{"db_get",    (cmd_function)ld_cmd_exec, 0, 0, 0},
-	{"db_upd",    (cmd_function)ld_cmd_exec, 0, 0, 0},
-	{"db_sql",    (cmd_function)ld_cmd_exec, 0, 0, 0},
-	{"db_res",    (cmd_function)ld_res, 0, 0, 0},
-	{"db_fld",    (cmd_function)ld_fld, 0, 0, 0},
-	{"db_first",  (cmd_function)ld_cmd_first, 0, 0, 0},
-	{"db_next",   (cmd_function)ld_cmd_next, 0, 0, 0},
-	{"db_setopt", (cmd_function)ld_cmd_setopt, 0, 0, 0},
-	{"db_getopt", (cmd_function)NULL, 0, 0, 0},
-	{0, 0, 0, 0, 0}
+	{"db_ctx",    (cmd_function)NULL, 0, 0, 0, 0},
+	{"db_con",    (cmd_function)ld_con, 0, 0, 0, 0},
+	{"db_uri",    (cmd_function)ld_uri, 0, 0, 0, 0},
+	{"db_cmd",    (cmd_function)ld_cmd, 0, 0, 0, 0},
+	{"db_put",    (cmd_function)ld_cmd_exec, 0, 0, 0, 0},
+	{"db_del",    (cmd_function)ld_cmd_exec, 0, 0, 0, 0},
+	{"db_get",    (cmd_function)ld_cmd_exec, 0, 0, 0, 0},
+	{"db_upd",    (cmd_function)ld_cmd_exec, 0, 0, 0, 0},
+	{"db_sql",    (cmd_function)ld_cmd_exec, 0, 0, 0, 0},
+	{"db_res",    (cmd_function)ld_res, 0, 0, 0, 0},
+	{"db_fld",    (cmd_function)ld_fld, 0, 0, 0, 0},
+	{"db_first",  (cmd_function)ld_cmd_first, 0, 0, 0, 0},
+	{"db_next",   (cmd_function)ld_cmd_next, 0, 0, 0, 0},
+	{"db_setopt", (cmd_function)ld_cmd_setopt, 0, 0, 0, 0},
+	{"db_getopt", (cmd_function)NULL, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -90,15 +90,16 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"db2_ldap",
-	cmds,
-	0,              /* RPC method */
-	params,         /* module parameters */
-	ld_mod_init,    /* module initialization function */
-	0,              /* response function*/
-	ld_mod_destroy, /* destroy function */
-	0,              /* oncancel function */
-	0               /* per-child init function */
+	"db2_ldap",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	ld_mod_init,     /* module init function */
+	0,               /* per-child init function */
+	ld_mod_destroy   /* module destroy function */
 };
 
 
