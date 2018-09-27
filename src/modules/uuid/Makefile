@@ -20,7 +20,4 @@ else
 	LIBS+=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -luuid
 endif
 
-
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
