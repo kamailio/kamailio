@@ -98,18 +98,16 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"tcpops",
+	"tcpops",        /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* exported functions to config */
 	params,          /* exported parameters to config */
-	0,               /* exported statistics */
-	0,              /* exported MI functions */
-	0,        /* exported pseudo-variables */
-	0,              /* extra processes */
-	mod_init,       /* module initialization function */
-	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per child init function */
+	mod_destroy      /* destroy function */
 };
 
 
