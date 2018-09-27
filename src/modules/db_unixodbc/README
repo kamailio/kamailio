@@ -186,7 +186,7 @@ modparam("db_unixodbc", "quote_char", "`")
 
 5.2. Configuring and Running
 
-   In the openser.conf file, add the line:
+   In the Kamailio.cfg file, add the line:
 ....
 loadmodule "/usr/local/lib/kamailio/modules/db_unixodbc.so"
 ....
@@ -204,7 +204,7 @@ modparam("auth_db", "password_column", "password")
    url adding this line:
 ....
 modparam("usrloc|auth_db", "db_url",
-    "unixodbc://openser:openserrw@localhost/my_dsn")
+    "unixodbc://kamailio:kamailiorw@localhost/my_dsn")
 ....
 
    replacing my_dsn with the correct value.
