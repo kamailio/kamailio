@@ -240,16 +240,14 @@ static param_export_t params[] = {
 struct module_exports exports= {
 	"acc",
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       /* exported functions */
-	params,     /* exported params */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* initialization module */
-	0,          /* response function */
-	destroy,    /* destroy function */
-	child_init  /* per-child init function */
+	cmds,            /* exported functions */
+	params,     	 /* exported params */
+        0,          	 /* RPC method exports */
+	0,          	 /* exported pseudo-variables */
+	0,          	 /* response function */
+	mod_init,   	 /* initialization module */
+	child_init,  	 /* per-child init function */
+	destroy    	 /* destroy function */
 };
 
 
