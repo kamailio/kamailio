@@ -208,18 +208,16 @@ select_row_t sel_declaration[] = {
 
 /** module exports */
 struct module_exports exports = {
-	MODULE_NAME,
+	MODULE_NAME,     /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	NULL,          	/* exported statistics */
-	NULL, 		    /* exported MI functions */
-	mod_pvs,  	    /* exported pseudo-variables */
-	NULL,          	/* extra processes */
-	__mod_init,   	/* module initialization function */
-	NULL,
-	NULL,
-	__child_init	/* per-child init function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pseudo-variables exports */
+	0,               /* response handling function */
+	__mod_init,      /* module init function */
+	__child_init,    /* per-child init function */
+	0                /* module destroy function */
 };
 /* clang-format on */
 
