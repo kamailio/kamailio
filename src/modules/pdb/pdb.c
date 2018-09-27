@@ -108,18 +108,16 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"pdb",
+	"pdb",           /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       /* Exported functions */
-	params,     /* Export parameters */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* Module initialization function */
-	0,          /* Response function */
-	mod_destroy,/* Destroy function */
-	child_init  /* Child initialization function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* Module initialization function */
+	child_init,      /* Child initialization function */
+	mod_destroy      /* Destroy function */
 };
 
 
