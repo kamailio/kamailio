@@ -597,9 +597,8 @@ static SQInteger sqlang_sr_modf (HSQUIRRELVM J)
 	int i;
 	int mod_type;
 	struct run_act_ctx ra_ctx;
-	unsigned modver;
 	struct action *act;
-	sr31_cmd_export_t* expf;
+	ksr_cmd_export_t* expf;
 	sr_sqlang_env_t *env_J;
 
 	ret = 1;
@@ -641,7 +640,7 @@ static SQInteger sqlang_sr_modf (HSQUIRRELVM J)
 		}
 	}
 
-	expf = find_export_record(sqlangv[0], argc-1, 0, &modver);
+	expf = find_export_record(sqlangv[0], argc-1, 0);
 	if (expf==NULL) {
 		LM_ERR("function '%s' is not available\n", sqlangv[0]);
 		goto error;
