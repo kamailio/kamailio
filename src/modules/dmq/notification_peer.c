@@ -97,18 +97,18 @@ int create_IP_uri(char **puri_list, int host_index, char *phost, int hostlen,
 
 	plist = puri_list[host_index];
 	if(puri->type == SIPS_URI_T) {
-		strncpy(plist, "sips:", 5);
+		memcpy(plist, "sips:", 5);
 		pos = 5;
 	} else {
-		strncpy(plist, "sip:", 4);
+		memcpy(plist, "sip:", 4);
 		pos = 4;
 	}
 	if(puri->user.s) {
-		strncpy(&plist[pos], puri->user.s, puri->user.len);
+		memcpy(&plist[pos], puri->user.s, puri->user.len);
 		pos += puri->user.len;
 		if(puri->passwd.s) {
 			plist[pos++] = ':';
-			strncpy(&plist[pos], puri->passwd.s, puri->passwd.len);
+			memcpy(&plist[pos], puri->passwd.s, puri->passwd.len);
 			pos += puri->passwd.len;
 		}
 		plist[pos++] = '@';
@@ -117,7 +117,7 @@ int create_IP_uri(char **puri_list, int host_index, char *phost, int hostlen,
 		LM_WARN("%s", perr);
 		return 0;
 	}
-	strncpy(&plist[pos], phost, hostlen);
+	memcpy(&plist[pos], phost, hostlen);
 	pos += hostlen;
 	if(puri->port_no) {
 		if((pos + 6) > MAXDMQURILEN) {
@@ -133,7 +133,7 @@ int create_IP_uri(char **puri_list, int host_index, char *phost, int hostlen,
 			return 0;
 		}
 		plist[pos++] = ';';
-		strncpy(&plist[pos], puri->params.s, puri->params.len);
+		memcpy(&plist[pos], puri->params.s, puri->params.len);
 		pos += puri->params.len;
 	}
 	plist[pos] = '\0';
