@@ -10,6 +10,4 @@ LIBS=
 
 include ../../Makefile.radius
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
