@@ -9,6 +9,4 @@ auto_gen=
 NAME=path.so
 LIBS=
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
