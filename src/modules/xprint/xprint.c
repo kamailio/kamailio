@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -63,18 +61,18 @@ static int xpdbg_fixup(void** param, int param_no);
 static void destroy(void);
 
 static cmd_export_t cmds[]={
-	{"xplog",  xplog,  2, xplog_fixup, ANY_ROUTE},
-	{"xpdbg",  xpdbg,  1, xpdbg_fixup, ANY_ROUTE},
-	{"xbind",	(cmd_function)xl_bind, NO_SCRIPT, 0, 0},
-	{"xprint",	(cmd_function)xl_print_log, NO_SCRIPT, 0, 0},
-	{"xparse",	(cmd_function)xl_parse_format, NO_SCRIPT, 0, 0},
-	{"shm_xparse",	(cmd_function)xl_shm_parse_format, NO_SCRIPT, 0, 0},
-	{"xparse2",	(cmd_function)xl_parse_format2, NO_SCRIPT, 0, 0},
-	{"shm_xparse2",	(cmd_function)xl_shm_parse_format2, NO_SCRIPT, 0, 0},
-	{"xfree",	(cmd_function)xl_elog_free_all, NO_SCRIPT, 0, 0},
-	{"shm_xfree",	(cmd_function)xl_elog_shm_free_all, NO_SCRIPT, 0, 0},
-	{"xnulstr",	(cmd_function)xl_get_nulstr, NO_SCRIPT, 0, 0},
-	{0,0,0,0,0}
+	{"xplog",  xplog,  2, xplog_fixup, 0, ANY_ROUTE},
+	{"xpdbg",  xpdbg,  1, xpdbg_fixup, 0, ANY_ROUTE},
+	{"xbind",	(cmd_function)xl_bind, NO_SCRIPT, 0, 0, 0},
+	{"xprint",	(cmd_function)xl_print_log, NO_SCRIPT, 0, 0, 0},
+	{"xparse",	(cmd_function)xl_parse_format, NO_SCRIPT, 0, 0, 0},
+	{"shm_xparse",	(cmd_function)xl_shm_parse_format, NO_SCRIPT, 0, 0, 0},
+	{"xparse2",	(cmd_function)xl_parse_format2, NO_SCRIPT, 0, 0, 0},
+	{"shm_xparse2",	(cmd_function)xl_shm_parse_format2, NO_SCRIPT, 0, 0, 0},
+	{"xfree",	(cmd_function)xl_elog_free_all, NO_SCRIPT, 0, 0, 0},
+	{"shm_xfree",	(cmd_function)xl_elog_shm_free_all, NO_SCRIPT, 0, 0, 0},
+	{"xnulstr",	(cmd_function)xl_get_nulstr, NO_SCRIPT, 0, 0, 0},
+	{0,0,0,0,0,0}
 };
 
 
@@ -86,16 +84,16 @@ static param_export_t params[]={
 
 /** module exports */
 struct module_exports exports= {
-	"xprint",
-	cmds,
-	0,        /* RPC methods */
-	params,
-
-	mod_init,   /* module initialization function */
-	(response_function) 0,
-	(destroy_function) destroy,
-	0,
-	child_init  /* per-child init function */
+	"xprint",			/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* cmd (cfg function) exports */
+	params,				/* param exports */
+	0,					/* RPC method exports */
+	0,					/* pv exports */
+	0,					/* response handling function */
+	mod_init,			/* module init function */
+	child_init,			/* per-child init function */
+	destroy			/* module destroy function */
 };
 
 /**
