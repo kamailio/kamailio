@@ -25,8 +25,6 @@ else
 	LIBS+=-L$(LOCALBASE)/lib -lcurl
 endif
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 
