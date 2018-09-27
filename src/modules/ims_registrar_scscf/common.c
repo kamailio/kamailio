@@ -85,7 +85,7 @@ int extract_aor(str* _uri, str* _a) {
 
 	_a->s = aor_buf;
 	_a->len = puri.user.len + 4;
-	strncpy(_a->s, "sip:", 4);
+	memcpy(_a->s, "sip:", 4);
 
 	str tmps;
 	tmps.s = _a->s + 4;
