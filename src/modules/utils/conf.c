@@ -208,7 +208,9 @@ static int update_filter(int id, char *flist)
 		/* no special filter! */
 			if (buf[0]) {
 				strcpy(tmp, buf);
-				snprintf(buf, BUFSIZE, "%s:%s", tmp, token);
+				if(snprintf(buf, BUFSIZE, "%s:%s", tmp, token)>BUFSIZE) {
+					LM_BUG("output was truncated\n");
+				}
 				buf[BUFSIZE]='\0';
 			} else {
 				snprintf(buf, BUFSIZE, "%s", token);
