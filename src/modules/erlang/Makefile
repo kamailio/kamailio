@@ -19,7 +19,7 @@ endif
 LIBS=-L$(ERLANG_LIBDIR) -lei -lpthread
 
 DEFS+=-I$(ERLANG_INCDIR)
-DEFS+=-DKAMAILIO_MOD_INTERFACE -D_REENTRANT
+DEFS+=-D_REENTRANT
 
 
 include ../../Makefile.modules
