@@ -82,7 +82,7 @@ static param_export_t params[]={
 	{ "db_url",					PARAM_STR,         &xcap_db_url    },
 	{ "xcap_table",				PARAM_STR,         &xcap_db_table  },
 	{ "periodical_query",		INT_PARAM,         &periodical_query },
-	{ "query_period",	       	INT_PARAM,         &query_period     },
+	{ "query_period",			INT_PARAM,         &query_period     },
 	{    0,                     0,                      0            }
 };
 
@@ -96,7 +96,7 @@ static cmd_export_t  cmds[]=
 /** module exports */
 struct module_exports exports= {
 	"xcap_client",   /* module name */
-	DEFAULT_DLFLAGS,  /* dlopen flags */
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* exported functions */
 	params,          /* exported parameters */
 	0,               /* exported rpc functions */
