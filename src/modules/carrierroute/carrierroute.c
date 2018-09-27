@@ -145,18 +145,16 @@ static mi_export_t mi_cmds[] = {
 static rpc_export_t rpc_methods[];
 
 struct module_exports exports = {
-	"carrierroute",
+	"carrierroute",  /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       /* Exported functions */
-	params,     /* Export parameters */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* Module initialization function */
-	0,          /* Response function */
-	mod_destroy,/* Destroy function */
-	child_init  /* Child initialization function */
+	cmds,            /* Exported functions */
+	params,          /* Export parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* Response function */
+	mod_init,        /* Module initialization function */
+	child_init,      /* Child initialization function */
+	mod_destroy      /* Destroy function */
 };
 
 
