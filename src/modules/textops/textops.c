@@ -349,7 +349,7 @@ struct module_exports exports= {
 	0,          /* exported rpc functions */
 	0,          /* exported pseudo-variables */
 	0,          /* response handling function */
-	mod_init,   /* module function */
+	mod_init,   /* module init function */
 	0,          /* per-child init function */
 	0           /* module destroy function */
 };
