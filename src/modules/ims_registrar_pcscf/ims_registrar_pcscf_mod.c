@@ -172,11 +172,6 @@ static param_export_t params[] = {
 };
 
 
-/*! \brief We expose internal variables via the statistic framework below.*/
-stat_export_t mod_stats[] = {
-	{0, 0, 0}
-};
-
 
 static pv_export_t mod_pvs[] = {
     {{"pcscf_asserted_identity", (sizeof("pcscf_asserted_identity")-1)}, /* The first identity of the contact. */
@@ -194,14 +189,12 @@ struct module_exports exports = {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,        	/* Exported functions */
 	params,      	/* Exported parameters */
-	mod_stats,   	/* exported statistics */
-	0,           	/* exported MI functions */
+	0,           	/* exported RPC methods */
 	mod_pvs,     	/* exported pseudo-variables */
-	0,           	/* extra processes */
+	0,           	/* response handling function */
 	mod_init,    	/* module initialization function */
-	0,
-	mod_destroy, 	/* destroy function */
 	child_init,  	/* Per-child init function */
+	mod_destroy 	/* destroy function */
 };
 
 int fix_parameters() {
