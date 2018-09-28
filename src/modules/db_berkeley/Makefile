@@ -9,7 +9,7 @@ NAME=db_berkeley.so
 
 # extra debug messages
 # -DBDB_EXTRA_DEBUG is optional
-DEFS +=-DSER_MOD_INTERFACE -I$(LOCALBASE)/include -I$(LOCALBASE)/BerkeleyDB.4.6/include \
+DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/BerkeleyDB.4.6/include \
 	-I$(SYSBASE)/include
 
 

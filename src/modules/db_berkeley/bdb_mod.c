@@ -86,14 +86,15 @@ static param_export_t params[] = {{"auto_reload", INT_PARAM, &auto_reload},
 		{0, 0, 0}};
 
 struct module_exports exports = {
-		"db_berkeley", cmds, /* Exported functions */
-		0,					 /* RPC method */
-		params,				 /* Exported parameters */
-		bdb_mod_init,		 /* module initialization function */
-		0,					 /* response function*/
-		bdb_mod_destroy,	 /* destroy function */
-		0,					 /* oncancel function */
-		0					 /* per-child init function */
+		"db_berkeley", 
+		cmds,			/* Exported functions */
+		0,			/* RPC method */
+		params,			/* Exported parameters */
+		bdb_mod_init,		/* module initialization function */
+		0,			/* response function*/
+		bdb_mod_destroy,	/* destroy function */
+		0,			/* oncancel function */
+		0			/* per-child init function */
 };
 
 
