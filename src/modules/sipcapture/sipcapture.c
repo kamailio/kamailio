@@ -422,22 +422,16 @@ stat_export_t *sipcapture_stats = NULL;
 
 /*! \brief module exports */
 struct module_exports exports = {
-	"sipcapture", DEFAULT_DLFLAGS, /*!< dlopen flags */
-	cmds,						   /*!< Exported functions */
-	params,						   /*!< Exported parameters */
-#ifdef STATISTICS
-	//	sipcapture_stats,  /*!< exported statistics */
-	0,
-#else
-	0, /*!< exported statistics */
-#endif
-	0,		   /*!< exported MI functions */
-	mod_pvs,   /*!< exported pseudo-variables */
-	0,		   /*!< extra processes */
-	mod_init,  /*!< module initialization function */
-	0,		   /*!< response function */
-	destroy,   /*!< destroy function */
-	child_init /*!< child initialization function */
+	"sipcapture",    /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	destroy          /* module destroy function */
 };
 
 
