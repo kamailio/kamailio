@@ -6,6 +6,4 @@ auto_gen=
 NAME=mqueue.so
 LIBS=
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
