@@ -39,6 +39,8 @@
     if (!(reply)) { \
         LM_ERR("Failed to fetch type entry: %s\n", \
                 (con)->con->errstr); \
+        redisFree((con)->con); \
+        (con)->con = NULL; \
         goto err; \
     } \
     if ((reply)->type == REDIS_REPLY_ERROR) { \
