@@ -73,14 +73,18 @@ static pv_export_t mod_pvs[] = {
 };
 
 /** module exports */
-struct module_exports exports = {"ims_diameter_server", DEFAULT_DLFLAGS, /* dlopen flags */
-    cmds, /* Exported functions */
-    params, 0, /* exported statistics */
-    0, /* exported MI functions */
-    mod_pvs, /* exported pseudo-variables */
-    0, /* extra processes */
-    mod_init, /* module initialization function */
-    0, mod_destroy, mod_child_init /* per-child init function */};
+struct module_exports exports = {
+	"ims_diameter_server", 
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds, 		 /* Exported functions */
+	params,  	 /* exported statistics */
+	0, 		 /* exported RPC methods */
+	mod_pvs, 	 /* exported pseudo-variables */
+	0, 		 /* response handling function */
+	mod_init, 	 /* module initialization function */
+	mod_child_init,  /* per-child init function */
+	mod_destroy
+};
 
 /**
  * init module function
