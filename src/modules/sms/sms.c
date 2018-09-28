@@ -43,7 +43,7 @@ MODULE_VERSION
 
 
 static int sms_init(void);
-static int sms_exit(void);
+static void sms_exit(void);
 static int sms_child_init(int);
 static int w_sms_send_msg(struct sip_msg*, char*, char* );
 static int w_sms_send_msg_to_net(struct sip_msg*, char*, char*);
@@ -68,10 +68,10 @@ int    sms_report_type = NO_REPORT;
 
 static cmd_export_t cmds[]={
 	{"sms_send_msg_to_net", w_sms_send_msg_to_net, 1,
-	     fixup_sms_send_msg_to_net, REQUEST_ROUTE},
+	     fixup_sms_send_msg_to_net, 0, REQUEST_ROUTE},
 	{"sms_send_msg",        w_sms_send_msg,        0,
-	     0,                         REQUEST_ROUTE},
-	{0,0,0,0,0}
+	     0, 0,                         REQUEST_ROUTE},
+	{0,0,0,0,0,0}
 };
 
 
@@ -89,16 +89,16 @@ static param_export_t params[]={
 
 
 struct module_exports exports= {
-	"sms",
-	cmds,
-	0,        /* RPC methods */
-	params,
-
-	sms_init,   /* module initialization function */
-	(response_function) 0,
-	(destroy_function) sms_exit,   /* module exit function */
-	0,
-	(child_init_function) sms_child_init  /* per-child init function */
+	"sms",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,           /* exported functions */
+	params,         /* exported parameters */
+	0,              /* exported RPC methods */
+	0,              /* exported pseudo-variables */
+	0,              /* response handling function*/
+	sms_init,       /* module init function */
+	sms_child_init, /* per-child init function */
+	sms_exit        /* module destroy function */
 };
 
 
@@ -647,7 +647,7 @@ static int sms_init(void)
 
 
 
-static int sms_exit(void)
+static void sms_exit(void)
 {
 	if (queued_msgs)
 		shm_free(queued_msgs);
@@ -655,7 +655,7 @@ static int sms_exit(void)
 	if (sms_report_type!=NO_REPORT)
 		destroy_report_queue();
 
-	return 0;
+	return;
 }
 
 
