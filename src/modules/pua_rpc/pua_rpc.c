@@ -388,15 +388,16 @@ rpc_export_t pua_rpc_ex[] = {
 
 /** module exports */
 struct module_exports exports= {
-	"pua_rpc",
-	0,
-	pua_rpc_ex,
-	0,
-	mod_init,
-	0,
-	0,
-	0,
-	0
+	"pua_rpc",			/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	0,					/* exported functions */
+	0,					/* exported parameters */
+	pua_rpc_ex,			/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	mod_init,			/* module initialization function */
+	0,					/* per-child init function */
+	0					/* module destroy function */
 };
 
 /**
