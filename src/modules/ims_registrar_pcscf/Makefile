@@ -26,8 +26,6 @@ ifneq ($(OS),darwin)
 	LIBS += -lpthread
 endif
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
 include ../../Makefile.modules
