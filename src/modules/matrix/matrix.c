@@ -104,19 +104,17 @@ static param_export_t params[] = {
 
 
 
-struct module_exports exports= {
-	"matrix",
-	DEFAULT_DLFLAGS,
-	cmds,
-	params,
-	0,
-	0,
-	0,
-	0,
-	mod_init,
-	0,
-	mod_destroy,
-	child_init
+struct module_exports exports = {
+	"matrix",        /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 
