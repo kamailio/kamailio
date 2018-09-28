@@ -46,24 +46,23 @@
  * PostgreSQL database module interface
  */
 
-static kam_cmd_export_t cmds[] = {
+static cmd_export_t cmds[] = {
 	{"db_bind_api", (cmd_function)db_postgres_bind_api, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
 
-struct kam_module_exports kam_exports = {
-	"db_postgres", DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,							/* module functions */
-	0,								/* module parameters */
-	0,								/* exported statistics */
-	0,								/* exported MI functions */
-	0,								/* exported pseudo-variables */
-	0,								/* extra processes */
-	km_postgres_mod_init,			/* module initialization function */
-	0,								/* response function*/
-	0,								/* destroy function */
-	0								/* per-child init function */
+struct module_exports kam_exports = {
+	"db_postgres",			/* module name*/
+	DEFAULT_DLFLAGS,		/* dlopen flags */
+	cmds,					/* exported functions */
+	0,						/* exported parameters */
+	0,						/* exported rpc functions */
+	0,						/* exported pseudo-variables */
+	0,						/* response function*/
+	km_postgres_mod_init,	/* module init function */
+	0,						/* per-child init function */
+	0						/* module destroy function */
 };
 
 
