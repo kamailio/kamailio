@@ -106,7 +106,7 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"check_uri",   check_uri,     1, header_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 
