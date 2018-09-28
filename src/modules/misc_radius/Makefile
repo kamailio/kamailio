@@ -7,6 +7,4 @@ include ../../Makefile.radius
 auto_gen=
 NAME=misc_radius.so
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
