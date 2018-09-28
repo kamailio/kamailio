@@ -114,17 +114,15 @@ static int nsq_add_topic_channel(modparam_t type, void *val)
 
 struct module_exports exports = {
 	"nsq",
-	DEFAULT_DLFLAGS,		/* dlopen flags */
-	cmds,					/* Exported functions */
-	params,					/* Exported parameters */
-	0,						/* exported statistics */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,			/* Exported functions */
+	params,			/* Exported parameters */
 	0,                      /* exported MI functions */
 	nsq_mod_pvs,            /* exported pseudo-variables */
-	0,						/* extra processes */
-	mod_init,				/* module initialization function */
-	0,						/* response function*/
-	mod_destroy,			/* destroy function */
-	mod_child_init			/* per-child init function */
+	0,			/* response function*/
+	mod_init,		/* module initialization function */
+	mod_child_init,		/* per-child init function */
+	mod_destroy		/* destroy function */
 };
 
 static int fire_init_event(int rank)
