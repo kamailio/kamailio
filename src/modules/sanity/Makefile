@@ -9,7 +9,6 @@ include ../../Makefile.defs
 auto_gen=
 NAME=sanity.so
 LIBS=
-
-DEFS+=-DSER_MOD_INTERFACE
+DEFS+=
 
 include ../../Makefile.modules
