@@ -121,18 +121,16 @@ static cmd_export_t cmds[]={
 };
 
 struct module_exports exports= {
-	"dialplan",     /* module's name */
+	"dialplan",      /* module's name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,      	    /* exported functions */
-	mod_params,     /* param exports */
-	0,				/* exported statistics */
-	0,				/* exported MI functions */
-	0,				/* exported pseudo-variables */
-	0,				/* additional processes */
-	mod_init,		/* module initialization function */
-	0,				/* reply processing function */
-	mod_destroy,
-	child_init		/* per-child init function */
+	cmds,            /* exported functions */
+	mod_params,      /* param exports */
+	0,               /* exported RPC functions */
+	0,               /* exported pseudo-variables */
+	0,               /* reply processing function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 
