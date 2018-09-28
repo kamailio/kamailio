@@ -231,18 +231,16 @@ static param_export_t parameters[] = {
 		{"ice_candidate_avp", PARAM_STR, &(ice_candidate_avp.spec)}, {0, 0, 0}};
 
 struct module_exports exports = {
-		"mediaproxy",	// module name
-		DEFAULT_DLFLAGS, // dlopen flags
-		commands,		 // exported functions
-		parameters,		 // exported parameters
-		NULL,			 // exported statistics
-		NULL,			 // exported MI functions
-		NULL,			 // exported pseudo-variables
-		NULL,			 // extra processes
-		mod_init,  // module init function (before fork. kids will inherit)
-		NULL,	  // reply processing function
-		NULL,	  // destroy function
-		child_init // child init function
+	"mediaproxy",    /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	commands,        /* cmd (cfg function) exports */
+	parameters,      /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	0                /* module destroy function */
 };
 
 
