@@ -80,13 +80,9 @@ static cmd_export_t cmds[] = {
 };
 
 static pv_export_t mod_pvs[] = {
-        { {"isup", sizeof("isup")-1}, PVT_OTHER, pv_get_isup,
-        	0, pv_parse_isup_name, 0, 0, 0 },
-        { {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
-
-static param_export_t params[] = {
-	{0, 0, 0}
+	{ {"isup", sizeof("isup")-1}, PVT_OTHER, pv_get_isup,
+			0, pv_parse_isup_name, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 static int mod_init(void)
@@ -101,18 +97,16 @@ static void destroy(void)
 }
 
 struct module_exports exports = {
-	"ss7",
+	"ss7",      /*!< module name */
 	DEFAULT_DLFLAGS, /*!< dlopen flags */
-	cmds,       /*!< Exported functions */
-	params,     /*!< Exported parameters */
-	0,
-	0,          /*!< exported MI functions */
+	cmds,       /*!< exported functions */
+	0,          /*!< exported parameters */
+	0,          /*!< exported rpc functions */
 	mod_pvs,    /*!< exported pseudo-variables */
-	0,          /*!< extra processes */
-	mod_init,   /*!< module initialization function */
-	0,          /*!< response function */
-	destroy,    /*!< destroy function */
-	0           /*!< child initialization function */
+	0,          /*!< response handling function */
+	mod_init,   /*!< module init function */
+	0,          /*!< child init function */
+	destroy     /*!< module destroy function */
 };
 
 static const uint8_t *extract_from_m2ua(const uint8_t *data, size_t *len)
