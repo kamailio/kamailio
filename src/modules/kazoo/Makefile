@@ -32,9 +32,6 @@ else
 	LIBS += $(shell $(BUILDER) --libs libevent)
 endif
 
-DEFS += -DKAMAILIO_MOD_INTERFACE
-
-
 SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/srdb1/srdb1
 
