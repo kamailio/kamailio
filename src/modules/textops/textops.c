@@ -345,15 +345,13 @@ struct module_exports exports= {
 	"textops",  /* module name*/
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* exported functions */
-	0,          /* module parameters */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
+	0,          /* exported parameters */
+	0,          /* exported rpc functions */
 	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,          /* response function */
-	0,          /* destroy function */
+	0,          /* response handling function */
+	mod_init,   /* module function */
 	0,          /* per-child init function */
+	0           /* module destroy function */
 };
 
 
