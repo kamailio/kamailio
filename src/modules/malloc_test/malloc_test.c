@@ -44,9 +44,9 @@ static void mod_destroy(void);
 
 
 static cmd_export_t cmds[]={
-	{"mt_mem_alloc", mt_mem_alloc_f, 1, fixup_var_int_1,
+	{"mt_mem_alloc", mt_mem_alloc_f, 1, fixup_var_int_1, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
-	{"mt_mem_free", mt_mem_free_f, 1, fixup_var_int_1,
+	{"mt_mem_free", mt_mem_free_f, 1, fixup_var_int_1, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -93,14 +93,15 @@ static param_export_t params[]={
 
 struct module_exports exports = {
 	"malloc_test",
+	DEFAULT_DLFLAGS, /* dlopen flags */	
 	cmds,
-	mt_rpc,        /* RPC methods */
 	params,
-	mod_init, /* module initialization function */
-	0,        /* response function*/
-	mod_destroy, /* destroy function */
-	0,        /* oncancel function */
-	0         /* per-child init function */
+	mt_rpc,        	/* RPC methods */
+	0,       	/* pseudo-variables exports */
+	0,        	/* response function*/
+	mod_init, 	/* module initialization function */
+	0,         	/* per-child init function */
+	mod_destroy 	/* destroy function */
 };
 
 
