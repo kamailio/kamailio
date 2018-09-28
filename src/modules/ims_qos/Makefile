@@ -8,8 +8,6 @@ auto_gen=
 NAME=ims_qos.so
 LIBS=
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
 
