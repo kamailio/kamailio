@@ -54,16 +54,16 @@ static int bind_sanity(sanity_api_t* api);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"sanity_check", (cmd_function)w_sanity_check, 0, 0,
+	{"sanity_check", (cmd_function)w_sanity_check, 0, 0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"sanity_check", (cmd_function)w_sanity_check, 1, fixup_igp_null,
+	{"sanity_check", (cmd_function)w_sanity_check, 1, fixup_igp_null, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"sanity_check", (cmd_function)w_sanity_check, 2, fixup_igp_igp,
+	{"sanity_check", (cmd_function)w_sanity_check, 2, fixup_igp_igp, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"sanity_check", (cmd_function)w_sanity_reply, 0, 0,
+	{"sanity_check", (cmd_function)w_sanity_reply, 0, 0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"bind_sanity",  (cmd_function)bind_sanity,    0, 0, 0},
-	{0, 0, 0, 0}
+	{"bind_sanity",  (cmd_function)bind_sanity,    0, 0, 0, 0 },
+	{0, 0, 0, 0, 0, 0}
 };
 
 /*
@@ -82,15 +82,16 @@ static param_export_t params[] = {
  * Module description
  */
 struct module_exports exports = {
-	"sanity",        /* Module name */
-	cmds,            /* Exported functions */
+	"sanity",        /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd exports */
+	params,          /* exported parameters */
 	0,               /* RPC methods */
-	params,          /* Exported parameters */
-	mod_init,        /* Initialization function */
-	0,               /* Response function */
-	0,               /* Destroy function */
-	0,               /* OnCancel function */
-	0                /* Child init function */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
 
 /*
