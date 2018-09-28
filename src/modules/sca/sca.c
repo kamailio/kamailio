@@ -159,18 +159,16 @@ static param_export_t params[] = {
  * MODULE EXPORTS
  */
 struct module_exports exports= {
-	"sca",
+	"sca",           /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	sca_mod_init,
-	0,
-	sca_mod_destroy,
-	sca_child_init  /* per-child init function */
+	cmds,            /* cmd exports */
+	params,          /* param exports */
+	0,               /* exported RPC functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	sca_mod_init,    /* module init function */
+	sca_child_init,  /* per-child init function */
+	sca_mod_destroy  /* module destroy function */
 };
 
 static int sca_bind_sl(sca_mod *scam, sl_api_t *sl_api)
