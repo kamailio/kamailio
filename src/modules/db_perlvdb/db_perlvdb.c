@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id: perlvdb.c 770 2007-01-22 10:16:34Z bastian $
  *
  * Perl virtual database module
@@ -18,8 +18,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -43,28 +43,17 @@ static cmd_export_t cmds[] = {
 };
 
 
-/*
- * Exported parameters
- */
-static param_export_t params[] = {
-	{0, 0, 0}
-};
-
-
-
 struct module_exports exports = {
-	"db_perlvdb",
+	"db_perlvdb",	/* module name */
 	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
-	cmds,
-	params,      /*  module parameters */
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	0,           /* exported pseudo-variables */
-	0,           /* extra processes */
-	mod_init,    /* module initialization function */
-	0,           /* response function*/
-	0,           /* destroy function */
-	0            /* per-child init function */
+	cmds,		/* exported functions */
+	0,			/* exported parameters */
+	0,			/* exported rpc functions */
+	0,			/* exported pseudo-variables */
+	0,			/* response handling function*/
+	mod_init,	/* module initialization function */
+	0,			/* per-child init function */
+	0			/* destroy function */
 };
 
 
