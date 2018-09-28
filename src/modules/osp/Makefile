@@ -35,7 +35,5 @@ LIBS+= $(TLS_EXTRA_LIBS)
 DEFS+=-D_POSIX_THREADS -I$(LOCALBASE)/include
 LIBS+=-L$(LOCALBASE)/lib -losptk -lpthread -lm
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
 
