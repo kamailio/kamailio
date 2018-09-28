@@ -310,16 +310,14 @@ static stat_export_t statistics[] = {
 struct module_exports exports = {
 	"nat_traversal", // module name
 	DEFAULT_DLFLAGS, // dlopen flags
-	commands,		 // exported functions
-	parameters,		 // exported parameters
-	NULL,			 // exported statistics (initialized early in mod_init)
-	NULL,			 // exported MI functions
-	pvars,			 // exported pseudo-variables
-	NULL,			 // extra processes
+	commands,	 // exported functions
+	parameters,	 // exported parameters
+	0,		 // exported RPC methods
+	pvars,		 // exported pseudo-variables
+	reply_filter, 	 // reply processing function
 	mod_init,	 // module init function (before fork. kids will inherit)
-	reply_filter, // reply processing function
-	mod_destroy,  // destroy function
-	child_init	// child init function
+	child_init, 	 // child init function
+	mod_destroy  	 // destroy function
 };
 
 
