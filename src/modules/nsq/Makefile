@@ -12,8 +12,6 @@ NAME=nsq.so
 LIBS=-lnsq -lev -levbuffsock -lcurl -ljson-c
 DEFS+=-I$(LOCALBASE)/include -I/usr/local/include $(shell pkg-config --cflags json-c)
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/srdb1/srdb1
 
