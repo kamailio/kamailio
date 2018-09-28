@@ -57,7 +57,7 @@ static int w_as_relay_sl(struct sip_msg *msg, char *as_name, char *foo);
 /* Local functions */
 static int seas_init(void);
 static int seas_child_init(int rank);
-static int seas_exit();
+static void seas_exit();
 static int fixup_as_relay(void** param, int param_no);
 
 /*utility functions*/
@@ -104,25 +104,18 @@ static param_export_t params[]=
 	{0,0,0}
 };
 
-static proc_export_t seas_procs[] = {
-	{"SEAS",  0,  0,  0,  1 },
-	{0,0,0,0,0}
-};
-
 struct module_exports exports=
 {
 	"seas",
 	DEFAULT_DLFLAGS,
-	cmds,        /* exported commands */
-	params,      /* exported parameters */
-	0,           /* exported statistics */
-	0,           /* exported mi commands */
-	0,           /* exported module-items (pseudo variables) */
-	seas_procs,  /* extra processes */
-	seas_init,   /* module initialization function */
-	0,           /* response function */
-	(destroy_function) seas_exit,   /* module exit function */
-	(child_init_function) seas_child_init  /* per-child init function */
+	cmds,        	 /* exported commands */
+	params,      	 /* exported parameters */
+	0,           	 /* exported RPC methods */
+	0,           	 /* exported module-items (pseudo variables) */
+	0,           	 /* response function */
+	seas_init,   	 /* module initialization function */
+	seas_child_init, /* per-child init function */
+	seas_exit	 /* module exit function */
 };
 
 static int fixup_as_relay(void** param, int param_no)
@@ -745,11 +738,11 @@ static int seas_child_init(int rank)
  * send them an EOF event or something that signals that SER is being shutdown,
  * so they could do their cleanup, etc.
  */
-static int seas_exit(void)
+static void seas_exit(void)
 {
 	if( seas_listen_ip!=NULL && seas_listen_ip!=&(get_first_socket()->address))
 		pkg_free(seas_listen_ip);
-	return 0;
+	return;
 }
 
 /**
