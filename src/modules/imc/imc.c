@@ -134,18 +134,12 @@ struct module_exports exports= {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* exported commands */
 	params,     /* exported parameters */
-#ifdef STATISTICS
-	imc_stats,
-#else
-	0,          /* exported statistics */
-#endif
-	0,          /* exported MI functions */
+	0,          /* exported rpc functions */
 	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* mod init */
-	0,          /* response handler */
-	(destroy_function) destroy,  /* destroy function */
-	child_init  /* child init */
+	0,          /* response handling function */
+	mod_init,   /* module init function */
+	child_init, /* child init function */
+	destroy     /* module destroy function */
 };
 
 /**
