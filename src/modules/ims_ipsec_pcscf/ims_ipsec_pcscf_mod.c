@@ -76,33 +76,20 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-
-/*! \brief We expose internal variables via the statistic framework below.*/
-stat_export_t mod_stats[] = {
-	{0, 0, 0}
-};
-
-
-static pv_export_t mod_pvs[] = {
-    {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
-};
-
 /*! \brief
  * Module exports structure
  */
 struct module_exports exports = {
 	"ims_ipsec_pcscf",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,        	/* Exported functions */
-	params,      	/* Exported parameters */
-	mod_stats,   	/* exported statistics */
-	0,           	/* exported MI functions */
-	mod_pvs,     	/* exported pseudo-variables */
-	0,           	/* extra processes */
-	mod_init,    	/* module initialization function */
-	0,
-	mod_destroy, 	/* destroy function */
-	child_init,  	/* Per-child init function */
+	DEFAULT_DLFLAGS,/* dlopen flags */
+	cmds,		/* exported functions */
+	params,		/* exported params */
+	0,		/*·exported·RPC·methods·*/
+	0,		/* exported pseudo-variables */	
+	0,		/*·response·function·*/
+	mod_init,	/* module initialization function */
+	child_init,	/* Per-child init function */
+	mod_destroy,	/* destroy function */
 };
 
 
