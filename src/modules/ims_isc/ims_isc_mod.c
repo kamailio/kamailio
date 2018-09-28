@@ -97,14 +97,18 @@ static param_export_t params[] = {
 };
 
 /** module exports */
-struct module_exports exports = {"ims_isc", DEFAULT_DLFLAGS, /* dlopen flags */
-    cmds, /* Exported functions */
-    params, 0, /* exported statistics */
-    0, /* exported MI functions */
-    0, /* exported pseudo-variables */
-    0, /* extra processes */
-    mod_init, /* module initialization function */
-    0, 0, 0 /* per-child init function */};
+struct module_exports exports = {
+	"ims_isc", 
+	DEFAULT_DLFLAGS, /* dlopen flags */
+    	cmds, 		 /* Exported functions */
+    	params, 
+	0, 		 /* exported RPC methods */
+	0, 		 /* exported pseudo-variables */
+	0, 		 /* response handling function */
+	mod_init, 	 /* module initialization function */
+	0, 		 /* per-child init function */
+	0                /* module destroy function */
+};
 
 /*! \brief
  * Convert char* parameter to udomain_t* pointer
