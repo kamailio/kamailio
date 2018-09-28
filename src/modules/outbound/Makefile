@@ -47,6 +47,5 @@ LIBS+= $(TLS_EXTRA_LIBS)
 # Static linking, if you'd like to use TLS and OUTBOUND at the same time
 #
 #LIBS+= /usr/lib/libcurl.a /usr/lib/libssl.a /usr/lib/libcrypto.a -lkrb5 -lidn -lz -lgssapi_krb5 -lrt
-DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules
