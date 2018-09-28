@@ -63,9 +63,8 @@ struct module_exports exports = {
 	params,         /* exported parameters */
 	0,              /* exported rpc functions */
 	0,              /* exported pseudo-variables */
-	0,              /* extra processes */
-	mod_init,       /* module init function */
 	0,              /* response handling function */
+	mod_init,       /* module init function */
 	child_init,     /* per child init function */
 	mod_destroy     /* destroy function */
 };
