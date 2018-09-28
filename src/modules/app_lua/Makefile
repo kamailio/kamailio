@@ -105,6 +105,4 @@ else
 	endif
 endif
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
