@@ -73,18 +73,16 @@ static cmd_export_t cmds[]={
 };
 
 struct module_exports exports = {
-		"jansson",
-		DEFAULT_DLFLAGS,	/* dlopen flags */
-		cmds,				/* Exported functions */
-		0,					/* Exported parameters */
-		0,					/* exported statistics */
-		0,					/* exported MI functions */
-		0,					/* exported pseudo-variables */
-		0,					/* extra processes */
-		mod_init,			/* module initialization function */
-		0,					/* response function*/
-		0,					/* destroy function */
-		0					/* per-child init function */
+	"jansson",       /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	0,               /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
 
 
