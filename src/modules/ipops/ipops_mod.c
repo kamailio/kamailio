@@ -174,16 +174,16 @@ static cmd_export_t cmds[] =
  * Module interface
  */
 struct module_exports exports = {
-	"ipops",         /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd (cfg function) exports */
-	0,               /* exported parameters */
-	0,               /* RPC method exports */
-	mod_pvs,         /* exported pseudo-variables */
-	0,               /* response handling function */
-	mod_init,        /* module init function */
-	0,               /* per-child init function */
-	0                /* module destroy function */
+	"ipops",	/* module name */
+	DEFAULT_DLFLAGS,/* dlopen flags */
+	cmds,		/* cmd (cfg function) exports */
+	0,		/* param exports*/
+	0,		/* RPC method exports */
+	mod_pvs,	/* exported pseudo-variables */
+	0,		/* response handling function */
+	mod_init,	/* module init function */
+	0,		/* per-child init function */
+	0		/* module destroy function */
 };
 
 
