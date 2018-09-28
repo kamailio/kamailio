@@ -227,18 +227,16 @@ static rpc_export_t rpc_methods[];
 
 /** module exports */
 struct module_exports exports= {
-	"ratelimit",
-	DEFAULT_DLFLAGS,		/* dlopen flags */
-	cmds,
-	params,
-	0,				/* exported statistics */
-	0,				/* exported MI functions */
-	0,				/* exported pseudo-variables */
-	0,				/* extra processes */
-	mod_init,			/* module initialization function */
-	0,
-	(destroy_function) destroy,	/* module exit function */
-	0				/* per-child init function */
+	"ratelimit",     /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* exported RPC functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	destroy          /* module exit function */
 };
 
 
