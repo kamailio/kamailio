@@ -13,8 +13,6 @@ ifneq ($(OS),darwin)
 	LIBS += -lmnl
 endif
 
-DEFS+=-DOPENSER_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
 include ../../Makefile.modules
