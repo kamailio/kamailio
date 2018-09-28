@@ -120,7 +120,6 @@ struct module_exports exports= {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* exported functions */
 	params,          /* exported parameters */
-	0,               /* exported statistics */
 	0,               /* exported rpc functions */
 	0,               /* exported pseudo-variables */
 	0,               /* response handling function */
