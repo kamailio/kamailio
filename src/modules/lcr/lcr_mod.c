@@ -360,16 +360,14 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"lcr", 
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,      /* Exported functions */
-	params,    /* Exported parameters */
-	0,         /* exported statistics */
-	0,         /* exported MI functions */
-	0,         /* exported pseudo-variables */
-	0,         /* extra processes */
-	mod_init,  /* module initialization function */
-	0,         /* response function */
-	destroy,   /* destroy function */
-	child_init /* child initialization function */
+	cmds,      	 /* Exported functions */
+	params,    	 /* Exported parameters */
+	0,         	 /* exported RPC methods */
+	0,         	 /* exported pseudo-variables */
+	0,         	 /* response function */
+	mod_init,  	 /* module initialization function */
+	child_init,	 /* child initialization function */
+	destroy		 /* destroy function */
 };
 /* clang-format on */
 
