@@ -137,18 +137,16 @@ static param_export_t params[]={
 
 /** module exports */
 struct module_exports exports= {
-	"topos",
+	"topos",    /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
+	cmds,       /* exported  functions */
+	params,     /* exported parameters */
+	0,          /* exported rpc functions */
 	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
+	0,          /* response handling function */
 	mod_init,   /* module initialization function */
-	0,
-	destroy,    /* destroy function */
-	child_init  /* child initialization function */
+	child_init, /* child initialization function */
+	destroy     /* destroy function */
 };
 
 /**
