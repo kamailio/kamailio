@@ -102,14 +102,12 @@ struct module_exports exports = {
   DEFAULT_DLFLAGS,  /* dlopen flags */
   mod_cmds,         /* exported functions */
   mod_parms,        /* exported parameters */
-  0,                /* statistics */
-  0,                /* MI functions */
+  0,                /* RPC methods */
   0,                /* exported pseudo-variables */
-  0,                /* extra processes */
-  mod_init,         /* module initialization function */
   0,                /* response handling function */
-  mod_destroy,      /* destructor function */
+  mod_init,         /* module initialization function */
   mod_child_init,   /* per-child initialization function */
+  mod_destroy       /* destructor function */
 };
 
 /**********
