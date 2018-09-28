@@ -568,9 +568,8 @@ static int jsdt_sr_modf (duk_context *J)
 	int i;
 	int mod_type;
 	struct run_act_ctx ra_ctx;
-	unsigned modver;
 	struct action *act;
-	sr31_cmd_export_t* expf;
+	ksr_cmd_export_t* expf;
 	sr_jsdt_env_t *env_J;
 
 	ret = 1;
@@ -612,7 +611,7 @@ static int jsdt_sr_modf (duk_context *J)
 		}
 	}
 
-	expf = find_export_record(jsdtv[0], argc-1, 0, &modver);
+	expf = find_export_record(jsdtv[0], argc-1, 0);
 	if (expf==NULL) {
 		LM_ERR("function '%s' is not available\n", jsdtv[0]);
 		goto error;

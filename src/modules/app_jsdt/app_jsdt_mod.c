@@ -83,18 +83,16 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-	"app_jsdt",
+	"app_jsdt",     /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,
-	0,              /* exported MI functions */
+	cmds,           /* exported functions */
+	params,         /* exported parameters */
+	0,              /* exported rpc functions */
 	0,              /* exported pseudo-variables */
-	0,              /* extra processes */
-	mod_init,       /* module initialization function */
 	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	mod_init,       /* module init function */
+	child_init,     /* per child init function */
+	mod_destroy     /* destroy function */
 };
 /* clang-format on */
 
