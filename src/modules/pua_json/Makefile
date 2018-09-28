@@ -31,6 +31,4 @@ else
 	LIBS+= $(shell pkg-config --libs $(JLIB))
 endif
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
