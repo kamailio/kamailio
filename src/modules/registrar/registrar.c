@@ -254,18 +254,16 @@ stat_export_t mod_stats[] = {
  * Module exports structure
  */
 struct module_exports exports = {
-	"registrar",
+	"registrar", /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,        /* Exported functions */
-	params,      /* Exported parameters */
-	mod_stats,   /* exported statistics */
-	0,           /* exported MI functions */
+	cmds,        /* exported functions */
+	params,      /* exported parameters */
+	0,           /* exported rpc functions */
 	mod_pvs,     /* exported pseudo-variables */
-	0,           /* extra processes */
+	0,           /* response handling function */
 	mod_init,    /* module initialization function */
-	0,
-	mod_destroy, /* destroy function */
-	child_init,  /* Per-child init function */
+	child_init,  /* per-child init function */
+	mod_destroy  /* destroy function */
 };
 
 
