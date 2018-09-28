@@ -9,8 +9,6 @@ NAME=db_oracle.so
 DEFS +=-I/usr/include/oracle/12.2/client64
 LIBS +=-locci -lclntsh -L/usr/lib/oracle/12.2/client64/lib
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules
