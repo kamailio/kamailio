@@ -35,8 +35,6 @@ endif
 
 LIBS=$(BUILDAGENTLIBS)
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
 
 install-cfg:
