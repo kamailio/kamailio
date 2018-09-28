@@ -208,18 +208,16 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-    "kazoo",
-    DEFAULT_DLFLAGS,		/* dlopen flags */
-    cmds,
-    params,			/* module parameters */
-    0,				/* exported statistics */
-    0,			/* exported MI functions */
-    kz_mod_pvs,				/* exported pseudo-variables */
-    0,				/* extra processes */
-    mod_init,			/* module initialization function */
-    0,				/* response function */
-    mod_destroy,		/* destroy function */
-    mod_child_init				/* per-child init function */
+	"kazoo",         /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	kz_mod_pvs,      /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	mod_child_init,  /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 inline static int kz_parse_avp( str *avp_spec, pv_spec_t *avp, char *txt)
