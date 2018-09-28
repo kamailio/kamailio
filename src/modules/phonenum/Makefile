@@ -11,7 +11,7 @@ LIB_DIR = /opt/local/lib
 
 LIBS= -L${LIB_DIR} cphonenumber.o -lphonenumber -lgeocoding
 
-DEFS+= -I/opt/local/include -DKAMAILIO_MOD_INTERFACE
+DEFS+= -I/opt/local/include
 
 CXXFLAGS=$(CFLAGS:-Wno-deprecated option=)
 CXXFLAGS+=-Wno-write-strings -Wno-deprecated -Wno-unused-function -Wno-sign-compare -Wno-strict-aliasing
