@@ -78,18 +78,16 @@ static param_export_t mod_params[]={
  * Exports
  */
 struct module_exports exports = {
-	"jsonrpcc",           /* module name */
-	DEFAULT_DLFLAGS,     /* dlopen flags */
-	cmds,                /* Exported functions */
-	mod_params,          /* Exported parameters */
-	0,                   /* exported statistics */
-	0,                   /* exported MI functions */
-	0,                   /* exported pseudo-variables */
-	0,                   /* extra processes */
-	mod_init,            /* module initialization function */
-	0,                   /* response function*/
-	0,                   /* destroy function */
-	child_init           /* per-child init function */
+	"jsonrpcc",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	mod_params,      /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	0                /* module destroy function */
 };
 
 
