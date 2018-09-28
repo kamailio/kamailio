@@ -254,18 +254,16 @@ static param_export_t params[] = {
 };
 
 struct module_exports exports = {
-	"nathelper",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	mod_pvs,     /* exported pseudo-variables */
-	0,           /* extra processes */
-	mod_init,
-	nh_sip_reply_received, /* reply processing */
-	mod_destroy, /* destroy function */
-	child_init
+	"nathelper",           /* module name */
+	DEFAULT_DLFLAGS,       /* dlopen flags */
+	cmds,                  /* cmd (cfg function) exports */
+	params,                /* param exports */
+	0,                     /* RPC method exports */
+	mod_pvs,               /* pseudo-variables exports */
+	nh_sip_reply_received, /* response handling function */
+	mod_init,              /* module init function */
+	child_init,            /* per-child init function */
+	mod_destroy            /* module destroy function */
 };
 /* clang-format on */
 
