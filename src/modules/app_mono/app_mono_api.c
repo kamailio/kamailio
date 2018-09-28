@@ -338,9 +338,8 @@ static int sr_mono_modf(MonoString *nfunc)
 	int ret;
 	int mod_type;
 	struct run_act_ctx ra_ctx;
-	unsigned modver;
 	struct action *act = NULL;
-	sr31_cmd_export_t* expf;
+	ksr_cmd_export_t* expf;
 	sr_mono_env_t *env_M;
 	char *func = NULL;
 
@@ -350,7 +349,7 @@ static int sr_mono_modf(MonoString *nfunc)
 
 	func = mono_string_to_utf8(nfunc);
 
-	expf = find_export_record(func, 0, 0, &modver);
+	expf = find_export_record(func, 0, 0);
 	if (expf==NULL) {
 		LM_ERR("function '%s' is not available\n", func);
 		goto error;
