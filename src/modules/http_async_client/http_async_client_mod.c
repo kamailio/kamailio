@@ -198,7 +198,7 @@ struct module_exports exports = {
 	cmds,					/* exported functions */
 	params,					/* exported parameters */
 	0,						/* RPC method exports */
-	0,						/* exported pseudo-variables */
+	pvs,					/* exported pseudo-variables */
 	0,						/* response handling function */
 	mod_init,				/* module initialization function */
 	child_init,				/* per-child init function */
