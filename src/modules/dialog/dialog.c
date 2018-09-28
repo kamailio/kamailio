@@ -358,14 +358,12 @@ struct module_exports exports= {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* exported functions */
 	mod_params,      /* param exports */
-	mod_stats,       /* exported statistics */
-	0,               /* exported MI functions */
+	0,               /* exported RPC methods */
 	mod_items,       /* exported pseudo-variables */
-	0,               /* extra processes */
-	mod_init,        /* module initialization function */
 	0,               /* reply processing function */
-	mod_destroy,
-	child_init       /* per-child init function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	mod_destroy
 };
 
 
@@ -499,7 +497,7 @@ static int mod_init(void)
 
 #ifdef STATISTICS
 	/* register statistics */
-	if (register_module_stats( exports.name, mod_stats)!=0 ) {
+	if (dlg_enable_stats && (register_module_stats( exports.name, mod_stats)!=0 )) {
 		LM_ERR("failed to register %s statistics\n", exports.name);
 		return -1;
 	}
@@ -578,10 +576,6 @@ static int mod_init(void)
 				dlg_timeout_noreset);
 		return -1;
 	}
-
-	/* if statistics are disabled, prevent their registration to core */
-	if (dlg_enable_stats==0)
-		exports.stats = 0;
 
 	/* create profile hashes */
 	if (add_profile_definitions( profiles_nv_s, 0)!=0 ) {
