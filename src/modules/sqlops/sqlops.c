@@ -124,18 +124,16 @@ static tr_export_t mod_trans[] = {
 
 /** module exports */
 struct module_exports exports= {
-	"sqlops",
+	"sqlops",   /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,          /* exported statistics */
-	0  ,        /* exported MI functions */
+	cmds,       /* exported functions */
+	params,     /* exported parameters */
+	0,          /* exported rpc functions */
 	mod_pvs,    /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,
-	(destroy_function) destroy,
-	child_init  /* per-child init function */
+	0,          /* response handling function */
+	mod_init,   /* module init function */
+	child_init, /* per-child init function */
+	destroy     /* module destroy function */
 };
 
 static int mod_init(void)
