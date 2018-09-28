@@ -96,11 +96,25 @@ static int db_redis_val2str(const db_val_t *v, str *_str) {
             snprintf(_str->s, _str->len, "%d", VAL_INT(v));
             _str->len = strlen(_str->s);
             break;
+       case DB1_UINT:
+            LM_DBG("converting uint value %u to str\n", VAL_UINT(v));
+            _str->s = (char*)pkg_malloc(_str->len);
+            if (!_str->s) goto memerr;
+            snprintf(_str->s, _str->len, "%u", VAL_UINT(v));
+            _str->len = strlen(_str->s);
+            break;
         case DB1_BIGINT:
             LM_DBG("converting bigint value %lld to str\n", VAL_BIGINT(v));
             _str->s = (char*)pkg_malloc(_str->len);
             if (!_str->s) goto memerr;
             snprintf(_str->s, _str->len, "%lld", VAL_BIGINT(v));
+            _str->len = strlen(_str->s);
+            break;
+        case DB1_UBIGINT:
+            LM_DBG("converting ubigint value %llu to str\n", VAL_UBIGINT(v));
+            _str->s = (char*)pkg_malloc(_str->len);
+            if (!_str->s) goto memerr;
+            snprintf(_str->s, _str->len, "%llu", VAL_UBIGINT(v));
             _str->len = strlen(_str->s);
             break;
         case DB1_STRING:
