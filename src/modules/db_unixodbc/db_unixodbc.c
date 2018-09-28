@@ -39,7 +39,7 @@ char *db_unixodbc_tquote = NULL;
 MODULE_VERSION
 
 int db_unixodbc_bind_api(db_func_t *dbb);
-int unixodbc_mod_init(void);
+int mod_init(void);
 
 /*
  * MySQL database module interface
@@ -67,15 +67,13 @@ struct module_exports exports = {
 	"db_unixodbc",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
-	params,             /*  module parameters */
-	0,                  /* exported statistics */
-	0,                  /* exported MI functions */
-	0,                  /* exported pseudo-variables */
-	0,                  /* extra processes */
-	unixodbc_mod_init,  /* module initialization function */
-	0,                  /* response function*/
-	0,                  /* destroy function */
-	0                   /* per-child init function */
+	params,		/* module parameters */
+	0,		/* exported·RPC·methods */
+	0,		/* exported pseudo-variables */
+	0,		/* response·function */
+	mod_init,	/* module initialization function */
+	0,		/* per-child init function */
+	0		/* destroy function */
 };
 
 int db_unixodbc_bind_api(db_func_t *dbb)
@@ -112,7 +110,7 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 	return 0;
 }
 
-int unixodbc_mod_init(void)
+int mod_init(void)
 {
 	return 0;
 }
