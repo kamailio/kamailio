@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2004 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -23,12 +21,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-/*
- * History:
- * --------
- * 2004-06-14 added ability to read default values from DB table usr_preferences_types (kozlik)
  */
 
 #include <string.h>
@@ -80,18 +72,23 @@ static domain_get_did_t dm_get_did = NULL;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-    {"load_attrs", load_attrs, 2, attrs_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	
+	{"load_attrs", load_attrs, 2, attrs_fixup, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
 	/* functions for loading/storing flagged attributes into DB */
-    {"load_extra_attrs", load_extra_attrs, 2, extra_attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-    {"save_extra_attrs", save_extra_attrs, 2, extra_attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-    {"remove_extra_attrs", remove_extra_attrs, 2, extra_attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"load_extra_attrs", load_extra_attrs, 2, extra_attrs_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"save_extra_attrs", save_extra_attrs, 2, extra_attrs_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"remove_extra_attrs", remove_extra_attrs, 2, extra_attrs_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 
 	/* locking attrs - needed for proper work! */
-    {"lock_extra_attrs", lock_extra_attrs, 2, extra_attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-    {"unlock_extra_attrs", unlock_extra_attrs, 2, extra_attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},	
-	
-    {0, 0, 0, 0, 0}
+	{"lock_extra_attrs", lock_extra_attrs, 2, extra_attrs_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"unlock_extra_attrs", unlock_extra_attrs, 2, extra_attrs_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -118,15 +115,16 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-    "uid_avp_db",
-    cmds,        /* Exported commands */
-    0,           /* RPC methods */
-    params,      /* Exported parameters */
-    mod_init,    /* module initialization function */
+    "uid_avp_db",/* module name */
+    DEFAULT_DLFLAGS, /* dlopen flags */
+    cmds,        /* exported commands */
+    params,      /* exported parameters */
+    0,           /* exported RPC methods */
+    0,           /* exported pseudo-variables */
     0,           /* response function*/
-    0,           /* destroy function */
-    0,           /* oncancel function */
-    child_init   /* per-child init function */
+    mod_init,    /* module init function */
+    child_init,  /* per-child init function */
+    0            /* destroy function */
 };
 
 
