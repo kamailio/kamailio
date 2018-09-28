@@ -254,18 +254,16 @@ static param_export_t params[]={
 
 /** module exports */
 struct module_exports exports= {
-	"rls",  			/* module name */
-	DEFAULT_DLFLAGS,		/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,				/* exported statistics */
-	0,     			/* exported MI functions */
-	0,				/* exported pseudo-variables */
-	0,				/* extra processes */
-	mod_init,			/* module initialization function */
-	0,				/* response handling function */
-	(destroy_function) destroy,	/* destroy function */
-	child_init			/* per-child init function */
+	"rls",           /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported RPC functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	destroy          /* destroy function */
 };
 
 /**
