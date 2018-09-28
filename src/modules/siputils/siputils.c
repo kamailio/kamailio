@@ -210,18 +210,16 @@ static pv_export_t mod_pvs[] =  {
 };
 
 struct module_exports exports= {
-	"siputils",
+	"siputils",      /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* Exported functions */
+	cmds,            /* exported functions */
 	params,          /* param exports */
-	0,               /* exported statistics */
-	0,               /* exported MI functions */
+	0,               /* exported RPC functions */
 	mod_pvs,         /* exported pseudo-variables */
-	0,               /* extra processes */
+	0,               /* response function */
 	mod_init,        /* initialization function */
-	0,               /* Response function */
-	mod_destroy,     /* Destroy function */
-	0,               /* Child init function */
+	0,               /* child init function */
+	mod_destroy      /* destroy function */
 };
 
 
