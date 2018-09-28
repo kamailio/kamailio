@@ -155,18 +155,16 @@ static pv_export_t mod_pvs[] = {
 
 
 struct module_exports exports = {
-	"rr",
-	DEFAULT_DLFLAGS,	/*!< dlopen flags */
-	cmds,			/*!< Exported functions */
-	params,			/*!< Exported parameters */
-	0,				/*!< exported statistics */
-	0,				/*!< exported MI functions */
-	mod_pvs,			/*!< exported pseudo-variables */
-	0,				/*!< extra processes */
-	mod_init,			/*!< initialize module */
-	0,				/*!< response function*/
-	mod_destroy,		/*!< destroy function */
-	0				/*!< per-child init function */
+	"rr",            /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 

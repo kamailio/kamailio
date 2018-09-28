@@ -11,6 +11,4 @@ LIBS=
 
 #DEFS+=-DENABLE_USER_CHECK
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
