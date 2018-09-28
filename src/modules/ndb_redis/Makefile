@@ -13,7 +13,7 @@ HIREDIS_BUILDER = $(shell \
 endif
 
 ifeq ($(HIREDIS_BUILDER),)
-	HIREDISDEFS=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/hiredis
+	HIREDISDEFS=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/hiredis  -I/usr/include/hiredis
 	HIREDISLIBS=-L$(LOCALBASE)/lib -lhiredis
 else
 	HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags)
