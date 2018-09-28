@@ -289,7 +289,7 @@ stat_export_t mod_stats[] = {
     {"accepted_regs", 0, &accepted_registrations},
     {"rejected_regs", 0, &rejected_registrations},
     {"sar_avg_response_time", STAT_IS_FUNC, (stat_var**) get_avg_sar_response_time},
-	{"notifies_in_q", STAT_IS_FUNC, (stat_var**) get_notification_list_size},
+    {"notifies_in_q", STAT_IS_FUNC, (stat_var**) get_notification_list_size},
     {"sar_timeouts", 0, (stat_var**) & stat_sar_timeouts},
     {0, 0, 0}
 };
@@ -299,17 +299,15 @@ stat_export_t mod_stats[] = {
  */
 struct module_exports exports = {
     "ims_registrar_scscf",
-    DEFAULT_DLFLAGS, /* dlopen flags */
-    cmds, /* Exported functions */
-    params, /* Exported parameters */
-    mod_stats, /* exported statistics */
-    0, /* exported MI functions */
-    mod_pvs, /* exported pseudo-variables */
-    0, /* extra processes */
-    mod_init, /* module initialization function */
-    0,
-    mod_destroy, /* destroy function */
-    child_init, /* Per-child init function */
+    DEFAULT_DLFLAGS, 	/* dlopen flags */
+    cmds, 		/* Exported functions */
+    params, 		/* Exported parameters */
+    0, 			/* exported RPC methods */
+    mod_pvs, 		/* exported pseudo-variables */
+    0, 			/* response handling function */
+    mod_init, 		/* module initialization function */
+    child_init, 	/* Per-child init function */
+    mod_destroy 	/* destroy function */
 };
 
 static str orig_prefix = {"sip:orig@", 9};

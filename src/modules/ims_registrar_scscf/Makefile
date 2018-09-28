@@ -21,8 +21,6 @@ else
 	LIBS+=-L$(LOCALBASE)/lib -lxml2
 endif
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
 
