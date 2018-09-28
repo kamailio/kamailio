@@ -53,22 +53,20 @@ static param_export_t params[]={
 
 
 struct module_exports exports = {
-	"sipjson",
+	"sipjson",      /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,
-	0,              /* exported MI functions */
+	cmds,           /* exported functions */
+	params,         /* exported parameters */
+	0,              /* exported rpc functions */
 	0,              /* exported pseudo-variables */
-	0,              /* extra processes */
-	0,              /* module initialization function */
+	0,              /* module init function */
 	0,              /* response function */
-	0,              /* destroy function */
-	0               /* per child init function */
+	0,              /* per child init function */
+	0               /* destroy function */
 };
 
 /**
- * 
+ *
  */
 static int ki_sj_serialize_helper(sip_msg_t* msg, str* smode, pv_spec_t *pvs)
 {
