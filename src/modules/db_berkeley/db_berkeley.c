@@ -70,7 +70,7 @@ static int db_berkeley_init_rpc(void);
 /*
  * Exported functions
  */
-static kam_cmd_export_t cmds[] = {
+static cmd_export_t cmds[] = {
 	{"db_bind_api",    (cmd_function)bdb_bind_api,   0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -86,19 +86,17 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-struct kam_module_exports kam_exports = {
+struct module_exports kam_exports = {
 	"db_berkeley",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,     /* Exported functions */
-	params,   /* Exported parameters */
-	0,        /* exported statistics */
-	0,        /* exported MI functions */
-	0,        /* exported pseudo-variables */
-	0,        /* extra processes */
-	km_mod_init, /* module initialization function */
-	0,        /* response function*/
-	km_destroy,  /* destroy function */
-	0         /* per-child init function */
+	DEFAULT_DLFLAGS,/* dlopen flags */
+	cmds,		/* Exported functions */
+	params,		/* Exported parameters */
+	0,		/* exported·RPC·method */
+	0,		/* exported pseudo-variables */
+	0,		/* response·function */
+	km_mod_init,	/* module initialization function */
+	0,		/* per-child init function */
+	km_destroy	/* destroy function */
 };
 /* clang-format on */
 
