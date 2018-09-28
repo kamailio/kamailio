@@ -80,50 +80,51 @@ extern select_row_t sel_declaration[];
 /* cfg functions */
 /* clag-format off */
 static cmd_export_t cmds[] = {
-		{"msg_apply_changes", (cmd_function)msg_apply_changes_f, 0, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"change_reply_status", change_reply_status_f, 2,
-				change_reply_status_fixup, ONREPLY_ROUTE},
-		{"remove_body", (cmd_function)w_remove_body_f, 0, 0, ANY_ROUTE},
-		{"keep_hf", (cmd_function)w_keep_hf_f, 0, fixup_regexp_null, ANY_ROUTE},
-		{"keep_hf", (cmd_function)w_keep_hf_f, 1, fixup_regexp_null, ANY_ROUTE},
-		{"fnmatch", (cmd_function)w_fnmatch2_f, 2, fixup_fnmatch, ANY_ROUTE},
-		{"fnmatch", (cmd_function)w_fnmatch3_f, 3, fixup_fnmatch, ANY_ROUTE},
+	{"msg_apply_changes", (cmd_function)msg_apply_changes_f, 0, 0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"change_reply_status", change_reply_status_f, 2,
+			change_reply_status_fixup, 0, ONREPLY_ROUTE},
+	{"remove_body", (cmd_function)w_remove_body_f, 0, 0, 0, ANY_ROUTE},
+	{"keep_hf", (cmd_function)w_keep_hf_f, 0, fixup_regexp_null, 0, ANY_ROUTE},
+	{"keep_hf", (cmd_function)w_keep_hf_f, 1, fixup_regexp_null, 0, ANY_ROUTE},
+	{"fnmatch", (cmd_function)w_fnmatch2_f, 2, fixup_fnmatch, 0, ANY_ROUTE},
+	{"fnmatch", (cmd_function)w_fnmatch3_f, 3, fixup_fnmatch, 0, ANY_ROUTE},
+	{"append_hf_value", insupddel_hf_value_f, 2, append_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"insert_hf_value", insupddel_hf_value_f, 2, insert_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"remove_hf_value", insupddel_hf_value_f, 1, remove_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"assign_hf_value", insupddel_hf_value_f, 2, assign_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"remove_hf_value2", insupddel_hf_value_f, 1, remove_hf_value2_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"assign_hf_value2", insupddel_hf_value_f, 2, assign_hf_value2_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"include_hf_value", incexc_hf_value_f, 2, include_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"exclude_hf_value", incexc_hf_value_f, 2, exclude_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"hf_value_exists", incexc_hf_value_f, 2, hf_value_exists_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 
-		{"append_hf_value", insupddel_hf_value_f, 2, append_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"insert_hf_value", insupddel_hf_value_f, 2, insert_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"remove_hf_value", insupddel_hf_value_f, 1, remove_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"assign_hf_value", insupddel_hf_value_f, 2, assign_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"remove_hf_value2", insupddel_hf_value_f, 1, remove_hf_value2_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"assign_hf_value2", insupddel_hf_value_f, 2, assign_hf_value2_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"include_hf_value", incexc_hf_value_f, 2, include_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"exclude_hf_value", incexc_hf_value_f, 2, exclude_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"hf_value_exists", incexc_hf_value_f, 2, hf_value_exists_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"bind_textopsx", (cmd_function)bind_textopsx, 1, 0, 0, ANY_ROUTE},
 
-		{"bind_textopsx", (cmd_function)bind_textopsx, 1, 0, ANY_ROUTE},
-
-
-		{0, 0, 0, 0, 0}};
+	{0, 0, 0, 0, 0, 0}
+};
 
 /* module exports structure */
 struct module_exports exports = {
-		"textopsx", cmds, /* cfg functions */
-		0,				  /* RPC methods */
-		0,				  /* cfg parameters */
-		mod_init,		  /* initialization function */
-		0,				  /* response function */
-		0,				  /* destroy function */
-		0,				  /* on_cancel function */
-		0				  /* per-child init function */
+	"textopsx",		/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,			/* exported cfg functions */
+	0,				/* exported cfg parameters */
+	0,				/* exported RPC methods */
+	0,				/* exported pseudo-variables */
+	0,				/* response handling function */
+	mod_init,		/* module init function */
+	0,				/* per-child init function */
+	0,				/* destroy function */
 };
 /* clag-format on */
 
