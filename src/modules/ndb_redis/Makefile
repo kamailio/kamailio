@@ -33,6 +33,4 @@ endif
 DEFS+=$(HIREDISDEFS)
 LIBS=$(HIREDISLIBS)
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
