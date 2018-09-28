@@ -8,7 +8,6 @@ include ../../Makefile.defs
 auto_gen=
 NAME=pua_rpc.so
 LIBS=
-DEFS+= -DSER_MOD_INTERFACE
 
 ifeq ($(INSTALL_FLAVOUR),kamailio)
 DEFS+= -DWITH_EVENT_LOCAL_REQUEST
