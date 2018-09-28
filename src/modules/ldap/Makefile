@@ -19,7 +19,4 @@ ifeq ($(OS),solaris)
        LIBS=-L$(LOCALBASE)/lib -L/usr/sfw/lib -L/usr/local/lib -L/opt/sfw/lib -I/opt/csw/lib -lldap 
 endif
 
-
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
