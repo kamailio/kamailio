@@ -58,16 +58,16 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-	"log_custom",
+	"log_custom",   /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
+	cmds,           /* exported functions */
+	params,         /* exported parameters */
 	0,              /* exported RPC functions */
 	0,              /* exported pseudo-variables */
 	0,              /* response function */
 	mod_init,       /* module initialization function */
 	child_init,     /* per child init function */
-	mod_destro,    	/* destroy function */
+	mod_destroy    	/* destroy function */
 };
 
 /**
