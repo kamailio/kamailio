@@ -9,6 +9,4 @@ auto_gen=
 NAME=malloc_test.so
 LIBS=
 
-DEFS+=-DSER_MOD_INTERFACE
-
 include ../../Makefile.modules
