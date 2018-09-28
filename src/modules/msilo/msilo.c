@@ -239,18 +239,12 @@ struct module_exports exports= {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* module's exported functions */
 	params,     /* module's exported parameters */
-#ifdef STATISTICS
-	msilo_stats,
-#else
-	0,          /* exported statistics */
-#endif
-	0,          /* exported MI functions */
+	0,          /* exported RPC methods */
 	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
 	0,   	    /* response handler */
-	(destroy_function) destroy,  /* module destroy function */
-	child_init  /* per-child init function */
+	mod_init,   /* module initialization function */
+	child_init, /* per-child init function */
+	destroy     /* module destroy function */
 };
 
 static int bind_msilo(msilo_api_t* api)
