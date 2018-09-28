@@ -13,7 +13,7 @@ NAME=db_cassandra.so
 
 INCLUDE_DIR = /usr/include/thrift
 LIB_DIR = /usr/lib
-DEFS += -I${INCLUDE_DIR} -DKAMAILIO_MOD_INTERFACE
+DEFS += -I${INCLUDE_DIR}
 LIBS += -L${LIB_DIR} dbcassa_base.o cassandra_constants.o cassandra_types.o Cassandra.o -lthrift
 
 CXXFLAGS=$(CFLAGS:-Wno-deprecated option=)
