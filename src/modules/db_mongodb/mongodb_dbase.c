@@ -119,6 +119,15 @@ int db_mongodb_bson_filter_add(bson_t *doc, const db_key_t* _k, const db_op_t* _
 			}
 			break;
 
+		case DB1_UINT:
+			if(!bson_append_int32(&mdoc, ocmp.s, ocmp.len,
+						(int)VAL_UINT(tval))) {
+				LM_ERR("failed to append uint to bson doc %.*s %s %u [%d]\n",
+						tkey->len, tkey->s, ocmp.s, VAL_UINT(tval), idx);
+				goto error;
+			}
+			break;
+
 		case DB1_BIGINT:
 			if(!bson_append_int64(&mdoc, ocmp.s, ocmp.len,
 						VAL_BIGINT(tval ))) {
@@ -126,7 +135,16 @@ int db_mongodb_bson_filter_add(bson_t *doc, const db_key_t* _k, const db_op_t* _
 						tkey->len, tkey->s, ocmp.s, VAL_BIGINT(tval), idx);
 				goto error;
 			}
-			return -1;
+			break;
+
+		case DB1_UBIGINT:
+			if(!bson_append_int64(&mdoc, ocmp.s, ocmp.len,
+						(long long int)VAL_UBIGINT(tval ))) {
+				LM_ERR("failed to append ubigint to bson doc %.*s %s %llu [%d]\n",
+						tkey->len, tkey->s, ocmp.s, VAL_UBIGINT(tval), idx);
+				goto error;
+			}
+			break;
 
 		case DB1_DOUBLE:
 			if(!bson_append_double(&mdoc, ocmp.s, ocmp.len,
@@ -226,6 +244,15 @@ int db_mongodb_bson_add(bson_t *doc, const db_key_t _k, const db_val_t *_v, int 
 			}
 			break;
 
+		case DB1_UINT:
+			if(!bson_append_int32(doc, _k->s, _k->len,
+						(int)VAL_INT(_v))) {
+				LM_ERR("failed to append uint to bson doc %.*s = %u [%d]\n",
+						_k->len, _k->s, VAL_INT(_v), idx);
+				goto error;
+			}
+			break;
+
 		case DB1_BIGINT:
 			if(!bson_append_int64(doc, _k->s, _k->len,
 						VAL_BIGINT(_v ))) {
@@ -233,7 +260,16 @@ int db_mongodb_bson_add(bson_t *doc, const db_key_t _k, const db_val_t *_v, int 
 						_k->len, _k->s, VAL_BIGINT(_v), idx);
 				goto error;
 			}
-			return -1;
+			break;
+
+		case DB1_UBIGINT:
+			if(!bson_append_int64(doc, _k->s, _k->len,
+						(long long int)VAL_BIGINT(_v ))) {
+				LM_ERR("failed to append ubigint to bson doc %.*s = %llu [%d]\n",
+						_k->len, _k->s, VAL_UBIGINT(_v), idx);
+				goto error;
+			}
+			break;
 
 		case DB1_DOUBLE:
 			if(!bson_append_double(doc, _k->s, _k->len,
