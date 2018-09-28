@@ -211,7 +211,7 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 	return 0;
 }
 
-static int sqlite_mod_init(void)
+static int mod_init(void)
 {
 	sqlite3_initialize();
 
@@ -222,7 +222,7 @@ static int sqlite_mod_init(void)
 }
 
 
-static void sqlite_mod_destroy(void)
+static void mod_destroy(void)
 {
 	LM_INFO("SQlite terminate\n");
 
@@ -234,12 +234,10 @@ struct module_exports exports = {
 	DEFAULT_DLFLAGS,	/* dlopen flags */
 	cmds,			/* module commands */
 	params,			/* module parameters */
-	0,			/* exported statistics */
-	0,			/* exported MI functions */
+	0,			/* exported·RPC·methods· */
 	0,			/* exported pseudo-variables */
-	0,			/* extra processes */
-	sqlite_mod_init,	/* module initialization function */
-	0,			/* response function*/
-	sqlite_mod_destroy,	/* destroy function */
-	0			/* per-child init function */
+	0,			/* response function */
+	mod_init,		/* module initialization function */
+	0,			/* per-child init function */
+	mod_destroy		/* destroy function */
 };

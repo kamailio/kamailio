@@ -12,8 +12,6 @@ DEFS += -I$(LOCALBASE)/include
 # (Debian does the right thing and puts it in /usr/lib)
 LIBS= -L$(LOCALBASE)/lib -lsqlite3
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules
