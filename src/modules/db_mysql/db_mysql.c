@@ -63,23 +63,23 @@ MODULE_VERSION
  * MySQL database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_ctx",    (cmd_function)NULL,         0, 0, 0},
-	{"db_con",    (cmd_function)my_con,       0, 0, 0},
-	{"db_uri",    (cmd_function)my_uri,       0, 0, 0},
-	{"db_cmd",    (cmd_function)my_cmd,       0, 0, 0},
-	{"db_put",    (cmd_function)my_cmd_exec,  0, 0, 0},
-	{"db_del",    (cmd_function)my_cmd_exec,  0, 0, 0},
-	{"db_get",    (cmd_function)my_cmd_exec,  0, 0, 0},
-	{"db_upd",    (cmd_function)my_cmd_exec,  0, 0, 0},
-	{"db_sql",    (cmd_function)my_cmd_exec,  0, 0, 0},
-	{"db_res",    (cmd_function)my_res,       0, 0, 0},
-	{"db_fld",    (cmd_function)my_fld,       0, 0, 0},
-	{"db_first",  (cmd_function)my_cmd_first, 0, 0, 0},
-	{"db_next",   (cmd_function)my_cmd_next,  0, 0, 0},
-	{"db_setopt", (cmd_function)my_setopt,    0, 0, 0},
-	{"db_getopt", (cmd_function)my_getopt,    0, 0, 0},
-	{"db_bind_api",         (cmd_function)db_mysql_bind_api,      0, 0, 0},
-	{0, 0, 0, 0, 0}
+	{"db_ctx",    (cmd_function)NULL,         0, 0, 0, 0},
+	{"db_con",    (cmd_function)my_con,       0, 0, 0, 0},
+	{"db_uri",    (cmd_function)my_uri,       0, 0, 0, 0},
+	{"db_cmd",    (cmd_function)my_cmd,       0, 0, 0, 0},
+	{"db_put",    (cmd_function)my_cmd_exec,  0, 0, 0, 0},
+	{"db_del",    (cmd_function)my_cmd_exec,  0, 0, 0, 0},
+	{"db_get",    (cmd_function)my_cmd_exec,  0, 0, 0, 0},
+	{"db_upd",    (cmd_function)my_cmd_exec,  0, 0, 0, 0},
+	{"db_sql",    (cmd_function)my_cmd_exec,  0, 0, 0, 0},
+	{"db_res",    (cmd_function)my_res,       0, 0, 0, 0},
+	{"db_fld",    (cmd_function)my_fld,       0, 0, 0, 0},
+	{"db_first",  (cmd_function)my_cmd_first, 0, 0, 0, 0},
+	{"db_next",   (cmd_function)my_cmd_next,  0, 0, 0, 0},
+	{"db_setopt", (cmd_function)my_setopt,    0, 0, 0, 0},
+	{"db_getopt", (cmd_function)my_getopt,    0, 0, 0, 0},
+	{"db_bind_api", (cmd_function)db_mysql_bind_api, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -103,15 +103,16 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"db_mysql",
-	cmds,
-	0,               /* RPC method */
-	params,          /*  module parameters */
-	mysql_mod_init,  /* module initialization function */
-	0,               /* response function*/
-	0,               /* destroy function */
-	0,               /* oncancel function */
-	0                /* per-child init function */
+	"db_mysql",      /* module name*/
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported RPC methods */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function*/
+	mysql_mod_init,  /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
 
 

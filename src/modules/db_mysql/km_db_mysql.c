@@ -50,7 +50,7 @@ unsigned int db_mysql_update_affected_found = 0; /* Default is off */
 /*! \brief
  * MySQL database module interface
  */
-static kam_cmd_export_t cmds[] = {
+static cmd_export_t cmds[] = {
 	{"db_bind_api",         (cmd_function)db_mysql_bind_api,      0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -65,19 +65,17 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-struct kam_module_exports kam_exports = {
-	"db_mysql",
+struct module_exports kam_exports = {
+	"db_mysql",      /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,          /*  module parameters */
-	0,               /* exported statistics */
-	0,               /* exported MI functions */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
 	0,               /* exported pseudo-variables */
-	0,               /* extra processes */
-	kam_mysql_mod_init,  /* module initialization function */
 	0,               /* response function*/
-	0,               /* destroy function */
-	0                /* per-child init function */
+	kam_mysql_mod_init,  /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
 
 

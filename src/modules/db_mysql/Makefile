@@ -5,8 +5,6 @@ include ../../Makefile.defs
 auto_gen=
 NAME=db_mysql.so
 
-DEFS +=-DSER_MOD_INTERFACE
-
 # set CROSS_COMPILE to true if you want to skip
 # the autodetection
 # CROSS_COMPILE=true
