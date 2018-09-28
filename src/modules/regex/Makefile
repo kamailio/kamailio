@@ -24,6 +24,4 @@ endif
 DEFS+=$(PCREDEFS)
 LIBS+=$(PCRELIBS)
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
