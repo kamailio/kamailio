@@ -41,16 +41,16 @@ static cmd_export_t cmds[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 struct module_exports exports = {
-		"pua_json", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,						 /* Exported functions */
-		params,						 /* Exported parameters */
-		0,							 /* exported statistics */
-		0,							 /* exported MI functions */
-		0, 0,						 /* extra processes */
-		mod_init,					 /* module initialization function */
-		0,							 /* response function*/
-		0,							 /* destroy function */
-		0							 /* per-child init function */
+		"pua_json",			/* module name */
+		DEFAULT_DLFLAGS,	/* dlopen flags */
+		cmds,				/* exported functions */
+		params,				/* exported parameters */
+		0,					/* RPC method exports */
+		0,					/* exported pseudo-variables */
+		0,					/* response handling function */
+		mod_init,			/* module initialization function */
+		0,					/* per-child init function */
+		0					/* module destroy function */
 };
 
 static int mod_init(void)
