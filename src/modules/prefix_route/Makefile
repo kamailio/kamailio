@@ -6,7 +6,7 @@ auto_gen=
 NAME=prefix_route.so
 LIBS=
 
-DEFS+=-DSER_MOD_INTERFACE
+DEFS+=
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb2/srdb2
