@@ -70,18 +70,16 @@ static param_export_t params[] = {
 };
 
 struct module_exports exports = {
-	"sctp",
+	"sctp",          /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,
-	0,				 /* exported MI functions */
-	0,				 /* exported pseudo-variables */
-	0,				 /* extra processes */
-	mod_init,		 /* module initialization function */
-	0,				 /* response function */
-	0,				 /* destroy function */
-	0				 /* per child init function */
+	cmds,            /* cmd exports */
+	params,          /* param exports */
+	0,               /* exported RPC functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per child init function */
+	0                /* destroy function */
 };
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
