@@ -85,18 +85,16 @@ static param_export_t params[]={
 };
 
 struct module_exports exports= {
-	"pua_usrloc",				/*!< module name */
-	DEFAULT_DLFLAGS,			/*!< dlopen flags */
-	cmds,						/*!< exported functions */
-	params,						/*!< exported parameters */
-	0,							/*!< exported statistics */
-	0,							/*!< exported MI functions */
-	0,							/*!< exported pseudo-variables */
-	0,							/*!< extra processes */
-	mod_init,					/*!< module initialization function */
-	0,							/*!< response handling function */
-	0,							/*!< destroy function */
-	0							/*!< per-child init function */
+	"pua_usrloc",		/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	mod_init,			/* module initialization function */
+	0,					/* per-child init function */
+	0					/* module destroy function */
 };
 
 /*! \brief
