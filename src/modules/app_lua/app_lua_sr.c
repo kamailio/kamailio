@@ -126,9 +126,9 @@ static int lua_sr_modf (lua_State *L)
 	int i;
 	int mod_type;
 	struct run_act_ctx ra_ctx;
-	unsigned modver;
 	struct action *act;
-	sr31_cmd_export_t* expf;
+	unsigned modver;
+	ksr_cmd_export_t* expf;
 	sr_lua_env_t *env_L;
 
 	ret = 1;
@@ -179,7 +179,7 @@ static int lua_sr_modf (lua_State *L)
 		}
 	}
 
-	expf = find_export_record(luav[0], argc-1, 0, &modver);
+	expf = find_export_record(luav[0], argc-1, 0);
 	if (expf==NULL) {
 		LM_ERR("function '%s' is not available\n", luav[0]);
 		goto error;
