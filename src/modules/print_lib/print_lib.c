@@ -44,8 +44,8 @@ static int mod_init(void);
 
 
 static cmd_export_t cmds[]={
-	{"print_stderr", print_f, 1, 0, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"print_stderr", print_f, 1, 0, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={
@@ -53,16 +53,16 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-	"print_stderr",
-	cmds,
-	0,        /* RPC methods */
-	params,
-
-	mod_init, /* module initialization function */
-	0,        /* response function*/
-	0,        /* destroy function */
-	0,        /* oncancel function */
-	0         /* per-child init function */
+	"print_stderr",		/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	mod_init,			/* module initialization function */
+	0,					/* per-child init function */
+	0					/* module destroy function */
 };
 
 
