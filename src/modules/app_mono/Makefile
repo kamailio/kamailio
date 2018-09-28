@@ -14,6 +14,4 @@ else
 	LIBS = $(shell pkg-config --libs mono-2)
 endif
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
