@@ -281,18 +281,16 @@ static mi_export_t mi_cmds[] = {
 
 
 struct module_exports exports = {
-	"p_usrloc",
+	"p_usrloc", /*!< module name  */
 	DEFAULT_DLFLAGS, /*!< dlopen flags */
-	cmds,       /*!< Exported functions */
-	params,     /*!< Export parameters */
-	mod_stats,  /*!< exported statistics */
-	0,          /*!< exported MI functions */
+	cmds,       /*!< exported functions */
+	params,     /*!< export parameters */
+	0,          /*!< exported rpc functions */
 	0,          /*!< exported pseudo-variables */
-	0,          /*!< extra processes */
-	mod_init,   /*!< Module initialization function */
-	0,          /*!< Response function */
-	destroy,    /*!< Destroy function */
-	child_init  /*!< Child initialization function */
+	0,          /*!< response handling function */
+	mod_init,   /*!< module init function */
+	child_init, /*!< child init function */
+	destroy     /*!< module destroy function */
 };
 
 
