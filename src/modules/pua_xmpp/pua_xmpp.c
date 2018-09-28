@@ -100,15 +100,13 @@ struct module_exports exports= {
 	"pua_xmpp",			/* module name */
 	DEFAULT_DLFLAGS,	/* dlopen flags */
 	cmds,				/* exported functions */
-	params,				/* exported  parameters */
-	0,					/* exported statistics */
-	0,					/* exported MI functions*/
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
 	0,					/* exported pseudo-variables */
-	0,					/* extra processes */
-	mod_init,			/* module initialization function */
 	0,					/* response handling function */
-	0,					/* destroy function */
-	child_init			/* per-child init function */
+	mod_init,			/* module initialization function */
+	child_init,			/* per-child init function */
+	0					/* module destroy function */
 };
 
 /*! \brief
