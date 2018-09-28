@@ -90,18 +90,16 @@ static param_export_t params[] = {
 
 /* Module interface */
 struct module_exports exports = {
-	"speeddial",
+	"speeddial",     /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       /* Exported functions */
-	params,     /* Exported parameters */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,          /* response function */
-	destroy,    /* destroy function */
-	child_init  /* child initialization function */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported RPC functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module initialization function */
+	child_init,      /* child initialization function */
+	destroy          /* destroy function */
 };
 
 
