@@ -315,6 +315,40 @@ event_route[tls:connection-out] {
 
 		</section>
 	</section>
+	<section id="tls.dbstorage">
+		<title>TLS With Database Backend</title>
+		<para>
+		The module does not connect to database to fetch the values for the
+		TLS profile attributes. However the 'kamcli' tool can generate the tls.cfg
+		from a database table. Once generated, the 'tls.cfg' can be reloaded with
+		an RPC command.
+		</para>
+		<para>
+		The kamcli tool can be found at <ulink url="https://github.com/kamailio/kamcli">https://github.com/kamailio/kamcli</ulink>.
+		</para>
+		<para>
+		The schema to create the database table can be seen with the command: "kamcli tls sqlprint".
+		The default name for database table is 'tlscfg'.
+		</para>
+		<para>
+		The most of the column names matches the corresponding attribute names
+		from a TLS profile.
+		</para>
+		<para>
+		The profile id in 'tls.cfg' is generated from '[profile_type:profile_name]'.
+		The 'profile_type' has to be 'server' or 'client'. The 'profile_name'
+		can be 'default', 'any' or the pair of IP address and port like 'ipaddr:port'.
+		</para>
+		<para>
+		The 'file_type' is specifying if the values for 'certificate', 'private_key',
+		'ca_list' and 'crl' are path to files on disc (when is set to 0) or the
+		content of the files (when set to 1). If 'file_type' is 1, then 'kamcli'
+		will create new files on disc and store the values from the database in
+		them. The target folder for 'tls.cfg' and the certificates related files
+		can be set via command options for 'kamcli tls', for more details see
+		the output of 'kamcli tls --help' and 'kamcli tls cfgprint --help'.
+		</para>
+	</section>
 	</chapter>
 </book>
 
