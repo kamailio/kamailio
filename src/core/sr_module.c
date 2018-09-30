@@ -208,7 +208,7 @@ static int register_module(module_exports_t* e, char* path, void* handle)
 	int ret, i;
 	struct sr_module* mod;
 	char defmod[64];
-	int n;
+	int n = 0;
 
 	ret=-1;
 
@@ -227,7 +227,9 @@ static int register_module(module_exports_t* e, char* path, void* handle)
 
 	mod->exports.dlflags = e->dlflags;
 
-	for (n=0; e->cmds[n].name; n++);
+	if(e->cmds) {
+		for (n=0; e->cmds[n].name; n++);
+	}
 	mod->exports.cmds = pkg_malloc(sizeof(ksr_cmd_export_t)*(n+1));
 	memset(mod->exports.cmds, 0, sizeof(ksr_cmd_export_t)*(n+1));
 	for (i=0; i < n; i++) {
