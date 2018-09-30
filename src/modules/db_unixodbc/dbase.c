@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * UNIXODBC module core functions
  *
  * Copyright (C) 2005-2006 Marco Lorrai
@@ -22,15 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- *
- * History:
- * --------
- *  2005-12-01  initial commit (chgen)
- *  2006-04-03  fixed invalid handle to extract error (sgupta)
- *  2006-04-04  removed deprecated ODBC functions, closed cursors on error
- *              (sgupta)
- *  2006-05-05  Fixed reconnect code to actually work on connection loss
- *              (sgupta)
  */
 
 
