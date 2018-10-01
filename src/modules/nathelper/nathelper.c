@@ -1531,7 +1531,7 @@ static inline int replace_sdp_ip(
 		body2.s = oldip.s + oldip.len;
 		body2.len = bodylimit - body2.s;
 		ret = alter_mediaip(
-				msg, &body2, &oldip, pf, &newip, pf, sdp_oldmediaip);
+				msg, &body1, &oldip, pf, &newip, pf, sdp_oldmediaip);
 		if(ret == -1) {
 			LM_ERR("can't alter '%s' IP\n", line);
 			return -1;
