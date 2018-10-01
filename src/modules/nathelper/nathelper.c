@@ -1644,7 +1644,7 @@ static int ki_fix_nated_sdp(sip_msg_t *msg, int level)
 static int fix_nated_sdp_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	int level;
-	str ip;
+	str ip = {0,0};
 
 	if(fixup_get_ivalue(msg, (gparam_t *)str1, &level) != 0) {
 		LM_ERR("failed to get value for first parameter\n");
