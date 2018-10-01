@@ -1043,7 +1043,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 	for(i = 0; i < RES_ROW_N(res); i++) {
 		row = RES_ROWS(res) + i;
 		if((VAL_NULL(ROW_VALUES(row) + 12) == 1)
-				|| (VAL_TYPE(ROW_VALUES(row) + 12) != DB1_INT)) {
+				|| ((VAL_TYPE(ROW_VALUES(row) + 12) != DB1_INT)
+						   && (VAL_TYPE(ROW_VALUES(row) + 12) != DB1_UINT))) {
 			LM_ERR("lcr_gw id at row <%u> is null or not int\n", i);
 			return 0;
 		}
@@ -1051,7 +1052,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		if(VAL_NULL(ROW_VALUES(row) + 11)) {
 			defunct_until = 0;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 11) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 11) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 11) != DB1_UINT)) {
 				LM_ERR("lcr_gw defunct at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1135,7 +1137,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		if(VAL_NULL(ROW_VALUES(row) + 2)) {
 			port = 0;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_UINT)) {
 				LM_ERR("lcr_gw port at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1149,7 +1152,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 			scheme = "sip:";
 			scheme_len = 4;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 3) != DB1_UINT)) {
 				LM_ERR("lcr_gw uri scheme at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1175,7 +1179,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 			transport = "";
 			transport_len = 0;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 4) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 4) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 4) != DB1_UINT)) {
 				LM_ERR("lcr_gw transport at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1272,7 +1277,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		if(VAL_NULL(ROW_VALUES(row) + 7)) {
 			strip = 0;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 7) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 7) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 7) != DB1_UINT)) {
 				LM_ERR("lcr_gw strip count at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1330,7 +1336,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		if(VAL_NULL(ROW_VALUES(row) + 10)) {
 			flags = 0;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 10) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 10) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 10) != DB1_UINT)) {
 				LM_ERR("lcr_gw flags at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1463,7 +1470,9 @@ int reload_tables()
 				row = RES_ROWS(res) + i;
 
 				if((VAL_NULL(ROW_VALUES(row)) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row)) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row)) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row))
+											  != DB1_UINT))) {
 					LM_ERR("lcr rule id at row <%u> is null or not int\n", i);
 					goto err;
 				}
@@ -1504,7 +1513,9 @@ int reload_tables()
 				}
 
 				if((VAL_NULL(ROW_VALUES(row) + 3) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row) + 3)
+											  != DB1_UINT))) {
 					LM_ERR("lcr rule <%u> stopper is NULL or not int\n",
 							rule_id);
 					goto err;
@@ -1516,7 +1527,9 @@ int reload_tables()
 				}
 
 				if((VAL_NULL(ROW_VALUES(row) + 4) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row) + 4) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row) + 4) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row) + 4)
+											  != DB1_UINT))) {
 					LM_ERR("lcr rule <%u> enabled is NULL or not int\n",
 							rule_id);
 					goto err;
@@ -1725,7 +1738,9 @@ int reload_tables()
 			for(i = 0; i < RES_ROW_N(res); i++) {
 				row = RES_ROWS(res) + i;
 				if((VAL_NULL(ROW_VALUES(row)) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row)) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row)) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row))
+											  != DB1_UINT))) {
 					LM_ERR("lcr_rule_target rule_id at row <%u> is null "
 						   "or not int\n",
 							i);
@@ -1733,7 +1748,9 @@ int reload_tables()
 				}
 				rule_id = (unsigned int)VAL_INT(ROW_VALUES(row));
 				if((VAL_NULL(ROW_VALUES(row) + 1) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row) + 1) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row) + 1) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row) + 1)
+											  != DB1_UINT))) {
 					LM_ERR("lcr_rule_target gw_id at row <%u> is null "
 						   "or not int\n",
 							i);
@@ -1741,7 +1758,9 @@ int reload_tables()
 				}
 				gw_id = (unsigned int)VAL_INT(ROW_VALUES(row) + 1);
 				if((VAL_NULL(ROW_VALUES(row) + 2) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row) + 2)
+											  != DB1_UINT))) {
 					LM_ERR("lcr_rule_target priority at row <%u> is null "
 						   "or not int\n",
 							i);
@@ -1755,7 +1774,9 @@ int reload_tables()
 					goto err;
 				}
 				if((VAL_NULL(ROW_VALUES(row) + 3) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row) + 3)
+											  != DB1_UINT))) {
 					LM_ERR("lcr_rule_target weight at row <%u> is null "
 						   "or not int\n",
 							i);
