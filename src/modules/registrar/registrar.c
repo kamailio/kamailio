@@ -74,7 +74,8 @@ static int w_registered(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid);
 static int w_registered3(struct sip_msg* _m, char* _d, char* _uri, char* _flags);
-static int w_registered4(struct sip_msg* _m, char* _d, char* _uri, char* _flags, char* _actionflags);
+static int w_registered4(struct sip_msg* _m, char* _d, char* _uri, char* _flags,
+		char* _actionflags);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
@@ -86,16 +87,22 @@ static int registered_fixup(void** param, int param_no);
 /*! \brief Functions */
 static int w_add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
-int tcp_persistent_flag = -1;			/*!< if the TCP connection should be kept open */
-int method_filtering = 0;			/*!< if the looked up contacts should be filtered based on supported methods */
-int path_enabled = 0;				/*!< if the Path HF should be handled */
-int path_mode = PATH_MODE_STRICT;		/*!< if the Path HF should be inserted in the reply.
-			*   - STRICT (2): always insert, error if no support indicated in request
-			*   - LAZY   (1): insert only if support indicated in request
-			*   - OFF    (0): never insert */
+/*!< if the TCP connection should be kept open */
+int tcp_persistent_flag = -1;
+/*!< if the looked up contacts should be filtered based on supported methods */
+int method_filtering = 0;
+/*!< if the Path HF should be handled */
+int path_enabled = 0;
+/*!< if the Path HF should be inserted in the reply.
+	*   - STRICT (2): always insert, error if no support indicated in request
+	*   - LAZY   (1): insert only if support indicated in request
+	*   - OFF    (0): never insert */
+int path_mode = PATH_MODE_STRICT;
 
-int path_use_params = 0;			/*!< if the received- and nat-parameters of last Path uri should be used
-						 * to determine if UAC is nat'ed */
+/*!< if the received- and nat-parameters of last Path uri should be used
+	* to determine if UAC is nat'ed */
+int path_use_params = 0;
+
 int path_check_local = 0;
 
 /* sruid to get internal uid */
@@ -223,7 +230,7 @@ static param_export_t params[] = {
 	{"use_path",           INT_PARAM, &path_enabled        					},
 	{"path_mode",          INT_PARAM, &path_mode           					},
 	{"path_use_received",  INT_PARAM, &path_use_params     					},
-	{"path_check_local",   INT_PARAM, &path_check_local                                     },
+	{"path_check_local",   INT_PARAM, &path_check_local                     },
 	{"xavp_cfg",           PARAM_STR, &reg_xavp_cfg     					},
 	{"xavp_rcd",           PARAM_STR, &reg_xavp_rcd     					},
 	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
@@ -291,11 +298,13 @@ static int mod_init(void)
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
-		LM_ERR("Cannot bind to SL API. Please load the SL module before loading this module.\n");
+		LM_ERR("Cannot bind to SL API. Please load the SL module before"
+				" loading this module.\n");
 		return -1;
 	}
 
-	if(cfg_declare("registrar", registrar_cfg_def, &default_registrar_cfg, cfg_sizeof(registrar), &registrar_cfg)){
+	if(cfg_declare("registrar", registrar_cfg_def, &default_registrar_cfg,
+				cfg_sizeof(registrar), &registrar_cfg)){
 		LM_ERR("Failed to declare the configuration parameters.\n");
 		return -1;
 	}
@@ -320,7 +329,8 @@ static int mod_init(void)
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {
-		LM_ERR("Can't bind to the usrloc module. Please load it before this module.\n");
+		LM_ERR("Can't bind to the usrloc module."
+				"Please load it before this module.\n");
 		return -1;
 	}
 
@@ -353,11 +363,13 @@ static int mod_init(void)
 					reg_event_callback.s);
 			}
 		}
-		if (reg_expire_event_rt>=0 || (reg_event_callback.s!=NULL && keng !=NULL)) {
+		if (reg_expire_event_rt>=0 || (reg_event_callback.s!=NULL
+					&& keng !=NULL)) {
 			set_child_rpc_sip_mode();
 			if(ul.register_ulcb(UL_CONTACT_EXPIRE, reg_ul_expired_contact, 0)< 0)
 			{
-				LM_ERR("Can not register callback for expired contacts (usrloc module)\n");
+				LM_ERR("Can not register callback for expired contacts"
+						" (usrloc module)\n");
 				return -1;
 			}
 		}
@@ -379,17 +391,20 @@ static int mod_init(void)
 			sock_flag = -1;
 		}
 	} else if (sock_flag!=-1) {
-		LM_INFO("sock_flag defined but no sock_hdr_name or no reg_xavp_cfg -> resetting flag\n");
+		LM_INFO("sock_flag defined but no sock_hdr_name"
+				" or no reg_xavp_cfg -> resetting flag\n");
 		sock_flag = -1;
 	}
 
 	if (reg_outbound_mode < 0 || reg_outbound_mode > 2) {
-		LM_ERR("outbound_mode modparam must be 0 (not supported), 1 (supported), or 2 (supported and required)\n");
+		LM_ERR("outbound_mode modparam must be 0 (not supported),"
+				" 1 (supported), or 2 (supported and required)\n");
 		return -1;
 	}
 
 	if (reg_regid_mode < 0 || reg_regid_mode > 1) {
-		LM_ERR("regid_mode modparam must be 0 (use with outbound), 1 (use always)\n");
+		LM_ERR("regid_mode modparam must be 0 (use with outbound),"
+				" 1 (use always)\n");
 		return -1;
 	}
 
@@ -416,9 +431,9 @@ static int child_init(int rank)
 	if (rank==1) {
 		/* init stats */
 		//TODO if parameters are modified via cfg framework do i change them?
-		update_stat( max_expires_stat, default_registrar_cfg.max_expires );
-		update_stat( max_contacts_stat, default_registrar_cfg.max_contacts );
-		update_stat( default_expire_stat, default_registrar_cfg.default_expires );
+		update_stat(max_expires_stat, default_registrar_cfg.max_expires);
+		update_stat(max_contacts_stat, default_registrar_cfg.max_contacts);
+		update_stat(default_expire_stat, default_registrar_cfg.default_expires);
 	}
 
 	return 0;
@@ -453,7 +468,8 @@ static int w_save3(struct sip_msg* _m, char* _d, char* _cflags, char* _uri)
 static int w_lookup(struct sip_msg* _m, char* _d, char* _uri)
 {
 	str uri = {0};
-	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0
+				|| uri.len<=0))
 	{
 		LM_ERR("invalid uri parameter\n");
 		return -1;
@@ -468,7 +484,8 @@ static int w_lookup(struct sip_msg* _m, char* _d, char* _uri)
 static int w_lookup_to_dset(struct sip_msg* _m, char* _d, char* _uri)
 {
 	str uri = {0};
-	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0
+				|| uri.len<=0))
 	{
 		LM_ERR("invalid uri parameter\n");
 		return -1;
@@ -501,7 +518,8 @@ static int ki_lookup_branches(sip_msg_t* _m, str* _dtable)
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri)
 {
 	str uri = {0};
-	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0
+				|| uri.len<=0))
 	{
 		LM_ERR("invalid uri parameter\n");
 		return -1;
@@ -525,7 +543,8 @@ static int w_registered3(struct sip_msg* _m, char* _d, char* _uri, char* _flags)
 {
 	str uri = {0};
 	int flags = 0;
-	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0
+				|| uri.len<=0))
 	{
 		LM_ERR("invalid uri parameter\n");
 		return -1;
@@ -550,12 +569,14 @@ static int ki_registered_flags(sip_msg_t* _m, str* _dtable, str* _uri, int _f)
 	return registered3(_m, d, (_uri && _uri->len>0)?_uri:NULL, _f);
 }
 
-static int w_registered4(struct sip_msg* _m, char* _d, char* _uri, char* _flags, char* _actionflags)
+static int w_registered4(struct sip_msg* _m, char* _d, char* _uri,
+		char* _flags, char* _actionflags)
 {
 	str uri = {0};
 	int flags = 0;
 	int actionflags = 0;
-	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0
+				|| uri.len<=0))
 	{
 		LM_ERR("invalid uri parameter\n");
 		return -1;
@@ -565,12 +586,14 @@ static int w_registered4(struct sip_msg* _m, char* _d, char* _uri, char* _flags,
 		LM_ERR("invalid flags parameter\n");
 		return -1;
 	}
-	if(_actionflags!=NULL && (fixup_get_ivalue(_m, (fparam_t*)_actionflags, &actionflags)) < 0)
+	if(_actionflags!=NULL && (fixup_get_ivalue(_m, (fparam_t*)_actionflags,
+					&actionflags)) < 0)
 	{
 		LM_ERR("invalid action flag parameter\n");
 		return -1;
 	}
-	return registered4(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL, flags, actionflags);
+	return registered4(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL, flags,
+			actionflags);
 }
 
 static int ki_registered_action(sip_msg_t* _m, str* _dtable, str* _uri,
@@ -838,20 +861,27 @@ static int w_add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 	return ki_add_sock_hdr(msg, &hdr_name);
 }
 
-void default_expires_stats_update(str* gname, str* name){
-	update_stat(default_expire_stat, cfg_get(registrar, registrar_cfg, default_expires));
+void default_expires_stats_update(str* gname, str* name)
+{
+	update_stat(default_expire_stat, cfg_get(registrar, registrar_cfg,
+				default_expires));
 }
 
-void max_expires_stats_update(str* gname, str* name){
-	update_stat(max_expires_stat, cfg_get(registrar, registrar_cfg, max_expires));
+void max_expires_stats_update(str* gname, str* name)
+{
+	update_stat(max_expires_stat, cfg_get(registrar, registrar_cfg,
+				max_expires));
 }
 
-void default_expires_range_update(str* gname, str* name){
-	update_stat(default_expire_range_stat, cfg_get(registrar, registrar_cfg, default_expires_range));
+void default_expires_range_update(str* gname, str* name)
+{
+	update_stat(default_expire_range_stat, cfg_get(registrar, registrar_cfg,
+				default_expires_range));
 }
 
 void expires_range_update(str* gname, str* name){
-	update_stat(expire_range_stat, cfg_get(registrar, registrar_cfg, expires_range));
+	update_stat(expire_range_stat, cfg_get(registrar, registrar_cfg,
+				expires_range));
 }
 
 /**
