@@ -391,9 +391,9 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 	VAL_TYPE(val) = DB1_STR;
 	VAL_NULL(val) = 0;
 	VAL_STR(val) = *table;
-	
+
 	col[0] = &tmp2;
-	
+
 	if (dbf->query(connection, key, 0, val, col, 1, 1, 0, &res) < 0) {
 		LM_ERR("error in db_query\n");
 		return -1;
@@ -414,7 +414,8 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 
 	ver = ROW_VALUES(RES_ROWS(res));
 	val_type = VAL_TYPE(ver);
-	if ( (val_type!=DB1_INT && val_type!=DB1_DOUBLE && val_type!=DB1_BIGINT)
+	if ( (val_type!=DB1_INT && val_type!=DB1_DOUBLE && val_type!=DB1_BIGINT
+				&& val_type!=DB1_UINT && val_type!=DB1_UBIGINT)
 			|| VAL_NULL(ver) ) {
 		LM_ERR("invalid type (%d) or nul (%d) version "
 			"columns for %.*s\n", VAL_TYPE(ver), VAL_NULL(ver),
@@ -425,8 +426,12 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 
 	if (val_type == DB1_INT) {
 		ret = VAL_INT(ver);
+	} else if (val_type == DB1_UINT) {
+		ret = (int)VAL_UINT(ver);
 	} else if (val_type == DB1_BIGINT) {
 		ret = (int)VAL_BIGINT(ver);
+	} else if (val_type == DB1_UBIGINT) {
+		ret = (int)VAL_UBIGINT(ver);
 	} else if (val_type == DB1_DOUBLE) {
 		ret = (int)VAL_DOUBLE(ver);
 	}
