@@ -253,6 +253,7 @@ void free_cell_helper(
 		xavp_destroy_list_unsafe(&dead_cell->xavps_list);
 #endif
 
+	memset(dead_cell, 0, sizeof(tm_cell_t));
 	/* the cell's body */
 	shm_free_unsafe(dead_cell);
 
