@@ -1868,7 +1868,6 @@ static int ki_sdp_get_line_startswith(sip_msg_t *msg, str *aname, str *sline)
 
 static int sdp_get_sess_version(sip_msg_t* msg, str* sess_version, int* sess_version_num)
 {
-	sdp_info_t *sdp = NULL;
 	sdp_session_cell_t* sdp_session;
 	int sdp_session_num;
 
