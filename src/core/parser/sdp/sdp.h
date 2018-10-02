@@ -102,6 +102,7 @@ typedef struct sdp_session_cell {
 	int pf;           /**< connection address family: AF_INET/AF_INET6 */
 	str ip_addr;      /**< connection address */
 	/* o=<username> <session id> <version> <network type> <address type> <address> */
+	str o_sess_version; /** < origin session version number */
 	int o_pf;         /**< origin address family: AF_INET/AF_INET6 */
 	str o_ip_addr;    /**< origin address */
 	/* b=<bwtype>:<bandwidth> */

@@ -590,6 +590,74 @@ int extract_media_attr(str *body, str *mediamedia, str *mediaport, str *mediatra
 	return 0;
 }
 
+int extract_sess_version(str* oline, str* sess_version) {
+
+	char* cp0 = NULL;
+	char* cp = NULL;
+	int len = 0;
+	char ws = ' ';
+	int i=0;
+
+	/*
+	"o=jdoe 2890844526 2890842807 IN IP4 10.47.16.5" CR LF
+	"o=W 1 2 IN IP4 0.0.0.0" CR LF -> 24
+	"o=W 1 2 IN IP6 ::1" CR LF -> 20
+	"o=W 1 2 X Y Z" CR LF -> 15
+	*/
+	if ( oline->s == NULL || oline->len < 15 )
+	{
+		LM_ERR("invalid o -line\n");
+		return -1;
+	}
+
+	if ( sess_version == NULL )
+	{
+		LM_ERR("invalid result pointer\n");
+		return -1;
+	}
+
+	LM_DBG("oline(%d): >%.*s<\n", oline->len, oline->len, oline->s);
+
+	// jump over o=
+	cp = oline->s + 2;
+	len = oline->len - 2;
+
+	// find whitespace 3 times
+	do
+	{
+		cp0=cp;
+		//LM_DBG("loop %d: >%.*s<\n", len, len, cp0);
+
+		cp = (char*)ser_memmem(cp0, &ws, len, 1);
+		if ( cp == NULL) { break; }
+
+		//LM_DBG("cp0: %p cp: %p (%ld)\n", cp0, cp, cp-cp0);
+		len-=cp-cp0;
+
+		// step over whitespace
+		if ( len > 0 )
+		{
+			cp++;
+			len--;
+		}
+
+		i++;
+	} while ( len < oline->len && i < 3 );
+
+	len = cp-cp0-1;
+	LM_DBG("end %d: >%.*s<\n", len, len, cp0);
+
+	sess_version->s = cp0;
+	sess_version->len = len;
+
+	if (!isdigit(*cp0))
+	{
+		LM_WARN("not digit >%.*s<\n", len, cp0);
+	}
+
+	return 1;
+}
+
 
 /*
  * Auxiliary for some functions.
