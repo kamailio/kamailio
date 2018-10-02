@@ -69,6 +69,8 @@ Chapter 1. Admin Guide
    verify from a broker if source or destination of a SIP request is a
    trusted peer.
 
+   This module is obsolete and will be removed in the next release.
+
    In order to participate in the trust community provided by a broker,
    each SIP provider registers the domains (host parts of SIP URIs) that
    they serve with the broker. When a SIP proxy of a provider needs to
