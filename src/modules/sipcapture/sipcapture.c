@@ -2499,7 +2499,8 @@ int receive_logging_json_msg(char *buf, unsigned int len,
 	struct timezone tz;
 	time_t epoch_time_as_time_t;
 
-	str tmp, corrtmp, table;
+	str tmp, table;
+	str corrtmp = STR_NULL;
 	_capture_mode_data_t *c = NULL;
 
 	c = capture_def;
