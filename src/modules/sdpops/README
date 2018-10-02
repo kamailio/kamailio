@@ -46,6 +46,10 @@ Daniel-Constantin Mierla
               4.18. sdp_with_ice()
               4.19. sdp_get_line_startswith(avpvar, string)
 
+        5. Exported Variables
+
+              5.1. $sdp( )
+
    List of Examples
 
    1.1. sdp_remove_codecs_by_id usage
@@ -100,6 +104,10 @@ Chapter 1. Admin Guide
         4.17. sdp_content([sloppy])
         4.18. sdp_with_ice()
         4.19. sdp_get_line_startswith(avpvar, string)
+
+   5. Exported Variables
+
+        5.1. $sdp( )
 
 1. Overview
 
@@ -492,3 +500,18 @@ if(sdp_get_line_startswith("$avp(mline)", "m=")) {
         xlog("m-line: $avp(mline)\n");
 }
 ...
+
+5. Exported Variables
+
+   5.1. $sdp( )
+
+5.1. $sdp( )
+
+   Access to SDP attributes
+     * $sdp(body) - full SDP body (read only)
+     * $sdp(sess_version) - sess-version -attribute from SDP o= -line.
+       When set to special value -1, current value is incremented. (read +
+       write)
+
+   Exported pseudo-variables are also documented at
+   https://www.kamailio.org/wiki/
