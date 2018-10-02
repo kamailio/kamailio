@@ -48,6 +48,10 @@
 #include "uac.h" /* free_local_ack */
 
 
+#define T_UAC_PTR(T) ((tm_ua_client_t*)((char*)T + sizeof(tm_cell_t) \
+								+ MD5_LEN - sizeof(((tm_cell_t*)0)->md5)))
+
+
 static enum kill_reason kr;
 
 /* pointer to the big table where all the transaction data lives */
@@ -331,9 +335,7 @@ struct cell *build_cell(struct sip_msg *p_msg)
 	new_cell->uas.response.my_T = new_cell;
 	init_rb_timers(&new_cell->uas.response);
 	/* UAC */
-	new_cell->uac =
-			(struct ua_client *)((char *)new_cell + sizeof(struct cell)
-								+ MD5_LEN - sizeof(((struct cell *)0)->md5));
+	new_cell->uac = T_UAC_PTR(new_cell);
 	/* timers */
 	init_cell_timers(new_cell);
 
