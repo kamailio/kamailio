@@ -132,6 +132,10 @@ void free_cell_helper(
 
 	LM_DBG("freeing transaction %p from %s:%u\n", dead_cell, fname, fline);
 
+	if(dead_cell==NULL) {
+		return;
+	}
+
 	if(dead_cell->prev_c != NULL && dead_cell->next_c != NULL) {
 		if(likely(silent == 0)) {
 			LM_WARN("removed cell %p is still linked in hash table (%s:%u)\n",
@@ -152,6 +156,10 @@ void free_cell_helper(
 	dead_cell->fcount++;
 	if(dead_cell->fcount!=1) {
 		LM_WARN("unexpected fcount value: %d\n", dead_cell->fcount);
+	}
+	if(dead_cell->uac==NULL || dead_cell->uac!=T_UAC_PTR(dead_cell)) {
+		LM_WARN("unexpected tm cell content: %p\n", dead_cell);
+		return;
 	}
 
 	if(unlikely(has_tran_tmcbs(dead_cell, TMCB_DESTROY)))
