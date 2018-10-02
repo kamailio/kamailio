@@ -1709,9 +1709,9 @@ else # no gcc
 ifeq ($(CC_NAME), icc)
 		CFLAGS+= -Wall
 else # no icc
-ifeq ($(CC_NAME), suncc)
-		# FIXME: is the default (-Xa ?) enough?
-endif # CC_NAME=suncc
+ifeq ($(CC_NAME), clang)
+		CFLAGS+= -Wunused-variable -Wuninitialized
+endif # CC_NAME=clang
 endif # CC_NAME=icc
 endif # CC_NAME=gcc
 
