@@ -75,13 +75,23 @@ int async_task_workers_active(void)
  */
 int async_task_init_sockets(void)
 {
+	int val;
+
 	if (socketpair(PF_UNIX, SOCK_DGRAM, 0, _async_task_sockets) < 0) {
 		LM_ERR("opening tasks dgram socket pair\n");
 		return -1;
 	}
 
-	if (_async_nonblock)
-		fcntl(_async_task_sockets[1], F_SETFL, fcntl(_async_task_sockets[1], F_GETFL, 0) | O_NONBLOCK);
+	if (_async_nonblock) {
+		val = fcntl(_async_task_sockets[1], F_GETFL, 0);
+		if(val<0) {
+			LM_WARN("failed to get socket flags\n");
+		} else {
+			if(fcntl(_async_task_sockets[1], F_SETFL, val | O_NONBLOCK)<0) {
+				LM_WARN("failed to set socket nonblock flag\n");
+			}
+		}
+	}
 
 	LM_DBG("inter-process event notification sockets initialized\n");
 	return 0;
