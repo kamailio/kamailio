@@ -237,7 +237,7 @@ static int km_cb_rpl_stats_by_method(struct sip_msg *msg,
       int method = get_cseq(msg)->method_id;
       int group = msg->first_line.u.reply.statuscode / 100 - 1;
 
-      if (group >= 1 && group <= 6) {
+      if (group >= 0 && group <= 5) {
             switch(method) {
                   case METHOD_INVITE: update_stat( VAR_NAME(invite)[group], 1); break;
                   case METHOD_CANCEL: update_stat( VAR_NAME(cancel)[group], 1); break;
