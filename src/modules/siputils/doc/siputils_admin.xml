@@ -1093,9 +1093,13 @@ if (is_supported("outbound")) { ... }
 		original sender. For incoming SIP requests, it means there is only
 		one Via header. For incoming SIP replies, it means that top
 		Record-Route URI is 'myself' and source address is not matching it
-		(to avoid detecting in case of local loops). Note that it does not
-		detect spirals, which can have the condition for replies true also
-		in the case of additional SIP reply receival.
+		(to avoid detecting in case of local loops). The detection is done
+		only when Record-Route has an IP address in its URI (for a domain,
+		it returns -1/false).
+		</para>
+		<para>
+		Note that it does not detect spirals, which can have the condition
+		for replies true also in the case of additional SIP reply reception.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
