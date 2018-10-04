@@ -210,7 +210,7 @@ static char* xhttp_to_sip(sip_msg_t* msg, int* new_msg_len)
 	hp.host = &ip;
 	hp.port = &port;
 	init_dst_from_rcv(&dst, &msg->rcv);
-	via = via_builder(&via_len, &dst, 0, 0, &hp);
+	via = via_builder(&via_len, NULL, &dst, 0, 0, &hp);
 	if (via == 0)
 	{
 		LM_DBG("failed to build via\n");
