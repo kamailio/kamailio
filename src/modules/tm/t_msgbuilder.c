@@ -106,7 +106,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		}
 	}
 #endif /* USE_TCP */
-	via=via_builder(&via_len, &Trans->uac[branch].request.dst,
+	via=via_builder(&via_len, NULL, &Trans->uac[branch].request.dst,
 		&branch_str, via_id.s?&via_id:0 , &hp );
 
 	/* via_id.s not needed anylonger => free it */
@@ -1192,7 +1192,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	branch_str.s = branch_buf;
 	branch_str.len = branch_len;
 	set_hostport(&hp, 0);
-	via = via_builder(&via_len, dst, &branch_str, 0, &hp);
+	via = via_builder(&via_len, NULL, dst, &branch_str, 0, &hp);
 	if (!via) {
 		LM_ERR("No via header got from builder\n");
 		goto error;
@@ -1367,7 +1367,7 @@ static inline int assemble_via(str* dest, struct cell* t,
 #endif
 
 	set_hostport(&hp, 0);
-	via = via_builder(&via_len, dst, &branch_str, 0, &hp);
+	via = via_builder(&via_len, NULL, dst, &branch_str, 0, &hp);
 	if (!via) {
 		LM_ERR("via building failed\n");
 		return -2;
