@@ -608,6 +608,33 @@ if (is_uri_user_e164("$avp(i:705)") {
 		</example>
 	</section>
 
+    <section id="siputils.f.is_uri">
+        <title>
+        <function moreinfo="none">is_uri(pseudo-variable)</function>
+        </title>
+        <para>
+        Checks if string value of pseudo variable argument is a
+        valid uri.
+        </para>
+        <para>
+        This function can be used from ANY_ROUTE.
+        </para>
+        <example>
+        <title><function>is_uri</function> usage</title>
+        <programlisting format="linespecific">
+...
+if (is_uri("$var(x)")) {  # Check if variable contains a uri
+   ...
+}
+if (is_uri("$avp(i:705)") {
+   # Check value stored in avp i:705
+   ...
+};
+...
+</programlisting>
+        </example>
+    </section>
+
 	<section id="siputils.f.is_tel_number">
 		<title>
 		<function moreinfo="none">is_tel_number(tval)</function>

@@ -130,6 +130,37 @@ int w_has_totag(struct sip_msg* _m, char* _foo, char* _bar)
 }
 
 /*
+ * Check if pseudo variable contains a valid uri
+ */
+int is_uri(struct sip_msg* _m, char* _sp, char* _s2)
+{
+	pv_spec_t *sp;
+	pv_value_t pv_val;
+	sip_uri_t turi;
+
+	sp = (pv_spec_t *)_sp;
+
+	if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
+		if (pv_val.flags & PV_VAL_STR) {
+			if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+				LM_DBG("missing argument\n");
+				return -1;
+			}
+			if(parse_uri(pv_val.rs.s, pv_val.rs.len, &turi)!=0) {
+				return -1;
+			}
+			return 1;
+		} else {
+			LM_ERR("pseudo variable value is not string\n");
+			return -1;
+		}
+	} else {
+		LM_ERR("failed to get pseudo variable value\n");
+		return -1;
+	}
+}
+
+/*
  * Check if the username matches the username in credentials
  */
 int is_user(struct sip_msg* _m, char* _user, char* _str2)
