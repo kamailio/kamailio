@@ -2955,7 +2955,8 @@ char* create_via_hf( unsigned int *len,
 	}
 
 	/* test and add xavp params */
-	if(msg && (msg->msg_flags&FL_ADD_XAVP_VIA) && _ksr_xavp_via_params.len>0) {
+	if(msg && (msg->msg_flags&FL_ADD_XAVP_VIA_PARAMS)
+			&& _ksr_xavp_via_params.len>0) {
 		xparams.s = pv_get_buffer();
 		xparams.len = xavp_serialize_fields(&_ksr_xavp_via_params,
 							xparams.s, pv_get_buffer_size());
