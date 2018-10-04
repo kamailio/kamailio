@@ -667,6 +667,34 @@ via_add_xavp_params("1");
 </programlisting>
 		</example>
 		</section>
+		<section id="corex.f.via_use_xavp_fields">
+		<title><function moreinfo="none">via_use_xavp_fields(flags)</function></title>
+		<para>
+			Control if fields of the xavp with the name specified by
+			xavp_via_fields global parameter are used or not to build local Via.
+
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - use xavp fields; 0 - do not
+				use xavp fields.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_use_xavp_fields</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_use_xavp_fields("1");
+...
+</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>
