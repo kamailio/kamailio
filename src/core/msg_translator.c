@@ -114,6 +114,7 @@ extern char version[];
 extern int version_len;
 
 str _ksr_xavp_via_params = STR_NULL;
+str _ksr_xavp_via_fields = STR_NULL;
 
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
@@ -2673,10 +2674,10 @@ int branch_builder( unsigned int hash_index,
 
 
 
-/* uses only the send_info->send_socket, send_info->proto and 
+/* uses only the send_info->send_socket, send_info->proto and
  * send_info->comp (so that a send_info used for sending can be passed
  * to this function w/o changes and the correct via will be built) */
-char* via_builder( unsigned int *len,
+char* via_builder(unsigned int *len, sip_msg_t *msg,
 	struct dest_info* send_info /* where to send the reply */,
 	str* branch, str* extra_params, struct hostport* hp)
 {
@@ -2684,8 +2685,8 @@ char* via_builder( unsigned int *len,
 	char               *line_buf;
 	int max_len;
 	int via_prefix_len;
-	str* address_str; /* address displayed in via */
-	str* port_str; /* port no displayed in via */
+	str* address_str = NULL; /* address displayed in via */
+	str* port_str = NULL; /* port no displayed in via */
 	struct socket_info* send_sock;
 	int comp_len, comp_name_len;
 #ifdef USE_COMP
@@ -2696,22 +2697,46 @@ char* via_builder( unsigned int *len,
 	union sockaddr_union *from = NULL;
 	union sockaddr_union local_addr;
 	struct tcp_connection *con = NULL;
+	sr_xavp_t *rxavp = NULL;
+	str xname;
 
 	send_sock=send_info->send_sock;
 	/* use pre-set address in via, the outbound socket alias or address one */
-	if (hp && hp->host->len)
-		address_str=hp->host;
-	else if(send_sock->useinfo.name.len>0)
-		address_str=&(send_sock->useinfo.name);
-	else
-		address_str=&(send_sock->address_str);
-	if (hp && hp->port->len)
-		port_str=hp->port;
-	else if(send_sock->useinfo.port_no>0)
-		port_str=&(send_sock->useinfo.port_no_str);
-	else
-		port_str=&(send_sock->port_no_str);
-	
+	if(msg && (msg->msg_flags&FL_USE_XAVP_VIA_FIELDS)
+			&& _ksr_xavp_via_fields.len>0) {
+		xname.s = "address";
+		xname.len = 7;
+		rxavp = xavp_get_child_with_sval(&_ksr_xavp_via_fields, &xname);
+		if(rxavp!=NULL) {
+			address_str = &rxavp->val.v.s;
+		}
+	}
+	if(address_str==NULL) {
+		if (hp && hp->host->len)
+			address_str=hp->host;
+		else if(send_sock->useinfo.name.len>0)
+			address_str=&(send_sock->useinfo.name);
+		else
+			address_str=&(send_sock->address_str);
+	}
+	if(msg && (msg->msg_flags&FL_USE_XAVP_VIA_FIELDS)
+			&& _ksr_xavp_via_fields.len>0) {
+		xname.s = "port";
+		xname.len = 4;
+		rxavp = xavp_get_child_with_sval(&_ksr_xavp_via_fields, &xname);
+		if(rxavp!=NULL) {
+			port_str = &rxavp->val.v.s;
+		}
+	}
+	if(port_str==NULL) {
+		if (hp && hp->port->len)
+			port_str=hp->port;
+		else if(send_sock->useinfo.port_no>0)
+			port_str=&(send_sock->useinfo.port_no_str);
+		else
+			port_str=&(send_sock->port_no_str);
+	}
+
 	comp_len=comp_name_len=0;
 #ifdef USE_COMP
 	comp_name=0;
@@ -2861,7 +2886,7 @@ char* via_builder( unsigned int *len,
 
 /* creates a via header honoring the protocol of the incoming socket
  * msg is an optional parameter */
-char* create_via_hf( unsigned int *len,
+char* create_via_hf(unsigned int *len,
 	struct sip_msg *msg,
 	struct dest_info* send_info /* where to send the reply */,
 	str* branch)
@@ -2982,7 +3007,7 @@ char* create_via_hf( unsigned int *len,
 	}
 
 	set_hostport(&hp, msg);
-	via = via_builder( len, send_info, branch,
+	via = via_builder(len, msg, send_info, branch,
 							extra_params.len?&extra_params:0, &hp);
 
 	/* we do not need extra_params any more, already in the new via header */

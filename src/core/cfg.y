@@ -324,6 +324,7 @@ extern char *default_routename;
 %token LOGENGINETYPE
 %token LOGENGINEDATA
 %token XAVPVIAPARAMS
+%token XAVPVIAFIELDS
 %token LISTEN
 %token ADVERTISE
 %token ALIAS
@@ -802,6 +803,10 @@ assign_stm:
 			_ksr_xavp_via_params.len=strlen($3);
 		}
 	| XAVPVIAPARAMS EQUAL error { yyerror("string value expected"); }
+	| XAVPVIAFIELDS EQUAL STRING { _ksr_xavp_via_params.s=$3;
+			_ksr_xavp_via_fields.len=strlen($3);
+		}
+	| XAVPVIAFIELDS EQUAL error { yyerror("string value expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }

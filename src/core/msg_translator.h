@@ -107,9 +107,9 @@ char * build_res_buf_with_body_from_sip_req(	unsigned int code ,
 				unsigned int *returned_len,
 				struct bookmark *bmark);
 */
-char* via_builder( unsigned int *len,
+char* via_builder(unsigned int *len, sip_msg_t *msg,
 	struct dest_info* send_info,
-	str *branch, str* extra_params, struct hostport *hp );
+	str *branch, str* extra_params, struct hostport *hp);
 
 /* creates a via header honoring the protocol of the incoming socket
  * msg is an optional parameter */

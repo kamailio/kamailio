@@ -107,7 +107,8 @@ typedef enum request_method {
 #define FL_UAC_AUTH          (1<<19)  /* Proxy UAC-like authentication */
 #define FL_ADD_SRVID         (1<<20) /*!< add 'srvid' to local via hdr */
 #define FL_ADD_XAVP_VIA_PARAMS (1<<21) /*!< add xavp fields to local via params */
-#define FL_MSG_NOREPLY       (1<<22) /*!< do not send sip reply for request */
+#define FL_USE_XAVP_VIA_FIELDS (1<<22) /*!< use xavp fields for local via attrs */
+#define FL_MSG_NOREPLY       (1<<23) /*!< do not send sip reply for request */
 
 /* WARNING: Value (1 << 28) is temporarily reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
