@@ -58,6 +58,7 @@ static int w_set_recv_socket(sip_msg_t *msg, char *psock, char *p2);
 static int w_set_source_address(sip_msg_t *msg, char *paddr, char *p2);
 static int w_via_add_srvid(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *p2);
+static int w_via_use_xavp_fields(sip_msg_t *msg, char *pflags, char *p2);
 
 static int fixup_file_op(void** param, int param_no);
 
@@ -120,6 +121,8 @@ static cmd_export_t cmds[]={
 	{"via_add_srvid", (cmd_function)w_via_add_srvid, 1, fixup_igp_null,
 		0, ANY_ROUTE },
 	{"via_add_xavp_params", (cmd_function)w_via_add_xavp_params, 1, fixup_igp_null,
+		0, ANY_ROUTE },
+	{"via_use_xavp_fields", (cmd_function)w_via_use_xavp_fields, 1, fixup_igp_null,
 		0, ANY_ROUTE },
 
 	{0, 0, 0, 0, 0, 0}
@@ -798,6 +801,35 @@ static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *s2)
 /**
  *
  */
+static int ki_via_use_xavp_fields(sip_msg_t *msg, int fval)
+{
+	if(msg==NULL)
+		return -1;
+	if(fval) {
+		msg->msg_flags |= FL_USE_XAVP_VIA_FIELDS;
+	} else {
+		msg->msg_flags &= ~(FL_USE_XAVP_VIA_FIELDS);
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_via_use_xavp_fields(sip_msg_t *msg, char *pflags, char *s2)
+{
+	int fval=0;
+	if(fixup_get_ivalue(msg, (gparam_t*)pflags, &fval)!=0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_via_use_xavp_fields(msg, fval);
+}
+
+
+/**
+ *
+ */
 static int ki_has_ruri_user(sip_msg_t *msg)
 {
 	if(msg==NULL)
@@ -897,6 +929,11 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	},
 	{ str_init("corex"), str_init("via_add_xavp_params"),
 		SR_KEMIP_INT, ki_via_add_xavp_params,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("via_use_xavp_fields"),
+		SR_KEMIP_INT, ki_via_use_xavp_fields,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
