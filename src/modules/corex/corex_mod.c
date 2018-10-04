@@ -775,9 +775,9 @@ static int ki_via_add_xavp_params(sip_msg_t *msg, int fval)
 	if(msg==NULL)
 		return -1;
 	if(fval) {
-		msg->msg_flags |= FL_ADD_XAVP_VIA;
+		msg->msg_flags |= FL_ADD_XAVP_VIA_PARAMS;
 	} else {
-		msg->msg_flags &= ~(FL_ADD_XAVP_VIA);
+		msg->msg_flags &= ~(FL_ADD_XAVP_VIA_PARAMS);
 	}
 	return 1;
 }
