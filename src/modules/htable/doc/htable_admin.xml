@@ -650,6 +650,28 @@ modparam("htable", "enable_dmq", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.p.dmq_init_sync">
+		<title><varname>dmq_init_sync</varname> (integer)</title>
+		<para>
+			If set to 1, will request synchronization from other nodes at startup. It applies
+			to all tables having the "dmqreplicate" parameter set. As above, it is important to 
+			ensure the definition (size, autoexpire etc.) of replicated tables is identical 
+			across all instances.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dmq_init_sync</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "dmq_init_sync", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="htable.p.timer_procs">
 		<title><varname>timer_procs</varname> (integer)</title>
 		<para>

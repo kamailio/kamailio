@@ -52,6 +52,7 @@ MODULE_VERSION
 int  ht_timer_interval = 20;
 int  ht_db_expires_flag = 0;
 int  ht_enable_dmq = 0;
+int  ht_dmq_init_sync = 0;
 int  ht_timer_procs = 0;
 static int ht_event_callback_mode = 0;
 
@@ -153,6 +154,7 @@ static param_export_t params[]={
 	{"timer_interval",      INT_PARAM, &ht_timer_interval},
 	{"db_expires",          INT_PARAM, &ht_db_expires_flag},
 	{"enable_dmq",          INT_PARAM, &ht_enable_dmq},
+	{"dmq_init_sync",       INT_PARAM, &ht_dmq_init_sync},
 	{"timer_procs",         PARAM_INT, &ht_timer_procs},
 	{"event_callback",      PARAM_STR, &ht_event_callback},
 	{"event_callback_mode", PARAM_INT, &ht_event_callback_mode},
@@ -218,7 +220,7 @@ static int mod_init(void)
 		}
 	}
 
-	if (ht_enable_dmq>0 && ht_dmq_initialize()!=0) {
+	if (ht_enable_dmq>0 && ht_dmq_initialize(ht_dmq_init_sync)!=0) {
 		LM_ERR("failed to initialize dmq integration\n");
 		return -1;
 	}
