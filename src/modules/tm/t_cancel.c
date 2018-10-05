@@ -173,7 +173,7 @@ int cancel_all_uacs(struct cell *trans, int how)
 }
 
 
-/* should be called directly only if one of the condition bellow is true:
+/* should be called directly only if one of the condition below is true:
  *  - prepare_cancel_branch or prepare_to_cancel returned true for this branch
  *  - buffer value was 0 and then set to BUSY in an atomic op.:
  *     if (atomic_cmpxchg_long(&buffer, 0, BUSY_BUFFER)==0).

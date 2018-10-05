@@ -1417,7 +1417,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		/* look if the callback perhaps replied transaction; it also
 		 * covers the case in which a transaction is replied localy
 		 * on CANCEL -- then it would make no sense to proceed to
-		 * new branches bellow
+		 * new branches below
 		*/
 		if (Trans->uas.status >= 200) {
 			*should_store=0;
