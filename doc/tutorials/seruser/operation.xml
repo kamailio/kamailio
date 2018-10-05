@@ -417,7 +417,7 @@ warning: IP extract from warning activated to be more informational
 					    </programlisting>
 					    <para>
 						The following SIP message causes then logging output as shown
-						bellow.
+						below.
 					    </para>
 					    <programlisting>
 REGISTER sip:192.168.2.16 SIP/2.0
