@@ -302,7 +302,7 @@ static int fixup_t_flag(void** param, int param_no)
 
 	if (*code < FL_MAX && token==0) {
 		LM_ERR("TM module: too high flag number: %s (%d)\n; lower number"
-			" bellow %d reserved\n", (char *) (*param), *code, FL_MAX );
+			" below %d reserved\n", (char *) (*param), *code, FL_MAX );
 		goto error;
 	}
 

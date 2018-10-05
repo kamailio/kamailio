@@ -1333,7 +1333,7 @@ static int hep3_process_msg(char* tcpbuf, unsigned int len,
 	/* fill in msg */
 	msg.buf=tcpbuf;
 	msg.len=len;
-	/* zero termination (termination of orig message bellow not that
+	/* zero termination (termination of orig message below not that
 	 * useful as most of the work is done with scratch-pad; -jiri  */
 	/* buf[len]=0; */ /* WARNING: zero term removed! */
 	msg.rcv=*rcv_info;

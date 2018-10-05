@@ -202,7 +202,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	/* fill in msg */
 	msg->buf = buf;
 	msg->len = len;
-	/* zero termination (termination of orig message bellow not that
+	/* zero termination (termination of orig message below not that
 	 * useful as most of the work is done with scratch-pad; -jiri  */
 	/* buf[len]=0; */ /* WARNING: zero term removed! */
 	msg->rcv = *rcv_info;
