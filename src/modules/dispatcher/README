@@ -993,7 +993,7 @@ modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
             tolerance. When facing congestion the weight of a gateway is
             lowered by 1 for every ms of estimated congestion, a 'rweight'
             value of 50 is recommended. See the example "configuring load
-            balancing with congestion detection" bellow.
+            balancing with congestion detection" below.
             The congestion estimation is done using an EWMA (see
             ds_latency_estimator_alpha). If all the gateways in a set are
             above their congestion threshold(weight), the load
