@@ -186,18 +186,10 @@
 
 #define PATH_MAX_GUESS	1024		/*!< maximum path length */
 
-#if defined KAMAILIO_MOD_INTERFACE || defined OPENSER_MOD_INTERFACE || \
-		defined MOD_INTERFACE_V1
-	#define DEFAULT_DB_URL "mysql://kamailio:kamailiorw@localhost/kamailio"
-	#define DEFAULT_DB_URL_LEN (sizeof(DEFAULT_DB_URL) - 1)
-	#define DEFAULT_RODB_URL "mysql://kamailioro:kamailioro@localhost/kamailio"
-	#define DEFAULT_RODB_URL_LEN (sizeof(DEFAULT_RODB_URL) - 1)
-#else
-	#define DEFAULT_DB_URL "mysql://ser:heslo@localhost/ser"
-	#define DEFAULT_DB_URL_LEN (sizeof(DEFAULT_DB_URL) - 1)
-	#define DEFAULT_RODB_URL "mysql://serro:47serro11@localhost/ser"
-	#define DEFAULT_RODB_URL_LEN (sizeof(DEFAULT_RODB_URL) - 1)
-#endif
+#define DEFAULT_DB_URL "mysql://kamailio:kamailiorw@localhost/kamailio"
+#define DEFAULT_DB_URL_LEN (sizeof(DEFAULT_DB_URL) - 1)
+#define DEFAULT_RODB_URL "mysql://kamailioro:kamailioro@localhost/kamailio"
+#define DEFAULT_RODB_URL_LEN (sizeof(DEFAULT_RODB_URL) - 1)
 
 #define VERSION_TABLE "version"			/*!< table holding versions of other ser tables */
 #define VERSION_TABLE_LEN (sizeof(VERSION_TABLE) - 1)
