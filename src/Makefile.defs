@@ -698,8 +698,8 @@ C_DEFS+= -DSHM_MEM  -DSHM_MMAP \
 				# you may also want to set -DPROFILING
 
 # WARNING: do not add mode=debug or mode=release anymore in the Makefile,
-# use make mode=debug all instead. Anyway no by default ser is  compiled w/
-# debugging symbols in all cases (-g). --andrei
+# use make mode=debug all instead. By default Kamailio is compiled with
+# debugging symbols in all cases (-g) and without optimization (-O0).
 
 # memory managers and related debug mode
 C_DEFS+= -DMEM_JOIN_FREE
