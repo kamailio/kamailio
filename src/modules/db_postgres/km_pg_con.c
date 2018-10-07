@@ -52,6 +52,7 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 	int i = 0;
 	const char *keywords[10], *values[10];
 	char to[16];
+	PGresult   *res;
 
 	LM_DBG("db_id = %p\n", id);
 
@@ -140,6 +141,15 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 		}
 	}
 #endif
+
+	res = PQexec(ptr->con, "SET bytea_output=escape");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		LM_ERR("cannot set blob output escaping format\n");
+		PQclear(res);
+		goto err;
+	}
+	PQclear(res);
 
 	return ptr;
 
