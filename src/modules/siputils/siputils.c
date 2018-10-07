@@ -65,6 +65,7 @@
 #include "../../core/error.h"
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_option_tags.h"
+#include "../../core/parser/parse_uri.h"
 
 #include "ring.h"
 #include "options.h"
@@ -457,6 +458,22 @@ static int fixup_option(void** param, int param_no) {
 	return 0;
 }
 
+/*
+ * Check if pseudo variable contains a valid uri
+ */
+static int ki_is_uri(sip_msg_t* msg, str* suri)
+{
+	sip_uri_t turi;
+
+	if(suri==NULL || suri->s==NULL || suri->len<=0) {
+		return -1;
+	}
+	if(parse_uri(suri->s, suri->len, &turi)!=0) {
+		return -1;
+	}
+	return 1;
+}
+
 /**
  *
  */
@@ -479,6 +496,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("is_first_hop"),
 		SR_KEMIP_INT, is_first_hop,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_uri"),
+		SR_KEMIP_INT, ki_is_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
