@@ -699,7 +699,7 @@ filter_json()
 	$AWK 'function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
 		BEGIN { line=0; IGNORECASE=1; }
 		{ line++; }
-		NR == 1 && /^{.+"id"[ \t]*:[ \t]*[0-9]+[ \t]*}$/ { print; next; }
+		NR == 1 && /^[{].+"id"[ \t]*:[ \t]*[0-9]+[ \t]*}$/ { print; next; }
 		NR == 1 && /^200 OK/ { next; }
 		/^[ \t]*"jsonrpc":[ \t]*"2.0"/ { print; next; }
 		/^[ \t]*"result":[ \t]*\[.+/ {
