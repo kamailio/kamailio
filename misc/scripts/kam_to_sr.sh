@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 #
+# Note: This script is obselete, especially after the changes in commit
+# 1f70d062b0b9cf1e, the module interface unification.
+#
 # This is a simple script which attempts to convert kamailio modules so that
 # they can be used with the sip-router core. Most of the changes done by the
 # script deal with the changes in the database abstraction layer in the
