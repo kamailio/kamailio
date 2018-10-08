@@ -139,4 +139,10 @@ int ksr_is_alphanum(sip_msg_t *msg, char *_sp, char* _s2);
  */
 int ksr_is_alphanumex(sip_msg_t *msg, char *_sp, char* _se);
 
+int ki_is_user(sip_msg_t *_m, str *suser);
+
+int ki_uri_param(sip_msg_t *_msg, str *sparam);
+
+int ki_uri_param_value(sip_msg_t *_msg, str *sparam, str *svalue);
+
 #endif /* CHECKS_H */

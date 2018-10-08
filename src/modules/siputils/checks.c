@@ -150,13 +150,10 @@ int is_uri(struct sip_msg* _m, char* _sp, char* _s2)
 /*
  * Check if the username matches the username in credentials
  */
-int is_user(struct sip_msg* _m, char* _user, char* _str2)
+int ki_is_user(sip_msg_t *_m, str *suser)
 {
-	str* s;
 	struct hdr_field* h;
 	auth_body_t* c;
-
-	s = (str*)_user;
 
 	get_authorized_cred(_m->authorization, &h);
 	if (!h) {
@@ -175,12 +172,12 @@ int is_user(struct sip_msg* _m, char* _user, char* _str2)
 		return -1;
 	}
 
-	if (s->len != c->digest.username.user.len) {
+	if (suser->len != c->digest.username.user.len) {
 		LM_DBG("username length does not match\n");
 		return -1;
 	}
 
-	if (!memcmp(s->s, c->digest.username.user.s, s->len)) {
+	if (!memcmp(suser->s, c->digest.username.user.s, suser->len)) {
 		LM_DBG("username matches\n");
 		return 1;
 	} else {
@@ -189,28 +186,57 @@ int is_user(struct sip_msg* _m, char* _user, char* _str2)
 	}
 }
 
+int is_user(struct sip_msg* _m, char* _user, char* _str2)
+{
+	str suser;
 
+	if(fixup_get_svalue(_m, (gparam_t*)_user, &suser)<0) {
+		LM_ERR("failed to get user param\n");
+		return -1;
+	}
+
+	return ki_is_user(_m, &suser);
+}
 /*
  * Find if Request URI has a given parameter with no value
  */
 int uri_param_1(struct sip_msg* _msg, char* _param, char* _str2)
 {
-	return uri_param_2(_msg, _param, (char*)0);
+	str sparam;
+	if(fixup_get_svalue(_msg, (gparam_t*)_param, &sparam)<0) {
+		LM_ERR("failed to get parameter\n");
+		return -1;
+	}
+	return ki_uri_param_value(_msg, &sparam, NULL);
 }
-
 
 /*
  * Find if Request URI has a given parameter with matching value
  */
 int uri_param_2(struct sip_msg* _msg, char* _param, char* _value)
 {
-	str *param, *value, t;
+	str sparam;
+	str svalue;
+	if(fixup_get_svalue(_msg, (gparam_t*)_param, &sparam)<0) {
+		LM_ERR("failed to get parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_msg, (gparam_t*)_value, &svalue)<0) {
+		LM_ERR("failed to get value\n");
+		return -1;
+	}
+	return ki_uri_param_value(_msg, &sparam, &svalue);
+}
+
+/*
+ * Find if Request URI has a given parameter with matching value
+ */
+int ki_uri_param_value(sip_msg_t *_msg, str *sparam, str *svalue)
+{
+	str t;
 
 	param_hooks_t hooks;
 	param_t* params, *pit;
-
-	param = (str*)_param;
-	value = (str*)_value;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("ruri parsing failed\n");
@@ -225,11 +251,11 @@ int uri_param_2(struct sip_msg* _msg, char* _param, char* _value)
 	}
 
 	for (pit = params; pit; pit = pit->next) {
-		if ((pit->name.len == param->len) &&
-				(strncmp(pit->name.s, param->s, param->len) == 0)) {
-			if (value) {
-				if ((value->len == pit->body.len) &&
-						strncmp(value->s, pit->body.s, value->len) == 0) {
+		if ((pit->name.len == sparam->len) &&
+				(strncmp(pit->name.s, sparam->s, sparam->len) == 0)) {
+			if (svalue) {
+				if ((svalue->len == pit->body.len) &&
+						strncmp(svalue->s, pit->body.s, svalue->len) == 0) {
 					goto ok;
 				} else {
 					goto nok;
@@ -254,6 +280,13 @@ ok:
 }
 
 
+/**
+ *
+ */
+int ki_uri_param(sip_msg_t *_msg, str *sparam)
+{
+	return ki_uri_param_value(_msg, sparam, NULL);
+}
 
 /*
  * Adds a new parameter to Request URI
