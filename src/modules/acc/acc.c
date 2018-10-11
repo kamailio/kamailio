@@ -526,7 +526,7 @@ int is_eng_acc_on(sip_msg_t *msg)
 	}
 	while(e) {
 		if(e->flags & 1) {
-			if(msg->flags & e->acc_flag) {
+			if(isflagset(msg, e->acc_flag) == 1) {
 				return 1;
 			}
 		}
@@ -549,7 +549,7 @@ int is_eng_mc_on(sip_msg_t *msg)
 	}
 	while(e) {
 		if(e->flags & 1) {
-			if(msg->flags & e->missed_flag) {
+			if(isflagset(msg, e->missed_flag) == 1) {
 				return 1;
 			}
 		}
@@ -579,15 +579,15 @@ int acc_run_engines(struct sip_msg *msg, int type, int *reset)
 	inf.leg_info = leg_info;
 	while(e) {
 		if(e->flags & 1) {
-			if((type==0) && (msg->flags&(e->acc_flag))) {
+			if((type==0) && isflagset(msg, e->acc_flag) == 1) {
 				LM_DBG("acc event for engine: %s\n", e->name);
 				e->acc_req(msg, &inf);
-				if(reset) *reset |= e->acc_flag;
+				if(reset) *reset |= 1 << e->acc_flag;
 			}
-			if((type==1) && (msg->flags&(e->missed_flag))) {
+			if((type==1) && isflagset(msg, e->missed_flag) == 1) {
 				LM_DBG("missed event for engine: %s\n", e->name);
 				e->acc_req(msg, &inf);
-				if(reset) *reset |= e->missed_flag;
+				if(reset) *reset |= 1 << e->missed_flag;
 			}
 		}
 		e = e->next;

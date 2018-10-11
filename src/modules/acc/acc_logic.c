@@ -55,7 +55,6 @@ struct acc_enviroment acc_env;
 
 
 #define is_acc_flag_set(_rq,_flag)  (((_flag) != -1) && (isflagset((_rq), (_flag)) == 1))
-#define reset_acc_flag(_rq,_flag)   (resetflag((_rq), (_flag)))
 
 #define is_failed_acc_on(_rq)  is_acc_flag_set(_rq,failed_transaction_flag)
 
@@ -464,7 +463,15 @@ static inline void acc_onreply_in(struct cell *t, struct sip_msg *req,
 	}
 }
 
-
+static void reset_acc_flags(struct sip_msg *req, int flags_to_reset) {
+	int x;
+	for (x=0;x<32;x++) {
+		if (flags_to_reset & 1<<x) {
+			resetflag(req, x);
+			LM_DBG("reset[%d]\n", x);
+		}
+	}
+}
 
 /* initiate a report if we previously enabled MC accounting for this t */
 static inline void on_missed(struct cell *t, struct sip_msg *req,
@@ -501,11 +508,10 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	 * forwarding attempt fails; we do not wish to
 	 * report on every attempt; so we clear the flags;
 	 */
-
 	if (is_log_mc_on(req)) {
 		env_set_text( ACC_MISSED, ACC_MISSED_LEN);
 		acc_log_request( req );
-		flags_to_reset |= log_missed_flag;
+		flags_to_reset |= 1 << log_missed_flag;
 	}
 	if (is_db_mc_on(req)) {
 		if(acc_db_set_table_name(req, db_table_mc_data, &db_table_mc)<0) {
@@ -513,7 +519,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 			return;
 		}
 		acc_db_request( req );
-		flags_to_reset |= db_missed_flag;
+		flags_to_reset |= 1 << db_missed_flag;
 	}
 
 	/* run extra acc engines */
@@ -523,7 +529,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	 * These can't be reset in the blocks above, because
 	 * it would skip accounting if the flags are identical
 	 */
-	reset_acc_flag( req, flags_to_reset );
+	reset_acc_flags(req, flags_to_reset);
 
 	if (new_uri_bk.len>=0) {
 		req->new_uri = new_uri_bk;

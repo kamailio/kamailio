@@ -129,9 +129,9 @@ static int mod_init(void)
 	memset(&_acc_json_engine, 0, sizeof(acc_engine_t));
 
 	if(acc_flag != -1)
-		_acc_json_engine.acc_flag = 1 << acc_flag;
+		_acc_json_engine.acc_flag = acc_flag;
 	if(acc_missed_flag != -1)
-		_acc_json_engine.missed_flag = 1 << acc_missed_flag;
+		_acc_json_engine.missed_flag = acc_missed_flag;
 	_acc_json_engine.acc_req = acc_json_send_request;
 	_acc_json_engine.acc_init = acc_json_init;
 	memcpy(_acc_json_engine.name, "json", 4);
