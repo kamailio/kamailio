@@ -27,6 +27,7 @@ Greg Fausak
               3.2. timeout (integer)
               3.3. tcp_keepalive (integer)
               3.4. lockset (integer)
+              3.5. bytea_output_escape (integer)
 
         4. Functions
 
@@ -36,6 +37,7 @@ Greg Fausak
    1.2. Set timeout parameter
    1.3. Set tcp_keepalive parameter
    1.4. Set lockset parameter
+   1.5. Set bytea_output_escape parameter
 
 Chapter 1. Admin Guide
 
@@ -53,6 +55,7 @@ Chapter 1. Admin Guide
         3.2. timeout (integer)
         3.3. tcp_keepalive (integer)
         3.4. lockset (integer)
+        3.5. bytea_output_escape (integer)
 
    4. Functions
 
@@ -85,6 +88,7 @@ Chapter 1. Admin Guide
    3.2. timeout (integer)
    3.3. tcp_keepalive (integer)
    3.4. lockset (integer)
+   3.5. bytea_output_escape (integer)
 
 3.1. retries (integer)
 
@@ -141,6 +145,18 @@ modparam("db_postgres", "tcp_keepalive", 600)
    Example 1.4. Set lockset parameter
 ...
 modparam("db_postgres", "lockset", 6)
+...
+
+3.5. bytea_output_escape (integer)
+
+   Control if the module should request escaping the output for bytea
+   fields.
+
+   Default value is 1 (do the escape).
+
+   Example 1.5. Set bytea_output_escape parameter
+...
+modparam("db_postgres", "bytea_output_escape", 0)
 ...
 
 4. Functions
