@@ -32,6 +32,16 @@ spi_list_t create_list()
     return lst;
 }
 
+void destroy_list(spi_list_t lst)
+{
+    spi_node_t* l = lst.head;
+    while(l) {
+        spi_node_t* n = l->next;
+        free(l);
+        l = n;
+    }
+}
+
 int spi_add(spi_list_t* list, uint32_t id)
 {
     // create new node
@@ -118,6 +128,7 @@ int spi_remove(spi_list_t* list, uint32_t id)
             }
 
             free(t);
+            return 0;
         }
 
         prev = curr;

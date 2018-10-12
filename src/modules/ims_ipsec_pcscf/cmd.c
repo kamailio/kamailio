@@ -170,6 +170,10 @@ static int fill_contact(struct pcontact_info* ci, struct sip_msg* m)
         ci->via_prot = proto;
         ci->aor = cb->contacts->uri;
     }
+    else {
+        LM_ERR("fill_contact(): Unknown first line type: %d\n", m->first_line.type);
+        return -1;
+    }
 
 
     char* srcip = NULL;

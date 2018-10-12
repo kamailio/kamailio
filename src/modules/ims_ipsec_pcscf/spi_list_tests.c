@@ -91,6 +91,8 @@ void case1() // One element list
     spi_add(&list, 1);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case2() // Two element list
@@ -103,6 +105,8 @@ void case2() // Two element list
     spi_add(&list, 2);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case3() // Three element list
@@ -116,6 +120,8 @@ void case3() // Three element list
     spi_add(&list, 3);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case4() // Delete head
@@ -131,6 +137,8 @@ void case4() // Delete head
     spi_remove(&list, 1);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 
@@ -147,6 +155,8 @@ void case5() // Delete tail
     spi_remove(&list, 3);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case6() // Delete between
@@ -162,6 +172,8 @@ void case6() // Delete between
     spi_remove(&list, 2);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case7() // Out of order add
@@ -175,6 +187,8 @@ void case7() // Out of order add
     spi_add(&list, 3);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case8() //Random operations
@@ -193,6 +207,8 @@ void case8() //Random operations
     spi_remove(&list, 3);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case9() // Empty list
@@ -210,6 +226,8 @@ void case9() // Empty list
     spi_remove(&list, 3);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 
@@ -226,6 +244,8 @@ void case10() //No duplicates
     spi_add(&list, 3);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case11() //No duplicates
@@ -241,6 +261,8 @@ void case11() //No duplicates
     spi_add(&list, 3);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case12() //No duplicates
@@ -255,6 +277,8 @@ void case12() //No duplicates
     spi_add(&list, 3);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case13() //No duplicates
@@ -269,6 +293,8 @@ void case13() //No duplicates
     spi_add(&list, 1);
 
     check(&list, exp, sizeof(exp)/sizeof(int), __func__);
+
+    destroy_list(list);
 }
 
 void case14()
@@ -288,6 +314,8 @@ void case14()
     }
 
     printf("%s: OK\n", __func__);
+
+    destroy_list(list);
 }
 
 

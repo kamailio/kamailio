@@ -265,8 +265,6 @@ int add_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_
     char* src_addr = NULL;
     char* dest_addr = NULL;
 
-    //printf("Adding Policy\n");
-
     memset(l_msg_buf, 0, sizeof(l_msg_buf));
     memset(l_tmpls_buf, 0, sizeof(l_tmpls_buf));
 
@@ -421,8 +419,13 @@ int remove_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_ad
     if(mnl_socket_sendto(mnl_socket, &req.n, req.n.nlmsg_len) < 0)
     {
         LM_ERR("Failed to send Netlink message, error: %s\n", strerror(errno));
+        pkg_free(src_addr);
+        pkg_free(dest_addr);
         return -1;
     }
+
+    pkg_free(src_addr);
+    pkg_free(dest_addr);
 
     return 0;
 }
