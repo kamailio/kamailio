@@ -37,6 +37,8 @@
 #include <netinet/tcp.h>
 
 
+extern int pg_bytea_output_escape;
+
 /*!
  * \brief Create a new connection
  *
@@ -52,7 +54,7 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 	int i = 0;
 	const char *keywords[10], *values[10];
 	char to[16];
-	PGresult   *res;
+	PGresult *res = NULL;
 
 	LM_DBG("db_id = %p\n", id);
 
@@ -142,15 +144,16 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 	}
 #endif
 
-	res = PQexec(ptr->con, "SET bytea_output=escape");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		LM_ERR("cannot set blob output escaping format\n");
+	if(pg_bytea_output_escape!=0) {
+		res = PQexec(ptr->con, "SET bytea_output=escape");
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			LM_ERR("cannot set blob output escaping format\n");
+			PQclear(res);
+			goto err;
+		}
 		PQclear(res);
-		goto err;
 	}
-	PQclear(res);
-
 	return ptr;
 
 err:

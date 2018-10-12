@@ -58,6 +58,7 @@ int pg_retries =
 int pg_lockset = 4;
 int pg_timeout = 0; /* default = no timeout */
 int pg_keepalive = 0;
+int pg_bytea_output_escape = 1;
 
 /*
  * Postgres module interface
@@ -91,6 +92,7 @@ static param_export_t params[] = {
 	{"lockset", PARAM_INT, &pg_lockset},
 	{"timeout", PARAM_INT, &pg_timeout},
 	{"tcp_keepalive", PARAM_INT, &pg_keepalive},
+	{"bytea_output_escape", PARAM_INT, &pg_bytea_output_escape},
 	{0, 0, 0}
 };
 
