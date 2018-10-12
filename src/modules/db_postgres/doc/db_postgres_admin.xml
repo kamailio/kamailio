@@ -151,6 +151,25 @@ modparam("db_postgres", "lockset", 6)
 		</example>
 	</section>
 
+	<section id="db_postgres.p.bytea_output_escape">
+		<title><varname>bytea_output_escape</varname> (integer)</title>
+		<para>
+			Control if the module should request escaping the output for
+			bytea fields.
+		</para>
+		<para>
+			Default value is 1 (do the escape).
+		</para>
+		<example>
+		<title>Set <varname>bytea_output_escape</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_postgres", "bytea_output_escape", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
