@@ -40,7 +40,7 @@ src.rpm: tar
 	mv ../../kamailio-$(RELEASE)_src.tar.gz ${RPMBUILD_TOP}/SOURCES/${DIST_ARCHIVE}
 	sed -i -e 's/setup -n %{name}-%{ver}/setup -n kamailio-$(RELEASE)/' obs/kamailio.spec
 	rpmbuild ${RPMBUILD_OPT} -bs obs/kamailio.spec
-	mv ${RPMBUILD_TOP}/SRPMS/kamailio-$(RELEASE).*.src.rpm ../..
+	mv ${RPMBUILD_TOP}/SRPMS/kamailio-$(RELEASE)*.src.rpm ../..
 	rm -Rf ${RPMBUILD_TOP}
 
 # build rpm packages

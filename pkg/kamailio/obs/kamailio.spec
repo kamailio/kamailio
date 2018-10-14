@@ -965,7 +965,11 @@ ln -s ../obs pkg/kamailio/centos/7
 %if 0%{?fedora} || 0%{?suse_version}
 export FREERADIUS=1
 %endif
-make cfg prefix=/usr basedir=%{buildroot} cfg_prefix=%{buildroot} doc_prefix=%{buildroot} \
+make cfg prefix=/usr \
+    basedir=%{buildroot} \
+    cfg_prefix=%{buildroot} \
+    doc_prefix=%{buildroot} \
+    share_prefix=%{_prefix} \
     doc_dir=%{_docdir}/kamailio/ \
     cfg_target=%{_sysconfdir}/kamailio/ modules_dirs="modules"
 make
