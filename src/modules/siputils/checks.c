@@ -804,30 +804,61 @@ found:
  * Check if the parameter is a valid telephone number
  * - optional leading + followed by digits only
  */
-int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2)
+int ki_is_tel_number(sip_msg_t *msg, str *tval)
 {
-	str tval = {0, 0};
 	int i;
 
-	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0)
-	{
-		LM_ERR("cannot get parameter value\n");
-		return -1;
-	}
-	if(tval.len<1)
+	if(tval==NULL || tval->len<1)
 		return -2;
 
 	i = 0;
-	if(tval.s[0]=='+') {
-		if(tval.len<2)
+	if(tval->s[0]=='+') {
+		if(tval->len<2)
 			return -2;
-		if(tval.s[1]<'1' || tval.s[1]>'9')
+		if(tval->s[1]<'1' || tval->s[1]>'9')
 			return -2;
 		i = 2;
 	}
 
-	for(; i<tval.len; i++) {
-		if(tval.s[i]<'0' || tval.s[i]>'9')
+	for(; i<tval->len; i++) {
+		if(tval->s[i]<'0' || tval->s[i]>'9')
+			return -2;
+	}
+
+	return 1;
+}
+
+
+/*
+ * Check if the parameter is a valid telephone number
+ * - optional leading + followed by digits only
+ */
+int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2)
+{
+	str tval = {0, 0};
+
+	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0) {
+		LM_ERR("cannot get parameter value\n");
+		return -1;
+	}
+
+	return ki_is_tel_number(msg, &tval);
+}
+
+
+/*
+ * Check if the parameter contains decimal digits only
+ */
+int ki_is_numeric(sip_msg_t *msg, str *tval)
+{
+	int i;
+
+	if(tval==NULL || tval->len<=0)
+		return -2;
+
+	i = 0;
+	for(; i<tval->len; i++) {
+		if(tval->s[i]<'0' || tval->s[i]>'9')
 			return -2;
 	}
 
@@ -841,25 +872,36 @@ int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2)
 int is_numeric(sip_msg_t *msg, char *_sp, char* _s2)
 {
 	str tval = {0, 0};
-	int i;
 
-	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0) {
 		LM_ERR("cannot get parameter value\n");
 		return -1;
 	}
-	if(tval.len<=0)
+
+	return ki_is_numeric(msg, &tval);
+}
+
+
+/*
+ * Check if the parameter contains alphanumeric characters
+ */
+int ki_is_alphanum(sip_msg_t *msg, str *tval)
+{
+	int i;
+
+	if(tval==NULL || tval->len<=0)
 		return -2;
 
 	i = 0;
-	for(; i<tval.len; i++) {
-		if(tval.s[i]<'0' || tval.s[i]>'9')
-			return -2;
+	for(; i<tval->len; i++) {
+		if( !((tval->s[i]>='0' && tval->s[i]<='9')
+				|| (tval->s[i]>='A' && tval->s[i]<='Z')
+				|| (tval->s[i]>='z' && tval->s[i]<='z')) )
+			return -3;
 	}
 
 	return 1;
 }
-
 
 /*
  * Check if the parameter contains alphanumeric characters
@@ -867,21 +909,47 @@ int is_numeric(sip_msg_t *msg, char *_sp, char* _s2)
 int ksr_is_alphanum(sip_msg_t *msg, char *_sp, char* _s2)
 {
 	str tval = {0, 0};
-	int i;
 
 	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0) {
 		LM_ERR("cannot get parameter value\n");
 		return -1;
 	}
-	if(tval.len<=0)
+
+	return ki_is_alphanum(msg, &tval);
+}
+
+/*
+ * Check if the parameter contains alphanumeric characters or are part of
+ * the second parameter
+ */
+int ki_is_alphanumex(sip_msg_t *msg, str *tval, str *eset)
+{
+	int i;
+	int j;
+	int found;
+
+	if(tval==NULL || tval->len<=0)
 		return -2;
 
 	i = 0;
-	for(; i<tval.len; i++) {
-	if( !((tval.s[i]>='0' && tval.s[i]<='9')
-			|| (tval.s[i]>='A' && tval.s[i]<='Z')
-			|| (tval.s[i]>='z' && tval.s[i]<='z')) )
-		return -3;
+	for(; i<tval->len; i++) {
+		if( !((tval->s[i]>='0' && tval->s[i]<='9')
+				|| (tval->s[i]>='A' && tval->s[i]<='Z')
+				|| (tval->s[i]>='z' && tval->s[i]<='z')) ) {
+			if(eset==NULL || eset->len<=0) {
+				return -3;
+			}
+			found = 0;
+			for(j=0; j<eset->len; j++) {
+				if(tval->s[i]==eset->s[j]) {
+					found = 1;
+					break;
+				}
+			}
+			if(found==0) {
+				return -3;
+			}
+		}
 	}
 
 	return 1;
@@ -895,9 +963,6 @@ int ksr_is_alphanumex(sip_msg_t *msg, char *_sp, char* _se)
 {
 	str tval = {0, 0};
 	str eset = {0, 0};
-	int i;
-	int j;
-	int found;
 
 	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0) {
 		LM_ERR("cannot get tval parameter value\n");
@@ -908,29 +973,5 @@ int ksr_is_alphanumex(sip_msg_t *msg, char *_sp, char* _se)
 		return -1;
 	}
 
-	if(tval.len<=0)
-		return -2;
-
-	i = 0;
-	for(; i<tval.len; i++) {
-		if( !((tval.s[i]>='0' && tval.s[i]<='9')
-				|| (tval.s[i]>='A' && tval.s[i]<='Z')
-				|| (tval.s[i]>='z' && tval.s[i]<='z')) ) {
-			if(eset.len<=0) {
-				return -3;
-			}
-			found = 0;
-			for(j=0; j<eset.len; j++) {
-				if(tval.s[i]==eset.s[j]) {
-					found = 1;
-					break;
-				}
-			}
-			if(found==0) {
-				return -3;
-			}
-		}
-	}
-
-	return 1;
+	return ki_is_alphanumex(msg, &tval, &eset);
 }

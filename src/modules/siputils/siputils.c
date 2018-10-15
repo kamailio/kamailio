@@ -164,8 +164,6 @@ static cmd_export_t cmds[]={
 		fixup_free_set_uri,	ANY_ROUTE},
 	{"set_uri_host", (cmd_function)set_uri_host,             2, fixup_set_uri,
 		fixup_free_set_uri,	ANY_ROUTE},
-	{"bind_siputils",       (cmd_function)bind_siputils,           1, 0,
-		0, 0},
 	{"is_request",          (cmd_function)w_is_request,            0, 0,
 		0, ANY_ROUTE},
 	{"is_reply",            (cmd_function)w_is_reply,              0, 0,
@@ -188,6 +186,10 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"sip_p_charging_vector", (cmd_function)sip_handle_pcv,  1, fixup_spve_null,
 		fixup_free_spve_null, ANY_ROUTE},
+
+	{"bind_siputils",       (cmd_function)bind_siputils,           1, 0,
+		0, 0},
+
 	{0,0,0,0,0,0}
 };
 
@@ -515,6 +517,26 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	},
 	{ str_init("siputils"), str_init("uri_param_value"),
 		SR_KEMIP_INT, ki_uri_param_value,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_tel_number"),
+		SR_KEMIP_INT, ki_is_tel_number,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_numeric"),
+		SR_KEMIP_INT, ki_is_numeric,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_alphanum"),
+		SR_KEMIP_INT, ki_is_alphanum,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_alphanumex"),
+		SR_KEMIP_INT, ki_is_alphanumex,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

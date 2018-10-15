@@ -145,4 +145,12 @@ int ki_uri_param(sip_msg_t *_msg, str *sparam);
 
 int ki_uri_param_value(sip_msg_t *_msg, str *sparam, str *svalue);
 
+int ki_is_tel_number(sip_msg_t *msg, str *tval);
+
+int ki_is_numeric(sip_msg_t *msg, str *tval);
+
+int ki_is_alphanum(sip_msg_t *msg, str *tval);
+
+int ki_is_alphanumex(sip_msg_t *msg, str *tval, str *eset);
+
 #endif /* CHECKS_H */
