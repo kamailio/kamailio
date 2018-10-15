@@ -463,15 +463,6 @@ static inline void acc_onreply_in(struct cell *t, struct sip_msg *req,
 	}
 }
 
-static void reset_acc_flags(struct sip_msg *req, int flags_to_reset) {
-	int x;
-	for (x=0;x<32;x++) {
-		if (flags_to_reset & 1<<x) {
-			resetflag(req, x);
-			LM_DBG("reset[%d]\n", x);
-		}
-	}
-}
 
 /* initiate a report if we previously enabled MC accounting for this t */
 static inline void on_missed(struct cell *t, struct sip_msg *req,
@@ -529,7 +520,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	 * These can't be reset in the blocks above, because
 	 * it would skip accounting if the flags are identical
 	 */
-	reset_acc_flags(req, flags_to_reset);
+	resetflags(req, flags_to_reset);
 
 	if (new_uri_bk.len>=0) {
 		req->new_uri = new_uri_bk;
