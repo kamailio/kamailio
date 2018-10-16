@@ -896,7 +896,7 @@ int ki_is_alphanum(sip_msg_t *msg, str *tval)
 	for(; i<tval->len; i++) {
 		if( !((tval->s[i]>='0' && tval->s[i]<='9')
 				|| (tval->s[i]>='A' && tval->s[i]<='Z')
-				|| (tval->s[i]>='z' && tval->s[i]<='z')) )
+				|| (tval->s[i]>='a' && tval->s[i]<='z')) )
 			return -3;
 	}
 
@@ -935,7 +935,7 @@ int ki_is_alphanumex(sip_msg_t *msg, str *tval, str *eset)
 	for(; i<tval->len; i++) {
 		if( !((tval->s[i]>='0' && tval->s[i]<='9')
 				|| (tval->s[i]>='A' && tval->s[i]<='Z')
-				|| (tval->s[i]>='z' && tval->s[i]<='z')) ) {
+				|| (tval->s[i]>='a' && tval->s[i]<='z')) ) {
 			if(eset==NULL || eset->len<=0) {
 				return -3;
 			}
