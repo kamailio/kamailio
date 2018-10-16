@@ -85,7 +85,7 @@ struct module_exports exports = {
 	cmds,		/* exported functions */
 	params,		/* exported params */
 	0,		/*·exported·RPC·methods·*/
-	0,		/* exported pseudo-variables */	
+	0,		/* exported pseudo-variables */
 	0,		/*·response·function·*/
 	mod_init,	/* module initialization function */
 	child_init,	/* Per-child init function */
@@ -97,7 +97,6 @@ struct module_exports exports = {
  * Initialize parent
  */
 static int mod_init(void) {
-    struct socket_info * bind_addr = NULL;
     char addr[128];
     if(ipsec_listen_addr.len > sizeof(addr)-1) {
         LM_ERR("Bad value for ipsec listen address: %.*s\n", ipsec_listen_addr.len, ipsec_listen_addr.s);
@@ -128,6 +127,16 @@ static int mod_init(void) {
 
 
     //add listen interfaces
+    if(add_listen_iface(addr, NULL, ipsec_client_port, PROTO_TCP, 0) != 0) {
+        LM_ERR("Error adding listen ipsec client interface\n");
+        return -1;
+    }
+
+    if(add_listen_iface(addr, NULL, ipsec_server_port, PROTO_TCP, 0) != 0) {
+        LM_ERR("Error adding listen ipsec server interface\n");
+        return -1;
+    }
+
     if(add_listen_iface(addr, NULL, ipsec_client_port, PROTO_UDP, 0) != 0) {
         LM_ERR("Error adding listen ipsec client interface\n");
         return -1;
@@ -140,30 +149,6 @@ static int mod_init(void) {
 
     if(fix_all_socket_lists() != 0) {
         LM_ERR("Error calling fix_all_socket_lists() during module initialisation\n");
-        return -1;
-    }
-
-    //bind client port
-    bind_addr = grep_sock_info(&ipsec_listen_addr, ipsec_client_port, PROTO_UDP);
-    if(!bind_addr) {
-        LM_ERR("Error calling grep_sock_info() for ipsec client port during module initialisation\n");
-        return -1;
-    }
-
-    if(udp_init(bind_addr) != 0) {
-        LM_ERR("Error calling udp_init() during for ipsec client port module initialisation\n");
-        return -1;
-    }
-
-    //bind server port
-    bind_addr = grep_sock_info(&ipsec_listen_addr, ipsec_server_port, PROTO_UDP);
-    if(!bind_addr) {
-        LM_ERR("Error calling grep_sock_info() for ipsec server port during module initialisation\n");
-        return -1;
-    }
-
-    if(udp_init(bind_addr) != 0) {
-        LM_ERR("Error calling udp_init() during for ipsec server port module initialisation\n");
         return -1;
     }
 

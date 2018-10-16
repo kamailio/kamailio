@@ -269,7 +269,7 @@ static int update_contact_ipsec_params(ipsec_t* s, const struct sip_msg* m)
     return 0;
 }
 
-static int create_ipsec_tunnel(const str remote_addr, ipsec_t* s)
+static int create_ipsec_tunnel(const str remote_addr, unsigned short proto, ipsec_t* s)
 {
     struct mnl_socket* sock = init_mnl_socket();
     if (sock == NULL) {
@@ -281,19 +281,19 @@ static int create_ipsec_tunnel(const str remote_addr, ipsec_t* s)
             remote_addr.len, remote_addr.s, s->port_uc, s->port_us);
 
     // P-CSCF 'client' tunnel to UE 'server'
-    add_sa    (sock, ipsec_listen_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us, s->ck, s->ik);
-    add_policy(sock, ipsec_listen_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
+    add_sa    (sock, proto, ipsec_listen_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us, s->ck, s->ik);
+    add_policy(sock, proto,  ipsec_listen_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
 
     // UE 'client' to P-CSCF 'server' tunnel
-    add_sa    (sock, remote_addr, ipsec_listen_addr, s->port_uc, ipsec_server_port, s->spi_ps, s->ck, s->ik);
-    add_policy(sock, remote_addr, ipsec_listen_addr, s->port_uc, ipsec_server_port, s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
+    add_sa    (sock, proto, remote_addr, ipsec_listen_addr, s->port_uc, ipsec_server_port, s->spi_ps, s->ck, s->ik);
+    add_policy(sock, proto, remote_addr, ipsec_listen_addr, s->port_uc, ipsec_server_port, s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
 
     close_mnl_socket(sock);
 
     return 0;
 }
 
-static int destroy_ipsec_tunnel(const str remote_addr, ipsec_t* s)
+static int destroy_ipsec_tunnel(const str remote_addr, unsigned short proto, ipsec_t* s)
 {
     struct mnl_socket* sock = init_mnl_socket();
     if (sock == NULL) {
@@ -306,11 +306,11 @@ static int destroy_ipsec_tunnel(const str remote_addr, ipsec_t* s)
 
     // P-CSCF 'client' tunnel to UE 'server'
     remove_sa    (sock, ipsec_listen_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us);
-    remove_policy(sock, ipsec_listen_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
+    remove_policy(sock, proto, ipsec_listen_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
 
     // UE 'client' to P-CSCF 'server' tunnel
     remove_sa    (sock, remote_addr, ipsec_listen_addr, s->port_uc, ipsec_server_port, s->spi_ps);
-    remove_policy(sock, remote_addr, ipsec_listen_addr, s->port_uc, ipsec_server_port, s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
+    remove_policy(sock, proto, remote_addr, ipsec_listen_addr, s->port_uc, ipsec_server_port, s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
 
     // Release SPIs
     release_spi(s->spi_uc);
@@ -340,7 +340,7 @@ static void on_expire(struct pcontact *c, int type, void *param)
         return;
     }
 
-    destroy_ipsec_tunnel(c->received_host, c->security_temp->data.ipsec);
+    destroy_ipsec_tunnel(c->received_host, c->received_proto, c->security_temp->data.ipsec);
 }
 
 int add_supported_secagree_header(struct sip_msg* m)
@@ -451,7 +451,7 @@ int ipsec_create(struct sip_msg* m, udomain_t* d)
         goto cleanup;
     }
 
-    if(create_ipsec_tunnel(ci.received_host, s) != 0) {
+    if(create_ipsec_tunnel(ci.received_host, ci.received_proto, s) != 0) {
         goto cleanup;
     }
 
@@ -633,7 +633,7 @@ int ipsec_destroy(struct sip_msg* m, udomain_t* d)
         goto cleanup;
     }
 
-    destroy_ipsec_tunnel(ci.received_host, pcontact->security_temp->data.ipsec);
+    destroy_ipsec_tunnel(ci.received_host, ci.received_proto, pcontact->security_temp->data.ipsec);
 
     ret = IPSEC_CMD_SUCCESS;    // all good, set ret to SUCCESS, and exit
 

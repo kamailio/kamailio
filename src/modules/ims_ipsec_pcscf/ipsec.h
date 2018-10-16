@@ -38,12 +38,14 @@ enum ipsec_policy_direction {
 
 struct mnl_socket* init_mnl_socket();
 void close_mnl_socket(struct mnl_socket* sock);
+unsigned short kamailio_to_linux_proto(const unsigned short kamailio_proto);
 
-int add_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_param, int s_port, int d_port, int long id, str ck, str ik);
+
+int add_sa(struct mnl_socket* nl_sock,  unsigned short proto, str src_addr_param, str dest_addr_param, int s_port, int d_port, int long id, str ck, str ik);
 int remove_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_param, int s_port, int d_port, int long id);
 
-int add_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir);
-int remove_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir);
+int add_policy(struct mnl_socket* mnl_socket,  unsigned short proto, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir);
+int remove_policy(struct mnl_socket* mnl_socket,  unsigned short proto, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir);
 
 int clean_sa(struct mnl_socket*  mnl_socket);
 int clean_policy(struct mnl_socket*  mnl_socket);

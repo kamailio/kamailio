@@ -26,6 +26,7 @@
 
 #include "../../core/dprint.h"
 #include "../../core/mem/pkg.h"
+#include "../../core/ip_addr.h"
 
 #include <errno.h>
 #include <arpa/inet.h>
@@ -89,7 +90,26 @@ static void string_to_key(char* dst, const str key_string)
     }
 }
 
-int add_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_param, int s_port, int d_port, int long id, str ck, str ik)
+// Converts the protocol enum used in Kamailio to the constants used in Linux
+unsigned short kamailio_to_linux_proto(const unsigned short kamailio_proto)
+{
+    switch(kamailio_proto) {
+        case PROTO_UDP:
+            return IPPROTO_UDP;
+        case PROTO_TCP:
+            return IPPROTO_TCP;
+        case PROTO_NONE:
+        case PROTO_TLS:
+        case PROTO_SCTP:
+	    case PROTO_WS:
+        case PROTO_WSS:
+        case PROTO_OTHER:
+        default:
+            return IPPROTO_MAX;
+    };
+}
+
+int add_sa(struct mnl_socket* nl_sock, unsigned short proto, str src_addr_param, str dest_addr_param, int s_port, int d_port, int long id, str ck, str ik)
 {
     char l_msg_buf[MNL_SOCKET_BUFFER_SIZE];
     char l_auth_algo_buf[XFRM_TMPLS_BUF_SIZE];
@@ -107,16 +127,22 @@ int add_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_param, 
     memset(l_auth_algo_buf, 0, sizeof(l_auth_algo_buf));
     memset(l_enc_algo_buf, 0, sizeof(l_enc_algo_buf));
 
+    unsigned sel_proto = 0;
+    if((sel_proto = kamailio_to_linux_proto(proto)) == IPPROTO_MAX) {
+        LM_ERR("Invalid port was passed to the function: %d\n", proto);
+        return -1;
+    }
+
     // convert input IP addresses and keys to char*
     if((src_addr = pkg_malloc(src_addr_param.len+1)) == NULL) {
         LM_ERR("Error allocating memory for src addr during SA creation\n");
-        return -1;
+        return -2;
     }
 
     if((dest_addr = pkg_malloc(dest_addr_param.len+1)) == NULL) {
         pkg_free(src_addr);
         LM_ERR("Error allocating memory for dest addr during SA creation\n");
-        return -2;
+        return -3;
     }
 
     memset(src_addr, 0, src_addr_param.len+1);
@@ -143,7 +169,7 @@ int add_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_param, 
     l_xsainfo->sel.sport        = htons(s_port);
     l_xsainfo->sel.sport_mask   = 0xFFFF;
     l_xsainfo->sel.prefixlen_s  = 32;
-    l_xsainfo->sel.proto        = IPPROTO_UDP;
+    l_xsainfo->sel.proto        = sel_proto;
     l_xsainfo->sel.user         = htonl(xfrm_user_selector);
 
     l_xsainfo->saddr.a4         = inet_addr(src_addr);
@@ -255,12 +281,18 @@ int remove_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_para
 }
 
 
-int add_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir)
+int add_policy(struct mnl_socket* mnl_socket, unsigned short proto, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir)
 {
     char                            l_msg_buf[MNL_SOCKET_BUFFER_SIZE];
     char                            l_tmpls_buf[XFRM_TMPLS_BUF_SIZE];
     struct nlmsghdr*                l_nlh;
     struct xfrm_userpolicy_info*    l_xpinfo;
+
+    unsigned sel_proto = 0;
+    if((sel_proto = kamailio_to_linux_proto(proto)) == IPPROTO_MAX) {
+        LM_ERR("Invalid port was passed to the function: %d\n", proto);
+        return -1;
+    }
 
     char* src_addr = NULL;
     char* dest_addr = NULL;
@@ -304,7 +336,7 @@ int add_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_
     l_xpinfo->sel.sport         = htons(src_port);
     l_xpinfo->sel.sport_mask    = 0xFFFF;
     l_xpinfo->sel.prefixlen_s   = 32;
-    l_xpinfo->sel.proto         = IPPROTO_UDP;
+    l_xpinfo->sel.proto         = sel_proto;
     l_xpinfo->sel.user          = htonl(xfrm_user_selector);
 
     l_xpinfo->lft.soft_byte_limit   = XFRM_INF;
@@ -358,9 +390,14 @@ int add_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_
     return 0;
 }
 
-
-int remove_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir)
+int remove_policy(struct mnl_socket* mnl_socket, unsigned short proto, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir)
 {
+    unsigned sel_proto = 0;
+    if((sel_proto = kamailio_to_linux_proto(proto)) == IPPROTO_MAX) {
+        LM_ERR("Invalid port was passed to the function: %d\n", proto);
+        return -1;
+    }
+
     unsigned char policy_dir = 0;
 
     if(dir == IPSEC_POLICY_DIRECTION_IN) {
@@ -413,7 +450,7 @@ int remove_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_ad
         .xpid.sel.sport         = htons(src_port),
         .xpid.sel.sport_mask    = 0xFFFF,
         .xpid.sel.prefixlen_s   = 32,
-        .xpid.sel.proto         = IPPROTO_UDP
+        .xpid.sel.proto         = sel_proto
     };
 
     if(mnl_socket_sendto(mnl_socket, &req.n, req.n.nlmsg_len) < 0)
