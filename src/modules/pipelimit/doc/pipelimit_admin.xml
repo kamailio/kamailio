@@ -278,6 +278,26 @@ modparam("pipelimit", "timer_interval", 5)
 </programlisting>
 		</example>
 	</section>
+	<section id="pipelimit.p.timer_mode">
+		<title><varname>timer_mode</varname> (integer)</title>
+		<para>
+		Control what timer process to be used: 0 - use main fast timer; 1 - use
+		secondary wheel timer.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "timer_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="pipelimit.p.reply_code">
 		<title><varname>reply_code</varname> (integer)</title>
 		<para>
