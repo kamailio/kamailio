@@ -24,42 +24,40 @@ Daniel-Constantin Mierla
    1. Admin Guide
 
         1. Overview
+        2. Algorithms
+        3. Dependencies
 
-              1.1. Algorithms
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
 
-        2. Dependencies
+        4. Parameters
 
-              2.1. Kamailio Modules
-              2.2. External Libraries or Applications
+              4.1. hash_size (int)
+              4.2. db_url (string)
+              4.3. plp_table_name (string)
+              4.4. plp_pipeid_column (string)
+              4.5. plp_limit_column (string)
+              4.6. plp_algorithm_column (string)
+              4.7. timer_interval (integer)
+              4.8. timer_mode (integer)
+              4.9. load_fetch (integer)
+              4.10. reply_code (integer)
+              4.11. reply_reason (string)
 
-        3. Parameters
+        5. Functions
 
-              3.1. hash_size (int)
-              3.2. db_url (string)
-              3.3. plp_table_name (string)
-              3.4. plp_pipeid_column (string)
-              3.5. plp_limit_column (string)
-              3.6. plp_algorithm_column (string)
-              3.7. timer_interval (integer)
-              3.8. timer_mode (integer)
-              3.9. load_fetch (integer)
-              3.10. reply_code (integer)
-              3.11. reply_reason (string)
+              5.1. pl_check(name [, algorithm, limit])
+              5.2. pl_drop([ [min ], max ])
 
-        4. Functions
+        6. RPC Commands
 
-              4.1. pl_check(name [, algorithm, limit])
-              4.2. pl_drop([ [min ], max ])
-
-        5. RPC Commands
-
-              5.1. pl.list
-              5.2. pl.stats
-              5.3. pl.set_pipe
-              5.4. pl.get_pipes
-              5.5. pl.set_pid
-              5.6. pl.get_pid
-              5.7. pl.push_load
+              6.1. pl.list
+              6.2. pl.stats
+              6.3. pl.set_pipe
+              6.4. pl.get_pipes
+              6.5. pl.set_pid
+              6.6. pl.get_pid
+              6.7. pl.push_load
 
    List of Examples
 
@@ -84,46 +82,42 @@ Chapter 1. Admin Guide
    Table of Contents
 
    1. Overview
+   2. Algorithms
+   3. Dependencies
 
-        1.1. Algorithms
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
 
-   2. Dependencies
+   4. Parameters
 
-        2.1. Kamailio Modules
-        2.2. External Libraries or Applications
+        4.1. hash_size (int)
+        4.2. db_url (string)
+        4.3. plp_table_name (string)
+        4.4. plp_pipeid_column (string)
+        4.5. plp_limit_column (string)
+        4.6. plp_algorithm_column (string)
+        4.7. timer_interval (integer)
+        4.8. timer_mode (integer)
+        4.9. load_fetch (integer)
+        4.10. reply_code (integer)
+        4.11. reply_reason (string)
 
-   3. Parameters
+   5. Functions
 
-        3.1. hash_size (int)
-        3.2. db_url (string)
-        3.3. plp_table_name (string)
-        3.4. plp_pipeid_column (string)
-        3.5. plp_limit_column (string)
-        3.6. plp_algorithm_column (string)
-        3.7. timer_interval (integer)
-        3.8. timer_mode (integer)
-        3.9. load_fetch (integer)
-        3.10. reply_code (integer)
-        3.11. reply_reason (string)
+        5.1. pl_check(name [, algorithm, limit])
+        5.2. pl_drop([ [min ], max ])
 
-   4. Functions
+   6. RPC Commands
 
-        4.1. pl_check(name [, algorithm, limit])
-        4.2. pl_drop([ [min ], max ])
-
-   5. RPC Commands
-
-        5.1. pl.list
-        5.2. pl.stats
-        5.3. pl.set_pipe
-        5.4. pl.get_pipes
-        5.5. pl.set_pid
-        5.6. pl.get_pid
-        5.7. pl.push_load
+        6.1. pl.list
+        6.2. pl.stats
+        6.3. pl.set_pipe
+        6.4. pl.get_pipes
+        6.5. pl.set_pid
+        6.6. pl.get_pid
+        6.7. pl.push_load
 
 1. Overview
-
-   1.1. Algorithms
 
    This module implements traffic limiting for SIP requests.
 
@@ -139,7 +133,7 @@ Chapter 1. Admin Guide
    new module which is focused on just traffic shaping policies, the
    implementation of queues was discarded.
 
-1.1. Algorithms
+2. Algorithms
 
    Algorithms are based from the ratelimit module, which describes the
    algorithms in more detail. The algorithms are used by the pipelimit
@@ -187,38 +181,38 @@ Chapter 1. Admin Guide
    going up/down instantly by thousands - it takes up to 20 seconds for
    the controller to adapt to the new request rate.
 
-2. Dependencies
+3. Dependencies
 
-   2.1. Kamailio Modules
-   2.2. External Libraries or Applications
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
 
-2.1. Kamailio Modules
+3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * database connection module.
      * sl: Stateless Request Handling.
 
-2.2. External Libraries or Applications
+3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
-3. Parameters
+4. Parameters
 
-   3.1. hash_size (int)
-   3.2. db_url (string)
-   3.3. plp_table_name (string)
-   3.4. plp_pipeid_column (string)
-   3.5. plp_limit_column (string)
-   3.6. plp_algorithm_column (string)
-   3.7. timer_interval (integer)
-   3.8. timer_mode (integer)
-   3.9. load_fetch (integer)
-   3.10. reply_code (integer)
-   3.11. reply_reason (string)
+   4.1. hash_size (int)
+   4.2. db_url (string)
+   4.3. plp_table_name (string)
+   4.4. plp_pipeid_column (string)
+   4.5. plp_limit_column (string)
+   4.6. plp_algorithm_column (string)
+   4.7. timer_interval (integer)
+   4.8. timer_mode (integer)
+   4.9. load_fetch (integer)
+   4.10. reply_code (integer)
+   4.11. reply_reason (string)
 
-3.1. hash_size (int)
+4.1. hash_size (int)
 
    Used to compute the number of slots for the internal hash table, as
    power of 2 (number of slots = 2^hash_size, aka 1<<hash_size). If you
@@ -232,7 +226,7 @@ Chapter 1. Admin Guide
 modparam("pipelimit", "hash_size", 10)
 ...
 
-3.2. db_url (string)
+4.2. db_url (string)
 
    URL of the database server to be used.
 
@@ -243,7 +237,7 @@ modparam("pipelimit", "hash_size", 10)
 modparam("pipelimit", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-3.3. plp_table_name (string)
+4.3. plp_table_name (string)
 
    Name of DB table where data definition for pipes is stores.
 
@@ -254,7 +248,7 @@ modparam("pipelimit", "db_url", "dbdriver://username:password@dbhost/dbname")
 modparam("pipelimit", "plp_table_name", "mypipes")
 ...
 
-3.4. plp_pipeid_column (string)
+4.4. plp_pipeid_column (string)
 
    Name of 'pipeid' column.
 
@@ -265,7 +259,7 @@ modparam("pipelimit", "plp_table_name", "mypipes")
 modparam("pipelimit", "plp_pipeid_column", "name")
 ...
 
-3.5. plp_limit_column (string)
+4.5. plp_limit_column (string)
 
    Name of 'limit' column.
 
@@ -276,7 +270,7 @@ modparam("pipelimit", "plp_pipeid_column", "name")
 modparam("pipelimit", "plp_limit_column", "name")
 ...
 
-3.6. plp_algorithm_column (string)
+4.6. plp_algorithm_column (string)
 
    Name of 'algorithm' column.
 
@@ -287,7 +281,7 @@ modparam("pipelimit", "plp_limit_column", "name")
 modparam("pipelimit", "plp_algorithm_column", "name")
 ...
 
-3.7. timer_interval (integer)
+4.7. timer_interval (integer)
 
    The length of the timer interval in seconds. Counted messages are reset
    each timer_interval, therefore the amounts of messages have to be
@@ -306,7 +300,7 @@ modparam("pipelimit", "plp_algorithm_column", "name")
 modparam("pipelimit", "timer_interval", 5)
 ...
 
-3.8. timer_mode (integer)
+4.8. timer_mode (integer)
 
    Control what timer process to be used: 0 - use main fast timer; 1 - use
    secondary wheel timer.
@@ -318,7 +312,7 @@ modparam("pipelimit", "timer_interval", 5)
 modparam("pipelimit", "timer_mode", 1)
 ...
 
-3.9. load_fetch (integer)
+4.9. load_fetch (integer)
 
    Control if the module should fetch the load for CPU and network
    traffic. If set to 0, no load is fetched; if set to 1, the load is
@@ -331,7 +325,7 @@ modparam("pipelimit", "timer_mode", 1)
 modparam("pipelimit", "load_fetch", 0)
 ...
 
-3.10. reply_code (integer)
+4.10. reply_code (integer)
 
    The code of the reply sent by Kamailio while limiting.
 
@@ -347,7 +341,7 @@ modparam("pipelimit", "reply_code", 505)
    Example 1.11.  Set reply_code parameter at runtime
 kamcmd cfg.set_now_int pipelimit reply_code 505
 
-3.11. reply_reason (string)
+4.11. reply_reason (string)
 
    The reason of the reply sent by Kamailio while limiting.
 
@@ -363,12 +357,12 @@ modparam("pipelimit", "reply_reason", "Limiting")
    Example 1.13.  Set reply_reason parameter at runtime
 kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
 
-4. Functions
+5. Functions
 
-   4.1. pl_check(name [, algorithm, limit])
-   4.2. pl_drop([ [min ], max ])
+   5.1. pl_check(name [, algorithm, limit])
+   5.2. pl_drop([ [min ], max ])
 
-4.1.  pl_check(name [, algorithm, limit])
+5.1.  pl_check(name [, algorithm, limit])
 
    Check the current request against the 'name' pipe.
 
@@ -447,7 +441,7 @@ with unexpected retcode=$var(check_result)\n");
         }
 ...
 
-4.2.  pl_drop([ [min ], max ])
+5.2.  pl_drop([ [min ], max ])
 
    For the current request, a "503 - Server Unavailable" reply is sent
    back. The reply may or may not have a "Retry-After" header. If no
@@ -474,17 +468,17 @@ with unexpected retcode=$var(check_result)\n");
         }
 ...
 
-5. RPC Commands
+6. RPC Commands
 
-   5.1. pl.list
-   5.2. pl.stats
-   5.3. pl.set_pipe
-   5.4. pl.get_pipes
-   5.5. pl.set_pid
-   5.6. pl.get_pid
-   5.7. pl.push_load
+   6.1. pl.list
+   6.2. pl.stats
+   6.3. pl.set_pipe
+   6.4. pl.get_pipes
+   6.5. pl.set_pid
+   6.6. pl.get_pid
+   6.7. pl.push_load
 
-5.1.  pl.list
+6.1.  pl.list
 
    Lists the details of one or all pipes, respectively the attributes pipe
    name (id), algorithm, limit and counter.
@@ -499,7 +493,7 @@ kamctl rpc pl.list
 kamctl rpc pl.list testid
 ...
 
-5.2.  pl.stats
+6.2.  pl.stats
 
    Lists the parameters and variables in the pipelimit module: pipe id,
    pipe load and pipe counter.
@@ -513,7 +507,7 @@ kamctl rpc pl.list testid
 kamcmd pl.stats
 ...
 
-5.3.  pl.set_pipe
+6.3.  pl.set_pipe
 
    Sets the pipe parameters for the given pipe id.
 
@@ -529,7 +523,7 @@ kamcmd pl.stats
 kamcmd pl.set_pipe 2 RED 10
 ...
 
-5.4.  pl.get_pipes
+6.4.  pl.get_pipes
 
    Gets the list of in use pipes.
 
@@ -542,7 +536,7 @@ kamcmd pl.set_pipe 2 RED 10
 kamcmd pl.get_pipes
 ...
 
-5.5.  pl.set_pid
+6.5.  pl.set_pid
 
    Sets the PID Controller parameters for the Feedback Algorithm.
 
@@ -558,7 +552,7 @@ kamcmd pl.get_pipes
 kamcmd pl.set_pid 0.5 0.5 0.5
 ...
 
-5.6.  pl.get_pid
+6.6.  pl.get_pid
 
    Gets the list of in use PID Controller parameters.
 
@@ -571,7 +565,7 @@ kamcmd pl.set_pid 0.5 0.5 0.5
 kamcmd pl.get_pid
 ...
 
-5.7.  pl.push_load
+6.7.  pl.push_load
 
    Force the value of the load parameter. This command is useful for
    testing the Feedback algorithm.
