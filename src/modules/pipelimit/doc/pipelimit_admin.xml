@@ -32,6 +32,7 @@
 		new module which is focused on just traffic shaping policies, the
 		implementation of queues was discarded.
 	</para>
+	</section>
 	<section>
 		<title>Algorithms</title>
 		<para>
@@ -90,7 +91,6 @@
 			going up/down instantly by thousands - it takes up to 20 seconds for
 			the controller to adapt to the new request rate.
 		</para>
-	</section>
 	</section>
 	<section>
 	<title>Dependencies</title>
