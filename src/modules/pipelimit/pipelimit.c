@@ -54,6 +54,7 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/rand/kam_rand.h"
 #include "../../core/kemi.h"
+#include "../../core/timer_proc.h"
 
 #include "pl_statistics.h"
 #include "pl_ht.h"
@@ -91,30 +92,32 @@ typedef struct pl_queue {
 	str method_mp;
 } pl_queue_t;
 
-static struct timer_ln* pl_timer;
+static struct timer_ln* pl_timer = NULL;
 
 /* === these change after startup */
 
-static double * load_value;     /* actual load, used by PIPE_ALGO_FEEDBACK */
-static double * pid_kp, * pid_ki, * pid_kd; /* PID tuning params */
-double * _pl_pid_setpoint; /* PID tuning params */
-static int * drop_rate;         /* updated by PIPE_ALGO_FEEDBACK */
+static double *load_value = NULL;     /* actual load, used by PIPE_ALGO_FEEDBACK */
+static double *pid_kp = NULL, *pid_ki = NULL, *pid_kd = NULL; /* PID tuning params */
+double *_pl_pid_setpoint = NULL; /* PID tuning params */
+static int *drop_rate = NULL;    /* updated by PIPE_ALGO_FEEDBACK */
 
-static int * network_load_value;      /* network load */
+static int *network_load_value = NULL;      /* network load */
 
 /* where to get the load for feedback. values: cpu, external */
 static int load_source_mp = LOAD_SOURCE_CPU;
-static int * load_source;
+static int *load_source = NULL;
 
 /* these only change in the mod_init() process -- no locking needed */
 static int pl_timer_interval = PL_TIMER_INTERVAL_DEFAULT;
-int _pl_cfg_setpoint;        /* desired load, used when reading modparams */
+static int pl_timer_mode = 0;
+int _pl_cfg_setpoint = 0;        /* desired load, used when reading modparams */
 /* === */
 
 
 /** module functions */
 static int mod_init(void);
 static ticks_t pl_timer_handle(ticks_t, struct timer_ln*, void*);
+static void pl_timer_exec(unsigned int ticks, void *param);
 static int w_pl_check(struct sip_msg*, char *, char *);
 static int w_pl_check3(struct sip_msg*, char *, char *, char *);
 static int w_pl_drop_default(struct sip_msg*, char *, char *);
@@ -138,6 +141,7 @@ static cmd_export_t cmds[]={
 };
 static param_export_t params[]={
 	{"timer_interval",       INT_PARAM,          &pl_timer_interval},
+	{"timer_mode",           INT_PARAM,          &pl_timer_mode},
 	{"reply_code",           INT_PARAM,          &pl_drop_code},
 	{"reply_reason",         PARAM_STR,          &pl_drop_reason},
 	{"db_url",               PARAM_STR,          &pl_db_url},
@@ -340,14 +344,22 @@ static int mod_init(void)
 		LM_ERR("could not load pipes description\n");
 		return -1;
 	}
-	/* register timer to reset counters */
-	if ((pl_timer = timer_alloc()) == NULL) {
-		LM_ERR("could not allocate timer\n");
-		return -1;
+
+	if(pl_timer_mode == 0) {
+		/* register timer to reset counters */
+		if ((pl_timer = timer_alloc()) == NULL) {
+			LM_ERR("could not allocate timer\n");
+			return -1;
+		}
+		timer_init(pl_timer, pl_timer_handle, 0, F_TIMER_FAST);
+		/* execute timer routine after pl_timer_interval * 1000ms */
+		timer_add(pl_timer, pl_timer_interval * MS_TO_TICKS(1000));
+	} else {
+		if(sr_wtimer_add(pl_timer_exec, NULL, pl_timer_interval) < 0) {
+			LM_ERR("cannot add timer exec routine\n");
+			return -1;
+		}
 	}
-	timer_init(pl_timer, pl_timer_handle, 0, F_TIMER_FAST);
-	/* execute timer routine after pl_timer_interval * 1000ms */
-	timer_add(pl_timer, pl_timer_interval * MS_TO_TICKS(1000));
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
@@ -713,8 +725,7 @@ static int fixup_pl_check3(void** param, int param_no)
 	return 0;
 }
 
-/* timer housekeeping, invoked each timer interval to reset counters */
-static ticks_t pl_timer_handle(ticks_t ticks, struct timer_ln* tl, void* data)
+static void pl_timer_refresh(void)
 {
 	switch (*load_source) {
 		case LOAD_SOURCE_CPU:
@@ -725,8 +736,18 @@ static ticks_t pl_timer_handle(ticks_t ticks, struct timer_ln* tl, void* data)
 	*network_load_value = get_total_bytes_waiting();
 
 	pl_pipe_timer_update(pl_timer_interval, *network_load_value);
+}
 
+/* timer housekeeping, invoked each timer interval to reset counters */
+static ticks_t pl_timer_handle(ticks_t ticks, struct timer_ln* tl, void* data)
+{
+	pl_timer_refresh();
 	return (ticks_t)(-1); /* periodical */
+}
+
+static void pl_timer_exec(unsigned int ticks, void *param)
+{
+	pl_timer_refresh();
 }
 
 
