@@ -113,6 +113,7 @@ static int pl_timer_mode = 0;
 int _pl_cfg_setpoint = 0;        /* desired load, used when reading modparams */
 /* === */
 
+static int pl_load_fetch = 1;
 
 /** module functions */
 static int mod_init(void);
@@ -150,6 +151,7 @@ static param_export_t params[]={
 	{"plp_limit_column",     PARAM_STR,          &rlp_limit_col},
 	{"plp_algorithm_column", PARAM_STR,          &rlp_algorithm_col},
 	{"hash_size",            INT_PARAM,          &pl_hash_size},
+	{"load_fetch",           INT_PARAM,          &pl_load_fetch},
 
 	{0,0,0}
 };
@@ -727,13 +729,15 @@ static int fixup_pl_check3(void** param, int param_no)
 
 static void pl_timer_refresh(void)
 {
-	switch (*load_source) {
-		case LOAD_SOURCE_CPU:
-			update_cpu_load();
-			break;
-	}
+	if(pl_load_fetch!=0) {
+		switch (*load_source) {
+			case LOAD_SOURCE_CPU:
+				update_cpu_load();
+				break;
+		}
 
-	*network_load_value = get_total_bytes_waiting();
+		*network_load_value = get_total_bytes_waiting();
+	}
 
 	pl_pipe_timer_update(pl_timer_interval, *network_load_value);
 }
