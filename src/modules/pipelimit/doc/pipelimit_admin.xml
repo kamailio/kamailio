@@ -298,6 +298,27 @@ modparam("pipelimit", "timer_mode", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="pipelimit.p.load_fetch">
+		<title><varname>load_fetch</varname> (integer)</title>
+		<para>
+		Control if the module should fetch the load for CPU and network traffic.
+		If set to 0, no load is fetched; if set to 1, the load is fetched every
+		timer interval.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>load_fetch</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "load_fetch", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="pipelimit.p.reply_code">
 		<title><varname>reply_code</varname> (integer)</title>
 		<para>
