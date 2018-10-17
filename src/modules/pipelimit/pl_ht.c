@@ -345,7 +345,7 @@ void pl_pipe_timer_update(int interval, int netload)
 				if( it->algo == PIPE_ALGO_NETWORK ) {
 					it->load = ( netload > it->limit ) ? 1 : -1;
 				} else if (it->limit && interval) {
-					it->load = it->counter / (it->limit * interval);
+					it->load = it->counter / it->limit;
 				}
 				it->last_counter = it->counter;
 				it->counter = 0;

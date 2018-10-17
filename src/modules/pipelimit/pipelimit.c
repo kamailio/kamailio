@@ -64,7 +64,7 @@ MODULE_VERSION
 /*
  * timer interval length in seconds, tunable via modparam
  */
-#define PL_TIMER_INTERVAL 10
+#define PL_TIMER_INTERVAL_DEFAULT 10
 
 /** SL API structure */
 sl_api_t slb;
@@ -85,10 +85,10 @@ static str pl_drop_reason = str_init("Server Unavailable");
 static int pl_hash_size = 6;
 
 typedef struct pl_queue {
-	int     *       pipe;
-	int             pipe_mp;
-	str     *       method;
-	str             method_mp;
+	int *pipe;
+	int pipe_mp;
+	str *method;
+	str method_mp;
 } pl_queue_t;
 
 static struct timer_ln* pl_timer;
@@ -107,7 +107,7 @@ static int load_source_mp = LOAD_SOURCE_CPU;
 static int * load_source;
 
 /* these only change in the mod_init() process -- no locking needed */
-static int timer_interval = PL_TIMER_INTERVAL;
+static int pl_timer_interval = PL_TIMER_INTERVAL_DEFAULT;
 int _pl_cfg_setpoint;        /* desired load, used when reading modparams */
 /* === */
 
@@ -137,7 +137,7 @@ static cmd_export_t cmds[]={
 	{0,0,0,0,0,0}
 };
 static param_export_t params[]={
-	{"timer_interval",       INT_PARAM,          &timer_interval},
+	{"timer_interval",       INT_PARAM,          &pl_timer_interval},
 	{"reply_code",           INT_PARAM,          &pl_drop_code},
 	{"reply_reason",         PARAM_STR,          &pl_drop_reason},
 	{"db_url",               PARAM_STR,          &pl_db_url},
@@ -346,7 +346,8 @@ static int mod_init(void)
 		return -1;
 	}
 	timer_init(pl_timer, pl_timer_handle, 0, F_TIMER_FAST);
-	timer_add(pl_timer, MS_TO_TICKS(1000)); /* Start it after 1000ms */
+	/* execute timer routine after pl_timer_interval * 1000ms */
+	timer_add(pl_timer, pl_timer_interval * MS_TO_TICKS(1000));
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
@@ -723,7 +724,7 @@ static ticks_t pl_timer_handle(ticks_t ticks, struct timer_ln* tl, void* data)
 
 	*network_load_value = get_total_bytes_waiting();
 
-	pl_pipe_timer_update(timer_interval, *network_load_value);
+	pl_pipe_timer_update(pl_timer_interval, *network_load_value);
 
 	return (ticks_t)(-1); /* periodical */
 }
