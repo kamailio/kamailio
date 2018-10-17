@@ -1828,8 +1828,11 @@ route_stm:
 	| ROUTE error { yyerror("invalid  route  statement"); }
 	| ROUTE_REQUEST error { yyerror("invalid  request_route  statement"); }
 	;
+
+failure_route_main: ROUTE_FAILURE { routename=NULL; }
+;
 failure_route_stm:
-	ROUTE_FAILURE LBRACE actions RBRACE {
+	failure_route_main LBRACE actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
@@ -1906,8 +1909,11 @@ onreply_route_stm:
 		yyerror("invalid onreply_route statement");
 	}
 	;
+
+branch_route_main: ROUTE_BRANCH { routename=NULL; }
+;
 branch_route_stm:
-	ROUTE_BRANCH LBRACE actions RBRACE {
+	branch_route_main LBRACE actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
@@ -1936,7 +1942,11 @@ branch_route_stm:
 	}
 	| ROUTE_BRANCH error { yyerror("invalid branch_route statement"); }
 	;
-send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
+
+send_route_main: ROUTE_SEND { routename=NULL; }
+;
+send_route_stm:
+	send_route_main LBRACE actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
@@ -1965,7 +1975,11 @@ send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
 	}
 	| ROUTE_SEND error { yyerror("invalid onsend_route statement"); }
 	;
-event_route_stm: ROUTE_EVENT LBRACK EVENT_RT_NAME RBRACK LBRACE actions RBRACE {
+
+event_route_main: ROUTE_EVENT { routename=NULL; }
+;
+event_route_stm:
+	event_route_main LBRACK EVENT_RT_NAME RBRACK LBRACE actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
