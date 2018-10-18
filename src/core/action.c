@@ -1670,6 +1670,9 @@ int run_child_one_init_route(void)
 		rt = route_get(&event_rt, evname.s);
 	}
 	if((keng!=NULL) || (rt>=0 && event_rt.rlist[rt]!=NULL)) {
+		if (cfg_child_init()) {
+			return -1;
+		}
 		LM_DBG("executing event_route[%s] (%d)\n", evname.s, rt);
 		if(faked_msg_init()<0)
 			return -1;
