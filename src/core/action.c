@@ -1671,6 +1671,9 @@ int run_child_one_init_route(void)
 	rt = route_get(&event_rt, "core:worker-one-init");
 	if(rt>=0 && event_rt.rlist[rt]!=NULL) {
 		LM_DBG("executing event_route[core:worker-one-init] (%d)\n", rt);
+		if (cfg_child_init()) {
+			return -1;
+		}
 		if(faked_msg_init()<0)
 			return -1;
 		fmsg = faked_msg_next();
