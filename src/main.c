@@ -2615,8 +2615,8 @@ try_again:
 	 * function being called before this point may rely on the
 	 * number of processes !
 	 */
-	LM_DBG("Expect (at least) %d kamailio processes in your process list\n",
-			get_max_procs());
+	LM_INFO("processes (at least): %d - shm size: %lu - pkg size: %lu\n",
+			get_max_procs(), shm_mem_size, pkg_mem_size);
 
 #if defined USE_DNS_CACHE && defined USE_DNS_CACHE_STATS
 	if (init_dns_cache_stats(get_max_procs())<0){
