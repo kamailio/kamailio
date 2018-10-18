@@ -3882,7 +3882,7 @@ int dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 				}
 				break;
 			case T_NAPTR:
-				if(rpc->struct_add(sh, "ds",
+				if(rpc->struct_add(sh, "dd",
 						"rr_order", ((struct naptr_rdata*)(rr->rdata))->order,
 						"rr_preference", ((struct naptr_rdata*)(rr->rdata))->pref)
 							<0) {
