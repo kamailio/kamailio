@@ -550,11 +550,14 @@ xlog("translated to var $var(y) \n");
    Name: dialplan.translate
 
    Parameters: 2
-     * Dial plan ID
-     * Input String
+     * Dial plan ID (number)
+     * Input string (string) - it can be prefixed with 's:' to avoid
+       auto-conversion when the command is executed with CLI apps such as
+       kamcmd.
 
    Example:
                 kamcmd dialplan.translate 1 "abcdxyz"
+                kamcmd dialplan.translate 1 s:123456789
 
 8. Installation
 
