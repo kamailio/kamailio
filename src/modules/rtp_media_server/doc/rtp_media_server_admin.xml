@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<chapter>
+	<title>&adminguide;</title>
+
+<section>
+	<title>Overview</title>
+	<para>
+		rtp_media_server module is adding RTP and media processing functionalities to Kamailio
+	</para>
+	<para>
+		Kamailio is providing SIP signaling including and enpoint with Dialog state, SDP parsing and scripting language
+	</para><para>
+		oRTP: is providing Real-time Transport Protocol (RFC 3550)
+	</para><para>
+		mediastreamer2: is providing mediaprocessing functionnalities using graphs and filters, many modules are available
+		to support various features, it should be relatively simple to integrated them.
+	</para><para>
+		mediastreamer2 is also providing a framework to create custom mediaprocessing modules.
+	</para>
+</section>
+
+<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The module depends on the following modules (in the other words
+		the listed modules must be loaded before this module):
+		<itemizedlist>
+			<listitem>
+			<para><emphasis>tm</emphasis> - accounting module</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed
+		before running &kamailio; with this module loaded:
+		</para><para>
+		If you want to build oRTP and mediastreamer from source, you can use the provided script for Debian "install_bc.sh".
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>oRTP</emphasis> git://git.linphone.org/ortp.git
+			</para>
+			<para>
+				oRTP is a library implemeting Real-time Transport Protocol (RFC 3550), distributed under GNU GPLv2 or proprietary license.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>mediastreamer2</emphasis> git clone git://git.linphone.org/mediastreamer2.git
+			</para>
+			<para>
+				Mediastreamer2 is a powerful and lightweight streaming engine specialized for voice/video telephony applications.
+			</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+</section>
+
+<section>
+	<title>Parameters</title>
+	<section>
+	<title><varname>log_file_name</varname> (string)</title>
+		<para>
+		oRTP and MediaStreamer2 log file settings
+		the log mask is not configurable :
+		MESSAGE | WARNING | ERROR | FATAL
+		levels are activated.
+		</para>
+		<para>
+		Default value is not-set (no logging to file).
+		</para>
+		<example>
+		<title>log_file_name example</title>
+		<programlisting format="linespecific">
+...
+modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
+...
+		</programlisting></example>
+	</section>
+</section>
+
+<section>
+	<title>Functions</title>
+
+	<section id="rtp_media_server.f.rms_answer">
+		<title><varname>rms_answer</varname> ()</title>
+		<para>
+		Create a session and a call leg and call the event_route[rms:start]
+		config example
+		</para>
+		<example>
+		<title>usage example</title>
+		<programlisting format="linespecific">
+...
+event_route[rms:start] {
+	xnotice("[rms:start] play ...\n");
+	rms_play("/tmp/reference_8000.wav", "rms:after_play");
+};
+
+event_route[rms:after_play] {
+	xnotice("[rms:after_play] play done...\n");
+	rms_hangup();
+};
+
+route {
+	if (t_precheck_trans()) {
+		t_check_trans();
+		exit;
+	}
+	t_check_trans();
+	if (is_method("INVITE") &amp;&amp; !has_totag()) {
+		if (!rms_answer()) {
+			t_reply("503", "server error");
+		}
+	}
+
+	if (is_method("BYE")){
+		xnotice("BYE RECEIVED [$ci]\n");
+		rms_media_stop();
+	}
+...
+		</programlisting></example>
+	</section>
+
+	<section id="rtp_media_server.f.rms_hangup">
+		<title><varname>rms_hangup</varname> ()</title>
+		<para>
+		Send a BYE, delete the RTP session and the media ressources.
+		</para>
+		<example>
+		<title>usage example</title>
+		<programlisting format="linespecific">
+...
+	rms_hangup();
+...
+		</programlisting></example>
+	</section>
+
+	<section id="rtp_media_server.f.rms_media_stop">
+		<title><varname>rms_media_stop</varname> ()</title>
+		<para>
+		This should be called on reception of a BYE, this will
+		delete the RTP session and the media ressources.
+		and reply "200 OK".
+		</para>
+		<para>
+		If the SIP session is not found "481 Call/Transaction Does Not Exist"
+		is returned.
+		</para>
+		<example>
+		<title>usage example</title>
+		<programlisting format="linespecific">
+...
+	if (is_method("BYE")){
+		rms_media_stop();
+	}
+...
+		</programlisting></example>
+	</section>
+
+	<section id="rtp_media_server.f.rms_play">
+		<title><varname>rms_play</varname> ()</title>
+		<para>
+		Play a wav file, a resampler is automaticaly configured to resample
+		and convert stereo to mono if needed.
+		</para><para>
+		The second parameter is the event route that will be called when the file was played.
+		</para>
+		<example>
+		<title>usage example</title>
+		<programlisting format="linespecific">
+...
+	rms_play("file.wav", "event_route_name");
+...
+		</programlisting></example>
+	</section>
+</section>
+</chapter>
