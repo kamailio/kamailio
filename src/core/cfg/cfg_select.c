@@ -220,7 +220,12 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 			break;
 
 		case CFG_VAR_STR:
-			memcpy(res, p, sizeof(str));
+			if(p) {
+				memcpy(res, p, sizeof(str));
+			} else {
+				res->s = 0;
+				res->len = 0;
+			}
 			break;
 
 		default:
