@@ -357,15 +357,19 @@ int add_supported_secagree_header(struct sip_msg* m)
 
     if((supported->s = pkg_malloc(supported_sec_agree_len)) == NULL) {
         LM_ERR("Error allcationg pkg memory for supported header str\n");
+        pkg_free(supported);
         return -1;
     }
     memcpy(supported->s, supported_sec_agree, supported_sec_agree_len);
     supported->len = supported_sec_agree_len;
 
     if(cscf_add_header(m, supported, HDR_SUPPORTED_T) != 1) {
+		pkg_free(supported->s);
+		pkg_free(supported);
         LM_ERR("Error adding security header to reply!\n");
         return -1;
     }
+    pkg_free(supported);
 
     return 0;
 }
