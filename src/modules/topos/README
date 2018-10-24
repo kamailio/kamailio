@@ -172,7 +172,7 @@ modparam("topos", "mask_callid", 1)
 
 3.4. sanity_checks (int)
 
-   If set to 1, topoh module will bind to sanity module in order to
+   If set to 1, topos module will bind to sanity module in order to
    perform sanity checks over received SIP request. Default sanity checks
    are done. It is useful to check if received request is well formatted
    before proceeding to encoding/decoding.
@@ -181,7 +181,7 @@ modparam("topos", "mask_callid", 1)
 
    Example 1.4. Set sanity_checks parameter
 ...
-modparam("topoh", "sanity_checks", 1)
+modparam("topos", "sanity_checks", 1)
 ...
 
 3.5. branch_expire (int)
