@@ -52,8 +52,9 @@
 			</itemizedlist>
 		</para>
 		<para>
-			The NSQ module also has support to publish updates to presence module through
-			the nsq_pua_publish() function.
+			<emphasis>IMPORTANT</emphasis>
+			The `nsq.json` transformation is deprecated in favor of the json module's `json.parse` transformation.
+			The `nsq_pua_publish()` function is deprecated in favor of pua_json module's `pua_json_publish()` function.
 		</para>
 
 	</section>
@@ -343,99 +344,6 @@ modparam("nsq", "topic_channel", "My-NSQ-Topic-2:My-NSQ-Channel-2")
 			</example>
 		</section>
 
-		<section>
-			<title><varname>db_url</varname>(str)</title>
-			<para>
-				The database for the presentity table.
-			</para>
-			<para>
-				If set, the nsq_pua_publish function will update the presentity status in the database.
-			</para>
-			<para>
-				Usage: presence related.
-			</para>
-			<para>
-				<emphasis>Default value is <quote>NULL</quote>.</emphasis>
-			</para>
-			<example>
-			<title>Set <varname>db_url</varname> parameter</title>
-<programlisting format="linespecific">
-...
-modparam("nsq", "db_url", "&defaultdb;")
-...
-</programlisting>
-			</example>
-		</section>
-
-		<section>
-			<title><varname>presentity_table</varname>(str)</title>
-			<para>
-				The name of the presentity table in the database.
-			</para>
-			<para>
-				<emphasis>Default value is <quote>presentity</quote>.</emphasis>
-			</para>
-			<example>
-				<title>Set <varname>presentity_table</varname> parameter</title>
-<programlisting format="linespecific">
-...
-modparam("nsq", "presentity_table", "my_presentity_table")
-...
-</programlisting>
-			</example>
-		</section>
-
-		<section>
-			<title><varname>db_table_lock_type</varname>(int)</title>
-			<para>
-			Enable (=1) or disable (=0) the locks for table during a
-			transaction.
-			</para>
-			<para>
-				<emphasis>Default value is <quote>1</quote>.</emphasis>
-			</para>
-			<example>
-				<title>Set <varname>db_table_lock_type</varname> parameter</title>
-<programlisting format="linespecific">
-...
-modparam("nsq", "db_table_lock_type", 0)
-...
-</programlisting>
-			</example>
-		</section>
-
-	</section>
-	<section>
-		<title>Functions</title>
-		<section>
-			<title>
-				<function moreinfo="none">nsq_pua_publish(json_payload)</function>
-			</title>
-			<para>
-				The function build presentity state from json_payload and updates presentity table.
-			</para>
-			<para>
-				Usage: presence related.
-			</para>
-			<para>
-				This function can be used from ANY ROUTE.
-			</para>
-
-			<example>
-				<title><function>nsq_pua_publish</function> usage</title>
-<programlisting format="linespecific">
-...
-event_route[nsq:consumer-event-presence-update]
-{
-	xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{nsq.json,From})");
-	nsq_pua_publish($nsqE);
-	pres_refresh_watchers("$(nsqE{nsq.json,From})", "$(nsqE{nsq.json,Event-Package})", 1);
-}
-...
-</programlisting>
-			</example>
-		</section>
-
 	</section>
 
 	<section>
@@ -456,32 +364,6 @@ event_route[nsq:consumer-event-presence-update]
 
 </programlisting>
 			</example>
-		</itemizedlist>
-	</section>
-
-	<section>
-		<title>Transformations</title>
-		<para>The prefix for nsq transformations is nsq.</para>
-		<para>You can use the transformation to extract values from the json structured $nsqE pseudo variable</para>
-		<itemizedlist>
-			<listitem><para>
-					<emphasis>json</emphasis>
-				</para>
-				<example>
-					<title><function>nsq.json</function> usage</title>
-<programlisting format="linespecific">
-...
-# extract value of "Custom-Data" from $nsqE pseudo variable and set it to $var(Custom-Data)
-$var(Custom-Data) = $(nsqE{nsq.json,Custom-Data});
-if($var(Custom-Data) != $null) {
-	xlog("L_INFO", "$ci|log|custom data: $var(Custom-Data)");
-}
-...
-</programlisting>
-				</example>
-
-			</listitem>
-
 		</itemizedlist>
 	</section>
 
@@ -509,14 +391,17 @@ event_route[nsq:consumer-event-presence-update]
 {
 	# presence is the value extracted from Event-Category field in json payload
 	# update is the value extracted from Event-Name field in json payload
-	xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{nsq.json,From})");
+	if ($(nsqE{json.parse,Event-Package}) == "dialog") {
+		xlog("L_INFO", "received $(nsqE{json.parse,Event-Package}) update for $(nsqE{json.parse,From})");
+		pua_json_publish($nsqE);
+	}
 	...
 }
 
 event_route[nsq:consumer-event-presence]
 {
 	# presence is the value extracted from Event-Category field in json payload
-	xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{nsq.json,From})");
+	xlog("L_INFO", "received $(nsqE{json.parse,Event-Package}) update for $(nsqE{json.parse,From})");
 	...
 }
 
