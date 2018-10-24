@@ -911,6 +911,10 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 	urecord_t* r;
 	ucontact_t* c;
 
+	if (db_mode!=DB_ONLY) {
+		return 0;
+	}
+
 	columns[0] = &user_col;
 	columns[1] = &contact_col;
 	columns[2] = &expires_col;
