@@ -150,7 +150,7 @@ modparam("topos", "mask_callid", 1)
 	<section id="topos.p.sanity_checks">
 		<title><varname>sanity_checks</varname> (int)</title>
 		<para>
-			If set to 1, topoh module will bind to sanity module in order
+			If set to 1, topos module will bind to sanity module in order
 			to perform sanity checks over received SIP request. Default
 			sanity checks are done. It is useful to check if received request
 			is well formated before proceeding to encoding/decoding.
@@ -164,7 +164,7 @@ modparam("topos", "mask_callid", 1)
 		<title>Set <varname>sanity_checks</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("topoh", "sanity_checks", 1)
+modparam("topos", "sanity_checks", 1)
 ...
 </programlisting>
 		</example>
