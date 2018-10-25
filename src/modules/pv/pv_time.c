@@ -313,6 +313,11 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 			}
 			return pv_get_uintval(msg, param, res, (unsigned int)_timeval_ts.tv_sec);
 		case 3:
+			if(gettimeofday(&_timeval_ts, NULL)!=0)
+                        {
+                                LM_ERR("unable to get time val attributes\n");
+                                return pv_get_null(msg, param, res);
+                        }
 			return pv_get_uintval(msg, param, res, (unsigned int)_timeval_ts.tv_usec);
 		case 4:
 			if(gettimeofday(&tv, NULL)!=0)
