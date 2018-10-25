@@ -1012,11 +1012,9 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 
 			lock_udomain(_d, &user);
 			if (get_urecord(_d, &user, &r) > 0) {
-				if (mem_insert_urecord(_d, &user, &r) < 0) {
-					LM_ERR("failed to create a record\n");
-					unlock_udomain(_d, &user);
-					goto error;
-				}
+				LM_ERR("failed to get a record\n");
+				unlock_udomain(_d, &user);
+				goto error;
 			}
 
 			if ( (c=mem_insert_ucontact(r, &contact, ci)) == 0) {
