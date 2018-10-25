@@ -234,8 +234,17 @@ static int km_cb_req_stats(struct sip_msg *msg,
 static int km_cb_rpl_stats_by_method(struct sip_msg *msg,
 		unsigned int flags, void *param)
 {
-      int method = get_cseq(msg)->method_id;
-      int group = msg->first_line.u.reply.statuscode / 100 - 1;
+	int method = 0;
+	int group = 0;
+
+	if(msg==NULL) {
+		return -1;
+	}
+	if (!msg->cseq && (parse_headers(msg, HDR_CSEQ_F, 0) < 0 || !msg->cseq)) {
+		return -1;
+	}
+	method = get_cseq(msg)->method_id;
+	group = msg->first_line.u.reply.statuscode / 100 - 1;
 
       if (group >= 0 && group <= 5) {
             switch(method) {
