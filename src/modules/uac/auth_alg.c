@@ -135,6 +135,7 @@ void uac_calc_response( HASHHEX ha1, HASHHEX ha2,
 {
 	MD5_CTX Md5Ctx;
 	HASH RespHash;
+	char *p;
 
 	MD5Init(&Md5Ctx);
 	MD5Update(&Md5Ctx, ha1, HASHHEXLEN);
@@ -148,7 +149,12 @@ void uac_calc_response( HASHHEX ha1, HASHHEX ha2,
 		MD5Update(&Md5Ctx, ":", 1);
 		MD5Update(&Md5Ctx, cnonce->s, cnonce->len);
 		MD5Update(&Md5Ctx, ":", 1);
-		MD5Update(&Md5Ctx, auth->qop.s, auth->qop.len);
+		p = memchr(auth->qop.s, ',', auth->qop.len);
+		if(p) {
+			MD5Update(&Md5Ctx, auth->qop.s, (size_t)(p - auth->qop.s));
+		} else {
+			MD5Update(&Md5Ctx, auth->qop.s, auth->qop.len);
+		}
 		MD5Update(&Md5Ctx, ":", 1);
 	};
 	MD5Update(&Md5Ctx, ha2, HASHHEXLEN);
