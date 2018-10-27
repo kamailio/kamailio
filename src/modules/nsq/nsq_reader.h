@@ -29,11 +29,8 @@
 
 #include <json.h>
 
-#include "../../core/sr_module.h"
 #include "../../core/fmsg.h"
 #include "nsq.h"
-#include "nsq_json.h"
-
 
 int nsq_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 int nsq_consumer_fire_event(char *routename);
