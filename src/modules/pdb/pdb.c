@@ -147,7 +147,7 @@ static struct server_list_t *server_list;
 /* debug function for the new client <-> server protocol */
 static void pdb_msg_dbg(struct pdb_msg msg, char *dbg_msg) {
     int i;
-    char buf[PAYLOADSIZE];
+    char buf[PAYLOADSIZE * 3 + 1];
     char *ptr = buf;
 
     for (i = 0; i < msg.hdr.length - sizeof(msg.hdr); i++) {
@@ -267,7 +267,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 
 	/* prepare request */
 	reqlen = number.len + 1; /* include null termination */
-	if (reqlen > sizeof(struct pdb_bdy)) {
+	if (reqlen > PAYLOADSIZE) {
 		LM_ERR("number too long '%.*s'.\n", number.len, number.s);
 		return -1;
 	}
@@ -307,6 +307,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
             break;
     }
 
+	memset(&msg, 0, sizeof(struct pdb_msg));
 	/* wait for response */
 	for (;;) {
 		if (gettimeofday(&tnow, NULL) != 0) {
