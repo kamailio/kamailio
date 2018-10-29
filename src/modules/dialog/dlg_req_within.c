@@ -77,8 +77,8 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 	unsigned int loc_seq;
 	char nbuf[MAX_URI_SIZE];
 	char dbuf[80];
-	str nuri;
-	str duri;
+	str nuri = STR_NULL;
+	str duri = STR_NULL;
 	size_t sz;
 	char *p;
 
@@ -87,14 +87,16 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 		LM_ERR("no contact available\n");
 		goto error;
 	}
-	/*restore alias parameter*/
-	nuri.s = nbuf;
-	nuri.len = MAX_URI_SIZE;
-	duri.s = dbuf;
-	duri.len = 80;
-	if(uri_restore_rcv_alias(&cell->contact[dir], &nuri, &duri)<0) {
-		nuri.len = 0;
-		duri.len = 0;
+	if(cell->route_set[dir].s==NULL || cell->route_set[dir].len<=0){
+		/*try to restore alias parameter if no route set */
+		nuri.s = nbuf;
+		nuri.len = MAX_URI_SIZE;
+		duri.s = dbuf;
+		duri.len = 80;
+		if(uri_restore_rcv_alias(&cell->contact[dir], &nuri, &duri)<0) {
+			nuri.len = 0;
+			duri.len = 0;
+		}
 	}
 	if(nuri.len>0 && duri.len>0) {
 		sz = sizeof(dlg_t) + (nuri.len+duri.len+2)*sizeof(char);
@@ -103,7 +105,6 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 	}
 	td = (dlg_t*)pkg_malloc(sz);
 	if(!td){
-	
 		LM_ERR("out of pkg memory\n");
 		return NULL;
 	}
@@ -122,13 +123,12 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 
 	/*route set*/
 	if( cell->route_set[dir].s && cell->route_set[dir].len){
-		
-		if( parse_rr_body(cell->route_set[dir].s, cell->route_set[dir].len, 
+		if( parse_rr_body(cell->route_set[dir].s, cell->route_set[dir].len,
 						&td->route_set) !=0){
 		 	LM_ERR("failed to parse route set\n");
 			goto error;
 		}
-	} 
+	}
 
 	if(nuri.len>0 && duri.len>0) {
 		/* req uri */
@@ -153,7 +153,7 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 	td->id.rem_tag = cell->tag[dir];
 	td->id.loc_tag = (dir == DLG_CALLER_LEG) ? 	cell->tag[DLG_CALLEE_LEG]:
 												cell->tag[DLG_CALLER_LEG];
-	
+
 	td->state= DLG_CONFIRMED;
 	td->send_sock = cell->bind_addr[dir];
 
