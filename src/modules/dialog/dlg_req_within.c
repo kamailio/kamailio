@@ -92,7 +92,8 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 	nuri.len = MAX_URI_SIZE;
 	duri.s = dbuf;
 	duri.len = 80;
-	if(uri_restore_rcv_alias(&cell->contact[dir], &nuri, &duri)<0) {
+	if((cell->route_set[dir].s && cell->route_set[dir].len) || 
+	   (uri_restore_rcv_alias(&cell->contact[dir], &nuri, &duri)<0)) {
 		nuri.len = 0;
 		duri.len = 0;
 	}
