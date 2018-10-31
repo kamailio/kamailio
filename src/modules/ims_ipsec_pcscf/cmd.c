@@ -410,6 +410,8 @@ int add_security_server_header(struct sip_msg* m, ipsec_t* s)
         return -1;
     }
 
+    pkg_free(sec_header);
+
     return 0;
 }
 
