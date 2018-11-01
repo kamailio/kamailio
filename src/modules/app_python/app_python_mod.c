@@ -26,6 +26,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "python_exec.h"
 #include "python_iface.h"
@@ -81,18 +82,16 @@ static cmd_export_t cmds[] = {
 
 /** module exports */
 struct module_exports exports = {
-	"app_python",                   /* module name */
-	RTLD_NOW | RTLD_GLOBAL,         /* dlopen flags */
-	cmds,                           /* exported functions */
-	params,                         /* exported parameters */
-	0,                              /* exported statistics */
-	0,                              /* exported MI functions */
-	0,                              /* exported pseudo-variables */
-	0,                              /* extra processes */
-	mod_init,                       /* module initialization function */
-	(response_function) NULL,       /* response handling function */
-	(destroy_function) mod_destroy, /* destroy function */
-	child_init                      /* per-child init function */
+	"app_python",           /* module name */
+	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
+	cmds,                   /* exported functions */
+	params,                 /* exported parameters */
+	0,                      /* exported rpc functions */
+	0,                      /* exported pseudo-variables */
+	0,                      /* response handling function */
+	mod_init,               /* module init function */
+	child_init,             /* per-child init function */
+	mod_destroy             /* destroy function */
 };
 
 
@@ -179,6 +178,9 @@ static int child_init(int rank)
 	}
 	_apy_process_rank = rank;
 	PyOS_AfterFork();
+	if (cfg_child_init()) {
+		return -1;
+	}
 	return apy_init_script(rank);
 }
 
@@ -278,7 +280,7 @@ int apy_mod_init(PyObject *pModule)
 	Py_XDECREF(_sr_apy_handler_obj);
 	_sr_apy_handler_obj = pHandler;
 	rval = 0;
- err:
+err:
 	return rval;
 }
 
@@ -291,7 +293,7 @@ int apy_reload_script(void)
 	PY_GIL_ENSURE;
 	pModule = PyImport_ReloadModule(_sr_apy_module);
 	if (!pModule) {
-                // PyErr_PrintEx(0); - don't hide the real exception
+		// PyErr_PrintEx(0); - don't hide the real exception
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_ImportError, "Reload module '%s'", bname);
 		python_handle_exception("mod_init");
@@ -306,15 +308,15 @@ int apy_reload_script(void)
 	Py_DECREF(_sr_apy_module);
 	_sr_apy_module = pModule;
 
-        if(apy_init_script(_apy_process_rank)<0) {
-                LM_ERR("failed to init script\n");
+	if(apy_init_script(_apy_process_rank)<0) {
+		LM_ERR("failed to init script\n");
 		goto err;
-        }
+	}
 
 	rval = 0;
- err:
+err:
 	PY_GIL_RELEASE;
-        return rval;
+	return rval;
 }
 
 int apy_load_script(void)
@@ -390,7 +392,7 @@ int apy_load_script(void)
 	_sr_apy_module = pModule;
 
 	rval = apy_mod_init(pModule);
- err:
+err:
 	PY_GIL_RELEASE;
 	return rval;
 }
@@ -485,7 +487,7 @@ int apy_init_script(int rank)
 	rval = PyInt_AsLong(pResult);
 	Py_DECREF(pResult);
 
- err:
+err:
 	PY_GIL_RELEASE;
 	return rval;
 }

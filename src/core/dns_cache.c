@@ -57,7 +57,6 @@
 
 
 
-#define DNS_CACHE_DEBUG /* extra sanity checks and debugging */
 
 
 #ifndef MAX
@@ -102,9 +101,7 @@ struct dns_hash_head{
 	struct dns_hash_entry* prev;
 };
 
-#ifdef DNS_LU_LST
 struct dns_lu_lst* dns_last_used_lst=0;
-#endif
 
 static struct dns_hash_head* dns_hash=0;
 
@@ -150,9 +147,7 @@ const char* dns_strerror(int err)
 /* "internal" only, don't use unless you really know waht you're doing */
 inline static void dns_destroy_entry(struct dns_hash_entry* e)
 {
-#ifdef DNS_CACHE_DEBUG
 	memset(e, 0, e->total_size);
-#endif
 	shm_free(e); /* nice having it in one block isn't it? :-) */
 }
 
@@ -160,9 +155,7 @@ inline static void dns_destroy_entry(struct dns_hash_entry* e)
 /* "internal" only, same as above, asumes shm_lock() held (tm optimization) */
 inline static void dns_destroy_entry_shm_unsafe(struct dns_hash_entry* e)
 {
-#ifdef DNS_CACHE_DEBUG
 	memset(e, 0, e->total_size);
-#endif
 	shm_free_unsafe(e); /* nice having it in one block isn't it? :-) */
 }
 
@@ -233,12 +226,10 @@ void destroy_dns_cache()
 		shm_free(dns_hash);
 		dns_hash=0;
 	}
-#ifdef DNS_LU_LST
 	if (dns_last_used_lst){
 		shm_free(dns_last_used_lst);
 		dns_last_used_lst=0;
 	}
-#endif
 #ifdef USE_DNS_CACHE_STATS
 	if (dns_cache_stats)
 		shm_free(dns_cache_stats);
@@ -347,17 +338,15 @@ int init_dns_cache()
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
-
 	*dns_cache_mem_used=0;
 
-#ifdef DNS_LU_LST
 	dns_last_used_lst=shm_malloc(sizeof(*dns_last_used_lst));
 	if (dns_last_used_lst==0){
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
 	clist_init(dns_last_used_lst, next, prev);
-#endif
+
 	dns_hash=shm_malloc(sizeof(struct dns_hash_head)*DNS_HASH_SIZE);
 	if (dns_hash==0){
 		ret=E_OUT_OF_MEM;
@@ -444,9 +433,6 @@ int init_dns_cache_stats(int iproc_num)
 
 
 
-#ifdef DNS_CACHE_DEBUG
-#define DEBUG_LU_LST
-#ifdef DEBUG_LU_LST
 
 #include <stdlib.h> /* abort() */
 #define check_lu_lst(l) ((((l)->next==(l)) || ((l)->prev==(l))) && \
@@ -478,8 +464,6 @@ int init_dns_cache_stats(int iproc_num)
 		} \
 	}while(0)
 
-#endif
-#endif /* DNS_CACHE_DEBUG */
 
 
 /* must be called with the DNS_LOCK hold
@@ -488,21 +472,11 @@ int init_dns_cache_stats(int iproc_num)
 inline static void _dns_hash_remove(struct dns_hash_entry* e)
 {
 	clist_rm(e, next, prev);
-#ifdef DNS_CACHE_DEBUG
 	e->next=e->prev=0;
-#endif
-#ifdef DNS_LU_LST
-#ifdef DEBUG_LU_LST
 	debug_lu_lst("_dns_hash_remove: pre rm:", &e->last_used_lst);
-#endif
 	clist_rm(&e->last_used_lst, next, prev);
-#ifdef DEBUG_LU_LST
 	debug_lu_lst("_dns_hash_remove: post rm:", &e->last_used_lst);
-#endif
-#ifdef DNS_CACHE_DEBUG
 	e->last_used_lst.next=e->last_used_lst.prev=0;
-#endif
-#endif
 	*dns_cache_mem_used-=e->total_size;
 	dns_hash_put(e);
 }
@@ -536,11 +510,16 @@ inline static struct dns_hash_entry* _dns_hash_find(str* name, int type,
 	ret=0;
 	now=get_ticks_raw();
 	*err=0;
+
+	/* just in case that e.g. the VIA parser get confused */
+	if(unlikely(!name->s || name->len <= 0)) {
+		LM_ERR("invalid name, no cache lookup possible\n");
+		*err=-1;
+		return 0;
+	}
 again:
 	*h=dns_hash_no(name->s, name->len, type);
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("(%.*s(%d), %d), h=%d\n", name->len, name->s, name->len, type, *h);
-#endif
 	clist_foreach_safe(&dns_hash[*h], e, tmp, next){
 		if (
 #ifdef DNS_WATCHDOG_SUPPORT
@@ -555,17 +534,11 @@ again:
 		}else if ((e->type==type) && (e->name_len==name->len) &&
 			(strncasecmp(e->name, name->s, e->name_len)==0)){
 			e->last_used=now;
-#ifdef DNS_LU_LST
 			/* add it at the end */
-#ifdef DEBUG_LU_LST
 			debug_lu_lst("_dns_hash_find: pre rm:", &e->last_used_lst);
-#endif
 			clist_rm(&e->last_used_lst, next, prev);
 			clist_append(dns_last_used_lst, &e->last_used_lst, next, prev);
-#ifdef DEBUG_LU_LST
 			debug_lu_lst("_dns_hash_find: post append:", &e->last_used_lst);
-#endif
-#endif
 			return e;
 		}else if ((e->type==T_CNAME) &&
 					!((e->rr_lst==0) || (e->ent_flags & DNS_FLAG_BAD_NAME)) &&
@@ -574,18 +547,12 @@ again:
 			/*if CNAME matches and CNAME is entry is not a neg. cache entry
 			  (could be produced by a specific CNAME lookup)*/
 			e->last_used=now;
-#ifdef DNS_LU_LST
 			/* add it at the end */
-#ifdef DEBUG_LU_LST
 			debug_lu_lst("_dns_hash_find: cname: pre rm:", &e->last_used_lst);
-#endif
 			clist_rm(&e->last_used_lst, next, prev);
 			clist_append(dns_last_used_lst, &e->last_used_lst, next, prev);
-#ifdef DEBUG_LU_LST
 			debug_lu_lst("_dns_hash_find: cname: post append:",
 							&e->last_used_lst);
-#endif
-#endif
 			ret=e; /* if this is an unfinished cname chain, we try to
 					  return the last cname */
 			/* this is a cname => retry using its value */
@@ -621,20 +588,13 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 	ticks_t now;
 	unsigned int n;
 	unsigned int deleted;
-#ifdef DNS_LU_LST
 	struct dns_lu_lst* l;
 	struct dns_lu_lst* tmp;
-#else
-	struct dns_hash_entry* t;
-	unsigned int h;
-	static unsigned int start=0;
-#endif
 
 	n=0;
 	deleted=0;
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
-#ifdef DNS_LU_LST
 	clist_foreach_safe(dns_last_used_lst, l, tmp, next){
 		e=(struct dns_hash_entry*)(((char*)l)-
 				(char*)&((struct dns_hash_entry*)(0))->last_used_lst);
@@ -647,35 +607,6 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 		n++;
 		if (n>=no) break;
 	}
-#else
-	for(h=start; h!=(start+DNS_HASH_SIZE); h++){
-		clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-			if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
-				&& ((s_ticks_t)(now-e->expire)>=0)
-			) {
-				_dns_hash_remove(e);
-				deleted++;
-			}
-			n++;
-			if (n>=no) goto skip;
-		}
-	}
-	/* not fair, but faster then random() */
-	if (!expired_only){
-		for(h=start; h!=(start+DNS_HASH_SIZE); h++){
-			clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-				if ((e->ent_flags & DNS_FLAG_PERMANENT) == 0) {
-					_dns_hash_remove(e);
-					deleted++;
-				}
-				n++;
-				if (n>=no) goto skip;
-			}
-		}
-	}
-skip:
-	start=h;
-#endif
 	UNLOCK_DNS_HASH();
 	return deleted;
 }
@@ -692,19 +623,12 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 	struct dns_hash_entry* e;
 	ticks_t now;
 	unsigned int deleted;
-#ifdef DNS_LU_LST
 	struct dns_lu_lst* l;
 	struct dns_lu_lst* tmp;
-#else
-	struct dns_hash_entry* t;
-	unsigned int h;
-	static unsigned int start=0;
-#endif
 
 	deleted=0;
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
-#ifdef DNS_LU_LST
 	clist_foreach_safe(dns_last_used_lst, l, tmp, next){
 		if (*dns_cache_mem_used<=target) break;
 		e=(struct dns_hash_entry*)(((char*)l)-
@@ -716,37 +640,6 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 				deleted++;
 		}
 	}
-#else
-	for(h=start; h!=(start+DNS_HASH_SIZE); h++){
-		clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-			if (*dns_cache_mem_used<=target)
-				goto skip;
-			if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
-				&& ((s_ticks_t)(now-e->expire)>=0)
-			) {
-				_dns_hash_remove(e);
-				deleted++;
-			}
-		}
-	}
-	/* not fair, but faster then random() */
-	if (!expired_only){
-		for(h=start; h!=(start+DNS_HASH_SIZE); h++){
-			clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-				if (*dns_cache_mem_used<=target)
-					goto skip;
-				if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
-					&& ((s_ticks_t)(now-e->expire)>=0)
-				) {
-					_dns_hash_remove(e);
-					deleted++;
-				}
-			}
-		}
-	}
-skip:
-	start=h;
-#endif
 	UNLOCK_DNS_HASH();
 	return deleted;
 }
@@ -800,17 +693,13 @@ inline static int dns_cache_add(struct dns_hash_entry* e)
 	}
 	atomic_inc(&e->refcnt);
 	h=dns_hash_no(e->name, e->name_len, e->type);
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("adding %.*s(%d) %d (flags=%0x) at %d\n",
 			e->name_len, e->name, e->name_len, e->type, e->ent_flags, h);
-#endif
 	LOCK_DNS_HASH();
 		*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
 										 only from within a lock */
 		clist_append(&dns_hash[h], e, next, prev);
-#ifdef DNS_LU_LST
 		clist_append(dns_last_used_lst, &e->last_used_lst, next, prev);
-#endif
 	UNLOCK_DNS_HASH();
 	return 0;
 }
@@ -842,16 +731,13 @@ inline static int dns_cache_add_unsafe(struct dns_hash_entry* e)
 	}
 	atomic_inc(&e->refcnt);
 	h=dns_hash_no(e->name, e->name_len, e->type);
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("adding %.*s(%d) %d (flags=%0x) at %d\n",
 			e->name_len, e->name, e->name_len, e->type, e->ent_flags, h);
-#endif
 	*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
 										 only from within a lock */
 	clist_append(&dns_hash[h], e, next, prev);
-#ifdef DNS_LU_LST
 	clist_append(dns_last_used_lst, &e->last_used_lst, next, prev);
-#endif
+
 	return 0;
 }
 
@@ -867,9 +753,7 @@ inline static struct dns_hash_entry* dns_cache_mk_bad_entry(str* name,
 	int size;
 	ticks_t now;
 
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("(%.*s, %d, %d, %d)\n", name->len, name->s, type, ttl, flags);
-#endif
 	size=sizeof(struct dns_hash_entry)+name->len-1+1;
 	e=shm_malloc(size);
 	if (e==0){
@@ -1213,9 +1097,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	}
 	*tail=0; /* mark the end of our tmp_lst */
 	if (size==0){
-#ifdef DNS_CACHE_DEBUG
 		LM_DBG("entry %.*s (%d) not found\n", name->len, name->s, type);
-#endif
 		return 0;
 	}
 	/* compute size */
@@ -1743,10 +1625,8 @@ inline static struct dns_hash_entry* dns_get_related(struct dns_hash_entry* e,
 
 	ret=0;
 	l=e;
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("(%p (%.*s, %d), %d, *%p) (%d)\n", e,
 			e->name_len, e->name, e->type, type, *records, cname_chain_len);
-#endif
 	clist_init(l, next, prev);
 	if (type==e->type){
 		ret=e;
@@ -2334,7 +2214,6 @@ retry:
 	for (i=0; (i<idx) && (r_sums[i].r_sum<rand_w); i++);
 found:
 	if(i<MAX_SRV_GRP_IDX) {
-#ifdef DNS_CACHE_DEBUG
 		LM_DBG("(%p, %lx, %d, %u): selected %d/%d in grp. %d"
 			   " (rand_w=%d, rr=%p rd=%p p=%d w=%d rsum=%d)\n",
 				e, (unsigned long)*tried, *no, now, i, idx, n, rand_w,
@@ -2346,7 +2225,6 @@ found:
 						? ((struct srv_rdata *)r_sums[i].rr->rdata)->weight
 						: 0,
 				r_sums[i].r_sum);
-#endif
 		/* i is the winner */
 		*no = n; /* grp. start */
 		if(i < 8 * sizeof(*tried))
@@ -2758,10 +2636,8 @@ struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head,
 			i++;
 			continue; /* already tried */
 		}
-#ifdef DNS_CACHE_DEBUG
 		LM_DBG("found a valid sip NAPTR rr %.*s, proto %d\n",
 				naptr->repl_len, naptr->repl, (int)naptr_proto);
-#endif
 		if ((naptr_proto_supported(naptr_proto))){
 			if (naptr_choose(&naptr_saved, &saved_proto,
 								naptr, naptr_proto))
@@ -2771,10 +2647,8 @@ struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head,
 	}
 	if (naptr_saved){
 		/* found something */
-#ifdef DNS_CACHE_DEBUG
 		LM_DBG("choosed NAPTR rr %.*s, proto %d tried: 0x%x\n",
 			naptr_saved->repl_len, naptr_saved->repl, (int)saved_proto, *tried);
-#endif
 		*tried|=1<<idx;
 		*proto=saved_proto;
 		srv_name->s=naptr_saved->repl;
@@ -2837,10 +2711,8 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 		while(dns_naptr_sip_iterate(e->rr_lst, &tried_bmp,
 												&srv_name, &n_proto)){
 			if ((he=dns_srv_get_he(&srv_name, port, dns_flags))!=0){
-#ifdef DNS_CACHE_DEBUG
 				LM_DBG("(%.*s, %d, %d) srv, ret=%p\n",
 							name->len, name->s, (int)*port, (int)*proto, he);
-#endif
 				dns_hash_put(e);
 				*proto=n_proto;
 				return he;
@@ -3191,11 +3063,9 @@ inline static int dns_srv_resolve_ip(struct dns_srv_handle* h,
 		}
 	}while(ret<0);
 error:
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("(\"%.*s\", %d, %d), ret=%d, ip=%s\n",
 			name->len, name->s, h->srv_no, h->ip_no, ret,
 			ip?ZSW(ip_addr2a(ip)):"");
-#endif
 	return ret;
 }
 
@@ -3288,10 +3158,8 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 						{
 							h->proto = srv_proto_list[i].proto;
 							if(proto) *proto = h->proto;
-#ifdef DNS_CACHE_DEBUG
 							LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n",
 								name->len, name->s, h->srv_no, h->ip_no, ret);
-#endif
 							return ret;
 						}
 					}
@@ -3321,10 +3189,8 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 		*port=h->port;
 	if (proto)
 		*proto=h->proto;
-#ifdef DNS_CACHE_DEBUG
 	LM_DBG("(%.*s, %d, %d), ip, ret=%d\n",
 			name->len, name->s, h->srv_no, h->ip_no, ret);
-#endif
 	return ret;
 }
 
@@ -3396,10 +3262,8 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 			dns_srv_handle_init(h); /* make sure h does not contain garbage
 									from previous dns_srv_sip_resolve calls */
 			if ((ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags))>=0){
-#ifdef DNS_CACHE_DEBUG
 				LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n",
 								name->len, name->s, h->srv_no, h->ip_no, ret);
-#endif
 				dns_hash_put(e);
 				*proto=n_proto;
 				h->proto=*proto;
@@ -3796,7 +3660,7 @@ static int dns_get_type(str* s)
 
 /** rpc-prints a dns cache entry.
   */
-void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
+int dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 {
 	int expires;
 	struct dns_rr* rr;
@@ -3805,104 +3669,173 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 	str s;
 	int i;
 	int n;
+	void *th;
+	void *rh;
+	void *sh;
+	void *ih;
+	void *ah;
+
+	/* add entry node */
+	if(rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return -1;
+	}
 
 	now=get_ticks_raw();
 	expires = (s_ticks_t)(e->expire-now)<0?-1: TICKS_TO_S(e->expire-now);
-	
-	rpc->rpl_printf(ctx, "%sname: %s", SPACE_FORMAT, e->name);
-	rpc->rpl_printf(ctx, "%stype: %s", SPACE_FORMAT, print_type(e->type));
-	rpc->rpl_printf(ctx, "%ssize (bytes): %d", SPACE_FORMAT,
-						e->total_size);
-	rpc->rpl_printf(ctx, "%sreference counter: %d", SPACE_FORMAT,
-						e->refcnt.val);
-	if (e->ent_flags & DNS_FLAG_PERMANENT) {
-		rpc->rpl_printf(ctx, "%spermanent: yes", SPACE_FORMAT);
-	} else {
-		rpc->rpl_printf(ctx, "%spermanent: no", SPACE_FORMAT);
-		rpc->rpl_printf(ctx, "%sexpires in (s): %d", SPACE_FORMAT, expires);
+	if(rpc->struct_add(th, "ssddsdds",
+			"name", e->name,
+			"type", print_type(e->type),
+			"size_bytes", e->total_size,
+			"reference_counter", e->refcnt.val,
+			"permanent", (e->ent_flags & DNS_FLAG_PERMANENT) ? "yes" : "no",
+			"expires", (e->ent_flags & DNS_FLAG_PERMANENT)?0:expires, /* seconds */
+			"last_used", TICKS_TO_S(now-e->last_used), /* seconds */
+			"negative_entry", (e->ent_flags & DNS_FLAG_BAD_NAME) ? "yes" : "no")
+				<0) {
+		rpc->fault(ctx, 500, "Internal error building structure");
+		return -1;
 	}
-	rpc->rpl_printf(ctx, "%slast used (s): %d", SPACE_FORMAT,
-						TICKS_TO_S(now-e->last_used));
-	rpc->rpl_printf(ctx, "%snegative entry: %s", SPACE_FORMAT,
-						(e->ent_flags & DNS_FLAG_BAD_NAME) ? "yes" : "no");
 	n = 0;
 	for (rr=e->rr_lst; rr; rr=rr->next) {
-		rpc->rpl_printf(ctx, "%srr idx: %d", SPACE_FORMAT, n++);
+		if(n==0) {
+			if(rpc->struct_add(th, "[", "records", &rh)<0) {
+				rpc->fault(ctx, 500, "Internal error building records");
+				return -1;
+			}
+		}
+		if(rpc->array_add(rh, "{", &sh) < 0) {
+			rpc->fault(ctx, 500, "Internal error adding record");
+			return -1;
+		}
+		if(rpc->struct_add(sh, "d", "rr_idx", n)<0) {
+			rpc->fault(ctx, 500, "Internal error adding rr_idx");
+			return -1;
+		}
+		n++;
 		switch(e->type) {
 			case T_A:
 			case T_AAAA:
 				if (dns_rr2ip(e->type, rr, &ip)==0){
-				  rpc->rpl_printf(ctx, "%srr ip: %s", SPACE_FORMAT,
-									ip_addr2a(&ip) );
+					if(rpc->struct_add(sh, "s", "rr_ip", ip_addr2a(&ip))<0) {
+						rpc->fault(ctx, 500, "Internal error adding rr_ip");
+						return -1;
+					}
 				}else{
-				  rpc->rpl_printf(ctx, "%srr ip: <error: bad rr>", 
-									SPACE_FORMAT);
+					if(rpc->struct_add(sh, "s", "rr_ip", "error-bad-rr")<0) {
+						rpc->fault(ctx, 500, "Internal error adding rr_ip");
+						return -1;
+					}
 				}
 				break;
 			case T_SRV:
-				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
-							((struct srv_rdata*)(rr->rdata))->name);
-				rpc->rpl_printf(ctx, "%srr port: %d", SPACE_FORMAT,
-							((struct srv_rdata*)(rr->rdata))->port);
-				rpc->rpl_printf(ctx, "%srr priority: %d", SPACE_FORMAT,
-						((struct srv_rdata*)(rr->rdata))->priority);
-				rpc->rpl_printf(ctx, "%srr weight: %d", SPACE_FORMAT,
-							((struct srv_rdata*)(rr->rdata))->weight);
+				if(rpc->struct_add(sh, "sddd",
+						"rr_name", ((struct srv_rdata*)(rr->rdata))->name,
+						"rr_port", ((struct srv_rdata*)(rr->rdata))->port,
+						"rr_priority", ((struct srv_rdata*)(rr->rdata))->priority,
+						"rr_weight", ((struct srv_rdata*)(rr->rdata))->weight)<0) {
+					rpc->fault(ctx, 500, "Internal error adding rr srv fields");
+					return -1;
+				}
 				break;
 			case T_NAPTR:
-				rpc->rpl_printf(ctx, "%srr order: %d", SPACE_FORMAT,
-							((struct naptr_rdata*)(rr->rdata))->order);
-				rpc->rpl_printf(ctx, "%srr preference: %d", SPACE_FORMAT,
-							((struct naptr_rdata*)(rr->rdata))->pref);
+				if(rpc->struct_add(sh, "dd",
+						"rr_order", ((struct naptr_rdata*)(rr->rdata))->order,
+						"rr_preference", ((struct naptr_rdata*)(rr->rdata))->pref)
+							<0) {
+					rpc->fault(ctx, 500, "Internal error adding naptr order");
+					return -1;
+				}
 				s.s = ((struct naptr_rdata*)(rr->rdata))->flags;
 				s.len = ((struct naptr_rdata*)(rr->rdata))->flags_len;
-				rpc->rpl_printf(ctx, "%srr flags: %.*s", SPACE_FORMAT,
-									s.len, s.s);
+				if(rpc->struct_add(sh, "S", "rr_flags", &s)<0) {
+					rpc->fault(ctx, 500, "Internal error adding naptre rr_flags");
+					return -1;
+				}
 				s.s=((struct naptr_rdata*)(rr->rdata))->services;
 				s.len=((struct naptr_rdata*)(rr->rdata))->services_len;
-				rpc->rpl_printf(ctx, "%srr service: %.*s", SPACE_FORMAT,
-									s.len, s.s);
+				if(rpc->struct_add(sh, "S", "rr_service", &s)<0) {
+					rpc->fault(ctx, 500, "Internal error adding naptre rr_service");
+					return -1;
+				}
 				s.s = ((struct naptr_rdata*)(rr->rdata))->regexp;
 				s.len = ((struct naptr_rdata*)(rr->rdata))->regexp_len;
-				rpc->rpl_printf(ctx, "%srr regexp: %.*s", SPACE_FORMAT,
-									s.len, s.s);
+				if(rpc->struct_add(sh, "S", "rr_regexp", &s)<0) {
+					rpc->fault(ctx, 500, "Internal error adding naptre rr_regexp");
+					return -1;
+				}
 				s.s = ((struct naptr_rdata*)(rr->rdata))->repl;
 				s.len = ((struct naptr_rdata*)(rr->rdata))->repl_len;
-				rpc->rpl_printf(ctx, "%srr replacement: %.*s", 
-									SPACE_FORMAT, s.len, s.s);
+				if(rpc->struct_add(sh, "S", "rr_regexp", &s)<0) {
+					rpc->fault(ctx, 500, "Internal error adding naptre rr_replacement");
+					return -1;
+				}
 				break;
 			case T_CNAME:
-				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
-							((struct cname_rdata*)(rr->rdata))->name);
+				if(rpc->struct_add(sh, "s", "rr_name",
+						((struct cname_rdata*)(rr->rdata))->name)<0) {
+					rpc->fault(ctx, 500, "Internal error adding cname rr_name");
+					return -1;
+				}
 				break;
 			case T_TXT:
+				if(rpc->struct_add(sh, "[", "txt", &ih)<0) {
+					rpc->fault(ctx, 500, "Internal error txt record");
+					return -1;
+				}
 				for (i=0; i<((struct txt_rdata*)(rr->rdata))->cstr_no;
 						i++){
-					rpc->rpl_printf(ctx, "%stxt[%d]: %s", SPACE_FORMAT, i,
-						((struct txt_rdata*)(rr->rdata))->txt[i].cstr);
+					if(rpc->array_add(ih, "{", &ah) < 0) {
+						rpc->fault(ctx, 500, "Internal error adding txt record");
+						return -1;
+					}
+					if(rpc->struct_add(ah, "ds", "idx", i,
+							"rr_txt",
+							((struct txt_rdata*)(rr->rdata))->txt[i].cstr)<0) {
+						rpc->fault(ctx, 500, "Internal error adding rr_txt");
+						return -1;
+					}
 				}
 				break;
 			case T_EBL:
-				rpc->rpl_printf(ctx, "%srr position: %d", SPACE_FORMAT,
-							((struct ebl_rdata*)(rr->rdata))->position);
-				rpc->rpl_printf(ctx, "%srr separator: %s", SPACE_FORMAT,
-							((struct ebl_rdata*)(rr->rdata))->separator);
-				rpc->rpl_printf(ctx, "%srr apex: %s", SPACE_FORMAT,
-							((struct ebl_rdata*)(rr->rdata))->apex);
+				if(rpc->struct_add(sh, "dss",
+						"rr_position", ((struct ebl_rdata*)(rr->rdata))->position,
+						"rr_separator", ((struct ebl_rdata*)(rr->rdata))->separator,
+						"rr_apex", ((struct ebl_rdata*)(rr->rdata))->apex)<0) {
+					rpc->fault(ctx, 500, "Internal error adding ebl fields");
+					return -1;
+				}
 				break;
 			case T_PTR:
-				rpc->rpl_printf(ctx, "%srr name: %s", SPACE_FORMAT,
-							((struct ptr_rdata*)(rr->rdata))->ptrdname);
+				if(rpc->struct_add(sh, "s", "rr_name",
+						((struct ptr_rdata*)(rr->rdata))->ptrdname)<0) {
+					rpc->fault(ctx, 500, "Internal error adding ptr rr_name");
+					return -1;
+				}
 				break;
 			default:
-				rpc->rpl_printf(ctx, "%sresource record: unknown",
-									SPACE_FORMAT);
+				if(rpc->struct_add(sh, "s", "rr_type", "unknown" )<0) {
+					rpc->fault(ctx, 500, "Internal error adding rr unknown");
+					return -1;
+				}
 		}
-		if ((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
-			rpc->rpl_printf(ctx, "%srr expires in (s): %d", SPACE_FORMAT,
-						(s_ticks_t)(rr->expire-now)<0?-1 : 
-						TICKS_TO_S(rr->expire-now));
+		if ((e->ent_flags & DNS_FLAG_PERMANENT) == 0) {
+			if(rpc->struct_add(sh, "sd", "rr_permanent", "no",
+					"rr_expires",
+					(s_ticks_t)(rr->expire-now)<0?-1 : 
+						TICKS_TO_S(rr->expire-now))<0) {
+				rpc->fault(ctx, 500, "Internal error adding rr_expires");
+				return -1;
+			}
+		} else {
+			if(rpc->struct_add(sh, "sd", "rr_permanent", "yes",
+					"rr_expires", 0)<0) {
+				rpc->fault(ctx, 500, "Internal error adding rr_expires");
+				return -1;
+			}
+		}
 	}
+	return 0;
 }
 
 
@@ -3927,9 +3860,10 @@ void dns_cache_view(rpc_t* rpc, void* ctx)
 			) {
 				continue;
 			}
-			rpc->rpl_printf(ctx, "{\n");
-			dns_cache_print_entry(rpc, ctx, e);
-			rpc->rpl_printf(ctx, "}");
+			if(dns_cache_print_entry(rpc, ctx, e)<0) {
+				LM_DBG("failed to print dns entry\n");
+				return;
+			}
 		}
 	}
 	UNLOCK_DNS_HASH();
@@ -3960,24 +3894,44 @@ void dns_cache_flush(int del_permanent)
 /* deletes all the non-permanent entries from the cache */
 void dns_cache_delete_all(rpc_t* rpc, void* ctx)
 {
+	void *th;
+
 	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
 	dns_cache_flush(0);
-	rpc->rpl_printf(ctx, "OK");
+
+	if(rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error - root structure");
+		return;
+	}
+	if(rpc->struct_add(th, "s", "status", "ok") < 0) {
+		rpc->fault(ctx, 500, "Internal error - status");
+		return;
+	}
 }
 
 /* deletes all the entries from the cache,
  * even the permanent ones */
 void dns_cache_delete_all_force(rpc_t* rpc, void* ctx)
 {
+	void *th;
+
 	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
 	dns_cache_flush(1);
-	rpc->rpl_printf(ctx, "OK");
+
+	if(rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error - root structure");
+		return;
+	}
+	if(rpc->struct_add(th, "s", "status", "ok") < 0) {
+		rpc->fault(ctx, 500, "Internal error - status");
+		return;
+	}
 }
 
 /* clones an entry and extends its memory area to hold a new rr.
@@ -4042,9 +3996,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 	memcpy(new, e, size);
 	/* fix the values and pointers */
 	new->next = new->prev = NULL;
-#ifdef DNS_LU_LST
 	new->last_used_lst.next = new->last_used_lst.prev = NULL;
-#endif
 	new->rr_lst = (struct dns_rr*)translate_pointer((char*)new, (char*)e,
 														(char*)new->rr_lst);
 	atomic_set(&new->refcnt, 0);
@@ -4612,7 +4564,9 @@ void dns_cache_rpc_lookup(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 400, "Not found");
 		return;
 	}
-	dns_cache_print_entry(rpc, ctx, e);
+	if(dns_cache_print_entry(rpc, ctx, e)<0) {
+		LM_DBG("failed to print the dns entry\n");
+	}
 	dns_hash_put(e);
 }
 

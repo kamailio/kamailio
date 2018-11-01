@@ -2073,7 +2073,7 @@ main_via:
 						break;
 					case P_HOST:
 						/*mark end of host*/
-						vb->host.len = tmp - vb->host.s;
+						if(vb->host.s) vb->host.len = tmp - vb->host.s;
 						state = L_PORT;
 						break;
 					case L_PORT: /*eat the spaces*/
@@ -2081,7 +2081,7 @@ main_via:
 						break;
 					case P_PORT:
 						/*end of port */
-						vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
 						state = L_PARAM;
 						break;
 					case L_PARAM: /* eat the space */
@@ -2131,13 +2131,13 @@ main_via:
 						break;
 					case P_HOST:
 						/*mark end of host*/
-						vb->host.len = tmp - vb->host.s;
+						if(vb->host.s) vb->host.len = tmp - vb->host.s;
 						saved_state = L_PORT;
 						state = F_LF;
 						break;
 					case P_PORT:
 						/*end of port */
-						vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
 						saved_state = L_PARAM;
 						state = F_LF;
 						break;
@@ -2176,13 +2176,13 @@ main_via:
 						break;
 					case P_HOST:
 						/*mark end of host*/
-						vb->host.len = tmp - vb->host.s;
+						if(vb->host.s) vb->host.len = tmp - vb->host.s;
 						saved_state = L_PORT;
 						state = F_CR;
 						break;
 					case P_PORT:
 						/*end of port */
-						vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
 						saved_state = L_PARAM;
 						state = F_CR;
 						break;
@@ -2212,7 +2212,7 @@ main_via:
 						break;
 					case P_HOST:
 						/*mark  end of host*/
-						vb->host.len = tmp - vb->host.s;
+						if(vb->host.s) vb->host.len = tmp - vb->host.s;
 						state = F_PORT;
 						break;
 					case L_PORT:
@@ -2257,13 +2257,13 @@ main_via:
 						LM_ERR("bad ipv6 reference\n");
 						goto error;
 					case P_HOST:
-						vb->host.len = tmp - vb->host.s;
+						if(vb->host.s) vb->host.len = tmp - vb->host.s;
 						state = F_PARAM;
 						param_start = tmp + 1;
 						break;
 					case P_PORT:
 						/*mark the end*/
-						vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
 					case L_PORT:
 					case L_PARAM:
 						state = F_PARAM;
@@ -2313,12 +2313,12 @@ main_via:
 						goto error;
 					case P_HOST:
 						/*mark the end*/
-						vb->host.len = tmp - vb->host.s;
+						if(vb->host.s) vb->host.len = tmp - vb->host.s;
 						state = F_VIA;
 						break;
 					case P_PORT:
 						/*mark the end*/
-						vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
 						state = F_VIA;
 						break;
 					case L_PORT:
@@ -2363,13 +2363,13 @@ main_via:
 						goto error;
 					case P_HOST:
 						/*mark the end*/
-						vb->host.len = tmp - vb->host.s;
+						if(vb->host.s) vb->host.len = tmp - vb->host.s;
 						state = F_COMMENT;
 						c_nest++;
 						break;
 					case P_PORT:
 						/*mark the end*/
-						vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
 						state = F_COMMENT;
 						c_nest++;
 						break;
@@ -2469,7 +2469,7 @@ main_via:
 				switch(state) {
 					case P_IP6HOST:
 						/*mark the end*/
-						vb->host.len = (tmp - vb->host.s) + 1; /* include "]" */
+						if(vb->host.s) vb->host.len = (tmp - vb->host.s) + 1; /* include "]" */
 						state = L_PORT;
 						break;
 					case F_CRLF:

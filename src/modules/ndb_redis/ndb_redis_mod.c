@@ -83,10 +83,15 @@ int bind_ndb_redis(ndb_redis_api_t *api);
 static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
 static int pv_parse_redisc_name(pv_spec_p sp, str *in);
+static int pv_get_rediscd(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res);
+static int pv_parse_rediscd_name(pv_spec_p sp, str *in);
 
 static pv_export_t mod_pvs[] = {
 	{ {"redis", sizeof("redis")-1}, PVT_OTHER, pv_get_redisc, 0,
 		pv_parse_redisc_name, 0, 0, 0 },
+	{ {"redisd", sizeof("redisd")-1}, PVT_OTHER, pv_get_rediscd, 0,
+		pv_parse_rediscd_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -137,14 +142,12 @@ struct module_exports exports = {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
-	0,
-	0,              /* exported MI functions */
+	0,              /* exported RPC methods */
 	mod_pvs,        /* exported pseudo-variables */
-	0,              /* extra processes */
-	0,       	/* module initialization function */
 	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	0,       	/* module initialization function */
+	child_init,     /* per child init function */
+	mod_destroy    	/* destroy function */
 };
 
 
@@ -912,6 +915,71 @@ static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 		default:
 			/* We do nothing. */
 			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+int pv_parse_rediscd_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 7:
+			if(strncmp(in->s, "rpl_str", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "rpl_arr", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "rpl_int", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "rpl_nil", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "rpl_sts", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "rpl_err", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown redisd name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_rediscd(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(param==NULL)
+		return -1;
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 0:
+			return pv_get_uintval(msg, param, res, REDIS_REPLY_STRING);
+		case 1:
+			return pv_get_uintval(msg, param, res, REDIS_REPLY_ARRAY);
+		case 2:
+			return pv_get_uintval(msg, param, res, REDIS_REPLY_INTEGER);
+		case 3:
+			return pv_get_uintval(msg, param, res, REDIS_REPLY_NIL);
+		case 4:
+			return pv_get_uintval(msg, param, res, REDIS_REPLY_STATUS);
+		case 5:
+			return pv_get_uintval(msg, param, res, REDIS_REPLY_ERROR);
+		default:
+			return pv_get_uintval(msg, param, res, 0);
 	}
 }
 

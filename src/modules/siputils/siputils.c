@@ -65,6 +65,7 @@
 #include "../../core/error.h"
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_option_tags.h"
+#include "../../core/parser/parse_uri.h"
 
 #include "ring.h"
 #include "options.h"
@@ -123,20 +124,22 @@ static cmd_export_t cmds[]={
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"options_reply",      (cmd_function)opt_reply,         0, 0,
 		0, REQUEST_ROUTE},
-	{"is_user",            (cmd_function)is_user,           1, fixup_str_null,
+	{"is_user",            (cmd_function)is_user,           1, fixup_spve_null,
 		0, REQUEST_ROUTE|LOCAL_ROUTE},
 	{"has_totag", 	       (cmd_function)w_has_totag,         0, 0,
 		0, ANY_ROUTE},
-	{"uri_param",          (cmd_function)uri_param_1,       1, fixup_str_null,
-		0, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"uri_param",          (cmd_function)uri_param_2,       2, fixup_str_str,
-		0, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"uri_param",          (cmd_function)uri_param_1,       1, fixup_spve_null,
+		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"uri_param",          (cmd_function)uri_param_2,       2, fixup_spve_spve,
+		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"add_uri_param",      (cmd_function)add_uri_param,     1, fixup_str_null,
 		0, REQUEST_ROUTE},
 	{"get_uri_param",      (cmd_function)get_uri_param,     2, fixup_get_uri_param,
 		free_fixup_get_uri_param, REQUEST_ROUTE|LOCAL_ROUTE},
 	{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
+	{"is_uri",            (cmd_function)is_uri,           1, fixup_spve_null,
+		fixup_free_spve_null, ANY_ROUTE},
 	{"is_e164",            (cmd_function)is_e164,           1, fixup_pvar_null,
 		fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{"is_uri_user_e164",   (cmd_function)w_is_uri_user_e164,  1, fixup_pvar_null,
@@ -161,8 +164,6 @@ static cmd_export_t cmds[]={
 		fixup_free_set_uri,	ANY_ROUTE},
 	{"set_uri_host", (cmd_function)set_uri_host,             2, fixup_set_uri,
 		fixup_free_set_uri,	ANY_ROUTE},
-	{"bind_siputils",       (cmd_function)bind_siputils,           1, 0,
-		0, 0},
 	{"is_request",          (cmd_function)w_is_request,            0, 0,
 		0, ANY_ROUTE},
 	{"is_reply",            (cmd_function)w_is_reply,              0, 0,
@@ -185,6 +186,10 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"sip_p_charging_vector", (cmd_function)sip_handle_pcv,  1, fixup_spve_null,
 		fixup_free_spve_null, ANY_ROUTE},
+
+	{"bind_siputils",       (cmd_function)bind_siputils,           1, 0,
+		0, 0},
+
 	{0,0,0,0,0,0}
 };
 
@@ -210,18 +215,16 @@ static pv_export_t mod_pvs[] =  {
 };
 
 struct module_exports exports= {
-	"siputils",
+	"siputils",      /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* Exported functions */
+	cmds,            /* exported functions */
 	params,          /* param exports */
-	0,               /* exported statistics */
-	0,               /* exported MI functions */
+	0,               /* exported RPC functions */
 	mod_pvs,         /* exported pseudo-variables */
-	0,               /* extra processes */
+	0,               /* response function */
 	mod_init,        /* initialization function */
-	0,               /* Response function */
-	mod_destroy,     /* Destroy function */
-	0,               /* Child init function */
+	0,               /* child init function */
+	mod_destroy      /* destroy function */
 };
 
 
@@ -457,6 +460,22 @@ static int fixup_option(void** param, int param_no) {
 	return 0;
 }
 
+/*
+ * Check if pseudo variable contains a valid uri
+ */
+static int ki_is_uri(sip_msg_t* msg, str* suri)
+{
+	sip_uri_t turi;
+
+	if(suri==NULL || suri->s==NULL || suri->len<=0) {
+		return -1;
+	}
+	if(parse_uri(suri->s, suri->len, &turi)!=0) {
+		return -1;
+	}
+	return 1;
+}
+
 /**
  *
  */
@@ -479,6 +498,46 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("is_first_hop"),
 		SR_KEMIP_INT, is_first_hop,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_uri"),
+		SR_KEMIP_INT, ki_is_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_user"),
+		SR_KEMIP_INT, ki_is_user,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("uri_param"),
+		SR_KEMIP_INT, ki_uri_param,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("uri_param_value"),
+		SR_KEMIP_INT, ki_uri_param_value,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_tel_number"),
+		SR_KEMIP_INT, ki_is_tel_number,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_numeric"),
+		SR_KEMIP_INT, ki_is_numeric,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_alphanum"),
+		SR_KEMIP_INT, ki_is_alphanum,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_alphanumex"),
+		SR_KEMIP_INT, ki_is_alphanumex,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

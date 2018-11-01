@@ -85,16 +85,23 @@ extern int _tps_dialog_expire;
 
 int _tps_clean_interval = 60;
 
+#define TPS_EVENTRT_OUTGOING 1
+#define TPS_EVENTRT_SENDING  2
+static int _tps_eventrt_mode = TPS_EVENTRT_OUTGOING | TPS_EVENTRT_SENDING;
 static int _tps_eventrt_outgoing = -1;
 static str _tps_eventrt_callback = STR_NULL;
-static str _tps_eventrt_name = str_init("topos:msg-outgoing");
+static str _tps_eventrt_outgoing_name = str_init("topos:msg-outgoing");
+static int _tps_eventrt_sending = -1;
+static str _tps_eventrt_sending_name = str_init("topos:msg-sending");
+str _tps_contact_host = str_init("");
 
 sanity_api_t scb;
 
 int tps_msg_received(sr_event_param_t *evp);
 int tps_msg_sent(sr_event_param_t *evp);
 
-static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp);
+static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
+		int evtype, int evidx, str *evname);
 
 /** module functions */
 /* Module init function prototype */
@@ -122,24 +129,24 @@ static param_export_t params[]={
 	{"dialog_expire",	PARAM_INT, &_tps_dialog_expire},
 	{"clean_interval",	PARAM_INT, &_tps_clean_interval},
 	{"event_callback",	PARAM_STR, &_tps_eventrt_callback},
+	{"event_mode",		PARAM_STR, &_tps_eventrt_mode},
+	{"contact_host",	PARAM_STR, &_tps_contact_host},
 	{0,0,0}
 };
 
 
 /** module exports */
 struct module_exports exports= {
-	"topos",
+	"topos",    /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
+	cmds,       /* exported  functions */
+	params,     /* exported parameters */
+	0,          /* exported rpc functions */
 	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
+	0,          /* response handling function */
 	mod_init,   /* module initialization function */
-	0,
-	destroy,    /* destroy function */
-	child_init  /* child initialization function */
+	child_init, /* child initialization function */
+	destroy     /* destroy function */
 };
 
 /**
@@ -147,10 +154,15 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	_tps_eventrt_outgoing = route_lookup(&event_rt, _tps_eventrt_name.s);
+	_tps_eventrt_outgoing = route_lookup(&event_rt, _tps_eventrt_outgoing_name.s);
 	if(_tps_eventrt_outgoing<0
 			|| event_rt.rlist[_tps_eventrt_outgoing]==NULL) {
 		_tps_eventrt_outgoing = -1;
+	}
+	_tps_eventrt_sending = route_lookup(&event_rt, _tps_eventrt_sending_name.s);
+	if(_tps_eventrt_sending<0
+			|| event_rt.rlist[_tps_eventrt_sending]==NULL) {
+		_tps_eventrt_sending = -1;
 	}
 
 	if(faked_msg_init()<0) {
@@ -375,7 +387,8 @@ int tps_msg_sent(sr_event_param_t *evp)
 
 	obuf = (str*)evp->data;
 
-	if(tps_execute_event_route(NULL, evp)==1) {
+	if(tps_execute_event_route(NULL, evp, TPS_EVENTRT_OUTGOING,
+				_tps_eventrt_outgoing, &_tps_eventrt_outgoing_name)==1) {
 		return 0;
 	}
 
@@ -391,7 +404,14 @@ int tps_msg_sent(sr_event_param_t *evp)
 		goto done;
 	}
 
+	if(tps_execute_event_route(&msg, evp, TPS_EVENTRT_SENDING,
+				_tps_eventrt_sending, &_tps_eventrt_sending_name)==1) {
+		goto done;
+	}
+
 	if(msg.first_line.type==SIP_REQUEST) {
+
+
 		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
 
 		local = 0;
@@ -400,8 +420,9 @@ int tps_msg_sent(sr_event_param_t *evp)
 		}
 
 		if(local==1 && dialog==0) {
-			if((get_cseq(&msg)->method_id) & (METHOD_OPTIONS|METHOD_NOTIFY)) {
-				/* skip local out-of-dialog requests (e.g., keepalive) */
+			if((get_cseq(&msg)->method_id)
+						& (METHOD_OPTIONS|METHOD_NOTIFY|METHOD_KDMQ)) {
+				/* skip local out-of-dialog requests (e.g., keepalive, dmq) */
 				goto done;
 			}
 		}
@@ -442,7 +463,8 @@ int tps_get_branch_expire(void)
 /**
  *
  */
-static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
+static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
+		int evtype, int evidx, str *evname)
 {
 	struct sip_msg *fmsg;
 	struct run_act_ctx ctx;
@@ -450,7 +472,11 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
 	sr_kemi_eng_t *keng = NULL;
 	struct onsend_info onsnd_info = {0};
 
-	if(_tps_eventrt_outgoing<0) {
+	if(!(_tps_eventrt_mode & evtype)) {
+		return 0;
+	}
+
+	if(evidx<0) {
 		if(_tps_eventrt_callback.s!=NULL || _tps_eventrt_callback.len>0) {
 			keng = sr_kemi_eng_get();
 			if(keng==NULL) {
@@ -461,12 +487,12 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
 		}
 	}
 
-	if(_tps_eventrt_outgoing<0 && keng==NULL) {
+	if(evidx<0 && keng==NULL) {
 		return 0;
 	}
 
-	LM_DBG("executing event_route[topos:...] (%d)\n",
-			_tps_eventrt_outgoing);
+	LM_DBG("executing event_route[topos:%.*s] (%d)\n", evname->len, evname->s,
+			evidx);
 	fmsg = faked_msg_next();
 
 	onsnd_info.to = &evp->dst->to;
@@ -485,12 +511,12 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
 	rtb = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
-	if(_tps_eventrt_outgoing>=0) {
-		run_top_route(event_rt.rlist[_tps_eventrt_outgoing], fmsg, &ctx);
+	if(evidx>=0) {
+		run_top_route(event_rt.rlist[evidx], (msg)?msg:fmsg, &ctx);
 	} else {
 		if(keng!=NULL) {
-			if(keng->froute(fmsg, EVENT_ROUTE,
-						&_tps_eventrt_callback, &_tps_eventrt_name)<0) {
+			if(keng->froute((msg)?msg:fmsg, EVENT_ROUTE,
+						&_tps_eventrt_callback, evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 				p_onsend=NULL;
 				return -1;

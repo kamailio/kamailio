@@ -138,6 +138,7 @@ telnum_t* telnum_parse(char* number, char* region)
 	string regionCode;
 	_phoneUtil.GetRegionCodeForNumber(parsedNumber, &regionCode);
 	res->cctel = _phoneUtil.GetCountryCodeForRegion(regionCode);
+	res->ccname = strdup(regionCode.c_str());
 
 	return res;
 }
@@ -154,6 +155,7 @@ telnum_t* telnum_new(char* number)
 	tn->normalized = NULL;
 	tn->ltype = NULL;
 	tn->ndesc = NULL;
+	tn->ccname = NULL;
 	tn->error = NULL;
 	return tn;
 }
@@ -177,6 +179,9 @@ void telnum_free(telnum_t* tn)
 	}
 	if (tn->ndesc) {
 		free(tn->ndesc);
+	}
+	if (tn->ccname) {
+		free(tn->ccname);
 	}
 	free(tn);
 }

@@ -172,9 +172,14 @@ modparam("nathelper", "natping_interval", 10)
 	<section id="nathelper.p.ping_nated_only">
 		<title><varname>ping_nated_only</varname> (integer)</title>
 		<para>
-		If this variable is set then only contacts that have 
-		<quote>behind_NAT</quote> flag in user location database set will 
+		If this parameter is set to 1 then only contacts that have
+		<quote>behind_NAT</quote> flag in user location database set will
 		get ping.
+		</para>
+		<para>
+		If it is 0 and sipping_flag is not set, then the 4-bytes UDP ping is
+		sent to all contacts. If it is 0 and sipping_flag parameter is set, then
+		SIP-request-based pinging is sent to all contacts.
 		</para>
 		<para>
 		<emphasis>

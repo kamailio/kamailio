@@ -32,7 +32,8 @@
 MODULE_VERSION
 
 str redis_keys = str_init("");
-str redis_schema_path = str_init("/usr/share/kamailio/db_redis/kamailio");
+str redis_schema_path = str_init(SHARE_DIR "db_redis/kamailio");
+int db_redis_verbosity = 1;
 
 static int db_redis_bind_api(db_func_t *dbb);
 static int mod_init(void);
@@ -51,23 +52,22 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
     {"keys",        PARAM_STRING|USE_FUNC_PARAM, (void*)keys_param},
     {"schema_path", PARAM_STR, &redis_schema_path },
+	{"verbosity",	PARAM_INT, &db_redis_verbosity },
     {0, 0, 0}
 };
 
 
 struct module_exports exports = {
-    "db_redis",
-    DEFAULT_DLFLAGS, /* dlopen flags */
-    cmds,
-    params,             /*  module parameters */
-    0,                  /* exported statistics */
-    0,                  /* exported MI functions */
-    0,                  /* exported pseudo-variables */
-    0,                  /* extra processes */
-    mod_init,           /* module initialization function */
-    0,                  /* response function*/
-    mod_destroy,        /* destroy function */
-    0                   /* per-child init function */
+	"db_redis",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 static int db_redis_bind_api(db_func_t *dbb) {
@@ -93,10 +93,10 @@ static int db_redis_bind_api(db_func_t *dbb) {
 
 int keys_param(modparam_t type, void *val)
 {
-	if (val == NULL)
-		return -1;
-	else
-		return db_redis_keys_spec((char*)val);
+    if (val == NULL)
+        return -1;
+    else
+        return db_redis_keys_spec((char*)val);
 }
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2) {

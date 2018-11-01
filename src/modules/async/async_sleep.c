@@ -298,6 +298,11 @@ int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname)
 		atp->cbname[cbname->len] = '\0';
 		atp->cbname_len = cbname->len;
 	}
-	async_task_push(at);
+
+	if (async_task_push(at)<0) {
+		shm_free(at);
+		return -1;
+	}
+
 	return 0;
 }

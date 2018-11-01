@@ -35,7 +35,8 @@
 #define OTHER_CARRIERID 1000
 #define MAX_CARRIERID 1000
 #define NULL_CARRIERID -1001
-#define PAYLOADSIZE 256
+/* hdr size + PAYLOADSIZE must add to 255 (uint8_t pdb_hdr.length) */
+#define PAYLOADSIZE 249
 
 
 #define IS_VALID_PDB_CARRIERID(id) ((id>=MIN_PDB_CARRIERID) && (id<=MAX_PDB_CARRIERID))

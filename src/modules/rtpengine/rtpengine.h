@@ -38,6 +38,10 @@ enum rtpe_operation {
         OP_STOP_RECORDING,
         OP_QUERY,
         OP_PING,
+        OP_BLOCK_DTMF,
+        OP_UNBLOCK_DTMF,
+        OP_BLOCK_MEDIA,
+        OP_UNBLOCK_MEDIA,
 };
 
 struct rtpp_node {

@@ -12,7 +12,7 @@ NAME=ndb_cassandra.so
 THRIFT_DIR = /usr/local/include/thrift
 LIB_DIR = /usr/local/lib
 
-DEFS += -I${THRIFT_DIR} -DKAMAILIO_MOD_INTERFACE
+DEFS += -I${THRIFT_DIR} 
 LIBS += -L${LIB_DIR} thrift_wrapper.o cassandra_constants.o cassandra_types.o Cassandra.o -lthrift
 
 CXXFLAGS=$(CFLAGS:-Wno-deprecated option=)

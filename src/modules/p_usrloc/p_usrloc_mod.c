@@ -165,6 +165,7 @@ int policy               = DB_DEFAULT_POLICY;
 int db_write             = 0;
 int db_master_write      = 0;
 int alg_location         = 0;
+int mdb_availability_control = 0;
 
 int db_use_transactions  = 0;
 str db_transaction_level = str_init(DB_DEFAULT_TRANSACTION_LEVEL);
@@ -182,7 +183,7 @@ str default_db_type   = str_init(DEFAULT_DB_TYPE);
 str domain_db         = str_init(DEFAULT_DOMAIN_DB);
 int default_dbt       = 0;
 int expire            = 0;
-
+db_shared_param_t *write_on_master_db_shared;
 
 /*! \brief
  * Exported functions
@@ -248,6 +249,7 @@ static param_export_t params[] = {
 	{"alg_location",         INT_PARAM, &alg_location },
     {"db_ops_ruid",          INT_PARAM, &default_p_usrloc_cfg.db_ops_ruid},
 	{"db_update_as_insert",  INT_PARAM, &default_p_usrloc_cfg.db_update_as_insert},
+	{"mdb_availability_control", INT_PARAM, &mdb_availability_control},
 	{0, 0, 0}
 };
 
@@ -279,18 +281,16 @@ static mi_export_t mi_cmds[] = {
 
 
 struct module_exports exports = {
-	"p_usrloc",
+	"p_usrloc", /*!< module name  */
 	DEFAULT_DLFLAGS, /*!< dlopen flags */
-	cmds,       /*!< Exported functions */
-	params,     /*!< Export parameters */
-	mod_stats,  /*!< exported statistics */
-	0,          /*!< exported MI functions */
+	cmds,       /*!< exported functions */
+	params,     /*!< export parameters */
+	0,          /*!< exported rpc functions */
 	0,          /*!< exported pseudo-variables */
-	0,          /*!< extra processes */
-	mod_init,   /*!< Module initialization function */
-	0,          /*!< Response function */
-	destroy,    /*!< Destroy function */
-	child_init  /*!< Child initialization function */
+	0,          /*!< response handling function */
+	mod_init,   /*!< module init function */
+	child_init, /*!< child init function */
+	destroy     /*!< module destroy function */
 };
 
 
@@ -306,6 +306,13 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
+
+	if((write_on_master_db_shared = shm_malloc(sizeof(db_shared_param_t))) == NULL) {
+		LM_ERR("couldn't allocate shared memory.\n");
+		return -1;
+	} else {
+		write_on_master_db_shared->val = db_master_write;
+	}
 
 	if(ul_hash_size<=1)
 		ul_hash_size = 512;
@@ -395,10 +402,14 @@ static int mod_init(void)
 		LM_ERR("could not init database watch environment.\n");
 		return -1;
 	}
-	if(db_master_write){
+	if (lock_init(&write_on_master_db_shared->lock)==0){
+		LM_ERR("could not initialise lock\n");
+	}
+	if(write_on_master_db_shared->val){
 		/* register extra dummy timer to be created in init_db_check() */
 		register_dummy_timers(1);
 	}
+        check_master_db(db_master_write);
 	return 0;
 }
 

@@ -650,6 +650,28 @@ modparam("htable", "enable_dmq", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.p.dmq_init_sync">
+		<title><varname>dmq_init_sync</varname> (integer)</title>
+		<para>
+			If set to 1, will request synchronization from other nodes at startup. It applies
+			to all tables having the "dmqreplicate" parameter set. As above, it is important to 
+			ensure the definition (size, autoexpire etc.) of replicated tables is identical 
+			across all instances.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dmq_init_sync</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "dmq_init_sync", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="htable.p.timer_procs">
 		<title><varname>timer_procs</varname> (integer)</title>
 		<para>
@@ -748,6 +770,26 @@ modparam("htable", "event_callback_mode", 1)
 		<programlisting format="linespecific">
 ...
 sht_print();
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_rm">
+		<title>
+		<function moreinfo="none">sht_rm(htname, itname)</function>
+		</title>
+		<para>
+			Delete the item with the name 'itname' from hash table 'htname'.
+			This API function equivaluent to '$sht(htname=&gt;itname) = $null'.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_rm("ha", "test"");
 ...
 </programlisting>
 		</example>
@@ -1025,6 +1067,114 @@ sht_iterator_end("i1");
         xlog("h1[$shtitkey(i1)] is: $shtitval(i1)\n");
     }
     sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_has_name">
+		<title>
+		<function moreinfo="none">sht_has_name(htable, op, mval)</function>
+		</title>
+		<para>
+			Return greater than 0 (true) if the htable has an item that matches
+			the name against the mval parameter.
+		</para>
+		<para>
+			The op parameter can be:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>eq</emphasis> - match the val parameter as string equal
+			expression.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>ne</emphasis> - match the val parameter as string not-equal
+			expression.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>re</emphasis> - match the val parameter as regular
+			expression.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>sw</emphasis> - match the val parameter as 'starts
+			with' expression.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			All parameters can be static strings or contain variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_has_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(sht_has_name("ha", "eq", "alice")) {
+  ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_has_str_value">
+		<title>
+		<function moreinfo="none">sht_has_str_value(htable, op, mval)</function>
+		</title>
+		<para>
+			Return greater than 0 (true) if the htable has an item that matches
+			the string value against the mval parameter.
+		</para>
+		<para>
+			The op parameter can be:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>eq</emphasis> - match the val parameter as string equal
+			expression.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>ne</emphasis> - match the val parameter as string not-equal
+			expression.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>re</emphasis> - match the val parameter as regular
+			expression.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>sw</emphasis> - match the val parameter as 'starts
+			with' expression.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			All parameters can be static strings or contain variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_has_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(sht_has_str_value("ha", "eq", "alice")) {
+  ...
+}
 ...
 </programlisting>
 		</example>

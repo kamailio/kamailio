@@ -1271,7 +1271,7 @@ route{
 		For example, we use the UA functionality to shield 
 		SMS gateway and instant message store from SIP transactional
 		processing.
-		The simple example bellow issues a log report on receipt
+		The simple example below issues a log report on receipt
 		of a new transaction. 
 		If we did not use a stateful UA, every single request retransmission
 		would cause the application to be re-executed which would result in

@@ -67,14 +67,12 @@ struct module_exports exports= {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* exported functions */
 	mod_params,      /* param exports */
-	0,               /* exported statistics */
-	0,               /* exported MI functions */
+	0,               /* exported RPC functions */
 	0,               /* exported pseudo-variables */
-	0,	         /* extra processes */
-	mod_init,        /* module initialization function */
 	0,               /* reply processing function */
-	mod_destroy,     /* Destroy function */
-	0                /* per-child init function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 int load_qos( struct qos_binds *qosb)

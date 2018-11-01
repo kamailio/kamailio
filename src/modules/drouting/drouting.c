@@ -110,7 +110,7 @@ static int *reload_flag = 0;
 
 static int dr_init(void);
 static int dr_child_init(int rank);
-static int dr_exit(void);
+static void dr_exit(void);
 
 static int do_routing(struct sip_msg *msg, int grp_id);
 static int do_routing_0(struct sip_msg *msg, char *str1, char *str2);
@@ -175,17 +175,16 @@ static param_export_t params[] = {
 static rpc_export_t rpc_methods[];
 
 struct module_exports exports = {
-	"drouting", DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,						 /* Exported functions */
-	params,						 /* Exported parameters */
-	NULL,						 /* exported statistics */
-	NULL,						 /* exported MI functions */
-	NULL,						 /* exported pseudo-variables */
-	0,							 /* additional processes */
-	dr_init,					 /* Module initialization function */
-	(response_function)NULL,
-	(destroy_function)dr_exit,
-	(child_init_function)dr_child_init /* per-child init function */
+	"drouting",			/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	dr_init,			/* module initialization function */
+	dr_child_init,		/* per-child init function */
+	dr_exit				/* module destroy function */
 };
 /* clang-format on */
 
@@ -439,7 +438,7 @@ static int dr_child_init(int rank)
 }
 
 
-static int dr_exit(void)
+static void dr_exit(void)
 {
 	/* close DB connection */
 	if(db_hdl) {
@@ -467,7 +466,7 @@ static int dr_exit(void)
 	if(data_refcnt)
 		shm_free(data_refcnt);
 
-	return 0;
+	return;
 }
 
 

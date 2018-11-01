@@ -103,7 +103,7 @@ str* dbg_get_action_name(struct action *a)
 {
 	int i;
 	static str aname;
-	cmd_export_common_t *cmd;
+	cmd_export_t *cmd;
 
 	if(a==NULL)
 		return &_dbg_action_special[0];
@@ -130,7 +130,7 @@ str* dbg_get_action_name(struct action *a)
 		case MODULE5_RVE_T:
 		case MODULE6_RVE_T:
 		case MODULEX_RVE_T:
-			cmd = (cmd_export_common_t*)(a->val[0].u.data);
+			cmd = (cmd_export_t*)(a->val[0].u.data);
 			aname.s = cmd->name;
 			aname.len = strlen(aname.s);
 			return &aname;

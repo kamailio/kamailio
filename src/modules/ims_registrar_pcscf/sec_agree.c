@@ -69,7 +69,7 @@ static int process_sec_agree_param(str name, str value, ipsec_t *ret)
         SEC_COPY_STR_PARAM(ret->mod, value);
     }
     else if(strncasecmp(name.s, "ealg", name.len) == 0) {
-        SEC_COPY_STR_PARAM(ret->r_alg, value);
+        SEC_COPY_STR_PARAM(ret->r_ealg, value);
     }
     else if(strncasecmp(name.s, "spi-c", name.len) == 0) {
         ret->spi_uc = parse_digits(value);
@@ -201,20 +201,27 @@ static security_t* parse_sec_agree(struct hdr_field* h)
     return params;
 
 cleanup:
-    if(params) {
+    // The same piece of code also lives in modules/ims_usrloc_pcscf/pcontact.c
+    // Function - free_security()
+    // Keep them in sync!
+    if (params) {
         shm_free(params->sec_header.s);
 
-        if(params->data.ipsec) {
+        if(params->type == SECURITY_IPSEC && params->data.ipsec) {
+            shm_free(params->data.ipsec->ealg.s);
+            shm_free(params->data.ipsec->r_ealg.s);
+            shm_free(params->data.ipsec->ck.s);
+            shm_free(params->data.ipsec->alg.s);
             shm_free(params->data.ipsec->r_alg.s);
+            shm_free(params->data.ipsec->ik.s);
             shm_free(params->data.ipsec->prot.s);
             shm_free(params->data.ipsec->mod.s);
-            shm_free(params->data.ipsec->ealg.s);
-
             shm_free(params->data.ipsec);
         }
 
         shm_free(params);
     }
+
     return NULL;
 }
 

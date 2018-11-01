@@ -79,22 +79,22 @@ static void mod_destroy();
 static int fixup_sl_reply(void** param, int param_no);
 
 static cmd_export_t cmds[]={
-	{"sl_send_reply",  w_sl_send_reply,             2, fixup_sl_reply,
+	{"sl_send_reply",  w_sl_send_reply,             2, fixup_sl_reply, 0,
 		REQUEST_ROUTE},
-	{"sl_reply",       w_sl_send_reply,             2, fixup_sl_reply,
+	{"sl_reply",       w_sl_send_reply,             2, fixup_sl_reply, 0,
 		REQUEST_ROUTE},
-	{"send_reply",     w_send_reply,                2, fixup_sl_reply,
+	{"send_reply",     w_send_reply,                2, fixup_sl_reply, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
-	{"sl_reply_error", w_sl_reply_error,            0, 0,
+	{"sl_reply_error", w_sl_reply_error,            0, 0, 0,
 		REQUEST_ROUTE},
-	{"sl_forward_reply",  w_sl_forward_reply0,      0, 0,
+	{"sl_forward_reply",  w_sl_forward_reply0,      0, 0, 0,
 		ONREPLY_ROUTE},
-	{"sl_forward_reply",  w_sl_forward_reply1,      1, fixup_spve_all,
+	{"sl_forward_reply",  w_sl_forward_reply1,      1, fixup_spve_all, 0,
 		ONREPLY_ROUTE},
-	{"sl_forward_reply",  w_sl_forward_reply2,      2, fixup_spve_all,
+	{"sl_forward_reply",  w_sl_forward_reply2,      2, fixup_spve_all, 0,
 		ONREPLY_ROUTE},
-	{"bind_sl",        (cmd_function)bind_sl,       0, 0,              0},
-	{0,0,0,0,0}
+	{"bind_sl",        (cmd_function)bind_sl,       0, 0, 0,           0},
+	{0,0,0,0,0,0}
 };
 
 
@@ -115,15 +115,16 @@ struct module_exports sl_exports = {
 #else
 struct module_exports exports= {
 #endif
-	"sl",
-	cmds,
-	sl_rpc,     /* RPC methods */
-	params,     /* param exports */
-	mod_init,   /* module initialization function */
-	(response_function) 0,
-	mod_destroy,
-	0,
-	child_init  /* per-child init function */
+	"sl",				/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* cmd (cfg function) exports */
+	params,			    /* param exports */
+	sl_rpc,			    /* RPC method exports */
+	0,					/* pv exports */
+	0,					/* response handling function */
+	mod_init,			/* module init function */
+	child_init,			/* per-child init function */
+	mod_destroy			/* module destroy function */
 };
 
 
@@ -249,6 +250,11 @@ int send_reply(struct sip_msg *msg, int code, str *reason)
 	char *r = NULL;
 	struct cell *t;
 	int ret = 1;
+
+	if(msg->msg_flags & FL_MSG_NOREPLY) {
+		LM_INFO("message marked with no-reply flag\n");
+		return -2;
+	}
 
 	if(reason->s[reason->len-1]=='\0') {
 		r = reason->s;

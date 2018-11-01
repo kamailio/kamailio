@@ -608,6 +608,33 @@ if (is_uri_user_e164("$avp(i:705)") {
 		</example>
 	</section>
 
+    <section id="siputils.f.is_uri">
+        <title>
+        <function moreinfo="none">is_uri(pseudo-variable)</function>
+        </title>
+        <para>
+        Checks if string value of pseudo variable argument is a
+        valid uri.
+        </para>
+        <para>
+        This function can be used from ANY_ROUTE.
+        </para>
+        <example>
+        <title><function>is_uri</function> usage</title>
+        <programlisting format="linespecific">
+...
+if (is_uri("$var(x)")) {  # Check if variable contains a uri
+   ...
+}
+if (is_uri("$avp(i:705)") {
+   # Check value stored in avp i:705
+   ...
+};
+...
+</programlisting>
+        </example>
+    </section>
+
 	<section id="siputils.f.is_tel_number">
 		<title>
 		<function moreinfo="none">is_tel_number(tval)</function>
@@ -627,7 +654,7 @@ if (is_uri_user_e164("$avp(i:705)") {
 if (is_tel_number("$rU")) {  # Test if R-URI user is telephone number
    ...
 }
-if (is_tel_number("+24242424") {
+if (is_tel_number("+24242424")) {
    ...
 }
 ...
@@ -1093,9 +1120,13 @@ if (is_supported("outbound")) { ... }
 		original sender. For incoming SIP requests, it means there is only
 		one Via header. For incoming SIP replies, it means that top
 		Record-Route URI is 'myself' and source address is not matching it
-		(to avoid detecting in case of local loops). Note that it does not
-		detect spirals, which can have the condition for replies true also
-		in the case of additional SIP reply reception.
+		(to avoid detecting in case of local loops). The detection is done
+		only when Record-Route has an IP address in its URI (for a domain,
+		it returns -1/false).
+		</para>
+		<para>
+		Note that it does not detect spirals, which can have the condition
+		for replies true also in the case of additional SIP reply reception.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.

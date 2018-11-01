@@ -30,7 +30,7 @@
 	</section>
 	<section><title>Base class Kamailio::VDB</title>
 		<para>
-			A client module has to be configured to use the perlvdb module in conjunction
+			A client module has to be configured to use the db_perlvdb module in conjunction
 			with a Perl class to provide the functions. The configured class needs to
 			inherit from the base class <literal role="code">Kamailio::VDB</literal>.
 		</para>

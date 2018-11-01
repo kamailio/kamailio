@@ -91,18 +91,15 @@ static cmd_export_t cmds[] = {
 /** module exports */
 struct module_exports exports = {
 	APP_NAME, /* module name */
-	//    RTLD_NOW | RTLD_GLOBAL,         /* dlopen flags */
-	DEFAULT_DLFLAGS,			   /* dlopen flags */
-	cmds,						   /* exported functions */
-	params,						   /* exported parameters */
-	0,							   /* exported statistics */
-	0,							   /* exported MI functions */
-	0,							   /* exported pseudo-variables */
-	0,							   /* extra processes */
-	mod_init,					   /* module initialization function */
-	(response_function)NULL,	   /* response handling function */
-	(destroy_function)mod_destroy, /* destroy function */
-	child_init					   /* per-child init function */
+	DEFAULT_DLFLAGS,   /* dlopen flags */
+	cmds,		   /* exported functions */
+	params,		   /* exported parameters */
+	0,		   /* exported RPC methods */
+	0,		   /* exported pseudo-variables */
+	0,	   	   /* response handling function */
+	mod_init,	   /* module initialization function */
+	child_init,	   /* per-child init function */
+	mod_destroy 	   /* destroy function */
 };
 
 static int mod_init(void)

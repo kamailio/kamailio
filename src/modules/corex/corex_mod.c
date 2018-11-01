@@ -30,6 +30,7 @@
 #include "../../core/lvalue.h"
 #include "../../core/pvar.h"
 #include "../../core/kemi.h"
+#include "../../core/parser/parse_uri.h"
 
 #include "corex_lib.h"
 #include "corex_rpc.h"
@@ -40,9 +41,10 @@ MODULE_VERSION
 
 static int nio_intercept = 0;
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
-static int w_send(sip_msg_t *msg, char *su, char *sq);
+static int w_send_udp(sip_msg_t *msg, char *su, char *sq);
 static int w_send_tcp(sip_msg_t *msg, char *su, char *sq);
 static int w_send_data(sip_msg_t *msg, char *suri, char *sdata);
+static int w_sendx(sip_msg_t *msg, char *suri, char *ssock, char *sdata);
 static int w_msg_iflag_set(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2);
@@ -56,6 +58,7 @@ static int w_set_recv_socket(sip_msg_t *msg, char *psock, char *p2);
 static int w_set_source_address(sip_msg_t *msg, char *paddr, char *p2);
 static int w_via_add_srvid(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *p2);
+static int w_via_use_xavp_fields(sip_msg_t *msg, char *pflags, char *p2);
 
 static int fixup_file_op(void** param, int param_no);
 
@@ -79,15 +82,17 @@ static cmd_export_t cmds[]={
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"append_branch", (cmd_function)w_append_branch, 2, fixup_spve_spve,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"send", (cmd_function)w_send, 0, 0,
+	{"send_udp", (cmd_function)w_send_udp, 0, 0,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"send", (cmd_function)w_send, 1, fixup_spve_spve,
+	{"send_udp", (cmd_function)w_send_udp, 1, fixup_spve_null,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"send_tcp", (cmd_function)w_send_tcp, 0, 0,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"send_tcp", (cmd_function)w_send_tcp, 1, fixup_spve_null,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"send_data", (cmd_function)w_send_data, 2, fixup_spve_spve,
+		0, ANY_ROUTE },
+	{"sendx", (cmd_function)w_sendx, 3, fixup_spve_all,
 		0, ANY_ROUTE },
 	{"is_incoming",    (cmd_function)nio_check_incoming, 0, 0,
 		0, ANY_ROUTE },
@@ -117,6 +122,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE },
 	{"via_add_xavp_params", (cmd_function)w_via_add_xavp_params, 1, fixup_igp_null,
 		0, ANY_ROUTE },
+	{"via_use_xavp_fields", (cmd_function)w_via_use_xavp_fields, 1, fixup_igp_null,
+		0, ANY_ROUTE },
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -132,18 +139,16 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-	"corex",
+	"corex",          /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,
-	0,              /* exported MI functions */
-	mod_pvs,        /* exported pseudo-variables */
-	0,              /* extra processes */
-	mod_init,       /* module initialization function */
-	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 
@@ -202,14 +207,18 @@ static int w_append_branch(sip_msg_t *msg, char *su, char *sq)
 }
 
 /**
- * config wrapper for send() and send_tcp()
+ * config wrapper for send_udp()
  */
-static int w_send(sip_msg_t *msg, char *su, char *sq)
+static int w_send_udp(sip_msg_t *msg, char *su, char *sq)
 {
 	if(corex_send(msg, (gparam_t*)su, PROTO_UDP) < 0)
 		return -1;
 	return 1;
 }
+
+/**
+ * config wrapper for send_tcp()
+ */
 static int w_send_tcp(sip_msg_t *msg, char *su, char *sq)
 {
 	if(corex_send(msg, (gparam_t*)su, PROTO_TCP) < 0)
@@ -232,7 +241,47 @@ static int w_send_data(sip_msg_t *msg, char *suri, char *sdata)
 		LM_ERR("cannot get the destination parameter\n");
 		return -1;
 	}
-	if(corex_send_data(&uri, &data) < 0)
+	if(corex_send_data(&uri, NULL, &data) < 0)
+		return -1;
+	return 1;
+}
+
+static int ki_send_data(sip_msg_t *msg, str *uri, str *data)
+{
+	if(corex_send_data(uri, NULL, data) < 0)
+		return -1;
+	return 1;
+}
+
+static int w_sendx(sip_msg_t *msg, char *suri, char *ssock, char *sdata)
+{
+	str uri;
+	str sock;
+	str data;
+
+	if (fixup_get_svalue(msg, (gparam_t*)suri, &uri))
+	{
+		LM_ERR("cannot get the destination parameter\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)ssock, &sock))
+	{
+		LM_ERR("cannot get the socket parameter\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)sdata, &data))
+	{
+		LM_ERR("cannot get the destination parameter\n");
+		return -1;
+	}
+	if(corex_send_data(&uri, &sock, &data) < 0)
+		return -1;
+	return 1;
+}
+
+static int ki_sendx(sip_msg_t *msg, str *uri, str *sock, str *data)
+{
+	if(corex_send_data(uri, sock, data) < 0)
 		return -1;
 	return 1;
 }
@@ -729,9 +778,9 @@ static int ki_via_add_xavp_params(sip_msg_t *msg, int fval)
 	if(msg==NULL)
 		return -1;
 	if(fval) {
-		msg->msg_flags |= FL_ADD_XAVP_VIA;
+		msg->msg_flags |= FL_ADD_XAVP_VIA_PARAMS;
 	} else {
-		msg->msg_flags &= ~(FL_ADD_XAVP_VIA);
+		msg->msg_flags &= ~(FL_ADD_XAVP_VIA_PARAMS);
 	}
 	return 1;
 }
@@ -747,6 +796,80 @@ static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *s2)
 		return -1;
 	}
 	return ki_via_add_xavp_params(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_via_use_xavp_fields(sip_msg_t *msg, int fval)
+{
+	if(msg==NULL)
+		return -1;
+	if(fval) {
+		msg->msg_flags |= FL_USE_XAVP_VIA_FIELDS;
+	} else {
+		msg->msg_flags &= ~(FL_USE_XAVP_VIA_FIELDS);
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_via_use_xavp_fields(sip_msg_t *msg, char *pflags, char *s2)
+{
+	int fval=0;
+	if(fixup_get_ivalue(msg, (gparam_t*)pflags, &fval)!=0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_via_use_xavp_fields(msg, fval);
+}
+
+
+/**
+ *
+ */
+static int ki_has_ruri_user(sip_msg_t *msg)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)	/* REPLY doesnt have a ruri */
+		return -1;
+
+	if(msg->parsed_uri_ok==0 /* R-URI not parsed*/ && parse_sip_msg_uri(msg)<0) {
+		LM_ERR("failed to parse the R-URI\n");
+		return -1;
+	}
+
+	if(msg->parsed_uri.user.s!=NULL && msg->parsed_uri.user.len>0) {
+		return 1;
+	}
+
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_has_user_agent(sip_msg_t *msg)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->user_agent==NULL && ((parse_headers(msg, HDR_USERAGENT_F, 0)==-1)
+			|| (msg->user_agent==NULL)))
+	{
+		LM_DBG("no User-Agent header\n");
+		return -1;
+	}
+
+	if(msg->user_agent->body.s!=NULL && msg->user_agent->body.len>0) {
+		return 1;
+	}
+
+	return -1;
 }
 
 /**
@@ -809,6 +932,32 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("corex"), str_init("via_use_xavp_fields"),
+		SR_KEMIP_INT, ki_via_use_xavp_fields,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("has_ruri_user"),
+		SR_KEMIP_INT, ki_has_ruri_user,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("has_user_agent"),
+		SR_KEMIP_INT, ki_has_user_agent,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("send_data"),
+		SR_KEMIP_INT, ki_send_data,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("sendx"),
+		SR_KEMIP_INT, ki_sendx,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */

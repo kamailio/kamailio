@@ -50,6 +50,7 @@ typedef int (*query_func_t)(char *number, char *comment, void *data);
 
 void print_usage(char *program) {
 	set_log_level(LOG_INFO);
+	LINFO("version: pdbt %d\n", PDB_VERSION);
 	LINFO("Usage: %s [<option>...] <command> [<param>...]\n", program);
 	LINFO("  %s -s <csv file> -m <mmap file> [-k <ids>] [-o] [-u <tree file>] [-l <log level>] build\n", program);
 	LINFO("  %s (-m <mmap file>|-r <host>:<port>) [-q <timeout>] [-f <query file>] [-t <carrier text file>] [-l <log level>] query <number>...\n", program);
@@ -93,6 +94,7 @@ void print_usage(char *program) {
 	LINFO("                      %ld for emergency level.\n", LOG_EMERG);
 	LINFO("                      %ld to disable all messages.\n", LOG_EMERG-1);
 	LINFO("                      Default is info level.\n");
+	LINFO("    -v: Print the version\n");
 	LINFO("    -h: Print this help.\n");
 }
 
@@ -678,7 +680,7 @@ int main(int argc, char *argv[]) {
 
 	init_log("pdbt", 0);
 
-	while ((opt = getopt(argc, argv, "s:m:f:u:t:r:q:k:ol:h")) != -1) {
+	while ((opt = getopt(argc, argv, "s:m:f:u:t:r:q:k:ol:vh")) != -1) {
 		switch (opt) {
 		case 's':
 			csv_file = optarg;
@@ -751,6 +753,11 @@ int main(int argc, char *argv[]) {
 				return -1;
 			}
 			log_level=ret;
+			break;
+		case 'v':
+			set_log_level(LOG_INFO);
+			LINFO("version: pdbt %d\n", PDB_VERSION);
+			return 0;
 			break;
 		case 'h':
 			print_usage(argv[0]);

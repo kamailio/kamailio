@@ -25,6 +25,7 @@
 
 #include "../../core/mod_fix.h"
 #include "../../core/sr_module.h"
+#include "../../core/kemi.h"
 
 #include "jansson_funcs.h"
 #include "jansson_utils.h"
@@ -72,18 +73,16 @@ static cmd_export_t cmds[]={
 };
 
 struct module_exports exports = {
-		"jansson",
-		DEFAULT_DLFLAGS,	/* dlopen flags */
-		cmds,				/* Exported functions */
-		0,					/* Exported parameters */
-		0,					/* exported statistics */
-		0,					/* exported MI functions */
-		0,					/* exported pseudo-variables */
-		0,					/* extra processes */
-		mod_init,			/* module initialization function */
-		0,					/* response function*/
-		0,					/* destroy function */
-		0					/* per-child init function */
+	"jansson",       /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	0,               /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
 
 
@@ -145,5 +144,48 @@ static int fixup_set_params_free(void** param, int param_no)
 
 /* just used for unit testing */
 static int mod_init(void) {
+	return 0;
+}
+
+/**
+ *
+ */
+static int ki_jansson_get(sip_msg_t *msg, str *spath, str *sdoc, str *spv)
+{
+	pv_spec_t *pvs = NULL;
+
+	pvs = pv_cache_get(spv);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", spv->len, spv->s);
+		return -1;
+	}
+
+	if(pvs->setf==NULL) {
+		LM_ERR("read only output var [%.*s]\n", spv->len, spv->s);
+		return -1;
+	}
+
+	return janssonmod_get_helper(msg, spath, sdoc, pvs);
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_jansson_exports[] = {
+	{ str_init("jansson"), str_init("get"),
+		SR_KEMIP_INT, ki_jansson_get,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_jansson_exports);
 	return 0;
 }

@@ -100,13 +100,13 @@ str default_did	= STR_STATIC_INIT("_default");
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"lookup_user", lookup_user,   1, header_fixup,
+	{"lookup_user", lookup_user,   1, header_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"lookup_user", lookup_user_2, 2, lookup_user_fixup,
+	{"lookup_user", lookup_user_2, 2, lookup_user_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"check_uri",   check_uri,     1, header_fixup,
+	{"check_uri",   check_uri,     1, header_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -129,15 +129,16 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"uid_uri_db",
-	cmds,      /* Exported functions */
-	0,         /* RPC methods */
-	params,    /* Exported parameters */
-	0,         /* module initialization function */
-	0,         /* response function */
-	destroy,   /* destroy function */
-	0,         /* oncancel function */
-	child_init /* child initialization function */
+	"uid_uri_db", /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,         /* exported functions */
+	params,       /* exported parameters */
+	0,            /* exported RPC methods */
+	0,            /* exported pseudo-variables */
+	0,            /* module init function */
+	0,            /* response handling function */
+	child_init,   /* child init function */
+	destroy       /* destroy function */
 };
 
 

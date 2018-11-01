@@ -1,3 +1,33 @@
+kamailio (5.2.0~pre1) unstable; urgency=medium
+
+  * version set 5.2.0~pre1
+
+ -- Victor Seva <vseva@debian.org>  Fri, 19 Oct 2018 10:35:40 +0200
+
+kamailio (5.2.0~pre0) unstable; urgency=medium
+
+  * version set 5.2.0~pre0
+
+ -- Victor Seva <vseva@debian.org>  Mon, 08 Oct 2018 09:11:35 +0200
+
+kamailio (5.2.0~dev8) unstable; urgency=medium
+
+  * version set 5.2.0-dev8
+
+ -- Victor Seva <vseva@debian.org>  Tue, 02 Oct 2018 16:12:52 +0200
+
+kamailio (5.2.0~dev7) unstable; urgency=medium
+
+  * version set 5.2.0-dev7
+
+ -- Victor Seva <vseva@debian.org>  Mon, 17 Sep 2018 12:12:40 +0200
+
+kamailio (5.2.0~dev6) unstable; urgency=medium
+
+  * version set 5.2.0-dev6
+
+ -- Victor Seva <vseva@debian.org>  Wed, 30 May 2018 18:18:49 +0200
+
 kamailio (5.2.0~dev5) unstable; urgency=medium
 
   * version set 5.2.0-dev5

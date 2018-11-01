@@ -117,16 +117,17 @@ endif
 
 #man page build rules
 ifneq (,$(wildcard $(UTIL_NAME).xml))
-
+ifneq ($(DOCBOOKMAN),)
 $(UTIL_NAME).7: $(UTIL_NAME).xml
-	$(DOCBOOK) -s ../../doc/stylesheets/serdoc2man.xsl $<
+	$(DOCBOOKMAN) -s ../../doc/stylesheets/serdoc2man.xsl $<
 
 man: $(UTIL_NAME).7
-
 else
-
 man:
-
+	@echo "info - no docbook to man tool to convert $(UTIL_NAME).xml"
+endif
+else
+man:
 endif
 
 $(man_prefix)/$(man_dir)/man8:

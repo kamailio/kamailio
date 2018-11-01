@@ -696,7 +696,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 	 * strings; but only if host is not null terminated (host.s[len] will
 	 * always be ok for a via)
 	 */
-	LM_DBG("trying SRV lookup\n");
+	LM_DBG("check if dns lookup is needed for [%.*s]\n", name->len, name->s);
 	proto=via->proto;
 	he=sip_resolvehost(name, &port, &proto);
 
@@ -704,6 +704,9 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 		LM_NOTICE("resolve_host(%.*s) failure\n", name->len, name->s);
 		return -1;
 	}
+
+	LM_DBG("address is [%.*s] port %d proto %d\n", name->len, name->s,
+			(int)port, (int)proto);
 
 	hostent2su(to, he, 0, port);
 	return 1;
@@ -821,14 +824,18 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 		goto error;
 	}
 
+	LM_DBG("reply forwarded (2nd via address: %.*s port %d)\n",
+			msg->via2->host.len, msg->via2->host.s,
+			(int) msg->via2->port);
+
 	done:
 #ifdef STATS
 	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif
 
-	LM_DBG("reply forwarded to %.*s:%d\n",
+	LM_DBG("reply forwarding finished (2nd via address: %.*s port %d)\n",
 			msg->via2->host.len, msg->via2->host.s,
-			(unsigned short) msg->via2->port);
+			(int) msg->via2->port);
 
 	STATS_RPL_FWD_OK();
 	pkg_free(new_buf);

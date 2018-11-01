@@ -114,7 +114,7 @@ enum {
 #define	CPORT					"22222"
 
 struct ng_flags_parse {
-	int via, to, packetize, transport;
+	int via, to, packetize, transport, directional;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux, *sdes,
 		       *codec, *codec_strip, *codec_offer, *codec_transcode, *codec_mask;
 	str call_id, from_tag, to_tag;
@@ -128,6 +128,10 @@ static const char *command_strings[] = {
 	[OP_QUERY]		= "query",
 	[OP_PING]		= "ping",
 	[OP_STOP_RECORDING]	= "stop recording",
+	[OP_BLOCK_DTMF]		= "block DTMF",
+	[OP_UNBLOCK_DTMF]	= "unblock DTMF",
+	[OP_BLOCK_MEDIA]	= "block media",
+	[OP_UNBLOCK_MEDIA]	= "unblock media",
 };
 
 struct minmax_mos_stats {
@@ -169,6 +173,10 @@ static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
 static int start_recording_f(struct sip_msg *, char *, char *);
 static int stop_recording_f(struct sip_msg *, char *, char *);
+static int block_dtmf_f(struct sip_msg *, char *, char *);
+static int unblock_dtmf_f(struct sip_msg *, char *, char *);
+static int block_media_f(struct sip_msg *, char *, char *);
+static int unblock_media_f(struct sip_msg *, char *, char *);
 static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
@@ -295,6 +303,30 @@ static cmd_export_t cmds[] = {
 	{"stop_recording",	(cmd_function)stop_recording_f, 	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
+	{"block_dtmf",		(cmd_function)block_dtmf_f,	 	0,
+		0, 0,
+		ANY_ROUTE },
+	{"unblock_dtmf",	(cmd_function)unblock_dtmf_f, 		0,
+		0, 0,
+		ANY_ROUTE},
+	{"block_media",		(cmd_function)block_media_f,	 	0,
+		0, 0,
+		ANY_ROUTE },
+	{"unblock_media",	(cmd_function)unblock_media_f, 		0,
+		0, 0,
+		ANY_ROUTE},
+	{"block_dtmf",		(cmd_function)block_dtmf_f,	 	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE },
+	{"unblock_dtmf",	(cmd_function)unblock_dtmf_f, 		1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"block_media",		(cmd_function)block_media_f,	 	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE },
+	{"unblock_media",	(cmd_function)unblock_media_f, 		1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	0,
 		0, 0,
 		ANY_ROUTE},
@@ -418,18 +450,16 @@ static param_export_t params[] = {
 };
 
 struct module_exports exports = {
-	"rtpengine",
+	"rtpengine",     /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	mod_pvs,     /* exported pseudo-variables */
-	0,           /* extra processes */
-	mod_init,
-	0,           /* reply processing */
-	mod_destroy, /* destroy function */
-	child_init
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 /* check if the node is already queried */
@@ -454,7 +484,8 @@ static int is_queried_node(struct rtpp_node *node, struct rtpp_node **queried_no
 int rtpengine_delete_node(struct rtpp_node *rtpp_node)
 {
 	rtpp_node->rn_displayed = 0;
-	rtpp_node->rn_disabled = RTPENGINE_MAX_RECHECK_TICKS;
+	rtpp_node->rn_disabled = 1;
+	rtpp_node->rn_recheck_ticks = RTPENGINE_MAX_RECHECK_TICKS;
 
 	return 1;
 }
@@ -1696,14 +1727,15 @@ static int build_rtpp_socks() {
 			if((0 <= control_cmd_tos) && (control_cmd_tos < 256)) {
 				unsigned char tos = control_cmd_tos;
 				if (pnode->rn_umode == 6) {
-					setsockopt(rtpp_socks[pnode->idx], IPPROTO_IPV6,
+					if(setsockopt(rtpp_socks[pnode->idx], IPPROTO_IPV6,
 							IPV6_TCLASS, &control_cmd_tos,
-							sizeof(control_cmd_tos));
+							sizeof(control_cmd_tos)))
+						LM_WARN("Failed to set IPv6 TOS socket option\n");
 
 				} else {
-					setsockopt(rtpp_socks[pnode->idx], IPPROTO_IP,
-							IP_TOS, &tos,
-							sizeof(tos));
+					if(setsockopt(rtpp_socks[pnode->idx], IPPROTO_IP,
+							IP_TOS, &tos, sizeof(tos)))
+						LM_WARN("Failed to set IPv4 TOS socket option\n");
 				}
 			}
 
@@ -2064,6 +2096,7 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 					if (!val.s)
 						goto error;
 					ng_flags->from_tag = val;
+					ng_flags->directional = 1;
 				}
 				else
 					goto generic;
@@ -2113,8 +2146,12 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 					if (!ng_flags->packetize)
 						goto error;
 					bencode_dictionary_add_integer(ng_flags->dict, "repacketize", ng_flags->packetize);
-					goto next;
 				}
+				else if (str_eq(&key, "directional"))
+					ng_flags->directional = 1;
+				else
+					goto generic;
+				goto next;
 				break;
 
 			case 12:
@@ -2230,6 +2267,11 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		else
 			bencode_dictionary_add_str(ng_flags.dict, "sdp", &body);
 	}
+	else if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
+			|| op == OP_UNBLOCK_MEDIA)
+	{
+		ng_flags.flags = bencode_list(bencbuf);
+	}
 
 	/*** parse flags & build dictionary ***/
 
@@ -2279,7 +2321,13 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	) );
 	bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
 
-	if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
+	if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
+			|| op == OP_UNBLOCK_MEDIA)
+	{
+		if (ng_flags.directional)
+			bencode_dictionary_add_str(ng_flags.dict, "from-tag", &ng_flags.from_tag);
+	}
+	else if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_DELETE)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_ANSWER))
 	{
@@ -3298,6 +3346,7 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 {
 	int method;
 	int nosdp;
+	tm_cell_t *t = NULL;
 
 	if (msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
 	   (msg->cseq==NULL)))
@@ -3327,9 +3376,12 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0);
 		if(method==METHOD_INVITE && nosdp==0) {
 			msg->msg_flags |= FL_SDP_BODY;
-			if(tmb.t_gett!=NULL && tmb.t_gett()!=NULL
-					&& tmb.t_gett()!=T_UNDEFINED)
-				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
+			if(tmb.t_gett!=NULL) {
+				t = tmb.t_gett();
+				if(t!=NULL && t!=T_UNDEFINED && t->uas.request!=NULL) {
+					t->uas.request->msg_flags |= FL_SDP_BODY;
+				}
+			}
 			if(route_type==FAILURE_ROUTE)
 				return rtpengine_delete(msg, flags);
 			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0);
@@ -3522,6 +3574,83 @@ stop_recording_f(struct sip_msg* msg, char *str1, char *str2)
 	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_recording_wrap, flags.s, 1);
+}
+
+
+static int rtpengine_block_dtmf_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_BLOCK_DTMF, d);
+}
+
+static int rtpengine_unblock_dtmf_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_UNBLOCK_DTMF, d);
+}
+
+static int
+block_dtmf_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_block_dtmf_wrap, flags.s, 1);
+}
+
+static int
+unblock_dtmf_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_unblock_dtmf_wrap, flags.s, 1);
+}
+
+static int rtpengine_block_media_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_BLOCK_MEDIA, d);
+}
+
+static int rtpengine_unblock_media_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_UNBLOCK_MEDIA, d);
+}
+
+static int
+block_media_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_block_media_wrap, flags.s, 1);
+}
+
+static int
+unblock_media_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_unblock_media_wrap, flags.s, 1);
 }
 
 static int rtpengine_rtpstat_wrap(struct sip_msg *msg, void *d, int more) {

@@ -80,50 +80,51 @@ extern select_row_t sel_declaration[];
 /* cfg functions */
 /* clag-format off */
 static cmd_export_t cmds[] = {
-		{"msg_apply_changes", (cmd_function)msg_apply_changes_f, 0, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"change_reply_status", change_reply_status_f, 2,
-				change_reply_status_fixup, ONREPLY_ROUTE},
-		{"remove_body", (cmd_function)w_remove_body_f, 0, 0, ANY_ROUTE},
-		{"keep_hf", (cmd_function)w_keep_hf_f, 0, fixup_regexp_null, ANY_ROUTE},
-		{"keep_hf", (cmd_function)w_keep_hf_f, 1, fixup_regexp_null, ANY_ROUTE},
-		{"fnmatch", (cmd_function)w_fnmatch2_f, 2, fixup_fnmatch, ANY_ROUTE},
-		{"fnmatch", (cmd_function)w_fnmatch3_f, 3, fixup_fnmatch, ANY_ROUTE},
+	{"msg_apply_changes", (cmd_function)msg_apply_changes_f, 0, 0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"change_reply_status", change_reply_status_f, 2,
+			change_reply_status_fixup, 0, ONREPLY_ROUTE},
+	{"remove_body", (cmd_function)w_remove_body_f, 0, 0, 0, ANY_ROUTE},
+	{"keep_hf", (cmd_function)w_keep_hf_f, 0, fixup_regexp_null, 0, ANY_ROUTE},
+	{"keep_hf", (cmd_function)w_keep_hf_f, 1, fixup_regexp_null, 0, ANY_ROUTE},
+	{"fnmatch", (cmd_function)w_fnmatch2_f, 2, fixup_fnmatch, 0, ANY_ROUTE},
+	{"fnmatch", (cmd_function)w_fnmatch3_f, 3, fixup_fnmatch, 0, ANY_ROUTE},
+	{"append_hf_value", insupddel_hf_value_f, 2, append_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"insert_hf_value", insupddel_hf_value_f, 2, insert_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"remove_hf_value", insupddel_hf_value_f, 1, remove_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"assign_hf_value", insupddel_hf_value_f, 2, assign_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"remove_hf_value2", insupddel_hf_value_f, 1, remove_hf_value2_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"assign_hf_value2", insupddel_hf_value_f, 2, assign_hf_value2_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"include_hf_value", incexc_hf_value_f, 2, include_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"exclude_hf_value", incexc_hf_value_f, 2, exclude_hf_value_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"hf_value_exists", incexc_hf_value_f, 2, hf_value_exists_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 
-		{"append_hf_value", insupddel_hf_value_f, 2, append_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"insert_hf_value", insupddel_hf_value_f, 2, insert_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"remove_hf_value", insupddel_hf_value_f, 1, remove_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"assign_hf_value", insupddel_hf_value_f, 2, assign_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"remove_hf_value2", insupddel_hf_value_f, 1, remove_hf_value2_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"assign_hf_value2", insupddel_hf_value_f, 2, assign_hf_value2_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"include_hf_value", incexc_hf_value_f, 2, include_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"exclude_hf_value", incexc_hf_value_f, 2, exclude_hf_value_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"hf_value_exists", incexc_hf_value_f, 2, hf_value_exists_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"bind_textopsx", (cmd_function)bind_textopsx, 1, 0, 0, ANY_ROUTE},
 
-		{"bind_textopsx", (cmd_function)bind_textopsx, 1, 0, ANY_ROUTE},
-
-
-		{0, 0, 0, 0, 0}};
+	{0, 0, 0, 0, 0, 0}
+};
 
 /* module exports structure */
 struct module_exports exports = {
-		"textopsx", cmds, /* cfg functions */
-		0,				  /* RPC methods */
-		0,				  /* cfg parameters */
-		mod_init,		  /* initialization function */
-		0,				  /* response function */
-		0,				  /* destroy function */
-		0,				  /* on_cancel function */
-		0				  /* per-child init function */
+	"textopsx",		/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,			/* exported cfg functions */
+	0,				/* exported cfg parameters */
+	0,				/* exported RPC methods */
+	0,				/* exported pseudo-variables */
+	0,				/* response handling function */
+	mod_init,		/* module init function */
+	0,				/* per-child init function */
+	0,				/* destroy function */
 };
 /* clag-format on */
 
@@ -145,8 +146,6 @@ static int mod_init(void)
  */
 static int ki_msg_update_buffer(sip_msg_t *msg, str *obuf)
 {
-	sip_msg_t tmp;
-
 	if(obuf==NULL || obuf->s==NULL || obuf->len<=0) {
 		LM_ERR("invalid buffer parameter\n");
 		return -1;
@@ -156,52 +155,8 @@ static int ki_msg_update_buffer(sip_msg_t *msg, str *obuf)
 		LM_ERR("new buffer is too large (%d)\n", obuf->len);
 		return -1;
 	}
-	/* temporary copy */
-	memcpy(&tmp, msg, sizeof(sip_msg_t));
 
-	/* reset dst uri and path vector to avoid freeing - restored later */
-	if(msg->dst_uri.s != NULL) {
-		msg->dst_uri.s = NULL;
-		msg->dst_uri.len = 0;
-	}
-	if(msg->path_vec.s != NULL) {
-		msg->path_vec.s = NULL;
-		msg->path_vec.len = 0;
-	}
-
-	/* free old msg structure */
-	free_sip_msg(msg);
-	memset(msg, 0, sizeof(sip_msg_t));
-
-	/* restore msg fields */
-	msg->buf = tmp.buf;
-	msg->id = tmp.id;
-	msg->rcv = tmp.rcv;
-	msg->set_global_address = tmp.set_global_address;
-	msg->set_global_port = tmp.set_global_port;
-	msg->flags = tmp.flags;
-	msg->msg_flags = tmp.msg_flags;
-	msg->hash_index = tmp.hash_index;
-	msg->force_send_socket = tmp.force_send_socket;
-	msg->fwd_send_flags = tmp.fwd_send_flags;
-	msg->rpl_send_flags = tmp.rpl_send_flags;
-	msg->dst_uri = tmp.dst_uri;
-	msg->path_vec = tmp.path_vec;
-
-	memcpy(msg->buf, obuf->s, obuf->len);
-	msg->len = obuf->len;
-	msg->buf[msg->len] = '\0';
-
-	/* reparse the message */
-	LM_DBG("SIP message content updated - reparsing\n");
-	if(parse_msg(msg->buf, msg->len, msg) != 0) {
-		LM_ERR("parsing new sip message failed [[%.*s]]\n", msg->len, msg->buf);
-		/* exit config execution - sip_msg_t structure is no longer
-		 * valid/safe for config */
-		return 0;
-	}
-
-	return 1;
+	return sip_msg_update_buffer(msg, obuf);
 }
 
 /**
@@ -222,39 +177,12 @@ static int ki_msg_set_buffer(sip_msg_t *msg, str *obuf)
  */
 static int ki_msg_apply_changes(sip_msg_t *msg)
 {
-	int ret;
-	dest_info_t dst;
-	str obuf;
-
 	if(msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
 		LM_ERR("invalid usage - not in request route or a reply\n");
 		return -1;
 	}
 
-	init_dest_info(&dst);
-	dst.proto = PROTO_UDP;
-	if(msg->first_line.type == SIP_REPLY) {
-		obuf.s = generate_res_buf_from_sip_res(
-				msg, (unsigned int *)&obuf.len, BUILD_NO_VIA1_UPDATE);
-	} else {
-		if(msg->msg_flags & FL_RR_ADDED) {
-			LM_ERR("cannot apply msg changes after adding record-route"
-				   " header - it breaks conditional 2nd header\n");
-			return -1;
-		}
-		obuf.s = build_req_buf_from_sip_req(msg, (unsigned int *)&obuf.len,
-				&dst,
-				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
-	}
-	if(obuf.s == NULL) {
-		LM_ERR("couldn't update msg buffer content\n");
-		return -1;
-	}
-	ret = ki_msg_update_buffer(msg, &obuf);
-	/* free new buffer - copied in the static buffer from old sip_msg_t */
-	pkg_free(obuf.s);
-
-	return ret;
+	return sip_msg_apply_changes(msg);
 }
 
 /**

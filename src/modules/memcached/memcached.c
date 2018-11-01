@@ -98,13 +98,11 @@ struct module_exports exports = {
 	0,
 	params,
 	0,
-	0,
 	mod_pvs,
 	0,
 	mod_init,
 	0,
-	mod_destroy,
-	0
+	mod_destroy
 };
 
 

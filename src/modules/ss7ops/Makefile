@@ -9,8 +9,6 @@ auto_gen=
 NAME=ss7ops.so
 LIBS=
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srutils/srutils
 

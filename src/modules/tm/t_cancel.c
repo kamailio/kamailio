@@ -173,7 +173,7 @@ int cancel_all_uacs(struct cell *trans, int how)
 }
 
 
-/* should be called directly only if one of the condition bellow is true:
+/* should be called directly only if one of the condition below is true:
  *  - prepare_cancel_branch or prepare_to_cancel returned true for this branch
  *  - buffer value was 0 and then set to BUSY in an atomic op.:
  *     if (atomic_cmpxchg_long(&buffer, 0, BUSY_BUFFER)==0).
@@ -316,7 +316,7 @@ int cancel_branch( struct cell *t, int branch,
 	crb->branch = branch;
 	/* label it as cancel so that FR timer can better know how to
 	   deal with it */
-	crb->activ_type = TYPE_LOCAL_CANCEL;
+	crb->rbtype = TYPE_LOCAL_CANCEL;
 	/* be extra carefully and check for bugs (the below if could be replaced
 	 *  by an atomic_set((void*)&crb->buffer, cancel) */
 	if (unlikely(atomic_cmpxchg_long((void*)&crb->buffer, (long)BUSY_BUFFER,

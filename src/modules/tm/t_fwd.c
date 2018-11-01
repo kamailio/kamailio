@@ -1718,7 +1718,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 	setbflagsval(0, backup_bflags);
 
 	/* update message flags, if changed in branch route */
-	t->uas.request->flags = p_msg->flags;
+	if(t->uas.request) t->uas.request->flags = p_msg->flags;
 
 	/* don't forget to clear all branches processed so far */
 
@@ -1782,7 +1782,7 @@ canceled:
 	/* restore backup flags from initial env */
 	setbflagsval(0, backup_bflags);
 	/* update message flags, if changed in branch route */
-	t->uas.request->flags = p_msg->flags;
+	if(t->uas.request) t->uas.request->flags = p_msg->flags;
 	ser_error=E_CANCELED;
 	return -1;
 }

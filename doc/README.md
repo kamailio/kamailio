@@ -27,4 +27,4 @@ Contact
 If you have further questions, you can contact the developers via sr-dev
 mailing list:
 
-  * sr-dev@lists.sip-router.org
+  * sr-dev@lists.kamailio.org

@@ -59,7 +59,7 @@ static param_t* _tr_uri_params = NULL;
 
 /*! transformation buffer size */
 #define TR_BUFFER_SIZE 65536
-#define TR_BUFFER_SLOTS	4
+#define TR_BUFFER_SLOTS	8
 
 /*! transformation buffer */
 static char **_tr_buffer_list = NULL;
@@ -1154,6 +1154,56 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			}
 			val->flags = PV_VAL_STR;
 			val->ri = 0;
+			break;
+
+		case TR_S_UNQUOTE:
+			if(!(val->flags&PV_VAL_STR)) {
+				val->rs.s = int2str(val->ri, &val->rs.len);
+				break;
+			}
+			if(val->rs.len<2) {
+				break;
+			}
+			if(val->rs.len>TR_BUFFER_SIZE-2) {
+				LM_ERR("value too large: %d\n", val->rs.len);
+				return -1;
+			}
+			if((val->rs.s[0] == val->rs.s[val->rs.len-1])
+					&& (val->rs.s[0] == '"' || val->rs.s[0] == '\'')) {
+				memcpy(_tr_buffer, val->rs.s+1, val->rs.len-2);
+				val->rs.len -= 2;
+			} else {
+				memcpy(_tr_buffer, val->rs.s, val->rs.len);
+			}
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.s[val->rs.len] = '\0';
+			break;
+
+		case TR_S_UNBRACKET:
+			if(!(val->flags&PV_VAL_STR)) {
+				val->rs.s = int2str(val->ri, &val->rs.len);
+				break;
+			}
+			if(val->rs.len<2) {
+				break;
+			}
+			if(val->rs.len>TR_BUFFER_SIZE-2) {
+				LM_ERR("value too large: %d\n", val->rs.len);
+				return -1;
+			}
+			if((val->rs.s[0] == '(' && val->rs.s[val->rs.len-1] == ')')
+					|| (val->rs.s[0] == '[' && val->rs.s[val->rs.len-1] == ']')
+					|| (val->rs.s[0] == '{' && val->rs.s[val->rs.len-1] == '}')
+					|| (val->rs.s[0] == '<' && val->rs.s[val->rs.len-1] == '>')) {
+				memcpy(_tr_buffer, val->rs.s+1, val->rs.len-2);
+				val->rs.len -= 2;
+			} else {
+				memcpy(_tr_buffer, val->rs.s, val->rs.len);
+			}
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.s[val->rs.len] = '\0';
 			break;
 
 		default:
@@ -2507,6 +2557,12 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==15 && strncasecmp(name.s, "urldecode.param", 15)==0) {
 		t->subtype = TR_S_URLDECODEPARAM;
+		goto done;
+	} else if(name.len==7 && strncasecmp(name.s, "unquote", 7)==0) {
+		t->subtype = TR_S_UNQUOTE;
+		goto done;
+	} else if(name.len==9 && strncasecmp(name.s, "unbracket", 9)==0) {
+		t->subtype = TR_S_UNBRACKET;
 		goto done;
 	}
 

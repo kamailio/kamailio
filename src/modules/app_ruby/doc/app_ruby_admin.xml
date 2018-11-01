@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module allows executing Ruby scripts from the Kamailio
+		configuration file.
+		It exports all KEMI functions to Ruby in order to access the
+		currently processed SIP message. These functions are available within
+		the Ruby module 'KSR'.
+	</para>
+	<para>
+		IMPORTANT: because of Ruby language policy (which require that a public
+		submodule name has to start with an uppercase letter), the KSR submodule
+		names are with all letters uppercase. For example, what is documented as
+		KSR.sl in KEMI docs, must be used as KSR::SL in Ruby scripts.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+				<emphasis>libruby</emphasis> - the ruby library (for compilation
+				on Debian, ruby-dev package is needed.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section id="app_ruby.p.load">
+	    <title><varname>load</varname> (str)</title>
+	    <para>
+			Set the path to the Ruby file to be loaded at startup. Then you
+			can use Ruby_run(function, params) to execute a function from the
+			script at runtime. If you use it for KEMI configuration,
+			then it has to include the requited functions.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>null</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>load</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_ruby", "load", "/usr/local/etc/kamailio/ruby/myscript.rb")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+    <section>
+	<title>Functions</title>
+	<section id="app_ruby.f.ruby_run">
+	    <title>
+		<function moreinfo="none">ruby_run(function, params)</function>
+	    </title>
+	    <para>
+		Execute the Ruby function 'func' giving params as parameters. There
+		can be up to 3 string parameters. The function must exist in the
+		script loaded at startup via parameter 'load'. Parameters can be
+		strings with pseudo-variables that are evaluated at runtime.
+	    </para>
+		<example>
+		<title><function>jsdt_run</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!ruby_run("rb_append_fu_to_reply"))
+{
+    xdbg("SCRIPT: failed to execute ruby function!\n");
+}
+...
+ruby_run("rb_funcx", "$rU", "2");
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+
+    <section>
+        <title>RPC Commands</title>
+        <section id="app_ruby.r.reload">
+            <title>
+            <function moreinfo="none">app_ruby.reload</function>
+            </title>
+            <para>
+            Marks the need to reload the js script.
+            The actual reload is done by every working process when the next
+            call to ruby_run() function or KEMI config is executed.
+            </para>
+            <para>
+            Name: <emphasis>app_ruby.reload</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_ruby.reload
+...
+            </programlisting>
+        </section>
+       <section id="app_ruby.r.api_list">
+            <title>
+            <function moreinfo="none">ruby_jsdt.api_list</function>
+            </title>
+            <para>
+			List the functions available via Kemi framework.
+            </para>
+            <para>
+            Name: <emphasis>ruby_jsdt.api_list</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_ruby.api_list
+...
+            </programlisting>
+        </section>
+    </section>
+
+    <section>
+	<title>Example of usage</title>
+    <para>
+		Create your Ruby script and store it on the file system,
+		say: '/usr/local/etc/kamailio/ruby/myscript.rb'.
+    </para>
+<programlisting format="linespecific">
+...
+def ksr_sl_reply()
+	KSR.dbg("==== from ruby - src ip: " + KSR::PV.get("$si") + "\n")
+	KSR::SL.sl_send_reply(200, "OK-Ruby")
+end
+...
+</programlisting>
+    <para>
+		Load the script via parameter 'load' and execute function
+		via ruby_run(...).
+    </para>
+<programlisting format="linespecific">
+...
+modparam("app_ruby", "load", "/usr/local/etc/kamailio/ruby/myscript.rb")
+...
+request_route {
+    ...
+    if(!ruby_run("ksr_sl_reply")) {
+        xdbg("SCRIPT: failed to execute ruby function!\n");
+    }
+    ...
+}
+...
+</programlisting>
+    </section>
+</chapter>

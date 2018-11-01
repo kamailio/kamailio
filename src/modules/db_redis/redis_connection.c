@@ -24,6 +24,8 @@
 #include "redis_connection.h"
 #include "redis_table.h"
 
+extern int db_redis_verbosity;
+
 static void print_query(redis_key_t *query) {
     redis_key_t *k;
 
@@ -217,7 +219,7 @@ km_redis_con_t* db_redis_new_connection(const struct db_id* id) {
         goto err;
     }
 
-    db_redis_print_all_tables(ptr);
+    if(db_redis_verbosity > 0) db_redis_print_all_tables(ptr);
 
     ptr->ref = 1;
     ptr->append_counter = 0;
@@ -390,7 +392,7 @@ void db_redis_free_reply(redisReply **reply) {
 void db_redis_consume_replies(km_redis_con_t *con) {
     redisReply *reply = NULL;
     redis_key_t *query;
-    while (con->append_counter > 0 && !con->con->err) {
+    while (con->append_counter > 0 && con->con && !con->con->err) {
         LM_DBG("consuming outstanding reply %u", con->append_counter);
         db_redis_get_reply(con, (void**)&reply);
         if (reply) {
@@ -401,5 +403,13 @@ void db_redis_consume_replies(km_redis_con_t *con) {
     while ((query = db_redis_shift_query(con))) {
         LM_DBG("consuming queued command\n");
         db_redis_key_free(&query);
+    }
+}
+
+const char *db_redis_get_error(km_redis_con_t *con) {
+    if (con && con->con && con->con->errstr[0]) {
+        return con->con->errstr;
+    } else {
+        return "<broken redis connection>";
     }
 }

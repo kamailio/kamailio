@@ -221,10 +221,10 @@ void log_prefix_init(void);
 					if (unlikely(log_stderr)) { \
 						if (unlikely(log_color)) dprint_color(__llevel); \
 						if(unlikely(log_prefix_val)) { \
-							fprintf(stderr, "%.*s%2d(%d) %s: %s" fmt, \
-								log_prefix_val->len, log_prefix_val->s, \
+							fprintf(stderr, "%2d(%d) %s: %.*s%s" fmt, \
 								process_no, my_pid(), \
 								(lname)?(lname):LOG_LEVEL2NAME(__llevel), \
+								log_prefix_val->len, log_prefix_val->s, \
 								(prefix) , __VA_ARGS__);\
 						} else { \
 							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
@@ -239,9 +239,9 @@ void log_prefix_init(void);
 							    (((facility) != DEFAULT_FACILITY) ? \
 								(facility) : \
 								get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
-								"%.*s%s: %s" fmt,\
-								log_prefix_val->len, log_prefix_val->s, \
+								"%s: %.*s%s" fmt,\
 								(lname)?(lname):LOG_LEVEL2NAME(__llevel),\
+								log_prefix_val->len, log_prefix_val->s, \
 								(prefix) , __VA_ARGS__); \
 						} else { \
 							_km_log_func(LOG2SYSLOG_LEVEL(__llevel) |\
@@ -299,10 +299,10 @@ void log_prefix_init(void);
 					if (unlikely(log_stderr)) { \
 						if (unlikely(log_color)) dprint_color(__llevel); \
 						if(unlikely(log_prefix_val)) { \
-							fprintf(stderr, "%.*s%2d(%d) %s: %s" fmt, \
-								log_prefix_val->len, log_prefix_val->s, \
+							fprintf(stderr, "%2d(%d) %s: %.*s%s" fmt, \
 								process_no, my_pid(), \
 								(lname)?(lname):LOG_LEVEL2NAME(__llevel), \
+								log_prefix_val->len, log_prefix_val->s, \
 								(prefix) , ## args);\
 						} else { \
 							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
@@ -317,9 +317,9 @@ void log_prefix_init(void);
 							   (((facility) != DEFAULT_FACILITY) ? \
 								(facility) : \
 								get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
-								"%.*s%s: %s" fmt,\
-								log_prefix_val->len, log_prefix_val->s, \
+								"%s: %.*s%s" fmt,\
 								(lname)?(lname):LOG_LEVEL2NAME(__llevel),\
+								log_prefix_val->len, log_prefix_val->s, \
 								(prefix) , ## args); \
 						} else { \
 							_km_log_func(LOG2SYSLOG_LEVEL(__llevel) |\

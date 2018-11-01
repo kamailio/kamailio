@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id: perlvdb.c 770 2007-01-22 10:16:34Z bastian $
  *
  * Perl virtual database module
@@ -18,8 +18,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -32,53 +32,59 @@ static int mod_init(void);
 
 SV* vdbmod;
 
+static int db_perlvdb_bind_api(db_func_t *dbb);
+
 /*
  * Perl virtual database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_use_table",	(cmd_function)perlvdb_use_table, 2, 0, 0, 0},
-	{"db_init",		(cmd_function)perlvdb_db_init,   1, 0, 0, 0},
-	{"db_close",		(cmd_function)perlvdb_db_close,  2, 0, 0, 0},
-	{"db_insert",		(cmd_function)perlvdb_db_insert, 2, 0, 0, 0},
-	{"db_update",		(cmd_function)perlvdb_db_update, 2, 0, 0, 0},
-	{"db_delete",		(cmd_function)perlvdb_db_delete, 2, 0, 0, 0},
-	{"db_query",		(cmd_function)perlvdb_db_query, 2, 0, 0, 0},
-	{"db_free_result",	(cmd_function)perlvdb_db_free_result, 2, 0, 0, 0},
+	{"db_bind_api",    (cmd_function)db_perlvdb_bind_api,    0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
 
-/*
- * Exported parameters
- */
-static param_export_t params[] = {
-	{0, 0, 0}
-};
-
-
-
 struct module_exports exports = {
-	"db_perlvdb",
+	"db_perlvdb",	/* module name */
 	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
-	cmds,
-	params,      /*  module parameters */
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	0,           /* exported pseudo-variables */
-	0,           /* extra processes */
-	mod_init,    /* module initialization function */
-	0,           /* response function*/
-	0,           /* destroy function */
-	0            /* per-child init function */
+	cmds,		/* exported functions */
+	0,			/* exported parameters */
+	0,			/* exported rpc functions */
+	0,			/* exported pseudo-variables */
+	0,			/* response handling function*/
+	mod_init,	/* module initialization function */
+	0,			/* per-child init function */
+	0			/* destroy function */
 };
 
 
 static int mod_init(void)
 {
-	if (!module_loaded("perl")) {
-		LM_CRIT("perl module not loaded. Exiting.\n");
+	if (!module_loaded("app_perl")) {
+		LM_CRIT("app_perl module not loaded. Exiting.\n");
 		return -1;
 	}
+
+	return 0;
+}
+
+static int db_perlvdb_bind_api(db_func_t *dbb)
+{
+	if(dbb==NULL)
+		return -1;
+
+	memset(dbb, 0, sizeof(db_func_t));
+
+	dbb->use_table        = perlvdb_use_table;
+	dbb->init             = perlvdb_db_init;
+	dbb->close            = perlvdb_db_close;
+	dbb->query            = perlvdb_db_query;
+	dbb->fetch_result     = 0;
+	dbb->raw_query        = 0;
+	dbb->free_result      = perlvdb_db_free_result;
+	dbb->insert           = perlvdb_db_insert;
+	dbb->delete           = perlvdb_db_delete; 
+	dbb->update           = perlvdb_db_update;
+	dbb->replace          = perlvdb_db_replace;
 
 	return 0;
 }

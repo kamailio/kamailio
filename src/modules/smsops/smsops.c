@@ -32,8 +32,10 @@ MODULE_VERSION
 
 static pv_export_t mod_pvs[] = {
 	{ {"smsack", sizeof("smsack")-1}, PVT_OTHER, pv_sms_ack, 0, 0, 0, 0, 0 },
-	{ {"rpdata", sizeof("rpdata")-1}, PVT_OTHER, pv_get_sms, pv_set_sms, pv_parse_rpdata_name, 0, 0, 0 },
-	{ {"tpdu", sizeof("tpdu")-1}, PVT_OTHER, pv_get_sms, pv_set_sms, pv_parse_tpdu_name, 0, 0, 0 },
+	{ {"rpdata", sizeof("rpdata")-1}, PVT_OTHER, pv_get_sms, pv_set_sms,
+		pv_parse_rpdata_name, 0, 0, 0 },
+	{ {"tpdu", sizeof("tpdu")-1}, PVT_OTHER, pv_get_sms, pv_set_sms,
+		pv_parse_tpdu_name, 0, 0, 0 },
 	{ {"smsbody", sizeof("smsbody")-1}, PVT_OTHER, pv_sms_body, 0, 0, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -46,18 +48,16 @@ static cmd_export_t cmds[]={
 
 /** module exports */
 struct module_exports exports= {
-	"smsops",
+	"smsops",    /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	0,
-	0,          /* exported statistics */
-	0,    /* exported MI functions */
-	mod_pvs,    /* exported pseudo-variables */
-	0,          /* extra processes */
-	0,   /* module initialization function */
-	0,
-	0,
-	0           /* per-child init function */
+	cmds,        /* exported functions */
+	0,           /* exported parameters */
+	0,           /* exported rpc functions */
+	mod_pvs,     /* exported pseudo-variables */
+	0,           /* response handling function*/
+	0,           /* module init function */
+	0,           /* per-child init function */
+	0            /* module destroy function */
 };
 
 

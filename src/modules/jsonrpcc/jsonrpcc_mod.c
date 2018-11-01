@@ -28,6 +28,8 @@
 #include "../../core/mod_fix.h"
 #include "../../core/trim.h"
 #include "../../core/sr_module.h"
+#include "../../core/cfg/cfg_struct.h"
+
 #include "../tm/tm_load.h"
 
 #include "jsonrpc_request.h"
@@ -76,18 +78,16 @@ static param_export_t mod_params[]={
  * Exports
  */
 struct module_exports exports = {
-	"jsonrpcc",           /* module name */
-	DEFAULT_DLFLAGS,     /* dlopen flags */
-	cmds,                /* Exported functions */
-	mod_params,          /* Exported parameters */
-	0,                   /* exported statistics */
-	0,                   /* exported MI functions */
-	0,                   /* exported pseudo-variables */
-	0,                   /* extra processes */
-	mod_init,            /* module initialization function */
-	0,                   /* response function*/
-	0,                   /* destroy function */
-	child_init           /* per-child init function */
+	"jsonrpcc",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	mod_params,      /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	0                /* module destroy function */
 };
 
 
@@ -139,6 +139,9 @@ static int child_init(int rank)
 	if(pid==0){
 		/* child */
 		close(pipe_fds[1]);
+		/* initialize the config framework */
+		if (cfg_child_init())
+			return -1;
 		return jsonrpc_io_child_process(pipe_fds[0], servers_param);
 	}
 	return 0;

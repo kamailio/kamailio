@@ -65,10 +65,13 @@ int app_lua_load_param(modparam_t type, void *val);
 int app_lua_register_param(modparam_t type, void *val);
 int app_lua_reload_param(modparam_t type, void *val);
 
+int _ksr_app_lua_log_mode = 0;
+
 static param_export_t params[]={
 	{"load",     PARAM_STRING|USE_FUNC_PARAM, (void*)app_lua_load_param},
 	{"register", PARAM_STRING|USE_FUNC_PARAM, (void*)app_lua_register_param},
 	{"reload",   INT_PARAM|USE_FUNC_PARAM, (void*)app_lua_reload_param},
+	{"log_mode", PARAM_INT, &_ksr_app_lua_log_mode},
 	{0, 0, 0}
 };
 
@@ -93,16 +96,14 @@ static cmd_export_t cmds[]={
 struct module_exports exports = {
 	"app_lua",
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,
-	0,              /* exported MI functions */
-	0,              /* exported pseudo-variables */
-	0,              /* extra processes */
-	mod_init,       /* module initialization function */
-	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	cmds,		 /*·exported·functions·*/
+	params,		 /*·exported·params·*/
+	0,		 /*·exported·RPC·methods·*/
+	0,		 /* exported pseudo-variables */
+	0,		 /*·response·function·*/
+	mod_init,	 /* initialization module*/
+	child_init,	 /* per child init function */
+	mod_destroy	 /* destroy function */
 };
 
 /**

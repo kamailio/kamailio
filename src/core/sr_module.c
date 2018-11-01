@@ -201,78 +201,14 @@ int register_builtin_modules()
 }
 
 
-
-/** convert cmd exports to current format.
- * @param ver - module interface versions (0 == ser, 1 == kam).
- * @param src - null terminated array of cmd exports
- *              (either ser_cmd_export_t or kam_cmd_export_t, depending
- *               on ver).
- * @param mod - pointer to module exports structure.
- * @return - pkg_malloc'ed null terminated sr_cmd_export_v31_t array with
- *           the converted cmd exports  or 0 on error.
- */
-static sr31_cmd_export_t* sr_cmd_exports_convert(unsigned ver,
-													void* src, void* mod)
-{
-	int i, n;
-	ser_cmd_export_t* ser_cmd;
-	kam_cmd_export_t* kam_cmd;
-	sr31_cmd_export_t* ret;
-
-	ser_cmd = 0;
-	kam_cmd = 0;
-	ret = 0;
-	n = 0;
-	/* count the number of elements */
-	if (ver == 0) {
-		ser_cmd = src;
-		for (; ser_cmd[n].name; n++);
-	} else if (ver == 1) {
-		kam_cmd = src;
-		for (; kam_cmd[n].name; n++);
-	} else goto error; /* unknown interface version */
-	/* alloc & init new array */
-	ret = pkg_malloc(sizeof(*ret)*(n+1));
-	memset(ret, 0, sizeof(*ret)*(n+1));
-	/* convert/copy */
-	for (i=0; i < n; i++) {
-		if (ver == 0) {
-			ret[i].name = ser_cmd[i].name;
-			ret[i].function = ser_cmd[i].function;
-			ret[i].param_no = ser_cmd[i].param_no;
-			ret[i].fixup = ser_cmd[i].fixup;
-			ret[i].free_fixup = 0; /* no present in ser  <= 2.1 */
-			ret[i].flags = ser_cmd[i].flags;
-		} else {
-			ret[i].name = kam_cmd[i].name;
-			ret[i].function = kam_cmd[i].function;
-			ret[i].param_no = kam_cmd[i].param_no;
-			ret[i].fixup = kam_cmd[i].fixup;
-			ret[i].free_fixup = kam_cmd[i].free_fixup;
-			ret[i].flags = kam_cmd[i].flags;
-		}
-		/* 3.1+ specific stuff */
-		ret[i].fixup_flags = 0;
-		ret[i].module_exports = mod;
-		/* fill known free fixups */
-		if (ret[i].fixup && ret[i].free_fixup == 0)
-			ret[i].free_fixup = get_fixup_free(ret[i].fixup);
-	}
-	return ret;
-error:
-	return 0;
-}
-
-
-
 /* registers a module,  register_f= module register  functions
  * returns <0 on error, 0 on success */
-static int register_module(unsigned ver, union module_exports_u* e,
-					char* path, void* handle)
+static int register_module(module_exports_t* e, char* path, void* handle)
 {
 	int ret, i;
 	struct sr_module* mod;
 	char defmod[64];
+	int n = 0;
 
 	ret=-1;
 
@@ -282,68 +218,49 @@ static int register_module(unsigned ver, union module_exports_u* e,
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
-	memset(mod,0, sizeof(struct sr_module));
+	memset(mod, 0, sizeof(struct sr_module));
 	mod->path=path;
 	mod->handle=handle;
-	mod->orig_mod_interface_ver=ver;
-	/* convert exports to sr31 format */
-	if (ver == 0) {
-		/* ser <= 3.0 */
-		mod->exports.name = e->v0.name;
-		if (e->v0.cmds) {
-			mod->exports.cmds = sr_cmd_exports_convert(ver, e->v0.cmds, mod);
-			if (mod->exports.cmds == 0) {
-				LM_ERR("failed to convert module command exports to 3.1 format"
-						" for module \"%s\" (%s), interface version %d\n",
-						mod->exports.name, mod->path, ver);
-				ret = E_UNSPEC;
-				goto error;
-			}
+
+	/* copy and convert fields */
+	mod->exports.name = e->name;
+
+	mod->exports.dlflags = e->dlflags;
+
+	if(e->cmds) {
+		for (n=0; e->cmds[n].name; n++);
+	}
+	mod->exports.cmds = pkg_malloc(sizeof(ksr_cmd_export_t)*(n+1));
+	memset(mod->exports.cmds, 0, sizeof(ksr_cmd_export_t)*(n+1));
+	for (i=0; i < n; i++) {
+		mod->exports.cmds[i].name = e->cmds[i].name;
+		mod->exports.cmds[i].function = e->cmds[i].function;
+		mod->exports.cmds[i].param_no = e->cmds[i].param_no;
+		mod->exports.cmds[i].fixup = e->cmds[i].fixup;
+		mod->exports.cmds[i].free_fixup = e->cmds[i].free_fixup;
+		mod->exports.cmds[i].flags = e->cmds[i].flags;
+
+		mod->exports.cmds[i].fixup_flags = 0;
+		mod->exports.cmds[i].module_exports = mod;
+		/* fill known free fixups */
+		if (mod->exports.cmds[i].fixup && mod->exports.cmds[i].free_fixup == 0) {
+			mod->exports.cmds[i].free_fixup
+					= get_fixup_free(mod->exports.cmds[i].fixup);
 		}
-		mod->exports.params = e->v0.params;
-		mod->exports.init_f = e->v0.init_f;
-		mod->exports.response_f = e->v0.response_f;
-		mod->exports.destroy_f = e->v0.destroy_f;
-		mod->exports.onbreak_f = e->v0.onbreak_f;
-		mod->exports.init_child_f = e->v0.init_child_f;
-		mod->exports.dlflags = 0; /* not used in ser <= 3.0 */
-		mod->exports.rpc_methods = e->v0.rpc_methods;
-		/* the rest are 0, not used in ser */
-	} else if (ver == 1) {
-		/* kamailio <= 3.0 */
-		mod->exports.name = e->v1.name;
-		if (e->v1.cmds) {
-			mod->exports.cmds = sr_cmd_exports_convert(ver, e->v1.cmds, mod);
-			if (mod->exports.cmds == 0) {
-				LM_ERR("failed to convert module command exports to 3.1 format"
-						" for module \"%s\" (%s), interface version %d\n",
-						mod->exports.name, mod->path, ver);
-				ret = E_UNSPEC;
-				goto error;
-			}
-		}
-		mod->exports.params = e->v1.params;
-		mod->exports.init_f = e->v1.init_f;
-		mod->exports.response_f = e->v1.response_f;
-		mod->exports.destroy_f = e->v1.destroy_f;
-		mod->exports.onbreak_f = 0; /* not used in k <= 3.0 */
-		mod->exports.init_child_f = e->v1.init_child_f;
-		mod->exports.dlflags = e->v1.dlflags;
-		mod->exports.rpc_methods = 0; /* not used in k <= 3.0 */
-		mod->exports.stats = e->v1.stats;
-		mod->exports.nn_cmds = e->v1.nn_cmds;
-		mod->exports.items = e->v1.items;
-		mod->exports.procs = e->v1.procs;
-	} else {
-		LM_ERR("unsupported module interface version %d\n", ver);
-		ret = E_UNSPEC;
-		goto error;
 	}
 
-	if (mod->exports.items) {
+	mod->exports.params = e->params;
+	mod->exports.rpc_methods = e->rpc_methods;
+	mod->exports.pv_items = e->pv_items;
+	mod->exports.response_f = e->response_f;
+	mod->exports.init_mod_f = e->init_mod_f;
+	mod->exports.init_child_f = e->init_child_f;
+	mod->exports.destroy_mod_f = e->destroy_mod_f;
+
+	if (mod->exports.pv_items) {
 		/* register module pseudo-variables for kamailio modules */
 		LM_DBG("register PV from: %s\n", mod->exports.name);
-		if (register_pvars_mod(mod->exports.name, mod->exports.items)!=0) {
+		if (register_pvars_mod(mod->exports.name, mod->exports.pv_items)!=0) {
 			LM_ERR("failed to register pseudo-variables for module %s (%s)\n",
 				mod->exports.name, path);
 			ret = E_UNSPEC;
@@ -451,8 +368,7 @@ int load_module(char* mod_path)
 	void* handle;
 	char* error;
 	mod_register_function mr;
-	union module_exports_u* exp;
-	unsigned* mod_if_ver;
+	module_exports_t* exp;
 	struct sr_module* t;
 	struct stat stat_buf;
 	str modname;
@@ -593,11 +509,6 @@ reload:
 	if (!version_control(handle, path)) {
 		exit(-1);
 	}
-	mod_if_ver = (unsigned *)dlsym(handle, "module_interface_ver");
-	if (mod_if_ver==NULL || (error =(char*)dlerror())!=0 ){
-		LM_ERR("no module interface version in module <%s>\n", path );
-		goto error1;
-	}
 	/* launch register */
 	mr = (mod_register_function)dlsym(handle, "mod_register");
 	if (((error =(char*)dlerror())==0) && mr) {
@@ -617,7 +528,7 @@ reload:
 			goto error;
 		}
 	}
-	exp = (union module_exports_u*)dlsym(handle, "exports");
+	exp = (module_exports_t*)dlsym(handle, "exports");
 	if(exp==NULL) {
 		error =(char*)dlerror();
 		LM_DBG("attempt to lookup exports structure failed - dlerror: %s\n",
@@ -634,7 +545,7 @@ reload:
 			expref.len -= 3;
 		snprintf(exbuf, 62, "_%.*s_exports", expref.len, expref.s);
 		LM_DBG("looking up exports with name: %s\n", exbuf);
-		exp = (union module_exports_u*)dlsym(handle, exbuf);
+		exp = (module_exports_t*)dlsym(handle, exbuf);
 		if(exp==NULL || (error =(char*)dlerror())!=0 ){
 			LM_ERR("failure for exports symbol: %s - dlerror: %s\n",
 					exbuf, (error)?error:"none");
@@ -642,22 +553,20 @@ reload:
 		}
 	}
 	/* hack to allow for kamailio style dlflags inside exports */
-	if (*mod_if_ver == 1) {
-		new_dlflags = exp->v1.dlflags;
-		if (new_dlflags!=dlflags && new_dlflags!=DEFAULT_DLFLAGS) {
-			/* we have to reload the module */
-			dlclose(handle);
-			DEBUG("%s: exports dlflags interface is deprecated and it will not"
-					" be supported in newer versions; consider using"
-					" mod_register() instead\n", path);
-			dlflags=new_dlflags;
-			retries--;
-			if (retries>0) goto reload;
-			LM_ERR("%s: cannot agree on the dlflags\n", path);
-			goto error;
-		}
+	new_dlflags = exp->dlflags;
+	if (new_dlflags!=dlflags && new_dlflags!=DEFAULT_DLFLAGS) {
+		/* we have to reload the module */
+		dlclose(handle);
+		DEBUG("%s: exports dlflags interface is deprecated and it will not"
+				" be supported in newer versions; consider using"
+				" mod_register() instead\n", path);
+		dlflags=new_dlflags;
+		retries--;
+		if (retries>0) goto reload;
+		LM_ERR("%s: cannot agree on the dlflags\n", path);
+		goto error;
 	}
-	if (register_module(*mod_if_ver, exp, path, handle)<0) goto error1;
+	if (register_module(exp, path, handle)<0) goto error1;
 	return 0;
 
 error1:
@@ -687,16 +596,14 @@ static inline int sr_cmd_flags_match(int cflags, int rflags)
 
 /* searches the module list for function name in module mod and returns
  *  a pointer to the "name" function record union or 0 if not found
- * sets also *mod_if_ver to the original module interface version.
  * mod==0 is a wildcard matching all modules
  * flags parameter is OR value of all flags that must match
  */
-sr31_cmd_export_t* find_mod_export_record(char* mod, char* name,
-											int param_no, int flags,
-											unsigned* mod_if_ver)
+ksr_cmd_export_t* find_mod_export_record(char* mod, char* name,
+											int param_no, int flags)
 {
 	struct sr_module* t;
-	sr31_cmd_export_t* cmd;
+	ksr_cmd_export_t* cmd;
 
 	for(t=modules;t;t=t->next){
 		if (mod!=0 && (strcmp(t->exports.name, mod) !=0))
@@ -710,7 +617,6 @@ sr31_cmd_export_t* find_mod_export_record(char* mod, char* name,
 				){
 					LM_DBG("found export of <%s> in module %s [%s]\n",
 						name, t->exports.name, t->path);
-					*mod_if_ver=t->orig_mod_interface_ver;
 					return cmd;
 				}
 			}
@@ -723,26 +629,21 @@ sr31_cmd_export_t* find_mod_export_record(char* mod, char* name,
 
 /* searches the module list for function name and returns
  *  a pointer to the "name" function record union or 0 if not found
- * sets also *mod_if_ver to the module interface version (needed to know
- * which member of the union should be accessed v0 or v1)
  * mod==0 is a wildcard matching all modules
  * flags parameter is OR value of all flags that must match
  */
-sr31_cmd_export_t* find_export_record(char* name,
-											int param_no, int flags,
-											unsigned* mod_if_ver)
+ksr_cmd_export_t* find_export_record(char* name, int param_no, int flags)
 {
-	return find_mod_export_record(0, name, param_no, flags, mod_if_ver);
+	return find_mod_export_record(0, name, param_no, flags);
 }
 
 
 
 cmd_function find_export(char* name, int param_no, int flags)
 {
-	sr31_cmd_export_t* cmd;
-	unsigned mver;
+	ksr_cmd_export_t* cmd;
 
-	cmd = find_export_record(name, param_no, flags, &mver);
+	cmd = find_export_record(name, param_no, flags);
 	return cmd?cmd->function:0;
 }
 
@@ -761,10 +662,9 @@ rpc_export_t* find_rpc_export(char* name, int flags)
  */
 cmd_function find_mod_export(char* mod, char* name, int param_no, int flags)
 {
-	sr31_cmd_export_t* cmd;
-	unsigned mver;
+	ksr_cmd_export_t* cmd;
 
-	cmd=find_mod_export_record(mod, name, param_no, flags, &mver);
+	cmd=find_mod_export_record(mod, name, param_no, flags);
 	if (cmd)
 		return cmd->function;
 
@@ -828,8 +728,8 @@ void destroy_modules()
 	t=modules;
 	while(t) {
 		foo=t->next;
-		if (t->exports.destroy_f){
-			t->exports.destroy_f();
+		if (t->exports.destroy_mod_f){
+			t->exports.destroy_mod_f();
 		}
 		t=foo;
 	}
@@ -984,9 +884,9 @@ static int init_mod( struct sr_module* m )
 		 * propagate it up the stack
 		 */
 		if (init_mod(m->next)!=0) return -1;
-			if (m->exports.init_f) {
+			if (m->exports.init_mod_f) {
 				LM_DBG("%s\n", m->exports.name);
-				if (m->exports.init_f()!=0) {
+				if (m->exports.init_mod_f()!=0) {
 					LM_ERR("Error while initializing module %s (%s)\n",
 								m->exports.name, m->path);
 					return -1;

@@ -85,7 +85,7 @@ static int rabbitmq_disconnect(amqp_connection_state_t *conn);
 static int rabbitmq_reconnect(amqp_connection_state_t *conn);
 
 /* module fixup functions */
-static int fixup_params(void **param, int param_no)
+static int rbmq_fixup_params(void **param, int param_no)
 {
 	if(param_no == 5) {
 		if(fixup_pvar_null(param, 1) != 0) {
@@ -98,18 +98,18 @@ static int fixup_params(void **param, int param_no)
 		}
 		return 0;
 	} else {
-		return fixup_spve_null(param, 1);
+		return fixup_spve_all(param, param_no);
 	}
 
 	return -1;
 }
 
-static int fixup_free_params(void **param, int param_no)
+static int rbmq_fixup_free_params(void **param, int param_no)
 {
 	if(param_no == 5) {
 		return fixup_free_pvar_null(param, 1);
 	} else {
-		return fixup_free_spve_null(param, 1);
+		return fixup_free_spve_all(param, param_no);
 	}
 
 	return -1;
@@ -117,10 +117,10 @@ static int fixup_free_params(void **param, int param_no)
 
 /* module commands */
 static cmd_export_t cmds[] = {
-	{"rabbitmq_publish", (cmd_function)rabbitmq_publish, 4, fixup_params,
-			fixup_free_params, REQUEST_ROUTE},
+	{"rabbitmq_publish", (cmd_function)rabbitmq_publish, 4, fixup_spve_all,
+			fixup_free_spve_all, REQUEST_ROUTE},
 	{"rabbitmq_publish_consume", (cmd_function)rabbitmq_publish_consume, 5,
-			fixup_params, fixup_free_params, REQUEST_ROUTE},
+			rbmq_fixup_params, rbmq_fixup_free_params, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -135,16 +135,16 @@ static param_export_t params[] = {
 
 /* module exports */
 struct module_exports exports = {
-	"rabbitmq", DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,						 /* Exported functions */
-	params, 0,					 /* exported statistics */
-	0,							 /* exported MI functions */
-	0,							 /* exported pseudo-variables */
-	0,							 /* extra processes */
-	mod_init,					 /* module initialization function */
-	0,
-	0,
-	mod_child_init				/* per-child init function */
+	"rabbitmq",				/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	mod_init,			/* module initialization function */
+	mod_child_init,		/* per-child init function */
+	0					/* module destroy function */
 };
 
 /* module init */

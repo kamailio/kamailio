@@ -73,26 +73,21 @@ char *dslistfile = CFG_DIR"dispatcher.list";
 int  ds_force_dst   = 1;
 int  ds_flags       = 0;
 int  ds_use_default = 0;
-static str dst_avp_param = STR_NULL;
-static str grp_avp_param = STR_NULL;
-static str cnt_avp_param = STR_NULL;
-static str dstid_avp_param = STR_NULL;
-static str attrs_avp_param = STR_NULL;
-static str sock_avp_param = STR_NULL;
+str ds_xavp_dst = str_init("_dsdst_");
+int ds_xavp_dst_mode = 0;
+str ds_xavp_ctx = str_init("_dsctx_");
+int ds_xavp_ctx_mode = 0;
+
 str hash_pvar_param = STR_NULL;
 
-int_str dst_avp_name;
-unsigned short dst_avp_type;
-int_str grp_avp_name;
-unsigned short grp_avp_type;
-int_str cnt_avp_name;
-unsigned short cnt_avp_type;
-int_str dstid_avp_name;
-unsigned short dstid_avp_type;
-int_str attrs_avp_name;
-unsigned short attrs_avp_type;
-int_str sock_avp_name;
-unsigned short sock_avp_type;
+str ds_xavp_dst_addr = str_init("uri");
+str ds_xavp_dst_grp = str_init("grp");
+str ds_xavp_dst_dstid = str_init("dstid");
+str ds_xavp_dst_attrs = str_init("attrs");
+str ds_xavp_dst_sock = str_init("sock");
+
+str ds_xavp_ctx_cnt = str_init("cnt");
+
 
 pv_elem_t * hash_param_model = NULL;
 
@@ -120,6 +115,7 @@ int ds_hash_expire = 7200;
 int ds_hash_initexpire = 7200;
 int ds_hash_check_interval = 30;
 int ds_timer_mode = 0;
+int ds_attrs_none = 0;
 
 str ds_outbound_proxy = STR_NULL;
 
@@ -141,6 +137,8 @@ str ds_attrs_pvname   = STR_NULL;
 pv_spec_t ds_attrs_pv;
 
 str ds_event_callback = STR_NULL;
+str ds_db_extra_attrs = STR_NULL;
+param_t *ds_db_extra_attrs_list = NULL;
 
 /** module functions */
 static int mod_init(void);
@@ -155,8 +153,12 @@ static int w_ds_select_dst(struct sip_msg*, char*, char*);
 static int w_ds_select_dst_limit(struct sip_msg*, char*, char*, char*);
 static int w_ds_select_domain(struct sip_msg*, char*, char*);
 static int w_ds_select_domain_limit(struct sip_msg*, char*, char*, char*);
+static int w_ds_select_routes(sip_msg_t*, char*, char*);
+static int w_ds_select_routes_limit(sip_msg_t*, char*, char*, char*);
 static int w_ds_next_dst(struct sip_msg*, char*, char*);
 static int w_ds_next_domain(struct sip_msg*, char*, char*);
+static int w_ds_set_dst(struct sip_msg*, char*, char*);
+static int w_ds_set_domain(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst0(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst1(struct sip_msg*, char*, char*);
 static int w_ds_load_unset(struct sip_msg*, char*, char*);
@@ -189,9 +191,17 @@ static cmd_export_t cmds[]={
 		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_domain", (cmd_function)w_ds_select_domain_limit, 3,
 		fixup_igp_all, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_select_routes", (cmd_function)w_ds_select_routes, 2,
+		fixup_spve_spve, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_select_routes", (cmd_function)w_ds_select_routes_limit, 3,
+		fixup_spve_spve_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0,
+		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_set_dst",       (cmd_function)w_ds_set_dst,      0,
+		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_set_domain",    (cmd_function)w_ds_set_domain,   0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_mark_dst",      (cmd_function)w_ds_mark_dst0,     0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
@@ -233,12 +243,10 @@ static param_export_t params[]={
 	{"force_dst",       INT_PARAM, &ds_force_dst},
 	{"flags",           INT_PARAM, &ds_flags},
 	{"use_default",     INT_PARAM, &ds_use_default},
-	{"dst_avp",         PARAM_STR, &dst_avp_param},
-	{"grp_avp",         PARAM_STR, &grp_avp_param},
-	{"cnt_avp",         PARAM_STR, &cnt_avp_param},
-	{"dstid_avp",       PARAM_STR, &dstid_avp_param},
-	{"attrs_avp",       PARAM_STR, &attrs_avp_param},
-	{"sock_avp",        PARAM_STR, &sock_avp_param},
+	{"xavp_dst",        PARAM_STR, &ds_xavp_dst},
+	{"xavp_dst_mode",   PARAM_INT, &ds_xavp_dst_mode},
+	{"xavp_ctx",        PARAM_STR, &ds_xavp_ctx},
+	{"xavp_ctx_mode",   PARAM_INT, &ds_xavp_ctx_mode},
 	{"hash_pvar",       PARAM_STR, &hash_pvar_param},
 	{"setid_pvname",    PARAM_STR, &ds_setid_pvname},
 	{"attrs_pvname",    PARAM_STR, &ds_attrs_pvname},
@@ -255,28 +263,28 @@ static param_export_t params[]={
 	{"ds_hash_expire",     INT_PARAM, &ds_hash_expire},
 	{"ds_hash_initexpire", INT_PARAM, &ds_hash_initexpire},
 	{"ds_hash_check_interval", INT_PARAM, &ds_hash_check_interval},
-	{"outbound_proxy",  PARAM_STR, &ds_outbound_proxy},
+	{"outbound_proxy",     PARAM_STR, &ds_outbound_proxy},
 	{"ds_default_socket",  PARAM_STR, &ds_default_socket},
 	{"ds_timer_mode",      PARAM_INT, &ds_timer_mode},
 	{"event_callback",     PARAM_STR, &ds_event_callback},
+	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
+	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
 	{0,0,0}
 };
 
 
 /** module exports */
 struct module_exports exports= {
-	"dispatcher",
+	"dispatcher",    /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,
-	(destroy_function) destroy,
-	child_init  /* per-child init function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	destroy          /* module destroy function */
 };
 /* clang-format on */
 
@@ -285,9 +293,10 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	pv_spec_t avp_spec;
 	str host;
 	int port, proto;
+	param_hooks_t phooks;
+	param_t *pit = NULL;
 
 	if(ds_ping_active_init() < 0) {
 		return -1;
@@ -344,6 +353,22 @@ static int mod_init(void)
 		return -1;
 
 	if(ds_db_url.s) {
+		if(ds_db_extra_attrs.s!=NULL && ds_db_extra_attrs.len>2) {
+			if(ds_db_extra_attrs.s[ds_db_extra_attrs.len-1]==';') {
+				ds_db_extra_attrs.len--;
+			}
+			if (parse_params(&ds_db_extra_attrs, CLASS_ANY, &phooks,
+						&ds_db_extra_attrs_list)<0) {
+				LM_ERR("failed to parse extra attrs parameter\n");
+				return -1;
+			}
+			for(pit = ds_db_extra_attrs_list; pit!=NULL; pit=pit->next) {
+				if(pit->body.s==NULL || pit->body.len<=0) {
+					LM_ERR("invalid db extra attrs parameter\n");
+					return -1;
+				}
+			}
+		}
 		if(init_ds_db() != 0) {
 			LM_ERR("could not initiate a connect to the database\n");
 			return -1;
@@ -355,117 +380,6 @@ static int mod_init(void)
 		} else {
 			LM_DBG("loaded dispatching list\n");
 		}
-	}
-
-	if(dst_avp_param.s && dst_avp_param.len > 0) {
-		if(pv_parse_spec(&dst_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					dst_avp_param.len, dst_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &dst_avp_name, &dst_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", dst_avp_param.len,
-					dst_avp_param.s);
-			return -1;
-		}
-	} else {
-		dst_avp_name.n = 0;
-		dst_avp_type = 0;
-	}
-	if(grp_avp_param.s && grp_avp_param.len > 0) {
-		if(pv_parse_spec(&grp_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					grp_avp_param.len, grp_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &grp_avp_name, &grp_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", grp_avp_param.len,
-					grp_avp_param.s);
-			return -1;
-		}
-	} else {
-		grp_avp_name.n = 0;
-		grp_avp_type = 0;
-	}
-	if(cnt_avp_param.s && cnt_avp_param.len > 0) {
-		if(pv_parse_spec(&cnt_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					cnt_avp_param.len, cnt_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &cnt_avp_name, &cnt_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", cnt_avp_param.len,
-					cnt_avp_param.s);
-			return -1;
-		}
-	} else {
-		cnt_avp_name.n = 0;
-		cnt_avp_type = 0;
-	}
-	if(dstid_avp_param.s && dstid_avp_param.len > 0) {
-		if(pv_parse_spec(&dstid_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					dstid_avp_param.len, dstid_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &dstid_avp_name, &dstid_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", dstid_avp_param.len,
-					dstid_avp_param.s);
-			return -1;
-		}
-	} else {
-		dstid_avp_name.n = 0;
-		dstid_avp_type = 0;
-	}
-
-	if(attrs_avp_param.s && attrs_avp_param.len > 0) {
-		if(pv_parse_spec(&attrs_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					attrs_avp_param.len, attrs_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &attrs_avp_name, &attrs_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", attrs_avp_param.len,
-					attrs_avp_param.s);
-			return -1;
-		}
-	} else {
-		attrs_avp_name.n = 0;
-		attrs_avp_type = 0;
-	}
-
-	if(sock_avp_param.s && sock_avp_param.len > 0) {
-		if(pv_parse_spec(&sock_avp_param, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					sock_avp_param.len, sock_avp_param.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &sock_avp_name, &sock_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s]- invalid AVP definition\n", sock_avp_param.len,
-					sock_avp_param.s);
-			return -1;
-		}
-	} else {
-		sock_avp_name.n = 0;
-		sock_avp_type = 0;
 	}
 
 	if(hash_pvar_param.s && *hash_pvar_param.s) {
@@ -494,26 +408,21 @@ static int mod_init(void)
 		}
 	}
 
-	if(dstid_avp_param.s && dstid_avp_param.len > 0) {
-		if(ds_hash_size > 0) {
-			if(ds_hash_load_init(
-					   1 << ds_hash_size, ds_hash_expire, ds_hash_initexpire)
+	if(ds_hash_size > 0) {
+		if(ds_hash_load_init(
+					1 << ds_hash_size, ds_hash_expire, ds_hash_initexpire)
+				< 0)
+			return -1;
+		if(ds_timer_mode == 1) {
+			if(sr_wtimer_add(ds_ht_timer, NULL, ds_hash_check_interval) < 0)
+				return -1;
+		} else {
+			if(register_timer(ds_ht_timer, NULL, ds_hash_check_interval)
 					< 0)
 				return -1;
-			if(ds_timer_mode == 1) {
-				if(sr_wtimer_add(ds_ht_timer, NULL, ds_hash_check_interval) < 0)
-					return -1;
-			} else {
-				if(register_timer(ds_ht_timer, NULL, ds_hash_check_interval)
-						< 0)
-					return -1;
-			}
-		} else {
-			LM_ERR("call load dispatching DSTID_AVP set but no size"
-				   " for hash table (see ds_hash_size parameter)\n");
-			return -1;
 		}
 	}
+
 	/* Only, if the Probing-Timer is enabled the TM-API needs to be loaded: */
 	if(ds_ping_interval > 0) {
 		/*****************************************************
@@ -662,8 +571,8 @@ static int w_ds_select_addr(
  */
 static int w_ds_select(struct sip_msg *msg, char *set, char *alg)
 {
-	return w_ds_select_addr(
-			msg, set, alg, 0 /* limit number of dst*/, 2 /*set no dst/uri*/);
+	return w_ds_select_addr(msg, set, alg, 0 /* limit number of dst*/,
+					DS_SETOP_XAVP /*set no dst/uri*/);
 }
 
 /**
@@ -673,7 +582,7 @@ static int w_ds_select_limit(
 		struct sip_msg *msg, char *set, char *alg, char *limit)
 {
 	return w_ds_select_addr(msg, set, alg, limit /* limit number of dst*/,
-			2 /*set no dst/uri*/);
+			DS_SETOP_XAVP /*set no dst/uri*/);
 }
 
 /**
@@ -681,8 +590,8 @@ static int w_ds_select_limit(
  */
 static int w_ds_select_dst(struct sip_msg *msg, char *set, char *alg)
 {
-	return w_ds_select_addr(
-			msg, set, alg, 0 /* limit number of dst*/, 0 /*set dst uri*/);
+	return w_ds_select_addr(msg, set, alg, 0 /* limit number of dst*/,
+				DS_SETOP_DSTURI /*set dst uri*/);
 }
 
 /**
@@ -691,8 +600,8 @@ static int w_ds_select_dst(struct sip_msg *msg, char *set, char *alg)
 static int w_ds_select_dst_limit(
 		struct sip_msg *msg, char *set, char *alg, char *limit)
 {
-	return w_ds_select_addr(
-			msg, set, alg, limit /* limit number of dst*/, 0 /*set dst uri*/);
+	return w_ds_select_addr(msg, set, alg, limit /* limit number of dst*/,
+			DS_SETOP_DSTURI /*set dst uri*/);
 }
 
 /**
@@ -700,8 +609,8 @@ static int w_ds_select_dst_limit(
  */
 static int w_ds_select_domain(struct sip_msg *msg, char *set, char *alg)
 {
-	return w_ds_select_addr(
-			msg, set, alg, 0 /* limit number of dst*/, 1 /*set host port*/);
+	return w_ds_select_addr(msg, set, alg, 0 /* limit number of dst*/,
+			DS_SETOP_RURI /*set host port*/);
 }
 
 /**
@@ -710,8 +619,169 @@ static int w_ds_select_domain(struct sip_msg *msg, char *set, char *alg)
 static int w_ds_select_domain_limit(
 		struct sip_msg *msg, char *set, char *alg, char *limit)
 {
-	return w_ds_select_addr(
-			msg, set, alg, limit /* limit number of dst*/, 1 /*set host port*/);
+	return w_ds_select_addr(msg, set, alg, limit /* limit number of dst*/,
+			DS_SETOP_RURI /*set host port*/);
+}
+
+/**
+ *
+ */
+static int ki_ds_select_routes_limit(sip_msg_t *msg, str *srules, str *smode,
+		int rlimit)
+{
+	int i;
+	int vret;
+	int gret;
+	int vfirst;
+	sr_xval_t nxval;
+	ds_select_state_t vstate;
+
+	memset(&vstate, 0, sizeof(ds_select_state_t));
+	vstate.limit = (uint32_t)rlimit;
+	if(vstate.limit == 0) {
+		LM_DBG("Limit set to 0 - forcing to unlimited\n");
+		vstate.limit = 0xffffffff;
+	}
+	vret = -1;
+	gret = -1;
+	vfirst = 0;
+	i = 0;
+	while(i<srules->len) {
+		vstate.setid = 0;
+		for(; i<srules->len; i++) {
+			if(srules->s[i]<'0' || srules->s[i]>'9') {
+				if(srules->s[i]=='=') {
+					i++;
+					break;
+				} else {
+					LM_ERR("invalid character in [%.*s] at [%d]\n",
+							srules->len, srules->s, i);
+					return -1;
+				}
+			}
+			vstate.setid = (vstate.setid * 10) + (srules->s[i] - '0');
+		}
+		vstate.alg = 0;
+		for(; i<srules->len; i++) {
+			if(srules->s[i]<'0' || srules->s[i]>'9') {
+				if(srules->s[i]==';') {
+					i++;
+					break;
+				} else {
+					LM_ERR("invalid character in [%.*s] at [%d]\n",
+							srules->len, srules->s, i);
+					return -1;
+				}
+			}
+			vstate.alg = (vstate.alg * 10) + (srules->s[i] - '0');
+		}
+		LM_DBG("routing with setid=%d alg=%d cnt=%d limit=0x%x (%u)\n",
+			vstate.setid, vstate.alg, vstate.cnt, vstate.limit, vstate.limit);
+		
+		vstate.umode = DS_SETOP_XAVP;
+		if(vfirst==0) {
+			switch(smode->s[0]) {
+				case '0':
+				case 'd':
+				case 'D':
+					vstate.umode = DS_SETOP_DSTURI;
+				break;
+				case '1':
+				case 'r':
+				case 'R':
+					vstate.umode = DS_SETOP_RURI;
+				break;
+				case '2':
+				case 'x':
+				case 'X':
+				break;
+				default:
+					LM_ERR("invalid routing mode parameter: %.*s\n",
+							smode->len, smode->s);
+					return -1;
+			}
+			vfirst = 1;
+		}
+		vret = ds_manage_routes(msg, &vstate);
+		if(vret<0) {
+			LM_DBG("failed to select target destinations from %d=%d [%.*s]\n",
+					vstate.setid, vstate.alg, srules->len, srules->s);
+			/* continue to try other target groups */
+		} else {
+			if(vret>0) {
+				gret = vret;
+			}
+		}
+	}
+
+	if(gret<0) {
+		/* no selection of a target address */
+		LM_DBG("failed to select any target destinations from [%.*s]\n",
+					srules->len, srules->s);
+		/* return last failure code when trying to select target addresses */
+		return vret;
+	}
+
+	/* add cnt value to xavp */
+	if(((ds_xavp_ctx_mode & DS_XAVP_CTX_SKIP_CNT)==0)
+			&& (ds_xavp_ctx.len >= 0)) {
+		/* add to xavp the number of selected dst records */
+		memset(&nxval, 0, sizeof(sr_xval_t));
+		nxval.type = SR_XTYPE_INT;
+		nxval.v.i = vstate.cnt;
+		if(xavp_add_xavp_value(&ds_xavp_ctx, &ds_xavp_ctx_cnt, &nxval, NULL)==NULL) {
+			LM_ERR("failed to add cnt value to xavp\n");
+			return -1;
+		}
+	}
+
+	LM_DBG("selected target destinations: %d\n", vstate.cnt);
+	return gret;
+}
+
+/**
+ *
+ */
+static int ki_ds_select_routes(sip_msg_t *msg, str *srules, str *smode)
+{
+	return ki_ds_select_routes_limit(msg, srules, smode, 0);
+}
+
+/**
+ *
+ */
+static int w_ds_select_routes(sip_msg_t *msg, char *lrules, char *umode)
+{
+	return w_ds_select_routes_limit(msg, lrules, umode, 0);
+}
+
+/**
+ *
+ */
+static int w_ds_select_routes_limit(sip_msg_t *msg, char *lrules, char *umode,
+		char *rlimit)
+{
+	str vrules;
+	str vmode;
+	int vlimit;
+
+	if(fixup_get_svalue(msg, (gparam_t*)lrules, &vrules)<0) {
+		LM_ERR("failed to get routing rules parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)umode, &vmode)<0) {
+		LM_ERR("failed to get update mode parameter\n");
+		return -1;
+	}
+	if(rlimit!=NULL) {
+		if(fixup_get_ivalue(msg, (gparam_t*)rlimit, &vlimit)<0) {
+			LM_ERR("failed to get limit parameter\n");
+			return -1;
+		}
+	} else {
+		vlimit = 0;
+	}
+	return ki_ds_select_routes_limit(msg, &vrules, &vmode, vlimit);
 }
 
 /**
@@ -719,7 +789,7 @@ static int w_ds_select_domain_limit(
  */
 static int w_ds_next_dst(struct sip_msg *msg, char *str1, char *str2)
 {
-	return ds_next_dst(msg, 0 /*set dst uri*/);
+	return ds_update_dst(msg, DS_USE_NEXT, DS_SETOP_DSTURI /*set dst uri*/);
 }
 
 /**
@@ -727,7 +797,23 @@ static int w_ds_next_dst(struct sip_msg *msg, char *str1, char *str2)
  */
 static int w_ds_next_domain(struct sip_msg *msg, char *str1, char *str2)
 {
-	return ds_next_dst(msg, 1 /*set host port*/);
+	return ds_update_dst(msg, DS_USE_NEXT, DS_SETOP_RURI /*set host port*/);
+}
+
+/**
+ *
+ */
+static int w_ds_set_dst(struct sip_msg *msg, char *str1, char *str2)
+{
+	return ds_update_dst(msg, DS_USE_CRT, DS_SETOP_DSTURI /*set dst uri*/);
+}
+
+/**
+ *
+ */
+static int w_ds_set_domain(struct sip_msg *msg, char *str1, char *str2)
+{
+	return ds_update_dst(msg, DS_USE_CRT, DS_SETOP_RURI /*set host port*/);
 }
 
 /**
@@ -810,9 +896,8 @@ static int w_ds_load_update(struct sip_msg *msg, char *str1, char *str2)
  */
 static int ds_warn_fixup(void **param, int param_no)
 {
-	if(!dst_avp_param.s || !grp_avp_param.s || !cnt_avp_param.s
-			|| !sock_avp_param.s) {
-		LM_ERR("failover functions used, but required AVP parameters"
+	if(ds_xavp_dst.len<=0 || ds_xavp_ctx.len<=0) {
+		LM_ERR("failover functions used, but required XAVP parameters"
 			   " are NULL -- feature disabled\n");
 	}
 	return 0;
@@ -1120,7 +1205,7 @@ static int ki_ds_select_domain_limit(sip_msg_t *msg, int set, int alg, int limit
  */
 static int ki_ds_next_dst(sip_msg_t *msg)
 {
-	return ds_next_dst(msg, 0 /*set dst uri*/);
+	return ds_update_dst(msg, DS_USE_NEXT, DS_SETOP_DSTURI /*set dst uri*/);
 }
 
 /**
@@ -1128,9 +1213,24 @@ static int ki_ds_next_dst(sip_msg_t *msg)
  */
 static int ki_ds_next_domain(sip_msg_t *msg)
 {
-	return ds_next_dst(msg, 1 /*set host port*/);
+	return ds_update_dst(msg, DS_USE_NEXT, DS_SETOP_RURI /*set host port*/);
 }
 
+/**
+ *
+ */
+static int ki_ds_set_dst(sip_msg_t *msg)
+{
+	return ds_update_dst(msg, DS_USE_CRT, DS_SETOP_DSTURI /*set dst uri*/);
+}
+
+/**
+ *
+ */
+static int ki_ds_set_domain(sip_msg_t *msg)
+{
+	return ds_update_dst(msg, DS_USE_CRT, DS_SETOP_RURI /*set host port*/);
+}
 
 /**
  *
@@ -1162,6 +1262,11 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dispatcher"), str_init("ds_set_domain"),
+		SR_KEMIP_INT, ki_ds_set_domain,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dispatcher"), str_init("ds_select_dst"),
 		SR_KEMIP_INT, ki_ds_select_dst,
 		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
@@ -1172,8 +1277,23 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dispatcher"), str_init("ds_select_routes"),
+		SR_KEMIP_INT, ki_ds_select_routes,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_select_routes_limit"),
+		SR_KEMIP_INT, ki_ds_select_routes_limit,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dispatcher"), str_init("ds_next_dst"),
 		SR_KEMIP_INT, ki_ds_next_dst,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_set_dst"),
+		SR_KEMIP_INT, ki_ds_set_dst,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -1275,24 +1395,25 @@ static const char *dispatcher_rpc_list_doc[2] = {
  */
 int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 {
+	int i = 0, rc = 0;
+	void *rh;
+	void *sh;
+	void *vh;
+	void *wh;
+	void *lh;
+	void *dh;
+	int j;
+	char c[3];
+	str data = STR_NULL;
+
 	if(!node)
 		return 0;
 
-	int i = 0, rc = 0;
 	for(; i < 2; ++i) {
 		rc = ds_rpc_print_set(node->next[i], rpc, ctx, rpc_handle);
 		if(rc != 0)
 			return rc;
 	}
-
-	void *rh;
-	void *sh;
-	void *vh;
-	void *wh;
-	void *lh; // latency stats handle
-	int j;
-	char c[3];
-	str data = STR_NULL;
 
 	if(rpc->struct_add(rpc_handle, "{", "SET", &sh) < 0) {
 		rpc->fault(ctx, 500, "Internal error set structure");
@@ -1325,23 +1446,22 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 			c[1] = 'X';
 
 		if(node->dlist[j].attrs.body.s) {
-			if(rpc->struct_add(vh, "Ssd{", "URI", &node->dlist[j].uri, "FLAGS",
-					   c, "PRIORITY", node->dlist[j].priority, "ATTRS", &wh)
-					< 0) {
+			if(rpc->struct_add(vh, "Ssd{", "URI", &node->dlist[j].uri,
+					"FLAGS", c,
+					"PRIORITY", node->dlist[j].priority,
+					"ATTRS", &wh) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSdddS", "BODY",
-					   &(node->dlist[j].attrs.body), "DUID",
-					   (node->dlist[j].attrs.duid.s)
-							   ? &(node->dlist[j].attrs.duid)
-							   : &data,
-					   "MAXLOAD", node->dlist[j].attrs.maxload, "WEIGHT",
-					   node->dlist[j].attrs.weight, "RWEIGHT",
-					   node->dlist[j].attrs.rweight, "SOCKET",
-					   (node->dlist[j].attrs.socket.s)
-							   ? &(node->dlist[j].attrs.socket)
-							   : &data)
+			if(rpc->struct_add(wh, "SSdddS",
+						"BODY", &(node->dlist[j].attrs.body),
+						"DUID", (node->dlist[j].attrs.duid.s)
+									? &(node->dlist[j].attrs.duid) : &data,
+						"MAXLOAD", node->dlist[j].attrs.maxload,
+						"WEIGHT", node->dlist[j].attrs.weight,
+						"RWEIGHT", node->dlist[j].attrs.rweight,
+						"SOCKET", (node->dlist[j].attrs.socket.s)
+									? &(node->dlist[j].attrs.socket) : &data)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating attrs struct");
 				return -1;
@@ -1366,6 +1486,16 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 					  "TIMEOUT", node->dlist[j].latency_stats.timeout)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
+				return -1;
+			}
+		}
+		if (ds_hash_size>0) {
+			if(rpc->struct_add(vh, "{", "RUNTIME", &dh) < 0) {
+				rpc->fault(ctx, 500, "Internal error creating runtime struct");
+				return -1;
+			}
+			if (rpc->struct_add(dh, "d", "DLGLOAD", node->dlist[j].dload) < 0) {
+				rpc->fault(ctx, 500, "Internal error creating runtime attrs");
 				return -1;
 			}
 		}

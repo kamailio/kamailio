@@ -29,6 +29,12 @@
 #include "km_my_con.h"
 #include "km_db_mysql.h"
 #include <mysql.h>
+
+/* MariaDB exports MYSQL_VERSION_ID as well, but changed numbering scheme */
+#if MYSQL_VERSION_ID > 80000 && ! defined MARIADB_BASE_VERSION
+#include <stdbool.h>
+#endif
+
 #include "../../core/mem/mem.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
@@ -44,7 +50,11 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	char *host, *grp, *egrp;
 	unsigned int connection_flag = 0;
 #if MYSQL_VERSION_ID > 50012
-	my_bool rec;
+#if MYSQL_VERSION_ID > 80000 && ! defined MARIADB_BASE_VERSION
+	bool rec;
+#else
+        my_bool rec;
+#endif
 #endif
 
 	if (!id) {

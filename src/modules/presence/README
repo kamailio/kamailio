@@ -1272,7 +1272,7 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
    used in obtaining the status of the subscription and processing the
    notified body. A reference to the document should be put in the
    auth_rules_doc of the subs_t structure given as a parameter to the
-   functions described bellow.
+   functions described below.
 
 4.  get_auth_status
 

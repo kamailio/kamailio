@@ -310,16 +310,14 @@ static stat_export_t statistics[] = {
 struct module_exports exports = {
 	"nat_traversal", // module name
 	DEFAULT_DLFLAGS, // dlopen flags
-	commands,		 // exported functions
-	parameters,		 // exported parameters
-	NULL,			 // exported statistics (initialized early in mod_init)
-	NULL,			 // exported MI functions
-	pvars,			 // exported pseudo-variables
-	NULL,			 // extra processes
+	commands,	 // exported functions
+	parameters,	 // exported parameters
+	0,		 // exported RPC methods
+	pvars,		 // exported pseudo-variables
+	reply_filter, 	 // reply processing function
 	mod_init,	 // module init function (before fork. kids will inherit)
-	reply_filter, // reply processing function
-	mod_destroy,  // destroy function
-	child_init	// child init function
+	child_init, 	 // child init function
+	mod_destroy  	 // destroy function
 };
 
 
@@ -2094,15 +2092,15 @@ static int pv_get_keepalive_socket(
 }
 
 
-static int pv_get_source_uri(
-		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+static int pv_get_source_uri(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	static char uri[128];
 
 	if(msg == NULL || res == NULL)
 		return -1;
 
-	snprintf(uri, 64, "sip:%s:%d", ip_addr2a(&msg->rcv.src_ip),
+	uri[0] = '\0';
+	snprintf(uri, 64, "sip:%s:%d", ip_addr2strz(&msg->rcv.src_ip),
 			msg->rcv.src_port);
 
 	switch(msg->rcv.proto) {

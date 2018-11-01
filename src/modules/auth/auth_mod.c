@@ -152,31 +152,31 @@ sl_api_t slb;
  */
 static cmd_export_t cmds[] = {
 	{"consume_credentials",    w_consume_credentials,                0,
-		0, REQUEST_ROUTE},
+		0, 0, REQUEST_ROUTE},
 	{"www_challenge",          (cmd_function)www_challenge,          2,
-		fixup_auth_challenge, REQUEST_ROUTE},
+		fixup_auth_challenge, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"proxy_challenge",        (cmd_function)proxy_challenge,        2,
-		fixup_auth_challenge, REQUEST_ROUTE},
+		fixup_auth_challenge, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"auth_challenge",         (cmd_function)w_auth_challenge,       2,
-		fixup_auth_challenge, REQUEST_ROUTE},
+		fixup_auth_challenge, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"pv_www_authorize",       (cmd_function)pv_www_authenticate,    3,
-		fixup_pv_auth, REQUEST_ROUTE},
+		fixup_pv_auth, 0, REQUEST_ROUTE},
 	{"pv_www_authenticate",    (cmd_function)pv_www_authenticate,    3,
-		fixup_pv_auth, REQUEST_ROUTE},
+		fixup_pv_auth, 0, REQUEST_ROUTE},
 	{"pv_www_authenticate",    (cmd_function)pv_www_authenticate2,   4,
-		fixup_pv_auth, REQUEST_ROUTE},
+		fixup_pv_auth, 0, REQUEST_ROUTE},
 	{"pv_proxy_authorize",     (cmd_function)pv_proxy_authenticate,  3,
-		fixup_pv_auth, REQUEST_ROUTE},
+		fixup_pv_auth, 0, REQUEST_ROUTE},
 	{"pv_proxy_authenticate",  (cmd_function)pv_proxy_authenticate,  3,
-		fixup_pv_auth, REQUEST_ROUTE},
+		fixup_pv_auth, 0, REQUEST_ROUTE},
 	{"auth_get_www_authenticate",  (cmd_function)w_auth_get_www_authenticate,  3,
-		fixup_auth_get_www_authenticate, REQUEST_ROUTE},
+		fixup_auth_get_www_authenticate, 0, REQUEST_ROUTE},
 	{"has_credentials",        w_has_credentials,                    1,
-		fixup_spve_null, REQUEST_ROUTE},
+		fixup_spve_null, 0, REQUEST_ROUTE},
 	{"pv_auth_check",         (cmd_function)w_pv_auth_check,           4,
-		fixup_pv_auth_check, REQUEST_ROUTE},
+		fixup_pv_auth_check, 0, REQUEST_ROUTE},
 	{"bind_auth_s",           (cmd_function)bind_auth_s, 0, 0, 0        },
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -216,14 +216,15 @@ static param_export_t params[] = {
  */
 struct module_exports exports = {
 	"auth",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
-	0,          /* RPC methods */
 	params,
-	mod_init,   /* module initialization function */
+	0,          /* RPC methods */
+        0,          /* pseudo-variables exports */
 	0,          /* response function */
-	destroy,    /* destroy function */
-	0,          /* oncancel function */
-	0           /* child initialization function */
+	mod_init,   /* module initialization function */
+	0,          /* child initialization function */
+	destroy     /* destroy function */
 };
 
 

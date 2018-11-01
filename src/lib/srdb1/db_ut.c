@@ -69,7 +69,10 @@
 #include "db_ut.h"
 
 
-inline int db_str2int(const char* _s, int* _v)
+/**
+ *
+ */
+int db_str2int(const char* _s, int* _v)
 {
 	long tmp;
 	char* p = NULL;
@@ -95,7 +98,39 @@ inline int db_str2int(const char* _s, int* _v)
 }
 
 
-inline int db_str2longlong(const char* _s, long long * _v)
+/**
+ *
+ */
+int db_str2uint(const char* _s, unsigned int* _v)
+{
+	unsigned long tmp;
+	char* p = NULL;
+
+	if (!_s || !_v) {
+		LM_ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	tmp = strtoul(_s, &p, 10);
+	if ((tmp == ULONG_MAX && errno == ERANGE) ||
+				((long)tmp < INT_MIN) || (tmp > UINT_MAX)) {
+		LM_ERR("Value out of range\n");
+		return -1;
+	}
+	if (p && *p != '\0') {
+		LM_ERR("Unexpected characters: [%s]\n", p);
+		return -2;
+	}
+
+	*_v = (unsigned int)tmp;
+	return 0;
+}
+
+
+/**
+ *
+ */
+int db_str2longlong(const char* _s, long long * _v)
 {
 	long long tmp;
 	char* p = NULL;
@@ -120,10 +155,38 @@ inline int db_str2longlong(const char* _s, long long * _v)
 }
 
 
+/**
+ *
+ */
+int db_str2ulonglong(const char* _s, unsigned long long * _v)
+{
+	unsigned long long tmp;
+	char* p = NULL;
+
+	if (!_s || !_v) {
+		LM_ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	tmp = strtoull(_s, &p, 10);
+	if (errno == ERANGE) {
+		LM_ERR("Value out of range\n");
+		return -1;
+	}
+	if (p && *p != '\0') {
+		LM_ERR("Unexpected characters: [%s]\n", p);
+		return -2;
+	}
+
+	*_v = tmp;
+	return 0;
+}
+
+
 /*
  * Convert a string to double
  */
-inline int db_str2double(const char* _s, double* _v)
+int db_str2double(const char* _s, double* _v)
 {
 	if ((!_s) || (!_v)) {
 		LM_ERR("Invalid parameter value\n");
@@ -135,11 +198,10 @@ inline int db_str2double(const char* _s, double* _v)
 }
 
 
-
 /*
  * Convert an integer to string
  */
-inline int db_int2str(int _v, char* _s, int* _l)
+int db_int2str(int _v, char* _s, int* _l)
 {
 	int ret;
 
@@ -160,9 +222,32 @@ inline int db_int2str(int _v, char* _s, int* _l)
 
 
 /*
- * Convert an long long to string
+ * Convert an unsigned integer to string
  */
-inline int db_longlong2str(long long _v, char* _s, int* _l)
+int db_uint2str(unsigned int _v, char* _s, int* _l)
+{
+	int ret;
+
+	if ((!_s) || (!_l) || (!*_l)) {
+		LM_ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	ret = snprintf(_s, *_l, "%u", _v);
+	if (ret < 0 || ret >= *_l) {
+		LM_ERR("Error in snprintf\n");
+		return -1;
+	}
+	*_l = ret;
+
+	return 0;
+}
+
+
+/*
+ * Convert a long long to string
+ */
+int db_longlong2str(long long _v, char* _s, int* _l)
 {
 	int ret;
 
@@ -183,9 +268,32 @@ inline int db_longlong2str(long long _v, char* _s, int* _l)
 
 
 /*
+ * Convert an unsigned long long to string
+ */
+int db_ulonglong2str(unsigned long long _v, char* _s, int* _l)
+{
+	int ret;
+
+	if ((!_s) || (!_l) || (!*_l)) {
+		LM_ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	ret = snprintf(_s, *_l, "%llu", _v);
+	if (ret < 0 || ret >= *_l) {
+		LM_ERR("Error in snprintf\n");
+		return -1;
+	}
+	*_l = ret;
+
+	return 0;
+}
+
+
+/*
  * Convert a double to string
  */
-inline int db_double2str(double _v, char* _s, int* _l)
+int db_double2str(double _v, char* _s, int* _l)
 {
 	int ret;
 
@@ -208,7 +316,7 @@ inline int db_double2str(double _v, char* _s, int* _l)
 /*
  * Convert a string to time_t
  */
-inline int db_str2time(const char* _s, time_t* _v)
+int db_str2time(const char* _s, time_t* _v)
 {
 	struct tm time;
 
@@ -240,7 +348,7 @@ inline int db_str2time(const char* _s, time_t* _v)
 /**
  *
  */
-inline int db_time2str_ex(time_t _v, char* _s, int* _l, int _qmode)
+int db_time2str_ex(time_t _v, char* _s, int* _l, int _qmode)
 {
 	struct tm* t;
 	int l;
@@ -275,7 +383,7 @@ inline int db_time2str_ex(time_t _v, char* _s, int* _l, int _qmode)
 /**
  *
  */
-inline int db_time2str(time_t _v, char* _s, int* _l)
+int db_time2str(time_t _v, char* _s, int* _l)
 {
 	return db_time2str_ex(_v, _s, _l, 1);
 }

@@ -154,14 +154,12 @@ struct module_exports exports = {
 	DEFAULT_DLFLAGS,
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
+	0,          /* exported RPC methods */
 	mod_items,  /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
 	0,          /* response function */
-	destroy,    /* destroy function */
-	0           /* child initialization function */
+	mod_init,   /* module initialization function */
+	0,          /* child initialization function */
+	destroy     /* destroy function */
 };
 
 
@@ -244,6 +242,9 @@ void bm_reset_timer(int i)
 	bm_mycfg->tindex[i]->last_sum = 0;
 	bm_mycfg->tindex[i]->global_max = 0;
 	bm_mycfg->tindex[i]->global_min = 0xffffffff;
+	bm_mycfg->tindex[i]->period_sum = 0;
+	bm_mycfg->tindex[i]->period_max = 0;
+	bm_mycfg->tindex[i]->period_min = 0xffffffff;
 }
 
 void reset_timers(void)
@@ -361,6 +362,11 @@ int _bm_log_timer(unsigned int id)
 			bm_mycfg->tindex[id]->global_max,
 			((double)bm_mycfg->tindex[id]->sum)/bm_mycfg->tindex[id]->calls);
 
+		/* Fill data for last period. */
+		bm_mycfg->tindex[id]->period_sum = bm_mycfg->tindex[id]->last_sum;
+		bm_mycfg->tindex[id]->period_max = bm_mycfg->tindex[id]->last_max;
+		bm_mycfg->tindex[id]->period_min = bm_mycfg->tindex[id]->last_min;
+		
 		bm_mycfg->tindex[id]->last_sum = 0;
 		bm_mycfg->tindex[id]->last_max = 0;
 		bm_mycfg->tindex[id]->last_min = 0xffffffff;
@@ -610,6 +616,167 @@ void bm_rpc_loglevel(rpc_t* rpc, void* ctx)
 	bm_mycfg->loglevel = v1;
 }
 
+/**
+ * Internal buffer to convert llu numbers into strings.
+ */
+#define BUFFER_S_LEN 100
+static char buffer_s[BUFFER_S_LEN];
+
+/**
+ * Create a RPC structure for a timer.
+ *
+ * /return 0 on success.
+ */
+int bm_rpc_timer_struct(rpc_t* rpc, void* ctx, int id)
+{
+	void *handle; /* Handle for RPC structure. */
+
+	/* Create empty structure and obtain its handle */
+	if (rpc->add(ctx, "{", &handle) < 0) {
+		return -1;
+	}
+		
+	int enabled = timer_active(id);
+
+	if (rpc->struct_add(handle, "s", "name", bm_mycfg->tindex[id]->name) < 0) {
+		return -1;
+	}
+		
+	if (rpc->struct_add(handle, "s", "state", (enabled==0)?"disabled":"enabled") < 0) {
+		return -1;
+	}
+
+	if (rpc->struct_add(handle, "d", "id", id) < 0) {
+		return -1;
+	}
+
+	if (rpc->struct_add(handle, "d", "granularity", bm_mycfg->granularity) < 0) {
+		return -1;
+	}
+
+	/* We use a string to represent long long unsigned integers. */
+	int len;
+	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->period_sum);
+	if (len <= 0 || len >= BUFFER_S_LEN) {
+		LM_ERR("Buffer overflow\n");
+		return -1;
+	}
+	if (rpc->struct_add(handle, "s", "period_sum", buffer_s) < 0) {
+		return -1;
+	}
+
+	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->period_min);
+	if (len <= 0 || len >= BUFFER_S_LEN) {
+		LM_ERR("Buffer overflow\n");
+		return -1;
+	}
+	if (rpc->struct_add(handle, "s", "period_min", buffer_s) < 0) {
+		return -1;
+	}
+
+	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->period_max);
+	if (len <= 0 || len >= BUFFER_S_LEN) {
+		LM_ERR("Buffer overflow\n");
+		return -1;
+	}
+	if (rpc->struct_add(handle, "s", "period_max", buffer_s) < 0) {
+		return -1;
+	}
+
+	if (bm_mycfg->granularity > 0) {
+		double media = ((double)bm_mycfg->tindex[id]->period_sum)/bm_mycfg->granularity;
+
+		if (rpc->struct_add(handle, "f", "period_media", media) < 0) {
+			return -1;
+		}
+	}
+
+	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->calls);
+	if (len <= 0 || len >= BUFFER_S_LEN) {
+		LM_ERR("Buffer overflow\n");
+		return -1;
+	}
+	if (rpc->struct_add(handle, "s", "calls", buffer_s) < 0) {
+		return -1;
+	}
+
+	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->sum);
+	if (len <= 0 || len >= BUFFER_S_LEN) {
+		LM_ERR("Buffer overflow\n");
+		return -1;
+	}
+	if (rpc->struct_add(handle, "s", "sum", buffer_s) < 0) {
+		return -1;
+	}
+
+	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->global_min);
+	if (len <= 0 || len >= BUFFER_S_LEN) {
+		LM_ERR("Buffer overflow\n");
+		return -1;
+	}
+	if (rpc->struct_add(handle, "s", "global_min", buffer_s) < 0) {
+		return -1;
+	}
+
+	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->global_max);
+	if (len <= 0 || len >= BUFFER_S_LEN) {
+		LM_ERR("Buffer overflow\n");
+		return -1;
+	}
+	if (rpc->struct_add(handle, "s", "global_max", buffer_s) < 0) {
+		return -1;
+	}
+
+	if (bm_mycfg->tindex[id]->calls > 0) {
+		double media = ((double)bm_mycfg->tindex[id]->sum)/bm_mycfg->tindex[id]->calls;
+
+		if (rpc->struct_add(handle, "f", "global_media", media) < 0) {
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+void bm_rpc_timer_list(rpc_t* rpc, void* ctx)
+{
+	int id;
+	
+	for (id = 0; id < bm_mycfg->nrtimers; id++) {
+
+		if (bm_rpc_timer_struct(rpc, ctx, id)) {
+			LM_ERR("Failure writing RPC structure for timer: %d\n", id);
+			return;
+		}
+
+	} /* for (id = 0; id < bm_mycfg->nrtimers; id++) */
+
+	return;
+}
+
+void bm_rpc_timer_name_list(rpc_t* rpc, void* ctx)
+{
+	char *name = NULL;
+	unsigned int id = 0;
+
+	if(rpc->scan(ctx, "s", &name) < 1) {
+		LM_WARN("invalid timer name\n");
+		rpc->fault(ctx, 400, "Invalid timer name");
+		return;
+	}
+	if(_bm_register_timer(name, 0, &id)!=0) {
+		rpc->fault(ctx, 500, "Register timer failure");
+		return;
+	}
+
+	if (bm_rpc_timer_struct(rpc, ctx, id)) {
+		LM_ERR("Failure writing RPC structure for timer: %d\n", id);
+		return;
+	}
+
+	return;
+}
+
 static const char* bm_rpc_enable_global_doc[2] = {
 	"Enable/disable benchmarking",
 	0
@@ -630,6 +797,16 @@ static const char* bm_rpc_loglevel_doc[2] = {
 	0
 };
 
+static const char* bm_rpc_timer_list_doc[2] = {
+	"List all timers",
+	0
+};
+
+static const char* bm_rpc_timer_name_list_doc[2] = {
+	"List a timer based on its name",
+	0
+};
+
 rpc_export_t bm_rpc_cmds[] = {
 	{"benchmark.enable_global", bm_rpc_enable_global,
 		bm_rpc_enable_global_doc, 0},
@@ -639,6 +816,10 @@ rpc_export_t bm_rpc_cmds[] = {
 		bm_rpc_granularity_doc, 0},
 	{"benchmark.loglevel", bm_rpc_loglevel,
 		bm_rpc_loglevel_doc, 0},
+	{"benchmark.timer_list", bm_rpc_timer_list,
+		bm_rpc_timer_list_doc, 0},
+	{"benchmark.timer_name_list", bm_rpc_timer_name_list,
+		bm_rpc_timer_name_list_doc, 0},
 	{0, 0, 0, 0}
 };
 

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * UNIXODBC module
  *
  * Copyright (C) 2005-2006 Marco Lorrai
@@ -22,13 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- *
- * History:
- * --------
- *  2005-12-01  initial commit (chgen)
- *  2006-01-10  UID (username) and PWD (password) attributes added to
- *              connection string (bogdan)
- *  2006-05-05  extract_error passes back last error state on return (sgupta)
  */
 
 #include "connection.h"

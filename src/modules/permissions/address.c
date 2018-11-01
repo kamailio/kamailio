@@ -255,6 +255,11 @@ dberror:
  */
 int reload_address_table_cmd(void)
 {
+	if(!db_url.s) {
+		LM_ERR("db_url not set\n");
+		return -1;
+	}
+
 	if (!db_handle) {
 		db_handle = perm_dbf.init(&db_url);
 		if (!db_handle) {
@@ -525,7 +530,7 @@ int w_allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
  * subnet table in any group. If yes, returns that group. If not returns -1.
  * Port value 0 in cached address and group table matches any port.
  */
-int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2)
+int ki_allow_source_address_group(sip_msg_t* _msg)
 {
 	int group = -1;
 
@@ -551,17 +556,63 @@ int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2)
 }
 
 /*
+ * Checks if source address/port is found in cached address or
+ * subnet table in any group. If yes, returns that group. If not returns -1.
+ * Port value 0 in cached address and group table matches any port.
+ */
+int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2)
+{
+	return ki_allow_source_address_group(_msg);
+}
+
+/*
  * Checks if address/port is found in cached address or
  * subnet table in any group. If yes, returns that group. If not returns -1.
  * Port value 0 in cached address and group table matches any port.
  */
-int allow_address_group(struct sip_msg* _msg, char* _addr, char* _port)
+int ki_allow_address_group(sip_msg_t* _msg, str* _addr, int _port)
 {
 	int group = -1;
 
-	unsigned int port;
-	str ips;
 	ip_addr_t *ipa;
+
+	ipa=strtoipX(_addr);
+
+	if ( ipa ) {
+		LM_DBG("looking for <%.*s, %u> in address table\n",
+				_addr->len, _addr->s, (unsigned int)_port);
+		if(addr_hash_table) {
+			group = find_group_in_addr_hash_table(*addr_hash_table,
+					ipa, (unsigned int)_port);
+			LM_DBG("Found address in group <%d>\n", group);
+
+			if (group != -1) return group;
+		}
+		if(subnet_table) {
+			LM_DBG("looking for <%.*s, %u> in subnet table\n",
+					_addr->len, _addr->s, _port);
+			group = find_group_in_subnet_table(*subnet_table,
+					ipa, (unsigned int)_port);
+			LM_DBG("Found a match of subnet in group <%d>\n", group);
+		}
+	} else {
+		LM_DBG("looking for <%.*s, %u> in domain_name table\n",
+				_addr->len, _addr->s, (unsigned int)_port);
+		if(domain_list_table) {
+			group = find_group_in_domain_name_table(*domain_list_table,
+					_addr, (unsigned int)_port);
+			LM_DBG("Found a match of domain_name in group <%d>\n", group);
+		}
+	}
+
+	LM_DBG("Found <%d>\n", group);
+	return group;
+}
+
+int allow_address_group(struct sip_msg* _msg, char* _addr, char* _port)
+{
+	int port;
+	str ips;
 
 	if (_addr==NULL
 			|| (fixup_get_svalue(_msg, (gparam_p)_addr, &ips) < 0)) {
@@ -569,40 +620,10 @@ int allow_address_group(struct sip_msg* _msg, char* _addr, char* _port)
 		return -1;
 	}
 	if (_port==NULL
-			|| (fixup_get_ivalue(_msg, (gparam_p)_port, (int*)&port) < 0)) {
+			|| (fixup_get_ivalue(_msg, (gparam_p)_port, &port) < 0)) {
 		LM_ERR("cannot get value of port pvar\n");
 		return -1;
 	}
 
-	ipa=strtoipX(&ips);
-
-	if ( ipa ) {
-		LM_DBG("looking for <%.*s, %u> in address table\n",
-				ips.len, ips.s, port);
-		if(addr_hash_table) {
-			group = find_group_in_addr_hash_table(*addr_hash_table,
-					ipa, port);
-			LM_DBG("Found address in group <%d>\n", group);
-
-			if (group != -1) return group;
-		}
-		if(subnet_table) {
-			LM_DBG("looking for <%.*s, %u> in subnet table\n",
-					ips.len, ips.s, port);
-			group = find_group_in_subnet_table(*subnet_table,
-					ipa, port);
-			LM_DBG("Found a match of subnet in group <%d>\n", group);
-		}
-	} else {
-		LM_DBG("looking for <%.*s, %u> in domain_name table\n",
-				ips.len, ips.s, port);
-		if(domain_list_table) {
-			group = find_group_in_domain_name_table(*domain_list_table,
-					&ips, port);
-			LM_DBG("Found a match of domain_name in group <%d>\n", group);
-		}
-	}
-
-	LM_DBG("Found <%d>\n", group);
-	return group;
+	return ki_allow_address_group(_msg, &ips, port);
 }

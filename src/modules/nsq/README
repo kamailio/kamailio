@@ -39,17 +39,9 @@ Emmanuel Schmidbauer
               4.8. max_in_flight(int)
               4.9. consumer_workers(int)
               4.10. topic_channel(str)
-              4.11. db_url(str)
-              4.12. presentity_table(str)
-              4.13. db_table_lock_type(int)
 
-        5. Functions
-
-              5.1. nsq_pua_publish(json_payload)
-
-        6. Pseudo Variables
-        7. Transformations
-        8. Event Routes
+        5. Pseudo Variables
+        6. Event Routes
 
    List of Examples
 
@@ -63,13 +55,8 @@ Emmanuel Schmidbauer
    1.8. Set max_in_flight parameter
    1.9. Set consumer_workers parameter
    1.10. Set topic_channel parameter
-   1.11. Set db_url parameter
-   1.12. Set presentity_table parameter
-   1.13. Set db_table_lock_type parameter
-   1.14. nsq_pua_publish usage
-   1.15. Example usage of $nsqE pseudo variable
-   1.16. nsq.json usage
-   1.17. Define the event routes
+   1.11. Example usage of $nsqE pseudo variable
+   1.12. Define the event routes
 
 Chapter 1. Admin Guide
 
@@ -97,17 +84,9 @@ Chapter 1. Admin Guide
         4.8. max_in_flight(int)
         4.9. consumer_workers(int)
         4.10. topic_channel(str)
-        4.11. db_url(str)
-        4.12. presentity_table(str)
-        4.13. db_table_lock_type(int)
 
-   5. Functions
-
-        5.1. nsq_pua_publish(json_payload)
-
-   6. Pseudo Variables
-   7. Transformations
-   8. Event Routes
+   5. Pseudo Variables
+   6. Event Routes
 
 1. Overview
 
@@ -127,8 +106,10 @@ Chapter 1. Admin Guide
    Supported NSQ operations are:
      * Subscribe to a Topic and Channel
 
-   The NSQ module also has support to publish updates to presence module
-   through the nsq_pua_publish() function.
+   IMPORTANT The `nsq.json` transformation is deprecated in favor of the
+   json module's `json.parse` transformation. The `nsq_pua_publish()`
+   function is deprecated in favor of pua_json module's
+   `pua_json_publish()` function.
 
 2. How it works
 
@@ -175,9 +156,6 @@ Chapter 1. Admin Guide
    4.8. max_in_flight(int)
    4.9. consumer_workers(int)
    4.10. topic_channel(str)
-   4.11. db_url(str)
-   4.12. presentity_table(str)
-   4.13. db_table_lock_type(int)
 
 4.1. lookupd_address(str)
 
@@ -316,96 +294,16 @@ modparam("nsq", "topic_channel", "My-NSQ-Topic:My-NSQ-Channel")
 modparam("nsq", "topic_channel", "My-NSQ-Topic-2:My-NSQ-Channel-2")
 ...
 
-4.11. db_url(str)
+5. Pseudo Variables
 
-   The database for the presentity table.
-
-   If set, the nsq_pua_publish function will update the presentity status
-   in the database.
-
-   Usage: presence related.
-
-   Default value is “NULL”.
-
-   Example 1.11. Set db_url parameter
-...
-modparam("nsq", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
-...
-
-4.12. presentity_table(str)
-
-   The name of the presentity table in the database.
-
-   Default value is “presentity”.
-
-   Example 1.12. Set presentity_table parameter
-...
-modparam("nsq", "presentity_table", "my_presentity_table")
-...
-
-4.13. db_table_lock_type(int)
-
-   Enable (=1) or disable (=0) the locks for table during a transaction.
-
-   Default value is “1”.
-
-   Example 1.13. Set db_table_lock_type parameter
-...
-modparam("nsq", "db_table_lock_type", 0)
-...
-
-5. Functions
-
-   5.1. nsq_pua_publish(json_payload)
-
-5.1.  nsq_pua_publish(json_payload)
-
-   The function build presentity state from json_payload and updates
-   presentity table.
-
-   Usage: presence related.
-
-   This function can be used from ANY ROUTE.
-
-   Example 1.14. nsq_pua_publish usage
-...
-event_route[nsq:consumer-event-presence-update]
-{
-        xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(ns
-qE{nsq.json,From})");
-        nsq_pua_publish($nsqE);
-        pres_refresh_watchers("$(nsqE{nsq.json,From})", "$(nsqE{nsq.json,Event-P
-ackage})", 1);
-}
-...
-
-6. Pseudo Variables
-
-   Example 1.15. Example usage of $nsqE pseudo variable
+   Example 1.11. Example usage of $nsqE pseudo variable
         xlog("L_INFO", "received payload $nsqE from NSQ");
         ...
 }
 
      * $nsqE Contains the payload of a consumed message
 
-7. Transformations
-
-   The prefix for nsq transformations is nsq.
-
-   You can use the transformation to extract values from the json
-   structured $nsqE pseudo variable
-     * json
-       Example 1.16. nsq.json usage
-...
-# extract value of "Custom-Data" from $nsqE pseudo variable and set it to $var(C
-ustom-Data)
-$var(Custom-Data) = $(nsqE{nsq.json,Custom-Data});
-if($var(Custom-Data) != $null) {
-        xlog("L_INFO", "$ci|log|custom data: $var(Custom-Data)");
-}
-...
-
-8. Event Routes
+6. Event Routes
 
    The worker process issues an event-route where we can act on the
    received payload. The name of the event-route is composed by values
@@ -419,7 +317,7 @@ if($var(Custom-Data) != $null) {
    We can set the key/subkey pair on a subscription base. check the
    payload on subscribe.
 
-   Example 1.17. Define the event routes
+   Example 1.12. Define the event routes
 ...
 modparam("nsq", "consumer_event_key", "Event-Category")
 modparam("nsq", "consumer_event_sub_key", "Event-Name")
@@ -430,8 +328,11 @@ event_route[nsq:consumer-event-presence-update]
         # presence is the value extracted from Event-Category field in json payl
 oad
         # update is the value extracted from Event-Name field in json payload
-        xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(ns
-qE{nsq.json,From})");
+        if ($(nsqE{json.parse,Event-Package}) == "dialog") {
+                xlog("L_INFO", "received $(nsqE{json.parse,Event-Package}) updat
+e for $(nsqE{json.parse,From})");
+                pua_json_publish($nsqE);
+        }
         ...
 }
 
@@ -439,8 +340,8 @@ event_route[nsq:consumer-event-presence]
 {
         # presence is the value extracted from Event-Category field in json payl
 oad
-        xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(ns
-qE{nsq.json,From})");
+        xlog("L_INFO", "received $(nsqE{json.parse,Event-Package}) update for $(
+nsqE{json.parse,From})");
         ...
 }
 

@@ -84,8 +84,6 @@
 		<column><field>password</field><type>DB1_STR</type></column>
 		<column><field>ha1</field><type>DB1_STR</type></column>
 		<column><field>ha1b</field><type>DB1_STR</type></column>
-		<column><field>email_address</field><type>DB1_STR</type></column>
-		<column><field>rpid</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of usr_preferences table-->
 	<db_table id="usr_preferences">
@@ -1223,8 +1221,6 @@
 				<col><field>password</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
-				<col><field>email_address</field></col>
-				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -1236,8 +1232,6 @@
 				<col><field>password</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
-				<col><field>email_address</field></col>
-				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -1252,8 +1246,6 @@
 				<col><field>password</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
-				<col><field>email_address</field></col>
-				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

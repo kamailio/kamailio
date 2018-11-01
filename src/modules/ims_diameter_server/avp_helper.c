@@ -42,6 +42,7 @@
 #include "../../core/basex.h"
 
 #define STRSIZE 8*1024
+#define HEXDUMP "hexdump"
 
 // ID of current message
 static unsigned int current_msg_id = 0;
@@ -109,7 +110,7 @@ cJSON * avp2json(AAA_AVP *avp_t) {
 		case AAA_AVP_DATA_TYPE:
 			l = 0;
 			for (i=0; i < avp_t->data.len; i++) {
-				l+=snprintf(dest+l,STRSIZE-l-1,"%x", ((unsigned char*)avp_t->data.s)[i]);
+				l+=snprintf(dest+l,STRSIZE-l-1,"%02x", ((unsigned char*)avp_t->data.s)[i]);
 			}
 			cJSON_AddStringToObject(avp, "data", dest);
 			if (avp_t->data.len == 4) {
@@ -250,6 +251,34 @@ int diameterserver_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_co
     return 1;
 }
 
+unsigned int parse_hex_half_digit(const char * str) {
+  if (*str>='0' && *str<='9') {
+    return (*str)-'0';
+  } else if (*str>='A' && *str<='F') {
+    return 10+(*str)-'A';
+  } else if (*str>='a' && *str<='f') {
+    return 10+(*str)-'a';
+  }
+  return 0;
+  
+}
+
+char* parse_hexdump(const char * hexdump) {
+  const char *src = hexdump;
+  char *hexdump_copy = strdup(hexdump);
+  unsigned char *dst = (unsigned char*)hexdump_copy;
+  while (*src) {
+    unsigned h=parse_hex_half_digit(src++);
+    h=h<<4;
+    if (!*src) {
+      return hexdump_copy;
+    }
+    h+=parse_hex_half_digit(src++);
+    *dst++ = (unsigned char) h;
+  }
+  return hexdump_copy;
+}
+
 void parselist(AAAMessage *response, AAA_AVP_LIST *list, cJSON * item, int level) {
 	int flags;
 	char x[4];
@@ -274,13 +303,16 @@ void parselist(AAAMessage *response, AAA_AVP_LIST *list, cJSON * item, int level
 	if (cJSON_GetObjectItem(item,"string")) {
 		LM_DBG("%i) String: %s\n", level, cJSON_GetObjectItem(item,"string")->valuestring);
 	}
+	if (cJSON_GetObjectItem(item,HEXDUMP)) {
+		LM_DBG("%i) String: %s\n", level, cJSON_GetObjectItem(item,HEXDUMP)->valuestring);
+	}
 	if (cJSON_GetObjectItem(item,"int32")) {
 		LM_DBG("%i) Integer: %i\n", level, cJSON_GetObjectItem(item,"int32")->valueint);
 	}
 
 	if (!cJSON_GetObjectItem(item,"avpCode")) {
 		LM_WARN("mandatory field missing: avpCode\n");
-		return;
+                return;
 	}
 	if (!cJSON_GetObjectItem(item,"vendorId")) {
 		LM_WARN("mandatory field missing: vendorId (avpCode %i)\n", cJSON_GetObjectItem(item,"avpCode")->valueint);
@@ -327,8 +359,20 @@ void parselist(AAAMessage *response, AAA_AVP_LIST *list, cJSON * item, int level
 			 strlen(cJSON_GetObjectItem(item,"string")->valuestring), cJSON_GetObjectItem(item,"avpCode")->valueint, flags,
 			 cJSON_GetObjectItem(item,"vendorId")->valueint, AVP_DUPLICATE_DATA, __FUNCTION__);
 		}
+	} else if (cJSON_GetObjectItem(item,HEXDUMP)) {
+                char * binary_form = parse_hexdump(cJSON_GetObjectItem(item,HEXDUMP)->valuestring);
+		if (list) {
+                        diameterserver_add_avp_list(list, binary_form,
+			 strlen(cJSON_GetObjectItem(item,HEXDUMP)->valuestring) / 2, cJSON_GetObjectItem(item,"avpCode")->valueint, flags,
+			 cJSON_GetObjectItem(item,"vendorId")->valueint, AVP_DUPLICATE_DATA, __FUNCTION__);
+		} else {
+                        diameterserver_add_avp(response, binary_form,
+			 strlen(cJSON_GetObjectItem(item,HEXDUMP)->valuestring) / 2, cJSON_GetObjectItem(item,"avpCode")->valueint, flags,
+			 cJSON_GetObjectItem(item,"vendorId")->valueint, AVP_DUPLICATE_DATA, __FUNCTION__);
+		}
+                free(binary_form);
 	} else {
-		LM_WARN("Not a string, int32, list? Invalid field definition... (%i:%i)\n",
+		LM_WARN("Not a string, int32, list, hexdump? Invalid field definition... (%i:%i)\n",
 			cJSON_GetObjectItem(item,"avpCode")->valueint, cJSON_GetObjectItem(item,"vendorId")->valueint);
 	}
 }

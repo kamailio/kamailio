@@ -807,7 +807,7 @@ int imc_handle_list(struct sip_msg* msg, imc_cmd_t *cmd,
 		goto error;
 	}
 	p = imc_body_buf;
-	strncpy(p, "Members:\n", 9);
+	memcpy(p, "Members:\n", 9);
 	p+=9;
 	imp = room->members;
 

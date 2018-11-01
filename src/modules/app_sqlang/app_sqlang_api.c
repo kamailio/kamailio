@@ -275,7 +275,23 @@ static int sqlang_gettype(HSQUIRRELVM J, int idx)
 /**
  *
  */
-static SQInteger sqlang_sr_pv_get(HSQUIRRELVM J)
+static SQInteger sqlang_sr_get_str_null(HSQUIRRELVM J, int rmode)
+{
+	if(rmode==1) {
+		sqlang_pushlstring(J, "<<null>>", 8);
+		return 1;
+	} else if(rmode==2) {
+		sqlang_pushlstring(J, "", 0);
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+/**
+ *
+ */
+static SQInteger sqlang_sr_pv_get_mode(HSQUIRRELVM J, int rmode)
 {
 	str pvn;
 	pv_spec_t *pvs;
@@ -287,24 +303,24 @@ static SQInteger sqlang_sr_pv_get(HSQUIRRELVM J)
 
 	pvn.s = (char*)sqlang_to_string(J, 0);
 	if(pvn.s==NULL || env_J->msg==NULL)
-		return 0;
+		return sqlang_sr_get_str_null(J, rmode);
 
 	pvn.len = strlen(pvn.s);
 	LM_DBG("pv get: %s\n", pvn.s);
 	pl = pv_locate_name(&pvn);
 	if(pl != pvn.len) {
 		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return 0;
+		return sqlang_sr_get_str_null(J, rmode);
 	}
 	pvs = pv_cache_get(&pvn);
 	if(pvs==NULL) {
 		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return 0;
+		return sqlang_sr_get_str_null(J, rmode);
 	}
 	memset(&val, 0, sizeof(pv_value_t));
 	if(pv_get_spec_value(env_J->msg, pvs, &val) != 0) {
 		LM_ERR("unable to get pv value for [%s]\n", pvn.s);
-		return 0;
+		return sqlang_sr_get_str_null(J, rmode);
 	}
 	if(val.flags&PV_VAL_NULL) {
 		sqlang_pushstring(J, NULL);
@@ -316,6 +332,30 @@ static SQInteger sqlang_sr_pv_get(HSQUIRRELVM J)
 	}
 	sqlang_pushlstring(J, val.rs.s, val.rs.len);
 	return 1;
+}
+
+/**
+ *
+ */
+static SQInteger sqlang_sr_pv_get(HSQUIRRELVM J)
+{
+	return sqlang_sr_pv_get_mode(J, 0);
+}
+
+/**
+ *
+ */
+static SQInteger sqlang_sr_pv_getw(HSQUIRRELVM J)
+{
+	return sqlang_sr_pv_get_mode(J, 1);
+}
+
+/**
+ *
+ */
+static SQInteger sqlang_sr_pv_gete(HSQUIRRELVM J)
+{
+	return sqlang_sr_pv_get_mode(J, 2);
 }
 
 /**
@@ -508,6 +548,8 @@ static SQInteger sqlang_sr_pv_is_null (HSQUIRRELVM J)
 
 const SQRegFunction _sr_kemi_pv_J_Map[] = {
 	{ "get", sqlang_sr_pv_get, 2 /* 1 args */, NULL },
+	{ "getw", sqlang_sr_pv_getw, 2 /* 1 args */, NULL },
+	{ "gete", sqlang_sr_pv_gete, 2 /* 1 args */, NULL },
 	{ "seti", sqlang_sr_pv_seti, 3 /* 2 args */, NULL },
 	{ "sets", sqlang_sr_pv_sets, 4 /* 2 args */, NULL },
 	{ "unset", sqlang_sr_pv_unset, 2 /* 1 args */, NULL },
@@ -555,9 +597,8 @@ static SQInteger sqlang_sr_modf (HSQUIRRELVM J)
 	int i;
 	int mod_type;
 	struct run_act_ctx ra_ctx;
-	unsigned modver;
 	struct action *act;
-	sr31_cmd_export_t* expf;
+	ksr_cmd_export_t* expf;
 	sr_sqlang_env_t *env_J;
 
 	ret = 1;
@@ -599,7 +640,7 @@ static SQInteger sqlang_sr_modf (HSQUIRRELVM J)
 		}
 	}
 
-	expf = find_export_record(sqlangv[0], argc-1, 0, &modver);
+	expf = find_export_record(sqlangv[0], argc-1, 0);
 	if (expf==NULL) {
 		LM_ERR("function '%s' is not available\n", sqlangv[0]);
 		goto error;
@@ -1300,18 +1341,60 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 		break;
 		case 4:
 			if(ket->ptypes[0]==SR_KEMIP_STR
-					|| ket->ptypes[1]==SR_KEMIP_STR
-					|| ket->ptypes[2]==SR_KEMIP_STR
-					|| ket->ptypes[3]==SR_KEMIP_STR) {
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_STR) {
 				ret = ((sr_kemi_fmssss_f)(ket->func))(env_J->msg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s);
 				return sr_kemi_sqlang_return_int(J, ket, ret);
 			} else if(ket->ptypes[0]==SR_KEMIP_STR
-					|| ket->ptypes[1]==SR_KEMIP_STR
-					|| ket->ptypes[2]==SR_KEMIP_INT
-					|| ket->ptypes[3]==SR_KEMIP_INT) {
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_INT) {
+				ret = ((sr_kemi_fmsssn_f)(ket->func))(env_J->msg,
+						&vps[0].s, &vps[1].s, &vps[2].s, vps[3].n);
+				return sr_kemi_sqlang_return_int(J, ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_STR
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_INT
+					&& ket->ptypes[3]==SR_KEMIP_INT) {
 				ret = ((sr_kemi_fmssnn_f)(ket->func))(env_J->msg,
 						&vps[0].s, &vps[1].s, vps[2].n, vps[3].n);
+				return sr_kemi_sqlang_return_int(J, ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_STR
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_INT
+					&& ket->ptypes[3]==SR_KEMIP_INT) {
+				ret = ((sr_kemi_fmsnnn_f)(ket->func))(env_J->msg,
+						&vps[0].s, vps[1].n, vps[2].n, vps[3].n);
+				return sr_kemi_sqlang_return_int(J, ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_STR) {
+				ret = ((sr_kemi_fmnsss_f)(ket->func))(env_J->msg,
+						vps[0].n, &vps[1].s, &vps[2].s, &vps[3].s);
+				return sr_kemi_sqlang_return_int(J, ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_STR) {
+				ret = ((sr_kemi_fmnnss_f)(ket->func))(env_J->msg,
+						vps[0].n, vps[1].n, &vps[2].s, &vps[3].s);
+				return sr_kemi_sqlang_return_int(J, ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_INT
+					&& ket->ptypes[3]==SR_KEMIP_STR) {
+				ret = ((sr_kemi_fmnnns_f)(ket->func))(env_J->msg,
+						vps[0].n, vps[1].n, vps[2].n, &vps[3].s);
+				return sr_kemi_sqlang_return_int(J, ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_INT
+					&& ket->ptypes[3]==SR_KEMIP_INT) {
+				ret = ((sr_kemi_fmnnnn_f)(ket->func))(env_J->msg,
+						vps[0].n, vps[1].n, vps[2].n, vps[3].n);
 				return sr_kemi_sqlang_return_int(J, ket, ret);
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
@@ -1321,10 +1404,10 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 		break;
 		case 5:
 			if(ket->ptypes[0]==SR_KEMIP_STR
-					|| ket->ptypes[1]==SR_KEMIP_STR
-					|| ket->ptypes[2]==SR_KEMIP_STR
-					|| ket->ptypes[3]==SR_KEMIP_STR
-					|| ket->ptypes[4]==SR_KEMIP_STR) {
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_STR
+					&& ket->ptypes[4]==SR_KEMIP_STR) {
 				ret = ((sr_kemi_fmsssss_f)(ket->func))(env_J->msg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s,
 						&vps[4].s);
@@ -1337,11 +1420,11 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 		break;
 		case 6:
 			if(ket->ptypes[0]==SR_KEMIP_STR
-					|| ket->ptypes[1]==SR_KEMIP_STR
-					|| ket->ptypes[2]==SR_KEMIP_STR
-					|| ket->ptypes[3]==SR_KEMIP_STR
-					|| ket->ptypes[4]==SR_KEMIP_STR
-					|| ket->ptypes[5]==SR_KEMIP_STR) {
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR
+					&& ket->ptypes[3]==SR_KEMIP_STR
+					&& ket->ptypes[4]==SR_KEMIP_STR
+					&& ket->ptypes[5]==SR_KEMIP_STR) {
 				ret = ((sr_kemi_fmssssss_f)(ket->func))(env_J->msg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s,
 						&vps[4].s, &vps[5].s);

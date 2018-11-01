@@ -376,7 +376,9 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 3.11. is_myself(uri)
 
    Check if the parameter matches the 'myself' condition (i.e., is a local
-   IP or domain).
+   IP or domain). Note that if the port is missing in the URI, then no
+   port matching is done (in other words, port matching is skipped -- it
+   does not use default SIP ports 5060 or 5061 for matching).
 
    Meaning of the parameters is as follows:
      * uri - Valid SIP URI or IP address to check against the list of
@@ -632,6 +634,11 @@ kamcmd core.modules
 4.23.  stats.get_statistics
 
    Print the list of available internal statistics.
+
+   NOTE: the result is an array of strings that have the list of
+   statistics formated like "name = value", being propagated over the time
+   from the MI variant. Use "stats.fetch" command to have a more
+   JSON-friendly output.
 
    Parameters: statsid - which statistics to be printed. If set to 'all'
    then all statistics are printed; if set to 'statsgroup:' then all

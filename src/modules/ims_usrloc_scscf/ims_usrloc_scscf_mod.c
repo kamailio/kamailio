@@ -173,23 +173,17 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-stat_export_t mod_stats[] = {
-	{0,0,0}
-};
-
 struct module_exports exports = {
 	"ims_usrloc_scscf",
 	DEFAULT_DLFLAGS, /*!< dlopen flags */
 	cmds,       /*!< Exported functions */
 	params,     /*!< Export parameters */
-	mod_stats,  /*!< exported statistics */
-	0,          /*!< exported MI functions */
+	0,          /*!< exported RPC methods */
 	0,          /*!< exported pseudo-variables */
-	0,          /*!< extra processes */
-	mod_init,   /*!< Module initialization function */
 	0,          /*!< Response function */
-	destroy,    /*!< Destroy function */
-	child_init  /*!< Child initialization function */
+	mod_init,   /*!< Module initialization function */
+	child_init, /*!< Child initialization function */
+	destroy    /*!< Destroy function */
 };
 
 

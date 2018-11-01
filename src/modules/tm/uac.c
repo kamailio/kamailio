@@ -583,11 +583,18 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 
 error2:
 #ifdef TM_DEL_UNREF
-	if (!is_ack) {
-		UNREF_FREE(new_cell);
-	}else
-#endif
+	if (is_ack) {
 		free_cell(new_cell);
+	} else {
+		if(atomic_get_int(&new_cell->ref_count)==0) {
+			free_cell(new_cell);
+		} else {
+			UNREF_FREE(new_cell, 0);
+		}
+	}
+#else
+	free_cell(new_cell);
+#endif
 error3:
 	return ret;
 }
@@ -758,7 +765,7 @@ struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
 	}
 
 	/* TODO: need next 2? */
-	lack->activ_type = TYPE_LOCAL_ACK;
+	lack->rbtype = TYPE_LOCAL_ACK;
 	lack->my_T = trans;
 
 	return lack;

@@ -1,6 +1,4 @@
-/* 
- * $Id$ 
- *
+/*
  * UNIXODBC module
  *
  * Copyright (C) 2005-2006 Marco Lorrai
@@ -18,16 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- *
- * History:
- * --------
- *  2005-12-01  initial commit (chgen)
- *  2006-04-04  simplified link list (sgupta)
- *  2006-05-05  removed static allocation of 1k per column data (sgupta)
  */
 
 #ifndef _UNIXODBC_LIST_H_

@@ -373,5 +373,11 @@ int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param,
 int pv_parse_env_name(pv_spec_p sp, str *in);
 
 int pv_get_env(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+
+int pv_parse_ksr_attrs_name(pv_spec_p sp, str *in);
+
+int pv_get_ksr_attrs(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+
 #endif
 

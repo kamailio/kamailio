@@ -186,7 +186,10 @@ int db_mysql_submit_query_async(const db1_con_t* _h, const str* _s)
 	p[1].len = _s->len;
 	strncpy(p[1].s, _s->s, _s->len);
 
-	async_task_push(atask);
+	if (async_task_push(atask)<0) {
+		shm_free(atask);
+		return -1;
+	}
 
 	return 0;
 }

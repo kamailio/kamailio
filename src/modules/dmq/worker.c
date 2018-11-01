@@ -114,7 +114,7 @@ void worker_loop(int id)
 						current_job->msg, &peer_response, dmq_node);
 				if(ret_value < 0) {
 					LM_ERR("running job failed\n");
-					continue;
+					goto nextjob;
 				}
 				/* add the body to the reply */
 				if(peer_response.body.s) {
@@ -122,7 +122,7 @@ void worker_loop(int id)
 							   &peer_response.content_type)
 							< 0) {
 						LM_ERR("error adding lumps\n");
-						continue;
+						goto nextjob;
 					}
 				}
 				/* send the reply */
@@ -130,8 +130,12 @@ void worker_loop(int id)
 						   &peer_response.reason)
 						< 0) {
 					LM_ERR("error sending reply\n");
+				} else {
+					LM_DBG("done sending reply\n");
 				}
+				worker->jobs_processed++;
 
+nextjob:
 				/* if body given, free the lumps and free the body */
 				if(peer_response.body.s) {
 					del_nonshm_lump_rpl(&current_job->msg->reply_lump);
@@ -141,10 +145,8 @@ void worker_loop(int id)
 					free_to(current_job->msg->from->parsed);
 				}
 
-				LM_DBG("sent reply\n");
 				shm_free(current_job->msg);
 				shm_free(current_job);
-				worker->jobs_processed++;
 			}
 		}
 	}

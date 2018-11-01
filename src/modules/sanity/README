@@ -19,10 +19,12 @@ Nils Ohlmeier
               3.2. uri_checks (integer)
               3.3. proxy_require (string)
               3.4. autodrop (integer)
+              3.5. noreply (int)
 
         4. Functions
 
               4.1. sanity_check([msg_checks [, uri_checks]])
+              4.2. sanity_reply()
 
    List of Examples
 
@@ -30,9 +32,11 @@ Nils Ohlmeier
    1.2. Set uri_checks parameter
    1.3. Set proxy_require parameter
    1.4. Set autodrop parameter
-   1.5. sanity_check usage
-   1.6. sanity_check usage with parameter
-   1.7. sanity_check usage with two parameters
+   1.5. Set noreply parameter
+   1.6. sanity_check usage
+   1.7. sanity_check usage with parameter
+   1.8. sanity_check usage with two parameters
+   1.9. sanity_reply usage
 
 Chapter 1. Admin Guide
 
@@ -46,10 +50,12 @@ Chapter 1. Admin Guide
         3.2. uri_checks (integer)
         3.3. proxy_require (string)
         3.4. autodrop (integer)
+        3.5. noreply (int)
 
    4. Functions
 
         4.1. sanity_check([msg_checks [, uri_checks]])
+        4.2. sanity_reply()
 
 1. Overview
 
@@ -72,10 +78,8 @@ Chapter 1. Admin Guide
        supported (sip[s]|tel[s]) by Kamailio
      * required headers - (4) -checks if the minimum set of required
        headers to, from, cseq, callid and via is present in the request.
-     * via sip version - (8) - not working because parser fails already
-       when another version then 2.0 is present.
-     * via protocol - (16) - not working because parser fails already if
-       an unsupported transport is present.
+     * via sip version - (8) - disabled.
+     * via protocol - (16) - disabled.
      * Cseq method - (32) - checks if the method from the Cseq header is
        equal to the request method.
      * Cseq value - (64) - checks if the number in the Cseq header is a
@@ -99,6 +103,8 @@ Chapter 1. Admin Guide
      * authorization header (8192) - checks if the Authorization is valid
        if the scheme is "digest" (see "digest credentials" above), always
        returns success for other schemes.
+     * first via header (16384) - checks if the first Via header is
+       available, can be parsed and has an address value.
 
 2. Dependencies
 
@@ -111,6 +117,7 @@ Chapter 1. Admin Guide
    3.2. uri_checks (integer)
    3.3. proxy_require (string)
    3.4. autodrop (integer)
+   3.5. noreply (int)
 
 3.1. default_checks (integer)
 
@@ -120,10 +127,10 @@ Chapter 1. Admin Guide
    of the sanity_check function. The integer value is the sum of the check
    numbers which should be executed by default.
 
-   Default value is “999”. This resolves to the following list of checks:
+   Default value is “3047”. This resolves to the following list of checks:
    ruri_sip_version (1), ruri_scheme (2), required_headers (4),
-   cseq_method (32), cseq_value (64), cotent_length (128), expires_value
-   (256), proxy_require (512).
+   cseq_method (32), cseq_value (64), content_length (128), expires_value
+   (256), proxy_require (512), digest credentials (2048).
 
    Example 1.1. Set default_checks parameter
 ...
@@ -169,9 +176,24 @@ modparam("sanity", "proxy_require", "foo, bar")
 modparam("sanity", "autodrop", 1)
 ...
 
+3.5. noreply (int)
+
+   If set to 1, then the module does not send a SIP reply internally in
+   case there is an error detected when performing the sanity checks.
+   There is the option to send the reply from config file with functions
+   from sl or tm module as well as sanity_reply() from this module.
+
+   Default value: 0.
+
+   Example 1.5. Set noreply parameter
+...
+modparam("sanity", "noreply", 1)
+...
+
 4. Functions
 
    4.1. sanity_check([msg_checks [, uri_checks]])
+   4.2. sanity_reply()
 
 4.1.  sanity_check([msg_checks [, uri_checks]])
 
@@ -183,7 +205,10 @@ modparam("sanity", "autodrop", 1)
    module sends a precise error reply via SL send_reply(). Thus there is
    no need to reply with a generic error message.
 
-   Example 1.5. sanity_check usage
+   The parameters can be static integers or variables holding integer
+   values.
+
+   Example 1.6. sanity_check usage
 ...
 if (!sanity_check()) {
         exit;
@@ -196,7 +221,7 @@ if (!sanity_check()) {
    of the checks (like for the module parameter) which should be executed
    at this function call.
 
-   Example 1.6. sanity_check usage with parameter
+   Example 1.7. sanity_check usage with parameter
 ...
 if (method=="REGISTER" && !sanity_check("256")) {
         /* the register contains an invalid expires value and is replied with a
@@ -209,11 +234,26 @@ if (method=="REGISTER" && !sanity_check("256")) {
    overwrites the global module parameter uri_checks and thus determines
    which URIs will be checked if the parse uri test will be executed.
 
-   Example 1.7. sanity_check usage with two parameters
+   Example 1.8. sanity_check usage with two parameters
 ...
 if (method=="INVITE" && !sanity_check("1024", "6")) {
         /* the INVITE contains an invalid From or To header and is replied with
 a 400 */
         exit;
+}
+...
+
+4.2.  sanity_reply()
+
+   Send a SIP reply using the code and reason text set internally by the
+   module when detecting errors while performing the sanity checks. It is
+   done only when parameter noreply is set to 1.
+
+   Example 1.9. sanity_reply usage
+...
+if(!sanity_check("1024", "6")) {
+   xdbg("sanity checks failed\n");
+   sanity_reply();
+   exit;
 }
 ...

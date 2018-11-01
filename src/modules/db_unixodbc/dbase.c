@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * UNIXODBC module core functions
  *
  * Copyright (C) 2005-2006 Marco Lorrai
@@ -22,15 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- *
- * History:
- * --------
- *  2005-12-01  initial commit (chgen)
- *  2006-04-03  fixed invalid handle to extract error (sgupta)
- *  2006-04-04  removed deprecated ODBC functions, closed cursors on error
- *              (sgupta)
- *  2006-05-05  Fixed reconnect code to actually work on connection loss
- *              (sgupta)
  */
 
 
@@ -227,7 +216,11 @@ int db_unixodbc_submit_query_async(const db1_con_t* _h, const str* _s)
     p[1].len = _s->len;
     strncpy(p[1].s, _s->s, _s->len);
 
-    async_task_push(atask);
+
+    if (async_task_push(atask)<0) {
+        shm_free(atask);
+        return -1;
+    }
 
     return 0;
 }

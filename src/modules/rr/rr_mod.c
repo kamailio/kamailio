@@ -61,6 +61,7 @@ int rr_force_send_socket = 0; /*!< control if socket is forced by rr */
 int enable_socket_mismatch_warning = 1; /*!< enable socket mismatch warning */
 static str custom_user_spec = {NULL, 0};
 pv_spec_t custom_user_avp;
+int rr_ignore_sips = 0; /*!< ignore sips schema when building record-route */
 
 ob_api_t rr_obb;
 
@@ -131,6 +132,7 @@ static param_export_t params[] ={
 	{"enable_socket_mismatch_warning",INT_PARAM,&enable_socket_mismatch_warning},
 	{"custom_user_avp",     PARAM_STR, &custom_user_spec},
 	{"force_send_socket",   PARAM_INT, &rr_force_send_socket},
+	{"ignore_sips",         PARAM_INT, &rr_ignore_sips},
 	{0, 0, 0 }
 };
 
@@ -153,18 +155,16 @@ static pv_export_t mod_pvs[] = {
 
 
 struct module_exports exports = {
-	"rr",
-	DEFAULT_DLFLAGS,	/*!< dlopen flags */
-	cmds,			/*!< Exported functions */
-	params,			/*!< Exported parameters */
-	0,				/*!< exported statistics */
-	0,				/*!< exported MI functions */
-	mod_pvs,			/*!< exported pseudo-variables */
-	0,				/*!< extra processes */
-	mod_init,			/*!< initialize module */
-	0,				/*!< response function*/
-	mod_destroy,		/*!< destroy function */
-	0				/*!< per-child init function */
+	"rr",            /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 
@@ -418,6 +418,28 @@ static int w_is_direction(struct sip_msg *msg,char *dir, char *foo)
 	return ((is_direction(msg,(int)(long)dir)==0)?1:-1);
 }
 
+static int ki_is_direction(sip_msg_t *msg, str *dir)
+{
+	int n;
+
+	if (!append_fromtag) {
+		LM_ERR("usage of \"is_direction\" function requires parameter"
+				"\"append_fromtag\" enabled!!");
+		return E_CFG;
+	}
+
+	if (dir->len==10 && strncasecmp(dir->s, "downstream", 10)==0) {
+		n = RR_FLOW_DOWNSTREAM;
+	} else if (dir->len==8 && strncasecmp(dir->s, "upstream", 8)==0) {
+		n = RR_FLOW_UPSTREAM;
+	} else {
+		LM_ERR("unknown direction '%.*s' - use 'downstream' or 'upstream'\n",
+				dir->len, dir->s);
+		return E_CFG;
+	}
+
+	return ((is_direction(msg,n)==0)?1:-1);
+}
 
 /*
  * Return the URI of the topmost Route-Header.
@@ -720,7 +742,11 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("rr"), str_init("is_direction"),
+		SR_KEMIP_INT, ki_is_direction,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 

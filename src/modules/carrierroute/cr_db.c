@@ -353,7 +353,7 @@ int load_route_data_db(struct route_data_t * rd) {
 		}
 	}
 	int n = 0;
-	boolean query_done = false;
+	crboolean query_done = crfalse;
 	do {
 		LM_DBG("loading, cycle %d", n++);
 		for (i = 0; i < RES_ROW_N(res); ++i) {
@@ -421,7 +421,7 @@ int load_route_data_db(struct route_data_t * rd) {
 				}
 				if(RES_ROW_N(prob_res) == 0) {
 					LM_ERR("Carrierroute db table contains route(s) with only 0 probability.\n");
-					query_done = true;
+					query_done = crtrue;
 				}
 				carrierroute_dbf.free_result(carrierroute_dbh, prob_res);
 				prob_res = NULL;

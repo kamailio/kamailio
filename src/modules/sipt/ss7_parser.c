@@ -143,6 +143,19 @@ static int encode_calling_party(char * number, int nai, int presentation, int sc
         return datalen + 2;
 }
 
+static int encode_forwarding_number(char * number, int nai, unsigned char * buf, int len) 
+{
+        int oddeven, datalen;
+
+        isup_put_number(&buf[2], number, &datalen, &oddeven);
+
+        buf[0] = (oddeven << 7) | nai;      /* Nature of Address Indicator */
+         /* Assume E.164 ISDN numbering plan, calling number complete */
+        buf[1] = 0x14;
+
+        return datalen + 2;
+}
+
 // returns start of specified optional header of IAM or CPG, otherwise return -1
 static int get_optional_header(unsigned char header, unsigned char *buf, int len)
 {
@@ -320,6 +333,67 @@ int isup_get_charging_indicator(unsigned char *buf, int len) {
 		return -1;
 
 	return (orig_message->backwards_call_ind[0] & 0x03);
+}
+
+int isup_get_redirection_info(unsigned char *buf, int len)
+{
+       int  offset = get_optional_header(ISUP_PARM_GENERIC_NOTIFICATION_IND, buf, len);
+
+       int call_is_diverting = 0;
+       int diversion_reason = 0;
+
+       if(offset != -1 && len-offset > 1)
+       {
+               call_is_diverting = (buf[offset+2]) & 0x7F;
+
+               if ( call_is_diverting == 123 ) {
+                       int  offset1 = get_optional_header(ISUP_PARM_DIVERSION_INFORMATION, buf, len);
+
+                       if(offset1 != -1 && len-offset1 > 1)
+                       {
+                               diversion_reason = (buf[offset1+2]>>3 & 0x0F);
+                               return diversion_reason;
+                       }
+               }
+               return -1;
+
+       }
+        return -1;
+}
+
+int isup_get_redirection_number_nai(unsigned char *buf, int len)
+{
+       int  offset = get_optional_header(ISUP_PARM_REDIRECTION_NUMBER, buf, len);
+
+       if(offset != -1 && len-offset-2 > 1)
+       {
+               return buf[offset+2] & 0x7F;
+       }
+       return -1;
+}
+
+int isup_get_redirection_number(unsigned char *buf, int len, char* sb_buf)
+{
+       int sbparamlen;
+       int sb_i=0;
+       int sb_j=0;
+       int  offset = get_optional_header(ISUP_PARM_REDIRECTION_NUMBER, buf, len);
+
+       if(offset != -1 && len-offset-2 > 1)
+       {
+               sbparamlen = (buf[offset+1] & 0xFF) - 2;
+
+               while ((sbparamlen > 0) && (buf[offset] != 0)) {
+                   sb_buf[sb_i]=(buf[offset+4+sb_j] & 0x0F) + '\x30';
+                   sb_buf[sb_i+1]=(buf[offset+4+sb_j]>>4 & 0x0F) + '\x30';
+                   sb_i=sb_i+2;
+                   sbparamlen--;
+                   sb_j++;
+               }
+               sb_buf[sb_i] = '\x0';
+               return 1;
+       }
+       return -1;
 }
 
 int isup_update_bci_1(struct sdp_mangler * mangle, int charge_indicator, int called_status, int called_category, int e2e_indicator, unsigned char *buf, int len)
@@ -514,6 +588,70 @@ int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int
 			new_party[1] = (char)res;
 
 			add_body_segment(mangle, offset,new_party, res+2);
+		}
+
+	}
+
+	return offset;
+}
+
+int isup_update_forwarding(struct sdp_mangler * mangle, char * forwardn, int nai, unsigned char *buf, int len)
+{
+	int offset = 0;
+	int res;
+	struct isup_iam_fixed * orig_message = (struct isup_iam_fixed*)buf;
+
+	// not an iam? do nothing
+	if(orig_message->type != ISUP_IAM)
+	{
+		return 1;
+	}
+
+	/* Copy the fixed parms */
+	len -= offsetof(struct isup_iam_fixed, called_party_number);
+	offset += offsetof(struct isup_iam_fixed, called_party_number);
+
+	if (len < 1)
+		return -1;
+
+
+	/* IAM has one Fixed variable param, Called party number, we need to modify this */
+
+
+	// add the new mandatory fixed header
+	res = buf[offset];
+	offset += res+1;
+	len -= res+1;
+	
+	if (len < 1 )
+		return -1;
+
+	/* Optional paramter parsing code */
+	if (orig_message->optional_pointer) {
+	
+		while ((len > 0) && (buf[offset] != 0)) {
+			int res2 = 0;
+			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
+			unsigned char new_party[255];
+
+			res = optparm->len+2;
+			switch(optparm->type)
+			{
+				case ISUP_PARM_REDIRECTING_NUMBER:
+					res2 = encode_forwarding_number(forwardn, nai, &new_party[1], 255-1);
+					new_party[0] = (char)res2;
+					replace_body_segment(mangle, offset+1,(int)buf[offset+1]+1,new_party, res2+1);
+					break;
+                                case ISUP_PARM_ORIGINAL_CALLED_NUM:
+					res2 = encode_forwarding_number(forwardn, nai, &new_party[1], 255-1);
+					new_party[0] = (char)res2;
+					replace_body_segment(mangle, offset+1,(int)buf[offset+1]+1,new_party, res2+1);
+				default:
+					break;
+			}
+
+			len -= res;
+			offset += res;
 		}
 
 	}

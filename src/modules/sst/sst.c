@@ -128,18 +128,16 @@ static stat_export_t mod_stats[] = {
 #endif /* STATISTICS */
 
 struct module_exports exports= {
-	"sst",        /* module's name */
+	"sst",           /* module's name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,         /* exported functions */
-	mod_params,   /* param exports */
-	0,            /* exported statistics (they are registered from mod_init) */
-	0,            /* exported MI functions */
-	0,            /* exported pseudo-variables */
-	0,            /* extra processes */
-	mod_init,     /* module initialization function */
-	0,            /* reply processing function */
-	0,            /* Destroy function */
-	0             /* per-child init function */
+	cmds,            /* exported functions */
+	mod_params,      /* param exports */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* reply processing function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	0                /* Destroy function */
 };
 
 /**
@@ -155,10 +153,6 @@ struct module_exports exports= {
 static int mod_init(void) 
 {
 	str s;
-	/* if statistics are disabled, prevent their registration to core. */
-	if (sst_enable_stats==0) {
-		exports.stats = 0;
-	}
 
 #ifdef STATISTICS
 	/* register statistics */

@@ -350,7 +350,10 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 		<title><function moreinfo="none">is_myself(uri)</function></title>
 		<para>
 			Check if the parameter matches the 'myself' condition (i.e., is
-			a local IP or domain).
+			a local IP or domain). Note that if the port is missing in the URI,
+			then no port matching is done (in other words, port matching is
+			skipped -- it does not use default SIP ports 5060 or 5061 for
+			matching).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -735,11 +738,15 @@ resetdebug();
 		<function moreinfo="none">stats.get_statistics</function>
 		</title>
 		<para>Print the list of available internal statistics.</para>
+		<para>NOTE: the result is an array of strings that have the list of
+		statistics formated like "name = value", being propagated over the time
+		from the MI variant. Use "stats.fetch" command to have a more
+		JSON-friendly output.</para>
 		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
-			be printed. If set to 'all' then all statistics are printed; if
-			set to 'statsgroup:' then all statistics in the group are printed;
-			if set to 'statsname' then the statistics identified by the name
-			is printed.</para>
+		be printed. If set to 'all' then all statistics are printed; if
+		set to 'statsgroup:' then all statistics in the group are printed;
+		if set to 'statsname' then the statistics identified by the name
+		is printed.</para>
 		<para>Examples:</para>
         <programlisting  format="linespecific">
 		&kamcmd; stats.get_statistics all
@@ -757,11 +764,11 @@ resetdebug();
 		structure: {"statsgroup.statsname" : "statsvalue"}. The value is
 		represented as string to accomodate large numbers.</para>
 		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
-			be printed. If set to 'all' then all statistics are printed; if
-			set to 'statsgroup:' then all statistics in the group are printed;
-			if set to 'statsname' then the statistics identified by the name
-			is printed (can be also 'statsgroup.stastname' or
-			'statsgroup:statsname').</para>
+		be printed. If set to 'all' then all statistics are printed; if
+		set to 'statsgroup:' then all statistics in the group are printed;
+		if set to 'statsname' then the statistics identified by the name
+		is printed (can be also 'statsgroup.stastname' or
+		'statsgroup:statsname').</para>
 		<para>Examples:</para>
         <programlisting  format="linespecific">
 		&kamcmd; stats.fetch all

@@ -511,6 +511,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_expires_name, 0, 0, 0 },
 	{ {"msg", (sizeof("msg")-1)}, PVT_OTHER, pv_get_msg_attrs, 0,
 		pv_parse_msg_attrs_name, 0, 0, 0 },
+	{ {"ksr", (sizeof("ksr")-1)}, PVT_OTHER, pv_get_ksr_attrs, 0,
+		pv_parse_ksr_attrs_name, 0, 0, 0 },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -589,18 +591,16 @@ static cmd_export_t cmds[]={
 
 /** module exports */
 struct module_exports exports= {
-	"pv",
+	"pv",            /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	mod_pvs,    /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,
-	mod_destroy,
-	0           /* per-child init function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pv exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 static int mod_init(void)
@@ -1001,6 +1001,7 @@ int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt)
 		goto error;
 	}
 
+	LM_DBG("preparing to evaluate: [%.*s]\n", tstr.len, tstr.s);
 	if(pv_eval_str(msg, &val.rs, &tstr)<0){
 		LM_ERR("cannot eval reparsed value of second parameter\n");
 		return -1;

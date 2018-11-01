@@ -102,18 +102,16 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"h350", 
+	"h350",          /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       /* Exported functions */
-	params,     /* Exported parameters */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,          /* response function */
-	0,          /* destroy function */
-	child_init  /* child initialization function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* Exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module initialization function */
+	child_init,      /* child initialization function */
+	0                /* destroy function */
 };
 
 static int child_init(int rank)

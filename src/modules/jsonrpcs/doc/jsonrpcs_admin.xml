@@ -16,28 +16,30 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides a JSON-RPC v2 server over HTTP implementation,
-		tailored for the needs of &kamailio;. It implements the &kamailio;
-		RPC interface over JSON-RPC.
+		This module provides a JSON-RPC v2 server, tailored for the needs of
+		&kamailio;. It implements the &kamailio; RPC interface over JSON-RPC.
 	</para>
 	<para>
 		The specification for JSON-RPC is available at:
 		<ulink url="http://www.jsonrpc.org/specification">http://www.jsonrpc.org/specification</ulink>.
 	</para>
 	<para>
-		The JSONRPC-S module uses the xHTTP module to handle HTTP/S requests.
+		The transports supported by the module are: FIFO file, datagram (UDP)
+		over unix socket files or network sockets, HTTP and HTTPS.
+	</para>
+	<para>
+		The JSONRPCS module requires the xHTTP module to handle HTTP/S requests.
 		Read the documentation of the xHTTP module for more details.
 	</para>
 	</section>
 
 	<section>
-	<title>Limitations</title>
+	<title>Important Remarks</title>
 	<itemizedlist>
 	<listitem>
 	<para>
-		This module does not implement asynchronous RPC commands.
-		It is unlikely that asynchronous RPC commands will be executed
-		from an JSON-RPC over HTTP client.
+		This module implements the support for asynchronous RPC commands only
+		for HTTP and HTTPS transports.
 	</para>
 	</listitem>
 	<listitem>
@@ -47,6 +49,14 @@
 		passed to RPC).
 	</para>
 	</listitem>
+	<listitem>
+	<para>
+		For the RPC interface implemented by &kamailio;, the order of parameters
+		is important. If the parameters are given with names, the names are
+		ignored.
+	</para>
+	</listitem>
+
 	</itemizedlist>
 	</section>
 

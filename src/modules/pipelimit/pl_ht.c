@@ -345,7 +345,7 @@ void pl_pipe_timer_update(int interval, int netload)
 				if( it->algo == PIPE_ALGO_NETWORK ) {
 					it->load = ( netload > it->limit ) ? 1 : -1;
 				} else if (it->limit && interval) {
-					it->load = it->counter / (it->limit * interval);
+					it->load = it->counter / it->limit;
 				}
 				it->last_counter = it->counter;
 				it->counter = 0;
@@ -437,6 +437,75 @@ void rpc_pl_get_pipes(rpc_t *rpc, void *c)
 					lock_release(&_pl_pipes_ht->slots[i].lock);
 					return;
 				}
+			}
+			it = it->next;
+		}
+		lock_release(&_pl_pipes_ht->slots[i].lock);
+	}
+}
+
+int rpc_pl_list_pipe(rpc_t *rpc, void *c, pl_pipe_t *it)
+{
+	str algo;
+	void* th;
+
+	if (it->algo == PIPE_ALGO_NOP) {
+		return 0;
+	}
+
+	if (str_map_int(algo_names, it->algo, &algo)) {
+		return -1;
+	}
+	/* add structure node */
+	if (rpc->add(c, "{", &th) < 0) {
+		rpc->fault(c, 500, "Internal pipe structure");
+		return -1;
+	}
+	if(rpc->struct_add(th, "ssdd",
+				"name",	it->name.s,
+				"algorithm", algo.s,
+				"limit", it->limit,
+				"counter",  it->counter)<0) {
+		rpc->fault(c, 500, "Internal error address list structure");
+		return -1;
+	}
+	return 0;
+}
+
+void rpc_pl_list(rpc_t *rpc, void *c)
+{
+	int i;
+	pl_pipe_t *it;
+	str pipeid = STR_NULL;
+
+	if (rpc->scan(c, "*S", &pipeid) < 1) {
+		pipeid.s = NULL;
+		pipeid.len = 0;
+	}
+
+	if(pipeid.len>0) {
+		it = pl_pipe_get(&pipeid, 1);
+		if (it==NULL) {
+			LM_ERR("no pipe: %.*s\n", pipeid.len, pipeid.s);
+			rpc->fault(c, 400, "Unknown pipe id %.*s", pipeid.len, pipeid.s);
+			return;
+		}
+		if(rpc_pl_list_pipe(rpc, c, it)<0) {
+			LM_DBG("failed to list pipe: %.*s\n", it->name.len, it->name.s);
+		}
+		pl_pipe_release(&pipeid);
+		return;
+	}
+
+	for(i=0; i<_pl_pipes_ht->htsize; i++)
+	{
+		lock_get(&_pl_pipes_ht->slots[i].lock);
+		it = _pl_pipes_ht->slots[i].first;
+		while(it) {
+			if(rpc_pl_list_pipe(rpc, c, it)<0) {
+				LM_DBG("failed to list pipe: %.*s\n", it->name.len, it->name.s);
+				lock_release(&_pl_pipes_ht->slots[i].lock);
+				return;
 			}
 			it = it->next;
 		}

@@ -120,13 +120,13 @@ static domain_t dom_buf[2];
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_local",      is_local,              1, fixup_var_str_1,
+	{"is_local",      is_local,              1, fixup_var_str_1, 0,
 	 REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-	{"lookup_domain", lookup_domain,         2, lookup_domain_fixup,
+	{"lookup_domain", lookup_domain,         2, lookup_domain_fixup, 0,
 	 REQUEST_ROUTE|FAILURE_ROUTE },
-	{"get_did",       (cmd_function)get_did, 0, 0, 0},
-	{"bind_domain",   (cmd_function)bind_domain, 0, 0, 0},
-	{0, 0, 0, 0, 0}
+	{"get_did",       (cmd_function)get_did, 0, 0, 0, 0},
+	{"bind_domain",   (cmd_function)bind_domain, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -155,15 +155,16 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"uid_domain",
-	cmds,       /* Exported functions */
-	domain_rpc, /* RPC methods */
-	params,     /* Exported parameters */
-	mod_init,   /* module initialization function */
-	0,          /* response function*/
-	destroy,    /* destroy function */
-	0,          /* cancel function */
-	child_init  /* per-child init function */
+	"uid_domain", /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,         /* exported functions */
+	params,       /* exported parameters */
+	domain_rpc,   /* exported RPC methods */
+	0,            /* exported pseudo-variables */
+	0,            /* response handling function */
+	mod_init,     /* module init function */
+	child_init,   /* per-child init function */
+	destroy       /* module destroy function */
 };
 
 

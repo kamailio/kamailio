@@ -2025,7 +2025,7 @@ static char **_pv_print_buffer = NULL;
 static int _pv_print_buffer_size  = PV_DEFAULT_PRINT_BUFFER_SIZE;
 static int _pv_print_buffer_size_active  = 0;
 /* 6 mod params + 4 direct usage from mods */
-#define PV_DEFAULT_PRINT_BUFFER_SLOTS 10
+#define PV_DEFAULT_PRINT_BUFFER_SLOTS 40
 static int _pv_print_buffer_slots = PV_DEFAULT_PRINT_BUFFER_SLOTS;
 static int _pv_print_buffer_slots_active = 0;
 static int _pv_print_buffer_index = 0;

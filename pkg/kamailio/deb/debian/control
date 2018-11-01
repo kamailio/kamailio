@@ -29,6 +29,7 @@ Build-Depends:
  libmaxminddb-dev,
  libmemcached-dev,
  libmono-2.0-dev,
+ libmnl-dev,
  libncurses5-dev,
  libpcre3-dev,
  libperl-dev,

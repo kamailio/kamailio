@@ -83,7 +83,7 @@ int regapi_lookup(sip_msg_t *msg, str *table)
  *
  * table->s must be zero-terminated
  */
-int regapi_lookup_uri(sip_msg_t *msg, str *table, str * uri)
+int regapi_lookup_uri(sip_msg_t *msg, str *table, str *uri)
 {
 	udomain_t* d;
 
@@ -144,7 +144,7 @@ int regapi_lookup_to_dset(sip_msg_t *msg, str *table, str *uri)
 /**
  *
  */
-int bind_registrar(registrar_api_t* api)
+int bind_registrar(registrar_api_t *api)
 {
 	if (!api) {
 		ERR("Invalid parameter value\n");

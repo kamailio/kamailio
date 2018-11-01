@@ -53,6 +53,8 @@ extern sruid_t _tps_sruid;
 extern db1_con_t* _tps_db_handle;
 extern db_func_t _tpsdbf;
 
+extern str _tps_contact_host;
+
 #define TPS_STORAGE_LOCK_SIZE	1<<9
 static gen_lock_set_t *_tps_storage_lock_set = NULL;
 
@@ -208,6 +210,7 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 	str sv;
 	sip_uri_t puri;
 	int i;
+	int contact_len;
 
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		sv = td->bs_contact;
@@ -219,14 +222,20 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 		return 0;
 	}
 
-	if(td->cp + 8 + (2*uuid->len) + sv.len >= td->cbuf + TPS_DATA_SIZE) {
-		LM_ERR("insufficient data buffer\n");
-		return -1;
-	}
 	if (parse_uri(sv.s, sv.len, &puri) < 0) {
 		LM_ERR("failed to parse the uri\n");
 		return -1;
 	}
+
+	contact_len = sv.len;
+	if (_tps_contact_host.len)
+		contact_len = sv.len - puri.host.len + _tps_contact_host.len;
+
+	if(td->cp + 8 + (2*uuid->len) + contact_len >= td->cbuf + TPS_DATA_SIZE) {
+		LM_ERR("insufficient data buffer\n");
+		return -1;
+	}
+
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		td->b_uuid.s = td->cp;
 		*td->cp = 'b';
@@ -263,8 +272,15 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 	td->cp += uuid->len;
 	*td->cp = '@';
 	td->cp++;
-	memcpy(td->cp, puri.host.s, puri.host.len);
-	td->cp += puri.host.len;
+
+	if (_tps_contact_host.len) { // using configured hostname in the contact header
+		memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
+		td->cp += _tps_contact_host.len;
+	} else {
+		memcpy(td->cp, puri.host.s, puri.host.len);
+		td->cp += puri.host.len;
+	}
+
 	if(puri.port.len>0) {
 		*td->cp = ':';
 		td->cp++;
@@ -360,6 +376,11 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		}
 	}
 
+	LM_DBG("downstream: %s - acontact: [%.*s] - bcontact: [%.*s]\n",
+			(dir==TPS_DIR_DOWNSTREAM)?"yes":"no",
+			td->a_contact.len, (td->a_contact.len>0)?td->a_contact.s:"",
+			td->b_contact.len, (td->b_contact.len>0)?td->b_contact.s:"");
+
 	return 0;
 
 error:
@@ -369,9 +390,9 @@ error:
 /**
  *
  */
-int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog)
+int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 {
-	int ret;
+	int ret = -1; /* error if dialog == 0 */
 	str suid;
 
 	if(dialog==0) {
@@ -394,12 +415,12 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog)
 	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_UPSTREAM);
 	if(ret<0) goto error;
 
-	ret = tps_storage_link_msg(msg, td, TPS_DIR_DOWNSTREAM);
+	ret = tps_storage_link_msg(msg, td, dir);
 	if(ret<0) goto error;
-	if(td->as_contact.len <= 0 && td->bs_contact.len <= 0) {
-		LM_WARN("no local address - do record routing for all initial requests\n");
-	}
 	if(dialog==0) {
+		if(td->as_contact.len <= 0 && td->bs_contact.len <= 0) {
+			LM_WARN("no local address - do record routing for all initial requests\n");
+		}
 		ret = _tps_storage_api.insert_dialog(td);
 		if(ret<0) goto error;
 	}

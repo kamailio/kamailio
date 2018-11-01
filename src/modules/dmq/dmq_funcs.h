@@ -55,6 +55,9 @@ int cfg_dmq_is_from_node(struct sip_msg *msg, char *p1, char *p2);
 dmq_peer_t *register_dmq_peer(dmq_peer_t *peer);
 int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type);
+int bcast_dmq_message1(dmq_peer_t *peer, str *body, dmq_node_t *except,
+		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type,
+		int incl_inactive);
 int bcast_dmq_message(dmq_peer_t *peer, str *body, dmq_node_t *except,
 		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type);
 

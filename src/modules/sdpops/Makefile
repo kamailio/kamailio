@@ -8,6 +8,4 @@ NAME=sdpops.so
 DEFS +=
 LIBS +=
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules

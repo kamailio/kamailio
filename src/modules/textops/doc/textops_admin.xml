@@ -301,6 +301,38 @@ replace_body("openser", "&kamailio; SIP Proxy");
 		</example>
 	</section>
 
+	<section id="textops.f.replace_hdrs">
+		<title>
+		<function moreinfo="none">replace_hdrs(re, txt)</function>
+		</title>
+		<para>
+		Replaces the first occurrence of re in the SIP headers of the message
+		with txt.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_hdrs</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_hdrs("&kamailio;", "&kamailio; SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.replace_all">
 		<title>
 		<function moreinfo="none">replace_all(re, txt)</function>
@@ -395,7 +427,120 @@ replace_body_all("openser", "&kamailio; SIP Proxy");
 ...
 # strip the whole body from the message:
 if(has_body() &amp;&amp; replace_body_atonce("^.+$", ""))
-        remove_hf("Content-Type"); 
+        remove_hf("Content-Type");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.replace_str">
+		<title>
+		<function moreinfo="none">replace_str(match, repl, mode)</function>
+		</title>
+		<para>
+		Replaces the first or all occurrence of 'match' with 'repl' by doing
+		string comparison for matching. It is applied over headers and message
+		body (not over the first line).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>match</emphasis> - string to be matched.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>repl</emphasis> - string to be used as replacement.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>mode</emphasis> - 'f' - replace only first match;
+				'a' - replace all matches.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_str("&kamailio;", "&kamailio; SIP Proxy", "a");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.replace_body_str">
+		<title>
+		<function moreinfo="none">replace_body_str(match, repl, mode)</function>
+		</title>
+		<para>
+		Replaces the first or all occurrence of 'match' with 'repl' by doing
+		string comparison for matching. It is applied over the message body.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>match</emphasis> - string to be matched.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>repl</emphasis> - string to be used as replacement.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>mode</emphasis> - 'f' - replace only first match;
+				'a' - replace all matches.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_body_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_body_str("&kamailio;", "&kamailio; SIP Proxy", "a");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.replace_hdrs_str">
+		<title>
+		<function moreinfo="none">replace_hdrs_str(match, repl, mode)</function>
+		</title>
+		<para>
+		Replaces the first or all occurrence of 'match' with 'repl' by doing
+		string comparison for matching. It is applied over the part with headers
+		of the SIP message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>match</emphasis> - string to be matched.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>repl</emphasis> - string to be used as replacement.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>mode</emphasis> - 'f' - replace only first match;
+				'a' - replace all matches.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_hdrs_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_hdrs_str("&kamailio;", "&kamailio; SIP Proxy", "a");
 ...
 </programlisting>
 		</example>
@@ -1549,8 +1694,33 @@ text
 		<title><function>append_body_part</function> usage</title>
 		<programlisting format="linespecific">
 ...
-$var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c"
+$var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c";
 append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext", "signal;handling=required");
+...
+
+# Will append this to the body:
+
+...
+Content-Type: application/vnd.cirpack.isdn-ext
+Content-Disposition: signal;handling=required
+
+7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c
+
+--unique-boundary-1
+...
+</programlisting>
+		</example>
+		<para>
+		If other headers are wanted to be added for a body part, they can be
+		appended after the value of the content-type parameter, separated by
+		`\r\n` (at the very end do not add the '\r\n').
+		</para>
+		<example>
+		<title><function>append_body_part</function> with headers</title>
+		<programlisting format="linespecific">
+...
+$var(b) = "<info>active</info>";
+append_body_part("$var(b)", "application/xml\r\nX-Header: xyz");
 ...
 
 # Will append this to the body:
@@ -1622,6 +1792,10 @@ kamailio
 ...
 </programlisting>
 		</example>
+		<para>
+		If other headers are wanted to be added for a body part, see the docs
+		for append_body_part(...) function.
+		</para>
 	</section>
 
 	<section id="textops.f.get_body_part">

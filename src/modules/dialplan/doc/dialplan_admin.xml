@@ -682,10 +682,12 @@ xlog("translated to var $var(y) \n");
         		<para>Parameters: <emphasis>2</emphasis></para>
         		<itemizedlist>
                 	<listitem>
-                	<para><emphasis>Dial plan ID</emphasis></para>
+					<para><emphasis>Dial plan ID</emphasis> (number)</para>
                 	</listitem>
                 	<listitem>
-                	<para><emphasis>Input String</emphasis></para>
+					<para><emphasis>Input string</emphasis> (string) - it
+					can be prefixed with 's:' to avoid auto-conversion when
+					the command is executed with CLI apps such as &kamcmd;.</para>
                 	</listitem>
 			</itemizedlist>
 			<para>
@@ -693,6 +695,7 @@ xlog("translated to var $var(y) \n");
 			</para>
 		<programlisting  format="linespecific">
 		&kamcmd; dialplan.translate 1 "abcdxyz"
+		&kamcmd; dialplan.translate 1 s:123456789
 		</programlisting>
 		</section>
 	</section>

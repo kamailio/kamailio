@@ -367,8 +367,8 @@ inline static ticks_t retransmission_handler(struct retr_buf *r_buf)
 		abort();
 	}
 #endif
-	if(r_buf->activ_type == TYPE_LOCAL_CANCEL
-			|| r_buf->activ_type == TYPE_REQUEST) {
+	if(r_buf->rbtype == TYPE_LOCAL_CANCEL
+			|| r_buf->rbtype == TYPE_REQUEST) {
 #ifdef EXTRA_DEBUG
 		LM_DBG("request resending (t=%p, %.9s ... )\n", r_buf->my_T,
 				r_buf->buffer);
@@ -415,14 +415,14 @@ inline static void final_response_handler(
 	}
 #endif
 	/* FR for local cancels.... */
-	if(r_buf->activ_type == TYPE_LOCAL_CANCEL) {
+	if(r_buf->rbtype == TYPE_LOCAL_CANCEL) {
 #ifdef TIMER_DEBUG
 		LM_DBG("stop retr for local cancel\n");
 #endif
 		return;
 	}
 	/* FR for replies (negative INVITE replies) */
-	if(r_buf->activ_type > 0) {
+	if(r_buf->rbtype > 0) {
 #ifdef EXTRA_DEBUG
 		if(t->uas.request->REQ_METHOD != METHOD_INVITE || t->uas.status < 200) {
 			LM_CRIT("BUG - unknown type reply buffer\n");
@@ -648,7 +648,11 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void *data)
 	remove_from_hash_table_unsafe(p_cell);
 	UNLOCK_HASH(p_cell->hash_index);
 	p_cell->flags |= T_IN_AGONY;
-	UNREF_FREE(p_cell);
+	if(t_linked_timers(p_cell)) {
+		UNREF_FREE(p_cell, 0);
+	} else {
+		UNREF_FREE(p_cell, 1);
+	}
 	ret = 0;
 #else  /* TM_DEL_UNREF */
 	if(p_cell->flags & T_IN_AGONY) {

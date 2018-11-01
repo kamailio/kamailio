@@ -27,6 +27,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/ut.h"
 #include "../../core/error.h"
+#include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 
 MODULE_VERSION
@@ -38,28 +39,31 @@ str pr_str 	= STR_STATIC_INIT(PROXY_REQUIRE_DEF);
 int default_msg_checks = SANITY_DEFAULT_CHECKS;
 int default_uri_checks = SANITY_DEFAULT_URI_CHECKS;
 int _sanity_drop = 1;
+int ksr_sanity_noreply = 0;
 
 strl* proxyrequire_list = NULL;
 
 sl_api_t slb;
 
 static int mod_init(void);
-static int sanity_fixup(void** param, int param_no);
-static int w_sanity_check(struct sip_msg* _msg, char* _foo, char* _bar);
+static int w_sanity_check(sip_msg_t* _msg, char* _msg_check, char* _uri_check);
+static int w_sanity_reply(sip_msg_t* _msg, char* _p1, char* _p2);
 static int bind_sanity(sanity_api_t* api);
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"sanity_check", (cmd_function)w_sanity_check, 0, 0,
+	{"sanity_check", (cmd_function)w_sanity_check, 0, 0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"sanity_check", (cmd_function)w_sanity_check, 1, sanity_fixup,
+	{"sanity_check", (cmd_function)w_sanity_check, 1, fixup_igp_null, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"sanity_check", (cmd_function)w_sanity_check, 2, sanity_fixup,
+	{"sanity_check", (cmd_function)w_sanity_check, 2, fixup_igp_igp, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"bind_sanity",  (cmd_function)bind_sanity,    0, 0, 0},
-	{0, 0, 0, 0}
+	{"sanity_check", (cmd_function)w_sanity_reply, 0, 0, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"bind_sanity",  (cmd_function)bind_sanity,    0, 0, 0, 0 },
+	{0, 0, 0, 0, 0, 0}
 };
 
 /*
@@ -70,6 +74,7 @@ static param_export_t params[] = {
 	{"uri_checks",		PARAM_INT,	&default_uri_checks	},
 	{"proxy_require",	PARAM_STR,	&pr_str			},
 	{"autodrop",		PARAM_INT,	&_sanity_drop	},
+	{"noreply",			PARAM_INT,	&ksr_sanity_noreply	},
 	{0, 0, 0}
 };
 
@@ -77,15 +82,16 @@ static param_export_t params[] = {
  * Module description
  */
 struct module_exports exports = {
-	"sanity",        /* Module name */
-	cmds,            /* Exported functions */
+	"sanity",        /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd exports */
+	params,          /* exported parameters */
 	0,               /* RPC methods */
-	params,          /* Exported parameters */
-	mod_init,        /* Initialization function */
-	0,               /* Response function */
-	0,               /* Destroy function */
-	0,               /* OnCancel function */
-	0                /* Child init function */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
 
 /*
@@ -95,6 +101,8 @@ static int mod_init(void) {
 	strl* ptr;
 
 	LM_DBG("sanity initializing\n");
+
+	ksr_sanity_info_init();
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
@@ -116,40 +124,6 @@ static int mod_init(void) {
 	return 0;
 }
 
-static int sanity_fixup(void** param, int param_no) {
-	int checks;
-	str in;
-
-	if (param_no == 1) {
-		in.s = (char*)*param;
-		in.len = strlen(in.s);
-		if (str2int(&in, (unsigned int*)&checks) < 0) {
-			LM_ERR("failed to convert input integer\n");
-			return E_UNSPEC;
-		}
-		if ((checks < 1) || (checks >= (SANITY_MAX_CHECKS))) {
-			LM_ERR("input parameter (%i) outside of valid range <1-%i)\n",
-					checks, SANITY_MAX_CHECKS);
-			return E_UNSPEC;
-		}
-		*param = (void*)(long)checks;
-	}
-	if (param_no == 2) {
-		in.s = (char*)*param;
-		in.len = strlen(in.s);
-		if (str2int(&in, (unsigned int*)&checks) < 0) {
-			LM_ERR("failed to convert second integer argument\n");
-			return E_UNSPEC;
-		}
-		if ((checks < 1) || (checks >= (SANITY_URI_MAX_CHECKS))) {
-			LM_ERR("second input parameter (%i) outside of valid range <1-%i\n",
-					checks, SANITY_URI_MAX_CHECKS);
-			return E_UNSPEC;
-		}
-		*param = (void*)(long)checks;
-	}
-	return 0;
-}
 
 /**
  * perform SIP message sanity check
@@ -162,6 +136,10 @@ int sanity_check(struct sip_msg* _msg, int msg_checks, int uri_checks)
 {
 	int ret;
 
+	if(ksr_sanity_noreply!=0) {
+		ksr_sanity_info_init();
+	}
+
 	ret = SANITY_CHECK_PASSED;
 	if (SANITY_RURI_SIP_VERSION & msg_checks &&
 			(ret = check_ruri_sip_version(_msg)) != SANITY_CHECK_PASSED) {
@@ -173,6 +151,10 @@ int sanity_check(struct sip_msg* _msg, int msg_checks, int uri_checks)
 	}
 	if (SANITY_REQUIRED_HEADERS & msg_checks &&
 			(ret = check_required_headers(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
+	}
+	if (SANITY_VIA1_HEADER & msg_checks &&
+			(ret = check_via1_header(_msg)) != SANITY_CHECK_PASSED) {
 		goto done;
 	}
 	if (SANITY_VIA_SIP_VERSION & msg_checks &&
@@ -236,23 +218,39 @@ int sanity_check_defaults(struct sip_msg* msg)
 /**
  * wrapper for sanity_check() to be used from config file
  */
-static int w_sanity_check(struct sip_msg* _msg, char* _number, char* _arg) {
-	int ret, check, arg;
+static int w_sanity_check(sip_msg_t* _msg, char* _msg_check, char* _uri_check)
+{
+	int ret, msg_check, uri_check;
 
-	if (_number == NULL) {
-		check = default_msg_checks;
+	if (_msg_check == NULL) {
+		msg_check = default_msg_checks;
+	} else {
+		if(fixup_get_ivalue(_msg, (gparam_t*)_msg_check, &msg_check)<0) {
+			LM_ERR("failed to get msg check flags parameter\n");
+			return -1;
+		}
 	}
-	else {
-		check = (int)(long)_number;
+	if (_uri_check == NULL) {
+		uri_check = default_uri_checks;
+	} else {
+		if(fixup_get_ivalue(_msg, (gparam_t*)_uri_check, &uri_check)<0) {
+			LM_ERR("failed to get uri check flags parameter\n");
+			return -1;
+		}
 	}
-	if (_arg == NULL) {
-		arg = default_uri_checks;
-	}
-	else {
-		arg = (int)(long)_arg;
-	}
-	ret = sanity_check(_msg, check, arg);
 
+	if ((msg_check < 1) || (msg_check >= (SANITY_MAX_CHECKS))) {
+		LM_ERR("input parameter (%i) outside of valid range <1-%i)\n",
+				msg_check, SANITY_MAX_CHECKS);
+		return -1;
+	}
+	if ((uri_check < 1) || (uri_check >= (SANITY_URI_MAX_CHECKS))) {
+		LM_ERR("second input parameter (%i) outside of valid range <1-%i\n",
+				uri_check, SANITY_URI_MAX_CHECKS);
+		return -1;
+	}
+
+	ret = sanity_check(_msg, msg_check, uri_check);
 	LM_DBG("sanity checks result: %d\n", ret);
 	if(_sanity_drop!=0)
 		return ret;
@@ -277,6 +275,14 @@ static int ki_sanity_check_defaults(sip_msg_t *msg)
 	int ret;
 	ret =  sanity_check(msg, default_msg_checks, default_uri_checks);
 	return (ret==SANITY_CHECK_FAILED)?-1:ret;
+}
+
+/**
+ *
+ */
+static int w_sanity_reply(sip_msg_t* _msg, char* _p1, char* _p2)
+{
+	return ki_sanity_reply(_msg);
 }
 
 /**
@@ -305,6 +311,11 @@ static sr_kemi_t sr_kemi_sanity_exports[] = {
 	},
 	{ str_init("sanity"), str_init("sanity_check_defaults"),
 		SR_KEMIP_INT, ki_sanity_check_defaults,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sanity"), str_init("sanity_reply"),
+		SR_KEMIP_INT, ki_sanity_reply,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

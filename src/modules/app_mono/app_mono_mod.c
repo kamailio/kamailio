@@ -69,17 +69,15 @@ static cmd_export_t cmds[]={
 
 struct module_exports exports = {
 	"app_mono",
-	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
-	cmds,
-	params,
-	0,
-	0,              /* exported MI functions */
-	0,              /* exported pseudo-variables */
-	0,              /* extra processes */
-	mod_init,       /* module initialization function */
-	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	RTLD_NOW | RTLD_GLOBAL,	/* dlopen flags */
+	cmds,			/*·exported·functions·*/
+	params,			/*·exported·params·*/
+	0,			/*·exported·RPC·methods·*/
+	0,			/* exported pseudo-variables */
+	0,			/*·response·function·*/
+	mod_init,		/* module initialization function */
+	child_init,		/* per child init function */
+	mod_destroy,		/* destroy function */
 };
 
 

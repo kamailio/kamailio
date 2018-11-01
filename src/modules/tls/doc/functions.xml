@@ -18,16 +18,18 @@
 		<title><function>is_peer_verified()</function></title>
 		<para>
 			Returns true if the connection on which the message was received
-			is TLS , the peer presented an X509 certificate and the
+			is TLS, the peer presented an X509 certificate and the
 			certificate chain verified ok.
+		</para>
+		<para>
 			It can be used only in a request route.
 		</para>
 		<example>
 			<title><function>is_peer_verified</function> usage</title>
 			<programlisting>
-	if (proto==TLS &amp;&amp; !is_peer_verified()){
+	if (proto==TLS &amp;&amp; !is_peer_verified()) {
 		sl_send_reply("400", "No certificate or verification failed");
-		drop;
+		exit;
 	}
 			</programlisting>
 		</example>

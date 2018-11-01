@@ -105,22 +105,16 @@ stat_export_t mod_stats[] = {
 
 /** module exports */
 struct module_exports exports = {
-	"tsilo",
-	DEFAULT_DLFLAGS,/* dlopen flags */
-	cmds,        	/* Exported functions */
-	params,      	/* Exported parameters */
-#ifdef STATISTICS
-	mod_stats,   	/* exported statistics */
-#else
-	0,
-#endif
-	0,           	/* exported MI functions */
-	0,     		/* exported pseudo-variables */
-	0,           	/* extra processes */
-	mod_init,    	/* module initialization function */
-	0,
-	destroy, 	/* destroy function */
-	0,  		/* Per-child init function */
+	"tsilo",         /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported RPC methods */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	destroy          /* destroy function */
 };
 
 /**

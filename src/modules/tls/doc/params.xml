@@ -1034,18 +1034,25 @@ modparam("tls", "renegotiation", 1)
 		domain:
 	</para>
 	<itemizedlist>
-			<listitem><para>tls_method</para></listitem>
-			<listitem><para>verify_certificate</para></listitem>
-			<listitem><para>require_certificate</para></listitem>
-			<listitem><para>private_key</para></listitem>
-			<listitem><para>certificate</para></listitem>
-			<listitem><para>verify_depth</para></listitem>
-			<listitem><para>ca_list</para></listitem>
-			<listitem><para>crl</para></listitem>
-			<listitem><para>cipher_list</para></listitem>
-			<listitem><para>server_name</para></listitem>
-			<listitem><para>server_id</para></listitem>
+			<listitem><para>tls_method - (str) - TLS methods</para></listitem>
+			<listitem><para>verify_certificate - (bool) - see modparam</para></listitem>
+			<listitem><para>require_certificate - (bool) - see modparam</para></listitem>
+			<listitem><para>private_key - (str) - see modparam</para></listitem>
+			<listitem><para>certificate - (str) - see modparam</para></listitem>
+			<listitem><para>verify_depth - (int) - see modparam</para></listitem>
+			<listitem><para>ca_list - (str) - see modparam</para></listitem>
+			<listitem><para>crl - (str) - see modparam</para></listitem>
+			<listitem><para>cipher_list - (str) - see modparam</para></listitem>
+			<listitem><para>server_name - (str) - SNI (server name identification)</para></listitem>
+			<listitem><para>server_name_mode - (int) - how to match server_name</para></listitem>
+			<listitem><para>server_id - (str) - server id</para></listitem>
 	</itemizedlist>
+	<para>
+		The value for server_name_mode specifies how to match the server_name
+		(SNI). If set to 1, match the domain and all its subdomains. If set to
+		2, match only the subdomains. If set to 0 (or anything else), match only
+		the domain given in server_name.
+	</para>
 	<para>
 		The value for server_id can be any string, being used to match TLS
 		client config profile, overriding the match on ip:port and
@@ -1066,9 +1073,34 @@ modparam("tls", "renegotiation", 1)
 		client when it initiates a new connection by itself (it connects to
 		something).
 	</para>
+	<para>
+		The tls.cfg consists on a set of server and client TLS domain profiles.
+		A server TLS domain profile starts with [server:domain]. A client TLS
+		domain profile starts with [client:domain]. The tokens 'server' and
+		'client' are static values. The 'domain' part can be: 'ip:port' - the
+		IP address and port to match with the TLS connection; 'default' -
+		(static string) for client and server profiles to be used when
+		no other profile is matched; 'any' - (static string) for client and
+		server profiles to be matched based on 'server_name', no matter of
+		IP and port of the TLS connection.
+	</para>
+	<para>
+		There can be only one of each [server:default] and [client:default]
+		profile definitions. Other profiles can be defined many times with the
+		same domain ('ip:port' or 'any'), but in that case they must have
+		'server_name' set for matching SNI.
+	</para>
+	<para>
+		It is highly recommended to have [server:default] and [client:default]
+		profile definitions. They are needed when SNI is not yet available. If
+		SNI is provided, then the profile definition is searched again to match
+		on 'server_name'.
+	</para>
+
 	<example>
-		<title>Short config file</title>
+		<title>Sample TLS Config File</title>
 	<programlisting>
+...
 [server:default]
 method = TLSv1
 verify_certificate = yes
@@ -1082,13 +1114,13 @@ crl = default_crl.pem
 verify_certificate = yes
 require_certificate = yes
 
-#more relaxed for connection on the loopback interface
+# more relaxed for connection on the loopback interface
 [server:127.0.0.1:5061]
-method = SSLv23
+method = TLSv1
 verify_certificate = yes
 require_certificate = no
-private_key = local_key.pem
-certificate = local_cert.pem
+private_key = local_kamailio_org_key.pem
+certificate = local_kamailio_org_cert.pem
 verify_depth = 3
 ca_list = local_ca.pem
 server_name = kamailio.org
@@ -1103,6 +1135,19 @@ ca_list = default_ca.pem
 crl = default_crl.pem
 server_name = kamailio.org
 server_id = kamailio.org
+
+# server profile on any address
+[server:any]
+method = TLSv1
+verify_certificate = yes
+require_certificate = no
+private_key = kamailio_net_key.pem
+certificate = kamailio_net_cert.pem
+verify_depth = 3
+ca_list = local_ca.pem
+server_name = kamailio.net
+server_name_mode = 1
+...
 	</programlisting>
 	</example>
 	<para>

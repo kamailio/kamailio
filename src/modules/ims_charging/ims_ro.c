@@ -1105,6 +1105,8 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     //getting subscription id type
     if (strncasecmp(subscription_id.s, "tel:", 4) == 0) {
         subscription_id_type = Subscription_Type_MSISDN;
+        subscription_id.s += 4;
+        subscription_id.len -= 4;
     } else {
         subscription_id_type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
     }

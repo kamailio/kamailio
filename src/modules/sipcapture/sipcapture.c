@@ -67,6 +67,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/digest/digest.h"
 #include "../../core/parser/parse_ppi_pai.h"
+#include "../../core/parser/parse_rpid.h"
 #include "../../core/forward.h"
 #include "../../core/pvar.h"
 #include "../../core/str.h"
@@ -421,22 +422,16 @@ stat_export_t *sipcapture_stats = NULL;
 
 /*! \brief module exports */
 struct module_exports exports = {
-	"sipcapture", DEFAULT_DLFLAGS, /*!< dlopen flags */
-	cmds,						   /*!< Exported functions */
-	params,						   /*!< Exported parameters */
-#ifdef STATISTICS
-	//	sipcapture_stats,  /*!< exported statistics */
-	0,
-#else
-	0, /*!< exported statistics */
-#endif
-	0,		   /*!< exported MI functions */
-	mod_pvs,   /*!< exported pseudo-variables */
-	0,		   /*!< extra processes */
-	mod_init,  /*!< module initialization function */
-	0,		   /*!< response function */
-	destroy,   /*!< destroy function */
-	child_init /*!< child initialization function */
+	"sipcapture",    /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	destroy          /* module destroy function */
 };
 
 
@@ -1921,6 +1916,16 @@ static int sip_capture(sip_msg_t *msg, str *_table,
 			LM_DBG("PARSE PPI: (%.*s)\n", ppi->uri.len, ppi->uri.s);
 			sco.pid_user = ppi->parsed_uri.user;
 		}
+	} else if((parse_rpid_header(msg) == 0) && (msg->rpid) && (msg->rpid->parsed)) {
+		to_body_t *rpid = get_rpid(msg);
+		if((rpid->parsed_uri.user.s == NULL)
+				&& (parse_uri(rpid->uri.s, rpid->uri.len, &rpid->parsed_uri) < 0)) {
+			LM_DBG("DEBUG: do_action: bad rpid: method:[%.*s] CID: [%.*s]\n",
+					sco.method.len, sco.method.s, sco.callid.len, sco.callid.s);
+		} else {
+			LM_DBG("PARSE RPID: (%.*s)\n",rpid->uri.len, rpid->uri.s);
+			sco.pid_user = rpid->parsed_uri.user;
+		}
 	} else {
 		EMPTY_STR(sco.pid_user);
 	}
@@ -2494,7 +2499,8 @@ int receive_logging_json_msg(char *buf, unsigned int len,
 	struct timezone tz;
 	time_t epoch_time_as_time_t;
 
-	str tmp, corrtmp, table;
+	str tmp, table;
+	str corrtmp = STR_NULL;
 	_capture_mode_data_t *c = NULL;
 
 	c = capture_def;

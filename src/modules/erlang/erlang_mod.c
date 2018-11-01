@@ -164,7 +164,7 @@ static pv_export_t pvs[] = {
 /* exported parameters */
 static param_export_t parameters[] =
 {
-		/* Kamailo C node parameters */
+		/* Kamailio C node parameters */
 		{ "no_cnodes", PARAM_INT, &no_cnodes },
 		{ "cnode_alivename", PARAM_STR, &cnode_alivename },
 		{ "cnode_host", PARAM_STR, &cnode_host },
@@ -193,18 +193,16 @@ static cmd_export_t commands[] =
 
 
 struct module_exports exports = {
-		"erlang",
-		DEFAULT_DLFLAGS,
-		commands,
-		parameters,
-		NULL,
-		NULL,
-		pvs,
-		NULL,
-		mod_init,
-		NULL,
-		mod_destroy,
-		child_init
+		"erlang",			/* module name */
+		DEFAULT_DLFLAGS,	/* dlopen flags */
+		commands,			/* exported functions */
+		parameters,			/* exported parameters */
+		0,					/* RPC method exports */
+		pvs,				/* exported pseudo-variables */
+		0,					/* response handling function */
+		mod_init,			/* module initialization function */
+		child_init,			/* per-child init function */
+		mod_destroy			/* module destroy function */
 };
 
 /**

@@ -38,6 +38,7 @@
 #include "km_my_con.h"
 #include "km_res.h"
 
+extern int db_mysql_unsigned_type;
 
 /*!
  * \brief Get and convert columns from a result
@@ -96,13 +97,25 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 			case MYSQL_TYPE_LONG:
 			case MYSQL_TYPE_INT24:
 			case MYSQL_TYPE_TIMESTAMP:
-				LM_DBG("use DB1_INT result type\n");
-				RES_TYPES(_r)[col] = DB1_INT;
+				if ((db_mysql_unsigned_type != 0)
+						&& (fields[col].flags & UNSIGNED_FLAG)) {
+					LM_DBG("use DB1_UINT result type\n");
+					RES_TYPES(_r)[col] = DB1_UINT;
+				} else {
+					LM_DBG("use DB1_INT result type\n");
+					RES_TYPES(_r)[col] = DB1_INT;
+				}
 				break;
 
 			case MYSQL_TYPE_LONGLONG:
-				LM_DBG("use DB1_BIGINT result type\n");
-				RES_TYPES(_r)[col] = DB1_BIGINT;
+				if ((db_mysql_unsigned_type != 0)
+						&& (fields[col].flags & UNSIGNED_FLAG)) {
+					LM_DBG("use DB1_UBIGINT result type\n");
+					RES_TYPES(_r)[col] = DB1_UBIGINT;
+				} else {
+					LM_DBG("use DB1_BIGINT result type\n");
+					RES_TYPES(_r)[col] = DB1_BIGINT;
+				}
 				break;
 
 			case MYSQL_TYPE_FLOAT:

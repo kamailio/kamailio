@@ -61,14 +61,14 @@ int int_param = 0;
 str str_param = STR_STATIC_INIT("");
 
 static cmd_export_t cmds[]={
-	{"print", print_f_0, 0, 0, REQUEST_ROUTE},   // overload test
-	{"print", print_f_1, 1, print_fixup_f_1, REQUEST_ROUTE},
-	{"print", print_f_2, 2, print_fixup_f_2, REQUEST_ROUTE},
-	{"print1", print_f1, 1, 0, REQUEST_ROUTE},
-	{"print2", print_f2, 2, fixup_var_str_12, REQUEST_ROUTE},
-	{"print3", (cmd_function)print_f3, 3, 0, REQUEST_ROUTE},
-	{"printv", (cmd_function)print_f_var, VAR_PARAM_NO, 0, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"print", print_f_0, 0, 0, 0, REQUEST_ROUTE},   // overload test
+	{"print", print_f_1, 1, print_fixup_f_1, 0, REQUEST_ROUTE},
+	{"print", print_f_2, 2, print_fixup_f_2, 0, REQUEST_ROUTE},
+	{"print1", print_f1, 1, 0, 0, REQUEST_ROUTE},
+	{"print2", print_f2, 2, fixup_var_str_12, 0, REQUEST_ROUTE},
+	{"print3", (cmd_function)print_f3, 3, 0, 0, REQUEST_ROUTE},
+	{"printv", (cmd_function)print_f_var, VAR_PARAM_NO, 0, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={
@@ -79,16 +79,16 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-	"print_stdout",
-	cmds,
-	0,        /* RPC methods */
-	params,
-
-	mod_init, /* module initialization function */
-	0,        /* response function*/
-	0,        /* destroy function */
-	0,        /* oncancel function */
-	0         /* per-child init function */
+	"print_stdout",		/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	mod_init,			/* module initialization function */
+	0,					/* per-child init function */
+	0					/* module destroy function */
 };
 
 

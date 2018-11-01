@@ -193,18 +193,16 @@ static pv_export_t pvs[] = {
 };
 
 struct module_exports exports = {
-	"http_async_client",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	mod_stats,   	/* exported statistics */
-	0,              /* exported MI functions */
-	pvs,            /* exported pseudo-variables */
-	0,              /* extra processes */
-	mod_init,       /* module initialization function */
-	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	"http_async_client",	/* module name */
+	DEFAULT_DLFLAGS,		/* dlopen flags */
+	cmds,					/* exported functions */
+	params,					/* exported parameters */
+	0,						/* RPC method exports */
+	pvs,					/* exported pseudo-variables */
+	0,						/* response handling function */
+	mod_init,				/* module initialization function */
+	child_init,				/* per-child init function */
+	mod_destroy				/* module destroy function */
 };
 
 

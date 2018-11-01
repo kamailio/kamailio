@@ -58,17 +58,16 @@ static param_export_t params[] = {{"basedir", PARAM_STR, &cfgt_basedir},
 		{"callid_prefix", PARAM_STR, &cfgt_hdr_prefix}, {0, 0, 0}};
 
 struct module_exports exports = {
-		"cfgt", DEFAULT_DLFLAGS, /*!< dlopen flags */
-		cmds,					 /*!< Exported functions */
-		params,					 /*!< Export parameters */
-		0,						 /*!< exported statistics */
-		0,						 /*!< exported MI functions */
-		0,						 /*!< exported pseudo-variables */
-		0,						 /*!< extra processes */
-		mod_init,				 /*!< Module initialization function */
-		0,						 /*!< Response function */
-		destroy,				 /*!< Destroy function */
-		child_init				 /*!< Child initialization function */
+	"cfgt",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	destroy          /* module destroy function */
 };
 
 /*! \brief

@@ -118,6 +118,7 @@ int reg_htable_size = 4;
 int reg_fetch_rows = 1000;
 int reg_keep_callid = 0;
 int reg_random_delay = 0;
+int *reg_active = NULL;
 str reg_contact_addr = STR_NULL;
 str reg_db_url = STR_NULL;
 str reg_db_table = str_init("uacreg");
@@ -166,6 +167,23 @@ extern pv_spec_t auth_password_spec;
 counter_handle_t regtotal;         /* Total number of registrations in memory */
 counter_handle_t regactive;        /* Active registrations - 200 OK */
 counter_handle_t regdisabled;      /* Disabled registrations */
+
+/* Init reg active mode */
+int reg_active_init(int mode)
+{
+	if(reg_active!=NULL) {
+		/* already allocated */
+		*reg_active = mode;
+		return 0;
+	}
+	reg_active = (int*)shm_malloc(sizeof(int));
+	if(reg_active==NULL) {
+		LM_ERR("not enough shared memory\n");
+		return -1;
+	}
+	*reg_active = mode;
+	return 0;
+}
 
 /* Init counters */
 static void uac_reg_counter_init()
@@ -1076,6 +1094,8 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 				(int)reg->flags);
 		reg->flags &= ~(UAC_REG_ONLINE|UAC_REG_AUTHSENT);
 	}
+	if(reg_active && *reg_active == 0)
+		return 4;
 	if(reg->flags&UAC_REG_DISABLED)
 		return 4;
 
@@ -1486,6 +1506,31 @@ error:
 /**
  *
  */
+int uac_reg_refresh(sip_msg_t *msg, str *l_uuid)
+{
+	int ret;
+
+	if(l_uuid==NULL || l_uuid->s==NULL || l_uuid->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	ret = uac_reg_db_refresh(l_uuid);
+	if(ret==0) {
+		LM_WARN("record not found: %.*s\n", l_uuid->len, l_uuid->s);
+		return -1;
+	} else if(ret<0) {
+		LM_WARN("failed to refresh record: %.*s - check log messages\n",
+				l_uuid->len, l_uuid->s);
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
 int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode)
 {
 	char  b_ruri[MAX_URI_SIZE];
@@ -1674,6 +1719,67 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+static int uac_reg_update_flag(str *attr, str *val, int mode, int fval)
+{
+	reg_uac_t *reg = NULL;
+	int ret;
+
+	if(_reg_htable==NULL) {
+		LM_ERR("uac remote registrations not enabled\n");
+		return -1;
+	}
+
+	if(attr->len<=0 || attr->s==NULL || val->len<=0 || val->s==NULL) {
+		LM_ERR("bad parameter values\n");
+		return -1;
+	}
+
+	ret = reg_ht_get_byfilter(&reg, attr, val);
+	if (ret == 0) {
+		LM_DBG("record not found for %.*s = %.*s\n", attr->len, attr->s,
+				val->len, val->s);
+		return -2;
+	} else if (ret < 0) {
+		LM_DBG("unsupported filter attribute %.*s = %.*s\n", attr->len, attr->s,
+				val->len, val->s);
+		return -3;
+	}
+
+	if(mode==1) {
+		reg->flags |= fval;
+	} else {
+		reg->flags &= ~fval;
+	}
+	reg->timer_expires = time(NULL) + 1;
+
+	lock_release(reg->lock);
+	return 1;
+}
+
+/**
+ *
+ */
+int uac_reg_enable(sip_msg_t *msg, str *attr, str *val)
+{
+	counter_add(regdisabled, -1);
+	return uac_reg_update_flag(attr, val, 0, UAC_REG_DISABLED);
+}
+
+/**
+ *
+ */
+int uac_reg_disable(sip_msg_t *msg, str *attr, str *val)
+{
+	counter_inc(regdisabled);
+	return uac_reg_update_flag(attr, val, 1, UAC_REG_DISABLED);
+}
+
+/**
+ *
+ */
 static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, time_t tn)
 {
 	void* th;
@@ -1979,6 +2085,40 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 }
 
 
+static const char* rpc_uac_reg_active_doc[2] = {
+	"Set remote registration active or inactive for all records.",
+	0
+};
+
+static void rpc_uac_reg_active(rpc_t* rpc, void* ctx)
+{
+	int omode;
+	int nmode;
+	void* th;
+
+	if(reg_active==NULL) {
+		rpc->fault(ctx, 500, "Not initialized");
+		return;
+	}
+	if(rpc->scan(ctx, "d", &nmode)<1) {
+		LM_ERR("missing parameter");
+		rpc->fault(ctx, 500, "Missing parameter");
+		return;
+	}
+	omode = *reg_active;
+	*reg_active = (nmode)?1:0;
+
+	/* add entry node */
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating rpc struct");
+		return;
+	}
+	if(rpc->struct_add(th, "dd", "omode", omode, "nmode", nmode)<0) {
+		rpc->fault(ctx, 500, "Internal error creating response");
+		return;
+	}
+}
+
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, RET_ARRAY},
 	{"uac.reg_info", rpc_uac_reg_info, rpc_uac_reg_info_doc, 0},
@@ -1988,6 +2128,7 @@ rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_refresh", rpc_uac_reg_refresh, rpc_uac_reg_refresh_doc, 0},
 	{"uac.reg_remove", rpc_uac_reg_remove, rpc_uac_reg_remove_doc, 0},
 	{"uac.reg_add", rpc_uac_reg_add, rpc_uac_reg_add_doc, 0},
+	{"uac.reg_active", rpc_uac_reg_active, rpc_uac_reg_active_doc, 0},
 	{0, 0, 0, 0}
 };
 

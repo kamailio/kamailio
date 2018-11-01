@@ -254,7 +254,7 @@
 		<listitem>
 			<para>
 			regular expression is either empty (NULL in
-			database) or matches the From URI of request.
+			database) or matches the request's From (or optionally provided) URI.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1185,12 +1185,12 @@ if ($var(group) != -1) {
 	</section>
 	<section id ="permissions.f.allow_trusted">
 		<title>
-		<function moreinfo="none">allow_trusted([src_ip_pvar, proto_pvar])</function>
+		<function moreinfo="none">allow_trusted([src_ip_pvar, proto_pvar, furi_pvar])</function>
 		</title>
 		<para>
 		Checks based either on request's source address and transport
 		protocol or source address and transport protocol given
-		in pvar arguments, and From URI of request
+		in pvar arguments, and From URI of request (or furi_pvar if provided)
 		if request can be trusted without
 		authentication.  Returns <quote>1</quote> if a match is found
 		as described in <xref linkend="sec-trusted-requests"/>
@@ -1200,9 +1200,14 @@ if ($var(group) != -1) {
 		matching peer to AVP peer_tag_avp.
 		</para>
 		<para>
-		Source address and transport protocol given in pvar
-		arguments must be in string format.  Valid transport
-		protocol values are (ignoring case) "any", "udp, "tcp", "tls",
+		NOTE: source IP is matched using string comparison. Be careful if the
+		IP can have different forms, for a safer alternative for matching IP
+		addresses, look at allow_source_address or allow_address().
+		</para>
+		<para>
+		Source address, transport protocol and uri given in the
+		arguments must be in string format and they can contain script variables.
+		Valid transport protocol values are (ignoring case) "any", "udp, "tcp", "tls",
 		"ws", "wss" and "sctp".
 		</para>
 		<para>
@@ -1214,11 +1219,15 @@ if ($var(group) != -1) {
 ...
 if (allow_trusted()) {
 	t_relay();
-};
+}
 ...
 if (allow_trusted("$si", "$proto")) {
 	t_relay();
-};
+}
+...
+if (allow_trusted("$si", "any", "$ai")) {
+	t_relay();
+}
 ...
 </programlisting>
 		</example>

@@ -250,10 +250,11 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
  * Returns number of matches or -1 if none matched.
  */
 int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
-		char *src_ip_c_str, int proto)
+		char *src_ip_c_str, int proto, char *from_uri)
 {
-	str uri, ruri;
-	char uri_string[MAX_URI_SIZE + 1];
+	LM_DBG("match_hash_table src_ip: %s, proto: %d, uri: %s\n", src_ip_c_str,
+			proto, from_uri);
+	str ruri;
 	char ruri_string[MAX_URI_SIZE + 1];
 	regex_t preg;
 	struct trusted_list *np;
@@ -266,14 +267,6 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 
 	if (IS_SIP(msg))
 	{
-		if (parse_from_header(msg) < 0) return -1;
-		uri = get_from(msg)->uri;
-		if (uri.len > MAX_URI_SIZE) {
-			LM_ERR("from URI too large\n");
-			return -1;
-		}
-		memcpy(uri_string, uri.s, uri.len);
-		uri_string[uri.len] = (char)0;
 		ruri = msg->first_line.u.request.uri;
 		if (ruri.len > MAX_URI_SIZE) {
 			LM_ERR("message has Request URI too large\n");
@@ -288,15 +281,21 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 				(strncmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
 				((np->proto == PROTO_NONE) || (proto == PROTO_NONE) ||
 				(np->proto == proto))) {
+
+			LM_DBG("match_hash_table: %d, %s, %s, %s\n", np->proto,
+					(np->pattern ? np->pattern : "null"),
+					(np->ruri_pattern ? np->ruri_pattern : "null"),
+					(np->tag.s ? np->tag.s : "null"));
+
 			if (IS_SIP(msg)) {
 				if (np->pattern) {
 					if (regcomp(&preg, np->pattern, REG_NOSUB)) {
 						LM_ERR("invalid regular expression\n");
-						if (!np->ruri_pattern) {
+						if (!np->pattern) {
 							continue;
 						}
 					}
-					if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
+					if (regexec(&preg, from_uri, 0, (regmatch_t *)0, 0)) {
 						regfree(&preg);
 						continue;
 					}
@@ -327,6 +326,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 			count++;
 		}
 	}
+
 	if (!count)
 		return -1;
 	else

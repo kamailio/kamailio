@@ -65,7 +65,7 @@ int parse_method_name(const str* const s, enum request_method* const method)
 	}
 
 	switch ((s->s)[0]) {
-		/* ordered after probability of aparition on a normal proxy */
+		/* ordered after probability of apparition on a normal proxy */
 		case 'R':
 		case 'r':
 			if (likely((s->len == 8) &&
@@ -104,6 +104,14 @@ int parse_method_name(const str* const s, enum request_method* const method)
 			}
 			if (likely((s->len==7) && !strncasecmp(s->s + 1, "ublish", 6))) {
 				*method = METHOD_PUBLISH;
+				return 0;
+			}
+			if (likely((s->len==4) && !strncasecmp(s->s + 1, "ost", 3))) {
+				*method = METHOD_POST;
+				return 0;
+			}
+			if (likely((s->len==3) && !strncasecmp(s->s + 1, "ut", 2))) {
+				*method = METHOD_PUT;
 				return 0;
 			}
 			break;
@@ -153,6 +161,27 @@ int parse_method_name(const str* const s, enum request_method* const method)
 		case 'u':
 			if (likely((s->len==6) && !strncasecmp(s->s + 1, "pdate", 5))){
 				*method = METHOD_UPDATE;
+				return 0;
+			}
+			break;
+		case 'D':
+		case 'd':
+			if (likely((s->len==6) && !strncasecmp(s->s + 1, "elete", 5))){
+				*method = METHOD_DELETE;
+				return 0;
+			}
+			break;
+		case 'G':
+		case 'g':
+			if (likely((s->len==3) && !strncasecmp(s->s + 1, "et", 2))){
+				*method = METHOD_GET;
+				return 0;
+			}
+			break;
+		case 'K':
+		case 'k':
+			if (likely((s->len==4) && !strncasecmp(s->s + 1, "dmq", 3))){
+				*method = METHOD_KDMQ;
 				return 0;
 			}
 			break;
@@ -287,6 +316,18 @@ static int parse_method_advance(str* const _next, enum request_method* const _me
 				_next->s += 7;
 				goto found;
 			}
+			if ((_next->len > 3) && !strncasecmp(_next->s + 1, "ost", 3)) {
+				*_method = METHOD_POST;
+				_next->len -= 4;
+				_next->s += 4;
+				goto found;
+			}
+			if ((_next->len > 2) && !strncasecmp(_next->s + 1, "ut", 2)) {
+				*_method = METHOD_PUT;
+				_next->len -= 3;
+				_next->s += 3;
+				goto found;
+			}
 			goto unknown;
 
 		case 'R':
@@ -330,7 +371,36 @@ static int parse_method_advance(str* const _next, enum request_method* const _me
 			} else {
 				goto unknown;
 			}
-
+		case 'D':
+		case 'd':
+			if ((_next->len>5) && !strncasecmp(_next->s + 1, "elete", 5)){
+				*_method = METHOD_DELETE;
+				_next->len -= 6;
+				_next->s += 6;
+				goto found;
+			} else {
+				goto unknown;
+			}
+		case 'G':
+		case 'g':
+			if ((_next->len>2) && !strncasecmp(_next->s + 1, "et", 2)){
+				*_method = METHOD_GET;
+				_next->len -= 3;
+				_next->s += 3;
+				goto found;
+			} else {
+				goto unknown;
+			}
+		case 'K':
+		case 'k':
+			if ((_next->len>3) && !strncasecmp(_next->s + 1, "dmq", 3)){
+				*_method = METHOD_KDMQ;
+				_next->len -= 4;
+				_next->s += 4;
+				goto found;
+			} else {
+				goto unknown;
+			}
 		default:
 			goto unknown;
 	}

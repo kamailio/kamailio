@@ -13,11 +13,15 @@ HIREDIS_BUILDER = $(shell \
 endif
 
 ifeq ($(HIREDIS_BUILDER),)
-	HIREDISDEFS=-I$(LOCALBASE)/include
+	HIREDISDEFS=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/hiredis  -I/usr/include/hiredis
 	HIREDISLIBS=-L$(LOCALBASE)/lib -lhiredis
 else
 	HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags)
 	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs)
+
+ifeq (,$(findstring hiredis,$(HIREDISDEFS)))
+	DEFS+=-DWITH_HIREDIS_PATH
+endif
 
 ifeq ($(HIREDISLIBS),-L -lhiredis)
 		HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags) /opt/local/include
@@ -28,7 +32,5 @@ endif
 
 DEFS+=$(HIREDISDEFS)
 LIBS=$(HIREDISLIBS)
-
-DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules

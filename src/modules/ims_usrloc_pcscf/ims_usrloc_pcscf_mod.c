@@ -125,17 +125,15 @@ stat_export_t mod_stats[] = {
 
 struct module_exports exports = {
 	"ims_usrloc_pcscf",
-	DEFAULT_DLFLAGS, /*!< dlopen flags */
-	cmds,       /*!< Exported functions */
-	params,     /*!< Export parameters */
-	mod_stats,  /*!< exported statistics */
-	0,          /*!< exported MI functions */
-	0,          /*!< exported pseudo-variables */
-	0,          /*!< extra processes */
-	mod_init,   /*!< Module initialization function */
-	0,          /*!< Response function */
-	destroy,    /*!< Destroy function */
-	child_init  /*!< Child initialization function */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,		/* exported functions */
+	params,		/* export parameters */
+	0,		/* exported RPC functions */
+	0,		/* exported pseudo-variables */
+	0,		/* response·function */
+	mod_init,	/* module initialization function */
+	child_init,	/* per-child·init·function*/
+	destroy		/* destroy function */
 };
 
 

@@ -141,14 +141,12 @@ static param_export_t params[] = {
 struct module_exports exports = { MOD_NAME, DEFAULT_DLFLAGS, /* dlopen flags */
 		cmds, 		/* Exported functions */
 		params, 	/* Exported params */
-		0,		/* exported statistics */
-		0, 			/* exported MI functions */
+		0, 			/* exported RPC methods */
 		0, 			/* exported pseudo-variables */
-		0, 			/* extra processes */
-		mod_init, 	/* module initialization function */
 		0,
-		mod_destroy, 	/* module destroy functoin */
-		mod_child_init 	/* per-child init function */
+		mod_init, 	/* module initialization function */
+		mod_child_init, 	/* per-child init function */
+		mod_destroy 	/* module destroy functoin */
 };
 
 int fix_parameters() {

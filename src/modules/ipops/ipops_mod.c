@@ -174,18 +174,16 @@ static cmd_export_t cmds[] =
  * Module interface
  */
 struct module_exports exports = {
-	"ipops",                   /*!< module name */
-	DEFAULT_DLFLAGS,           /*!< dlopen flags */
-	cmds,                      /*!< exported functions */
-	0,                         /*!< exported parameters */
-	0,                         /*!< exported statistics */
-	0,                         /*!< exported MI functions */
-	mod_pvs,                   /*!< exported pseudo-variables */
-	0,                         /*!< extra processes */
-	mod_init,                  /*!< module initialization function */
-	(response_function) 0,     /*!< response handling function */
-	0,                         /*!< destroy function */
-	0                          /*!< per-child init function */
+	"ipops",	/* module name */
+	DEFAULT_DLFLAGS,/* dlopen flags */
+	cmds,		/* cmd (cfg function) exports */
+	0,		/* param exports*/
+	0,		/* RPC method exports */
+	mod_pvs,	/* exported pseudo-variables */
+	0,		/* response handling function */
+	mod_init,	/* module init function */
+	0,		/* per-child init function */
+	0		/* module destroy function */
 };
 
 
@@ -1414,6 +1412,11 @@ static sr_kemi_t sr_kemi_ipops_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("ipops"), str_init("ip_is_in_subnet"),
+		SR_KEMIP_INT, ki_ip_is_in_subnet,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("is_in_subnet"),
 		SR_KEMIP_INT, ki_ip_is_in_subnet,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }

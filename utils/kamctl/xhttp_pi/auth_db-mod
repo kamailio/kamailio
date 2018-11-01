@@ -10,8 +10,6 @@
 				<col><field>password</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
-				<col><field>email_address</field></col>
-				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -23,8 +21,6 @@
 				<col><field>password</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
-				<col><field>email_address</field></col>
-				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -39,8 +35,6 @@
 				<col><field>password</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
-				<col><field>email_address</field></col>
-				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

@@ -200,7 +200,7 @@ inline static int _set_fr_retr(struct retr_buf *rb, unsigned retr_ms)
 #endif
 	/* adjust timeout to MIN(fr, maximum lifetime) if rb is a request
 	 *  (for neg. replies we are force to wait for the ACK so use fr) */
-	if(unlikely((rb->activ_type == TYPE_REQUEST)
+	if(unlikely((rb->rbtype == TYPE_REQUEST)
 				&& ((s_ticks_t)(eol - (ticks + timeout))
 						   < 0))) { /* fr after end of life */
 		timeout = (((s_ticks_t)(eol - ticks)) > 0) ? (eol - ticks)
@@ -260,7 +260,7 @@ inline static void restart_rb_fr(struct retr_buf *rb, ticks_t new_val)
 
 	now = get_ticks_raw();
 	t = rb->my_T;
-	if(unlikely((rb->activ_type == TYPE_REQUEST)
+	if(unlikely((rb->rbtype == TYPE_REQUEST)
 				&& (((s_ticks_t)(t->end_of_life - (now + new_val))) < 0)))
 		rb->fr_expire = t->end_of_life;
 	else
@@ -291,7 +291,7 @@ inline static void change_fr(struct cell *t, ticks_t fr_inv, ticks_t fr)
 			if((t->uac[i].request.flags & F_RB_FR_INV) && fr_inv)
 				t->uac[i].request.fr_expire = fr_inv_expire;
 			else if(fr) {
-				if(t->uac[i].request.activ_type == TYPE_REQUEST)
+				if(t->uac[i].request.rbtype == TYPE_REQUEST)
 					t->uac[i].request.fr_expire = req_fr_expire;
 				else
 					t->uac[i].request.fr_expire = fr_expire;
@@ -347,7 +347,7 @@ inline static void change_end_of_life(struct cell *t, int adj, ticks_t eol)
 	if(adj) {
 		for(i = 0; i < t->nr_of_outgoings; i++) {
 			if(t->uac[i].request.t_active) {
-				if((t->uac[i].request.activ_type == TYPE_REQUEST)
+				if((t->uac[i].request.rbtype == TYPE_REQUEST)
 						&& ((s_ticks_t)(t->end_of_life
 										- t->uac[i].request.fr_expire)
 								   < 0))
@@ -375,5 +375,24 @@ inline static void unlink_timers(struct cell *t)
 	cleanup_localcancel_timers(t);
 }
 
+inline static int t_linked_timers(tm_cell_t *t)
+{
+	int i;
+
+	if(t->uas.response.timer.next!=NULL || t->uas.response.timer.prev!=NULL) {
+		return 1;
+	}
+	for(i = 0; i < t->nr_of_outgoings; i++) {
+		if(t->uac[i].request.timer.next!=NULL
+				|| t->uac[i].request.timer.prev!=NULL) {
+			return 1;
+		}
+		if(t->uac[i].local_cancel.timer.next!=NULL
+				|| t->uac[i].local_cancel.timer.prev!=NULL) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
 #endif

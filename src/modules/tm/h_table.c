@@ -48,6 +48,10 @@
 #include "uac.h" /* free_local_ack */
 
 
+#define T_UAC_PTR(T) ((tm_ua_client_t*)((char*)T + sizeof(tm_cell_t) \
+								+ MD5_LEN - sizeof(((tm_cell_t*)0)->md5)))
+
+
 static enum kill_reason kr;
 
 /* pointer to the big table where all the transaction data lives */
@@ -128,6 +132,10 @@ void free_cell_helper(
 
 	LM_DBG("freeing transaction %p from %s:%u\n", dead_cell, fname, fline);
 
+	if(dead_cell==NULL) {
+		return;
+	}
+
 	if(dead_cell->prev_c != NULL && dead_cell->next_c != NULL) {
 		if(likely(silent == 0)) {
 			LM_WARN("removed cell %p is still linked in hash table (%s:%u)\n",
@@ -143,7 +151,17 @@ void free_cell_helper(
 		unlink_timers(dead_cell);
 		remove_from_hash_table_unsafe(dead_cell);
 	}
-	release_cell_lock(dead_cell);
+	release_cell_lock(dead_cell); /* does nothing */
+
+	dead_cell->fcount++;
+	if(dead_cell->fcount!=1) {
+		LM_WARN("unexpected fcount value: %d\n", dead_cell->fcount);
+	}
+	if(dead_cell->uac==NULL || dead_cell->uac!=T_UAC_PTR(dead_cell)) {
+		LM_WARN("unexpected tm cell content: %p\n", dead_cell);
+		return;
+	}
+
 	if(unlikely(has_tran_tmcbs(dead_cell, TMCB_DESTROY)))
 		run_trans_callbacks(TMCB_DESTROY, dead_cell, 0, 0, 0);
 
@@ -247,6 +265,7 @@ void free_cell_helper(
 		xavp_destroy_list_unsafe(&dead_cell->xavps_list);
 #endif
 
+	memset(dead_cell, 0, sizeof(tm_cell_t));
 	/* the cell's body */
 	shm_free_unsafe(dead_cell);
 
@@ -330,9 +349,7 @@ struct cell *build_cell(struct sip_msg *p_msg)
 	new_cell->uas.response.my_T = new_cell;
 	init_rb_timers(&new_cell->uas.response);
 	/* UAC */
-	new_cell->uac =
-			(struct ua_client *)((char *)new_cell + sizeof(struct cell)
-								+ MD5_LEN - sizeof(((struct cell *)0)->md5));
+	new_cell->uac = T_UAC_PTR(new_cell);
 	/* timers */
 	init_cell_timers(new_cell);
 

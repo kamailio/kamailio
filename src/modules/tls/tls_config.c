@@ -41,8 +41,8 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-static tls_domains_cfg_t* cfg = NULL;
-static tls_domain_t* domain = NULL;
+static tls_domains_cfg_t* _ksr_tls_cfg = NULL;
+static tls_domain_t* _ksr_tls_domain = NULL;
 
 static int parse_ipv6(struct ip_addr* ip, cfg_token_t* token,
 		cfg_parser_t* st)
@@ -146,6 +146,12 @@ static cfg_option_t token_default[] = {
 	{0}
 };
 
+static cfg_option_t ksr_tls_token_any[] = {
+	{"any"},
+	{"all"},
+	{0}
+};
+
 
 static cfg_option_t options[] = {
 	{"method",              .param = methods, .f = cfg_parse_enum_opt},
@@ -164,6 +170,7 @@ static cfg_option_t options[] = {
 	{"ca_list",             .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 	{"crl",                 .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 	{"server_name",         .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+	{"server_name_mode",    .f = cfg_parse_int_opt},
 	{"server_id",           .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 	{0}
 };
@@ -173,27 +180,28 @@ static void update_opt_variables(void)
 {
 	int i;
 	for(i = 0; methods[i].name; i++) {
-		methods[i].param = &domain->method;
+		methods[i].param = &_ksr_tls_domain->method;
 	}
-	options[2].param = &domain->verify_cert;
-	options[3].param = &domain->verify_cert;
-	options[4].param = &domain->verify_depth;
-	options[5].param = &domain->require_cert;
-	options[6].param = &domain->require_cert;
-	options[7].param = &domain->pkey_file;
-	options[8].param = &domain->pkey_file;
-	options[9].param = &domain->ca_file;
-	options[10].param = &domain->cert_file;
-	options[11].param = &domain->cert_file;
-	options[12].param = &domain->cipher_list;
-	options[13].param = &domain->ca_file;
-	options[14].param = &domain->crl_file;
-	options[15].param = &domain->server_name;
-	options[16].param = &domain->server_id;
+	options[2].param = &_ksr_tls_domain->verify_cert;
+	options[3].param = &_ksr_tls_domain->verify_cert;
+	options[4].param = &_ksr_tls_domain->verify_depth;
+	options[5].param = &_ksr_tls_domain->require_cert;
+	options[6].param = &_ksr_tls_domain->require_cert;
+	options[7].param = &_ksr_tls_domain->pkey_file;
+	options[8].param = &_ksr_tls_domain->pkey_file;
+	options[9].param = &_ksr_tls_domain->ca_file;
+	options[10].param = &_ksr_tls_domain->cert_file;
+	options[11].param = &_ksr_tls_domain->cert_file;
+	options[12].param = &_ksr_tls_domain->cipher_list;
+	options[13].param = &_ksr_tls_domain->ca_file;
+	options[14].param = &_ksr_tls_domain->crl_file;
+	options[15].param = &_ksr_tls_domain->server_name;
+	options[16].param = &_ksr_tls_domain->server_name_mode;
+	options[17].param = &_ksr_tls_domain->server_id;
 }
 
 
-static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
+static int ksr_tls_parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 		cfg_token_t* token, cfg_parser_t* st)
 {
 	int ret;
@@ -217,7 +225,14 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 			/* Default domain */
 			return 0;
 		} else {
-			if (parse_ipv4(ip, &t, st) < 0) return -1;
+			opt = cfg_lookup_token(ksr_tls_token_any, &t.val);
+			if (opt) {
+				*type = TLS_DOMAIN_ANY;
+				/* Default domain */
+				return 0;
+			} else {
+				if (parse_ipv4(ip, &t, st) < 0) return -1;
+			}
 		}
 	} else {
 		LM_ERR("%s:%d:%d: Syntax error, IP address expected\n",
@@ -258,7 +273,7 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 }
 
 
-static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
+static int ksr_tls_parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 {
 	cfg_token_t t;
 	int ret;
@@ -267,6 +282,13 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 	int type;
 	struct ip_addr ip;
 	unsigned int port;
+
+	if(_ksr_tls_cfg!=NULL && _ksr_tls_domain!=NULL) {
+		/* Make sure the previous domain is not a duplicate */
+		if (ksr_tls_domain_duplicated(_ksr_tls_cfg, _ksr_tls_domain)) {
+			return -1;
+		}
+	}
 
 	memset(&ip, 0, sizeof(struct ip_addr));
 
@@ -299,7 +321,7 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 	}
 
 	port = 0;
-	if (parse_hostport(&type, &ip, &port, &t, st) < 0) return -1;
+	if (ksr_tls_parse_hostport(&type, &ip, &port, &t, st) < 0) return -1;
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
@@ -316,26 +338,29 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 
 	if (cfg_eat_eol(st, flags)) return -1;
 
-	if ((domain = tls_new_domain(opt->val | type, &ip, port)) == NULL) {
+	if ((_ksr_tls_domain = tls_new_domain(opt->val | type, &ip, port)) == NULL) {
 		LM_ERR("%s:%d: Cannot create TLS domain structure\n", st->file, st->line);
 		return -1;
 	}
 
-	ret = tls_add_domain(cfg, domain);
+	ret = tls_add_domain(_ksr_tls_cfg, _ksr_tls_domain);
 	if (ret < 0) {
 		LM_ERR("%s:%d: Error while creating TLS domain structure\n", st->file,
 				st->line);
-		tls_free_domain(domain);
+		tls_free_domain(_ksr_tls_domain);
+		_ksr_tls_domain = NULL;
 		return -1;
 	} else if (ret == 1) {
 		LM_ERR("%s:%d: Duplicate TLS domain (appears earlier in the config file)\n",
 				st->file, st->line);
-		tls_free_domain(domain);
+		tls_free_domain(_ksr_tls_domain);
+		_ksr_tls_domain = NULL;
 		return -1;
 	}
 
 	update_opt_variables();
 	cfg_set_options(st, options);
+
 	return 0;
 }
 
@@ -361,7 +386,7 @@ tls_domains_cfg_t* tls_load_config(str* filename)
 	in_fd = out_fd = filename_is_directory = 0;
 	file_path = (char *)0;
 
-	if ((cfg = tls_new_cfg()) == NULL) goto error;
+	if ((_ksr_tls_cfg = tls_new_cfg()) == NULL) goto error;
 
 	if (stat(filename->s, &file_status) != 0) {
 		LM_ERR("cannot stat config file %s\n", filename->s);
@@ -436,11 +461,11 @@ tls_domains_cfg_t* tls_load_config(str* filename)
 		}
 	}
 
-	cfg_section_parser(parser, parse_domain, NULL);
+	cfg_section_parser(parser, ksr_tls_parse_domain, NULL);
 	if (sr_cfg_parse(parser)) goto error;
 	cfg_parser_close(parser);
 	if (file_path) pkg_free(file_path);
-	return cfg;
+	return _ksr_tls_cfg;
 
 error:
 	if (dir) closedir(dir);
@@ -450,7 +475,10 @@ error:
 	}
 	if (file_path) pkg_free(file_path);
 	if (parser) cfg_parser_close(parser);
-	if (cfg) tls_free_cfg(cfg);
+	if (_ksr_tls_cfg) {
+		tls_free_cfg(_ksr_tls_cfg);
+		_ksr_tls_cfg = NULL;
+	}
 	return 0;
 }
 

@@ -179,6 +179,9 @@ if(phonenum_match_cn("1-484-555-8888", "US", "src")) {
 					<emphasis>cctel</emphasis> - country code for phone number
 				</para></listitem>
 				<listitem><para>
+					<emphasis>ccname</emphasis> - country code name
+				</para></listitem>
+				<listitem><para>
 					<emphasis>ltype</emphasis> - local network type
 				</para></listitem>
 				<listitem><para>

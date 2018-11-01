@@ -236,6 +236,7 @@ int pres_dmq_handle_msg(
 	}
 
 	*pres_dmq_recv = 1;
+	srjson_InitDoc(&jdoc, NULL);
 
 	if(!msg->content_length) {
 		LM_ERR("no content length header found\n");
@@ -258,7 +259,6 @@ int pres_dmq_handle_msg(
 	/* parse body */
 	LM_DBG("body: %.*s\n", body.len, body.s);
 
-	srjson_InitDoc(&jdoc, NULL);
 	jdoc.buf = body;
 
 	if(jdoc.root == NULL) {

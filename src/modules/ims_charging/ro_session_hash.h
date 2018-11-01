@@ -158,6 +158,13 @@ extern struct ro_session_table *ro_session_table;
  * \param ro_session unlinked ro_session
  */
 static inline void unlink_unsafe_ro_session(struct ro_session_entry *ro_session_entry, struct ro_session *ro_session) {
+	if ((ro_session->next == 0x00) &&
+			(ro_session->prev == 0x00) &&
+			(ro_session != ro_session_entry->first) )
+	{
+		return;
+	}
+
     if (ro_session->next)
         ro_session->next->prev = ro_session->prev;
     else

@@ -623,12 +623,17 @@ void fm_free(void* qmp, void* p)
 	}
 #ifdef DBG_F_MALLOC
 	if (p>(void*)qm->last_frag || p<(void*)qm->first_frag){
-		LM_CRIT("BUG: bad pointer %p (out of memory block (%p)!),"
+		if(likely(cfg_get(core, core_cfg, mem_safety)==0)) {
+			LM_CRIT("BUG: bad pointer %p (out of memory block (%p)!),"
 				" called from %s: %s(%d) - aborting\n", p, qm,
 				file, func, line);
-		if(likely(cfg_get(core, core_cfg, mem_safety)==0))
 			abort();
-		else return;
+		} else {
+			LM_CRIT("BUG: bad pointer %p (out of memory block (%p)!),"
+				" called from %s: %s(%d) - ignoring\n", p, qm,
+				file, func, line);
+			return;
+		}
 	}
 #endif
 	f=(struct fm_frag*) ((char*)p-sizeof(struct fm_frag));

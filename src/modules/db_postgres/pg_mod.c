@@ -58,28 +58,29 @@ int pg_retries =
 int pg_lockset = 4;
 int pg_timeout = 0; /* default = no timeout */
 int pg_keepalive = 0;
+int pg_bytea_output_escape = 1;
 
 /*
  * Postgres module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_ctx", (cmd_function)NULL, 0, 0, 0},
-	{"db_con", (cmd_function)pg_con, 0, 0, 0},
-	{"db_uri", (cmd_function)pg_uri, 0, 0, 0},
-	{"db_cmd", (cmd_function)pg_cmd, 0, 0, 0},
-	{"db_put", (cmd_function)pg_cmd_exec, 0, 0, 0},
-	{"db_del", (cmd_function)pg_cmd_exec, 0, 0, 0},
-	{"db_get", (cmd_function)pg_cmd_exec, 0, 0, 0},
-	{"db_upd", (cmd_function)pg_cmd_exec, 0, 0, 0},
-	{"db_sql", (cmd_function)pg_cmd_exec, 0, 0, 0},
-	{"db_res", (cmd_function)pg_res, 0, 0, 0},
-	{"db_fld", (cmd_function)pg_fld, 0, 0, 0},
-	{"db_first", (cmd_function)pg_cmd_first, 0, 0, 0},
-	{"db_next", (cmd_function)pg_cmd_next, 0, 0, 0},
-	{"db_setopt", (cmd_function)pg_setopt, 0, 0, 0},
-	{"db_getopt", (cmd_function)pg_getopt, 0, 0, 0},
-	{"db_bind_api", (cmd_function)db_postgres_bind_api, 0, 0, 0},
-	{0, 0, 0, 0, 0}
+	{"db_ctx", (cmd_function)NULL, 0, 0, 0, 0},
+	{"db_con", (cmd_function)pg_con, 0, 0, 0, 0},
+	{"db_uri", (cmd_function)pg_uri, 0, 0, 0, 0},
+	{"db_cmd", (cmd_function)pg_cmd, 0, 0, 0, 0},
+	{"db_put", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
+	{"db_del", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
+	{"db_get", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
+	{"db_upd", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
+	{"db_sql", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
+	{"db_res", (cmd_function)pg_res, 0, 0, 0, 0},
+	{"db_fld", (cmd_function)pg_fld, 0, 0, 0, 0},
+	{"db_first", (cmd_function)pg_cmd_first, 0, 0, 0, 0},
+	{"db_next", (cmd_function)pg_cmd_next, 0, 0, 0, 0},
+	{"db_setopt", (cmd_function)pg_setopt, 0, 0, 0, 0},
+	{"db_getopt", (cmd_function)pg_getopt, 0, 0, 0, 0},
+	{"db_bind_api", (cmd_function)db_postgres_bind_api, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -91,18 +92,22 @@ static param_export_t params[] = {
 	{"lockset", PARAM_INT, &pg_lockset},
 	{"timeout", PARAM_INT, &pg_timeout},
 	{"tcp_keepalive", PARAM_INT, &pg_keepalive},
+	{"bytea_output_escape", PARAM_INT, &pg_bytea_output_escape},
 	{0, 0, 0}
 };
 
 
 struct module_exports exports = {
-	"db_postgres", cmds, 0, /* RPC method */
-	params,					/* module parameters */
-	pg_mod_init,			/* module initialization function */
-	0,						/* response function*/
-	pg_mod_destroy,			/* destroy function */
-	0,						/* oncancel function */
-	0						/* per-child init function */
+	"db_postgres",	/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,			/* exported functions */
+	params,			/* exported parameters */
+	0,				/* exported RPC methods */
+	0,				/* exported pseudo-variables */
+	0,				/* response function*/
+	pg_mod_init,	/* module initialization function */
+	0,				/* per-child init function */
+	pg_mod_destroy	/* destroy function */
 };
 
 /*

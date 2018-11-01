@@ -9,7 +9,12 @@ NAME=app_python.so
 # the following to point to the correct instance. Module has been tested
 # to work with 2.6 and 2.5. Python 2.4 has been only confirmed to compile,
 # but no testing has been done with that.
-PYTHON?=python
+PYTHON=$(shell which python2)
+
+# workaround for some OS (like MacOS) that don't have a python2 link
+ifeq ($(PYTHON),)
+PYTHON=python
+endif
 
 PYTHON_VERSION=${shell ${PYTHON} -c "import distutils.sysconfig;print distutils.sysconfig.get_config_var('VERSION')"}
 PYTHON_LIBDIR=${shell ${PYTHON} -c "import distutils.sysconfig;print distutils.sysconfig.get_config_var('LIBDIR')"}
@@ -23,7 +28,6 @@ LIBS+=-pthread
 endif
 
 DEFS+=-I${PYTHON_INCDIR}
-DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules
 

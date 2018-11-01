@@ -107,11 +107,11 @@ char * build_res_buf_with_body_from_sip_req(	unsigned int code ,
 				unsigned int *returned_len,
 				struct bookmark *bmark);
 */
-char* via_builder( unsigned int *len,
+char* via_builder(unsigned int *len, sip_msg_t *msg,
 	struct dest_info* send_info,
-	str *branch, str* extra_params, struct hostport *hp );
+	str *branch, str* extra_params, struct hostport *hp);
 
-/* creates a via header honoring the protocol of the incomming socket
+/* creates a via header honoring the protocol of the incoming socket
  * msg is an optional parameter */
 char* create_via_hf( unsigned int *len,
 	struct sip_msg *msg,
@@ -180,4 +180,15 @@ void process_lumps( struct sip_msg* msg,
                     unsigned int* orig_offs,
                     struct dest_info* send_info,
                     int flag);
+
+/**
+ * set the internal buffer for sip msg with obuf and reparse
+ */
+int sip_msg_update_buffer(sip_msg_t *msg, str *obuf);
+
+/**
+ * apply changes to sip msg buffer and reparse
+ */
+int sip_msg_apply_changes(sip_msg_t *msg);
+
 #endif

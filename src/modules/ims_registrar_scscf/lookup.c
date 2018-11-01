@@ -75,7 +75,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
         LM_ERR("NULL message!!!\n");
         return -1;
     }
-    
+
     switch (ue_type_c[0]) {
             case '3':
                 LM_DBG("looking for 3gpp terminals\n");
@@ -91,8 +91,23 @@ int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
             ue_type=0;
     }
 
-    if (_m->new_uri.s) aor = _m->new_uri;
-    else aor = _m->first_line.u.request.uri;
+    if (_m->new_uri.s) {
+			aor.s = pkg_malloc(_m->new_uri.len);
+			if (aor.s == NULL) {
+				LM_ERR("memory allocation failure\n");
+				return -1;
+			}
+			memcpy(aor.s, _m->new_uri.s, _m->new_uri.len);
+			aor.len = _m->new_uri.len;
+		} else {
+			aor.s = pkg_malloc(_m->first_line.u.request.uri.len);
+			if (aor.s == NULL) {
+				LM_ERR("memory allocation failure\n");
+				return -1;
+			}
+			memcpy(aor.s, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
+			aor.len = _m->first_line.u.request.uri.len;
+		}
 
     for (i = 4; i < aor.len; i++)
         if (aor.s[i] == ':' || aor.s[i] == ';' || aor.s[i] == '?') {
@@ -108,6 +123,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
     res = ul.get_impurecord(_d, &aor, &r);
     if (res != 0) {
         LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
+				pkg_free(aor.s);
         ul.unlock_udomain(_d, &aor);
         return -1;
     }
@@ -206,6 +222,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
     }
 
 done:
+		pkg_free(aor.s);
     ul.unlock_udomain(_d, &aor);
     return ret;
 }

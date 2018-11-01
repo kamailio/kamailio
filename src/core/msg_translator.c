@@ -114,6 +114,7 @@ extern char version[];
 extern int version_len;
 
 str _ksr_xavp_via_params = STR_NULL;
+str _ksr_xavp_via_fields = STR_NULL;
 
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
@@ -170,12 +171,17 @@ static int check_via_address(struct ip_addr* ip, str *name,
 						(name->s[name->len-1]==']')&&
 						(strncasecmp(name->s+1, s, len)==0))
 				)
-		   )
+		   ) {
 			return 0;
-		else
-
+		}
+		else {
+			if (unlikely(name->s==NULL)) {
+				LM_CRIT("invalid Via host name\n");
+				return -1;
+			}
 			if (strncmp(name->s, s, name->len)==0)
 				return 0;
+		}
 	}else{
 		LM_CRIT("could not convert ip address\n");
 		return -1;
@@ -641,7 +647,10 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 			case SUBST_RCV_ALL: \
 				if (msg->rcv.bind_address){ \
 					new_len+=recv_address_str->len; \
-					if (msg->rcv.bind_address->address.af!=AF_INET) \
+					if ((msg->rcv.bind_address->address.af==AF_INET6)\
+							&& (recv_address_str->s[0]!='[')\
+							&& (memchr(recv_address_str->s, ':',\
+								recv_address_str->len)!=NULL))\
 						new_len+=2; \
 					if (recv_port_no!=SIP_PORT){ \
 						/* add :port_no */ \
@@ -727,7 +736,9 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				if (send_sock){ \
 					new_len+=send_address_str->len; \
 					if ((send_sock->address.af==AF_INET6) && \
-							(send_address_str->s[0]!='[')) \
+							(send_address_str->s[0]!='[')\
+							&& (memchr(send_address_str->s, ':',\
+								send_address_str->len)!=NULL)) \
 						new_len+=2; \
 					if ((send_sock->port_no!=SIP_PORT) || \
 							(send_port_str!=&(send_sock->port_no_str))){ \
@@ -995,13 +1006,19 @@ void process_lumps( struct sip_msg* msg,
 		case SUBST_RCV_ALL: \
 			if (msg->rcv.bind_address){  \
 				/* address */ \
-				if (msg->rcv.bind_address->address.af!=AF_INET){\
+				if ((msg->rcv.bind_address->address.af==AF_INET6)\
+						&& (recv_address_str->s[0]!='[')\
+						&& (memchr(recv_address_str->s, ':',\
+								recv_address_str->len)!=NULL)){\
 					new_buf[offset]='['; offset++; \
 				}\
 				memcpy(new_buf+offset, recv_address_str->s, \
 						recv_address_str->len); \
 				offset+=recv_address_str->len; \
-				if (msg->rcv.bind_address->address.af!=AF_INET){\
+				if ((msg->rcv.bind_address->address.af==AF_INET6)\
+						&& (recv_address_str->s[0]!='[')\
+						&& (memchr(recv_address_str->s, ':',\
+								recv_address_str->len)!=NULL)){\
 					new_buf[offset]=']'; offset++; \
 				}\
 				/* :port */ \
@@ -1087,15 +1104,19 @@ void process_lumps( struct sip_msg* msg,
 		case SUBST_SND_ALL: \
 			if (send_sock){  \
 				/* address */ \
-				if ((send_sock->address.af!=AF_INET) && \
-						(send_address_str->s[0]!='[')){\
+				if ((send_sock->address.af==AF_INET6)\
+						&& (send_address_str->s[0]!='[')\
+						&& (memchr(send_address_str->s, ':',\
+								send_address_str->len)!=NULL)){\
 					new_buf[offset]='['; offset++; \
 				}\
 				memcpy(new_buf+offset, send_address_str->s, \
 						send_address_str->len); \
 				offset+=send_address_str->len; \
-				if ((send_sock->address.af!=AF_INET) && \
-						(send_address_str->s[0]!='[')){\
+				if ((send_sock->address.af==AF_INET6)\
+						&& (send_address_str->s[0]!='[')\
+						&& (memchr(send_address_str->s, ':',\
+								send_address_str->len)!=NULL)){\
 					new_buf[offset]=']'; offset++; \
 				}\
 				/* :port */ \
@@ -2369,7 +2390,7 @@ char * build_res_buf_from_sip_req( unsigned int code, str *text ,str *new_tag,
 			case HDR_TO_T:
 				if (new_tag && new_tag->len) {
 					to_tag=get_to(msg)->tag_value;
-					if ( to_tag.len || to_tag.s )
+					if ( to_tag.len && to_tag.s )
 						len+=new_tag->len-to_tag.len;
 					else
 						len+=new_tag->len+TOTAG_TOKEN_LEN/*";tag="*/;
@@ -2497,7 +2518,7 @@ char * build_res_buf_from_sip_req( unsigned int code, str *text ,str *new_tag,
 				break;
 			case HDR_TO_T:
 				if (new_tag && new_tag->len){
-					if (to_tag.s ) { /* replacement */
+					if (to_tag.len && to_tag.s) { /* replacement */
 						/* before to-tag */
 						append_str( p, hdr->name.s, to_tag.s-hdr->name.s);
 						/* to tag replacement */
@@ -2653,10 +2674,10 @@ int branch_builder( unsigned int hash_index,
 
 
 
-/* uses only the send_info->send_socket, send_info->proto and 
+/* uses only the send_info->send_socket, send_info->proto and
  * send_info->comp (so that a send_info used for sending can be passed
  * to this function w/o changes and the correct via will be built) */
-char* via_builder( unsigned int *len,
+char* via_builder(unsigned int *len, sip_msg_t *msg,
 	struct dest_info* send_info /* where to send the reply */,
 	str* branch, str* extra_params, struct hostport* hp)
 {
@@ -2664,8 +2685,8 @@ char* via_builder( unsigned int *len,
 	char               *line_buf;
 	int max_len;
 	int via_prefix_len;
-	str* address_str; /* address displayed in via */
-	str* port_str; /* port no displayed in via */
+	str* address_str = NULL; /* address displayed in via */
+	str* port_str = NULL; /* port no displayed in via */
 	struct socket_info* send_sock;
 	int comp_len, comp_name_len;
 #ifdef USE_COMP
@@ -2676,22 +2697,46 @@ char* via_builder( unsigned int *len,
 	union sockaddr_union *from = NULL;
 	union sockaddr_union local_addr;
 	struct tcp_connection *con = NULL;
+	sr_xavp_t *rxavp = NULL;
+	str xname;
 
 	send_sock=send_info->send_sock;
 	/* use pre-set address in via, the outbound socket alias or address one */
-	if (hp && hp->host->len)
-		address_str=hp->host;
-	else if(send_sock->useinfo.name.len>0)
-		address_str=&(send_sock->useinfo.name);
-	else
-		address_str=&(send_sock->address_str);
-	if (hp && hp->port->len)
-		port_str=hp->port;
-	else if(send_sock->useinfo.port_no>0)
-		port_str=&(send_sock->useinfo.port_no_str);
-	else
-		port_str=&(send_sock->port_no_str);
-	
+	if(msg && (msg->msg_flags&FL_USE_XAVP_VIA_FIELDS)
+			&& _ksr_xavp_via_fields.len>0) {
+		xname.s = "address";
+		xname.len = 7;
+		rxavp = xavp_get_child_with_sval(&_ksr_xavp_via_fields, &xname);
+		if(rxavp!=NULL) {
+			address_str = &rxavp->val.v.s;
+		}
+	}
+	if(address_str==NULL) {
+		if (hp && hp->host->len)
+			address_str=hp->host;
+		else if(send_sock->useinfo.name.len>0)
+			address_str=&(send_sock->useinfo.name);
+		else
+			address_str=&(send_sock->address_str);
+	}
+	if(msg && (msg->msg_flags&FL_USE_XAVP_VIA_FIELDS)
+			&& _ksr_xavp_via_fields.len>0) {
+		xname.s = "port";
+		xname.len = 4;
+		rxavp = xavp_get_child_with_sval(&_ksr_xavp_via_fields, &xname);
+		if(rxavp!=NULL) {
+			port_str = &rxavp->val.v.s;
+		}
+	}
+	if(port_str==NULL) {
+		if (hp && hp->port->len)
+			port_str=hp->port;
+		else if(send_sock->useinfo.port_no>0)
+			port_str=&(send_sock->useinfo.port_no_str);
+		else
+			port_str=&(send_sock->port_no_str);
+	}
+
 	comp_len=comp_name_len=0;
 #ifdef USE_COMP
 	comp_name=0;
@@ -2839,9 +2884,9 @@ char* via_builder( unsigned int *len,
 	return line_buf;
 }
 
-/* creates a via header honoring the protocol of the incomming socket
+/* creates a via header honoring the protocol of the incoming socket
  * msg is an optional parameter */
-char* create_via_hf( unsigned int *len,
+char* create_via_hf(unsigned int *len,
 	struct sip_msg *msg,
 	struct dest_info* send_info /* where to send the reply */,
 	str* branch)
@@ -2935,12 +2980,13 @@ char* create_via_hf( unsigned int *len,
 	}
 
 	/* test and add xavp params */
-	if(msg && (msg->msg_flags&FL_ADD_XAVP_VIA) && _ksr_xavp_via_params.len>0) {
+	if(msg && (msg->msg_flags&FL_ADD_XAVP_VIA_PARAMS)
+			&& _ksr_xavp_via_params.len>0) {
 		xparams.s = pv_get_buffer();
 		xparams.len = xavp_serialize_fields(&_ksr_xavp_via_params,
 							xparams.s, pv_get_buffer_size());
 		if(xparams.len>0) {
-			via = (char*)pkg_malloc(extra_params.len+xparams.len+1);
+			via = (char*)pkg_malloc(extra_params.len+xparams.len+2);
 			if(via==0) {
 				LM_ERR("building xavps params failed\n");
 				if (extra_params.s) pkg_free(extra_params.s);
@@ -2950,7 +2996,10 @@ char* create_via_hf( unsigned int *len,
 				memcpy(via, extra_params.s, extra_params.len);
 				pkg_free(extra_params.s);
 			}
-			memcpy(via + extra_params.len, xparams.s, xparams.len);
+			/* add ';' between via parameters */
+			via[extra_params.len] = ';';
+			/* skip last ';' from xavp serialized output */
+			memcpy(via + extra_params.len + 1, xparams.s, xparams.len - 1);
 			extra_params.s = via;
 			extra_params.len += xparams.len;
 			extra_params.s[extra_params.len] = '\0';
@@ -2958,7 +3007,7 @@ char* create_via_hf( unsigned int *len,
 	}
 
 	set_hostport(&hp, msg);
-	via = via_builder( len, send_info, branch,
+	via = via_builder(len, msg, send_info, branch,
 							extra_params.len?&extra_params:0, &hp);
 
 	/* we do not need extra_params any more, already in the new via header */
@@ -3153,3 +3202,106 @@ int build_sip_msg_from_buf(struct sip_msg *msg, char *buf, int len,
 	return 0;
 }
 
+/**
+ *
+ */
+int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
+{
+	sip_msg_t tmp;
+
+	if(obuf==NULL || obuf->s==NULL || obuf->len<=0) {
+		LM_ERR("invalid buffer parameter\n");
+		return -1;
+	}
+
+	if(obuf->len >= BUF_SIZE) {
+		LM_ERR("new buffer is too large (%d)\n", obuf->len);
+		return -1;
+	}
+	/* temporary copy */
+	memcpy(&tmp, msg, sizeof(sip_msg_t));
+
+	/* reset dst uri and path vector to avoid freeing - restored later */
+	if(msg->dst_uri.s != NULL) {
+		msg->dst_uri.s = NULL;
+		msg->dst_uri.len = 0;
+	}
+	if(msg->path_vec.s != NULL) {
+		msg->path_vec.s = NULL;
+		msg->path_vec.len = 0;
+	}
+
+	/* free old msg structure */
+	free_sip_msg(msg);
+	memset(msg, 0, sizeof(sip_msg_t));
+
+	/* restore msg fields */
+	msg->buf = tmp.buf;
+	msg->id = tmp.id;
+	msg->rcv = tmp.rcv;
+	msg->set_global_address = tmp.set_global_address;
+	msg->set_global_port = tmp.set_global_port;
+	msg->flags = tmp.flags;
+	msg->msg_flags = tmp.msg_flags;
+	msg->hash_index = tmp.hash_index;
+	msg->force_send_socket = tmp.force_send_socket;
+	msg->fwd_send_flags = tmp.fwd_send_flags;
+	msg->rpl_send_flags = tmp.rpl_send_flags;
+	msg->dst_uri = tmp.dst_uri;
+	msg->path_vec = tmp.path_vec;
+
+	memcpy(msg->buf, obuf->s, obuf->len);
+	msg->len = obuf->len;
+	msg->buf[msg->len] = '\0';
+
+	/* reparse the message */
+	LM_DBG("SIP message content updated - reparsing\n");
+	if(parse_msg(msg->buf, msg->len, msg) != 0) {
+		LM_ERR("parsing new sip message failed [[%.*s]]\n", msg->len, msg->buf);
+		/* exit config execution - sip_msg_t structure is no longer
+		 * valid/safe for config */
+		return 0;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+int sip_msg_apply_changes(sip_msg_t *msg)
+{
+	int ret;
+	dest_info_t dst;
+	str obuf;
+
+	if(msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
+		LM_ERR("invalid usage - not in request route or a reply\n");
+		return -1;
+	}
+
+	init_dest_info(&dst);
+	dst.proto = PROTO_UDP;
+	if(msg->first_line.type == SIP_REPLY) {
+		obuf.s = generate_res_buf_from_sip_res(
+				msg, (unsigned int *)&obuf.len, BUILD_NO_VIA1_UPDATE);
+	} else {
+		if(msg->msg_flags & FL_RR_ADDED) {
+			LM_ERR("cannot apply msg changes after adding record-route"
+				   " header - it breaks conditional 2nd header\n");
+			return -1;
+		}
+		obuf.s = build_req_buf_from_sip_req(msg, (unsigned int *)&obuf.len,
+				&dst,
+				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
+	}
+	if(obuf.s == NULL) {
+		LM_ERR("couldn't update msg buffer content\n");
+		return -1;
+	}
+	ret = sip_msg_update_buffer(msg, &obuf);
+	/* free new buffer - copied in the static buffer from old sip_msg_t */
+	pkg_free(obuf.s);
+
+	return ret;
+}

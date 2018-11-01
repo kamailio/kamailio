@@ -97,14 +97,18 @@ static param_export_t params[] = {
 };
 
 /** module exports */
-struct module_exports exports = {"ims_isc", DEFAULT_DLFLAGS, /* dlopen flags */
-    cmds, /* Exported functions */
-    params, 0, /* exported statistics */
-    0, /* exported MI functions */
-    0, /* exported pseudo-variables */
-    0, /* extra processes */
-    mod_init, /* module initialization function */
-    0, 0, 0 /* per-child init function */};
+struct module_exports exports = {
+	"ims_isc", 
+	DEFAULT_DLFLAGS, /* dlopen flags */
+    	cmds, 		 /* Exported functions */
+    	params, 
+	0, 		 /* exported RPC methods */
+	0, 		 /* exported pseudo-variables */
+	0, 		 /* response handling function */
+	mod_init, 	 /* module initialization function */
+	0, 		 /* per-child init function */
+	0                /* module destroy function */
+};
 
 /*! \brief
  * Convert char* parameter to udomain_t* pointer
@@ -224,6 +228,8 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t* d) {
     //sometimes s is populated by an ims_getter method cscf_get_terminating_user that alloc memory that must be free-ed at the end
     int free_s = 0;
 
+    //the callback from the Cx interface in case of unreg terminating initial message is a FAILURE_ROUTE. Hence we need an addl. flag
+    int firstflag = 0;
 
     int ret = ISC_RETURN_FALSE;
     isc_mark new_mark, old_mark;
@@ -245,9 +251,10 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t* d) {
         LM_DBG("Message returned s=%d;h=%d;d=%d;a=%.*s\n", old_mark.skip, old_mark.handling, old_mark.direction, old_mark.aor.len, old_mark.aor.s);
     } else {
         LM_DBG("Starting triggering\n");
+        firstflag = 1;
     }
 
-    if (is_route_type(FAILURE_ROUTE)) {
+    if (is_route_type(FAILURE_ROUTE) && !firstflag) {
         /* need to find the handling for the failed trigger */
         if (dir == DLG_MOBILE_ORIGINATING) {
             k = cscf_get_originating_user(msg, &s);
@@ -345,7 +352,7 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t* d) {
                 new_mark.skip = m->index + 1;
                 new_mark.handling = m->default_handling;
                 new_mark.aor = s;
-                ret = isc_forward(msg, m, &new_mark);
+                ret = isc_forward(msg, m, &new_mark, firstflag);
                 isc_free_match(m);
                 goto done;
             }
@@ -383,7 +390,7 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t* d) {
                 new_mark.skip = m->index + 1;
                 new_mark.handling = m->default_handling;
                 new_mark.aor = s;
-                ret = isc_forward(msg, m, &new_mark);
+                ret = isc_forward(msg, m, &new_mark, firstflag);
                 isc_free_match(m);
                 goto done;
             }

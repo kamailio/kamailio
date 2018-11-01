@@ -33,10 +33,13 @@ Daniel-Constantin Mierla
               3.6. dialog_expire (int)
               3.7. clean_interval (int)
               3.8. event_callback (str)
+              3.9. event_mode (int)
+              3.10. contact_host (str)
 
         4. Event Routes
 
               4.1. event_route[topos:msg-outgoing]
+              4.2. event_route[topos:msg-sending]
 
    List of Examples
 
@@ -48,7 +51,10 @@ Daniel-Constantin Mierla
    1.6. Set dialog_expire parameter
    1.7. Set clean_interval parameter
    1.8. Set event_callback parameter
-   1.9. Usage of event_route[topos:msg-outgoing]
+   1.9. Set event_mode parameter
+   1.10. Set contact_host parameter
+   1.11. Usage of event_route[topos:msg-outgoing]
+   1.12. Usage of event_route[topos:msg-sending]
 
 Chapter 1. Admin Guide
 
@@ -70,10 +76,13 @@ Chapter 1. Admin Guide
         3.6. dialog_expire (int)
         3.7. clean_interval (int)
         3.8. event_callback (str)
+        3.9. event_mode (int)
+        3.10. contact_host (str)
 
    4. Event Routes
 
         4.1. event_route[topos:msg-outgoing]
+        4.2. event_route[topos:msg-sending]
 
 1. Overview
 
@@ -119,6 +128,8 @@ Chapter 1. Admin Guide
    3.6. dialog_expire (int)
    3.7. clean_interval (int)
    3.8. event_callback (str)
+   3.9. event_mode (int)
+   3.10. contact_host (str)
 
 3.1. storage (str)
 
@@ -161,7 +172,7 @@ modparam("topos", "mask_callid", 1)
 
 3.4. sanity_checks (int)
 
-   If set to 1, topoh module will bind to sanity module in order to
+   If set to 1, topos module will bind to sanity module in order to
    perform sanity checks over received SIP request. Default sanity checks
    are done. It is useful to check if received request is well formatted
    before proceeding to encoding/decoding.
@@ -170,7 +181,7 @@ modparam("topos", "mask_callid", 1)
 
    Example 1.4. Set sanity_checks parameter
 ...
-modparam("topoh", "sanity_checks", 1)
+modparam("topos", "sanity_checks", 1)
 ...
 
 3.5. branch_expire (int)
@@ -227,9 +238,38 @@ function ksr_topos_event(evname)
 end
 ...
 
+3.9. event_mode (int)
+
+   Control what event_route blocks to be executed. It is a bitmask of: 1 -
+   execute event_route[topos:outgoing]; 2 - execute
+   event_route[topos:sending].
+
+   Default value is 3 (execute both event_route blocks).
+
+   Example 1.9. Set event_mode parameter
+...
+modparam("topos", "event_mode", 2)
+...
+
+3.10. contact_host (str)
+
+   You may need to control the host part of the Contact header added by
+   topos. For example when using TLS with TOPOS the remote UAS must be
+   able to open a new TLS socket to the contact header. In this case, the
+   contact header must contain a domain name with a trusted CA signed
+   certitificate.
+
+   Default value is taken from the Record-Route URI.
+
+   Example 1.10. Set contact_host parameter
+...
+modparam("topos", "contact_host", "proxy.domain.com")
+...
+
 4. Event Routes
 
    4.1. event_route[topos:msg-outgoing]
+   4.2. event_route[topos:msg-sending]
 
 4.1. event_route[topos:msg-outgoing]
 
@@ -243,10 +283,29 @@ end
    reparsing the outgoing SIP message for the cases when topology hiding
    is not wanted.
 
-   Example 1.9. Usage of event_route[topos:msg-outgoing]
+   Example 1.11. Usage of event_route[topos:msg-outgoing]
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
+    drop;
+  }
+}
+...
+
+4.2. event_route[topos:msg-sending]
+
+   It is executed before doing topology stripping processing for a SIP
+   message to be sent out, being executed after
+   event_route[topos:sending].
+
+   Inside the event route the variables $sndto(ip), $sndto(port) and
+   $sndto(proto) point to the destination. The SIP message is the one to
+   be sent out.
+
+   Example 1.12. Usage of event_route[topos:msg-sending]
+...
+event_route[topos:msg-sending] {
+  if(is_request() and $fU=="alice") {
     drop;
   }
 }

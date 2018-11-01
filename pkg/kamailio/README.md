@@ -42,7 +42,7 @@ To build RPM packages for CentOS, RHEL, Fedora, OpenSUSE and Oracle linux execut
 make rpm
 ```
 
-When utility is finished, you can see tge directory where compiled RPM files
+When utility is finished, you can see the directory where compiled RPM files
 are located.
 
 Example:
@@ -75,3 +75,15 @@ maintained, being quite old.
 ## Solaris ##
 
 Not actively maintained, being quite old.
+
+## Alpine Linux ##
+
+To build apk packages please execute
+
+```
+make cfg
+make apk
+cd alpine && abuild -r
+```
+
+NOTICE: Now `abuild -r` command is failed when called from `Makefile`. This reason why need to execute command from shell.

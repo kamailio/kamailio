@@ -103,7 +103,7 @@ err:
     return -1;
 }
 
-redis_key_t * db_redis_key_unshift(redis_key_t **list) {
+redis_key_t * db_redis_key_shift(redis_key_t **list) {
     redis_key_t *k;
 
     k = *list;
@@ -448,6 +448,15 @@ static struct str_hash_entry* db_redis_create_column(str *col, str *type) {
         case 'I':
             e->u.n = DB1_INT;
             break;
+        case 'u':
+        case 'U':
+			/* uint and ubigint */
+			if(type->len>1 && (type->s[1]=='b' || type->s[1]=='B')) {
+				e->u.n = DB1_UBIGINT;
+			} else {
+				e->u.n = DB1_UINT;
+			}
+            break;
         case 't':
         case 'T':
             e->u.n = DB1_DATETIME;
@@ -458,7 +467,12 @@ static struct str_hash_entry* db_redis_create_column(str *col, str *type) {
             break;
         case 'b':
         case 'B':
-            e->u.n = DB1_BLOB;
+			/* blob and bigint */
+			if(type->len>1 && (type->s[1]=='i' || type->s[1]=='I')) {
+				e->u.n = DB1_BIGINT;
+			} else {
+				e->u.n = DB1_BLOB;
+			}
             break;
         default:
             LM_ERR("Invalid schema column type '%.*s', expecting one of string, int, timestamp, double, blob\n",

@@ -14,6 +14,4 @@ LIBS=
 DEFS += -I$(LOCALBASE)/include
 LIBS  = -L$(LOCALBASE)/lib -lexpat
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules

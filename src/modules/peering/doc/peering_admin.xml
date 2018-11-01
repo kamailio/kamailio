@@ -17,9 +17,12 @@
 	<section>
 	<title>Overview</title>
 	<para>The peering module allows SIP providers (operators or organizations) 
-	to verify from a broker if source or destination of a SIP request is a trusted peer.
-        </para>
-        <para>
+	to verify from a broker if source or destination of a SIP request is
+    a trusted peer.
+    </para>
+    <para>This module is obsolete and will be removed in the next release.
+    </para>
+    <para>
 	In order to participate in the trust community provided by a
 	broker, each SIP provider registers the domains (host parts of SIP URIs) 
 	that they serve with the broker.  When a SIP proxy of a

@@ -56,7 +56,7 @@ time_t km_local_timestamp;
 /*
  * Flatstore database module interface
  */
-static kam_cmd_export_t cmds[] = {
+static cmd_export_t cmds[] = {
 	{"db_bind_api",    (cmd_function)db_flat_bind_api,      0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -70,19 +70,17 @@ static param_export_t params[] = {
 
 static rpc_export_t k_rpc_methods[];
 
-struct kam_module_exports km_exports = {
-	"db_flatstore",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,      /*  module parameters */
-	0,           /* exported statistics */
-	NULL,       /* exported MI functions */
-	0,           /* exported pseudo-variables */
-	0,           /* extra processes */
-	km_mod_init,    /* module initialization function */
-	0,           /* response function*/
-	km_mod_destroy, /* destroy function */
-	km_child_init   /* per-child init function */
+struct module_exports km_exports = {
+	"db_flatstore",		/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	km_mod_init,		/* module initialization function */
+	km_child_init,		/* per-child init function */
+	km_mod_destroy		/* module destroy function */
 };
 
 

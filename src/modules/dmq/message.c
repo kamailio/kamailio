@@ -40,7 +40,7 @@ str dmq_404_rpl = str_init("User Not Found");
 /**
  * @brief config function to handle dmq messages
  */
-int ki_dmq_handle_message(sip_msg_t *msg)
+int ki_dmq_handle_message_rc(sip_msg_t *msg, int returnval)
 {
 	dmq_peer_t *peer;
 	if((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s)) {
@@ -60,7 +60,7 @@ int ki_dmq_handle_message(sip_msg_t *msg)
 			LM_ERR("sending reply\n");
 			goto error;
 		}
-		return 0;
+		return returnval;
 	}
 	LM_DBG("dmq_handle_message peer found: %.*s\n", msg->parsed_uri.user.len,
 			msg->parsed_uri.user.s);
@@ -68,12 +68,28 @@ int ki_dmq_handle_message(sip_msg_t *msg)
 		LM_ERR("failed to add dmq job\n");
 		goto error;
 	}
-	return 0;
+	return returnval;
 error:
 	return -1;
 }
 
+
+int ki_dmq_handle_message(sip_msg_t *msg)
+{
+	return ki_dmq_handle_message_rc(msg, 0);
+}
+
+int w_dmq_handle_message(struct sip_msg *msg, char *str1, char *str2)
+{
+	int i = 0;
+	if(str1) {
+		if(get_int_fparam(&i, msg, (fparam_t*)str1)<0) return -1;
+	}
+	if(i>1) i = 1;
+	return ki_dmq_handle_message_rc(msg, i);
+}
+
 int dmq_handle_message(struct sip_msg *msg, char *str1, char *str2)
 {
-	return ki_dmq_handle_message(msg);
+	return ki_dmq_handle_message_rc(msg, 0);
 }

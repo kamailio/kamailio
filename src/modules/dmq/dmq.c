@@ -91,6 +91,8 @@ static void destroy(void);
 static cmd_export_t cmds[] = {
 	{"dmq_handle_message", (cmd_function)dmq_handle_message, 0,
 		0, 0, REQUEST_ROUTE},
+	{"dmq_handle_message", (cmd_function)w_dmq_handle_message, 1,
+		fixup_int_1, 0, REQUEST_ROUTE},
 	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4,
 		fixup_spve_all, 0, ANY_ROUTE},
 	{"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3,
@@ -121,17 +123,15 @@ static rpc_export_t rpc_methods[];
 /** module exports */
 struct module_exports exports = {
 	"dmq",				/* module name */
-	DEFAULT_DLFLAGS,		/* dlopen flags */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
 	cmds,				/* exported functions */
 	params,				/* exported parameters */
-	0,				/* exported statistics */
-	0,   			/* exported MI functions */
-	0,				/* exported pseudo-variables */
-	0,				/* extra processes */
+	0,					/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
 	mod_init,			/* module initialization function */
-	0,   				/* response handling function */
-	(destroy_function) destroy, 	/* destroy function */
-	child_init                  	/* per-child init function */
+	child_init,			/* per-child init function */
+	destroy				/* module destroy function */
 };
 /* clang-format on */
 
@@ -301,9 +301,8 @@ static int child_init(int rank)
 			notification_node =
 					add_server_and_notify(&dmq_notification_address);
 			if(!notification_node) {
-				LM_ERR("cannot retrieve initial nodelist from %.*s\n",
+				LM_WARN("cannot retrieve initial nodelist from %.*s\n",
 						STR_FMT(&dmq_notification_address));
-				return -1;
 			}
 		}
 		return 0;
@@ -377,6 +376,11 @@ static sr_kemi_t sr_kemi_dmq_exports[] = {
 	{ str_init("dmq"), str_init("handle_message"),
 		SR_KEMIP_INT, ki_dmq_handle_message,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("handle_message_rc"),
+		SR_KEMIP_INT, ki_dmq_handle_message_rc,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dmq"), str_init("is_from_node"),

@@ -241,16 +241,17 @@ int tcp_read_data(int fd, struct tcp_connection *c,
 					char* buf, int b_size, int* flags)
 {
 	int bytes_read;
-	
+
 again:
 	bytes_read=read(fd, buf, b_size);
-	
+
 	if (likely(bytes_read!=b_size)){
 		if(unlikely(bytes_read==-1)){
 			if (errno == EWOULDBLOCK || errno == EAGAIN){
 				bytes_read=0; /* nothing has been read */
-			}else if (errno == EINTR) goto again;
-			else{
+			}else if (errno == EINTR){
+				goto again;
+			}else{
 				if (unlikely(c->state==S_CONN_CONNECT)){
 					switch(errno){
 						case ECONNRESET:
@@ -299,7 +300,8 @@ again:
 						"error reading: %s (%d) ([%s]:%u ->",
 						strerror(errno), errno,
 						ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
-				LOG(cfg_get(core, core_cfg, corelog),"-> [%s]:%u)\n", ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+				LOG(cfg_get(core, core_cfg, corelog),"-> [%s]:%u)\n",
+						ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 				if (errno == ETIMEDOUT) {
 					tcp_emit_closed_event(c, TCP_CLOSED_TIMEOUT);
 				} else if (errno == ECONNRESET) {
@@ -307,12 +309,13 @@ again:
 				}
 				return -1;
 			}
-		}else if (unlikely((bytes_read==0) || 
+		}else if (unlikely((bytes_read==0) ||
 					(*flags & RD_CONN_FORCE_EOF))){
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
 			tcp_emit_closed_event(c, TCP_CLOSED_EOF);
-			LM_DBG("EOF on %p, FD %d ([%s]:%u ->", c, fd, ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
+			LM_DBG("EOF on %p, FD %d ([%s]:%u ->", c, fd,
+					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
 			LM_DBG("-> [%s]:%u)\n", ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		}else{
 			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
@@ -336,9 +339,9 @@ again:
 /* reads next available bytes
  *   c- tcp connection used for reading, tcp_read changes also c->state on
  *      EOF and c->req.error on read error
- *   * flags - value/result - used to signal a seen or "forced" EOF on the 
- *     connection (when it is known that no more data will come after the 
- *     current socket buffer is emptied )=> return/signal EOF on the first 
+ *   * flags - value/result - used to signal a seen or "forced" EOF on the
+ *     connection (when it is known that no more data will come after the
+ *     current socket buffer is emptied )=> return/signal EOF on the first
  *     short read (=> don't use it on POLLPRI, as OOB data will cause short
  *      reads even if there are still remaining bytes in the socket buffer)
  * return number of bytes read, 0 on EOF or -1 on error,
@@ -354,9 +357,9 @@ int tcp_read(struct tcp_connection *c, int* flags)
 
 	r=&c->req;
 	fd=c->fd;
-	bytes_free=r->b_size- (int)(r->pos - r->buf);
-	
-	if (unlikely(bytes_free==0)){
+	bytes_free=r->b_size - (unsigned int)(r->pos - r->buf);
+
+	if (unlikely(bytes_free<=0)){
 		LM_ERR("buffer overrun, dropping ([%s]:%u -> [%s]:%u)\n",
 				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
@@ -1114,10 +1117,28 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 #endif
 		bytes = tcp_read(c, read_flags);
 
-	if (bytes <= 0)
-	{
-		if (likely(r->parsed >= r->pos))
-			return 0;
+	if (bytes < 0) {
+		/* read error */
+		return bytes;
+	}
+	if (r->parsed == r->pos) {
+		/* nothing else to parse */
+		return bytes;
+	}
+	if (r->parsed > r->pos) {
+		LM_ERR("req buf pos (%p) before parsed (%p) [%d]\n", r->pos, r->parsed,
+				bytes);
+		return -1;
+	}
+	if(r->pos > r->buf + r->b_size) {
+		LM_ERR("req pos (%p) over buf (%p / %u) - parsed (%p) [%d]\n", r->pos,
+				r->buf, r->b_size, r->parsed, bytes);
+		return -1;
+	}
+	if(r->buf > r->parsed) {
+		LM_ERR("req parsed (%p) before buf (%p / %u) - pos (%p) [%d]\n",
+				r->parsed, r->buf, r->b_size, r->pos, bytes);
+		return -1;
 	}
 
 	size = r->pos - r->parsed;
@@ -1154,11 +1175,11 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 		goto skip;
 	pos++;
 	mask_present = p[pos] & 0x80;
-	len = (p[pos++] & 0xff) & ~0x80;
+	len = (p[pos] & 0xff) & ~0x80;
+	pos++;
 
 	/* Work out real length */
-	if (len == 126)
-	{
+	if (len == 126) {
 		/* 2 bytes store the payload size */
 		if (size < pos + 2)
 			goto skip;
@@ -1187,8 +1208,7 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 	}
 
 	/* Skip mask */
-	if (mask_present)
-	{
+	if (mask_present) {
 		if (size < pos + 4)
 			goto skip;
 		pos += 4;
@@ -1313,7 +1333,7 @@ static int hep3_process_msg(char* tcpbuf, unsigned int len,
 	/* fill in msg */
 	msg.buf=tcpbuf;
 	msg.len=len;
-	/* zero termination (termination of orig message bellow not that
+	/* zero termination (termination of orig message below not that
 	 * useful as most of the work is done with scratch-pad; -jiri  */
 	/* buf[len]=0; */ /* WARNING: zero term removed! */
 	msg.rcv=*rcv_info;
@@ -1452,10 +1472,10 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 	char c;
 	int ret;
 
-		bytes=-1;
-		total_bytes=0;
-		resp=CONN_RELEASE;
-		req=&con->req;
+	bytes=-1;
+	total_bytes=0;
+	resp=CONN_RELEASE;
+	req=&con->req;
 
 again:
 		if (likely(req->error==TCP_REQ_OK)){
@@ -1479,10 +1499,10 @@ again:
 			}
 #endif
 
-			if (unlikely(bytes==-1)){
+			if (unlikely(bytes<0)){
 				LOG(cfg_get(core, core_cfg, corelog),
-						"ERROR: tcp_read_req: error reading - c: %p r: %p\n",
-						con, req);
+						"ERROR: tcp_read_req: error reading - c: %p r: %p (%d)\n",
+						con, req, bytes);
 				resp=CONN_ERROR;
 				goto end_req;
 			}
@@ -1610,14 +1630,14 @@ again:
 #endif
 				ret = receive_tcp_msg(req->start, req->parsed-req->start,
 									&con->rcv, con);
-				
+
 			if (unlikely(ret < 0)) {
 				*req->parsed=c;
 				resp=CONN_ERROR;
 				goto end_req;
 			}
 			*req->parsed=c;
-			
+
 			/* prepare for next request */
 			size=req->pos-req->parsed;
 			req->start=req->buf;
@@ -1628,8 +1648,8 @@ again:
 			req->content_len=0;
 			req->bytes_to_go=0;
 			req->pos=req->buf+size;
-			
-			if (unlikely(size)){ 
+
+			if (unlikely(size)){
 				memmove(req->buf, req->parsed, size);
 				req->parsed=req->buf; /* fix req->parsed after using it */
 #ifdef EXTRA_DEBUG
@@ -1645,8 +1665,7 @@ again:
 			}
 			req->parsed=req->buf; /* fix req->parsed */
 		}
-		
-		
+
 	end_req:
 		if (likely(bytes_read)) *bytes_read=total_bytes;
 		return resp;

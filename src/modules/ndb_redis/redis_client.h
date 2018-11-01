@@ -28,7 +28,11 @@
 #ifndef _REDIS_CLIENT_H_
 #define _REDIS_CLIENT_H_
 
+#ifdef WITH_HIREDIS_PATH
 #include <hiredis/hiredis.h>
+#else
+#include <hiredis.h>
+#endif
 
 #include "../../core/str.h"
 #include "../../core/parser/parse_param.h"

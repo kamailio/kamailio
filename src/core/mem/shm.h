@@ -86,6 +86,8 @@ int shm_init_manager(char *name);
 void shm_destroy_manager(void);
 void shm_print_manager(void);
 
+int shm_address_in(void *p);
+
 #define shm_available_safe() shm_available()
 #define shm_malloc_on_fork() do{}while(0)
 

@@ -76,6 +76,7 @@ Bogdan-Andre Iancu
               3.27. regid_mode (integer)
               3.28. flow_timer (integer)
               3.29. contact_max_size (integer)
+              3.30. event_callback (str)
 
         4. Functions
 
@@ -138,16 +139,17 @@ Bogdan-Andre Iancu
    1.26. Set regid_mode parameter
    1.27. Set flow_timer parameter
    1.28. Set contact_max_size parameter
-   1.29. save usage
-   1.30. lookup usage
-   1.31. lookup_branches usage
-   1.32. registered usage
-   1.33. add_sock_hdr usage
-   1.34. unregister usage
-   1.35. reg_fetch_contacts usage
-   1.36. reg_free_contacts usage
-   1.37. event_route[usrloc:contact-expired] usage
-   1.38. $ulc(name) usage
+   1.29. Set event_callback parameter
+   1.30. save usage
+   1.31. lookup usage
+   1.32. lookup_branches usage
+   1.33. registered usage
+   1.34. add_sock_hdr usage
+   1.35. unregister usage
+   1.36. reg_fetch_contacts usage
+   1.37. reg_free_contacts usage
+   1.38. event_route[usrloc:contact-expired] usage
+   1.39. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -194,6 +196,7 @@ Chapter 1. Admin Guide
         3.27. regid_mode (integer)
         3.28. flow_timer (integer)
         3.29. contact_max_size (integer)
+        3.30. event_callback (str)
 
    4. Functions
 
@@ -317,6 +320,7 @@ Chapter 1. Admin Guide
    3.27. regid_mode (integer)
    3.28. flow_timer (integer)
    3.29. contact_max_size (integer)
+   3.30. event_callback (str)
 
 3.1. default_expires (integer)
 
@@ -815,6 +819,28 @@ modparam("registrar", "flow_timer", 25)
 modparam("registrar", "contact_max_size", 1024)
 ...
 
+3.30. event_callback (str)
+
+   The name of the function in the KEMI configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event.
+   The only possible value currently is 'usrloc:contact-expired'.
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.29. Set event_callback parameter
+...
+modparam("registrar", "event_callback", "ksr_registrar_event")
+...
+-- event callback function implemented in Lua
+function ksr_registrar_event(evname)
+    KSR.info( "Expired contact for " .. KSR.pv.getw("$ulc(exp=>aor)") .. "\n");
+        return 1;
+end
+...
+
 4. Functions
 
    4.1. save(domain, [, flags [, uri]])
@@ -867,7 +893,7 @@ modparam("registrar", "contact_max_size", 1024)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and
    REPLY_ROUTE.
 
-   Example 1.29. save usage
+   Example 1.30. save usage
 ...
 save("location");
 save("location", "0x01");
@@ -900,7 +926,7 @@ save("location", "0x00", "sip:test@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.30. lookup usage
+   Example 1.31. lookup usage
 ...
 lookup("location");
 switch ($retcode) {
@@ -926,7 +952,7 @@ switch ($retcode) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.31. lookup_branches usage
+   Example 1.32. lookup_branches usage
 ...
 lookup_branches("location");
 ...
@@ -958,7 +984,7 @@ lookup_branches("location");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.32. registered usage
+   Example 1.33. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -985,7 +1011,7 @@ if (registered("location","$rz:$Au", 2)) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.33. add_sock_hdr usage
+   Example 1.34. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
@@ -1015,7 +1041,7 @@ add_sock_hdr("Sock-Info");
      * -2 - Error in unregistering user
      * -3 - Contacts for AOR not found
 
-   Example 1.34. unregister usage
+   Example 1.35. unregister usage
 ...
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
@@ -1039,7 +1065,7 @@ unregister("location", "", "$ruid");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.35. reg_fetch_contacts usage
+   Example 1.36. reg_fetch_contacts usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
@@ -1058,7 +1084,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.36. reg_free_contacts usage
+   Example 1.37. reg_free_contacts usage
 ...
 reg_free_contacts("callee");
 ...
@@ -1072,7 +1098,7 @@ reg_free_contacts("callee");
    Executed when a contact in location table has expired. The variable
    $ulc(exp=>...) is filled with the attributes of the expired contact.
 
-   Example 1.37. event_route[usrloc:contact-expired] usage
+   Example 1.38. event_route[usrloc:contact-expired] usage
 ...
 event_route[usrloc:contact-expired] {
     xlog("expired contact for $ulc(exp=>aor)\n");
@@ -1146,7 +1172,7 @@ event_route[usrloc:contact-expired] {
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.38. $ulc(name) usage
+   Example 1.39. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {

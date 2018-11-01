@@ -15,7 +15,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_without rebbitmq
+%bcond_without rabbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -35,7 +35,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_without rebbitmq
+%bcond_without rabbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -55,7 +55,67 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_without rebbitmq
+%bcond_without rabbitmq
+%bcond_without redis
+%bcond_without sctp
+%bcond_without websocket
+%bcond_without xmlrpc
+%endif
+
+%if 0%{?fedora} == 27
+%define dist_name fedora
+%define dist_version %{?fedora}
+%bcond_without cnxcc
+%bcond_with dnssec
+%bcond_without geoip
+%bcond_without http_async_client
+%bcond_without jansson
+%bcond_without json
+%bcond_without lua
+%bcond_without kazoo
+%bcond_without memcached
+%bcond_without perl
+%bcond_without rabbitmq
+%bcond_without redis
+%bcond_without sctp
+%bcond_without websocket
+%bcond_without xmlrpc
+%endif
+
+%if 0%{?fedora} == 28
+%define dist_name fedora
+%define dist_version %{?fedora}
+%bcond_without cnxcc
+%bcond_with dnssec
+%bcond_without geoip
+%bcond_without http_async_client
+%bcond_without jansson
+%bcond_without json
+%bcond_without lua
+%bcond_without kazoo
+%bcond_without memcached
+%bcond_without perl
+%bcond_without rabbitmq
+%bcond_without redis
+%bcond_without sctp
+%bcond_without websocket
+%bcond_without xmlrpc
+%endif
+
+%if 0%{?fedora} == 29
+%define dist_name fedora
+%define dist_version %{?fedora}
+%bcond_without cnxcc
+%bcond_with dnssec
+%bcond_without geoip
+%bcond_without http_async_client
+%bcond_without jansson
+%bcond_without json
+%bcond_without lua
+%bcond_without kazoo
+%bcond_without memcached
+%bcond_without perl
+%bcond_without rabbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -75,7 +135,7 @@
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_with rebbitmq
+%bcond_with rabbitmq
 %bcond_with redis
 %bcond_without sctp
 %bcond_without websocket
@@ -96,7 +156,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_without rebbitmq
+%bcond_without rabbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -116,7 +176,7 @@
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_without perl
-%bcond_with rebbitmq
+%bcond_with rabbitmq
 %bcond_without redis
 %bcond_without sctp
 %bcond_without websocket
@@ -136,7 +196,7 @@
 %bcond_with kazoo
 %bcond_with memcached
 %bcond_with perl
-%bcond_with rebbitmq
+%bcond_with rabbitmq
 %bcond_with redis
 %bcond_with sctp
 %bcond_with websocket
@@ -156,7 +216,7 @@
 %bcond_with kazoo
 %bcond_with memcached
 %bcond_without perl
-%bcond_without rebbitmq
+%bcond_without rabbitmq
 %bcond_without redis
 %bcond_with sctp
 %bcond_with websocket
@@ -192,7 +252,7 @@ Conflicts:  kamailio-memcached < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
 Conflicts:  kamailio-python < %ver
-Conflicts:  kamailio-radius < % ver, kamailio-redis < %ver
+Conflicts:  kamailio-radius < %ver, kamailio-redis < %ver
 Conflicts:  kamailio-regex < %ver, kamailio-sctp < %ver
 Conflicts:  kamailio-sipdump < %ver
 Conflicts:  kamailio-snmpstats < %ver, kamailio-sqlang < %ver, kamailio-sqlite < %ver
@@ -427,7 +487,7 @@ This module implements protocol functions that use the libcurl to communicate wi
 Summary:    IMS modules and extensions module for Kamailio
 Group:      System Environment/Daemons
 Requires:   libxml2, kamailio = %ver
-BuildRequires:  libxml2-devel
+BuildRequires:  libxml2-devel libmnl-devel
 
 %description    ims
 IMS modules and extensions module for Kamailio.
@@ -578,8 +638,8 @@ Requires:   kamailio = %ver
 Requires:   perl
 BuildRequires:  perl
 %else
-Requires:   mod_perl
-BuildRequires:  mod_perl-devel
+Requires:   perl-libs
+BuildRequires:  perl-ExtUtils-Embed
 %endif
 
 %description    perl
@@ -624,7 +684,7 @@ SIP Presence (and RLS, XCAP, etc) support for Kamailio.
 Summary:    Python extensions for Kamailio
 Group:      System Environment/Daemons
 Requires:   python, kamailio = %ver
-BuildRequires:  python-devel
+BuildRequires:  python, python-devel
 
 %description    python
 Python extensions for Kamailio.
@@ -717,6 +777,15 @@ Requires:   kamailio = %ver
 
 %description    sipdump
 This module writes SIP traffic and some associated details into local files
+
+
+%package    sipjson
+Summary:    This module serializes SIP message attributes into a JSON document
+Group:      System Environment/Daemons
+Requires:   kamailio = %ver
+
+%description    sipjson
+This module serializes SIP message attributes into a JSON document
 
 
 %package    smsops
@@ -873,8 +942,6 @@ XML operation functions for Kamailio.
 %package    xmlrpc
 Summary:    XMLRPC transport and encoding for Kamailio RPCs and MI commands
 Group:      System Environment/Daemons
-#Requires:   libxml2, xmlrpc-c, kamailio = %ver
-#BuildRequires:  libxml2-devel, xmlrpc-c-devel
 Requires:   libxml2, kamailio = %ver
 BuildRequires:  libxml2-devel
 
@@ -920,13 +987,15 @@ UUID module for Kamailio.
 ln -s ../obs pkg/kamailio/fedora/24
 ln -s ../obs pkg/kamailio/fedora/25
 ln -s ../obs pkg/kamailio/fedora/26
+ln -s ../obs pkg/kamailio/fedora/27
+ln -s ../obs pkg/kamailio/fedora/28
+ln -s ../obs pkg/kamailio/fedora/29
 mkdir -p pkg/kamailio/rhel
 ln -s ../obs pkg/kamailio/rhel/6
 ln -s ../obs pkg/kamailio/rhel/7
 mkdir -p pkg/kamailio/opensuse
 ln -s ../obs pkg/kamailio/opensuse/1315
 ln -s ../obs pkg/kamailio/opensuse/1330
-rm -Rf pkg/kamailio/centos
 mkdir -p pkg/kamailio/centos
 ln -s ../obs pkg/kamailio/centos/6
 ln -s ../obs pkg/kamailio/centos/7
@@ -936,7 +1005,11 @@ ln -s ../obs pkg/kamailio/centos/7
 %if 0%{?fedora} || 0%{?suse_version}
 export FREERADIUS=1
 %endif
-make cfg prefix=/usr basedir=%{buildroot} cfg_prefix=%{buildroot} doc_prefix=%{buildroot} \
+make cfg prefix=/usr \
+    basedir=%{buildroot} \
+    cfg_prefix=%{buildroot} \
+    doc_prefix=%{buildroot} \
+    share_prefix=%{_prefix} \
     doc_dir=%{_docdir}/kamailio/ \
     cfg_target=%{_sysconfdir}/kamailio/ modules_dirs="modules"
 make
@@ -1569,6 +1642,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ims_dialog
 %doc %{_docdir}/kamailio/modules/README.ims_diameter_server
 %doc %{_docdir}/kamailio/modules/README.ims_icscf
+%doc %{_docdir}/kamailio/modules/README.ims_ipsec_pcscf
 %doc %{_docdir}/kamailio/modules/README.ims_isc
 %doc %{_docdir}/kamailio/modules/README.ims_ocs
 %doc %{_docdir}/kamailio/modules/README.ims_qos
@@ -1587,6 +1661,7 @@ fi
 %{_libdir}/kamailio/modules/ims_dialog.so
 %{_libdir}/kamailio/modules/ims_diameter_server.so
 %{_libdir}/kamailio/modules/ims_icscf.so
+%{_libdir}/kamailio/modules/ims_ipsec_pcscf.so
 %{_libdir}/kamailio/modules/ims_isc.so
 %{_libdir}/kamailio/modules/ims_ocs.so
 %{_libdir}/kamailio/modules/ims_qos.so
@@ -1840,6 +1915,12 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.sipdump
 %{_libdir}/kamailio/modules/sipdump.so
+
+
+%files      sipjson
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.sipjson
+%{_libdir}/kamailio/modules/sipjson.so
 
 
 %files      snmpstats

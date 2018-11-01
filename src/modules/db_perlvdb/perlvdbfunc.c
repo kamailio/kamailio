@@ -53,10 +53,10 @@ long IV2int(SV *in) {
 /*
  * Returns the class part of the URI
  */
-char *parseurl(const char* url) {
+char *parseurl(const str* url) {
 	char *cn;
 
-	cn = strchr(url, ':') + 1;
+	cn = strchr(url->s, ':') + 1;
 	if (strlen(cn) > 0)
 		return cn;
 	else
@@ -76,7 +76,7 @@ SV *newvdbobj(const char* cn) {
 	return obj;
 }
 
-SV *getobj(db1_con_t *con) {
+SV *getobj(const db1_con_t *con) {
 	return ((SV*)CON_TAIL(con));
 }
 
@@ -105,7 +105,7 @@ int checkobj(SV* obj) {
  * Initialize database module
  * No function should be called before this
  */
-db1_con_t* perlvdb_db_init(const char* url) {
+db1_con_t* perlvdb_db_init(const str* url) {
 	db1_con_t* res;
 
 	char *cn;
@@ -179,8 +179,8 @@ void perlvdb_db_close(db1_con_t* h) {
  * v: values of the keys
  * n: number of key=value pairs
  */
-int perlvdb_db_insertreplace(db1_con_t* h, db_key_t* k, db_val_t* v,
-		int n, char *insertreplace) {
+int perlvdb_db_insertreplace(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
+		const int n, char *insertreplace) {
 	AV *arr;
 	SV *arrref;
 	SV *ret;
@@ -195,14 +195,15 @@ int perlvdb_db_insertreplace(db1_con_t* h, db_key_t* k, db_val_t* v,
 	return IV2int(ret);
 }
 
-int perlvdb_db_insert(db1_con_t* h, db_key_t* k, db_val_t* v, int n) {
+int perlvdb_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v, const int n) {
 	return perlvdb_db_insertreplace(h, k, v, n, PERL_VDB_INSERTMETHOD);
 }
 
 /*
  * Just like insert, but replace the row if it exists
  */
-int perlvdb_db_replace(db1_con_t* h, db_key_t* k, db_val_t* v, int n) {
+int perlvdb_db_replace(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
+		const int n, const int un, const int m) {
 	return perlvdb_db_insertreplace(h, k, v, n, PERL_VDB_REPLACEMETHOD);
 }
 
@@ -214,8 +215,8 @@ int perlvdb_db_replace(db1_con_t* h, db_key_t* k, db_val_t* v, int n) {
  * v: values of the keys that must match
  * n: number of key=value pairs
  */
-int perlvdb_db_delete(db1_con_t* h, db_key_t* k, db_op_t* o, db_val_t* v,
-		int n) {
+int perlvdb_db_delete(const db1_con_t* h, const db_key_t* k, const db_op_t* o,
+		const db_val_t* v, const int n) {
 	AV *arr;
 	SV *arrref;
 	SV *ret;
@@ -242,8 +243,9 @@ int perlvdb_db_delete(db1_con_t* h, db_key_t* k, db_op_t* o, db_val_t* v,
  * _n: number of key=value pairs
  * _un: number of columns to update
  */
-int perlvdb_db_update(db1_con_t* h, db_key_t* k, db_op_t* o, db_val_t* v,
-	      db_key_t* uk, db_val_t* uv, int n, int un) {
+int perlvdb_db_update(const db1_con_t* h, const db_key_t* k, const db_op_t* o,
+		const db_val_t* v, const db_key_t* uk, const db_val_t* uv,
+		const int n, const int un) {
 
 	AV *condarr;
 	AV *updatearr;
@@ -280,9 +282,9 @@ int perlvdb_db_update(db1_con_t* h, db_key_t* k, db_op_t* o, db_val_t* v,
  * nc: number of columns to return
  * o: order by the specified column
  */
-int perlvdb_db_query(db1_con_t* h, db_key_t* k, db_op_t* op, db_val_t* v,
-			db_key_t* c, int n, int nc,
-			db_key_t o, db1_res_t** r) {
+int perlvdb_db_query(const db1_con_t* h, const db_key_t* k, const db_op_t* op,
+		const db_val_t* v, const db_key_t* c, const int n, const int nc,
+		const db_key_t o, db1_res_t** r) {
 
 
 	AV *condarr;

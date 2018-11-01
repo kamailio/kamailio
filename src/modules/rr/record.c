@@ -69,6 +69,7 @@
 
 #define RR_PARAM_BUF_SIZE 512 /*!< buffer for RR parameter */
 
+extern int rr_ignore_sips;
 
 /*!
  * \brief RR param buffer 
@@ -378,11 +379,11 @@ int record_route(struct sip_msg* _m, str *params)
 	str user = {NULL, 0};
 	str* tag;
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
-	int sips;
+	int sips = 0;
 	int ret = 0;
-	
+
 	user.len = 0;
-	
+
 	if (add_username) {
 		/* check if there is a custom user set */
 		if (get_custom_user(_m, &user) < 0) {
@@ -428,7 +429,9 @@ int record_route(struct sip_msg* _m, str *params)
 		rr_param_buf.len = 0;
 	}
 
-	sips = rr_is_sips(_m);
+	if(rr_ignore_sips==0) {
+		sips = rr_is_sips(_m);
+	}
 
 	if (enable_double_rr) {
 		l = anchor_lump(_m, _m->headers->name.s - _m->buf,0,HDR_RECORDROUTE_T);
@@ -453,7 +456,7 @@ int record_route(struct sip_msg* _m, str *params)
 			goto error;
 		}
 	}
-	
+
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
 	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l || !l2) {
@@ -461,7 +464,7 @@ int record_route(struct sip_msg* _m, str *params)
 		ret = -3;
 		goto error;
 	}
-	
+
 	if (build_rr(l, l2, &user, tag, params, INBOUND, sips) < 0) {
 		LM_ERR("failed to insert inbound Record-Route\n");
 		ret = -4;
@@ -499,10 +502,12 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
 	char *rr_prefix;
 	int rr_prefix_len;
-	int sips;
+	int sips = 0;
 	int ret = 0;
 
-	sips = rr_is_sips(_m);
+	if(rr_ignore_sips==0) {
+		sips = rr_is_sips(_m);
+	}
 	if(sips==0) {
 		rr_prefix = RR_PREFIX_SIP;
 		rr_prefix_len = RR_PREFIX_SIP_LEN;
@@ -756,9 +761,9 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 	struct lump* l;
 	struct lump* l2;
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
-	int sips;
+	int sips = 0;
 	int ret = 0;
-	
+
 	user.len = 0;
 	user.s = 0;
 
@@ -799,7 +804,9 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 		tag = 0;
 	}
 
-	sips = rr_is_sips(_m);
+	if(rr_ignore_sips==0) {
+		sips = rr_is_sips(_m);
+	}
 
 	if (enable_double_rr) {
 		l = anchor_lump(_m, _m->headers->name.s - _m->buf,0,HDR_RECORDROUTE_T);
@@ -825,7 +832,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 			goto error;
 		}
 	}
-	
+
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
 	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l || !l2) {
@@ -833,7 +840,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 		ret = -6;
 		goto error;
 	}
-	
+
 	if (build_advertised_rr(l, l2, _data, &user, tag, INBOUND, sips) < 0) {
 		LM_ERR("failed to insert outbound Record-Route\n");
 		ret = -7;

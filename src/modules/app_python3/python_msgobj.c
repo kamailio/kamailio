@@ -185,10 +185,9 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 {
 	int i, rval;
 	char *fname, *arg1, *arg2;
-	sr31_cmd_export_t* fexport;
+	ksr_cmd_export_t* fexport;
 	struct action *act;
 	struct run_act_ctx ra_ctx;
-	unsigned mod_ver;
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
@@ -213,7 +212,7 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 	if(!PyArg_ParseTuple(args, "s|ss:call_function", &fname, &arg1, &arg2))
 		return NULL;
 
-	fexport = find_export_record(fname, i - 1, 0, &mod_ver);
+	fexport = find_export_record(fname, i - 1, 0);
 	if (fexport == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "no such function");
 		Py_INCREF(Py_None);

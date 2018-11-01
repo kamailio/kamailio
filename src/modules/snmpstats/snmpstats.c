@@ -126,15 +126,9 @@ static int mod_child_init(int rank);
  * log a useful message and kill the AgentX Sub-Agent child process */
 static void mod_destroy(void);
 
-static proc_export_t mod_procs[] = {
-	{"SNMP AgentX", 0, 0, agentx_child, 1},
-	{0, 0, 0, 0, 0}
-};
-
-
 /*!
  * This structure defines the SNMPStats parameters that can be configured
- * through the kamailio.cfg configuration file.  
+ * through the kamailio.cfg configuration file.
  */
 static param_export_t mod_params[] = {
 	{"sipEntityType", PARAM_STRING | USE_FUNC_PARAM,
@@ -157,18 +151,16 @@ static param_export_t mod_params[] = {
 
 
 struct module_exports exports = {
-	SNMPSTATS_MODULE_NAME, /* module's name */
-	DEFAULT_DLFLAGS,	   /* dlopen flags */
-	0,					   /* exported functions */
-	mod_params,			   /* param exports */
-	0,					   /* exported statistics */
-	0,					   /* MI Functions */
-	0,					   /* pseudo-variables */
-	mod_procs,			   /* extra processes */
-	mod_init,			   /* module initialization function */
-	0,					   /* reply processing function */
-	mod_destroy,		   /* Destroy function */
-	mod_child_init		   /* per-child init function */
+	SNMPSTATS_MODULE_NAME,	/* module name */
+	DEFAULT_DLFLAGS,		/* dlopen flags */
+	0,						/* exported functions */
+	mod_params,				/* exported parameters */
+	0,						/* exported rpc functions */
+	0,						/* exported pseudo-variables */
+	0,						/* reply processing function */
+	mod_init,				/* module init function */
+	mod_child_init,			/* per-child init function */
+	mod_destroy				/* module destroy function */
 };
 
 /*!
@@ -200,13 +192,13 @@ static struct sigaction old_sigchld_handler;
 
 /*! The following message codes are from Wikipedia at:
  *
- *     http://en.wikipedia.org/wiki/SIP_Responses 
+ *     http://en.wikipedia.org/wiki/SIP_Responses
  *
  * Updated by oej to use the IETF reference page
  *     http://www.iana.org/assignments/sip-parameters/sip-parameters.xml#sip-parameters-7
  *
  * If there are more message codes added at a later time, they should be added
- * here, and to out_message_code_names below.  
+ * here, and to out_message_code_names below.
  *
  * The array is used to register the statistics keeping track of the number of
  * messages received with the response code X.
@@ -235,7 +227,7 @@ char *in_message_code_names[] = {
 
 /*! The following message codes are from Wikipedia at:
  *
- *     http://en.wikipedia.org/wiki/SIP_Responses 
+ *     http://en.wikipedia.org/wiki/SIP_Responses
  *
  * Updated by oej to use the IETF reference page
  *     http://www.iana.org/assignments/sip-parameters/sip-parameters.xml#sip-parameters-7

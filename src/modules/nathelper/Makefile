@@ -9,7 +9,5 @@ auto_gen=
 NAME=nathelper.so
 LIBS=
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules
 

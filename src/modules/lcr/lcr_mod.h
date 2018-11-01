@@ -80,6 +80,7 @@ struct rule_id_info
 struct matched_gw_info
 {
 	unsigned short gw_index;
+	unsigned int rule_id;
 	unsigned short prefix_len;
 	unsigned short priority;
 	unsigned int weight;

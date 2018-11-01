@@ -23,7 +23,6 @@ LIBS+=-pthread
 endif
 
 DEFS+=-I${PYTHON3_INCDIR}
-DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules
 

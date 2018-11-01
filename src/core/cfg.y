@@ -138,7 +138,6 @@ static void yyerror(char* s, ...);
 static void yyerror_at(struct cfg_pos* pos, char* s, ...);
 static char* tmp;
 static int i_tmp;
-static unsigned u_tmp;
 static struct socket_id* lst_tmp;
 static struct name_lst*  nl_tmp;
 static int rt;  /* Type of route block for find_export */
@@ -325,6 +324,7 @@ extern char *default_routename;
 %token LOGENGINETYPE
 %token LOGENGINEDATA
 %token XAVPVIAPARAMS
+%token XAVPVIAFIELDS
 %token LISTEN
 %token ADVERTISE
 %token ALIAS
@@ -377,6 +377,7 @@ extern char *default_routename;
 %token SOCKET_WORKERS
 %token ASYNC_WORKERS
 %token ASYNC_USLEEP
+%token ASYNC_NONBLOCK
 %token CHECK_VIA
 %token PHONE2TEL
 %token MEMLOG
@@ -802,6 +803,10 @@ assign_stm:
 			_ksr_xavp_via_params.len=strlen($3);
 		}
 	| XAVPVIAPARAMS EQUAL error { yyerror("string value expected"); }
+	| XAVPVIAFIELDS EQUAL STRING { _ksr_xavp_via_params.s=$3;
+			_ksr_xavp_via_fields.len=strlen($3);
+		}
+	| XAVPVIAFIELDS EQUAL error { yyerror("string value expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
@@ -910,6 +915,8 @@ assign_stm:
 	| ASYNC_WORKERS EQUAL error { yyerror("number expected"); }
 	| ASYNC_USLEEP EQUAL NUMBER { async_task_set_usleep($3); }
 	| ASYNC_USLEEP EQUAL error { yyerror("number expected"); }
+	| ASYNC_NONBLOCK EQUAL NUMBER { async_task_set_nonblock($3); }
+	| ASYNC_NONBLOCK EQUAL error { yyerror("number expected"); }
 	| CHECK_VIA EQUAL NUMBER { check_via=$3; }
 	| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
 	| PHONE2TEL EQUAL NUMBER { phone2tel=$3; }
@@ -1870,8 +1877,11 @@ route_stm:
 	| ROUTE error { yyerror("invalid  route  statement"); }
 	| ROUTE_REQUEST error { yyerror("invalid  request_route  statement"); }
 	;
+
+failure_route_main: ROUTE_FAILURE { routename=NULL; }
+;
 failure_route_stm:
-	ROUTE_FAILURE LBRACE actions RBRACE {
+	failure_route_main LBRACE actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
@@ -1948,8 +1958,11 @@ onreply_route_stm:
 		yyerror("invalid onreply_route statement");
 	}
 	;
+
+branch_route_main: ROUTE_BRANCH { routename=NULL; }
+;
 branch_route_stm:
-	ROUTE_BRANCH LBRACE actions RBRACE {
+	branch_route_main LBRACE actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
@@ -1978,7 +1991,11 @@ branch_route_stm:
 	}
 	| ROUTE_BRANCH error { yyerror("invalid branch_route statement"); }
 	;
-send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
+
+send_route_main: ROUTE_SEND { routename=NULL; }
+;
+send_route_stm:
+	send_route_main LBRACE actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
@@ -2007,7 +2024,11 @@ send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
 	}
 	| ROUTE_SEND error { yyerror("invalid onsend_route statement"); }
 	;
-event_route_stm: ROUTE_EVENT LBRACK EVENT_RT_NAME RBRACK LBRACE actions RBRACE {
+
+event_route_main: ROUTE_EVENT { routename=NULL; }
+;
+event_route_stm:
+	event_route_main LBRACK EVENT_RT_NAME RBRACK LBRACE actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
@@ -3340,11 +3361,9 @@ cmd:
 	| ID {mod_func_action = mk_action(MODULE0_T, 2, MODEXP_ST, NULL, NUMBER_ST,
 			0); } LPAREN func_params RPAREN	{
 		mod_func_action->val[0].u.data =
-			find_export_record($1, mod_func_action->val[1].u.number, rt,
-								&u_tmp);
+			find_export_record($1, mod_func_action->val[1].u.number, rt);
 		if (mod_func_action->val[0].u.data == 0) {
-			if (find_export_record($1, mod_func_action->val[1].u.number, 0,
-									&u_tmp) ) {
+			if (find_export_record($1, mod_func_action->val[1].u.number, 0) ) {
 					LM_ERR("misused command %s\n", $1);
 					yyerror("Command cannot be used in the block\n");
 			} else {
@@ -3841,7 +3860,7 @@ static int case_check_default(struct case_stms* stms)
  */
 static int mod_f_params_pre_fixup(struct action* a)
 {
-	sr31_cmd_export_t* cmd_exp;
+	ksr_cmd_export_t* cmd_exp;
 	action_u_t* params;
 	int param_no;
 	struct rval_expr* rve;

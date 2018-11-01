@@ -88,7 +88,11 @@ MODULE_VERSION
 static int search_body_f(struct sip_msg*, char*, char*);
 static int search_hf_f(struct sip_msg*, char*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
+static int replace_str_f(struct sip_msg*, char*, char*, char*);
 static int replace_body_f(struct sip_msg*, char*, char*);
+static int replace_body_str_f(struct sip_msg*, char*, char*, char*);
+static int replace_hdrs_f(struct sip_msg*, char*, char*);
+static int replace_hdrs_str_f(struct sip_msg*, char*, char*, char*);
 static int replace_all_f(struct sip_msg*, char*, char*);
 static int replace_body_all_f(struct sip_msg*, char*, char*);
 static int replace_body_atonce_f(struct sip_msg*, char*, char*);
@@ -178,8 +182,20 @@ static cmd_export_t cmds[]={
 	{"replace",          (cmd_function)replace_f,         2,
 		fixup_regexp_none, fixup_free_regexp_none,
 		ANY_ROUTE},
+	{"replace_str",      (cmd_function)replace_str_f,     3,
+		fixup_spve_all, fixup_free_spve_all,
+		ANY_ROUTE},
 	{"replace_body",     (cmd_function)replace_body_f,    2,
 		fixup_regexp_none, fixup_free_regexp_none,
+		ANY_ROUTE},
+	{"replace_body_str", (cmd_function)replace_body_str_f,3,
+		fixup_spve_all, fixup_free_spve_all,
+		ANY_ROUTE},
+	{"replace_hdrs",     (cmd_function)replace_hdrs_f,    2,
+		fixup_regexp_none, fixup_free_regexp_none,
+		ANY_ROUTE},
+	{"replace_hdrs_str", (cmd_function)replace_hdrs_str_f,3,
+		fixup_spve_all, fixup_free_spve_all,
 		ANY_ROUTE},
 	{"replace_all",      (cmd_function)replace_all_f,     2,
 		fixup_regexp_none, fixup_free_regexp_none,
@@ -329,15 +345,13 @@ struct module_exports exports= {
 	"textops",  /* module name*/
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* exported functions */
-	0,          /* module parameters */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
+	0,          /* exported parameters */
+	0,          /* exported rpc functions */
 	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,          /* response function */
-	0,          /* destroy function */
+	0,          /* response handling function */
+	mod_init,   /* module init function */
 	0,          /* per-child init function */
+	0           /* module destroy function */
 };
 
 
@@ -779,6 +793,113 @@ static int ki_replace(sip_msg_t* msg, str* sre, str* sval)
 	return ret;
 }
 
+static char *textops_strfind(str *mbuf, str *mkey)
+{
+	char *sp;
+
+	// Sanity check
+	if(!(mbuf && mkey && mbuf->len >= mkey->len))
+		return NULL;
+
+	for(sp = mbuf->s; sp <= mbuf->s + mbuf->len - mkey->len; sp++) {
+		if(*sp == mkey->s[0] && strncmp(sp, mkey->s, mkey->len) == 0) {
+			return sp;
+		}
+	}
+
+	return NULL;
+}
+
+/**
+ * search in lbuf for mkey and replace it with rval, only first occurrence or
+ * all of them based on rmode
+ */
+static int ki_replace_str_helper(sip_msg_t* msg, str* lbuf, str* mkey,
+			str* rval, str *rmode)
+{
+	sr_lump_t* l;
+	char* s;
+	str mbuf;
+	char *mp;
+	char rpos;
+
+	if(lbuf==NULL || mkey==NULL || rval==NULL) {
+		return -1;
+	}
+	if(lbuf->s==NULL || lbuf->len<=0 || mkey->s==NULL || mkey->len<=0) {
+		return 1;
+	}
+
+	if(rmode==NULL || rmode->s==NULL || rmode->s[0]=='f' || rmode->s[0]=='F') {
+		rpos = 'f';
+	} else {
+		rpos = 'a';
+	}
+
+	mbuf = *lbuf;
+
+	while((mp=textops_strfind(&mbuf, mkey))!=NULL) {
+
+		if ((l=del_lump(msg, mp - msg->buf, mkey->len, 0))==0) {
+			return -1;
+		}
+		s=pkg_malloc(rval->len+1);
+		if (s==0){
+			LM_ERR("memory allocation failure\n");
+			return -1;
+		}
+		memcpy(s, rval->s, rval->len);
+		if (insert_new_lump_after(l, s, rval->len, 0)==0){
+			LM_ERR("could not insert new lump\n");
+			pkg_free(s);
+			return -1;
+		}
+
+		if(rpos=='f') {
+			return 1;
+		}
+
+		mbuf.s = mp + mkey->len;
+		mbuf.len = msg->len - (mbuf.s - msg->buf);
+	}
+
+	return 1;
+}
+
+static int ki_replace_str(sip_msg_t* msg, str* mkey, str* rval, str *rmode)
+{
+	str lbuf;
+
+	lbuf.s = get_header(msg);
+	lbuf.len = msg->len - (lbuf.s - msg->buf);
+
+	return ki_replace_str_helper(msg, &lbuf, mkey, rval, rmode);
+}
+
+static int replace_str_f(sip_msg_t* msg, char* pmkey, char* prval, char* prmode)
+{
+	str mkey;
+	str rval;
+	str rmode;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pmkey, &mkey)<0) {
+		LM_ERR("failed to get the matching string parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)prval, &rval)<0) {
+		LM_ERR("failed to get the replacement string parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)prmode, &rmode)<0) {
+		LM_ERR("failed to get the replacement mode parameter\n");
+		return -1;
+	}
+
+	return ki_replace_str(msg, &mkey, &rval, &rmode);
+}
+
 static int replace_body_helper(sip_msg_t* msg, regex_t *re, str *val)
 {
 	struct lump* l;
@@ -851,6 +972,173 @@ static int ki_replace_body(sip_msg_t* msg, str* sre, str* sval)
 	regfree(&mre);
 
 	return ret;
+}
+
+static int ki_replace_body_str(sip_msg_t* msg, str* mkey, str* rval, str *rmode)
+{
+	str lbuf;
+
+	lbuf.s = get_body(msg);
+	if (lbuf.s==0) {
+		LM_ERR("failed to get the message body\n");
+		return -1;
+	}
+	lbuf.len = msg->len - (int)(lbuf.s-msg->buf);
+	if (lbuf.len==0) {
+		LM_DBG("message body has zero length\n");
+		return -1;
+	}
+
+	return ki_replace_str_helper(msg, &lbuf, mkey, rval, rmode);
+}
+
+static int replace_body_str_f(sip_msg_t* msg, char* pmkey, char* prval, char* prmode)
+{
+	str mkey;
+	str rval;
+	str rmode;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pmkey, &mkey)<0) {
+		LM_ERR("failed to get the matching string parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)prval, &rval)<0) {
+		LM_ERR("failed to get the replacement string parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)prmode, &rmode)<0) {
+		LM_ERR("failed to get the replacement mode parameter\n");
+		return -1;
+	}
+
+	return ki_replace_body_str(msg, &mkey, &rval, &rmode);
+}
+
+static int replace_hdrs_helper(sip_msg_t* msg, regex_t *re, str *val)
+{
+	struct lump* l;
+	regmatch_t pmatch;
+	char* s;
+	int off;
+	str lbuf;
+	char bk;
+
+	if ( parse_headers(msg, HDR_EOH_F, 0)==-1 ) {
+		LM_ERR("failed to parse to end of headers\n");
+		return -1;
+	}
+
+	lbuf.s = get_header(msg);
+	lbuf.len = (int)(msg->unparsed - lbuf.s);
+
+	if (lbuf.len==0) {
+		LM_DBG("message headers part has zero length\n");
+		return -1;
+	}
+
+	bk = lbuf.s[lbuf.len];
+	lbuf.s[lbuf.len] = '\0';
+	if (regexec(re, lbuf.s, 1, &pmatch, 0)!=0) {
+		lbuf.s[lbuf.len] = bk;
+		return -1;
+	}
+	lbuf.s[lbuf.len] = bk;
+
+	off=lbuf.s-msg->buf;
+
+	if (pmatch.rm_so!=-1){
+		if ((l=del_lump(msg, pmatch.rm_so+off,
+						pmatch.rm_eo-pmatch.rm_so, 0))==0)
+			return -1;
+		s=pkg_malloc(val->len+1);
+		if (s==0){
+			LM_ERR("memory allocation failure\n");
+			return -1;
+		}
+		memcpy(s, val->s, val->len);
+		if (insert_new_lump_after(l, s, val->len, 0)==0){
+			LM_ERR("could not insert new lump\n");
+			pkg_free(s);
+			return -1;
+		}
+
+		return 1;
+	}
+	return -1;
+}
+
+static int replace_hdrs_f(struct sip_msg* msg, char* key, char* str2)
+{
+	str val;
+
+	val.s = str2;
+	val.len = strlen(val.s);
+
+	return replace_hdrs_helper(msg, (regex_t*)key, &val);
+}
+
+static int ki_replace_hdrs(sip_msg_t* msg, str* sre, str* sval)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+
+	ret = replace_hdrs_helper(msg, &mre, sval);
+
+	regfree(&mre);
+
+	return ret;
+}
+
+static int ki_replace_hdrs_str(sip_msg_t* msg, str* mkey, str* rval, str *rmode)
+{
+	str lbuf;
+
+	if ( parse_headers(msg, HDR_EOH_F, 0)==-1 ) {
+		LM_ERR("failed to parse to end of headers\n");
+		return -1;
+	}
+
+	lbuf.s = get_header(msg);
+	lbuf.len = (int)(msg->unparsed - lbuf.s);
+
+	if (lbuf.len==0) {
+		LM_DBG("message headers part has zero length\n");
+		return -1;
+	}
+
+	return ki_replace_str_helper(msg, &lbuf, mkey, rval, rmode);
+}
+
+static int replace_hdrs_str_f(sip_msg_t* msg, char* pmkey, char* prval, char* prmode)
+{
+	str mkey;
+	str rval;
+	str rmode;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pmkey, &mkey)<0) {
+		LM_ERR("failed to get the matching string parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)prval, &rval)<0) {
+		LM_ERR("failed to get the replacement string parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)prmode, &rmode)<0) {
+		LM_ERR("failed to get the replacement mode parameter\n");
+		return -1;
+	}
+
+	return ki_replace_hdrs_str(msg, &mkey, &rval, &rmode);
 }
 
 /* sed-perl style re: s/regular expression/replacement/flags */
@@ -4243,6 +4531,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("textops"), str_init("replace_str"),
+		SR_KEMIP_INT, ki_replace_str,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("textops"), str_init("replace_all"),
 		SR_KEMIP_INT, ki_replace_all,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
@@ -4251,6 +4544,21 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	{ str_init("textops"), str_init("replace_body"),
 		SR_KEMIP_INT, ki_replace_body,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("replace_body_str"),
+		SR_KEMIP_INT, ki_replace_body_str,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("replace_hdrs"),
+		SR_KEMIP_INT, ki_replace_hdrs,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("replace_hdrs_str"),
+		SR_KEMIP_INT, ki_replace_hdrs_str,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textops"), str_init("replace_body_all"),

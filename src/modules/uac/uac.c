@@ -76,6 +76,7 @@ int_str restore_from_avp_name;
 unsigned short restore_to_avp_type;
 int_str restore_to_avp_name;
 static int uac_restore_dlg = 0;
+static int reg_active_param = 1;
 
 /* global param variables */
 str rr_from_param = str_init("vsf");
@@ -99,6 +100,9 @@ static int w_uac_auth(struct sip_msg* msg, char* str, char* str2);
 static int w_uac_reg_lookup(struct sip_msg* msg, char* src, char* dst);
 static int w_uac_reg_status(struct sip_msg* msg, char* src, char* dst);
 static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s);
+static int w_uac_reg_enable(struct sip_msg* msg, char* pfilter, char* pval);
+static int w_uac_reg_disable(struct sip_msg* msg, char* pfilter, char* pval);
+static int w_uac_reg_refresh(struct sip_msg* msg, char* pluuid, char* p2);
 static int mod_init(void);
 static void mod_destroy(void);
 static int child_init(int rank);
@@ -134,6 +138,12 @@ static cmd_export_t cmds[]={
 	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2,
 		fixup_spve_igp, fixup_free_spve_igp,
 		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
+	{"uac_reg_enable",   (cmd_function)w_uac_reg_enable,   2, fixup_spve_spve,
+		fixup_free_spve_spve, ANY_ROUTE },
+	{"uac_reg_disable",  (cmd_function)w_uac_reg_disable,  2, fixup_spve_spve,
+		fixup_free_spve_spve, ANY_ROUTE },
+	{"uac_reg_refresh",  (cmd_function)w_uac_reg_refresh,  1, fixup_spve_null,
+		fixup_free_spve_null, ANY_ROUTE },
 	{"bind_uac", (cmd_function)bind_uac,		  1,  0, 0, 0},
 	{0,0,0,0,0,0}
 };
@@ -160,24 +170,23 @@ static param_export_t params[] = {
 	{"reg_retry_interval",	INT_PARAM,	  		&reg_retry_interval    },
 	{"reg_keep_callid",	INT_PARAM,			&reg_keep_callid       },
 	{"reg_random_delay",	INT_PARAM,			&reg_random_delay      },
+	{"reg_active",	INT_PARAM,			&reg_active_param      },
 	{0, 0, 0}
 };
 
 
 
 struct module_exports exports= {
-	"uac",
+	"uac",           /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       /* exported functions */
-	params,     /* param exports */
-	0,	  /* exported statistics */
-	0,	  /* exported MI functions */
-	mod_pvs,    /* exported pseudo-variables */
-	0,	  /* extra processes */
-	mod_init,   /* module initialization function */
-	0,
-	mod_destroy,
-	child_init  /* per-child init function */
+	cmds,            /* cmd exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	mod_destroy
 };
 
 
@@ -310,6 +319,10 @@ static int mod_init(void)
 		if(!reg_contact_addr.s || reg_contact_addr.len<=0)
 		{
 			LM_ERR("contact address parameter not set\n");
+			goto error;
+		}
+		if(reg_active_init(reg_active_param)<0) {
+			LM_ERR("failed to init reg active mode\n");
 			goto error;
 		}
 		if(reg_htable_size>14)
@@ -621,6 +634,49 @@ static int ki_uac_reg_status(sip_msg_t *msg, str *sruuid)
 	return uac_reg_status(msg, sruuid, 0);
 }
 
+static int w_uac_reg_enable(struct sip_msg* msg, char* pfilter, char* pval)
+{
+	str sfilter;
+	str sval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pfilter, &sfilter)<0) {
+		LM_ERR("cannot get the filter parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pval, &sval)<0) {
+		LM_ERR("cannot get the value parameter\n");
+		return -1;
+	}
+	return uac_reg_enable(msg, &sfilter, &sval);
+}
+
+static int w_uac_reg_disable(struct sip_msg* msg, char* pfilter, char* pval)
+{
+	str sfilter;
+	str sval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pfilter, &sfilter)<0) {
+		LM_ERR("cannot get the filter parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pval, &sval)<0) {
+		LM_ERR("cannot get the value parameter\n");
+		return -1;
+	}
+	return uac_reg_disable(msg, &sfilter, &sval);
+}
+
+static int w_uac_reg_refresh(struct sip_msg* msg, char* pluuid, char* p2)
+{
+	str sluuid;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pluuid, &sluuid)<0) {
+		LM_ERR("cannot get the local uuid parameter\n");
+		return -1;
+	}
+	return uac_reg_refresh(msg, &sluuid);
+}
+
 static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* pmode)
 {
 	str sval;
@@ -725,6 +781,21 @@ static sr_kemi_t sr_kemi_uac_exports[] = {
 	{ str_init("uac"), str_init("uac_reg_request_to"),
 		SR_KEMIP_INT, ki_uac_reg_request_to,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_reg_enable"),
+		SR_KEMIP_INT, uac_reg_enable,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_reg_disable"),
+		SR_KEMIP_INT, uac_reg_disable,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_reg_refresh"),
+		SR_KEMIP_INT, uac_reg_refresh,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

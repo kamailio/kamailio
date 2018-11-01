@@ -190,25 +190,22 @@ static pv_export_t mod_items[] = {
 
 
 struct module_exports exports = {
-	"cfgutils",
+	"cfgutils",          /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,        /* exported functions */
-	params,      /* exported parameters */
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	mod_items,   /* exported pseudo-variables */
-	0,           /* extra processes */
-	mod_init,    /* module initialization function */
-	0,           /* response function*/
-	mod_destroy, /* destroy function */
-	0            /* per-child init function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_items,       /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
-
 
 /**************************** fixup functions ******************************/
 static int fixup_prob( void** param, int param_no)
 {
-	unsigned int myint;
+	unsigned int myint = 1000; /* stop if str2int later fail */
 	str param_str;
 
 	/* we only fix the parameter #1 */

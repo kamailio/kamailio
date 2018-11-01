@@ -8,6 +8,4 @@ auto_gen=
 NAME=app_jsdt.so
 LIBS = -lm
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules

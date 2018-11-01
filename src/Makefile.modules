@@ -61,13 +61,6 @@ override static_modules_path=
 DEFS += -DMOD_NAME='"$(MOD_NAME)"'
 
 
-ifeq (,$(findstring -DSER_MOD_INTERFACE, $(DEFS)))
-	MODIFACE=-DKAMAILIO_MOD_INTERFACE
-else
-	MODIFACE=-DSER_MOD_INTERFACE
-endif
-
-
 ifneq ($(makefile_defs_included),1)
 $(error "the local makefile does not include Makefile.defs!")
 endif
@@ -278,16 +271,17 @@ endif
 
 #man page build rules
 ifneq (,$(wildcard $(MOD_NAME).xml))
-
+ifneq ($(DOCBOOKMAN),)
 $(MOD_NAME).7: $(MOD_NAME).xml
-	$(DOCBOOK) -s ../../../doc/stylesheets/serdoc2man.xsl $<
+	$(DOCBOOKMAN) -s ../../../doc/stylesheets/serdoc2man.xsl $<
 
 man: $(MOD_NAME).7
-
 else
-
 man:
-
+	@echo "info - no docbook to man tool to convert $(MOD_NAME).xml"
+endif
+else
+man:
 endif
 
 

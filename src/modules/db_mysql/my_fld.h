@@ -30,11 +30,20 @@
 #include "../../lib/srdb2/db_fld.h"
 #include <mysql.h>
 
+/* MariaDB exports MYSQL_VERSION_ID as well, but changed numbering */
+#if MYSQL_VERSION_ID > 80000 && ! defined MARIADB_BASE_VERSION
+#include <stdbool.h>
+#endif
+
 struct my_fld {
 	db_drv_t gen;
 
 	char* name;
+#if MYSQL_VERSION_ID > 80000 && ! defined MARIADB_BASE_VERSION
+	bool is_null;
+#else
 	my_bool is_null;
+#endif
 	MYSQL_TIME time;
 	unsigned long length;
 	str buf;

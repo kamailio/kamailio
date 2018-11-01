@@ -48,13 +48,33 @@ int db_str2int(const char* _s, int* _v);
 
 
 /**
- * Converts a char into an long long value.
+ * Converts a char into an unsigned integer value.
+ *
+ * \param _s source value
+ * \param _v target value
+ * \return zero on success, negative on conversion errors
+ */
+int db_str2uint(const char* _s, unsigned int* _v);
+
+
+/**
+ * Converts a char into a long long value.
  *
  * \param _s source value
  * \param _v target value
  * \return zero on success, negative on conversion errors
  */
 int db_str2longlong(const char* _s, long long* _v);
+
+
+/**
+ * Converts a char into an unsigned long long value.
+ *
+ * \param _s source value
+ * \param _v target value
+ * \return zero on success, negative on conversion errors
+ */
+int db_str2ulonglong(const char* _s, unsigned long long* _v);
 
 
 /**
@@ -68,7 +88,7 @@ int db_str2double(const char* _s, double* _v);
 
 
 /**
- * Converts a integer value in a char pointer.
+ * Converts an integer value in a char pointer.
  *
  * \param _v source value
  * \param _s target value
@@ -76,6 +96,17 @@ int db_str2double(const char* _s, double* _v);
  * \return zero on success, negative on conversion errors
  */
 int db_int2str(int _v, char* _s, int* _l);
+
+
+/**
+ * Converts an unsigned integer value in a char pointer.
+ *
+ * \param _v source value
+ * \param _s target value
+ * \param _l available length and target length
+ * \return zero on success, negative on conversion errors
+ */
+int db_uint2str(unsigned int _v, char* _s, int* _l);
 
 
 /**
@@ -87,6 +118,17 @@ int db_int2str(int _v, char* _s, int* _l);
  * \return zero on success, negative on conversion errors
  */
 int db_longlong2str(long long _v, char* _s, int* _l);
+
+
+/**
+ * Converts an unsigned long long value in a char pointer.
+ *
+ * \param _v source value
+ * \param _s target value
+ * \param _l available length and target length
+ * \return zero on success, negative on conversion errors
+ */
+int db_ulonglong2str(unsigned long long _v, char* _s, int* _l);
 
 
 /**

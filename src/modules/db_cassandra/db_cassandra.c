@@ -53,8 +53,8 @@ MODULE_VERSION
  *  database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_bind_api",  (cmd_function)db_cassa_bind_api, 0, 0, 0},
-	{0, 0, 0, 0, 0}
+	{"db_bind_api",  (cmd_function)db_cassa_bind_api, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -70,18 +70,16 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"db_cassandra",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,          /* module parameters */
-	0,               /* exported statistics */
-	0,               /* exported MI functions */
-	0,               /* exported pseudo-variables */
-	0,               /* extra processes */
-	cassa_mod_init,  /* module initialization function */
-	0,               /* response function*/
-	mod_destroy,     /* destroy function */
-	0                /* per-child init function */
+	"db_cassandra",		/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	0,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	cassa_mod_init,		/* module initialization function */
+	0,					/* per-child init function */
+	mod_destroy			/* module destroy function */
 };
 
 static int cassa_mod_init(void)

@@ -52,7 +52,7 @@ static inline void calc_crc_suffix( struct sip_msg *msg, char *tag_suffix)
 	suffix_source[1]=msg->via1->port_str;
 	if (msg->via1->branch)
 		suffix_source[ss_nr++]=msg->via1->branch->value;
-        crcitt_string_array( tag_suffix, suffix_source, ss_nr );
+	crcitt_string_array( tag_suffix, suffix_source, ss_nr );
 }
 
 static void inline init_tags( char *tag, char **suffix, 

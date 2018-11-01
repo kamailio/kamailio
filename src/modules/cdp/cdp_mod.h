@@ -51,6 +51,6 @@
 
 static int cdp_init( void );
 static int cdp_child_init( int rank );
-static int cdp_exit( void );
+static void cdp_exit( void );
 
 #endif

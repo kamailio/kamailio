@@ -150,7 +150,7 @@ modparam("topos", "mask_callid", 1)
 	<section id="topos.p.sanity_checks">
 		<title><varname>sanity_checks</varname> (int)</title>
 		<para>
-			If set to 1, topoh module will bind to sanity module in order
+			If set to 1, topos module will bind to sanity module in order
 			to perform sanity checks over received SIP request. Default
 			sanity checks are done. It is useful to check if received request
 			is well formatted before proceeding to encoding/decoding.
@@ -164,7 +164,7 @@ modparam("topos", "mask_callid", 1)
 		<title>Set <varname>sanity_checks</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("topoh", "sanity_checks", 1)
+modparam("topos", "sanity_checks", 1)
 ...
 </programlisting>
 		</example>
@@ -257,10 +257,56 @@ end
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.event_mode">
+		<title><varname>event_mode</varname> (int)</title>
+		<para>
+			Control what event_route blocks to be executed. It is a bitmask of:
+			1 - execute event_route[topos:outgoing]; 2 - execute
+			event_route[topos:sending].
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3 (execute both event_route blocks).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "event_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.contact_host">
+		<title><varname>contact_host</varname> (str)</title>
+		<para>
+			You may need to control the host part of the Contact header added
+			by topos.
+
+			For example when using TLS with TOPOS the remote UAS must be able to open
+			a new TLS socket to the contact header.
+			In this case, the contact header must contain a domain name with a trusted CA
+			signed certitificate.
+		</para>
+		<para>
+		<emphasis>
+			Default value is taken from the Record-Route URI.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contact_host</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "contact_host", "proxy.domain.com")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Event Routes</title>
-	<section>
+	<section id="topos.e.msg_outgoing">
 		<title>event_route[topos:msg-outgoing]</title>
 		<para>
 		It is executed before doing topology stripping processing for an outgoing
@@ -280,6 +326,30 @@ end
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
+    drop;
+  }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.e.msg_sending">
+		<title>event_route[topos:msg-sending]</title>
+		<para>
+		It is executed before doing topology stripping processing for a SIP
+		message to be sent out, being executed after event_route[topos:sending].
+		</para>
+		<para>
+		Inside the event route the variables $sndto(ip), $sndto(port) and
+		$sndto(proto) point to the destination. The SIP message is the one
+		to be sent out.
+		</para>
+		<example>
+		<title>Usage of event_route[topos:msg-sending]</title>
+		<programlisting format="linespecific">
+...
+event_route[topos:msg-sending] {
+  if(is_request() and $fU=="alice") {
     drop;
   }
 }

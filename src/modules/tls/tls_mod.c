@@ -103,6 +103,7 @@ static tls_domain_t mod_params = {
 	TLS_USE_TLSv1,    /* TLS method */
 	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
 	{0, 0},           /* Server name (SNI) */
+	0,                /* Server name (SNI) mode */
 	{0, 0},           /* Server id */
 	0                 /* next */
 };
@@ -126,6 +127,7 @@ tls_domain_t srv_defaults = {
 	TLS_USE_TLSv1,    /* TLS method */
 	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
 	{0, 0},           /* Server name (SNI) */
+	0,                /* Server name (SNI) mode */
 	{0, 0},           /* Server id */
 	0                 /* next */
 };
@@ -166,6 +168,7 @@ tls_domain_t cli_defaults = {
 	TLS_USE_TLSv1,    /* TLS method */
 	{0, 0}, /* Certificate revocation list */
 	{0, 0},           /* Server name (SNI) */
+	0,                /* Server name (SNI) mode */
 	{0, 0},           /* Server id */
 	0                 /* next */
 };
@@ -241,18 +244,16 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"tls",
+	"tls",           /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,        /* Exported functions */
-	params,      /* Exported parameters */
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	tls_pv,      /* exported pseudo-variables */
-	0,           /* extra processes */
-	mod_init,    /* module initialization function */
-	0,           /* response function */
-	destroy,     /* destroy function */
-	mod_child    /* child initialization function */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc command */
+	tls_pv,          /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	mod_child,       /* child initi function */
+	destroy          /* destroy function */
 };
 
 

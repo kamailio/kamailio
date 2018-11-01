@@ -763,7 +763,8 @@ int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri)
 	/*uri;alias=[ip]~port~proto*/
 	len = uri->len+ip.len+port.len+12;
 	if(len>=nuri->len) {
-		LM_ERR("not enough space for new uri: %d\n", len);
+		LM_ERR("not enough space - new uri len: %d (buf size: %d)\n",
+				len, nuri->len);
 		return -1;
 	}
 	p = nuri->s;
@@ -876,18 +877,18 @@ int uri_restore_rcv_alias(str *uri, str *nuri, str *suri)
 	nuri->len = p - nuri->s;
 
 	p = suri->s;
-	strncpy(p, "sip:", 4);
+	memcpy(p, "sip:", 4);
 	p += 4;
-	strncpy(p, ip.s, ip.len);
+	memcpy(p, ip.s, ip.len);
 	p += ip.len;
 	*p++ = ':';
-	strncpy(p, port.s, port.len);
+	memcpy(p, port.s, port.len);
 	p += port.len;
 	proto_type_to_str((unsigned short)proto, &sproto);
 	if(sproto.len>0 && proto!=PROTO_UDP) {
-		strncpy(p, ";transport=", 11);
+		memcpy(p, ";transport=", 11);
 		p += 11;
-		strncpy(p, sproto.s, sproto.len);
+		memcpy(p, sproto.s, sproto.len);
 		p += sproto.len;
 	}
 	suri->len = p - suri->s;

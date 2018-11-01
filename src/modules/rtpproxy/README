@@ -230,7 +230,7 @@ Chapter 1. Admin Guide
 
 4.1. rtpproxy_sock (string)
 
-   Used to define the list of RTPPRoxy instances to connect to. These can
+   Used to define the list of RTPProxy instances to connect to. These can
    be UNIX sockets or IPv4/IPv6 UDP sockets. Each modparam entry will
    insert sockets into a single set. If no set ID is given, the default
    set ID '0' will be used. To define multiple sets add the set number at

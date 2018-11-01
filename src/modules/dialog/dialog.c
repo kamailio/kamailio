@@ -130,8 +130,6 @@ int dlg_h_id_step = 1;
 
 /* statistic variables */
 int dlg_enable_stats = 1;
-int active_dlgs_cnt = 0;
-int early_dlgs_cnt = 0;
 int detect_spirals = 1;
 int dlg_send_bye = 0;
 int dlg_timeout_noreset = 0;
@@ -360,14 +358,12 @@ struct module_exports exports= {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* exported functions */
 	mod_params,      /* param exports */
-	mod_stats,       /* exported statistics */
-	0,               /* exported MI functions */
+	0,               /* exported RPC methods */
 	mod_items,       /* exported pseudo-variables */
-	0,               /* extra processes */
-	mod_init,        /* module initialization function */
 	0,               /* reply processing function */
-	mod_destroy,
-	child_init       /* per-child init function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	mod_destroy
 };
 
 
@@ -501,7 +497,7 @@ static int mod_init(void)
 
 #ifdef STATISTICS
 	/* register statistics */
-	if (register_module_stats( exports.name, mod_stats)!=0 ) {
+	if (dlg_enable_stats && (register_module_stats( exports.name, mod_stats)!=0 )) {
 		LM_ERR("failed to register %s statistics\n", exports.name);
 		return -1;
 	}
@@ -580,10 +576,6 @@ static int mod_init(void)
 				dlg_timeout_noreset);
 		return -1;
 	}
-
-	/* if statistics are disabled, prevent their registration to core */
-	if (dlg_enable_stats==0)
-		exports.stats = 0;
 
 	/* create profile hashes */
 	if (add_profile_definitions( profiles_nv_s, 0)!=0 ) {
@@ -713,7 +705,6 @@ static int mod_init(void)
 			LM_ERR("failed to initialize the DB support\n");
 			return -1;
 		}
-		run_load_callbacks();
 	}
 
 	destroy_dlg_callbacks( DLGCB_LOADED );
@@ -744,6 +735,13 @@ static int child_init(int rank)
 {
 	dlg_db_mode = dlg_db_mode_param;
 
+
+	if(rank==PROC_INIT) {
+		if (dlg_db_mode!=DB_MODE_NONE) {
+			run_load_callbacks();
+		}
+	}
+
 	if(rank==PROC_MAIN) {
 		if(dlg_timer_procs>0) {
 			if(fork_sync_timer(PROC_TIMER, "Dialog Main Timer", 1 /*socks flag*/,
@@ -766,11 +764,6 @@ static int child_init(int rank)
 			LM_ERR("failed to start clean timer routine as process\n");
 			return -1; /* error */
 		}
-	}
-
-	if (rank==1) {
-		if_update_stat(dlg_enable_stats, active_dlgs, active_dlgs_cnt);
-		if_update_stat(dlg_enable_stats, early_dlgs, early_dlgs_cnt);
 	}
 
 	if ( ((dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
@@ -2331,6 +2324,7 @@ static void rpc_profile_print_dlgs(rpc_t *rpc, void *c) {
 	}
 	return;
 }
+
 static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 	str from = {NULL,0};
 	str to = {NULL,0};
@@ -2355,10 +2349,72 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 		if(rpc->scan(c, "*S", &bd)<1) {
 			bd.s = NULL;
 			bd.len = 0;
+		} else {
+			if(bd.len==1 && *bd.s=='.') {
+				bd.s = NULL;
+				bd.len = 0;
+			} else if(bd.len==1 && *bd.s=='_') {
+				bd.s = "";
+				bd.len = 0;
+			}
 		}
 	}
 
 	dlg_bridge(&from, &to, &op, &bd);
+}
+
+static const char *rpc_dlg_stats_active_doc[2] = {
+	"Get stats about active dialogs", 0
+};
+
+/*!
+ * \brief Print stats of active dialogs
+ */
+static void rpc_dlg_stats_active(rpc_t *rpc, void *c)
+{
+	dlg_cell_t *dlg;
+	unsigned int i;
+	int dlg_starting = 0;
+	int dlg_connecting = 0;
+	int dlg_answering = 0;
+	int dlg_ongoing = 0;
+	void *h;
+
+	for( i=0 ; i<d_table->size ; i++ ) {
+		dlg_lock( d_table, &(d_table->entries[i]) );
+
+		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
+			switch(dlg->state) {
+				case DLG_STATE_UNCONFIRMED:
+					dlg_starting++;
+				break;
+				case DLG_STATE_EARLY:
+					dlg_connecting++;
+				break;
+				case DLG_STATE_CONFIRMED_NA:
+					dlg_answering++;
+				break;
+				case DLG_STATE_CONFIRMED:
+					dlg_ongoing++;
+				break;
+				default:
+					LM_DBG("not active - state: %d\n", dlg->state);
+			}
+		}
+		dlg_unlock( d_table, &(d_table->entries[i]) );
+	}
+
+	if (rpc->add(c, "{", &h) < 0) {
+		rpc->fault(c, 500, "Server failure");
+		return;
+	}
+
+	rpc->struct_add(h, "ddddd",
+		"starting", dlg_starting,
+		"connecting", dlg_connecting,
+		"answering", dlg_answering,
+		"ongoing", dlg_ongoing,
+		"all", dlg_starting + dlg_connecting + dlg_answering + dlg_ongoing);
 }
 
 static rpc_export_t rpc_methods[] = {
@@ -2371,5 +2427,6 @@ static rpc_export_t rpc_methods[] = {
 	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, RET_ARRAY},
 	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
 	{"dlg.terminate_dlg", rpc_dlg_terminate_dlg, rpc_dlg_terminate_dlg_doc, 0},
+	{"dlg.stats_active", rpc_dlg_stats_active, rpc_dlg_stats_active_doc, 0},
 	{0, 0, 0, 0}
 };

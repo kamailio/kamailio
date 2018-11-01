@@ -71,14 +71,14 @@ static int send_2XX_reply(sip_msg_t *msg, int reply_code,
 	{
 		ERR_MEM(PKG_MEM_STR);
 	}
-	strncpy(hdr_append.s, "Expires: ", 9);
-	strncpy(hdr_append.s+9, tmp.s, tmp.len);
+	memcpy(hdr_append.s, "Expires: ", 9);
+	memcpy(hdr_append.s+9, tmp.s, tmp.len);
 	tmp.s = hdr_append.s+9+tmp.len;
-	strncpy(tmp.s, CRLF, CRLF_LEN);
+	memcpy(tmp.s, CRLF, CRLF_LEN);
 	tmp.s += CRLF_LEN;
-	strncpy(tmp.s, "Contact: <", 10);
+	memcpy(tmp.s, "Contact: <", 10);
 	tmp.s += 10;
-	strncpy(tmp.s, local_contact->s, local_contact->len);
+	memcpy(tmp.s, local_contact->s, local_contact->len);
 	tmp.s[local_contact->len] = '\0';
 	t = strstr(tmp.s, ";transport=");
 	tmp.s += local_contact->len;
@@ -87,22 +87,22 @@ static int send_2XX_reply(sip_msg_t *msg, int reply_code,
 		switch (msg->rcv.proto)
 		{
 			case PROTO_TCP:
-				strncpy(tmp.s, ";transport=tcp", 14);
+				memcpy(tmp.s, ";transport=tcp", 14);
 				tmp.s += 14;
 				hdr_append.len -= 1;
 				break;
 			case PROTO_TLS:
-				strncpy(tmp.s, ";transport=tls", 14);
+				memcpy(tmp.s, ";transport=tls", 14);
 				tmp.s += 14;
 				hdr_append.len -= 1;
 				break;
 			case PROTO_SCTP:
-				strncpy(tmp.s, ";transport=sctp", 15);
+				memcpy(tmp.s, ";transport=sctp", 15);
 				tmp.s += 15;
 				break;
 			case PROTO_WS:
 			case PROTO_WSS:
-				strncpy(tmp.s, ";transport=ws", 13);
+				memcpy(tmp.s, ";transport=ws", 13);
 				tmp.s += 13;
 				hdr_append.len -= 2;
 				break;
@@ -113,7 +113,7 @@ static int send_2XX_reply(sip_msg_t *msg, int reply_code,
 		hdr_append.len -= 15;
 	}
 	*tmp.s = '>';
-	strncpy(tmp.s+1, CRLF, CRLF_LEN);
+	memcpy(tmp.s+1, CRLF, CRLF_LEN);
 
 	hdr_append.s[hdr_append.len]= '\0';
 
@@ -2026,14 +2026,14 @@ void update_db_subs_timer_dbonly(void)
 	db_val_t qvals[1];
 	db_key_t result_cols[18];
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
-		callid_col, totag_col, fromtag_col, event_col, event_id_col,
-		local_cseq_col, expires_col, rr_col, sockinfo_col,
-		contact_col, lcontact_col, watcher_user_col, watcher_domain_col;
+	callid_col, totag_col, fromtag_col, event_col, event_id_col,
+	local_cseq_col, expires_col, rr_col, sockinfo_col,
+	contact_col, lcontact_col, watcher_user_col, watcher_domain_col;
 	int n_result_cols = 0;
 	db1_res_t *result= NULL;
-	db_row_t *row = NULL;
+	db_row_t *rows;
 	db_val_t *row_vals= NULL;
-	int i;
+	int i, res;
 	subs_t s, *s_new, *s_array = NULL, *s_del;
 	str ev_name;
 	pres_ev_t* event;
@@ -2072,27 +2072,26 @@ void update_db_subs_timer_dbonly(void)
 		return;
 	}
 
-	if (pa_dbf.query(pa_db, qcols, qops, qvals, result_cols,
-				1, n_result_cols, 0, &result) < 0) {
-		LM_ERR("failed to query database for expired subscriptions\n");
-		if(result)
-			pa_dbf.free_result(pa_db, result);
-		return;
-	}
-
-	if(result== NULL)
-		return;
-
-	if(result->n <=0 ) {
-		pa_dbf.free_result(pa_db, result);
-		return;
-	}
-	LM_DBG("found %d dialogs\n", result->n);
-
-	for(i=0; i<result->n; i++)
+	res = db_fetch_query(&pa_dbf, pres_fetch_rows, pa_db, qcols, qops, qvals, result_cols,1, n_result_cols, 0, &result );
+	if (res < 0)
 	{
-		row = &result->rows[i];
-		row_vals = ROW_VALUES(row);
+		LM_ERR("failed to query database for expired subscriptions\n");
+		if (result) {
+			pa_dbf.free_result(pa_db, result);
+		}
+		return;
+	}
+
+	if(result == NULL) {
+		LM_DBG("no results returned\n");
+		return;
+	}
+
+	LM_DBG("processing %d dialogs\n", RES_ROW_N(result));
+	s_array = NULL;
+	rows = RES_ROWS(result);
+	for (i = 0; i < RES_ROW_N(result); i++) {
+		row_vals = ROW_VALUES(&rows[i]);
 
 		memset(&s, 0, sizeof(subs_t));
 
@@ -2172,12 +2171,6 @@ void update_db_subs_timer_dbonly(void)
 		s_del = s_new;
 		s_new = s_new->next;
 		pkg_free(s_del);
-	}
-
-	/* delete the expired subscriptions */
-	if(pa_dbf.delete(pa_db, qcols, qops, qvals, 1) < 0)
-	{
-		LM_ERR("deleting expired information from database\n");
 	}
 }
 

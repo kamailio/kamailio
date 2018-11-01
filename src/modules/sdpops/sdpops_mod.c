@@ -63,9 +63,13 @@ static int w_sdp_content_sloppy(sip_msg_t* msg, char* foo, char *bar);
 static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar);
 static int w_sdp_get_line_startswith(sip_msg_t* msg, char *foo, char *bar);
 
+static int sdp_get_sess_version(sip_msg_t* msg, str* sess_version, int* sess_version_num);
+static int sdp_set_sess_version(sip_msg_t* msg, str* sess_version, int* sess_version_num);
 
 static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
+static int pv_set_sdp(sip_msg_t *msg, pv_param_t *param,
+		int op, pv_value_t *res);
 static int pv_parse_sdp_name(pv_spec_p sp, str *in);
 
 static int mod_init(void);
@@ -120,7 +124,7 @@ static cmd_export_t cmds[] = {
 	{"sdp_with_ice",                (cmd_function)w_sdp_with_ice,
 		0, 0,  0, ANY_ROUTE},
 	{"sdp_get_line_startswith", (cmd_function)w_sdp_get_line_startswith,
-		2, 0,  0, ANY_ROUTE},
+		2, fixup_none_spve,  0, ANY_ROUTE},
 	{"bind_sdpops",                (cmd_function)bind_sdpops,
 		1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -128,7 +132,7 @@ static cmd_export_t cmds[] = {
 
 static pv_export_t mod_pvs[] = {
 	{{"sdp", (sizeof("sdp")-1)}, /* */
-		PVT_OTHER, pv_get_sdp, 0,
+		PVT_OTHER, pv_get_sdp, pv_set_sdp,
 		pv_parse_sdp_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
@@ -140,18 +144,16 @@ static param_export_t params[] = {
 
 /** module exports */
 struct module_exports exports= {
-	"sdpops",
+	"sdpops",        /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,          /* exported statistics */
-	0  ,        /* exported MI functions */
-	mod_pvs,    /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,
-	0,
-	0           /* per-child init function */
+	cmds,            /* cmd exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
 
 /**
@@ -512,8 +514,9 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix, str* media)
 
 					LM_DBG("range for media type %.*s: %ld - %ld\n",
 							sdp_stream->media.len, sdp_stream->media.s,
-							sdp_stream->raw_stream.s - body.s,
-							sdp_stream->raw_stream.s + sdp_stream->raw_stream.len - body.s
+							(long int)(sdp_stream->raw_stream.s - body.s),
+							(long int)(sdp_stream->raw_stream.s
+								+ sdp_stream->raw_stream.len - body.s)
 					);
 
 					found += sdp_remove_line_lump_by_prefix(msg,&(sdp_stream->raw_stream),prefix);
@@ -1554,28 +1557,34 @@ static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar)
 /**
  *
  */
-static int w_sdp_print(sip_msg_t* msg, char* level, char *bar)
+static int ki_sdp_print(sip_msg_t* msg, int llevel)
 {
 	sdp_info_t *sdp = NULL;
-	int llevel = L_DBG;
 
 	if(parse_sdp(msg) < 0) {
 		LM_ERR("Unable to parse sdp\n");
 		return -1;
 	}
 
-	if(fixup_get_ivalue(msg, (gparam_p)level, &llevel)!=0)
-	{
-		LM_ERR("unable to get the debug level value\n");
-		return -1;
-	}
-
-	sdp = (sdp_info_t*)msg->body;
-
 	print_sdp(sdp, llevel);
 	return 1;
 }
 
+
+/**
+ *
+ */
+static int w_sdp_print(sip_msg_t* msg, char* level, char *bar)
+{
+	int llevel = L_DBG;
+
+	if(fixup_get_ivalue(msg, (gparam_p)level, &llevel)!=0) {
+		LM_ERR("unable to get the debug level value\n");
+		return -1;
+	}
+
+	return ki_sdp_print(msg, llevel);
+}
 
 /**
  *
@@ -1761,28 +1770,26 @@ static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar)
 /**
  *
  */
-static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
+static int ki_sdp_get_line_startswith(sip_msg_t *msg, str *aname, str *sline)
 {
 	sdp_info_t *sdp = NULL;
 	str body = {NULL, 0};
 	str line = {NULL, 0};
 	char* p = NULL;
-	str s;
-	str sline;
 	int_str avp_val;
 	int_str avp_name;
 	pv_spec_t *avp_spec = NULL;
 	static unsigned short avp_type = 0;
 	int sdp_missing=1;
 
-	if (s_line == NULL || strlen(s_line) <= 0)
-	{
+	if (sline == NULL || sline->len <= 0) {
 		LM_ERR("Search string is null or empty\n");
 		return -1;
 	}
-	sline.s = s_line;
-	sline.len = strlen(s_line);
-
+	if (aname == NULL || aname->len <= 0) {
+		LM_ERR("avp variable name is null or empty\n");
+		return -1;
+	}
 	sdp_missing = parse_sdp(msg);
 
 	if(sdp_missing < 0) {
@@ -1792,8 +1799,7 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 
 	sdp = (sdp_info_t *)msg->body;
 
-	if (sdp_missing || sdp == NULL)
-	{
+	if (sdp_missing || sdp == NULL) {
 		LM_DBG("No SDP\n");
 		return -2;
 	}
@@ -1812,56 +1818,41 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 		return -1;
 	}
 
-	if (avp == NULL || strlen(avp) <= 0)
-	{
-		LM_ERR("avp variable is null or empty\n");
+	if (pv_locate_name(aname) != aname->len) {
+		LM_ERR("invalid parameter - cannot locate pv name\n");
 		return -1;
 	}
 
-	s.s = avp;
-	s.len = strlen(s.s);
-
-	if (pv_locate_name(&s) != s.len)
-	{
-		LM_ERR("invalid parameter\n");
-		return -1;
-	}
-
-	if (((avp_spec = pv_cache_get(&s)) == NULL)
+	if (((avp_spec = pv_cache_get(aname)) == NULL)
 			|| avp_spec->type!=PVT_AVP) {
-		LM_ERR("malformed or non AVP %s AVP definition\n", avp);
+		LM_ERR("malformed or non AVP %.*s AVP definition\n",
+				aname->len, aname->s);
 		return -1;
 	}
 
-	if(pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type)!=0)
-	{
-		LM_ERR("[%s]- invalid AVP definition\n", avp);
+	if(pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type)!=0) {
+		LM_ERR("[%.*s]- invalid AVP definition\n", aname->len, aname->s);
 		return -1;
 	}
 
-	p = find_sdp_line(body.s, body.s+body.len, sline.s[0]);
-	while (p != NULL)
-	{
-		if (sdp_locate_line(msg, p, &line) != 0)
-		{
+	p = find_sdp_line(body.s, body.s+body.len, sline->s[0]);
+	while (p != NULL) {
+		if (sdp_locate_line(msg, p, &line) != 0) {
 			LM_ERR("sdp_locate_line fail\n");
 			return -1;
 		}
 
-		if (strncmp(line.s, sline.s, sline.len) == 0)
-		{
+		if (strncmp(line.s, sline->s, sline->len) == 0) {
 			avp_val.s.s = line.s;
 			avp_val.s.len = line.len;
 
 			/* skip ending \r\n if exists */
-			if (avp_val.s.s[line.len-2] == '\r' && avp_val.s.s[line.len-1] == '\n')
-			{
+			if (avp_val.s.s[line.len-2] == '\r' && avp_val.s.s[line.len-1] == '\n') {
 				/* add_avp() clones to shm and adds 0-terminating char */
 				avp_val.s.len -= 2;
 			}
 
-			if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0)
-			{
+			if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0) {
 				LM_ERR("Failed to add SDP line avp");
 				return -1;
 			}
@@ -1869,10 +1860,139 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 			return 1;
 		}
 
-		p = find_sdp_line(line.s + line.len, body.s + body.len, sline.s[0]);
+		p = find_sdp_line(line.s + line.len, body.s + body.len, sline->s[0]);
 	}
 
 	return -1;
+}
+
+static int sdp_get_sess_version(sip_msg_t* msg, str* sess_version, int* sess_version_num)
+{
+	sdp_session_cell_t* sdp_session;
+	int sdp_session_num;
+
+	sdp_session_num = 0;
+	for(;;)
+	{
+		sdp_session = get_sdp_session(msg, sdp_session_num);
+		if(!sdp_session) break;
+		LM_DBG("sdp_session_num %d sess-version: %.*s\n", sdp_session_num,sdp_session->o_sess_version.len, sdp_session->o_sess_version.s);
+		*sess_version = sdp_session->o_sess_version;
+		sdp_session_num++;
+	}
+
+	LM_DBG("sdp_session_num %d\n", sdp_session_num);
+
+	if ( sdp_session_num > 0 )
+	{
+		if ( str2sint(sess_version, sess_version_num) != -1 )
+		{
+			return 1;
+		}
+	}
+	return -1;
+}
+
+static int sdp_set_sess_version(sip_msg_t* msg, str* disabled_old_sess_version, int* new_sess_version_num)
+{
+	str new_sess_version = STR_NULL;
+	str old_sess_version = STR_NULL;
+	int old_sess_version_num = 0;
+	int autoincrement = 0;
+
+	struct lump* anchor = NULL;
+
+	if ( new_sess_version_num == NULL )
+	{
+		LM_ERR("no *new_sess_version_num\n");
+		return -1;
+	}
+	if ( *new_sess_version_num == -1 )
+	{
+		autoincrement = 1;
+	}
+
+	// get current value and pointer (for lump operations)
+	if ( sdp_get_sess_version(msg, &old_sess_version, &old_sess_version_num) != 1 )
+	{
+		LM_ERR("unable to get current str pointer\n");
+		return -1;
+	}
+
+	if ( autoincrement == 1 )
+	{
+		*new_sess_version_num = old_sess_version_num + 1;
+		if ( *new_sess_version_num < old_sess_version_num )
+		{
+			LM_ERR("autoincrement: new(%d) < old(%d)\n", *new_sess_version_num, old_sess_version_num);
+			return -1;
+		}
+		LM_DBG("old_sess_version_num: %d -> *new_sess_version_num %d\n", old_sess_version_num, *new_sess_version_num);
+	}
+	LM_DBG("old_sess_version_num: %d  autoincrement: %d\n", old_sess_version_num,autoincrement);
+	LM_DBG("*new_sess_version_num: %d  autoincrement: %d\n", *new_sess_version_num,autoincrement);
+
+	char *sid;
+	char buf[INT2STR_MAX_LEN];
+	sid = sint2strbuf(*new_sess_version_num, buf, INT2STR_MAX_LEN, &(new_sess_version.len));
+	if ( sid == 0 )
+	{
+		LM_ERR("sint2strbuf() fail\n");
+		return -1;
+	}
+
+	if ( autoincrement == 1 && ( new_sess_version.len < old_sess_version.len ) )
+	{
+		LM_ERR("autoincrement: new(%d) < old(%.*s)\n", *new_sess_version_num, old_sess_version.len, old_sess_version.s);
+		return -1;
+	}
+
+	new_sess_version.s = sid;
+	new_sess_version.s = pkg_malloc((new_sess_version.len * sizeof(char)));
+	if (new_sess_version.s == NULL)
+	{
+		LM_ERR("Out of pkg memory\n");
+		return -1;
+	}
+
+	memcpy(new_sess_version.s, sid, new_sess_version.len);
+
+	int offset = 0;
+	offset = old_sess_version.s - msg->buf;
+	anchor = del_lump(msg, offset, old_sess_version.len, 0);
+	if (anchor == NULL)
+	{
+		LM_ERR("del_lump failed\n");
+		pkg_free(new_sess_version.s);
+		return -1;
+	}
+
+	if (insert_new_lump_after(anchor, new_sess_version.s, new_sess_version.len, 0) == 0)
+	{
+		LM_ERR("insert_new_lump_after failed\n");
+		pkg_free(new_sess_version.s);
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *pline)
+{
+	str sline;
+	str aname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pline, &sline)<0) {
+		LM_ERR("failed to evaluate start line parameter\n");
+		return -1;
+	}
+	aname.s = avp;
+	aname.len = strlen(aname.s);
+
+	return ki_sdp_get_line_startswith(msg, &aname, &sline);
 }
 
 /**
@@ -1906,6 +2026,8 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	sdp_info_t *sdp = NULL;
+	str sess_version = STR_NULL;
+	int sess_version_num = 0;
 
 	if(msg==NULL || param==NULL)
 		return -1;
@@ -1923,12 +2045,55 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param,
 
 	switch(param->pvn.u.isname.name.n)
 	{
+
+/* body */
 		case 0:
+			LM_DBG("param->pvn.u.isname.name.n=0\n");
 			return pv_get_strval(msg, param, res, &sdp->raw_sdp);
+/* sess_version */
+		case 1:
+			if ( sdp_get_sess_version(msg, &sess_version, &sess_version_num) == 1 )
+			{
+				if ( sess_version.len > 0 && sess_version.s != NULL)
+				{
+					return pv_get_intstrval(msg, param, res, sess_version_num, &sess_version);
+				}
+			}
+			return pv_get_null(msg, param, res);
+
 		default:
 			return pv_get_null(msg, param, res);
 	}
 }
+
+static int pv_set_sdp(sip_msg_t *msg, pv_param_t *param,
+		int op, pv_value_t *res)
+{
+	LM_DBG("res->flags: %d\n", res->flags);
+	if ( res->flags & PV_TYPE_INT ) LM_DBG("PV_TYPE_INT: %d\n",PV_TYPE_INT);
+	if ( res->flags & PV_VAL_INT ) LM_DBG("PV_VAL_INT: %d\n",PV_VAL_INT);
+	if ( res->flags & PV_VAL_STR ) LM_DBG("PV_VAL_STR: %d\n",PV_VAL_STR);
+
+	LM_DBG("param.pvn.u.isname.name.n = %d\n",param->pvn.u.isname.name.n);
+	if (param->pvn.u.isname.name.n == 1)
+	{
+	// sdp(sess_version)
+		if ( !(res->flags & PV_VAL_INT) )
+		{
+			LM_ERR("expected integer\n");
+			return -1;
+		}
+		LM_DBG("do $sdp(sess_version) = %d\n", res->ri);
+		return sdp_set_sess_version(msg, NULL, &res->ri);
+	}
+	else
+	{
+		LM_ERR("unknown PV\n");
+		return -1;
+	}
+	return -1;
+}
+
 
 /**
  *
@@ -1943,6 +2108,11 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in)
 		case 4:
 			if(strncmp(in->s, "body", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 12:
+			if(strncmp(in->s, "sess_version", 12)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
 		break;
 		default:
@@ -2007,6 +2177,16 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("sdpops"), str_init("sdp_with_media"),
+		SR_KEMIP_INT, sdp_with_media,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_with_active_media"),
+		SR_KEMIP_INT, sdp_with_active_media,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("sdpops"), str_init("sdp_get"),
 		SR_KEMIP_INT, ki_sdp_get,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -2015,6 +2195,16 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 	{ str_init("sdpops"), str_init("sdp_transport"),
 		SR_KEMIP_INT, ki_sdp_transport,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_get_line_startswith"),
+		SR_KEMIP_INT, ki_sdp_get_line_startswith,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_print"),
+		SR_KEMIP_INT, ki_sdp_print,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

@@ -150,17 +150,15 @@ static param_export_t params[]={
 
 struct module_exports exports = {
 	"mtree",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,
-	0,              /* exported MI functions */
-	0,              /* exported pseudo-variables */
-	0,              /* extra processes */
-	mod_init,       /* module initialization function */
-	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	DEFAULT_DLFLAGS,/* dlopen flags */
+	cmds,		/*·exported·functions·*/
+	params,		/*·exported·functions·*/
+	0,		/*·exported·RPC·methods·*/
+	0,		/* exported pseudo-variables */
+	0,		/* response·function */
+	mod_init,	/* module initialization function */
+	child_init,	/* per child init function */
+	mod_destroy	/* destroy function */
 };
 
 
@@ -930,7 +928,8 @@ static const char* rpc_mtree_summary_doc[2] = {
 void rpc_mtree_reload(rpc_t* rpc, void* c)
 {
 	str tname = {0, 0};
-	m_tree_t *pt;
+	m_tree_t *pt = NULL;
+	int treloaded = 0;
 
 	if(db_table.len>0)
 	{
@@ -949,8 +948,13 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 
 		/* read tree name */
 		if (rpc->scan(c, "S", &tname) != 1) {
-			rpc->fault(c, 500, "Failed to get table name parameter");
-			return;
+			tname.s = 0;
+			tname.len = 0;
+		} else {
+			if(*tname.s=='.') {
+				tname.s = 0;
+				tname.len = 0;
+			}
 		}
 
 		pt = mt_get_first_tree();
@@ -967,8 +971,12 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 					LM_ERR("cannot re-load mtree from database\n");
 					goto error;
 				}
+				treloaded = 1;
 			}
 			pt = pt->next;
+		}
+		if(treloaded == 0) {
+			rpc->fault(c, 500, "No Mtree Name Matching");
 		}
 	}
 

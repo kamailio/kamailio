@@ -54,17 +54,16 @@ static param_export_t params[] = {
 		{"json_escape_char", PARAM_STR, &tr_json_escape_str}, {0, 0, 0}};
 
 struct module_exports exports = {
-		"json", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,					 /* Exported functions */
-		params,					 /* Exported parameters */
-		0,						 /* exported statistics */
-		0,						 /* exported MI functions */
-		0,						 /* exported pseudo-variables */
-		0,						 /* extra processes */
-		0,						 /* module initialization function */
-		0,						 /* response function*/
-		0,						 /* destroy function */
-		0						 /* per-child init function */
+	"json",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	0,               /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
 
 int _json_extract_field(struct json_object *json_obj, char *json_name, str *val) {

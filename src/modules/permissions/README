@@ -78,7 +78,7 @@ Emmanuel Schmidbauer
               4.8. allow_source_address([group_id])
               4.9. allow_source_address_group()
               4.10. allow_address_group(addr, port)
-              4.11. allow_trusted([src_ip_pvar, proto_pvar])
+              4.11. allow_trusted([src_ip_pvar, proto_pvar, furi_pvar])
 
         5. RPC Commands
 
@@ -183,7 +183,7 @@ Chapter 1. Admin Guide
         4.8. allow_source_address([group_id])
         4.9. allow_source_address_group()
         4.10. allow_address_group(addr, port)
-        4.11. allow_trusted([src_ip_pvar, proto_pvar])
+        4.11. allow_trusted([src_ip_pvar, proto_pvar, furi_pvar])
 
    5. RPC Commands
 
@@ -342,7 +342,7 @@ Chapter 1. Admin Guide
      * transport protocol is either "ANY" or equal to the transport
        protocol of request or the transport protocol given in pvar, and
      * regular expression is either empty (NULL in database) or matches
-       the From URI of request.
+       the request's From (or optionally provided) URI.
 
    Otherwise the request is rejected.
 
@@ -715,7 +715,7 @@ modparam("permissions", "load_backends", 1)
    4.8. allow_source_address([group_id])
    4.9. allow_source_address_group()
    4.10. allow_address_group(addr, port)
-   4.11. allow_trusted([src_ip_pvar, proto_pvar])
+   4.11. allow_trusted([src_ip_pvar, proto_pvar, furi_pvar])
 
 4.1.  allow_routing()
 
@@ -948,19 +948,24 @@ if ($var(group) != -1) {
 };
 ...
 
-4.11.  allow_trusted([src_ip_pvar, proto_pvar])
+4.11.  allow_trusted([src_ip_pvar, proto_pvar, furi_pvar])
 
    Checks based either on request's source address and transport protocol
    or source address and transport protocol given in pvar arguments, and
-   From URI of request if request can be trusted without authentication.
-   Returns “1” if a match is found as described in Section 1.5, “Trusted
-   Requests” and “-1” otherwise. If a match is found and peer_tag_avp has
-   been defined, adds a non-NULL tag column value of the matching peer to
-   AVP peer_tag_avp.
+   From URI of request (or furi_pvar if provided) if request can be
+   trusted without authentication. Returns “1” if a match is found as
+   described in Section 1.5, “Trusted Requests” and “-1” otherwise. If a
+   match is found and peer_tag_avp has been defined, adds a non-NULL tag
+   column value of the matching peer to AVP peer_tag_avp.
 
-   Source address and transport protocol given in pvar arguments must be
-   in string format. Valid transport protocol values are (ignoring case)
-   "any", "udp, "tcp", "tls", "ws", "wss" and "sctp".
+   NOTE: source IP is matched using string comparison. Be careful if the
+   IP can have different forms, for a safer alternative for matching IP
+   addresses, look at allow_source_address or allow_address().
+
+   Source address, transport protocol and uri given in the arguments must
+   be in string format and they can contain script variables. Valid
+   transport protocol values are (ignoring case) "any", "udp, "tcp",
+   "tls", "ws", "wss" and "sctp".
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -968,11 +973,15 @@ if ($var(group) != -1) {
 ...
 if (allow_trusted()) {
         t_relay();
-};
+}
 ...
 if (allow_trusted("$si", "$proto")) {
         t_relay();
-};
+}
+...
+if (allow_trusted("$si", "any", "$ai")) {
+        t_relay();
+}
 ...
 
 5. RPC Commands

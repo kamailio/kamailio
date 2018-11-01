@@ -79,18 +79,6 @@ unsigned int new_hash( str call_id, str cseq_nr )
 		hash_code+=ccitt_tab[(unsigned char)*(cs+i)+123];
 
 	/* hash_code conditioning */
-#ifdef _BUG
-	/* not flat ... % 111b has shorter period than
-       & 111b by one and results in different distribution;
-	   ( 7 % 7 == 0, 7 %7 == 1 )
- 	   % is used as a part of the hash function too, not only
-	   for rounding; & is not flat; whoever comes up with
-	   a nicer flat hash function which does not take
-	   costly division is welcome; feel free to verify
-	   distribution using hashtest()
-    */
-	hash_code &= (TABLE_ENTRIES-1); /* TABLE_ENTRIES = 2^k */
-#endif
 	hash_code=hash_code%(TABLE_ENTRIES-1)+1;
 	return hash_code;
 }

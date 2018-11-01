@@ -15,6 +15,4 @@ DEFS+=
 #DEFS+= -DBM_CLOCK_REALTIME
 #LIBS+= -lrt
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules

@@ -9,7 +9,6 @@ auto_gen=
 NAME=http_client.so
 
 ifeq ($(CROSS_COMPILE),)
-XML2CFG=$(shell which xml2-config)
 CURL_BUILDER=$(shell \
 	if pkg-config --exists libcurl; then \
 		echo 'pkg-config libcurl'; \
@@ -25,7 +24,5 @@ else
 	DEFS+=-I$(LOCALBASE)/include
 	LIBS+=-L$(LOCALBASE)/lib -lcurl
 endif
-
-DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules

@@ -504,6 +504,26 @@ modparam("p_usrloc", "write_on_master_db", "0")
 </programlisting>
 	    </example>
 	</section>
+
+	<section>
+		<title><varname>mdb_availability_control</varname>(str)</title>
+		<para>
+		  Checks the master database in certain time intervals specified by the <quote>retry_interval</quote> parameter. Overwrites the <quote>write_on_master_db</quote> parameter based on the reachability of master database. If the master db is unavailable then the aforementioned parameter will be deactivated.                        
+		</para>
+                <para>
+                <emphasis>
+                    Default value is <quote>0</quote>.
+                </emphasis>
+            </para>
+	    <example>
+		<title>Set <varname>mdb_availability_control</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "mdb_availability_control", 1)
+...
+</programlisting>
+	    </example>
+	</section>
 		<section>
 		<title><varname>write_on_db</varname> (int)</title>
 	    <para>

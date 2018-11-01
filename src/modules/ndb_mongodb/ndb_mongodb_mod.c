@@ -89,18 +89,16 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-	"ndb_mongodb",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,
-	0,              /* exported MI functions */
-	mod_pvs,        /* exported pseudo-variables */
-	0,              /* extra processes */
-	0,       /* module initialization function */
-	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	"ndb_mongodb",	/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,		/*·exported·functions·*/
+	params,		/*·exported·params·*/
+	0,			/*·exported·RPC·methods·*/
+	mod_pvs,	/* exported pseudo-variables */
+	0,			/* response function */
+	0,			/* module·initialization·function */
+	child_init,	/* per child init function */
+	mod_destroy	/* destroy function */
 };
 
 

@@ -10,6 +10,4 @@ include ../../Makefile.radius
 auto_gen=
 NAME=peering.so
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 include ../../Makefile.modules

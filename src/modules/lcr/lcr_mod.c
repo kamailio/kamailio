@@ -172,6 +172,7 @@ static char *gw_uri_avp_param = NULL;
 static char *ruri_user_avp_param = NULL;
 static char *tag_avp_param = NULL;
 static char *flags_avp_param = NULL;
+static char *rule_id_avp_param = NULL;
 static char *defunct_gw_avp_param = NULL;
 static char *lcr_id_avp_param = NULL;
 static char *mt_pv_values_param = NULL;
@@ -216,6 +217,8 @@ static int     tag_avp_type;
 static int_str tag_avp;
 static int     flags_avp_type;
 static int_str flags_avp;
+static int     rule_id_avp_type;
+static int_str rule_id_avp;
 static int     defunct_gw_avp_type;
 static int_str defunct_gw_avp;
 static int     lcr_id_avp_type;
@@ -331,6 +334,7 @@ static param_export_t params[] = {
     {"ruri_user_avp",            PARAM_STRING, &ruri_user_avp_param},
     {"tag_avp",                  PARAM_STRING, &tag_avp_param},
     {"flags_avp",                PARAM_STRING, &flags_avp_param},
+    {"rule_id_avp",              PARAM_STRING, &rule_id_avp_param},
     {"defunct_capability",       INT_PARAM, &defunct_capability_param},
     {"defunct_gw_avp",           PARAM_STRING, &defunct_gw_avp_param},
     {"lcr_id_avp",               PARAM_STRING, &lcr_id_avp_param},
@@ -356,16 +360,14 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"lcr", 
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,      /* Exported functions */
-	params,    /* Exported parameters */
-	0,         /* exported statistics */
-	0,         /* exported MI functions */
-	0,         /* exported pseudo-variables */
-	0,         /* extra processes */
-	mod_init,  /* module initialization function */
-	0,         /* response function */
-	destroy,   /* destroy function */
-	child_init /* child initialization function */
+	cmds,      	 /* Exported functions */
+	params,    	 /* Exported parameters */
+	0,         	 /* exported RPC methods */
+	0,         	 /* exported pseudo-variables */
+	0,         	 /* response function */
+	mod_init,  	 /* module initialization function */
+	child_init,	 /* child initialization function */
+	destroy		 /* destroy function */
 };
 /* clang-format on */
 
@@ -537,6 +539,21 @@ static int mod_init(void)
 			return -1;
 		}
 		flags_avp_type = avp_flags;
+	}
+
+	if(rule_id_avp_param) {
+		s.s = rule_id_avp_param;
+		s.len = strlen(s.s);
+		avp_spec = pv_cache_get(&s);
+		if(avp_spec == NULL || (avp_spec->type != PVT_AVP)) {
+			LM_ERR("malformed or non AVP definition <%s>\n", rule_id_avp_param);
+			return -1;
+		}
+		if(pv_get_avp_name(0, &(avp_spec->pvp), &rule_id_avp, &avp_flags) != 0) {
+			LM_ERR("invalid AVP definition <%s>\n", rule_id_avp_param);
+			return -1;
+		}
+		rule_id_avp_type = avp_flags;
 	}
 
 	if((ping_interval_param != 0) && (ping_interval_param < 10)) {
@@ -1026,7 +1043,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 	for(i = 0; i < RES_ROW_N(res); i++) {
 		row = RES_ROWS(res) + i;
 		if((VAL_NULL(ROW_VALUES(row) + 12) == 1)
-				|| (VAL_TYPE(ROW_VALUES(row) + 12) != DB1_INT)) {
+				|| ((VAL_TYPE(ROW_VALUES(row) + 12) != DB1_INT)
+						   && (VAL_TYPE(ROW_VALUES(row) + 12) != DB1_UINT))) {
 			LM_ERR("lcr_gw id at row <%u> is null or not int\n", i);
 			return 0;
 		}
@@ -1034,7 +1052,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		if(VAL_NULL(ROW_VALUES(row) + 11)) {
 			defunct_until = 0;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 11) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 11) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 11) != DB1_UINT)) {
 				LM_ERR("lcr_gw defunct at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1118,7 +1137,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		if(VAL_NULL(ROW_VALUES(row) + 2)) {
 			port = 0;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_UINT)) {
 				LM_ERR("lcr_gw port at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1132,7 +1152,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 			scheme = "sip:";
 			scheme_len = 4;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 3) != DB1_UINT)) {
 				LM_ERR("lcr_gw uri scheme at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1158,7 +1179,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 			transport = "";
 			transport_len = 0;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 4) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 4) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 4) != DB1_UINT)) {
 				LM_ERR("lcr_gw transport at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1255,7 +1277,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		if(VAL_NULL(ROW_VALUES(row) + 7)) {
 			strip = 0;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 7) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 7) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 7) != DB1_UINT)) {
 				LM_ERR("lcr_gw strip count at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1313,7 +1336,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		if(VAL_NULL(ROW_VALUES(row) + 10)) {
 			flags = 0;
 		} else {
-			if(VAL_TYPE(ROW_VALUES(row) + 10) != DB1_INT) {
+			if((VAL_TYPE(ROW_VALUES(row) + 10) != DB1_INT)
+					&& (VAL_TYPE(ROW_VALUES(row) + 10) != DB1_UINT)) {
 				LM_ERR("lcr_gw flags at row <%u> is not int\n", i);
 				return 0;
 			}
@@ -1446,7 +1470,9 @@ int reload_tables()
 				row = RES_ROWS(res) + i;
 
 				if((VAL_NULL(ROW_VALUES(row)) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row)) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row)) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row))
+											  != DB1_UINT))) {
 					LM_ERR("lcr rule id at row <%u> is null or not int\n", i);
 					goto err;
 				}
@@ -1487,7 +1513,9 @@ int reload_tables()
 				}
 
 				if((VAL_NULL(ROW_VALUES(row) + 3) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row) + 3)
+											  != DB1_UINT))) {
 					LM_ERR("lcr rule <%u> stopper is NULL or not int\n",
 							rule_id);
 					goto err;
@@ -1499,7 +1527,9 @@ int reload_tables()
 				}
 
 				if((VAL_NULL(ROW_VALUES(row) + 4) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row) + 4) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row) + 4) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row) + 4)
+											  != DB1_UINT))) {
 					LM_ERR("lcr rule <%u> enabled is NULL or not int\n",
 							rule_id);
 					goto err;
@@ -1708,7 +1738,9 @@ int reload_tables()
 			for(i = 0; i < RES_ROW_N(res); i++) {
 				row = RES_ROWS(res) + i;
 				if((VAL_NULL(ROW_VALUES(row)) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row)) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row)) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row))
+											  != DB1_UINT))) {
 					LM_ERR("lcr_rule_target rule_id at row <%u> is null "
 						   "or not int\n",
 							i);
@@ -1716,7 +1748,9 @@ int reload_tables()
 				}
 				rule_id = (unsigned int)VAL_INT(ROW_VALUES(row));
 				if((VAL_NULL(ROW_VALUES(row) + 1) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row) + 1) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row) + 1) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row) + 1)
+											  != DB1_UINT))) {
 					LM_ERR("lcr_rule_target gw_id at row <%u> is null "
 						   "or not int\n",
 							i);
@@ -1724,7 +1758,9 @@ int reload_tables()
 				}
 				gw_id = (unsigned int)VAL_INT(ROW_VALUES(row) + 1);
 				if((VAL_NULL(ROW_VALUES(row) + 2) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row) + 2)
+											  != DB1_UINT))) {
 					LM_ERR("lcr_rule_target priority at row <%u> is null "
 						   "or not int\n",
 							i);
@@ -1738,7 +1774,9 @@ int reload_tables()
 					goto err;
 				}
 				if((VAL_NULL(ROW_VALUES(row) + 3) == 1)
-						|| (VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)) {
+						|| ((VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)
+								   && (VAL_TYPE(ROW_VALUES(row) + 3)
+											  != DB1_UINT))) {
 					LM_ERR("lcr_rule_target weight at row <%u> is null "
 						   "or not int\n",
 							i);
@@ -1805,7 +1843,8 @@ static inline int encode_avp_value(char *value, unsigned int gw_index,
 		unsigned int prefix_len, char *tag, unsigned int tag_len,
 		struct ip_addr *ip_addr, char *hostname, unsigned int hostname_len,
 		unsigned int port, char *params, unsigned int params_len,
-		char *transport, unsigned int transport_len, unsigned int flags)
+		char *transport, unsigned int transport_len, unsigned int flags,
+		unsigned int rule_id)
 {
 	char *at, *string;
 	int len;
@@ -1857,13 +1896,17 @@ static inline int encode_avp_value(char *value, unsigned int gw_index,
 	/* flags */
 	string = int2str(flags, &len);
 	append_str(at, string, len);
+	append_chr(at, '|');
+	/* rule id */
+	string = int2str(rule_id, &len);
+	append_str(at, string, len);
 	return at - value;
 }
 
 static inline int decode_avp_value(char *value, unsigned int *gw_index,
 		str *scheme, unsigned int *strip, str *prefix, str *tag,
 		struct ip_addr *addr, str *hostname, str *port, str *params,
-		str *transport, unsigned int *flags)
+		str *transport, unsigned int *flags, unsigned int *rule_id)
 {
 	unsigned int u;
 	str s;
@@ -1970,6 +2013,15 @@ static inline int decode_avp_value(char *value, unsigned int *gw_index,
 	s.s = sep + 1;
 	s.len = strlen(s.s);
 	str2int(&s, flags);
+	sep = index(s.s, '|');
+	if(sep == NULL) {
+		LM_ERR("flags was not found in AVP value\n");
+		return 0;
+	}
+	/* rule_id */
+	s.s = sep + 1;
+	s.len = strlen(s.s);
+	str2int(&s, rule_id);
 
 	return 1;
 }
@@ -1979,7 +2031,7 @@ static inline int decode_avp_value(char *value, unsigned int *gw_index,
 void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 		unsigned int gw_cnt, str *ruri_user)
 {
-	unsigned int i, index, strip, hostname_len, params_len;
+	unsigned int i, index, strip, hostname_len, params_len, rule_id;
 	int prefix_len, tag_len;
 	str value;
 	char encoded_value[MAX_URI_LEN];
@@ -1992,6 +2044,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 		if(matched_gws[i].duplicate == 1)
 			continue;
 		index = matched_gws[i].gw_index;
+		rule_id = matched_gws[i].rule_id;
 		hostname_len = gws[index].hostname_len;
 		params_len = gws[index].params_len;
 		strip = gws[index].strip;
@@ -2009,6 +2062,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 						+ 6 /* port */ + params_len /* params */
 						+ 15 /* transport */ + 10   /* flags */
 						+ 7							/* separators */
+						+ 10						/* rule_id */
 				> MAX_URI_LEN) {
 			LM_ERR("too long AVP value\n");
 			goto skip;
@@ -2018,7 +2072,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 				gws[index].tag, tag_len, &gws[index].ip_addr,
 				gws[index].hostname, hostname_len, gws[index].port,
 				gws[index].params, params_len, gws[index].transport,
-				gws[index].transport_len, gws[index].flags);
+				gws[index].transport_len, gws[index].flags, rule_id);
 		value.s = (char *)&(encoded_value[0]);
 		val.s = value;
 		add_avp(gw_uri_avp_type | AVP_VAL_STR, gw_uri_avp, val);
@@ -2137,6 +2191,7 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 						|| (gws[t->gw_index].state == GW_INACTIVE))
 					goto skip_gw;
 				matched_gws[gw_index].gw_index = t->gw_index;
+				matched_gws[gw_index].rule_id = rule->rule_id;
 				matched_gws[gw_index].prefix_len = pl->prefix_len;
 				matched_gws[gw_index].priority = t->priority;
 				matched_gws[gw_index].weight = t->weight * (kam_rand() >> 8);
@@ -2301,6 +2356,7 @@ static int ki_load_gws_furi(
 						|| (gws[t->gw_index].state == GW_INACTIVE))
 					goto skip_gw;
 				matched_gws[gw_index].gw_index = t->gw_index;
+				matched_gws[gw_index].rule_id = rule->rule_id;
 				matched_gws[gw_index].prefix_len = pl->prefix_len;
 				matched_gws[gw_index].priority = t->priority;
 				matched_gws[gw_index].weight = t->weight * (kam_rand() >> 8);
@@ -2436,7 +2492,7 @@ static int load_gws(struct sip_msg *_m, int argc, action_u_t argv[])
 static int generate_uris(struct sip_msg *_m, char *r_uri, str *r_uri_user,
 		unsigned int *r_uri_len, char *dst_uri, unsigned int *dst_uri_len,
 		struct ip_addr *addr, unsigned int *gw_index, unsigned int *flags,
-		str *tag)
+		str *tag, unsigned int *rule_id)
 {
 	int_str gw_uri_val;
 	struct usr_avp *gu_avp;
@@ -2450,7 +2506,7 @@ static int generate_uris(struct sip_msg *_m, char *r_uri, str *r_uri_user,
 		return 0; /* No more gateways left */
 
 	decode_avp_value(gw_uri_val.s.s, gw_index, &scheme, &strip, &prefix,
-			&tmp_tag, addr, &hostname, &port, &params, &transport, flags);
+			&tmp_tag, addr, &hostname, &port, &params, &transport, flags, rule_id);
 
 	if(addr->af != 0) {
 		addr_str.s = ip_addr2a(addr);
@@ -2808,7 +2864,7 @@ static int ki_next_gw(sip_msg_t *_m)
 	int rval;
 	str uri_str, tag_str;
 	char tag[MAX_TAG_LEN];
-	unsigned int flags, r_uri_len, dst_uri_len, gw_index;
+	unsigned int flags, r_uri_len, dst_uri_len, gw_index, rule_id;
 	char r_uri[MAX_URI_LEN], dst_uri[MAX_URI_LEN];
 	struct ip_addr addr;
 
@@ -2828,7 +2884,7 @@ static int ki_next_gw(sip_msg_t *_m)
 			return -1;
 		}
 		if(generate_uris(_m, r_uri, &(_m->parsed_uri.user), &r_uri_len, dst_uri,
-				   &dst_uri_len, &addr, &gw_index, &flags, &tag_str)
+				   &dst_uri_len, &addr, &gw_index, &flags, &tag_str, &rule_id)
 				<= 0) {
 			return -1;
 		}
@@ -2847,7 +2903,7 @@ static int ki_next_gw(sip_msg_t *_m)
          * and Destination URIs. */
 
 		if(generate_uris(_m, r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
-				   &dst_uri_len, &addr, &gw_index, &flags, &tag_str)
+				   &dst_uri_len, &addr, &gw_index, &flags, &tag_str, &rule_id)
 				<= 0) {
 			return -1;
 		}
@@ -2885,6 +2941,13 @@ static int ki_next_gw(sip_msg_t *_m)
 		val.s = tag_str;
 		add_avp(tag_avp_type, tag_avp, val);
 		LM_DBG("added tag_avp <%.*s>\n", val.s.len, val.s.s);
+	}
+
+	/* Set rule_id_avp */
+	if(rule_id_avp_param) {
+		val.n = rule_id;
+		add_avp(rule_id_avp_type, rule_id_avp, val);
+				LM_DBG("added rule_id_avp <%u>\n", (unsigned int)val.n);
 	}
 
 	/* Add index of selected gw to defunct gw AVP */

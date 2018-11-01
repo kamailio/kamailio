@@ -120,7 +120,8 @@ extern int jsonrpc_dgram_destroy(void);
  * being currently processed.
  * @sa rpc_ctx
  */
-static jsonrpc_ctx_t _jsonrpc_ctx;
+static jsonrpc_ctx_t _jsonrpc_ctx_global;
+static jsonrpc_ctx_t *_jsonrpc_ctx_active = NULL;
 
 static xhttp_api_t xhttp_api;
 
@@ -174,19 +175,17 @@ static pv_export_t mod_pvs[] = {
 };
 
 /** module exports */
-struct module_exports exports= {
-	"jsonrpcs",
+struct module_exports exports = {
+	"jsonrpcs",      /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,			/* exported statistics */
-	0,			/* exported MI functions */
-	mod_pvs,	/* exported pseudo-variables */
-	0,			/* extra processes */
-	mod_init,	/* module initialization function */
-	0,
-	mod_destroy,/* module destroy function */
-	child_init	/* per-child init function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 
@@ -277,6 +276,7 @@ static int jsonrpc_delayed_reply_ctx_init(jsonrpc_ctx_t* ctx)
 		if (jsonrpc_init_reply(ctx) < 0)
 			return -1;
 		jsonrpc_reset_plain_reply(ctx->jrpl->free_fn);
+		_jsonrpc_ctx_active = ctx;
 	}
 	return 0;
 }
@@ -387,15 +387,26 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 			ctx->rpl_node = 0;
 		}
 	}
-	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "id");
-	if(nj!=NULL) {
-		if(nj->valuestring!=NULL) {
+	if(ctx->jreq!=NULL && ctx->jreq->root!=NULL) {
+		nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "id");
+		if(nj!=NULL) {
+			if(nj->valuestring!=NULL) {
+				srjson_AddStrStrToObject(ctx->jrpl, ctx->jrpl->root,
+						"id", 2,
+						nj->valuestring, strlen(nj->valuestring));
+			} else {
+				srjson_AddNumberToObject(ctx->jrpl, ctx->jrpl->root, "id",
+						nj->valuedouble);
+			}
+		}
+	} else {
+		if(ctx->jsrid_type == 1) {
 			srjson_AddStrStrToObject(ctx->jrpl, ctx->jrpl->root,
 					"id", 2,
-					nj->valuestring, strlen(nj->valuestring));
-		} else {
+					ctx->jsrid_val, strlen(ctx->jsrid_val));
+		} else if(ctx->jsrid_type == 2) {
 			srjson_AddNumberToObject(ctx->jrpl, ctx->jrpl->root, "id",
-					nj->valuedouble);
+					(double)(*(long*)ctx->jsrid_val));
 		}
 	}
 
@@ -762,9 +773,10 @@ static int jsonrpc_struct_add(srjson_t *jnode, char* fmt, ...)
 	}
 	isobject = (jnode->type==srjson_Object);
 
-	ctx = &_jsonrpc_ctx;
-	if(ctx->jrpl==NULL) {
-		LM_ERR("reply object not initialized in rpl context\n");
+	ctx = _jsonrpc_ctx_active;
+	if(ctx==NULL || ctx->jrpl==NULL) {
+		LM_ERR("reply object not initialized in rpl context %p - flags 0x%x\n",
+				ctx, (ctx)?ctx->flags:0);
 		return -1;
 	}
 
@@ -832,9 +844,10 @@ static int jsonrpc_array_add(srjson_t *jnode, char* fmt, ...)
 		return -1;
 	}
 
-	ctx = &_jsonrpc_ctx;
-	if(ctx->jrpl==NULL) {
-		LM_ERR("reply object not initialized in rpl context\n");
+	ctx = _jsonrpc_ctx_active;
+	if(ctx==NULL || ctx->jrpl==NULL) {
+		LM_ERR("reply object not initialized in rpl context %p - flags 0x%x\n",
+				ctx, (ctx)?ctx->flags:0);
 		return -1;
 	}
 
@@ -892,9 +905,10 @@ static int jsonrpc_struct_printf(srjson_t *jnode, char* mname, char* fmt, ...)
 		return -1;
 	}
 
-	ctx = &_jsonrpc_ctx;
-	if(ctx->jrpl==NULL) {
-		LM_ERR("reply object not initialized in rpl context\n");
+	ctx = _jsonrpc_ctx_active;
+	if(ctx==NULL || ctx->jrpl==NULL) {
+		LM_ERR("reply object not initialized in rpl context %p - flags 0x%x\n",
+				ctx, (ctx)?ctx->flags:0);
 		return -1;
 	}
 
@@ -970,6 +984,7 @@ static struct rpc_delayed_ctx* jsonrpc_delayed_ctx_new(jsonrpc_ctx_t* ctx)
 	jsonrpc_ctx_t* r_ctx;
 	sip_msg_t* shm_msg;
 	int len;
+	srjson_t *nj = NULL;
 
 	ret=0;
 	shm_msg=0;
@@ -982,6 +997,22 @@ static struct rpc_delayed_ctx* jsonrpc_delayed_ctx_new(jsonrpc_ctx_t* ctx)
 
 	if (ctx->transport!=JSONRPC_TRANS_HTTP) {
 		LM_ERR("delayed response implemented only for HTTP transport\n");
+		return 0;
+	}
+
+	if(ctx->jreq==NULL || ctx->jreq->root==NULL) {
+		LM_ERR("invalid context attributes\n");
+		return 0;
+	}
+
+	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "id");
+	if(nj==NULL) {
+		LM_ERR("id attribute is missing\n");
+		return 0;
+	}
+	if(nj->valuestring!=NULL && strlen(nj->valuestring)>JSONRPC_ID_SIZE-1) {
+		LM_ERR("id attribute is too long (%lu/%d)\n", strlen(nj->valuestring),
+				JSONRPC_ID_SIZE);
 		return 0;
 	}
 	/* clone the sip msg */
@@ -1004,6 +1035,14 @@ static struct rpc_delayed_ctx* jsonrpc_delayed_ctx_new(jsonrpc_ctx_t* ctx)
 	ctx->flags |= JSONRPC_DELAYED_REPLY_F;
 	r_ctx->msg=shm_msg;
 	r_ctx->msg_shm_block_size=len;
+
+	if(nj->valuestring!=NULL) {
+		strcpy(r_ctx->jsrid_val, nj->valuestring);
+		r_ctx->jsrid_type = 1;
+	} else {
+		*(long*)r_ctx->jsrid_val = (long)nj->valuedouble;
+		r_ctx->jsrid_type = 2;
+	}
 
 	return ret;
 error:
@@ -1061,6 +1100,7 @@ error:
 	r_ctx->msg=0;
 	dctx->reply_ctx=0;
 	shm_free(dctx);
+	_jsonrpc_ctx_active = NULL;
 
 	return;
 }
@@ -1194,7 +1234,8 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 	}
 
 	/* initialize jsonrpc context */
-	ctx = &_jsonrpc_ctx;
+	_jsonrpc_ctx_active = &_jsonrpc_ctx_global;
+	ctx = _jsonrpc_ctx_active;
 	memset(ctx, 0, sizeof(jsonrpc_ctx_t));
 	ctx->msg = msg;
 	/* parse the jsonrpc request */
@@ -1273,7 +1314,8 @@ int jsonrpc_exec_ex(str *cmd, str *rpath)
 	scmd = *cmd;
 
 	/* initialize jsonrpc context */
-	ctx = &_jsonrpc_ctx;
+	_jsonrpc_ctx_active = &_jsonrpc_ctx_global;
+	ctx = _jsonrpc_ctx_active;
 	memset(ctx, 0, sizeof(jsonrpc_ctx_t));
 	ctx->msg = NULL; /* mark it not send a reply out */
 	/* parse the jsonrpc request */

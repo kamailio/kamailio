@@ -364,15 +364,6 @@ int is_from_user_enum_helper(sip_msg_t *_msg, str *suffix, str *service)
 				LM_ERR("Parsing of NAPTR regexp failed\n");
 				return -5;
 			}
-#ifdef LATER
-			if((pattern.len == 4) && (strncmp(pattern.s, "^.*$", 4) == 0)) {
-				LM_DBG("Resulted in replacement: '%.*s'\n", replacement.len,
-						ZSW(replacement.s));
-				retval = set_uri(_msg, replacement.s, replacement.len);
-				free_rdata_list(head); /*clean up*/
-				return retval;
-			}
-#endif
 			result.s = &(uri[0]);
 			result.len = MAX_URI_SIZE;
 			/* Avoid making copies of pattern and replacement */

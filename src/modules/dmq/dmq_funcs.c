@@ -147,8 +147,9 @@ done:
  * except - we do not send the message to this node
  * resp_cback - a response callback that gets called when the transaction is complete
  */
-int bcast_dmq_message(dmq_peer_t *peer, str *body, dmq_node_t *except,
-		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type)
+int bcast_dmq_message1(dmq_peer_t *peer, str *body, dmq_node_t *except,
+		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type,
+		int incl_inactive)
 {
 	dmq_node_t *node;
 
@@ -158,10 +159,10 @@ int bcast_dmq_message(dmq_peer_t *peer, str *body, dmq_node_t *except,
 		/* we do not send the message to the following:
 		 *   - the except node
 		 *   - itself
-		 *   - any inactive nodes
+		 *   - any inactive nodes (unless incl_inactive is specified)
 		 */
 		if((except && cmp_dmq_node(node, except)) || node->local
-				|| node->status != DMQ_NODE_ACTIVE) {
+				|| (node->status != DMQ_NODE_ACTIVE && !incl_inactive)) {
 			LM_DBG("skipping node %.*s\n", STR_FMT(&node->orig_uri));
 			node = node->next;
 			continue;
@@ -179,6 +180,12 @@ int bcast_dmq_message(dmq_peer_t *peer, str *body, dmq_node_t *except,
 error:
 	lock_release(&node_list->lock);
 	return -1;
+}
+
+int bcast_dmq_message(dmq_peer_t *peer, str *body, dmq_node_t *except,
+		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type)
+{
+	return bcast_dmq_message1(peer, body, except, resp_cback, max_forwards, content_type, 0);
 }
 
 /**
@@ -520,8 +527,8 @@ void ping_servers(unsigned int ticks, void *param)
 		LM_ERR("could not build notification body\n");
 		return;
 	}
-	ret = bcast_dmq_message(dmq_notification_peer, body, NULL,
-			&notification_callback, 1, &notification_content_type);
+	ret = bcast_dmq_message1(dmq_notification_peer, body, NULL,
+			&notification_callback, 1, &notification_content_type, 1);
 	pkg_free(body->s);
 	pkg_free(body);
 	if(ret < 0) {

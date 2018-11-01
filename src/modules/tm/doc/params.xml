@@ -1458,4 +1458,31 @@ end
 		</example>
 	</section>
 
+	<section id="tm.p.relay_100">
+		<title><varname>relay_100</varname> (str)</title>
+		<para>
+			This parameter controls whether or not a SIP 100 response is proxied.
+			Note that this is not valid behavior when operating in stateful mode
+			per RFC 3261 Section 21.1.1, and therefore is useful only when
+			operating as a stateless proxy.
+			When using this feature, it is possible to control which 100 responses
+			are proxied and which are not by detecting whether they are part of
+			an existing transaction and setting up the appropriate logic in
+			onreply_route.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>relay_100</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "relay_100", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>

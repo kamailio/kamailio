@@ -35,6 +35,7 @@ typedef enum {
 	SR_XTYPE_LONG,    /* long value */
 	SR_XTYPE_LLONG,   /* long long value */
 	SR_XTYPE_XAVP,    /* xavp value */
+	SR_XTYPE_VPTR,    /* void pointer value */
 	SR_XTYPE_DATA     /* custom data value */
 } sr_xtype_t;
 
@@ -57,6 +58,7 @@ typedef struct _sr_xval {
 		long l;
 		long long ll;
 		struct _sr_xavp *xavp; /* must be given in shm (not cloned) */
+		void *vptr;            /* void pointer - address copied, not freed */
 		sr_data_t *data;       /* must be given in shm (not cloned) */
 	} v;
 } sr_xval_t;
@@ -74,12 +76,15 @@ void xavp_free(sr_xavp_t *xa);
 
 int xavp_add(sr_xavp_t *xavp, sr_xavp_t **list);
 int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list);
+int xavp_add_after(sr_xavp_t *nxavp, sr_xavp_t *pxavp);
 sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list);
+sr_xavp_t *xavp_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavp);
 sr_xavp_t *xavp_add_xavp_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavp_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavp_get(str *name, sr_xavp_t *start);
 sr_xavp_t *xavp_get_by_index(str *name, int idx, sr_xavp_t **start);
 sr_xavp_t *xavp_get_next(sr_xavp_t *start);
+sr_xavp_t *xavp_get_last(str *xname, sr_xavp_t **list);
 int xavp_rm_by_name(str *name, int all, sr_xavp_t **head);
 int xavp_rm_by_index(str *name, int idx, sr_xavp_t **head);
 int xavp_rm(sr_xavp_t *xa, sr_xavp_t **head);

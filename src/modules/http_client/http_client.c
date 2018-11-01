@@ -186,7 +186,7 @@ static param_export_t params[] = {
 	{"maxdatasize", PARAM_INT,  &default_maxdatasize },
 	{"config_file", PARAM_STR,  &http_client_config_file },
 	{"httpcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
-	{"authmetod", PARAM_INT, &default_authmethod },
+	{"authmethod", PARAM_INT, &default_authmethod },
 	{"keep_connections", PARAM_INT, &default_keep_connections },
 	{0, 0, 0}
 };
@@ -204,18 +204,16 @@ static pv_export_t mod_pvs[] = {
 
 /* Module interface */
 struct module_exports exports = {
-	"http_client",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,      /* Exported functions */
-	params,    /* Exported parameters */
-	0,         /* exported statistics */
-	0,         /* exported MI functions */
-	mod_pvs,         /* exported pseudo-variables */
-	0,         /* extra processes */
-	mod_init,  /* module initialization function */
-	0,         /* response function*/
-	destroy,   /* destroy function */
-	child_init /* per-child init function */
+	"http_client",		/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* RPC method exports */
+	mod_pvs,					/* exported pseudo-variables */
+	0,					/* response handling function */
+	mod_init,			/* module initialization function */
+	child_init,			/* per-child init function */
+	destroy				/* module destroy function */
 };
 /* clang-format on */
 

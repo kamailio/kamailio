@@ -64,7 +64,7 @@ extern ph_framework_t *ph_framework_data;
 
 
 static int mod_init(void);
-static int destroy(void);
+static void destroy(void);
 static int xhttp_pi_dispatch(sip_msg_t* msg, char* s1, char* s2);
 
 
@@ -104,20 +104,17 @@ static rpc_export_t rpc_methods[];
 
 /** module exports */
 struct module_exports exports= {
-	"xhttp_pi",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,		/* exported statistics */
-	0,		/* exported MI functions */
-	0,		/* exported pseudo-variables */
-	0,		/* extra processes */
-	mod_init,	/* module initialization function */
-	0,
-	(destroy_function) destroy,	/* destroy function */
-	NULL	/* per-child init function */
+	"xhttp_pi",			/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* cmd (cfg function) exports */
+	params,				/* param exports */
+	0,					/* RPC method exports */
+	0,					/* pv exports */
+	0,					/* response handling function */
+	mod_init,			/* module init function */
+	0,					/* per-child init function */
+	destroy					/* module destroy function */
 };
-
 
 
 /** Implementation of pi_fault function required by the management API.
@@ -303,11 +300,10 @@ static int mod_init(void)
 }
 
 
-int destroy(void)
+void destroy(void)
 {
 	destroy_http_db(ph_framework_data);
 	ph_destroy_async_lock();
-	return 0;
 }
 
 

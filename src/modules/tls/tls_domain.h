@@ -84,10 +84,13 @@ enum tls_method {
 enum tls_domain_type {
 	TLS_DOMAIN_DEF = (1 << 0), /**< Default domain */
 	TLS_DOMAIN_SRV = (1 << 1), /**< Server domain */
-	TLS_DOMAIN_CLI = (1 << 2)  /**< Client domain */
+	TLS_DOMAIN_CLI = (1 << 2), /**< Client domain */
+	TLS_DOMAIN_ANY = (1 << 3)  /**< Any address */
 };
 
-
+#define KSR_TLS_SNM_STRICT 0 /**< Match server_name only */
+#define KSR_TLS_SNM_INCDOM 1 /**< Match server_name and subdomains */
+#define KSR_TLS_SNM_SUBDOM 2 /**< Match subdomains only */
 /**
  * separate configuration per ip:port
  */
@@ -106,6 +109,7 @@ typedef struct tls_domain {
 	enum tls_method method;
 	str crl_file;
 	str server_name;
+	int server_name_mode;
 	str server_id;
 	struct tls_domain* next;
 } tls_domain_t;
@@ -209,5 +213,10 @@ void tls_free_cfg(tls_domains_cfg_t* cfg);
  * @brief Destroy all TLS configuration data
  */
 void tls_destroy_cfg(void);
+
+/**
+ * @brief Check if a TLS configuration domain exists
+ */
+int ksr_tls_domain_duplicated(tls_domains_cfg_t* cfg, tls_domain_t* d);
 
 #endif /* _TLS_DOMAIN_H */

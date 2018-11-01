@@ -4,8 +4,6 @@ include ../../Makefile.defs
 auto_gen=
 NAME=cdp.so
 
-DEFS+=-DKAMAILIO_MOD_INTERFACE
-
 ifeq ($(CROSS_COMPILE),)
 XML2CFG=$(shell which xml2-config)
 endif

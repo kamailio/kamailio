@@ -172,7 +172,7 @@ int create_via(sip_msg_t* msg, char* s1, char* s2)
 	hp.port = &port;
 
 	init_dst_from_rcv(&dst, &msg->rcv);
-	via = via_builder(&via_len, &dst, 0, 0, &hp);
+	via = via_builder(&via_len, NULL, &dst, 0, 0, &hp);
 	if (!via) {
 		ERR("Unable to build Via header field\n");
 		return -1;

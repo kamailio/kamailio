@@ -147,11 +147,12 @@ enum kill_reason
 
 typedef struct retr_buf
 {
-	short activ_type;
-	/* set to status code if the buffer is a reply,
-	 * 0 if request or -1 if local CANCEL */
+	/* rbtype is set to status code if the buffer is a reply,
+	 * 0 (TYPE_REQUEST) if request, -1 if local CANCEL (TYPE_LOCAL_CANCEL),
+	 * -2 if local ACK (TYPE_LOCAL_ACK) */
+	short rbtype;
 	volatile unsigned short flags;   /* DISABLED, T2 */
-	volatile unsigned char t_active; /* timer active */
+	volatile unsigned short t_active; /* timer active */
 	unsigned short branch;			 /* no more than 64k branches */
 	int buffer_len;
 	char *buffer;
@@ -161,7 +162,7 @@ typedef struct retr_buf
 	struct dest_info dst;
 	ticks_t retr_expire;
 	ticks_t fr_expire; /* ticks value after which fr. will fire */
-} retr_buf_type;
+} tm_retr_buf_t;
 
 
 /* User Agent Server content */
@@ -180,7 +181,7 @@ typedef struct ua_server
 										* for e2e cancels */
 #endif /* CANCEL_REASON_SUPPORT */
 	unsigned int status;
-} ua_server_type;
+} tm_ua_server_t;
 
 
 /* User Agent Client content */
@@ -243,15 +244,15 @@ typedef struct ua_client
 	unsigned short on_reply;
 	/* unused - keep the structure aligned to 32b */
 	unsigned short on_unused;
-} ua_client_type;
+} tm_ua_client_t;
 
 
-struct totag_elem
+typedef struct totag_elem
 {
 	struct totag_elem *next;
 	str tag;
 	volatile int acked;
-};
+} tm_totag_elem_t;
 
 /* structure for storing transaction state prior to suspending
  * of async transactions */
@@ -261,7 +262,7 @@ typedef struct async_state
 	unsigned int backup_branch;
 	unsigned int blind_uac;
 	unsigned int ruri_new;
-} async_state_type;
+} tm_async_state_t;
 
 /* transaction's flags */
 /* is the transaction's request an INVITE? */
@@ -365,6 +366,9 @@ typedef struct cell
 	unsigned short flags;
 	/* number of forks */
 	short nr_of_outgoings;
+
+	/* free operations counter - debug */
+	int fcount;
 
 #ifdef TM_DEL_UNREF
 	/* every time the transaction/cell is referenced from somewhere this
@@ -502,7 +506,7 @@ typedef struct entry
 	unsigned long cur_entries;
 #endif
 	char _pad[ENTRY_PAD_BYTES];
-} entry_type;
+} tm_entry_t;
 
 
 /* transaction table */

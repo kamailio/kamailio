@@ -18,10 +18,11 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 				   auth_xkeys smsops tsilo cfgt statsc topos sipdump
 
 # - extra used modules, with no extra dependency
-mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp carrierroute \
-			     pdb qos sca seas sms sst timer tmrec uac_redirect xhttp \
-				 xhttp_rpc xprint jsonrpcs nosip dmq_usrloc statsd rtjson \
-			  log_custom keepalive ss7ops app_sqlang acc_diameter evrexec
+mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
+			carrierroute pdb qos sca seas sms sst timer tmrec uac_redirect \
+			xhttp xhttp_rpc xprint jsonrpcs nosip dmq_usrloc statsd rtjson \
+			log_custom keepalive ss7ops app_sqlang acc_diameter evrexec \
+			sipjson
 
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
@@ -128,6 +129,9 @@ mod_list_python3=app_python3
 # - modules depending on libm (math library - standard system library)
 mod_list_jsdt=app_jsdt
 
+# - modules depending on ruby library
+mod_list_ruby=app_ruby
+
 # - modules depending on geoip library
 mod_list_geoip=geoip
 
@@ -161,7 +165,8 @@ mod_list_mono=app_mono
 # - modules related to IMS extensions
 mod_list_ims=cdp cdp_avp ims_dialog ims_auth ims_isc ims_icscf ims_qos \
 			   ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
-			   ims_usrloc_scscf ims_charging ims_ocs ims_diameter_server
+			   ims_usrloc_scscf ims_charging ims_ocs ims_diameter_server \
+			   ims_ipsec_pcscf
 
 # - modules depending on osp toolkit library
 mod_list_osp=osp
@@ -217,7 +222,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_websocket) \
 			   $(mod_list_snmpstats) $(mod_list_presence) \
 			   $(mod_list_lua) $(mod_list_python) \
-			   $(mod_list_python3) \
+			   $(mod_list_python3) $(mod_list_ruby) \
 			   $(mod_list_geoip) $(mod_list_sqlite) \
 			   $(mod_list_json) $(mod_list_json_event) \
 			   $(mod_list_redis) \
@@ -366,6 +371,9 @@ module_group_kpython=$(mod_list_python)
 
 # pkg python3 module
 module_group_kpython3=$(mod_list_python3)
+
+# pkg ruby module
+module_group_kruby=$(mod_list_ruby)
 
 # pkg geoip module
 module_group_kgeoip=$(mod_list_geoip)

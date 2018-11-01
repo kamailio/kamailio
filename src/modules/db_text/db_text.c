@@ -78,18 +78,16 @@ static param_export_t params[] = {
 static rpc_export_t rpc_methods[];
 
 struct module_exports exports = {
-	"db_text",
+	"db_text",       /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,     /* Exported functions */
-	params,   /* Exported parameters */
-	0,        /* exported statistics */
-	0,        /* exported MI functions */
-	0,        /* exported pseudo-variables */
-	0,        /* extra processes */
-	mod_init, /* module initialization function */
-	0,        /* response function*/
-	destroy,  /* destroy function */
-	0         /* per-child init function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	destroy          /* module destroy function */
 };
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)

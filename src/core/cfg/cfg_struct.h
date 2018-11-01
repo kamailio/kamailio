@@ -40,22 +40,24 @@
  * When the config is shmzied, these variables are combined in
  * an array.
  */
+#pragma pack(push, 1)
 typedef struct _cfg_add_var {
 	struct _cfg_add_var	*next;
 	unsigned int	type;	/*!< type == 0 is also valid, it indicates that the group
 				must be created with the default values */
+	unsigned int	group_id; /*!< Id of the group instance */
 	union {
 		char	*ch;
 		str	s;
 		int	i;
 	} val;
-	unsigned int	group_id; /*!< Id of the group instance */
 	int		name_len;	/*!< Name of the variable. The variable may not be known,
 					for example the additional group value is set in the script
 					before the cfg group is declared. Hence, the pointer cannot
 					be stored here. */
 	char		name[1];
 } cfg_add_var_t;
+#pragma pack(pop)
 
 /*! \brief structure used for variable - pointer mapping */
 typedef struct _cfg_mapping {
@@ -72,6 +74,7 @@ typedef struct _cfg_mapping {
 enum { CFG_GROUP_UNKNOWN = 0, CFG_GROUP_DYNAMIC, CFG_GROUP_STATIC };
 
 /*! \brief linked list of registered groups */
+#pragma pack(push, 1)
 typedef struct _cfg_group {
 	int		num;		/*!< number of variables within the group */
 	cfg_mapping_t	*mapping;	/*!< describes the mapping betweeen
@@ -103,9 +106,11 @@ typedef struct _cfg_group {
 	int		name_len;
 	char		name[1];
 } cfg_group_t;
+#pragma pack(pop)
 
 /*! \brief One instance of the cfg group variables which stores
  * the additional values. These values can overwrite the default values. */
+#pragma pack(push, 1)
 typedef struct _cfg_group_inst {
 	unsigned int	id;		/*!< identifier of the group instance */
 	unsigned int	set[CFG_MAX_VAR_NUM/(sizeof(int)*8)];
@@ -114,6 +119,7 @@ typedef struct _cfg_group_inst {
 					then the default value is used, and copied into this instance. */
 	unsigned char	vars[1];	/*!< block for the values */
 } cfg_group_inst_t;
+#pragma pack(pop)
 
 /*! \brief Meta-data which is stored before each variable group
  * within the blob. This structure is used to handle the multivalue
@@ -125,6 +131,7 @@ typedef struct _cfg_group_meta {
 } cfg_group_meta_t;
 
 /*! \brief single memoy block that contains all the cfg values */
+#pragma pack(push, 1)
 typedef struct _cfg_block {
 	atomic_t	refcnt;		/*!< reference counter,
 					the block is automatically deleted
@@ -132,6 +139,7 @@ typedef struct _cfg_block {
 	int		_pad;		/*!< force 8 byte alignment */
 	unsigned char	vars[1];	/*!< blob that contains the values */
 } cfg_block_t;
+#pragma pack(pop)
 
 /*! \brief Linked list of per-child process callbacks.
  * Each child process has a local pointer, and executes the callbacks

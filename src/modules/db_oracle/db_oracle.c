@@ -65,14 +65,12 @@ struct module_exports exports = {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,          /*  module parameters */
-	0,               /* exported statistics */
-	0,               /* exported MI functions */
+	0,               /* exported RPC methods */
 	0,               /* exported pseudo-variables */
-	0,               /* extra processes */
-	oracle_mod_init, /* module initialization function */
 	0,               /* response function*/
-	destroy,         /* destroy function */
-	0                /* per-child init function */
+	oracle_mod_init, /* module initialization function */
+	0,               /* per-child init function */
+	destroy          /* destroy function */
 };
 
 

@@ -256,7 +256,7 @@ modparam("dispatcher", "force_dst", 1)
  		<para>
 		If flag 2 is set, then failover support is enabled. The functions
 		exported by the module will store the rest of addresses from the
-		destination set in the AVP, and use these AVPs to contact next address if
+		destination set in XAPVs, and use these XAVPs to try next address if
 		the current-tried destination fails.
  		</para>
  		<para>
@@ -295,16 +295,15 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
- 	<section id="dispatcher.p.dst_avp">
- 		<title><varname>dst_avp</varname> (str)</title>
+ 	<section id="dispatcher.p.xavp_dst">
+ 		<title><varname>xavp_dst</varname> (str)</title>
  		<para>
- 		The name of the avp which will hold the list with addresses, in the
-		order
-		they have been selected by the chosen algorithm. If use_default is 1,
-		the value of last dst_avp_id is the last address in destination set. The
-		first dst_avp_id is the selected destinations. All the other addresses
-		from the destination set will be added in the avp list to be able to
-		implement serial forking.
+ 		The name of the XAVP which will hold the list with addresses and
+		associated properties, in the order they have been selected by the
+		chosen algorithm. If use_default is 1, the values of last XAVP correspond
+		to the last address in destination set. The first XAVP is the current
+		selected destination. All the other addresses from the destination set
+		will be added in the XAVP list to be able to implement serial forking.
  		</para>
 		<note>
  		<para>
@@ -313,141 +312,100 @@ modparam("dispatcher", "force_dst", 1)
 		</note>
  		<para>
  		<emphasis>
- 			Default value is <quote>null</quote> - don't add AVPs.
+ 			Default value is <quote>_dsdst_</quote>.
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>dst_avp</quote> parameter</title>
+ 		<title>Set the <quote>xavp_dst</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "dst_avp", "$avp(dsdst)")
+ modparam("dispatcher", "xavp_dst", "_dsdst_")
  ...
  </programlisting>
  		</example>
  	</section>
- 	<section id="dispatcher.p.grp_avp">
- 		<title><varname>grp_avp</varname> (str)</title>
+ 	<section id="dispatcher.p.xavp_dst_mode">
+ 		<title><varname>xavp_dst_mode</varname> (int)</title>
  		<para>
- 		The name of the avp storing the group id of the destination set. Good
-		to have it for later usage or checks.
- 		</para>
-		<note>
- 		<para>
-		You must set this parameter if you want to do load balancing fail over.
- 		</para>
-		</note>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>null</quote> - don't add AVP.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>grp_avp</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "grp_avp", "$avp(dsgrp)")
- ...
- </programlisting>
- 		</example>
- 	</section>
- 	<section id="dispatcher.p.cnt_avp">
- 		<title><varname>cnt_avp</varname> (str)</title>
- 		<para>
- 		The name of the avp storing the number of destination addresses kept in
-		dst_avp AVPs.
- 		</para>
-		<note>
- 		<para>
-		You must set this parameter if you want to do load balancing fail over.
- 		</para>
-		</note>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>null</quote> - don't add AVP.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>cnt_avp</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "cnt_avp", "$avp(dscnt)")
- ...
- </programlisting>
- 		</example>
- 	</section>
- 	<section id="dispatcher.p.dstid_avp">
- 		<title><varname>dstid_avp</varname> (str)</title>
- 		<para>
-		The name of the avp storing the destination unique ID used for
-		call load based dispatching.
- 		</para>
-		<note>
- 		<para>
-		You must set this parameter if you want to do load balancing on
-		call load (alg 10).
- 		</para>
-		</note>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>null</quote> - don't add AVP.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>dstid_avp</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "dstid_avp", "$avp(dsdstid)")
- ...
- </programlisting>
- 		</example>
- 	</section>
- 	<section id="dispatcher.p.attrs_avp">
- 		<title><varname>attrs_avp</varname> (str)</title>
- 		<para>
-		The name of the avp storing destination's attributes value.
- 		</para>
-		<note>
-		</note>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>null</quote> - don't add AVP.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>attrs_avp</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "attrs_avp", "$avp(dsattrs)")
- ...
- </programlisting>
- 		</example>
- 	</section>
-	<section id="dispatcher.p.sock_avp">
-		<title><varname>sock_avp</varname> (str)</title>
-		<para>
-			The name of the avp which will hold the list with the sockets
-			associated to the addresses stored in dst_avp avp.
+ 		Control what fields are added to the XAVP specified by xavp_dst
+		parameter.
 		</para>
-		<note>
 		<para>
-			If you want to do load balancing fail over, you have to set
-			this parameter to use the correct socket for each gateway.
-		</para>
-		</note>
-		<para>
-		<emphasis>
-			Default value is <quote>null</quote> - don't add AVPs.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set the <quote>sock_avp</quote> parameter</title>
+		The addeded fields are:
+		<itemizedlist>
+			<listitem>
+			grp - the set id (group id).
+			</listitem>
+			<listitem>
+			uri - the URI address.
+			</listitem>
+			<listitem>
+			sock - the socket pointer.
+			</listitem>
+			<listitem>
+			dstid - the destination unique id (in case of call load distribution algorithm).
+			</listitem>
+			<listitem>
+			attrs - the attributes - they are added if xavp_dst_mode does not have the bit 1 set.
+			</listitem>
+		</itemizedlist>
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>0</quote> (add all fields).
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>xavp_dst_mode</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "sock_avp", "$avp(dssocket)")
+ modparam("dispatcher", "xavp_dst_mode", 1)
  ...
  </programlisting>
-		</example>
-	</section>
+ 		</example>
+ 	</section>
+ 	<section id="dispatcher.p.xavp_ctx">
+ 		<title><varname>xavp_ctx</varname> (str)</title>
+ 		<para>
+ 		The name of the XAVP which will hold some attributes specific to
+		dispatcher routing context. The XAVP can hold the next fields: cnt -
+		the number of addresses selected for routing.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>_dsctx_</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>xavp_ctx</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "xavp_ctx", "_dsctx_")
+ ...
+ </programlisting>
+ 		</example>
+ 	</section>
+ 	<section id="dispatcher.p.xavp_ctx_mode">
+ 		<title><varname>xavp_ctx_mode</varname> (int)</title>
+ 		<para>
+ 		Control what fields are added to the XAVP specified by xavp_ctx
+		parameter. The cnt field is added if xavp_cnt_mode does not have the
+		bit 1 set.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>0</quote> (add all fields).
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>xavp_ctx_mode</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "xavp_ctx_mode", 1)
+ ...
+ </programlisting>
+ 		</example>
+ 	</section>
  	<section id="dispatcher.p.hash_pvar">
  		<title><varname>hash_pvar</varname> (str)</title>
  		<para>
@@ -975,6 +933,55 @@ end
 		</example>
 	</section>
 
+ 	<section id="dispatcher.p.ds_attrs_none">
+ 		<title><varname>ds_attrs_none</varname> (int)</title>
+ 		<para>
+		If set to 1, "none=yes" is set in the attrs for those records that
+		have no attrs value, to ensure that corresponding XAVP fields for
+		records do not get mixed up.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>0</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_attrs_none</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_attrs_none", 1)
+ ...
+ </programlisting>
+ 		</example>
+	</section>
+
+	<section id="dispatcher.p.ds_db_extra_attrs">
+		<title><varname>ds_db_extra_attrs</varname> (str)</title>
+		<para>
+		Set a list of column names to be loaded from database dispatcher table
+		and be concatenated to 'attrs' field. The format is:
+		'aname1=cname1;aname2=cname2;...;anameN=cnameN'.
+		</para>
+		<para>
+		The 'anameX' is the attribute name and 'cnameX' is column name. The
+		additional columns must be added to database dispatcher table and their
+		type must be VARCHAR (string).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>empty</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_db_extra_attrs</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -991,7 +998,7 @@ end
 		</para>
 		<para>
 		If the bit 2 in 'flags' parameter is set, the rest of the addresses from
-		the destination set is stored in AVP list (limited with an optional 'limit'
+		the destination set are stored in XAVP list (limited with an optional 'limit'
 		parameter). You can use 'ds_next_dst()' to use next address in order to
 		achieve serial forking to all possible destinations.
 		</para>
@@ -1073,7 +1080,7 @@ end
 				<quote>10</quote> - use call load distribution. You have
 				to set the attribute 'duid' (as an unique string id)
 				per each address in destination set. Also, you must set
-				parameters 'dstid_avp' and 'ds_hash_size'.
+				the parameter 'ds_hash_size'.
 				</para>
 				<para>
 				The algorithm can be used even with stateless proxy mode,
@@ -1110,11 +1117,24 @@ end
 				will be distributed as 25/50/25. After third host failing
 				distribution will be changed to 33/67/0.
 				</para>
+				<para>
+				Using this algorithm, you can also enable congestion control by setting the
+				attibute 'cc=1', when 'cc' is enabled the 'rweight' attribute will also be
+				used to control congestion tolerance. When facing congestion the weight of
+				a gateway is lowered by 1 for every ms of estimated congestion, a 'rweight'
+				value of 50 is recommended. See the example "configuring load balancing with
+				congestion detection" below.
+				</para>
+				<para>
+				The congestion estimation is done using an EWMA (see ds_latency_estimator_alpha).
+				If all the gateways in a set are above their congestion threshold(weight), the
+				load distribution is instead done using the ratio of estimated congestion ms.
+				</para>
 			</listitem>
 			<listitem>
 				<para>
 				<quote>12</quote> - dispatch to all destination in setid at
-				once (parallel forking). Note that the AVPs are no longer set
+				once (parallel forking). Note that the XAVPs are no longer set
 				with the values of the destination records, no re-routing
 				making sense in this case.
 				</para>
@@ -1130,7 +1150,7 @@ end
 		<listitem>
 			<para>
 			<emphasis>limit</emphasis> - the maximum number of items to be
-			stored in AVP list for further fail-overs (the first selected
+			stored in XAVP list for further fail-overs (the first selected
 			destination and default destination are the first to be put in
 			the list)
 			</para>
@@ -1152,6 +1172,48 @@ ds_select_dst("1", "4", "3");
 ...
 </programlisting>
 		</example>
+		<example>
+		<title>configuring load balancing with congestion detection</title>
+		<programlisting format="linespecific">
+...
+# sample of SQL provisionning statements
+INSERT INTO "dispatcher" 
+VALUES(1,1,'sip:192.168.0.1:5060',0,12,'rweight=50;weight=50;cc=1;','');
+INSERT INTO "dispatcher" 
+VALUES(2,1,'sip:192.168.0.2:5060',0,12,'rweight=50;weight=50;cc=1;','');
+...
+modparam("dispatcher", "ds_ping_interval", 1) # ping gateways once/second
+modparam("dispatcher", "ds_ping_latency_stats", 1) # update congestion metrics
+# configure the latency estimator
+modparam("dispatcher", "ds_latency_estimator_alpha", 900)
+...
+if (!ds_select_dst("1", "11")) { # use relative weight based load distribution
+...
+# sample of output from 'kamcmd dispatcher.list'
+DEST: {
+	URI: sip:192.168.0.1:5060
+	FLAGS: AP
+	PRIORITY: 12
+	ATTRS: {
+		BODY: rweight=50;weight=50;cc=1 # configuration values
+		DUID: 
+		MAXLOAD: 0
+		WEIGHT: 50
+		RWEIGHT: 50
+		SOCKET: 
+	}
+	LATENCY: {
+		AVG: 20.104000
+		STD: 1.273000
+		# estimated congestion is currently 25ms = 45ms(EST) -20ms(AVG)
+		EST: 45.005000
+		MAX: 132
+		TIMEOUT: 3
+	}
+}
+...
+</programlisting>
+		</example>
 	</section>
   	<section id="dispatcher.f.ds_select_domain">
  		<title>
@@ -1164,7 +1226,7 @@ ds_select_dst("1", "4", "3");
  		</para>
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
-		destination set is stored in AVP list (limited with an optional 'limit'
+		destination set are stored in XAVP list (limited with an optional 'limit'
 		parameter). You can use 'ds_next_domain()' to use next address to
 		achieve serial forking to all possible destinations.
 		</para>
@@ -1190,13 +1252,13 @@ if(ds_select_domain("1", "$var(a)")) {
 		</title>
 		<para>
 		The method selects a destination from addresses set and adds it
-		in the AVPs specified for this module. It is not updating R-URI
+		in the XAVP specified for this module. It is not updating R-URI
 		nor the destination URI. The parameters have same
 		meaning as for ds_select_dst().
 		</para>
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
-		destination set is stored in AVP list (limited with an optional 'limit'
+		destination set are stored in XAVP list (limited with an optional 'limit'
 		parameter). You can execute 'ds_next_domain()' or 'ds_next_dst()' to use
 		next address to achieve serial forking to all possible destinations.
 		</para>
@@ -1217,12 +1279,83 @@ if(ds_select("1", "$var(a)")) {
 </programlisting>
 		</example>
 	</section>
+	<section id="dispatcher.f.ds_select_routes">
+		<title>
+		<function moreinfo="none">ds_select_routes(rules, mode [, limit])</function>
+		</title>
+		<para>
+		The method selects destinations following the rules combining groups add
+		algorithms, controlling where the first destination address is pushed,
+		and optionally setting a limit of selected addresses.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>rules</emphasis> - a string in the format
+			"grp1=alg1;grp2=alg2;...grpN=algN", where grpX is an integer number
+			identifying a dispatcher set id and algN is a dispatcher algorithm
+			identifier. No white spaces should be given in the parameter value.
+			The parameter can contain pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>mode</emphasis> - control where to push the first
+			selected target address. Valid values are: '0', 'd' or 'D' to push
+			the address in destination URI; '1', 'r' or 'R' to push the address
+			in R-URI; '2', 'x' or 'X' to push the address only in the XAVP when
+			failure rerouting is enabled. Note that only first character of the
+			parameter matters, therefore once case use a more meaningful value
+			such as 'ruri' instead of 'r'. The parameter can contain pseudo
+			variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>limit</emphasis> - a positive integer value to
+			restrict the number of selected target addresses. If it is 0, then
+			no limit is considered. The parameter can be a static integer or
+			a variable holding an integer value.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		If the bit 2 in 'flags' is set, the rest of the addresses from the
+		destination groups are stored in XAVP list (limited with an optional 'limit'
+		parameter). You can execute 'ds_next_domain()' or 'ds_next_dst()' to use
+		next address to achieve serial forking to all possible destinations.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_select_routes</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(alg) = 4;
+$var(limit) = 8;
+if(ds_select_routes("1=4;2=$var(alg)", "ruri", "$var(limit)")) {
+    t_on_failure("REROUTE");
+    t_relay();
+    exit;
+}
+failure_route[REROUTE] {
+    if(t_check_status("408|5[0-9][0-9]")) {
+        if(ds_next_domain()) {
+            t_on_failure("REROUTE");
+            t_relay();
+            exit;
+        }
+    }
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section>
 		<title>
 		<function moreinfo="none">ds_next_dst()</function>
 		</title>
 		<para>
-		Takes the next destination address from the AVPs with id 'dst_avp_id'
+		Takes the next destination address from the corresponding XAVPs
 		and sets the dst_uri (outbound proxy address).
  		</para>
 		<para>
@@ -1234,7 +1367,31 @@ if(ds_select("1", "$var(a)")) {
  		<function moreinfo="none">ds_next_domain()</function>
  		</title>
  		<para>
- 		Takes the next destination address from the AVPs with id 'dst_avp_id'
+ 		Takes the next destination address from the corresponding XAVPs
+		and sets the domain part of the request URI.
+ 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+ 	</section>
+	<section id="dispatcher.f.ds_set_dst">
+		<title>
+		<function moreinfo="none">ds_set_dst()</function>
+		</title>
+		<para>
+		Takes the current destination address from the corresponding XAVPs
+		and sets the dst_uri (outbound proxy address).
+ 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+ 	</section>
+  	<section id="dispatcher.f.ds_set_domain">
+ 		<title>
+ 		<function moreinfo="none">ds_set_domain()</function>
+ 		</title>
+ 		<para>
+ 		Takes the current destination address from the corresponding XAVPs
 		and sets the domain part of the request URI.
  		</para>
 		<para>
@@ -1672,6 +1829,10 @@ onreply_route {
 					It is used for sending the SIP traffic as well as
 					OPTIONS keepalives.
 				</listitem>
+				<listitem>
+					'ping_from' - used to set the From URI in OPTIONS keepalives.
+					It overwrites the general ds_ping_from parameter.
+				</listitem>
 			</itemizedlist>
 		</para>
 		</section>
@@ -1691,7 +1852,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 		</para>
 		<programlisting format="linespecific">
 ...
-1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:192.168.0.125:5060;my=xyz
+1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:192.168.0.125:5060;my=xyz;ping_from=sip:myproxy.com
 ...
 </programlisting>
 

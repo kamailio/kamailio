@@ -421,9 +421,9 @@ static regex_t xmlrpc_url_skip_regexp;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"dispatch_rpc", w_dispatch_rpc, 0, 0,                  REQUEST_ROUTE},
-	{"xmlrpc_reply", w_xmlrpc_reply, 2, fixup_xmlrpc_reply, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"dispatch_rpc", w_dispatch_rpc, 0, 0, 0,                  REQUEST_ROUTE},
+	{"xmlrpc_reply", w_xmlrpc_reply, 2, fixup_xmlrpc_reply, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 
@@ -443,15 +443,16 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"xmlrpc",
-	cmds,           /* Exported commands */
-	0,              /* Exported RPC methods */
-	params,         /* Exported parameters */
-	mod_init,       /* module initialization function */
-	0,              /* response function*/
-	0,              /* destroy function */
-	0,              /* oncancel function */
-	0               /* per-child init function */
+	"xmlrpc",			/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* cmd (cfg function) exports */
+	params,				/* param exports */
+	0,					/* RPC method exports */
+	0,					/* pv exports */
+	0,					/* response handling function */
+	mod_init,			/* module init function */
+	0,					/* per-child init function */
+	0					/* module destroy function */
 };
 
 /* XML-RPC reply helper functions */
@@ -2239,7 +2240,7 @@ static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 	hp.host = &ip;
 	hp.port = &port;
 	init_dst_from_rcv(&dst, &msg->rcv);
-	via = via_builder(&via_len, &dst, 0, 0, &hp);
+	via = via_builder(&via_len, NULL, &dst, 0, 0, &hp);
 	if (via == 0) {
 		DEBUG("failed to build via\n");
 		return 0;

@@ -96,7 +96,10 @@ void check_dbs(unsigned int ticks, void *param){
 	ul_db_handle_list_t * tmp2, * new_element;
 	int found;
 	int i;
-	
+
+	if(mdb_availability_control) {
+		check_master_db(db_master_write);
+	}
 	if(!list_lock){
 		return;
 	}
@@ -147,6 +150,22 @@ void check_dbs(unsigned int ticks, void *param){
 		tmp = tmp->next;
 	}
 	lock_release(list_lock);
+}
+
+void check_master_db(int dbm_write_default) {
+	if(mdb.write.dbh){
+		mdb.write.dbf.close(mdb.write.dbh);
+		mdb.write.dbh = NULL;
+	}
+
+	lock_get(&write_on_master_db_shared->lock);
+	if((mdb.write.dbh  = mdb.write.dbf.init(mdb.write.url)) == NULL) {
+		write_on_master_db_shared->val = 0;
+		LM_WARN("Master db is unavailable.\n");
+	} else {
+		write_on_master_db_shared->val = dbm_write_default;
+	}
+	lock_release(&write_on_master_db_shared->lock);
 }
 
 int ul_register_watch_db(int id){

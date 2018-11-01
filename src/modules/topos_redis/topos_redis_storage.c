@@ -1116,7 +1116,7 @@ int tps_redis_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		return -1;
 	}
 
-	if(md->s_method.len==6 && strncmp(md->s_method.s, "INVITE", 7)==0) {
+	if(md->s_method.len==6 && strncmp(md->s_method.s, "INVITE", 6)==0) {
 		if(tps_redis_insert_invite_branch(md)<0) {
 			LM_ERR("failed to insert INVITE extra branch data\n");
 			return -1;
@@ -1313,6 +1313,10 @@ int tps_redis_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	redisReply *rrpl = NULL;
 	int32_t liflags;
 	unsigned long lval = 0;
+
+	if(md->s_method_id != METHOD_BYE) {
+		return 0;
+	}
 
 	if(sd->a_uuid.len<=0 && sd->b_uuid.len<=0) {
 		LM_INFO("no uuid for this message\n");

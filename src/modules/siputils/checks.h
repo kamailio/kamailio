@@ -75,6 +75,10 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2);
  */
 int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res);
 
+/*
+ * Check if pseudo variable contains a valid uri
+ */
+int is_uri(struct sip_msg* _m, char* _sp, char* _s2);
 
 /*
  * Check if user part of URI in pseudo variable is an e164 number
@@ -134,5 +138,19 @@ int ksr_is_alphanum(sip_msg_t *msg, char *_sp, char* _s2);
  * the second parameter
  */
 int ksr_is_alphanumex(sip_msg_t *msg, char *_sp, char* _se);
+
+int ki_is_user(sip_msg_t *_m, str *suser);
+
+int ki_uri_param(sip_msg_t *_msg, str *sparam);
+
+int ki_uri_param_value(sip_msg_t *_msg, str *sparam, str *svalue);
+
+int ki_is_tel_number(sip_msg_t *msg, str *tval);
+
+int ki_is_numeric(sip_msg_t *msg, str *tval);
+
+int ki_is_alphanum(sip_msg_t *msg, str *tval);
+
+int ki_is_alphanumex(sip_msg_t *msg, str *tval, str *eset);
 
 #endif /* CHECKS_H */

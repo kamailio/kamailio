@@ -81,6 +81,17 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 		}
 		break;
 
+	case DB1_UINT:
+		LM_DBG("converting UNSIGNED INT [%s]\n", _s);
+		if (db_str2uint(_s, &VAL_UINT(_v)) < 0) {
+			LM_ERR("error while converting unsigned integer value from string\n");
+			return -2;
+		} else {
+			VAL_TYPE(_v) = DB1_UINT;
+			return 0;
+		}
+		break;
+
 	case DB1_BIGINT:
 		LM_DBG("converting BIGINT [%s]\n", _s);
 		if (db_str2longlong(_s, &VAL_BIGINT(_v)) < 0) {
@@ -88,6 +99,17 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 			return -3;
 		} else {
 			VAL_TYPE(_v) = DB1_BIGINT;
+			return 0;
+		}
+		break;
+
+	case DB1_UBIGINT:
+		LM_DBG("converting UNSIGNED BIGINT [%s]\n", _s);
+		if (db_str2ulonglong(_s, &VAL_UBIGINT(_v)) < 0) {
+			LM_ERR("error while converting unsigned big integer value from string\n");
+			return -3;
+		} else {
+			VAL_TYPE(_v) = DB1_UBIGINT;
 			return 0;
 		}
 		break;
@@ -222,7 +244,16 @@ int db_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 	switch(VAL_TYPE(_v)) {
 	case DB1_INT:
 		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
-			LM_ERR("error while converting string to int\n");
+			LM_ERR("error while converting int to string\n");
+			return -2;
+		} else {
+			return 0;
+		}
+		break;
+
+	case DB1_UINT:
+		if (db_uint2str(VAL_UINT(_v), _s, _len) < 0) {
+			LM_ERR("error while converting unsigned int to string\n");
 			return -2;
 		} else {
 			return 0;
@@ -231,7 +262,16 @@ int db_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 
 	case DB1_BIGINT:
 		if (db_longlong2str(VAL_BIGINT(_v), _s, _len) < 0) {
-			LM_ERR("error while converting string to big int\n");
+			LM_ERR("error while converting big int to string\n");
+			return -3;
+		} else {
+			return 0;
+		}
+		break;
+
+	case DB1_UBIGINT:
+		if (db_ulonglong2str(VAL_UBIGINT(_v), _s, _len) < 0) {
+			LM_ERR("error while converting unsigned big int to string\n");
 			return -3;
 		} else {
 			return 0;
@@ -239,8 +279,8 @@ int db_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 		break;
 
 	case DB1_BITMAP:
-		if (db_int2str(VAL_BITMAP(_v), _s, _len) < 0) {
-			LM_ERR("error while converting string to int\n");
+		if (db_uint2str(VAL_BITMAP(_v), _s, _len) < 0) {
+			LM_ERR("error while converting bitmap to string\n");
 			return -4;
 		} else {
 			return 0;
@@ -249,7 +289,7 @@ int db_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 
 	case DB1_DOUBLE:
 		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
-			LM_ERR("error while converting string to double\n");
+			LM_ERR("error while converting double to string\n");
 			return -5;
 		} else {
 			return 0;
@@ -258,7 +298,7 @@ int db_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 
 	case DB1_DATETIME:
 		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
-			LM_ERR("failed to convert string to time_t\n");
+			LM_ERR("failed to convert time_t string\n");
 			return -8;
 		} else {
 			return 0;

@@ -24,11 +24,14 @@
  *
  */
 
+#include "../json/api.h"
 #include "nsq_reader.h"
 
 char *eventData = NULL;
 
-typedef struct json_object *json_obj_ptr;
+extern json_api_t json_api;
+extern str nsq_event_key;
+extern str nsq_event_sub_key;
 
 int nsq_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
@@ -63,7 +66,7 @@ int nsq_consumer_fire_event(char *routename)
 
 int nsq_consumer_event(char *payload, char *channel, char *topic)
 {
-	json_obj_ptr json_obj = NULL;
+	struct json_object *json_obj = NULL;
 	int ret = 0;
 	str ev_name = {0, 0}, ev_category = {0, 0};
 	char *k = NULL;
@@ -72,21 +75,21 @@ int nsq_consumer_event(char *payload, char *channel, char *topic)
 
 	eventData = payload;
 
-	json_obj = nsq_json_parse(payload);
+	json_obj = json_api.json_parse(payload);
 	if (json_obj == NULL) {
-		return 0;
+		return ret;
 	}
 
 	k = pkg_malloc(nsq_event_key.len+1);
 	memcpy(k, nsq_event_key.s, nsq_event_key.len);
 	k[nsq_event_key.len] = '\0';
-	json_extract_field(k, ev_category);
+	json_api.extract_field(json_obj, k, &ev_category);
 	pkg_free(k);
 
 	k = pkg_malloc(nsq_event_sub_key.len+1);
 	memcpy(k, nsq_event_sub_key.s, nsq_event_sub_key.len);
 	k[nsq_event_sub_key.len] = '\0';
-	json_extract_field(k, ev_name);
+	json_api.extract_field(json_obj, k, &ev_name);
 	pkg_free(k);
 
 	sprintf(buffer, "nsq:consumer-event-%.*s-%.*s",ev_category.len, ev_category.s, ev_name.len, ev_name.s);
@@ -114,8 +117,9 @@ int nsq_consumer_event(char *payload, char *channel, char *topic)
 		}
 	}
 
-	if(json_obj)
+	if (json_obj) {
 		json_object_put(json_obj);
+	}
 
 	eventData = NULL;
 

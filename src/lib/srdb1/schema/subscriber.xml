@@ -75,24 +75,6 @@
         <description>md5(username@domain:realm:password)</description>
     </column>
 
-    <column>
-        <name>email_address</name>
-        <type>string</type>
-        <size>&uri_len;</size>
-        <null/>
-        <default><null/></default>
-        <description>Email address</description>
-    </column>
-
-    <column>
-        <name>rpid</name>
-        <type>string</type>
-        <size>&uri_len;</size>
-        <null/>
-        <default><null/></default>
-        <description>The SIP Remote-Party-ID header identifies the calling party and includes user, party, screen and privacy headers that specify how a call is presented and screened.</description>
-    </column>
-
     <index>
         <name>account_idx</name>
         <colref linkend="username"/>

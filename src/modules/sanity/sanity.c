@@ -38,6 +38,59 @@
 #define UNSUPPORTED_HEADER "Unsupported: "
 #define UNSUPPORTED_HEADER_LEN (sizeof(UNSUPPORTED_HEADER)-1)
 
+extern int ksr_sanity_noreply;
+
+#define KSR_SANITY_REASON_SIZE 128
+typedef struct ksr_sanity_info {
+	int code;
+	char reason[KSR_SANITY_REASON_SIZE];
+	unsigned int msgid;
+	int msgpid;
+} ksr_sanity_info_t;
+
+static ksr_sanity_info_t _ksr_sanity_info = {0};
+
+/**
+ *
+ */
+void ksr_sanity_info_init(void)
+{
+	memset(&_ksr_sanity_info, 0, sizeof(ksr_sanity_info_t));
+}
+
+/**
+ *
+ */
+int ki_sanity_reply(sip_msg_t *msg)
+{
+	if(msg->first_line.type == SIP_REPLY) {
+		return 1;
+	}
+
+	if(msg->REQ_METHOD == METHOD_ACK) {
+		return 1;
+	}
+
+	if(ksr_sanity_noreply == 0) {
+		return 1;
+	}
+
+	if(!(msg->msg_flags&FL_MSG_NOREPLY)) {
+		if(_ksr_sanity_info.code==0 || _ksr_sanity_info.reason[0]=='\0'
+				|| msg->id != _ksr_sanity_info.msgid
+				|| msg->pid != _ksr_sanity_info.msgpid) {
+			LM_INFO("no sanity reply info set - sending 500\n");
+			if(slb.zreply(msg, 500, "Server Sanity Failure") < 0) {
+				return -1;
+			}
+			return 1;
+		}
+		if(slb.zreply(msg, _ksr_sanity_info.code, _ksr_sanity_info.reason) < 0) {
+			return -1;
+		}
+	}
+	return 1;
+}
 
 /**
  * wrapper to SL send reply function
@@ -52,9 +105,24 @@ int sanity_reply(sip_msg_t *msg, int code, char *reason)
 	if(msg->REQ_METHOD == METHOD_ACK) {
 		return 1;
 	}
-	if(slb.zreply(msg, code, reason) < 0) {
-		return -1;
+
+	if(ksr_sanity_noreply!=0) {
+		_ksr_sanity_info.code = code;
+		if(strlen(reason)>=KSR_SANITY_REASON_SIZE) {
+			strncpy(_ksr_sanity_info.reason, reason, KSR_SANITY_REASON_SIZE-1);
+		} else {
+			strcpy(_ksr_sanity_info.reason, reason);
+		}
+		_ksr_sanity_info.msgid = msg->id;
+		_ksr_sanity_info.msgpid = msg->pid;
+	} else {
+		if(!(msg->msg_flags&FL_MSG_NOREPLY)) {
+			if(slb.zreply(msg, code, reason) < 0) {
+				return -1;
+			}
+		}
 	}
+
 	return 0;
 }
 
@@ -67,9 +135,7 @@ int str2valid_uint(str* _number, unsigned int* _result) {
 
 	*_result = 0;
 	if (_number->len > 10) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("number is too long\n");
-#endif
 		return -1;
 	}
 	if (_number->len < 10) {
@@ -77,9 +143,7 @@ int str2valid_uint(str* _number, unsigned int* _result) {
 	}
 	for (i=0; i < _number->len; i++) {
 		if (_number->s[i] < '0' || _number->s[i] > '9') {
-#ifdef EXTRA_DEBUG
 			LM_DBG("number contains non-number char\n");
-#endif
 			return -1;
 		}
 		if (equal == 1) {
@@ -87,9 +151,7 @@ int str2valid_uint(str* _number, unsigned int* _result) {
 				equal = 0;
 			}
 			else if (_number->s[i] > mui[i]) {
-#ifdef EXTRA_DEBUG
 				LM_DBG("number exceeds uint\n");
-#endif
 				return -1;
 			}
 		}
@@ -113,9 +175,7 @@ strl* parse_str_list(str* _string) {
 	trim(&input);
 
 	if (input.len == 0) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("list is empty\n");
-#endif
 		return NULL;
 	}
 	parsed_list = pkg_malloc(sizeof(strl));
@@ -180,108 +240,102 @@ int parse_proxyrequire(struct hdr_field* _h) {
 }
 
 /* check the SIP version in the request URI */
-int check_ruri_sip_version(struct sip_msg* _msg) {
+int check_ruri_sip_version(sip_msg_t* msg) {
 	char *sep;
 	str version;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_ruri_sip_version entered\n");
-#endif
 
-	if (_msg->first_line.u.request.version.len != 0) {
-		sep = q_memchr(_msg->first_line.u.request.version.s, '/',
-				_msg->first_line.u.request.version.len);
+	if (msg->first_line.u.request.version.len != 0) {
+		sep = q_memchr(msg->first_line.u.request.version.s, '/',
+				msg->first_line.u.request.version.len);
 		if (sep == NULL) {
 			LM_WARN("failed to find / in ruri version\n");
 			return SANITY_CHECK_FAILED;
 		}
 		version.s = sep + 1;
-		version.len = _msg->first_line.u.request.version.len - (version.s - _msg->first_line.u.request.version.s);
+		version.len = msg->first_line.u.request.version.len
+						- (version.s - msg->first_line.u.request.version.s);
 
 		if (version.len != SIP_VERSION_TWO_POINT_ZERO_LENGTH ||
 				(memcmp(version.s, SIP_VERSION_TWO_POINT_ZERO,
 						SIP_VERSION_TWO_POINT_ZERO_LENGTH) != 0)) {
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 505, "Version Not Supported (R-URI)")
-						< 0) {
-					LM_WARN("failed to send 505 via sl reply\n");
-				}
+			if (sanity_reply(msg, 505, "Version Not Supported (R-URI)") < 0) {
+				LM_WARN("failed to send 505 via sl reply\n");
 			}
-#ifdef EXTRA_DEBUG
 			LM_DBG("check_ruri_sip_version failed\n");
-#endif
 			return SANITY_CHECK_FAILED;
 		}
 	}
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_ruri_sip_version passed\n");
-#endif
 	return SANITY_CHECK_PASSED;
 }
 
 /* check if the r-uri scheme */
-int check_ruri_scheme(struct sip_msg* _msg) {
+int check_ruri_scheme(sip_msg_t* msg) {
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_ruri_scheme entered\n");
-#endif
 
-	if (_msg->parsed_uri_ok == 0 &&
-			parse_sip_msg_uri(_msg) != 1) {
+	if (msg->parsed_uri_ok == 0 &&
+			parse_sip_msg_uri(msg) != 1) {
 		/* unsupported schemes end up here already */
 		LM_WARN("failed to parse request uri [%.*s]\n",
-				GET_RURI(_msg)->len, GET_RURI(_msg)->s);
-		if (_msg->REQ_METHOD != METHOD_ACK) {
-			if (slb.zreply(_msg, 400, "Bad Request URI") < 0) {
-				LM_WARN("failed to send 400 via sl reply (bad ruri)\n");
-			}
+				GET_RURI(msg)->len, GET_RURI(msg)->s);
+		if (sanity_reply(msg, 400, "Bad Request URI") < 0) {
+			LM_WARN("failed to send 400 via sl reply (bad ruri)\n");
 		}
 		return SANITY_CHECK_FAILED;
 	}
-	if (_msg->parsed_uri.type == ERROR_URI_T) {
-		if (_msg->REQ_METHOD != METHOD_ACK) {
-			if (sanity_reply(_msg, 416, "Unsupported URI Scheme in Request URI")
-					< 0) {
-				LM_WARN("failed to send 416 via sl reply\n");
-			}
+	if (msg->parsed_uri.type == ERROR_URI_T) {
+		if (sanity_reply(msg, 416, "Unsupported URI Scheme in Request URI")
+				< 0) {
+			LM_WARN("failed to send 416 via sl reply\n");
 		}
 		LM_DBG("check_ruri_scheme failed\n");
 		return SANITY_CHECK_FAILED;
 	}
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_ruri_scheme passed\n");
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
 
 /* check for the presence of the minimal required headers */
-int check_required_headers(struct sip_msg* _msg) {
+int check_required_headers(sip_msg_t* msg) {
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_required_headers entered\n");
-#endif
 
-	if (!check_transaction_quadruple(_msg)) {
-		if (_msg->REQ_METHOD != METHOD_ACK) {
-			if (sanity_reply(_msg, 400, "Missing Required Header in Request")
-					< 0) {
-				LM_WARN("failed to send 400 via sl reply\n");
-			}
-		}
+	if (!check_transaction_quadruple(msg)) {
+		msg->msg_flags |= FL_MSG_NOREPLY;
 		LM_DBG("check_required_headers failed\n");
 		return SANITY_CHECK_FAILED;
 	}
 	/* TODO: check for other required headers according to request type */
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_required_headers passed\n");
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
 
 /* check if the SIP version in the Via header is 2.0 */
-int check_via_sip_version(struct sip_msg* _msg) {
+int check_via1_header(sip_msg_t* msg)
+{
+	LM_DBG("check via1 header\n");
+	if (parse_headers(msg, HDR_VIA1_F, 0) != 0) {
+		LM_WARN("failed to parse the Via1 header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	if (msg->via1->host.s==NULL || msg->via1->host.len<0) {
+		LM_WARN("failed to parse the Via1 host\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	return SANITY_CHECK_PASSED;
+}
+
+/* check if the SIP version in the Via header is 2.0 */
+int check_via_sip_version(sip_msg_t* msg) {
 
 	LM_DBG("this is a useless check"
 			" for now; check the source code comments for details\n");
@@ -292,34 +346,30 @@ int check_via_sip_version(struct sip_msg* _msg) {
 	DBG("check_via_sip_version entered\n");
 
 	// FIXME via parser fails on non 2.0 number
-	if (parse_headers(_msg, HDR_VIA1_F, 0) != 0) {
+	if (parse_headers(msg, HDR_VIA1_F, 0) != 0) {
 	LOG(L_WARN, "sanity_check(): check_via_sip_version():"
 	" failed to parse the first Via header\n");
 	return SANITY_CHECK_FAILED;
 	}
 
-	if (_msg->via1->version.len != 3 ||
-	memcmp(_msg->via1->version.s, SIP_VERSION_TWO_POINT_ZERO,
+	if (msg->via1->version.len != 3 ||
+	memcmp(msg->via1->version.s, SIP_VERSION_TWO_POINT_ZERO,
 	SIP_VERSION_TWO_POINT_ZERO_LENGTH ) != 0) {
-	if (_msg->REQ_METHOD != METHOD_ACK) {
-	if (sanity_reply(_msg, 505, "Version Not Supported (Via)") < 0) {
+	if (sanity_reply(msg, 505, "Version Not Supported (Via)") < 0) {
 	LOG(L_WARN, "sanity_check(): check_via_sip_version():"
 	" failed to send 505 via sl reply\n");
-	}
 	}
 	DBG("check_via_sip_version failed\n");
 	return SANITY_CHECK_FAILED;
 	}
-#ifdef EXTRA_DEBUG
 DBG("check_via_sip_version passed\n");
-#endif
 
 return SANITY_CHECK_PASSED;
 */
 }
 
 /* compare the protocol string in the Via header with the transport */
-int check_via_protocol(struct sip_msg* _msg) {
+int check_via_protocol(sip_msg_t* msg) {
 
 	LM_DBG("this is a useless check"
 			" for now; check the source code comment for details\n");
@@ -330,97 +380,83 @@ int check_via_protocol(struct sip_msg* _msg) {
 	DBG("check_via_protocol entered\n");
 
 	// FIXME via parser fails on unknown transport
-	if (parse_headers(_msg, HDR_VIA1_F, 0) != 0) {
+	if (parse_headers(msg, HDR_VIA1_F, 0) != 0) {
 	LOG(L_WARN, "sanity_check(): check_via_protocol():"
 	" failed to parse the first Via header\n");
 	return SANITY_CHECK_FAILED;
 	}
-	if (_msg->via1->transport.len != 3 &&
-	_msg->via1->transport.len != 4) {
-	if (_msg->REQ_METHOD != METHOD_ACK) {
-	if (sanity_reply(_msg, 400, "Unsupported Transport in Topmost Via")
+	if (msg->via1->transport.len != 3 &&
+	msg->via1->transport.len != 4) {
+	if (sanity_reply(msg, 400, "Unsupported Transport in Topmost Via")
 	< 0) {
 	LOG(L_WARN, "sanity_check(): check_via_protocol():"
 	" failed to send 400 via sl reply\n");
 	}
-	}
 	DBG("check_via_protocol failed\n");
 	return SANITY_CHECK_FAILED;
 	}
-	switch (_msg->rcv.proto) {
+	switch (msg->rcv.proto) {
 	case PROTO_UDP:
-	if (memcmp(_msg->via1->transport.s, "UDP", 3) != 0) {
-	if (_msg->REQ_METHOD != METHOD_ACK) {
-	if (sanity_reply(_msg, 400,
+	if (memcmp(msg->via1->transport.s, "UDP", 3) != 0) {
+	if (sanity_reply(msg, 400,
 	"Transport Missmatch in Topmost Via") < 0) {
 	LOG(L_WARN, "sanity_check(): check_via_protocol():"
 	" failed to send 505 via sl reply\n");
-	}
 	}
 	DBG("check_via_protocol failed\n");
 	return SANITY_CHECK_FAILED;
 	}
 	break;
 	case PROTO_TCP:
-	if (memcmp(_msg->via1->transport.s, "TCP", 3) != 0) {
-	if (_msg->REQ_METHOD != METHOD_ACK) {
-	if (sanity_reply(_msg, 400,
+	if (memcmp(msg->via1->transport.s, "TCP", 3) != 0) {
+	if (sanity_reply(msg, 400,
 	"Transport Missmatch in Topmost Via") < 0) {
 	LOG(L_WARN, "sanity_check(): check_via_protocol():"
 	" failed to send 505 via sl reply\n");
-	}
 	}
 	DBG("check_via_protocol failed\n");
 	return SANITY_CHECK_FAILED;
 	}
 	break;
 	case PROTO_TLS:
-	if (memcmp(_msg->via1->transport.s, "TLS", 3) != 0) {
-	if (_msg->REQ_METHOD != METHOD_ACK) {
-	if (sanity_reply(_msg, 400,
+	if (memcmp(msg->via1->transport.s, "TLS", 3) != 0) {
+	if (sanity_reply(msg, 400,
 	"Transport Missmatch in Topmost Via") < 0) {
 	LOG(L_WARN, "sanity_check(): check_via_protocol():"
 	" failed to send 505 via sl reply\n");
-	}
 	}
 	DBG("check_via_protocol failed\n");
 	return SANITY_CHECK_FAILED;
 	}
 	break;
 	case PROTO_SCTP:
-	if (memcmp(_msg->via1->transport.s, "SCTP", 4) != 0) {
-	if (_msg->REQ_METHOD != METHOD_ACK) {
-	if (sanity_reply(_msg, 400,
+	if (memcmp(msg->via1->transport.s, "SCTP", 4) != 0) {
+	if (sanity_reply(msg, 400,
 	"Transport Missmatch in Topmost Via") < 0) {
 	LOG(L_WARN, "sanity_check(): check_via_protocol():"
 	" failed to send 505 via sl reply\n");
-	}
 	}
 	DBG("check_via_protocol failed\n");
 	return SANITY_CHECK_FAILED;
 }
 break;
 case PROTO_WS:
-if (memcmp(_msg->via1->transport.s, "WS", 2) != 0) {
-	if (_msg->REQ_METHOD != METHOD_ACK) {
-		if (sanity_reply(_msg, 400,
-					"Transport Missmatch in Topmost Via") < 0) {
-			LOG(L_WARN, "sanity_check(): check_via_protocol():"
-					" failed to send 505 via sl reply\n");
-		}
+if (memcmp(msg->via1->transport.s, "WS", 2) != 0) {
+	if (sanity_reply(msg, 400,
+				"Transport Missmatch in Topmost Via") < 0) {
+		LOG(L_WARN, "sanity_check(): check_via_protocol():"
+				" failed to send 505 via sl reply\n");
 	}
 	DBG("check_via_protocol failed\n");
 	return SANITY_CHECK_FAILED;
 }
 break;
 case PROTO_WSS:
-if (memcmp(_msg->via1->transport.s, "WSS", 3) != 0) {
-	if (_msg->REQ_METHOD != METHOD_ACK) {
-		if (sanity_reply(_msg, 400,
-					"Transport Missmatch in Topmost Via") < 0) {
-			LOG(L_WARN, "sanity_check(): check_via_protocol():"
-					" failed to send 505 via sl reply\n");
-		}
+if (memcmp(msg->via1->transport.s, "WSS", 3) != 0) {
+	if (sanity_reply(msg, 400,
+				"Transport Missmatch in Topmost Via") < 0) {
+		LOG(L_WARN, "sanity_check(): check_via_protocol():"
+				" failed to send 505 via sl reply\n");
 	}
 	DBG("check_via_protocol failed\n");
 	return SANITY_CHECK_FAILED;
@@ -431,230 +467,206 @@ LOG(L_WARN, "sanity_check(): check_via_protocol():"
 		" unknown protocol in received structure\n");
 return SANITY_CHECK_FAILED;
 }
-#ifdef EXTRA_DEBUG
 DBG("check_via_protocol passed\n");
-#endif
 
 return SANITY_CHECK_PASSED;
 */
 }
 
 /* compare the method in the CSeq header with the request line value */
-int check_cseq_method(struct sip_msg* _msg) {
+int check_cseq_method(sip_msg_t* msg) {
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_cseq_method entered\n");
-#endif
 
-	if (parse_headers(_msg, HDR_CSEQ_F, 0) != 0) {
+	if (parse_headers(msg, HDR_CSEQ_F, 0) != 0) {
+		msg->msg_flags |= FL_MSG_NOREPLY;
 		LM_WARN("failed to parse the CSeq header\n");
 		return SANITY_CHECK_FAILED;
 	}
-	if (_msg->cseq != NULL && _msg->cseq->parsed != NULL) {
-		if (((struct cseq_body*)_msg->cseq->parsed)->method.len == 0) {
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Missing method in CSeq header")
-						< 0) {
-					LM_WARN("failed to send 400 via sl reply\n");
-				}
+	if (msg->cseq != NULL && msg->cseq->parsed != NULL) {
+		if (((struct cseq_body*)msg->cseq->parsed)->method.len == 0) {
+			if (sanity_reply(msg, 400, "Missing method in CSeq header")
+					< 0) {
+				LM_WARN("failed to send 400 via sl reply\n");
 			}
 			LM_DBG("check_cseq_method failed (missing method)\n");
 			return SANITY_CHECK_FAILED;
 		}
 
-		if (((struct cseq_body*)_msg->cseq->parsed)->method.len !=
-				_msg->first_line.u.request.method.len ||
-				memcmp(((struct cseq_body*)_msg->cseq->parsed)->method.s,
-					_msg->first_line.u.request.method.s,
-					((struct cseq_body*)_msg->cseq->parsed)->method.len) != 0) {
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400,
-							"CSeq method does not match request method") < 0) {
-					LM_WARN("failed to send 400 via sl reply 2\n");
-				}
+		if (((struct cseq_body*)msg->cseq->parsed)->method.len !=
+				msg->first_line.u.request.method.len ||
+				memcmp(((struct cseq_body*)msg->cseq->parsed)->method.s,
+					msg->first_line.u.request.method.s,
+					((struct cseq_body*)msg->cseq->parsed)->method.len) != 0) {
+			if (sanity_reply(msg, 400,
+						"CSeq method does not match request method") < 0) {
+				LM_WARN("failed to send 400 via sl reply 2\n");
 			}
 			LM_DBG("check_cseq_method failed (non-equal method)\n");
 			return SANITY_CHECK_FAILED;
 		}
-	}
-	else {
+	} else {
 		LM_WARN("missing CSeq header\n");
 		return SANITY_CHECK_FAILED;
 	}
-#ifdef EXTRA_DEBUG
 	DBG("check_cseq_method passed\n");
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
 
 /* check the number within the CSeq header */
-int check_cseq_value(struct sip_msg* _msg) {
+int check_cseq_value(sip_msg_t* msg) {
 	unsigned int cseq;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_cseq_value entered\n");
-#endif
 
-	if (parse_headers(_msg, HDR_CSEQ_F, 0) != 0) {
+	if (parse_headers(msg, HDR_CSEQ_F, 0) != 0) {
 		LM_WARN("failed to parse the CSeq header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
 		return SANITY_CHECK_FAILED;
 	}
-	if (_msg->cseq != NULL && _msg->cseq->parsed != NULL) {
-		if (((struct cseq_body*)_msg->cseq->parsed)->number.len == 0) {
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Missing number in CSeq header")
+	if (msg->cseq != NULL && msg->cseq->parsed != NULL) {
+		if (((struct cseq_body*)msg->cseq->parsed)->number.len == 0) {
+			if (sanity_reply(msg, 400, "Missing number in CSeq header")
 						< 0) {
-					LM_WARN("failed to send 400 via sl reply\n");
-				}
+				LM_WARN("failed to send 400 via sl reply\n");
 			}
 			return SANITY_CHECK_FAILED;
 		}
-		if (str2valid_uint(&((struct cseq_body*)_msg->cseq->parsed)->number,
+		if (str2valid_uint(&((struct cseq_body*)msg->cseq->parsed)->number,
 					&cseq) != 0) {
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "CSeq number is illegal") < 0) {
-					LM_WARN("failed to send 400 via sl reply 2\n");
-				}
+			if (sanity_reply(msg, 400, "CSeq number is illegal") < 0) {
+				LM_WARN("failed to send 400 via sl reply 2\n");
 			}
 			LM_DBG("check_cseq_value failed\n");
 			return SANITY_CHECK_FAILED;
 		}
-	}
-	else {
+	} else {
 		LM_WARN("missing CSeq header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
 		return SANITY_CHECK_FAILED;
 	}
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_cseq_value passed\n");
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
 
 /* compare the Content-Length value with the accutal body length */
-int check_cl(struct sip_msg* _msg) {
+int check_cl(sip_msg_t* msg) {
 	char *body;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_cl entered\n");
-#endif
 
-	if (parse_headers(_msg, HDR_CONTENTLENGTH_F, 0) != 0) {
+	if (parse_headers(msg, HDR_CONTENTLENGTH_F, 0) != 0) {
 		LM_WARN("failed to parse content-length header\n");
+		if (sanity_reply(msg, 400, "Content-Length Failure") < 0) {
+			LM_WARN("failed to send 400 via sl reply\n");
+		}
 		return SANITY_CHECK_FAILED;
 	}
-	if (_msg->content_length != NULL) {
-		//dump_hdr_field(_msg->content_length);
-		if ((body = get_body(_msg)) == NULL) {
-#ifdef EXTRA_DEBUG
+	if (msg->content_length != NULL) {
+		//dump_hdr_field(msg->content_length);
+		if ((body = get_body(msg)) == NULL) {
 			LM_DBG("check_cl(): no body\n");
-#endif
+			if (sanity_reply(msg, 400, "Content-Length Body Failure") < 0) {
+				LM_WARN("failed to send 400 via sl reply\n");
+			}
 			return SANITY_CHECK_FAILED;
 		}
-		if ((_msg->len - (body - _msg->buf)) != get_content_length(_msg)) {
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Content-Length mis-match") < 0) {
-					LM_WARN("failed to send 400 via sl reply\n");
-				}
+		if ((msg->len - (body - msg->buf)) != get_content_length(msg)) {
+			if (sanity_reply(msg, 400, "Content-Length mis-match") < 0) {
+				LM_WARN("failed to send 400 via sl reply\n");
 			}
 			LM_DBG("check_cl failed\n");
 			return SANITY_CHECK_FAILED;
 		}
-#ifdef EXTRA_DEBUG
 		LM_DBG("check_cl passed\n");
-#endif
-	}
-#ifdef EXTRA_DEBUG
-	else {
+	} else {
 		LM_WARN("content length header missing in request\n");
 	}
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
 
 /* check the number within the Expires header */
-int check_expires_value(struct sip_msg* _msg) {
+int check_expires_value(sip_msg_t* msg) {
 	unsigned int expires;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_expires_value entered\n");
-#endif
 
-	if (parse_headers(_msg, HDR_EXPIRES_F, 0) != 0) {
+	if (parse_headers(msg, HDR_EXPIRES_F, 0) < 0) {
+		if (sanity_reply(msg, 400, "Bad Expires Header") < 0) {
+			LM_WARN("failed to send 400 reply\n");
+		}
 		LM_WARN("failed to parse expires header\n");
 		return SANITY_CHECK_FAILED;
 	}
-	if (_msg->expires != NULL) {
-		//dump_hdr_field(_msg->expires);
-		if (_msg->expires->parsed == NULL &&
-				parse_expires(_msg->expires) < 0) {
+	if (msg->expires != NULL) {
+		//dump_hdr_field(msg->expires);
+		if (msg->expires->parsed == NULL &&
+				parse_expires(msg->expires) < 0) {
 			LM_WARN("parse_expires failed\n");
+			if (sanity_reply(msg, 400, "Bad Expires Header") < 0) {
+				LM_WARN("failed to send 400 reply\n");
+			}
 			return SANITY_CHECK_FAILED;
 		}
-		if (((struct exp_body*)_msg->expires->parsed)->text.len == 0) {
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Missing number in Expires header")
-						< 0) {
-					LM_WARN("failed to send 400 via sl reply\n");
-				}
+		if (((struct exp_body*)msg->expires->parsed)->text.len == 0) {
+			if (sanity_reply(msg, 400, "Missing number in Expires header")
+					< 0) {
+				LM_WARN("failed to send 400 via sl reply\n");
 			}
 			LM_DBG("check_expires_value failed\n");
 			return SANITY_CHECK_FAILED;
 		}
-		if (str2valid_uint(&((struct exp_body*)_msg->expires->parsed)->text, &expires) != 0) {
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Expires value is illegal") < 0) {
-					LM_WARN("failed to send 400 via sl reply 2\n");
-				}
+		if (str2valid_uint(&((struct exp_body*)msg->expires->parsed)->text,
+					&expires) != 0) {
+			if (sanity_reply(msg, 400, "Expires value is illegal") < 0) {
+				LM_WARN("failed to send 400 via sl reply 2\n");
 			}
 			LM_DBG("check_expires_value failed\n");
 			return SANITY_CHECK_FAILED;
 		}
-#ifdef EXTRA_DEBUG
 		LM_DBG("check_expires_value passed\n");
-#endif
-	}
-#ifdef EXTRA_DEBUG
-	else {
+	} else {
 		LM_DBG("no expires header found\n");
 	}
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
 
 /* check the content of the Proxy-Require header */
-int check_proxy_require(struct sip_msg* _msg) {
+int check_proxy_require(sip_msg_t* msg) {
 	strl *r_pr, *l_pr;
 	char *u;
 	int u_len;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("checking proxy require\n");
-#endif
 
-	if (parse_headers(_msg, HDR_PROXYREQUIRE_F, 0) != 0) {
+	if (parse_headers(msg, HDR_PROXYREQUIRE_F, 0) != 0) {
 		LM_WARN("failed to parse proxy require header\n");
+		if (sanity_reply(msg, 400, "Bad Proxy Require Header") < 0) {
+			LM_WARN("failed to send 400 reply\n");
+		}
 		return SANITY_CHECK_FAILED;
 	}
-	if (_msg->proxy_require != NULL) {
-		//dump_hdr_field(_msg->proxy_require);
-		if (_msg->proxy_require->parsed == NULL &&
-				parse_proxyrequire(_msg->proxy_require) < 0) {
+	if (msg->proxy_require != NULL) {
+		//dump_hdr_field(msg->proxy_require);
+		if (msg->proxy_require->parsed == NULL &&
+				parse_proxyrequire(msg->proxy_require) < 0) {
 			LM_WARN("parse proxy require failed\n");
+			if (sanity_reply(msg, 400, "Bad Proxy Require Header") < 0) {
+				LM_WARN("failed to send 400 reply\n");
+			}
 			return SANITY_CHECK_FAILED;
 		}
-		r_pr = _msg->proxy_require->parsed;
+		r_pr = msg->proxy_require->parsed;
 		while (r_pr != NULL) {
 			l_pr = proxyrequire_list;
 			while (l_pr != NULL) {
-#ifdef EXTRA_DEBUG
 				LM_DBG("comparing r='%.*s' l='%.*s'\n",
 						r_pr->string.len, r_pr->string.s, l_pr->string.len,
 						l_pr->string.s);
-#endif
 				if (l_pr->string.len == r_pr->string.len &&
 						/* FIXME tokens are case in-sensitive */
 						memcmp(l_pr->string.s, r_pr->string.s,
@@ -678,17 +690,13 @@ int check_proxy_require(struct sip_msg* _msg) {
 							r_pr->string.len);
 					memcpy(u + UNSUPPORTED_HEADER_LEN + r_pr->string.len,
 							CRLF, CRLF_LEN);
-					add_lump_rpl(_msg, u, u_len, LUMP_RPL_HDR);
+					add_lump_rpl(msg, u, u_len, LUMP_RPL_HDR);
 				}
 
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 420, "Bad Extension") < 0) {
-						LM_WARN("failed to send 420 via sl reply\n");
-					}
+				if (sanity_reply(msg, 420, "Bad Proxy Require Extension") < 0) {
+					LM_WARN("failed to send 420 via sl reply\n");
 				}
-#ifdef EXTRA_DEBUG
 				LM_DBG("checking proxy require failed\n");
-#endif
 				if (u) pkg_free(u);
 				return SANITY_CHECK_FAILED;
 			}
@@ -696,48 +704,37 @@ int check_proxy_require(struct sip_msg* _msg) {
 				r_pr = r_pr->next;
 			}
 		}
-#ifdef EXTRA_DEBUG
 		LM_DBG("checking proxy require passed\n");
-#endif
-		if (_msg->proxy_require->parsed) {
+		if (msg->proxy_require->parsed) {
 			/* TODO we have to free it here, because it is not automatically
 			 * freed when the message freed. Lets hope nobody needs to access
 			 * this header again later on */
-			free_str_list(_msg->proxy_require->parsed);
-			_msg->proxy_require->parsed = NULL;
+			free_str_list(msg->proxy_require->parsed);
+			msg->proxy_require->parsed = NULL;
 		}
-	}
-#ifdef EXTRA_DEBUG
-	else {
+	} else {
 		LM_DBG("no proxy-require header found\n");
 	}
-#endif
 
 	return SANITY_CHECK_PASSED;
 }
 
 /* check if the typical URI's are parseable */
-int check_parse_uris(struct sip_msg* _msg, int checks) {
+int check_parse_uris(sip_msg_t* msg, int checks) {
 
 	struct to_body *ft_body = NULL;
 	struct sip_uri uri;
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_parse_uris entered\n");
-#endif
 
 	/* check R-URI */
 	if (SANITY_URI_CHECK_RURI & checks) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("parsing ruri\n");
-#endif
-		if (_msg->parsed_uri_ok == 0 &&
-				parse_sip_msg_uri(_msg) != 1) {
+		if (msg->parsed_uri_ok == 0 &&
+				parse_sip_msg_uri(msg) != 1) {
 			LM_WARN("failed to parse request uri\n");
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Bad Request URI") < 0) {
-					LM_WARN("failed to send 400 via sl reply (bad ruri)\n");
-				}
+			if (sanity_reply(msg, 400, "Bad Request URI") < 0) {
+				LM_WARN("failed to send 400 via sl reply (bad ruri)\n");
 			}
 			return SANITY_CHECK_FAILED;
 		}
@@ -746,58 +743,53 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 	}
 	/* check From URI */
 	if (SANITY_URI_CHECK_FROM & checks) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("looking up From header\n");
-#endif
-		if ((!_msg->from && parse_headers(_msg, HDR_FROM_F, 0) != 0)
-				|| !_msg->from) {
-			LM_WARN("missing from header\n");
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Missing From Header") < 0) {
+		if ((!msg->from && parse_headers(msg, HDR_FROM_F, 0) != 0)
+				|| !msg->from) {
+			LM_WARN("invalid from header\n");
+			if(!msg->from || !msg->from->body.s) {
+				msg->msg_flags |= FL_MSG_NOREPLY;
+			} else {
+				if (sanity_reply(msg, 400, "Invalid From Header") < 0) {
 					LM_WARN("failed to send 400 via sl reply (missing From)\n");
 				}
 			}
 			return SANITY_CHECK_FAILED;
 		}
-		if (!_msg->from->parsed) {
-#ifdef EXTRA_DEBUG
+		if (!msg->from->parsed) {
 			LM_DBG("parsing From header\n");
-#endif
 			ft_body = pkg_malloc(sizeof(struct to_body));
 			if (!ft_body) {
 				LM_ERR("out of pkg_memory (From)\n");
+				if (sanity_reply(msg, 500, "Invalid Resources") < 0) {
+					LM_WARN("failed to send 500 reply\n");
+				}
 				return SANITY_CHECK_ERROR;
 			}
 			memset(ft_body, 0, sizeof(struct to_body));
-			parse_to(_msg->from->body.s, _msg->from->body.s + \
-					_msg->from->body.len + 1, ft_body);
+			parse_to(msg->from->body.s, msg->from->body.s + \
+					msg->from->body.len + 1, ft_body);
 			if (ft_body->error == PARSE_ERROR) {
 				LM_WARN("failed to parse From header [%.*s]\n",
-						_msg->from->body.len, _msg->from->body.s);
+						msg->from->body.len, msg->from->body.s);
 				free_to(ft_body);
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400, "Bad From header") < 0) {
-						LM_WARN("failed to send 400 via sl reply"
-								" (bad from header)\n");
-					}
+				if (sanity_reply(msg, 400, "Bad From header") < 0) {
+					LM_WARN("failed to send 400 via sl reply"
+							" (bad from header)\n");
 				}
 				return SANITY_CHECK_FAILED;
 			}
-			_msg->from->parsed = ft_body;
+			msg->from->parsed = ft_body;
 			ft_body = NULL;
 		}
-		if (((struct to_body*)_msg->from->parsed)->uri.s) {
-#ifdef EXTRA_DEBUG
+		if (((struct to_body*)msg->from->parsed)->uri.s) {
 			LM_DBG("parsing From URI\n");
-#endif
-			if (parse_uri(((struct to_body*)_msg->from->parsed)->uri.s,
-						((struct to_body*)_msg->from->parsed)->uri.len, &uri) != 0) {
+			if (parse_uri(((struct to_body*)msg->from->parsed)->uri.s,
+						((struct to_body*)msg->from->parsed)->uri.len, &uri) != 0) {
 				LM_WARN("failed to parse From uri\n");
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400, "Bad From URI") < 0) {
-						LM_WARN("failed to send 400 via sl reply"
-								" (bad from uri)\n");
-					}
+				if (sanity_reply(msg, 400, "Bad From URI") < 0) {
+					LM_WARN("failed to send 400 via sl reply"
+							" (bad from uri)\n");
 				}
 				return SANITY_CHECK_FAILED;
 			}
@@ -809,41 +801,34 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 	}
 	/* check To URI */
 	if (SANITY_URI_CHECK_TO & checks) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("looking up To header\n");
-#endif
-		if ((!_msg->to && parse_headers(_msg, HDR_TO_F, 0) != 0)
-				|| !_msg->to) {
-			LM_WARN("missing to header\n");
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Missing To Header") < 0) {
+		if ((!msg->to && parse_headers(msg, HDR_TO_F, 0) != 0)
+				|| !msg->to) {
+			LM_WARN("invalid To header\n");
+			if(!msg->to || !msg->to->body.s) {
+				msg->msg_flags |= FL_MSG_NOREPLY;
+			} else {
+				if (sanity_reply(msg, 400, "Ivalid To Header") < 0) {
 					LM_WARN("failed to send 400 via sl reply (missing To)\n");
 				}
 			}
 			return SANITY_CHECK_FAILED;
 		}
 		/* parse_to is automatically called for HDR_TO_F */
-		if (!_msg->to->parsed) {
+		if (!msg->to->parsed) {
 			LM_WARN("failed to parse To header\n");
-			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Bad To URI") < 0) {
-					LM_WARN("failed to send 400 via sl reply (bad to uri)\n");
-				}
+			if (sanity_reply(msg, 400, "Bad To URI") < 0) {
+				LM_WARN("failed to send 400 via sl reply (bad to uri)\n");
 			}
 			return SANITY_CHECK_FAILED;
 		}
-		if (((struct to_body*)_msg->to->parsed)->uri.s) {
-#ifdef EXTRA_DEBUG
+		if (((struct to_body*)msg->to->parsed)->uri.s) {
 			DBG("check_parse_uris(): parsing To URI\n");
-#endif
-			if (parse_uri(((struct to_body*)_msg->to->parsed)->uri.s,
-						((struct to_body*)_msg->to->parsed)->uri.len, &uri) != 0) {
+			if (parse_uri(((struct to_body*)msg->to->parsed)->uri.s,
+						((struct to_body*)msg->to->parsed)->uri.len, &uri) != 0) {
 				LM_WARN("failed to parse To uri\n");
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400, "Bad To URI") < 0) {
-						LM_WARN("failed to send 400 via sl reply"
-								" (bad to uri)\n");
-					}
+				if (sanity_reply(msg, 400, "Bad To URI") < 0) {
+					LM_WARN("failed to send 400 via sl reply (bad to uri)\n");
 				}
 				return SANITY_CHECK_FAILED;
 			}
@@ -855,53 +840,42 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 	}
 	/* check Contact URI */
 	if (SANITY_URI_CHECK_CONTACT & checks) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("looking up Contact header\n");
-#endif
-		if ((!_msg->contact && parse_headers(_msg, HDR_CONTACT_F, 0) != 0)
-				|| !_msg->contact) {
+		if ((!msg->contact && parse_headers(msg, HDR_CONTACT_F, 0) != 0)
+				|| !msg->contact) {
 			LM_WARN("missing contact header\n");
 		}
-		if (_msg->contact) {
-#ifdef EXTRA_DEBUG
+		if (msg->contact) {
 			LM_DBG("parsing Contact header\n");
-#endif
-			if (parse_contact(_msg->contact) < 0) {
+			if (parse_contact(msg->contact) < 0) {
 				LM_WARN("failed to parse Contact header\n");
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400, "Bad Contact Header") < 0) {
-						LM_WARN("failed to send 400 via send_reply"
-								" (bad Contact)\n");
-					}
+				if (sanity_reply(msg, 400, "Bad Contact Header") < 0) {
+					LM_WARN("failed to send 400 via send_reply (bad Contact)\n");
 				}
 				return SANITY_CHECK_FAILED;
 			}
 			if (parse_uri(
-						((struct contact_body*)_msg->contact->parsed)->contacts->uri.s,
-						((struct contact_body*)_msg->contact->parsed)->contacts->uri.len,
+						((struct contact_body*)msg->contact->parsed)->contacts->uri.s,
+						((struct contact_body*)msg->contact->parsed)->contacts->uri.len,
 						&uri) != 0) {
 				LM_WARN("failed to parse Contact uri\n");
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400, "Bad Contact URI") < 0) {
-						LM_WARN("failed to send 400 via send_reply"
-								" (bad Contact uri)\n");
-					}
+				if (sanity_reply(msg, 400, "Bad Contact URI") < 0) {
+					LM_WARN("failed to send 400 via send_reply"
+							" (bad Contact uri)\n");
 				}
 				return SANITY_CHECK_FAILED;
 			}
 		}
 	}
 
-#ifdef EXTRA_DEBUG
 	LM_DBG("check_parse_uris passed\n");
-#endif
 	return SANITY_CHECK_PASSED;
 }
 
 /* Make sure that username attribute in all digest credentials
  * instances has a meaningful value
  */
-static int check_digest_only(struct sip_msg* msg, int checks)
+static int check_digest_only(sip_msg_t* msg, int checks)
 {
 	struct hdr_field* ptr;
 	dig_cred_t* cred;
@@ -910,13 +884,14 @@ static int check_digest_only(struct sip_msg* msg, int checks)
 
 	if (parse_headers(msg, HDR_EOH_F, 0) != 0) {
 		LM_ERR("failed to parse proxy require header\n");
+		if (sanity_reply(msg, 400, "Bad Headers") < 0) {
+			LM_WARN("failed to send 400 reply\n");
+		}
 		return SANITY_CHECK_FAILED;
 	}
 
 	if (!msg->authorization && !msg->proxy_auth) {
-#ifdef EXTRA_DEBUG
 		LM_DBG("Nothing to check\n");
-#endif
 		return SANITY_CHECK_PASSED;
 	}
 
@@ -934,6 +909,9 @@ static int check_digest_only(struct sip_msg* msg, int checks)
 				return SANITY_CHECK_NOT_APPLICABLE;
 			} else {
 				LM_DBG("Cannot parse credentials: %d\n", ret);
+				if (sanity_reply(msg, 400, "Bad Auth Header") < 0) {
+					LM_WARN("failed to send 400 reply\n");
+				}
 				return SANITY_CHECK_FAILED;
 			}
 		}
@@ -941,30 +919,34 @@ static int check_digest_only(struct sip_msg* msg, int checks)
 		cred = &((auth_body_t*)ptr->parsed)->digest;
 
 		if (check_dig_cred(cred) != E_DIG_OK) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("Digest credentials malformed\n");
-#endif
+			if (sanity_reply(msg, 400, "Bad Auth Credentials") < 0) {
+				LM_WARN("failed to send 400 reply\n");
+			}
 			return SANITY_CHECK_FAILED;
 		}
 
 		if (cred->username.whole.len == 0) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("Empty username\n");
-#endif
+			if (sanity_reply(msg, 400, "Auth Empty User") < 0) {
+				LM_WARN("failed to send 400 reply\n");
+			}
 			return SANITY_CHECK_FAILED;
 		}
 
 		if (cred->nonce.len == 0) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("Empty nonce attribute\n");
-#endif
+			if (sanity_reply(msg, 400, "Auth Empty Nonce") < 0) {
+				LM_WARN("failed to send 400 reply\n");
+			}
 			return SANITY_CHECK_FAILED;
 		}
 
 		if (cred->response.len == 0) {
-#ifdef EXTRA_DEBUG
 			LM_DBG("Empty response attribute\n");
-#endif
+			if (sanity_reply(msg, 400, "Auth Empty Response") < 0) {
+				LM_WARN("failed to send 400 reply\n");
+			}
 			return SANITY_CHECK_FAILED;
 		}
 
@@ -981,7 +963,7 @@ static int check_digest_only(struct sip_msg* msg, int checks)
 	return SANITY_CHECK_PASSED;
 }
 
-int check_authorization(struct sip_msg* msg, int checks) {
+int check_authorization(sip_msg_t* msg, int checks) {
 	int ret;
 
 	ret = check_digest_only(msg, checks);
@@ -992,7 +974,7 @@ int check_authorization(struct sip_msg* msg, int checks) {
 	}
 }
 
-int check_digest(struct sip_msg* msg, int checks) {
+int check_digest(sip_msg_t* msg, int checks) {
 	if (check_digest_only(msg, checks) == SANITY_CHECK_PASSED) {
 		return SANITY_CHECK_PASSED;
 	} else {
@@ -1001,17 +983,18 @@ int check_digest(struct sip_msg* msg, int checks) {
 }
 
 /* check for the presence of duplicate tag prameters in To/From headers */
-int check_duptags(sip_msg_t* _msg)
+int check_duptags(sip_msg_t* msg)
 {
 	to_body_t *tb;
 	to_param_t *tp;
 	int n;
 
-	if(parse_from_header(_msg)<0 || parse_to_header(_msg)<0) {
-		LM_DBG("failed while parsing\n");
+	if(parse_from_header(msg)<0 || parse_to_header(msg)<0) {
+		LM_DBG("failed while parsing From or To headers\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
 		return SANITY_CHECK_FAILED;
 	}
-	tb = get_from(_msg);
+	tb = get_from(msg);
 	if(tb->tag_value.s!=NULL) {
 		n = 0;
 		for(tp = tb->param_lst; tp; tp = tp->next) {
@@ -1020,10 +1003,13 @@ int check_duptags(sip_msg_t* _msg)
 		}
 		if(n>1) {
 			LM_DBG("failed for From header\n");
+			if (sanity_reply(msg, 400, "Many From Tag Params") < 0) {
+				LM_WARN("failed to send 400 reply\n");
+			}
 			return SANITY_CHECK_FAILED;
 		}
 	}
-	tb = get_to(_msg);
+	tb = get_to(msg);
 	if(tb->tag_value.s!=NULL) {
 		n = 0;
 		for(tp = tb->param_lst; tp; tp = tp->next) {
@@ -1032,11 +1018,12 @@ int check_duptags(sip_msg_t* _msg)
 		}
 		if(n>1) {
 			LM_DBG("failed for To header\n");
+			if (sanity_reply(msg, 400, "Many To Tag Params") < 0) {
+				LM_WARN("failed to send 400 reply\n");
+			}
 			return SANITY_CHECK_FAILED;
 		}
 	}
 
 	return SANITY_CHECK_PASSED;
 }
-
-

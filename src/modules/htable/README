@@ -51,23 +51,27 @@ Ovidiu Sas
               3.10. timer_interval (integer)
               3.11. db_expires (integer)
               3.12. enable_dmq (integer)
-              3.13. timer_procs (integer)
-              3.14. event_callback (str)
-              3.15. event_callback_mode (int)
+              3.13. dmq_init_sync (integer)
+              3.14. timer_procs (integer)
+              3.15. event_callback (str)
+              3.16. event_callback_mode (int)
 
         4. Functions
 
               4.1. sht_print()
-              4.2. sht_rm_name_re(htable=>regexp)
-              4.3. sht_rm_value_re(htable=>regexp)
-              4.4. sht_rm_name(htable, op, val)
-              4.5. sht_rm_value(htable, op, val)
-              4.6. sht_reset(htable)
-              4.7. sht_lock(htable=>key)
-              4.8. sht_unlock(htable=>key)
-              4.9. sht_iterator_start(iname, hname)
-              4.10. sht_iterator_end(iname)
-              4.11. sht_iterator_next(iname)
+              4.2. sht_rm(htname, itname)
+              4.3. sht_rm_name_re(htable=>regexp)
+              4.4. sht_rm_value_re(htable=>regexp)
+              4.5. sht_rm_name(htable, op, val)
+              4.6. sht_rm_value(htable, op, val)
+              4.7. sht_reset(htable)
+              4.8. sht_lock(htable=>key)
+              4.9. sht_unlock(htable=>key)
+              4.10. sht_iterator_start(iname, hname)
+              4.11. sht_iterator_end(iname)
+              4.12. sht_iterator_next(iname)
+              4.13. sht_has_name(htable, op, mval)
+              4.14. sht_has_str_value(htable, op, mval)
 
         5. Exported pseudo-variables
         6. RPC Commands
@@ -103,20 +107,24 @@ Ovidiu Sas
    1.13. Set timer_interval parameter
    1.14. Set db_expires parameter
    1.15. Set enable_dmq parameter
-   1.16. Set timer_procs parameter
-   1.17. Set event_callback parameter
-   1.18. Set event_callback_mode parameter
-   1.19. sht_print usage
-   1.20. sht_rm_name_re usage
-   1.21. sht_rm_value_re usage
-   1.22. sht_rm_name usage
-   1.23. sht_rm_value usage
-   1.24. sht_reset usage
-   1.25. sht_lock usage
-   1.26. sht_unlock usage
-   1.27. sht_iterator_start usage
-   1.28. sht_iterator_end usage
-   1.29. sht_iterator_next usage
+   1.16. Set dmq_init_sync parameter
+   1.17. Set timer_procs parameter
+   1.18. Set event_callback parameter
+   1.19. Set event_callback_mode parameter
+   1.20. sht_print usage
+   1.21. sht_rm usage
+   1.22. sht_rm_name_re usage
+   1.23. sht_rm_value_re usage
+   1.24. sht_rm_name usage
+   1.25. sht_rm_value usage
+   1.26. sht_reset usage
+   1.27. sht_lock usage
+   1.28. sht_unlock usage
+   1.29. sht_iterator_start usage
+   1.30. sht_iterator_end usage
+   1.31. sht_iterator_next usage
+   1.32. sht_has_name usage
+   1.33. sht_has_name usage
 
 Chapter 1. Admin Guide
 
@@ -143,23 +151,27 @@ Chapter 1. Admin Guide
         3.10. timer_interval (integer)
         3.11. db_expires (integer)
         3.12. enable_dmq (integer)
-        3.13. timer_procs (integer)
-        3.14. event_callback (str)
-        3.15. event_callback_mode (int)
+        3.13. dmq_init_sync (integer)
+        3.14. timer_procs (integer)
+        3.15. event_callback (str)
+        3.16. event_callback_mode (int)
 
    4. Functions
 
         4.1. sht_print()
-        4.2. sht_rm_name_re(htable=>regexp)
-        4.3. sht_rm_value_re(htable=>regexp)
-        4.4. sht_rm_name(htable, op, val)
-        4.5. sht_rm_value(htable, op, val)
-        4.6. sht_reset(htable)
-        4.7. sht_lock(htable=>key)
-        4.8. sht_unlock(htable=>key)
-        4.9. sht_iterator_start(iname, hname)
-        4.10. sht_iterator_end(iname)
-        4.11. sht_iterator_next(iname)
+        4.2. sht_rm(htname, itname)
+        4.3. sht_rm_name_re(htable=>regexp)
+        4.4. sht_rm_value_re(htable=>regexp)
+        4.5. sht_rm_name(htable, op, val)
+        4.6. sht_rm_value(htable, op, val)
+        4.7. sht_reset(htable)
+        4.8. sht_lock(htable=>key)
+        4.9. sht_unlock(htable=>key)
+        4.10. sht_iterator_start(iname, hname)
+        4.11. sht_iterator_end(iname)
+        4.12. sht_iterator_next(iname)
+        4.13. sht_has_name(htable, op, mval)
+        4.14. sht_has_str_value(htable, op, mval)
 
    5. Exported pseudo-variables
    6. RPC Commands
@@ -413,9 +425,10 @@ $ kamcmd htable.dump htable
    3.10. timer_interval (integer)
    3.11. db_expires (integer)
    3.12. enable_dmq (integer)
-   3.13. timer_procs (integer)
-   3.14. event_callback (str)
-   3.15. event_callback_mode (int)
+   3.13. dmq_init_sync (integer)
+   3.14. timer_procs (integer)
+   3.15. event_callback (str)
+   3.16. event_callback_mode (int)
 
 3.1. htable (str)
 
@@ -610,7 +623,21 @@ modparam("htable", "db_expires", 1)
 modparam("htable", "enable_dmq", 1)
 ...
 
-3.13. timer_procs (integer)
+3.13. dmq_init_sync (integer)
+
+   If set to 1, will request synchronization from other nodes at startup.
+   It applies to all tables having the "dmqreplicate" parameter set. As
+   above, it is important to ensure the definition (size, autoexpire etc.)
+   of replicated tables is identical across all instances.
+
+   Default value is 0.
+
+   Example 1.16. Set dmq_init_sync parameter
+...
+modparam("htable", "dmq_init_sync", 1)
+...
+
+3.14. timer_procs (integer)
 
    If set to 1 or greater, the module will create its own timer processes
    to scan for expired items in hash tables. If set to zero, it will use
@@ -619,12 +646,12 @@ modparam("htable", "enable_dmq", 1)
 
    Default value is 0.
 
-   Example 1.16. Set timer_procs parameter
+   Example 1.17. Set timer_procs parameter
 ...
 modparam("htable", "timer_procs", 4)
 ...
 
-3.14. event_callback (str)
+3.15. event_callback (str)
 
    The name of the function in the kemi configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
@@ -636,7 +663,7 @@ modparam("htable", "timer_procs", 4)
 
    Default value is 'empty' (no function is executed for events).
 
-   Example 1.17. Set event_callback parameter
+   Example 1.18. Set event_callback parameter
 ...
 modparam("htable", "event_callback", "ksr_htable_event")
 ...
@@ -647,7 +674,7 @@ function ksr_htable_event(evname)
 end
 ...
 
-3.15. event_callback_mode (int)
+3.16. event_callback_mode (int)
 
    Control when event_route[htable:init] is executed: 0 - after all
    modules were initialized; 1 - in first worker process.
@@ -657,7 +684,7 @@ end
 
    Default value is 0.
 
-   Example 1.18. Set event_callback_mode parameter
+   Example 1.19. Set event_callback_mode parameter
 ...
 modparam("htable", "event_callback_mode", 1)
 ...
@@ -665,16 +692,19 @@ modparam("htable", "event_callback_mode", 1)
 4. Functions
 
    4.1. sht_print()
-   4.2. sht_rm_name_re(htable=>regexp)
-   4.3. sht_rm_value_re(htable=>regexp)
-   4.4. sht_rm_name(htable, op, val)
-   4.5. sht_rm_value(htable, op, val)
-   4.6. sht_reset(htable)
-   4.7. sht_lock(htable=>key)
-   4.8. sht_unlock(htable=>key)
-   4.9. sht_iterator_start(iname, hname)
-   4.10. sht_iterator_end(iname)
-   4.11. sht_iterator_next(iname)
+   4.2. sht_rm(htname, itname)
+   4.3. sht_rm_name_re(htable=>regexp)
+   4.4. sht_rm_value_re(htable=>regexp)
+   4.5. sht_rm_name(htable, op, val)
+   4.6. sht_rm_value(htable, op, val)
+   4.7. sht_reset(htable)
+   4.8. sht_lock(htable=>key)
+   4.9. sht_unlock(htable=>key)
+   4.10. sht_iterator_start(iname, hname)
+   4.11. sht_iterator_end(iname)
+   4.12. sht_iterator_next(iname)
+   4.13. sht_has_name(htable, op, mval)
+   4.14. sht_has_str_value(htable, op, mval)
 
 4.1.  sht_print()
 
@@ -684,12 +714,24 @@ modparam("htable", "event_callback_mode", 1)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.19. sht_print usage
+   Example 1.20. sht_print usage
 ...
 sht_print();
 ...
 
-4.2.  sht_rm_name_re(htable=>regexp)
+4.2.  sht_rm(htname, itname)
+
+   Delete the item with the name 'itname' from hash table 'htname'. This
+   API function equivaluent to '$sht(htname=>itname) = $null'.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.21. sht_rm usage
+...
+sht_rm("ha", "test"");
+...
+
+4.3.  sht_rm_name_re(htable=>regexp)
 
    Delete all entries in the htable that match the name against regular
    expression.
@@ -697,12 +739,12 @@ sht_print();
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.20. sht_rm_name_re usage
+   Example 1.22. sht_rm_name_re usage
 ...
 sht_rm_name_re("ha=>.*");
 ...
 
-4.3.  sht_rm_value_re(htable=>regexp)
+4.4.  sht_rm_value_re(htable=>regexp)
 
    Delete all entries in the htable that match the value against regular
    expression.
@@ -710,12 +752,12 @@ sht_rm_name_re("ha=>.*");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.21. sht_rm_value_re usage
+   Example 1.23. sht_rm_value_re usage
 ...
 sht_rm_value_re("ha=>.*");
 ...
 
-4.4.  sht_rm_name(htable, op, val)
+4.5.  sht_rm_name(htable, op, val)
 
    Delete all entries in the htable that match the name against the val
    parameter.
@@ -728,12 +770,12 @@ sht_rm_value_re("ha=>.*");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. sht_rm_name usage
+   Example 1.24. sht_rm_name usage
 ...
 sht_rm_name("ha", "re", ".*");
 ...
 
-4.5.  sht_rm_value(htable, op, val)
+4.6.  sht_rm_value(htable, op, val)
 
    Delete all entries in the htable that match the value against the val
    parameter.
@@ -746,24 +788,24 @@ sht_rm_name("ha", "re", ".*");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. sht_rm_value usage
+   Example 1.25. sht_rm_value usage
 ...
 sht_rm_value("ha", "re", ".*");
 ...
 
-4.6.  sht_reset(htable)
+4.7.  sht_reset(htable)
 
    Delete all entries in the htable. The name of the hash table can be a
    dynamic string with variables.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.24. sht_reset usage
+   Example 1.26. sht_reset usage
 ...
 sht_reset("ha$var(x)");
 ...
 
-4.7.  sht_lock(htable=>key)
+4.8.  sht_lock(htable=>key)
 
    Lock the slot in htable corresponding to the key item. Note that the
    locking is re-entrant for the process, therefore the lock and unlock
@@ -771,12 +813,12 @@ sht_reset("ha$var(x)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. sht_lock usage
+   Example 1.27. sht_lock usage
 ...
 sht_lock("ha=>test");
 ...
 
-4.8.  sht_unlock(htable=>key)
+4.9.  sht_unlock(htable=>key)
 
    Unlock the slot in htable corresponding to the key item. Note that the
    locking is re-entrant for the process, therefore the lock and unlock
@@ -784,14 +826,14 @@ sht_lock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. sht_unlock usage
+   Example 1.28. sht_unlock usage
 ...
 sht_lock("ha=>test");
 $sht(ha=>test) = $sht(ha=>test) + 10;
 sht_unlock("ha=>test");
 ...
 
-4.9.  sht_iterator_start(iname, hname)
+4.10.  sht_iterator_start(iname, hname)
 
    Start an iterator for hash table named by the value of parameter hname.
    The parameter iname is used to identify the iterator. There can be up
@@ -806,12 +848,12 @@ sht_unlock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.27. sht_iterator_start usage
+   Example 1.29. sht_iterator_start usage
 ...
 sht_iterator_start("i1", "h1");
 ...
 
-4.10.  sht_iterator_end(iname)
+4.11.  sht_iterator_end(iname)
 
    Close the iterator identified by iname parameter and release the hash
    table slot acquired by the iterator. The iname value must be the same
@@ -821,12 +863,12 @@ sht_iterator_start("i1", "h1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.28. sht_iterator_end usage
+   Example 1.30. sht_iterator_end usage
 ...
 sht_iterator_end("i1");
 ...
 
-4.11.  sht_iterator_next(iname)
+4.12.  sht_iterator_next(iname)
 
    Move the iterator to the next item in hash table. It must be called
    also after sht_iterator_start() to get the first item in the hash
@@ -843,13 +885,57 @@ sht_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.29. sht_iterator_next usage
+   Example 1.31. sht_iterator_next usage
 ...
     sht_iterator_start("i1", "h1");
     while(sht_iterator_next("i1")) {
         xlog("h1[$shtitkey(i1)] is: $shtitval(i1)\n");
     }
     sht_iterator_end("i1");
+...
+
+4.13.  sht_has_name(htable, op, mval)
+
+   Return greater than 0 (true) if the htable has an item that matches the
+   name against the mval parameter.
+
+   The op parameter can be:
+     * eq - match the val parameter as string equal expression.
+     * ne - match the val parameter as string not-equal expression.
+     * re - match the val parameter as regular expression.
+     * sw - match the val parameter as 'starts with' expression.
+
+   All parameters can be static strings or contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.32. sht_has_name usage
+...
+if(sht_has_name("ha", "eq", "alice")) {
+  ...
+}
+...
+
+4.14.  sht_has_str_value(htable, op, mval)
+
+   Return greater than 0 (true) if the htable has an item that matches the
+   string value against the mval parameter.
+
+   The op parameter can be:
+     * eq - match the val parameter as string equal expression.
+     * ne - match the val parameter as string not-equal expression.
+     * re - match the val parameter as regular expression.
+     * sw - match the val parameter as 'starts with' expression.
+
+   All parameters can be static strings or contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.33. sht_has_name usage
+...
+if(sht_has_str_value("ha", "eq", "alice")) {
+  ...
+}
 ...
 
 5. Exported pseudo-variables

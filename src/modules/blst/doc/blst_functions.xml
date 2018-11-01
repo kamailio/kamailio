@@ -152,7 +152,9 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 	<example>
 		<title><function>blst_set_ignore</function> usage</title>
 		<programlisting>
+...
     blst_set_ignore(6); # ignore send and connect errors
+...
 		</programlisting>
 	</example>
 	</section>
@@ -181,7 +183,9 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 	<example>
 		<title><function>blst_clear_ignore</function> usage</title>
 	    <programlisting>
+...
     blst_clear_ignore(4); # ignore connect errors
+...
 		</programlisting>
 	</example>
 	</section>

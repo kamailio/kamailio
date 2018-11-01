@@ -99,18 +99,16 @@ static param_export_t params[] = {
 
 /** module exports */
 struct module_exports exports= {
-	"xhttp_rpc",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,		/* exported statistics */
-	0,		/* exported MI functions */
-	0,		/* exported pseudo-variables */
-	0,		/* extra processes */
-	mod_init,	/* module initialization function */
-	0,
-	0,
-	child_init	/* per-child init function */
+	"xhttp_rpc",		/* module name */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,				/* cmd (cfg function) exports */
+	params,				/* param exports */
+	0,					/* RPC method exports */
+	0,					/* pv exports */
+	0,					/* response handling function */
+	mod_init,			/* module init function */
+	child_init,			/* per-child init function */
+	0					/* module destroy function */
 };
 
 

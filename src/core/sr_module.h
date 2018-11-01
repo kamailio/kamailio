@@ -42,30 +42,11 @@
 #include "counters.h"
 #include "pvar.h"
 
-
-
-#if defined KAMAILIO_MOD_INTERFACE || defined OPENSER_MOD_INTERFACE || \
-	defined MOD_INTERFACE_V1
-
-#define MODULE_INTERFACE_VER 1
-#define cmd_export_t kam_cmd_export_t
-#define module_exports kam_module_exports
-
-#elif defined SER_MOD_INTERFACE || defined MOD_INTERFACE_V0
-
-#define MODULE_INTERFACE_VER 0
-#define cmd_export_t ser_cmd_export_t
-#define module_exports ser_module_exports
-
-#else
-
-/* do nothing for core */
-
-#endif
+#define MODULE_INTERFACE_VER 4
 
 /**
  * @brief type used for the mod_register function export
- * 
+ *
  * mod_register is a function called when loading a module
  * (if present), prior to registering the module exports.
  * @param path path to the module, including file name
@@ -77,13 +58,14 @@
  * @return 0 on success, -1 on error, all the other values are reserved
  *                      for future use (<0 meaning error and >0 success)
  */
-typedef  int (*mod_register_function)(char* path, int* dlflags, void* reserved1, void* reserved2);
+typedef  int (*mod_register_function)(char* path, int* dlflags, void* reserved1,
+		void* reserved2);
 
 typedef  struct module_exports* (*module_register)(void);
 
 /**
  * @brief main two parameter module function
- * 
+ *
  * Main two parameter module function, default and oldest version.
  * @param sip_msg SIP message
  * @param param1 first parameter
@@ -99,7 +81,7 @@ typedef  int (*cmd_function6)(struct sip_msg*,  char*, char*, char*,
 												char*, char*, char*);
 /**
  * @brief variable number of parameter module function
- * 
+ *
  * Variable number of parameter module function, takes as param the sip_msg,
  * extra parameters number and a pointer to an array of parameters
  * @param sip_msg SIP message
@@ -207,19 +189,9 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 	char *module_flags=SER_COMPILE_FLAGS; \
 	unsigned int module_interface_ver=MODULE_INTERFACE_VER;
 
-/** ser version */
-struct ser_cmd_export_ {
-	char* name;             /**< null terminated command name */
-	cmd_function function;  /**< pointer to the corresponding function */
-	int param_no;           /**< number of parameters used by the function */
-	fixup_function fixup;   /**< pointer to the function called to "fix" the
-							   parameters */
-	unsigned int flags;     /**< Function flags */
-};
 
-
-/** kamailo/openser version */
-struct kam_cmd_export_ {
+/** kamailio/openser version */
+typedef struct cmd_export {
 	char* name;             /**< null terminated command name */
 	cmd_function function;  /**< pointer to the corresponding function */
 	int param_no;           /**< number of parameters used by the function */
@@ -228,10 +200,10 @@ struct kam_cmd_export_ {
 	free_fixup_function free_fixup; /**< function called to free the "fixed"
 									   parameters */
 	unsigned int flags;     /**< Function flags */
-};
+} cmd_export_t;
 
 /** sip-router version */
-struct sr31_cmd_export_ {
+typedef struct ksr_cmd_export {
 	char* name;             /**< null terminated command name */
 	cmd_function function;  /**< pointer to the corresponding function */
 	int param_no;           /**< number of parameters used by the function */
@@ -242,24 +214,14 @@ struct sr31_cmd_export_ {
 	unsigned int flags;     /**< Function flags */
 	unsigned int fixup_flags;
 	void* module_exports; /**< pointer to module structure */
-};
+} ksr_cmd_export_t;
 
 
-/** members situated at the same place in memory in both ser & kamailio
-   cmd_export */
-struct cmd_export_common_ {
-	char* name;
-	cmd_function function;
-	int param_no;
-	fixup_function fixup;
-};
-
-
-struct param_export_ {
+typedef struct param_export {
 	char* name;             /**< null terminated param. name */
 	modparam_t type;        /**< param. type */
 	void* param_pointer;    /**< pointer to the param. memory location */
-};
+} param_export_t;
 
 
 /*
@@ -304,142 +266,59 @@ typedef struct fparam {
 	void *fixed;
 } fparam_t;
 
-
-typedef struct param_export_ param_export_t;
-typedef struct ser_cmd_export_ ser_cmd_export_t;
-typedef struct kam_cmd_export_ kam_cmd_export_t;
-typedef struct cmd_export_common_ cmd_export_common_t;
-typedef struct sr31_cmd_export_ sr31_cmd_export_t;
-
-
-/** ser module exports version */
-struct ser_module_exports {
-	char* name;			/**< null terminated module name */
-	ser_cmd_export_t* cmds;         /**< null terminated array of the exported
-									   commands */
-	rpc_export_t* rpc_methods;      /**< null terminated array of exported rpc methods */
-	param_export_t* params;         /**< null terminated array of the exported
-									   module parameters */
-	init_function init_f;           /**< Initialization function */
-	response_function response_f;   /**< function used for responses,
-									   returns yes or no; can be null */
-	destroy_function destroy_f;     /**< function called when the module should
-									   be "destroyed", e.g: on ser exit;
-									   can be null */
-	onbreak_function onbreak_f;
-	child_init_function init_child_f;  /**< function called by all processes
-										  after the fork */
-};
-
-
-/** kamailio/openser proc_export (missing from ser) */
-typedef void (*mod_proc)(int no);
-
-typedef int (*mod_proc_wrapper)(void);
-
-struct proc_export_ {
-	char *name;
-	mod_proc_wrapper pre_fork_function;
-	mod_proc_wrapper post_fork_function;
-	mod_proc function;
-	unsigned int no;
-};
-
-typedef struct proc_export_ proc_export_t;
-
-typedef void nn_export_t;
-
-/** kamailio/openser module exports version */
-struct kam_module_exports {
-	char* name;				/**< null terminated module name */
-	unsigned int dlflags;			/**< flags for dlopen  */
-	kam_cmd_export_t* cmds;			/**< null terminated array of the exported
-									   commands */
-	param_export_t* params;			/**< null terminated array of the exported
-									   module parameters */
-	stat_export_t* stats;			/**< null terminated array of the exported
-									  module statistics */
-	nn_export_t* nn_cmds;			/**< null terminated array of the exported
-									  NN functions */
-	pv_export_t* items;				/*!< null terminated array of the exported
-									   module items (pseudo-variables) */
-	proc_export_t* procs;			/**< null terminated array of the
-									  additional processes required by the
-									  module */
-	init_function init_f;			/**< Initialization function */
-	response_function response_f;		/**< function used for responses,
-									   returns yes or no; can be null */
-	destroy_function destroy_f;			/**< function called when the module should
-									   be "destroyed", e.g: on ser exit;
-									   can be null */
-	child_init_function init_child_f;	/**< function called by all processes
-										  after the fork */
-};
-
-
-
-/**
- * @brief sr/ser 3.1+ module exports version
- *
- * sr/ser 3.1+ module exports version, Includes ser and kamailio versions,
- * re-arraranged + some extras.
- * @note Some of the members will be obsoleted and are kept only for
- * backward compatibility (avoid re-writing all the modules exports
- * declarations).
- */
-struct sr31_module_exports {
-	char* name;			/**< null terminated module name */
-	sr31_cmd_export_t* cmds;	/**< null terminated array of the exported
-									   commands */
-	param_export_t* params;         /**< null terminated array of the exported
-									   module parameters */
-	init_function init_f;           /**< Initialization function */
-	response_function response_f;   /**< function used for responses,
-									   returns yes or no; can be null */
-	destroy_function destroy_f;     /**< function called when the module should
-									   be "destroyed", e.g: on ser exit;
-									   can be null */
-	onbreak_function onbreak_f;
-	child_init_function init_child_f;/**< function called by all processes
-										  after the fork */
-	unsigned int dlflags;		/**< flags for dlopen */
-	/* ser specific exports
-	   (to be obsoleted and replaced by register_...) */
-	rpc_export_t* rpc_methods;	/**< null terminated array of exported
-							rpc methods */
-	/* kamailio specific exports
-	   (to be obsoleted and replaced by register_...) */
-	stat_export_t* stats;			/**< null terminated array of the exported
-									  module statistics */
-	nn_export_t* nn_cmds;			/**< null terminated array of the exported
-									  NN functions */
-	pv_export_t* items;			/**< null terminated array of the exported
-									   module items (pseudo-variables) */
-	proc_export_t* procs;			/**< null terminated array of the
-									  additional processes required by the
-									  module */
-};
-
-
-
-/** module exports in the same place in memory in both ser & kamailio */
-struct module_exports_common {
+/** kamailio module exports version */
+typedef struct module_exports {
+	/**< null terminated module name */
 	char* name;
-};
+	/**< flags for dlopen  */
+	unsigned int dlflags;
+	/**< null terminated array of the exported commands (config functions)*/
+	cmd_export_t* cmds;
+	/**< null terminated array of the exported module parameters */
+	param_export_t* params;
+	/**< null terminated array of exported rpc methods */
+	rpc_export_t* rpc_methods;
+	/*!< null terminated array of the exported module items (pseudo-variables) */
+	pv_export_t* pv_items;
+	/**< function used for responses, returns yes or no; can be null */
+	response_function response_f;
+	/**< Initialization function */
+	init_function init_mod_f;
+	/**< function called by all processes after the fork */
+	child_init_function init_child_f;
+	/**< function called when the module is "destroyed" (on server shut down) */
+	destroy_function destroy_mod_f;
+} module_exports_t;
 
 
-union module_exports_u {
-		struct module_exports_common c; /**< common members for all the versions */
-		struct ser_module_exports v0;
-		struct kam_module_exports v1;
-};
-
+/** kamailio module exports version coverted for core operations */
+typedef struct ksr_module_exports {
+	/**< null terminated module name */
+	char* name;
+	/**< flags for dlopen  */
+	unsigned int dlflags;
+	/**< null terminated array of the exported commands (config functions)*/
+	ksr_cmd_export_t* cmds;
+	/**< null terminated array of the exported module parameters */
+	param_export_t* params;
+	/**< null terminated array of exported rpc methods */
+	rpc_export_t* rpc_methods;
+	/*!< null terminated array of the exported module items (pseudo-variables) */
+	pv_export_t* pv_items;
+	/**< function used for responses, returns yes or no; can be null */
+	response_function response_f;
+	/**< Initialization function */
+	init_function init_mod_f;
+	/**< function called by all processes after the fork */
+	child_init_function init_child_f;
+	/**< function called when the module is "destroyed" (on server shut down) */
+	destroy_function destroy_mod_f;
+} ksr_module_exports_t;
 
 typedef struct sr_module {
 	char* path;
 	void* handle;
-	unsigned int orig_mod_interface_ver;
-	struct sr31_module_exports exports;
+	ksr_module_exports_t exports;
 	struct sr_module* next;
 } sr_module_t;
 
@@ -450,8 +329,7 @@ extern int mod_response_cbk_no; /**< size of reponse callbacks array */
 
 int register_builtin_modules(void);
 int load_module(char* path);
-sr31_cmd_export_t* find_export_record(char* name, int param_no, int flags,
-										unsigned *ver);
+ksr_cmd_export_t* find_export_record(char* name, int param_no, int flags);
 cmd_function find_export(char* name, int param_no, int flags);
 cmd_function find_mod_export(char* mod, char* name, int param_no, int flags);
 rpc_export_t* find_rpc_export(char* name, int flags);
@@ -473,11 +351,13 @@ sr_module_t* get_loaded_modules(void);
  * @param param_type parameter type
  * @return parameter address in memory, if there is no such parameter, NULL is returned
  */
-void* find_param_export(struct sr_module* mod, char* name, modparam_t type_mask, modparam_t *param_type);
+void* find_param_export(struct sr_module* mod, char* name, modparam_t type_mask,
+		modparam_t *param_type);
 
 
 /** API function to get other parameters from fixup */
-action_u_t *fixup_get_param(void **cur_param, int cur_param_no, int required_param_no);
+action_u_t *fixup_get_param(void **cur_param, int cur_param_no,
+		int required_param_no);
 int fixup_get_param_count(void **cur_param, int cur_param_no);
 
 int fix_flag( modparam_t type, void* val,
@@ -618,7 +498,8 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param);
  * @param flags flags to indicate destinations
  * @return 0 on success, 1 on error, e.g. cannot get value
  */
-int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, unsigned int *flags);
+int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param,
+		unsigned int *flags);
 
 /**
  * @brief Get the function parameter value as compiled regular expression

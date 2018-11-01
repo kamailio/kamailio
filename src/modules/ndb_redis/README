@@ -355,6 +355,10 @@ modparam("ndb_redis", "allow_dynamic_nodes", 1)
    The first value[n] references the element in the first array, while the
    next key references an element of the referenced array.
 
+   The result type can be compared with $redisd(key) variable to test its
+   value. The key can be: rpl_str, rpl_arr, rpl_int, rpl_err, rpl_sts,
+   rpl_nil.
+
    Example 1.10. redis_cmd usage
 ...
 if(redis_cmd("srvN", "INCR cnt", "r")) {

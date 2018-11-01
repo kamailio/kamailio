@@ -152,6 +152,7 @@ Olle E. Johansson
               9.7. dlg.profile_get_size
               9.8. dlg.profile_list
               9.9. dlg.bridge_dlg
+              9.10. dlg.stats_active
 
         10. Exported Variables
 
@@ -381,6 +382,7 @@ Chapter 1. Admin Guide
         9.7. dlg.profile_get_size
         9.8. dlg.profile_list
         9.9. dlg.bridge_dlg
+        9.10. dlg.stats_active
 
    10. Exported Variables
 
@@ -1871,6 +1873,7 @@ if(has_totag()) {
    9.7. dlg.profile_get_size
    9.8. dlg.profile_list
    9.9. dlg.bridge_dlg
+   9.10. dlg.stats_active
 
 9.1. dlg.list
 
@@ -1941,12 +1944,12 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
    Parameters:
      * callid - callid of dialog to be terminated
      * from_tag - from tag of the dialog to terminated
-     * totag - to tag of the dialog to terminated
+     * to_tag - to tag of the dialog to terminated
 
    The command works only for confirmed dialogs.
 
    RPC Command Format:
-                kamcmd dlg.dlg_terminate_dlg callid12345 fromtag123 totag123
+                kamcmd dlg.terminate_dlg callid12345 fromtag123 totag123
 
 9.6. dlg.end_dlg
 
@@ -2018,12 +2021,43 @@ kamcmd dlg.profile_list inbound_calls
    Parameters:
      * from - SIP address to initiate the call
      * to - SIP address to refer 'from' to
-     * op (optional) - outbound proxy SIP address
-     * body (optional) - SDP body for initial INVITE
+     * op (optional) - outbound proxy SIP address. If its value is set to
+       '.' (dot), then it is ignored (like it would not have been
+       provided).
+     * body (optional) - SDP body for initial INVITE. If its value is set
+       to '.' (dot), then it is ignored (like it would not have been
+       provided). If body is not set via RPC command parameter, then an
+       internal generated SDP with G711a and G711u is used. If its value
+       is set to '' (empty string) or '_' (underline), then the INVITE is
+       sent without an SDP body.
 
    RPC Command Format:
 ...
 kamcmd dlg.bridge_dlg _from_ _to_ _op_
+...
+
+9.10. dlg.stats_active
+
+   Get stats about active dialogs by scanning internal list of dialogs
+   (not relying on core stats framework).
+
+   Name: dlg.stats_active
+
+   Parameters: none.
+
+   Returned fields
+     * starting - initial INVITE has been processed, no ringing or 1xx has
+       been received.
+     * connecting - initial INVITE was forwarded and rining or 1xx has
+       been received.
+     * answering - initial INVITE received 200ok, but ACK was not handled
+       yet.
+     * ongoing - ongoing active dialog, after the ACK was processed.
+     * all - all active dialogs, respectively the sum of the above values.
+
+   RPC Command Format:
+...
+kamcmd dlg.stats_active
 ...
 
 10. Exported Variables

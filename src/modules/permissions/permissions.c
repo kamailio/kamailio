@@ -141,6 +141,8 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE},
 	{"allow_trusted",  (cmd_function)allow_trusted_2,  2, fixup_spve_spve,
 		fixup_free_spve_spve, ANY_ROUTE},
+	{"allow_trusted",  (cmd_function)allow_trusted_3,  3, fixup_spve_all,
+		fixup_free_spve_all, ANY_ROUTE},
 	{"allow_uri",      (cmd_function)allow_uri, 2, double_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_address",  (cmd_function)w_allow_address, 3, fixup_allow_address,
@@ -187,18 +189,16 @@ static param_export_t params[] = {
 
 /* Module interface */
 struct module_exports exports = {
-	"permissions",
+	"permissions",   /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,      /* Exported functions */
-	params,    /* Exported parameters */
-	0,         /* exported statistics */
-	0,         /* exported MI functions */
-	0,         /* exported pseudo-variables */
-	0,         /* extra processes */
-	mod_init,  /* module initialization function */
-	0,         /* response function */
-	mod_exit,  /* destroy function */
-	child_init /* child initialization function */
+	cmds,            /* Exported functions */
+	params,          /* Exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module initialization function */
+	child_init,      /* child initialization function */
+	mod_exit         /* destroy function */
 };
 
 
@@ -1032,6 +1032,16 @@ static sr_kemi_t sr_kemi_permissions_exports[] = {
 	{ str_init("permissions"), str_init("allow_address"),
 		SR_KEMIP_INT, allow_address,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("permissions"), str_init("allow_source_address_group"),
+		SR_KEMIP_INT, ki_allow_source_address_group,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("permissions"), str_init("allow_address_group"),
+		SR_KEMIP_INT, ki_allow_address_group,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

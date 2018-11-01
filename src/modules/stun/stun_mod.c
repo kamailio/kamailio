@@ -37,18 +37,16 @@ static int mod_init(void);
 static int stun_msg_receive(sr_event_param_t *evp);
 
 struct module_exports exports = {
-	"stun",
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	0,			/* Exported functions */
-	0,			/* Exported parameters */
-	0,			/* exported statistics */
-	0,			/* exported MI functions */
-	0,			/* exported pseudo-variables */
-	0,			/* extra processes */
-	mod_init,		/* module initialization function */
-	0,			/* response function */
-	0,			/* destroy function */
-	0			/* per-child initialization function */
+	"stun",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	0,               /* exported functions */
+	0,               /* exported parameters */
+	0,               /* exported RPC functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child initialization function */
+	0                /* destroy function */
 };
 
 static int mod_init(void)

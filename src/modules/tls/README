@@ -89,9 +89,11 @@ Olle E. Johansson
 
               14.1. event_route[tls:connection-out]
 
+        15. TLS With Database Backend
+
    List of Examples
 
-   1.1. Quick start config
+   1.1. Quick Start Basic Config
    1.2. Compiling TLS with Debug Messages
    1.3. Set tls_method parameter
    1.4. Set certificate parameter
@@ -130,7 +132,7 @@ Olle E. Johansson
    1.37. Set session_cache parameter
    1.38. Set session_id parameter
    1.39. Set renegotiation parameter
-   1.40. Short config file
+   1.40. Sample TLS Config File
    1.41. Set config parameter
    1.42. Change and reload the TLS configuration at runtime
    1.43. Set xavp_cfg parameter
@@ -210,6 +212,8 @@ Chapter 1. Admin Guide
 
         14.1. event_route[tls:connection-out]
 
+   15. TLS With Database Backend
+
 1. Overview
 
    This module implements the TLS transport for Kamailio using the OpenSSL
@@ -223,24 +227,38 @@ Chapter 1. Admin Guide
 
 2. Quick Start
 
-   Make sure you have a proper certificate and private key and either use
-   the certificate and private_key module parameters, or make sure the
-   certificate and key are in the same PEM file, named cert.pem an placed
-   in [your-cfg-install-prefix]/etc/kamailio/. Don't forget to load the
-   tls module and to enable TLS (add enable_tls=yes to your config).
+   The default kamailio.cfg file has basic tls support included, it has to
+   be enabled with "#!define WITH_TLS" directive.
 
-   Example 1.1. Quick start config
+   The most important parameters to set the path to the public certificate
+   and private key files. You can either have them in different file or in
+   the same file in PEM format. The parameters for them are certificate
+   and private_key. They can be given as modparam or or provided in the
+   profiles of tls.cfg file.
+
+   When installing tls module of kamailio, a sample 'tls.cfg' file is
+   deployed in the same folder with 'kamailio.cfg', along with freshly
+   generated self signed certificates.
+
+   HINT: be sure you have enable_tls=yes to your kamailio.cfg.
+
+   Example 1.1. Quick Start Basic Config
 #...
-loadmodule "modules/tls/tls.so"
+loadmodule "sl.so"
+loadmodule "tls.so"
 
-modparam("tls", "private_key", "./andrei-test.pem")
-modparam("tls", "certificate", "./andrei-test.pem")
+modparam("tls", "private_key", "./server-test.pem")
+modparam("tls", "certificate", "./server-test.pem")
 modparam("tls", "ca_list", "./calist.pem")
 
 enable_tls=yes
 
-route{
-        # ....
+request_route {
+        if(proto != TLS) {
+                sl_send_reply("403", "Accepting TLS Only");
+                exit;
+        }
+        ...
 }
 
 3. Important Notes
@@ -1231,17 +1249,23 @@ modparam("tls", "renegotiation", 1)
 
    The following parameters can be set in the config file, for each
    domain:
-     * tls_method
-     * verify_certificate
-     * require_certificate
-     * private_key
-     * certificate
-     * verify_depth
-     * ca_list
-     * crl
-     * cipher_list
-     * server_name
-     * server_id
+     * tls_method - (str) - TLS methods
+     * verify_certificate - (bool) - see modparam
+     * require_certificate - (bool) - see modparam
+     * private_key - (str) - see modparam
+     * certificate - (str) - see modparam
+     * verify_depth - (int) - see modparam
+     * ca_list - (str) - see modparam
+     * crl - (str) - see modparam
+     * cipher_list - (str) - see modparam
+     * server_name - (str) - SNI (server name identification)
+     * server_name_mode - (int) - how to match server_name
+     * server_id - (str) - server id
+
+   The value for server_name_mode specifies how to match the server_name
+   (SNI). If set to 1, match the domain and all its subdomains. If set to
+   2, match only the subdomains. If set to 0 (or anything else), match
+   only the domain given in server_name.
 
    The value for server_id can be any string, being used to match TLS
    client config profile, overriding the match on ip:port and server_name.
@@ -1259,7 +1283,28 @@ modparam("tls", "renegotiation", 1)
    when it initiates a new connection by itself (it connects to
    something).
 
-   Example 1.40. Short config file
+   The tls.cfg consists on a set of server and client TLS domain profiles.
+   A server TLS domain profile starts with [server:domain]. A client TLS
+   domain profile starts with [client:domain]. The tokens 'server' and
+   'client' are static values. The 'domain' part can be: 'ip:port' - the
+   IP address and port to match with the TLS connection; 'default' -
+   (static string) for client and server profiles to be used when no other
+   profile is matched; 'any' - (static string) for client and server
+   profiles to be matched based on 'server_name', no matter of IP and port
+   of the TLS connection.
+
+   There can be only one of each [server:default] and [client:default]
+   profile definitions. Other profiles can be defined many times with the
+   same domain ('ip:port' or 'any'), but in that case they must have
+   'server_name' set for matching SNI.
+
+   It is highly recommended to have [server:default] and [client:default]
+   profile definitions. They are needed when SNI is not yet available. If
+   SNI is provided, then the profile definition is searched again to match
+   on 'server_name'.
+
+   Example 1.40. Sample TLS Config File
+...
 [server:default]
 method = TLSv1
 verify_certificate = yes
@@ -1273,13 +1318,13 @@ crl = default_crl.pem
 verify_certificate = yes
 require_certificate = yes
 
-#more relaxed for connection on the loopback interface
+# more relaxed for connection on the loopback interface
 [server:127.0.0.1:5061]
-method = SSLv23
+method = TLSv1
 verify_certificate = yes
 require_certificate = no
-private_key = local_key.pem
-certificate = local_cert.pem
+private_key = local_kamailio_org_key.pem
+certificate = local_kamailio_org_cert.pem
 verify_depth = 3
 ca_list = local_ca.pem
 server_name = kamailio.org
@@ -1294,6 +1339,19 @@ ca_list = default_ca.pem
 crl = default_crl.pem
 server_name = kamailio.org
 server_id = kamailio.org
+
+# server profile on any address
+[server:any]
+method = TLSv1
+verify_certificate = yes
+require_certificate = no
+private_key = kamailio_net_key.pem
+certificate = kamailio_net_cert.pem
+verify_depth = 3
+ca_list = local_ca.pem
+server_name = kamailio.net
+server_name_mode = 1
+...
 
    For a more complete example check the tls.cfg distributed with the
    Kamailio source (kamailio/modules/tls/tls.cfg).
@@ -1405,14 +1463,16 @@ modparam("tls", "engine_algorithms", "ALL")
 
 11.1. is_peer_verified()
 
-   Returns true if the connection on which the message was received is TLS
-   , the peer presented an X509 certificate and the certificate chain
-   verified ok. It can be used only in a request route.
+   Returns true if the connection on which the message was received is
+   TLS, the peer presented an X509 certificate and the certificate chain
+   verified ok.
+
+   It can be used only in a request route.
 
    Example 1.45. is_peer_verified usage
-        if (proto==TLS && !is_peer_verified()){
+        if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
-                drop;
+                exit;
         }
 
 12. RPC Commands
@@ -1494,3 +1554,32 @@ event_route[tls:connection-out] {
   }
 }
 ...
+
+15. TLS With Database Backend
+
+   The module does not connect to database to fetch the values for the TLS
+   profile attributes. However the 'kamcli' tool can generate the tls.cfg
+   from a database table. Once generated, the 'tls.cfg' can be reloaded
+   with an RPC command.
+
+   The kamcli tool can be found at https://github.com/kamailio/kamcli.
+
+   The schema to create the database table can be seen with the command:
+   "kamcli tls sqlprint". The default name for database table is 'tlscfg'.
+
+   The most of the column names matches the corresponding attribute names
+   from a TLS profile.
+
+   The profile id in 'tls.cfg' is generated from
+   '[profile_type:profile_name]'. The 'profile_type' has to be 'server' or
+   'client'. The 'profile_name' can be 'default', 'any' or the pair of IP
+   address and port like 'ipaddr:port'.
+
+   The 'file_type' is specifying if the values for 'certificate',
+   'private_key', 'ca_list' and 'crl' are path to files on disc (when is
+   set to 0) or the content of the files (when set to 1). If 'file_type'
+   is 1, then 'kamcli' will create new files on disc and store the values
+   from the database in them. The target folder for 'tls.cfg' and the
+   certificates related files can be set via command options for 'kamcli
+   tls', for more details see the output of 'kamcli tls --help' and
+   'kamcli tls cfgprint --help'.

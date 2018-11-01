@@ -452,7 +452,7 @@ modparam("http_client", "tlsversion", 6)
    Example 1.14. Set authmethod parameter
 ...
 # Use the best of BASIC and Digest authentication.
-modparam("http_client", "authmetod", 3)
+modparam("http_client", "authmethod", 3)
 ...
 
 3.15. keep_connections (int)

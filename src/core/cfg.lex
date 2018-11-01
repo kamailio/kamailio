@@ -294,6 +294,7 @@ LOGPREFIXMODE	log_prefix_mode
 LOGENGINETYPE	log_engine_type
 LOGENGINEDATA	log_engine_data
 XAVPVIAPARAMS	xavp_via_params
+XAVPVIAFIELDS	xavp_via_fields
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
 ALIAS		alias
@@ -348,6 +349,7 @@ CHILDREN children
 SOCKET_WORKERS socket_workers
 ASYNC_WORKERS async_workers
 ASYNC_USLEEP async_usleep
+ASYNC_NONBLOCK async_nonblock
 CHECK_VIA	check_via
 PHONE2TEL	phone2tel
 MEMLOG		"memlog"|"mem_log"
@@ -453,7 +455,7 @@ REPLY_ROUTE_CALLBACK	"reply_route_callback"
 EVENT_ROUTE_CALLBACK	"event_route_callback"
 
 MAX_RECURSIVE_LEVEL		"max_recursive_level"
-MAX_BRANCHES_PARAM		"max_branches"|"max_branches"
+MAX_BRANCHES_PARAM		"max_branches"
 
 LATENCY_CFG_LOG			latency_cfg_log
 LATENCY_LOG				latency_log
@@ -696,6 +698,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGENGINETYPE}	{ yylval.strval=yytext; return LOGENGINETYPE; }
 <INITIAL>{LOGENGINEDATA}	{ yylval.strval=yytext; return LOGENGINEDATA; }
 <INITIAL>{XAVPVIAPARAMS}	{ yylval.strval=yytext; return XAVPVIAPARAMS; }
+<INITIAL>{XAVPVIAFIELDS}	{ yylval.strval=yytext; return XAVPVIAFIELDS; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
@@ -780,6 +783,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{SOCKET_WORKERS}	{ count(); yylval.strval=yytext; return SOCKET_WORKERS; }
 <INITIAL>{ASYNC_WORKERS}	{ count(); yylval.strval=yytext; return ASYNC_WORKERS; }
 <INITIAL>{ASYNC_USLEEP}	{ count(); yylval.strval=yytext; return ASYNC_USLEEP; }
+<INITIAL>{ASYNC_NONBLOCK}	{ count(); yylval.strval=yytext; return ASYNC_NONBLOCK; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{PHONE2TEL}	{ count(); yylval.strval=yytext; return PHONE2TEL; }
 <INITIAL>{MEMLOG}	{ count(); yylval.strval=yytext; return MEMLOG; }
@@ -1704,7 +1708,7 @@ static int sr_pop_yy_state()
 /* define/ifdef support */
 
 #define MAX_DEFINES    256
-static str pp_defines[MAX_DEFINES][2];
+static ksr_ppdefine_t pp_defines[MAX_DEFINES];
 static int pp_num_defines = 0;
 static int pp_define_type = 0;
 static int pp_define_index = -1;
@@ -1721,7 +1725,14 @@ str* pp_get_define_name(int idx)
 {
 	if(idx<0 || idx>=pp_num_defines)
 		return NULL;
-	return &pp_defines[idx][0];
+	return &pp_defines[idx].name;
+}
+
+ksr_ppdefine_t* pp_get_define(int idx)
+{
+	if(idx<0 || idx>=pp_num_defines)
+		return NULL;
+	return &pp_defines[idx];
 }
 
 static int pp_lookup(int len, const char * text)
@@ -1730,7 +1741,7 @@ static int pp_lookup(int len, const char * text)
 	int i;
 
 	for (i=0; i<pp_num_defines; i++)
-		if (STR_EQ(pp_defines[i][0], var))
+		if (STR_EQ(pp_defines[i].name, var))
 			return i;
 
 	return -1;
@@ -1763,11 +1774,12 @@ int pp_define(int len, const char * text)
 		} else if(pp_define_type==2) {
 			LM_DBG("redefining: %.*s\n", len, text);
 			pp_define_index = ppos;
-			if(pp_defines[ppos][1].s != NULL) {
-				pkg_free(pp_defines[ppos][1].s);
-				pp_defines[ppos][1].len = 0;
-				pp_defines[ppos][1].s = NULL;
+			if(pp_defines[ppos].value.s != NULL) {
+				pkg_free(pp_defines[ppos].value.s);
+				pp_defines[ppos].value.len = 0;
+				pp_defines[ppos].value.s = NULL;
 			}
+			pp_defines[ppos].dtype = pp_define_type;
 			return 0;
 		} else {
 			LM_CRIT("already defined: %.*s\n", len, text);
@@ -1775,16 +1787,17 @@ int pp_define(int len, const char * text)
 		}
 	}
 
-	pp_defines[pp_num_defines][0].len = len;
-	pp_defines[pp_num_defines][0].s = (char*)pkg_malloc(len+1);
-	if(pp_defines[pp_num_defines][0].s==NULL) {
+	pp_defines[pp_num_defines].name.len = len;
+	pp_defines[pp_num_defines].name.s = (char*)pkg_malloc(len+1);
+	if(pp_defines[pp_num_defines].name.s==NULL) {
 		LM_CRIT("no more memory to define: %.*s\n", len, text);
 		return -1;
 	}
-	memcpy(pp_defines[pp_num_defines][0].s, text, len);
-	pp_defines[pp_num_defines][0].s[len] = '\0';
-	pp_defines[pp_num_defines][1].len = 0;
-	pp_defines[pp_num_defines][1].s = NULL;
+	memcpy(pp_defines[pp_num_defines].name.s, text, len);
+	pp_defines[pp_num_defines].name.s[len] = '\0';
+	pp_defines[pp_num_defines].value.len = 0;
+	pp_defines[pp_num_defines].value.s = NULL;
+	pp_defines[pp_num_defines].dtype = pp_define_type;
 	pp_define_index = pp_num_defines;
 	pp_num_defines++;
 
@@ -1819,25 +1832,25 @@ int pp_define_set(int len, char *text)
 	}
 
 	ppos = pp_define_index;
-	if (pp_defines[ppos][0].s == NULL) {
+	if (pp_defines[ppos].name.s == NULL) {
 		LM_BUG("BUG: last define ID is null\n");
 		return -1;
 	}
 
-	if (pp_defines[ppos][1].s != NULL) {
+	if (pp_defines[ppos].value.s != NULL) {
 		LM_BUG("BUG: ID %.*s [%d] overwritten\n",
-			pp_defines[ppos][0].len,
-			pp_defines[ppos][0].s, ppos);
+			pp_defines[ppos].name.len,
+			pp_defines[ppos].name.s, ppos);
 		return -1;
 	}
 
-	pp_defines[ppos][1].len = len;
-	pp_defines[ppos][1].s = text;
+	pp_defines[ppos].value.len = len;
+	pp_defines[ppos].value.s = text;
 	LM_DBG("### setting define ID [%.*s] value [%.*s]\n",
-			pp_defines[ppos][0].len,
-			pp_defines[ppos][0].s,
-			pp_defines[ppos][1].len,
-			pp_defines[ppos][1].s);
+			pp_defines[ppos].name.len,
+			pp_defines[ppos].name.s,
+			pp_defines[ppos].value.len,
+			pp_defines[ppos].value.s);
 	return 0;
 }
 
@@ -1848,16 +1861,16 @@ static str *pp_define_get(int len, const char * text)
 
 	for (i=0; i<pp_num_defines; i++)
 	{
-		if (STR_EQ(pp_defines[i][0], var))
+		if (STR_EQ(pp_defines[i].name, var))
 		{
-			if(pp_defines[i][0].s!=NULL)
+			if(pp_defines[i].name.s!=NULL)
 			{
 				LM_DBG("### returning define ID [%.*s] value [%.*s]\n",
-					pp_defines[i][0].len,
-					pp_defines[i][0].s,
-					pp_defines[i][1].len,
-					pp_defines[i][1].s);
-				return &pp_defines[i][1];
+					pp_defines[i].name.len,
+					pp_defines[i].name.s,
+					pp_defines[i].value.len,
+					pp_defines[i].value.s);
+				return &pp_defines[i].value;
 			}
 			return NULL;
 		}

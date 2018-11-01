@@ -49,14 +49,12 @@
 		</listitem>
 		<listitem>
 			<para>
-			via sip version - (8) - not working because parser fails already 
-			when another version then 2.0 is present.
+			via sip version - (8) - disabled.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			via protocol - (16) - not working because parser fails already if an
-			unsupported transport is present.
+			via protocol - (16) - disabled.
 			</para>
 		</listitem>
 		<listitem>
@@ -86,7 +84,7 @@
 		<listitem>
 			<para>
 			proxy require - (512) - checks if all items of the proxy require header
-			are present in the list of the extensions from the module 
+			are present in the list of the extensions from the module
 			parameter proxy_require.
 			</para>
 		</listitem>
@@ -116,6 +114,12 @@
 			authorization header (8192) - checks if the Authorization is valid
 			if the scheme is "digest" (see "digest credentials" above), always
 			returns success for other schemes.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			first via header (16384) - checks if the first Via header is
+			available, can be parsed and has an address value.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -152,10 +156,10 @@
 		is the sum of the check numbers which should be executed by default.
 	</para>
 	<para>
-	    Default value is <quote>999</quote>. This resolves to the following list of
+	    Default value is <quote>3047</quote>. This resolves to the following list of
 		checks: ruri_sip_version (1), ruri_scheme (2), required_headers (4),
-		cseq_method (32), cseq_value (64), cotent_length (128), 
-		expires_value (256), proxy_require (512).
+		cseq_method (32), cseq_value (64), content_length (128), 
+		expires_value (256), proxy_require (512), digest credentials (2048).
 	</para>
 	<example>
 	    <title>Set <varname>default_checks</varname> parameter</title>
@@ -225,6 +229,27 @@ modparam("sanity", "autodrop", 1)
 	    </programlisting>
 	</example>
 	</section>
+
+	<section id="sanity.p.noreply">
+	<title><varname>noreply</varname> (int)</title>
+	<para>
+		If set to 1, then the module does not send a SIP reply internally in
+		case there is an error detected when performing the sanity checks.
+		There is the option to send the reply from config file with functions
+		from sl or tm module as well as sanity_reply() from this module.
+	</para>
+	<para>
+		Default value: 0.
+	</para>
+	<example>
+	    <title>Set <varname>noreply</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "noreply", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
 </section>
 
    <section id="sanity.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -243,6 +268,9 @@ modparam("sanity", "autodrop", 1)
 		In both cases, if one of the checks fails the module sends a precise error
 		reply via SL <function>send_reply()</function>. Thus there is no need to reply with a generic 
 		error message.
+	</para>
+	<para>
+		The parameters can be static integers or variables holding integer values.
 	</para>
 	<example>
 	    <title><function>sanity_check</function> usage</title>
@@ -295,6 +323,28 @@ if (method=="INVITE" && !sanity_check("1024", "6")) {
 ]]>
 		</programlisting>
 	</example>
-    </section>
+	</section>
+	<section id="sanity.f.sanity_reply">
+	    <title>
+		<function>sanity_reply()</function>
+	    </title>
+	<para>
+	Send a SIP reply using the code and reason text set internally by the module
+	when detecting errors while performing the sanity checks. It is done only
+	when parameter noreply is set to 1.
+	</para>
+	<example>
+		<title><function>sanity_reply</function> usage</title>
+		<programlisting>
+...
+if(!sanity_check("1024", "6")) {
+   xdbg("sanity checks failed\n");
+   sanity_reply();
+   exit;
+}
+...
+		</programlisting>
+	</example>
+	</section>
 </section>
 </chapter>

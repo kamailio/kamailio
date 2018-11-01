@@ -58,18 +58,16 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-	"log_custom",
+	"log_custom",   /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,
-	0,              /* exported MI functions */
+	cmds,           /* exported functions */
+	params,         /* exported parameters */
+	0,              /* exported RPC functions */
 	0,              /* exported pseudo-variables */
-	0,              /* extra processes */
-	mod_init,       /* module initialization function */
 	0,              /* response function */
-	mod_destroy,    /* destroy function */
-	child_init      /* per child init function */
+	mod_init,       /* module initialization function */
+	child_init,     /* per child init function */
+	mod_destroy    	/* destroy function */
 };
 
 /**
@@ -148,7 +146,9 @@ void _lc_core_log_udp(int lpriority, const char *format, ...)
 	n += snprintf(obuf + n, LC_LOG_MSG_MAX_SIZE - n, "(%d) ", my_pid());
 	n += vsnprintf(obuf + n, LC_LOG_MSG_MAX_SIZE - n, format, arglist);
 	va_end(arglist);
-	udp_send(&_lc_udp_dst, obuf, n);
+	if(udp_send(&_lc_udp_dst, obuf, n)!=0) {
+		LM_DBG("udp send returned non zero\n");
+	}
 }
 
 int ki_log_udp(sip_msg_t *msg, str *txt)

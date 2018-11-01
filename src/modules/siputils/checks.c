@@ -130,15 +130,30 @@ int w_has_totag(struct sip_msg* _m, char* _foo, char* _bar)
 }
 
 /*
+ * Check if pseudo variable contains a valid uri
+ */
+int is_uri(struct sip_msg* _m, char* _sp, char* _s2)
+{
+	sip_uri_t turi;
+	str uval;
+
+	if(fixup_get_svalue(_m, (gparam_t*)_sp, &uval)!=0) {
+		LM_ERR("cannot get parameter value\n");
+		return -1;
+	}
+	if(parse_uri(uval.s, uval.len, &turi)!=0) {
+		return -1;
+	}
+	return 1;
+}
+
+/*
  * Check if the username matches the username in credentials
  */
-int is_user(struct sip_msg* _m, char* _user, char* _str2)
+int ki_is_user(sip_msg_t *_m, str *suser)
 {
-	str* s;
 	struct hdr_field* h;
 	auth_body_t* c;
-
-	s = (str*)_user;
 
 	get_authorized_cred(_m->authorization, &h);
 	if (!h) {
@@ -157,12 +172,12 @@ int is_user(struct sip_msg* _m, char* _user, char* _str2)
 		return -1;
 	}
 
-	if (s->len != c->digest.username.user.len) {
+	if (suser->len != c->digest.username.user.len) {
 		LM_DBG("username length does not match\n");
 		return -1;
 	}
 
-	if (!memcmp(s->s, c->digest.username.user.s, s->len)) {
+	if (!memcmp(suser->s, c->digest.username.user.s, suser->len)) {
 		LM_DBG("username matches\n");
 		return 1;
 	} else {
@@ -171,28 +186,57 @@ int is_user(struct sip_msg* _m, char* _user, char* _str2)
 	}
 }
 
+int is_user(struct sip_msg* _m, char* _user, char* _str2)
+{
+	str suser;
 
+	if(fixup_get_svalue(_m, (gparam_t*)_user, &suser)<0) {
+		LM_ERR("failed to get user param\n");
+		return -1;
+	}
+
+	return ki_is_user(_m, &suser);
+}
 /*
  * Find if Request URI has a given parameter with no value
  */
 int uri_param_1(struct sip_msg* _msg, char* _param, char* _str2)
 {
-	return uri_param_2(_msg, _param, (char*)0);
+	str sparam;
+	if(fixup_get_svalue(_msg, (gparam_t*)_param, &sparam)<0) {
+		LM_ERR("failed to get parameter\n");
+		return -1;
+	}
+	return ki_uri_param_value(_msg, &sparam, NULL);
 }
-
 
 /*
  * Find if Request URI has a given parameter with matching value
  */
 int uri_param_2(struct sip_msg* _msg, char* _param, char* _value)
 {
-	str *param, *value, t;
+	str sparam;
+	str svalue;
+	if(fixup_get_svalue(_msg, (gparam_t*)_param, &sparam)<0) {
+		LM_ERR("failed to get parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_msg, (gparam_t*)_value, &svalue)<0) {
+		LM_ERR("failed to get value\n");
+		return -1;
+	}
+	return ki_uri_param_value(_msg, &sparam, &svalue);
+}
+
+/*
+ * Find if Request URI has a given parameter with matching value
+ */
+int ki_uri_param_value(sip_msg_t *_msg, str *sparam, str *svalue)
+{
+	str t;
 
 	param_hooks_t hooks;
 	param_t* params, *pit;
-
-	param = (str*)_param;
-	value = (str*)_value;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("ruri parsing failed\n");
@@ -207,11 +251,11 @@ int uri_param_2(struct sip_msg* _msg, char* _param, char* _value)
 	}
 
 	for (pit = params; pit; pit = pit->next) {
-		if ((pit->name.len == param->len) &&
-				(strncmp(pit->name.s, param->s, param->len) == 0)) {
-			if (value) {
-				if ((value->len == pit->body.len) &&
-						strncmp(value->s, pit->body.s, value->len) == 0) {
+		if ((pit->name.len == sparam->len) &&
+				(strncmp(pit->name.s, sparam->s, sparam->len) == 0)) {
+			if (svalue) {
+				if ((svalue->len == pit->body.len) &&
+						strncmp(svalue->s, pit->body.s, svalue->len) == 0) {
 					goto ok;
 				} else {
 					goto nok;
@@ -236,6 +280,13 @@ ok:
 }
 
 
+/**
+ *
+ */
+int ki_uri_param(sip_msg_t *_msg, str *sparam)
+{
+	return ki_uri_param_value(_msg, sparam, NULL);
+}
 
 /*
  * Adds a new parameter to Request URI
@@ -753,30 +804,61 @@ found:
  * Check if the parameter is a valid telephone number
  * - optional leading + followed by digits only
  */
-int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2)
+int ki_is_tel_number(sip_msg_t *msg, str *tval)
 {
-	str tval = {0, 0};
 	int i;
 
-	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0)
-	{
-		LM_ERR("cannot get parameter value\n");
-		return -1;
-	}
-	if(tval.len<1)
+	if(tval==NULL || tval->len<1)
 		return -2;
 
 	i = 0;
-	if(tval.s[0]=='+') {
-		if(tval.len<2)
+	if(tval->s[0]=='+') {
+		if(tval->len<2)
 			return -2;
-		if(tval.s[1]<'1' || tval.s[1]>'9')
+		if(tval->s[1]<'1' || tval->s[1]>'9')
 			return -2;
 		i = 2;
 	}
 
-	for(; i<tval.len; i++) {
-		if(tval.s[i]<'0' || tval.s[i]>'9')
+	for(; i<tval->len; i++) {
+		if(tval->s[i]<'0' || tval->s[i]>'9')
+			return -2;
+	}
+
+	return 1;
+}
+
+
+/*
+ * Check if the parameter is a valid telephone number
+ * - optional leading + followed by digits only
+ */
+int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2)
+{
+	str tval = {0, 0};
+
+	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0) {
+		LM_ERR("cannot get parameter value\n");
+		return -1;
+	}
+
+	return ki_is_tel_number(msg, &tval);
+}
+
+
+/*
+ * Check if the parameter contains decimal digits only
+ */
+int ki_is_numeric(sip_msg_t *msg, str *tval)
+{
+	int i;
+
+	if(tval==NULL || tval->len<=0)
+		return -2;
+
+	i = 0;
+	for(; i<tval->len; i++) {
+		if(tval->s[i]<'0' || tval->s[i]>'9')
 			return -2;
 	}
 
@@ -790,25 +872,36 @@ int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2)
 int is_numeric(sip_msg_t *msg, char *_sp, char* _s2)
 {
 	str tval = {0, 0};
-	int i;
 
-	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0) {
 		LM_ERR("cannot get parameter value\n");
 		return -1;
 	}
-	if(tval.len<=0)
+
+	return ki_is_numeric(msg, &tval);
+}
+
+
+/*
+ * Check if the parameter contains alphanumeric characters
+ */
+int ki_is_alphanum(sip_msg_t *msg, str *tval)
+{
+	int i;
+
+	if(tval==NULL || tval->len<=0)
 		return -2;
 
 	i = 0;
-	for(; i<tval.len; i++) {
-		if(tval.s[i]<'0' || tval.s[i]>'9')
-			return -2;
+	for(; i<tval->len; i++) {
+		if( !((tval->s[i]>='0' && tval->s[i]<='9')
+				|| (tval->s[i]>='A' && tval->s[i]<='Z')
+				|| (tval->s[i]>='a' && tval->s[i]<='z')) )
+			return -3;
 	}
 
 	return 1;
 }
-
 
 /*
  * Check if the parameter contains alphanumeric characters
@@ -816,21 +909,47 @@ int is_numeric(sip_msg_t *msg, char *_sp, char* _s2)
 int ksr_is_alphanum(sip_msg_t *msg, char *_sp, char* _s2)
 {
 	str tval = {0, 0};
-	int i;
 
 	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0) {
 		LM_ERR("cannot get parameter value\n");
 		return -1;
 	}
-	if(tval.len<=0)
+
+	return ki_is_alphanum(msg, &tval);
+}
+
+/*
+ * Check if the parameter contains alphanumeric characters or are part of
+ * the second parameter
+ */
+int ki_is_alphanumex(sip_msg_t *msg, str *tval, str *eset)
+{
+	int i;
+	int j;
+	int found;
+
+	if(tval==NULL || tval->len<=0)
 		return -2;
 
 	i = 0;
-	for(; i<tval.len; i++) {
-	if( !((tval.s[i]>='0' && tval.s[i]<='9')
-			|| (tval.s[i]>='A' && tval.s[i]<='Z')
-			|| (tval.s[i]>='z' && tval.s[i]<='z')) )
-		return -3;
+	for(; i<tval->len; i++) {
+		if( !((tval->s[i]>='0' && tval->s[i]<='9')
+				|| (tval->s[i]>='A' && tval->s[i]<='Z')
+				|| (tval->s[i]>='a' && tval->s[i]<='z')) ) {
+			if(eset==NULL || eset->len<=0) {
+				return -3;
+			}
+			found = 0;
+			for(j=0; j<eset->len; j++) {
+				if(tval->s[i]==eset->s[j]) {
+					found = 1;
+					break;
+				}
+			}
+			if(found==0) {
+				return -3;
+			}
+		}
 	}
 
 	return 1;
@@ -844,9 +963,6 @@ int ksr_is_alphanumex(sip_msg_t *msg, char *_sp, char* _se)
 {
 	str tval = {0, 0};
 	str eset = {0, 0};
-	int i;
-	int j;
-	int found;
 
 	if(fixup_get_svalue(msg, (gparam_t*)_sp, &tval)!=0) {
 		LM_ERR("cannot get tval parameter value\n");
@@ -857,29 +973,5 @@ int ksr_is_alphanumex(sip_msg_t *msg, char *_sp, char* _se)
 		return -1;
 	}
 
-	if(tval.len<=0)
-		return -2;
-
-	i = 0;
-	for(; i<tval.len; i++) {
-		if( !((tval.s[i]>='0' && tval.s[i]<='9')
-				|| (tval.s[i]>='A' && tval.s[i]<='Z')
-				|| (tval.s[i]>='z' && tval.s[i]<='z')) ) {
-			if(eset.len<=0) {
-				return -3;
-			}
-			found = 0;
-			for(j=0; j<eset.len; j++) {
-				if(tval.s[i]==eset.s[j]) {
-					found = 1;
-					break;
-				}
-			}
-			if(found==0) {
-				return -3;
-			}
-		}
-	}
-
-	return 1;
+	return ki_is_alphanumex(msg, &tval, &eset);
 }

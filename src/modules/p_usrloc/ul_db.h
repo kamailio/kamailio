@@ -56,6 +56,7 @@ typedef struct ul_master_db_set {
 } ul_master_db_set_t;
 
 extern int required_caps;
+extern ul_master_db_set_t mdb;
 
 int ul_db_init();
 

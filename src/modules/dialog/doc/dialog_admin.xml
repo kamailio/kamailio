@@ -2462,7 +2462,7 @@ if(has_totag()) {
 				<emphasis>from_tag</emphasis> -  from tag of the dialog to terminated
 			</para></listitem>
 			<listitem><para>
-				<emphasis>totag</emphasis> -  to tag of the dialog to terminated
+				<emphasis>to_tag</emphasis> -  to tag of the dialog to terminated
 			</para></listitem>
 		</itemizedlist>
 		<para>
@@ -2470,7 +2470,7 @@ if(has_totag()) {
 		</para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg.dlg_terminate_dlg callid12345 fromtag123 totag123
+		kamcmd dlg.terminate_dlg callid12345 fromtag123 totag123
 		</programlisting>
 		</section>
 		<section>
@@ -2581,11 +2581,17 @@ if(has_totag()) {
 				<emphasis>to</emphasis> - SIP address to refer 'from' to
 			</para></listitem>
 			<listitem><para>
-				<emphasis>op</emphasis> (optional) - outbound proxy SIP address
+				<emphasis>op</emphasis> (optional) - outbound proxy SIP address.
+				If its value is set to '.' (dot), then it is ignored (like it
+				would not have been provided).
 			</para></listitem>
 			<listitem><para>
 				<emphasis>body</emphasis> (optional) - SDP body for initial
-				INVITE
+				INVITE. If its value is set to '.' (dot), then it is ignored
+				(like it would not have been provided). If body is not set via
+				RPC command parameter, then an internal generated SDP with G711a
+				and G711u is used. If its value is set to '' (empty string) or
+				'_' (underline), then the INVITE is sent without an SDP body.
 			</para></listitem>
 		</itemizedlist>
 		<para>RPC Command Format:</para>
@@ -2595,8 +2601,46 @@ if(has_totag()) {
 ...
 		</programlisting>
 		</section>
-	</section>
 
+		<section id="dlg.r.stats_active">
+		<title>dlg.stats_active</title>
+		<para>
+			Get stats about active dialogs by scanning internal list of dialogs
+			(not relying on core stats framework).
+		</para>
+		<para>Name: <emphasis>dlg.stats_active</emphasis></para>
+		<para>Parameters: none.</para>
+		<para>Returned fields</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>starting</emphasis> - initial INVITE has been processed,
+				no ringing or 1xx has been received.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>connecting</emphasis> - initial INVITE was forwarded
+				and rining or 1xx has been received.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>answering</emphasis> - initial INVITE received 200ok,
+				but ACK was not handled yet.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>ongoing</emphasis> - ongoing active dialog, after the
+				ACK was processed.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>all</emphasis> - all active dialogs, respectively the
+				sum of the above values.
+			</para></listitem>
+		</itemizedlist>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; dlg.stats_active
+...
+		</programlisting>
+		</section>
+	</section>
 
 	<section>
 	<title>Exported Variables</title>

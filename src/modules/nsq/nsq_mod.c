@@ -24,28 +24,19 @@
  *
  */
 
+#include "../json/api.h"
 #include "nsq_mod.h"
 
 MODULE_VERSION
-
-static tr_export_t mod_trans[] = {
-	{ {"nsq", sizeof("nsq")-1}, nsq_tr_parse},
-	{ { 0, 0 }, 0 }
-};
 
 static pv_export_t nsq_mod_pvs[] = {
 	{{"nsqE", (sizeof("nsqE")-1)}, PVT_OTHER, nsq_pv_get_event_payload, 0, 0, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-static cmd_export_t cmds[] = {
-	{"nsq_pua_publish", (cmd_function) nsq_pua_publish, 1, 0, 0, ANY_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
-
 static param_export_t params[]=
 {
-	{"consumer_workers", INT_PARAM, &dbn_consumer_workers},
+	{"consumer_workers", INT_PARAM, &nsq_consumer_workers},
 	{"max_in_flight", INT_PARAM, &nsq_max_in_flight},
 	{"lookupd_address", PARAM_STR, &nsq_lookupd_address},
 	{"lookupd_port", INT_PARAM, &lookupd_port},
@@ -55,12 +46,6 @@ static param_export_t params[]=
 	{"nsqd_port", INT_PARAM, &nsqd_port},
 	{"consumer_event_key", PARAM_STR, &nsq_event_key},
 	{"consumer_event_subkey", PARAM_STR, &nsq_event_sub_key},
-	{"pua_include_entity", INT_PARAM, &dbn_include_entity},
-	{"presentity_table", PARAM_STR, &nsq_presentity_table},
-	{"db_url", PARAM_STR, &nsq_db_url},
-	{"pua_mode", INT_PARAM, &dbn_pua_mode},
-	{"json_escape_char", PARAM_STR, &nsq_json_escape_str},
-	{"db_table_lock_type", INT_PARAM, &db_table_lock_type},
 	{ 0, 0, 0 }
 };
 
@@ -114,17 +99,15 @@ static int nsq_add_topic_channel(modparam_t type, void *val)
 
 struct module_exports exports = {
 	"nsq",
-	DEFAULT_DLFLAGS,		/* dlopen flags */
-	cmds,					/* Exported functions */
-	params,					/* Exported parameters */
-	0,						/* exported statistics */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	0,			/* Exported functions */
+	params,			/* Exported parameters */
 	0,                      /* exported MI functions */
 	nsq_mod_pvs,            /* exported pseudo-variables */
-	0,						/* extra processes */
-	mod_init,				/* module initialization function */
-	0,						/* response function*/
-	mod_destroy,			/* destroy function */
-	mod_child_init			/* per-child init function */
+	0,			/* response function*/
+	mod_init,		/* module initialization function */
+	mod_child_init,		/* per-child init function */
+	mod_destroy		/* destroy function */
 };
 
 static int fire_init_event(int rank)
@@ -159,64 +142,23 @@ static int fire_init_event(int rank)
 
 static int mod_init(void)
 {
-	startup_time = (int) time(NULL);
-
-	if (dbn_pua_mode == 1) {
-		nsq_db_url.len = nsq_db_url.s ? strlen(nsq_db_url.s) : 0;
-		LM_DBG("db_url=%s/%d/%p\n", ZSW(nsq_db_url.s), nsq_db_url.len,nsq_db_url.s);
-		nsq_presentity_table.len = strlen(nsq_presentity_table.s);
-
-		if (nsq_db_url.len > 0) {
-
-			/* binding to database module  */
-			if (db_bind_mod(&nsq_db_url, &nsq_pa_dbf)) {
-				LM_ERR("Database module not found\n");
-				return -1;
-			}
-
-			if (!DB_CAPABILITY(nsq_pa_dbf, DB_CAP_ALL)) {
-				LM_ERR("Database module does not implement all functions"
-						" needed by NSQ module\n");
-				return -1;
-			}
-
-			nsq_pa_db = nsq_pa_dbf.init(&nsq_db_url);
-			if (!nsq_pa_db) {
-				LM_ERR("Connection to database failed\n");
-				return -1;
-			}
-
-			if (db_table_lock_type != 1) {
-				db_table_lock = DB_LOCKING_NONE;
-			}
-
-			nsq_pa_dbf.close(nsq_pa_db);
-			nsq_pa_db = NULL;
-		}
+	if(json_load_api(&json_api) < 0) {
+		LM_ERR("cannot bind to JSON API\n");
+		return -1;
 	}
-
-	LM_DBG("NSQ Workers per Topic/Channel: %d\n", dbn_consumer_workers);
+	LM_DBG("NSQ Workers per Topic/Channel: %d\n", nsq_consumer_workers);
 	if (!nsq_topic_channel_counter) {
 		nsq_topic_channel_counter = 1;
 	}
 	LM_DBG("NSQ Total Topic/Channel: %d\n", nsq_topic_channel_counter);
-	dbn_consumer_workers = dbn_consumer_workers * nsq_topic_channel_counter;
-	LM_DBG("NSQ Total Workers: %d\n", dbn_consumer_workers);
-	int total_workers = dbn_consumer_workers + 2;
+	nsq_consumer_workers = nsq_consumer_workers * nsq_topic_channel_counter;
+	LM_DBG("NSQ Total Workers: %d\n", nsq_consumer_workers);
+	int total_workers = nsq_consumer_workers + 2;
 
 	register_procs(total_workers);
 	cfg_register_child(total_workers);
 
 	return 0;
-}
-
-int mod_register(char *path, int *dlflags, void *p1, void *p2)
-{
-	if (nsq_tr_init_buffers() < 0) {
-		LM_ERR("failed to initialize transformations buffers\n");
-		return -1;
-	}
-	return register_trans_mod(path, mod_trans);
 }
 
 /**
@@ -257,7 +199,7 @@ static int mod_child_init(int rank)
 {
 	int pid;
 	int i;
-	int workers = dbn_consumer_workers / nsq_topic_channel_counter;
+	int workers = nsq_consumer_workers / nsq_topic_channel_counter;
 	int max_in_flight = 1;
 
 	if (nsq_max_in_flight > 1) {
@@ -304,24 +246,6 @@ static int mod_child_init(int rank)
 		}
 
 		return 0;
-	}
-
-	if (dbn_pua_mode == 1) {
-		if (nsq_pa_dbf.init == 0) {
-			LM_CRIT("child_init: database not bound\n");
-			return -1;
-		}
-		nsq_pa_db = nsq_pa_dbf.init(&nsq_db_url);
-		if (!nsq_pa_db) {
-			LM_ERR("child %d: unsuccessful connecting to database\n", rank);
-			return -1;
-		}
-
-		if (nsq_pa_dbf.use_table(nsq_pa_db, &nsq_presentity_table) < 0) {
-			LM_ERR( "child %d:unsuccessful use_table presentity_table\n", rank);
-			return -1;
-		}
-		LM_DBG("child %d: Database connection opened successfully\n", rank);
 	}
 
 	return 0;

@@ -499,12 +499,12 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 
 	switch(in->len)
 	{
-		case 3: 
+		case 3:
 			if(strncmp(in->s, "all", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else goto error;
 		break;
-		case 4: 
+		case 4:
 			if(strncmp(in->s, "ruri", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else if(strncmp(in->s, "turi", 4)==0)
@@ -526,7 +526,7 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 9;
 			else goto error;
 		break;
-		case 6: 
+		case 6:
 			if(strncmp(in->s, "method", 6)==0)
 				sp->pvp.pvn.u.isname.name.n = 7;
 			else if(strncmp(in->s, "callid", 6)==0)
@@ -537,7 +537,7 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 16;
 			else goto error;
 		break;
-		case 7: 
+		case 7:
 			if(strncmp(in->s, "evroute", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 8;
 			else if(strncmp(in->s, "apasswd", 7)==0)
@@ -655,8 +655,36 @@ void uac_req_run_event_route(sip_msg_t *msg, uac_send_info_t *tp, int rcode)
 	set_route_type(backup_rt);
 }
 
-/** 
- * TM callback function
+/**
+ * TM resend callback function
+ */
+void uac_resend_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
+{
+	uac_send_info_t *tp = NULL;
+
+	LM_DBG("tm callback with status %d\n", ps->code);
+
+	if(ps->param==NULL || *ps->param==0)
+	{
+		LM_DBG("callback param with message id not received\n");
+		goto done;
+	}
+	tp = (uac_send_info_t*)(*ps->param);
+
+	if(tp->evroute!=0) {
+		uac_req_run_event_route((ps->rpl==FAKED_REPLY)?NULL:ps->rpl,
+				tp, ps->code);
+	}
+
+done:
+	if(tp!=NULL)
+		shm_free(tp);
+	return;
+
+}
+
+/**
+ * TM send callback function
  */
 void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 {
@@ -753,11 +781,21 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	uac_r.ssock = (tp->s_sock.len <= 0) ? NULL : &tp->s_sock;
 	uac_r.dialog = &tmdlg;
 	uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
+	if(tp->evroute!=0) {
+		/* Callback function */
+		uac_r.cb  = uac_resend_tm_callback;
+		/* Callback parameter */
+		uac_r.cbp = (void*)tp;
+	}
 	ret = tmb.t_request_within(&uac_r);
 
 	if(ret<0) {
 		LM_ERR("failed to send request with authentication\n");
 		goto error;
+	}
+
+	if(tp->evroute!=0) {
+		return;
 	}
 
 done:

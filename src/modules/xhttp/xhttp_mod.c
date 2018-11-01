@@ -94,18 +94,16 @@ static param_export_t params[] = {
 
 /** module exports */
 struct module_exports exports= {
-	"xhttp",
+	"xhttp",         /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,          /* exported statistics */
-	0  ,        /* exported MI functions */
-	mod_pvs,    /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
-	0,
-	0,
-	0           /* per-child init function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* exported rpc functions */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
 
 static tr_export_t mod_trans[] = {
@@ -115,8 +113,8 @@ static tr_export_t mod_trans[] = {
 	{ { 0, 0 }, 0 }
 };
 
-/** 
- * 
+/**
+ *
  */
 static int mod_init(void)
 {
@@ -212,7 +210,7 @@ static char* xhttp_to_sip(sip_msg_t* msg, int* new_msg_len)
 	hp.host = &ip;
 	hp.port = &port;
 	init_dst_from_rcv(&dst, &msg->rcv);
-	via = via_builder(&via_len, &dst, 0, 0, &hp);
+	via = via_builder(&via_len, NULL, &dst, 0, 0, &hp);
 	if (via == 0)
 	{
 		LM_DBG("failed to build via\n");

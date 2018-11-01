@@ -207,7 +207,7 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 	<title>Exported Variables</title>
 		<itemizedlist>
 			<listitem>
-				<emphasis>$mqv(mqueue)</emphasis> - the most recent item key fetched from the specified mqueue
+				<emphasis>$mqk(mqueue)</emphasis> - the most recent item key fetched from the specified mqueue
 			</listitem>
 			<listitem>
 				<emphasis>$mqv(mqueue)</emphasis> - the most recent item value fetched from the specified mqueue

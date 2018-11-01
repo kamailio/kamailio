@@ -410,6 +410,14 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	session = add_sdp_session(_sdp, session_num, cnt_disp);
 	if (session == NULL) return -1;
 
+	/* Get sess-version */
+	tmpstr1.s = o1p;
+	tmpstr1.len = eat_line(o1p,m1p-o1p) - o1p;
+	if ( extract_sess_version(&tmpstr1, &session->o_sess_version) == -1 ) {
+		LM_ERR("can't extract origin sess-version from the message\n");
+		return -1;
+	}
+
 	/* Get origin IP */
 	tmpstr1.s = o1p;
 	tmpstr1.len = bodylimit - tmpstr1.s; /* limit is session limit text */

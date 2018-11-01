@@ -299,7 +299,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct dest_info dst;
 	char* tmp;
 	char *new_uri, *end, *crt;
-	sr31_cmd_export_t* cmd;
+	ksr_cmd_export_t* cmd;
 	int len;
 	int user;
 	struct sip_uri uri, next_hop;
@@ -1527,7 +1527,6 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 {
 	struct action* t;
 	int ret;
-	struct sr_module *mod;
 	unsigned int ms = 0;
 
 	ret=E_UNSPEC;
@@ -1574,7 +1573,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						"alert - action [%s (%d)]"
 						" cfg [%s:%d] took too long [%u ms]\n",
 						is_mod_func(t) ?
-							((cmd_export_common_t*)(t->val[0].u.data))->name
+							((cmd_export_t*)(t->val[0].u.data))->name
 							: "corefunc",
 						t->type, (t->cfile)?t->cfile:"", t->cline, ms);
 			}
@@ -1596,13 +1595,6 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 
 	h->rec_lev--;
 end:
-	/* process module onbreak handlers if present */
-	if (unlikely(h->rec_lev==0 && ret==0 &&
-					!(h->run_flags & IGNORE_ON_BREAK_R_F)))
-		for (mod=modules;mod;mod=mod->next)
-			if (unlikely(mod->exports.onbreak_f)) {
-				mod->exports.onbreak_f( msg );
-			}
 	return ret;
 
 
@@ -1624,7 +1616,7 @@ int run_actions_safe(struct run_act_ctx* h, struct action* a,
 	struct run_act_ctx ctx;
 	int ret;
 	int ign_on_break;
-	
+
 	/* start with a fresh action context */
 	init_run_actions_ctx(&ctx);
 	ctx.last_retcode = h->last_retcode;
@@ -1678,6 +1670,9 @@ int run_child_one_init_route(void)
 		rt = route_get(&event_rt, evname.s);
 	}
 	if((keng!=NULL) || (rt>=0 && event_rt.rlist[rt]!=NULL)) {
+		if (cfg_child_init()) {
+			return -1;
+		}
 		LM_DBG("executing event_route[%s] (%d)\n", evname.s, rt);
 		if(faked_msg_init()<0)
 			return -1;

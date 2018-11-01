@@ -998,6 +998,44 @@ static void core_ppdefines(rpc_t* rpc, void* c)
 	}
 }
 
+/**
+ *
+ */
+static const char* core_ppdefines_full_doc[] = {
+	"List preprocessor defines with full details", /* Documentation string */
+	0                               /* Method signature(s) */
+};
+
+/**
+ * list listen sockets for SIP server
+ */
+static void core_ppdefines_full(rpc_t* rpc, void* c)
+{
+	ksr_ppdefine_t *ppdef;
+	void *vp;
+	int i=0;
+
+	while((ppdef=pp_get_define(i))!=NULL && ppdef->name.s!=NULL) {
+		if (rpc->add(c, "{", &vp) < 0) {
+			rpc->fault(c, 500, "Server Failure");
+			return;
+		}
+		if(ppdef->value.s!=NULL) {
+			rpc->struct_add(vp, "SdS",
+					"name", &ppdef->name,
+					"type", ppdef->dtype,
+					"value", &ppdef->value);
+		} else {
+			rpc->struct_add(vp, "Sds",
+					"name", &ppdef->name,
+					"type", ppdef->dtype,
+					"value", "none");
+		}
+
+		i++;
+	}
+}
+
 /*
  * RPC Methods exported by core
  */
@@ -1034,8 +1072,9 @@ static rpc_export_t core_rpc_methods[] = {
 		0},
 	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc, 0},
 	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc, 0},
-	{"core.modules",           core_modules,           core_modules_doc,    RET_ARRAY},
-	{"core.ppdefines",         core_ppdefines,         core_ppdefines_doc,  RET_ARRAY},
+	{"core.modules",           core_modules,           core_modules_doc,         RET_ARRAY},
+	{"core.ppdefines",         core_ppdefines,         core_ppdefines_doc,       RET_ARRAY},
+	{"core.ppdefines_full",    core_ppdefines_full,    core_ppdefines_full_doc,  RET_ARRAY},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},
@@ -1044,7 +1083,7 @@ static rpc_export_t core_rpc_methods[] = {
 	{"dns.debug_all",      dns_cache_debug_all,       dns_cache_debug_all_doc,
 		0	},
 	{"dns.view",               dns_cache_view,        dns_cache_view_doc,
-		0	},
+		RET_ARRAY	},
 	{"dns.lookup",             dns_cache_rpc_lookup,  dns_cache_rpc_lookup_doc,
 		0	},
 	{"dns.delete_all",         dns_cache_delete_all,  dns_cache_delete_all_doc,

@@ -60,6 +60,7 @@ int add_notification_peer()
 	}
 	/* local node - only for self */
 	self_node->local = 1;
+	self_node->status = DMQ_NODE_ACTIVE;
 	return 0;
 error:
 	return -1;
@@ -96,18 +97,18 @@ int create_IP_uri(char **puri_list, int host_index, char *phost, int hostlen,
 
 	plist = puri_list[host_index];
 	if(puri->type == SIPS_URI_T) {
-		strncpy(plist, "sips:", 5);
+		memcpy(plist, "sips:", 5);
 		pos = 5;
 	} else {
-		strncpy(plist, "sip:", 4);
+		memcpy(plist, "sip:", 4);
 		pos = 4;
 	}
 	if(puri->user.s) {
-		strncpy(&plist[pos], puri->user.s, puri->user.len);
+		memcpy(&plist[pos], puri->user.s, puri->user.len);
 		pos += puri->user.len;
 		if(puri->passwd.s) {
 			plist[pos++] = ':';
-			strncpy(&plist[pos], puri->passwd.s, puri->passwd.len);
+			memcpy(&plist[pos], puri->passwd.s, puri->passwd.len);
 			pos += puri->passwd.len;
 		}
 		plist[pos++] = '@';
@@ -116,7 +117,7 @@ int create_IP_uri(char **puri_list, int host_index, char *phost, int hostlen,
 		LM_WARN("%s", perr);
 		return 0;
 	}
-	strncpy(&plist[pos], phost, hostlen);
+	memcpy(&plist[pos], phost, hostlen);
 	pos += hostlen;
 	if(puri->port_no) {
 		if((pos + 6) > MAXDMQURILEN) {
@@ -132,7 +133,7 @@ int create_IP_uri(char **puri_list, int host_index, char *phost, int hostlen,
 			return 0;
 		}
 		plist[pos++] = ';';
-		strncpy(&plist[pos], puri->params.s, puri->params.len);
+		memcpy(&plist[pos], puri->params.s, puri->params.len);
 		pos += puri->params.len;
 	}
 	plist[pos] = '\0';
@@ -411,7 +412,7 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 			update_list->nodes = cur;
 			update_list->count++;
 			total_nodes++;
-		} else if(find->uri.params.s && ret->status != find->status) {
+		} else if(!ret->local && find->uri.params.s && ret->status != find->status) {
 			LM_DBG("updating status on %.*s from %d to %d\n", STR_FMT(&tmp_uri),
 					ret->status, find->status);
 			ret->status = find->status;
@@ -533,16 +534,18 @@ str *build_notification_body()
 	lock_get(&node_list->lock);
 	cur_node = node_list->nodes;
 	while(cur_node) {
-		LM_DBG("body_len = %d - clen = %d\n", body->len, clen);
-		/* body->len - clen - 2 bytes left to write - including the \r\n */
-		slen = build_node_str(cur_node, body->s + clen, body->len - clen - 2);
-		if(slen < 0) {
-			LM_ERR("cannot build_node_string\n");
-			goto error;
+		if (cur_node->local || cur_node->status == DMQ_NODE_ACTIVE) {
+			LM_DBG("body_len = %d - clen = %d\n", body->len, clen);
+			/* body->len - clen - 2 bytes left to write - including the \r\n */
+			slen = build_node_str(cur_node, body->s + clen, body->len - clen - 2);
+			if(slen < 0) {
+				LM_ERR("cannot build_node_string\n");
+				goto error;
+			}
+			clen += slen;
+			body->s[clen++] = '\r';
+			body->s[clen++] = '\n';
 		}
-		clen += slen;
-		body->s[clen++] = '\r';
-		body->s[clen++] = '\n';
 		cur_node = cur_node->next;
 	}
 	lock_release(&node_list->lock);
@@ -567,8 +570,8 @@ int request_nodelist(dmq_node_t *node, int forward)
 		LM_ERR("no notification body\n");
 		return -1;
 	}
-	ret = bcast_dmq_message(dmq_notification_peer, body, NULL,
-			&notification_callback, forward, &notification_content_type);
+	ret = bcast_dmq_message1(dmq_notification_peer, body, NULL,
+			&notification_callback, forward, &notification_content_type, 1);
 	pkg_free(body->s);
 	pkg_free(body);
 	return ret;
@@ -597,6 +600,7 @@ int notification_resp_callback_f(
 				STR_FMT(&node->orig_uri));
 		if(STR_EQ(node->orig_uri, dmq_notification_address)) {
 			LM_ERR("not deleting notification_peer\n");
+			update_dmq_node_status(node_list, node, DMQ_NODE_PENDING);
 			return 0;
 		}
 		ret = del_dmq_node(node_list, node);

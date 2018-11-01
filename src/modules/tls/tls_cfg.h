@@ -34,14 +34,14 @@
 /* maximum accepted lifetime (maximum possible is  ~ MAXINT/2)
  *  (it should be kept in sync w/ MAX_TCP_CON_LIFETIME from tcp_main.c:
  *   MAX_TLS_CON_LIFETIME <= MAX_TCP_CON_LIFETIME )*/
-#define MAX_TLS_CON_LIFETIME	(1U<<(sizeof(ticks_t)*8-1))
-
+#define MAX_TLS_CON_LIFETIME	((1U<<(sizeof(ticks_t)*8-1))-1)
 
 
 struct cfg_group_tls {
 	int force_run;
 	str method;
 	str server_name;
+	int server_name_mode;
 	str server_id;
 	int verify_cert;
 	int verify_depth;

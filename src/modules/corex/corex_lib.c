@@ -315,15 +315,17 @@ error:
 /**
  *
  */
-int corex_send_data(str *puri, str *pdata)
+int corex_send_data(str *puri, str *psock, str *pdata)
 {
 	struct dest_info dst;
 	sip_uri_t next_hop;
 	int ret = 0;
 	char proto;
+	socket_info_t *si = NULL;
+	int sport, sproto;
+	str shost;
 
-	if(parse_uri(puri->s, puri->len, &next_hop)<0)
-	{
+	if(parse_uri(puri->s, puri->len, &next_hop)<0) {
 		LM_ERR("bad dst sip uri <%.*s>\n", puri->len, puri->s);
 		return -1;
 	}
@@ -337,12 +339,28 @@ int corex_send_data(str *puri, str *pdata)
 			ZSW(next_hop.host.s));
 		return -1;
 	}
+
+	if(psock && psock->s && psock->len>0) {
+		if (parse_phostport(psock->s, &shost.s, &shost.len, &sport, &sproto) < 0) {
+			LM_ERR("invalid socket specification\n");
+			return -1;
+		}
+		si = grep_sock_info(&shost, (unsigned short)sport, (unsigned short)sproto);
+		if (si==NULL) {
+			LM_WARN("local socket not found: %.*s\n", psock->len, psock->s);
+		}
+	}
+
 	dst.proto = proto;
 	if(dst.proto==PROTO_NONE) dst.proto = PROTO_UDP;
 
 	if (dst.proto == PROTO_UDP)
 	{
-		dst.send_sock=get_send_socket(0, &dst.to, PROTO_UDP);
+		if(si!=NULL) {
+			dst.send_sock=si;
+		} else {
+			dst.send_sock=get_send_socket(0, &dst.to, PROTO_UDP);
+		}
 		if (dst.send_sock!=0) {
 			ret=udp_send(&dst, pdata->s, pdata->len);
 		} else {
@@ -352,6 +370,9 @@ int corex_send_data(str *puri, str *pdata)
 	}
 #ifdef USE_TCP
 	else if(dst.proto == PROTO_TCP) {
+		if(si!=NULL) {
+			dst.send_sock=si;
+		}
 		/*tcp*/
 		dst.id=0;
 		ret=tcp_send(&dst, 0, pdata->s, pdata->len);
@@ -359,6 +380,9 @@ int corex_send_data(str *puri, str *pdata)
 #endif
 #ifdef USE_TLS
 	else if(dst.proto == PROTO_TLS) {
+		if(si!=NULL) {
+			dst.send_sock=si;
+		}
 		/*tls*/
 		dst.id=0;
 		ret=tcp_send(&dst, 0, pdata->s, pdata->len);
@@ -367,7 +391,11 @@ int corex_send_data(str *puri, str *pdata)
 #ifdef USE_SCTP
 	else if(dst.proto == PROTO_SCTP) {
 		/*sctp*/
-		dst.send_sock=get_send_socket(0, &dst.to, PROTO_SCTP);
+		if(si!=NULL) {
+			dst.send_sock=si;
+		} else {
+			dst.send_sock=get_send_socket(0, &dst.to, PROTO_SCTP);
+		}
 		if (dst.send_sock!=0) {
 			ret=sctp_core_msg_send(&dst, pdata->s, pdata->len);
 		} else {

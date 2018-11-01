@@ -29,12 +29,18 @@
 #define SIP_VERSION_TWO_POINT_ZERO "2.0"
 #define SIP_VERSION_TWO_POINT_ZERO_LENGTH 3
 
+void ksr_sanity_info_init(void);
+int ki_sanity_reply(sip_msg_t *msg);
+
 /* check if the given string is a valid unsigned int value
  * and converts it into _result. returns -1 on error and 0 on success*/
 int str2valid_uint(str* _number, unsigned int* _result);
 
 /* parses the given comma seperated string into a string list */
 strl* parse_str_list(str* _string);
+
+/* check top Via header */
+int check_via1_header(sip_msg_t* msg);
 
 /* compare the protocol string in the Via header with the transport */
 int check_via_protocol(struct sip_msg* _msg);

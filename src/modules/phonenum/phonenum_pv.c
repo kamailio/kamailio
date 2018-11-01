@@ -181,6 +181,8 @@ int pv_parse_phonenum_name(pv_spec_p sp, str *in)
 		case 6:
 			if(strncmp(pvs.s, "number", 6) == 0)
 				gpv->type = 0;
+			else if(strncmp(pvs.s, "ccname", 6) == 0)
+				gpv->type = 7;
 			else
 				goto error;
 			break;
@@ -255,6 +257,10 @@ int pv_get_phonenum(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_sintval(msg, param, res, gpv->item->r.record->cctel);
 		case 6: /* valid */
 			return pv_get_sintval(msg, param, res, gpv->item->r.record->valid);
+		case 7: /* ccname */
+			if(gpv->item->r.record->ccname==NULL)
+				return pv_get_null(msg, param, res);
+			return pv_get_strzval(msg, param, res, gpv->item->r.record->ccname);
 		default: /* number */
 			if(gpv->item->r.record->number==NULL)
 				return pv_get_null(msg, param, res);

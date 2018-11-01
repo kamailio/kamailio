@@ -8,8 +8,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=sca.so
 LIBS=
-
-DEFS+=-DKAMAILIO_MOD_INTERFACE
+DEFS+=
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1

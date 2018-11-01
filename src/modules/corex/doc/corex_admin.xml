@@ -205,9 +205,9 @@ modparam("corex", "msg_avp", "$avp(msg)")
 	    </example>
 	</section>
 
-	<section id="corex.f.send">
+	<section id="corex.f.send_udp">
 		<title>
-			<function moreinfo="none">send([ host [ :port ] ])</function>
+			<function moreinfo="none">send_udp([ host [ :port ] ])</function>
 		</title>
 		<para>
 			Send the original SIP message to a specific destination in stateless
@@ -228,13 +228,13 @@ modparam("corex", "msg_avp", "$avp(msg)")
 			This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>send</function> usage</title>
+		<title><function>send_udp</function> usage</title>
 		<programlisting format="linespecific">
 ...
-	send();
-	send("10.20.15.10");
-	send("sip.example.com:5070");
-	send("$var(res)");
+	send_udp();
+	send_udp("10.20.15.10");
+	send_udp("sip.example.com:5070");
+	send_udp("$var(res)");
 ...
 </programlisting>
 		</example>
@@ -245,10 +245,21 @@ modparam("corex", "msg_avp", "$avp(msg)")
 			<function moreinfo="none">send_tcp([ host [ :port ] ])</function>
 		</title>
 		<para>
-			This function is identical to <emphasis>send()</emphasis>
+			This function is identical to <emphasis>send_udp()</emphasis>
 			described above, except that it sends the SIP message using the
 			TCP protocol instead of UDP.
 		</para>
+		<example>
+		<title><function>send_tcp</function> usage</title>
+		<programlisting format="linespecific">
+...
+	send_tcp();
+	send_tcp("10.20.15.10");
+	send_tcp("sip.example.com:5070");
+	send_tcp("$var(res)");
+...
+</programlisting>
+		</example>
 	</section>
 
 	<section id="corex.f.send_data">
@@ -272,7 +283,32 @@ modparam("corex", "msg_avp", "$avp(msg)")
 </programlisting>
 		</example>
 	</section>
-    <section id="corex.f.is_incoming">
+
+	<section id="corex.f.sendx">
+		<title>
+			<function moreinfo="none">sendx(uri, sock, data)</function>
+		</title>
+		<para>
+			Send the data to address specified by uri using a specific local
+			socket. All parameters can contain pseudo-variables. The uri
+			parameter has to be a valid SIP URI. The sock parameter has to be
+			a valid socket specifier (like values assigned to $fs). The data
+			parameter can by any arbitrary content.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sendx</function> usage</title>
+		<programlisting format="linespecific">
+...
+sendx("sip:example.com:5070;transport=sctp", "sctp:2.3.4.5:5060", "Message at $Ts");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.is_incoming">
 		<title>
 			<function moreinfo="none">is_incoming()</function>
 		</title>
@@ -627,6 +663,34 @@ via_add_srv("1");
 		<programlisting format="linespecific">
 ...
 via_add_xavp_params("1");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.via_use_xavp_fields">
+		<title><function moreinfo="none">via_use_xavp_fields(flags)</function></title>
+		<para>
+			Control if fields of the xavp with the name specified by
+			xavp_via_fields global parameter are used or not to build local Via.
+
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - use xavp fields; 0 - do not
+				use xavp fields.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_use_xavp_fields</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_use_xavp_fields("1");
 ...
 </programlisting>
 		</example>
