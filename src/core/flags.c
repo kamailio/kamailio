@@ -51,6 +51,11 @@ int resetflag( struct sip_msg* msg, flag_t flag ) {
 	return 1;
 }
 
+int resetflags( struct sip_msg* msg, flag_t flags ) {
+	msg->flags &= ~ flags;
+	return 1;
+}
+
 int isflagset( struct sip_msg* msg, flag_t flag ) {
 	return (msg->flags & (1<<flag)) ? 1 : -1;
 }

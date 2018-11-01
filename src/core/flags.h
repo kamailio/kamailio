@@ -40,6 +40,7 @@ struct sip_msg;
 
 int setflag( struct sip_msg* msg, flag_t flag );
 int resetflag( struct sip_msg* msg, flag_t flag );
+int resetflags( struct sip_msg* msg, flag_t flags );
 int isflagset( struct sip_msg* msg, flag_t flag );
 
 
