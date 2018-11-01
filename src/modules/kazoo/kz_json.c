@@ -49,7 +49,7 @@ enum json_type kz_json_get_type(struct json_object *jso)
 typedef str* json_key;
 typedef json_key* json_keys;
 
-json_keys str_split(char* a_str, const char a_delim, int* c)
+json_keys kz_str_split(char* a_str, const char a_delim, int* c)
 {
 	json_keys result = 0;
     int count     = 0;
@@ -145,7 +145,7 @@ struct json_object * kz_json_get_field_object(str* json, str* field)
   dup = pkg_malloc(field->len+1);
   memcpy(dup, field->s, field->len);
   dup[field->len] = '\0';
-  keys = str_split(dup, '.', &parts);
+  keys = kz_str_split(dup, '.', &parts);
   pkg_free(dup);
 
     if (keys)
