@@ -145,9 +145,9 @@ static int mod_init( void )
 	memset(&_acc_diameter_engine, 0, sizeof(acc_engine_t));
 
 	if(diameter_flag != -1)
-		_acc_diameter_engine.acc_flag	   = 1<<diameter_flag;
+		_acc_diameter_engine.acc_flag	   = diameter_flag;
 	if(diameter_missed_flag != -1)
-		_acc_diameter_engine.missed_flag = 1<<diameter_missed_flag;
+		_acc_diameter_engine.missed_flag = diameter_missed_flag;
 	_acc_diameter_engine.acc_req     = acc_diameter_send_request;
 	_acc_diameter_engine.acc_init    = acc_diameter_init;
 	memcpy(_acc_diameter_engine.name, "diameter", 8);
