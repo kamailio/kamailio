@@ -144,9 +144,9 @@ static int mod_init(void)
 	memset(&_acc_radius_engine, 0, sizeof(acc_engine_t));
 
 	if(radius_flag != -1)
-		_acc_radius_engine.acc_flag = 1 << radius_flag;
+		_acc_radius_engine.acc_flag = radius_flag;
 	if(radius_missed_flag != -1)
-		_acc_radius_engine.missed_flag = 1 << radius_missed_flag;
+		_acc_radius_engine.missed_flag = radius_missed_flag;
 	_acc_radius_engine.acc_req = acc_radius_send_request;
 	_acc_radius_engine.acc_init = acc_radius_init;
 	memcpy(_acc_radius_engine.name, "radius", 6);
