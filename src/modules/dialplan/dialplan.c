@@ -115,7 +115,7 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"dp_match",(cmd_function)w_dp_match,	2,	fixup_igp_spve,
 		fixup_free_igp_spve, ANY_ROUTE},
-	{"dp_replace",(cmd_function)w_dp_replace,	2,	dp_replace_fixup,
+	{"dp_replace",(cmd_function)w_dp_replace,	3,	dp_replace_fixup,
 		dp_replace_fixup_free, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
