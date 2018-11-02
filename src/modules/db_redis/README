@@ -134,6 +134,12 @@ nce/string,server_id/int,connection_id/int,keepalive/int,partition/int
    'address:entry::1', address:entry::2', address:entry::3', ... No 'keys'
    modparam of 'db_redis' for 'address' table needs to be defined.
 
+   Important Note: at this moment the module requires at least one 'keys'
+   parameter, but it does not need to be related to the table loaded from
+   Redis server -- for example, if used only for permissions module with
+   'address' table, then the 'keys' parameter can be specified for
+   'version' table.
+
    The mappings can be freely defined in the "keys" module parameter,
    which is composed of a semi-colon separated list of definitions in the
    format
@@ -231,6 +237,7 @@ loadmodule "db_redis.so"
 #!define DBURL_PERM   "redis://127.0.0.1:6379/8"
 ...
 modparam("db_redis", "schema_path", "/usr/share/kamailio/db_redis/kamailio")
+modparam("db_redis", "keys", "version=entry:table_name")
 modparam("db_redis", "keys", "location=entry:ruid&usrdom:username,domain&timer:p
 artition,keepalive")
 modparam("db_redis", "keys", "acc=entry:callid,time_hires&cid:callid")
