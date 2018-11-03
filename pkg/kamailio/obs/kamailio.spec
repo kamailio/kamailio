@@ -14,6 +14,7 @@
 %bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without mongodb
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
@@ -34,6 +35,7 @@
 %bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without mongodb
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
@@ -54,6 +56,7 @@
 %bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without mongodb
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
@@ -74,6 +77,7 @@
 %bcond_without lua
 %bcond_with kazoo
 %bcond_without memcached
+%bcond_with mongodb
 %bcond_without perl
 %bcond_with rabbitmq
 %bcond_with redis
@@ -95,6 +99,7 @@
 %bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without mongodb
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
@@ -115,6 +120,7 @@
 %bcond_without lua
 %bcond_with kazoo
 %bcond_without memcached
+%bcond_with mongodb
 %bcond_without perl
 %bcond_with rabbitmq
 %bcond_without redis
@@ -135,6 +141,7 @@
 %bcond_with lua
 %bcond_with kazoo
 %bcond_with memcached
+%bcond_with mongodb
 %bcond_with perl
 %bcond_with rabbitmq
 %bcond_with redis
@@ -155,6 +162,7 @@
 %bcond_with lua
 %bcond_with kazoo
 %bcond_with memcached
+%bcond_without mongodb
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
@@ -188,7 +196,7 @@ Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-kazoo < %ver
 Conflicts:  kamailio-rabbitmq < %ver
-Conflicts:  kamailio-memcached < %ver, kamailio-mysql < %ver
+Conflicts:  kamailio-memcached < %ver, kamailio-mongodb < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
 Conflicts:  kamailio-python < %ver
@@ -538,6 +546,19 @@ BuildRequires:  libmemcached-devel
 
 %description    memcached
 Memcached configuration file support for Kamailio.
+%endif
+
+
+%if %{with mongodb}
+%package    mongodb
+Summary:    MongoDB database connectivity for Kamailio
+Group:      System Environment/Daemons
+Requires:   kamailio = %ver
+Requires:   mongo-c-driver
+BuildRequires:  mongo-c-driver-devel
+
+%description    mongodb
+MongoDB database connectivity for Kamailio.
 %endif
 
 
@@ -992,6 +1013,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with xmlrpc}
     kmi_xmlrpc \
 %endif
+%if %{with mongodb}
+    kmongodb \
+%endif
     kmysql koutbound \
 %if %{with perl}
     kperl \
@@ -1060,6 +1084,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %endif
 %if %{with xmlrpc}
     kmi_xmlrpc \
+%endif
+%if %{with mongodb}
+    kmongodb \
 %endif
     kmysql koutbound \
 %if %{with perl}
@@ -1665,6 +1692,16 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.memcached
 %{_libdir}/kamailio/modules/memcached.so
+%endif
+
+
+%if %{with mongodb}
+%files      mongodb
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.db_mongodb
+%doc %{_docdir}/kamailio/modules/README.ndb_mongodb
+%{_libdir}/kamailio/modules/db_mongodb.so
+%{_libdir}/kamailio/modules/ndb_mongodb.so
 %endif
 
 
