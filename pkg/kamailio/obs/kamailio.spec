@@ -212,6 +212,12 @@ BuildRequires:  bison, flex
 %if 0%{?suse_version}
 BuildRequires:  systemd-mini, shadow
 %endif
+%if 0%{?fedora} == 27
+BuildRequires:  python3-devel
+%endif
+%if 0%{?fedora} == 28
+BuildRequires:  python3-devel
+%endif
 
 %description
 Kamailio (former OpenSER) is an Open Source SIP Server released under GPL, able
@@ -253,8 +259,13 @@ Requires:   kamailio = %ver
 Requires:   libdb-4_8
 BuildRequires:  libdb-4_8-devel
 %else
+%if 0%{?rhel} == 6
 Requires:   db4
 BuildRequires:  db4-devel
+%else
+Requires:   libdb
+BuildRequires:  libdb-devel
+%endif
 %endif
 
 %description    bdb
@@ -1120,6 +1131,9 @@ install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
 
 %if 0%{?suse_version}
 %py_compile -O %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
+%endif
+%if 0%{?fedora}
+%py_byte_compile %{__python2} %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
 %endif
 
 # Removing devel files
