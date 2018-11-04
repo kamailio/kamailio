@@ -181,6 +181,17 @@ modparam("sqlops", "sqlres", "ra")
 modparam("sqlops", "tr_buf_size", 4096)
 ...
 
+3.4. start_without_db_connection (int)
+
+   A value of 1 allows the startup of kamailio with an offline database (with later reconnection-attempts).
+
+   Default value is 0 (disabled).
+
+   Example 1.4. Set start_without_db_connection parameter
+...
+modparam("sqlops", "start_without_db_connection", 1)
+...
+   
 4. Functions
 
    4.1. sql_query(connection, query[, result])
@@ -209,7 +220,7 @@ modparam("sqlops", "tr_buf_size", 4096)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.4. sql_query() usage
+   Example 1.5. sql_query() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -229,7 +240,7 @@ sql_result_free("ra");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.5. sql_xquery() usage
+   Example 1.6. sql_xquery() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -267,7 +278,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1) {
    successful query, 2 if query provided no result set, 3 if result is
    ignored (no result parameter given)
 
-   Example 1.6. sql_pvquery() usage
+   Example 1.7. sql_pvquery() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -281,7 +292,7 @@ sql_pvquery("ca", "select 'col1', 2, NULL, 'sip:test@example.com'",
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.7. sql_result_free() usage
+   Example 1.8. sql_result_free() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -305,7 +316,7 @@ sql_result_free("ra");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.8. sql_query_async() usage
+   Example 1.9. sql_query_async() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -332,7 +343,7 @@ sql_query_async("ca", "delete from domain");
        integer.
      * colname[N] - return the name of the N-th column in the result set.
 
-   Example 1.9. $dbr(result=>key) usage
+   Example 1.10. $dbr(result=>key) usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -391,7 +402,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1)
 
    “con” must be the name identifying a DB connection.
 
-   Example 1.10. $sqlrows(con) usage
+   Example 1.11. $sqlrows(con) usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
