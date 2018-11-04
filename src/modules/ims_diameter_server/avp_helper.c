@@ -338,8 +338,17 @@ void parselist(AAAMessage *response, AAA_AVP_LIST *list, cJSON * item, int level
 		avp_list_s = cdpb.AAAGroupAVPS(avp_list);
 		cdpb.AAAFreeAVPList(&avp_list);
 
-		diameterserver_add_avp(response, avp_list_s.s, avp_list_s.len, cJSON_GetObjectItem(item,"avpCode")->valueint, flags,
-		  cJSON_GetObjectItem(item,"vendorId")->valueint, AVP_FREE_DATA, __FUNCTION__);
+		if(list) {
+			diameterserver_add_avp_list(list, avp_list_s.s, avp_list_s.len,
+					cJSON_GetObjectItem(item, "avpCode")->valueint, flags,
+					cJSON_GetObjectItem(item, "vendorId")->valueint, AVP_FREE_DATA,
+					__FUNCTION__);
+		} else {
+			diameterserver_add_avp(response, avp_list_s.s, avp_list_s.len,
+					cJSON_GetObjectItem(item, "avpCode")->valueint, flags,
+					cJSON_GetObjectItem(item, "vendorId")->valueint, AVP_FREE_DATA,
+					__FUNCTION__);
+		}
 	} else if (cJSON_GetObjectItem(item,"int32")) {
 		set_4bytes(x, cJSON_GetObjectItem(item,"int32")->valueint);
 		if (list) {
