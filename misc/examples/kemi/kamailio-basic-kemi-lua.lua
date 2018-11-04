@@ -33,7 +33,7 @@ function ksr_request_route()
 	ksr_route_natdetect();
 
 	-- CANCEL processing
-	if KSR.pv.get("$rm") == "CANCEL" then
+	if KSR.is_CANCEL() then
 		if KSR.tm.t_check_trans()>0 then
 			ksr_route_relay();
 		end
@@ -58,12 +58,13 @@ function ksr_request_route()
 	-- record routing for dialog forming requests (in case they are routed)
 	-- - remove preloaded route headers
 	KSR.hdr.remove("Route");
-	if string.find("INVITE|SUBSCRIBE", KSR.pv.get("$rm")) then
+	-- if INVITE or SUBSCRIBE
+	if KSR.is_method_in("IS") then
 		KSR.rr.record_route();
 	end
 
 	-- account only INVITEs
-	if KSR.pv.get("$rm")=="INVITE" then
+	if KSR.is_INVITE() then
 		KSR.setflag(FLT_ACC); -- do accounting
 	end
 
@@ -75,7 +76,7 @@ function ksr_request_route()
 	-- handle registrations
 	ksr_route_registrar();
 
-	if KSR.pv.is_null("$rU") then
+	if KSR.corex.has_ruri_user() < 0 then
 		-- request with no Username in RURI
 		KSR.sl.sl_send_reply(484,"Address Incomplete");
 		return 1;
@@ -91,18 +92,18 @@ end
 function ksr_route_relay()
 	-- enable additional event routes for forwarded requests
 	-- - serial forking, RTP relaying handling, a.s.o.
-	if string.find("INVITE,BYE,SUBSCRIBE,UPDATE", KSR.pv.get("$rm")) then
+	if KSR.is_method_in("IBSU") then
 		if KSR.tm.t_is_set("branch_route")<0 then
 			KSR.tm.t_on_branch("ksr_branch_manage");
 		end
 	end
-	if string.find("INVITE,SUBSCRIBE,UPDATE", KSR.pv.get("$rm")) then
+	if KSR.is_method_in("ISU") then
 		if KSR.tm.t_is_set("onreply_route")<0 then
 			KSR.tm.t_on_reply("ksr_onreply_manage");
 		end
 	end
 
-	if KSR.pv.get("$rm")=="INVITE" then
+	if KSR.is_INVITE() then
 		if KSR.tm.t_is_set("failure_route")<0 then
 			KSR.tm.t_on_failure("ksr_failure_manage");
 		end
@@ -133,11 +134,13 @@ function ksr_route_reqinit()
 			KSR.x.exit();
 		end
 	end
-	if (not KSR.pv.is_null("$ua"))
-			and (string.find(KSR.pv.get("$ua"), "friendly-scanner")
-				or string.find(KSR.pv.get("$ua"), "sipcli")) then
-		KSR.sl.sl_send_reply(200, "OK");
-		KSR.x.exit();
+	if KSR.corex.has_user_agent() then
+		local ua = KSR.pv.gete("$ua");
+		if string.find(ua, "friendly-scanner")
+				or string.find(ua, "sipcli") then
+			KSR.sl.sl_send_reply(200, "OK");
+			KSR.x.exit();
+		end
 	end
 
 	if KSR.maxfwd.process_maxfwd(10) < 0 then
@@ -145,9 +148,9 @@ function ksr_route_reqinit()
 		KSR.x.exit();
 	end
 
-	if KSR.pv.get("$rm")=="OPTIONS"
-			and KSR.is_myself(KSR.pv.get("$ru"))
-			and KSR.pv.is_null("$rU") then
+	if KSR.is_OPTIONS()
+			and KSR.is_myself_ruri()
+			and KSR.corex.has_ruri_user() < 0 then
 		KSR.sl.sl_send_reply(200,"Keepalive");
 		KSR.x.exit();
 	end
@@ -169,20 +172,20 @@ function ksr_route_withindlg()
 	-- take the path determined by record-routing
 	if KSR.rr.loose_route()>0 then
 		ksr_route_dlguri();
-		if KSR.pv.get("$rm")=="BYE" then
+		if KSR.is_BYE() then
 			KSR.setflag(FLT_ACC); -- do accounting ...
 			KSR.setflag(FLT_ACCFAILED); -- ... even if the transaction fails
-		elseif KSR.pv.get("$rm")=="ACK" then
+		elseif KSR.is_ACK() then
 			-- ACK is forwarded statelessly
 			ksr_route_natmanage();
-		elseif  KSR.pv.get("$rm")=="NOTIFY" then
+		elseif  KSR.is_NOTIFY() then
 			-- Add Record-Route for in-dialog NOTIFY as per RFC 6665.
 			KSR.rr.record_route();
 		end
 		ksr_route_relay();
 		KSR.x.exit();
 	end
-	if KSR.pv.get("$rm")=="ACK" then
+	if KSR.is_ACK() then
 		if KSR.tm.t_check_trans() >0 then
 			-- no loose-route, but stateful ACK;
 			-- must be an ACK after a 487
@@ -200,7 +203,7 @@ end
 
 -- Handle SIP registrations
 function ksr_route_registrar()
-	if KSR.pv.get("$rm")~="REGISTER" then return 1; end
+	if not KSR.is_REGISTER() then return 1; end
 	if KSR.isflagset(FLT_NATS) then
 		KSR.setbflag(FLB_NATB);
 		-- do SIP NAT pinging
@@ -227,7 +230,7 @@ function ksr_route_location()
 	end
 
 	-- when routing via usrloc, log the missed calls also
-	if KSR.pv.get("$rm")=="INVITE" then
+	if KSR.is_INVITE() then
 		KSR.setflag(FLT_ACCMISSED);
 	end
 
@@ -239,29 +242,29 @@ end
 -- IP authorization and user uthentication
 function ksr_route_auth()
 
-	if KSR.pv.get("$rm")~="REGISTER" then
+	if not KSR.is_REGISTER() then
 		if KSR.permissions.allow_source_address(1)>0 then
 			-- source IP allowed
 			return 1;
 		end
 	end
 
-	if KSR.pv.get("$rm")=="REGISTER" or KSR.is_myself(KSR.pv.get("$fu")) then
+	if KSR.is_REGISTER() or KSR.is_myself_furi() then
 		-- authenticate requests
 		if KSR.auth_db.auth_check(KSR.pv.get("$fd"), "subscriber", 1)<0 then
 			KSR.auth.auth_challenge(KSR.pv.get("$fd"), 0);
 			KSR.x.exit();
 		end
 		-- user authenticated - remove auth header
-		if not string.find("REGISTER,PUBLISH", KSR.pv.get("$rm")) then
+		if not KSR.is_method_in("RP") then
 			KSR.auth.consume_credentials();
 		end
 	end
 
 	-- if caller is not local subscriber, then check if it calls
 	-- a local destination, otherwise deny, not an open relay here
-	if (not KSR.is_myself(KSR.pv.get("$fu"))
-			and (not KSR.is_myself(KSR.pv.get("$ru")))) then
+	if (not KSR.is_myself_furi())
+			and (not KSR.is_myself_ruri()) then
 		KSR.sl.sl_send_reply(403,"Not relaying");
 		KSR.x.exit();
 	end
@@ -273,7 +276,7 @@ end
 function ksr_route_natdetect()
 	KSR.force_rport();
 	if KSR.nathelper.nat_uac_test(19)>0 then
-		if KSR.pv.get("$rm")=="REGISTER" then
+		if KSR.is_REGISTER() then
 			KSR.nathelper.fix_nated_register();
 		elseif KSR.siputils.is_first_hop()>0 then
 			KSR.nathelper.set_contact_alias();
@@ -323,7 +326,7 @@ end
 
 -- Routing to foreign domains
 function ksr_route_sipout()
-	if KSR.is_myself(KSR.pv.get("$ru")) then return 1; end
+	if KSR.is_myself_ruri() then return 1; end
 
 	KSR.hdr.append("P-Hint: outbound\r\n");
 	ksr_route_relay();
