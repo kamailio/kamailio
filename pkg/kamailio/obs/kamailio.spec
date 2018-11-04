@@ -2,66 +2,6 @@
 %define ver 5.2.0
 %define rel dev1.0%{dist}
 
-%if 0%{?fedora} == 24
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without perl
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
-%if 0%{?fedora} == 25
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without perl
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
-%if 0%{?fedora} == 26
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without perl
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
 %if 0%{?fedora} == 27
 %define dist_name fedora
 %define dist_version %{?fedora}
@@ -984,19 +924,14 @@ UUID module for Kamailio.
 %prep
 %setup -n %{name}-%{ver}
 
-ln -s ../obs pkg/kamailio/fedora/24
-ln -s ../obs pkg/kamailio/fedora/25
-ln -s ../obs pkg/kamailio/fedora/26
 ln -s ../obs pkg/kamailio/fedora/27
 ln -s ../obs pkg/kamailio/fedora/28
 ln -s ../obs pkg/kamailio/fedora/29
-mkdir -p pkg/kamailio/rhel
 ln -s ../obs pkg/kamailio/rhel/6
 ln -s ../obs pkg/kamailio/rhel/7
-mkdir -p pkg/kamailio/opensuse
 ln -s ../obs pkg/kamailio/opensuse/1315
 ln -s ../obs pkg/kamailio/opensuse/1330
-mkdir -p pkg/kamailio/centos
+ln -s ../obs pkg/kamailio/opensuse/1550
 ln -s ../obs pkg/kamailio/centos/6
 ln -s ../obs pkg/kamailio/centos/7
 
@@ -2025,6 +1960,8 @@ fi
 
 
 %changelog
+* Sun Nov 04 2018 Sergey Safarov <s.safarov@gmail.com>
+  - removed packaging for Fedora 25, 26 as End Of Life
 * Sat Sep 02 2017 Sergey Safarov <s.safarov@gmail.com>
   - added packaging for Fedora 26 and openSUSE Leap 42.3
   - removed packaging for Fedora 24 and openSUSE Leap 42.1 as End Of Life
