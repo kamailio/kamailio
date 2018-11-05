@@ -238,6 +238,7 @@ reconnect:
 		LM_ERR("FAIL: amqp_basic_publish()\n");
 
 		// cleanup
+		amqp_maybe_release_buffers(amqp_conn);
 		amqp_channel_close(amqp_conn, 1, AMQP_REPLY_SUCCESS);
 
 		// error
@@ -248,6 +249,7 @@ reconnect:
 	LM_DBG("SUCCESS: amqp_basic_publish()\n");
 
 	// cleanup
+	amqp_maybe_release_buffers(amqp_conn);
 	amqp_channel_close(amqp_conn, 1, AMQP_REPLY_SUCCESS);
 
 	// success
