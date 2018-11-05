@@ -200,6 +200,10 @@ int pv_get_request(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
  */
 int diameterserver_add_avp(AAAMessage *m, char *d, int len, int avp_code, int flags, int vendorid, int data_do, const char *func) {
     AAA_AVP *avp;
+	if(m==NULL) {
+		LM_ERR("invalid diamemter message parameter\n");
+		return 0;
+	}
     if (vendorid != 0) flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
     avp = cdpb.AAACreateAVP(avp_code, flags, vendorid, d, len, data_do);
     if (!avp) {
