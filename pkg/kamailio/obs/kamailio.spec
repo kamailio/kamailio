@@ -516,15 +516,6 @@ BuildRequires:  openldap-devel
 LDAP search interface for Kamailio.
 
 
-%package    log_custom
-Summary:    Logging to custom backends from Kamailio
-Group:      System Environment/Daemons
-Requires:   kamailio = %ver
-
-%description    log_custom
-This module provides logging to custom systems, replacing the default core logging to syslog.
-
-
 %if %{with lua}
 %package    lua
 Summary:    Lua extensions for Kamailio
@@ -1303,7 +1294,10 @@ fi
 %doc %{_docdir}/kamailio/modules/README.call_obj
 %doc %{_docdir}/kamailio/modules/README.evrexec
 %doc %{_docdir}/kamailio/modules/README.keepalive
-
+%doc %{_docdir}/kamailio/modules/README.log_custom
+%doc %{_docdir}/kamailio/modules/README.statsc
+%doc %{_docdir}/kamailio/modules/README.topos
+%doc %{_docdir}/kamailio/modules/README.cfgt
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/dictionary.kamailio
@@ -1450,7 +1444,10 @@ fi
 %{_libdir}/kamailio/modules/call_obj.so
 %{_libdir}/kamailio/modules/evrexec.so
 %{_libdir}/kamailio/modules/keepalive.so
-
+%{_libdir}/kamailio/modules/log_custom.so
+%{_libdir}/kamailio/modules/statsc.so
+%{_libdir}/kamailio/modules/topos.so
+%{_libdir}/kamailio/modules/cfgt.so
 
 %{_sbindir}/kamailio
 %{_sbindir}/kamctl
@@ -1583,7 +1580,6 @@ fi
 
 %doc %{_docdir}/kamailio/modules/README.cdp
 %doc %{_docdir}/kamailio/modules/README.cdp_avp
-%doc %{_docdir}/kamailio/modules/README.cfgt
 %doc %{_docdir}/kamailio/modules/README.ims_auth
 %doc %{_docdir}/kamailio/modules/README.ims_charging
 %doc %{_docdir}/kamailio/modules/README.ims_dialog
@@ -1595,13 +1591,9 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_pcscf
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_scscf
 %doc %{_docdir}/kamailio/modules/README.ims_usrloc_pcscf
-%doc %{_docdir}/kamailio/modules/README.log_custom
 %doc %{_docdir}/kamailio/modules/README.smsops
-%doc %{_docdir}/kamailio/modules/README.statsc
-%doc %{_docdir}/kamailio/modules/README.topos
 %{_libdir}/kamailio/modules/cdp.so
 %{_libdir}/kamailio/modules/cdp_avp.so
-%{_libdir}/kamailio/modules/cfgt.so
 %{_libdir}/kamailio/modules/ims_auth.so
 %{_libdir}/kamailio/modules/ims_charging.so
 %{_libdir}/kamailio/modules/ims_dialog.so
@@ -1614,10 +1606,8 @@ fi
 %{_libdir}/kamailio/modules/ims_registrar_scscf.so
 %{_libdir}/kamailio/modules/ims_usrloc_pcscf.so
 %{_libdir}/kamailio/modules/ims_usrloc_scscf.so
-%{_libdir}/kamailio/modules/log_custom.so
 %{_libdir}/kamailio/modules/smsops.so
-%{_libdir}/kamailio/modules/statsc.so
-%{_libdir}/kamailio/modules/topos.so
+
 
 %if %{with jansson}
 %files      jansson
