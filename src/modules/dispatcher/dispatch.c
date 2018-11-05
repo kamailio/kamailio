@@ -1613,55 +1613,6 @@ int ds_load_replace(struct sip_msg *msg, str *duid)
 /**
  *
  */
-int ds_load_remove(struct sip_msg *msg)
-{
-	ds_cell_t *it;
-	int set;
-	int olddst;
-	ds_set_t *idx = NULL;
-	int i;
-
-	if((it = ds_get_cell(_dsht_load, &msg->callid->body)) == NULL) {
-		LM_ERR("cannot find load for (%.*s)\n", msg->callid->body.len,
-				msg->callid->body.s);
-		return -1;
-	}
-	set = it->dset;
-	/* get the index of the set */
-	if(ds_get_index(set, *crt_idx, &idx) != 0) {
-		ds_unlock_cell(_dsht_load, &msg->callid->body);
-		LM_ERR("destination set [%d] not found\n", set);
-		return -1;
-	}
-	olddst = -1;
-	for(i = 0; i < idx->nr; i++) {
-		if(idx->dlist[i].attrs.duid.len == it->duid.len
-				&& strncasecmp(
-						   idx->dlist[i].attrs.duid.s, it->duid.s, it->duid.len)
-						   == 0) {
-			olddst = i;
-			break;
-		}
-	}
-	if(olddst == -1) {
-		ds_unlock_cell(_dsht_load, &msg->callid->body);
-		LM_ERR("old destination address not found for [%d, %.*s]\n", set,
-				it->duid.len, it->duid.s);
-		return -1;
-	}
-
-	ds_unlock_cell(_dsht_load, &msg->callid->body);
-	ds_del_cell(_dsht_load, &msg->callid->body);
-	if(idx->dlist[olddst].dload > 0)
-		idx->dlist[olddst].dload--;
-
-	return 0;
-}
-
-
-/**
- *
- */
 int ds_load_remove_byid(int set, str *duid)
 {
 	int olddst;
@@ -1690,6 +1641,29 @@ int ds_load_remove_byid(int set, str *duid)
 
 	if(idx->dlist[olddst].dload > 0)
 		idx->dlist[olddst].dload--;
+
+	return 0;
+}
+
+/**
+ *
+ */
+int ds_load_remove(struct sip_msg *msg)
+{
+	ds_cell_t *it;
+
+	if((it = ds_get_cell(_dsht_load, &msg->callid->body)) == NULL) {
+		LM_ERR("cannot find load for (%.*s)\n", msg->callid->body.len,
+				msg->callid->body.s);
+		return -1;
+	}
+
+	if (ds_load_remove_byid(it->dset, &it->duid) < 0) {
+		ds_unlock_cell(_dsht_load, &msg->callid->body);
+		return -1;
+	}
+	ds_unlock_cell(_dsht_load, &msg->callid->body);
+	ds_del_cell(_dsht_load, &msg->callid->body);
 
 	return 0;
 }
