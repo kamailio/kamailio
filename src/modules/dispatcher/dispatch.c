@@ -2362,7 +2362,6 @@ int ds_update_latency(int group, str *address, int code)
 int ds_get_state(int group, str *address)
 {
 	int i = 0;
-	int state = 0;
 	ds_set_t *idx = NULL;
 
 	if(_ds_list == NULL || _ds_list_nr <= 0) {
@@ -2381,11 +2380,11 @@ int ds_get_state(int group, str *address)
 				&& strncasecmp(idx->dlist[i].uri.s, address->s, address->len)
 						   == 0) {
 			/* destination address found */
-			state = idx->dlist[i].flags;
+			return idx->dlist[i].flags;
 		}
 		i++;
 	}
-	return state;
+	return 0;
 }
 
 /**
