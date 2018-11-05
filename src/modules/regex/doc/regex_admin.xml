@@ -10,18 +10,18 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section id="regex.overview">
-		
+
 		<title>Overview</title>
-		
+
 		<para>
 			This module offers matching operations using regular expressions based on the
 			powerful <ulink url="http://www.pcre.org/">PCRE</ulink> library.
 		</para>
-		
+
 		<para>
 			A text file containing regular expressions categorized in groups is compiled
 			when the module is loaded,  the resulting PCRE objects are stored in an array. A
@@ -30,18 +30,18 @@
 			The module also offers a function to perform a PCRE matching operation against a
 			regular expression provided as function parameter.
 		</para>
-		
+
 		<para>
 			For a detailed list of PCRE features read the
 			<ulink url="http://www.pcre.org/pcre.txt">man page</ulink> of the library.
 		</para>
-	
+
 	</section>
-	
+
 	<section>
-		
+
 		<title>Dependencies</title>
-		
+
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
@@ -70,9 +70,9 @@
 				</itemizedlist>
 			</para>
 		</section>
-		
+
 	</section>
-	
+
 	<section>
 		<title>Parameters</title>
 
@@ -230,7 +230,7 @@ modparam("regex", "pcre_extended", 1)
 	<section>
 		<title>Functions</title>
 
-		<section id="regex.p.pcre_match">
+		<section id="regex.f.pcre_match">
 			<title>
 				<function moreinfo="none">pcre_match (string, pcre_regex)</function>
 			</title>
@@ -294,7 +294,7 @@ if (pcre_match("$rU", "^user[1234]$$")) {  # Will be converted to "^user[1234]$"
 
 		</section>
 
-		<section id="regex.p.pcre_match_group">
+		<section id="regex.f.pcre_match_group">
 			<title>
 				<function moreinfo="none">pcre_match_group (string [, group])</function>
 			</title>
@@ -353,7 +353,7 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 ...
 				</programlisting>
 			</example>
- 
+
 		</section>
 
 	</section>
@@ -391,13 +391,13 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 		</section>
 
 	</section>
-	
+
 	<section>
 		<title>Installation and Running</title>
-		
+
 		<section id="file-format-id">
 			<title>File format</title>
-			
+
 			<para>
 				The file contains regular expressions categorized in groups. Each
 				group starts with "[number]" line. Lines starting by space, tab,
@@ -405,11 +405,11 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 				take up just one line, this means that a regular expression can't
 				be splitted in various lines.
 			</para>
-			
+
 			<para>
 				An example of the file format would be the following:
 			</para>
-			
+
 			<example>
 				<title>regex file</title>
 <programlisting  format="linespecific">
@@ -446,14 +446,14 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 ^1\d{3}$
 ^((\+|00)34)?900\d{6}$
 </programlisting>
-			
+
 			</example>
 
 			<para>
 				The module compiles the text above to the following regular
 				expressions:
 			</para>
-			
+
 <programlisting  format="linespecific">
 group 0: ((^Twinkle/1)|(^X-Lite)|(^eyeBeam)|(^Bria)|(^SIP Communicator)|
           (^Linphone)|(^Snom)|(^SIPp)|(^PJSUA))
@@ -465,7 +465,7 @@ group 2: ((^1\d{3}$)|(^((\+|00)34)?900\d{6}$))
 				The first group can be used to avoid auto-generated PUBLISH (pua_usrloc
 				module) for UA's already supporting presence:
 			</para>
-			
+
 			<example>
 				<title>Using with pua_usrloc</title>
 <programlisting  format="linespecific">
@@ -479,14 +479,14 @@ route[REGISTER] {
 }
 </programlisting>
 			</example>
-			
+
 			<para>
 				NOTE: It's important to understand that the numbers in each group
 				header ([number]) must start by 0. If not, the real group number
 				will not match the number appearing in the file. For example, the
 				following text file:
 			</para>
-			
+
 			<example>
 				<title>Incorrect groups file</title>
 <programlisting  format="linespecific">
@@ -499,39 +499,39 @@ route[REGISTER] {
 ^ddd
 </programlisting>
 			</example>
-			
+
 			<para>
 				will generate the following regular expressions:
 			</para>
-			
+
 <programlisting  format="linespecific">
 group 0: ((^aaa)|(^bbb))
 group 1: ((^ccc)|(^ddd))
 </programlisting>
-			
+
 			<para>
 				Note that the real index doesn't match the group number in the file. This
 				is, compiled group 0 always points to the first group in the file, regardless
 				of its number in the file. In fact, the group number appearing in the file is
 				used for nothing but for delimiting different groups.
 			</para>
-			
+
 			<para>
 				NOTE: A line containing a regular expression cannot start by '[' since it
 				would be treated as a new group. The same for lines starting by space, tab,
 				or '#' (they would be ignored by the parser). As a workaround, using brackets
 				would work:
 			</para>
-			
+
 <programlisting  format="linespecific">
 [0]
 ([0-9]{9})
 ( #abcde)
 ( qwerty)
 </programlisting>
-			
+
 		</section>
 
 	</section>
-	
+
 </chapter>
