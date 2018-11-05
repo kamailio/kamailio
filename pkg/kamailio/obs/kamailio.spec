@@ -2,66 +2,6 @@
 %define ver 5.2.0
 %define rel dev1.0%{dist}
 
-%if 0%{?fedora} == 24
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without perl
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
-%if 0%{?fedora} == 25
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without perl
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
-%if 0%{?fedora} == 26
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without perl
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
 %if 0%{?fedora} == 27
 %define dist_name fedora
 %define dist_version %{?fedora}
@@ -74,6 +14,7 @@
 %bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without mongodb
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
@@ -94,6 +35,7 @@
 %bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without mongodb
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
@@ -114,6 +56,7 @@
 %bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without mongodb
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
@@ -134,6 +77,7 @@
 %bcond_without lua
 %bcond_with kazoo
 %bcond_without memcached
+%bcond_with mongodb
 %bcond_without perl
 %bcond_with rabbitmq
 %bcond_with redis
@@ -155,6 +99,7 @@
 %bcond_without lua
 %bcond_without kazoo
 %bcond_without memcached
+%bcond_without mongodb
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
@@ -175,6 +120,7 @@
 %bcond_without lua
 %bcond_with kazoo
 %bcond_without memcached
+%bcond_with mongodb
 %bcond_without perl
 %bcond_with rabbitmq
 %bcond_without redis
@@ -195,6 +141,7 @@
 %bcond_with lua
 %bcond_with kazoo
 %bcond_with memcached
+%bcond_with mongodb
 %bcond_with perl
 %bcond_with rabbitmq
 %bcond_with redis
@@ -215,6 +162,7 @@
 %bcond_with lua
 %bcond_with kazoo
 %bcond_with memcached
+%bcond_without mongodb
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
@@ -248,7 +196,7 @@ Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-kazoo < %ver
 Conflicts:  kamailio-rabbitmq < %ver
-Conflicts:  kamailio-memcached < %ver, kamailio-mysql < %ver
+Conflicts:  kamailio-memcached < %ver, kamailio-mongodb < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
 Conflicts:  kamailio-python < %ver
@@ -264,6 +212,12 @@ Conflicts:  kamailio-uuid < %ver
 BuildRequires:  bison, flex
 %if 0%{?suse_version}
 BuildRequires:  systemd-mini, shadow
+%endif
+%if 0%{?fedora} == 27
+BuildRequires:  python3-devel
+%endif
+%if 0%{?fedora} == 28
+BuildRequires:  python3-devel
 %endif
 
 %description
@@ -323,8 +277,13 @@ Requires:   kamailio = %ver
 Requires:   libdb-4_8
 BuildRequires:  libdb-4_8-devel
 %else
+%if 0%{?rhel} == 6
 Requires:   db4
 BuildRequires:  db4-devel
+%else
+Requires:   libdb
+BuildRequires:  libdb-devel
+%endif
 %endif
 
 %description    bdb
@@ -598,6 +557,19 @@ BuildRequires:  libmemcached-devel
 
 %description    memcached
 Memcached configuration file support for Kamailio.
+%endif
+
+
+%if %{with mongodb}
+%package    mongodb
+Summary:    MongoDB database connectivity for Kamailio
+Group:      System Environment/Daemons
+Requires:   kamailio = %ver
+Requires:   mongo-c-driver
+BuildRequires:  mongo-c-driver-devel
+
+%description    mongodb
+MongoDB database connectivity for Kamailio.
 %endif
 
 
@@ -984,19 +956,14 @@ UUID module for Kamailio.
 %prep
 %setup -n %{name}-%{ver}
 
-ln -s ../obs pkg/kamailio/fedora/24
-ln -s ../obs pkg/kamailio/fedora/25
-ln -s ../obs pkg/kamailio/fedora/26
 ln -s ../obs pkg/kamailio/fedora/27
 ln -s ../obs pkg/kamailio/fedora/28
 ln -s ../obs pkg/kamailio/fedora/29
-mkdir -p pkg/kamailio/rhel
 ln -s ../obs pkg/kamailio/rhel/6
 ln -s ../obs pkg/kamailio/rhel/7
-mkdir -p pkg/kamailio/opensuse
 ln -s ../obs pkg/kamailio/opensuse/1315
 ln -s ../obs pkg/kamailio/opensuse/1330
-mkdir -p pkg/kamailio/centos
+ln -s ../obs pkg/kamailio/opensuse/1550
 ln -s ../obs pkg/kamailio/centos/6
 ln -s ../obs pkg/kamailio/centos/7
 
@@ -1056,6 +1023,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %endif
 %if %{with xmlrpc}
     kmi_xmlrpc \
+%endif
+%if %{with mongodb}
+    kmongodb \
 %endif
     kmysql koutbound \
 %if %{with perl}
@@ -1126,6 +1096,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with xmlrpc}
     kmi_xmlrpc \
 %endif
+%if %{with mongodb}
+    kmongodb \
+%endif
     kmysql koutbound \
 %if %{with perl}
     kperl \
@@ -1178,6 +1151,9 @@ install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
 
 %if 0%{?suse_version}
 %py_compile -O %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
+%endif
+%if 0%{?fedora}
+%py_byte_compile %{__python2} %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
 %endif
 
 # Removing devel files
@@ -1733,6 +1709,16 @@ fi
 %endif
 
 
+%if %{with mongodb}
+%files      mongodb
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.db_mongodb
+%doc %{_docdir}/kamailio/modules/README.ndb_mongodb
+%{_libdir}/kamailio/modules/db_mongodb.so
+%{_libdir}/kamailio/modules/ndb_mongodb.so
+%endif
+
+
 %files      mysql
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.db_mysql
@@ -2025,6 +2011,8 @@ fi
 
 
 %changelog
+* Sun Nov 04 2018 Sergey Safarov <s.safarov@gmail.com>
+  - removed packaging for Fedora 25, 26 as End Of Life
 * Sat Sep 02 2017 Sergey Safarov <s.safarov@gmail.com>
   - added packaging for Fedora 26 and openSUSE Leap 42.3
   - removed packaging for Fedora 24 and openSUSE Leap 42.1 as End Of Life
