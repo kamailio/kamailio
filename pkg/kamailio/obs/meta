@@ -1,6 +1,6 @@
-<project name="home:kamailio:v5.0.x-rpms">
-  <title>RPM Packages for Kamailio v5.0.x</title>
-  <description>RPM Packages for Kamailio v5.0.x</description>
+<project name="home:kamailio:v5.1.x-rpms">
+  <title>RPM Packages for Kamailio v5.1.x</title>
+  <description>RPM Packages for Kamailio v5.1.x</description>
   <person userid="kamailio" role="maintainer"/>
   <repository name="openSUSE_Tumbleweed">
     <path project="openSUSE:Factory" repository="snapshot"/>
@@ -24,20 +24,19 @@
     <path project="Fedora:EPEL:6" repository="RHEL"/>
     <arch>x86_64</arch>
   </repository>
+  <repository name="Fedora_29">
+    <path project="Fedora:29" repository="update"/>
+    <path project="Fedora:29" repository="standard"/>
+    <arch>x86_64</arch>
+  </repository>
+  <repository name="Fedora_28">
+    <path project="Fedora:28" repository="update"/>
+    <path project="Fedora:28" repository="standard"/>
+    <arch>x86_64</arch>
+  </repository>
   <repository name="Fedora_27">
     <path project="Fedora:27" repository="update"/>
     <path project="Fedora:27" repository="standard"/>
-    <arch>x86_64</arch>
-  </repository>
-  <repository name="Fedora_26">
-    <path project="Fedora:26" repository="update"/>
-    <path project="Fedora:26" repository="standard"/>
-    <arch>x86_64</arch>
-  </repository>
-  <repository name="Fedora_25">
-    <path project="Fedora:25" repository="update"/>
-    <path project="Fedora:25" repository="standard"/>
-    <arch>i586</arch>
     <arch>x86_64</arch>
   </repository>
   <repository name="CentOS_7">
