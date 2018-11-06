@@ -9,6 +9,7 @@
 %bcond_with dnssec
 %bcond_without geoip
 %bcond_without http_async_client
+%bcond_without ims
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
@@ -30,6 +31,7 @@
 %bcond_with dnssec
 %bcond_without geoip
 %bcond_without http_async_client
+%bcond_without ims
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
@@ -51,6 +53,7 @@
 %bcond_with dnssec
 %bcond_without geoip
 %bcond_without http_async_client
+%bcond_without ims
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
@@ -72,6 +75,7 @@
 %bcond_without dnssec
 %bcond_without geoip
 %bcond_with http_async_client
+%bcond_without ims
 %bcond_with jansson
 %bcond_with json
 %bcond_without lua
@@ -94,6 +98,7 @@
 %bcond_with dnssec
 %bcond_without geoip
 %bcond_without http_async_client
+%bcond_without ims
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
@@ -115,6 +120,7 @@
 %bcond_with dnssec
 %bcond_without geoip
 %bcond_without http_async_client
+%bcond_without ims
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
@@ -136,6 +142,7 @@
 %bcond_without dnssec
 %bcond_with geoip
 %bcond_with http_async_client
+%bcond_with ims
 %bcond_with jansson
 %bcond_with json
 %bcond_with lua
@@ -157,6 +164,7 @@
 %bcond_with dnssec
 %bcond_with geoip
 %bcond_with http_async_client
+%bcond_with ims
 %bcond_with jansson
 %bcond_with json
 %bcond_with lua
@@ -164,7 +172,7 @@
 %bcond_with memcached
 %bcond_without mongodb
 %bcond_without perl
-%bcond_without rabbitmq
+%bcond_with rabbitmq
 %bcond_without redis
 %bcond_with sctp
 %bcond_with websocket
@@ -431,6 +439,7 @@ BuildRequires:  libxml2-devel, libcurl-devel, zlib-devel
 This module implements protocol functions that use the libcurl to communicate with HTTP servers. 
 
 
+%if %{with ims}
 %package    ims
 Summary:    IMS modules and extensions module for Kamailio
 Group:      System Environment/Daemons
@@ -439,6 +448,7 @@ BuildRequires:  libxml2-devel libmnl-devel
 
 %description    ims
 IMS modules and extensions module for Kamailio.
+%endif
 
 
 %if %{with jansson}
@@ -947,7 +957,6 @@ make cfg prefix=/usr \
     basedir=%{buildroot} \
     cfg_prefix=%{buildroot} \
     doc_prefix=%{buildroot} \
-    share_prefix=%{_prefix} \
     doc_dir=%{_docdir}/kamailio/ \
     cfg_target=%{_sysconfdir}/kamailio/ modules_dirs="modules"
 make
@@ -971,7 +980,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with http_async_client}
     khttp_async \
 %endif
+%if %{with ims}
     kims \
+%endif
 %if %{with jansson}
     kjansson \
 %endif
@@ -1043,7 +1054,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with http_async_client}
     khttp_async \
 %endif
+%if %{with ims}
     kims \
+%endif
 %if %{with jansson}
     kjansson \
 %endif
@@ -1573,6 +1586,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.http_client
 %{_libdir}/kamailio/modules/http_client.so
 
+%if %{with ims}
 %files      ims
 %defattr(-,root,root)
 %{_libdir}/kamailio/libkamailio_ims.so.0
@@ -1607,6 +1621,7 @@ fi
 %{_libdir}/kamailio/modules/ims_usrloc_pcscf.so
 %{_libdir}/kamailio/modules/ims_usrloc_scscf.so
 %{_libdir}/kamailio/modules/smsops.so
+%endif
 
 
 %if %{with jansson}
