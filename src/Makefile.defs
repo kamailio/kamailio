@@ -497,7 +497,7 @@ bin_target = $(prefix)/$(bin_dir)
 #modules_target = $(prefix)/$(modules_dir)
 lib_target = $(prefix)/$(lib_dir)
 run_target = $(run_prefix)/$(run_dir)
-share_target = $(share_prefix)/$(share_dir)
+share_target = $(prefix)/$(share_dir)
 doc_target = $(prefix)/$(doc_dir)
 data_target = $(prefix)/$(data_dir)
 
@@ -2095,7 +2095,8 @@ saved_chg_vars:=\
 		cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir \
 		doc_prefix doc_dir man_prefix man_dir ut_prefix ut_dir \
 		share_prefix share_dir lib_prefix lib_dir data_prefix data_dir \
-		cfg_target lib_target data_target run_prefix run_dir run_target
+		cfg_target lib_target data_target run_prefix run_dir run_target \
+		share_target
 
 
 #export relevant variables to the sub-makes
