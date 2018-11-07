@@ -9,6 +9,7 @@
 %bcond_with dnssec
 %bcond_without geoip
 %bcond_without http_async_client
+%bcond_without ims
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
@@ -30,6 +31,7 @@
 %bcond_with dnssec
 %bcond_without geoip
 %bcond_without http_async_client
+%bcond_without ims
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
@@ -51,6 +53,7 @@
 %bcond_with dnssec
 %bcond_without geoip
 %bcond_without http_async_client
+%bcond_without ims
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
@@ -72,6 +75,7 @@
 %bcond_without dnssec
 %bcond_without geoip
 %bcond_with http_async_client
+%bcond_without ims
 %bcond_with jansson
 %bcond_with json
 %bcond_without lua
@@ -94,6 +98,7 @@
 %bcond_with dnssec
 %bcond_without geoip
 %bcond_without http_async_client
+%bcond_without ims
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
@@ -115,6 +120,7 @@
 %bcond_with dnssec
 %bcond_without geoip
 %bcond_without http_async_client
+%bcond_without ims
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
@@ -136,6 +142,7 @@
 %bcond_without dnssec
 %bcond_with geoip
 %bcond_with http_async_client
+%bcond_with ims
 %bcond_with jansson
 %bcond_with json
 %bcond_with lua
@@ -157,6 +164,7 @@
 %bcond_with dnssec
 %bcond_with geoip
 %bcond_with http_async_client
+%bcond_with ims
 %bcond_with jansson
 %bcond_with json
 %bcond_with lua
@@ -164,7 +172,7 @@
 %bcond_with memcached
 %bcond_without mongodb
 %bcond_without perl
-%bcond_without rabbitmq
+%bcond_with rabbitmq
 %bcond_without redis
 %bcond_with sctp
 %bcond_with websocket
@@ -442,6 +450,7 @@ BuildRequires:  libxml2-devel, libcurl-devel, zlib-devel
 This module implements protocol functions that use the libcurl to communicate with HTTP servers. 
 
 
+%if %{with ims}
 %package    ims
 Summary:    IMS modules and extensions module for Kamailio
 Group:      System Environment/Daemons
@@ -450,6 +459,7 @@ BuildRequires:  libxml2-devel libmnl-devel
 
 %description    ims
 IMS modules and extensions module for Kamailio.
+%endif
 
 
 %if %{with jansson}
@@ -525,15 +535,6 @@ BuildRequires:  openldap-devel
 
 %description    ldap
 LDAP search interface for Kamailio.
-
-
-%package    log_custom
-Summary:    Logging to custom backends from Kamailio
-Group:      System Environment/Daemons
-Requires:   kamailio = %ver
-
-%description    log_custom
-This module provides logging to custom systems, replacing the default core logging to syslog.
 
 
 %if %{with lua}
@@ -976,7 +977,6 @@ make cfg prefix=/usr \
     basedir=%{buildroot} \
     cfg_prefix=%{buildroot} \
     doc_prefix=%{buildroot} \
-    share_prefix=%{_prefix} \
     doc_dir=%{_docdir}/kamailio/ \
     cfg_target=%{_sysconfdir}/kamailio/ modules_dirs="modules"
 make
@@ -1000,7 +1000,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with http_async_client}
     khttp_async \
 %endif
+%if %{with ims}
     kims \
+%endif
 %if %{with jansson}
     kjansson \
 %endif
@@ -1072,7 +1074,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with http_async_client}
     khttp_async \
 %endif
+%if %{with ims}
     kims \
+%endif
 %if %{with jansson}
     kjansson \
 %endif
@@ -1291,6 +1295,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.siputils
 %doc %{_docdir}/kamailio/modules/README.sl
 %doc %{_docdir}/kamailio/modules/README.sms
+%doc %{_docdir}/kamailio/modules/README.smsops
 %doc %{_docdir}/kamailio/modules/README.speeddial
 %doc %{_docdir}/kamailio/modules/README.sqlops
 %doc %{_docdir}/kamailio/modules/README.ss7ops
@@ -1324,7 +1329,10 @@ fi
 %doc %{_docdir}/kamailio/modules/README.call_obj
 %doc %{_docdir}/kamailio/modules/README.evrexec
 %doc %{_docdir}/kamailio/modules/README.keepalive
-
+%doc %{_docdir}/kamailio/modules/README.log_custom
+%doc %{_docdir}/kamailio/modules/README.statsc
+%doc %{_docdir}/kamailio/modules/README.topos
+%doc %{_docdir}/kamailio/modules/README.cfgt
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/dictionary.kamailio
@@ -1438,6 +1446,7 @@ fi
 %{_libdir}/kamailio/modules/siputils.so
 %{_libdir}/kamailio/modules/sl.so
 %{_libdir}/kamailio/modules/sms.so
+%{_libdir}/kamailio/modules/smsops.so
 %{_libdir}/kamailio/modules/speeddial.so
 %{_libdir}/kamailio/modules/sqlops.so
 %{_libdir}/kamailio/modules/ss7ops.so
@@ -1471,7 +1480,10 @@ fi
 %{_libdir}/kamailio/modules/call_obj.so
 %{_libdir}/kamailio/modules/evrexec.so
 %{_libdir}/kamailio/modules/keepalive.so
-
+%{_libdir}/kamailio/modules/log_custom.so
+%{_libdir}/kamailio/modules/statsc.so
+%{_libdir}/kamailio/modules/topos.so
+%{_libdir}/kamailio/modules/cfgt.so
 
 %{_sbindir}/kamailio
 %{_sbindir}/kamctl
@@ -1605,6 +1617,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.http_client
 %{_libdir}/kamailio/modules/http_client.so
 
+%if %{with ims}
 %files      ims
 %defattr(-,root,root)
 %{_libdir}/kamailio/libkamailio_ims.so.0
@@ -1612,7 +1625,6 @@ fi
 
 %doc %{_docdir}/kamailio/modules/README.cdp
 %doc %{_docdir}/kamailio/modules/README.cdp_avp
-%doc %{_docdir}/kamailio/modules/README.cfgt
 %doc %{_docdir}/kamailio/modules/README.ims_auth
 %doc %{_docdir}/kamailio/modules/README.ims_charging
 %doc %{_docdir}/kamailio/modules/README.ims_dialog
@@ -1625,13 +1637,8 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_pcscf
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_scscf
 %doc %{_docdir}/kamailio/modules/README.ims_usrloc_pcscf
-%doc %{_docdir}/kamailio/modules/README.log_custom
-%doc %{_docdir}/kamailio/modules/README.smsops
-%doc %{_docdir}/kamailio/modules/README.statsc
-%doc %{_docdir}/kamailio/modules/README.topos
 %{_libdir}/kamailio/modules/cdp.so
 %{_libdir}/kamailio/modules/cdp_avp.so
-%{_libdir}/kamailio/modules/cfgt.so
 %{_libdir}/kamailio/modules/ims_auth.so
 %{_libdir}/kamailio/modules/ims_charging.so
 %{_libdir}/kamailio/modules/ims_dialog.so
@@ -1645,10 +1652,8 @@ fi
 %{_libdir}/kamailio/modules/ims_registrar_scscf.so
 %{_libdir}/kamailio/modules/ims_usrloc_pcscf.so
 %{_libdir}/kamailio/modules/ims_usrloc_scscf.so
-%{_libdir}/kamailio/modules/log_custom.so
-%{_libdir}/kamailio/modules/smsops.so
-%{_libdir}/kamailio/modules/statsc.so
-%{_libdir}/kamailio/modules/topos.so
+%endif
+
 
 %if %{with jansson}
 %files      jansson
