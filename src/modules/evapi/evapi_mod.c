@@ -586,7 +586,13 @@ static int w_evapi_set_tag(sip_msg_t* msg, char* ptag, char* p2)
  */
 static int ki_evapi_relay(sip_msg_t *msg, str *sdata)
 {
-	return evapi_relay(sdata);
+	int ret;
+
+	ret = evapi_relay(sdata);
+
+	if(ret<0) return ret;
+
+	return (ret+1);
 }
 
 /**
@@ -597,7 +603,6 @@ static int ki_evapi_async_relay(sip_msg_t *msg, str *sdata)
 	unsigned int tindex;
 	unsigned int tlabel;
 	tm_cell_t *t = 0;
-
 
 	if(tmb.t_suspend==NULL) {
 		LM_ERR("evapi async relay is disabled - tm module not loaded\n");
@@ -644,7 +649,13 @@ static int ki_evapi_async_relay(sip_msg_t *msg, str *sdata)
  */
 static int ki_evapi_relay_unicast(sip_msg_t *msg, str *sdata, str *stag)
 {
-	return evapi_relay_unicast(sdata, stag);
+	int ret;
+
+	ret = evapi_relay_unicast(sdata, stag);
+
+	if(ret<0) return ret;
+
+	return (ret+1);
 }
 
 /**
@@ -652,7 +663,13 @@ static int ki_evapi_relay_unicast(sip_msg_t *msg, str *sdata, str *stag)
  */
 static int ki_evapi_relay_multicast(sip_msg_t *msg, str *sdata, str *stag)
 {
-	return evapi_relay_multicast(sdata, stag);
+	int ret;
+
+	ret = evapi_relay_multicast(sdata, stag);
+
+	if(ret<0) return ret;
+
+	return (ret+1);
 }
 
 /**
