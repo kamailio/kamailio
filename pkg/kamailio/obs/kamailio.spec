@@ -1274,6 +1274,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.siputils
 %doc %{_docdir}/kamailio/modules/README.sl
 %doc %{_docdir}/kamailio/modules/README.sms
+%doc %{_docdir}/kamailio/modules/README.smsops
 %doc %{_docdir}/kamailio/modules/README.speeddial
 %doc %{_docdir}/kamailio/modules/README.sqlops
 %doc %{_docdir}/kamailio/modules/README.ss7ops
@@ -1424,6 +1425,7 @@ fi
 %{_libdir}/kamailio/modules/siputils.so
 %{_libdir}/kamailio/modules/sl.so
 %{_libdir}/kamailio/modules/sms.so
+%{_libdir}/kamailio/modules/smsops.so
 %{_libdir}/kamailio/modules/speeddial.so
 %{_libdir}/kamailio/modules/sqlops.so
 %{_libdir}/kamailio/modules/ss7ops.so
@@ -1605,7 +1607,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_pcscf
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_scscf
 %doc %{_docdir}/kamailio/modules/README.ims_usrloc_pcscf
-%doc %{_docdir}/kamailio/modules/README.smsops
 %{_libdir}/kamailio/modules/cdp.so
 %{_libdir}/kamailio/modules/cdp_avp.so
 %{_libdir}/kamailio/modules/ims_auth.so
@@ -1620,7 +1621,6 @@ fi
 %{_libdir}/kamailio/modules/ims_registrar_scscf.so
 %{_libdir}/kamailio/modules/ims_usrloc_pcscf.so
 %{_libdir}/kamailio/modules/ims_usrloc_scscf.so
-%{_libdir}/kamailio/modules/smsops.so
 %endif
 
 
