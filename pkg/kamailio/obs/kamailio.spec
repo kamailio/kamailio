@@ -184,12 +184,20 @@
 %define _sharedstatedir /var/lib
 %endif
 
+# Defining missing macros on OpenSUSE Leap
+%if 0%{?suse_version} == 1315
+%define _fillupdir /var/adm/fillup-templates
+%endif
+%if 0%{?suse_version} == 1330
+%define _fillupdir /var/adm/fillup-templates
+%endif
+
 Summary:    Kamailio (former OpenSER) - the Open Source SIP Server
 Name:       %name
 Version:    %ver
 Release:    %rel
 Packager:   Peter Dunkley <peter@dunkley.me.uk>
-License:    GPL
+License:    GPL-2.0
 Group:      System Environment/Daemons
 Source:     http://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
 URL:        http://kamailio.org/
@@ -219,6 +227,7 @@ Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
 BuildRequires:  bison, flex
 %if 0%{?suse_version}
+Requires:  filesystem
 BuildRequires:  systemd-mini, shadow
 %endif
 %if 0%{?fedora} == 27
@@ -339,7 +348,7 @@ CPL (Call Processing Language) interpreter for Kamailio.
 
 
 %package    crypto
-Summary:    Module to support cryptographic extensions for use in the Kamailio configuration
+Summary:    Module to support cryptographic extensions
 Group:      System Environment/Daemons
 Requires:   kamailio = %ver
 %if 0%{?rhel} == 6
@@ -735,9 +744,12 @@ SCTP transport for Kamailio.
 
 
 %package    sipcapture-daemon-config
-Summary:    reference config for sipcapture daemon
+Summary:    Reference config for sipcapture daemon
 Group:      System Environment/Daemons
 Requires:   kamailio-sipcapture = %ver
+%if 0%{?suse_version}
+Requires:  filesystem
+%endif
 
 %description    sipcapture-daemon-config
 reference config for sipcapture daemon.
@@ -1140,11 +1152,11 @@ install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.tmpfiles 
 %endif
 
 %if 0%{?suse_version}
-install -d %{buildroot}/var/adm/fillup-templates/
+install -d %{buildroot}%{_fillupdir}
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
-        %{buildroot}/var/adm/fillup-templates/sysconfig.kamailio
+        %{buildroot}%{_fillupdir}/sysconfig.kamailio
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
-        %{buildroot}/var/adm/fillup-templates/sysconfig.sipcapture
+        %{buildroot}%{_fillupdir}/sysconfig.sipcapture
 %else
 install -d %{buildroot}%{_sysconfdir}/sysconfig
 install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
@@ -1164,7 +1176,7 @@ install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
 rm -f %{buildroot}%{_libdir}/kamailio/lib*.so
 
 %pre
-%if 0%{?suse_version} == 1330
+%if 0%{?suse_version}
 if ! /usr/bin/getent group daemon &>/dev/null; then
     /usr/sbin/groupadd --gid 2 daemon &> /dev/null
 fi
@@ -1342,7 +1354,7 @@ fi
 %config(noreplace) %{_sysconfdir}/kamailio/tls.cfg
 %dir %attr(-,kamailio,kamailio) %{_sharedstatedir}/kamailio
 %if 0%{?suse_version}
-/var/adm/fillup-templates/sysconfig.kamailio
+%{_fillupdir}/sysconfig.kamailio
 %else
 %config %{_sysconfdir}/sysconfig/kamailio
 %endif
@@ -1884,7 +1896,7 @@ fi
 %defattr(-,root,root)
 %config(noreplace) %{_sysconfdir}/kamailio/kamailio-sipcapture.cfg
 %if 0%{?suse_version}
-/var/adm/fillup-templates/sysconfig.sipcapture
+%{_fillupdir}/sysconfig.sipcapture
 %else
 %config(noreplace) %{_sysconfdir}/sysconfig/sipcapture
 %endif
@@ -2016,7 +2028,7 @@ fi
 
 
 %changelog
-* Sun Nov 04 2018 Sergey Safarov <s.safarov@gmail.com>
+* Sun Nov 04 2018 Sergey Safarov <s.safarov@gmail.com> 5.2.0-0
   - removed packaging for Fedora 25, 26 as End Of Life
 * Sat Sep 02 2017 Sergey Safarov <s.safarov@gmail.com>
   - added packaging for Fedora 26 and openSUSE Leap 42.3
