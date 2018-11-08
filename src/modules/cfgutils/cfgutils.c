@@ -705,7 +705,8 @@ static int cfg_lock_helper(str *lkey, int mode)
 	unsigned int pos;
 
 	if(_cfg_lock_set==NULL) {
-		LM_ERR("lock set not initialized (attempt to do op: %d on: %.*s)\n",
+		LM_ERR("lock set not initialized (attempt to do op: %d on: %.*s) -"
+				" see param lock_set_size\n",
 				mode, lkey->len, lkey->s);
 		return -1;
 	}
@@ -900,6 +901,7 @@ static void mod_destroy(void)
 	{
 		lock_set_destroy(_cfg_lock_set);
 		lock_set_dealloc(_cfg_lock_set);
+		_cfg_lock_set = NULL;
 	}
 }
 
