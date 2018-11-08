@@ -1,6 +1,7 @@
 [Unit]
 Description=Kamailio SIP router server daemon
-After=syslog.target network.target auditd.service
+Wants=network-online.target
+After=syslog.target network-online.target auditd.service
 
 [Service]
 EnvironmentFile=/etc/sysconfig/kamailio
