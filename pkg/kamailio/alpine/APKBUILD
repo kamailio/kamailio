@@ -27,7 +27,7 @@ depends="gawk"
 options="!check"
 makedepends="bison db-dev flex freeradius-client-dev expat-dev lksctp-tools-dev perl-dev postgresql-dev python2-dev pcre-dev mariadb-dev
 	libxml2-dev curl-dev unixodbc-dev confuse-dev ncurses-dev sqlite-dev
-	lua-dev openldap-dev libressl-dev net-snmp-dev libuuid libev-dev
+	lua-dev openldap-dev openssl-dev net-snmp-dev libuuid libev-dev
 	jansson-dev json-c-dev libevent-dev linux-headers libmemcached-dev
 	rabbitmq-c-dev hiredis-dev libmaxminddb-dev libunistring-dev ruby-dev"
 install="$pkgname.pre-install $pkgname.pre-upgrade"
@@ -253,7 +253,6 @@ for _i in db postgres sqlite dbtext mysql \
 done
 
 source="${pkgname}-${pkgver}${_suffix}.tar.gz::https://github.com/kamailio/$pkgname/archive/$_gitcommit.tar.gz
-	0004-src_core_tcp_read_c.patch
 	kamailio.initd
 	"
 
@@ -557,5 +556,4 @@ sipdump() {
 }
 
 sha512sums="51ea5fccd27a9d3d1783cfc5596eb28ab27e34faeec3268600363f43c48a3634c3c584c479ba874fdb53b85766a0ce8fe7df0e20954c9c6514b1d9d41d9237e6  kamailio-5.1.0.20171125-991fe9b.tar.gz
-af8362201957eae6b66baf7368c9ca884024209a396d77c5c52180c9aabe13772e9c6513e59721d39503e5bb7a8c1030f5c10301ea9055bddafb7f01ee2f3076  0004-src_core_tcp_read_c.patch
 321b1b160434150bcde3c0ad7f47ddf259791b68d4ce74ba4c35034026421a2bc6f5e86f26f393f5fcdb523d8cd75f944709473065553ce860b0ea06b3dc2a1b  kamailio.initd"
