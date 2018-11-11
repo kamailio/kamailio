@@ -58,13 +58,23 @@ typedef struct ms_res
 	RtpProfile *rtp_profile;
 } ms_res_t;
 
-typedef enum rms_action {
+typedef enum rms_action_type
+{
 	RMS_NONE,
 	RMS_START,
 	RMS_STOP,
 	RMS_HANGUP,
 	RMS_PLAY,
 	RMS_DONE,
+} rms_action_type_t;
+
+typedef struct rms_action
+{
+	struct rms_action *next;
+	struct rms_action *prev;
+	str param;
+	str route;
+	rms_action_type_t type;
 } rms_action_t;
 
 typedef struct rms_session_info
@@ -85,8 +95,6 @@ typedef struct rms_session_info
 	call_leg_media_t caller_media;
 	call_leg_media_t callee_media;
 	rms_action_t action;
-	str action_param;
-	str action_route;
 } rms_session_info_t;
 
 #endif

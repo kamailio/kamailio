@@ -43,3 +43,10 @@ make install
 cd ..
 
 ldconfig
+
+# download sample voice file
+mkdir -p voice_files
+cd voice_files
+wget http://www.voiptroubleshooter.com/open_speech/american/OSR_us_000_0010_8k.wav
+cd ..
+

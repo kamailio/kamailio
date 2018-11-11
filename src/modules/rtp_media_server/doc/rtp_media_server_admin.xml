@@ -103,6 +103,9 @@ modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
 		Create a session and a call leg and call the event_route[rms:start]
 		config example
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, REPLY_ROUTE and FAILURE_ROUTE.
+		</para>
 		<example>
 		<title>usage example</title>
 		<programlisting format="linespecific">
@@ -142,6 +145,9 @@ route {
 		<para>
 		Send a BYE, delete the RTP session and the media ressources.
 		</para>
+		<para>
+		This function can be used from EVENT_ROUTE.
+		</para>
 		<example>
 		<title>usage example</title>
 		<programlisting format="linespecific">
@@ -162,6 +168,9 @@ route {
 		If the SIP session is not found "481 Call/Transaction Does Not Exist"
 		is returned.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, REPLY_ROUTE and FAILURE_ROUTE.
+		</para>
 		<example>
 		<title>usage example</title>
 		<programlisting format="linespecific">
@@ -180,6 +189,9 @@ route {
 		and convert stereo to mono if needed.
 		</para><para>
 		The second parameter is the event route that will be called when the file was played.
+		</para>
+		<para>
+		This function can be used from EVENT_ROUTE.
 		</para>
 		<example>
 		<title>usage example</title>

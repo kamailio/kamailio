@@ -47,13 +47,15 @@ static int rms_hangup_f(struct sip_msg *);
 static int rms_sessions_dump_f(struct sip_msg *, char *, char *);
 
 static cmd_export_t cmds[] = {
-		{"rms_answer", (cmd_function)rms_answer_f, 0, 0, 0, ANY_ROUTE},
+		{"rms_answer", (cmd_function)rms_answer_f, 0, 0, 0, EVENT_ROUTE},
 		{"rms_play", (cmd_function)rms_action_play_f, 2, fixup_rms_action_play, 0,
 				ANY_ROUTE},
 		{"rms_sdp_offer", (cmd_function)rms_sdp_offer_f, 0, 0, 0, ANY_ROUTE},
-		{"rms_sdp_answer", (cmd_function)rms_sdp_answer_f, 0, 0, 0, ANY_ROUTE},
-		{"rms_media_stop", (cmd_function)rms_media_stop_f, 0, 0, 0, ANY_ROUTE},
-		{"rms_hangup", (cmd_function)rms_hangup_f, 0, 0, 0, ANY_ROUTE},
+		{"rms_sdp_answer", (cmd_function)rms_sdp_answer_f, 0, 0, 0, REQUEST_ROUTE
+				| FAILURE_ROUTE | ONREPLY_ROUTE},
+		{"rms_media_stop", (cmd_function)rms_media_stop_f, 0, 0, 0, REQUEST_ROUTE
+				| FAILURE_ROUTE | ONREPLY_ROUTE},
+		{"rms_hangup", (cmd_function)rms_hangup_f, 0, 0, 0, EVENT_ROUTE},
 		{"rms_sessions_dump", (cmd_function)rms_sessions_dump_f, 0, 0, 0,
 				ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
@@ -161,6 +163,53 @@ void rms_signal_handler(int signum)
 	LM_INFO("signal received [%d]\n", signum);
 }
 
+static rms_session_info_t* rms_session_action_check(rms_session_info_t *si)
+{
+	rms_action_t *a;
+	clist_foreach(&si->action, a, next)
+	{
+		if(a->type == RMS_HANGUP) {
+			LM_INFO("session action RMS_HANGUP [%s]\n", si->callid.s);
+			rms_hangup_call(si);
+			a->type = RMS_STOP;
+			return si;
+		} else if(a->type == RMS_STOP) {
+			LM_INFO("session action RMS_STOP [%s][%p|%p]\n", si->callid.s, si, si->prev);
+			rms_stop_media(&si->caller_media);
+			rms_session_info_t *tmp = si->prev;
+			clist_rm(si, next, prev);
+			rms_session_free(si);
+			si = tmp;
+			return si;
+		} else if(a->type == RMS_PLAY) {
+			LM_INFO("session action RMS_PLAY [%s]\n", si->callid.s);
+			rms_playfile(&si->caller_media, a);
+			a->type = RMS_NONE;
+		} else if(a->type == RMS_DONE) {
+			LM_INFO("session action RMS_DONE [%s][%s]\n", si->callid.s,
+					a->route.s);
+			if(a->route.s) {
+				run_action_route(si, a->route.s);
+				rms_action_t *tmp = a->prev;
+				clist_rm(a, next, prev);
+				shm_free(a);
+				a = tmp;
+			} else {
+				a->type = RMS_HANGUP;
+			}
+			return si;
+		} else if(a->type == RMS_START) {
+			create_call_leg_media(&si->caller_media);
+			LM_INFO("session action RMS_START [%s]\n", si->callid.s);
+			rms_start_media(&si->caller_media, a->param.s);
+			run_action_route(si, "rms:start");
+			a->type = RMS_NONE;
+			return si;
+		}
+	}
+	return si;
+}
+
 /**
  * Most interaction with the session and media streams that are controlled 
  * in this function this is safer in the event where a library is using non shared memory
@@ -173,36 +222,7 @@ static void rms_session_manage_loop()
 		rms_session_info_t *si;
 		clist_foreach(rms_session_list, si, next)
 		{
-			if(si->action == RMS_HANGUP) {
-				LM_INFO("session action RMS_HANGUP [%s]\n", si->callid.s);
-				rms_hangup_call(si);
-				si->action = RMS_STOP;
-			} else if(si->action == RMS_STOP) {
-				LM_INFO("session action RMS_STOP [%s]\n", si->callid.s);
-				rms_stop_media(&si->caller_media);
-				rms_session_info_t *tmp = si->prev;
-				clist_rm(si, next, prev);
-				rms_session_free(si);
-				si = tmp;
-			} else if(si->action == RMS_PLAY) {
-				LM_INFO("session action RMS_PLAY [%s]\n", si->callid.s);
-				rms_playfile(&si->caller_media, si->action_param.s);
-				si->action = RMS_NONE;
-			} else if(si->action == RMS_DONE) {
-				LM_INFO("session action RMS_DONE [%s][%s]\n", si->callid.s,
-						si->action_route.s);
-				if(si->action_route.s) {
-					run_action_route(si, si->action_route.s);
-				} else {
-					si->action = RMS_HANGUP;
-				}
-			} else if(si->action == RMS_START) {
-				create_call_leg_media(&si->caller_media);
-				LM_INFO("session action RMS_START [%s]\n", si->callid.s);
-				rms_start_media(&si->caller_media, si->action_param.s);
-				si->action = RMS_NONE;
-				run_action_route(si, "rms:start");
-			}
+			si = rms_session_action_check(si);
 		}
 		unlock(&session_list_mutex);
 		usleep(2000);
@@ -362,20 +382,6 @@ static int rms_answer_call(struct sip_msg *msg, rms_session_info_t *si)
 	return 1;
 }
 
-static rms_session_info_t *rms_session_search(char *callid, int len)
-{
-	// lock(&session_list_mutex);
-	rms_session_info_t *si;
-	clist_foreach(rms_session_list, si, next)
-	{
-		if(strncmp(callid, si->callid.s, len) == 0) {
-			unlock(&session_list_mutex);
-			return si;
-		}
-	}
-	// unlock(&session_list_mutex);
-	return NULL;
-}
 
 static int rms_hangup_call(rms_session_info_t *si)
 {
@@ -421,8 +427,20 @@ static int rms_check_msg(struct sip_msg *msg)
 	return 1;
 }
 
+static void rms_action_free(rms_session_info_t *si)
+{
+	rms_action_t *a, *tmp;
+	clist_foreach(&si->action, a, next) {
+		tmp = a;
+		a = a->prev;
+		clist_rm(tmp, next, prev);
+		shm_free(tmp);
+	}
+}
+
 static int rms_session_free(rms_session_info_t *si)
 {
+	rms_action_free(si);
 	rms_sdp_info_free(&si->sdp_info_offer);
 	rms_sdp_info_free(&si->sdp_info_answer);
 	if(si->caller_media.pt) {
@@ -456,6 +474,14 @@ static int rms_session_free(rms_session_info_t *si)
 	shm_free(si);
 	si = NULL;
 	return 1;
+}
+
+rms_action_t *rms_action_new(rms_action_type_t t) {
+	rms_action_t *a = shm_malloc(sizeof(rms_action_t));
+	if (!a) return NULL;
+	memset(a, 0, sizeof(rms_action_t));
+	a->type = t;
+	return a;
 }
 
 rms_session_info_t *rms_session_new(struct sip_msg *msg)
@@ -502,7 +528,7 @@ rms_session_info_t *rms_session_new(struct sip_msg *msg)
 		tmb.t_reply(msg, 488, "incompatible media format");
 		goto error;
 	}
-
+	clist_init(&si->action, next, prev);
 	return si;
 error:
 	rms_session_free(si);
@@ -552,6 +578,16 @@ static int rms_create_trans(struct sip_msg *msg) {
 	return 1;
 }
 
+static void rms_action_add(rms_session_info_t *si, rms_action_t *a) {
+	clist_append(&si->action, a, next, prev);
+}
+
+static void rms_action_add_sync(rms_session_info_t *si, rms_action_t *a) {
+	lock(&session_list_mutex);
+	rms_action_add(si, a);
+	unlock(&session_list_mutex);
+}
+
 static void rms_session_add(rms_session_info_t *si) {
 	lock(&session_list_mutex);
 	clist_append(rms_session_list, si, next, prev);
@@ -562,6 +598,26 @@ static void rms_session_rm(rms_session_info_t *si) {
 	lock(&session_list_mutex);
 	clist_rm(si, next, prev);
 	unlock(&session_list_mutex);
+}
+
+static rms_session_info_t *rms_session_search(char *callid, int len)
+{
+	rms_session_info_t *si;
+	clist_foreach(rms_session_list, si, next)
+	{
+		if(strncmp(callid, si->callid.s, len) == 0) {
+			return si;
+		}
+	}
+	return NULL;
+}
+
+static rms_session_info_t *rms_session_search_sync(char *callid, int len)
+{
+	lock(&session_list_mutex);
+	rms_session_info_t *si = rms_session_search(callid, len);
+	unlock(&session_list_mutex);
+	return si;
 }
 
 static int rms_sdp_offer_f(struct sip_msg *msg, char *param1, char *param2)
@@ -595,7 +651,7 @@ static int rms_sdp_answer_f(struct sip_msg *msg, char *param1, char *param2)
 		LM_INFO("no callid ?\n");
 		return -1;
 	}
-	si = rms_session_search(msg->callid->body.s, msg->callid->body.len);
+	si = rms_session_search_sync(msg->callid->body.s, msg->callid->body.len);
 	if(!si) {
 		LM_INFO("session not found ci[%.*s]\n", msg->callid->body.len,
 				msg->callid->body.s);
@@ -642,7 +698,7 @@ static int rms_media_stop_f(struct sip_msg *msg, char *param1, char *param2)
 		LM_ERR("no callid\n");
 		return -1;
 	}
-	si = rms_session_search(msg->callid->body.s, msg->callid->body.len);
+	si = rms_session_search_sync(msg->callid->body.s, msg->callid->body.len);
 	if(!si) {
 		LM_INFO("session not found ci[%.*s]\n", msg->callid->body.len,
 				msg->callid->body.s);
@@ -651,12 +707,23 @@ static int rms_media_stop_f(struct sip_msg *msg, char *param1, char *param2)
 		}
 		return 0;
 	}
-	si->action = RMS_STOP;
+	rms_action_t *a = rms_action_new(RMS_STOP);
+	if(!a) return -1;
+	rms_action_add_sync(si, a);
 	if(!tmb.t_reply(msg, 200, "OK")) {
 		return -1;
 	}
 	return 0;
 }
+
+//static int rms_action_dtmf_f(struct sip_msg *msg, char dtmf, str *route)
+//	rms_session_info_t *si =
+//			rms_session_search(msg->callid->body.s, msg->callid->body.len);
+//	if(!si)
+//		return -1;
+//	rms_playfile();
+//	return 0;
+//}
 
 static int rms_action_play_f(struct sip_msg *msg, str *playback_fn, str *route)
 {
@@ -667,11 +734,14 @@ static int rms_action_play_f(struct sip_msg *msg, str *playback_fn, str *route)
 	LM_INFO("RTP session [%s:%d]<>[%s:%d]\n", si->caller_media.local_ip.s,
 			si->caller_media.local_port, si->caller_media.remote_ip.s,
 			si->caller_media.remote_port);
-	si->action = RMS_PLAY;
-	si->action_param.len = playback_fn->len;
-	si->action_param.s = playback_fn->s;
-	si->action_route.len = route->len;
-	si->action_route.s = route->s;
+
+	rms_action_t *a = rms_action_new(RMS_PLAY);
+	if(!a) return -1;
+	a->param.len = playback_fn->len;
+	a->param.s = playback_fn->s;
+	a->route.len = route->len;
+	a->route.s = route->s;
+	rms_action_add(si, a);
 	return 0;
 }
 
@@ -681,11 +751,11 @@ static int rms_hangup_f(struct sip_msg *msg)
 			rms_session_search(msg->callid->body.s, msg->callid->body.len);
 	if(!si)
 		return -1;
-	si->action = RMS_HANGUP;
+	rms_action_t *a = rms_action_new(RMS_HANGUP);
+	if(!a) return -1;
+	rms_action_add(si, a);
 	return 0;
 }
-
-
 
 static int rms_answer_f(struct sip_msg *msg)
 {
@@ -707,7 +777,9 @@ static int rms_answer_f(struct sip_msg *msg)
 	LM_INFO("RTP session [%s:%d]<>[%s:%d]\n", si->caller_media.local_ip.s,
 			si->caller_media.local_port, si->caller_media.remote_ip.s,
 			si->caller_media.remote_port);
-	si->action = RMS_START;
+	rms_action_t *a = rms_action_new(RMS_START);
+	if(!a) return -1;
+	rms_action_add(si, a);
 	return 1;
 error:
 	rms_session_rm(si);

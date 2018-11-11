@@ -41,7 +41,6 @@ typedef struct shared_global_vars
 	gen_lock_t lock;
 } shared_global_vars_t;
 
-static shared_global_vars_t *vars;
 
 MSFilterDesc *rms_ms_filter_descs[] = {&ms_alaw_dec_desc, &ms_alaw_enc_desc,
 		&ms_ulaw_dec_desc, &ms_ulaw_enc_desc, &ms_rtp_send_desc,
@@ -75,7 +74,6 @@ int rms_media_init()
 	ortp_memory_functions.free_fun = ptr_shm_free;
 	ortp_set_memory_functions(&ortp_memory_functions);
 	ortp_init();
-	vars = shm_malloc(sizeof(shared_global_vars_t));
 	return 1;
 }
 
@@ -155,8 +153,8 @@ static void rms_player_eof(
 		void *user_data, MSFilter *f, unsigned int event, void *event_data)
 {
 	if(event == MS_FILE_PLAYER_EOF) {
-		rms_session_info_t *si = (rms_session_info_t *)user_data;
-		si->action = RMS_DONE;
+		rms_action_t *a = (rms_action_t *)user_data;
+		a->type = RMS_DONE;
 	}
 	MS_UNUSED(f), MS_UNUSED(event_data);
 }
@@ -203,13 +201,22 @@ int rms_stop_bridge(call_leg_media_t *m1, call_leg_media_t *m2)
 	return 1;
 }
 
-int rms_playfile(call_leg_media_t *m, char *file_name)
+
+int rms_get_dtmf(call_leg_media_t *m, char dtmf) {
+//	static void tone_detected_cb(void *data, MSFilter *f, unsigned int event_id, MSToneDetectorEvent *ev) {
+//			MS_UNUSED(data), MS_UNUSED(f), MS_UNUSED(event_id), MS_UNUSED(ev);
+//				ms_tester_tone_detected = TRUE;
+//	}
+	return 1;
+}
+
+int rms_playfile(call_leg_media_t *m, rms_action_t *a)
 {
 	int file_sample_rate = 8000;
 	if(!m->ms_player)
 		return 0;
-	ms_filter_add_notify_callback(m->ms_player, rms_player_eof, m->si, TRUE);
-	ms_filter_call_method(m->ms_player, MS_FILE_PLAYER_OPEN, (void *)file_name);
+	ms_filter_add_notify_callback(m->ms_player, rms_player_eof, a, TRUE);
+	ms_filter_call_method(m->ms_player, MS_FILE_PLAYER_OPEN, (void *)a->param.s);
 	ms_filter_call_method(m->ms_player, MS_FILE_PLAYER_START, NULL);
 	ms_filter_call_method(m->ms_player, MS_FILTER_GET_SAMPLE_RATE, &file_sample_rate);
 	ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_SAMPLE_RATE, &file_sample_rate);
