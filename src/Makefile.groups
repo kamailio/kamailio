@@ -207,6 +207,9 @@ mod_list_rabbitmq=rabbitmq
 # - modules depending on libphonenumber library
 mod_list_phonenum=phonenum
 
+# - modules depending on oRTP and mediastreamer2 libraries
+mod_list_rtp_media=rtp_media_server
+
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_db) $(mod_list_dbuid) \
@@ -239,7 +242,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_erlang) $(mod_list_systemd) \
 			   $(mod_list_http_async) $(mod_list_nsq) \
 			   $(mod_list_rabbitmq) $(mod_list_jsdt)) \
-			   $(mod_list_phonenum)
+			   $(mod_list_phonenum) \
+			   $(mod_list_rtp_media)
 
 
 
