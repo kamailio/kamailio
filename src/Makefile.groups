@@ -208,7 +208,7 @@ mod_list_rabbitmq=rabbitmq
 mod_list_phonenum=phonenum
 
 # - modules depending on oRTP and mediastreamer2 libraries
-mod_list_rtp_media=rtp_media_server
+mod_list_rtp_media_server=rtp_media_server
 
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
@@ -243,7 +243,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_http_async) $(mod_list_nsq) \
 			   $(mod_list_rabbitmq) $(mod_list_jsdt)) \
 			   $(mod_list_phonenum) \
-			   $(mod_list_rtp_media)
+			   $(mod_list_rtp_media_server)
 
 
 
@@ -456,6 +456,9 @@ module_group_krabbitmq=$(mod_list_rabbitmq)
 
 # K phonenumber modules
 module_group_kphonenum=$(mod_list_phonenum)
+
+# K rtp_media_server modules
+module_group_krtp_media_server=$(mod_list_rtp_media_server)
 
 # list of static modules
 #
