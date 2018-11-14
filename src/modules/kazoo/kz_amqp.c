@@ -1802,10 +1802,10 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 	str* event_key = NULL;
     str* event_subkey = NULL;
 
-
-
 	json_obj_ptr json_obj = NULL;
 	struct json_object* tmpObj = NULL;
+	kz_amqp_bind_ptr bind = NULL;
+	kz_amqp_binding_ptr binding = NULL;
 
 	if (fixup_get_svalue(msg, (gparam_p)payload, &payload_s) != 0) {
 		LM_ERR("cannot get payload value\n");
@@ -1880,7 +1880,7 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 	}
 	queue = kz_amqp_queue_from_json(&queue_s, tmpObj);
 
-	kz_amqp_bind_ptr bind = kz_amqp_bind_alloc(exchange, exchange_binding, queue, routing, event_key, event_subkey);
+	bind = kz_amqp_bind_alloc(exchange, exchange_binding, queue, routing, event_key, event_subkey);
 	if(bind == NULL) {
 		LM_ERR("Could not allocate bind struct\n");
 		goto error;
@@ -1893,7 +1893,7 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 	bind->consistent_worker_key = consistent_worker_key;
 
 
-	kz_amqp_binding_ptr binding = shm_malloc(sizeof(kz_amqp_binding));
+	binding = shm_malloc(sizeof(kz_amqp_binding));
 	if(binding == NULL) {
 		LM_ERR("Could not allocate binding struct\n");
 		goto error;
@@ -1935,7 +1935,8 @@ int kz_amqp_subscribe_simple(struct sip_msg* msg, char* exchange, char* exchange
 	kz_amqp_exchange_ptr exchange_ptr = NULL;
 	kz_amqp_queue_ptr queue_ptr = NULL;
 	kz_amqp_routings_ptr routing_ptr = NULL;
-
+	kz_amqp_bind_ptr bind = NULL;
+	kz_amqp_binding_ptr binding = NULL;
 
 	if (fixup_get_svalue(msg, (gparam_p)exchange, &exchange_s) != 0) {
 		LM_ERR("cannot get exchange string value\n");
@@ -1961,7 +1962,7 @@ int kz_amqp_subscribe_simple(struct sip_msg* msg, char* exchange, char* exchange
 	queue_ptr = kz_amqp_queue_new(&queue_s);
 	routing_ptr = kz_amqp_routing_new(routing_key_s.s);
 
-	kz_amqp_bind_ptr bind = kz_amqp_bind_alloc(exchange_ptr, NULL, queue_ptr, routing_ptr, NULL, NULL);
+	bind = kz_amqp_bind_alloc(exchange_ptr, NULL, queue_ptr, routing_ptr, NULL, NULL);
 	if(bind == NULL) {
 		LM_ERR("Could not allocate bind struct\n");
 		goto error;
@@ -1969,7 +1970,7 @@ int kz_amqp_subscribe_simple(struct sip_msg* msg, char* exchange, char* exchange
 
 	bind->no_ack = 1;
 
-	kz_amqp_binding_ptr binding = shm_malloc(sizeof(kz_amqp_binding));
+	binding = shm_malloc(sizeof(kz_amqp_binding));
 	if(binding == NULL) {
 		LM_ERR("Could not allocate binding struct\n");
 		goto error;
@@ -2870,6 +2871,7 @@ void kz_send_targeted_cmd(int server_id, amqp_bytes_t body)
     char* server_id_str = NULL;
     kz_amqp_cmd_ptr cmd = NULL;
     json_object* JObj = NULL;
+    json_obj_ptr json_obj = NULL;
 	char* payload = kz_local_amqp_bytes_dup(body);
 
 	if(payload == NULL) {
@@ -2877,7 +2879,7 @@ void kz_send_targeted_cmd(int server_id, amqp_bytes_t body)
 		goto error;
 	}
 
-	json_obj_ptr json_obj = kz_json_parse(payload );
+	json_obj = kz_json_parse(payload );
     if (json_obj == NULL) {
 		LM_ERR("error parsing json payload\n");
 		goto error;
