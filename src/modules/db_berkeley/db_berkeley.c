@@ -874,7 +874,7 @@ int _bdb_delete_cursor(
 	int ret, klen = MAX_ROW_SIZE;
 	DBT key, data;
 	DB *db;
-	DBC *dbcp;
+	DBC *dbcp = NULL;
 	int *lkey = NULL;
 
 	ret = 0;
