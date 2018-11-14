@@ -67,6 +67,15 @@
 				Mediastreamer2 is a powerful and lightweight streaming engine specialized for voice/video telephony applications.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>bcunit</emphasis> git clone https://github.com/BelledonneCommunications/bcunit.git
+			</para>
+			<para>
+				fork of the defunct project CUnit, with several fixes and patches applied.
+				CUnit is a Unit testing framework for C.
+			</para>
+			</listitem>
 		</itemizedlist>
 	</section>
 </section>
