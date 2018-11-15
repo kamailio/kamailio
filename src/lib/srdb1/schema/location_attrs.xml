@@ -79,7 +79,7 @@
     <column>
         <name>avalue</name>
         <type>string</type>
-        <size>255</size>
+        <size>512</size>
         <default/>
         <description>Attribute value.</description>
     </column>
