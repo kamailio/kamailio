@@ -51,7 +51,7 @@
     <column id="event">
         <name>event</name>
         <type>string</type>
-        <size>&user_len;</size>
+        <size>&event_len;</size>
         <description>Event</description>
         <natural/>
     </column>
@@ -59,8 +59,8 @@
     <column id="etag">
         <name>etag</name>
         <type>string</type>
-        <size>&user_len;</size>
-        <description>User name</description>
+        <size>&etag_len;</size>
+        <description>Etag attribute</description>
     </column>
 
     <column id="expires">
