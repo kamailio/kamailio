@@ -3,7 +3,7 @@ CREATE TABLE `presentity` (
     `username` VARCHAR(64) NOT NULL,
     `domain` VARCHAR(64) NOT NULL,
     `event` VARCHAR(64) NOT NULL,
-    `etag` VARCHAR(64) NOT NULL,
+    `etag` VARCHAR(128) NOT NULL,
     `expires` INT(11) NOT NULL,
     `received_time` INT(11) NOT NULL,
     `body` BLOB NOT NULL,
