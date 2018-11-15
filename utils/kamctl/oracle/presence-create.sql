@@ -3,7 +3,7 @@ CREATE TABLE presentity (
     username VARCHAR2(64),
     domain VARCHAR2(64),
     event VARCHAR2(64),
-    etag VARCHAR2(64),
+    etag VARCHAR2(128),
     expires NUMBER(10),
     received_time NUMBER(10),
     body BLOB,
