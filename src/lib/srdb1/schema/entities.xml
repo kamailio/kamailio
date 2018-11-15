@@ -22,6 +22,8 @@
 <!ENTITY expires_len "11">
 <!ENTITY flag_len "11">
 <!ENTITY description_len "255">
+<!ENTITY event_len "64">
+<!ENTITY etag_len "128">
 <!ENTITY MYSQL_TABLE_TYPE "">
 <!ENTITY USERCOL "username">
 <!ENTITY DEFAULT_ALIASES_EXPIRES "2030-05-28 21:32:15">
