@@ -64,7 +64,7 @@
     <column id="etag">
         <name>etag</name>
         <type>string</type>
-        <size>&user_len;</size>
+        <size>&etag_len;</size>
         <description>Document Etag</description>
     </column>
 

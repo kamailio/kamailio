@@ -80,7 +80,7 @@
     <column id="etag">
         <name>etag</name>
         <type>string</type>
-        <size>&domain_len;</size>
+        <size>&etag_len;</size>
         <description>Etag</description>
     </column>
 
