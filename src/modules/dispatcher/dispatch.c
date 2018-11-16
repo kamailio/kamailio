@@ -2286,7 +2286,7 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 	}
 
 	rxavp = xavp_get(&ds_xavp_dst, NULL);
-	if(rxavp == NULL) {
+	if(rxavp == NULL || rxavp->val.type != SR_XTYPE_XAVP) {
 		LM_DBG("no xavp with previous destination record\n");
 		return -1;
 	}
@@ -2297,12 +2297,14 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 		xavp_rm(rxavp, NULL);
 
 		rxavp = xavp_get(&ds_xavp_dst, NULL);
-		if(rxavp == NULL) {
+		if(rxavp == NULL || rxavp->val.type != SR_XTYPE_XAVP) {
 			LM_DBG("no xavp with next destination record\n");
 			return -1;
 		}
 	}
 
+	/* retrieve attributes from sub list */
+	rxavp = rxavp->val.v.xavp;
 	lxavp = xavp_get(&ds_xavp_dst_sock, rxavp);
 	if(lxavp!=NULL && lxavp->val.type==SR_XTYPE_VPTR) {
 		LM_DBG("socket enforced in next destination record\n");
