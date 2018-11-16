@@ -90,13 +90,13 @@ event_route[xhttp:request] {
                 # Optional... perform HTTP authentication
 
                 # ws_handle_handshake() exits (no further configuration file
-                # processing of the request) when complete.
+                # processing of the request) when complete in case of failure.
                 if (ws_handle_handshake())
-		{
-			# Optional... cache some information about the
-			# successful connection
-			exit;
-		}
+                {
+                        # Optional... cache some information about the
+                        # successful connection
+                        exit;
+                }
         }
 
         xhttp_reply("404", "Not found", "", "");
@@ -181,9 +181,9 @@ route[WITHINDLG] {
 onreply_route[WS_REPLY] {
         if (nat_uac_test(64)) {
                 # Do NAT traversal stuff for replies to a WebSocket connection
-		# - even if it is not behind a NAT!
+                # - even if it is not behind a NAT!
                 # This won't be needed in the future if Kamailio and the
-		# WebSocket client support Outbound and Path.
+                # WebSocket client support Outbound and Path.
                 add_contact_alias();
         }
 }
@@ -460,7 +460,8 @@ modparam("websocket", "verbose_list", 1)
 		<para>This function can be used from ANY_ROUTE (but will only
 		work in <emphasis>event_route[xhttp:request]</emphasis>).</para>
 		<note><para>This function returns 0, stopping all further
-		processing of the request, when there is a problem.</para></note>
+		processing of the request, when there is a problem. Otherwise, it
+		returns 1 (or positive number) in case of success.</para></note>
 		<example>
 		<title><function>ws_handle_handshake</function> usage</title>
 		<programlisting format="linespecific">
