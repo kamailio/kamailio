@@ -2303,6 +2303,13 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 		}
 	}
 
+	/*
+	* xavp_get returns the xavp in val.v.xavp
+	* we need to get that value for the below
+	* xavp_get from rxavp work
+	*/
+	rxavp = rxavp->val.v.xavp;
+
 	lxavp = xavp_get(&ds_xavp_dst_sock, rxavp);
 	if(lxavp!=NULL && lxavp->val.type==SR_XTYPE_VPTR) {
 		LM_DBG("socket enforced in next destination record\n");
