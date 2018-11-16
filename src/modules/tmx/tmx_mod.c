@@ -73,6 +73,8 @@ static int w_t_is_branch_route(sip_msg_t* msg, char*, char* );
 static int w_t_is_reply_route(sip_msg_t* msg, char*, char*);
 static int w_t_is_request_route(sip_msg_t* msg, char*, char*);
 
+static int w_t_drop(sip_msg_t* msg, char*, char*);
+static int fixup_t_drop(void** param, int param_no);
 static int w_t_suspend(sip_msg_t* msg, char*, char*);
 static int w_t_continue(sip_msg_t* msg, char *idx, char *lbl, char *rtn);
 static int w_t_reuse_branch(sip_msg_t* msg, char*, char*);
@@ -197,6 +199,8 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE },
 	{"bind_tmx", (cmd_function)bind_tmx, 1,
 		0, 0, ANY_ROUTE },
+	{"t_drop",   (cmd_function)w_t_drop, 0, 0, 0, ANY_ROUTE},
+	{"t_drop",   (cmd_function)w_t_drop, 1, fixup_t_drop, 0, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -699,6 +703,34 @@ static int t_is_request_route(sip_msg_t* msg)
 /**
  *
  */
+static int w_t_drop(sip_msg_t* msg, char *p1, char *p2)
+{
+	tm_cell_t *t = 0;
+	unsigned int uas_status = 500;
+
+	if(p1) {
+		if(fixup_get_ivalue(msg, (gparam_p)p1, (int*)&uas_status)<0)
+		{
+			uas_status = 500;
+		}
+	}
+
+	t=_tmx_tmb.t_gett();
+	if (t==NULL || t==T_UNDEFINED) {
+		LM_ERR("no transaction\n");
+		return -1;
+	}
+
+	t->uas.status = uas_status;
+	if(t_is_request_route(msg) == 1) {
+		_tmx_tmb.t_release(msg);
+	}
+	return 0;
+}
+
+/**
+ *
+ */
 static int ki_t_suspend(sip_msg_t* msg)
 {
 	unsigned int tindex;
@@ -870,6 +902,18 @@ static int fixup_t_continue(void** param, int param_no)
 	}
 	if (param_no==3) {
 		return fixup_spve_null(param, 1);
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int fixup_t_drop(void** param, int param_no)
+{
+	if (param_no==1) {
+		return fixup_igp_null(param, 1);
 	}
 
 	return 0;
