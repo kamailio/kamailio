@@ -537,17 +537,16 @@ error:
 int ht_dmq_handle_sync(srjson_doc_t* jdoc) {
 	LM_DBG("handling sync\n");
 
-	srjson_t* cells;
-	srjson_t* cell;
-	srjson_t* it;
-	str htname;
-	str cname;
-	int type;
-	int_str val;
-	int expire;
-	ht_t* ht;
-	time_t now;
-
+	srjson_t* cells = NULL;
+	srjson_t* cell = NULL;
+	srjson_t* it = NULL;
+	str htname = STR_NULL;
+	str cname = STR_NULL;
+	int type = 0;
+	int_str val = {0};
+	int expire = 0;
+	ht_t* ht = NULL;
+	time_t now = 0;
 
 	cells = jdoc->root->child;
 	cell = cells->child;
