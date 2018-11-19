@@ -1710,7 +1710,7 @@ int get_boundary(struct sip_msg* msg, str* boundary)
 		msg->content_type->body.len);
 	if (params.s == NULL)
 	{
-		LM_INFO("Content-Type hdr has no params <%.*s>\n",
+		LM_INFO("Content-Type hdr has no boundary params <%.*s>\n",
 				msg->content_type->body.len, msg->content_type->body.s);
 		return -1;
 	}
