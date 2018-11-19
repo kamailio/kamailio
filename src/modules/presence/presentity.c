@@ -807,7 +807,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	}
 	else
 	{
-
 		LM_DBG("updating existing presentity with etag %.*s\n", presentity->etag.len, presentity->etag.s);
 
 		if (ruid) {
@@ -1265,7 +1264,7 @@ send_notify:
 
 done:
 
-	if (pres_enable_dmq>0) {
+	if (pres_enable_dmq>0 && p_ruid.s!=NULL) {
 		pres_dmq_replicate_presentity(presentity, body, new_t, &cur_etag, sphere, &p_ruid, NULL);
 	}
 
@@ -1934,9 +1933,9 @@ error:
 int _api_update_presentity(str *event, str *realm, str *user, str *etag,
 		str *sender, str *body, int expires, int new_t, int replace)
 {
-	int ret;
+	int ret = -1;
 	presentity_t *pres = NULL;
-	pres_ev_t *ev;
+	pres_ev_t *ev = NULL;
 	char *sphere = NULL;
 
 	ev = contains_event(event, NULL);
@@ -1950,10 +1949,12 @@ int _api_update_presentity(str *event, str *realm, str *user, str *etag,
 	if(sphere_enable) {
 		sphere = extract_sphere(*body);
 	}
-	ret = update_presentity(NULL, pres, body, new_t, NULL, sphere, NULL, NULL, replace);
-
-	if(pres)
+	if(pres) {
+		ret = update_presentity(NULL, pres, body, new_t, NULL, sphere, NULL,
+					NULL, replace);
 		pkg_free(pres);
+	}
+
 	if(sphere)
 		pkg_free(sphere);
 
