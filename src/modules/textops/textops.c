@@ -2761,7 +2761,7 @@ static int ki_remove_multibody(sip_msg_t* msg, str* content_type)
 	}
 
 	if(get_boundary(msg, &boundary)!=0) {
-		LM_ERR("Cannot get boundary. Is body multipart?\n");
+		LM_ERR("Cannot get boundary from Content type header. Is body multipart?\n");
 		return -1;
 	}
 
@@ -2851,18 +2851,23 @@ static int ki_get_body_part_helper(sip_msg_t* msg, str* ctype, pv_spec_t *dst,
 
 	body.s = get_body(msg);
 	if (body.s == 0) {
-		LM_ERR("failed to get the message body\n");
+		LM_ERR("failed to get the content message body\n");
 		return -1;
 	}
 	body.len = msg->len - (int)(body.s - msg->buf);
 	if (body.len == 0) {
-		LM_DBG("message body has zero length\n");
+		LM_DBG("Content body has zero length\n");
 		return -1;
 	}
 
 	if(get_boundary(msg, &boundary)!=0) {
-		LM_ERR("Cannot get boundary. Is body multipart?\n");
-		return -1;
+		LM_DBG("Content is not multipart so return all content body as string\n");
+		memset(&val, 0, sizeof(pv_value_t));
+		val.flags = PV_VAL_STR;
+		val.rs.s = body.s;
+		val.rs.len =body.len;
+		dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+		return 1;
 	}
 
 	start = body.s;
@@ -2968,7 +2973,7 @@ static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mod
 	str content_type;
 
 	if(ctype==0) {
-		LM_ERR("invalid parameters\n");
+		LM_ERR("invalid Content-type parameters\n");
 		return -1;
 	}
 
@@ -3680,7 +3685,7 @@ int ki_in_list_prefix(sip_msg_t* _m, str* subject, str* list, str* vsep)
 {
 	int sep;
 	char *at, *past, *next_sep, *s;
-	
+
 	if(subject==NULL || subject->len<=0 || list==NULL || list->len<=0
 			|| vsep==NULL || vsep->len<=0)
 		return -1;
