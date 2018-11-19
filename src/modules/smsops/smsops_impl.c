@@ -564,9 +564,9 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 
 							// Check for malicious length, which might cause buffer overflow
 							if(udh_read + ie->data.len + 2 /* two octets are read so far */ > udh_len) {
-								pkg_free(ie);
 								LM_ERR("IE Lenght for IE id %d is bigger than the remaining User-Data element!\n",
 																									ie->identifier);
+								pkg_free(ie);
 								return -1;
 							}
 
