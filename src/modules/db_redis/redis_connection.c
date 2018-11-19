@@ -394,7 +394,9 @@ void db_redis_consume_replies(km_redis_con_t *con) {
     redis_key_t *query;
     while (con->append_counter > 0 && con->con && !con->con->err) {
         LM_DBG("consuming outstanding reply %u", con->append_counter);
-        db_redis_get_reply(con, (void**)&reply);
+        if(db_redis_get_reply(con, (void**)&reply) != REDIS_OK) {
+            LM_DBG("failure to get the reply\n");
+        }
         if (reply) {
             freeReplyObject(reply);
             reply = NULL;
