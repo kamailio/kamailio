@@ -599,10 +599,18 @@ int ki_t_next_contacts(struct sip_msg* msg)
 		xavp_rm(prev_xavp, NULL);
 
 		vavp = xavp_get(&q_flag_name, xavp->val.v.xavp);
-		q_flag = vavp->val.v.i;
+		if(vavp) {
+			q_flag = vavp->val.v.i;
+		} else {
+			q_flag = 0;
+		}
 
 		vavp = xavp_get(&uri_name, xavp->val.v.xavp);
-		uri = vavp->val.v.s;
+		if(vavp) {
+			uri = vavp->val.v.s;
+		} else {
+			uri.len = 0;
+		}
 
 		vavp = xavp_get(&dst_uri_name, xavp->val.v.xavp);
 		if (vavp != NULL) {
