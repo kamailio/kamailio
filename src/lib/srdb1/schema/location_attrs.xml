@@ -63,7 +63,7 @@
     <column>
         <name>aname</name>
         <type>string</type>
-        <size>64</size>
+        <size>&aname_len;</size>
 		<default/>
         <description>Attribute name.</description>
     </column>
@@ -79,7 +79,7 @@
     <column>
         <name>avalue</name>
         <type>string</type>
-        <size>255</size>
+        <size>&avalue_len;</size>
         <default/>
         <description>Attribute value.</description>
     </column>
