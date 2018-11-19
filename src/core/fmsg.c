@@ -103,3 +103,8 @@ sip_msg_t* faked_msg_get_next_clear(void)
 	}
 	return faked_msg_next_clear();
 }
+
+int faked_msg_match(sip_msg_t *tmsg)
+{
+	return ( tmsg == &_faked_msg ) ? 1 : 0;
+}
