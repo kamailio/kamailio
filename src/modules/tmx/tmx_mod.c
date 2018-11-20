@@ -37,6 +37,7 @@
 #include "../../core/counters.h"
 #include "../../core/dset.h"
 #include "../../core/kemi.h"
+#include "../../core/fmsg.h"
 
 #include "t_var.h"
 #include "tmx_pretran.h"
@@ -680,6 +681,11 @@ static int ki_t_suspend(sip_msg_t* msg)
 	unsigned int tindex;
 	unsigned int tlabel;
 	tm_cell_t *t = 0;
+
+	if(faked_msg_match(msg)) {
+		LM_ERR("suspending a faked request is not allowed\n");
+		return -1;
+	}
 
 	t=_tmx_tmb.t_gett();
 	if (t==NULL || t==T_UNDEFINED)
