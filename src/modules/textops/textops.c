@@ -140,6 +140,8 @@ static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int remove_hf_exp_f(sip_msg_t* msg, char* ematch, char* eskip);
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 );
+static int get_regsub_string_f(struct sip_msg* msg, char* regex, char* input,
+		char* dst,char *matched_index, char *match_count);
 static int fixup_substre(void**, int);
 static int hname_fixup(void** param, int param_no);
 static int free_hname_fixup(void** param, int param_no);
@@ -332,6 +334,9 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
 	{"get_body_part",        (cmd_function)get_body_part_f,       2,
 		fixup_get_body_part, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
+	{"get_regsub_string",        (cmd_function)get_regsub_string_f,       5,
+		0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
 
 	{"bind_textops",      (cmd_function)bind_textops,       0, 0, 0,
@@ -764,6 +769,118 @@ static int replace_helper(sip_msg_t *msg, regex_t *re, str *val)
 		return 1;
 	}
 	return -1;
+}
+
+/*	it helps to get substring from a string with regular expression ,regexec()
+		after findingf substring, function sets destination pseudo-variable as given
+ 		@param regex, reguler expression as REG_EXTENDED
+		@param input , given strings
+		@param dst , given pseudo-variable, result will be setted
+		@param matched_index , index number for finding array ,When nmatch is non-zero, points to an array with at least nmatch elements.
+		@param match_count , Is the number of matches allowed
+		return ; 0 is success , -1 or less is failed
+*/
+static int get_regsub_string_f(struct sip_msg* msg, char* regex, char* input,
+		char* dst, char *matched_index, char *match_count)
+{
+	regex_t preg;
+	regmatch_t* pmatch;
+	pv_spec_t *pvresult = NULL;
+	pv_value_t valx;
+	int nmatch;
+	str tempstr = {0,0};
+	int rc;
+	int index;
+	str result = {0,0};
+	char *tmp;
+	char *tmp1;
+
+	index=1;
+	nmatch=2;
+	result.s=dst;
+	result.len=strlen(dst);
+
+	if(result.s && (result.len>0)){
+
+		pvresult = pv_cache_get(&result);
+
+		if(pvresult == NULL) {
+			LM_ERR("Failed to malloc destination pseudo-variable \n");
+			return -1;
+		}
+
+		if(pvresult->setf==NULL) {
+			LM_ERR("destination pseudo-variable is not writable: %.*s \n", result.len, result.s);
+			return -1;
+		}
+
+	}else{
+		LM_ERR("Destination pseudo-variable is empty \n");
+		return -1;
+	}
+
+	memset(&valx, 0, sizeof(pv_value_t));
+	memset(&preg, 0, sizeof(regex_t));
+
+	index = strtol(matched_index, &tmp, 10);
+	nmatch = strtol(match_count, &tmp1, 10);
+
+	if( index > (nmatch-1) ){
+		LM_ERR("matched_index cannot be bigger than match_count\n");
+		return -1;
+	}
+
+	pmatch=pkg_malloc(nmatch*sizeof(regmatch_t));
+
+	LM_DBG("matched_index        %d   \n",index);
+	LM_DBG("match_count   nmatch %d   \n",nmatch );
+
+	if (pmatch==0){
+		LM_ERR("couldnt malloc memory for pmatch\n");
+		return -1;
+	}
+
+	rc = regcomp(&preg , regex , REG_EXTENDED);
+
+	if (0 != rc) {
+	 LM_ERR("regular experession coudnt be compiled, Error code: (%d)\n", rc);
+	 return -1;
+	}
+
+	rc = regexec(&preg, input, nmatch, pmatch, REG_EXTENDED);
+	regfree(&preg);
+	if(rc==0){ // is matched
+
+		if (pmatch[index].rm_so==-1) {
+			LM_ERR("Unknown offset for reguler expression \n");
+			return -1;
+		}
+
+		LM_DBG("Start offset %d end offset %d \n",pmatch[0].rm_so ,pmatch[0].rm_eo);
+
+		if (pmatch[index].rm_so==pmatch[index].rm_eo) {
+			LM_ERR("Matched string is empty\n");
+			return -1;
+		}
+
+		tempstr.len=pmatch[index].rm_eo - pmatch[index].rm_so;
+		tempstr.s=&input[pmatch[index].rm_so];
+
+		if(tempstr.len>0 && tempstr.s){
+			valx.flags = PV_VAL_STR;
+			valx.rs.s=tempstr.s;
+			valx.rs.len=tempstr.len;
+			LM_DBG("result %.*s   \n",valx.rs.len,valx.rs.s);
+			pvresult->setf(msg, &pvresult->pvp, (int)EQ_T, &valx);
+			return 1;
+		}else{
+			LM_ERR("result is NULL   \n" );
+		}
+	}else{
+			LM_ERR("There isnt any matched\n");
+	}
+
+	return 1;
 }
 
 static int replace_f(sip_msg_t* msg, char* key, char* str2)
@@ -4688,6 +4805,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("get_body_part_raw"),
 		SR_KEMIP_INT, ki_get_body_part_raw,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("get_sub_string"),
+		SR_KEMIP_INT, get_regsub_string_f,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
