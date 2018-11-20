@@ -2647,7 +2647,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 					len = recv(rtpp_socks[node->idx], buf, sizeof(buf)-1, 0);
 				} while (len == -1 && errno == EINTR);
 				if (len <= 0) {
-					LM_ERR("can't read reply for command \"%.*s\ from RTP proxy <%s>\n", out.len, out.s, node->rn_url.s);
+					LM_ERR("can't read reply for command \"%.*s\" from RTP proxy <%s>\n", out.len, out.s, node->rn_url.s);
 					goto badproxy;
 				}
 				if (len >= (v[0].iov_len - 1) &&
@@ -2664,7 +2664,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 			}
 		}
 		if (i == rtpengine_retr) {
-			LM_ERR("timeout waiting reply for command \"%.*s\ from RTP proxy <%s>\n", out.len, out.s, node->rn_url.s);
+			LM_ERR("timeout waiting reply for command \"%.*s\" from RTP proxy <%s>\n", out.len, out.s, node->rn_url.s);
 			goto badproxy;
 		}
 	}
