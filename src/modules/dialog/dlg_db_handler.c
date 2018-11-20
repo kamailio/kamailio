@@ -565,11 +565,11 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 					}
 					dlg = dlg->next;
 					if (!dlg) {
-						LM_WARN("insonsistent data: the dialog h_entry/h_id does not exist!\n");
+						LM_WARN("inconsistent data: the dialog h_entry/h_id does not exist!\n");
 					}
 				}
 			} else {
-				LM_WARN("insonsistent data: the h_entry in the DB does not exist!\n");
+				LM_WARN("inconsistent data: the h_entry in the DB does not exist!\n");
 			}
 		}
 
