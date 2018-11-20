@@ -575,15 +575,18 @@ int ht_dmq_handle_sync(srjson_doc_t* jdoc) {
 			}
 		}
 
-		ht = ht_get_table(&htname);
-		if(ht==NULL) {
-			LM_WARN("unable to get table %.*s\n",
-					htname.len, (htname.s)?htname.s:"");
-		}
+		if(htname.s!=NULL && htname.len>0 && cname.s!=NULL
+				&& cname.len>0) {
+			ht = ht_get_table(&htname);
+			if(ht==NULL) {
+				LM_WARN("unable to get table %.*s\n",
+						htname.len, (htname.s)?htname.s:"");
+			}
 
-		if (ht_set_cell_ex(ht, &cname, type, &val, 0, expire - now) < 0) {
-			LM_WARN("unable to set cell %.*s in table %.*s\n",
-					cname.len, cname.s, ht->name.len, ht->name.s);
+			if (ht_set_cell_ex(ht, &cname, type, &val, 0, expire - now) < 0) {
+				LM_WARN("unable to set cell %.*s in table %.*s\n",
+						cname.len, cname.s, ht->name.len, ht->name.s);
+			}
 		}
 
 		cell = cell->next;
