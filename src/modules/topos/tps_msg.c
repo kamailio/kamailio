@@ -1029,6 +1029,7 @@ int tps_response_sent(sip_msg_t *msg)
 	str lkey;
 	uint32_t direction = TPS_DIR_UPSTREAM;
 	str xvbranch = {0, 0};
+	int contact_keep = 0;
 
 	LM_DBG("handling outgoing response\n");
 
@@ -1078,8 +1079,15 @@ int tps_response_sent(sip_msg_t *msg)
 	/* keep contact without updates for redirect responses sent out */
 	if(msg->first_line.u.reply.statuscode<300
 			|| msg->first_line.u.reply.statuscode>=400) {
+		contact_keep = 1;
+	}
+	if(contact_keep==0 && msg->first_line.u.reply.statuscode>100
+				&& msg->first_line.u.reply.statuscode<200
+				&& msg->contact==NULL) {
+		contact_keep = 1;
+	}
+	if(contact_keep==0) {
 		tps_remove_headers(msg, HDR_CONTACT_T);
-
 		if(direction==TPS_DIR_DOWNSTREAM) {
 			tps_reinsert_contact(msg, &stsd, &stsd.as_contact);
 		} else {
