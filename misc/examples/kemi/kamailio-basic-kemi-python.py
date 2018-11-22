@@ -62,7 +62,7 @@ class kamailio:
         # CANCEL processing
         if KSR.pv.get("$rm") == "CANCEL" :
             if KSR.tm.t_check_trans()>0 :
-                self.ksr_route_relay();
+                self.ksr_route_relay(msg);
             return 1;
 
         # handle requests within SIP dialogs
