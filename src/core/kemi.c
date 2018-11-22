@@ -274,10 +274,28 @@ static int sr_kemi_core_is_myself_suri(sip_msg_t *msg)
 
 	if(get_src_uri(msg, 0, &suri)<0) {
 		LM_ERR("cannot src address uri\n");
-		return SR_KEMI_FALSE; 
+		return SR_KEMI_FALSE;
 	}
 
 	return sr_kemi_core_is_myself(msg, &suri);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_myself_srcip(sip_msg_t *msg)
+{
+	str srcip;
+	int ret;
+
+	srcip.s = ip_addr2a(&msg->rcv.src_ip);
+	srcip.len = strlen(srcip.s);
+
+	ret = check_self(&srcip, 0, 0);
+	if(ret==1) {
+		return SR_KEMI_TRUE;
+	}
+	return SR_KEMI_FALSE;
 }
 
 /**
@@ -1264,6 +1282,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_myself_suri"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_myself_suri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_myself_srcip"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_myself_srcip,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
