@@ -2181,6 +2181,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 					idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
 			return -1;
 		}
+		rstate->emode = 1;
 	}
 
 	LM_DBG("selected [%d-%d-%d/%d] <%.*s>\n", rstate->alg, rstate->setid,
