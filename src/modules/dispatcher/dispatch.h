@@ -214,11 +214,12 @@ typedef struct _ds_set {
 } ds_set_t;
 
 typedef struct _ds_select_state {
-	int setid;
-	int alg;
-	int umode;
-	uint32_t limit;
-	int cnt;
+	int setid;  /* dispatcher set id (group id) */
+	int alg;    /* algorithm to select destionations */
+	int umode;  /* update mode - push to: r-uri, d-uri, xavp */
+	uint32_t limit; /* limit of destination addresses to be selected */
+	int cnt;    /* output: number of xavps set with destination addresses */
+	int emode;  /* output: update operation was executed or not */
 	sr_xavp_t *lxavp;
 } ds_select_state_t;
 

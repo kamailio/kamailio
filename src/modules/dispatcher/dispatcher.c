@@ -632,7 +632,6 @@ static int ki_ds_select_routes_limit(sip_msg_t *msg, str *srules, str *smode,
 	int i;
 	int vret;
 	int gret;
-	int vfirst;
 	sr_xval_t nxval;
 	ds_select_state_t vstate;
 
@@ -644,7 +643,6 @@ static int ki_ds_select_routes_limit(sip_msg_t *msg, str *srules, str *smode,
 	}
 	vret = -1;
 	gret = -1;
-	vfirst = 0;
 	i = 0;
 	while(i<srules->len) {
 		vstate.setid = 0;
@@ -677,9 +675,11 @@ static int ki_ds_select_routes_limit(sip_msg_t *msg, str *srules, str *smode,
 		}
 		LM_DBG("routing with setid=%d alg=%d cnt=%d limit=0x%x (%u)\n",
 			vstate.setid, vstate.alg, vstate.cnt, vstate.limit, vstate.limit);
-		
+
 		vstate.umode = DS_SETOP_XAVP;
-		if(vfirst==0) {
+		/* if no r-uri/d-uri was set already, keep using the update mode
+		 * specified by the param, then just add to xavps list */
+		if(vstate.emode==0) {
 			switch(smode->s[0]) {
 				case '0':
 				case 'd':
@@ -700,7 +700,6 @@ static int ki_ds_select_routes_limit(sip_msg_t *msg, str *srules, str *smode,
 							smode->len, smode->s);
 					return -1;
 			}
-			vfirst = 1;
 		}
 		vret = ds_manage_routes(msg, &vstate);
 		if(vret<0) {
