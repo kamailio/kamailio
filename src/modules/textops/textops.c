@@ -778,7 +778,7 @@ static int replace_helper(sip_msg_t *msg, regex_t *re, str *val)
 		@param dst , given pseudo-variable, result will be setted
 		@param matched_index , index number for finding array ,When nmatch is non-zero, points to an array with at least nmatch elements.
 		@param match_count , Is the number of matches allowed
-		return ; 0 is success , -1 or less is failed
+		@return ; 1 is success , -1 or less is failed
 */
 static int get_regsub_string_f(struct sip_msg* msg, char* regex, char* input,
 		char* dst, char *matched_index, char *match_count)
@@ -843,7 +843,8 @@ static int get_regsub_string_f(struct sip_msg* msg, char* regex, char* input,
 	rc = regcomp(&preg , regex , REG_EXTENDED);
 
 	if (0 != rc) {
-	 LM_ERR("regular experession coudnt be compiled, Error code: (%d)\n", rc);
+		LM_ERR("regular experession coudnt be compiled, Error code: (%d)\n", rc);
+		regfree(&preg);
 	 return -1;
 	}
 
@@ -852,7 +853,7 @@ static int get_regsub_string_f(struct sip_msg* msg, char* regex, char* input,
 	if(rc==0){ // is matched
 
 		if (pmatch[index].rm_so==-1) {
-			LM_ERR("Unknown offset for reguler expression \n");
+			LM_ERR("Unknown offset for regular expression \n");
 			return -1;
 		}
 
@@ -874,10 +875,10 @@ static int get_regsub_string_f(struct sip_msg* msg, char* regex, char* input,
 			pvresult->setf(msg, &pvresult->pvp, (int)EQ_T, &valx);
 			return 1;
 		}else{
-			LM_ERR("result is NULL   \n" );
+			LM_ERR("match  is NULL   \n" );
 		}
 	}else{
-			LM_ERR("There isnt any matched\n");
+			LM_ERR("There isnt any match\n");
 	}
 
 	return 1;
