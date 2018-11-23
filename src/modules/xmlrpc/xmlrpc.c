@@ -416,6 +416,7 @@ static regex_t xmlrpc_url_match_regexp;
 static char* xmlrpc_url_skip = NULL;
 static regex_t xmlrpc_url_skip_regexp;
 
+static str xmlrpc_event_callback = STR_NULL;
 
 /*
  * Exported functions
@@ -438,6 +439,7 @@ static param_export_t params[] = {
 	{"mode",              PARAM_INT,    &xmlrpc_mode},
 	{"url_match",         PARAM_STRING, &xmlrpc_url_match},
 	{"url_skip",          PARAM_STRING, &xmlrpc_url_skip},
+	{"event_callback",    PARAM_STR,    &xmlrpc_event_callback},
 	{0, 0, 0}
 };
 
@@ -2294,7 +2296,11 @@ static int em_receive_request(sip_msg_t* orig_msg,
 {
 	int ret;
 	sip_msg_t tmp_msg, *msg;
+	int backup_rt;
 	struct run_act_ctx ra_ctx;
+	str evrtname = str_init("xmlrpc:request");
+	backup_rt = get_route_type();
+	sr_kemi_eng_t *keng = NULL;
 
 	ret=0;
 	if (new_buf && new_len) {
@@ -2328,10 +2334,22 @@ static int em_receive_request(sip_msg_t* orig_msg,
 	}
 	/* exec routing script */
 	init_run_actions_ctx(&ra_ctx);
-	if (run_actions(&ra_ctx, main_rt.rlist[xmlrpc_route_no], msg) < 0) {
-		ret=-1;
-		DBG("xmlrpc: error while trying script\n");
-		goto end;
+	if(xmlrpc_route_no>=0) {
+		if (run_actions(&ra_ctx, main_rt.rlist[xmlrpc_route_no], msg) < 0) {
+			ret=-1;
+			DBG("xmlrpc: error while trying script\n");
+			goto end;
+		}
+	}else{
+		keng = sr_kemi_eng_get();
+		if(keng!=NULL) {
+			if(keng->froute(msg, EVENT_ROUTE,
+						&xmlrpc_event_callback, &evrtname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		} else {
+			LM_ERR("no event route or kemi callback found for execution\n");
+		}	
 	}
 end:
 	exec_post_script_cb(msg, REQUEST_CB_TYPE); /* needed for example if tm is used */
@@ -2339,6 +2357,7 @@ end:
 	if (msg != orig_msg) { /* avoid double free (freed from receive_msg too) */
 		free_sip_msg(msg);
 	}
+	set_route_type(backup_rt);
 	return ret;
 error:
 	return -1;
@@ -2583,22 +2602,31 @@ static int mod_init(void)
 {
 	struct nonsip_hook nsh;
 	int route_no;
+	sr_kemi_eng_t *keng = NULL;
 
 	/* try to fix the xmlrpc route */
-	if (xmlrpc_route){
-		route_no=route_get(&main_rt, xmlrpc_route);
-		if (route_no==-1){
-			ERR("xmlrpc: failed to fix route \"%s\": route_get() failed\n",
-					xmlrpc_route);
+	if(xmlrpc_event_callback.s!=NULL && xmlrpc_event_callback.len>0) {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			LM_ERR("failed to find kemi engine\n");
 			return -1;
 		}
-		if (main_rt.rlist[route_no]==0){
-			WARN("xmlrpc: xmlrpc route \"%s\" is empty / doesn't exist\n",
-					xmlrpc_route);
+		xmlrpc_route_no=-1;
+	}else{
+                if (xmlrpc_route){
+                        route_no=route_get(&main_rt, xmlrpc_route);
+		        if (route_no==-1){
+				ERR("xmlrpc: failed to fix route \"%s\": route_get() failed\n",
+						xmlrpc_route);
+				return -1;
+			}
+			if (main_rt.rlist[route_no]==0){
+				WARN("xmlrpc: xmlrpc route \"%s\" is empty / doesn't exist\n",
+						xmlrpc_route);
+			}
+			xmlrpc_route_no=route_no;
 		}
-		xmlrpc_route_no=route_no;
 	}
-
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
 		LM_ERR("cannot bind to SL API\n");
