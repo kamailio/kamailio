@@ -291,6 +291,12 @@ int tps_prepare_msg(sip_msg_t *msg)
 		return 3;
 	}
 
+	if(msg->via1==NULL || msg->callid==NULL) {
+		LM_ERR("mandatory headers missing - via1: %p callid: %p\n",
+				msg->via1, msg->callid);
+		return 4;
+	}
+
 	return 0;
 }
 
