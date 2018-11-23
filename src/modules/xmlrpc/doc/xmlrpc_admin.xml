@@ -219,11 +219,12 @@ modparam("xmlrpc", "event_callback", "ksr_xmlrpc_event")
 -- event callback function implemented in Lua
 function ksr_xmlrpc_event(evname)
 	KSR.info("===== xmlrpc triggered event: " .. evname .. "\n");
-	local rpc_method = headers.get("$rm") or ""
+	local rpc_method = KSR.pv.get("$rm") or ""
 	if ((rpc_method == "POST" or rpc_method == "GET")) then
-        if not (core.dispatch_xmlrpc()) then
-            KSR.err("error while executing xmlrpc event")
-        end 
+		if (KSR.xmlrpc.dispatch_rpc() < 0) then
+            		KSR.err("error while executing xmlrpc event")
+        	end
+	end 
 	return 1;
 end
 ...
