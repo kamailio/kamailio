@@ -46,7 +46,7 @@ CREATE TABLE location_attrs (
     domain VARCHAR2(64) DEFAULT NULL,
     aname VARCHAR2(64) DEFAULT '',
     atype NUMBER(10) DEFAULT 0 NOT NULL,
-    avalue VARCHAR2(255) DEFAULT '',
+    avalue VARCHAR2(512) DEFAULT '',
     last_modified DATE DEFAULT to_date('2000-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss')
 );
 

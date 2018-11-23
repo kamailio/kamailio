@@ -38,7 +38,7 @@ CREATE TABLE `location_attrs` (
     `domain` VARCHAR(64) DEFAULT NULL,
     `aname` VARCHAR(64) DEFAULT '' NOT NULL,
     `atype` INT(11) DEFAULT 0 NOT NULL,
-    `avalue` VARCHAR(255) DEFAULT '' NOT NULL,
+    `avalue` VARCHAR(512) DEFAULT '' NOT NULL,
     `last_modified` DATETIME DEFAULT '2000-01-01 00:00:01' NOT NULL
 );
 
