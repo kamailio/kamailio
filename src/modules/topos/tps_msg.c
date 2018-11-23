@@ -1077,8 +1077,8 @@ int tps_response_sent(sip_msg_t *msg)
 	tps_remove_headers(msg, HDR_RECORDROUTE_T);
 
 	/* keep contact without updates for redirect responses sent out */
-	if(msg->first_line.u.reply.statuscode<300
-			|| msg->first_line.u.reply.statuscode>=400) {
+	if(msg->first_line.u.reply.statuscode>=300
+			&& msg->first_line.u.reply.statuscode<400) {
 		contact_keep = 1;
 	}
 	if(contact_keep==0 && msg->first_line.u.reply.statuscode>100
