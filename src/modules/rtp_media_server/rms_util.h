@@ -33,7 +33,7 @@ static inline int rms_str_dup(str *dst, str *src, int shared)
 {
 	if(!dst) {
 		LM_ERR("dst null\n");
-		return -1;
+		return 0;
 	}
 	dst->len = 0;
 	dst->s = NULL;
@@ -45,21 +45,21 @@ static inline int rms_str_dup(str *dst, str *src, int shared)
 		return 1;
 	dst->len = src->len;
 	if(shared) {
-		dst->s = shm_malloc(dst->len+1);
+		dst->s = shm_malloc(dst->len + 1);
 	} else {
-		dst->s = pkg_malloc(dst->len+1);
+		dst->s = pkg_malloc(dst->len + 1);
 	}
 	if(!dst->s) {
 		LM_ERR("%s_malloc: can't allocate memory (%d bytes)\n",
 				shared ? "shm" : "pkg", src->len);
-		return -1;
+		return 0;
 	}
 	memcpy(dst->s, src->s, src->len);
 	dst->s[dst->len] = '\0';
 	return 1;
 }
 
-static inline char* rms_char_dup(char *s, int shared)
+static inline char *rms_char_dup(char *s, int shared)
 {
 	str src;
 	str dst;

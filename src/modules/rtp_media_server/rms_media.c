@@ -68,11 +68,11 @@ static MSFactory *rms_create_factory()
 
 int rms_media_init()
 {
-	OrtpMemoryFunctions ortp_memory_functions;
-	ortp_memory_functions.malloc_fun = ptr_shm_malloc;
-	ortp_memory_functions.realloc_fun = ptr_shm_realloc;
-	ortp_memory_functions.free_fun = ptr_shm_free;
-	ortp_set_memory_functions(&ortp_memory_functions);
+	//	OrtpMemoryFunctions ortp_memory_functions;
+	//	ortp_memory_functions.malloc_fun = ptr_shm_malloc;
+	//	ortp_memory_functions.realloc_fun = ptr_shm_realloc;
+	//	ortp_memory_functions.free_fun = ptr_shm_free;
+	//	ortp_set_memory_functions(&ortp_memory_functions);
 	ortp_init();
 	return 1;
 }
@@ -82,18 +82,17 @@ static MSTicker *rms_create_ticker(char *name)
 	MSTickerParams params;
 	params.name = name;
 	params.prio = MS_TICKER_PRIO_NORMAL;
+	LM_DBG("\n");
 	return ms_ticker_new_with_params(&params);
 }
 
 void rms_media_destroy(call_leg_media_t *m)
 {
-	LM_INFO("rtp_session_destroy[%p]\n", m->rtps);
+	LM_DBG("rtp_session_destroy[%p]\n", m->rtps);
 	rtp_session_destroy(m->rtps);
 	m->rtps = NULL;
-	LM_INFO("ms_ticker[%p]\n", m->ms_ticker);
 	ms_ticker_destroy(m->ms_ticker);
 	m->ms_ticker = NULL;
-	LM_INFO("ms_factory_destroy[%p]\n", m->ms_factory);
 	ms_factory_destroy(m->ms_factory);
 	m->ms_factory = NULL;
 }
@@ -114,7 +113,8 @@ int create_call_leg_media(call_leg_media_t *m)
 	m->ms_rtprecv = ms_factory_create_filter(m->ms_factory, MS_RTP_RECV_ID);
 	m->ms_rtpsend = ms_factory_create_filter(m->ms_factory, MS_RTP_SEND_ID);
 
-	LM_INFO("codec[%s]\n", m->pt->mime_type);
+	LM_INFO("codec[%s] rtprecv[%p] rtpsend[%p]\n", m->pt->mime_type,
+			m->ms_rtprecv, m->ms_rtpsend);
 	m->ms_encoder = ms_factory_create_encoder(m->ms_factory, m->pt->mime_type);
 	if(!m->ms_encoder) {
 		LM_ERR("creating encoder failed.\n");
@@ -128,26 +128,6 @@ int create_call_leg_media(call_leg_media_t *m)
 	return 1;
 }
 
-int rms_bridge(call_leg_media_t *m1, call_leg_media_t *m2)
-{
-	MSConnectionHelper h;
-	m1->ms_ticker = rms_create_ticker(NULL);
-
-	// direction 1
-	ms_connection_helper_start(&h);
-	ms_connection_helper_link(&h, m1->ms_rtprecv, -1, 0);
-	ms_connection_helper_link(&h, m2->ms_rtpsend, 0, -1);
-
-	// direction 2
-	ms_connection_helper_start(&h);
-	ms_connection_helper_link(&h, m2->ms_rtprecv, -1, 0);
-	ms_connection_helper_link(&h, m1->ms_rtpsend, 0, -1);
-
-	ms_ticker_attach_multiple(
-			m1->ms_ticker, m1->ms_rtprecv, m2->ms_rtprecv, NULL);
-
-	return 1;
-}
 
 static void rms_player_eof(
 		void *user_data, MSFilter *f, unsigned int event, void *event_data)
@@ -159,54 +139,13 @@ static void rms_player_eof(
 	MS_UNUSED(f), MS_UNUSED(event_data);
 }
 
-int rms_stop_bridge(call_leg_media_t *m1, call_leg_media_t *m2)
+
+int rms_get_dtmf(call_leg_media_t *m, char dtmf)
 {
-	MSConnectionHelper h;
-	if(!m1->ms_ticker)
-		return -1;
-	if(m1->ms_rtpsend)
-		ms_ticker_detach(m1->ms_ticker, m1->ms_rtpsend);
-	if(m1->ms_rtprecv)
-		ms_ticker_detach(m1->ms_ticker, m1->ms_rtprecv);
-	if(m2->ms_rtpsend)
-		ms_ticker_detach(m1->ms_ticker, m2->ms_rtpsend);
-	if(m2->ms_rtprecv)
-		ms_ticker_detach(m1->ms_ticker, m2->ms_rtprecv);
-	rtp_stats_display(rtp_session_get_stats(m1->rtps),
-			" AUDIO BRIDGE offer RTP STATISTICS ");
-	rtp_stats_display(rtp_session_get_stats(m2->rtps),
-			" AUDIO BRIDGE answer RTP STATISTICS ");
-	ms_factory_log_statistics(m1->ms_factory);
-
-	ms_connection_helper_start(&h);
-	if(m1->ms_rtprecv)
-		ms_connection_helper_unlink(&h, m1->ms_rtprecv, -1, 0);
-	if(m2->ms_rtpsend)
-		ms_connection_helper_unlink(&h, m2->ms_rtpsend, 0, -1);
-
-	ms_connection_helper_start(&h);
-	if(m2->ms_rtprecv)
-		ms_connection_helper_unlink(&h, m2->ms_rtprecv, -1, 0);
-	if(m1->ms_rtpsend)
-		ms_connection_helper_unlink(&h, m1->ms_rtpsend, 0, -1);
-
-	if(m1->ms_rtpsend)
-		ms_filter_destroy(m1->ms_rtpsend);
-	if(m1->ms_rtprecv)
-		ms_filter_destroy(m1->ms_rtprecv);
-	if(m2->ms_rtpsend)
-		ms_filter_destroy(m2->ms_rtpsend);
-	if(m2->ms_rtprecv)
-		ms_filter_destroy(m2->ms_rtprecv);
-	return 1;
-}
-
-
-int rms_get_dtmf(call_leg_media_t *m, char dtmf) {
-//	static void tone_detected_cb(void *data, MSFilter *f, unsigned int event_id, MSToneDetectorEvent *ev) {
-//			MS_UNUSED(data), MS_UNUSED(f), MS_UNUSED(event_id), MS_UNUSED(ev);
-//				ms_tester_tone_detected = TRUE;
-//	}
+	//	static void tone_detected_cb(void *data, MSFilter *f, unsigned int event_id, MSToneDetectorEvent *ev) {
+	//			MS_UNUSED(data), MS_UNUSED(f), MS_UNUSED(event_id), MS_UNUSED(ev);
+	//				ms_tester_tone_detected = TRUE;
+	//	}
 	return 1;
 }
 
@@ -216,12 +155,17 @@ int rms_playfile(call_leg_media_t *m, rms_action_t *a)
 	if(!m->ms_player)
 		return 0;
 	ms_filter_add_notify_callback(m->ms_player, rms_player_eof, a, TRUE);
-	ms_filter_call_method(m->ms_player, MS_FILE_PLAYER_OPEN, (void *)a->param.s);
+	ms_filter_call_method(
+			m->ms_player, MS_FILE_PLAYER_OPEN, (void *)a->param.s);
 	ms_filter_call_method(m->ms_player, MS_FILE_PLAYER_START, NULL);
-	ms_filter_call_method(m->ms_player, MS_FILTER_GET_SAMPLE_RATE, &file_sample_rate);
-	ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_SAMPLE_RATE, &file_sample_rate);
-	ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_OUTPUT_SAMPLE_RATE, &m->pt->clock_rate);
-	ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_OUTPUT_NCHANNELS, &m->pt->channels);
+	ms_filter_call_method(
+			m->ms_player, MS_FILTER_GET_SAMPLE_RATE, &file_sample_rate);
+	ms_filter_call_method(
+			m->ms_resampler, MS_FILTER_SET_SAMPLE_RATE, &file_sample_rate);
+	ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_OUTPUT_SAMPLE_RATE,
+			&m->pt->clock_rate);
+	ms_filter_call_method(
+			m->ms_resampler, MS_FILTER_SET_OUTPUT_NCHANNELS, &m->pt->channels);
 	LM_INFO("clock[%d][%d]\n", m->pt->clock_rate, file_sample_rate);
 	return 1;
 }
@@ -232,23 +176,30 @@ int rms_start_media(call_leg_media_t *m, char *file_name)
 	int channels = 1;
 	int file_sample_rate = 8000;
 	m->ms_ticker = rms_create_ticker(NULL);
-	if(!m->ms_ticker) goto error;
+	if(!m->ms_ticker)
+		goto error;
 	m->ms_player = ms_factory_create_filter(m->ms_factory, MS_FILE_PLAYER_ID);
-	if(!m->ms_player) goto error;
+	if(!m->ms_player)
+		goto error;
 	m->ms_resampler = ms_factory_create_filter(m->ms_factory, MS_RESAMPLE_ID);
-	if(!m->ms_resampler) goto error;
+	if(!m->ms_resampler)
+		goto error;
 	// m->ms_recorder = ms_factory_create_filter(m->ms_factory,
 	// MS_FILE_PLAYER_ID);
 	m->ms_voidsink = ms_factory_create_filter(m->ms_factory, MS_VOID_SINK_ID);
-	if(!m->ms_voidsink) goto error;
+	if(!m->ms_voidsink)
+		goto error;
 	LM_INFO("m[%p]call-id[%p]\n", m, m->si->callid.s);
 
 	ms_filter_call_method(
 			m->ms_player, MS_FILTER_SET_OUTPUT_NCHANNELS, &channels);
 	ms_filter_call_method_noarg(m->ms_player, MS_FILE_PLAYER_START);
-	ms_filter_call_method(m->ms_player, MS_FILTER_GET_SAMPLE_RATE, &file_sample_rate);
-	ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_SAMPLE_RATE, &file_sample_rate);
-	ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_OUTPUT_SAMPLE_RATE, &m->pt->clock_rate);
+	ms_filter_call_method(
+			m->ms_player, MS_FILTER_GET_SAMPLE_RATE, &file_sample_rate);
+	ms_filter_call_method(
+			m->ms_resampler, MS_FILTER_SET_SAMPLE_RATE, &file_sample_rate);
+	ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_OUTPUT_SAMPLE_RATE,
+			&m->pt->clock_rate);
 
 	// sending graph
 	ms_connection_helper_start(&h);
@@ -322,5 +273,91 @@ int rms_stop_media(call_leg_media_t *m)
 		ms_filter_destroy(m->ms_voidsink);
 
 	rms_media_destroy(m);
+	return 1;
+}
+
+int rms_bridge(call_leg_media_t *m1, call_leg_media_t *m2)
+{
+	MSConnectionHelper h;
+	m1->ms_ticker = rms_create_ticker(NULL);
+	LM_NOTICE("[%p][%p][%p][%p]\n", m1->ms_rtprecv, m1->ms_rtpsend,
+			m2->ms_rtprecv, m2->ms_rtpsend);
+	// direction 1
+	ms_connection_helper_start(&h);
+	ms_connection_helper_link(&h, m1->ms_rtprecv, -1, 0);
+	ms_connection_helper_link(&h, m2->ms_rtpsend, 0, -1);
+
+	LM_NOTICE("[%p][%p][%p][%p]2\n", m1->ms_rtprecv, m1->ms_rtpsend,
+			m2->ms_rtprecv, m2->ms_rtpsend);
+	// direction 2
+	ms_connection_helper_start(&h);
+	ms_connection_helper_link(&h, m2->ms_rtprecv, -1, 0);
+	ms_connection_helper_link(&h, m1->ms_rtpsend, 0, -1);
+
+	ms_ticker_attach_multiple(
+			m1->ms_ticker, m1->ms_rtprecv, m2->ms_rtprecv, NULL);
+
+	return 1;
+}
+
+int rms_stop_bridge(call_leg_media_t *m1, call_leg_media_t *m2)
+{
+	MSConnectionHelper h;
+	MSTicker *ticker = NULL;
+
+	if(m1->ms_ticker) {
+		ticker = m1->ms_ticker;
+	}
+	if(m2->ms_ticker) {
+		ticker = m2->ms_ticker;
+	}
+	if(!ticker)
+		return -1;
+
+	if(m1->ms_rtprecv)
+		ms_ticker_detach(ticker, m1->ms_rtprecv);
+	if(m1->ms_rtpsend)
+		ms_ticker_detach(ticker, m1->ms_rtpsend);
+	if(m2->ms_rtprecv)
+		ms_ticker_detach(ticker, m2->ms_rtprecv);
+	if(m2->ms_rtpsend)
+		ms_ticker_detach(ticker, m2->ms_rtpsend);
+
+	ms_connection_helper_start(&h);
+	if(m1->ms_rtprecv)
+		ms_connection_helper_unlink(&h, m1->ms_rtprecv, -1, 0);
+	if(m2->ms_rtpsend)
+		ms_connection_helper_unlink(&h, m2->ms_rtpsend, 0, -1);
+
+	ms_connection_helper_start(&h);
+	if(m2->ms_rtprecv)
+		ms_connection_helper_unlink(&h, m2->ms_rtprecv, -1, 0);
+	if(m1->ms_rtpsend)
+		ms_connection_helper_unlink(&h, m1->ms_rtpsend, 0, -1);
+
+	rtp_stats_display(rtp_session_get_stats(m1->rtps),
+			" AUDIO BRIDGE offer RTP STATISTICS ");
+
+	rtp_stats_display(rtp_session_get_stats(m2->rtps),
+			" AUDIO BRIDGE answer RTP STATISTICS ");
+
+	if(m1->ms_rtpsend)
+		ms_filter_destroy(m1->ms_rtpsend);
+	if(m1->ms_rtprecv)
+		ms_filter_destroy(m1->ms_rtprecv);
+	if(m2->ms_rtpsend)
+		ms_filter_destroy(m2->ms_rtpsend);
+	if(m2->ms_rtprecv)
+		ms_filter_destroy(m2->ms_rtprecv);
+
+	rtp_session_destroy(m1->rtps);
+	rtp_session_destroy(m2->rtps);
+	if(m1->ms_ticker)
+		ms_ticker_destroy(m1->ms_ticker);
+	if(m2->ms_ticker)
+		ms_ticker_destroy(m2->ms_ticker);
+	m1->ms_ticker = NULL;
+	m2->ms_ticker = NULL;
+	ms_factory_log_statistics(m1->ms_factory);
 	return 1;
 }
