@@ -2640,6 +2640,34 @@ if(has_totag()) {
 ...
 		</programlisting>
 		</section>
+		<section id="dlg.r.isalive_dlg">
+			<title>dlg.isalive_dlg</title>
+			<para>
+				Check whether Given dialog is alive or not.
+			</para>
+			<para>Name: <emphasis>dlg.isalive_dlg</emphasis></para>
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>callid</emphasis> - callid of dialog
+				</para></listitem>
+				<listitem><para>
+					<emphasis>from_tag</emphasis> -  from tag of the dialog
+				</para></listitem>
+				<listitem><para>
+					<emphasis>to_tag</emphasis> -  to tag of the dialog
+				</para></listitem>
+			</itemizedlist>
+			<para>
+				This command will return error if dialog is not confirmed state.
+			</para>
+			<para>RPC Command Format:</para>
+			<programlisting  format="linespecific">
+...
+&kamcmd; dlg.isalive_dlg callid12345 fromtag123 totag123
+...
+			</programlisting>
+		</section>
 	</section>
 
 	<section>

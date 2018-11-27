@@ -2218,6 +2218,9 @@ static const char *rpc_dlg_bridge_doc[2] = {
 	"Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE mechanism:\
  to, from, [outbound SIP proxy]", 0
 };
+static const char *rpc_dlg_isalive_dlg_doc[2] = {
+    "Check whether dialog is alive or not", 0
+};
 
 
 static void rpc_print_dlgs(rpc_t *rpc, void *c) {
@@ -2272,6 +2275,37 @@ static void rpc_dlg_terminate_dlg(rpc_t *rpc,void *c){
     }
 }
 
+static void rpc_dlg_isalive_dlg(rpc_t *rpc, void *c) {
+    str callid = {NULL, 0};
+    str ftag = {NULL, 0};
+    str ttag = {NULL, 0};
+
+    dlg_cell_t *dlg = NULL;
+    unsigned int dir;
+    dir = 0;
+
+
+    if (rpc->scan(c, ".S.S.S", &callid, &ftag, &ttag) < 3) {
+                LM_ERR("Unable to read the parameters dlg_isalive_dlg \n");
+        rpc->fault(c, 400, "Need a Callid ,from tag ,to tag");
+        return;
+    }
+
+    dlg = get_dlg(&callid, &ftag, &ttag, &dir);
+
+    if (dlg == NULL) {
+                LM_ERR("Couldnt find callid in dialog '%.*s' \n", callid.len, callid.s);
+        rpc->fault(c, 404, "Couldnt find callid in dialog");
+        return;
+    } else if (dlg->state != DLG_STATE_CONFIRMED) {
+                LM_ERR("Dialog with Call-ID '%.*s' is in %d state %d \n", callid.len, callid.s, dlg->state,
+                       DLG_STATE_CONFIRMED);
+        rpc->fault(c, 500, "Dialog is not in confirmed state");
+        return;
+    } else {
+        rpc->add(c, "s", "Dialog is alive");
+    }
+}
 
 static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 	unsigned int h_entry, h_id;
@@ -2428,5 +2462,6 @@ static rpc_export_t rpc_methods[] = {
 	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
 	{"dlg.terminate_dlg", rpc_dlg_terminate_dlg, rpc_dlg_terminate_dlg_doc, 0},
 	{"dlg.stats_active", rpc_dlg_stats_active, rpc_dlg_stats_active_doc, 0},
+	{"dlg.isalive_dlg",  rpc_dlg_isalive_dlg, rpc_dlg_isalive_dlg_doc, 0},
 	{0, 0, 0, 0}
 };
