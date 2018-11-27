@@ -60,7 +60,7 @@ modparam("xmlrpc", "route", "route_for_xmlrpcs")
 	<section id="autoconversion">
 	<title><varname>autoconversion</varname> (string)</title>
 	<para>
-		Enable or disable automatic parameter type conversion globally, 
+		Enable or disable automatic parameter type conversion globally,
 		for all the methods parameters.
 		If on, a type mismatch in a method parameter
 		will not cause a fault if it is possible to automatically
@@ -191,6 +191,45 @@ modparam("xmlrpc", "url_match", "^/RPC2")
 ...
 </programlisting>
 		</example>
+	</section>
+	<section id="event_callback">
+		<title><varname>event_callback</varname> (string)</title>
+		<para>
+		The name of the function in the kemi configuration file (embedded
+		scripting language such as Lua, Python, ...) to be executed instead
+		of route blocks defined by route parameter for xmlrpc request.
+		</para>
+		<para>
+		This route will be called only for HTTP messages whose method is
+		either GET or POST. The message visible inside the route
+		will be a HTTP request converted to SIP (the uri will be fixed and
+		a fake via will be added).
+		</para>
+		<para>
+		The route should perform additional security checks to
+		ensure the client is authorized to execute management/RPC functions
+		and then it should call the <function>dispatch_rpc()</function>.
+		</para>
+		<example>
+			<title>Set <varname>event_callback</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("xmlrpc", "event_callback", "ksr_xmlrpc_event")
+...
+-- event callback function implemented in Lua
+function ksr_xmlrpc_event(evname)
+	KSR.info("===== xmlrpc triggered event: " .. evname .. "\n");
+	local rpc_method = KSR.pv.get("$rm") or ""
+	if ((rpc_method == "POST" or rpc_method == "GET")) then
+		if (KSR.xmlrpc.dispatch_rpc() &lt; 0) then
+			KSR.err("error while executing xmlrpc event")
+		end
+	end
+	return 1;
+end
+...
+</programlisting>
+	</example>
 	</section>
 </section>
 <section>
