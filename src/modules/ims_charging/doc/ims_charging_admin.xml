@@ -762,7 +762,7 @@ modparam("ims_charging", "custom_user_avp", "$avp(from_user)")
 
     <section>
       <title><function moreinfo="none">Ro_CCR(route_name, direction,
-      reservation_units, domain, incoming_trunk_id, outgoing_trunk_id</function>
+      reservation_units, incoming_trunk_id, outgoing_trunk_id)</function>
       </title>
 
       <para>Perform a CCR on Diameter Ro interface for Charging</para>
@@ -783,11 +783,6 @@ modparam("ims_charging", "custom_user_avp", "$avp(from_user)")
         <listitem>
           <para><emphasis>reservation_units</emphasis> how many units (at the
           moment seconds) should be reservated at the moment.</para>
-        </listitem>
-
-        <listitem>
-          <para><emphasis>domain</emphasis> Logical domain within
-          registrar.</para>
         </listitem>
 	
 	<listitem>
