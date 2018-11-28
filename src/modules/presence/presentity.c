@@ -380,6 +380,10 @@ int delete_presentity_if_dialog_id_exists(presentity_t* presentity,
 	int i = 0;
 	presentity_t old_presentity;
 
+	if (presentity->event->evp->type != EVENT_DIALOG) {
+		return 0;
+	}
+
 	query_cols[n_query_cols] = &str_domain_col;
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB1_STR;
