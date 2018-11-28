@@ -1776,12 +1776,23 @@ onreply_route {
 		</para>
 		<itemizedlist>
 			<listitem>
-			<para>flags (listed by index - can be bitwise mask of values):
-			0 (value 1) - inactive destination; 1 (value 2) - temporary trying
-			destination (in the way to become inactive if it does not reply to
-			keepalives - there is a module parameter to set the threshold of
-			failures); 2 (value 4)  - admin disabled destination; 3 (value 8)
-			- probing destination (sending keep alives);</para>
+			<para>flags - control the mode of using the destination address and
+			sending keepalives. It is a bitwise value that can be built using
+			the folowing flags:
+			<itemizedlist>
+				<listitem><para>1 (bit at index 0 - 1 &lt;&lt;0) - inactive destination<para>
+				</listitem>
+				<listitem><para>2 (bit at index 1 - 1 &lt;&lt;1) - temporary trying
+				destination (in the way to become inactive if it does not reply to
+				keepalives - there is a module parameter to set the threshold of
+				failures)<para>
+				</listitem>
+				<listitem><para>4 (bit at index 2 - 1 &lt;&lt;2) - admin disabled destination<para>
+				</listitem>
+				<listitem><para>8 (bit at index 3 - 1 &lt;&lt;3) - probing destination (sending keep alives);</para>
+				</listitem>
+			</itemizedlist>
+			</para>
 			</listitem>
 			<listitem>
 			<para>priority: sets the priority in destination list (based on it
