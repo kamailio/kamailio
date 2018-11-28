@@ -2331,6 +2331,12 @@ rtpengine_offer();
                                 recording calls to provide custom additional information. More details about this are found
                                 in the rtpengine README.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>transcode=...</emphasis> - allows codecs to be added to the list of offered codecs even 
+				if they were not present in the original list of codecs. In this case, the transcoding engine 
+				will be engaged. Only codecs that are supported for both decoding and encoding can be added in 
+				this manner. More details about this are found in the rtpengine README.                                
+				</para></listitem>
 			</itemizedlist>
 			<para>
 			 Check also the documentation of RTPEngine, these flags are documented there as well:
