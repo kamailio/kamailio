@@ -2,6 +2,32 @@
 
 ===================== Changes Since Version 5.1.0 ===========================
 
+commit d66ae2788e1ec12f48a7a3a9bc3530977846c58b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 28 10:53:49 2018 +0100
+
+    Makefile.defs: version set to 5.2.0
+
+    - new major release, first in 5.2.x series, built from git branch 5.2
+
+commit 19b7af8c40bf98ba9a6d251d5e8862444f5bcd09
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 28 10:09:59 2018 +0100
+
+    INSTALL: added link to the install tutorial on the web
+
+commit 3272284062891272918ab4e9333d3392d1a5d8ee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 28 10:07:21 2018 +0100
+
+    pkg: version set to 5.2.0 for alpine and oracle linux rpm specs
+
+commit 38380414744449796669a54d156c7d08d24aa9e3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 28 09:59:04 2018 +0100
+
+    ChangeLog: initial update for preparing v5.2.0
+
 commit b93adeb703b8cac9ef3cf07cc68ea4c444364fe9
 Author: Victor Seva <linuxmaniac@torreviejawireless.org>
 Date:   Wed Nov 28 08:38:53 2018 +0100
