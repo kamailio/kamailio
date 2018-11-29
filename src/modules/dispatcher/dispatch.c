@@ -424,11 +424,17 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs)
 	/* Do a DNS-Lookup for the Host-Name: */
 	he = resolvehost(hn);
 	if(he == 0) {
-		LM_ERR("could not resolve %.*s\n", puri.host.len, puri.host.s);
-		goto err;
+		if(dp->flags & DS_NODNSARES_DST) {
+			dp->irmode |= DS_IRMODE_NOIPADDR;
+		} else {
+			LM_ERR("could not resolve %.*s (missing no-probing flag?!?)\n",
+					puri.host.len, puri.host.s);
+			goto err;
+		}
+	} else {
+		/* Store hostent in the dispatcher structure */
+		hostent2ip_addr(&dp->ip_address, he, 0);
 	}
-	/* Free the hostname */
-	hostent2ip_addr(&dp->ip_address, he, 0);
 
 	/* Copy the port out of the URI */
 	dp->port = puri.port_no;
@@ -2957,8 +2963,8 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 
 
 	if(group == -1) {
-		rc = ds_is_addr_from_set_r(
-				_m, pipaddr, tport, tproto, _ds_list, mode, 1);
+		rc = ds_is_addr_from_set_r(_m, pipaddr, tport, tproto, _ds_list,
+				mode, 1);
 	} else {
 		list = ds_avl_find(_ds_list, group);
 		if(list) {
