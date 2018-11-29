@@ -213,7 +213,7 @@ int ds_log_sets(void)
 /**
  *
  */
-int init_data(void)
+int ds_init_data(void)
 {
 	int *p;
 
@@ -864,7 +864,7 @@ void ds_disconnect_db(void)
 }
 
 /*! \brief Initialize and verify DB stuff*/
-int init_ds_db(void)
+int ds_init_db(void)
 {
 	int ret;
 
