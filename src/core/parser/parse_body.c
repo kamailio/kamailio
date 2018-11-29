@@ -510,7 +510,11 @@ int part_multipart_headers_cmp (char *buffer,
 	}
 
 	if (error < 0) {
-		LM_ERR("part_multipart_headers_cmp. error. \"%i\". \"%s\".\n", error, error_msg);
+		if(error == -2) {
+			LM_DBG("result code: \"%i\" text: \"%s\".\n", error, error_msg);
+		} else {
+			LM_ERR("error code: \"%i\" error text: \"%s\".\n", error, error_msg);
+		}
 		return 0;
 	} else {
 		return found;
