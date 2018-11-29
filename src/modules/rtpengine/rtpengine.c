@@ -218,7 +218,7 @@ static int pv_parse_var(str *inp, pv_elem_t **outp, int *got_any);
 static int mos_label_stats_parse(struct minmax_mos_label_stats *mmls);
 static void parse_call_stats(bencode_item_t *, struct sip_msg *);
 
-static int control_cmd_tos = -1; 
+static int control_cmd_tos = -1;
 static int rtpengine_allow_op = 0;
 static struct rtpp_node **queried_nodes_ptr = NULL;
 static pid_t mypid;
@@ -375,7 +375,7 @@ static param_export_t params[] = {
 	{"queried_nodes_limit",   INT_PARAM, &default_rtpengine_cfg.queried_nodes_limit    },
 	{"rtpengine_tout_ms",     INT_PARAM, &default_rtpengine_cfg.rtpengine_tout_ms      },
 	{"rtpengine_allow_op",    INT_PARAM, &rtpengine_allow_op     },
-	{"control_cmd_tos",       INT_PARAM, &control_cmd_tos        }, 
+	{"control_cmd_tos",       INT_PARAM, &control_cmd_tos        },
 	{"db_url",                PARAM_STR, &rtpp_db_url            },
 	{"table_name",            PARAM_STR, &rtpp_table_name        },
 	{"setid_col",             PARAM_STR, &rtpp_setid_col         },
@@ -1992,6 +1992,10 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		if (str_key_val_prefix(&key, "transcode", &val, &s)
 				|| str_key_val_prefix(&key, "codec-transcode", &val, &s))
 		{
+			if(s.len<=0 && s.s==NULL){
+				LM_ERR(" %.*s key needs codec value \n",key.len,key.s);
+				goto next;
+			}
 			if (!ng_flags->codec_transcode) {
 				ng_flags->codec_transcode = bencode_list(ng_flags->dict->buffer);
 				bencode_dictionary_add(ng_flags->codec, "transcode",
@@ -2002,6 +2006,10 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		}
 
 		if (str_key_val_prefix(&key, "codec-strip", &val, &s)) {
+			if(s.len<=0 && s.s==NULL){
+				LM_ERR(" %.*s key needs codec value \n",key.len,key.s);
+				goto next;
+			}
 			if (!ng_flags->codec_strip) {
 				ng_flags->codec_strip = bencode_list(ng_flags->dict->buffer);
 				bencode_dictionary_add(ng_flags->codec, "strip",
@@ -2012,6 +2020,10 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		}
 
 		if (str_key_val_prefix(&key, "codec-offer", &val, &s)) {
+			if(s.len<=0 && s.s==NULL){
+				LM_ERR(" %.*s key needs codec value \n",key.len,key.s);
+				goto next;
+			}
 			if (!ng_flags->codec_offer) {
 				ng_flags->codec_offer = bencode_list(ng_flags->dict->buffer);
 				bencode_dictionary_add(ng_flags->codec, "offer",
@@ -2022,6 +2034,10 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		}
 
 		if (str_key_val_prefix(&key, "codec-mask", &val, &s)) {
+			if(s.len<=0 && s.s==NULL){
+				LM_ERR(" %.*s key needs codec value \n",key.len,key.s);
+				goto next;
+			}
 			if (!ng_flags->codec_mask) {
 				ng_flags->codec_mask = bencode_list(ng_flags->dict->buffer);
 				bencode_dictionary_add(ng_flags->codec, "mask",
