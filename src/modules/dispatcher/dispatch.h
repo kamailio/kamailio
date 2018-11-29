@@ -44,7 +44,8 @@
 #define DS_TRYING_DST		2  /*!< temporary trying destination */
 #define DS_DISABLED_DST		4  /*!< admin disabled destination */
 #define DS_PROBING_DST		8  /*!< checking destination */
-#define DS_STATES_ALL		15  /*!< all bits for the states of destination */
+#define DS_NODNSARES_DST	16 /*!< no DNS A/AAAA resolve for host in uri */
+#define DS_STATES_ALL		31 /*!< all bits for the states of destination */
 
 #define ds_skip_dst(flags)	((flags) & (DS_INACTIVE_DST|DS_DISABLED_DST))
 
@@ -67,6 +68,8 @@
 #define DS_XAVP_DST_SKIP_ATTRS	1
 
 #define DS_XAVP_CTX_SKIP_CNT	1
+
+#define DS_IRMODE_NOIPADDR	1
 
 /* clang-format on */
 
@@ -185,16 +188,17 @@ typedef struct _ds_latency_stats {
 } ds_latency_stats_t;
 
 typedef struct _ds_dest {
-	str uri;
-	int flags;
-	int priority;
-	int dload;
-	ds_attrs_t attrs;
-	ds_latency_stats_t latency_stats;
-	struct socket_info * sock;
-	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
-	unsigned short int port; 	/*!< Port of the URI */
-	unsigned short int proto; 	/*!< Protocol of the URI */
+	str uri;          /*!< address/uri */
+	int flags;        /*!< flags */
+	int priority;     /*!< priority */
+	int dload;        /*!< load */
+	ds_attrs_t attrs; /*!< the atttributes */
+	ds_latency_stats_t latency_stats; /*!< latency statistics */
+	int irmode;       /*!< internal runtime mode (flags) */
+	struct socket_info *sock; /*!< pointer to local socket */
+	struct ip_addr ip_address; 	/*!< IP of the address */
+	unsigned short int port; 	/*!< port of the URI */
+	unsigned short int proto; 	/*!< protocol of the URI */
 	int message_count;
 	struct _ds_dest *next;
 } ds_dest_t;
