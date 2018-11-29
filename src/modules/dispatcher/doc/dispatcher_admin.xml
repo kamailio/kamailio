@@ -1780,16 +1780,20 @@ onreply_route {
 			sending keepalives. It is a bitwise value that can be built using
 			the folowing flags:
 			<itemizedlist>
-				<listitem><para>1 (bit at index 0 - 1 &lt;&lt;0) - inactive destination<para>
+				<listitem><para>1 (bit at index 0 - 1 &lt;&lt;0) - inactive destination</para>
 				</listitem>
 				<listitem><para>2 (bit at index 1 - 1 &lt;&lt;1) - temporary trying
 				destination (in the way to become inactive if it does not reply to
 				keepalives - there is a module parameter to set the threshold of
-				failures)<para>
+				failures)</para>
 				</listitem>
-				<listitem><para>4 (bit at index 2 - 1 &lt;&lt;2) - admin disabled destination<para>
+				<listitem><para>4 (bit at index 2 - 1 &lt;&lt;2) - admin disabled destination</para>
 				</listitem>
 				<listitem><para>8 (bit at index 3 - 1 &lt;&lt;3) - probing destination (sending keep alives);</para>
+				</listitem>
+				<listitem><para>16 (bit at index 4 - 1 &lt;&lt;4) - skip DNS A/AAAA resolve at startup,
+				useful when the hostname of the destination address is a NAPTR or SRV record only.
+				Such addresses cannot be matched anymore with ds_is_from_list(...).</para>
 				</listitem>
 			</itemizedlist>
 			</para>
