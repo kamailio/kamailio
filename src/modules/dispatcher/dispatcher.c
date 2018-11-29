@@ -349,7 +349,7 @@ static int mod_init(void)
 				ds_default_socket.len, ds_default_socket.s);
 	}
 
-	if(init_data() != 0)
+	if(ds_init_data() != 0)
 		return -1;
 
 	if(ds_db_url.s) {
@@ -369,7 +369,7 @@ static int mod_init(void)
 				}
 			}
 		}
-		if(init_ds_db() != 0) {
+		if(ds_init_db() != 0) {
 			LM_ERR("could not initiate a connect to the database\n");
 			return -1;
 		}

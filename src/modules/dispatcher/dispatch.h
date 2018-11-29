@@ -114,8 +114,8 @@ extern str ds_outbound_proxy;
 extern str ds_default_socket;
 extern struct socket_info *ds_default_sockinfo;
 
-int init_data(void);
-int init_ds_db(void);
+int ds_init_data(void);
+int ds_init_db(void);
 int ds_load_list(char *lfile);
 int ds_connect_db(void);
 void ds_disconnect_db(void);
