@@ -140,6 +140,8 @@ static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int remove_hf_exp_f(sip_msg_t* msg, char* ematch, char* eskip);
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 );
+static int regex_substring_f(struct sip_msg *msg,  char *input, char *regex,
+		char *matched_index, char *match_count, char *dst);
 static int fixup_substre(void**, int);
 static int hname_fixup(void** param, int param_no);
 static int free_hname_fixup(void** param, int param_no);
@@ -153,6 +155,7 @@ static int fixup_free_in_list_prefix(void** param, int param_no);
 int fixup_regexpNL_none(void** param, int param_no);
 static int fixup_search_hf(void** param, int param_no);
 static int fixup_subst_hf(void** param, int param_no);
+static int fixup_regex_substring(void** param, int param_no);
 
 static int mod_init(void);
 
@@ -332,6 +335,9 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
 	{"get_body_part",        (cmd_function)get_body_part_f,       2,
 		fixup_get_body_part, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
+	{"regex_substring",        (cmd_function)regex_substring_f,   5,
+		fixup_regex_substring, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
 
 	{"bind_textops",      (cmd_function)bind_textops,       0, 0, 0,
@@ -764,6 +770,164 @@ static int replace_helper(sip_msg_t *msg, regex_t *re, str *val)
 		return 1;
 	}
 	return -1;
+}
+
+/**
+ * it helps to get substring from a string with regular expression ,regexec()
+ * after findingf substring, function sets destination pseudo-variable as given
+ * @param input - given strings
+ * @param regex - reguler expression as REG_EXTENDED
+ * @param mindex - index number for finding array, when nmatch is non-zero,
+ *   points to an array with at least nmatch elements.
+ * @param nmatch - is the number of matches allowed
+ * @param dst - given pseudo-variable, result will be setted
+ * @return : 1 is success, -1 or less is failed
+*/
+static int ki_regex_substring(sip_msg_t* msg, str *input, str *regex,
+		int mindex, int nmatch, str *dst)
+{
+	regex_t preg;
+	regmatch_t* pmatch;
+	pv_spec_t *pvresult = NULL;
+	pv_value_t valx;
+	str tempstr = {0,0};
+	int rc;
+
+	if(dst == NULL || dst->s == NULL || dst->len<=0) {
+		LM_ERR("Destination pseudo-variable is empty \n");
+		return -1;
+	}
+
+	if(mindex > (nmatch-1)) {
+		LM_ERR("matched_index cannot be bigger than match_count\n");
+		return -1;
+	}
+
+	pvresult = pv_cache_get(dst);
+
+	if(pvresult == NULL) {
+		LM_ERR("Failed to malloc destination pseudo-variable \n");
+		return -1;
+	}
+
+	if(pvresult->setf==NULL) {
+		LM_ERR("destination pseudo-variable is not writable: %.*s \n",
+				dst->len, dst->s);
+		return -1;
+	}
+
+	memset(&valx, 0, sizeof(pv_value_t));
+	memset(&preg, 0, sizeof(regex_t));
+
+	pmatch=pkg_malloc(nmatch*sizeof(regmatch_t));
+
+	LM_DBG("mindex: %d\n", mindex);
+	LM_DBG("nmatch: %d\n", nmatch );
+
+	if (pmatch==0){
+		LM_ERR("couldnt malloc memory for pmatch\n");
+		return -1;
+	}
+
+	rc = regcomp(&preg, regex->s, REG_EXTENDED);
+
+	if (0 != rc) {
+		LM_ERR("regular experession coudnt be compiled, Error code: (%d)\n", rc);
+		regfree(&preg);
+		return -1;
+	}
+
+	rc = regexec(&preg, input->s, nmatch, pmatch, REG_EXTENDED);
+	regfree(&preg);
+	if(rc!=0) {
+		LM_DBG("no matches\n");
+		return -2;
+	}
+
+	/* matched */
+	if (pmatch[mindex].rm_so==-1) {
+		LM_WARN("invalid offset for regular expression result\n");
+		return -1;
+	}
+
+	LM_DBG("start offset %d end offset %d\n",
+			(int)pmatch[0].rm_so, (int)pmatch[0].rm_eo);
+
+	if (pmatch[mindex].rm_so==pmatch[mindex].rm_eo) {
+		LM_WARN("Matched string is empty\n");
+		return -1;
+	}
+
+	tempstr.len=(int)(pmatch[mindex].rm_eo - pmatch[mindex].rm_so);
+	tempstr.s=&input->s[pmatch[mindex].rm_so];
+
+	if(tempstr.s== NULL || tempstr.len<=0) {
+		LM_WARN("matched token is null\n");
+		return -1;
+	}
+
+	valx.flags = PV_VAL_STR;
+	valx.rs.s=tempstr.s;
+	valx.rs.len=tempstr.len;
+	LM_DBG("result: %.*s\n", valx.rs.len, valx.rs.s);
+	pvresult->setf(msg, &pvresult->pvp, (int)EQ_T, &valx);
+
+	return 1;
+}
+
+/**
+ * it helps to get substring from a string with regular expression ,regexec()
+ * after findingf substring, function sets destination pseudo-variable as given
+ * @param input, given strings
+ * @param regex, reguler expression as REG_EXTENDED
+ * @param matched_index, index number for finding array, when nmatch is non-zero,
+ *   points to an array with at least nmatch elements.
+ * @param match_count, is the number of matches allowed
+ * @param dst, given pseudo-variable, result will be setted
+ * @return : 1 is success, -1 or less is failed
+*/
+static int regex_substring_f(sip_msg_t *msg, char *input, char *iregex,
+		char *matched_index, char *match_count, char* dst)
+{
+	str sinput;
+	str sregex;
+	str sdst;
+	int nmatch;
+	int index;
+
+	if(fixup_get_svalue(msg, (gparam_t*)input, &sinput)!=0) {
+		LM_ERR("unable to get input string\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)iregex, &sregex)!=0) {
+		LM_ERR("unable to get input regex\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)matched_index, &index)!=0) {
+		LM_ERR("unable to get index\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)match_count, &nmatch)!=0) {
+		LM_ERR("unable to get index\n");
+		return -1;
+	}
+	sdst.s = dst;
+	sdst.len = strlen(sdst.s);
+
+	return ki_regex_substring(msg, &sinput, &sregex, index, nmatch, &sdst);
+}
+
+static int fixup_regex_substring(void** param, int param_no)
+{
+	if (param_no == 1 || param_no == 2) {
+		return fixup_spve_all(param, param_no);
+	}
+
+	if (param_no == 3 || param_no == 3) {
+		return fixup_igp_all(param, param_no);
+	}
+
+	return 0;
 }
 
 static int replace_f(sip_msg_t* msg, char* key, char* str2)
@@ -4690,6 +4854,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 		SR_KEMIP_INT, ki_get_body_part_raw,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("regex_substring"),
+		SR_KEMIP_INT, regex_substring_f,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
