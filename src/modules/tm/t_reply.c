@@ -2171,7 +2171,7 @@ int reply_received( struct sip_msg  *p_msg )
 #ifdef WITH_XAVP
 	sr_xavp_t **backup_xavps;
 #endif
-	int replies_locked;
+	int replies_locked = 0;
 #ifdef USE_DNS_FAILOVER
 	int branch_ret;
 	int prev_branch;
@@ -2205,10 +2205,15 @@ int reply_received( struct sip_msg  *p_msg )
 	/* if transaction found, increment the rpl_received counter */
 	t_stats_rpl_received();
 
+	/* lock -- onreply_route, safe avp usage, ... */
+	/* - it is a recurrent mutex, so it is safe if a function executed
+	 * down here does another lock/unlock */
+	LOCK_REPLIES( t );
+	replies_locked=1;
+
 	tm_ctx_set_branch_index(branch);
 	init_cancel_info(&cancel_data);
 	msg_status=p_msg->REPLY_STATUS;
-	replies_locked=0;
 
 	uac=&t->uac[branch];
 	LM_DBG("org. status uas=%d, uac[%d]=%d local=%d is_invite=%d)\n",
@@ -2345,11 +2350,6 @@ int reply_received( struct sip_msg  *p_msg )
 	/* processing of on_reply block */
 	if (onreply_route) {
 		set_route_type(TM_ONREPLY_ROUTE);
-
-		/* lock onreply_route, for safe avp usage */
-		LOCK_REPLIES( t );
-		replies_locked=1;
-
 		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 		/* set the as avp_list the one from transaction */
@@ -2418,27 +2418,12 @@ int reply_received( struct sip_msg  *p_msg )
 		if (unlikely((ctx.run_flags&DROP_R_F) && (msg_status<200)))
 #endif /* TM_ONREPLY_FINAL_DROP_OK */
 		{
-			if (likely(replies_locked)) {
-				replies_locked = 0;
-				UNLOCK_REPLIES( t );
-			}
 			goto done;
 		}
 #ifdef TM_ONREPLY_FINAL_DROP_OK
 		if (msg_status >= 200) {
 			/* stop final reply timers, now that we executed the onreply route
 			 * and the reply was not DROPed */
-			if (likely(replies_locked)){
-				/* if final reply => we have to execute stop_rb_timers,
-				 * but with replies unlocked to avoid a possible deadlock
-				 * (if the timer is currently running, stop_rb_timers()
-				 * will wait until the timer handler ends, but the
-				 * final_response_handler() will try to lock replies
-				 * => deadlock).
-				*/
-				UNLOCK_REPLIES( t );
-				replies_locked=0;
-			}
 			stop_rb_timers(&uac->request);
 		}
 #endif /* TM_ONREPLY_FINAL_DROP_OK */
@@ -2494,11 +2479,6 @@ int reply_received( struct sip_msg  *p_msg )
 			branch_ret=add_uac_dns_fallback(t, t->uas.request,
 												uac, !replies_locked);
 			prev_branch=-1;
-			/* unlock replies to avoid sending() while holding a lock */
-			if (unlikely(replies_locked)) {
-				UNLOCK_REPLIES( t );
-				replies_locked = 0;
-			}
 			while((branch_ret>=0) &&(branch_ret!=prev_branch)){
 				prev_branch=branch_ret;
 				branch_ret=t_send_branch(t, branch_ret, t->uas.request , 0, 1);
@@ -2507,12 +2487,8 @@ int reply_received( struct sip_msg  *p_msg )
 #endif
 
 	if (unlikely(p_msg->msg_flags&FL_RPL_SUSPENDED)) {
-		goto skip_send_reply;
-		/* suspend the reply (async), no error */
-	}
-	if (unlikely(!replies_locked)){
-		LOCK_REPLIES( t );
-		replies_locked=1;
+		/* suspended the reply (async) - no error */
+		goto done;
 	}
 	if ( is_local(t) ) {
 		/* local_reply() does UNLOCK_REPLIES( t ) */
@@ -2570,18 +2546,16 @@ int reply_received( struct sip_msg  *p_msg )
 		uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
 	} /* provisional replies */
 
-skip_send_reply:
-
-	if (likely(replies_locked)){
-		/* unlock replies if still locked coming via goto skip_send_reply */
+done:
+	if (unlikely(replies_locked)){
+		/* unlock replies if still locked coming via goto */
 		UNLOCK_REPLIES(t);
 		replies_locked=0;
 	}
 
-done:
 	tm_ctx_set_branch_index(T_BR_UNDEFINED);
-	/* we are done with the transaction, so unref it - the reference
-	 * was incremented by t_check() function -bogdan*/
+	/* done processing the transaction, so unref it
+	 * - the reference counter was incremented by t_check() function */
 	t_unref(p_msg);
 	/* don't try to relay statelessly neither on success
 	 * (we forwarded statefully) nor on error; on troubles,
