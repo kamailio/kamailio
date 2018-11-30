@@ -60,7 +60,7 @@ From: medabeda
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -91,7 +91,7 @@ From: medabeda
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -119,7 +119,7 @@ if ( search("[Ss][Ii][Pp]") ) { /*....*/ };
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -158,7 +158,7 @@ if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -190,7 +190,7 @@ if ( search_hf("From", ":test@", "a") ) { /*....*/ };
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -223,7 +223,7 @@ search_append("[Oo]pen[Ss]er", " SIP Proxy");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -255,7 +255,7 @@ search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -288,7 +288,7 @@ replace("openser", "&kamailio; SIP Proxy");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -352,7 +352,7 @@ replace_hdrs("&kamailio;", "&kamailio; SIP Proxy");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -385,7 +385,7 @@ replace_all("openser", "&kamailio; SIP Proxy");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -418,7 +418,7 @@ replace_body_all("openser", "&kamailio; SIP Proxy");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -556,7 +556,7 @@ replace_hdrs_str("&kamailio;", "&kamailio; SIP Proxy", "a");
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular 
+			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular
 				expression. flags can be a combination of i (case insensitive),
 				g (global) or s (match newline don't treat it as end of line).
 			</para>
@@ -572,7 +572,7 @@ replace_hdrs_str("&kamailio;", "&kamailio; SIP Proxy", "a");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -601,7 +601,7 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig') )
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular 
+			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular
 				expression. flags can be a combination of i (case insensitive),
 				g (global) or s (match newline don't treat it as end of line).
 			</para>
@@ -617,7 +617,7 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig') )
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -664,7 +664,7 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){$
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -693,7 +693,7 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular 
+			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular
 				expression. flags can be a combination of i (case insensitive),
 				g (global) or s (match newline don't treat it as end of line).
 			</para>
@@ -709,7 +709,7 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -750,7 +750,7 @@ if ( subst_body('/^o=(.*) /o=$fU /') ) {};
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -784,7 +784,7 @@ if ( subst_hf("From", "/:test@/:best@/", "a") ) { /*....*/ };
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -847,7 +847,7 @@ set_reply_body("test", "text/plain");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -920,7 +920,7 @@ append_to_reply("Foo: $rm at $Ts\r\n");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -957,7 +957,7 @@ append_hf("From-username: $fU\r\n", "Call-ID");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -978,24 +978,24 @@ insert_hf("To-username: $tU\r\n", "Call-ID");
 		<function moreinfo="none">append_urihf(prefix, suffix)</function>
 		</title>
 		<para>
-		Append header field name with original <acronym>Request-URI</acronym> 
+		Append header field name with original <acronym>Request-URI</acronym>
 		in middle.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>prefix</emphasis> - string (usually at least 
+			<para><emphasis>prefix</emphasis> - string (usually at least
 			header field name).
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>suffix</emphasis> - string (usually at least 
+			<para><emphasis>suffix</emphasis> - string (usually at least
 			line terminator).
 			</para>
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, 
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 		BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1024,13 +1024,13 @@ append_urihf("CC-Diversion: ", "\r\n");
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>hf_name</emphasis> - Header field name.(long or 
+			<para><emphasis>hf_name</emphasis> - Header field name.(long or
 			compact form)
 			</para>
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1060,7 +1060,7 @@ if (is_present_hf("From")) log(1, "From HF Present");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1080,7 +1080,7 @@ if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\n");
 		<para>
 		Adds a time header to the reply of the request. You must use it
 		before functions that are likely to send a reply, e.g., save()
-		from 'registrar' module. Header format is: 
+		from 'registrar' module. Header format is:
 		<quote>Date: %a, %d %b %Y %H:%M:%S GMT</quote>, with the legend:
 		<itemizedlist>
 		<listitem>
@@ -1117,7 +1117,7 @@ if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\n");
 		Return true if a header was successfully appended.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, 
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 		BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1135,7 +1135,7 @@ append_time();
 		<function moreinfo="none">append_time_to_request()</function>
 		</title>
 		<para>
-		Adds a time header to the request. Header format is: 
+		Adds a time header to the request. Header format is:
 		<quote>Date: %a, %d %b %Y %H:%M:%S GMT</quote>, with the legend:
 		<itemizedlist>
 		<listitem>
@@ -1219,7 +1219,7 @@ if(!is_present_hf("Date"))
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, and BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1244,7 +1244,7 @@ if(is_method("OPTION|UPDATE"))
 		<function moreinfo="none">remove_hf(hname)</function>
 		</title>
 		<para>
-		Remove from message all headers with name <quote>hname</quote>. 
+		Remove from message all headers with name <quote>hname</quote>.
 		Header matching is case-insensitive. Matches and removes also
 		the compact header forms.
 		</para>
@@ -1259,7 +1259,7 @@ if(is_method("OPTION|UPDATE"))
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1380,7 +1380,7 @@ if(remove_hf_exp("^P-", "^P-Keep-"))
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1418,7 +1418,7 @@ if(has_body("application/sdp"))
 		</itemizedlist>
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1447,7 +1447,7 @@ if(is_audio_on_hold())
 		<function moreinfo="none">is_privacy(privacy_type)</function>
 		</title>
 		<para>
-		The function returns <emphasis>true</emphasis> if 
+		The function returns <emphasis>true</emphasis> if
                 the SIP message has a Privacy header field that includes
                 the given privacy_type among its privacy values.  See
 				<ulink url="http://www.iana.org/assignments/sip-priv-values">
@@ -1455,7 +1455,7 @@ if(is_audio_on_hold())
                 for possible privacy type values.
 		</para>
    		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1524,11 +1524,11 @@ if (in_list_prefix("$var(subject)", "$var(list)", ",")) {
 		<function moreinfo="none">cmp_str(str1, str2)</function>
 		</title>
 		<para>
-		The function returns <emphasis>true</emphasis> if 
+		The function returns <emphasis>true</emphasis> if
 		the two parameters matches as string case sensitive comparison.
 		</para>
    		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1549,11 +1549,11 @@ if(cmp_str("$rU", "kamailio"))
 		<function moreinfo="none">cmp_istr(str1, str2)</function>
 		</title>
 		<para>
-		The function returns <emphasis>true</emphasis> if 
+		The function returns <emphasis>true</emphasis> if
 		the two parameters matches as string case insensitive comparison.
 		</para>
    		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1574,11 +1574,11 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
 		<function moreinfo="none">starts_with(str1, str2)</function>
 		</title>
 		<para>
-		The function returns <emphasis>true</emphasis> if 
+		The function returns <emphasis>true</emphasis> if
 		the first string starts with the second string.
 		</para>
    		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
@@ -1921,6 +1921,63 @@ msg_apply_changes();
 		</example>
 	</section>
 
+	<section id="textops.f.regex_substring">
+		<title>
+		<function moreinfo="none">regex_substring(itext, regexp, mindex, mcount, dpv)</function>
+		</title>
+		<para>
+		Search in text with given regular expression then sets dpv pseudo-variable
+		with the matched token at provided index.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>itext</emphasis> - text to be searched (dynamic string)
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>regexp</emphasis> - regular expression (dynamic string)
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>mindex</emphasis> - index of the matched token (int or
+				variable holding int)
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>mcount</emphasis> - the number of maximum expected matches (int or
+				variable holding int)
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>dpv</emphasis> - variable to be set with matched token
+				(static string with a name of a variable)
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<para>
+		Note that the regular expression extended is used. More info at: <ulink
+		url='https://www.regular-expressions.info/posix.html'>
+		https://www.regular-expressions.info/posix.html</ulink>.
+		</para>
+		<example>
+		<title><function>_regex_substring</function> usage</title>
+		<programlisting format="linespecific">
+	...
+	regex_substring("___ abc123def ___ ghi456 ___", "([a-z]*)([0-9]+)([a-z]*)",
+			1, 3, "$var(asd)");
+	xlog("L_WARN","RESULT: $var(asd)\r\n");
+	------
+	result:
+	abc
+	----
+	...
+	</programlisting>
+		</example>
+	</section>
+
 	</section>
 </chapter>
-
