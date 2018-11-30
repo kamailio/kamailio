@@ -163,6 +163,12 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		LM_CRIT("null dbf parameter\n");
 		return -1;
 	}
+
+	/* for safety we initialize mydbf with 0 (this will cause
+	 *  a segfault immediately if someone tries to call a function
+	 *  from it without checking the return code from bind_dbmod */
+	memset((void*)mydbf, 0, sizeof(db_func_t));
+
 	if (mod->len > MAX_URL_LENGTH)
 	{
 		LM_ERR("SQL URL too long\n");
@@ -177,11 +183,6 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 	memcpy(name, "db_", 3);
 	memcpy(name+3, mod->s, mod->len);
 	name[mod->len+3] = 0;
-
-	/* for safety we initialize mydbf with 0 (this will cause
-	 *  a segfault immediately if someone tries to call a function
-	 *  from it without checking the return code from bind_dbmod */
-	memset((void*)mydbf, 0, sizeof(db_func_t));
 
 	p = strchr(name, ':');
 	if (p) {
