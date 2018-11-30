@@ -139,7 +139,7 @@ int pv_get_sqlrows(struct sip_msg *msg,  pv_param_t *param,
 	return pv_get_sintval(msg, param, res, con->dbf.affected_rows(con->dbh));
 }
 
-int sql_connect(void)
+int sql_connect(int mode)
 {
 	sql_con_t *sc;
 	sc = _sql_con_root;
@@ -160,11 +160,35 @@ int sql_connect(void)
 		sc->dbh = sc->dbf.init(&sc->db_url);
 		if (sc->dbh==NULL)
 		{
-			LM_ERR("failed to connect to the database [%.*s]\n",
-					sc->name.len, sc->name.s);
-			return -1;
+			if(mode) {
+				LM_ERR("failed to connect to the database [%.*s]\n",
+						sc->name.len, sc->name.s);
+				return -1;
+			} else {
+				LM_INFO("failed to connect to the database [%.*s] - trying next\n",
+						sc->name.len, sc->name.s);
+			}
 		}
 		sc = sc->next;
+	}
+	return 0;
+}
+
+int sql_reconnect(sql_con_t *sc)
+{
+	if(sc==NULL) {
+		LM_ERR("connection structure not initialized\n");
+		return -1;
+	}
+	if (sc->dbh!=NULL) {
+		/* already connected */
+		return 0;
+	}
+	sc->dbh = sc->dbf.init(&sc->db_url);
+	if (sc->dbh==NULL) {
+		LM_ERR("failed to connect to the database [%.*s]\n",
+					sc->name.len, sc->name.s);
+		return -1;
 	}
 	return 0;
 }

@@ -25,7 +25,6 @@
  * - Module: \ref sqlops
  */
 
-		       
 #ifndef _SQL_API_H_
 #define _SQL_API_H_
 
@@ -68,7 +67,8 @@ typedef struct _sql_con
 
 int sql_parse_param(char *val);
 void sql_destroy(void);
-int sql_connect(void);
+int sql_connect(int mode);
+int sql_reconnect(sql_con_t *sc);
 
 int sql_do_query(sql_con_t *con, str *query, sql_result_t *res);
 int sql_do_query_async(sql_con_t *con, str *query);
