@@ -194,6 +194,27 @@ modparam("sqlops", "tr_buf_size", 4096)
 </programlisting>
 		</example>
 	</section>
+	<section id="sqlops.p.connect_mode">
+		<title><varname>connect_mode</varname> (int)</title>
+		<para>
+		Control if the module must stop loading when connecting to database
+		server fails during start up. Values: 0 - stop loading; 1 - continue
+		even if connecting to database server fails.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>connect_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops", "connect_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>
