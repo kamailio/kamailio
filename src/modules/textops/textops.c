@@ -4856,7 +4856,7 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textops"), str_init("regex_substring"),
-		SR_KEMIP_INT, regex_substring_f,
+		SR_KEMIP_INT, ki_regex_substring,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
