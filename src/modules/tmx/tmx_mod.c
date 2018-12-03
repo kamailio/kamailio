@@ -704,17 +704,9 @@ static int t_is_request_route(sip_msg_t* msg)
 /**
  *
  */
-static int w_t_drop1(sip_msg_t* msg, char *p1, char *p2)
+static int ki_t_drop_rcode(sip_msg_t* msg, int rcode)
 {
 	tm_cell_t *t = 0;
-	unsigned int uas_status = 500;
-
-	if(p1) {
-		if(fixup_get_ivalue(msg, (gparam_p)p1, (int*)&uas_status)<0)
-		{
-			uas_status = 500;
-		}
-	}
 
 	t=_tmx_tmb.t_gett();
 	if (t==NULL || t==T_UNDEFINED) {
@@ -722,7 +714,7 @@ static int w_t_drop1(sip_msg_t* msg, char *p1, char *p2)
 		return -1;
 	}
 
-	t->uas.status = uas_status;
+	t->uas.status = (unsigned int)rcode;
 	if(t_is_request_route(msg) == 1) {
 		_tmx_tmb.t_release(msg);
 	}
@@ -732,9 +724,32 @@ static int w_t_drop1(sip_msg_t* msg, char *p1, char *p2)
 /**
  *
  */
+static int ki_t_drop(sip_msg_t* msg)
+{
+	return ki_t_drop_rcode(msg, 500);
+}
+
+/**
+ *
+ */
+static int w_t_drop1(sip_msg_t* msg, char *p1, char *p2)
+{
+	int uas_status = 500;
+
+	if(p1) {
+		if(fixup_get_ivalue(msg, (gparam_t*)p1, &uas_status)<0) {
+			uas_status = 500;
+		}
+	}
+	return ki_t_drop_rcode(msg, uas_status);
+}
+
+/**
+ *
+ */
 static int w_t_drop0(sip_msg_t* msg, char *p1, char *p2)
 {
-	return  w_t_drop1(msg, NULL, NULL);
+	return ki_t_drop_rcode(msg, 500);
 }
 
 
@@ -1139,6 +1154,16 @@ static sr_kemi_t sr_kemi_tmx_exports[] = {
 		SR_KEMIP_INT, ki_t_reply_callid,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_drop"),
+		SR_KEMIP_INT, ki_t_drop,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_drop_rcode"),
+		SR_KEMIP_INT, ki_t_drop_rcode,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
