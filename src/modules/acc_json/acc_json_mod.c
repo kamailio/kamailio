@@ -160,6 +160,7 @@ static void destroy(void)
 
 int acc_json_init(acc_init_info_t *inf)
 {
+	LM_DBG(" init ...\n");
 	return 0;
 }
 
@@ -244,6 +245,27 @@ int acc_json_send_request(struct sip_msg *req, acc_info_t *inf)
 		json_object_set_new(object, extra->name.s, value);
 		free(tmp);
 		extra = extra->next;
+	}
+
+	/* add leginfo fields */
+	if(inf->leg_info) {
+		o = accb.get_leg_attrs(inf->leg_info, req, inf->varr + attr_cnt,
+			inf->iarr + attr_cnt, inf->tarr + attr_cnt, 1);
+		attr_cnt += o;
+		m = attr_cnt;
+
+		struct acc_extra *leg_info = inf->leg_info;
+		for(; i < m; i++) {
+			LM_DBG("[%d][%s][%.*s]\n", i, leg_info->name.s, inf->varr[i].len,
+					inf->varr[i].s);
+			char *tmp = strndup(inf->varr[i].s, inf->varr[i].len);
+			json_t *value = json_string(tmp);
+			if(!value)
+				value = json_string("NON-UTF8");
+			json_object_set_new(object, leg_info->name.s, value);
+			free(tmp);
+			leg_info = leg_info->next;
+		}
 	}
 
 	if(object) {
