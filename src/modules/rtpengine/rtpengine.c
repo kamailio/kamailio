@@ -699,6 +699,9 @@ static inline int str_prefix(const str *p, const char *q, str *out) {
 /* handle either "foo-bar" or "foo=bar" from flags */
 static inline int str_key_val_prefix(const str *p, const char *q, const str *v, str *out) {
 	if (str_eq(p, q)) {
+		if(!v->s || !v->len)
+			return 0;
+
 		*out = *v;
 		return 1;
 	}
@@ -1992,10 +1995,6 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		if (str_key_val_prefix(&key, "transcode", &val, &s)
 				|| str_key_val_prefix(&key, "codec-transcode", &val, &s))
 		{
-			if(s.len<=0 && s.s==NULL){
-				LM_ERR(" %.*s key needs codec value \n",key.len,key.s);
-				goto next;
-			}
 			if (!ng_flags->codec_transcode) {
 				ng_flags->codec_transcode = bencode_list(ng_flags->dict->buffer);
 				bencode_dictionary_add(ng_flags->codec, "transcode",
@@ -2006,10 +2005,6 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		}
 
 		if (str_key_val_prefix(&key, "codec-strip", &val, &s)) {
-			if(s.len<=0 && s.s==NULL){
-				LM_ERR(" %.*s key needs codec value \n",key.len,key.s);
-				goto next;
-			}
 			if (!ng_flags->codec_strip) {
 				ng_flags->codec_strip = bencode_list(ng_flags->dict->buffer);
 				bencode_dictionary_add(ng_flags->codec, "strip",
@@ -2020,10 +2015,6 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		}
 
 		if (str_key_val_prefix(&key, "codec-offer", &val, &s)) {
-			if(s.len<=0 && s.s==NULL){
-				LM_ERR(" %.*s key needs codec value \n",key.len,key.s);
-				goto next;
-			}
 			if (!ng_flags->codec_offer) {
 				ng_flags->codec_offer = bencode_list(ng_flags->dict->buffer);
 				bencode_dictionary_add(ng_flags->codec, "offer",
@@ -2034,10 +2025,6 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		}
 
 		if (str_key_val_prefix(&key, "codec-mask", &val, &s)) {
-			if(s.len<=0 && s.s==NULL){
-				LM_ERR(" %.*s key needs codec value \n",key.len,key.s);
-				goto next;
-			}
 			if (!ng_flags->codec_mask) {
 				ng_flags->codec_mask = bencode_list(ng_flags->dict->buffer);
 				bencode_dictionary_add(ng_flags->codec, "mask",
