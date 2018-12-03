@@ -46,8 +46,9 @@ pgsql_query() {
 
 # input: sql query, optional pgsql command-line params
 pgsql_ro_query() {
-	mdbg "pgsql_ro_query: $PGSQL $2 -h $DBHOST -U $DBROUSER $DBNAME -c '$1'"
+	mdbg "pgsql_ro_query: $PGSQL $2 -A -q -t -h $DBHOST -U $DBROUSER $DBNAME -c '$1'"
 	PGPASSWORD="$DBROPW" $PGSQL $2 \
+		-A -q -t \
 		-h $DBHOST \
 		-U $DBROUSER \
 		$DBNAME \
