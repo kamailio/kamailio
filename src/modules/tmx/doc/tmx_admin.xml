@@ -432,6 +432,60 @@ route[MYROUTE] {
 </programlisting>
 		</example>
 	</section>
+    <section id="tmx.f.t_drop">
+        <title>
+            <function moreinfo="none">t_drop([rcode])
+            </function>
+        </title>
+        <para>
+        Drops the transaction with response code (500 default).
+        </para>
+        <para>
+        Parameters:.
+        </para>
+        <itemizedlist>
+            <listitem><para>
+                <emphasis>rcode</emphasis> - response code to set in uas status.
+            </para></listitem>
+        </itemizedlist>
+        <para>
+        This function can be used in ANY_ROUTE.
+        </para>
+        <example>
+        <title><function>t_drop</function> usage</title>
+        <programlisting format="linespecific">
+...
+route[MYREQ]
+{
+...
+    if (!t_newtran()) {
+        xlog("L_ERROR", "$ci|log|failed to create transaction\n");
+        drop;
+    }
+
+    t_on_failure("TR_ERROR");
+    t_on_reply("TR_OK");
+    t_relay();
+}
+
+failure_route[TR_ERROR]
+{
+    xlog("L_INFO", "$ci|log|failed $T_reply_code $T_reply_reason\n");
+    t_drop();
+}
+
+onreply_route[TR_OK]
+{
+   xlog("L_INFO", "$ci|log|checking transaction result\n");
+   if(status=~"60[0-9]") {
+      t_drop();
+   }
+...
+}
+...
+</programlisting>
+        </example>
+    </section>
 
 	<section id="tmx.f.t_reuse_branch">
 		<title>
