@@ -117,7 +117,8 @@
  
  		<para> 
  		The column's name in the database storing the type of list
- 		(0=blacklist or 1=whitelist).
+ 		(0=blacklisted data, 1=whitelist data or 2=blacklisted
+ 		destination).
  		</para> 
        <para><emphasis> Default value is action</emphasis></para>
  
