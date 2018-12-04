@@ -17,7 +17,7 @@
 	<title>Overview</title>
 	<para>
 		This module has been designed to offer an additional layer of
-		security over our communications. To do this, the following
+		security over our communications. To achieve this, the following
 		features are available:
 	</para>
 	<para>
@@ -37,9 +37,8 @@
 		value is not found, it will be searched in the blacklist.
 	</para>
 	<para>
-		All data will be loaded into arrays from database when the module is
-		started. To update blacklist and whitelist values without restart
-		kamailio it is necessary to reload arrays using RPC commands.
+		All data will be loaded to memory on start. There's a reload RPC
+		command to refresh data.
 	</para>
 	</section>
 	<section>
@@ -113,23 +112,83 @@
        </example>
      </section>
 
-	<section id="security.p.dst_exact_match">
-       <title><varname>dst_exact_match</varname> (string)</title>
+	<section id="security.p.action_col">
+       <title><varname>action_col</varname> (string)</title>
  
  		<para> 
-		If value is <emphasis>yes</emphasis> the destination number must be equal to the
-		database value to block the message. If its value is <emphasis>no</emphasis> will be
+ 		The column's name in the database storing the type of list
+ 		(0=blacklist or 1=whitelist).
+ 		</para> 
+       <para><emphasis> Default value is action</emphasis></para>
+ 
+       <example>
+         <title>Set <varname>action_col</varname> parameter</title>
+ 
+         <programlisting format="linespecific">
+		...
+		modparam("security", "action_col", "action")
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.p.type_col">
+       <title><varname>type_col</varname> (string)</title>
+ 
+ 		<para> 
+ 		The column's name in the database storing the type of value to
+ 		check (0=user-agent, 1=country, 2=domain, 3=IP addres or 4=user).
+ 		</para> 
+       <para><emphasis> Default value is type</emphasis></para>
+ 
+       <example>
+         <title>Set <varname>type_col</varname> parameter</title>
+ 
+         <programlisting format="linespecific">
+		...
+		modparam("security", "type_col", "type")
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.p.data_col">
+       <title><varname>data_col</varname> (string)</title>
+ 
+ 		<para> 
+ 		The column's name in the database storing the blacklisted or
+ 		whitelisted value.
+ 		</para> 
+       <para><emphasis> Default value is data</emphasis></para>
+ 
+       <example>
+         <title>Set <varname>data_col</varname> parameter</title>
+ 
+         <programlisting format="linespecific">
+		...
+		modparam("security", "data_col", "data")
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.p.dst_exact_match">
+       <title><varname>dst_exact_match</varname> (integer)</title>
+ 
+ 		<para> 
+		If value is <emphasis>1</emphasis> the destination number must be equal to the
+		database value to block the message. If its value is <emphasis>0</emphasis> will be
 		blocked all messages which destination number contains any
 		database values.
     		</para> 
-       <para><emphasis> Default value is yes</emphasis></para>
+       <para><emphasis> Default value is 1</emphasis></para>
  
        <example>
          <title>Set <varname>dst_exact_match</varname> parameter</title>
  
          <programlisting format="linespecific">
 		...
-		modparam("security", "dst_exact_match", "yes")
+		modparam("security", "dst_exact_match", 1)
 		...
 		</programlisting>
        </example>
