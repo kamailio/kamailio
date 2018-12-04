@@ -103,7 +103,7 @@ int check_sqli_to(struct sip_msg *msg)
 		strncpy(val, to->display.s, to->display.len);
 		val[to->display.len] = '\0';
 
-		if (strstr(val, "'") || (strstr(val, "\"") && count_chars(val, '"') != 2) || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "+") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
+		if (strstr(val, "'") || (strstr(val, "\"") && count_chars(val, '"') != 2) || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
 		{
 			LM_ERR("Possible SQLi detected in to name (%s)\n", val);
 			pkg_free(val);
@@ -122,7 +122,7 @@ int check_sqli_to(struct sip_msg *msg)
 			strncpy(val, parsed_uri.user.s, parsed_uri.user.len);
 			val[parsed_uri.user.len] = '\0';
 
-			if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "+") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
+			if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
 			{
 				LM_ERR("Possible SQLi detected in to user (%s)\n", val);
 				pkg_free(val);
@@ -175,7 +175,7 @@ int check_sqli_from(struct sip_msg *msg)
 		strncpy(val, from->display.s, from->display.len);
 		val[from->display.len] = '\0';
 
-		if (strstr(val, "'") || (strstr(val, "\"") && count_chars(val, '"') != 2) || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "+") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
+		if (strstr(val, "'") || (strstr(val, "\"") && count_chars(val, '"') != 2) || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
 		{
 			LM_ERR("Possible SQLi detected in from name (%s)\n", val);
 			pkg_free(val);
@@ -194,7 +194,7 @@ int check_sqli_from(struct sip_msg *msg)
 			strncpy(val, parsed_uri.user.s, parsed_uri.user.len);
 			val[parsed_uri.user.len] = '\0';
 
-			if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "+") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
+			if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
 			{
 				LM_ERR("Possible SQLi detected in from user (%s)\n", val);
 				pkg_free(val);
@@ -264,7 +264,7 @@ int check_sqli_contact(struct sip_msg *msg)
 		strncpy(val, parsed_uri.user.s, parsed_uri.user.len);
 		val[parsed_uri.user.len] = '\0';
 
-		if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "+") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
+		if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
 		{
 			LM_ERR("Possible SQLi detected in contact user (%s)\n", val);
 			pkg_free(val);
