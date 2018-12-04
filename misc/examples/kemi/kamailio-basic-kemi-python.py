@@ -60,7 +60,7 @@ class kamailio:
             return 1;
 
         # CANCEL processing
-        if KSR.pv.get("$rm") == "CANCEL" :
+        if KSR.is_CANCEL() :
             if KSR.tm.t_check_trans()>0 :
                 self.ksr_route_relay(msg);
             return 1;
@@ -86,7 +86,7 @@ class kamailio:
         # record routing for dialog forming requests (in case they are routed)
         # - remove preloaded route headers
         KSR.hdr.remove("Route");
-        if "INVITE|SUBSCRIBE".find(KSR.pv.get("$rm"))!=-1 :
+        if KSR.is_method_in("IS") :
             KSR.rr.record_route();
 
 
@@ -105,7 +105,7 @@ class kamailio:
         if self.ksr_route_registrar(msg)==-255 :
             return 1;
 
-        if KSR.pv.is_null("$rU") :
+        if KSR.corex.has_ruri_user() < 0 :
             # request with no Username in RURI
             KSR.sl.sl_send_reply(484,"Address Incomplete");
             return 1;
@@ -121,15 +121,15 @@ class kamailio:
     def ksr_route_relay(self, msg):
         # enable additional event routes for forwarded requests
         # - serial forking, RTP relaying handling, a.s.o.
-        if "INVITE,BYE,SUBSCRIBE,UPDATE".find(KSR.pv.get("$rm"))!=-1 :
+        if KSR.is_method_in("IBSU") :
             if KSR.tm.t_is_set("branch_route")<0 :
                 KSR.tm.t_on_branch("ksr_branch_manage");
 
-        if "INVITE,SUBSCRIBE,UPDATE".find(KSR.pv.get("$rm"))!=-1 :
+        if KSR.is_method_in("ISU") :
             if KSR.tm.t_is_set("onreply_route")<0 :
                 KSR.tm.t_on_reply("ksr_onreply_manage");
 
-        if KSR.pv.get("$rm")=="INVITE" :
+        if KSR.is_INVITE() :
             if KSR.tm.t_is_set("failure_route")<0 :
                 KSR.tm.t_on_failure("ksr_failure_manage");
 
@@ -156,9 +156,10 @@ class kamailio:
                 KSR.pv.seti("$sht(ipban=>$si)", 1);
                 return -255;
 
-        if not KSR.pv.is_null("$ua") :
-            if (KSR.pv.get("$ua").find("friendly-scanner")!=-1
-                    or KSR.pv.get("$ua").find("sipcli")!=-1) :
+        if KSR.corex.has_user_agent() :
+            ua = KSR.pv.gete("$ua")
+            if (ua.find("friendly-scanner")!=-1
+                    or ua.find("sipcli")!=-1) :
                 KSR.sl.sl_send_reply(200, "Processed");
                 return -255;
 
@@ -166,9 +167,9 @@ class kamailio:
             KSR.sl.sl_send_reply(483,"Too Many Hops");
             return -255;
 
-        if (KSR.pv.get("$rm")=="OPTIONS"
-                and KSR.is_myself(KSR.pv.get("$ru"))
-                and KSR.pv.is_null("$rU")) :
+        if (KSR.is_OPTIONS()
+                and KSR.is_myself_ruri()
+                and KSR.corex.has_ruri_user() < 0) :
             KSR.sl.sl_send_reply(200,"Keepalive");
             return -255;
 
@@ -188,23 +189,23 @@ class kamailio:
         if KSR.rr.loose_route()>0 :
             if self.ksr_route_dlguri(msg)==-255 :
                 return -255;
-            if KSR.pv.get("$rm")=="BYE" :
+            if KSR.is_BYE() :
                 # do accounting ...
                 KSR.setflag(FLT_ACC);
                 # ... even if the transaction fails
                 KSR.setflag(FLT_ACCFAILED);
-            elif KSR.pv.get("$rm")=="ACK" :
+            elif KSR.is_ACK() :
                 # ACK is forwarded statelessly
                 if self.ksr_route_natmanage(msg)==-255 :
                     return -255;
-            elif KSR.pv.get("$rm")=="NOTIFY" :
+            elif KSR.is_NOTIFY() :
                 # Add Record-Route for in-dialog NOTIFY as per RFC 6665.
                 KSR.rr.record_route();
 
             self.ksr_route_relay(msg);
             return -255;
 
-        if KSR.pv.get("$rm")=="ACK" :
+        if KSR.is_ACK() :
             if KSR.tm.t_check_trans() >0 :
                 # no loose-route, but stateful ACK;
                 # must be an ACK after a 487
@@ -221,7 +222,7 @@ class kamailio:
 
     # Handle SIP registrations
     def ksr_route_registrar(self, msg):
-        if KSR.pv.get("$rm") != "REGISTER" :
+        if not KSR.is_REGISTER() :
             return 1;
         if KSR.isflagset(FLT_NATS) :
             KSR.setbflag(FLB_NATB);
@@ -247,7 +248,7 @@ class kamailio:
                 return -255;
 
         # when routing via usrloc, log the missed calls also
-        if KSR.pv.get("$rm")=="INVITE" :
+        if KSR.is_INVITE() :
             KSR.setflag(FLT_ACCMISSED);
 
         self.ksr_route_relay(msg);
@@ -258,25 +259,25 @@ class kamailio:
     # IP authorization and user uthentication
     def ksr_route_auth(self, msg):
 
-        if KSR.pv.get("$rm") != "REGISTER" :
+        if not KSR.is_REGISTER() :
             if KSR.permissions.allow_source_address(1)>0 :
                 # source IP allowed
                 return 1;
 
-        if KSR.pv.get("$rm")=="REGISTER" or KSR.is_myself(KSR.pv.get("$fu")) :
+        if KSR.is_REGISTER() or KSR.is_myself_furi() :
             # authenticate requests
             if KSR.auth_db.auth_check(KSR.pv.get("$fd"), "subscriber", 1)<0 :
                 KSR.auth.auth_challenge(KSR.pv.get("$fd"), 0);
                 return -255;
 
             # user authenticated - remove auth header
-            if not "REGISTER,PUBLISH".find(KSR.pv.get("$rm"))!=-1 :
+            if not KSR.is_method_in("RP") :
                 KSR.auth.consume_credentials();
 
         # if caller is not local subscriber, then check if it calls
         # a local destination, otherwise deny, not an open relay here
-        if (not KSR.is_myself(KSR.pv.get("$fu"))
-                and (not KSR.is_myself(KSR.pv.get("$ru")))) :
+        if (not KSR.is_myself_furi())
+                and (not KSR.is_myself_ruri()) :
             KSR.sl.sl_send_reply(403,"Not relaying");
             return -255;
 
@@ -287,7 +288,7 @@ class kamailio:
     def ksr_route_natdetect(self, msg):
         KSR.force_rport();
         if KSR.nathelper.nat_uac_test(19)>0 :
-            if KSR.pv.get("$rm")=="REGISTER" :
+            if KSR.is_REGISTER() :
                 KSR.nathelper.fix_nated_register();
             elif KSR.siputils.is_first_hop()>0 :
                 KSR.nathelper.set_contact_alias();
@@ -331,7 +332,7 @@ class kamailio:
 
     # Routing to foreign domains
     def ksr_route_sipout(self, msg):
-        if KSR.is_myself(KSR.pv.get("$ru")) :
+        if KSR.is_myself_ruri() :
             return 1;
 
         KSR.hdr.append("P-Hint: outbound\r\n");
