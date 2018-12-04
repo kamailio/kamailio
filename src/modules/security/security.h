@@ -50,6 +50,9 @@ int check_sqli_contact(struct sip_msg *msg);
 /* Extern variables */
 extern str db_url;
 extern str table_name;
+extern str action_col;
+extern str type_col;
+extern str data_col;
 extern int dst_exact_match;
 
 /* RPC commands */

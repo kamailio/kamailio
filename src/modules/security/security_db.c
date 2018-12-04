@@ -30,10 +30,6 @@ static db1_con_t *db_handle = NULL;
 
 static int get_type(char *ctype);
 
-str action_col = str_init("action");
-str type_col = str_init("type");
-str data_col = str_init("data");
-
 str version_table_name = str_init("version");
 str table_name_col = str_init("table_name");
 str table_version_col = str_init("table_version");

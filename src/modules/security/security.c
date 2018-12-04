@@ -50,6 +50,9 @@ db1_con_t* db_handle=0;   /* Database connection handle */
 int dst_exact_match = 1;
 str db_url = {NULL, 0};
 str table_name = str_init("security");
+str action_col = str_init("action");
+str type_col = str_init("type");
+str data_col = str_init("data");
 
 /* Exported commands */
 static cmd_export_t cmds[]={
@@ -67,6 +70,9 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
         {"db_url",          PARAM_STRING, &db_url},
         {"table_name",      PARAM_STR, &table_name },
+        {"action_col",      PARAM_STR, &action_col },
+        {"type_col",        PARAM_STR, &type_col },
+        {"data_col",        PARAM_STR, &data_col },
         {"dst_exact_match", PARAM_INT, &dst_exact_match },
         {0, 0, 0}
 };
