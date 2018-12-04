@@ -1439,12 +1439,21 @@ kamcmd dispatcher.ping_active 0
    destination address (string value in full SIP URI format).
 
    Optionally, these fields can be followed by:
-     * flags (listed by index - can be bitwise mask of values): 0 (value
-       1) - inactive destination; 1 (value 2) - temporary trying
-       destination (in the way to become inactive if it does not reply to
-       keepalives - there is a module parameter to set the threshold of
-       failures); 2 (value 4) - admin disabled destination; 3 (value 8) -
-       probing destination (sending keep alives);
+     * flags - control the mode of using the destination address and
+       sending keepalives. It is a bitwise value that can be built using
+       the folowing flags:
+          + 1 (bit at index 0 - 1 <<0) - inactive destination
+          + 2 (bit at index 1 - 1 <<1) - temporary trying destination (in
+            the way to become inactive if it does not reply to keepalives
+            - there is a module parameter to set the threshold of
+            failures)
+          + 4 (bit at index 2 - 1 <<2) - admin disabled destination
+          + 8 (bit at index 3 - 1 <<3) - probing destination (sending keep
+            alives);
+          + 16 (bit at index 4 - 1 <<4) - skip DNS A/AAAA resolve at
+            startup, useful when the hostname of the destination address
+            is a NAPTR or SRV record only. Such addresses cannot be
+            matched anymore with ds_is_from_list(...).
      * priority: sets the priority in destination list (based on it is
        done the initial ordering inside the set)
      * attributes: extra fields in form of name1=value1;...;nameN=valueN.
