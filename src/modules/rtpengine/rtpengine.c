@@ -218,7 +218,7 @@ static int pv_parse_var(str *inp, pv_elem_t **outp, int *got_any);
 static int mos_label_stats_parse(struct minmax_mos_label_stats *mmls);
 static void parse_call_stats(bencode_item_t *, struct sip_msg *);
 
-static int control_cmd_tos = -1; 
+static int control_cmd_tos = -1;
 static int rtpengine_allow_op = 0;
 static struct rtpp_node **queried_nodes_ptr = NULL;
 static pid_t mypid;
@@ -375,7 +375,7 @@ static param_export_t params[] = {
 	{"queried_nodes_limit",   INT_PARAM, &default_rtpengine_cfg.queried_nodes_limit    },
 	{"rtpengine_tout_ms",     INT_PARAM, &default_rtpengine_cfg.rtpengine_tout_ms      },
 	{"rtpengine_allow_op",    INT_PARAM, &rtpengine_allow_op     },
-	{"control_cmd_tos",       INT_PARAM, &control_cmd_tos        }, 
+	{"control_cmd_tos",       INT_PARAM, &control_cmd_tos        },
 	{"db_url",                PARAM_STR, &rtpp_db_url            },
 	{"table_name",            PARAM_STR, &rtpp_table_name        },
 	{"setid_col",             PARAM_STR, &rtpp_setid_col         },
@@ -699,6 +699,9 @@ static inline int str_prefix(const str *p, const char *q, str *out) {
 /* handle either "foo-bar" or "foo=bar" from flags */
 static inline int str_key_val_prefix(const str *p, const char *q, const str *v, str *out) {
 	if (str_eq(p, q)) {
+		if(!v->s || !v->len)
+			return 0;
+
 		*out = *v;
 		return 1;
 	}
