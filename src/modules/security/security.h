@@ -50,7 +50,7 @@ int check_sqli_contact(struct sip_msg *msg);
 /* Extern variables */
 extern str db_url;
 extern str table_name;
-extern str dst_exact_match;
+extern int dst_exact_match;
 
 /* RPC commands */
 void rpc_reload(rpc_t *rpc, void *ctx);

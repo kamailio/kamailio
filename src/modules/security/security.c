@@ -47,7 +47,7 @@ db_func_t db_funcs;       /* Database API functions */
 db1_con_t* db_handle=0;   /* Database connection handle */
 
 /* Exported module parameters - default values */
-str dst_exact_match = {"yes", 3};
+int dst_exact_match = 1;
 str db_url = {NULL, 0};
 str table_name = str_init("security");
 
@@ -67,7 +67,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
         {"db_url",          PARAM_STRING, &db_url},
         {"table_name",      PARAM_STR, &table_name },
-        {"dst_exact_match", PARAM_STR, &dst_exact_match },
+        {"dst_exact_match", PARAM_INT, &dst_exact_match },
         {0, 0, 0}
 };
 
@@ -126,13 +126,16 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 
 	uppercase(val);
 
-	if (!strcmp(dst_exact_match.s, "no"))
+	if (dst_exact_match == 0)
 	{
 		for (i = 0; i < *nDst; i++)
 		{
 			/* Find any match */
 			if (strstr(val, dst_list[i])) return -1;
 		}
+	}
+	else
+	{
 		for (i = 0; i < *nDst; i++)
 		{
 			/* Find an exact match */
@@ -325,11 +328,8 @@ static int mod_init(void)
 		dst_list[i]        = (char *)shm_malloc(255*sizeof(char));
 	}
 
-        if (dst_exact_match.s == NULL || strcmp(dst_exact_match.s, "no"))
-        {
-        	dst_exact_match.s = "yes";
-        	dst_exact_match.len = 3;
-        }
+        if (dst_exact_match != 0)
+        	dst_exact_match = 1;
 
         if (init_db() == -1) return -1;
         	
