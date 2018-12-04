@@ -281,7 +281,7 @@ modparam("rtpengine", "rtpengine_allow_op", 1)
 	<section id="rtpengine.p.queried_nodes_limit">
 		<title><varname>queried_nodes_limit</varname> (integer)</title>
 		<para>
-		The total number of nodes inside a set (sets are configurable via rtpengine_sock function) to be queried 
+		The total number of nodes inside a set (sets are configurable via rtpengine_sock function) to be queried
 		before giving up establishing a session. This brings more flexibility in case checking all rtpengines
 		would take too long. Max limit is 30.
 		</para>
@@ -334,11 +334,11 @@ modparam("rtpengine", "rtpengine_retr", 2)
 	<section id="rtpengine.p.extra_id_pv">
 		<title><varname>extra_id_pv</varname> (string)</title>
 		<para>
-			The parameter sets the PV definition to use when the <quote>b</quote>
+			The parameter sets the PV definition to use when the <quote>via-branch</quote>
 			parameter is used on rtpengine_delete(), rtpengine_offer(),
 			rtpengine_answer() or rtpengine_manage() command.
 		</para><para>
-			Default is empty, the <quote>b</quote> parameter may not be used then.
+			Default is empty, the <quote>via-branch</quote> parameter may not be used then.
 		</para>
 		<example>
 		<title>Set <varname>extra_id_pv</varname> parameter</title>
@@ -2217,7 +2217,7 @@ rtpengine_offer();
 				should be used. See also the next set of flags below.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>RTP/AVP, RTP/SAVP, UDP/TLS/RTP/SAVP, RTP/AVPF, RTP/SAVPF, UDP/TLS/RTP/SAVPF</emphasis> - these 
+				<emphasis>RTP/AVP, RTP/SAVP, UDP/TLS/RTP/SAVP, RTP/AVPF, RTP/SAVPF, UDP/TLS/RTP/SAVPF</emphasis> - these
 				serve as an alternative, more explicit way to select between the different &rtp; protocols
 				and profiles supported by the &rtp; proxy. For example, giving the flag
 				<quote>RTP/SAVPF</quote> has the same effect as giving the two flags
@@ -2331,6 +2331,26 @@ rtpengine_offer();
                                 recording calls to provide custom additional information. More details about this are found
                                 in the rtpengine README.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>codec-transcode=...</emphasis> - allows codecs to be added to the list of offered codecs even
+				if they were not present in the original list of codecs. In this case, the transcoding engine
+				will be engaged. Only codecs that are supported for both decoding and encoding can be added in
+				this manner. More details about this are found in the rtpengine README.
+				</para></listitem>
+
+				<listitem><para>
+				<emphasis>codec-strip=...</emphasis> - strips given codec from sdp
+				</para></listitem>
+
+				<listitem><para>
+				<emphasis>codec-offer=...</emphasis> - offer given codec from sdp.More details about this are found in the rtpengine README.
+				</para></listitem>
+
+				<listitem><para>
+				<emphasis>codec-mask=...</emphasis> - Similar to strip except that codecs listed here will still be accepted
+				and used for transcoding on the offering side.Useful only in combination with codec-transcode. <emphasis>all</emphasis> keyword
+				can be used to mask all offered codecs
+				</para></listitem>
 			</itemizedlist>
 			<para>
 			 Check also the documentation of RTPEngine, these flags are documented there as well:
@@ -2374,6 +2394,13 @@ onreply_route[2]
         rtpengine_offer();
 ...
 }
+...
+if (has_body("application/sdp")) {
+		if (rtpengine_offer("codec-mask=all codec-transcode=PCMU codec-transcode=PCMA"))
+				t_on_reply("1");
+}
+
+...
 </programlisting>
                 </example>
 	</section>
@@ -2857,4 +2884,3 @@ $ &kamcmd; rtpengine.get_hash_total
 	</section>
 
 </chapter>
-
