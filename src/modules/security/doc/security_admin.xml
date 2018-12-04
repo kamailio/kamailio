@@ -1,0 +1,541 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module has been designed to offer an additional layer of
+		security over our communications. To do this, the following
+		features are available:
+	</para>
+	<para>
+		- Blacklist to filter user agents, IP addresses, countries, domains and users.
+	</para>
+	<para>
+		- Whitelist to filter user agents, IP addresses, countries, domains and users.
+	</para>
+	<para>
+		- Blacklist of destinations where calling is not allowed.
+	</para>
+	<para>
+		- SQL injection attacks prevention.
+	</para>
+	<para>
+		When a function is called it will be searched in the whitelist. If the
+		value is not found, it will be searched in the blacklist.
+	</para>
+	<para>
+		All data will be loaded into arrays from database when the module is
+		started. To update blacklist and whitelist values without restart
+		kamailio it is necessary to reload arrays using RPC commands.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>database</emphasis>
+				-- Any db_* database module
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+ 	<section>
+     <title>Parameters</title>
+ 
+	<section id="security.p.db_url">
+       <title><varname>db_url</varname> (string)</title>
+ 
+ 		<para> 
+	 	Database string connection.
+ 		</para> 
+ 
+       <example>
+         <title>Set <varname>db_url</varname> parameter</title>
+ 
+         <programlisting format="linespecific">
+		...
+		modparam("security", "db_url", "mysql://user:pass@localhost/database")
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.p.table_name">
+       <title><varname>table_name</varname> (string)</title>
+ 
+ 		<para> 
+		Table name where blacklisted and whitelisted values are stored.
+ 		</para> 
+       <para><emphasis> Default value is security</emphasis></para>
+ 
+       <example>
+         <title>Set <varname>table_name</varname> parameter</title>
+ 
+         <programlisting format="linespecific">
+		...
+		modparam("security", "table_name", "security")
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.p.dst_exact_match">
+       <title><varname>dst_exact_match</varname> (string)</title>
+ 
+ 		<para> 
+		If value is <emphasis>yes</emphasis> the destination number must be equal to the
+		database value to block the message. If its value is <emphasis>no</emphasis> will be
+		blocked all messages which destination number contains any
+		database values.
+    		</para> 
+       <para><emphasis> Default value is yes</emphasis></para>
+ 
+       <example>
+         <title>Set <varname>dst_exact_match</varname> parameter</title>
+ 
+         <programlisting format="linespecific">
+		...
+		modparam("security", "dst_exact_match", "yes")
+		...
+		</programlisting>
+       </example>
+     </section>
+	</section>
+
+ 	<section>
+     <title>Functions</title>
+ 
+	<section id="security.f.check_ip">
+       <title>
+		<function moreinfo="none">check_ip
+		(string ip_addr)</function>
+	  </title>
+ 
+ 		<para> 
+		Checks if the IP address is blacklisted. 
+ 		</para> 
+ 		<para> 
+		Return values are:
+		<itemizedlist>
+		<listitem>-1 (if the value is blacklisted)</listitem>
+		<listitem> 1 (if the value not found)</listitem>
+		<listitem> 2 (if the value is whitelisted)</listitem>
+		</itemizedlist>
+ 		</para> 
+ 
+       <example>
+         <title><function>check_ip</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		check_ip($si);
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.f.check_ua">
+       <title>
+		<function moreinfo="none">check_ua
+		(string useragent)</function>
+	  </title>
+ 
+ 		<para> 
+		Checks if the User-agent is blacklisted. The search is approximate and if
+		we block the word sipcli as user agent, for example, those messages whose
+		user agent can be sipcli/1.6 or sipcli/1.8 will be blocked. This is very
+		useful to block different versions of the same program.
+ 		</para> 
+ 		<para> 
+		Return values are:
+		<itemizedlist>
+		<listitem>-1 (if the value is blacklisted)</listitem>
+		<listitem> 1 (if the value not found)</listitem>
+		<listitem> 2 (if the value is whitelisted)</listitem>
+		</itemizedlist>
+ 		</para> 
+ 
+       <example>
+         <title><function>check_ua</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		check_ua($ua);
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.f.check_comain">
+       <title>
+		<function moreinfo="none">check_domain
+		(string domain)</function>
+	  </title>
+ 
+ 		<para> 
+		Similar to check_ua. Checks if the domain is blacklisted.
+ 		</para> 
+ 		<para> 
+		Return values are:
+		<itemizedlist>
+		<listitem>-1 (if the value is blacklisted)</listitem>
+		<listitem> 1 (if the value not found)</listitem>
+		<listitem> 2 (if the value is whitelisted)</listitem>
+		</itemizedlist>
+ 		</para> 
+ 
+       <example>
+         <title><function>check_domain</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		check_domain($fd);
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.f.country">
+       <title>
+		<function moreinfo="none">check_country
+		(string countrycode)</function>
+	  </title>
+ 
+ 		<para> 
+		Similar to check_ua. Checks if the country (IP address) is blacklisted.
+		<emphasis>Geoip</emphasis> module must be loaded.
+ 		</para> 
+ 		<para> 
+		Return values are:
+		<itemizedlist>
+		<listitem>-1 (if the value is blacklisted)</listitem>
+		<listitem> 1 (if the value not found)</listitem>
+		<listitem> 2 (if the value is whitelisted)</listitem>
+		</itemizedlist>
+ 		</para> 
+ 
+       <example>
+         <title><function>check_country</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		if (geoip_match("$si", "src")) {
+			check_country($gip(src=>cc));
+		}
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.f.check_user">
+       <title>
+		<function moreinfo="none">check_user
+		(string user)</function>
+	  </title>
+ 
+ 		<para> 
+		Similar to check_ua. Checks if the origin user-from or user-to is
+		blacklisted.
+ 		</para> 
+ 		<para> 
+		Return values are:
+		<itemizedlist>
+		<listitem>-1 (if the value is blacklisted)</listitem>
+		<listitem> 1 (if the value not found)</listitem>
+		<listitem> 2 (if the value is whitelisted)</listitem>
+		</itemizedlist>
+ 		</para> 
+ 
+       <example>
+         <title><function>check_user</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		check_user($fU);
+		check_user($tU);
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.f.check_dst">
+       <title>
+		<function moreinfo="none">check_dst
+		(string destination)</function>
+	  </title>
+ 
+ 		<para> 
+		Checks if the destination number is blacklisted for INVITE
+		messages. If param dst_exact_match value is <emphasis>yes</emphasis> the destination number
+		must be equal to the database value to block the message. If the param
+		dst_exact_match value is <emphasis>no</emphasis> will be blocked all messages which destination
+		number contains any database values.
+ 		</para> 
+ 		<para> 
+		Return values are:
+		<itemizedlist>
+		<listitem>-1 (if the value is blacklisted)</listitem>
+		<listitem> 1 (if the value not found)</listitem>
+		<listitem> 2 (if the value is whitelisted)</listitem>
+		</itemizedlist>
+ 		</para> 
+ 
+       <example>
+         <title><function>check_dst</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		if (is_method("INVITE")) {
+			$avp(kam_sec) = check_dst($rU);
+			if ($avp(kam_sec) == -1) {
+				xlog("L_ALERT", "$rm from $si blocked because destination $rU is blacklisted");
+				exit;
+			}
+		}
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.f.check_sqli">
+       <title>
+		<function moreinfo="none">check_sqli
+		()</function>
+	  </title>
+ 
+ 		<para> 
+		Search for illegal characters in some headers. If illegal characters are
+		found the message will be dropped.
+		</para> 
+ 
+       <example>
+         <title><function>check_sqli</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		check_sqli();
+		...
+		</programlisting>
+       </example>
+     </section>
+	</section>
+
+ 	<section>
+     <title>RPC commands</title>
+ 
+	<section id="security.r.reload">
+       <title>
+		<function moreinfo="none">security.reload</function>
+	  </title>
+ 
+ 		<para> 
+		Reload all blacklist and whitelist values from database.
+ 		</para> 
+ 
+       <example>
+         <title><function>security.reload</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		&kamcmd; security.reload
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.r.print">
+       <title>
+		<function moreinfo="none">security.print</function>
+	  </title>
+ 
+ 		<para> 
+		Print blacklist and whitelist values. Without parameters it will print all
+		values but if you use a type it ill print this values only.
+ 		</para> 
+ 
+ 		<para> 
+ 		Possible values are:
+		<itemizedlist>
+		<listitem>(none)  (show all data)</listitem>
+		<listitem>ua      (show blacklisted and whitelisted user-agents)</listitem>
+		<listitem>country (show blacklisted and whitelisted countries)</listitem>
+		<listitem>domain  (show blacklisted and whitelisted domains)</listitem>
+		<listitem>user    (show blacklisted and whitelisted users)</listitem>
+		<listitem>ip      (show blacklisted and whitelisted IP addresses)</listitem>
+		<listitem>dst     (show blacklisted destinations)</listitem>
+		</itemizedlist>
+ 		</para> 
+
+       <example>
+         <title><function>security.print</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		&kamcmd; security.print
+		&kamcmd; security.print ua
+		&kamcmd; security.print country
+		&kamcmd; security.print dst
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.r.add_bl">
+       <title>
+		<function moreinfo="none">security.add_bl</function>
+	  </title>
+ 
+ 		<para> 
+		Insert values into blacklist database.
+ 		</para> 
+ 
+ 		<para> 
+ 		Parameters:
+		<itemizedlist>
+		<listitem>type  (must be: ua, country, domain, user or ip)</listitem>
+		<listitem>value (value to add to blacklist database)</listitem>
+		</itemizedlist>
+ 		</para> 
+
+       <example>
+         <title><function>security.add_bl</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		&kamcmd; security.add_bl ua friendly-scanner
+		&kamcmd; security.add_bl user sipvicious
+		...
+		</programlisting>
+       </example>
+     </section>
+
+	<section id="security.r.add_wl">
+       <title>
+		<function moreinfo="none">security.add_wl</function>
+	  </title>
+ 
+ 		<para> 
+		Insert values into whitelist database.
+ 		</para> 
+ 
+ 		<para> 
+ 		Parameters:
+		<itemizedlist>
+		<listitem>type  (must be: ua, country, domain, user or ip)</listitem>
+		<listitem>value (value to add to whitelist database)</listitem>
+		</itemizedlist>
+ 		</para> 
+
+       <example>
+         <title><function>security.add_wl</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		&kamcmd; security.add_wl country es
+		&kamcmd; security.add_wl user trusted_user
+		...
+		</programlisting>
+       </example>
+     </section>
+	</section>
+	
+ 	<section>
+     <title>Instalation</title>
+ 
+	<section>
+       <title>Database setup</title>
+ 
+ 		<para> 
+		Before running &kamailio; with the security module,
+		you have to setup the database table where the module will
+		read the blacklist data. For that, if the table was not created
+		by the installation script or you choose to install everything
+		by yourself you can use the <emphasis>security-create.sql</emphasis>
+		<acronym>SQL</acronym> script in the database directories in the 
+		kamailio/scripts folder as template. 
+		Database and table name can be set with module parameters so they 
+		can be changed, but the name of the columns must be as they are 
+		in the <acronym>SQL</acronym> script.
+		You can also find the complete database documentation on the
+		project webpage, &kamailiodbdocs;.
+ 		</para> 
+ 
+       <example>
+         <title>Example database content - security table</title>
+ 
+         <programlisting format="linespecific">
+		...
+		+----+-----------+-----------+------------------+
+		| id | action    | type      | data             |
+		+----+-----------+-----------+------------------+
+		|  1 | 0         | 2         | 1.1.1.1          |
+		|  2 | 0         | 0         | friendly-scanner |
+		|  3 | 0         | 0         | pplsip           |
+		|  4 | 0         | 0         | sipcli           |
+		|  5 | 0         | 4         | sipvicious       |
+		|  6 | 0         | 1         | ps               |
+		|  7 | 0         | 3         | 5.56.57.58       |
+		|  8 | 1         | 0         | asterisk pbx     |
+		|  9 | 1         | 2         | sip.mydomain.com |
+		| 10 | 2         | 0         | 555123123        |
+		| 11 | 2         | 0         | 555998776        |
+		+----+-----------+-----------+------------------+
+		...
+		</programlisting>
+       </example>
+		<para>
+ 		Action values are:
+		<itemizedlist>
+		<listitem>0 (blacklistagent)</listitem>
+		<listitem>1 (whitelist)</listitem>
+		<listitem>2 (destination)</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+ 		Type values are:
+		<itemizedlist>
+		<listitem>0 (user-agent)</listitem>
+		<listitem>1 (country)</listitem>
+		<listitem>2 (domain)</listitem>
+		<listitem>3 (IP address)</listitem>
+		<listitem>4 (user)</listitem>
+		</itemizedlist>
+		</para>
+     </section>
+	</section>
+</chapter>
+

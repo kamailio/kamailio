@@ -1,0 +1,414 @@
+Security Module
+
+Jose Luis Verdeguer
+
+   Copyright © 2018
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. db_url (string)
+              3.2. table_name (string)
+              3.3. dst_exact_match (string)
+
+        4. Functions
+
+              4.1. check_ip (string ip_addr)
+              4.2. check_ua (string useragent)
+              4.3. check_domain (string domain)
+              4.4. check_country (string countrycode)
+              4.5. check_user (string user)
+              4.6. check_dst (string destination)
+              4.7. check_sqli ()
+
+        5. RPC commands
+
+              5.1. security.reload
+              5.2. security.print
+              5.3. security.add_bl
+              5.4. security.add_wl
+
+        6. Instalation
+
+              6.1. Database setup
+
+   List of Examples
+
+   1.1. Set db_url parameter
+   1.2. Set table_name parameter
+   1.3. Set dst_exact_match parameter
+   1.4. check_ip usage
+   1.5. check_ua usage
+   1.6. check_domain usage
+   1.7. check_country usage
+   1.8. check_user usage
+   1.9. check_dst usage
+   1.10. check_sqli usage
+   1.11. security.reload usage
+   1.12. security.print usage
+   1.13. security.add_bl usage
+   1.14. security.add_wl usage
+   1.15. Example database content - security table
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. db_url (string)
+        3.2. table_name (string)
+        3.3. dst_exact_match (string)
+
+   4. Functions
+
+        4.1. check_ip (string ip_addr)
+        4.2. check_ua (string useragent)
+        4.3. check_domain (string domain)
+        4.4. check_country (string countrycode)
+        4.5. check_user (string user)
+        4.6. check_dst (string destination)
+        4.7. check_sqli ()
+
+   5. RPC commands
+
+        5.1. security.reload
+        5.2. security.print
+        5.3. security.add_bl
+        5.4. security.add_wl
+
+   6. Instalation
+
+        6.1. Database setup
+
+1. Overview
+
+   This module has been designed to offer an additional layer of security
+   over our communications. To do this, the following features are
+   available:
+
+   - Blacklist to filter user agents, IP addresses, countries, domains and
+   users.
+
+   - Whitelist to filter user agents, IP addresses, countries, domains and
+   users.
+
+   - Blacklist of destinations where calling is not allowed.
+
+   - SQL injection attacks prevention.
+
+   When a function is called it will be searched in the whitelist. If the
+   value is not found, it will be searched in the blacklist.
+
+   All data will be loaded into arrays from database when the module is
+   started. To update blacklist and whitelist values without restart
+   kamailio it is necessary to reload arrays using RPC commands.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * database -- Any db_* database module
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Parameters
+
+   3.1. db_url (string)
+   3.2. table_name (string)
+   3.3. dst_exact_match (string)
+
+3.1. db_url (string)
+
+   Database string connection.
+
+   Example 1.1. Set db_url parameter
+                ...
+                modparam("security", "db_url", "mysql://user:pass@localhost/data
+base")
+                ...
+
+3.2. table_name (string)
+
+   Table name where blacklisted and whitelisted values are stored.
+
+   Default value is security
+
+   Example 1.2. Set table_name parameter
+                ...
+                modparam("security", "table_name", "security")
+                ...
+
+3.3. dst_exact_match (string)
+
+   If value is yes the destination number must be equal to the database
+   value to block the message. If its value is no will be blocked all
+   messages which destination number contains any database values.
+
+   Default value is yes
+
+   Example 1.3. Set dst_exact_match parameter
+                ...
+                modparam("security", "dst_exact_match", "yes")
+                ...
+
+4. Functions
+
+   4.1. check_ip (string ip_addr)
+   4.2. check_ua (string useragent)
+   4.3. check_domain (string domain)
+   4.4. check_country (string countrycode)
+   4.5. check_user (string user)
+   4.6. check_dst (string destination)
+   4.7. check_sqli ()
+
+4.1.  check_ip (string ip_addr)
+
+   Checks if the IP address is blacklisted.
+
+   Return values are:
+     * -1 (if the value is blacklisted)
+     * 1 (if the value not found)
+     * 2 (if the value is whitelisted)
+
+   Example 1.4. check_ip usage
+                ...
+                check_ip($si);
+                ...
+
+4.2.  check_ua (string useragent)
+
+   Checks if the User-agent is blacklisted. The search is approximate and
+   if we block the word sipcli as user agent, for example, those messages
+   whose user agent can be sipcli/1.6 or sipcli/1.8 will be blocked. This
+   is very useful to block different versions of the same program.
+
+   Return values are:
+     * -1 (if the value is blacklisted)
+     * 1 (if the value not found)
+     * 2 (if the value is whitelisted)
+
+   Example 1.5. check_ua usage
+                ...
+                check_ua($ua);
+                ...
+
+4.3.  check_domain (string domain)
+
+   Similar to check_ua. Checks if the domain is blacklisted.
+
+   Return values are:
+     * -1 (if the value is blacklisted)
+     * 1 (if the value not found)
+     * 2 (if the value is whitelisted)
+
+   Example 1.6. check_domain usage
+                ...
+                check_domain($fd);
+                ...
+
+4.4.  check_country (string countrycode)
+
+   Similar to check_ua. Checks if the country (IP address) is blacklisted.
+   Geoip module must be loaded.
+
+   Return values are:
+     * -1 (if the value is blacklisted)
+     * 1 (if the value not found)
+     * 2 (if the value is whitelisted)
+
+   Example 1.7. check_country usage
+                ...
+                if (geoip_match("$si", "src")) {
+                        check_country($gip(src=>cc));
+                }
+                ...
+
+4.5.  check_user (string user)
+
+   Similar to check_ua. Checks if the origin user-from or user-to is
+   blacklisted.
+
+   Return values are:
+     * -1 (if the value is blacklisted)
+     * 1 (if the value not found)
+     * 2 (if the value is whitelisted)
+
+   Example 1.8. check_user usage
+                ...
+                check_user($fU);
+                check_user($tU);
+                ...
+
+4.6.  check_dst (string destination)
+
+   Checks if the destination number is blacklisted for INVITE messages. If
+   param dst_exact_match value is yes the destination number must be equal
+   to the database value to block the message. If the param
+   dst_exact_match value is no will be blocked all messages which
+   destination number contains any database values.
+
+   Return values are:
+     * -1 (if the value is blacklisted)
+     * 1 (if the value not found)
+     * 2 (if the value is whitelisted)
+
+   Example 1.9. check_dst usage
+                ...
+                if (is_method("INVITE")) {
+                        $avp(kam_sec) = check_dst($rU);
+                        if ($avp(kam_sec) == -1) {
+                                xlog("L_ALERT", "$rm from $si blocked because de
+stination $rU is blacklisted");
+                                exit;
+                        }
+                }
+                ...
+
+4.7.  check_sqli ()
+
+   Search for illegal characters in some headers. If illegal characters
+   are found the message will be dropped.
+
+   Example 1.10. check_sqli usage
+                ...
+                check_sqli();
+                ...
+
+5. RPC commands
+
+   5.1. security.reload
+   5.2. security.print
+   5.3. security.add_bl
+   5.4. security.add_wl
+
+5.1.  security.reload
+
+   Reload all blacklist and whitelist values from database.
+
+   Example 1.11. security.reload usage
+                ...
+                kamcmd security.reload
+                ...
+
+5.2.  security.print
+
+   Print blacklist and whitelist values. Without parameters it will print
+   all values but if you use a type it ill print this values only.
+
+   Possible values are:
+     * (none) (show all data)
+     * ua (show blacklisted and whitelisted user-agents)
+     * country (show blacklisted and whitelisted countries)
+     * domain (show blacklisted and whitelisted domains)
+     * user (show blacklisted and whitelisted users)
+     * ip (show blacklisted and whitelisted IP addresses)
+     * dst (show blacklisted destinations)
+
+   Example 1.12. security.print usage
+                ...
+                kamcmd security.print
+                kamcmd security.print ua
+                kamcmd security.print country
+                kamcmd security.print dst
+                ...
+
+5.3.  security.add_bl
+
+   Insert values into blacklist database.
+
+   Parameters:
+     * type (must be: ua, country, domain, user or ip)
+     * value (value to add to blacklist database)
+
+   Example 1.13. security.add_bl usage
+                ...
+                kamcmd security.add_bl ua friendly-scanner
+                kamcmd security.add_bl user sipvicious
+                ...
+
+5.4.  security.add_wl
+
+   Insert values into whitelist database.
+
+   Parameters:
+     * type (must be: ua, country, domain, user or ip)
+     * value (value to add to whitelist database)
+
+   Example 1.14. security.add_wl usage
+                ...
+                kamcmd security.add_wl country es
+                kamcmd security.add_wl user trusted_user
+                ...
+
+6. Instalation
+
+   6.1. Database setup
+
+6.1. Database setup
+
+   Before running Kamailio with the security module, you have to setup the
+   database table where the module will read the blacklist data. For that,
+   if the table was not created by the installation script or you choose
+   to install everything by yourself you can use the security-create.sql
+   SQL script in the database directories in the kamailio/scripts folder
+   as template. Database and table name can be set with module parameters
+   so they can be changed, but the name of the columns must be as they are
+   in the SQL script. You can also find the complete database
+   documentation on the project webpage,
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+
+   Example 1.15. Example database content - security table
+                ...
+                +----+-----------+-----------+------------------+
+                | id | action    | type      | data             |
+                +----+-----------+-----------+------------------+
+                |  1 | 0         | 2         | 1.1.1.1          |
+                |  2 | 0         | 0         | friendly-scanner |
+                |  3 | 0         | 0         | pplsip           |
+                |  4 | 0         | 0         | sipcli           |
+                |  5 | 0         | 4         | sipvicious       |
+                |  6 | 0         | 1         | ps               |
+                |  7 | 0         | 3         | 5.56.57.58       |
+                |  8 | 1         | 0         | asterisk pbx     |
+                |  9 | 1         | 2         | sip.mydomain.com |
+                | 10 | 2         | 0         | 555123123        |
+                | 11 | 2         | 0         | 555998776        |
+                +----+-----------+-----------+------------------+
+                ...
+
+   Action values are:
+     * 0 (blacklistagent)
+     * 1 (whitelist)
+     * 2 (destination)
+
+   Type values are:
+     * 0 (user-agent)
+     * 1 (country)
+     * 2 (domain)
+     * 3 (IP address)
+     * 4 (user)
