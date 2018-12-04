@@ -203,7 +203,7 @@ event_route[xhttp:request] {
                 # Optional... perform HTTP authentication
 
                 # ws_handle_handshake() exits (no further configuration file
-                # processing of the request) when complete.
+                # processing of the request) when complete in case of failure.
                 if (ws_handle_handshake())
                 {
                         # Optional... cache some information about the
@@ -500,7 +500,8 @@ end
 Note
 
    This function returns 0, stopping all further processing of the
-   request, when there is a problem.
+   request, when there is a problem. Otherwise, it returns 1 (or positive
+   number) in case of success.
 
    Example 1.12. ws_handle_handshake usage
 ...
