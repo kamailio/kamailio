@@ -1,1 +1,1 @@
-D /run/kamailio 0700 kamailio daemon -
+D /run/kamailio 0700 kamailio kamailio -
