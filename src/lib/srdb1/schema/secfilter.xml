@@ -7,18 +7,18 @@
 
 ]>
 
-<table id="security_bl" xmlns:db="http://docbook.org/ns/docbook">
-    <name>security</name>
+<table id="secfilter" xmlns:db="http://docbook.org/ns/docbook">
+    <name>secfilter</name>
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
    <description>
                 <db:para>
-                        This table is used by the security module. It contains the sets of
+                        This table is used by the secfilter module. It contains the sets of
                         values used to block or allow messages. More information about the
-                        security module can be found at:
+                        secfilter module can be found at:
                         <itemizedlist>
                         <listitem>
-                        <ulink url="&KAMAILIO_MOD_DOC;security.html">&KAMAILIO_MOD_DOC;security.html</ulink>.
+                        <ulink url="&KAMAILIO_MOD_DOC;secfilter.html">&KAMAILIO_MOD_DOC;secfilter.html</ulink>.
                         </listitem>
                         </itemizedlist>
         </db:para>
@@ -57,7 +57,7 @@
     </column>
 
     <index>
-        <name>security_idx</name>
+        <name>secfilter_idx</name>
         <colref linkend="action"/>
         <colref linkend="type"/>
         <colref linkend="data"/>
