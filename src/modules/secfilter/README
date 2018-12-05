@@ -1,4 +1,4 @@
-Security Module
+Secfilter Module
 
 Jose Luis Verdeguer
 
@@ -36,10 +36,10 @@ Jose Luis Verdeguer
 
         5. RPC commands
 
-              5.1. security.reload
-              5.2. security.print
-              5.3. security.add_bl
-              5.4. security.add_wl
+              5.1. secfilter.reload
+              5.2. secfilter.print
+              5.3. secfilter.add_bl
+              5.4. secfilter.add_wl
 
         6. Instalation
 
@@ -60,11 +60,11 @@ Jose Luis Verdeguer
    1.11. check_user usage
    1.12. check_dst usage
    1.13. check_sqli usage
-   1.14. security.reload usage
-   1.15. security.print usage
-   1.16. security.add_bl usage
-   1.17. security.add_wl usage
-   1.18. Example database content - security table
+   1.14. secfilter.reload usage
+   1.15. secfilter.print usage
+   1.16. secfilter.add_bl usage
+   1.17. secfilter.add_wl usage
+   1.18. Example database content - secfilter table
 
 Chapter 1. Admin Guide
 
@@ -97,10 +97,10 @@ Chapter 1. Admin Guide
 
    5. RPC commands
 
-        5.1. security.reload
-        5.2. security.print
-        5.3. security.add_bl
-        5.4. security.add_wl
+        5.1. secfilter.reload
+        5.2. secfilter.print
+        5.3. secfilter.add_bl
+        5.4. secfilter.add_wl
 
    6. Instalation
 
@@ -159,19 +159,19 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set db_url parameter
                 ...
-                modparam("security", "db_url", "mysql://user:pass@localhost/data
-base")
+                modparam("secfilter", "db_url", "mysql://user:pass@localhost/dat
+abase")
                 ...
 
 3.2. table_name (string)
 
    Table name where blacklisted and whitelisted values are stored.
 
-   Default value is security
+   Default value is secfilter
 
    Example 1.2. Set table_name parameter
                 ...
-                modparam("security", "table_name", "security")
+                modparam("secfilter", "table_name", "secfilter")
                 ...
 
 3.3. action_col (string)
@@ -183,7 +183,7 @@ base")
 
    Example 1.3. Set action_col parameter
                 ...
-                modparam("security", "action_col", "action")
+                modparam("secfilter", "action_col", "action")
                 ...
 
 3.4. type_col (string)
@@ -195,7 +195,7 @@ base")
 
    Example 1.4. Set type_col parameter
                 ...
-                modparam("security", "type_col", "type")
+                modparam("secfilter", "type_col", "type")
                 ...
 
 3.5. data_col (string)
@@ -207,7 +207,7 @@ base")
 
    Example 1.5. Set data_col parameter
                 ...
-                modparam("security", "data_col", "data")
+                modparam("secfilter", "data_col", "data")
                 ...
 
 3.6. dst_exact_match (integer)
@@ -220,7 +220,7 @@ base")
 
    Example 1.6. Set dst_exact_match parameter
                 ...
-                modparam("security", "dst_exact_match", 1)
+                modparam("secfilter", "dst_exact_match", 1)
                 ...
 
 4. Functions
@@ -348,21 +348,21 @@ stination $rU is blacklisted");
 
 5. RPC commands
 
-   5.1. security.reload
-   5.2. security.print
-   5.3. security.add_bl
-   5.4. security.add_wl
+   5.1. secfilter.reload
+   5.2. secfilter.print
+   5.3. secfilter.add_bl
+   5.4. secfilter.add_wl
 
-5.1.  security.reload
+5.1.  secfilter.reload
 
    Reload all blacklist and whitelist values from database.
 
-   Example 1.14. security.reload usage
+   Example 1.14. secfilter.reload usage
                 ...
-                kamcmd security.reload
+                kamcmd secfilter.reload
                 ...
 
-5.2.  security.print
+5.2.  secfilter.print
 
    Print blacklist and whitelist values. Without parameters it will print
    all values but if you use a type it ill print this values only.
@@ -376,15 +376,15 @@ stination $rU is blacklisted");
      * ip (show blacklisted and whitelisted IP addresses)
      * dst (show blacklisted destinations)
 
-   Example 1.15. security.print usage
+   Example 1.15. secfilter.print usage
                 ...
-                kamcmd security.print
-                kamcmd security.print ua
-                kamcmd security.print country
-                kamcmd security.print dst
+                kamcmd secfilter.print
+                kamcmd secfilter.print ua
+                kamcmd secfilter.print country
+                kamcmd secfilter.print dst
                 ...
 
-5.3.  security.add_bl
+5.3.  secfilter.add_bl
 
    Insert values into blacklist database.
 
@@ -392,13 +392,13 @@ stination $rU is blacklisted");
      * type (must be: ua, country, domain, user or ip)
      * value (value to add to blacklist database)
 
-   Example 1.16. security.add_bl usage
+   Example 1.16. secfilter.add_bl usage
                 ...
-                kamcmd security.add_bl ua friendly-scanner
-                kamcmd security.add_bl user sipvicious
+                kamcmd secfilter.add_bl ua friendly-scanner
+                kamcmd secfilter.add_bl user sipvicious
                 ...
 
-5.4.  security.add_wl
+5.4.  secfilter.add_wl
 
    Insert values into whitelist database.
 
@@ -406,10 +406,10 @@ stination $rU is blacklisted");
      * type (must be: ua, country, domain, user or ip)
      * value (value to add to whitelist database)
 
-   Example 1.17. security.add_wl usage
+   Example 1.17. secfilter.add_wl usage
                 ...
-                kamcmd security.add_wl country es
-                kamcmd security.add_wl user trusted_user
+                kamcmd secfilter.add_wl country es
+                kamcmd secfilter.add_wl user trusted_user
                 ...
 
 6. Instalation
@@ -418,18 +418,18 @@ stination $rU is blacklisted");
 
 6.1. Database setup
 
-   Before running Kamailio with the security module, you have to setup the
-   database table where the module will read the blacklist data. For that,
-   if the table was not created by the installation script or you choose
-   to install everything by yourself you can use the security-create.sql
-   SQL script in the database directories in the kamailio/scripts folder
-   as template. Database and table name can be set with module parameters
-   so they can be changed, but the name of the columns must be as they are
-   in the SQL script. You can also find the complete database
-   documentation on the project webpage,
+   Before running Kamailio with the secfilter module, you have to setup
+   the database table where the module will read the blacklist data. For
+   that, if the table was not created by the installation script or you
+   choose to install everything by yourself you can use the
+   secfilter-create.sql SQL script in the database directories in the
+   kamailio/scripts folder as template. Database and table name can be set
+   with module parameters so they can be changed, but the name of the
+   columns must be as they are in the SQL script. You can also find the
+   complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.18. Example database content - security table
+   Example 1.18. Example database content - secfilter table
                 ...
                 +----+-----------+-----------+------------------+
                 | id | action    | type      | data             |

@@ -75,7 +75,7 @@
  	<section>
      <title>Parameters</title>
  
-	<section id="security.p.db_url">
+	<section id="secfilter.p.db_url">
        <title><varname>db_url</varname> (string)</title>
  
  		<para> 
@@ -87,32 +87,32 @@
  
          <programlisting format="linespecific">
 		...
-		modparam("security", "db_url", "mysql://user:pass@localhost/database")
+		modparam("secfilter", "db_url", "mysql://user:pass@localhost/database")
 		...
 		</programlisting>
        </example>
      </section>
 
-	<section id="security.p.table_name">
+	<section id="secfilter.p.table_name">
        <title><varname>table_name</varname> (string)</title>
  
  		<para> 
 		Table name where blacklisted and whitelisted values are stored.
  		</para> 
-       <para><emphasis> Default value is security</emphasis></para>
+       <para><emphasis> Default value is secfilter</emphasis></para>
  
        <example>
          <title>Set <varname>table_name</varname> parameter</title>
  
          <programlisting format="linespecific">
 		...
-		modparam("security", "table_name", "security")
+		modparam("secfilter", "table_name", "secfilter")
 		...
 		</programlisting>
        </example>
      </section>
 
-	<section id="security.p.action_col">
+	<section id="secfilter.p.action_col">
        <title><varname>action_col</varname> (string)</title>
  
  		<para> 
@@ -127,13 +127,13 @@
  
          <programlisting format="linespecific">
 		...
-		modparam("security", "action_col", "action")
+		modparam("secfilter", "action_col", "action")
 		...
 		</programlisting>
        </example>
      </section>
 
-	<section id="security.p.type_col">
+	<section id="secfilter.p.type_col">
        <title><varname>type_col</varname> (string)</title>
  
  		<para> 
@@ -147,13 +147,13 @@
  
          <programlisting format="linespecific">
 		...
-		modparam("security", "type_col", "type")
+		modparam("secfilter", "type_col", "type")
 		...
 		</programlisting>
        </example>
      </section>
 
-	<section id="security.p.data_col">
+	<section id="secfilter.p.data_col">
        <title><varname>data_col</varname> (string)</title>
  
  		<para> 
@@ -167,13 +167,13 @@
  
          <programlisting format="linespecific">
 		...
-		modparam("security", "data_col", "data")
+		modparam("secfilter", "data_col", "data")
 		...
 		</programlisting>
        </example>
      </section>
 
-	<section id="security.p.dst_exact_match">
+	<section id="secfilter.p.dst_exact_match">
        <title><varname>dst_exact_match</varname> (integer)</title>
  
  		<para> 
@@ -189,7 +189,7 @@
  
          <programlisting format="linespecific">
 		...
-		modparam("security", "dst_exact_match", 1)
+		modparam("secfilter", "dst_exact_match", 1)
 		...
 		</programlisting>
        </example>
@@ -199,7 +199,7 @@
  	<section>
      <title>Functions</title>
  
-	<section id="security.f.check_ip">
+	<section id="secfilter.f.check_ip">
        <title>
 		<function moreinfo="none">check_ip
 		(string ip_addr)</function>
@@ -228,7 +228,7 @@
        </example>
      </section>
 
-	<section id="security.f.check_ua">
+	<section id="secfilter.f.check_ua">
        <title>
 		<function moreinfo="none">check_ua
 		(string useragent)</function>
@@ -260,7 +260,7 @@
        </example>
      </section>
 
-	<section id="security.f.check_comain">
+	<section id="secfilter.f.check_comain">
        <title>
 		<function moreinfo="none">check_domain
 		(string domain)</function>
@@ -289,7 +289,7 @@
        </example>
      </section>
 
-	<section id="security.f.country">
+	<section id="secfilter.f.country">
        <title>
 		<function moreinfo="none">check_country
 		(string countrycode)</function>
@@ -321,7 +321,7 @@
        </example>
      </section>
 
-	<section id="security.f.check_user">
+	<section id="secfilter.f.check_user">
        <title>
 		<function moreinfo="none">check_user
 		(string user)</function>
@@ -352,7 +352,7 @@
        </example>
      </section>
 
-	<section id="security.f.check_dst">
+	<section id="secfilter.f.check_dst">
        <title>
 		<function moreinfo="none">check_dst
 		(string destination)</function>
@@ -391,7 +391,7 @@
        </example>
      </section>
 
-	<section id="security.f.check_sqli">
+	<section id="secfilter.f.check_sqli">
        <title>
 		<function moreinfo="none">check_sqli
 		()</function>
@@ -417,9 +417,9 @@
  	<section>
      <title>RPC commands</title>
  
-	<section id="security.r.reload">
+	<section id="secfilter.r.reload">
        <title>
-		<function moreinfo="none">security.reload</function>
+		<function moreinfo="none">secfilter.reload</function>
 	  </title>
  
  		<para> 
@@ -427,19 +427,19 @@
  		</para> 
  
        <example>
-         <title><function>security.reload</function> usage</title>
+         <title><function>secfilter.reload</function> usage</title>
  
          <programlisting format="linespecific">
 		...
-		&kamcmd; security.reload
+		&kamcmd; secfilter.reload
 		...
 		</programlisting>
        </example>
      </section>
 
-	<section id="security.r.print">
+	<section id="secfilter.r.print">
        <title>
-		<function moreinfo="none">security.print</function>
+		<function moreinfo="none">secfilter.print</function>
 	  </title>
  
  		<para> 
@@ -461,22 +461,22 @@
  		</para> 
 
        <example>
-         <title><function>security.print</function> usage</title>
+         <title><function>secfilter.print</function> usage</title>
  
          <programlisting format="linespecific">
 		...
-		&kamcmd; security.print
-		&kamcmd; security.print ua
-		&kamcmd; security.print country
-		&kamcmd; security.print dst
+		&kamcmd; secfilter.print
+		&kamcmd; secfilter.print ua
+		&kamcmd; secfilter.print country
+		&kamcmd; secfilter.print dst
 		...
 		</programlisting>
        </example>
      </section>
 
-	<section id="security.r.add_bl">
+	<section id="secfilter.r.add_bl">
        <title>
-		<function moreinfo="none">security.add_bl</function>
+		<function moreinfo="none">secfilter.add_bl</function>
 	  </title>
  
  		<para> 
@@ -492,20 +492,20 @@
  		</para> 
 
        <example>
-         <title><function>security.add_bl</function> usage</title>
+         <title><function>secfilter.add_bl</function> usage</title>
  
          <programlisting format="linespecific">
 		...
-		&kamcmd; security.add_bl ua friendly-scanner
-		&kamcmd; security.add_bl user sipvicious
+		&kamcmd; secfilter.add_bl ua friendly-scanner
+		&kamcmd; secfilter.add_bl user sipvicious
 		...
 		</programlisting>
        </example>
      </section>
 
-	<section id="security.r.add_wl">
+	<section id="secfilter.r.add_wl">
        <title>
-		<function moreinfo="none">security.add_wl</function>
+		<function moreinfo="none">secfilter.add_wl</function>
 	  </title>
  
  		<para> 
@@ -521,12 +521,12 @@
  		</para> 
 
        <example>
-         <title><function>security.add_wl</function> usage</title>
+         <title><function>secfilter.add_wl</function> usage</title>
  
          <programlisting format="linespecific">
 		...
-		&kamcmd; security.add_wl country es
-		&kamcmd; security.add_wl user trusted_user
+		&kamcmd; secfilter.add_wl country es
+		&kamcmd; secfilter.add_wl user trusted_user
 		...
 		</programlisting>
        </example>
@@ -540,11 +540,11 @@
        <title>Database setup</title>
  
  		<para> 
-		Before running &kamailio; with the security module,
+		Before running &kamailio; with the secfilter module,
 		you have to setup the database table where the module will
 		read the blacklist data. For that, if the table was not created
 		by the installation script or you choose to install everything
-		by yourself you can use the <emphasis>security-create.sql</emphasis>
+		by yourself you can use the <emphasis>secfilter-create.sql</emphasis>
 		<acronym>SQL</acronym> script in the database directories in the 
 		kamailio/scripts folder as template. 
 		Database and table name can be set with module parameters so they 
@@ -555,7 +555,7 @@
  		</para> 
  
        <example>
-         <title>Example database content - security table</title>
+         <title>Example database content - secfilter table</title>
  
          <programlisting format="linespecific">
 		...

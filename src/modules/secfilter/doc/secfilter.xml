@@ -10,7 +10,7 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
-	<title>Security Module</title>
+	<title>Secfilter Module</title>
 	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 		<author>
@@ -28,6 +28,6 @@
 	</bookinfo>
 	<toc></toc>
 	
-	<xi:include href="security_admin.xml"/>
+	<xi:include href="secfilter_admin.xml"/>
 	
 </book>
