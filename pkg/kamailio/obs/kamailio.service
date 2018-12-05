@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=kamailio
-Group=daemon
+Group=kamailio
 Environment='CFGFILE=/etc/kamailio/kamailio.cfg'
 Environment='SHM_MEMORY=64'
 Environment='PKG_MEMORY=4'

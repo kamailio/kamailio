@@ -1140,13 +1140,12 @@ install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
 rm -f %{buildroot}%{_libdir}/kamailio/lib*.so
 
 %pre
-%if 0%{?suse_version} == 1330
-if ! /usr/bin/getent group daemon &>/dev/null; then
-    /usr/sbin/groupadd --gid 2 daemon &> /dev/null
-fi
-%endif
 if ! /usr/bin/id kamailio &>/dev/null; then
-       /usr/sbin/useradd -r -g daemon -s /bin/false -c "Kamailio daemon" -d %{_libdir}/kamailio kamailio || \
+       /usr/sbin/useradd --system \
+                         --user-group \
+                         --shell /bin/false \
+                         --comment "Kamailio SIP Server" \
+                         --home-dir %{_rundir}/kamailio kamailio || \
                 %logmsg "Unexpected error adding user \"kamailio\". Aborting installation."
 fi
 
