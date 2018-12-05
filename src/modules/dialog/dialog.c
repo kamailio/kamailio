@@ -2588,6 +2588,10 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 			break;
 		}
 	}
+	if(vop == 1) {
+		regfree(&mre);
+	}
+
 	if(m==0) {
 		rpc->fault(c, 404, "Not found");
 		return;
