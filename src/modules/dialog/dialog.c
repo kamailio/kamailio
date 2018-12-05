@@ -2196,6 +2196,12 @@ static const char *rpc_print_dlgs_doc[2] = {
 static const char *rpc_print_dlgs_ctx_doc[2] = {
 	"Print all dialogs with associated context", 0
 };
+static const char *rpc_dlg_list_match_doc[2] = {
+	"Print matching dialogs", 0
+};
+static const char *rpc_dlg_list_match_ctx_doc[2] = {
+	"Print matching dialogs with associated context", 0
+};
 static const char *rpc_print_dlg_doc[2] = {
 	"Print dialog based on callid and optionally fromtag", 0
 };
@@ -2454,9 +2460,161 @@ static void rpc_dlg_stats_active(rpc_t *rpc, void *c)
 		"all", dlg_starting + dlg_connecting + dlg_answering + dlg_ongoing);
 }
 
+/*!
+ * \brief Helper function that outputs matching dialogs via the RPC interface
+ *
+ * \param rpc RPC node that should be filled
+ * \param c RPC void pointer
+ * \param with_context if 1 then the dialog context will be also printed
+ */
+static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
+{
+	dlg_cell_t *dlg = NULL;
+	int i = 0;
+	str mkey = {NULL, 0};
+	str mop = {NULL, 0};
+	str mval = {NULL, 0};
+	str sval = {NULL, 0};
+	int n = 0;
+	int m = 0;
+	int vkey = 0;
+	int vop = 0;
+	int matched = 0;
+	regex_t mre;
+	regmatch_t pmatch;
+
+	i = rpc->scan(c, "SSS", &mkey, &mop, &mval);
+	if (i < 3) {
+		LM_ERR("unable to read required parameters (%d)\n", i);
+		rpc->fault(c, 500, "Invalid parameters");
+		return;
+	}
+	if(mkey.s==NULL || mkey.len<=0 || mop.s==NULL || mop.len<=0
+			|| mval.s==NULL || mval.len<=0) {
+		LM_ERR("invalid parameters (%d)\n", i);
+		rpc->fault(c, 500, "Invalid parameters");
+		return;
+	}
+	if(mkey.len==4 && strncmp(mkey.s, "ruri", mkey.len)==0) {
+		vkey = 0;
+	} else if(mkey.len==4 && strncmp(mkey.s, "furi", mkey.len)==0) {
+		vkey = 1;
+	} else if(mkey.len==4 && strncmp(mkey.s, "turi", mkey.len)==0) {
+		vkey = 2;
+	} else if(mkey.len==5 && strncmp(mkey.s, "callid", mkey.len)==0) {
+		vkey = 3;
+	} else {
+		LM_ERR("invalid key %.*s\n", mkey.len, mkey.s);
+		rpc->fault(c, 500, "Invalid matching key parameter");
+		return;
+	}
+	if(mop.len!=2) {
+		LM_ERR("invalid matching operator %.*s\n", mop.len, mop.s);
+		rpc->fault(c, 500, "Invalid matching operator parameter");
+		return;
+
+	}
+	if(strncmp(mop.s, "eq", 2)==0) {
+		vop = 0;
+	} else if(strncmp(mop.s, "re", 2)==0) {
+		vop = 1;
+		memset(&mre, 0, sizeof(regex_t));
+		if (regcomp(&mre, mval.s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+			LM_ERR("failed to compile regex: %.*s\n", mval.len, mval.s);
+			rpc->fault(c, 500, "Invalid matching value parameter");
+			return;
+		}
+	} else if(strncmp(mop.s, "sw", 2)==0) {
+		vop = 2;
+	} else {
+		LM_ERR("invalid matching operator %.*s\n", mop.len, mop.s);
+		rpc->fault(c, 500, "Invalid matching operator parameter");
+		return;
+	}
+	if(rpc->scan(c, "*d", &n)<1) {
+		n = 0;
+	}
+
+	for(i=0; i<d_table->size; i++) {
+		dlg_lock(d_table, &(d_table->entries[i]));
+		for(dlg=d_table->entries[i].first; dlg!=NULL; dlg=dlg->next) {
+			matched = 0;
+			switch(vkey) {
+				case 0:
+					sval = dlg->req_uri;
+				break;
+				case 1:
+					sval = dlg->from_uri;
+				break;
+				case 2:
+					sval = dlg->to_uri;
+				break;
+				case 3:
+					sval = dlg->callid;
+				break;
+			}
+			switch(vop) {
+				case 0:
+					/* string comparison */
+					if(mval.len==sval.len
+							&& strncmp(mval.s, sval.s, mval.len)==0) {
+						matched = 1;
+					}
+				break;
+				case 1:
+					/* regexp matching */
+					if(regexec(&mre, sval.s, 1, &pmatch, 0)==0) {
+						matched = 1;
+					}
+				break;
+				case 2:
+					/* starts with */
+					if(mval.len<=sval.len
+							&& strncmp(mval.s, sval.s, mval.len)==0) {
+						matched = 1;
+					}
+				break;
+			}
+			if (matched==1) {
+				m++;
+				internal_rpc_print_dlg(rpc, c, dlg, with_context);
+				if(n>0 && m==n) {
+					break;
+				}
+			}
+		}
+		dlg_unlock(d_table, &(d_table->entries[i]));
+		if(n>0 && m==n) {
+			break;
+		}
+	}
+	if(m==0) {
+		rpc->fault(c, 404, "Not found");
+		return;
+	}
+}
+
+/*!
+ * \brief Print matching dialogs
+ */
+static void rpc_dlg_list_match(rpc_t *rpc, void *c)
+{
+	rpc_dlg_list_match_ex(rpc, c, 0);
+}
+
+/*!
+ * \brief Print matching dialogs wih context
+ */
+static void rpc_dlg_list_match_ctx(rpc_t *rpc, void *c)
+{
+	rpc_dlg_list_match_ex(rpc, c, 1);
+}
+
 static rpc_export_t rpc_methods[] = {
 	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, RET_ARRAY},
 	{"dlg.list_ctx", rpc_print_dlgs_ctx, rpc_print_dlgs_ctx_doc, RET_ARRAY},
+	{"dlg.list_match", rpc_dlg_list_match, rpc_dlg_list_match_doc, RET_ARRAY},
+	{"dlg.list_match_ctx", rpc_dlg_list_match_ctx, rpc_dlg_list_match_ctx_doc, RET_ARRAY},
 	{"dlg.dlg_list", rpc_print_dlg, rpc_print_dlg_doc, 0},
 	{"dlg.dlg_list_ctx", rpc_print_dlg_ctx, rpc_print_dlg_ctx_doc, 0},
 	{"dlg.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
