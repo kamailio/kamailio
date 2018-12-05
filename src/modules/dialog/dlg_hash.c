@@ -450,15 +450,16 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 	int len;
 	char *p;
 
-	len = sizeof(struct dlg_cell) + callid->len + from_uri->len +
-		to_uri->len + req_uri->len;
+	/* space for dialog  structure and values with 0-ending char */
+	len = sizeof(struct dlg_cell) + callid->len + 1 + from_uri->len + 1
+		+ to_uri->len + 1 + req_uri->len + 1;
 	dlg = (struct dlg_cell*)shm_malloc( len );
 	if (dlg==0) {
 		LM_ERR("no more shm mem (%d)\n",len);
 		return 0;
 	}
 
-	memset( dlg, 0, len);
+	memset(dlg, 0, len);
 	dlg->state = DLG_STATE_UNCONFIRMED;
 	dlg->init_ts = (unsigned int)time(NULL);
 
@@ -469,23 +470,23 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 
 	dlg->callid.s = p;
 	dlg->callid.len = callid->len;
-	memcpy( p, callid->s, callid->len);
-	p += callid->len;
+	memcpy(p, callid->s, callid->len);
+	p += callid->len + 1;
 
 	dlg->from_uri.s = p;
 	dlg->from_uri.len = from_uri->len;
-	memcpy( p, from_uri->s, from_uri->len);
-	p += from_uri->len;
+	memcpy(p, from_uri->s, from_uri->len);
+	p += from_uri->len + 1;
 
 	dlg->to_uri.s = p;
 	dlg->to_uri.len = to_uri->len;
-	memcpy( p, to_uri->s, to_uri->len);
-	p += to_uri->len; 
+	memcpy(p, to_uri->s, to_uri->len);
+	p += to_uri->len + 1;
 
 	dlg->req_uri.s = p;
 	dlg->req_uri.len = req_uri->len;
-	memcpy( p, req_uri->s, req_uri->len);
-	p += req_uri->len;
+	memcpy(p, req_uri->s, req_uri->len);
+	p += req_uri->len + 1;
 
 	if ( p!=(((char*)dlg)+len) ) {
 		LM_CRIT("buffer overflow\n");
