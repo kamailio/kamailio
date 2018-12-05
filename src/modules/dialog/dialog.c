@@ -2215,8 +2215,11 @@ static const char *rpc_profile_print_dlgs_doc[2] = {
 	"Lists all the dialogs belonging to a profile", 0
 };
 static const char *rpc_dlg_bridge_doc[2] = {
-	"Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE mechanism:\
- to, from, [outbound SIP proxy]", 0
+	"Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE mechanism:"
+		" to, from, [outbound SIP proxy]", 0
+};
+static const char *rpc_dlg_is_alive_doc[2] = {
+	"Check whether dialog is alive or not", 0
 };
 
 
@@ -2272,6 +2275,40 @@ static void rpc_dlg_terminate_dlg(rpc_t *rpc,void *c){
     }
 }
 
+static void rpc_dlg_is_alive(rpc_t *rpc, void *c)
+{
+	str callid = {NULL, 0};
+	str ftag = {NULL, 0};
+	str ttag = {NULL, 0};
+
+	dlg_cell_t *dlg = NULL;
+	unsigned int dir = 0;
+	unsigned int state = 0;
+
+	if (rpc->scan(c, ".S.S.S", &callid, &ftag, &ttag) < 3) {
+		LM_DBG("Unable to read expected parameters\n");
+		rpc->fault(c, 400, "Too few parameters (required callid, from-tag, to-tag)");
+		return;
+	}
+
+	dlg = get_dlg(&callid, &ftag, &ttag, &dir);
+
+	if (dlg == NULL) {
+		LM_DBG("Couldnt find dialog with callid: '%.*s'\n", callid.len, callid.s);
+		rpc->fault(c, 404, "Dialog not found");
+		return;
+	}
+	state = dlg->state;
+    dlg_release(dlg);
+	if (state != DLG_STATE_CONFIRMED) {
+		LM_DBG("Dialog with Call-ID '%.*s' is in state: %d (confirmed: %d)\n",
+				callid.len, callid.s, state, DLG_STATE_CONFIRMED);
+		rpc->fault(c, 500, "Dialog not in confirmed state");
+		return;
+	} else {
+		rpc->add(c, "s", "Alive");
+	}
+}
 
 static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 	unsigned int h_entry, h_id;
@@ -2428,5 +2465,6 @@ static rpc_export_t rpc_methods[] = {
 	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
 	{"dlg.terminate_dlg", rpc_dlg_terminate_dlg, rpc_dlg_terminate_dlg_doc, 0},
 	{"dlg.stats_active", rpc_dlg_stats_active, rpc_dlg_stats_active_doc, 0},
+	{"dlg.is_alive",  rpc_dlg_is_alive, rpc_dlg_is_alive_doc, 0},
 	{0, 0, 0, 0}
 };
