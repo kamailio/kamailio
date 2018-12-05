@@ -7,9 +7,13 @@ After=network-online.target
 Type=simple
 User=kamailio
 Group=daemon
+PermissionsStartOnly=true
 Environment='CFGFILE=/etc/kamailio/kamailio.cfg'
 Environment='SHM_MEMORY=64'
 Environment='PKG_MEMORY=4'
+RuntimeDirectory=kamailio
+RuntimeDirectoryMode=0755
+PIDFile=/var/run/kamailio/kamailio.pid
 EnvironmentFile=-/etc/sysconfig/kamailio
 ExecStart=/usr/sbin/kamailio -DD -P /var/run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY
 Restart=on-failure
