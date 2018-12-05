@@ -2401,6 +2401,56 @@ if(has_totag()) {
 		</programlisting>
 		</section>
 
+		<section id="dlg.r.list_match">
+		<title>dlg.list_match</title>
+		<para>
+		Lists the details of matching dialogs. The paramters specify the matching
+		key, operator, value and optionally a limit of matched dialogs.
+		</para>
+		<para>Name: <emphasis>dlg.list_match</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>mkey</emphasis> - matching key. It can be: 'ruri' -
+				match against R-URI of the dialog; 'furi' - match against From
+				header URI of the dialog; 'turi' - match against the To header
+				URI of the dialog; 'callid' - match against Call-Id value.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>mop</emphasis> - matching operator. It can be: 'eq' -
+				match using string comparison; 're' - match using regular
+				expression; 'sw' - match using starts-with (prefix) comparison.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>mval</emphasis> - matching value.
+			</para></listitem>
+		</itemizedlist>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; dlg.list_match furi eq sip:alice@test.com 2
+...
+&kamcmd; dlg.list_match furi sw sip:alice@
+...
+		</programlisting>
+		</section>
+
+		<section id="dlg.r.list_match_ctx">
+		<title>dlg.list_match_ctx</title>
+		<para>
+		Similar to <quote>dlg.list_match</quote>, but including in the
+		attributes associated with the dialog context from modules sitting on
+		top of the dialog module.
+		</para>
+		<para>Name: <emphasis>dlg.list_match_ctx</emphasis></para>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; dlg.list_match_ctx furi sw sip:alice@
+...
+		</programlisting>
+		</section>
+
 		<section id="dlg.r.dlg_list">
 		<title>dlg.dlg_list</title>
 		<para>
@@ -2430,7 +2480,7 @@ if(has_totag()) {
 		<section id="dlg.r.dlg_list_ctx">
 		<title>dlg.dlg_list_ctx</title>
 		<para>
-		The same as the <quote>dlg.list_ctx</quote> but including in the dialog
+		The same as the <quote>dlg.list_list</quote> but including in the dialog
 		description the associated context from modules sitting on top of
 		the dialog module.
 		</para>
