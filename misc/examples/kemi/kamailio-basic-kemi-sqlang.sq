@@ -20,7 +20,6 @@ local FLAGS = {
 // equivalent of request_route{}
 function ksr_request_route()
 {
-	local METHOD = KSR.pv.get("$rm");
 	// KSR.sl.sl_send_reply(100,"Intelligent trying");
 	// KSR.info("===== request - from kamailio SQLang script\n");
 
@@ -31,7 +30,7 @@ function ksr_request_route()
 	ksr_route_natdetect();
 
 	// CANCEL processing
-	if (METHOD == "CANCEL") {
+	if (KSR.is_CANCEL()) {
 		if(KSR.tm.t_check_trans()>0) {
 			ksr_route_relay();
 		}
@@ -44,11 +43,13 @@ function ksr_request_route()
 	// -- only initial requests (no To tag)
 
 	// handle retransmissions
-	if (KSR.tmx.t_precheck_trans()>0) {
-		KSR.tm.t_check_trans();
-		return;
+	if (!KSR.is_ACK()) {
+		if (KSR.tmx.t_precheck_trans()>0) {
+			KSR.tm.t_check_trans();
+			return;
+		}
+		if (KSR.tm.t_check_trans()==0) { return; }
 	}
-	if (KSR.tm.t_check_trans()==0) { return; }
 
 	// authentication
 	ksr_route_auth();
@@ -56,12 +57,12 @@ function ksr_request_route()
 	// record routing for dialog forming requests (in case they are routed)
 	// - remove preloaded route headers
 	KSR.hdr.remove("Route");
-	if (METHOD=="INVITE" || METHOD=="SUBSCRIBE") {
+	if (KSR.is_method_in("IS")) {
 		KSR.rr.record_route();
 	}
 
 	// account only INVITEs
-	if (METHOD=="INVITE") {
+	if (KSR.is_INVITE()) {
 		KSR.setflag(FLAGS.FLT_ACC); // do accounting
 	}
 
@@ -73,7 +74,7 @@ function ksr_request_route()
 	// handle registrations
 	ksr_route_registrar();
 
-	if (KSR.pv.is_null("$rU")) {
+	if (KSR.corex.has_ruri_user() < 0) {
 		// request with no Username in RURI
 		KSR.sl.sl_send_reply(484, "Address Incomplete");
 		return;
@@ -90,20 +91,18 @@ function ksr_route_relay()
 {
 	// enable additional event routes for forwarded requests
 	// - serial forking, RTP relaying handling, a.s.o.
-	local METHOD = KSR.pv.get("$rm");
-	if (METHOD=="INVITE" || METHOD=="BYE" || METHOD=="SUBSCRIBE"
-			|| METHOD=="UPDATE") {
+	if (KSR.is_method_in("IBSU")) {
 		if (KSR.tm.t_is_set("branch_route")<0) {
 			KSR.tm.t_on_branch("ksr_branch_manage");
 		}
 	}
-	if (METHOD=="INVITE" || METHOD=="SUBSCRIBE" || METHOD=="UPDATE") {
+	if (KSR.is_method_in("ISU")) {
 		if (KSR.tm.t_is_set("onreply_route")<0) {
 			KSR.tm.t_on_reply("ksr_onreply_manage");
 		}
 	}
 
-	if (METHOD=="INVITE") {
+	if (KSR.is_INVITE()) {
 		if (KSR.tm.t_is_set("failure_route")<0) {
 			KSR.tm.t_on_failure("ksr_failure_manage");
 		}
@@ -119,7 +118,7 @@ function ksr_route_relay()
 // Per SIP request initial checks
 function ksr_route_reqinit()
 {
-	if (!KSR.is_myself(KSR.pv.get("$si"))) {
+	if (!KSR.is_myself_srcip()) {
 		if (!KSR.pv.is_null("$sht(ipban=>$si)")) {
 			// ip is already blocked
 			KSR.dbg("request from blocked IP - " + KSR.pv.get("$rm")
@@ -135,7 +134,7 @@ function ksr_route_reqinit()
 			KSR.x.exit();
 		}
 	}
-	if (!KSR.pv.is_null("$ua")) {
+	if (KSR.corex.has_user_agent()>0) {
 		local UA = KSR.pv.get("$ua");
 		// if (sipscanregex.match(UA)) {
 		if (UA.find("friendly-scanner")!=null || UA.find("sipcli")!=null) {
@@ -149,9 +148,9 @@ function ksr_route_reqinit()
 		KSR.x.exit();
 	}
 
-	if (KSR.pv.get("$rm")=="OPTIONS"
-			&& KSR.is_myself(KSR.pv.get("$ru"))
-			&& KSR.pv.is_null("$rU")) {
+	if (KSR.is_OPTIONS()
+			&& KSR.is_myself_ruri()
+			&& KSR.corex.has_ruri_user() < 0) {
 		KSR.sl.sl_send_reply(200,"Keepalive");
 		KSR.x.exit();
 	}
@@ -169,25 +168,24 @@ function ksr_route_withindlg()
 {
 	if (KSR.siputils.has_totag()<0) { return; }
 
-	local METHOD = KSR.pv.get("$rm");
 	// sequential request withing a dialog should
 	// take the path determined by record-routing
 	if (KSR.rr.loose_route()>0) {
 		ksr_route_dlguri();
-		if (METHOD=="BYE") {
+		if (KSR.is_BYE()) {
 			KSR.setflag(FLAGS.FLT_ACC); // do accounting ...
 			KSR.setflag(FLAGS.FLT_ACCFAILED); // ... even if the transaction fails
-		} else if (METHOD=="ACK") {
+		} else if (KSR.is_ACK()) {
 			// ACK is forwarded statelessly
 			ksr_route_natmanage();
-		} else if (METHOD=="NOTIFY") {
+		} else if (KSR.is_NOTIFY()) {
 			// Add Record-Route for in-dialog NOTIFY as per RFC 6665.
 			KSR.rr.record_route();
 		}
 		ksr_route_relay();
 		KSR.x.exit();
 	}
-	if (METHOD=="ACK") {
+	if (KSR.is_ACK()) {
 		if (KSR.tm.t_check_trans() >0) {
 			// no loose-route, but stateful ACK;
 			// must be an ACK after a 487
@@ -206,7 +204,7 @@ function ksr_route_withindlg()
 // Handle SIP registrations
 function ksr_route_registrar()
 {
-	if (KSR.pv.get("$rm")!="REGISTER") { return; }
+	if (!KSR.is_REGISTER()) { return; }
 	if (KSR.isflagset(FLAGS.FLT_NATS)) {
 		KSR.setbflag(FLAGS.FLB_NATB);
 		// do SIP NAT pinging
@@ -234,7 +232,7 @@ function ksr_route_location()
 	}
 
 	// when routing via usrloc, log the missed calls also
-	if (KSR.pv.get("$rm")=="INVITE") {
+	if (KSR.is_INVITE()) {
 		KSR.setflag(FLAGS.FLT_ACCMISSED);
 	}
 
@@ -246,30 +244,29 @@ function ksr_route_location()
 // IP authorization and user uthentication
 function ksr_route_auth()
 {
-	local METHOD = KSR.pv.get("$rm");
-	if (METHOD!="REGISTER") {
+	if (!KSR.is_REGISTER()) {
 		if (KSR.permissions.allow_source_address(1)>0) {
 			// source IP allowed
 			return;
 		}
 	}
 
-	if (METHOD=="REGISTER" || KSR.is_myself(KSR.pv.get("$fu"))) {
+	if (KSR.is_REGISTER() || KSR.is_myself_furi()) {
 		// authenticate requests
 		if (KSR.auth_db.auth_check(KSR.pv.get("$fd"), "subscriber", 1)<0) {
 			KSR.auth.auth_challenge(KSR.pv.get("$fd"), 0);
 			KSR.x.exit();
 		}
 		// user authenticated - remove auth header
-		if (METHOD!="REGISTER" && METHOD!="PUBLISH") {
+		if (!KSR.is_method_in("RP")) {
 			KSR.auth.consume_credentials();
 		}
 	}
 
 	// if caller is not local subscriber, then check if it calls
 	// a local destination, otherwise deny, not an open relay here
-	if ((! KSR.is_myself(KSR.pv.get("$fu"))
-			&& (! KSR.is_myself(KSR.pv.get("$ru"))))) {
+	if ((!KSR.is_myself_furi())
+			&& (!KSR.is_myself_ruri())) {
 		KSR.sl.sl_send_reply(403,"Not relaying");
 		KSR.x.exit();
 	}
@@ -282,7 +279,7 @@ function ksr_route_natdetect()
 {
 	KSR.force_rport();
 	if (KSR.nathelper.nat_uac_test(19)>0) {
-		if (KSR.pv.get("$rm")=="REGISTER") {
+		if (KSR.is_REGISTER()) {
 			KSR.nathelper.fix_nated_register();
 		} else if (KSR.siputils.is_first_hop()>0) {
 			KSR.nathelper.set_contact_alias();
@@ -335,7 +332,7 @@ function ksr_route_dlguri()
 // Routing to foreign domains
 function ksr_route_sipout()
 {
-	if (KSR.is_myself(KSR.pv.get("$ru"))) { return; }
+	if (KSR.is_myself_ruri()) { return; }
 
 	KSR.hdr.append_hf("P-Hint: outbound\r\n");
 	ksr_route_relay();
