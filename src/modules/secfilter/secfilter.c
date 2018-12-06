@@ -75,12 +75,12 @@ db_func_t db_funcs;       /* Database API functions */
 db1_con_t* db_handle=0;   /* Database connection handle */
 
 /* Exported module parameters - default values */
-int dst_exact_match = 1;
-str db_url = {NULL, 0};
-str table_name = str_init("secfilter");
-str action_col = str_init("action");
-str type_col = str_init("type");
-str data_col = str_init("data");
+int sec_dst_exact_match = 1;
+str sec_db_url = {NULL, 0};
+str sec_table_name = str_init("secfilter");
+str sec_action_col = str_init("action");
+str sec_type_col = str_init("type");
+str sec_data_col = str_init("data");
 
 /* Exported commands */
 static cmd_export_t cmds[]={
@@ -96,12 +96,12 @@ static cmd_export_t cmds[]={
 
 /* Exported module parameters */
 static param_export_t params[]={
-        {"db_url",          PARAM_STRING, &db_url},
-        {"table_name",      PARAM_STR, &table_name },
-        {"action_col",      PARAM_STR, &action_col },
-        {"type_col",        PARAM_STR, &type_col },
-        {"data_col",        PARAM_STR, &data_col },
-        {"dst_exact_match", PARAM_INT, &dst_exact_match },
+        {"db_url",          PARAM_STRING, &sec_db_url},
+        {"table_name",      PARAM_STR, &sec_table_name },
+        {"action_col",      PARAM_STR, &sec_action_col },
+        {"type_col",        PARAM_STR, &sec_type_col },
+        {"data_col",        PARAM_STR, &sec_data_col },
+        {"dst_exact_match", PARAM_INT, &sec_dst_exact_match },
         {0, 0, 0}
 };
 
@@ -160,7 +160,7 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 
 	uppercase(val);
 
-	if (dst_exact_match == 0)
+	if (sec_dst_exact_match == 0)
 	{
 		for (i = 0; i < *sec_nDst; i++)
 		{
