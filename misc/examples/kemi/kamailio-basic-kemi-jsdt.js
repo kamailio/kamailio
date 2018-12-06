@@ -247,7 +247,7 @@ function ksr_route_auth()
 		}
 	}
 
-	if (KSR.is_REGISTER() || KSR.is_myself(KSR.pv.get("$fu"))) {
+	if (KSR.is_REGISTER() || KSR.is_myself_furi()) {
 		// authenticate requests
 		if (KSR.auth_db.auth_check(KSR.pv.get("$fd"), "subscriber", 1)<0) {
 			KSR.auth.auth_challenge(KSR.pv.get("$fd"), 0);
