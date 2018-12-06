@@ -134,7 +134,7 @@ function ksr_route_reqinit()
 			KSR.x.exit();
 		end
 	end
-	if KSR.corex.has_user_agent() then
+	if KSR.corex.has_user_agent() > 0 then
 		local ua = KSR.pv.gete("$ua");
 		if string.find(ua, "friendly-scanner")
 				or string.find(ua, "sipcli") then
@@ -178,7 +178,7 @@ function ksr_route_withindlg()
 		elseif KSR.is_ACK() then
 			-- ACK is forwarded statelessly
 			ksr_route_natmanage();
-		elseif  KSR.is_NOTIFY() then
+		elseif KSR.is_NOTIFY() then
 			-- Add Record-Route for in-dialog NOTIFY as per RFC 6665.
 			KSR.rr.record_route();
 		end
