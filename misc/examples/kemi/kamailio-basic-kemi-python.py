@@ -276,8 +276,7 @@ class kamailio:
 
         # if caller is not local subscriber, then check if it calls
         # a local destination, otherwise deny, not an open relay here
-        if (not KSR.is_myself_furi())
-                and (not KSR.is_myself_ruri()) :
+        if (not KSR.is_myself_furi()) and (not KSR.is_myself_ruri()) :
             KSR.sl.sl_send_reply(403,"Not relaying");
             return -255;
 
