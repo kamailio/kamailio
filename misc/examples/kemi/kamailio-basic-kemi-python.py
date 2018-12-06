@@ -156,7 +156,7 @@ class kamailio:
                 KSR.pv.seti("$sht(ipban=>$si)", 1);
                 return -255;
 
-        if KSR.corex.has_user_agent() :
+        if KSR.corex.has_user_agent() > 0 :
             ua = KSR.pv.gete("$ua")
             if (ua.find("friendly-scanner")!=-1
                     or ua.find("sipcli")!=-1) :
