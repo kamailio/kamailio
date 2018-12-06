@@ -40,7 +40,7 @@ function ksr_request_route()
 	// -- only initial requests (no To tag)
 
 	// handle retransmissions
-	if (!KSR.is_ACK())) {
+	if (!KSR.is_ACK()) {
 		if (KSR.tmx.t_precheck_trans()>0) {
 			KSR.tm.t_check_trans();
 			return;
