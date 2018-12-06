@@ -24,6 +24,7 @@ Jan Janak
               2.5. mode (integer)
               2.6. url_skip (str)
               2.7. url_match (str)
+              2.8. event_callback (string)
 
         3. Functions
 
@@ -44,8 +45,9 @@ Jan Janak
    1.5. Set the mode parameter
    1.6. Set url_skip parameter
    1.7. Set url_match parameter
-   1.8. dispatch_rpc usage
-   1.9. xmlrpc_reply usage
+   1.8. Set event_callback parameter
+   1.9. dispatch_rpc usage
+   1.10. xmlrpc_reply usage
 
 1. Design Goals
 
@@ -536,6 +538,7 @@ Chapter 1. Admin Guide
         2.5. mode (integer)
         2.6. url_skip (str)
         2.7. url_match (str)
+        2.8. event_callback (string)
 
    3. Functions
 
@@ -560,6 +563,7 @@ Chapter 1. Admin Guide
    2.5. mode (integer)
    2.6. url_skip (str)
    2.7. url_match (str)
+   2.8. event_callback (string)
 
 2.1. route (string)
 
@@ -665,6 +669,38 @@ modparam("xmlrpc", "url_skip", "^/sip")
 modparam("xmlrpc", "url_match", "^/RPC2")
 ...
 
+2.8. event_callback (string)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   route blocks defined by route parameter for xmlrpc request.
+
+   This route will be called only for HTTP messages whose method is either
+   GET or POST. The message visible inside the route will be a HTTP
+   request converted to SIP (the uri will be fixed and a fake via will be
+   added).
+
+   The route should perform additional security checks to ensure the
+   client is authorized to execute management/RPC functions and then it
+   should call the dispatch_rpc().
+
+   Example 1.8. Set event_callback parameter
+...
+modparam("xmlrpc", "event_callback", "ksr_xmlrpc_event")
+...
+-- event callback function implemented in Lua
+function ksr_xmlrpc_event(evname)
+        KSR.info("===== xmlrpc triggered event: " .. evname .. "\n");
+        local rpc_method = KSR.pv.get("$rm") or ""
+        if ((rpc_method == "POST" or rpc_method == "GET")) then
+                if (KSR.xmlrpc.dispatch_rpc() < 0) then
+                        KSR.err("error while executing xmlrpc event")
+                end
+        end
+        return 1;
+end
+...
+
 3. Functions
 
    3.1. dispatch_rpc()
@@ -686,7 +722,7 @@ modparam("xmlrpc", "url_match", "^/RPC2")
    function with matching name. If such a function is found then
    dispatch_rpc() will pass control to the function to handle the request.
 
-   Example 1.8. dispatch_rpc usage
+   Example 1.9. dispatch_rpc usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...
@@ -702,7 +738,7 @@ route[XMLRPC]{
    This function can be called from the config script to directly generate
    an XML-RPC reply.
 
-   Example 1.9. xmlrpc_reply usage
+   Example 1.10. xmlrpc_reply usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...

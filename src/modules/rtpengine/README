@@ -652,11 +652,11 @@ modparam("rtpengine", "rtpengine_retr", 2)
 
 4.8. extra_id_pv (string)
 
-   The parameter sets the PV definition to use when the “b” parameter is
-   used on rtpengine_delete(), rtpengine_offer(), rtpengine_answer() or
-   rtpengine_manage() command.
+   The parameter sets the PV definition to use when the “via-branch”
+   parameter is used on rtpengine_delete(), rtpengine_offer(),
+   rtpengine_answer() or rtpengine_manage() command.
 
-   Default is empty, the “b” parameter may not be used then.
+   Default is empty, the “via-branch” parameter may not be used then.
 
    Example 1.8. Set extra_id_pv parameter
 ...
@@ -2028,6 +2028,19 @@ rtpengine_offer();
             used when recording calls to provide custom additional
             information. More details about this are found in the
             rtpengine README.
+          + codec-transcode=... - allows codecs to be added to the list of
+            offered codecs even if they were not present in the original
+            list of codecs. In this case, the transcoding engine will be
+            engaged. Only codecs that are supported for both decoding and
+            encoding can be added in this manner. More details about this
+            are found in the rtpengine README.
+          + codec-strip=... - strips given codec from sdp
+          + codec-offer=... - offer given codec from sdp.More details
+            about this are found in the rtpengine README.
+          + codec-mask=... - Similar to strip except that codecs listed
+            here will still be accepted and used for transcoding on the
+            offering side.Useful only in combination with codec-transcode.
+            all keyword can be used to mask all offered codecs
        Check also the documentation of RTPEngine, these flags are
        documented there as well: https://github.com/sipwise/rtpengine.
 
@@ -2064,6 +2077,14 @@ onreply_route[2]
         rtpengine_offer();
 ...
 }
+...
+if (has_body("application/sdp")) {
+                if (rtpengine_offer("codec-mask=all codec-transcode=PCMU codec-t
+ranscode=PCMA"))
+                                t_on_reply("1");
+}
+
+...
 
 5.3.  rtpengine_answer([flags])
 

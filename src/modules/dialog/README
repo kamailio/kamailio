@@ -28,6 +28,12 @@ Olle E. Johansson
 
    <oej@edvina.net>
 
+Edited by
+
+Surendra Tiwari
+
+   <surendratiwari3@gmail.com>
+
    Copyright © 2006 Voice Sistem SRL
 
    Copyright © 2011 Carsten Bock, http://www.ng-voice.com
@@ -145,14 +151,17 @@ Olle E. Johansson
 
               9.1. dlg.list
               9.2. dlg.list_ctx
-              9.3. dlg.dlg_list
-              9.4. dlg.dlg_list_ctx
-              9.5. dlg.terminate_dlg
-              9.6. dlg.end_dlg
-              9.7. dlg.profile_get_size
-              9.8. dlg.profile_list
-              9.9. dlg.bridge_dlg
-              9.10. dlg.stats_active
+              9.3. dlg.list_match
+              9.4. dlg.list_match_ctx
+              9.5. dlg.dlg_list
+              9.6. dlg.dlg_list_ctx
+              9.7. dlg.terminate_dlg
+              9.8. dlg.end_dlg
+              9.9. dlg.profile_get_size
+              9.10. dlg.profile_list
+              9.11. dlg.bridge_dlg
+              9.12. dlg.stats_active
+              9.13. dlg.is_alive
 
         10. Exported Variables
 
@@ -375,14 +384,17 @@ Chapter 1. Admin Guide
 
         9.1. dlg.list
         9.2. dlg.list_ctx
-        9.3. dlg.dlg_list
-        9.4. dlg.dlg_list_ctx
-        9.5. dlg.terminate_dlg
-        9.6. dlg.end_dlg
-        9.7. dlg.profile_get_size
-        9.8. dlg.profile_list
-        9.9. dlg.bridge_dlg
-        9.10. dlg.stats_active
+        9.3. dlg.list_match
+        9.4. dlg.list_match_ctx
+        9.5. dlg.dlg_list
+        9.6. dlg.dlg_list_ctx
+        9.7. dlg.terminate_dlg
+        9.8. dlg.end_dlg
+        9.9. dlg.profile_get_size
+        9.10. dlg.profile_list
+        9.11. dlg.bridge_dlg
+        9.12. dlg.stats_active
+        9.13. dlg.is_alive
 
    10. Exported Variables
 
@@ -1866,14 +1878,17 @@ if(has_totag()) {
 
    9.1. dlg.list
    9.2. dlg.list_ctx
-   9.3. dlg.dlg_list
-   9.4. dlg.dlg_list_ctx
-   9.5. dlg.terminate_dlg
-   9.6. dlg.end_dlg
-   9.7. dlg.profile_get_size
-   9.8. dlg.profile_list
-   9.9. dlg.bridge_dlg
-   9.10. dlg.stats_active
+   9.3. dlg.list_match
+   9.4. dlg.list_match_ctx
+   9.5. dlg.dlg_list
+   9.6. dlg.dlg_list_ctx
+   9.7. dlg.terminate_dlg
+   9.8. dlg.end_dlg
+   9.9. dlg.profile_get_size
+   9.10. dlg.profile_list
+   9.11. dlg.bridge_dlg
+   9.12. dlg.stats_active
+   9.13. dlg.is_alive
 
 9.1. dlg.list
 
@@ -1898,7 +1913,45 @@ kamcmd dlg.list
 kamcmd dlg.list_ctx
 ...
 
-9.3. dlg.dlg_list
+9.3. dlg.list_match
+
+   Lists the details of matching dialogs. The paramters specify the
+   matching key, operator, value and optionally a limit of matched
+   dialogs.
+
+   Name: dlg.list_match
+
+   Parameters:
+     * mkey - matching key. It can be: 'ruri' - match against R-URI of the
+       dialog; 'furi' - match against From header URI of the dialog;
+       'turi' - match against the To header URI of the dialog; 'callid' -
+       match against Call-Id value.
+     * mop - matching operator. It can be: 'eq' - match using string
+       comparison; 're' - match using regular expression; 'sw' - match
+       using starts-with (prefix) comparison.
+     * mval - matching value.
+
+   RPC Command Format:
+...
+kamcmd dlg.list_match furi eq sip:alice@test.com 2
+...
+kamcmd dlg.list_match furi sw sip:alice@
+...
+
+9.4. dlg.list_match_ctx
+
+   Similar to “dlg.list_match”, but including in the attributes associated
+   with the dialog context from modules sitting on top of the dialog
+   module.
+
+   Name: dlg.list_match_ctx
+
+   RPC Command Format:
+...
+kamcmd dlg.list_match_ctx furi sw sip:alice@
+...
+
+9.5. dlg.dlg_list
 
    Lists the description of one dialog. The dialog identifiers are to be
    passed as parameter (callid and optionally fromtag).
@@ -1917,9 +1970,9 @@ kamcmd dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 kamcmd dlg.list abcdrssfrs122444@192.168.1.1
 ...
 
-9.4. dlg.dlg_list_ctx
+9.6. dlg.dlg_list_ctx
 
-   The same as the “dlg.list_ctx” but including in the dialog description
+   The same as the “dlg.list_list” but including in the dialog description
    the associated context from modules sitting on top of the dialog
    module.
 
@@ -1934,7 +1987,7 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
 ...
 
-9.5. dlg.terminate_dlg
+9.7. dlg.terminate_dlg
 
    Terminates an ongoing dialog by sending BYE in both directions,
    matching the dialog on call-id, from tag and to tag.
@@ -1951,7 +2004,7 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
    RPC Command Format:
                 kamcmd dlg.terminate_dlg callid12345 fromtag123 totag123
 
-9.6. dlg.end_dlg
+9.8. dlg.end_dlg
 
    Terminates an ongoing dialog by sending BYE in both directions.
 
@@ -1971,7 +2024,7 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
 kamcmd dlg.end_dlg 342 56
 ...
 
-9.7. dlg.profile_get_size
+9.9. dlg.profile_get_size
 
    Returns the number of dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -1991,7 +2044,7 @@ kamcmd dlg.end_dlg 342 56
 kamcmd dlg.dlg.profile_get_size inbound_calls
 ...
 
-9.8. dlg.profile_list
+9.10. dlg.profile_list
 
    Lists all the dialogs belonging to a profile. If the profile supports
    values, the check can be reinforced to take into account a specific
@@ -2011,7 +2064,7 @@ kamcmd dlg.dlg.profile_get_size inbound_calls
 kamcmd dlg.profile_list inbound_calls
 ...
 
-9.9. dlg.bridge_dlg
+9.11. dlg.bridge_dlg
 
    Bridge two SIP addresses into a call using INVITE(hold)-REFER-BYE
    mechanism.
@@ -2036,7 +2089,7 @@ kamcmd dlg.profile_list inbound_calls
 kamcmd dlg.bridge_dlg _from_ _to_ _op_
 ...
 
-9.10. dlg.stats_active
+9.12. dlg.stats_active
 
    Get stats about active dialogs by scanning internal list of dialogs
    (not relying on core stats framework).
@@ -2058,6 +2111,26 @@ kamcmd dlg.bridge_dlg _from_ _to_ _op_
    RPC Command Format:
 ...
 kamcmd dlg.stats_active
+...
+
+9.13. dlg.is_alive
+
+   Check whether a dialog matching the parameter is in confirmed state
+   (answered and alive).
+
+   Name: dlg.is_alive
+
+   Parameters:
+     * callid - callid of dialog
+     * from_tag - from tag of the dialog
+     * to_tag - to tag of the dialog
+
+   This command will return error if dialog is not found or not confirmed
+   state (answered).
+
+   RPC Command Format:
+...
+kamcmd dlg.is_alive callid123 fromtag123 totag123
 ...
 
 10. Exported Variables

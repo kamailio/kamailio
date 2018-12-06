@@ -52,8 +52,9 @@ Juha Heinanen
               4.9. t_is_request_route()
               4.10. t_suspend()
               4.11. t_continue(tindex, tlabel, rtname)
-              4.12. t_reuse_branch()
-              4.13. t_precheck_trans()
+              4.12. t_drop([rcode])
+              4.13. t_reuse_branch()
+              4.14. t_precheck_trans()
 
         5. Exported Variables
         6. Statistics
@@ -87,8 +88,9 @@ Juha Heinanen
    1.10. t_is_request_route usage
    1.11. t_suspend usage
    1.12. t_continue usage
-   1.13. t_reuse_branch usage
-   1.14. t_precheck_trans usage
+   1.13. t_drop usage
+   1.14. t_reuse_branch usage
+   1.15. t_precheck_trans usage
 
 Chapter 1. Admin Guide
 
@@ -117,8 +119,9 @@ Chapter 1. Admin Guide
         4.9. t_is_request_route()
         4.10. t_suspend()
         4.11. t_continue(tindex, tlabel, rtname)
-        4.12. t_reuse_branch()
-        4.13. t_precheck_trans()
+        4.12. t_drop([rcode])
+        4.13. t_reuse_branch()
+        4.14. t_precheck_trans()
 
    5. Exported Variables
    6. Statistics
@@ -191,8 +194,9 @@ modparam("tmx", "precheck_trans", 0)
    4.9. t_is_request_route()
    4.10. t_suspend()
    4.11. t_continue(tindex, tlabel, rtname)
-   4.12. t_reuse_branch()
-   4.13. t_precheck_trans()
+   4.12. t_drop([rcode])
+   4.13. t_reuse_branch()
+   4.14. t_precheck_trans()
 
 4.1.  t_cancel_branches(which)
 
@@ -407,7 +411,47 @@ route[MYROUTE] {
 }
 ...
 
-4.12.  t_reuse_branch()
+4.12.  t_drop([rcode])
+
+   Drops the transaction with response code (500 default).
+
+   Parameters:.
+     * rcode - response code to set in uas status.
+
+   This function can be used in ANY_ROUTE.
+
+   Example 1.13. t_drop usage
+...
+route[MYREQ]
+{
+...
+    if (!t_newtran()) {
+        xlog("L_ERROR", "$ci|log|failed to create transaction\n");
+        drop;
+    }
+
+    t_on_failure("TR_ERROR");
+    t_on_reply("TR_OK");
+    t_relay();
+}
+
+failure_route[TR_ERROR]
+{
+    xlog("L_INFO", "$ci|log|failed $T_reply_code $T_reply_reason\n");
+    t_drop();
+}
+
+onreply_route[TR_OK]
+{
+   xlog("L_INFO", "$ci|log|checking transaction result\n");
+   if(status=~"60[0-9]") {
+      t_drop();
+   }
+...
+}
+...
+
+4.13.  t_reuse_branch()
 
    Creates new "main" branch by making copy of branch-failure branch.
    Currently the following branch attributes are copied from
@@ -416,7 +460,7 @@ route[MYROUTE] {
 
    This function can be used from tm:branch-failure event_route.
 
-   Example 1.13. t_reuse_branch usage
+   Example 1.14. t_reuse_branch usage
 ...
 event_route [tm:branch-failure:contact] {
     t_reuse_branch();
@@ -426,7 +470,7 @@ event_route [tm:branch-failure:contact] {
 }
 ...
 
-4.13.  t_precheck_trans()
+4.14.  t_precheck_trans()
 
    Check if current processed message is handled by other process. This
    function is useful to catch retransmissions before transaction is
@@ -438,7 +482,7 @@ event_route [tm:branch-failure:contact] {
 
    This function can be used from REQUEST_ROUTE .
 
-   Example 1.14. t_precheck_trans usage
+   Example 1.15. t_precheck_trans usage
 ...
     # handle retransmissions
     if(t_precheck_trans()) {
