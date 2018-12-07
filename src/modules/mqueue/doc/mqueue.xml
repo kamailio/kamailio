@@ -35,10 +35,19 @@
 		<email>osas@voipembedded.com</email>
 		<affiliation><orgname>VoIP Embedded, Inc.</orgname></affiliation>
 	    </editor>
+	    <editor>
+		<firstname>Julien</firstname>
+		<surname>Chavanton</surname>
+		<email>jchavanton@gmail.com</email>
+	    </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2010</year>
 	    <holder>Elena-Ramona Modroiu (asipto.com)</holder>
+	</copyright>
+	<copyright>
+	    <year>2018</year>
+	    <holder>Julien chavanton, Flowroute</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>

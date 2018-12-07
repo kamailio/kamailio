@@ -245,6 +245,28 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 </programlisting>
 	    </example>
 	</section>
+	<section id="mqueue.r.fetch">
+		<title>mqueue.fetch</title>
+		<para>
+			Fetch a key-value pair from a memory queue.
+		</para>
+		<para>
+			Parameters:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<emphasis>name</emphasis> - the name of memory queue
+			</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>mqueue.fetch</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamcmd; mqueue.fetch xyz
+...
+</programlisting>
+	    </example>
+	</section>
     </section>
 
 </chapter>
