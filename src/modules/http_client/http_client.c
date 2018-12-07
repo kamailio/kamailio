@@ -120,8 +120,12 @@ static int fixup_free_http_query_post_hdr(void **param, int param_no);
 static int fixup_curl_connect(void **param, int param_no);
 static int fixup_free_curl_connect(void **param, int param_no);
 static int fixup_curl_connect_post(void **param, int param_no);
+static int fixup_curl_connect_post_raw(void **param, int param_no);
 static int fixup_free_curl_connect_post(void **param, int param_no);
+static int fixup_free_curl_connect_post_raw(void **param, int param_no);
 static int w_curl_connect_post(struct sip_msg *_m, char *_con, char *_url,
+		char *_result, char *_ctype, char *_data);
+static int w_curl_connect_post_raw(struct sip_msg *_m, char *_con, char *_url,
 		char *_result, char *_ctype, char *_data);
 
 static int fixup_curl_get_redirect(void **param, int param_no);
@@ -160,6 +164,9 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_connect", (cmd_function)w_curl_connect_post, 5, fixup_curl_connect_post,
 		fixup_free_curl_connect_post,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"http_connect_raw", (cmd_function)w_curl_connect_post_raw, 5, fixup_curl_connect_post_raw,
+		fixup_free_curl_connect_post_raw,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_get_redirect", (cmd_function)w_curl_get_redirect, 2, fixup_curl_get_redirect,
 		fixup_free_curl_get_redirect,
@@ -482,6 +489,37 @@ static int fixup_curl_connect_post(void **param, int param_no)
 	return -1;
 }
 
+/*
+ * Fix curl_connect params when posting (5 parameters): 
+ *	connection (string/pvar), url (string with pvars), content-type, 
+ *      data (string(with no pvar parsing), pvar)
+ */
+static int fixup_curl_connect_post_raw(void **param, int param_no)
+{
+
+	if(param_no == 1 || param_no == 3 || param_no == 4) {
+		/* We want char * strings */
+		return 0;
+	}
+	/* URL and data may contain pvar */
+	if(param_no == 2) {
+		return fixup_spve_null(param, 1);
+	}
+	if(param_no == 5) {
+		if(fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pseudo variable\n");
+			return -1;
+		}
+		if(((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeable\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
 
 /*
  * Free curl_connect params.
@@ -493,6 +531,27 @@ static int fixup_free_curl_connect_post(void **param, int param_no)
 		return 0;
 	}
 	if(param_no == 2 || param_no == 4) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	if(param_no == 5) {
+		return fixup_free_pvar_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/*
+ * Free curl_connect params.
+ */
+static int fixup_free_curl_connect_post_raw(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 3 || param_no == 4) {
+		/* Char strings don't need freeing */
+		return 0;
+	}
+	if(param_no == 2) {
 		return fixup_free_spve_null(param, 1);
 	}
 
@@ -643,6 +702,44 @@ static int ki_curl_connect_post(sip_msg_t *_m, str *con, str *url,
 	}
 
 	return ki_curl_connect_post_helper(_m, con, url, ctype, data, dst);
+}
+
+/*
+ * Wrapper for Curl_connect (POST) raw data (no pvar parsing inside the data)
+ */
+static int w_curl_connect_post_raw(struct sip_msg *_m, char *_con, char *_url,
+		char *_ctype, char *_data, char *_result)
+{
+	str con = {NULL, 0};
+	str url = {NULL, 0};
+	str ctype = {NULL, 0};
+	str data = {NULL, 0};
+	pv_spec_t *dst;
+
+	if(_con == NULL || _url == NULL || _ctype==NULL || _data == NULL
+			|| _result == NULL) {
+		LM_ERR("http_connect: Invalid parameters\n");
+		return -1;
+	}
+	con.s = _con;
+	con.len = strlen(con.s);
+
+	if(get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
+		LM_ERR("http_connect: URL has no value\n");
+		return -1;
+	}
+
+	ctype.s = _ctype;
+	ctype.len = strlen(ctype.s);
+
+	data.s = _data;
+	data.len = strlen(data.s);
+
+	LM_DBG("**** HTTP_CONNECT: Connection %s URL %s Result var %s\n", _con,
+			_url, _result);
+	dst = (pv_spec_t *)_result;
+
+	return ki_curl_connect_post_helper(_m, &con, &url, &ctype, &data, dst);
 }
 
 /*

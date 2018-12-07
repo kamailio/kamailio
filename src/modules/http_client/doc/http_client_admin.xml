@@ -646,7 +646,7 @@ http_follow_redirect = no
 					</para>
 					<para>
 						<emphasis>data</emphasis> - Data or a pseudo variable holding
-						data to be posted.
+						data to be posted. (may contain pseudo variable)
 					</para>
 					<para>
 						<emphasis>result</emphasis> - The name of a pseudo variable that
@@ -674,6 +674,67 @@ $var(res) = http_connect("apiserver", "/mailbox", "application/json", "{ ok, {20
 xlog("L_INFO", "API-server HTTP connection: $avp(gurka) Result code $var(res)\n");
 
 $var(res) = http_connect("apiserver", "/callroute", "application/json", "$var(jsondata)", "$avp(route)");
+xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.f.http_connect_raw">
+			<title>
+				<function moreinfo="none">http_connect_raw(connection, url, content_type, data, result)</function>
+			</title>
+			<para>
+				Sends HTTP POST request to a given connection.
+				Similar to http_connect.
+				The only difference is that the data parameter will not be parsed for pseudo variables,
+				therefore it can safely be used for content that may contain "$" character like JSON.
+			</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>connection</emphasis> - the name of an existing
+						HTTP connection, defined by a httpcon modparam.
+					</para>
+					<para>
+						<emphasis>url</emphasis> - the part of the URL to add to the
+						predefined URL in the connection definition.
+					</para>
+					<para>
+						<emphasis>content_type</emphasis> - Used only when posting
+						data with HTTP POST. An Internet Media type, like
+						"application/json" or "text/plain". Will be added to the
+						HTTP request as a header.
+					</para>
+					<para>
+						<emphasis>data</emphasis> - Data or a pseudo variable holding
+						data to be posted. (will not be parsed for pseudo variable)
+					</para>
+					<para>
+						<emphasis>result</emphasis> - The name of a pseudo variable that
+						will have the data of the response from the HTTP server.
+					</para>
+				</listitem>
+			</itemizedlist>
+			<para>
+			The return value is the HTTP return code (if >=100) or the
+			CURL error code if below 100. See the $curlerror pseudovariable
+			below for more information about CURL error codes.
+	    	        </para>
+			<para>
+			This function can be used from REQUEST_ROUTE,
+			ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
+			</para>
+			<example>
+				<title><function>http_connect_raw()</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
+...
+# POST Request
+$var(res) = http_connect_raw("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
+xlog("L_INFO", "API-server HTTP connection: $avp(gurka) Result code $var(res)\n");
+
+$var(res) = http_connect_war("apiserver", "/callroute", "application/json", "$var(jsondata)", "$avp(route)");
 xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n");
 ...
 				</programlisting>
