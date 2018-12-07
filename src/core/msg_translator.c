@@ -1835,10 +1835,10 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 			tmp.len = get_line(lb_t->s);
 			if(tmp.len!=b.len || strncmp(b.s, tmp.s, b.len)!=0)
 			{
-				LM_DBG("malformed bondary in the middle\n");
+				LM_DBG("malformed boundary in the middle\n");
 				memcpy(pb, b.s, b.len); body.len = body.len + b.len;
 				pb = pb + b.len;
-				t = lb_t->s.s - (lb_t->s.s + tmp.len);
+				t = lb_t->next->s.s - (lb_t->s.s + tmp.len);
 				memcpy(pb, lb_t->s.s+tmp.len, t); pb = pb + t;
 				/*LM_DBG("new chunk[%d][%.*s]\n", t, t, pb-t);*/
 			}
