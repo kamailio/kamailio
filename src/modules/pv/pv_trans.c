@@ -2051,28 +2051,28 @@ done:
 		} \
 	}
 
-#define _tr_parse_sparam(_p, _p0, _tp, _spec, _ps, _in, _s) \
+/**
+ * _m: 1 - the parameter value can be the TR_PARAM_MARKER; 0 - not allowed
+ */
+#define _tr_parse_sparamx(_p, _p0, _tp, _spec, _ps, _in, _s, _m) \
 	while(is_in_str(_p, _in) && (*_p==' ' || *_p=='\t' || *_p=='\n')) _p++; \
 	if(*_p==PV_MARKER) \
 	{ /* pseudo-variable */ \
 		_spec = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t)); \
-		if(_spec==NULL) \
-		{ \
+		if(_spec==NULL) { \
 			LM_ERR("no more private memory!\n"); \
 			goto error; \
 		} \
 		_s.s = _p; _s.len = _in->s + _in->len - _p; \
 		_p0 = pv_parse_spec(&_s, _spec); \
-		if(_p0==NULL) \
-		{ \
+		if(_p0==NULL) { \
 			LM_ERR("invalid spec in substr transformation: %.*s!\n", \
 					_in->len, _in->s); \
 			goto error; \
 		} \
 		_p = _p0; \
 		_tp = (tr_param_t*)pkg_malloc(sizeof(tr_param_t)); \
-		if(_tp==NULL) \
-		{ \
+		if(_tp==NULL) { \
 			LM_ERR("no more private memory!\n"); \
 			goto error; \
 		} \
@@ -2083,17 +2083,23 @@ done:
 		_ps = _p; \
 		while(is_in_str(_p, _in) && *_p!='\t' && *_p!='\n' \
 				&& *_p!=TR_PARAM_MARKER && *_p!=TR_RBRACKET) \
-		_p++; \
-		if(*_p=='\0') \
-		{ \
+			_p++; \
+		if(*_p=='\0') { \
 			LM_ERR("invalid param in transformation: %.*s!!\n", \
 					_in->len, _in->s); \
 			goto error; \
 		} \
+		if(_m && *_p==TR_PARAM_MARKER) { \
+			_p++; \
+			if(*_p=='\0') { \
+				LM_ERR("invalid param in transformation: %.*s!!!\n", \
+					_in->len, _in->s); \
+				goto error; \
+			} \
+		} \
 		_tp = (tr_param_t*)pkg_malloc(sizeof(tr_param_t)); \
-		if(_tp==NULL) \
-		{ \
-			LM_ERR("no more private memory!\n"); \
+		if(_tp==NULL) { \
+			LM_ERR("no more private memory!!\n"); \
 			goto error; \
 		} \
 		memset(_tp, 0, sizeof(tr_param_t)); \
@@ -2102,6 +2108,8 @@ done:
 		_tp->v.s.len = _p - _ps; \
 	}
 
+#define _tr_parse_sparam(_p, _p0, _tp, _spec, _ps, _in, _s) \
+	_tr_parse_sparamx(_p, _p0, _tp, _spec, _ps, _in, _s, 0)
 
 /*!
  * \brief Helper fuction to parse a string transformation
@@ -2758,13 +2766,11 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==5 && strncasecmp(name.s, "count", 5)==0) {
 		t->subtype = TR_PL_COUNT;
-		if(*p==TR_PARAM_MARKER)
-		{
+		if(*p==TR_PARAM_MARKER) {
 			start_pos = ++p;
-			_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+			_tr_parse_sparamx(p, p0, tp, spec, ps, in, s, 1);
 			t->params = tp;
-			if (tp->type != TR_PARAM_SPEC && p - start_pos != 1)
-			{
+			if (tp->type != TR_PARAM_SPEC && p - start_pos != 1) {
 				LM_ERR("invalid separator in transformation: "
 						"%.*s\n", in->len, in->s);
 				goto error;
@@ -2772,8 +2778,7 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 			tp = 0;
 
 			while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
-			if(*p!=TR_RBRACKET)
-			{
+			if(*p!=TR_RBRACKET) {
 				LM_ERR("invalid name transformation: %.*s!\n",
 						in->len, in->s);
 				goto error;
