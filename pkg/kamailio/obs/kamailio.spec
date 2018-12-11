@@ -19,6 +19,7 @@
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
+%bcond_without ruby
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
@@ -41,6 +42,7 @@
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
+%bcond_without ruby
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
@@ -63,6 +65,7 @@
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
+%bcond_without ruby
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
@@ -85,6 +88,7 @@
 %bcond_without perl
 %bcond_with rabbitmq
 %bcond_with redis
+%bcond_with ruby
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
@@ -108,6 +112,7 @@
 %bcond_without perl
 %bcond_without rabbitmq
 %bcond_without redis
+%bcond_without ruby
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
@@ -130,6 +135,7 @@
 %bcond_without perl
 %bcond_with rabbitmq
 %bcond_without redis
+%bcond_without ruby
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
@@ -152,6 +158,7 @@
 %bcond_with perl
 %bcond_with rabbitmq
 %bcond_with redis
+%bcond_with ruby
 %bcond_with sctp
 %bcond_with websocket
 %bcond_without xmlrpc
@@ -174,6 +181,7 @@
 %bcond_without perl
 %bcond_with rabbitmq
 %bcond_without redis
+%bcond_with ruby
 %bcond_with sctp
 %bcond_with websocket
 %bcond_without xmlrpc
@@ -225,7 +233,7 @@ Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
 Conflicts:  kamailio-python < %ver
 Conflicts:  kamailio-radius < %ver, kamailio-redis < %ver
-Conflicts:  kamailio-regex < %ver, kamailio-sctp < %ver
+Conflicts:  kamailio-regex < %ver, kamailio-ruby < %ver, kamailio-sctp < %ver
 Conflicts:  kamailio-sipdump < %ver
 Conflicts:  kamailio-snmpstats < %ver, kamailio-sqlang < %ver, kamailio-sqlite < %ver
 Conflicts:  kamailio-tls < %ver, kamailio-unixodbc < %ver
@@ -739,6 +747,18 @@ Requires:   kamailio = %ver
 SIP routing based on JSON specifications.
 
 
+%if %{with ruby}
+%package    ruby
+Summary:    Ruby extensions for Kamailio
+Group:      %{PKGGROUP}
+Requires:   kamailio = %ver
+BuildRequires:  ruby-devel
+
+%description    ruby
+Ruby extensions for Kamailio.
+%endif
+
+
 %if %{with sctp}
 %package    sctp
 Summary:    SCTP transport for Kamailio
@@ -1057,6 +1077,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with redis}
     kredis \
 %endif
+%if %{with ruby}
+    kruby \
+%endif
 %if %{with sctp}
     ksctp \
 %endif
@@ -1130,6 +1153,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kpostgres kpresence kpython kradius \
 %if %{with redis}
     kredis \
+%endif
+%if %{with ruby}
+    kruby \
 %endif
 %if %{with sctp}
     ksctp \
@@ -1913,6 +1939,14 @@ fi
 %endif
 
 
+%if %{with ruby}
+%files      ruby
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.app_ruby
+%{_libdir}/kamailio/modules/app_ruby.so
+%endif
+
+
 %if %{with sctp}
 %files      sctp
 %defattr(-,root,root)
@@ -2035,6 +2069,8 @@ fi
 
 
 %changelog
+* Tue Dec 11 2018 Sergey Safarov <s.safarov@gmail.com> 5.2.0-1
+  - Added Ruby package
 * Sun Nov 04 2018 Sergey Safarov <s.safarov@gmail.com> 5.2.0-0
   - removed packaging for Fedora 25, 26 as End Of Life
 * Sat Sep 02 2017 Sergey Safarov <s.safarov@gmail.com>
