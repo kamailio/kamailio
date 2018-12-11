@@ -56,6 +56,12 @@ sed -i -e '/libmongoc-dev/d' -e '/^Package: kamailio-mongodb-modules/,/^$/d' \
 sed -i -e 's/ mongodb[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mongodb/' ${DIST}/rules
 
+# no pkg-config for ruby-dev
+sed -i -e '/ruby-dev/d' -e '/^Package: kamailio-ruby-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ ruby[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ ruby/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
