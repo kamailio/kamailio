@@ -28,8 +28,9 @@ Build-Depends:
  liblua5.1-0-dev,
  libmaxminddb-dev,
  libmemcached-dev,
- libmono-2.0-dev,
  libmnl-dev,
+ libmongoc-dev,
+ libmono-2.0-dev,
  libncurses5-dev,
  libpcre3-dev,
  libperl-dev,
@@ -48,11 +49,11 @@ Build-Depends:
  libval-dev,
  libxml2-dev,
  libxmlrpc-c3-dev,
- libmongoc-dev,
  openssl,
  pkg-config,
  python,
  python-dev,
+ ruby-dev,
  unixodbc-dev,
  uuid-dev,
  xsltproc,
@@ -277,6 +278,23 @@ Description: The app_python module for the Kamailio SIP server
  This package provides the app_python module, an extension allowing to
  execute embedded Python applications within the Kamailio SIP routing script.
 
+Package: kamailio-ruby-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: The app_ruby module for Kamailio Ruby support
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the app_ruby module, an extension allowing to
+ execute embedded Ruby applications within the Kamailio SIP routing script.
+
 Package: kamailio-redis-modules
 Architecture: linux-any
 Multi-Arch: same
@@ -347,8 +365,10 @@ Description: CPL module (CPL interpreter engine) for the Kamailio SIP server
 Package: kamailio-radius-modules
 Architecture: linux-any
 Multi-Arch: same
-Breaks: kamailio (<<5.1)
-Replaces: kamailio (<<5.1)
+Breaks:
+ kamailio (<<5.1),
+Replaces:
+ kamailio (<<5.1),
 Pre-Depends:
  ${misc:Pre-Depends},
 Depends:

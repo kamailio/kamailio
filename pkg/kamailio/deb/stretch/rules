@@ -36,7 +36,7 @@ EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy mi_xmlrpc dnssec
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils lua memcached \
 			   snmpstats carrierroute xmpp cpl redis python geoip geoip2 \
-			   sqlite json mono ims sctp java \
+			   sqlite json mono ruby ims sctp java \
 			   tls outbound websocket autheph kazoo cnxcc \
 			   erlang systemd phonenum mongodb rabbitmq
 
