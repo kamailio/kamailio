@@ -24,7 +24,15 @@ Ovidiu Sas
    VoIP Embedded, Inc.
    <osas@voipembedded.com>
 
+Edited by
+
+Julien Chavanton
+
+   <jchavanton@gmail.com>
+
    Copyright © 2010 Elena-Ramona Modroiu (asipto.com)
+
+   Copyright © 2018 Julien chavanton, Flowroute
      __________________________________________________________________
 
    Table of Contents
@@ -52,6 +60,7 @@ Ovidiu Sas
         6. RPC Commands
 
               6.1. mqueue.get_size
+              6.2. mqueue.fetch
 
    List of Examples
 
@@ -61,6 +70,7 @@ Ovidiu Sas
    1.4. mq_pv_free usage
    1.5. mq_size usage
    1.6. mqueue.get_size usage
+   1.7. mqueue.fetch usage
 
 Chapter 1. Admin Guide
 
@@ -87,6 +97,7 @@ Chapter 1. Admin Guide
    6. RPC Commands
 
         6.1. mqueue.get_size
+        6.2. mqueue.fetch
 
 1. Overview
 
@@ -212,6 +223,7 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 6. RPC Commands
 
    6.1. mqueue.get_size
+   6.2. mqueue.fetch
 
 6.1. mqueue.get_size
 
@@ -223,4 +235,16 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
    Example 1.6. mqueue.get_size usage
 ...
 kamcmd mqueue.get_size xyz
+...
+
+6.2. mqueue.fetch
+
+   Fetch a key-value pair from a memory queue.
+
+   Parameters:
+     * name - the name of memory queue
+
+   Example 1.7. mqueue.fetch usage
+...
+kamcmd mqueue.fetch xyz
 ...
