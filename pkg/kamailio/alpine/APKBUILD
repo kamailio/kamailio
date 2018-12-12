@@ -29,7 +29,7 @@ makedepends="bison db-dev flex freeradius-client-dev expat-dev lksctp-tools-dev 
 	libxml2-dev curl-dev unixodbc-dev confuse-dev ncurses-dev sqlite-dev
 	lua-dev openldap-dev openssl-dev net-snmp-dev libuuid libev-dev
 	jansson-dev json-c-dev libevent-dev linux-headers libmemcached-dev
-	rabbitmq-c-dev hiredis-dev libmaxminddb-dev libunistring-dev"
+	rabbitmq-c-dev hiredis-dev libmaxminddb-dev libunistring-dev ruby-dev"
 install="$pkgname.pre-install $pkgname.pre-upgrade"
 
 # secfixes:
@@ -162,6 +162,9 @@ _mod_list_perl="app_perl db_perlvdb"
 # - modules depending on python library
 _mod_list_python="app_python"
 
+# - modules depending on ruby library
+_mod_list_ruby="app_ruby"
+
 # - modules depending on rabbitmq
 _mod_list_rabbitmq="rabbitmq"
 
@@ -243,7 +246,7 @@ for _i in db postgres sqlite dbtext mysql \
 	ldap utils tls presence lua ims outbound debugger \
 	extras json websocket authephemeral \
 	uuid ev memcached redis geoip2 jansson sqlang sipdump \
-	jsdt http_async kazoo rabbitmq sctp radius perl python; do
+	jsdt http_async kazoo rabbitmq sctp radius perl python ruby; do
 
    subpackages="$subpackages $pkgname-$_i"
    eval "_modules=\"\$_modules \$_mod_list_$_i\""
@@ -531,6 +534,11 @@ perl() {
 python() {
 	_generic_pkg "Python extensions for Kamailio" \
 		"$_mod_list_python"
+}
+
+ruby() {
+	_generic_pkg "Ruby extensions for Kamailio" \
+		"$_mod_list_ruby"
 }
 
 sqlang() {
