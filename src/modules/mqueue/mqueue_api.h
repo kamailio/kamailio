@@ -35,7 +35,8 @@ int pv_get_mqv(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_get_mq_size(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
-
+str* get_mqk(str *name);
+str* get_mqv(str *name);
 int mq_head_defined(void);
 void mq_destroy(void);
 int mq_head_add(str *name, int msize);

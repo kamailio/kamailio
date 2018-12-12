@@ -310,8 +310,72 @@ static const char* mqueue_rpc_get_size_doc[2] = {
 	0
 };
 
+static void  mqueue_rpc_fetch(rpc_t* rpc, void* ctx)
+{
+	str mqueue_name;
+	int mqueue_sz = 0;
+	int ret = 0;
+	void *th;
+	str *key = NULL;
+	str *val = NULL;
+
+	if (rpc->scan(ctx, "S", &mqueue_name) < 1) {
+		rpc->fault(ctx, 500, "No queue name");
+		return;
+	}
+
+	if(mqueue_name.len <= 0 || mqueue_name.s == NULL) {
+		LM_ERR("bad mqueue name\n");
+		rpc->fault(ctx, 500, "Invalid queue name");
+		return;
+	}
+
+	mqueue_sz = _mq_get_csize(&mqueue_name);
+
+	if(mqueue_sz < 0) {
+		LM_ERR("no such mqueue\n");
+		rpc->fault(ctx, 500, "No such queue");
+		return;
+	}
+
+	ret = mq_head_fetch(&mqueue_name);
+	if(ret == -2) {
+		rpc->fault(ctx, 404, "Empty queue");
+		return;
+	} else if(ret <0) {
+		LM_ERR("mqueue fetch\n");
+		rpc->fault(ctx, 500, "Unexpected error (fetch)");
+		return;
+	}
+
+	key = get_mqk(&mqueue_name);
+	val = get_mqv(&mqueue_name);
+
+	if(!val || !key) {
+		rpc->fault(ctx, 500, "Unexpected error (result)");
+		return;
+	}
+
+	/* add entry node */
+	if(rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+
+	if (rpc->struct_add(th, "SS", "key", key, "val", val) < 0) {
+		rpc->fault(ctx, 500, "Server error appending (key/val)");
+		return;
+	}
+}
+
+static const char* mqueue_rpc_fetch_doc[2] = {
+	"Fetch an element from the queue.",
+	0
+};
+
 rpc_export_t mqueue_rpc[] = {
 	{"mqueue.get_size", mqueue_rpc_get_size, mqueue_rpc_get_size_doc, 0},
+	{"mqueue.fetch", mqueue_rpc_fetch, mqueue_rpc_fetch_doc, 0},
 	{0, 0, 0, 0}
 };
 
