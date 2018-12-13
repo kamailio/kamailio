@@ -7,18 +7,20 @@ include ../../Makefile.defs
 auto_gen=
 NAME=app_ruby.so
 
-RUBYVER=$(shell pkg-config --list-all | grep ruby-2 | tail -1 | cut -f 1 -d " ")
-ifeq ($(RUBYVER),)
-RUBYVER=ruby-2.3
-endif
+PKGLIBRUBY=1
+
 ifeq ($(CROSS_COMPILE),)
 	BUILDER = $(shell which pkg-config)
 ifneq ($(BUILDER),)
+	RUBYVER = $(shell $(BUILDER) --list-all | grep ruby | tail -1 | cut -f 1 -d " ")
+ifneq ($(RUBYVER),)
 	PKGLIBRUBY = $(shell $(BUILDER) --exists $(RUBYVER) > /dev/null 2>&1 ; echo $$? )
+endif
+endif
+endif
+
 ifneq ($(PKGLIBRUBY),0)
 	BUILDER =
-endif
-endif
 endif
 
 ifneq ($(BUILDER),)
