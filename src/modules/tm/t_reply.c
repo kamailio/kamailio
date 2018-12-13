@@ -477,7 +477,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 
 	if (lock) LOCK_REPLIES( trans );
 	if (trans->uas.status>=200) {
-		LM_ERR("can't generate %d reply when a final %d was sent out\n",
+		LM_INFO("can't generate %d reply when a final %d was sent out\n",
 				code, trans->uas.status);
 		goto error2;
 	}
