@@ -1245,10 +1245,60 @@ int app_ruby_kemi_export_libs(void)
 	return 1;
 }
 
+static const char* app_ruby_rpc_reload_doc[2] = {
+	"Reload javascript file",
+	0
+};
+
+
+static void app_ruby_rpc_reload(rpc_t* rpc, void* ctx)
+{
+	int v;
+	void *vh;
+
+	if(_sr_ruby_load_file.s == NULL && _sr_ruby_load_file.len<=0) {
+		LM_WARN("script file path not provided\n");
+		rpc->fault(ctx, 500, "No script file");
+		return;
+	}
+	if(_sr_ruby_reload_version == NULL) {
+		LM_WARN("reload not enabled\n");
+		rpc->fault(ctx, 500, "Reload not enabled");
+		return;
+	}
+
+	v = *_sr_ruby_reload_version;
+	LM_INFO("marking for reload ruby script file: %.*s (%d => %d)\n",
+				_sr_ruby_load_file.len, _sr_ruby_load_file.s,
+				_sr_ruby_local_version, v);
+	*_sr_ruby_reload_version += 1;
+
+	if (rpc->add(ctx, "{", &vh) < 0) {
+		rpc->fault(ctx, 500, "Server error");
+		return;
+	}
+	rpc->struct_add(vh, "dd",
+			"old", v,
+			"new", *_sr_ruby_reload_version);
+}
+
 /**
- * 
+ *
+ */
+rpc_export_t app_ruby_rpc_cmds[] = {
+	{"app_ruby.reload", app_ruby_rpc_reload,
+		app_ruby_rpc_reload_doc, 0},
+	{0, 0, 0, 0}
+};
+
+/**
+ *
  */
 int app_ruby_init_rpc(void)
 {
+	if (rpc_register_array(app_ruby_rpc_cmds)!=0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	return 0;
 }
