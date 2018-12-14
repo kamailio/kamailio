@@ -1268,10 +1268,10 @@ static void app_ruby_rpc_reload(rpc_t* rpc, void* ctx)
 	}
 
 	v = *_sr_ruby_reload_version;
-	LM_INFO("marking for reload ruby script file: %.*s (%d => %d)\n",
-				_sr_ruby_load_file.len, _sr_ruby_load_file.s,
-				_sr_ruby_local_version, v);
 	*_sr_ruby_reload_version += 1;
+	LM_INFO("marking for reload ruby script file: %.*s (%d / %d => %d)\n",
+				_sr_ruby_load_file.len, _sr_ruby_load_file.s,
+				_sr_ruby_local_version, v, *_sr_ruby_reload_version);
 
 	if (rpc->add(ctx, "{", &vh) < 0) {
 		rpc->fault(ctx, 500, "Server error");
