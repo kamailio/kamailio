@@ -234,10 +234,18 @@ static char *make_message(const char *fmt, va_list ap)
 	return NULL;	// shall not happened, but who knows ;)
 }
 
+#if PY_VERSION_HEX >= 0x03070000
+const char *get_class_name(PyObject *y)
+#else
 char *get_class_name(PyObject *y)
+#endif
 {
 	PyObject *p;
+#if PY_VERSION_HEX >= 0x03070000
+	const char *name;
+#else
 	char *name;
+#endif
 
 	p = PyObject_GetAttrString(y, "__name__");
 	if (p == NULL || p == Py_None)
@@ -253,10 +261,18 @@ char *get_class_name(PyObject *y)
 }
 
 
+#if PY_VERSION_HEX >= 0x03070000
+const char *get_instance_class_name(PyObject *y)
+#else
 char *get_instance_class_name(PyObject *y)
+#endif
 {
 	PyObject *p, *n;
+#if PY_VERSION_HEX >= 0x03070000
+	const char *name;
+#else
 	char *name;
+#endif
 
 	n = PyObject_GetAttrString(y, "__class__");
 	if (n == NULL || n == Py_None)

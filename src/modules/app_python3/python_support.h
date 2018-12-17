@@ -30,7 +30,12 @@ PyObject *format_exc_obj;
 void python_handle_exception(const char *, ...);
 
 PyObject *InitTracebackModule(void);
+#if PY_VERSION_HEX >= 0x03070000
+const char *get_class_name(PyObject *);
+const char *get_instance_class_name(PyObject *);
+#else
 char *get_class_name(PyObject *);
 char *get_instance_class_name(PyObject *);
+#endif
 
 #endif

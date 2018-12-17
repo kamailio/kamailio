@@ -177,7 +177,11 @@ static int child_init(int rank)
 		return 0;
 	}
 	_apy_process_rank = rank;
+#if PY_VERSION_HEX >= 0x03070000
+	PyOS_AfterFork_Child();
+#else
 	PyOS_AfterFork();
+#endif
 	if (cfg_child_init()) {
 		return -1;
 	}
@@ -431,7 +435,11 @@ int apy_init_script(int rank)
 {
 	PyObject *pFunc, *pArgs, *pValue, *pResult;
 	int rval = -1;
+#if PY_VERSION_HEX >= 0x03070000
+	const char *classname;
+#else
 	char *classname;
+#endif
 	PyGILState_STATE gstate;
 
 
