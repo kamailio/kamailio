@@ -638,7 +638,7 @@ static int ki_pcre_match_group(sip_msg_t* _msg, str* string, int num_pcre)
 static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
 {
 	str string, group;
-	unsigned int num_pcre;
+	unsigned int num_pcre = 0;
 
 	if (_s1 == NULL) {
 		LM_ERR("bad parameters\n");
