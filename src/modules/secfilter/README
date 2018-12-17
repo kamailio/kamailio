@@ -26,22 +26,25 @@ Jose Luis Verdeguer
 
         4. Functions
 
-              4.1. check_ip (string ip_addr)
-              4.2. check_ua (string useragent)
-              4.3. check_domain (string domain)
-              4.4. check_country (string countrycode)
-              4.5. check_user (string user)
-              4.6. check_dst (string destination)
-              4.7. check_sqli ()
+              4.1. secf_check_ip ()
+              4.2. secf_check_ua ()
+              4.3. secf_check_country (string)
+              4.4. secf_check_from_hdr ()
+              4.5. secf_check_to_hdr ()
+              4.6. secf_check_contact_hdr ()
+              4.7. secf_check_dst (string)
+              4.8. secf_check_sqli_hdr (string)
+              4.9. secf_check_sqli_all ()
 
         5. RPC commands
 
               5.1. secfilter.reload
               5.2. secfilter.print
-              5.3. secfilter.add_bl
-              5.4. secfilter.add_wl
+              5.3. secfilter.add_dst
+              5.4. secfilter.add_bl
+              5.5. secfilter.add_wl
 
-        6. Instalation
+        6. Installation
 
               6.1. Database setup
 
@@ -53,18 +56,21 @@ Jose Luis Verdeguer
    1.4. Set type_col parameter
    1.5. Set data_col parameter
    1.6. Set dst_exact_match parameter
-   1.7. check_ip usage
-   1.8. check_ua usage
-   1.9. check_domain usage
-   1.10. check_country usage
-   1.11. check_user usage
-   1.12. check_dst usage
-   1.13. check_sqli usage
-   1.14. secfilter.reload usage
-   1.15. secfilter.print usage
-   1.16. secfilter.add_bl usage
-   1.17. secfilter.add_wl usage
-   1.18. Example database content - secfilter table
+   1.7. secf_check_ip usage
+   1.8. secf_check_ua usage
+   1.9. secf_check_country usage
+   1.10. secf_check_from_hdr usage
+   1.11. secf_check_to_hdr usage
+   1.12. secf_check_contact_hdr usage
+   1.13. secf_check_dst usage
+   1.14. secf_check_sqli_hdr usage
+   1.15. secf_check_sqli_all usage
+   1.16. secfilter.reload usage
+   1.17. secfilter.print usage
+   1.18. secfilter.add_dst usage
+   1.19. secfilter.add_bl usage
+   1.20. secfilter.add_wl usage
+   1.21. Example database content - secfilter table
 
 Chapter 1. Admin Guide
 
@@ -87,22 +93,25 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. check_ip (string ip_addr)
-        4.2. check_ua (string useragent)
-        4.3. check_domain (string domain)
-        4.4. check_country (string countrycode)
-        4.5. check_user (string user)
-        4.6. check_dst (string destination)
-        4.7. check_sqli ()
+        4.1. secf_check_ip ()
+        4.2. secf_check_ua ()
+        4.3. secf_check_country (string)
+        4.4. secf_check_from_hdr ()
+        4.5. secf_check_to_hdr ()
+        4.6. secf_check_contact_hdr ()
+        4.7. secf_check_dst (string)
+        4.8. secf_check_sqli_hdr (string)
+        4.9. secf_check_sqli_all ()
 
    5. RPC commands
 
         5.1. secfilter.reload
         5.2. secfilter.print
-        5.3. secfilter.add_bl
-        5.4. secfilter.add_wl
+        5.3. secfilter.add_dst
+        5.4. secfilter.add_bl
+        5.5. secfilter.add_wl
 
-   6. Instalation
+   6. Installation
 
         6.1. Database setup
 
@@ -112,21 +121,23 @@ Chapter 1. Admin Guide
    over our communications. To achieve this, the following features are
    available:
 
-   - Blacklist to filter user agents, IP addresses, countries, domains and
+   - Blacklist to block user agents, IP addresses, countries, domains and
    users.
 
-   - Whitelist to filter user agents, IP addresses, countries, domains and
+   - Whitelist to allow user agents, IP addresses, countries, domains and
    users.
 
-   - Blacklist of destinations where calling is not allowed.
+   - Blacklist of destinations where the called number is not allowed.
 
    - SQL injection attacks prevention.
 
-   When a function is called it will be searched in the whitelist. If the
-   value is not found, it will be searched in the blacklist.
+   When a function is called, it will be searched in the whitelist. If the
+   value is not found, then the blacklist will be searched.
 
-   All data will be loaded to memory on start. There's a reload RPC
-   command to refresh data.
+   All data will be loaded into memory when the module is started. There
+   is an RPC reload command to update the data in database and memory. It
+   is also possible to add new data to the blacklist or whitelist using
+   other RPC commands.
 
 2. Dependencies
 
@@ -155,17 +166,19 @@ Chapter 1. Admin Guide
 
 3.1. db_url (string)
 
-   Database string connection.
+   Database URL.
+
+   Default value is ""
 
    Example 1.1. Set db_url parameter
                 ...
-                modparam("secfilter", "db_url", "mysql://user:pass@localhost/dat
-abase")
+                modparam("secfilter", "db_url", "mysql://user:pass@localhost/kam
+ailio")
                 ...
 
 3.2. table_name (string)
 
-   Table name where blacklisted and whitelisted values are stored.
+   Name of the table used to store the blacklisted and whitelisted values.
 
    Default value is secfilter
 
@@ -176,8 +189,12 @@ abase")
 
 3.3. action_col (string)
 
-   The column's name in the database storing the type of list
-   (0=blacklisted data, 1=whitelist data or 2=blacklisted destination).
+   Name of database column containing the type of list. The possible
+   values are:
+
+     * 0 = blacklisted data
+     * 1 = whitelisted data
+     * 2 = blacklisted destination number
 
    Default value is action
 
@@ -188,8 +205,15 @@ abase")
 
 3.4. type_col (string)
 
-   The column's name in the database storing the type of value to check
-   (0=user-agent, 1=country, 2=domain, 3=IP addres or 4=user).
+   Name of database column containing the type of values. The possible
+   values are:
+
+     * 0 = user-agent (if action=0 or action=1)
+     * 0 = destination number (if action=2)
+     * 1 = country
+     * 2 = domain
+     * 3 = IP address
+     * 4 = user
 
    Default value is type
 
@@ -200,8 +224,7 @@ abase")
 
 3.5. data_col (string)
 
-   The column's name in the database storing the blacklisted or
-   whitelisted value.
+   Name of database column containing blacklisted and whitelisted values.
 
    Default value is data
 
@@ -212,9 +235,11 @@ abase")
 
 3.6. dst_exact_match (integer)
 
-   If value is 1 the destination number must be equal to the database
-   value to block the message. If its value is 0 will be blocked all
-   messages which destination number contains any database values.
+   This value is used in the destinations blacklist and corresponds to the
+   numbers that we want to prevent calling. If the value is 1, the call
+   will appear as blacklisted if the destination is exactly the same. If
+   the value is 0, every destination whose number begins with a number
+   appearing on the destination blacklist will be rejected.
 
    Default value is 1
 
@@ -225,147 +250,259 @@ abase")
 
 4. Functions
 
-   4.1. check_ip (string ip_addr)
-   4.2. check_ua (string useragent)
-   4.3. check_domain (string domain)
-   4.4. check_country (string countrycode)
-   4.5. check_user (string user)
-   4.6. check_dst (string destination)
-   4.7. check_sqli ()
+   4.1. secf_check_ip ()
+   4.2. secf_check_ua ()
+   4.3. secf_check_country (string)
+   4.4. secf_check_from_hdr ()
+   4.5. secf_check_to_hdr ()
+   4.6. secf_check_contact_hdr ()
+   4.7. secf_check_dst (string)
+   4.8. secf_check_sqli_hdr (string)
+   4.9. secf_check_sqli_all ()
 
-4.1.  check_ip (string ip_addr)
+4.1.  secf_check_ip ()
 
-   Checks if the IP address is blacklisted.
-
-   Return values are:
-     * -1 (if the value is blacklisted)
-     * 1 (if the value not found)
-     * 2 (if the value is whitelisted)
-
-   Example 1.7. check_ip usage
-                ...
-                check_ip($si);
-                ...
-
-4.2.  check_ua (string useragent)
-
-   Checks if the User-agent is blacklisted. The search is approximate and
-   if we block the word sipcli as user agent, for example, those messages
-   whose user agent can be sipcli/1.6 or sipcli/1.8 will be blocked. This
-   is very useful to block different versions of the same program.
+   It checks if the source IP address is blacklisted. The search is
+   aproximate and data stored in the database will be compared as a
+   prefix. For example, if we have blacklisted IP address 192.168.1. all
+   messages from IPs like 192.168.1.% will be rejected.
 
    Return values are:
-     * -1 (if the value is blacklisted)
-     * 1 (if the value not found)
-     * 2 (if the value is whitelisted)
+     * 2 = the value is whitelisted
+     * 1 = the value is not found
+     * -2 = the value is blacklisted
 
-   Example 1.8. check_ua usage
+   Example 1.7. secf_check_ip usage
                 ...
-                check_ua($ua);
+        secf_check_ip();
+        if ($? == -2) {
+                xlog("L_ALERT", "$rm from $si blocked because IP address is blac
+klisted");
+                exit;
+        }
                 ...
 
-4.3.  check_domain (string domain)
+4.2.  secf_check_ua ()
 
-   Similar to check_ua. Checks if the domain is blacklisted.
+   It checks if the user-agent is blacklisted. The search is approximate
+   and the comparison will be made using the values of the database as a
+   prefix. If we add to the user-agent blacklist the word sipcli, every
+   message whose user-agent is named, for example, sipcli/1.6 or
+   sipcli/1.8 will be blocked. It is very useful to block different
+   versions of the same program.
 
    Return values are:
-     * -1 (if the value is blacklisted)
-     * 1 (if the value not found)
-     * 2 (if the value is whitelisted)
+     * 2 = the value is whitelisted
+     * 1 = the value is not found
+     * -1 = error
+     * -2 = the value is blacklisted
 
-   Example 1.9. check_domain usage
+   Example 1.8. secf_check_ua usage
                 ...
-                check_domain($fd);
+        secf_check_ua();
+        if ($? == -2) {
+                xlog("L_ALERT", "$rm from $si blocked because UserAgent '$ua' is
+ blacklisted");
+                exit;
+        }
                 ...
 
-4.4.  check_country (string countrycode)
+4.3.  secf_check_country (string)
 
-   Similar to check_ua. Checks if the country (IP address) is blacklisted.
-   Geoip module must be loaded.
+   Similar to secf_check_ua. It checks if the country (IP address) is
+   blacklisted. Geoip module must be loaded to get the country code.
 
    Return values are:
-     * -1 (if the value is blacklisted)
-     * 1 (if the value not found)
-     * 2 (if the value is whitelisted)
+     * 2 = the value is whitelisted
+     * 1 = the value is not found
+     * -1 = error
+     * -2 = the value is blacklisted
 
-   Example 1.10. check_country usage
+   Example 1.9. secf_check_country usage
                 ...
-                if (geoip_match("$si", "src")) {
-                        check_country($gip(src=>cc));
+        if (geoip_match("$si", "src")) {
+                secf_check_country($gip(src=>cc));
+                if ($avp(secfilter) == -2) {
+                        xlog("L_ALERT", "$rm from $si blocked because Country '$
+gip(src=>cc)' is blacklisted");
+                        exit;
                 }
+        }
                 ...
 
-4.5.  check_user (string user)
+4.4.  secf_check_from_hdr ()
 
-   Similar to check_ua. Checks if the origin user-from or user-to is
-   blacklisted.
+   It checks if any value of from header is blacklisted. It checks if from
+   name or from user are in the users blacklist or whitelist. It also
+   checks if the from domain is in the domains blacklist or whitelist. The
+   blacklisted value will be used as a prefix and if we block, for
+   example, the user sipvicious, all users whose name starts with this
+   word will be considered as blacklisted.
 
    Return values are:
-     * -1 (if the value is blacklisted)
-     * 1 (if the value not found)
-     * 2 (if the value is whitelisted)
+     * 4 = from name is whitelisted
+     * 3 = from domain is whitelisted
+     * 2 = from user is whitelisted
+     * 1 = from header not found
+     * -1 = error
+     * -2 = from user is blacklisted
+     * -3 = from domain is blacklisted
+     * -4 = from name is blacklisted
 
-   Example 1.11. check_user usage
+   Example 1.10. secf_check_from_hdr usage
                 ...
-                check_user($fU);
-                check_user($tU);
+        secf_check_from_hdr();
+        switch ($?) {
+                case -2:
+                        xlog("L_ALERT", "$rm to $si blocked because From user '$
+fU' is blacklisted");
+                        exit;
+                case -3:
+                        xlog("L_ALERT", "$rm to $si blocked because From domain
+'$fd' is blacklisted");
+                        exit;
+                case -4:
+                        xlog("L_ALERT", "$rm to $si blocked because From name '$
+fn' is blacklisted");
+                        exit;
+        };
                 ...
 
-4.6.  check_dst (string destination)
+4.5.  secf_check_to_hdr ()
 
-   Checks if the destination number is blacklisted for INVITE messages. If
-   param dst_exact_match value is yes the destination number must be equal
-   to the database value to block the message. If the param
-   dst_exact_match value is no will be blocked all messages which
-   destination number contains any database values.
+   Do the same as secf_check_from_hdr function but with the to header.
 
    Return values are:
-     * -1 (if the value is blacklisted)
-     * 1 (if the value not found)
-     * 2 (if the value is whitelisted)
+     * 4 = to name is whitelisted
+     * 3 = to domain is whitelisted
+     * 2 = to user is whitelisted
+     * 1 = to header not found
+     * -1 = error
+     * -2 = to user is blacklisted
+     * -3 = to domain is blacklisted
+     * -4 = to name is blacklisted
 
-   Example 1.12. check_dst usage
+   Example 1.11. secf_check_to_hdr usage
+                ...
+        secf_check_to_hdr();
+        switch ($?) {
+                case -2:
+                        xlog("L_ALERT", "$rm to $si blocked because To user '$tU
+' is blacklisted");
+                        exit;
+                case -3:
+                        xlog("L_ALERT", "$rm to $si blocked because To domain '$
+td' is blacklisted");
+                        exit;
+                case -4:
+                        xlog("L_ALERT", "$rm to $si blocked because To name '$tn
+' is blacklisted");
+                        exit;
+        };
+                ...
+
+4.6.  secf_check_contact_hdr ()
+
+   Do the same as secf_check_from_hdr function but with the contact
+   header.
+
+   Return values are:
+     * 3 = contact domain is whitelisted
+     * 2 = contact user is whitelisted
+     * 1 = contact header not found
+     * -1 = error
+     * -2 = contact user is blacklisted
+     * -3 = contact domain is blacklisted
+
+   Example 1.12. secf_check_contact_hdr usage
+                ...
+        secf_check_contact_hdr();
+        switch ($?) {
+                case -2:
+                        xlog("L_ALERT", "$rm to $si blocked because Contact user
+ '$ct' is blacklisted");
+                        exit;
+                case -3:
+                        xlog("L_ALERT", "$rm to $si blocked because Contact doma
+in '$ct' is blacklisted");
+                        exit;
+        };
+                ...
+
+4.7.  secf_check_dst (string)
+
+   It checks if the destination number is blacklisted. It must be user for
+   INVITE messages. If the value of dst_exact_match is 1, the call will
+   appear as blacklisted if the destination is exactly the same. If the
+   value is 0, every destination whose number begins with a number
+   appearing on the destination blacklist will be rejected.
+
+   Return values are:
+     * 2 (if the value is whitelisted)
+     * 1 (if the value not found)
+     * -2 (if the value is blacklisted)
+
+   Example 1.13. secf_check_dst usage
                 ...
                 if (is_method("INVITE")) {
-                        $avp(kam_sec) = check_dst($rU);
-                        if ($avp(kam_sec) == -1) {
+                        secf_check_dst($rU);
+                        if ($? == -2) {
                                 xlog("L_ALERT", "$rm from $si blocked because de
 stination $rU is blacklisted");
+                                send_reply("403", "Forbidden");
                                 exit;
                         }
                 }
                 ...
 
-4.7.  check_sqli ()
+4.8.  secf_check_sqli_hdr (string)
 
-   Search for illegal characters in some headers. If illegal characters
-   are found the message will be dropped.
+   Search for illegal characters in the given value.
 
-   Example 1.13. check_sqli usage
+   Example 1.14. secf_check_sqli_hdr usage
                 ...
-                check_sqli();
+        secf_check_sqli_hdr($ua);
+        if ($? == -1) {
+                xlog("L_ALERT", "$rm from $si blocked because possible SQLi foun
+d in the user-agent header ($ua)");
+                exit;
+        }
+
+                ...
+
+4.9.  secf_check_sqli_all ()
+
+   Search for illegal characters in several headers (user-agent, from, to
+   and contact). If illegal characters are found the message will be
+   dropped.
+
+   Example 1.15. secf_check_sqli_all usage
+                ...
+                secf_check_sqli_all();
                 ...
 
 5. RPC commands
 
    5.1. secfilter.reload
    5.2. secfilter.print
-   5.3. secfilter.add_bl
-   5.4. secfilter.add_wl
+   5.3. secfilter.add_dst
+   5.4. secfilter.add_bl
+   5.5. secfilter.add_wl
 
 5.1.  secfilter.reload
 
-   Reload all blacklist and whitelist values from database.
+   Reload all blacklisted and whitelisted values from database.
 
-   Example 1.14. secfilter.reload usage
+   Example 1.16. secfilter.reload usage
                 ...
                 kamcmd secfilter.reload
                 ...
 
 5.2.  secfilter.print
 
-   Print blacklist and whitelist values. Without parameters it will print
-   all values but if you use a type it ill print this values only.
+   Print blacklisted and whitelisted values. Without parameters it will
+   print all values. If you enter a type it will print this type values
+   only.
 
    Possible values are:
      * (none) (show all data)
@@ -376,7 +513,7 @@ stination $rU is blacklisted");
      * ip (show blacklisted and whitelisted IP addresses)
      * dst (show blacklisted destinations)
 
-   Example 1.15. secfilter.print usage
+   Example 1.17. secfilter.print usage
                 ...
                 kamcmd secfilter.print
                 kamcmd secfilter.print ua
@@ -384,52 +521,66 @@ stination $rU is blacklisted");
                 kamcmd secfilter.print dst
                 ...
 
-5.3.  secfilter.add_bl
+5.3.  secfilter.add_dst
 
-   Insert values into blacklist database.
+   Insert values into destination blacklist. These values will be checked
+   with the function secf_check_dst to verify if the destination number
+   can be called.
+
+   Parameters:
+     * number (number to add to the destination blacklist)
+
+   Example 1.18. secfilter.add_dst usage
+                ...
+                kamcmd secfilter.add_dst 555123123
+                ...
+
+5.4.  secfilter.add_bl
+
+   Insert values into blacklist.
 
    Parameters:
      * type (must be: ua, country, domain, user or ip)
-     * value (value to add to blacklist database)
+     * value (value to add to the blacklist)
 
-   Example 1.16. secfilter.add_bl usage
+   Example 1.19. secfilter.add_bl usage
                 ...
                 kamcmd secfilter.add_bl ua friendly-scanner
                 kamcmd secfilter.add_bl user sipvicious
                 ...
 
-5.4.  secfilter.add_wl
+5.5.  secfilter.add_wl
 
-   Insert values into whitelist database.
+   Insert values into whitelist.
 
    Parameters:
      * type (must be: ua, country, domain, user or ip)
-     * value (value to add to whitelist database)
+     * value (value to add to the whitelist)
 
-   Example 1.17. secfilter.add_wl usage
+   Example 1.20. secfilter.add_wl usage
                 ...
                 kamcmd secfilter.add_wl country es
                 kamcmd secfilter.add_wl user trusted_user
                 ...
 
-6. Instalation
+6. Installation
 
    6.1. Database setup
 
 6.1. Database setup
 
-   Before running Kamailio with the secfilter module, you have to setup
-   the database table where the module will read the blacklist data. For
-   that, if the table was not created by the installation script or you
-   choose to install everything by yourself you can use the
-   secfilter-create.sql SQL script in the database directories in the
-   kamailio/scripts folder as template. Database and table name can be set
-   with module parameters so they can be changed, but the name of the
-   columns must be as they are in the SQL script. You can also find the
-   complete database documentation on the project webpage,
+   Before running Kamailio with the secfilter module, it is necessary to
+   setup the database table where the module will read the blacklist data
+   from. In order to do that, if the table was not created by the
+   installation script or you choose to install everything by yourself you
+   can use the secfilter-create.sql SQL script in the database directories
+   in the kamailio/scripts folder as a template. Database and table name
+   can be set with module parameters so they can be changed, but the name
+   of the columns must match the ones in the SQL script. You can also find
+   the complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.18. Example database content - secfilter table
+   Example 1.21. Example database content - secfilter table
                 ...
                 +----+-----------+-----------+------------------+
                 | id | action    | type      | data             |
@@ -449,7 +600,7 @@ stination $rU is blacklisted");
                 ...
 
    Action values are:
-     * 0 (blacklistagent)
+     * 0 (blacklist)
      * 1 (whitelist)
      * 2 (destination)
 

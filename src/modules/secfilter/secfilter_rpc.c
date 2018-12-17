@@ -22,56 +22,138 @@
 
 #include <string.h>
 
+#include "../../core/mem/mem.h"
 #include "secfilter.h"
 
 
 /* RPC commands */
 
-/* Add blacklist values to database */
+
+static int get_type(char *ctype)
+{
+	int type;
+
+	if(!strcmp(ctype, "ua")) {
+		type = 0;
+	} else if(!strcmp(ctype, "country")) {
+		type = 1;
+	} else if(!strcmp(ctype, "domain")) {
+		type = 2;
+	} else if(!strcmp(ctype, "ip")) {
+		type = 3;
+	} else if(!strcmp(ctype, "user")) {
+		type = 4;
+	} else {
+		LM_ERR("Invalid type\n");
+		return -1;
+	}
+
+	return type;
+}
+
+
+/* Add blacklist destination value */
+void rpc_add_dst(rpc_t *rpc, void *ctx)
+{
+	int number;
+	str data;
+	int len;
+	char *value;
+	char text[STR_LEN];
+
+	if(rpc->scan(ctx, "d", &number) < 1) {
+		rpc->fault(ctx, 0, "Invalid Parameters. Usage: secfilter.add_dst "
+						   "number\n     Example: secfilter.add_dst "
+						   "555123123");
+	} else {
+		/* limit length string to STR_LEN */
+		value = pkg_malloc(STR_LEN * sizeof(char));
+		sprintf(text, "%d", number);
+		value = text;
+
+		len = strlen(value);
+		if(len > STR_LEN)
+			len = STR_LEN;
+
+		memcpy(data.s, value, len);
+		data.len = len;
+
+		if (append_rule(2, 0, &data) == 0) {
+			rpc->rpl_printf(ctx,
+					"Values (%s) inserted into blacklist destinations",
+					data);
+		} else {
+			rpc->rpl_printf(ctx,
+					"Error insert values in the blacklist");
+		}
+
+		if(value)
+			pkg_free(value);
+	}
+}
+
+
+/* Add blacklist value */
 void rpc_add_bl(rpc_t *rpc, void *ctx)
 {
-	char *type;
+	char *ctype;
 	char *value;
+	str data;
+	int len, type;
 
-        if(rpc->scan(ctx, "ss", (char*)(&type), (char*)(&value))<2)
-        {
-	        rpc->fault(ctx, 0, "Invalid Parameters. Usage: secfilter.add_bl type value\n     Example: secfilter.add_bl user sipvicious");
-	}
-	else
-	{
-		if (insert_db(0, type, value) == 0)
-		{
-			load_data_from_db();
-			rpc->rpl_printf(ctx, "Values (%s, %s) inserted into blacklist table", type, value);
-		}
-		else
-		{
-			rpc->rpl_printf(ctx, "Error insert values in blacklist table");
+	if(rpc->scan(ctx, "ss", (char *)(&ctype), (char *)(&value)) < 2) {
+		rpc->fault(ctx, 0, "Invalid Parameters. Usage: secfilter.add_bl type "
+						   "value\n     Example: secfilter.add_bl user "
+						   "sipvicious");
+	} else {
+		/* limit length string to STR_LEN */
+		len = strlen(value);
+		if(len > STR_LEN)
+			len = STR_LEN;
+
+		memcpy(data.s, value, len);
+		data.len = len;
+
+		type = get_type(ctype);
+		if (append_rule(0, type, &data) == 0) {
+			rpc->rpl_printf(ctx,
+					"Values (%s, %s) inserted into blacklist", ctype,
+					data);
+		} else {
+			rpc->rpl_printf(ctx, "Error insert values in the blacklist");
 		}
 	}
 }
 
 
-/* Add whitelist values to database */
+/* Add whitelist value */
 void rpc_add_wl(rpc_t *rpc, void *ctx)
 {
-	char *type;
+	char *ctype;
 	char *value;
+	str data;
+	int len, type;
 
-        if(rpc->scan(ctx, "ss", (char*)(&type), (char*)(&value))<2)
-        {
-	        rpc->fault(ctx, 0, "Invalid Parameters. Usage: secfilter.add_wl type value\n     Example: secfilter.add_wl user trusted_user");
-	}
-	else
-	{
-		if (insert_db(1, type, value) == 0)
-		{
-			load_data_from_db();
-			rpc->rpl_printf(ctx, "Values (%s, %s) inserted into whitelist table", type, value);
-		}
-		else
-		{
-			rpc->rpl_printf(ctx, "Error insert values in whitelist table");
+	if(rpc->scan(ctx, "ss", (char *)(&ctype), (char *)(&value)) < 2) {
+		rpc->fault(ctx, 0, "Invalid Parameters. Usage: secfilter.add_wl type "
+						   "value\n     Example: secfilter.add_wl user "
+						   "trusted_user");
+	} else {
+		/* limit length string to STR_LEN */
+		len = strlen(value);
+		if(len > STR_LEN)
+			len = STR_LEN;
+
+		memcpy(data.s, value, len);
+		data.len = len;
+
+		type = get_type(ctype);
+		if (append_rule(1, type, &data) == 0) {
+			rpc->rpl_printf(ctx,
+					"Values (%s, %s) inserted into whitelist", type,
+					data);
+		} else {
+			rpc->rpl_printf(ctx, "Error insert values in the whitelist");
 		}
 	}
 }
@@ -80,8 +162,28 @@ void rpc_add_wl(rpc_t *rpc, void *ctx)
 /* Reload arrays */
 void rpc_reload(rpc_t *rpc, void *ctx)
 {
-	load_data_from_db();
-	rpc->rpl_printf(ctx, "Data reloaded");
+	free_data();
+
+	if(load_db() == -1) {
+		LM_ERR("Error loading data from database\n");
+		rpc->rpl_printf(ctx, "Error loading data from database");
+	}
+	else {
+		rpc->rpl_printf(ctx, "Data reloaded");
+	}
+}
+
+
+/* Print str_list data */
+static void rpc_print_data(rpc_t *rpc, void *ctx, struct str_list *list)
+{
+	int i = 1;
+
+	while(list) {
+		rpc->rpl_printf(ctx, "    %04d -> %.*s", i, list->s.len, list->s.s);
+		list = list->next;
+		i++;
+	}
 }
 
 
@@ -90,122 +192,82 @@ void rpc_print(rpc_t *rpc, void *ctx)
 {
 	char *param = NULL;
 	int showall = 0;
-	int i;
-	
-	if (rpc->scan(ctx, "s", (char*)(&param))<1)
+
+	if(rpc->scan(ctx, "s", (char *)(&param)) < 1)
 		showall = 1;
-		
-	if (!strcmp(param, "dst"))
-	{
+
+	if(!strcmp(param, "dst")) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "Destinations");
 		rpc->rpl_printf(ctx, "============");
 		rpc->rpl_printf(ctx, "[+] Blacklisted");
 		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nDst; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_dst_list[i]);
-		}
+		rpc_print_data(rpc, ctx, secf_data->bl.dst);
 	}
 
-	if (showall == 1 || !strcmp(param, "ua"))
-	{
+	if(showall == 1 || !strcmp(param, "ua")) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "User-agent");
 		rpc->rpl_printf(ctx, "==========");
 		rpc->rpl_printf(ctx, "[+] Blacklisted");
 		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nblUa; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_bl_ua_list[i]);
-		}
+		rpc_print_data(rpc, ctx, secf_data->bl.ua);
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "[+] Whitelisted");
 		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nwlUa; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_wl_ua_list[i]);
-		}
+		rpc_print_data(rpc, ctx, secf_data->wl.ua);
 	}
 
-	if (showall == 1 || !strcmp(param, "country"))
-	{
+	if(showall == 1 || !strcmp(param, "country")) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "Country");
 		rpc->rpl_printf(ctx, "=======");
 		rpc->rpl_printf(ctx, "[+] Blacklisted");
 		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nblCountry; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_bl_country_list[i]);
-		}
+		rpc_print_data(rpc, ctx, secf_data->bl.country);
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "[+] Whitelisted");
 		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nwlCountry; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_wl_country_list[i]);
-		}
+		rpc_print_data(rpc, ctx, secf_data->wl.country);
 	}
 
-	if (showall == 1 || !strcmp(param, "domain"))
-	{
+	if(showall == 1 || !strcmp(param, "domain")) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "Domain");
 		rpc->rpl_printf(ctx, "======");
 		rpc->rpl_printf(ctx, "[+] Blacklisted");
 		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nblDomain; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_bl_domain_list[i]);
-		}
+		rpc_print_data(rpc, ctx, secf_data->bl.domain);
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "[+] Whitelisted");
 		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nwlDomain; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_wl_domain_list[i]);
-		}
-	}
-	
-	if (showall == 1 || !strcmp(param, "user"))
-	{
-		rpc->rpl_printf(ctx, "");
-		rpc->rpl_printf(ctx, "User");
-		rpc->rpl_printf(ctx, "====");
-		rpc->rpl_printf(ctx, "[+] Blacklisted");
-		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nblUser; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_bl_user_list[i]);
-		}
-		rpc->rpl_printf(ctx, "");
-		rpc->rpl_printf(ctx, "[+] Whitelisted");
-		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nwlUser; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_wl_user_list[i]);
-		}
+		rpc_print_data(rpc, ctx, secf_data->wl.domain);
 	}
 
-	if (showall == 1 || !strcmp(param, "ip"))
-	{
+	if(showall == 1 || !strcmp(param, "ip")) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "IP Address");
 		rpc->rpl_printf(ctx, "==========");
 		rpc->rpl_printf(ctx, "[+] Blacklisted");
 		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nblIp; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_bl_ip_list[i]);
-		}
+		rpc_print_data(rpc, ctx, secf_data->bl.ip);
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "[+] Whitelisted");
 		rpc->rpl_printf(ctx, "    -----------");
-		for (i = 0; i < *sec_nwlIp; i++)
-		{
-			rpc->rpl_printf(ctx, "    %04d -> %s", (i+1), sec_wl_ip_list[i]);
-		}
+		rpc_print_data(rpc, ctx, secf_data->wl.ip);
+	}
+
+	if(showall == 1 || !strcmp(param, "user")) {
+		rpc->rpl_printf(ctx, "");
+		rpc->rpl_printf(ctx, "User");
+		rpc->rpl_printf(ctx, "====");
+		rpc->rpl_printf(ctx, "[+] Blacklisted");
+		rpc->rpl_printf(ctx, "    -----------");
+		rpc_print_data(rpc, ctx, secf_data->bl.user);
+		rpc->rpl_printf(ctx, "");
+		rpc->rpl_printf(ctx, "[+] Whitelisted");
+		rpc->rpl_printf(ctx, "    -----------");
+		rpc_print_data(rpc, ctx, secf_data->wl.user);
 	}
 
 	rpc->rpl_printf(ctx, "");

@@ -1,63 +1,59 @@
-#ifndef _SECURITY_H
-#define _SECURITY_H
+#ifndef _SECFILTER_H
+#define _SECFILTER_H
 
+#define STR_LEN 64
+
+#include "../../core/str_list.h"
 #include "../../core/sr_module.h"
 
 
-/* Blacklist variables */
-extern char *sec_bl_ua_list[1024];
-extern char *sec_bl_country_list[1024];
-extern char *sec_bl_domain_list[1024];
-extern char *sec_bl_user_list[1024];
-extern char *sec_bl_ip_list[1024];
-extern int *sec_nblUa;
-extern int *sec_nblCountry;
-extern int *sec_nblDomain;
-extern int *sec_nblUser;
-extern int *sec_nblIp;
+typedef struct _secf_info
+{
+	struct str_list *ua;
+	struct str_list *country;
+	struct str_list *domain;
+	struct str_list *user;
+	struct str_list *ip;
+	struct str_list *dst;
+} secf_info_t, *secf_info_p;
 
-/* Whitelist variables */
-extern char *sec_wl_ua_list[1024];
-extern char *sec_wl_country_list[1024];
-extern char *sec_wl_domain_list[1024];
-extern char *sec_wl_user_list[1024];
-extern char *sec_wl_ip_list[1024];
-extern int *sec_nwlUa;
-extern int *sec_nwlCountry;
-extern int *sec_nwlDomain;
-extern int *sec_nwlUser;
-extern int *sec_nwlIp;
+typedef struct _secf_data
+{
+	gen_lock_t lock;
+	secf_info_t wl; /* whitelist info */
+	secf_info_t wl_last;
+	secf_info_t bl; /* blacklist info */
+	secf_info_t bl_last;
+} secf_data_t, *secf_data_p;
 
-/* Destination blacklist variables */
-extern char *sec_dst_list[1024];
-extern int *sec_nDst;
+extern secf_data_p secf_data;
 
-/* Shared functions */
-int init_db(void);
-void uppercase(char *sPtr);
-int insert_db(int action, char *type, char *value);
+int append_rule(int action, int type, str *value);
+
+/* Get header values from message */
+int secf_get_ua(struct sip_msg *msg, str *ua);
+int secf_get_from(struct sip_msg *msg, str *name, str *user, str *domain);
+int secf_get_to(struct sip_msg *msg, str *name, str *user, str *domain);
+int secf_get_contact(struct sip_msg *msg, str *user, str *domain);
 
 /* Database functions */
-int check_version(void);
-void load_data_from_db(void);
-
-/* SQLi check functions */
-int check_sqli_ua(struct sip_msg *msg);
-int check_sqli_to(struct sip_msg *msg);
-int check_sqli_from(struct sip_msg *msg);
-int check_sqli_contact(struct sip_msg *msg);
+int init_db(void);
+int init_data(void);
+void free_data(void);
+int load_db(void);
 
 /* Extern variables */
-extern str sec_db_url;
-extern str sec_table_name;
-extern str sec_action_col;
-extern str sec_type_col;
-extern str sec_data_col;
-extern int sec_dst_exact_match;
+extern str secf_db_url;
+extern str secf_table_name;
+extern str secf_action_col;
+extern str secf_type_col;
+extern str secf_data_col;
+extern int secf_dst_exact_match;
 
 /* RPC commands */
 void rpc_reload(rpc_t *rpc, void *ctx);
 void rpc_print(rpc_t *rpc, void *ctx);
+void rpc_add_dst(rpc_t *rpc, void *ctx);
 void rpc_add_bl(rpc_t *rpc, void *ctx);
 void rpc_add_wl(rpc_t *rpc, void *ctx);
 

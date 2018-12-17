@@ -31,264 +31,150 @@
 #include "../../core/sr_module.h"
 #include "secfilter.h"
 
-
-int count_chars(char *val, char c);
-
-
-/* Count chars of a string */
-int count_chars(char *val, char c)
+/* get 'user-agent' header */
+int secf_get_ua(struct sip_msg *msg, str *ua)
 {
-    int cont = 0;
-    int i;
-    
-    for (i = 0; i < strlen(val); i++)
-    {     
-        if (val[i] == c) cont++;
-    }
+	ua->len = 0;
 
-    return cont;
+	if(msg == NULL)
+		return -2;
+	if(parse_headers(msg, HDR_USERAGENT_F, 0) != 0)
+		return 1;
+	if(msg->user_agent == NULL || msg->user_agent->body.s == NULL)
+		return 1;
+
+	ua->s = msg->user_agent->body.s;
+	ua->len = msg->user_agent->body.len;
+
+	return 0;
 }
 
 
-/* Search for illegal characters in User-agent header */
-int check_sqli_ua(struct sip_msg *msg)
+/* get 'from' header */
+int secf_get_from(struct sip_msg *msg, str *name, str *user, str *domain)
 {
-	char *val = NULL;
+	struct to_body *hdr;
+	struct sip_uri parsed_uri;
 
-	if (msg==NULL) return -1;
-	if (parse_headers(msg, HDR_USERAGENT_F, 0)!=0) return 1;
-	if (msg->user_agent==NULL || msg->user_agent->body.s==NULL) return 1;
+	name->len = 0;
+	user->len = 0;
+	domain->len = 0;
 
-	val = (char*)pkg_malloc(msg->user_agent->body.len+1);
-	if (val==NULL)
-	{
-		LM_ERR("Cannot allocate pkg memory\n");
+	if(msg == NULL)
 		return -1;
-	}
-	strncpy(val, msg->user_agent->body.s, msg->user_agent->body.len);
-	val[msg->user_agent->body.len] = '\0';
-	
-	if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
-	{
-		LM_ERR("User-agent header (%s) has illegal characters. Posible SQLi\n", val);
-		pkg_free(val);
-		return 0;
+	if(parse_from_header(msg) < 0)
+		return -1;
+	if(msg->from == NULL || msg->from->body.s == NULL)
+		return 1;
+
+	hdr = get_from(msg);
+	if(hdr->display.s != NULL) {
+		name->s = hdr->display.s;
+		name->len = hdr->display.len;
+
+		if(name->len > 1 && name->s[0] == '"'
+				&& name->s[name->len - 1] == '"') {
+			name->s = name->s + 1;
+			name->len = name->len - 2;
+		}
 	}
 
-	if (val) pkg_free(val);
-	return 1;
+	if(parse_uri(hdr->uri.s, hdr->uri.len, &parsed_uri) < 0)
+		return -1;
+
+	if(parsed_uri.user.s != NULL) {
+		user->s = parsed_uri.user.s;
+		user->len = parsed_uri.user.len;
+	}
+
+	if(parsed_uri.host.s != NULL) {
+		domain->s = parsed_uri.host.s;
+		domain->len = parsed_uri.host.len;
+	}
+
+	return 0;
 }
 
 
-/* Search for illegal characters in To header */
-int check_sqli_to(struct sip_msg *msg)
+/* get 'to' header */
+int secf_get_to(struct sip_msg *msg, str *name, str *user, str *domain)
 {
-	struct to_body *to;
+	struct to_body *hdr;
 	struct sip_uri parsed_uri;
-	char *val = NULL;
 
-	if (msg==NULL) return -1;
-	if(parse_to_header(msg) < 0) return -1;
-	if (msg->to==NULL || msg->to->body.s==NULL) return -1;
+	if(msg == NULL)
+		return -1;
+	if(parse_to_header(msg) < 0)
+		return -1;
+	if(msg->to == NULL || msg->to->body.s == NULL)
+		return 1;
 
-	to = get_to(msg);
-	if (to != NULL)
-	{
-		val = (char*)pkg_malloc(to->display.len+1);
-		if (val==NULL)
-		{
-			LM_ERR("Cannot allocate pkg memory\n");
-			return -1;
+	hdr = get_to(msg);
+	if(hdr->display.s != NULL) {
+		name->s = hdr->display.s;
+		name->len = hdr->display.len;
+
+		if(name->len > 1 && name->s[0] == '"'
+				&& name->s[name->len - 1] == '"') {
+			name->s = name->s + 1;
+			name->len = name->len - 2;
 		}
-		strncpy(val, to->display.s, to->display.len);
-		val[to->display.len] = '\0';
-
-		if (strstr(val, "'") || (strstr(val, "\"") && count_chars(val, '"') != 2) || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
-		{
-			LM_ERR("Possible SQLi detected in to name (%s)\n", val);
-			pkg_free(val);
-			return 0;
-		}
-
-	        if (parse_uri(to->uri.s, to->uri.len, &parsed_uri)==0)
-	        {
-			pkg_free(val);
-			val = (char*)pkg_malloc(parsed_uri.user.len+1);
-			if (val==NULL)
-			{
-				LM_ERR("Cannot allocate pkg memory\n");
-				return -1;
-			}
-			strncpy(val, parsed_uri.user.s, parsed_uri.user.len);
-			val[parsed_uri.user.len] = '\0';
-
-			if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
-			{
-				LM_ERR("Possible SQLi detected in to user (%s)\n", val);
-				pkg_free(val);
-				return 0;
-			}
-
-			pkg_free(val);
-			val = (char*)pkg_malloc(parsed_uri.host.len+1);
-			if (val==NULL)
-			{
-				LM_ERR("Cannot allocate pkg memory\n");
-				return -1;
-			}
-			strncpy(val, parsed_uri.host.s, parsed_uri.host.len);
-			val[parsed_uri.host.len] = '\0';
-
-			if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "+") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
-			{
-				LM_ERR("Possible SQLi detected in to domain (%s)\n", val);
-				pkg_free(val);
-				return 0;
-			}
-	        }
 	}
 
-	if (val) pkg_free(val);
-	return 1;
-}
+	if(parse_uri(hdr->uri.s, hdr->uri.len, &parsed_uri) < 0)
+		return -1;
 
-/* Search for illegal characters in From header */
-int check_sqli_from(struct sip_msg *msg)
-{
-	struct to_body *from;
-	struct sip_uri parsed_uri;
-	char *val = NULL;
-
-	if (msg==NULL) return -1;
-	if(parse_from_header(msg) < 0) return -1;
-	if (msg->from==NULL || msg->from->body.s==NULL) return -1;
-
-	from = get_from(msg);
-	if (from != NULL)
-	{
-		val = (char*)pkg_malloc(from->display.len+1);
-		if (val==NULL)
-		{
-			LM_ERR("Cannot allocate pkg memory\n");
-			return -1;
-		}
-		strncpy(val, from->display.s, from->display.len);
-		val[from->display.len] = '\0';
-
-		if (strstr(val, "'") || (strstr(val, "\"") && count_chars(val, '"') != 2) || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
-		{
-			LM_ERR("Possible SQLi detected in from name (%s)\n", val);
-			pkg_free(val);
-			return 0;
-		}
-
-	        if (parse_uri(from->uri.s, from->uri.len, &parsed_uri)==0)
-	        {
-			pkg_free(val);
-			val = (char*)pkg_malloc(parsed_uri.user.len+1);
-			if (val==NULL)
-			{
-				LM_ERR("Cannot allocate pkg memory\n");
-				return -1;
-			}
-			strncpy(val, parsed_uri.user.s, parsed_uri.user.len);
-			val[parsed_uri.user.len] = '\0';
-
-			if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
-			{
-				LM_ERR("Possible SQLi detected in from user (%s)\n", val);
-				pkg_free(val);
-				return 0;
-			}
-
-			pkg_free(val);
-			val = (char*)pkg_malloc(parsed_uri.host.len+1);
-			if (val==NULL)
-			{
-				LM_ERR("Cannot allocate pkg memory\n");
-				return -1;
-			}
-			strncpy(val, parsed_uri.host.s, parsed_uri.host.len);
-			val[parsed_uri.host.len] = '\0';
-
-			if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "+") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
-			{
-				LM_ERR("Possible SQLi detected in from domain (%s)\n", val);
-				pkg_free(val);
-				return 0;
-			}
-	        }
+	if(parsed_uri.user.s != NULL) {
+		user->s = parsed_uri.user.s;
+		user->len = parsed_uri.user.len;
 	}
 
-	if (val) pkg_free(val);
-	return 1;
+	if(parsed_uri.host.s != NULL) {
+		domain->s = parsed_uri.host.s;
+		domain->len = parsed_uri.host.len;
+	}
+
+	return 0;
 }
 
 
-/* Search for illegal characters in Contact header */
-int check_sqli_contact(struct sip_msg *msg)
+/* get 'contact' header */
+int secf_get_contact(struct sip_msg *msg, str *user, str *domain)
 {
 	str contact = {NULL, 0};
 	struct sip_uri parsed_uri;
-	char *val = NULL;
 
-	if (msg==NULL) return -1;
-	if (parse_headers(msg, HDR_CONTACT_F, 0)!=0) return -1;
-	if (msg->contact==NULL || msg->contact->body.s==NULL) return -1;
-
-	if (!msg->contact->parsed && (parse_contact(msg->contact) < 0))
-	{
-		LM_ERR("Error parsing contact header (%.*s)\n", msg->contact->body.len, msg->contact->body.s);
+	if(msg == NULL)
+		return -1;
+	if(msg->contact == NULL)
+		return 1;
+	if(!msg->contact->parsed && (parse_contact(msg->contact) < 0)) {
+		LM_ERR("Error parsing contact header (%.*s)\n", msg->contact->body.len,
+				msg->contact->body.s);
 		return -1;
 	}
-	
-	if (((contact_body_t*)msg->contact->parsed)->contacts && ((contact_body_t*)msg->contact->parsed)->contacts->uri.s != NULL && ((contact_body_t*)msg->contact->parsed)->contacts->uri.len > 0)
-	{
-		contact.s = ((contact_body_t*)msg->contact->parsed)->contacts->uri.s;
-		contact.len = ((contact_body_t*)msg->contact->parsed)->contacts->uri.len;
+	if(((contact_body_t *)msg->contact->parsed)->contacts
+			&& ((contact_body_t *)msg->contact->parsed)->contacts->uri.s != NULL
+			&& ((contact_body_t *)msg->contact->parsed)->contacts->uri.len
+					   > 0) {
+		contact.s = ((contact_body_t *)msg->contact->parsed)->contacts->uri.s;
+		contact.len =
+				((contact_body_t *)msg->contact->parsed)->contacts->uri.len;
 	}
-	if (contact.s != NULL)
-	{
-		if (parse_uri(contact.s, contact.len, &parsed_uri) < 0)
-		{
-			LM_ERR("Error parsing contact uri header (%.*s)\n", contact.len, contact.s);
-			return -1;
-		}
+	if(contact.s == NULL)
+		return 1;
 
-		val = (char*)pkg_malloc(parsed_uri.user.len+1);
-		if (val==NULL)
-		{
-			LM_ERR("Cannot allocate pkg memory\n");
-			return -1;
-		}
-		strncpy(val, parsed_uri.user.s, parsed_uri.user.len);
-		val[parsed_uri.user.len] = '\0';
+	if(parse_uri(contact.s, contact.len, &parsed_uri) < 0) {
+		LM_ERR("Error parsing contact uri header (%.*s)\n", contact.len,
+				contact.s);
+		return -1;
+	}
 
-		if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
-		{
-			LM_ERR("Possible SQLi detected in contact user (%s)\n", val);
-			pkg_free(val);
-			return 0;
-		}
+	user->s = parsed_uri.user.s;
+	user->len = parsed_uri.user.len;
 
-		pkg_free(val);
-		val = (char*)pkg_malloc(parsed_uri.host.len+1);
-		if (val==NULL)
-		{
-			LM_ERR("Cannot allocate pkg memory\n");
-			return -1;
-		}
-		strncpy(val, parsed_uri.host.s, parsed_uri.host.len);
-		val[parsed_uri.host.len] = '\0';
+	domain->s = parsed_uri.host.s;
+	domain->len = parsed_uri.host.len;
 
-		if (strstr(val, "'") || strstr(val, "\"") || strstr(val, "--") || strstr(val, "=") || strstr(val, "#") || strstr(val, "+") || strstr(val, "%27") || strstr(val, "%24") || strstr(val, "%60"))
-		{
-			LM_ERR("Possible SQLi detected in contact domain (%s)\n", val);
-			pkg_free(val);
-			return 0;
-		}
-        }
-
-	if (val) pkg_free(val);
-	return 1;
+	return 0;
 }
