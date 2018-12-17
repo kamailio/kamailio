@@ -1,8 +1,6 @@
 #ifndef _SECFILTER_H
 #define _SECFILTER_H
 
-#define STR_LEN 64
-
 #include "../../core/str_list.h"
 #include "../../core/sr_module.h"
 
