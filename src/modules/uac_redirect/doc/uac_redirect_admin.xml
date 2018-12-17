@@ -144,7 +144,7 @@ modparam("uac_redirect","default_filter","deny")
 				</programlisting>
 			</example>
 		</section>
-		<sectionid="uac_redirect.p.deny_filter">
+		<section id="uac_redirect.p.deny_filter">
 			<title><varname>deny_filter</varname> (string)</title>
 			<para>
 			The regular expression for default deny filtering. It makes sense
@@ -176,7 +176,7 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
 				</programlisting>
 			</example>
 		</section>
-		<sectionid="uac_redirect.p.accept_filter">
+		<section id="uac_redirect.p.accept_filter">
 			<title><varname>accept_filter</varname> (string)</title>
 			<para>
 			The regular expression for default accept filtering. It makes sense
