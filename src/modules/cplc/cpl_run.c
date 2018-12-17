@@ -413,7 +413,7 @@ static inline char *run_remove_location( struct cpl_interpreter *intr )
 	unsigned short attr_name;
 	unsigned short n;
 	char *p;
-	str url;
+	str url = STR_NULL;
 	int i;
 
 	url.s = (char*)UNDEF_CHAR;
