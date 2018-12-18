@@ -796,31 +796,36 @@ void ws_keepalive(unsigned int ticks, void *param)
 	int check_time =
 			(int)time(NULL) - cfg_get(websocket, ws_cfg, keepalive_timeout);
 
-	ws_connection_t **list = NULL, **list_head = NULL;
+	ws_connection_id_t *list_head = NULL;
 	ws_connection_t *wsc = NULL;
+	int i = 0;
 
 	/* get an array of pointer to all ws connection */
-	list_head = wsconn_get_list();
+	list_head = wsconn_get_list_ids();
 	if(!list_head)
 		return;
 
-	list = list_head;
-	wsc = *list_head;
-	while(wsc && wsc->last_used < check_time) {
-		if(wsc->state == WS_S_CLOSING || wsc->awaiting_pong) {
-			LM_WARN("forcibly closing connection\n");
-			wsconn_close_now(wsc);
-		} else {
-			int opcode = (ws_keepalive_mechanism == KEEPALIVE_MECHANISM_PING)
+	while(list_head[i].id!=-1) {
+		wsc = wsconn_get(list_head[i].id);
+		if(wsc && wsc->last_used < check_time) {
+			if(wsc->state == WS_S_CLOSING || wsc->awaiting_pong) {
+				LM_WARN("forcibly closing connection\n");
+				wsconn_close_now(wsc);
+			} else {
+				int opcode = (ws_keepalive_mechanism == KEEPALIVE_MECHANISM_PING)
 								 ? OPCODE_PING
 								 : OPCODE_PONG;
-			ping_pong(wsc, opcode);
+				ping_pong(wsc, opcode);
+			}
 		}
+		if(wsc) {
+			wsconn_get(list_head[i].id);
+		}
+		i++;
 
-		wsc = *(++list);
 	}
 
-	wsconn_put_list(list_head);
+	wsconn_put_list_ids(list_head);
 }
 
 int ws_close(sip_msg_t *msg)
