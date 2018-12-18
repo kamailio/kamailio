@@ -63,6 +63,11 @@ typedef struct ws_connection
 	str frag_buf;
 } ws_connection_t;
 
+typedef struct ws_connection_id
+{
+	int id;
+} ws_connection_id_t;
+
 typedef struct
 {
 	ws_connection_t *head;
@@ -95,5 +100,8 @@ ws_connection_t *wsconn_get(int id);
 int wsconn_put(ws_connection_t *wsc);
 ws_connection_t **wsconn_get_list(void);
 int wsconn_put_list(ws_connection_t **list);
+ws_connection_id_t *wsconn_get_list_ids(void);
+int wsconn_put_list_ids(ws_connection_id_t *list);
+int wsconn_put_id(int id);
 void ws_rpc_dump(rpc_t *rpc, void *ctx);
 #endif /* _WS_CONN_H */
