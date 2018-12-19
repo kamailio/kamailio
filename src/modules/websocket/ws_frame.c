@@ -799,9 +799,10 @@ void ws_keepalive(unsigned int ticks, void *param)
 	ws_connection_id_t *list_head = NULL;
 	ws_connection_t *wsc = NULL;
 	int i = 0;
+	int idx = (int)(long)param;
 
 	/* get an array of pointer to all ws connection */
-	list_head = wsconn_get_list_ids();
+	list_head = wsconn_get_list_ids(idx);
 	if(!list_head)
 		return;
 
