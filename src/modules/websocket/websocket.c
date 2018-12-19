@@ -66,7 +66,7 @@ static int ws_keepalive_interval = DEFAULT_KEEPALIVE_INTERVAL;
 static int ws_keepalive_timeout = DEFAULT_KEEPALIVE_TIMEOUT;
 
 #define DEFAULT_KEEPALIVE_PROCESSES 1
-static int ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
+int ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
 
 int ws_verbose_list = 0;
 
@@ -284,7 +284,7 @@ static int child_init(int rank)
 			&& ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE) {
 		for(i = 0; i < ws_keepalive_processes; i++) {
 			if(fork_sync_timer(PROC_TIMER, "WEBSOCKET KEEPALIVE", 1,
-					   ws_keepalive, NULL, ws_keepalive_interval)
+					   ws_keepalive, (void*)(long)i, ws_keepalive_interval)
 					< 0) {
 				LM_ERR("starting keepalive process\n");
 				return -1;
