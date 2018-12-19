@@ -39,6 +39,7 @@
 
 extern int ws_verbose_list;
 extern str ws_event_callback;
+extern int ws_keepalive_processes;
 
 ws_connection_t **wsconn_id_hash = NULL;
 #define wsconn_listadd tcpconn_listadd
@@ -53,7 +54,7 @@ gen_lock_t *wsconn_lock = NULL;
 
 gen_lock_t *wsstat_lock = NULL;
 
-ws_connection_used_list_t *wsconn_used_list = NULL;
+ws_connection_list_t *wsconn_used_list = NULL;
 
 stat_var *ws_current_connections;
 stat_var *ws_max_concurrent_connections;
@@ -103,13 +104,13 @@ int wsconn_init(void)
 	memset((void *)wsconn_id_hash, 0,
 			TCP_ID_HASH_SIZE * sizeof(ws_connection_t *));
 
-	wsconn_used_list = (ws_connection_used_list_t *)shm_malloc(
-			sizeof(ws_connection_used_list_t));
+	wsconn_used_list = (ws_connection_list_t *)shm_malloc(
+			sizeof(ws_connection_list_t));
 	if(wsconn_used_list == NULL) {
 		LM_ERR("allocating WebSocket used list\n");
 		goto error;
 	}
-	memset((void *)wsconn_used_list, 0, sizeof(ws_connection_used_list_t));
+	memset((void *)wsconn_used_list, 0, sizeof(ws_connection_list_t));
 
 	return 0;
 
@@ -573,7 +574,7 @@ int wsconn_put_list(ws_connection_t **list_head)
 }
 
 
-ws_connection_id_t *wsconn_get_list_ids(void)
+ws_connection_id_t *wsconn_get_list_ids(int idx)
 {
 	ws_connection_id_t *list = NULL;
 	ws_connection_t *wsc = NULL;
@@ -589,10 +590,13 @@ ws_connection_id_t *wsconn_get_list_ids(void)
 	/* get the number of used connections */
 	wsc = wsconn_used_list->head;
 	while(wsc) {
-		if(ws_verbose_list)
-			LM_DBG("counter wsc [%p] prev => [%p] next => [%p]\n", wsc,
-					wsc->used_prev, wsc->used_next);
-		list_len++;
+		if(wsc->id % ws_keepalive_processes == idx) {
+			if(ws_verbose_list) {
+				LM_DBG("counter wsc [%p] prev => [%p] next => [%p] (%d/%d)\n",
+						wsc, wsc->used_prev, wsc->used_next, wsc->id, idx);
+			}
+			list_len++;
+		}
 		wsc = wsc->used_next;
 	}
 
@@ -615,11 +619,13 @@ ws_connection_id_t *wsconn_get_list_ids(void)
 			break;
 		}
 
-		list[i].id = wsc->id;
-		wsconn_ref(wsc);
-		if(ws_verbose_list)
-			LM_DBG("wsc [%p] id [%d] ref++\n", wsc, wsc->id);
-
+		if(wsc->id % ws_keepalive_processes == idx) {
+			list[i].id = wsc->id;
+			wsconn_ref(wsc);
+			if(ws_verbose_list) {
+				LM_DBG("wsc [%p] id [%d] (%d) - ref++\n", wsc, wsc->id, idx);
+			}
+		}
 		wsc = wsc->used_next;
 	}
 	list[i].id = -1; /* explicit -1 termination */
@@ -627,10 +633,11 @@ ws_connection_id_t *wsconn_get_list_ids(void)
 end:
 	WSCONN_UNLOCK;
 
-	if(ws_verbose_list)
+	if(ws_verbose_list) {
 		LM_DBG("wsconn get list id returns list [%p]"
-			   " with [%d] members\n",
-				list, (int)list_len);
+			   " with [%d] members (%d)\n",
+				list, (int)list_len, idx);
+	}
 
 	return list;
 }
