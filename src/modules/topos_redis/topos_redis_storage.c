@@ -654,7 +654,7 @@ int tps_redis_load_invite_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		sval.s = NULL;
 		switch(rrpl->element[i]->type) {
 			case REDIS_REPLY_STRING:
-				LM_DBG("r[%d]: s[%.*s]\n", i, rrpl->element[i]->len,
+				LM_DBG("r[%d]: s[%.*s]\n", i, (int)rrpl->element[i]->len,
 						rrpl->element[i]->str);
 				sval.s = rrpl->element[i]->str;
 				sval.len = rrpl->element[i]->len;
@@ -802,7 +802,7 @@ int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		sval.s = NULL;
 		switch(rrpl->element[i]->type) {
 			case REDIS_REPLY_STRING:
-				LM_DBG("r[%d]: s[%.*s]\n", i, rrpl->element[i]->len,
+				LM_DBG("r[%d]: s[%.*s]\n", i, (int)rrpl->element[i]->len,
 						rrpl->element[i]->str);
 				sval.s = rrpl->element[i]->str;
 				sval.len = rrpl->element[i]->len;
@@ -1005,7 +1005,7 @@ int tps_redis_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		sval.s = NULL;
 		switch(rrpl->element[i]->type) {
 			case REDIS_REPLY_STRING:
-				LM_DBG("r[%d]: s[%.*s]\n", i, rrpl->element[i]->len,
+				LM_DBG("r[%d]: s[%.*s]\n", i, (int)rrpl->element[i]->len,
 						rrpl->element[i]->str);
 				sval.s = rrpl->element[i]->str;
 				sval.len = rrpl->element[i]->len;
