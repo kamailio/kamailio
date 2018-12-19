@@ -40,6 +40,7 @@
 extern int ws_verbose_list;
 extern str ws_event_callback;
 extern int ws_keepalive_processes;
+extern int ws_rm_delay_interval;
 
 ws_connection_t **wsconn_id_hash = NULL;
 #define wsconn_listadd tcpconn_listadd
@@ -383,54 +384,56 @@ void wsconn_close_now(ws_connection_t *wsc)
 	con->timeout = get_ticks_raw();
 }
 
+void wsconn_detach_connection(ws_connection_t *wsc)
+{
+	/* Remove from the WebSocket used list */
+	if(wsconn_used_list->head == wsc)
+		wsconn_used_list->head = wsc->used_next;
+	if(wsconn_used_list->tail == wsc)
+		wsconn_used_list->tail = wsc->used_prev;
+	if(wsc->used_prev)
+		wsc->used_prev->used_next = wsc->used_next;
+	if(wsc->used_next)
+		wsc->used_next->used_prev = wsc->used_prev;
+
+	/* remove from wsconn_id_hash */
+	wsconn_listrm(wsconn_id_hash[wsc->id_hash], wsc, id_next, id_prev);
+
+	/* stat */
+	update_stat(ws_current_connections, -1);
+	if(wsc->sub_protocol == SUB_PROTOCOL_SIP)
+		update_stat(ws_sip_current_connections, -1);
+	else if(wsc->sub_protocol == SUB_PROTOCOL_MSRP)
+		update_stat(ws_msrp_current_connections, -1);
+}
+
 /* mode controls if lock needs to be aquired */
 int wsconn_put_mode(ws_connection_t *wsc, int mode)
 {
-	int destroy = 0;
+	if(!wsc)
+		return -1;
 
 	LM_DBG("wsconn_put start for [%p] refcnt [%d]\n", wsc,
 			atomic_get(&wsc->refcnt));
 
-	if(!wsc)
-		return -1;
-
 	if(mode) {
 		WSCONN_LOCK;
 	}
+	if(wsc->state == WS_S_REMOVING) {
+		goto done;
+	}
 	/* refcnt == 0*/
 	if(wsconn_unref(wsc)) {
-		/* Remove from the WebSocket used list */
-		if(wsconn_used_list->head == wsc)
-			wsconn_used_list->head = wsc->used_next;
-		if(wsconn_used_list->tail == wsc)
-			wsconn_used_list->tail = wsc->used_prev;
-		if(wsc->used_prev)
-			wsc->used_prev->used_next = wsc->used_next;
-		if(wsc->used_next)
-			wsc->used_next->used_prev = wsc->used_prev;
-
-		/* remove from wsconn_id_hash */
-		wsconn_listrm(wsconn_id_hash[wsc->id_hash], wsc, id_next, id_prev);
-
-		/* stat */
-		update_stat(ws_current_connections, -1);
-		if(wsc->sub_protocol == SUB_PROTOCOL_SIP)
-			update_stat(ws_sip_current_connections, -1);
-		else if(wsc->sub_protocol == SUB_PROTOCOL_MSRP)
-			update_stat(ws_msrp_current_connections, -1);
-
-		destroy = 1;
+		wsc->state = WS_S_REMOVING;
+		wsc->rmticks = get_ticks();
 	}
-	if(mode) {
-		WSCONN_UNLOCK;
-	}
-
 	LM_DBG("wsconn_put end for [%p] refcnt [%d]\n", wsc,
 			atomic_get(&wsc->refcnt));
 
-	/* wsc is removed from all lists and can be destroyed safely */
-	if(destroy)
-		wsconn_dtor(wsc);
+done:
+	if(mode) {
+		WSCONN_UNLOCK;
+	}
 
 	return 0;
 }
@@ -662,6 +665,39 @@ int wsconn_put_list_ids(ws_connection_id_t *list_head)
 	return 0;
 }
 
+void ws_timer(unsigned int ticks, void *param)
+{
+	ws_connection_list_t rmlist;
+	ws_connection_t *wsc;
+	ws_connection_t *next;
+	ticks_t nticks;
+	int h;
+
+	rmlist.head = NULL;
+	nticks = get_ticks();
+
+	WSCONN_LOCK;
+	for(h = 0; h < TCP_ID_HASH_SIZE; h++) {
+		wsc = wsconn_id_hash[h];
+		while(wsc) {
+			next = wsc->id_next;
+			if(wsc->state == WS_S_REMOVING
+					&& wsc->rmticks <= nticks - ws_rm_delay_interval) {
+				wsconn_detach_connection(wsc);
+				wsc->id_next = rmlist.head;
+				rmlist.head = wsc;
+			}
+			wsc = next;
+		}
+	}
+	WSCONN_UNLOCK;
+
+	for(wsc = rmlist.head; wsc; ) {
+		next = wsc->id_next;
+		wsconn_dtor(wsc);
+		wsc = next;
+	}
+}
 
 static int ws_rpc_add_node(
 		rpc_t *rpc, void *ctx, void *ih, ws_connection_t *wsc)

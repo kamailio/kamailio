@@ -60,6 +60,12 @@ static int ws_init_rpc(void);
 
 sl_api_t ws_slb;
 
+#define WS_DEFAULT_RM_DELAY_INTERVAL 5
+static int ws_rm_delay_interval = WS_DEFAULT_RM_DELAY_INTERVAL;
+
+#define DEFAULT_TIMER_INTERVAL 1
+static int ws_timer_interval = DEFAULT_TIMER_INTERVAL;
+
 #define DEFAULT_KEEPALIVE_INTERVAL 1
 static int ws_keepalive_interval = DEFAULT_KEEPALIVE_INTERVAL;
 
@@ -106,6 +112,9 @@ static param_export_t params[] = {
 	/* ws_mod.c */
 	{ "keepalive_interval",		INT_PARAM, &ws_keepalive_interval },
 	{ "keepalive_processes",	INT_PARAM, &ws_keepalive_processes },
+
+	{ "timer_interval",		INT_PARAM, &ws_timer_interval },
+	{ "rm_delay_interval",	INT_PARAM, &ws_rm_delay_interval },
 
 	{ "verbose_list",		PARAM_INT, &ws_verbose_list },
 	{ "event_callback",		PARAM_STR, &ws_event_callback},
@@ -227,6 +236,13 @@ static int mod_init(void)
 		/* Add extra process/timer for the keepalive process */
 		register_sync_timers(ws_keepalive_processes);
 	}
+	if(ws_timer_interval < 1 || ws_timer_interval > 60)
+		ws_timer_interval = DEFAULT_TIMER_INTERVAL;
+	/* timer routing to clean up inactive connections */
+	register_sync_timers(1);
+
+	if(ws_rm_delay_interval < 1 || ws_rm_delay_interval > 60)
+		ws_rm_delay_interval = WS_DEFAULT_RM_DELAY_INTERVAL;
 
 	if(ws_sub_protocols & SUB_PROTOCOL_MSRP
 			&& !sr_event_enabled(SREV_TCP_MSRP_FRAME))
@@ -280,16 +296,24 @@ static int child_init(int rank)
 	if(rank == PROC_INIT || rank == PROC_TCP_MAIN)
 		return 0;
 
-	if(rank == PROC_MAIN
-			&& ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE) {
-		for(i = 0; i < ws_keepalive_processes; i++) {
-			if(fork_sync_timer(PROC_TIMER, "WEBSOCKET KEEPALIVE", 1,
-					   ws_keepalive, (void*)(long)i, ws_keepalive_interval)
-					< 0) {
-				LM_ERR("starting keepalive process\n");
-				return -1;
+	if(rank == PROC_MAIN) {
+		if(ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE) {
+			for(i = 0; i < ws_keepalive_processes; i++) {
+				if(fork_sync_timer(PROC_TIMER, "WEBSOCKET KEEPALIVE", 1,
+						   ws_keepalive, (void*)(long)i, ws_keepalive_interval)
+						< 0) {
+					LM_ERR("starting keepalive process\n");
+					return -1;
+				}
 			}
 		}
+		if(fork_sync_timer(PROC_TIMER, "WEBSOCKET TIMER", 1,
+			   ws_timer, NULL, ws_timer_interval)
+					< 0) {
+				LM_ERR("starting timer process\n");
+				return -1;
+		}
+
 	}
 
 	return 0;
