@@ -233,7 +233,7 @@ static int __redis_select_db(redisContext *ctxt, int db)
 		if(!rpl)
 			LM_ERR("%s\n", ctxt->errstr);
 		else {
-			LM_ERR("%.*s\n", rpl->len, rpl->str);
+			LM_ERR("%.*s\n", (int)rpl->len, rpl->str);
 			freeReplyObject(rpl);
 		}
 		return -1;
@@ -254,7 +254,7 @@ static int __redis_exec(
 		if(!*rpl)
 			LM_ERR("%s\n", _data.redis->ctxt->errstr);
 		else {
-			LM_ERR("%.*s\n", (*rpl)->len, (*rpl)->str);
+			LM_ERR("%.*s\n", (int)(*rpl)->len, (*rpl)->str);
 			freeReplyObject(*rpl);
 		}
 
@@ -384,7 +384,7 @@ int redis_get_str(credit_data_t *credit_data, const char *instruction,
 	}
 
 	if(rpl->len <= 0) {
-		LM_ERR("RPL len is equal to %d\n", rpl->len);
+		LM_ERR("RPL len is equal to %d\n", (int)rpl->len);
 		goto done;
 	}
 
