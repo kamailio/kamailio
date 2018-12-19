@@ -141,40 +141,32 @@ int secf_get_to(struct sip_msg *msg, str *name, str *user, str *domain)
 /* get 'contact' header */
 int secf_get_contact(struct sip_msg *msg, str *user, str *domain)
 {
-	str contact = {NULL, 0};
-	struct sip_uri parsed_uri;
+	struct sip_uri uri;
+	contact_t *contact;
 
-	if(msg == NULL)
-		return -1;
-	if(msg->contact == NULL)
-		return 1;
-	if(!msg->contact->parsed && (parse_contact(msg->contact) < 0)) {
-		LM_ERR("Error parsing contact header (%.*s)\n", msg->contact->body.len,
-				msg->contact->body.s);
-		return -1;
-	}
-	if(((contact_body_t *)msg->contact->parsed)->contacts
-			&& ((contact_body_t *)msg->contact->parsed)->contacts->uri.s != NULL
-			&& ((contact_body_t *)msg->contact->parsed)->contacts->uri.len
-					   > 0) {
-		contact.s = ((contact_body_t *)msg->contact->parsed)->contacts->uri.s;
-		contact.len =
-				((contact_body_t *)msg->contact->parsed)->contacts->uri.len;
-	}
-	if(contact.s == NULL)
+	if((parse_headers(msg, HDR_CONTACT_F, 0) == -1) || !msg->contact)
 		return 1;
 
-	if(parse_uri(contact.s, contact.len, &parsed_uri) < 0) {
-		LM_ERR("Error parsing contact uri header (%.*s)\n", contact.len,
-				contact.s);
-		return -1;
+	if(!msg->contact->parsed && parse_contact(msg->contact) < 0) {
+		LM_ERR("cannot parse the Contact header\n");
+		return 1;
 	}
 
-	user->s = parsed_uri.user.s;
-	user->len = parsed_uri.user.len;
+	contact = ((contact_body_t *)msg->contact->parsed)->contacts;
+	if(!contact) {
+		return 1;
+	}
 
-	domain->s = parsed_uri.host.s;
-	domain->len = parsed_uri.host.len;
+	if(parse_uri(contact->uri.s, contact->uri.len, &uri) < 0) {
+		LM_ERR("cannot parse the Contact URI\n");
+		return 1;
+	}
+
+	user->s = uri.user.s;
+	user->len = uri.user.len;
+
+	domain->s = uri.host.s;
+	domain->len = uri.host.len;
 
 	return 0;
 }
