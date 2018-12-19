@@ -208,7 +208,7 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 		/* use the same as in request */
 		cseq = dlg->cseq[DLG_CALLEE_LEG];
 	}
-	if(cseq.s==NULL || cseq.len<=0) {
+	if ((leg==DLG_CALLER_LEG) && (cseq.s==NULL || cseq.len<=0)) {
 		LM_ERR("empty CSeq number\n");
 		goto error0;
 	}
