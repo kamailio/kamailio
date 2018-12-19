@@ -216,7 +216,8 @@ int append_rule(int action, int type, str *value)
 		LM_ERR("can't append new node\n");
 		return -1;
 	}
-	LM_DBG("new node[%p] str:'%.*s'[%d]\n", new, new->s.len, new->s.s, new->s.len);
+	LM_DBG("new node[%p] str:'%.*s'[%d]\n", new, new->s.len, new->s.s,
+			new->s.len);
 
 	*last_node = new;
 	if(!*ini_node) {
@@ -277,7 +278,8 @@ int load_db(void)
 		type = (int)RES_ROWS(db_res)[i].values[1].val.int_val;
 		str_data.s = (char *)RES_ROWS(db_res)[i].values[2].val.string_val;
 		str_data.len = strlen(str_data.s);
-		LM_DBG("[%d] append_rule for action:%d type:%d data:%.*s\n",i, action, type, str_data.len, str_data.s);
+		LM_DBG("[%d] append_rule for action:%d type:%d data:%.*s\n", i, action,
+				type, str_data.len, str_data.s);
 
 		if(append_rule(action, type, &str_data) < 0) {
 			LM_ERR("Can't append_rule with action:%d type:%d\n", action, type);

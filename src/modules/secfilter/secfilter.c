@@ -67,6 +67,7 @@ str secf_action_col = str_init("action");
 str secf_type_col = str_init("type");
 str secf_data_col = str_init("data");
 
+/* clang-format off */
 /* Exported commands */
 static cmd_export_t cmds[] = {
 		{"secf_check_ua", (cmd_function)w_check_ua, 0, 0, 0, ANY_ROUTE},
@@ -121,7 +122,7 @@ rpc_export_t secfilter_rpc[] = {
 		{"secfilter.add_dst", rpc_add_dst, rpc_add_dst_doc, 0},
 		{"secfilter.add_bl", rpc_add_bl, rpc_add_bl_doc, 0},
 		{"secfilter.add_wl", rpc_add_wl, rpc_add_wl_doc, 0}, {0, 0, 0, 0}};
-
+/* clang-format on */
 
 /***
 PREVENT SQL INJECTION
