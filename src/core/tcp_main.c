@@ -1132,7 +1132,7 @@ int tcpconn_read_haproxy(struct tcp_connection *c) {
 
 			/* Parse the source port */
 			port = strtoul(p, &end, 10);
-			if (port == ULONG_MAX || port == 0 || port >= (1 << 16)) {
+			if (port == UINT32_MAX || port == 0 || port >= (1 << 16)) {
 				return -1; /* invalid port number */
 			}
 			c->rcv.src_port = port;
@@ -1144,7 +1144,7 @@ int tcpconn_read_haproxy(struct tcp_connection *c) {
 
 			/* Parse the destination port */
 			port = strtoul(p, NULL, 10);
-			if (port == ULONG_MAX || port == 0 || port >= (1 << 16)) {
+			if (port == UINT32_MAX || port == 0 || port >= (1 << 16)) {
 				return -1; /* invalid port number */
 			}
 			c->rcv.dst_port = port;
