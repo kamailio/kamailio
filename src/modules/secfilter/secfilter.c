@@ -513,8 +513,6 @@ static int w_check_ip(struct sip_msg *msg)
 
 	if(msg == NULL)
 		return -1;
-	if(&msg->rcv.src_ip == NULL)
-		return -1;
 
 	ip.s = ip_addr2a(&msg->rcv.src_ip);
 	ip.len = strlen(ip.s);
