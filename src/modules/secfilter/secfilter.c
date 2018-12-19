@@ -664,6 +664,8 @@ static void mod_destroy(void)
 	free_data();
 	/* Destroy lock */
 	lock_destroy(&secf_data->lock);
+	shm_free(secf_data);
+	secf_data = NULL;
 }
 
 
