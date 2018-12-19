@@ -211,6 +211,7 @@ int append_rule(int action, int type, str *value)
 	new = shm_append_str_list(v, value->len, last_node, &total);
 	if(!new) {
 		LM_ERR("can't append new node\n");
+		shm_free(v);
 		return -1;
 	}
 	LM_DBG("new node[%p] str:'%.*s'[%d]\n", new, new->s.len, new->s.s,
