@@ -40,7 +40,7 @@ static str table_version_col = str_init("table_version");
 /* Check module version */
 int check_version(void)
 {
-	int version = 0;
+	int version = 0, res = 0;
 	db_key_t db_keys[1];
 	db_val_t db_vals[1];
 	db_key_t db_cols[1];
@@ -71,17 +71,15 @@ int check_version(void)
 			   db_handle, db_keys, NULL, db_vals, db_cols, 1, 1, NULL, &db_res)
 			< 0) {
 		LM_ERR("Failed to query database\n");
-		db_funcs.close(db_handle);
-		return -1;
+		res = -1;
+		goto done;
 	}
 
 	if(RES_ROW_N(db_res) == 0) {
 		LM_ERR("No version value found in database. It must be %d\n",
 				mod_version);
-		if(db_res != NULL && db_funcs.free_result(db_handle, db_res) < 0)
-			LM_DBG("Failed to free the result\n");
-		db_funcs.close(db_handle);
-		return -1;
+		res = -1;
+		goto done;
 	}
 
 	/* Get the version value */
@@ -90,17 +88,16 @@ int check_version(void)
 	if(version != mod_version) {
 		LM_ERR("Wrong version value. Correct version is %d but found %d\n",
 				mod_version, version);
-		if(db_res != NULL && db_funcs.free_result(db_handle, db_res) < 0)
-			LM_DBG("Failed to free the result\n");
-		db_funcs.close(db_handle);
-		return -1;
+		res = -1;
+		goto done;
 	}
 
+done:
 	if(db_res != NULL && db_funcs.free_result(db_handle, db_res) < 0)
 		LM_DBG("Failed to free the result\n");
 	db_funcs.close(db_handle);
 
-	return 0;
+	return res;
 }
 
 
