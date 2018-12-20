@@ -978,8 +978,11 @@ static struct name_lst* mk_name_lst_elem(char* name, int name_len, int flags)
 		l->name[name_len]=0;
 		l->flags=flags;
 		l->next=0;
+		return l;
+	} else {
+		PKG_MEM_ERROR;
+		return 0;
 	}
-	return l;
 }
 
 
