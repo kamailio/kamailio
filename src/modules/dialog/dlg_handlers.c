@@ -206,8 +206,7 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 		cseq = dlg->cseq[DLG_CALLEE_LEG];
 	}
 	if ((leg==DLG_CALLER_LEG) && (cseq.s==NULL || cseq.len<=0)) {
-		LM_ERR("empty CSeq number\n");
-		goto error0;
+		LM_DBG("empty CSeq number (leg: %d)\n", leg);
 	}
 
 	/* extract the contact address */
@@ -223,8 +222,7 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	}
 	contact = ((contact_body_t *)msg->contact->parsed)->contacts->uri;
 	if(contact.s==NULL || contact.len<=0) {
-		LM_ERR("empty contact uri\n");
-		goto error0;
+		LM_DBG("empty contact uri (leg: %d)\n", leg);
 	}
 
 	/* extract the record-route addresses */
