@@ -34,14 +34,18 @@
 /* get 'user-agent' header */
 int secf_get_ua(struct sip_msg *msg, str *ua)
 {
-	ua->len = 0;
-
-	if(msg == NULL)
-		return -2;
-	if(parse_headers(msg, HDR_USERAGENT_F, 0) != 0)
+	if(msg == NULL) {
+		LM_DBG("SIP msg is empty\n");
+		return -1;
+	}
+	if(parse_headers(msg, HDR_USERAGENT_F, 0) != 0) {
+		LM_DBG("cannot parse the User-agent header\n");
 		return 1;
-	if(msg->user_agent == NULL || msg->user_agent->body.s == NULL)
+	}
+	if(msg->user_agent == NULL || msg->user_agent->body.s == NULL) {
+		LM_DBG("cannot parse the User-agent header\n");
 		return 1;
+	}
 
 	ua->s = msg->user_agent->body.s;
 	ua->len = msg->user_agent->body.len;
@@ -54,18 +58,20 @@ int secf_get_ua(struct sip_msg *msg, str *ua)
 int secf_get_from(struct sip_msg *msg, str *name, str *user, str *domain)
 {
 	struct to_body *hdr;
-	struct sip_uri parsed_uri;
+	struct sip_uri uri;
 
-	name->len = 0;
-	user->len = 0;
-	domain->len = 0;
-
-	if(msg == NULL)
+	if(msg == NULL) {
+		LM_DBG("SIP msg is empty\n");
 		return -1;
-	if(parse_from_header(msg) < 0)
-		return -1;
-	if(msg->from == NULL || msg->from->body.s == NULL)
+	}
+	if(parse_from_header(msg) < 0) {
+		LM_DBG("cannot parse the From header\n");
 		return 1;
+	}
+	if(msg->from == NULL || msg->from->body.s == NULL) {
+		LM_DBG("cannot parse the From header\n");
+		return 1;
+	}
 
 	hdr = get_from(msg);
 	if(hdr->display.s != NULL) {
@@ -79,18 +85,24 @@ int secf_get_from(struct sip_msg *msg, str *name, str *user, str *domain)
 		}
 	}
 
-	if(parse_uri(hdr->uri.s, hdr->uri.len, &parsed_uri) < 0)
-		return -1;
-
-	if(parsed_uri.user.s != NULL) {
-		user->s = parsed_uri.user.s;
-		user->len = parsed_uri.user.len;
+	if(parse_uri(hdr->uri.s, hdr->uri.len, &uri) < 0) {
+		LM_DBG("cannot parse the From URI header\n");
+		return 1;
 	}
 
-	if(parsed_uri.host.s != NULL) {
-		domain->s = parsed_uri.host.s;
-		domain->len = parsed_uri.host.len;
+	if(uri.user.s == NULL) {
+		LM_DBG("cannot parse the From User\n");
+		return 1;
 	}
+	user->s = uri.user.s;
+	user->len = uri.user.len;
+
+	if(uri.host.s == NULL) {
+		LM_DBG("cannot parse the From Domain\n");
+		return 1;
+	}
+	domain->s = uri.host.s;
+	domain->len = uri.host.len;
 
 	return 0;
 }
@@ -100,14 +112,20 @@ int secf_get_from(struct sip_msg *msg, str *name, str *user, str *domain)
 int secf_get_to(struct sip_msg *msg, str *name, str *user, str *domain)
 {
 	struct to_body *hdr;
-	struct sip_uri parsed_uri;
+	struct sip_uri uri;
 
-	if(msg == NULL)
+	if(msg == NULL) {
+		LM_DBG("SIP msg is empty\n");
 		return -1;
-	if(parse_to_header(msg) < 0)
-		return -1;
-	if(msg->to == NULL || msg->to->body.s == NULL)
+	}
+	if(parse_to_header(msg) < 0) {
+		LM_DBG("cannot parse the To header\n");
 		return 1;
+	}
+	if(msg->to == NULL || msg->to->body.s == NULL) {
+		LM_DBG("cannot parse the To header\n");
+		return 1;
+	}
 
 	hdr = get_to(msg);
 	if(hdr->display.s != NULL) {
@@ -121,18 +139,24 @@ int secf_get_to(struct sip_msg *msg, str *name, str *user, str *domain)
 		}
 	}
 
-	if(parse_uri(hdr->uri.s, hdr->uri.len, &parsed_uri) < 0)
-		return -1;
-
-	if(parsed_uri.user.s != NULL) {
-		user->s = parsed_uri.user.s;
-		user->len = parsed_uri.user.len;
+	if(parse_uri(hdr->uri.s, hdr->uri.len, &uri) < 0) {
+		LM_DBG("cannot parse the To URI header\n");
+		return 1;
 	}
 
-	if(parsed_uri.host.s != NULL) {
-		domain->s = parsed_uri.host.s;
-		domain->len = parsed_uri.host.len;
+	if(uri.user.s == NULL) {
+		LM_DBG("cannot parse the To User\n");
+		return 1;
 	}
+	user->s = uri.user.s;
+	user->len = uri.user.len;
+
+	if(uri.host.s == NULL) {
+		LM_DBG("cannot parse the To Domain\n");
+		return 1;
+	}
+	domain->s = uri.host.s;
+	domain->len = uri.host.len;
 
 	return 0;
 }
@@ -144,27 +168,42 @@ int secf_get_contact(struct sip_msg *msg, str *user, str *domain)
 	struct sip_uri uri;
 	contact_t *contact;
 
-	if((parse_headers(msg, HDR_CONTACT_F, 0) == -1) || !msg->contact)
+	if(msg == NULL) {
+		LM_DBG("SIP msg is empty\n");
+		return -1;
+	}
+	if((parse_headers(msg, HDR_CONTACT_F, 0) == -1) || !msg->contact) {
+		LM_DBG("cannot get the Contact header from the SIP message\n");
 		return 1;
+	}
 
 	if(!msg->contact->parsed && parse_contact(msg->contact) < 0) {
-		LM_ERR("cannot parse the Contact header\n");
+		LM_DBG("cannot parse the Contact header\n");
 		return 1;
 	}
 
 	contact = ((contact_body_t *)msg->contact->parsed)->contacts;
 	if(!contact) {
+		LM_DBG("cannot parse the Contact header\n");
 		return 1;
 	}
 
 	if(parse_uri(contact->uri.s, contact->uri.len, &uri) < 0) {
-		LM_ERR("cannot parse the Contact URI\n");
+		LM_DBG("cannot parse the Contact URI\n");
 		return 1;
 	}
 
+	if(uri.user.s == NULL) {
+		LM_DBG("cannot parse the Contact User\n");
+		return 1;
+	}
 	user->s = uri.user.s;
 	user->len = uri.user.len;
 
+	if(uri.host.s == NULL) {
+		LM_DBG("cannot parse the Contact Domain\n");
+		return 1;
+	}
 	domain->s = uri.host.s;
 	domain->len = uri.host.len;
 
