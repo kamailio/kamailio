@@ -104,7 +104,7 @@ modparam("acc_json", "acc_missed_flag", 3)
 	</section>
 
 	<section id="acc_json.p.acc_extra">
-		<title><varname>acc_extra</varname> (integer)</title>
+		<title><varname>acc_extra</varname> (string)</title>
 		<para>
 		Extra values to be added to the json dictionary.
 		</para>
@@ -189,7 +189,10 @@ modparam("acc_json", "acc_time_format", "%Y/%m/%d %H:%M:%S")
                 Using a rtimer module exec you can access the queue and process them.
 		</para>
 		<para>
-		Default value is not-set mqueue will not be required
+                You can also fetch the acc events using mqueue.fetch over JSON-RPC.
+		</para>
+		<para>
+		Default value is not-set mqueue will not be required.
 		</para>
 		<example>
 		<title>output_mqueue usage example</title>
@@ -206,15 +209,19 @@ modparam("rtimer", "exec", "timer=nsqt;route=RUN_CDR_PUBLISH")
 modparam("http_client", "keep_connections", 1)
 modparam("http_client", "httpcon", "nsqd=>http://localhost:4151/pub?topic=acc")
 
-route[RUN_CDR_PUBLISH] {
+route[RUN_ACC_PUBLISH] {
    $var(count) = 0;
    while (mq_fetch("acc_events")) {
       $var(q_size) = mq_size("acc_events");
       $var(count) = $var(count) + 1;
-      xinfo("[RUN_CDR_PUBLISH][$var(q_size)][$var(count)][$mqk(acc_events)][$mqv(acc_events)]\n");
-      $var(res) = http_connect("nsqd", "", "application/json", $mqv(acc_events), "$var(nsq_res)");
-      if ($var(res) != "200") {
+      xinfo("[RUN_ACC_PUBLISH][$var(q_size)][$var(count)][$mqk(acc_events)][$mqv(acc_events)]\n");
+      $var(res) = http_connect_raw("nsqd", "", "application/json", $mqv(acc_events), "$var(nsq_res)");
+      if ($var(res) < 0) {
+         xerr("[RUN_ACC_PUBLISH][$var(res)] http_connect_raw: timeout or error !\n");
          mq_add("acc_events", "acc_key", "$mqv(acc_events)");
+      } else if ($var(res) < 200 || $var(res) > 299) {
+         xerr("[RUN_ACC_PUBLISH][$var(res)] http unexpected response code !\n");
+         mq_add("acc_dead_letter_queue", "acc_key", "$mqv(acc_events)");
          return;
       }
    }
