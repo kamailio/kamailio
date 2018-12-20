@@ -61,7 +61,7 @@ static int ws_init_rpc(void);
 sl_api_t ws_slb;
 
 #define WS_DEFAULT_RM_DELAY_INTERVAL 5
-static int ws_rm_delay_interval = WS_DEFAULT_RM_DELAY_INTERVAL;
+int ws_rm_delay_interval = WS_DEFAULT_RM_DELAY_INTERVAL;
 
 #define DEFAULT_TIMER_INTERVAL 1
 static int ws_timer_interval = DEFAULT_TIMER_INTERVAL;
