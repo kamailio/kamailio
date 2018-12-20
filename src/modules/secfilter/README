@@ -135,9 +135,9 @@ Chapter 1. Admin Guide
    value is not found, then the blacklist will be searched.
 
    All data will be loaded into memory when the module is started. There
-   is an RPC reload command to update the data in database and memory. It
-   is also possible to add new data to the blacklist or whitelist using
-   other RPC commands.
+   is an RPC reload command to update all the data from database. It is
+   also possible to add new data to the blacklist or whitelist using other
+   RPC commands.
 
 2. Dependencies
 
