@@ -34,7 +34,7 @@
 
 MODULE_VERSION
 
-secf_data_p secf_data;
+secf_data_p secf_data = NULL;
 
 /* Static and shared functions */
 static int mod_init(void);
@@ -658,6 +658,8 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	LM_DBG("SECFILTER module destroy\n");
+	if(!secf_data)
+		return;
 	/* Free shared data */
 	free_data();
 	/* Destroy lock */
