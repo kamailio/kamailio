@@ -372,7 +372,7 @@ int register_check_self_func(check_self_f f)
 	nf=(struct _check_self_func*)pkg_malloc(sizeof(struct _check_self_func));
 	if(nf==0)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	nf->fself = f;

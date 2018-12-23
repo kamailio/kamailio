@@ -42,12 +42,13 @@ int init_nonsip_hooks()
 	nonsip_hooks=pkg_malloc(nonsip_max_hooks*
 									sizeof(struct nonsip_hook));
 	if (nonsip_hooks==0){
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(nonsip_hooks, 0, nonsip_max_hooks*sizeof(struct nonsip_hook));
 	return 0;
 error:
-	LM_ERR("memory allocation failure\n");
+	PKG_MEM_ERROR;
 	return -1;
 }
 

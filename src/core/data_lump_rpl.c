@@ -56,7 +56,7 @@ struct lump_rpl** add_lump_rpl2(struct sip_msg *msg, char *s,
 	lump = (struct lump_rpl*) pkg_malloc
 		( sizeof(struct lump_rpl) + ((flags&LUMP_RPL_NODUP)?0:len) );
 	if (!lump) {
-		LM_ERR("no free pkg memory !\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 

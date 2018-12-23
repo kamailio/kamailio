@@ -160,7 +160,7 @@ char* as_asciiz(str* s)
 
     r = (char*)pkg_malloc(s->len + 1);
     if (!r) {
-		ERR("Out of memory\n");
+			PKG_MEM_ERROR;
 		return 0;
     }
     memcpy(r, s->s, s->len);
@@ -240,7 +240,7 @@ char* get_abs_pathname(str* base, str* file)
 		/* This is an absolute pathname, make a zero terminated
 		 * copy and use it as it is */
 		if ((res = pkg_malloc(file->len+1)) == NULL) {
-			ERR("get_abs_pathname: No memory left (pkg_malloc failed)\n");
+			PKG_MEM_ERROR;
 			return NULL;
 		}
 		memcpy(res, file->s, file->len);
@@ -251,7 +251,7 @@ char* get_abs_pathname(str* base, str* file)
 		 */
 		/* Make a copy, function dirname may modify the string */
 		if ((buf = pkg_malloc(base->len+1)) == NULL) {
-			ERR("get_abs_pathname: No memory left (pkg_malloc failed)\n");
+			PKG_MEM_ERROR;
 			return NULL;
 		}
 		memcpy(buf, base->s, base->len);
@@ -260,7 +260,7 @@ char* get_abs_pathname(str* base, str* file)
 
 		len = strlen(dir);
 		if ((res = pkg_malloc(len + 1 + file->len + 1)) == NULL) {
-			ERR("get_abs_pathname: No memory left (pkg_malloc failed)\n");
+			PKG_MEM_ERROR;
 			pkg_free(buf);
 			return NULL;
 		}

@@ -752,7 +752,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					len=strlen(a->val[0].u.string);
 					msg->new_uri.s=pkg_malloc(len+1);
 					if (msg->new_uri.s==0){
-						LM_ERR("memory allocation failure\n");
+						PKG_MEM_ERROR;
 						ret=E_OUT_OF_MEM;
 						goto error;
 					}
@@ -802,7 +802,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 
 				new_uri=pkg_malloc(MAX_URI_SIZE);
 				if (new_uri==0){
-					LM_ERR("memory allocation failure\n");
+					PKG_MEM_ERROR;
 					ret=E_OUT_OF_MEM;
 					goto error;
 				}

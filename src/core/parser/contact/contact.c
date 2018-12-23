@@ -187,7 +187,7 @@ int parse_contacts(str* _s, contact_t** _c)
 		/* Allocate and clear contact structure */
 		c = (contact_t*)pkg_malloc(sizeof(contact_t));
 		if (c == 0) {
-			LM_ERR("no memory left\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset(c, 0, sizeof(contact_t));

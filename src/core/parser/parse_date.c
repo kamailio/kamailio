@@ -174,7 +174,7 @@ int parse_date_header(struct sip_msg *msg)
 
 	date_b=pkg_malloc(sizeof(*date_b));
 	if (date_b==0){
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(date_b, 0, sizeof(*date_b));

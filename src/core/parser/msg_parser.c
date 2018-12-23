@@ -115,7 +115,7 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 			via_cnt++;
 			vb=pkg_malloc(sizeof(struct via_body));
 			if (vb==0){
-				ERR("out of memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memset(vb,0,sizeof(struct via_body));
@@ -134,7 +134,7 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 		case HDR_CSEQ_T:
 			cseq_b=pkg_malloc(sizeof(struct cseq_body));
 			if (cseq_b==0){
-				ERR("out of memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memset(cseq_b, 0, sizeof(struct cseq_body));
@@ -154,7 +154,7 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 		case HDR_TO_T:
 			to_b=pkg_malloc(sizeof(struct to_body));
 			if (to_b==0){
-				ERR("out of memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memset(to_b, 0, sizeof(struct to_body));
@@ -324,8 +324,8 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 		prefetch_loc_r(tmp+64, 1);
 		hf=pkg_malloc(sizeof(struct hdr_field));
 		if (unlikely(hf==0)){
+			PKG_MEM_ERROR;
 			ser_error=E_OUT_OF_MEM;
-			ERR("memory allocation error\n");
 			goto error;
 		}
 		memset(hf,0, sizeof(struct hdr_field));
@@ -751,7 +751,7 @@ int set_dst_uri(struct sip_msg* const msg, const str* const uri)
 	} else {
 		ptr = (char*)pkg_malloc(uri->len);
 		if (!ptr) {
-			ERR("Not enough memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 
@@ -790,7 +790,7 @@ int set_path_vector(struct sip_msg* msg, str* path)
 	} else {
 		ptr = (char*)pkg_malloc(path->len);
 		if (!ptr) {
-			ERR("not enough pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 
@@ -830,7 +830,7 @@ int set_instance(struct sip_msg* msg, str* instance)
 	} else {
 		ptr = (char*)pkg_malloc(instance->len);
 		if (!ptr) {
-			ERR("not enough pkg memory for instance\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(ptr, instance->s, instance->len);
@@ -869,7 +869,7 @@ int set_ruid(struct sip_msg* msg, str* ruid)
 	} else {
 		ptr = (char*)pkg_malloc(ruid->len);
 		if (!ptr) {
-			ERR("not enough pkg memory for ruid\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(ptr, ruid->s, ruid->len);
@@ -908,7 +908,7 @@ int set_ua(struct sip_msg* msg, str* location_ua)
 	} else {
 		ptr = (char*)pkg_malloc(location_ua->len);
 		if (!ptr) {
-			ERR("not enough pkg memory for location_ua\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(ptr, location_ua->s, location_ua->len);

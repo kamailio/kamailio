@@ -89,7 +89,7 @@ int init_avps(void)
 	def_glist = (avp_list_t*)shm_malloc(sizeof(avp_list_t));
 	crt_glist = (avp_list_t**)shm_malloc(sizeof(avp_list_t*));
 	if (!def_glist || !crt_glist) {
-		LM_ERR("No memory to allocate default global AVP list\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	*def_glist = 0;
@@ -174,7 +174,7 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 
 	avp = (struct usr_avp*)shm_malloc( len );
 	if (avp==0) {
-		LM_ERR("no more shm mem\n");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 
@@ -757,13 +757,13 @@ int add_avp_galias(str *alias, int type, int_str avp_name)
 
 	ga = (struct avp_galias*)pkg_malloc( sizeof(struct avp_galias) );
 	if (ga==0) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 
 	ga->alias.s = (char*)pkg_malloc( alias->len+1 );
 	if (ga->alias.s==0) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error1;
 	}
 	memcpy( ga->alias.s, alias->s, alias->len);
@@ -774,7 +774,7 @@ int add_avp_galias(str *alias, int type, int_str avp_name)
 	if (type&AVP_NAME_STR) {
 		ga->avp.name.s.s = (char*)pkg_malloc( avp_name.s.len+1 );
 		if (ga->avp.name.s.s==0) {
-			LM_ERR("no more pkg memory\n");
+			PKG_MEM_ERROR;
 			goto error2;
 		}
 		ga->avp.name.s.len = avp_name.s.len;
@@ -993,7 +993,7 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 		if ((name->len > 2) && (name->s[0]=='/') && (name->s[name->len-1]=='/')) {
 			attr->name.re=pkg_malloc(sizeof(regex_t));
 			if (!attr->name.re) {
-				BUG("No free memory to allocate AVP_NAME_RE regex\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			name->s[name->len-1]=0;

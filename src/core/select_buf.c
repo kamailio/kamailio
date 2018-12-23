@@ -69,8 +69,10 @@ static int allocate_buffer(int req_size) {
 	int size=ALLOC_SIZE(req_size);
 	
 	if (buffer[active_buffer].b == NULL) {
-		if ((buffer[active_buffer].b=pkg_malloc(size))==NULL)
+		if ((buffer[active_buffer].b=pkg_malloc(size))==NULL) {
+			PKG_MEM_ERROR;
 			return 0;
+		}
 		buffer[active_buffer].size=size;
 		buffer[active_buffer].offset=0;
 		return 1;

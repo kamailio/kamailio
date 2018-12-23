@@ -63,7 +63,7 @@ int movetomybuffer (char *pstart,
 	for (phashend = pcur; !isendofhash(phashend, pend); phashend++);
 
 	if (!(ib->hash.s=pkg_malloc(phashend-pstart))) {
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		return -2;
 	}
 	ib->ballocated=1;
@@ -154,7 +154,7 @@ int parse_identity_header(struct sip_msg *msg)
 
 	identity_b=pkg_malloc(sizeof(*identity_b));
 	if (identity_b==0){
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(identity_b, 0, sizeof(*identity_b));

@@ -287,6 +287,7 @@ static void print_token(cfg_token_t* token)
 			token->type, STR_FMT(&token->val),
 			token->start.line, token->start.col, 
 			token->end.line, token->end.col);
+			PKG_MEM_ERROR;
 	} else {
 		for(i = 0, j = 0; i < token->val.len; i++) {
 			switch(token->val.s[i]) {
@@ -599,7 +600,7 @@ static char* get_base_name(str* filename)
 	len = strlen(tmp2);
 
 	if ((res = pkg_malloc(len + 1)) == NULL) {
-		ERR("cfg_parser: No memory left");
+	        PKG_MEM_ERROR;
 		goto error;
 	}
 	memcpy(res, tmp2, len + 1);
@@ -644,7 +645,7 @@ cfg_parser_t* cfg_parser_init(str* basedir, str* filename)
 	if ((base = get_base_name(filename)) == NULL) goto error;
 
 	if ((st = (cfg_parser_t*)pkg_malloc(sizeof(*st))) == NULL) {
-		ERR("cfg_parser: No memory left\n");
+	        PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(st, '\0', sizeof(*st));
@@ -904,22 +905,19 @@ int cfg_parse_str(void* param, cfg_parser_t* st, unsigned int flags)
 		buf = val->s;
 	} else if (flags & CFG_STR_SHMMEM) {
 		if ((buf = shm_malloc(t.val.len + 1)) == NULL) {
-			ERR("%s:%d:%d: Out of shared memory\n", st->file,
-				t.start.line, t.start.col);
+		        SHM_MEM_ERROR;
 			return -1;
 		}
 		if (val->s) shm_free(val->s);
 	} else if (flags & CFG_STR_MALLOC) {
 		if ((buf = malloc(t.val.len + 1)) == NULL) {
-			ERR("%s:%d:%d: Out of malloc memory\n", st->file,
-				t.start.line, t.start.col);
+		        SYS_MEM_ERROR;
 			return -1;
 		}
 		if (val->s) free(val->s);
 	} else if (flags & CFG_STR_PKGMEM) {
 		if ((buf = pkg_malloc(t.val.len + 1)) == NULL) {
-			ERR("%s:%d:%d: Out of private memory\n", st->file,
-				t.start.line, t.start.col);
+		        PKG_MEM_ERROR;
 			return -1;
 		}
 		if (val->s) pkg_free(val->s);

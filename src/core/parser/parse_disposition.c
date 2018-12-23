@@ -287,7 +287,7 @@ int parse_disposition( str *s, struct disposition *disp)
 						new_p=(struct disposition_param*)pkg_malloc
 							(sizeof(struct disposition_param));
 						if (new_p==0) {
-							LM_ERR("no more pkg mem\n");
+							PKG_MEM_ERROR;
 							goto error;
 						}
 						memset(new_p,0,sizeof(struct disposition_param));
@@ -385,7 +385,7 @@ int parse_content_disposition( struct sip_msg *msg )
 	/* parse the body */
 	disp = (struct disposition*)pkg_malloc(sizeof(struct disposition));
 	if (disp==0) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(disp,0,sizeof(struct disposition));

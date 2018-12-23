@@ -51,7 +51,7 @@ struct net* mk_new_net(struct ip_addr* ip, struct ip_addr* mask)
 	}
 	n=(struct net*)pkg_malloc(sizeof(struct net));
 	if (n==0){ 
-		LM_CRIT("memory allocation failure\n");
+		PKG_MEM_CRITICAL;
 		goto error;
 	}
 	n->ip=*ip;

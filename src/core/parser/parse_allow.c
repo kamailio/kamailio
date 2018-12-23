@@ -56,7 +56,7 @@ int parse_allow_header(struct hdr_field* _hf)
 
 	ab = (struct allow_body*)pkg_malloc(sizeof(struct allow_body));
 	if (ab == 0) {
-		LM_ERR("out of pkg_memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(ab,'\0', sizeof(struct allow_body));

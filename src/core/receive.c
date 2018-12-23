@@ -191,7 +191,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 
 	msg = pkg_malloc(sizeof(struct sip_msg));
 	if(unlikely(msg == 0)) {
-		LM_ERR("no mem for sip_msg\n");
+		PKG_MEM_ERROR;
 		goto error00;
 	}
 	msg_no++;

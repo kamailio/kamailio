@@ -75,7 +75,7 @@ int parse_contact(struct hdr_field* _h)
 
 	b = (contact_body_t*)pkg_malloc(sizeof(contact_body_t));
 	if (b == 0) {
-		LM_ERR("no memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

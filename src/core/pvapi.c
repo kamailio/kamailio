@@ -236,7 +236,7 @@ int pv_table_add(pv_export_t *e)
 	pvn = (pv_item_t*)pkg_malloc(sizeof(pv_item_t));
 	if(pvn==0)
 	{
-		LM_ERR("no more memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(pvn, 0, sizeof(pv_item_t));
@@ -347,7 +347,7 @@ pv_spec_t* pv_cache_add(str *name)
 	pvn = (pv_cache_t*)pkg_malloc(sizeof(pv_cache_t) + name->len + 1);
 	if(pvn==0)
 	{
-		LM_ERR("no more memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(pvn, 0, sizeof(pv_cache_t) + name->len + 1);
@@ -756,7 +756,7 @@ int pv_parse_index(pv_spec_p sp, str *in)
 		nsp = (pv_spec_p)pkg_malloc(sizeof(pv_spec_t));
 		if(nsp==NULL)
 		{
-			LM_ERR("no more memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		s = pv_parse_spec(in, nsp);
@@ -1133,8 +1133,10 @@ int pv_parse_format(str *in, pv_elem_p *el)
 	if(in->len == 0)
 	{
 		*el = pkg_malloc(sizeof(pv_elem_t));
-		if(*el == NULL)
+		if(*el == NULL) {
+			PKG_MEM_ERROR;
 			goto error;
+		}
 		memset(*el, 0, sizeof(pv_elem_t));
 		(*el)->text = *in;
 		return 0;
@@ -1148,8 +1150,10 @@ int pv_parse_format(str *in, pv_elem_p *el)
 	{
 		e0 = e;
 		e = pkg_malloc(sizeof(pv_elem_t));
-		if(!e)
+		if(!e) {
+			PKG_MEM_ERROR;
 			goto error;
+		}
 		memset(e, 0, sizeof(pv_elem_t));
 		n++;
 		if(*el == NULL)
@@ -1244,7 +1248,7 @@ int pv_parse_avp_name(pv_spec_p sp, str *in)
 		nsp = (pv_spec_p)pkg_malloc(sizeof(pv_spec_t));
 		if(nsp==NULL)
 		{
-			LM_ERR("no more memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		s = pv_parse_spec(in, nsp);
@@ -1515,7 +1519,7 @@ pvname_list_t* parse_pvname_list(str *in, unsigned int type)
 		al = (pvname_list_t*)pkg_malloc(sizeof(pvname_list_t));
 		if(al==NULL)
 		{
-			LM_ERR("no more memory!\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset(al, 0, sizeof(pvname_list_t));
@@ -1646,7 +1650,7 @@ static inline trans_t* tr_new(void)
 	t = (trans_t*)pkg_malloc(sizeof(trans_t));
 	if(t == NULL)
 	{
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(t, 0, sizeof(trans_t));
@@ -1875,7 +1879,7 @@ int tr_table_add(tr_export_t *e)
 	trn = (tr_item_t*)pkg_malloc(sizeof(tr_item_t));
 	if(trn==0)
 	{
-		LM_ERR("no more memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(trn, 0, sizeof(tr_item_t));
@@ -2045,7 +2049,7 @@ int pv_init_buffer(void)
 		(char**)pkg_malloc(_pv_print_buffer_slots*sizeof(char*));
 	if(_pv_print_buffer==NULL)
 	{
-		LM_ERR("cannot init PV print buffer slots\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(_pv_print_buffer, 0, _pv_print_buffer_slots*sizeof(char*));
@@ -2055,7 +2059,7 @@ int pv_init_buffer(void)
 			(char*)pkg_malloc(_pv_print_buffer_size*sizeof(char));
 		if(_pv_print_buffer[i]==NULL)
 		{
-			LM_ERR("cannot init PV print buffer slot[%d]\n", i);
+			PKG_MEM_ERROR;
 			return -1;
 		}
 	}

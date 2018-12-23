@@ -67,7 +67,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 		/* Allocate and clear rr structure */
 		r = (rr_t*)pkg_malloc(sizeof(rr_t));
 		if (!r) {
-			LM_ERR("No memory left\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset(r, 0, sizeof(rr_t));
@@ -291,7 +291,11 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 		if (_shm) res = shm_malloc(sizeof(rr_t) + len);
 		else res = pkg_malloc(sizeof(rr_t) + len);
 		if (!res) {
-			LM_ERR("No memory left\n");
+			if (_shm) {
+				SHM_MEM_ERROR;
+			} else {
+				PKG_MEM_ERROR;
+			}
 			return -2;
 		}
 		memcpy(res, it, sizeof(rr_t));
@@ -409,10 +413,9 @@ int print_rr_body(struct hdr_field *iroute, str *oroute, int order,
 
 	oroute->s=(char*)pkg_malloc(route_len);
 
-
 	if(oroute->s==0)
 	{
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	cp = start = oroute->s;

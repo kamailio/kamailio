@@ -203,7 +203,7 @@ int parse_select (char** p, select_t** s)
 	
 	sel=(select_t*)pkg_malloc(sizeof(select_t));
 	if (!sel) {
-		LM_ERR("no free memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(sel, 0, sizeof(select_t));
@@ -233,7 +233,7 @@ int shm_parse_select (char** p, select_t** s)
 	
 	sel=(select_t*)shm_malloc(sizeof(select_t));
 	if (!sel) {
-		LM_ERR("no free shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	if (w_parse_select(p, sel)<0) {
@@ -457,7 +457,7 @@ int register_select_table(select_row_t* mod_tab)
 	select_table_t* t;
 	t=(select_table_t*)pkg_malloc(sizeof(select_table_t));
 	if (!t) {
-		LM_ERR("No memory for new select_table structure\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

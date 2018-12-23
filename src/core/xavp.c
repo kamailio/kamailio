@@ -93,6 +93,7 @@ static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
 		size += val->v.s.len + 1;
 	avp = (sr_xavp_t*)shm_malloc(size);
 	if(avp==NULL)
+		SHM_MEM_ERROR;
 		return NULL;
 	memset(avp, 0, size);
 	avp->id = id;

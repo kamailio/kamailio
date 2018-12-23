@@ -1407,7 +1407,7 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 #ifdef DYN_BUF
 	buf=pkg_malloc(blen+1);
 	if (buf==0) {
-		LM_ERR("could not allocate receive buffer\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 #else
@@ -1426,7 +1426,7 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 			free(buf);
 		buf=malloc(blen+1);
 		if (buf==0) {
-			LM_ERR("could not allocate receive buffer\n");
+			SYS_MEM_ERROR;
 			return -1;
 		}
 		bsize = blen;

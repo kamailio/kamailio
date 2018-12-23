@@ -650,6 +650,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, const char* data,
 		wb_size=MAX_unsigned(cfg_get(tcp, tcp_cfg, wq_blk_size), size);
 		wb=shm_malloc(sizeof(*wb)+wb_size-1);
 		if (unlikely(wb==0))
+		        SHM_MEM_ERROR;
 			goto error;
 		wb->b_size=wb_size;
 		wb->next=0;
@@ -671,6 +672,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, const char* data,
 			wb_size=MAX_unsigned(cfg_get(tcp, tcp_cfg, wq_blk_size), size);
 			wb=shm_malloc(sizeof(*wb)+wb_size-1);
 			if (unlikely(wb==0))
+			        SHM_MEM_ERROR;
 				goto error;
 			wb->b_size=wb_size;
 			wb->next=0;
@@ -730,6 +732,7 @@ inline static int _wbufq_insert(struct  tcp_connection* c, const char* data,
 		/* create a size bytes block directly */
 		wb=shm_malloc(sizeof(*wb)+size-1);
 		if (unlikely(wb==0))
+		        SHM_MEM_ERROR;
 			goto error;
 		wb->b_size=size;
 		/* insert it */
@@ -1191,7 +1194,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	rd_b_size=cfg_get(tcp, tcp_cfg, rd_buf_size);
 	c=shm_malloc(sizeof(struct tcp_connection) + rd_b_size);
 	if (c==0){
-		LM_ERR("mem. allocation failure\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(c, 0, sizeof(struct tcp_connection)); /* zero init (skip rd buf)*/
@@ -3323,7 +3326,7 @@ static int send_fd_queue_init(struct tcp_send_fd_q *q, unsigned int size)
 {
 	q->data=pkg_malloc(size*sizeof(struct send_fd_info));
 	if (q->data==0){
-		LM_ERR("out of memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	q->crt=q->data;
@@ -4899,27 +4902,27 @@ int init_tcp()
 	/* init globals */
 	tcp_connections_no=shm_malloc(sizeof(int));
 	if (tcp_connections_no==0){
-		LM_CRIT("could not alloc globals\n");
+		SHM_MEM_CRITICAL;
 		goto error;
 	}
 	*tcp_connections_no=0;
 	tls_connections_no=shm_malloc(sizeof(int));
 	if (tls_connections_no==0){
-		LM_CRIT("could not alloc globals\n");
+		SHM_MEM_CRITICAL;
 		goto error;
 	}
 	*tls_connections_no=0;
 	if (INIT_TCP_STATS()!=0) goto error;
 	connection_id=shm_malloc(sizeof(int));
 	if (connection_id==0){
-		LM_CRIT("could not alloc globals\n");
+		SHM_MEM_CRITICAL;
 		goto error;
 	}
 	*connection_id=1;
 #ifdef TCP_ASYNC
 	tcp_total_wq=shm_malloc(sizeof(*tcp_total_wq));
 	if (tcp_total_wq==0){
-		LM_CRIT("could not alloc globals\n");
+		SHM_MEM_CRITICAL;
 		goto error;
 	}
 #endif /* TCP_ASYNC */
@@ -4927,13 +4930,13 @@ int init_tcp()
 	tcpconn_aliases_hash=(struct tcp_conn_alias**)
 			shm_malloc(TCP_ALIAS_HASH_SIZE* sizeof(struct tcp_conn_alias*));
 	if (tcpconn_aliases_hash==0){
-		LM_CRIT("could not alloc address hashtable\n");
+		SHM_MEM_CRITICAL;
 		goto error;
 	}
 	tcpconn_id_hash=(struct tcp_connection**)shm_malloc(TCP_ID_HASH_SIZE*
 								sizeof(struct tcp_connection*));
 	if (tcpconn_id_hash==0){
-		LM_CRIT("could not alloc id hashtable\n");
+		SHM_MEM_CRITICAL;
 		goto error;
 	}
 	/* init hashtables*/
@@ -5035,7 +5038,7 @@ int tcp_init_children()
 	/* alloc the children array */
 	tcp_children=pkg_malloc(sizeof(struct tcp_child)*tcp_children_no);
 	if (tcp_children==0){
-			LM_ERR("out of memory\n");
+			PKG_MEM_ERROR;
 			goto error;
 	}
 	memset(tcp_children, 0, sizeof(struct tcp_child)*tcp_children_no);

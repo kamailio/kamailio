@@ -227,6 +227,9 @@ struct rvalue* rval_new_empty(int extra_size)
 		rv->flags=RV_RV_ALLOCED_F;
 		rv->refcnt=1;
 		rv->type=RV_NONE;
+	} else {
+		PKG_MEM_ERROR;
+		return 0;
 	}
 	return rv;
 }
@@ -1255,7 +1258,7 @@ int rval_get_str(struct run_act_ctx* h, struct sip_msg* msg,
 		goto error;
 	s->s=pkg_malloc(tmp.len+1/* 0 term */);
 	if (unlikely(s->s==0)){
-		LM_ERR("memory allocation error\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	s->len=tmp.len;
@@ -2535,8 +2538,10 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 	int flags;
 
 	rve=pkg_malloc(sizeof(*rve));
-	if (rve==0)
+	if (rve==0) {
+		PKG_MEM_ERROR;
 		return 0;
+	}
 	memset(rve, 0, sizeof(*rve));
 	flags=0;
 	switch(rv_type){
@@ -2548,7 +2553,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 			v.s.s=pkg_malloc(s->len+1 /*0*/);
 			if (v.s.s==0){
 				pkg_free(rve);
-				LM_ERR("memory allocation failure\n");
+				PKG_MEM_ERROR;
 				return 0;
 			}
 			v.s.len=s->len;
@@ -2614,8 +2619,10 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
 			return 0;
 	}
 	ret=pkg_malloc(sizeof(*ret));
-	if (ret==0)
+	if (ret==0) {
+		PKG_MEM_ERROR;
 		return 0;
+	}
 	memset(ret, 0, sizeof(*ret));
 	ret->op=op;
 	ret->left.rve=rve1;
@@ -2672,8 +2679,10 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 			return 0;
 	}
 	ret=pkg_malloc(sizeof(*ret));
-	if (ret==0)
+	if (ret==0) {
+		PKG_MEM_ERROR;
 		return 0;
+	}
 	memset(ret, 0, sizeof(*ret));
 	ret->op=op;
 	ret->left.rve=rve1;
@@ -3027,7 +3036,7 @@ static int fix_match_rve(struct rval_expr* rve)
 		rv=0;
 		re=pkg_malloc(sizeof(*re));
 		if (re==0){
-			LM_ERR("out of memory\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		/* same flags as for expr. =~ (fix_expr()) */

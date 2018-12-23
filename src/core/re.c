@@ -272,7 +272,7 @@ found_re:
 
 	/* compile the re */
 	if ((regex=pkg_malloc(sizeof(regex_t)))==0){
-		LM_ERR("out of memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	c=*re_end; /* regcomp expects null terminated strings -- save */
@@ -291,7 +291,7 @@ found_re:
 					((rw_no)?(rw_no-1)*sizeof(struct replace_with):0));
 		/* 1 replace_with structure is  already included in subst_expr */
 	if (se==0){
-		LM_ERR("out of memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset((void*)se, 0, sizeof(struct subst_expr));
@@ -299,7 +299,7 @@ found_re:
 	se->replacement.len=repl_end-repl;
 	if (se->replacement.len > 0) {
 		if ((se->replacement.s=pkg_malloc(se->replacement.len))==0){
-			LM_ERR("out of memory\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		/* start copying */
@@ -390,7 +390,7 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 	RBUF_APPEND(dest, p, end-p);
 	rpl->len = dest - rbuf;
 	if ((rpl->s = pkg_malloc(rpl->len)) == NULL) {
-		LM_ERR("Out of pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memcpy(rpl->s, rbuf, rpl->len);
@@ -427,7 +427,7 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 	/* no of () referenced + 1 for the whole string: pmatch[0] */
 	pmatch=pkg_malloc(nmatch*sizeof(regmatch_t));
 	if (pmatch==0){
-		LM_ERR("out of mem\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	eflags=0;
@@ -446,7 +446,7 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 			}
 			*crt=pkg_malloc(sizeof(struct replace_lst));
 			if (*crt==0){
-				LM_ERR("out of mem\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memset(*crt, 0, sizeof(struct replace_lst));
@@ -508,12 +508,12 @@ str* subst_str(const char *input, struct sip_msg* msg, struct subst_expr* se,
 		len+=(int)(l->rpl.len)-l->size;
 	res=pkg_malloc(sizeof(str));
 	if (res==0){
-		LM_ERR("mem. allocation error\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	res->s=pkg_malloc(len+1); /* space for null termination */
 	if (res->s==0){
-		LM_ERR("mem. allocation error (res->s)\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	res->s[len]=0;

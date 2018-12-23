@@ -90,7 +90,7 @@ int init_stats(int nr_of_processes)
 
 	global_stats = shm_malloc(nr_of_processes*sizeof(struct stats_s));
 	if(!global_stats) {
-		LM_ERR("Out of memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	stats_segments = nr_of_processes;

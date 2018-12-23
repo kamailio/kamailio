@@ -469,7 +469,7 @@ int parse_accept_body(struct hdr_field* const hdr)
 	/* copy and link the mime buffer into the message */
 	hdr->parsed = (void*)pkg_malloc((nr_mimes+1)*sizeof(int));
 	if (hdr->parsed==0) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memcpy(hdr->parsed,mimes,nr_mimes*sizeof(int));
@@ -541,7 +541,7 @@ int parse_accept_hdr(struct sip_msg* const msg)
 	/* copy and link the mime buffer into the message */
 	msg->accept->parsed = (void*)pkg_malloc((nr_mimes+1)*sizeof(int));
 	if (msg->accept->parsed==0) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memcpy(msg->accept->parsed,mimes,nr_mimes*sizeof(int));

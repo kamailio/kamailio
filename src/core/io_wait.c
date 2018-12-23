@@ -474,8 +474,7 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 	/* common stuff, everybody has fd_hash */
 	h->fd_hash=local_malloc(sizeof(*(h->fd_hash))*h->max_fd_no);
 	if (h->fd_hash==0){
-		LM_CRIT("could not alloc fd hashtable (%ld bytes)\n",
-					(long)sizeof(*(h->fd_hash))*h->max_fd_no );
+		PKG_MEM_CRITICAL;
 		goto error;
 	}
 	memset((void*)h->fd_hash, 0, sizeof(*(h->fd_hash))*h->max_fd_no);
@@ -493,8 +492,7 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 #endif
 			h->fd_array=local_malloc(sizeof(*(h->fd_array))*h->max_fd_no);
 			if (h->fd_array==0){
-				LM_CRIT("could not alloc fd array (%ld bytes)\n",
-						(long)sizeof(*(h->fd_hash))*h->max_fd_no);
+				PKG_MEM_CRITICAL;
 				goto error;
 			}
 			memset((void*)h->fd_array, 0, sizeof(*(h->fd_array))*h->max_fd_no);
@@ -523,7 +521,7 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 		case POLL_EPOLL_ET:
 			h->ep_array=local_malloc(sizeof(*(h->ep_array))*h->max_fd_no);
 			if (h->ep_array==0){
-				LM_CRIT("could not alloc epoll array\n");
+				PKG_MEM_CRITICAL;
 				goto error;
 			}
 			memset((void*)h->ep_array, 0, sizeof(*(h->ep_array))*h->max_fd_no);
@@ -546,13 +544,13 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 			h->kq_array_size=2 * h->max_fd_no + h->kq_changes_size;
 			h->kq_array=local_malloc(sizeof(*(h->kq_array))*h->kq_array_size);
 			if (h->kq_array==0){
-				LM_CRIT("could not alloc kqueue event array\n");
+				PKG_MEM_CRITICAL;
 				goto error;
 			}
 			h->kq_changes=local_malloc(sizeof(*(h->kq_changes))*
 										h->kq_changes_size);
 			if (h->kq_changes==0){
-				LM_CRIT("could not alloc kqueue changes array\n");
+				PKG_MEM_CRITICAL;
 				goto error;
 			}
 			h->kq_nchanges=0;

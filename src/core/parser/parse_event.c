@@ -152,7 +152,7 @@ int parse_event(struct hdr_field* _h)
 
 	e = (event_t*)pkg_malloc(sizeof(event_t));
 	if (e == 0) {
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

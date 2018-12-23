@@ -69,7 +69,7 @@ inline static gen_lock_set_t* lock_set_alloc(int n)
 	gen_lock_set_t* ls;
 	ls=(gen_lock_set_t*)shm_malloc(sizeof(gen_lock_set_t)+n*sizeof(gen_lock_t));
 	if (ls==0){
-		LM_CRIT("could not allocate lock_set\n");
+		SHM_MEM_CRITICAL;
 	}else{
 		ls->locks=(gen_lock_t*)((char*)ls+sizeof(gen_lock_set_t));
 		ls->size=n;
@@ -90,10 +90,12 @@ inline static gen_lock_set_t* lock_set_alloc(int n)
 {
 	gen_lock_set_t* ls;
 	ls=(gen_lock_set_t*)shm_malloc(sizeof(gen_lock_set_t));
-	if (ls){
+	if (ls==0){
+		SHM_MEM_CRITICAL;
+	}else{
 		ls->size=n;
 		ls->semid=-1;
-	};
+	}
 	return ls;
 }
 

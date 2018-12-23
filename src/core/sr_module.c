@@ -214,7 +214,7 @@ static int register_module(module_exports_t* e, char* path, void* handle)
 
 	/* add module to the list */
 	if ((mod=pkg_malloc(sizeof(struct sr_module)))==0){
-		LM_ERR("memory allocation failure\n");
+		PKG_MEM_ERROR;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -231,6 +231,11 @@ static int register_module(module_exports_t* e, char* path, void* handle)
 		for (n=0; e->cmds[n].name; n++);
 	}
 	mod->exports.cmds = pkg_malloc(sizeof(ksr_cmd_export_t)*(n+1));
+	if (mod->exports.cmds==0) {
+		PKG_MEM_ERROR;
+		ret=E_OUT_OF_MEM;
+		goto error;
+	}
 	memset(mod->exports.cmds, 0, sizeof(ksr_cmd_export_t)*(n+1));
 	for (i=0; i < n; i++) {
 		mod->exports.cmds[i].name = e->cmds[i].name;
@@ -410,7 +415,10 @@ int load_module(char* mod_path)
 				/* try path <MODS_DIR>/<modname>.so */
 				path = (char*)pkg_malloc(mdir_len + 1 /* "/" */ +
 									modname.len + 3 /* ".so" */ + 1);
-				if (path==0) goto error;
+				if (path==0) {
+					PKG_MEM_ERROR;
+					goto error;
+				}
 				memcpy(path, mdir, mdir_len);
 				len = mdir_len;
 				if (len != 0 && path[len - 1] != '/'){
@@ -431,7 +439,10 @@ int load_module(char* mod_path)
 						mdir_len + 1 /* "/" */ +
 						modname.len + 1 /* "/" */ +
 						modname.len + 3 /* ".so" */ + 1);
-					if (path==0) goto error;
+					if (path==0) {
+						PKG_MEM_ERROR;
+						goto error;
+					}
 					memcpy(path, mdir, mdir_len);
 					len = mdir_len;
 					if (len != 0 && path[len - 1] != '/') {
@@ -463,7 +474,10 @@ int load_module(char* mod_path)
 					/* try path <MODS_DIR>/mod_path - K compat */
 					path = (char*)pkg_malloc(mdir_len + 1 /* "/" */ +
 									strlen(mod_path) + 1);
-					if (path==0) goto error;
+					if (path==0) {
+						PKG_MEM_ERROR;
+						goto error;
+					}
 					memcpy(path, mdir, mdir_len);
 					len = mdir_len;
 					if (len != 0 && path[len - 1] != '/'){
@@ -776,8 +790,7 @@ int init_modules(void)
 	mod_response_cbks=pkg_malloc(mod_response_cbk_no *
 									sizeof(response_function));
 	if (mod_response_cbks==0){
-		LM_ERR("memory allocation failure for %d response_f callbacks\n",
-					mod_response_cbk_no);
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	for (t=modules, i=0; t && (i<mod_response_cbk_no); t=t->next) {
@@ -925,7 +938,7 @@ int init_modules(void)
 	mod_response_cbks=pkg_malloc(mod_response_cbk_no *
 									sizeof(response_function));
 	if (mod_response_cbks==0){
-		LM_ERR("memory allocation failure for %d response_f callbacks\n", mod_response_cbk_no);
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	for (t=modules, i=0; t && (i<mod_response_cbk_no); t=t->next)
@@ -1061,7 +1074,7 @@ int fix_param(int type, void** param)
 
 	p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
 	if (!p) {
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
 	memset(p, 0, sizeof(fparam_t));
@@ -1094,7 +1107,7 @@ int fix_param(int type, void** param)
 			break;
 		case FPARAM_REGEX:
 			if ((p->v.regex = pkg_malloc(sizeof(regex_t))) == 0) {
-				LM_ERR("No memory left\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			if (regcomp(p->v.regex, *param,
@@ -1156,7 +1169,7 @@ int fix_param(int type, void** param)
 			}
 			p->v.pvs=pkg_malloc(sizeof(pv_spec_t));
 			if (p->v.pvs==0){
-				LM_ERR("out of memory while parsing pv_spec_t\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			if (pv_parse_spec2(&name, p->v.pvs, 1)==0){

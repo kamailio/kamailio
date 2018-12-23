@@ -141,7 +141,7 @@ static int init_addr_info(struct addr_info* a,
 	a->flags=flags;
 	return 0;
 error:
-	LM_ERR("memory allocation error\n");
+	PKG_MEM_ERROR;
 	return -1;
 }
 
@@ -160,7 +160,7 @@ static inline struct addr_info* new_addr_info(char* name,
 	if (init_addr_info(al, name, gf)!=0) goto error;
 	return al;
 error:
-	LM_ERR("memory allocation error\n");
+	PKG_MEM_ERROR;
 	if (al){
 		if (al->name.s) pkg_free(al->name.s);
 		pkg_free(al);
@@ -285,7 +285,7 @@ static inline struct socket_info* new_sock_info(	char* name,
 	}
 	return si;
 error:
-	LM_ERR("memory allocation error\n");
+	PKG_MEM_ERROR;
 	if (si) {
 		if(si->name.s)
 			pkg_free(si->name.s);
@@ -419,7 +419,7 @@ static int fix_sock_str(struct socket_info* si)
 	
 	si->sock_str.s = pkg_malloc(len + 1);
 	if (si->sock_str.s == NULL) {
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	if (socketinfo2str(si->sock_str.s, &len, si, 0) < 0) {
@@ -436,7 +436,7 @@ static int fix_sock_str(struct socket_info* si)
 
 		si->useinfo.sock_str.s = pkg_malloc(len + 1);
 		if (si->useinfo.sock_str.s == NULL) {
-			LM_ERR("No memory left\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		if (socketinfo2str(si->useinfo.sock_str.s, &len, si, 1) < 0) {
@@ -716,6 +716,10 @@ static struct socket_info* new_sock2list(char* name, struct name_lst* addr_l,
 	if (mcast!=0) {
 		si->mcast.len=strlen(mcast);
 		si->mcast.s=(char*)pkg_malloc(si->mcast.len+1);
+		if (si->mcast.s==0) {
+			PKG_MEM_ERROR;
+			return 0;
+		}
 		strcpy(si->mcast.s, mcast);
 		mcast = 0;
 	}
@@ -1012,7 +1016,7 @@ static int build_iface_list(void)
 	if(ifaces == NULL){
 		if((ifaces = (struct idxlist*)pkg_malloc(MAX_IFACE_NO
 						*sizeof(struct idxlist))) == NULL){
-			LM_ERR("No more pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memset(ifaces, 0, sizeof(struct idxlist)*MAX_IFACE_NO);
@@ -1071,7 +1075,7 @@ static int build_iface_list(void)
 			entry = (struct idx*)pkg_malloc(sizeof(struct idx));
 			if(entry == 0)
 			{
-				LM_ERR("could not allocate memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 
@@ -1282,7 +1286,7 @@ static int fix_hostname(str* name, struct ip_addr* address, str* address_str,
 		pkg_free(name->s);
 		name->s=(char*)pkg_malloc(strlen(he->h_name)+1);
 		if (name->s==0){
-			LM_ERR("out of memory.\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		name->len=strlen(he->h_name);
@@ -1300,7 +1304,7 @@ static int fix_hostname(str* name, struct ip_addr* address, str* address_str,
 	if ((tmp=ip_addr2a(address))==0) goto error;
 	address_str->s=pkg_malloc(strlen(tmp)+1);
 	if (address_str->s==0){
-		LM_ERR("out of memory.\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	strncpy(address_str->s, tmp, strlen(tmp)+1);
@@ -1508,7 +1512,7 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 		}
 		si->port_no_str.s=(char*)pkg_malloc(len+1);
 		if (si->port_no_str.s==0){
-			LM_ERR("out of memory.\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		strncpy(si->port_no_str.s, tmp, len+1);

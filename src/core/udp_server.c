@@ -283,7 +283,7 @@ int udp_init(struct socket_info* sock_info)
 /*
 	addr=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
 	if (addr==0){
-		LM_ERR("out of memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 */
@@ -435,7 +435,7 @@ int udp_rcv_loop()
 
 	from=(union sockaddr_union*) pkg_malloc(sizeof(union sockaddr_union));
 	if (from==0){
-		LM_ERR("out of memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(from, 0 , sizeof(union sockaddr_union));
@@ -452,7 +452,7 @@ int udp_rcv_loop()
 #ifdef DYN_BUF
 		buf=pkg_malloc(BUF_SIZE+1);
 		if (buf==0){
-			LM_ERR("could not allocate receive buffer\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 #endif

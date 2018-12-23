@@ -82,7 +82,7 @@ int init_dst_set(void)
 	/* sr_dst_max_branches - 1 : because of the default branch for r-uri, #0 in tm */
 	branches = (branch_t*)pkg_malloc((sr_dst_max_branches-1)*sizeof(branch_t));
 	if(branches==NULL) {
-		LM_ERR("not enough memory to initialize destination branches\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(branches, 0, (sr_dst_max_branches-1)*sizeof(branch_t));
@@ -602,7 +602,7 @@ int rewrite_uri(struct sip_msg* _m, str* _s)
 	if(_m->new_uri.s==NULL || _m->new_uri.len<_s->len) {
 		buf = (char*)pkg_malloc(_s->len + 1);
 		if (!buf) {
-			LM_ERR("No memory left to rewrite r-uri\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 	}

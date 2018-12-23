@@ -496,7 +496,7 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 	p=(char *)shm_malloc(len);
 	if (!p)
 	{
-		LM_ERR("cannot allocate memory\n" );
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	if (sip_msg_len)
@@ -986,7 +986,7 @@ int msg_lump_cloner(struct sip_msg *pkg_msg,
 	p=(char *)shm_malloc(len);
 	if (!p)
 	{
-		LM_ERR("cannot allocate memory\n" );
+		SHM_MEM_ERROR;
 		return -1;
 	}
 

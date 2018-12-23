@@ -78,7 +78,7 @@ cfg_group_t *cfg_new_group(char *name, int name_len,
 
 	group = (cfg_group_t *)pkg_malloc(sizeof(cfg_group_t)+name_len-1);
 	if (!group) {
-		LM_ERR("not enough memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(group, 0, sizeof(cfg_group_t)+name_len-1);
@@ -129,7 +129,7 @@ int cfg_clone_str(str *src, str *dst)
 
 	c = (char *)shm_malloc(sizeof(char)*(src->len+1));
 	if (!c) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memcpy(c, src->s, src->len);
@@ -216,7 +216,7 @@ int cfg_shmize(void)
 
 	block = (cfg_block_t*)shm_malloc(sizeof(cfg_block_t)+size-1);
 	if (!block) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(block, 0, sizeof(cfg_block_t)+size-1);
@@ -319,9 +319,10 @@ static void cfg_destory_groups(unsigned char *block)
 /* initiate the cfg framework */
 int sr_cfg_init(void)
 {
+	/* lock_alloc() is a define for shm_malloc */
 	cfg_global_lock = lock_alloc();
 	if (!cfg_global_lock) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	if (lock_init(cfg_global_lock) == 0) {
@@ -333,7 +334,7 @@ int sr_cfg_init(void)
 
 	cfg_writer_lock = lock_alloc();
 	if (!cfg_writer_lock) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	if (lock_init(cfg_writer_lock) == 0) {
@@ -345,21 +346,21 @@ int sr_cfg_init(void)
 
 	cfg_global = (cfg_block_t **)shm_malloc(sizeof(cfg_block_t *));
 	if (!cfg_global) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	*cfg_global = NULL;
 
 	cfg_child_cb_first = (cfg_child_cb_t **)shm_malloc(sizeof(cfg_child_cb_t *));
 	if (!cfg_child_cb_first) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	*cfg_child_cb_first = NULL;
 
 	cfg_child_cb_last = (cfg_child_cb_t **)shm_malloc(sizeof(cfg_child_cb_t *));
 	if (!cfg_child_cb_last) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	*cfg_child_cb_last = NULL;
@@ -624,7 +625,7 @@ cfg_block_t *cfg_clone_global(void)
 
 	block = (cfg_block_t*)shm_malloc(sizeof(cfg_block_t)+cfg_block_size-1);
 	if (!block) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memcpy(block, *cfg_global, sizeof(cfg_block_t)+cfg_block_size-1);
@@ -647,7 +648,7 @@ cfg_group_inst_t *cfg_clone_array(cfg_group_meta_t *meta, cfg_group_t *group)
 	size = (sizeof(cfg_group_inst_t) + group->size - 1) * meta->num;
 	new_array = (cfg_group_inst_t *)shm_malloc(size);
 	if (!new_array) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memcpy(new_array, meta->array, size);
@@ -668,7 +669,7 @@ cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
 	inst_size = sizeof(cfg_group_inst_t) + group->size - 1;
 	new_array = (cfg_group_inst_t *)shm_malloc(inst_size * (meta->num + 1));
 	if (!new_array) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	/* Find the position of the new group in the array. The array is ordered
@@ -717,7 +718,7 @@ int cfg_collapse_array(cfg_group_meta_t *meta, cfg_group_t *group,
 	inst_size = sizeof(cfg_group_inst_t) + group->size - 1;
 	new_array = (cfg_group_inst_t *)shm_malloc(inst_size * (meta->num - 1));
 	if (!new_array) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
@@ -796,7 +797,7 @@ void cfg_install_global(cfg_block_t *block, void **replaced,
 				cb_last = cb_first;
 				cb_first->replaced = replaced;
 			} else {
-				LM_ERR("not enough shm memory\n");
+				SHM_MEM_ERROR;
 				/* Nothing more can be done here, the replaced strings are still needed,
 				 * they cannot be freed at this moment.
 				 */
@@ -827,7 +828,7 @@ cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name,
 
 	cb_struct = (cfg_child_cb_t *)shm_malloc(sizeof(cfg_child_cb_t));
 	if (!cb_struct) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(cb_struct, 0, sizeof(cfg_child_cb_t));
@@ -923,7 +924,7 @@ int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 	add_var = (cfg_add_var_t *)pkg_malloc(sizeof(cfg_add_var_t) +
 			(type ? (var_name->len - 1) : 0));
 	if (!add_var) {
-		LM_ERR("Not enough memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(add_var, 0, sizeof(cfg_add_var_t) +
@@ -944,7 +945,7 @@ int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 				if (len) {
 					add_var->val.s.s = (char *)pkg_malloc(sizeof(char) * len);
 					if (!add_var->val.s.s) {
-						LM_ERR("Not enough memory\n");
+						PKG_MEM_ERROR;
 						goto error;
 					}
 					memcpy(add_var->val.s.s, ((str *)val)->s, len);
@@ -959,7 +960,7 @@ int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 					len = strlen((char *)val);
 					add_var->val.ch = (char *)pkg_malloc(sizeof(char) * (len + 1));
 					if (!add_var->val.ch) {
-						LM_ERR("Not enough memory\n");
+						PKG_MEM_ERROR;
 						goto error;
 					}
 					memcpy(add_var->val.ch, (char *)val, len);
@@ -1049,7 +1050,7 @@ static int apply_add_var_list(cfg_block_t *block, cfg_group_t *group)
 	size = (sizeof(cfg_group_inst_t) + group->size - 1) * num;
 	new_array = (cfg_group_inst_t *)shm_malloc(size);
 	if (!new_array) {
-		LM_ERR("not enough shm memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(new_array, 0, size);

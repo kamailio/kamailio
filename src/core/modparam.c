@@ -61,7 +61,7 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 	len = strlen(regex);
 	reg = pkg_malloc(len + 4 + 1);
 	if (reg == 0) {
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	reg[0] = '^';
@@ -109,7 +109,7 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 						case PARAM_STRING:
 							*((char**)ptr) = pkg_malloc(strlen((char*)val2)+1);
 							if (!*((char**)ptr)) {
-								LM_ERR("No memory left\n");
+								PKG_MEM_ERROR;
 								regfree(&preg);
 								pkg_free(reg);
 								return -1;
@@ -120,7 +120,7 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 						case PARAM_STR:
 							((str*)ptr)->s = pkg_malloc(((str*)val2)->len+1);
 							if (!((str*)ptr)->s) {
-								LM_ERR("No memory left\n");
+								PKG_MEM_ERROR;
 								regfree(&preg);
 								pkg_free(reg);
 								return -1;

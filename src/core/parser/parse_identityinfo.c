@@ -333,7 +333,7 @@ int parse_identityinfo_header(struct sip_msg *msg)
 
 	identityinfo_b=pkg_malloc(sizeof(*identityinfo_b));
 	if (identityinfo_b==0){
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(identityinfo_b, 0, sizeof(*identityinfo_b));

@@ -139,7 +139,7 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 	return var;
 
 error:
-	LM_ERR("not enough memory\n");
+	PKG_MEM_ERROR;
 	return NULL;
 }
 
@@ -188,7 +188,7 @@ int cfg_set_script_var(cfg_group_t *group, str *var_name,
 					s.len = ((str *)v)->len;
 					s.s = pkg_malloc(sizeof(char) * (s.len + 1));
 					if (!s.s) {
-						LM_ERR("not enough memory\n");
+						PKG_MEM_ERROR;
 						goto error;
 					}
 					memcpy(s.s, ((str *)v)->s, s.len);
@@ -325,7 +325,7 @@ error:
 	if (def) pkg_free(def);
 	if (handle) pkg_free(handle);
 
-	LM_ERR("not enough memory\n");
+	PKG_MEM_ERROR;
 	return -1;
 }
 

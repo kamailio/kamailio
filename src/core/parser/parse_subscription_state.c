@@ -137,7 +137,7 @@ int parse_subscription_state(struct hdr_field *h)
 
 	ss = (subscription_state_t*)pkg_malloc(sizeof(*ss));
 	if (!ss) {
-		ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

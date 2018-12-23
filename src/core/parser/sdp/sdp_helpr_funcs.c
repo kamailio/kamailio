@@ -263,7 +263,7 @@ static inline sdp_ice_attr_t *add_sdp_ice(sdp_stream_cell_t* _stream)
 	len = sizeof(sdp_ice_attr_t);
 	ice_attr = (sdp_ice_attr_t *)pkg_malloc(len);
 	if (ice_attr == NULL) {
-	    LM_ERR("No memory left\n");
+	    PKG_MEM_ERROR;
 	    return NULL;
 	}
 	memset( ice_attr, 0, len);

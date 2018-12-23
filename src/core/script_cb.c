@@ -58,7 +58,7 @@ static inline int add_callback( struct script_cb **list,
 
 	new_cb=pkg_malloc(sizeof(struct script_cb));
 	if (new_cb==0) {
-		LM_CRIT("out of memory\n");
+		PKG_MEM_CRITICAL;
 		return -1;
 	}
 	new_cb->cbf = f;

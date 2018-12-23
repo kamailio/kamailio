@@ -50,7 +50,7 @@ static inline int new_sdp(struct sip_msg* _m)
 
 	sdp = (sdp_info_t*)pkg_malloc(sizeof(sdp_info_t));
 	if (sdp == NULL) {
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset( sdp, 0, sizeof(sdp_info_t));
@@ -72,7 +72,7 @@ static inline sdp_session_cell_t *add_sdp_session(sdp_info_t* _sdp, int session_
 	len = sizeof(sdp_session_cell_t);
 	session = (sdp_session_cell_t*)pkg_malloc(len);
 	if (session == NULL) {
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset( session, 0, len);
@@ -103,7 +103,7 @@ static inline sdp_stream_cell_t *add_sdp_stream(sdp_session_cell_t* _session, in
 	len = sizeof(sdp_stream_cell_t);
 	stream = (sdp_stream_cell_t*)pkg_malloc(len);
 	if (stream == NULL) {
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset( stream, 0, len);
@@ -144,7 +144,7 @@ static inline sdp_payload_attr_t *add_sdp_payload(sdp_stream_cell_t* _stream, in
 	len = sizeof(sdp_payload_attr_t);
 	payload_attr = (sdp_payload_attr_t*)pkg_malloc(len);
 	if (payload_attr == NULL) {
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset( payload_attr, 0, len);
@@ -188,7 +188,11 @@ static inline sdp_payload_attr_t** init_p_payload_attr(sdp_stream_cell_t* _strea
 		return NULL;
 	}
 	if (_stream->p_payload_attr == NULL) {
-		LM_ERR("No memory left\n");
+		if (pkg == USE_PKG_MEM) {
+			PKG_MEM_ERROR;
+		} else if (pkg == USE_SHM_MEM) {
+			SHM_MEM_ERROR;
+		}
 		return NULL;
 	}
 
@@ -986,7 +990,7 @@ sdp_payload_attr_t * clone_sdp_payload_attr(sdp_payload_attr_t *attr)
 			attr->fmtp_string.len;
 	clone_attr = (sdp_payload_attr_t*)shm_malloc(len);
 	if (clone_attr == NULL) {
-		LM_ERR("no more shm mem (%d)\n",len);
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset( clone_attr, 0, len);
@@ -1058,7 +1062,7 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 			stream->rtcp_port.len;
 	clone_stream = (sdp_stream_cell_t*)shm_malloc(len);
 	if (clone_stream == NULL) {
-		LM_ERR("no more shm mem (%d)\n",len);
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset( clone_stream, 0, len);
@@ -1188,7 +1192,7 @@ sdp_session_cell_t * clone_sdp_session_cell(sdp_session_cell_t *session)
 		session->bw_width.len;
 	clone_session = (sdp_session_cell_t*)shm_malloc(len);
 	if (clone_session == NULL) {
-		LM_ERR("no more shm mem (%d)\n",len);
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset( clone_session, 0, len);
@@ -1282,7 +1286,7 @@ sdp_info_t * clone_sdp_info(struct sip_msg* _m)
 	len = sizeof(sdp_info_t);
 	clone_sdp_info = (sdp_info_t*)shm_malloc(len);
 	if (clone_sdp_info == NULL) {
-		LM_ERR("no more shm mem (%d)\n",len);
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	LM_DBG("clone_sdp_info: %p\n", clone_sdp_info);

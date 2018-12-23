@@ -123,7 +123,7 @@ static int route_add(struct route_list* rt, char* name, int i)
 	
 	e=pkg_malloc(sizeof(struct str_hash_entry));
 	if (e==0){
-		LM_CRIT("out of memory\n");
+		PKG_MEM_CRITICAL;
 		goto error;
 	}
 	LM_DBG("mapping routing block (%p)[%s] to %d\n", rt, name, i);
@@ -145,8 +145,7 @@ inline  static int init_rlist(char* r_name, struct route_list* rt,
 {
 		rt->rlist=pkg_malloc(sizeof(struct action*)*n_entries);
 		if (rt->rlist==0){ 
-			LM_CRIT("failed to allocate \"%s\" route tables: " 
-					"out of memory\n", r_name); 
+			PKG_MEM_CRITICAL;
 			goto error; 
 		}
 		memset(rt->rlist, 0 , sizeof(struct action*)*n_entries);
@@ -339,8 +338,10 @@ static int exp_optimize_left(struct expr* exp)
 						rval_destroy(rval);
 						pkg_free(rve);
 						ret=1;
-					}else
+					}else{
+						PKG_MEM_ERROR;
 						ret=-1;
+					}
 					break;
 				case RV_AVP:
 					exp->l.attr=pkg_malloc(sizeof(*exp->l.attr));
@@ -350,8 +351,10 @@ static int exp_optimize_left(struct expr* exp)
 						rval_destroy(rval);
 						pkg_free(rve);
 						ret=1;
-					}else
+					}else{
+						PKG_MEM_ERROR;
 						ret=-1;
+					}
 					break;
 				case RV_PVAR:
 					exp->l.param=pkg_malloc(sizeof(pv_spec_t));
@@ -361,8 +364,10 @@ static int exp_optimize_left(struct expr* exp)
 						rval_destroy(rval);
 						pkg_free(rve);
 						ret=1;
-					}else
+					}else{
+						PKG_MEM_ERROR;
 						ret=-1;
+					}
 					break;
 				case RV_NONE:
 					break;
@@ -417,8 +422,10 @@ static int exp_optimize_right(struct expr* exp)
 						rval_destroy(rval);
 						pkg_free(rve);
 						ret=1;
-					}else
+					}else{
+						PKG_MEM_ERROR;
 						ret=-1;
+					}
 					break;
 				case RV_BEXPR:
 					/* cannot be optimized further, is an exp_elem
@@ -436,8 +443,10 @@ static int exp_optimize_right(struct expr* exp)
 						rval_destroy(rval);
 						pkg_free(rve);
 						ret=1;
-					}else
+					}else{
+						PKG_MEM_ERROR;
 						ret=-1;
+					}
 					break;
 				case RV_AVP:
 					exp->r.attr=pkg_malloc(sizeof(*exp->l.attr));
@@ -447,8 +456,10 @@ static int exp_optimize_right(struct expr* exp)
 						rval_destroy(rval);
 						pkg_free(rve);
 						ret=1;
-					}else
+					}else{
+						PKG_MEM_ERROR;
 						ret=-1;
+					}
 					break;
 				case RV_PVAR:
 					exp->r.param=pkg_malloc(sizeof(pv_spec_t));
@@ -458,8 +469,10 @@ static int exp_optimize_right(struct expr* exp)
 						rval_destroy(rval);
 						pkg_free(rve);
 						ret=1;
-					}else
+					}else{
+						PKG_MEM_ERROR;
 						ret=-1;
+					}
 					break;
 				case RV_NONE:
 					ret=-1;
@@ -540,7 +553,7 @@ int fix_expr(struct expr* exp)
 				if (exp->r_type==STRING_ST){
 					re=(regex_t*)pkg_malloc(sizeof(regex_t));
 					if (re==0){
-						LM_CRIT("memory allocation failure\n");
+						PKG_MEM_CRITICAL;
 						return E_OUT_OF_MEM;
 					}
 					if (regcomp(re, (char*) exp->r.param,
@@ -1341,7 +1354,7 @@ inline static int comp_str(int op, str* left, int rtype,
 					/* we need to compile the RE on the fly */
 					re=(regex_t*)pkg_malloc(sizeof(regex_t));
 					if (re==0){
-						LM_CRIT("memory allocation failure\n");
+						PKG_MEM_CRITICAL;
 						left->s[left->len] = backup;
 						goto error;
 					}

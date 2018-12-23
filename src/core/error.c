@@ -218,7 +218,7 @@ void get_reply_status( str *status, struct sip_msg *reply, int code )
 	status->len=phrase.len+3/*code*/+1/*space*/; 
 	status->s=pkg_malloc(status->len+1/*ZT */);
 	if (!status->s) {
-		LM_ERR("no mem\n");
+		PKG_MEM_ERROR;
 		return;
 	}
 	status->s[3]=' ';

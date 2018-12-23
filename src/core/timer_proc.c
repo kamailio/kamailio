@@ -307,7 +307,7 @@ int sr_wtimer_init(void)
 		return 0;
 	_sr_wtimer = (sr_wtimer_t *)pkg_malloc(sizeof(sr_wtimer_t));
 	if(_sr_wtimer==NULL) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -329,7 +329,7 @@ int sr_wtimer_add(timer_function* f, void* param, int interval)
 
 	wt = (sr_wtimer_node_t*)pkg_malloc(sizeof(sr_wtimer_node_t));
 	if(wt==NULL) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(wt, 0, sizeof(sr_wtimer_node_t));

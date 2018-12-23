@@ -49,7 +49,7 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 
 	mapping = (cfg_mapping_t *)pkg_malloc(sizeof(cfg_mapping_t)*num);
 	if (!mapping) {
-		LM_ERR("not enough memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(mapping, 0, sizeof(cfg_mapping_t)*num);
@@ -212,7 +212,7 @@ int cfg_declare_str(char *group_name, char *var_name, char *val, char *descr)
 		len = strlen(val);
 		var->val.s.s = (char *)pkg_malloc(sizeof(char) * (len + 1));
 		if (!var->val.s.s) {
-			LM_ERR("not enough memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(var->val.s.s, val, len + 1);

@@ -226,18 +226,18 @@ int init_timer()
 	timer_lst=pkg_malloc(sizeof(struct timer_lists));
 #endif
 	if (ticks==0){
-		LM_CRIT("out of shared memory (ticks)\n");
+		SHM_MEM_CRITICAL;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
 	if (timer_lst==0){
-		LM_CRIT("out of shared memory (timer_lst)\n");
+		SHM_MEM_CRITICAL;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
 	running_timer=shm_malloc(sizeof(struct timer_ln*));
 	if (running_timer==0){
-		LM_CRIT("out of memory (running_timer)\n");
+		SHM_MEM_CRITICAL;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -283,7 +283,7 @@ int init_timer()
 	slow_timer_lists=shm_malloc(sizeof(struct timer_head)*SLOW_LISTS_NO);
 	running_timer2=shm_malloc(sizeof(struct timer_ln*));
 	if ((t_idx==0)||(s_idx==0) || (slow_timer_lists==0) ||(running_timer2==0)){
-		LM_ERR("out of shared memory (slow)\n");
+		SHM_MEM_ERROR;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -1011,7 +1011,7 @@ int register_timer(timer_function f, void* param, unsigned int interval)
 
 	t=shm_malloc(sizeof(struct sr_timer));
 	if (t==0){
-		LM_ERR("out of memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	t->id=timer_id++;

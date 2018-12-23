@@ -284,7 +284,7 @@ static char *parse_to_param(char *const buffer, const char *const end,
 						param = (struct to_param *)pkg_malloc(
 								sizeof(struct to_param));
 						if(!param) {
-							LM_ERR("out of memory\n");
+							PKG_MEM_ERROR;
 							goto error;
 						}
 						memset(param, 0, sizeof(struct to_param));

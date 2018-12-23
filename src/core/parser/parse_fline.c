@@ -256,7 +256,9 @@ error:
 			else *(prn+t)=(char)176; /* '°' */
 		LOG(L_DBG, "parsed so far: %.*s\n", offset, ZSW(prn) );
 		pkg_free( prn );
-	};
+	} else {
+		PKG_MEM_ERROR;
+	}
 error1:
 	fl->type=SIP_INVALID;
 	LOG(cfg_get(core, core_cfg, corelog), "parse_first_line: bad message (offset: %d)\n", offset);

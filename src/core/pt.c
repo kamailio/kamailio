@@ -113,7 +113,11 @@ int init_pt(int proc_no)
 	process_lock = lock_alloc();
 	process_lock = lock_init(process_lock);
 	if (pt==0||process_count==0||process_lock==0){
-		LM_ERR("out of memory\n");
+#ifdef SHM_MEM
+		SHM_MEM_ERROR;
+#else
+		PKG_MEM_ERROR;
+#endif
 		return -1;
 	}
 	memset(pt, 0, sizeof(struct process_table)*estimated_proc_no);

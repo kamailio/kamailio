@@ -42,7 +42,7 @@ static inline int new_credentials(struct hdr_field* _h)
 
 	b = (auth_body_t*)pkg_malloc(sizeof(auth_body_t));
 	if (b == 0) {
-		LM_ERR("no memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

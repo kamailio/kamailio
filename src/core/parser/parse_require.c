@@ -54,7 +54,7 @@ int parse_require( struct sip_msg *msg)
 
 		rb = (struct option_tag_body*)pkg_malloc(sizeof(struct option_tag_body));
 		if (rb == 0) {
-			LM_ERR("out of pkg_memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 

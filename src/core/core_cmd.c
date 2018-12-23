@@ -453,7 +453,7 @@ static void core_pwd(rpc_t* rpc, void* c)
 	max_len = pathmax();
 	cwd_buf = pkg_malloc(max_len);
 	if (!cwd_buf) {
-		ERR("core_pwd: No memory left\n");
+		PKG_MEM_ERROR;
 		rpc->fault(c, 500, "Server Ran Out of Memory");
 		return;
 	}

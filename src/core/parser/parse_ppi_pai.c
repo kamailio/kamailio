@@ -83,7 +83,7 @@ int parse_pai_ppi_body(char *buf, int len, p_id_body_t **body)
 	*body = pkg_malloc(sizeof(p_id_body_t) + num_uri * sizeof(to_body_t));
 	if (*body == NULL)
 	{
-		LM_ERR("No pkg memory for pai/ppi body\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(*body, 0, sizeof(p_id_body_t));

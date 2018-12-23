@@ -649,7 +649,7 @@ listen_id:
 			} else {
 				$$=pkg_malloc(strlen(tmp)+1);
 				if ($$==0) {
-					LM_CRIT("cfg. parser: out of memory.\n");
+					PKG_MEM_CRITICAL;
 				} else {
 					strncpy($$, tmp, strlen(tmp)+1);
 				}
@@ -659,7 +659,7 @@ listen_id:
 	| STRING {
 		$$=pkg_malloc(strlen($1)+1);
 		if ($$==0) {
-				LM_CRIT("cfg. parser: out of memory.\n");
+				PKG_MEM_CRITICAL;
 		} else {
 				strncpy($$, $1, strlen($1)+1);
 		}
@@ -668,7 +668,7 @@ listen_id:
 		if ($1){
 			$$=pkg_malloc(strlen($1)+1);
 			if ($$==0) {
-					LM_CRIT("cfg. parser: out of memory.\n");
+					PKG_MEM_CRITICAL;
 			} else {
 					strncpy($$, $1, strlen($1)+1);
 			}
@@ -1470,7 +1470,7 @@ assign_stm:
 	| ADVERTISED_PORT EQUAL NUMBER {
 		tmp=int2str($3, &i_tmp);
 		if ((default_global_port.s=pkg_malloc(i_tmp))==0) {
-			LM_CRIT("cfg. parser: out of memory.\n");
+			PKG_MEM_CRITICAL;
 			default_global_port.len=0;
 		} else {
 			default_global_port.len=i_tmp;
@@ -1789,7 +1789,7 @@ ipv4:
 	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER {
 		$$=pkg_malloc(sizeof(struct ip_addr));
 		if ($$==0) {
-			LM_CRIT("cfg. parser: out of memory.\n");
+			PKG_MEM_CRITICAL;
 		} else {
 			memset($$, 0, sizeof(struct ip_addr));
 			$$->af=AF_INET;
@@ -1818,7 +1818,7 @@ ipv6addr:
 	IPV6ADDR {
 		$$=pkg_malloc(sizeof(struct ip_addr));
 		if ($$==0) {
-			LM_CRIT("cfg. parser: out of memory.\n");
+			PKG_MEM_CRITICAL;
 		} else {
 			memset($$, 0, sizeof(struct ip_addr));
 			$$->af=AF_INET6;
@@ -2271,8 +2271,7 @@ host:
 		if ($1){
 			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 			if ($$==0) {
-				LM_CRIT("cfg. parser: memory allocation"
-							" failure while parsing host\n");
+				PKG_MEM_CRITICAL;
 			} else {
 				memcpy($$, $1, strlen($1));
 				$$[strlen($1)]='.';
@@ -2287,8 +2286,7 @@ host:
 		if ($1){
 			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 			if ($$==0) {
-				LM_CRIT("cfg. parser: memory allocation"
-							" failure while parsing host\n");
+				PKG_MEM_CRITICAL;
 			} else {
 				memcpy($$, $1, strlen($1));
 				$$[strlen($1)]='-';
@@ -2308,8 +2306,11 @@ host_if_id: ID
 		| NUMBER {
 			/* get string version */
 			$$=pkg_malloc(strlen(yy_number_str)+1);
-			if ($$)
+			if ($$==0) {
+				PKG_MEM_ERROR;
+			} else {
 				strcpy($$, yy_number_str);
+			}
 		}
 		;
 
@@ -2319,8 +2320,7 @@ host_or_if:
 		if ($1){
 			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 			if ($$==0) {
-				LM_CRIT("cfg. parser: memory allocation"
-							" failure while parsing host/interface name\n");
+				PKG_MEM_CRITICAL;
 			} else {
 				memcpy($$, $1, strlen($1));
 				$$[strlen($1)]='.';
@@ -2335,8 +2335,7 @@ host_or_if:
 		if ($1){
 			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 			if ($$==0) {
-				LM_CRIT("cfg. parser: memory allocation"
-							" failure while parsing host/interface name\n");
+				PKG_MEM_CRITICAL;
 			} else {
 				memcpy($$, $1, strlen($1));
 				$$[strlen($1)]='-';
@@ -3294,7 +3293,7 @@ cmd:
 	| SET_ADV_ADDRESS LPAREN listen_id RPAREN {
 		$$=0;
 		if ((str_tmp=pkg_malloc(sizeof(str)))==0) {
-			LM_CRIT("cfg. parser: out of memory.\n");
+			PKG_MEM_CRITICAL;
 		} else {
 			str_tmp->s=$3;
 			str_tmp->len=$3?strlen($3):0;
@@ -3308,10 +3307,10 @@ cmd:
 		$$=0;
 		tmp=int2str($3, &i_tmp);
 		if ((str_tmp=pkg_malloc(sizeof(str)))==0) {
-			LM_CRIT("cfg. parser: out of memory.\n");
+			PKG_MEM_CRITICAL;
 		} else {
 			if ((str_tmp->s=pkg_malloc(i_tmp))==0) {
-				LM_CRIT("cfg. parser: out of memory.\n");
+				PKG_MEM_CRITICAL;
 			} else {
 				memcpy(str_tmp->s, tmp, i_tmp);
 				str_tmp->len=i_tmp;
@@ -3680,7 +3679,7 @@ static struct name_lst* mk_name_lst(char* host, int flags)
 	if (host==0) return 0;
 	l=pkg_malloc(sizeof(struct name_lst));
 	if (l==0) {
-		LM_CRIT("cfg. parser: out of memory.\n");
+		PKG_MEM_CRITICAL;
 	} else {
 		l->name=host;
 		l->flags=flags;
@@ -3696,7 +3695,7 @@ static struct socket_id* mk_listen_id(char* host, int proto, int port)
 	if (host==0) return 0;
 	l=pkg_malloc(sizeof(struct socket_id));
 	if (l==0) {
-		LM_CRIT("cfg. parser: out of memory.\n");
+		PKG_MEM_CRITICAL;
 	} else {
 		l->addr_lst=mk_name_lst(host, 0);
 		if (l->addr_lst==0){
@@ -3731,7 +3730,7 @@ static struct socket_id* mk_listen_id2(struct name_lst* addr_l, int proto,
 	if (addr_l==0) return 0;
 	l=pkg_malloc(sizeof(struct socket_id));
 	if (l==0) {
-		LM_CRIT("cfg. parser: out of memory.\n");
+		PKG_MEM_CRITICAL;
 	} else {
 		l->flags=addr_l->flags;
 		l->port=port;

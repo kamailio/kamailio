@@ -114,14 +114,18 @@ int init_counters()
 	grp_no = 0;
 	cnt_id2record_size = CNT_ID2RECORD_SIZE;
 	cnt_id2record = pkg_malloc(sizeof(*cnt_id2record) * cnt_id2record_size);
-	if (cnt_id2record == 0)
+	if (cnt_id2record == 0) {
+		PKG_MEM_ERROR;
 		goto error;
+	}
 	memset(cnt_id2record, 0, sizeof(*cnt_id2record) * cnt_id2record_size);
 	grp_sorted_max_size = GRP_SORTED_SIZE;
 	grp_sorted_crt_size = 0;
 	grp_sorted = pkg_malloc(sizeof(*grp_sorted) * grp_sorted_max_size);
-	if (grp_sorted == 0)
+	if (grp_sorted == 0) {
+		PKG_MEM_ERROR;
 		goto error;
+	}
 	memset(grp_sorted, 0, sizeof(*grp_sorted) * grp_sorted_max_size);
 	return 0;
 error:
@@ -205,8 +209,10 @@ int counters_prefork_init(int max_process_no)
 	   the final shm version (with max_process_no rows) */
 	old = _cnts_vals;
 	_cnts_vals = shm_malloc(size);
-	if (_cnts_vals == 0)
+	if (_cnts_vals == 0) {
+		SHM_MEM_ERROR;
 		return -1;
+	}
 	memset(_cnts_vals, 0, size);
 	cnts_max_rows = max_process_no;
 	/* copy prefork values into the newly shm array */
@@ -232,8 +238,10 @@ static struct grp_record* grp_hash_add(str* group)
 	/* grp_rec copied at &g->u.data */
 	g = pkg_malloc(sizeof(struct str_hash_entry) - sizeof(g->u.data) +
 					sizeof(*grp_rec) + group->len + 1);
-	if (g == 0)
+	if (g == 0) {
+		PKG_MEM_ERROR;
 		goto error;
+	}
 	grp_rec = (struct grp_record*)&g->u.data[0];
 	grp_rec->group.s = (char*)(grp_rec + 1);
 	grp_rec->group.len = group->len;
@@ -330,8 +338,10 @@ static struct counter_record* cnt_hash_add(
 	e = pkg_malloc(sizeof(struct str_hash_entry) - sizeof(e->u.data) +
 					sizeof(*cnt_rec) + name->len + 1 + group->len + 1 +
 					doc_len + 1);
-	if (e == 0)
+	if (e == 0) {
+		PKG_MEM_ERROR;
 		goto error;
+	}
 	cnt_rec = (struct counter_record*)&e->u.data[0];
 	cnt_rec->group.s = (char*)(cnt_rec + 1);
 	cnt_rec->group.len = group->len;

@@ -84,7 +84,7 @@ int parse_sipifmatch(struct hdr_field* _h)
 
 	e = (str*)pkg_malloc(sizeof(str));
 	if (e == 0) {
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

@@ -110,7 +110,7 @@ int parse_expires(struct hdr_field* _h)
 
 	e = (exp_body_t*)pkg_malloc(sizeof(exp_body_t));
 	if (e == 0) {
-		LM_ERR("No pkg memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

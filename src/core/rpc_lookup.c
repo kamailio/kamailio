@@ -49,7 +49,12 @@ int init_rpcs(void)
 	str_hash_init(&rpc_hash_table);
 	rpc_sarray_max_size=RPC_SARRAY_SIZE;
 	rpc_sarray=pkg_malloc(sizeof(*rpc_sarray)* rpc_sarray_max_size);
-	rpc_sarray_crt_size=0;
+	if (rpc_sarray) {
+		rpc_sarray_crt_size=0;
+	} else {
+		PKG_MEM_ERROR;
+		return -1;
+	}
 	return 0;
 }
 
@@ -103,7 +108,7 @@ static int rpc_hash_add(struct rpc_export* rpc)
 #endif /* RPC_COPY_EXPORT */
 	
 	if (e==0){
-		ERR("out of memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 #ifdef RPC_COPY_EXPORT

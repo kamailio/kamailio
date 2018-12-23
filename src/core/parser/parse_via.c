@@ -2510,7 +2510,7 @@ main_via:
 							vb->params.s = param_start;
 						param = pkg_malloc(sizeof(struct via_param));
 						if(param == 0) {
-							LM_ERR("mem. allocation error\n");
+							PKG_MEM_ERROR;
 							goto error;
 						}
 						memset(param, 0, sizeof(struct via_param));
@@ -2691,7 +2691,7 @@ nextvia:
 	}
 	vb->next = pkg_malloc(sizeof(struct via_body));
 	if(vb->next == 0) {
-		LM_ERR("out of memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	vb = vb->next;

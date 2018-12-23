@@ -175,7 +175,7 @@ static int hostent_cpy(struct hostent *dst, struct hostent* src)
 	int ret;
 	HOSTENT_CPY(dst, src, pkg_malloc, pkg_free);
 error:
-	LM_CRIT("memory allocation failure\n");
+	PKG_MEM_CRITICAL;
 	return ret;
 }
 
@@ -185,7 +185,7 @@ static int hostent_shm_cpy(struct hostent *dst, struct hostent* src)
 	int ret;
 	HOSTENT_CPY(dst, src, shm_malloc, shm_free);
 error:
-	LM_CRIT("memory allocation failure\n");
+	SHM_MEM_CRITICAL;
 	return ret;
 }
 
@@ -217,7 +217,7 @@ error:
 	return 0;
 }
 
-
+/* FIXME - we should use the same error logic as in HOSTENT_CPY */
 #define MK_PROXY(name, port, protocol, p_malloc, p_free, he_cpy)		\
 	do {																\
 		struct proxy_l* p;												\
@@ -280,7 +280,7 @@ struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
 
 	p=(struct proxy_l*) pkg_malloc(sizeof(struct proxy_l));
 	if (p==0){
-		LM_CRIT("memory allocation failure\n");
+		PKG_MEM_CRITICAL;
 		goto error;
 	}
 	memset(p,0,sizeof(struct proxy_l));
@@ -291,12 +291,14 @@ struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
 	p->host.h_length=ip->len;
 	p->host.h_addr_list=pkg_malloc(2*sizeof(char*));
 	if (p->host.h_addr_list==0) {
+		PKG_MEM_ERROR;
 		pkg_free(p);
 		goto error;
 	}
 	p->host.h_addr_list[1]=0;
 	p->host.h_addr_list[0]=pkg_malloc(ip->len+1);
 	if (p->host.h_addr_list[0]==0){
+		PKG_MEM_ERROR;
 		pkg_free(p->host.h_addr_list);
 		pkg_free(p);
 		goto error;

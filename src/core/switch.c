@@ -41,7 +41,10 @@ static struct switch_cond_table* mk_switch_cond_table(int n)
 	sct=pkg_malloc(ROUND_INT(sizeof(*sct))+
 					ROUND_POINTER(n*sizeof(sct->cond[0]))+
 					n*sizeof(sct->jump[0]));
-	if (sct==0) return 0;
+	if (sct==0) {
+		PKG_MEM_ERROR;
+		return 0;
+	}
 	sct->n=n;
 	sct->cond=(int*)((char*)sct+ROUND_INT(sizeof(*sct)));
 	sct->jump=(struct action**)
@@ -68,7 +71,10 @@ static struct switch_jmp_table* mk_switch_jmp_table(int jmp_size, int rest)
 			ROUND_POINTER(rest*sizeof(jt->rest.cond[0]))+
 			rest*sizeof(jt->rest.jump[0]);
 	jt=pkg_malloc(size);
-	if (jt == 0) return 0;
+	if (jt == 0) {
+		PKG_MEM_ERROR;
+		return 0;
+	}
 	memset(jt, 0, size);
 	jt->tbl = (struct action**)((char*) jt + ROUND_POINTER(sizeof(*jt)));
 	jt->rest.cond = (int*)
@@ -92,7 +98,10 @@ static struct match_cond_table* mk_match_cond_table(int n)
 	mct=pkg_malloc(ROUND_POINTER(sizeof(*mct))+
 					ROUND_POINTER(n*sizeof(mct->match[0]))+
 					n*sizeof(mct->jump[0]));
-	if (mct==0) return 0;
+	if (mct==0) {
+		PKG_MEM_ERROR;
+		return 0;
+	}
 	mct->n=n;
 	mct->match=(struct match_str*)((char*)mct+ROUND_POINTER(sizeof(*mct)));
 	mct->jump=(struct action**)
@@ -242,7 +251,7 @@ int fix_switch(struct action* t)
 	cond=pkg_malloc(sizeof(cond[0])*n);
 	jmp_bm=pkg_malloc(sizeof(jmp_bm[0])*n);
 	if (cond==0 || jmp_bm==0){
-		LM_ERR("memory allocation failure\n");
+		PKG_MEM_ERROR;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -479,7 +488,7 @@ static int fix_match(struct action* t)
 			}
 			if (c->type==MATCH_RE){
 				if ((regex=pkg_malloc(sizeof(regex_t))) == 0){
-					LM_ERR("out of memory\n");
+					PKG_MEM_ERROR;
 					ret=E_OUT_OF_MEM;
 					goto error;
 				}
@@ -560,7 +569,7 @@ static int fix_match(struct action* t)
 	match=pkg_malloc(sizeof(match[0])*n);
 	jmp_bm=pkg_malloc(sizeof(jmp_bm[0])*n);
 	if (match==0 || jmp_bm==0){
-		LM_ERR("memory allocation failure\n");
+		PKG_MEM_ERROR;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}

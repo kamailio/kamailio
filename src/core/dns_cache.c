@@ -335,6 +335,7 @@ int init_dns_cache()
 	}
 	dns_cache_mem_used=shm_malloc(sizeof(*dns_cache_mem_used));
 	if (dns_cache_mem_used==0){
+		SHM_MEM_ERROR;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -342,6 +343,7 @@ int init_dns_cache()
 
 	dns_last_used_lst=shm_malloc(sizeof(*dns_last_used_lst));
 	if (dns_last_used_lst==0){
+		SHM_MEM_ERROR;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -349,6 +351,7 @@ int init_dns_cache()
 
 	dns_hash=shm_malloc(sizeof(struct dns_hash_head)*DNS_HASH_SIZE);
 	if (dns_hash==0){
+		SHM_MEM_ERROR;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -370,6 +373,7 @@ int init_dns_cache()
 #ifdef DNS_WATCHDOG_SUPPORT
 	dns_servers_up=shm_malloc(sizeof(atomic_t));
 	if (dns_servers_up==0){
+		SHM_MEM_ERROR;
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -416,6 +420,7 @@ int init_dns_cache_stats(int iproc_num)
 
 	dns_cache_stats=shm_malloc(sizeof(*dns_cache_stats) * iproc_num);
 	if (dns_cache_stats==0){
+		SHM_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
 	memset(dns_cache_stats, 0, sizeof(*dns_cache_stats) * iproc_num);
@@ -757,7 +762,7 @@ inline static struct dns_hash_entry* dns_cache_mk_bad_entry(str* name,
 	size=sizeof(struct dns_hash_entry)+name->len-1+1;
 	e=shm_malloc(size);
 	if (e==0){
-		LM_ERR("out of memory\n");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	memset(e, 0, size); /* init with 0*/
@@ -798,7 +803,7 @@ inline static struct dns_hash_entry* dns_cache_mk_ip_entry(str* name,
 			sizeof(struct dns_rr)+ ip->len;
 	e=shm_malloc(size);
 	if (e==0){
-		LM_ERR("out of memory\n");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	memset(e, 0, size); /* init with 0*/
@@ -851,7 +856,7 @@ static struct dns_hash_entry* dns_cache_mk_srv_entry(str* name,
 
 	e=shm_malloc(size);
 	if (e==0){
-		LM_ERR("out of memory\n");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	memset(e, 0, size); /* init with 0*/
@@ -1104,7 +1109,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	size+=ROUND_POINTER(sizeof(struct dns_hash_entry)+name->len-1+1);
 	e=shm_malloc(size);
 	if (e==0){
-		LM_ERR("out of memory\n");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	memset(e, 0, size); /* init with 0 */
@@ -1411,7 +1416,7 @@ found:
 	for (r=0; r<no_records; r++){
 		rec[r].e=shm_malloc(rec[r].size);
 		if (rec[r].e==0){
-			LM_ERR("out of memory\n");
+			SHM_MEM_ERROR;
 			goto error;
 		}
 		memset(rec[r].e, 0, rec[r].size); /* init with 0*/
@@ -3988,7 +3993,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 
 	new=shm_malloc(rounded_size+rr_size+rdata_size);
 	if (!new) {
-		LM_ERR("out of memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(new, 0, rounded_size+rr_size+rdata_size);

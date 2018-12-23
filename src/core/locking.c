@@ -101,7 +101,7 @@ rec_lock_set_t* rec_lock_set_alloc(int n)
 	rec_lock_set_t* ls;
 	ls=(rec_lock_set_t*)shm_malloc(sizeof(rec_lock_set_t)+n*sizeof(rec_lock_t));
 	if (ls==0){
-		LM_CRIT("could not allocate rec_lock_set\n");
+		SHM_MEM_CRITICAL;
 	}else{
 		ls->locks=(rec_lock_t*)((char*)ls+sizeof(rec_lock_set_t));
 		ls->size=n;

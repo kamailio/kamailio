@@ -1433,8 +1433,7 @@ static char* addstr(struct str_buf* dst_b, char* src, int len)
 
 	return dst_b->s;
 error:
-	LM_CRIT("lex: memory allocation error\n");
-	LM_CRIT("lex: try to increase pkg size with -M parameter\n");
+	PKG_MEM_CRITICAL;
 	exit(-1);
 }
 
@@ -1602,7 +1601,7 @@ static int sr_push_yy_state(char *fin, int mode)
 		newf = (char*)pkg_malloc(x-tmpfiname+strlen(fbuf)+2);
 		if(newf==0)
 		{
-			LM_CRIT("no more pkg\n");
+			PKG_MEM_CRITICAL;
 			return -1;
 		}
 		newf[0] = '\0';
@@ -1664,7 +1663,7 @@ static int sr_push_yy_state(char *fin, int mode)
 		{
 			if(newf!=fbuf)
 				pkg_free(newf);
-			LM_CRIT("no more pkg\n");
+			PKG_MEM_CRITICAL;
 			return -1;
 		}
 		if(newf==fbuf)
@@ -1673,7 +1672,7 @@ static int sr_push_yy_state(char *fin, int mode)
 			if(fn->fname==0)
 			{
 				pkg_free(fn);
-				LM_CRIT("no more pkg!\n");
+				PKG_MEM_CRITICAL;
 				return -1;
 			}
 			strcpy(fn->fname, fbuf);
@@ -1793,7 +1792,7 @@ int pp_define(int len, const char * text)
 	pp_defines[pp_num_defines].name.len = len;
 	pp_defines[pp_num_defines].name.s = (char*)pkg_malloc(len+1);
 	if(pp_defines[pp_num_defines].name.s==NULL) {
-		LM_CRIT("no more memory to define: %.*s\n", len, text);
+		PKG_MEM_CRITICAL;
 		return -1;
 	}
 	memcpy(pp_defines[pp_num_defines].name.s, text, len);

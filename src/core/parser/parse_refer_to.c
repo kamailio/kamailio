@@ -58,7 +58,7 @@ int parse_refer_to_header( struct sip_msg *msg )
 	/* first, get some memory */
 	refer_to_b = pkg_malloc(sizeof(struct to_body));
 	if (refer_to_b == 0) {
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 

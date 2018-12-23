@@ -242,7 +242,7 @@ int register_flag(char* name, int pos)
 	
 	e=pkg_malloc(sizeof(struct flag_entry));
 	if (e==0){
-		LM_ERR("memory allocation failure\n");
+		PKG_MEM_ERROR;
 		return -3;
 	}
 	e->name.s=name;

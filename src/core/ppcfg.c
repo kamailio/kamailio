@@ -57,7 +57,7 @@ int pp_subst_add(char *data)
 	pr = (pp_subst_rule_t*)pkg_malloc(sizeof(pp_subst_rule_t));
 	if(pr==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(pr, 0, sizeof(pp_subst_rule_t));
