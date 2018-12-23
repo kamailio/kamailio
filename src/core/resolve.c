@@ -54,9 +54,6 @@ counter_def_t dns_cnt_defs[] =  {
 	{0, 0, 0, 0, 0, 0 }
 };
 
-/* mallocs for local stuff */
-#define local_malloc pkg_malloc
-#define local_free   pkg_free
 
 #ifdef USE_NAPTR
 static int naptr_proto_pref[PROTO_LAST+1];
@@ -305,7 +302,7 @@ struct srv_rdata* dns_srv_parser( unsigned char* msg, unsigned char* end,
 	if (len>255)
 		goto error;
 	/* alloc enought space for the struct + null terminated name */
-	srv=local_malloc(sizeof(struct srv_rdata)-1+len+1);
+	srv=pkg_malloc(sizeof(struct srv_rdata)-1+len+1);
 	if (srv==0){
 		PKG_MEM_ERROR;
 		goto error;
@@ -319,7 +316,7 @@ struct srv_rdata* dns_srv_parser( unsigned char* msg, unsigned char* end,
 	
 	return srv;
 error:
-	if (srv) local_free(srv);
+	if (srv) pkg_free(srv);
 	return 0;
 }
 
@@ -391,7 +388,7 @@ struct naptr_rdata* dns_naptr_parser( unsigned char* msg, unsigned char* end,
 	len=strlen(repl);
 	if (len>255)
 		goto error;
-	naptr=local_malloc(sizeof(struct naptr_rdata)+flags_len+services_len+
+	naptr=pkg_malloc(sizeof(struct naptr_rdata)+flags_len+services_len+
 						regexp_len+len+1-1);
 	if (naptr == 0){
 		PKG_MEM_ERROR;
@@ -416,7 +413,7 @@ struct naptr_rdata* dns_naptr_parser( unsigned char* msg, unsigned char* end,
 	
 	return naptr;
 error:
-	if (naptr) local_free(naptr);
+	if (naptr) pkg_free(naptr);
 	return 0;
 }
 
@@ -437,7 +434,7 @@ struct cname_rdata* dns_cname_parser( unsigned char* msg, unsigned char* end,
 	if (len>255)
 		goto error;
 	/* alloc sizeof struct + space for the null terminated name */
-	cname=local_malloc(sizeof(struct cname_rdata)-1+len+1);
+	cname=pkg_malloc(sizeof(struct cname_rdata)-1+len+1);
 	if(cname==0){
 		PKG_MEM_ERROR;
 		goto error;
@@ -447,7 +444,7 @@ struct cname_rdata* dns_cname_parser( unsigned char* msg, unsigned char* end,
 	cname->name[cname->name_len]=0;
 	return cname;
 error:
-	if (cname) local_free(cname);
+	if (cname) pkg_free(cname);
 	return 0;
 }
 
@@ -461,7 +458,7 @@ struct a_rdata* dns_a_parser(unsigned char* rdata, unsigned char* eor)
 	struct a_rdata* a;
 	
 	if (rdata+4>eor) goto error;
-	a=(struct a_rdata*)local_malloc(sizeof(struct a_rdata));
+	a=(struct a_rdata*)pkg_malloc(sizeof(struct a_rdata));
 	if (a==0){
 		PKG_MEM_ERROR;
 		goto error;
@@ -481,7 +478,7 @@ struct aaaa_rdata* dns_aaaa_parser(unsigned char* rdata, unsigned char* eor)
 	struct aaaa_rdata* aaaa;
 	
 	if (rdata+16>eor) goto error;
-	aaaa=(struct aaaa_rdata*)local_malloc(sizeof(struct aaaa_rdata));
+	aaaa=(struct aaaa_rdata*)pkg_malloc(sizeof(struct aaaa_rdata));
 	if (aaaa==0){
 		PKG_MEM_ERROR;
 		goto error;
@@ -531,7 +528,7 @@ static struct txt_rdata* dns_txt_parser(unsigned char* msg, unsigned char* end,
 	}while(p<end);
 	/* alloc sizeof struct + space for the dns_cstr array + space for
 	   the strings */
-	txt=local_malloc(sizeof(struct txt_rdata) +(n-1)*sizeof(struct dns_cstr)+
+	txt=pkg_malloc(sizeof(struct txt_rdata) +(n-1)*sizeof(struct dns_cstr)+
 						str_size);
 	if(unlikely(txt==0)){
 		PKG_MEM_ERROR;
@@ -555,7 +552,7 @@ static struct txt_rdata* dns_txt_parser(unsigned char* msg, unsigned char* end,
 	}
 	return txt;
 error:
-	if (txt) local_free(txt);
+	if (txt) pkg_free(txt);
 	return 0;
 }
 
@@ -602,7 +599,7 @@ static struct ebl_rdata* dns_ebl_parser(unsigned char* msg, unsigned char* end,
 		goto error;
 	apex_len=strlen(apex);
 	/* alloc sizeof struct + space for the 2 null-terminated strings */
-	ebl=local_malloc(sizeof(struct ebl_rdata)-1+sep_len+1+apex_len+1);
+	ebl=pkg_malloc(sizeof(struct ebl_rdata)-1+sep_len+1+apex_len+1);
 	if (ebl==0){
 		PKG_MEM_ERROR;
 		goto error;
@@ -619,7 +616,7 @@ static struct ebl_rdata* dns_ebl_parser(unsigned char* msg, unsigned char* end,
 	
 	return ebl;
 error:
-	if (ebl) local_free(ebl);
+	if (ebl) pkg_free(ebl);
 	return 0;
 }
 
@@ -640,7 +637,7 @@ struct ptr_rdata* dns_ptr_parser( unsigned char* msg, unsigned char* end,
 	if (len>255)
 		goto error;
 	/* alloc sizeof struct + space for the null terminated name */
-	pname=local_malloc(sizeof(struct ptr_rdata)-1+len+1);
+	pname=pkg_malloc(sizeof(struct ptr_rdata)-1+len+1);
 	if(pname==0){
 		PKG_MEM_ERROR;
 		goto error;
@@ -650,7 +647,7 @@ struct ptr_rdata* dns_ptr_parser( unsigned char* msg, unsigned char* end,
 	pname->ptrdname[pname->ptrdname_len]=0;
 	return pname;
 error:
-	if (pname) local_free(pname);
+	if (pname) pkg_free(pname);
 	return 0;
 }
 
@@ -665,8 +662,8 @@ void free_rdata_list(struct rdata* head)
 	while (l != 0) {
 		next_l = l->next;
 		/* free the parsed rdata*/
-		if (l->rdata) local_free(l->rdata);
-		local_free(l);
+		if (l->rdata) pkg_free(l->rdata);
+		pkg_free(l);
 		l = next_l;
 	}
 }
@@ -833,7 +830,7 @@ again:
 		}
 		/* expand the "type" record  (rdata)*/
 
-		rd=(struct rdata*) local_malloc(sizeof(struct rdata)+rec_name_len+
+		rd=(struct rdata*) pkg_malloc(sizeof(struct rdata)+rec_name_len+
 										1-1);
 		if (rd==0){
 			PKG_MEM_ERROR;
@@ -972,7 +969,7 @@ again:
 	 * (queried) to long name (answered)
 	 */
 	if ((search_list_used==1)&&(fullname_rd!=0)) {
-		rd=(struct rdata*) local_malloc(sizeof(struct rdata)+name_len+1-1);
+		rd=(struct rdata*) pkg_malloc(sizeof(struct rdata)+name_len+1-1);
 		if (unlikely(rd==0)){
 			PKG_MEM_ERROR;
 			goto error;
@@ -985,7 +982,7 @@ again:
 		rd->name[name_len]=0;
 		rd->name_len=name_len;
 		/* alloc sizeof struct + space for the null terminated name */
-		rd->rdata=(void*)local_malloc(sizeof(struct cname_rdata)-1+
+		rd->rdata=(void*)pkg_malloc(sizeof(struct cname_rdata)-1+
 										head->name_len+1);
 		if(unlikely(rd->rdata==0)){
 			PKG_MEM_ERROR;
@@ -1009,7 +1006,7 @@ error_parse:
 				name, type,
 				p, end, rtype, class, ttl, rdlength);
 error_rd:
-		if (rd) local_free(rd); /* rd->rdata=0 & rd is not linked yet into
+		if (rd) pkg_free(rd); /* rd->rdata=0 & rd is not linked yet into
 								   the list */
 error:
 		LM_ERR("get_record\n");

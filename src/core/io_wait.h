@@ -33,9 +33,6 @@
  *                to int). 0 has a special not set/not init. meaning
  *                (a lot of sanity checks and the sigio_rt code are based on
  *                 this assumption)
- *     local_malloc (defaults to pkg_malloc)
- *     local_free   (defaults to pkg_free)
- *
  */
 
 #ifndef _io_wait_h

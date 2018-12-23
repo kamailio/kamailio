@@ -100,9 +100,6 @@
 #include "ut.h"
 #include "cfg/cfg_struct.h"
 
-#define local_malloc pkg_malloc
-#define local_free   pkg_free
-
 #include <fcntl.h> /* must be included after io_wait.h if SIGIO_RT is used */
 
 
