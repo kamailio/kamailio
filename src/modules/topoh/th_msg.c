@@ -701,7 +701,10 @@ int th_unmask_route(sip_msg_t *msg)
 
 				if(th_get_uri_param_value(&rr->nameaddr.uri, &th_uparam_name,
 							&eval)<0 || eval.len<=0)
-					return -1;
+				{
+					rr = rr->next;
+					continue;
+				}
 
 				out.s = th_mask_decode(eval.s, eval.len,
 							&th_uparam_prefix, 0, &out.len);
