@@ -88,6 +88,12 @@ sed -i -e '/ruby-dev/d' -e '/^Package: kamailio-ruby-modules/,/^$/d' \
 sed -i -e 's/ ruby[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ ruby/' ${DIST}/rules
 
+# no python3 for app_python3
+sed -i -e '/python3-dev/d' -e '/^Package: kamailio-python3-modules/,/^$/d' \
+	-e '/python3/d' ${DIST}/control
+sed -i -e 's/ python3[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ python3/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
