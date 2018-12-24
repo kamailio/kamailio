@@ -923,7 +923,7 @@ static int fixup_regex_substring(void** param, int param_no)
 		return fixup_spve_all(param, param_no);
 	}
 
-	if (param_no == 3 || param_no == 3) {
+	if (param_no == 3 || param_no == 4) {
 		return fixup_igp_all(param, param_no);
 	}
 
