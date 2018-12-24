@@ -52,6 +52,8 @@ Build-Depends:
  pkg-config,
  python,
  python-dev,
+ python3,
+ python3-dev,
  ruby-dev,
  unixodbc-dev,
  uuid-dev,
@@ -275,6 +277,24 @@ Description: The app_python module for the Kamailio SIP server
  per second even on low-budget hardware.
  .
  This package provides the app_python module, an extension allowing to
+ execute embedded Python applications within the Kamailio SIP routing script.
+
+Package: kamailio-python3-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ python3-dev,
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: The app_python3 module for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the app_python3 module, an extension allowing to
  execute embedded Python applications within the Kamailio SIP routing script.
 
 Package: kamailio-ruby-modules
