@@ -833,6 +833,7 @@ static int ki_regex_substring(sip_msg_t* msg, str *input, str *regex,
 
 	if (0 != rc) {
 		LM_ERR("regular experession coudnt be compiled, Error code: (%d)\n", rc);
+		pkg_free(pmatch);
 		regfree(&preg);
 		return -1;
 	}
@@ -841,12 +842,14 @@ static int ki_regex_substring(sip_msg_t* msg, str *input, str *regex,
 	regfree(&preg);
 	if(rc!=0) {
 		LM_DBG("no matches\n");
+		pkg_free(pmatch);
 		return -2;
 	}
 
 	/* matched */
 	if (pmatch[mindex].rm_so==-1) {
 		LM_WARN("invalid offset for regular expression result\n");
+		pkg_free(pmatch);
 		return -1;
 	}
 
@@ -855,6 +858,7 @@ static int ki_regex_substring(sip_msg_t* msg, str *input, str *regex,
 
 	if (pmatch[mindex].rm_so==pmatch[mindex].rm_eo) {
 		LM_WARN("Matched string is empty\n");
+		pkg_free(pmatch);
 		return -1;
 	}
 
@@ -863,6 +867,7 @@ static int ki_regex_substring(sip_msg_t* msg, str *input, str *regex,
 
 	if(tempstr.s== NULL || tempstr.len<=0) {
 		LM_WARN("matched token is null\n");
+		pkg_free(pmatch);
 		return -1;
 	}
 
@@ -871,6 +876,7 @@ static int ki_regex_substring(sip_msg_t* msg, str *input, str *regex,
 	valx.rs.len=tempstr.len;
 	LM_DBG("result: %.*s\n", valx.rs.len, valx.rs.s);
 	pvresult->setf(msg, &pvresult->pvp, (int)EQ_T, &valx);
+	pkg_free(pmatch);
 
 	return 1;
 }
