@@ -294,7 +294,9 @@ void db_redis_free_tables(km_redis_con_t *con) {
     struct str_hash_table *ht;
     struct str_hash_table *col_ht;
     struct str_hash_entry *he;
+    struct str_hash_entry *he_b;
     struct str_hash_entry *col_he;
+    struct str_hash_entry *col_he_b;
     struct str_hash_entry *last;
     struct str_hash_entry *col_last;
     redis_table_t *table;
@@ -305,13 +307,13 @@ void db_redis_free_tables(km_redis_con_t *con) {
     ht = &con->tables;
     for (i = 0; i < ht->size; ++i) {
         last = (&ht->table[i])->prev;
-        clist_foreach(&ht->table[i], he, next) {
+        clist_foreach_safe(&ht->table[i], he, he_b, next) {
             table = (redis_table_t*) he->u.p;
 
             col_ht = &table->columns;
             for (j = 0; j < col_ht->size; ++j) {
                 col_last = (&col_ht->table[j])->prev;
-                clist_foreach(&col_ht->table[j], col_he, next) {
+                clist_foreach_safe(&col_ht->table[j], col_he, col_he_b, next) {
                     pkg_free(col_he->key.s);
                     if (col_he == col_last) {
                         pkg_free(col_he);
