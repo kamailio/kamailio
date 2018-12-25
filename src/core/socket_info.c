@@ -215,7 +215,8 @@ error:
 
 
 
-/* another helper function, it just creates a socket_info struct */
+/* another helper function, it just creates a socket_info struct
+ * allocates a si and a si->name in new pkg memory */
 static inline struct socket_info* new_sock_info(	char* name,
 								struct name_lst* addr_l,
 								unsigned short port, unsigned short proto,
@@ -702,7 +703,7 @@ static struct socket_info* new_sock2list(char* name, struct name_lst* addr_l,
 									struct socket_info** list)
 {
 	struct socket_info* si;
-	
+	/* allocates si and si->name in new pkg memory */
 	si=new_sock_info(name, addr_l, port, proto, usename, useport, flags);
 	if (si==0){
 		LM_ERR("new_sock_info failed\n");
@@ -718,6 +719,8 @@ static struct socket_info* new_sock2list(char* name, struct name_lst* addr_l,
 		si->mcast.s=(char*)pkg_malloc(si->mcast.len+1);
 		if (si->mcast.s==0) {
 			PKG_MEM_ERROR;
+			pkg_free(si->name.s);
+			pkg_free(si);
 			return 0;
 		}
 		strcpy(si->mcast.s, mcast);
