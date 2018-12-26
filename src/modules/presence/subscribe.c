@@ -2694,14 +2694,14 @@ int restore_db_subs(void)
 				if(event== NULL)
 				{
 					free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
-					ERR_MEM(SHM_MEM_STR);
+					ERR_MEM("shm");
 				}
 				memset(event, 0, sizeof(pres_ev_t));
 				event->name.s= (char*)shm_malloc(ev_sname.len* sizeof(char));
 				if(event->name.s== NULL)
 				{
 					free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
-					ERR_MEM(SHM_MEM_STR);
+					ERR_MEM("shm");
 				}
 				memcpy(event->name.s,ev_sname.s, ev_sname.len);
 				event->name.len= ev_sname.len;
