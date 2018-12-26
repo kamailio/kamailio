@@ -16,6 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/**
+ * \file
+ * \brief Main definitions for memory manager
+ * 
+ * Main definitions for PKG memory manager, like malloc, free and realloc
+ * \ingroup mem
+ */
 
 #ifndef _sr_pkg_h_
 #define _sr_pkg_h_

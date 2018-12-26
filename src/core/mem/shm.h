@@ -16,6 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/**
+ * \file
+ * \brief  Shared memory functions
+ * \ingroup mem
+ */
 
 #ifndef _sr_shm_h_
 #define _sr_shm_h_

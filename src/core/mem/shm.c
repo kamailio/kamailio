@@ -16,6 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/**
+ * \file
+ * \brief  Shared memory functions
+ * \ingroup mem
+ */
+
 #include <stdlib.h>
 
 #include "../config.h"
