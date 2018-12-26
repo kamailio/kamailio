@@ -61,7 +61,6 @@
 //	}
 //#endif
 //
-//#ifdef SHM_MEM
 //
 //	if (init_shm_mallocs()==-1)
 //		goto error;
@@ -69,7 +68,6 @@
 //		LM_DBG( "Memory status (shm):\n");
 //		shm_status();
 //	}
-//#endif
 //	return 1;
 //error:
 //	return 0;

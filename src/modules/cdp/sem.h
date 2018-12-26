@@ -44,8 +44,6 @@
 #ifndef __SEM_H
 #define __SEM_H
 
-#ifdef SHM_MEM
-
 //	#include "../../core/mem/mem.h"
 //	#include "../../core/mem/shm_mem.h"
 
@@ -88,9 +86,5 @@ typedef sem_t gen_sem_t;
 #define sem_timedget(sem,abs_timeout) sem_trywait(sem,abs_timeout)
 
 #define sem_release(sem) sem_post(sem)
-
-#else
-//#error "locking requires shared memory support"
-#endif
 
 #endif
