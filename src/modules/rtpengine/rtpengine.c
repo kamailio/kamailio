@@ -1633,6 +1633,14 @@ mod_init(void)
 	return 0;
 }
 
+#define rtpe_reload_lock_get(plock) do { \
+	if (rtpp_db_url.s != NULL) lock_get(plock); \
+} while(0)
+
+#define rtpe_reload_lock_release(plock) do { \
+	if (rtpp_db_url.s != NULL) lock_release(plock); \
+} while(0)
+
 static int build_rtpp_socks() {
 	int n, i;
 	char *cp;
@@ -1644,9 +1652,9 @@ static int build_rtpp_socks() {
 	int ip_mtu_discover = IP_PMTUDISC_DONT;
 #endif
 
-	lock_get(rtpp_no_lock);
+	rtpe_reload_lock_get(rtpp_no_lock);
 	current_rtpp_no = *rtpp_no;
-	lock_release(rtpp_no_lock);
+	rtpe_reload_lock_release(rtpp_no_lock);
 
 	if (current_rtpp_no == rtpp_socks_size)
 		return 0;
@@ -1667,11 +1675,11 @@ static int build_rtpp_socks() {
 	}
 	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size));
 
-	lock_get(rtpp_set_list->rset_head_lock);
+	rtpe_reload_lock_get(rtpp_set_list->rset_head_lock);
 	for (rtpp_list = rtpp_set_list->rset_first; rtpp_list != 0;
 		rtpp_list = rtpp_list->rset_next) {
 
-		lock_get(rtpp_list->rset_lock);
+		rtpe_reload_lock_get(rtpp_list->rset_lock);
 		for (pnode=rtpp_list->rn_first; pnode!=0; pnode = pnode->rn_next) {
 			char *hostname;
 
@@ -1762,9 +1770,9 @@ static int build_rtpp_socks() {
 rptest:
 			pnode->rn_disabled = rtpp_test(pnode, 0, 1);
 		}
-		lock_release(rtpp_list->rset_lock);
+		rtpe_reload_lock_release(rtpp_list->rset_lock);
 	}
-	lock_release(rtpp_set_list->rset_head_lock);
+	rtpe_reload_lock_release(rtpp_set_list->rset_head_lock);
 
 	return 0;
 }
