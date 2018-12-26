@@ -68,10 +68,8 @@
 #include "core/udp_server.h"
 #include "core/globals.h"
 #include "core/mem/mem.h"
-#ifdef SHM_MEM
 #include "core/mem/shm_mem.h"
 #include "core/shm_init.h"
-#endif /* SHM_MEM */
 #include "core/sr_module.h"
 #include "core/timer.h"
 #include "core/parser/msg_parser.h"
@@ -224,9 +222,7 @@ void print_ct_constants(void)
 	printf("ADAPTIVE_WAIT_LOOPS=%d, ", ADAPTIVE_WAIT_LOOPS);
 #endif
 /*
-#ifdef SHM_MEM
 	printf("SHM_MEM_SIZE=%d, ", SHM_MEM_SIZE);
-#endif
 */
 	printf("MAX_RECV_BUFFER_SIZE %d"
 			" MAX_URI_SIZE %d, BUF_SIZE %d, DEFAULT PKG_SIZE %uMB\n",
@@ -249,9 +245,7 @@ void print_internals(void)
 	printf("  MAX_URI_SIZE=%d\n", MAX_URI_SIZE);
 	printf("  BUF_SIZE=%d\n", BUF_SIZE);
 	printf("  DEFAULT PKG_SIZE=%uMB\n", PKG_MEM_SIZE);
-#ifdef SHM_MEM
 	printf("  DEFAULT SHM_SIZE=%uMB\n", SHM_MEM_SIZE);
-#endif
 #ifdef ADAPTIVE_WAIT
 	printf("  ADAPTIVE_WAIT_LOOPS=%d\n", ADAPTIVE_WAIT_LOOPS);
 #endif
@@ -567,7 +561,6 @@ void cleanup(int show_status)
 		}
 	}
 #endif
-#ifdef SHM_MEM
 	if (pt) shm_free(pt);
 	pt=0;
 	if (show_status && memlog <= cfg_get(core, core_cfg, debug)){
@@ -582,7 +575,6 @@ void cleanup(int show_status)
 	}
 	/* zero all shmem alloc vars that we still use */
 	shm_destroy_manager();
-#endif
 	destroy_lock_ops();
 	if (pid_file) unlink(pid_file);
 	if (pgid_file) unlink(pgid_file);
@@ -714,7 +706,6 @@ void handle_sigs(void)
 			}
 		}
 #endif
-#ifdef SHM_MEM
 		if (memlog <= cfg_get(core, core_cfg, debug)){
 			if (cfg_get(core, core_cfg, mem_summary) & 2) {
 				LOG(memlog, "Memory status (shm):\n");
@@ -725,7 +716,6 @@ void handle_sigs(void)
 				shm_sums();
 			}
 		}
-#endif
 			break;
 
 		case SIGCHLD:
@@ -2461,10 +2451,8 @@ try_again:
 	 *  Note: shm can now be initialized when parsing the config script, that's
 	 *  why checking for a prior initialization is needed.
 	 * --andrei */
-#ifdef SHM_MEM
 	if (!shm_initialized() && init_shm()<0)
 		goto error;
-#endif /* SHM_MEM */
 	pkg_print_manager();
 	shm_print_manager();
 	if (init_atomic_ops()==-1)
