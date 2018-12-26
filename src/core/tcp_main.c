@@ -28,10 +28,6 @@
 #ifdef USE_TCP
 
 
-#ifndef SHM_MEM
-#error "shared memory support needed (add -DSHM_MEM to Makefile.defs)"
-#endif
-
 #define HANDLE_IO_INLINE
 #include "io_wait.h" /* include first to make sure the needed features are
 						turned on (e.g. _GNU_SOURCE for POLLRDHUP) */

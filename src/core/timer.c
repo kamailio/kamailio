@@ -1017,11 +1017,6 @@ error:
 
 ticks_t get_ticks_raw()
 {
-#ifndef SHM_MEM
-	LM_CRIT("no shared memory support compiled in"
-			", returning 0 (probably wrong)");
-	return 0;
-#endif
 	return *ticks;
 }
 
@@ -1030,11 +1025,6 @@ ticks_t get_ticks_raw()
 /* returns tick in s (for compatibility with the old code) */
 ticks_t get_ticks()
 {
-#ifndef SHM_MEM
-	LM_CRIT("no shared memory support compiled in"
-			", returning 0 (probably wrong)");
-	return 0;
-#endif
 	return TICKS_TO_S(*ticks);
 }
 
