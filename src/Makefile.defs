@@ -515,9 +515,6 @@ data_target = $(prefix)/$(data_dir)
 #		compiles in some extra debugging code
 # -DDNS_IP_HACK
 #		faster ip address resolver for ip strings (e.g "127.0.0.1")
-# -DSHM_MEM
-#		compiles in shared mem. support, needed by some modules and
-#		by USE_SHM_MEM
 # -DSHM_MMAP
 #		use mmap instead of SYSV shared memory
 # -DPKG_MALLOC
@@ -665,7 +662,7 @@ ifneq ($(MEMPKG), sys)
 C_DEFS+= -DPKG_MALLOC
 endif
 
-C_DEFS+= -DSHM_MEM  -DSHM_MMAP \
+C_DEFS+= -DSHM_MMAP \
 	 -DDNS_IP_HACK \
 	 -DUSE_MCAST \
 	 -DUSE_TCP \
