@@ -518,10 +518,7 @@ data_target = $(prefix)/$(data_dir)
 # -DSHM_MMAP
 #		use mmap instead of SYSV shared memory
 # -DPKG_MALLOC
-#		uses a faster malloc (exclusive w/ USE_SHM_MEM)
-# -DUSE_SHM_MEM
-#		all pkg_malloc => shm_malloc (most mallocs use a common sh.
-#		mem. segment); don't define PKG_MALLOC if you want this!
+#		uses a faster malloc
 # -DDBG_QM_MALLOC
 #		qm_malloc debug code, will cause pkg_malloc and shm_malloc
 #		to keep and display lot of debuging information: file name,
@@ -681,7 +678,6 @@ C_DEFS+= -DSHM_MMAP \
 	 #-DVQ_MALLOC  \
 	 #-DDBG_LOCK \
 	 #-DNOSMP \
-	 #-DUSE_SHM_MEM \
 	 #-DSTATS \
 	 #-DNO_LOG \
 	 #-DPROFILING \
