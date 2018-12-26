@@ -283,7 +283,6 @@ static int child_init(int rank)
 
 	if (rank == PROC_INIT) {
 
-#ifdef SHM_MEM
 		usocks[KSOCKET]=(int*)shm_malloc(sizeof(int)*no_cnodes);
 		if (!usocks[KSOCKET]) {
 			LM_ERR("Not enough memory\n");
@@ -295,19 +294,6 @@ static int child_init(int rank)
 			LM_ERR("Not enough memory\n");
 			return -1;
 		}
-#else
-		usocks[KSOCKET]=(int*)pkg_malloc(sizeof(int)*no_cnodes);
-		if (!usocks[KSOCKET]) {
-			LM_ERR("Not enough memory\n");
-			return -1;
-		}
-
-		usocks[CSOCKET]=(int*)pkg_malloc(sizeof(int)*no_cnodes);
-		if (!usocks[CSOCKET]) {
-			LM_ERR("Not enough memory\n");
-			return -1;
-		}
-#endif
 
 		for(i=0;i<no_cnodes;i++) {
 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair)) {
@@ -397,13 +383,8 @@ static int child_init(int rank)
  */
 static void mod_destroy(void)
 {
-#ifdef SHM_MEM
 		shm_free(usocks[0]);
 		shm_free(usocks[1]);
-#else
-		pkg_free(usocks[0]);
-		pkg_free(usocks[1]);
-#endif
 		free_tuple_fmt_buff();
 		free_atom_fmt_buff();
 		free_list_fmt_buff();
