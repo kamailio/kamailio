@@ -219,12 +219,12 @@ Options:\n\
 void print_ct_constants(void)
 {
 #ifdef ADAPTIVE_WAIT
-	printf("ADAPTIVE_WAIT_LOOPS=%d, ", ADAPTIVE_WAIT_LOOPS);
+	printf("ADAPTIVE_WAIT_LOOPS %d, ", ADAPTIVE_WAIT_LOOPS);
 #endif
 /*
-	printf("SHM_MEM_SIZE=%d, ", SHM_MEM_SIZE);
+	printf("SHM_MEM_SIZE %dMB, ", SHM_MEM_SIZE);
 */
-	printf("MAX_RECV_BUFFER_SIZE %d"
+	printf("MAX_RECV_BUFFER_SIZE %d,"
 			" MAX_URI_SIZE %d, BUF_SIZE %d, DEFAULT PKG_SIZE %uMB\n",
 		MAX_RECV_BUFFER_SIZE, MAX_URI_SIZE,
 		BUF_SIZE, PKG_MEM_SIZE);
