@@ -404,7 +404,7 @@ int db_query_init(void)
     sql_buf = (char*)malloc(sql_buffer_size);
     if (sql_buf == NULL)
     {
-        LM_ERR("failed to allocate sql_buf\n");
+		PKG_MEM_ERROR;
         return -1;
     }
     return 0;

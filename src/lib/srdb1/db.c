@@ -177,7 +177,7 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 	// add the prefix
 	name = pkg_malloc(mod->len + 4);
 	if (!name) {
-		LM_ERR("no private memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(name, "db_", 3);
@@ -189,7 +189,7 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		len = p - name;
 		tmp = (char*)pkg_malloc(len + 4);
 		if (!tmp) {
-			LM_ERR("no private memory left\n");
+			PKG_MEM_ERROR;
 			pkg_free(name);
 			return -1;
 		}
@@ -298,7 +298,7 @@ db1_con_t* db_do_init2(const str* url, void* (*new_connection)(), db_pooling_t p
 	/* this is the root memory for this database connection. */
 	res = (db1_con_t*)pkg_malloc(con_size);
 	if (!res) {
-		LM_ERR("no private memory left\n");
+		PKG_MEM_ERROR;
 		return 0;
 	}
 	memset(res, 0, con_size);

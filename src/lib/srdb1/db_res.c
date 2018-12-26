@@ -113,7 +113,7 @@ db1_res_t* db_new_result(void)
 	db1_res_t* r = NULL;
 	r = (db1_res_t*)pkg_malloc(sizeof(db1_res_t));
 	if (!r) {
-		LM_ERR("no private memory left\n");
+		PKG_MEM_ERROR;
 		return 0;
 	}
 	LM_DBG("allocate %d bytes for result set at %p\n",
@@ -149,7 +149,7 @@ int db_allocate_columns(db1_res_t* _r, const unsigned int cols)
 {
 	RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * cols);
 	if (!RES_NAMES(_r)) {
-		LM_ERR("no private memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(RES_NAMES(_r), 0, sizeof(db_key_t) * cols);
@@ -159,7 +159,7 @@ int db_allocate_columns(db1_res_t* _r, const unsigned int cols)
 
 	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * cols);
 	if (!RES_TYPES(_r)) {
-		LM_ERR("no private memory left\n");
+		PKG_MEM_ERROR;
 		pkg_free(RES_NAMES(_r));
 		return -1;
 	}
@@ -182,7 +182,7 @@ int db_allocate_rows(db1_res_t* _res)
 	int len = sizeof(db_row_t) * RES_ROW_N(_res);
 	RES_ROWS(_res) = (struct db_row*)pkg_malloc(len);
 	if (!RES_ROWS(_res)) {
-		LM_ERR("no private memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	LM_DBG("allocate %d bytes for rows at %p\n", len, RES_ROWS(_res));
@@ -210,7 +210,7 @@ int db_reallocate_rows(db1_res_t* _res, int _nsize)
 	len = sizeof(db_row_t) * RES_ROW_N(_res);
 	RES_ROWS(_res) = (struct db_row*)pkg_malloc(len);
 	if (!RES_ROWS(_res)) {
-		LM_ERR("no private memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	LM_DBG("allocate %d bytes for rows at %p\n", len, RES_ROWS(_res));

@@ -47,6 +47,7 @@ static int dupl_string(char** dst, const char* begin, const char* end)
 
 	*dst = pkg_malloc(end - begin + 1);
 	if ((*dst) == NULL) {
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -71,6 +72,7 @@ static int dupl_string_name(char** dst, const char* begin, const char* end)
 	}
 	*dst = pkg_malloc(p - begin + 1);
 	if ((*dst) == NULL) {
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -271,7 +273,7 @@ struct db_id* new_db_id(const str* url, db_pooling_t pooling)
 
 	ptr = (struct db_id*)pkg_malloc(sizeof(struct db_id) + url->len + 1);
 	if (!ptr) {
-		LM_ERR("no private memory left\n");
+		PKG_MEM_ERROR;
 		goto err;
 	}
 	memset(ptr, 0, sizeof(struct db_id)+url->len+1);

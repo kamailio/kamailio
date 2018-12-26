@@ -111,7 +111,7 @@ int db_allocate_row(const db1_res_t* _res, db_row_t* _row)
 	int len = sizeof(db_val_t) * RES_COL_N(_res);
 	ROW_VALUES(_row) = (db_val_t*)pkg_malloc(len);
 	if (!ROW_VALUES(_row)) {
-		LM_ERR("no private memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	LM_DBG("allocate %d bytes for row values at %p\n", len, ROW_VALUES(_row));

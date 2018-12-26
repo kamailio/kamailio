@@ -144,7 +144,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 		} else {
 			VAL_STRING(_v) = pkg_malloc(_l + 1);
 			if (VAL_STRING(_v) == NULL) {
-				LM_ERR("no private memory left\n");
+				PKG_MEM_ERROR;
 				return -6;
 			}
 			LM_DBG("allocate %d bytes memory for STRING at %p\n", _l + 1, VAL_STRING(_v));
@@ -164,7 +164,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 		} else {
 			VAL_STR(_v).s = pkg_malloc(_l);
 			if (VAL_STR(_v).s == NULL) {
-				LM_ERR("no private memory left\n");
+				PKG_MEM_ERROR;
 				return -7;
 			}
 			LM_DBG("allocate %d bytes memory for STR at %p\n", _l, VAL_STR(_v).s);
@@ -195,7 +195,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 		} else {
 			VAL_BLOB(_v).s = pkg_malloc(_l);
 			if (VAL_BLOB(_v).s == NULL) {
-				LM_ERR("no private memory left\n");
+				PKG_MEM_ERROR;
 				return -9;
 			}
 			LM_DBG("allocate %d bytes memory for BLOB at %p\n", _l, VAL_BLOB(_v).s);
