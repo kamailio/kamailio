@@ -575,10 +575,6 @@ data_target = $(prefix)/$(data_dir)
 # -DNOSMP
 #		don't use smp compliant locking (faster but won't work on SMP machines)
 #		(not yet enabled) (FAST_LOCK)
-# -DNO_PINGTEL_TAG_HACK
-#		if enabled, To-header-field will be less liberal and will not accept
-#		'tag=' (tag parameter with equal sign and without value); it is called
-#		this way because such message was sighted from a Pingtel phone
 # -DUSE_TCP
 #		compiles in tcp support
 # -DDISABLE_NAGLE
