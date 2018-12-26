@@ -26,8 +26,6 @@
  */
 
 
-#ifdef SHM_MEM
-
 #ifndef shm_mem_h
 #define shm_mem_h
 
@@ -344,6 +342,4 @@ unsigned long shm_available_safe();
 #endif
 
 #endif /* shm_mem_h */
-
-#endif /* SHM_MEM */
 

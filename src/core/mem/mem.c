@@ -38,9 +38,7 @@
 #include "q_malloc.h"
 #endif
 
-#ifdef SHM_MEM
 #include "shm_mem.h"
-#endif
 
 #if 0
 
@@ -122,14 +120,12 @@ void destroy_pkg_mallocs(void)
  */
 int init_shm_mallocs(int force_alloc)
 {
-#ifdef SHM_MEM
 	if (shm_mem_init(force_alloc)<0) {
 		LOG(L_CRIT, "could not initialize shared memory pool, exiting...\n");
 		 fprintf(stderr, "Too much shared memory demanded: %ld\n",
 			shm_mem_size );
 		return -1;
 	}
-#endif
 	return 0;
 }
 #endif 

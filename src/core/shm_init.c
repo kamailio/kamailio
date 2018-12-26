@@ -46,7 +46,6 @@ int shm_initialized()
 
 
 
-#ifdef SHM_MEM
 /** init shm mem.
  * @return 0 on success, < 0 on error
  * it _must_ be called:
@@ -77,6 +76,5 @@ int init_shm()
 error:
 	return -1;
 }
-#endif /* SHM_MEM */
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

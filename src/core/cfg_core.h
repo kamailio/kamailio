@@ -89,9 +89,7 @@ struct cfg_group_core {
 #ifdef PKG_MALLOC
 	int mem_dump_pkg;
 #endif
-#ifdef SHM_MEM
 	int mem_dump_shm;
-#endif
 	int max_while_loops;
 	int udp_mtu; /*!< maximum send size for udp, if > try another protocol*/
 	int udp_mtu_try_proto; /*!< if packet> udp_mtu, try proto (e.g. TCP) */

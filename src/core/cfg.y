@@ -41,9 +41,7 @@
 #include <errno.h>
 #include "route_struct.h"
 #include "globals.h"
-#ifdef SHM_MEM
 #include "shm_init.h"
-#endif /* SHM_MEM */
 #include "route.h"
 #include "switch.h"
 #include "dprint.h"
@@ -1743,23 +1741,19 @@ module_stm:
 	}
 	| LOADPATH EQUAL error	{ yyerror("string expected"); }
 	| MODPARAM LPAREN STRING COMMA STRING COMMA STRING RPAREN {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		if (set_mod_param_regex($3, $5, PARAM_STRING, $7) != 0) {
 			 yyerror("Can't set module parameter");
 		}
 	}
 	| MODPARAM LPAREN STRING COMMA STRING COMMA intno RPAREN {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		if (set_mod_param_regex($3, $5, PARAM_INT, (void*)$7) != 0) {
 			 yyerror("Can't set module parameter");
 		}
@@ -1857,21 +1851,17 @@ route_main:	ROUTE { routename=NULL; }
 
 route_stm:
 	route_main LBRACE actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		push($3, &main_rt.rlist[DEFAULT_RT]);
 	}
 	| ROUTE LBRACK route_name RBRACK LBRACE actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		i_tmp=route_get(&main_rt, $3);
 		if (i_tmp==-1){
 			yyerror("internal error");
@@ -1891,21 +1881,17 @@ failure_route_main: ROUTE_FAILURE { routename=NULL; }
 ;
 failure_route_stm:
 	failure_route_main LBRACE actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		push($3, &failure_rt.rlist[DEFAULT_RT]);
 	}
 	| ROUTE_FAILURE LBRACK route_name RBRACK LBRACE actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		i_tmp=route_get(&failure_rt, $3);
 		if (i_tmp==-1){
 			yyerror("internal error");
@@ -1928,12 +1914,10 @@ route_reply_main:	ROUTE_ONREPLY { routename=NULL; }
 
 onreply_route_stm:
 	route_reply_main LBRACE {rt=CORE_ONREPLY_ROUTE;} actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		push($4, &onreply_rt.rlist[DEFAULT_RT]);
 	}
 	| ROUTE_ONREPLY error { yyerror("invalid onreply_route statement"); }
@@ -1941,12 +1925,10 @@ onreply_route_stm:
 	| ROUTE_ONREPLY LBRACK route_name RBRACK
 		{rt=(*$3=='0' && $3[1]==0)?CORE_ONREPLY_ROUTE:TM_ONREPLY_ROUTE;}
 		LBRACE actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		if (*$3=='0' && $3[1]==0){
 			/* onreply_route[0] {} is equivalent with onreply_route {}*/
 			push($7, &onreply_rt.rlist[DEFAULT_RT]);
@@ -1972,21 +1954,17 @@ branch_route_main: ROUTE_BRANCH { routename=NULL; }
 ;
 branch_route_stm:
 	branch_route_main LBRACE actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		push($3, &branch_rt.rlist[DEFAULT_RT]);
 	}
 	| ROUTE_BRANCH LBRACK route_name RBRACK LBRACE actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		i_tmp=route_get(&branch_rt, $3);
 		if (i_tmp==-1){
 			yyerror("internal error");
@@ -2005,21 +1983,17 @@ send_route_main: ROUTE_SEND { routename=NULL; }
 ;
 send_route_stm:
 	send_route_main LBRACE actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		push($3, &onsend_rt.rlist[DEFAULT_RT]);
 	}
 	| ROUTE_SEND LBRACK route_name RBRACK LBRACE actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		i_tmp=route_get(&onsend_rt, $3);
 		if (i_tmp==-1){
 			yyerror("internal error");
@@ -2038,12 +2012,10 @@ event_route_main: ROUTE_EVENT { routename=NULL; }
 ;
 event_route_stm:
 	event_route_main LBRACK EVENT_RT_NAME RBRACK LBRACE actions RBRACE {
-	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
-	#endif /* SHM_MEM */
 		i_tmp=route_get(&event_rt, $3);
 		if (i_tmp==-1){
 			yyerror("internal error");

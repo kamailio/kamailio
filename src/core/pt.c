@@ -30,10 +30,8 @@
 #ifdef PKG_MALLOC
 #include "mem/mem.h"
 #endif
-#ifdef SHM_MEM
 #include "mem/shm_mem.h"
-#endif
-#if defined PKG_MALLOC || defined SHM_MEM
+#if defined PKG_MALLOC
 #include "cfg_core.h"
 #endif
 #include "daemonize.h"
@@ -103,21 +101,12 @@ int init_pt(int proc_no)
 	estimated_proc_no+=proc_no;
 	estimated_fds_no+=calc_common_open_fds_no();
 	/*alloc pids*/
-#ifdef SHM_MEM
 	pt=shm_malloc(sizeof(struct process_table)*estimated_proc_no);
 	process_count = shm_malloc(sizeof(int));
-#else
-	pt=pkg_malloc(sizeof(struct process_table)*estimated_proc_no);
-	process_count = pkg_malloc(sizeof(int));
-#endif
 	process_lock = lock_alloc();
 	process_lock = lock_init(process_lock);
 	if (pt==0||process_count==0||process_lock==0){
-#ifdef SHM_MEM
 		SHM_MEM_ERROR;
-#else
-		PKG_MEM_ERROR;
-#endif
 		return -1;
 	}
 	memset(pt, 0, sizeof(struct process_table)*estimated_proc_no);
@@ -557,7 +546,6 @@ void mem_dump_pkg_cb(str *gname, str *name)
 }
 #endif
 
-#ifdef SHM_MEM
 /* Dumps shm memory status.
  * fixup function that is called
  * when mem_dump_shm cfg var is set.
@@ -584,4 +572,3 @@ int mem_dump_shm_fixup(void *handle, str *gname, str *name, void **val)
 	}
 	return 0;
 }
-#endif

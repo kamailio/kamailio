@@ -92,9 +92,7 @@ int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1);
 void mem_dump_pkg_cb(str *gname, str *name);
 #endif
 
-#ifdef SHM_MEM
 int mem_dump_shm_fixup(void *handle, str *gname, str *name, void **val);
-#endif
 
 unsigned int set_fork_delay(unsigned int v);
 

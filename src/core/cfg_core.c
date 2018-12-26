@@ -47,7 +47,7 @@
 #ifdef USE_DNS_CACHE
 #include "dns_cache.h"
 #endif
-#if defined PKG_MALLOC || defined SHM_MEM
+#if defined PKG_MALLOC
 #include "pt.h"
 #endif
 #include "msg_translator.h" /* fix_global_req_flags() */
@@ -100,9 +100,7 @@ struct cfg_group_core default_core_cfg = {
 #ifdef PKG_MALLOC
 	0, /*!< mem_dump_pkg */
 #endif
-#ifdef SHM_MEM
 	0, /*!< mem_dump_shm */
-#endif
 	DEFAULT_MAX_WHILE_LOOPS, /*!< max_while_loops */
 	0, /*!< udp_mtu (disabled by default) */
 	0, /*!< udp_mtu_try_proto -> default disabled */
@@ -279,10 +277,8 @@ cfg_def_t core_cfg_def[] = {
 	{"mem_dump_pkg",	CFG_VAR_INT,	0, 0, 0, mem_dump_pkg_cb,
 		"dump process memory status, parameter: pid_number"},
 #endif
-#ifdef SHM_MEM
 	{"mem_dump_shm",	CFG_VAR_INT,	0, 0, mem_dump_shm_fixup, 0,
 		"dump shared memory status"},
-#endif
 	{"max_while_loops",	CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"maximum iterations allowed for a while loop" },
 	{"udp_mtu",	CFG_VAR_INT|CFG_ATOMIC,	0, 65535, 0, 0,

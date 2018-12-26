@@ -43,9 +43,7 @@
 */
 #include "globals.h"
 #include "mem/mem.h"
-#ifdef SHM_MEM
 #include "mem/shm_mem.h"
-#endif
 #include "locking.h"
 #include "sched_yield.h"
 #include "cfg/cfg_struct.h"
@@ -149,19 +147,11 @@ void destroy_timer()
 		timer_lock=0;
 	}
 	if (ticks){
-#ifdef SHM_MEM
 		shm_free(ticks);
-#else
-		pkg_free(ticks);
-#endif
 		ticks=0;
 	}
 	if (timer_lst){
-#ifdef SHM_MEM
 		shm_free(timer_lst);
-#else
-		pkg_free(timer_lst);
-#endif
 		timer_lst=0;
 	}
 	if (running_timer){
@@ -216,15 +206,8 @@ int init_timer()
 		goto error;
 	}
 	/* init the shared structs */
-#ifdef SHM_MEM
 	ticks=shm_malloc(sizeof(ticks_t));
 	timer_lst=shm_malloc(sizeof(struct timer_lists));
-#else
-	/* in this case get_ticks won't work! */
-	LM_WARN("no shared memory support compiled in get_ticks won't work\n");
-	ticks=pkg_malloc(sizeof(ticks_t));
-	timer_lst=pkg_malloc(sizeof(struct timer_lists));
-#endif
 	if (ticks==0){
 		SHM_MEM_CRITICAL;
 		ret=E_OUT_OF_MEM;
