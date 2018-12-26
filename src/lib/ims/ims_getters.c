@@ -301,6 +301,10 @@ str cscf_get_public_identity(struct sip_msg *msg)
 
 	if(get_to(msg) == NULL) {
 		to = (struct to_body *)pkg_malloc(sizeof(struct to_body));
+		if (to == NULL) {
+			PKG_MEM_ERROR;
+			return pu;
+		}
 		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len, to);
 		msg->to->parsed = to;
 	} else
@@ -334,6 +338,10 @@ str cscf_get_public_identity_from(struct sip_msg *msg)
 
 	if(get_from(msg) == NULL) {
 		from = (struct to_body *)pkg_malloc(sizeof(struct to_body));
+		if (from == NULL) {
+			PKG_MEM_ERROR;
+			return pu;
+		}
 		parse_to(msg->from->body.s, msg->from->body.s + msg->from->body.len,
 				from);
 		msg->from->parsed = from;
@@ -454,9 +462,7 @@ str cscf_get_public_identity_from_requri(struct sip_msg *msg)
 		pu.len = 4 + msg->parsed_uri.user.len;
 		pu.s = shm_malloc(pu.len + 1);
 		if(!pu.s) {
-			LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d "
-				   "bytes\n",
-					pu.len + 1);
+			SHM_MEM_ERROR;
 			pu.len = 0;
 			goto done;
 		}
@@ -466,9 +472,7 @@ str cscf_get_public_identity_from_requri(struct sip_msg *msg)
 		pu.len = 4 + msg->parsed_uri.user.len + 1 + msg->parsed_uri.host.len;
 		pu.s = shm_malloc(pu.len + 1);
 		if(!pu.s) {
-			LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d "
-				   "bytes\n",
-					pu.len + 1);
+			SHM_MEM_ERROR;
 			pu.len = 0;
 			goto done;
 		}
@@ -508,9 +512,7 @@ str cscf_get_contact_from_requri(struct sip_msg *msg)
 				 + 1 /*for colon before port*/;
 		pu.s = shm_malloc(pu.len + 1);
 		if(!pu.s) {
-			LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d "
-				   "bytes\n",
-					pu.len + 1);
+			SHM_MEM_ERROR;
 			pu.len = 0;
 			goto done;
 		}
@@ -523,9 +525,7 @@ str cscf_get_contact_from_requri(struct sip_msg *msg)
 				 + msg->parsed_uri.port.len + 1 /*for colon before port*/;
 		pu.s = shm_malloc(pu.len + 1);
 		if(!pu.s) {
-			LM_ERR("cscf_get_public_identity_from_requri: Error allocating %d "
-				   "bytes\n",
-					pu.len + 1);
+			SHM_MEM_ERROR;
 			pu.len = 0;
 			goto done;
 		}
@@ -642,7 +642,7 @@ str cscf_get_asserted_identity(struct sip_msg *msg, int is_shm) {
 		len = pai->uri.len + 1;
 		uri.s = (char*) pkg_malloc(pai->uri.len + 1);
 		if (!uri.s) {
-			LM_ERR("no more pkg mem\n");
+			PKG_MEM_ERROR;
 			return uri;
 		}
 		memset(uri.s, 0, len);
@@ -986,7 +986,7 @@ struct via_body* cscf_get_last_via(struct sip_msg *msg)
 	if (!h->parsed){
 		vb = pkg_malloc(sizeof(struct via_body));
 		if (!vb){
-			LM_ERR("cscf_get_last_via: Error allocating %lx bytes\n",sizeof(struct via_body));
+			PKG_MEM_ERROR;
 			return 0;
 		}
 		parse_via(h->body.s,h->body.s+h->body.len,vb);
@@ -1315,7 +1315,7 @@ int cscf_get_p_charging_vector(struct sip_msg *msg, str * icid, str * orig_ioi,
 	str_free(header_body, pkg);
 	return 1;
 	out_of_memory:
-	LM_ERR("cscf_get_p_charging_vector:out of pkg memory\n");
+	PKG_MEM_ERROR;
 	return 0;
 }
 
@@ -1466,7 +1466,7 @@ int cscf_get_p_associated_uri(struct sip_msg *msg, str **public_id,
 	}
 	*public_id = pkg_malloc(sizeof(str)*(*public_id_cnt));
 	if (*public_id==NULL) {
-		LM_ERR("Error out of pkg memory");
+		PKG_MEM_ERROR;
 		return 0;
 	}
 	r2 = r;
@@ -1718,7 +1718,7 @@ int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr)
 	if (!h->parsed){
 		cseq = pkg_malloc(sizeof(struct cseq_body));
 		if (!cseq){
-			LM_ERR("ERR:cscf_get_cseq: Header CSeq not found\n");
+			PKG_MEM_ERROR;
 			return 0;
 		}
 		parse_cseq(h->body.s,h->body.s+h->body.len,cseq);
