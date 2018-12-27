@@ -507,7 +507,12 @@ char *sr_memmng_shm = NULL;
 
 static int *_sr_instance_started = NULL;
 
-int sr_instance_initialized(void)
+/**
+ * return 1 if all child processes were forked
+ * - note: they might still be in init phase (i.e., child init)
+ * - note: see also sr_insance_ready()
+ */
+int sr_instance_started(void)
 {
 	if(_sr_instance_started!=NULL && *_sr_instance_started==1) {
 		return 1;

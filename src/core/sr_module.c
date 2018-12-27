@@ -819,6 +819,9 @@ int init_child(int rank)
 			}
 		}
 	}
+	if(rank!=PROC_INIT) {
+		pt[process_no].status = 1;
+	}
 	return 0;
 }
 
@@ -864,10 +867,15 @@ static int init_mod_child( struct sr_module* m, int rank )
  */
 int init_child(int rank)
 {
+	int ret;
 	if(async_task_child_init(rank)<0)
 		return -1;
 
-	return init_mod_child(modules, rank);
+	ret = init_mod_child(modules, rank);
+	if(rank!=PROC_INIT) {
+		pt[process_no].status = 1;
+	}
+	return ret;
 }
 
 
