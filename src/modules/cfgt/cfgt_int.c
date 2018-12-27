@@ -44,9 +44,10 @@ int cfgt_mask = CFGT_DP_ALL;
 static int shm_str_hash_alloc(struct str_hash_table *ht, int size)
 {
 	ht->table = shm_malloc(sizeof(struct str_hash_head) * size);
-
-	if(!ht->table)
+	if(!ht->table) {
+		SHM_MEM_ERROR;
 		return -1;
+	}
 
 	ht->size = size;
 	return 0;
@@ -54,10 +55,8 @@ static int shm_str_hash_alloc(struct str_hash_table *ht, int size)
 
 static int _cfgt_init_hashtable(struct str_hash_table *ht)
 {
-	if(shm_str_hash_alloc(ht, CFGT_HASH_SIZE) != 0) {
-		LM_ERR("Error allocating shared memory hashtable\n");
+	if(shm_str_hash_alloc(ht, CFGT_HASH_SIZE) != 0)
 		return -1;
-	}
 
 	str_hash_init(ht);
 
@@ -128,13 +127,12 @@ int _cfgt_get_uuid_id(cfgt_node_p node)
 		entry = shm_malloc(sizeof(struct str_hash_entry));
 		if(entry == NULL) {
 			lock_release(&_cfgt_uuid->lock);
-			LM_ERR("No shared memory left\n");
+			SHM_MEM_ERROR;
 			return -1;
 		}
 		if(shm_str_dup(&entry->key, &node->uuid) != 0) {
 			lock_release(&_cfgt_uuid->lock);
 			shm_free(entry);
-			LM_ERR("No shared memory left\n");
 			return -1;
 		}
 		entry->u.n = 1;
@@ -206,7 +204,7 @@ cfgt_node_p cfgt_create_node(struct sip_msg *msg)
 
 	node = (cfgt_node_p)pkg_malloc(sizeof(cfgt_node_t));
 	if(node == NULL) {
-		LM_ERR("cannot allocate cfgtest msgnode\n");
+		PKG_MEM_ERROR;
 		return node;
 	}
 	memset(node, 0, sizeof(cfgt_node_t));
@@ -287,7 +285,7 @@ int _cfgt_get_filename(int msgid, str uuid, str *dest, int *dir)
 	dest->len += lid + 6;
 	dest->s = (char *)pkg_malloc((dest->len * sizeof(char) + 1));
 	if(dest->s == NULL) {
-		LM_ERR("no more memory.\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	snprintf(dest->s, dest->len + 1, format, cfgt_basedir.len, cfgt_basedir.s,
@@ -454,7 +452,7 @@ int _cfgt_add_routename(cfgt_node_p node, struct action *a, str *routename)
 	{
 		node->route = pkg_malloc(sizeof(cfgt_str_list_t));
 		if(!node->route) {
-			LM_ERR("No more pkg mem\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memset(node->route, 0, sizeof(cfgt_str_list_t));
@@ -483,7 +481,7 @@ int _cfgt_add_routename(cfgt_node_p node, struct action *a, str *routename)
 		}
 		route = pkg_malloc(sizeof(cfgt_str_list_t));
 		if(!route) {
-			LM_ERR("No more pkg mem\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memset(route, 0, sizeof(cfgt_str_list_t));
@@ -718,7 +716,7 @@ int cfgt_init(void)
 	}
 	_cfgt_uuid = shm_malloc(sizeof(cfgt_hash_t));
 	if(_cfgt_uuid == NULL) {
-		LM_ERR("Cannot allocate shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	if(!lock_init(&_cfgt_uuid->lock)) {
