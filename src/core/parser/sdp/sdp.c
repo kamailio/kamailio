@@ -35,8 +35,8 @@
 #include "sdp.h"
 #include "sdp_helpr_funcs.h"
 
-#define USE_PKG_MEM 0
-#define USE_SHM_MEM 1
+#define SDP_USE_PKG_MEM 0
+#define SDP_USE_SHM_MEM 1
 
 #define HOLD_IP_STR "0.0.0.0"
 #define HOLD_IP_LEN 7
@@ -179,18 +179,18 @@ static inline sdp_payload_attr_t** init_p_payload_attr(sdp_stream_cell_t* _strea
 		LM_ERR("Invalid number of payloads\n");
 		return NULL;
 	}
-	if (pkg == USE_PKG_MEM) {
+	if (pkg == SDP_USE_PKG_MEM) {
 		_stream->p_payload_attr = (sdp_payload_attr_t**)pkg_malloc(payloads_num * sizeof(sdp_payload_attr_t*));
-	} else if (pkg == USE_SHM_MEM) {
+	} else if (pkg == SDP_USE_SHM_MEM) {
 		_stream->p_payload_attr = (sdp_payload_attr_t**)shm_malloc(payloads_num * sizeof(sdp_payload_attr_t*));
 	} else {
 		LM_ERR("undefined memory type\n");
 		return NULL;
 	}
 	if (_stream->p_payload_attr == NULL) {
-		if (pkg == USE_PKG_MEM) {
+		if (pkg == SDP_USE_PKG_MEM) {
 			PKG_MEM_ERROR;
-		} else if (pkg == USE_SHM_MEM) {
+		} else if (pkg == SDP_USE_SHM_MEM) {
 			SHM_MEM_ERROR;
 		}
 		return NULL;
@@ -531,7 +531,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 			}
 
 			/* Initialize fast access pointers */
-			if (NULL == init_p_payload_attr(stream, USE_PKG_MEM)) {
+			if (NULL == init_p_payload_attr(stream, SDP_USE_PKG_MEM)) {
 				return -1;
 			}
 			parse_payload_attr = 1;
@@ -1082,7 +1082,7 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 
 	clone_stream->payloads_num = stream->payloads_num;
 	if (clone_stream->payloads_num) {
-		if (NULL == init_p_payload_attr(clone_stream, USE_SHM_MEM)) {
+		if (NULL == init_p_payload_attr(clone_stream, SDP_USE_SHM_MEM)) {
 			goto error;
 		}
 	}
@@ -1319,3 +1319,5 @@ error:
 	return NULL;
 }
 
+#undef SDP_USE_PKG_MEM
+#undef SDP_USE_SHM_MEM
