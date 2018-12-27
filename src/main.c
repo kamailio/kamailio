@@ -505,6 +505,16 @@ char* pgid_file = 0;
 char *sr_memmng_pkg = NULL;
 char *sr_memmng_shm = NULL;
 
+static int *_sr_instance_started = NULL;
+
+int sr_instance_initialized(void)
+{
+	if(_sr_instance_started!=NULL && *_sr_instance_started==1) {
+		return 1;
+	}
+	return 0;
+}
+
 /* call it before exiting; if show_status==1, mem status is displayed */
 void cleanup(int show_status)
 {
@@ -1260,6 +1270,14 @@ int main_loop(void)
 	int nrprocs;
 	int woneinit;
 
+	if(_sr_instance_started == NULL) {
+		_sr_instance_started = shm_malloc(sizeof(int));
+		if(_sr_instance_started == NULL) {
+			LM_ERR("no shared memory\n");
+			goto error;
+		}
+		*_sr_instance_started = 0;
+	}
 	/* one "main" process and n children handling i/o */
 	if (dont_fork){
 #ifdef STATS
@@ -1422,6 +1440,7 @@ int main_loop(void)
 			LM_ERR("init_child failed\n");
 			goto error;
 		}
+		*_sr_instance_started = 1;
 		return udp_rcv_loop();
 	}else{ /* fork: */
 
@@ -1735,6 +1754,8 @@ int main_loop(void)
 		/* init cfg, but without per child callbacks support */
 		cfg_child_no_cb_init();
 		cfg_ok=1;
+
+		*_sr_instance_started = 1;
 
 #ifdef EXTRA_DEBUG
 		for (r=0; r<*process_count; r++){
