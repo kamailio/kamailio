@@ -57,6 +57,7 @@ struct lump* append_new_lump(struct lump** list, char* new_hdr,
 
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
+		ser_error=E_OUT_OF_MEM;
 		PKG_MEM_ERROR;
 		return 0;
 	}
@@ -83,6 +84,7 @@ struct lump* add_new_lump(struct lump** list, char* new_hdr,
 
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
+		ser_error=E_OUT_OF_MEM;
 		PKG_MEM_ERROR;
 		return 0;
 	}
@@ -108,6 +110,7 @@ struct lump* insert_new_lump(struct lump** list, char* new_hdr,
 
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
+		ser_error=E_OUT_OF_MEM;
 		PKG_MEM_ERROR;
 		return 0;
 	}
@@ -303,6 +306,7 @@ struct lump* del_lump(struct sip_msg* msg, int offset, int len, enum _hdr_types_
 	
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
+		ser_error=E_OUT_OF_MEM;
 		PKG_MEM_ERROR;
 		return 0;
 	}
@@ -536,6 +540,7 @@ static struct lump *dup_lump_list_r( struct lump *l,
 	/* otherwise duplicate current element */
 	new_lump=pkg_malloc(sizeof(struct lump));
 	if (!new_lump) {
+		ser_error=E_OUT_OF_MEM;
 		PKG_MEM_ERROR;
 		*error=1;
 		return 0;
@@ -754,6 +759,7 @@ int sr_hdr_add(sip_msg_t *msg, str *sname, str *sbody)
 	h.len = sname->len + 2 + sbody->len + CRLF_LEN;
 	h.s = (char*)pkg_malloc(h.len+1);
 	if(h.s == 0) {
+		ser_error=E_OUT_OF_MEM;
 		PKG_MEM_ERROR;
 		return -1;
 	}
