@@ -96,4 +96,6 @@ int mem_dump_shm_fixup(void *handle, str *gname, str *name, void **val);
 
 unsigned int set_fork_delay(unsigned int v);
 
+int sr_instance_started(void);
+
 #endif
