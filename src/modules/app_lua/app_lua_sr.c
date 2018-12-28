@@ -171,7 +171,7 @@ static int lua_sr_modf (lua_State *L)
 			argv[i] = (char*)pkg_malloc(strlen(luav[i])+1);
 			if(argv[i]==NULL)
 			{
-				LM_ERR("no more pkg\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			strcpy(argv[i], luav[i]);
@@ -743,7 +743,7 @@ static int lua_sr_hdr_append (lua_State *L)
 	hdr = (char*)pkg_malloc(len+1);
 	if(hdr==NULL)
 	{
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		return 0;
 	}
 	memcpy(hdr, txt, len);
@@ -829,7 +829,7 @@ static int lua_sr_hdr_insert (lua_State *L)
 	hdr = (char*)pkg_malloc(len+1);
 	if(hdr==NULL)
 	{
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		return 0;
 	}
 	memcpy(hdr, txt, len);

@@ -646,7 +646,7 @@ static int lua_sr_tm_t_on_branch_failure(lua_State *L)
 	{
 		if ((rt_name.s = pkg_reallocxf(rt_name.s, rt_name_len+1)) == NULL)
 		{
-			LM_ERR("No memory left in branch_failure fixup\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		rt_name.len = rt_name_len;

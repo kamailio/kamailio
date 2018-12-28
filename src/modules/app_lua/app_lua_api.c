@@ -81,14 +81,14 @@ int lua_sr_alloc_script_ver(void)
 	sr_lua_script_ver = (sr_lua_script_ver_t *) shm_malloc(sizeof(sr_lua_script_ver_t));
 	if(sr_lua_script_ver==NULL)
 	{
-		LM_ERR("cannot allocate shm memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
 	sr_lua_script_ver->version = (unsigned int *) shm_malloc(sizeof(unsigned int)*size);
 	if(sr_lua_script_ver->version==NULL)
 	{
-		LM_ERR("cannot allocate shm memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(sr_lua_script_ver->version, 0, sizeof(unsigned int)*size);
@@ -136,7 +136,7 @@ int sr_lua_load_script(char *script)
 	li = (sr_lua_load_t*)pkg_malloc(sizeof(sr_lua_load_t));
 	if(li==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(li, 0, sizeof(sr_lua_load_t));
@@ -451,7 +451,7 @@ int sr_lua_reload_script(void)
 		_app_lua_sv = (int *) pkg_malloc(sizeof(int)*sv_len);
 		if(_app_lua_sv==NULL)
 		{
-			LM_ERR("no more pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 	}
