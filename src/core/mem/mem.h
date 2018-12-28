@@ -37,8 +37,6 @@
 
 #ifndef mem_h
 #define mem_h
-#include "../config.h"
-#include "../dprint.h"
 
 #include "pkg.h"
 

@@ -29,6 +29,8 @@
 
 #include "memapi.h"
 
+#include "../dprint.h"
+
 extern sr_pkg_api_t _pkg_root;
 
 int pkg_init_api(sr_pkg_api_t *ap);
