@@ -115,7 +115,7 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 		}
 		extra = (struct acc_extra*)pkg_malloc(sizeof(struct acc_extra));
 		if (extra==0) {
-			LM_ERR("no more pkg mem 1\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset( extra, 0, sizeof(struct acc_extra));
@@ -237,7 +237,7 @@ int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 		} else {
 			val_arr[n].s = (char *)pkg_malloc(value.rs.len);
 			if (val_arr[n].s == NULL ) {
-				LM_ERR("out of memory.\n");
+				PKG_MEM_ERROR;
 				/* Cleanup already allocated memory and
 				 * return that we didn't do anything */
 				for (i = 0; i < n ; i++) {
