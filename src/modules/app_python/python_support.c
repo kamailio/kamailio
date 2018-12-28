@@ -94,8 +94,7 @@ void python_handle_exception(const char *fmt, ...)
 	buf = (char *)pkg_realloc(NULL, buflen * sizeof(char));
 	if (!buf)
 	{
-		LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed."
-				" Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
+		PKG_MEM_ERROR;
 		if (srcbuf) pkg_free(srcbuf);
 		return;
 	}
@@ -130,8 +129,7 @@ void python_handle_exception(const char *fmt, ...)
 		buf = (char *)pkg_reallocxf(buf, buflen * sizeof(char));
 		if (!buf)
 		{
-			LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed."
-					" Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
+			PKG_MEM_ERROR;
 			Py_DECREF(line);
 			Py_DECREF(pResult);
 			if (srcbuf) pkg_free(srcbuf);
@@ -200,8 +198,7 @@ static char *make_message(const char *fmt, va_list ap)
 	p = (char *)pkg_realloc(NULL, size * sizeof(char));
 	if (!p)
 	{
-		LM_ERR("Can't allocate memory (%lu bytes), pkg_malloc() has failed:"
-				" Not enough memory.\n", (unsigned long)(size * sizeof(char)));
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(p, 0, size * sizeof(char));
@@ -221,8 +218,7 @@ static char *make_message(const char *fmt, va_list ap)
 		np = (char *)pkg_realloc(p, size * sizeof(char));
 		if (!np)
 		{
-			LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed:"
-					" Not enough memory.\n", (unsigned long)size * sizeof(char));
+			PKG_MEM_ERROR;
 			if (p)
 				pkg_free(p);
 			return NULL;

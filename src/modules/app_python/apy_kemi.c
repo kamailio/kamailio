@@ -1342,7 +1342,7 @@ int apy_sr_init_mod(void)
 	if(_sr_python_reload_version == NULL) {
 		_sr_python_reload_version = (int*)shm_malloc(sizeof(int));
 		if(_sr_python_reload_version == NULL) {
-			LM_ERR("failed to allocated reload version\n");
+			SHM_MEM_ERROR;
 			return -1;
 		}
 		*_sr_python_reload_version = 0;
