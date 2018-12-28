@@ -42,22 +42,5 @@
 
 #include "pkg.h"
 
-
-/** generic logging helper for allocation errors in private memory pool/ system */
-#ifdef SYS_MALLOC
-#define PKG_MEM_ERROR LM_ERR("could not allocate private memory from sys pool\n")
-#define PKG_MEM_CRITICAL LM_CRIT("could not allocate private memory from sys pool\n")
-#else
-#define PKG_MEM_ERROR LM_ERR("could not allocate private memory from pkg pool\n")
-#define PKG_MEM_CRITICAL LM_CRIT("could not allocate private memory from pkg pool\n")
 #endif
 
-/** generic logging helper for allocation errors in system memory */
-#define SYS_MEM_ERROR LM_ERR("could not allocate memory from system\n")
-#define SYS_MEM_CRITICAL LM_CRIT("could not allocate memory from system\n")
-
-/** generic logging helper for allocation errors in shared memory pool */
-#define SHM_MEM_ERROR LM_ERR("could not allocate shared memory from shm pool\n")
-#define SHM_MEM_CRITICAL LM_CRIT("could not allocate shared memory from shm pool\n")
-
-#endif

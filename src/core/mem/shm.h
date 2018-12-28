@@ -96,4 +96,8 @@ int shm_address_in(void *p);
 #define shm_available_safe() shm_available()
 #define shm_malloc_on_fork() do{}while(0)
 
+/** generic logging helper for allocation errors in shared memory pool */
+#define SHM_MEM_ERROR LM_ERR("could not allocate shared memory from shm pool\n")
+#define SHM_MEM_CRITICAL LM_CRIT("could not allocate shared memory from shm pool\n")
+
 #endif
