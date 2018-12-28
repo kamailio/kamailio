@@ -111,17 +111,36 @@ void pkg_print_manager(void);
 #	define pkg_mod_free_stats(x)    do{}while(0)
 #endif /*PKG_MALLOC*/
 
+
 /** generic logging helper for allocation errors in private memory pool/ system */
 #ifdef SYS_MALLOC
 #define PKG_MEM_ERROR LM_ERR("could not allocate private memory from sys pool\n")
+#define PKG_MEM_ERROR_MSG(m) LM_ERR("could not allocate private memory from sys pool - %s\n", m);
+#define PKG_MEM_ERROR_SZ(s, m) LM_ERR("could not allocate private memory from sys pool, size: %u - %s\n", (unsigned int)s, m);
+
 #define PKG_MEM_CRITICAL LM_CRIT("could not allocate private memory from sys pool\n")
+#define PKG_MEM_CRITICAL_MSG(m) LM_CRIT("could not allocate private memory from sys pool - %s\n", m);
+#define PKG_MEM_CRITICAL_SZ(s, m) LM_CRIT("could not allocate private memory from sys pool, size: %u - %s\n", (unsigned int)s, m);
+
+
 #else
 #define PKG_MEM_ERROR LM_ERR("could not allocate private memory from pkg pool\n")
+#define PKG_MEM_ERROR_MSG(m) LM_ERR("could not allocate private memory from pkg pool - %s\n", m);
+#define PKG_MEM_ERROR_SZ(s, m) LM_ERR("could not allocate private memory from pkg pool, size: %u - %s\n", (unsigned int)s, m);
+
 #define PKG_MEM_CRITICAL LM_CRIT("could not allocate private memory from pkg pool\n")
+#define PKG_MEM_CRITICAL_MSG(m) LM_CRIT("could not allocate private memory from pkg pool - %s\n", m);
+#define PKG_MEM_CRITICAL_SZ(s, m) LM_CRIT("could not allocate private memory from pkg pool, size: %u - %s\n", (unsigned int)s, m);
 #endif
+
 
 /** generic logging helper for allocation errors in system memory */
 #define SYS_MEM_ERROR LM_ERR("could not allocate memory from system\n")
+#define SYS_MEM_ERROR_MSG(m) LM_ERR("could not allocate memory from system - %s\n", m);
+#define SYS_MEM_ERROR_SZ(s, m) LM_ERR("could not allocate memory from system, size: %u - %s\n", (unsigned int)s, m);
+
 #define SYS_MEM_CRITICAL LM_CRIT("could not allocate memory from system\n")
+#define SYS_MEM_CRITICAL_MSG(m) LM_CRIT("could not allocate memory from system - %s\n", m);
+#define SYS_MEM_CRITICAL_SZ(s, m) LM_CRIT("could not allocate memory from system, size: %u - %s\n", (unsigned int)s, m);
 
 #endif
