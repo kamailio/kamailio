@@ -1271,7 +1271,7 @@ int main_loop(void)
 	if(_sr_instance_started == NULL) {
 		_sr_instance_started = shm_malloc(sizeof(int));
 		if(_sr_instance_started == NULL) {
-			LM_ERR("no shared memory\n");
+			SHM_MEM_ERROR;
 			goto error;
 		}
 		*_sr_instance_started = 0;
