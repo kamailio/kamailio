@@ -118,8 +118,10 @@ AAA_AVP*  AAACreateAVP(
 	/* allocated a new AVP struct */
 	avp = 0;
 	avp = (AAA_AVP*)ad_malloc(sizeof(AAA_AVP));
-	if (!avp)
+	if (!avp) {
+		PKG_MEM_ERROR;
 		goto error;
+	}
 	memset( avp, 0, sizeof(AAA_AVP) );
 
 	/* set some fields */
@@ -134,8 +136,10 @@ AAA_AVP*  AAACreateAVP(
 		/* make a duplicate for data */
 		avp->data.len = length;
 		avp->data.s = (void*)ad_malloc(length);
-		if(!avp->data.s)
+		if(!avp->data.s) {
+			PKG_MEM_ERROR;
 			goto error;
+		}
 		memcpy( avp->data.s, data, length);
 		avp->free_it = 1;
 	} else {
@@ -428,7 +432,7 @@ AAA_AVP* AAACloneAVP( AAA_AVP *avp , unsigned char clone_data)
 	/* clone the avp structure */
 	n_avp = (AAA_AVP*)ad_malloc( sizeof(AAA_AVP) );
 	if (!n_avp) {
-		LM_ERR("cannot get free memory!!\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memcpy( n_avp, avp, sizeof(AAA_AVP));
@@ -438,7 +442,7 @@ AAA_AVP* AAACloneAVP( AAA_AVP *avp , unsigned char clone_data)
 		/* clone the avp data */
 		n_avp->data.s = (char*)ad_malloc( avp->data.len );
 		if (!(n_avp->data.s)) {
-			LM_ERR("cannot get free memory!!\n");
+			PKG_MEM_ERROR;
 			ad_free( n_avp );
 			goto error;
 		}

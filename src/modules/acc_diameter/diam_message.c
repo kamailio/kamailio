@@ -71,7 +71,7 @@ AAAReturnCode AAABuildMsgBuffer( AAAMessage *msg )
 	/* allocate some memory */
 	msg->buf.s = (char*)ad_malloc( msg->buf.len );
 	if (!msg->buf.s) {
-		LM_ERR("no more pkg free memory!\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(msg->buf.s, 0, msg->buf.len);
@@ -213,7 +213,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 	/* alloc a new message structure */
 	msg = (AAAMessage*)ad_malloc(sizeof(AAAMessage));
 	if (!msg) {
-		LM_ERR("no more pkg free memory!!\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(msg,0,sizeof(AAAMessage));
@@ -351,7 +351,7 @@ AAAMessage* AAAInMessage(AAACommandCode cmdCode,
 	/* allocated a new AAAMessage structure a set it to 0 */
 	msg = (AAAMessage*)ad_malloc(sizeof(AAAMessage));
 	if (!msg) {
-		LM_ERR("no more pkg free memory!\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(msg, 0, sizeof(AAAMessage));

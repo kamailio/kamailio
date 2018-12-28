@@ -180,7 +180,7 @@ static int child_init(int rank)
 	rb = (rd_buf_t*)pkg_malloc(sizeof(rd_buf_t));
 	if(!rb)
 	{
-		LM_DBG("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	rb->buf = 0;
@@ -223,7 +223,7 @@ static int acc_api_fixup(void** param, int param_no)
 	if (param_no == 1) {
 		accp = (struct acc_param*)pkg_malloc(sizeof(struct acc_param));
 		if (!accp) {
-			LM_ERR("no more pkg mem\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset( accp, 0, sizeof(struct acc_param));
@@ -544,7 +544,7 @@ int extra2strar(struct acc_extra *extra, sip_msg_t *rq, str *val_arr,
 		} else {
 			val_arr[n].s = (char *)pkg_malloc(value.rs.len);
 			if (val_arr[n].s == NULL ) {
-				LM_ERR("out of memory.\n");
+				PKG_MEM_ERROR;
 				/* Cleanup already allocated memory and
 				 * return that we didn't do anything */
 				for (i = 0; i < n ; i++) {
