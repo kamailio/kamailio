@@ -184,7 +184,7 @@ static int acc_api_fixup(void **param, int param_no)
 	if(param_no == 1) {
 		accp = (struct acc_param *)pkg_malloc(sizeof(struct acc_param));
 		if(!accp) {
-			LM_ERR("no more pkg mem\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset(accp, 0, sizeof(struct acc_param));
