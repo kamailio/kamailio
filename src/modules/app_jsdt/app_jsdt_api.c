@@ -604,7 +604,7 @@ static int jsdt_sr_modf (duk_context *J)
 		if(jsdtv[i]!=NULL) {
 			argv[i] = (char*)pkg_malloc(strlen(jsdtv[i])+1);
 			if(argv[i]==NULL) {
-				LM_ERR("no more pkg\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			strcpy(argv[i], jsdtv[i]);
@@ -758,7 +758,7 @@ int jsdt_sr_init_mod(void)
 	if(_sr_jsdt_reload_version == NULL) {
 		_sr_jsdt_reload_version = (int*)shm_malloc(sizeof(int));
 		if(_sr_jsdt_reload_version == NULL) {
-			LM_ERR("failed to allocated reload version\n");
+			SHM_MEM_ERROR;
 			return -1;
 		}
 		*_sr_jsdt_reload_version = 0;
