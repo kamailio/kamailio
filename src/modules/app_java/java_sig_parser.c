@@ -188,7 +188,7 @@ jvalue *get_value_by_sig_type(char *sig, char *pval)
 
 	ret = (jvalue *)pkg_malloc(sizeof(jvalue));
 	if(!ret) {
-		LM_ERR("%s: pkg_malloc() has failed. Not enouph memory!\n", APP_NAME);
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 

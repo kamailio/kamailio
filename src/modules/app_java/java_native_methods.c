@@ -995,17 +995,13 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_force_1send_1socket(
 
 	nl = (struct name_lst *)pkg_malloc(sizeof(struct name_lst));
 	if(!nl) {
-		LM_ERR("%s: force_send_socket: pkg_malloc() has failed. Not enough "
-			   "memory!\n",
-				APP_NAME);
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
 	si = (struct socket_id *)pkg_malloc(sizeof(struct socket_id));
 	if(!si) {
-		LM_ERR("%s: force_send_socket: pkg_malloc() has failed. Not enough "
-			   "memory!\n",
-				APP_NAME);
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

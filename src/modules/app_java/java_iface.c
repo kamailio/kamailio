@@ -152,9 +152,7 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized,
 			+ 1; // '(' + 'signature' + ')' + 'return signature' + null terminator
 	cs = (char *)pkg_malloc((cslen+1) * sizeof(char));
 	if(!cs) {
-		LM_ERR("%s: pkg_malloc() has failed. Can't allocate %lu bytes. Not "
-			   "enough memory!\n",
-				APP_NAME, (unsigned long)cslen);
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	r = snprintf(cs, cslen, "(%s)%s", signature, retval_sig);

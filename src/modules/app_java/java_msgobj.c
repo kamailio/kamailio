@@ -47,7 +47,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
 
 	SipMsgInstance = (jobject *)pkg_malloc(sizeof(jobject));
 	if(!SipMsgInstance) {
-		LM_ERR("%s: pkg_malloc() has failed. Not enough memory!\n", APP_NAME);
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(SipMsgInstance, 0, sizeof(jobject));

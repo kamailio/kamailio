@@ -123,8 +123,7 @@ static int mod_init(void)
 
 	options = (JavaVMOption *)pkg_malloc(sizeof(JavaVMOption));
 	if(!options) {
-		LM_ERR("pkg_malloc() failed: Couldn't initialize Java VM: Not enough "
-			   "memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(options, 0, sizeof(JavaVMOption));
