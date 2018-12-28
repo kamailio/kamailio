@@ -169,6 +169,16 @@ struct minmax_stats_vals {
 	long long avg_samples; /* our own running count to average the averages */
 };
 
+#define RTPE_LIST_VERSION_DELAY	10
+
+typedef struct rtpe_list_version {
+	int vernum;
+	time_t vertime;
+} rtpe_list_version_t;
+
+static rtpe_list_version_t *_rtpe_list_version = NULL;
+static int _rtpe_list_vernum_local = 0;
+
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
 static int start_recording_f(struct sip_msg *, char *, char *);
@@ -281,7 +291,6 @@ static struct minmax_mos_label_stats global_mos_stats,
 				     side_A_mos_stats,
 				     side_B_mos_stats;
 int got_any_mos_pvs;
-
 
 
 static cmd_export_t cmds[] = {
@@ -1169,15 +1178,25 @@ error:
 
 static void rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 {
+	time_t tnow;
+
 	if (rtpp_db_url.s == NULL) {
 		// no database
 		rpc->fault(ctx, 500, "No Database URL");
 		return;
 	}
+
 	if(!sr_instance_ready()) {
 		rpc->fault(ctx, 500, "Initializing - try later");
 		return;
 	}
+
+	tnow = time(NULL);
+	if(tnow - _rtpe_list_version->vertime < RTPE_LIST_VERSION_DELAY) {
+		rpc->fault(ctx, 500, "Too short reload interval - try later");
+		return;
+	}
+	_rtpe_list_version->vertime = tnow;
 
 	if (init_rtpproxy_db() < 0) {
 		// fail reloading from database
@@ -1186,9 +1205,15 @@ static void rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 	}
 
 	if (build_rtpp_socks(1, 1)) {
-		rpc->fault(ctx, 500, "Out of memory");
+		rpc->fault(ctx, 500, "Failed to build rtpengine sockets");
 		return;
 	}
+
+	_rtpe_list_version->vernum += 1;
+	_rtpe_list_version->vertime = time(NULL);
+	LM_DBG("current rtpengines list version: %d (%u)\n",
+			_rtpe_list_version->vernum,
+			(unsigned int)_rtpe_list_version->vertime);
 }
 
 static int rtpengine_rpc_iterate(rpc_t* rpc, void* ctx, const str *rtpp_url,
@@ -1473,6 +1498,14 @@ mod_init(void)
 	unsigned short avp_flags;
 	str s;
 
+	_rtpe_list_version = (rtpe_list_version_t*)shm_mallocxz(sizeof(rtpe_list_version_t));
+	if(_rtpe_list_version==NULL) {
+		LM_ERR("no more shm memory for rtpe list version\n");
+		return -1;
+	}
+	_rtpe_list_version->vernum = 1;
+	_rtpe_list_version->vertime = time(NULL);
+
 	if(rtpengine_rpc_init()<0)
 	{
 		LM_ERR("failed to register RPC commands\n");
@@ -1666,12 +1699,14 @@ static int build_rtpp_socks(int lmode, int rtest) {
 	int ip_mtu_discover = IP_PMTUDISC_DONT;
 #endif
 
+	if(_rtpe_list_vernum_local == _rtpe_list_version->vernum) {
+		/* same version for the list of rtpengines */
+		return 0;
+	}
+
 	rtpe_reload_lock_get(rtpp_no_lock);
 	current_rtpp_no = *rtpp_no;
 	rtpe_reload_lock_release(rtpp_no_lock);
-
-	if (current_rtpp_no == rtpp_socks_size)
-		return 0;
 
 	// close current sockets
 	for (i = 0; i < rtpp_socks_size; i++) {
@@ -1690,6 +1725,7 @@ static int build_rtpp_socks(int lmode, int rtest) {
 	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size));
 
 	rtpe_reload_lock_get(rtpp_set_list->rset_head_lock);
+	_rtpe_list_vernum_local = _rtpe_list_version->vernum;
 	for (rtpp_list = rtpp_set_list->rset_first; rtpp_list != 0;
 		rtpp_list = rtpp_list->rset_next) {
 
@@ -1947,6 +1983,10 @@ static void mod_destroy(void)
 		LM_ERR("rtpengine_hash_table_destroy() failed!\n");
 	} else {
 		LM_DBG("rtpengine_hash_table_destroy() success!\n");
+	}
+	if(_rtpe_list_version!=NULL) {
+		shm_free(_rtpe_list_version);
+		_rtpe_list_version = NULL;
 	}
 }
 
