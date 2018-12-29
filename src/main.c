@@ -1891,6 +1891,10 @@ int main(int argc, char** argv)
 					log_color=1;
 					break;
 			case 'M':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad private mem size\n");
+						goto error;
+					}
 					pkg_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
 					if (tmp &&(*tmp)){
 						fprintf(stderr, "bad private mem size number: -M %s\n",
