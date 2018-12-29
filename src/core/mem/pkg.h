@@ -114,35 +114,47 @@ void pkg_print_manager(void);
 #endif /*PKG_MALLOC*/
 
 
-/** generic logging helper for allocation errors in private memory pool/ system */
+/* generic logging helper for allocation errors in private system memory */
 #ifdef SYS_MALLOC
 #define PKG_MEM_ERROR LM_ERR("could not allocate private memory from sys pool\n")
-#define PKG_MEM_ERROR_MSG(m) LM_ERR("could not allocate private memory from sys pool - %s\n", m);
-#define PKG_MEM_ERROR_SZ(s, m) LM_ERR("could not allocate private memory from sys pool, size: %u - %s\n", (unsigned int)s, m);
-
 #define PKG_MEM_CRITICAL LM_CRIT("could not allocate private memory from sys pool\n")
-#define PKG_MEM_CRITICAL_MSG(m) LM_CRIT("could not allocate private memory from sys pool - %s\n", m);
-#define PKG_MEM_CRITICAL_SZ(s, m) LM_CRIT("could not allocate private memory from sys pool, size: %u - %s\n", (unsigned int)s, m);
 
-
+#ifdef __SUNPRO_C
+#define PKG_MEM_ERROR_FMT(...) LM_ERR("could not allocate private memory from sys pool" __VA_ARGS__)
+#define PKG_MEM_CRITICAL_FMT(...) LM_CRIT("could not allocate private memory from sys pool" __VA_ARGS__)
 #else
+#define PKG_MEM_ERROR_FMT(fmt, args...) LM_ERROR("could not allocate private memory from sys pool - " fmt , ## args)
+#define PKG_MEM_CRITICAL_FMT(fmt, args...) LM_CRIT("could not allocate private memory from sys pool - " fmt , ## args)
+#endif
+
+/* generic logging helper for allocation errors in private memory pool */
+#else
+
 #define PKG_MEM_ERROR LM_ERR("could not allocate private memory from pkg pool\n")
-#define PKG_MEM_ERROR_MSG(m) LM_ERR("could not allocate private memory from pkg pool - %s\n", m);
-#define PKG_MEM_ERROR_SZ(s, m) LM_ERR("could not allocate private memory from pkg pool, size: %u - %s\n", (unsigned int)s, m);
-
 #define PKG_MEM_CRITICAL LM_CRIT("could not allocate private memory from pkg pool\n")
-#define PKG_MEM_CRITICAL_MSG(m) LM_CRIT("could not allocate private memory from pkg pool - %s\n", m);
-#define PKG_MEM_CRITICAL_SZ(s, m) LM_CRIT("could not allocate private memory from pkg pool, size: %u - %s\n", (unsigned int)s, m);
+
+#ifdef __SUNPRO_C
+//#define PKG_MEM_ERROR_FMT(...) LM_ERR("could not allocate private memory from pkg pool", __VA_ARGS__)
+#define PKG_MEM_ERROR_FMT(...) LM_ERR("could not allocate private memory from pkg pool" __VA_ARGS__)
+#define PKG_MEM_CRITICAL_FMT(...) LM_CRIT("could not allocate private memory from pkg pool" __VA_ARGS__)
+#else
+#define PKG_MEM_ERROR_FMT(fmt, args...) LM_ERR("could not allocate private memory from pkg pool - " fmt , ## args)
+#define PKG_MEM_CRITICAL_FMT(fmt, args...) LM_CRIT("could not allocate private memory from pkg pool - " fmt , ## args)
 #endif
 
+#endif /* SYS_MALLOC */
 
-/** generic logging helper for allocation errors in system memory */
+
+/* generic logging helper for allocation errors in system memory */
 #define SYS_MEM_ERROR LM_ERR("could not allocate memory from system\n")
-#define SYS_MEM_ERROR_MSG(m) LM_ERR("could not allocate memory from system - %s\n", m);
-#define SYS_MEM_ERROR_SZ(s, m) LM_ERR("could not allocate memory from system, size: %u - %s\n", (unsigned int)s, m);
-
 #define SYS_MEM_CRITICAL LM_CRIT("could not allocate memory from system\n")
-#define SYS_MEM_CRITICAL_MSG(m) LM_CRIT("could not allocate memory from system - %s\n", m);
-#define SYS_MEM_CRITICAL_SZ(s, m) LM_CRIT("could not allocate memory from system, size: %u - %s\n", (unsigned int)s, m);
 
+#ifdef __SUNPRO_C
+#define SYS_MEM_ERROR_FMT(...) LM_ERR("could not allocate memory from system" __VA_ARGS__)
+#define SYS_MEM_CRITICAL_FMT(...) LM_CRIT("could not allocate memory from system" __VA_ARGS__)
+#else
+#define SYS_MEM_ERROR_FMT(fmt, args...) LM_ERR("could not allocate memory from system - " fmt , ## args)
+#define SYS_MEM_CRITICAL_FMT(fmt, args...) LM_CRIT("could not allocate memory from system - " fmt , ## args)
 #endif
+
+#endif /* _sr_pkg_h_ */
