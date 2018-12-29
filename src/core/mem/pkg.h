@@ -134,7 +134,6 @@ void pkg_print_manager(void);
 #define PKG_MEM_CRITICAL LM_CRIT("could not allocate private memory from pkg pool\n")
 
 #ifdef __SUNPRO_C
-//#define PKG_MEM_ERROR_FMT(...) LM_ERR("could not allocate private memory from pkg pool", __VA_ARGS__)
 #define PKG_MEM_ERROR_FMT(...) LM_ERR("could not allocate private memory from pkg pool" __VA_ARGS__)
 #define PKG_MEM_CRITICAL_FMT(...) LM_CRIT("could not allocate private memory from pkg pool" __VA_ARGS__)
 #else
