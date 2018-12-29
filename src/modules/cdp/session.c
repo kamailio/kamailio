@@ -607,8 +607,8 @@ AAASession* cdp_new_cc_acc_session(str id, int is_statefull)
 	AAASession *s;
 	cdp_session_type_t type;
 
-	if (is_statefull) type = ACCT_CC_CLIENT;
-	else type = ACCT_CC_CLIENT; //for now everything will be supported through this SM (until we add IEC)
+	//for now everything will be supported through this SM (until we add IEC)
+	type = ACCT_CC_CLIENT;
 
 	s = cdp_new_session(id,type);
 	if (s) {
