@@ -426,8 +426,9 @@ static int child_init(int rank)
 		if(db_check_table_version(
 				   &db_funcs, db_con, &siptrace_table, SIP_TRACE_TABLE_VERSION)
 				< 0) {
-			LM_ERR("error during table version check\n");
+			DB_TABLE_VERSION_ERROR(siptrace_table);
 			db_funcs.close(db_con);
+			db_con = 0;
 			return -1;
 		}
 	}
