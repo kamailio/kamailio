@@ -140,7 +140,9 @@ static int mod_init(void)
 
 	if(db_check_table_version(&xcap_dbf, xcap_db, &xcap_db_table,
 				XCAP_TABLE_VERSION) < 0) {
-		LM_ERR("error during table version check.\n");
+		DB_TABLE_VERSION_ERROR(xcap_db_table);
+		xcap_dbf.close(xcap_db);
+		xcap_db = NULL;
 		return -1;
 	}
 	xcap_dbf.close(xcap_db);
