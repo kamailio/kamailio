@@ -176,12 +176,12 @@ static int mod_init(void)
 		return -1;
 	}
 	if(domain_db_ver(&domain_table, DOMAIN_TABLE_VERSION) < 0) {
-		LM_ERR("error during check of domain table version\n");
+		DB_TABLE_VERSION_ERROR(domain_table);
 		domain_db_close();
 		goto error;
 	}
 	if(domain_db_ver(&domain_attrs_table, DOMAIN_ATTRS_TABLE_VERSION) < 0) {
-		LM_ERR("error during check of domain_attrs table version\n");
+		DB_TABLE_VERSION_ERROR(domain_attrs_table);
 		domain_db_close();
 		goto error;
 	}
