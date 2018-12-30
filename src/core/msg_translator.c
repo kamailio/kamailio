@@ -179,7 +179,7 @@ static int check_via_address(struct ip_addr* ip, str *name,
 				LM_CRIT("invalid Via host name\n");
 				return -1;
 			}
-			if (strncmp(name->s, s, name->len)==0)
+			if (len==name->len&&(strncmp(name->s, s, name->len)==0))
 				return 0;
 		}
 	}else{
