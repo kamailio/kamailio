@@ -216,8 +216,8 @@ static int mod_init(void)
 		}
 
 		if(db_check_table_version(&pxml_dbf, pxml_db, &xcap_table, S_TABLE_VERSION) < 0) {
-			LM_ERR("error during table version check.\n");
-			return -1;
+			DB_TABLE_VERSION_ERROR(xcap_table);
+			goto dberror;
 		}
 		if(!integrated_xcap_server )
 		{
@@ -229,25 +229,25 @@ static int mod_init(void)
 			if (!bind_xcap)
 			{
 				LM_ERR("Can't bind xcap_client\n");
-				return -1;
+				goto dberror;
 			}
 
 			if (bind_xcap(&xcap_api) < 0)
 			{
 				LM_ERR("Can't bind xcap_api\n");
-				return -1;
+				goto dberror;
 			}
 			xcap_GetNewDoc= xcap_api.getNewDoc;
 			if(xcap_GetNewDoc== NULL)
 			{
 				LM_ERR("can't import getNewDoc from xcap_client module\n");
-				return -1;
+				goto dberror;
 			}
 
 			if(xcap_api.register_xcb(PRES_RULES, xcap_doc_updated)< 0)
 			{
 				LM_ERR("registering xcap callback function\n");
-				return -1;
+				goto dberror;
 			}
 		}
 	}
@@ -263,6 +263,11 @@ static int mod_init(void)
 	pxml_db = NULL;
 
 	return 0;
+
+dberror:
+	pxml_dbf.close(pxml_db);
+	pxml_db = NULL;
+	return -1;
 }
 
 static int child_init(int rank)
