@@ -401,12 +401,12 @@ Return codes:
 */
 static int check_user(struct sip_msg *msg, int type)
 {
-	str name;
-	str user;
-	str domain;
+	str name = STR_NULL;
+	str user = STR_NULL;
+	str domain = STR_NULL;
 	int res = 0;
 	int nlen, ulen, dlen;
-	struct str_list *list;
+	struct str_list *list = NULL;
 
 	switch(type) {
 		case 1:
