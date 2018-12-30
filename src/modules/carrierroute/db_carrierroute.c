@@ -111,18 +111,33 @@ int carrierroute_db_init(void) {
 		LM_ERR("can't connect to database.\n");
 		return -1;
 	}
-	if (
-	(db_check_table_version(&carrierroute_dbf, carrierroute_dbh, &carrierroute_table, carrierroute_version) < 0) ||
-	(db_check_table_version(&carrierroute_dbf, carrierroute_dbh, &carrierfailureroute_table, carrierfailureroute_version) < 0) ||
-	(db_check_table_version(&carrierroute_dbf, carrierroute_dbh, &carrier_name_table, carrier_name_version) < 0) ||
-	(db_check_table_version(&carrierroute_dbf, carrierroute_dbh, &domain_name_table, domain_name_version) < 0)
-	) {
-		LM_ERR("during table version check.\n");
-		carrierroute_db_close();
-		return -1;
+	if (db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
+			&carrierroute_table, carrierroute_version) < 0) {
+		DB_TABLE_VERSION_ERROR(carrierroute_table);
+		goto dberror;
 	}
+	if (db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
+			&carrierfailureroute_table, carrierfailureroute_version) < 0) {
+		DB_TABLE_VERSION_ERROR(carrierfailureroute_table);
+		goto dberror;
+	}
+	if (db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
+			&carrier_name_table, carrier_name_version) < 0) {
+		DB_TABLE_VERSION_ERROR(carrier_name_table);
+		goto dberror;
+	}
+	if (db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
+			&domain_name_table, domain_name_version) < 0) {
+		DB_TABLE_VERSION_ERROR(domain_name_table);
+		goto dberror;
+	}
+
 	carrierroute_db_close();
 	return 0;
+
+dberror:
+	carrierroute_db_close();
+	return -1;
 }
 
 
