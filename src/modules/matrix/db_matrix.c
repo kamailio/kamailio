@@ -70,7 +70,7 @@ int matrix_db_init(void) {
 	if (
 	(db_check_table_version(&matrix_dbf, matrix_dbh, &matrix_table, matrix_version) < 0)
 	) {
-		LM_ERR("during table version check.\n");
+		DB_TABLE_VERSION_ERROR(matrix_table);
 		matrix_db_close();
 		return -1;
 	}
