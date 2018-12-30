@@ -61,7 +61,8 @@ int cpl_db_bind(const str* db_url, const str *db_table)
 		return -1;
 
 	if(db_check_table_version(&cpl_dbf, db_hdl, db_table, TABLE_VERSION) < 0) {
-		LM_ERR("error during table version check.\n");
+		str tmp = *db_table;
+		DB_TABLE_VERSION_ERROR(tmp);
 		cpl_db_close();
 		return -1;
 	}
