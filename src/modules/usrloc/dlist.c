@@ -644,21 +644,22 @@ int register_udomain(const char* _n, udomain_t** _d)
 		con = ul_dbf.init(&db_url);
 		if (!con) {
 			LM_ERR("failed to open database connection\n");
-			goto err;
+			goto dberror;
 		}
 
 		if(ul_version_table != 0
 				&& db_check_table_version(&ul_dbf, con, &s, UL_TABLE_VERSION) < 0) {
-			LM_ERR("error during table version check.\n");
-			goto err;
+			DB_TABLE_VERSION_ERROR(s);
+			goto dberror;
 		}
 		/* test if DB really exists */
 		if (testdb_udomain(con, d->d) < 0) {
 			LM_ERR("testing domain '%.*s' failed\n", s.len, ZSW(s.s));
-			goto err;
+			goto dberror;
 		}
 
 		ul_dbf.close(con);
+		con = 0;
 	}
 
 	d->next = root;
@@ -667,8 +668,9 @@ int register_udomain(const char* _n, udomain_t** _d)
 	*_d = d->d;
 	return 0;
 
-err:
+dberror:
 	if (con) ul_dbf.close(con);
+	con = 0;
 	free_udomain(d->d);
 	shm_free(d->name.s);
 	shm_free(d);
