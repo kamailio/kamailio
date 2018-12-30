@@ -335,7 +335,9 @@ static int mod_init(void)
 	}
 
 	if(db_check_table_version(&msilo_dbf, db_con, &ms_db_table, S_TABLE_VERSION) < 0) {
-		LM_ERR("error during table version check.\n");
+		DB_TABLE_VERSION_ERROR(ms_db_table);
+		msilo_dbf.close(db_con);
+		db_con = NULL;
 		return -1;
 	}
 	if(db_con)
