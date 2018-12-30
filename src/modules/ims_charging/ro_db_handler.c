@@ -98,8 +98,8 @@ int init_ro_db(const str *db_url, int dlg_hash_size, int db_update_period, int f
     }
 
     if (db_check_table_version(&ro_dbf, ro_db_handle, &ro_session_table_name, RO_TABLE_VERSION) < 0) {
-	LM_ERR("error during dialog-table version check.\n");
-	return -1;
+	DB_TABLE_VERSION_ERROR(ro_session_table_name);
+	goto dberror;
     }
 
     //	if( (dlg_db_mode==DB_MODE_DELAYED) && 
@@ -110,13 +110,18 @@ int init_ro_db(const str *db_url, int dlg_hash_size, int db_update_period, int f
 
     if ((load_ro_info_from_db(dlg_hash_size, fetch_num_rows)) != 0) {
 	LM_ERR("unable to load the dialog data\n");
-	return -1;
+	goto dberror;
     }
 
     ro_dbf.close(ro_db_handle);
     ro_db_handle = 0;
 
     return 0;
+
+dberror:
+    ro_dbf.close(ro_db_handle);
+    ro_db_handle = 0;
+    return -1;
 }
 
 int load_ro_info_from_db(int hash_size, int fetch_num_rows) {
