@@ -148,34 +148,39 @@ int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int
 	}
 
 	if(db_check_table_version(&dialog_dbf, dialog_db_handle, &dialog_table_name, DLG_TABLE_VERSION) < 0) {
-		LM_ERR("Error during dialog table version check. Please check the database structure.\n");
-		return -1;
+		DB_TABLE_VERSION_ERROR(dialog_table_name);
+		goto dberror;
 	}
 
 	if(db_check_table_version(&dialog_dbf, dialog_db_handle, &dialog_vars_table_name, DLG_VARS_TABLE_VERSION) < 0) {
-		LM_ERR("Error during dialog-vars table version check. Please check the database structure\n");
-		return -1;
+		DB_TABLE_VERSION_ERROR(dialog_vars_table_name);
+		goto dberror;
 	}
 
 	if( (dlg_db_mode==DB_MODE_DELAYED) && (register_timer( dialog_update_db, 0, db_update_period)<0 )) {
 		LM_ERR("Failed to register update db timer\n");
-		return -1;
+		goto dberror;
 	}
 
 	if ( db_skip_load == 0 ) {
 		if( (load_dialog_info_from_db(dlg_hash_size, fetch_num_rows, 0, NULL) ) !=0 ){
 			LM_ERR("Unable to load the dialog data\n");
-			return -1;
+			goto dberror;
 		}
 		if( (load_dialog_vars_from_db(fetch_num_rows, 0, NULL) ) !=0 ){
 			LM_ERR("Unable to load the dialog variable data\n");
-			return -1;
+			goto dberror;
 		}
 	}
 	dialog_dbf.close(dialog_db_handle);
 	dialog_db_handle = 0;
 
 	return 0;
+
+dberror:
+	dialog_dbf.close(dialog_db_handle);
+	dialog_db_handle = 0;
+	return -1;
 }
 
 
