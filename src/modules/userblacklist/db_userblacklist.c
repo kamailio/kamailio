@@ -79,11 +79,15 @@ int userblacklist_db_init(void) {
 		LM_ERR("can't connect to database.\n");
 		return -1;
 	}
-	if (
-	(db_check_table_version(&userblacklist_dbf, userblacklist_dbh, &userblacklist_table, userblacklist_version) < 0) ||
-	(db_check_table_version(&userblacklist_dbf, userblacklist_dbh, &globalblacklist_table, globalblacklist_version) < 0)
-	) {
-		LM_ERR("during table version check.\n");
+	if (db_check_table_version(&userblacklist_dbf, userblacklist_dbh,
+			&userblacklist_table, userblacklist_version) < 0) {
+		DB_TABLE_VERSION_ERROR(userblacklist_table);
+		userblacklist_db_close();
+		return -1;
+	}
+	if (db_check_table_version(&userblacklist_dbf, userblacklist_dbh,
+			&globalblacklist_table, globalblacklist_version) < 0) {
+		DB_TABLE_VERSION_ERROR(globalblacklist_table);
 		userblacklist_db_close();
 		return -1;
 	}
