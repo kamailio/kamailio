@@ -203,8 +203,9 @@ int init_trusted(void)
 		}
 
 		if(db_check_table_version(&perm_dbf, db_handle, &trusted_table, TABLE_VERSION) < 0) {
-			LM_ERR("error during table version check.\n");
+			DB_TABLE_VERSION_ERROR(trusted_table);
 			perm_dbf.close(db_handle);
+			db_handle = 0;
 			return -1;
 		}
 
@@ -272,7 +273,7 @@ int init_child_trusted(int rank)
 
 	if (db_check_table_version(&perm_dbf, db_handle, &trusted_table,
 				TABLE_VERSION) < 0) {
-		LM_ERR("error during table version check.\n");
+		DB_TABLE_VERSION_ERROR(trusted_table);
 		perm_dbf.close(db_handle);
 		return -1;
 	}

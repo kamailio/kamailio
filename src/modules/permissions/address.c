@@ -311,8 +311,9 @@ int init_addresses(void)
 	}
 
 	if(db_check_table_version(&perm_dbf, db_handle, &address_table, TABLE_VERSION) < 0) {
-		LM_ERR("error during table version check.\n");
+		DB_TABLE_VERSION_ERROR(address_table);
 		perm_dbf.close(db_handle);
+		db_handle = 0;
 		return -1;
 	}
 
