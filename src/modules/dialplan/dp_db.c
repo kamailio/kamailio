@@ -144,7 +144,7 @@ int init_db_data(void)
 
 	if(db_check_table_version(&dp_dbf, dp_db_handle, &dp_table_name,
 				DP_TABLE_VERSION) < 0) {
-		LM_ERR("error during table version check.\n");
+		DB_TABLE_VERSION_ERROR(dp_table_name);
 		goto error;
 	}
 
