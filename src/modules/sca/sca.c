@@ -222,11 +222,8 @@ static int sca_bind_srdb1(sca_mod *scam, db_func_t *db_api)
 
 	if (db_check_table_version(db_api, db_con, scam->cfg->subs_table,
 			SCA_DB_SUBSCRIPTIONS_TABLE_VERSION) < 0) {
-		LM_ERR("Version check of %.*s table in DB %.*s failed\n",
-				STR_FMT(scam->cfg->subs_table), STR_FMT(scam->cfg->db_url));
-		LM_ERR("%.*s table version %d required\n",
-				STR_FMT(scam->cfg->subs_table),
-				SCA_DB_SUBSCRIPTIONS_TABLE_VERSION);
+		str tmp = *scam->cfg->subs_table;
+		DB_TABLE_VERSION_ERROR(tmp);
 		goto done;
 	}
 
