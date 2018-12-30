@@ -675,18 +675,20 @@ static int mod_init(void)
 		LM_ERR("unable to open database connection\n");
 		return -1;
 	}
-	if((db_check_table_version(
-				&lcr_dbf, dbh, &lcr_rule_table, LCR_RULE_TABLE_VERSION)
-			   < 0)
-			|| (db_check_table_version(&lcr_dbf, dbh, &lcr_rule_target_table,
-						LCR_RULE_TARGET_TABLE_VERSION)
-					   < 0)
-			|| (db_check_table_version(
-						&lcr_dbf, dbh, &lcr_gw_table, LCR_GW_TABLE_VERSION)
-					   < 0)) {
-		LM_ERR("error during table version check\n");
-		lcr_db_close();
-		goto err;
+	if(db_check_table_version(&lcr_dbf, dbh, &lcr_rule_table,
+			LCR_RULE_TABLE_VERSION) < 0) {
+		DB_TABLE_VERSION_ERROR(lcr_rule_table);
+		goto dberror;
+	}
+	if(db_check_table_version(&lcr_dbf, dbh, &lcr_rule_target_table,
+			LCR_RULE_TARGET_TABLE_VERSION) < 0) {
+		DB_TABLE_VERSION_ERROR(lcr_rule_target_table);
+		goto dberror;
+	}
+	if (db_check_table_version(&lcr_dbf, dbh, &lcr_gw_table,
+			LCR_GW_TABLE_VERSION) < 0) {
+		DB_TABLE_VERSION_ERROR(lcr_gw_table);
+		goto dberror;
 	}
 	lcr_db_close();
 
@@ -762,6 +764,9 @@ static int mod_init(void)
 	lock_release(reload_lock);
 
 	return 0;
+
+dberror:
+	lcr_db_close();
 
 err:
 	free_shared_memory();
