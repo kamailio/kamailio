@@ -584,4 +584,11 @@ int db_fetch_query_lock(db_func_t *dbf, int frows,
 int db_fetch_next(db_func_t *dbf, int frows, db1_con_t* _h,
 		db1_res_t** _r);
 
+/**
+ * \brief Error logging helper for database version check error.
+ * \param table database table name string
+ */
+#define DB_TABLE_VERSION_ERROR(table) LM_ERR("Error during version check for db table:" \
+			" %.*s, check database structure.\n", table.len, table.s)
+
 #endif /* DB1_H */
