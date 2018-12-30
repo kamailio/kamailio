@@ -198,7 +198,9 @@ static int mod_init(void)
 	}
 	/* verify table version  */
 	if(db_check_table_version(&pua_dbf, pua_db, &db_table, PUA_TABLE_VERSION) < 0) {
-		LM_ERR("error during table version check.\n");
+		DB_TABLE_VERSION_ERROR(db_table);
+		pua_dbf.close(pua_db);
+		pua_db = NULL;
 		return -1;
 	}
 
