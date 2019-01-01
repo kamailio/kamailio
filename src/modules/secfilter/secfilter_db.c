@@ -31,20 +31,11 @@ int mod_version = 1;
 static db_func_t db_funcs;		 /* Database API functions */
 static db1_con_t *db_handle = 0; /* Database connection handle */
 
-/* Version table */
-static str version_table_name = str_init("version");
-static str table_name_col = str_init("table_name");
-static str table_version_col = str_init("table_version");
-
 
 /* Check module version */
 int check_version(void)
 {
-	int version = 0, res = 0;
-	db_key_t db_keys[1];
-	db_val_t db_vals[1];
-	db_key_t db_cols[1];
-	db1_res_t *db_res = NULL;
+	str table = str_init("secfilter");
 
 	/* Connect to DB */
 	db_handle = db_funcs.init(&secf_db_url);
@@ -53,51 +44,13 @@ int check_version(void)
 		return -1;
 	}
 
-	/* Prepare the data for the query */
-	db_cols[0] = &table_version_col;
-	db_keys[0] = &table_name_col;
-
-	db_vals[0].type = DB1_STRING;
-	db_vals[0].nul = 0;
-	db_vals[0].val.string_val = "secfilter";
-
-	/* Execute query */
-	if(db_funcs.use_table(db_handle, &version_table_name) < 0) {
-		LM_ERR("Unable to use table '%.*s'\n", version_table_name.len,
-				version_table_name.s);
+	if (db_check_table_version(&db_funcs, db_handle, &table, mod_version) < 0) {
+		DB_TABLE_VERSION_ERROR(table);
+		db_funcs.close(db_handle);
 		return -1;
 	}
-	if(db_funcs.query(
-			   db_handle, db_keys, NULL, db_vals, db_cols, 1, 1, NULL, &db_res)
-			< 0) {
-		LM_ERR("Failed to query database\n");
-		res = -1;
-		goto done;
-	}
 
-	if(RES_ROW_N(db_res) == 0) {
-		LM_ERR("No version value found in database. It must be %d\n",
-				mod_version);
-		res = -1;
-		goto done;
-	}
-
-	/* Get the version value */
-	version = RES_ROWS(db_res)[0].values[0].val.int_val;
-
-	if(version != mod_version) {
-		LM_ERR("Wrong version value. Correct version is %d but found %d\n",
-				mod_version, version);
-		res = -1;
-		goto done;
-	}
-
-done:
-	if(db_res != NULL && db_funcs.free_result(db_handle, db_res) < 0)
-		LM_DBG("Failed to free the result\n");
-	db_funcs.close(db_handle);
-
-	return res;
+	return 0;
 }
 
 
