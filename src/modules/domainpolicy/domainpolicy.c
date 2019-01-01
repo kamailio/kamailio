@@ -252,12 +252,10 @@ void domainpolicy_db_close(void)
 /*!
  * \brief Check the database table version
  * \param db_url database URL
- * \param name table name
- * \return -1 on failure, positive database version on success
+ * \return -1 on failure, 0 on success
  */
-int domainpolicy_db_ver(const str* db_url, const str* name)
+int domainpolicy_db_ver(const str* db_url)
 {
-	int ver;
 	db1_con_t* dbh;
 
 	if (domainpolicy_dbf.init==0){
@@ -269,9 +267,15 @@ int domainpolicy_db_ver(const str* db_url, const str* name)
 		LM_CRIT("null database handler\n");
 		return -1;
 	}
-	ver=db_table_version(&domainpolicy_dbf, dbh, name);
+	if (db_check_table_version(&domainpolicy_dbf, dbh, &domainpolicy_table, DOMAINPOLICY_TABLE_VERSION) < 0) {
+		DB_TABLE_VERSION_ERROR(domainpolicy_table);
+		domainpolicy_dbf.close(dbh);
+		dbh=0;
+		return -1;
+	}
 	domainpolicy_dbf.close(dbh);
-	return ver;
+	dbh=0;
+	return 0;
 }
 
 /***************************/

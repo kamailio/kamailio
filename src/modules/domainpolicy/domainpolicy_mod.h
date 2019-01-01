@@ -36,6 +36,13 @@
 #include "../../core/usr_avp.h"
 
 
+/*!
+ * Version of gw and lcr tables required by the module, increment this value
+ * if you change the table in an backwards incompatible way
+ */
+#define DOMAINPOLICY_TABLE_VERSION 2
+
+
 /*
  * Module parameters variables
  */

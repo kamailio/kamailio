@@ -100,10 +100,9 @@ void domainpolicy_db_close(void);
 /*!
  * \brief Check the database table version
  * \param db_url database URL
- * \param name table name
- * \return -1 on failure, positive database version on success
+ * \return -1 on failure, 0 on success
  */
-int domainpolicy_db_ver(const str* db_url, const str* name);
+int domainpolicy_db_ver(const str* db_url);
 
 
 #endif

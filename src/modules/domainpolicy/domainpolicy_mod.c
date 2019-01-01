@@ -50,12 +50,6 @@ static int child_init(int rank);
 
 MODULE_VERSION
 
-/*!
- * Version of gw and lcr tables required by the module, increment this value
- * if you change the table in an backwards incompatible way
- */
-#define DOMAINPOLICY_TABLE_VERSION 2
-
 
 #define DOMAINPOLICY_TABLE "domainpolicy"
 #define DOMAINPOLICY_COL_RULE "rule"
@@ -151,7 +145,6 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	unsigned int par;
-	int ver;
 
 	LM_DBG("check for DB module\n");
 
@@ -163,12 +156,8 @@ static int mod_init(void)
 	}
 
 	/* Check table version */
-	ver = domainpolicy_db_ver(&db_url, &domainpolicy_table);
-	if (ver < 0) {
-		LM_ERR("failed to query table version\n");
-		return -1;
-	} else if (ver < DOMAINPOLICY_TABLE_VERSION) {
-		LM_ERR("invalid table version of domainpolicy table\n");
+	if (domainpolicy_db_ver(&db_url) < 0) {
+		LM_ERR("Error during database table version check");
 		return -1;
 	}
 
