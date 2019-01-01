@@ -139,7 +139,6 @@ static int rtpp_load_db(void)
 int init_rtpproxy_db(void)
 {
 	int ret;
-	int rtpp_table_version;
 	if (rtpp_db_url.s == NULL)
 		/* Database not configured */
 		return 0;
@@ -155,21 +154,11 @@ int init_rtpproxy_db(void)
 		return -1;
 	}
 
-	rtpp_table_version = db_table_version(&rtpp_dbf, rtpp_db_handle, &rtpp_table_name);
-	if (rtpp_table_version < 0)
+	if (db_check_table_version(&rtpp_dbf, rtpp_db_handle, &rtpp_table_name, RTPP_TABLE_VERSION) < 0)
 	{
-		LM_ERR("failed to get rtpp table version\n");
+		DB_TABLE_VERSION_ERROR(rtpp_table_name);
 		ret = -1;
 		goto done;
-	}
-	switch (rtpp_table_version) {
-		case RTPP_TABLE_VERSION:
-			break;
-		default:
-			LM_ERR("invalid table version (found %d, require %d)\n",
-			  rtpp_table_version, RTPP_TABLE_VERSION);
-			ret = -1;
-			goto done;
 	}
 	ret = rtpp_load_db();
 
