@@ -358,13 +358,16 @@ void db_do_close(db1_con_t* _h, void (*free_connection)())
 }
 
 
-
-/*! \brief
- * Get version of a table
- * \param dbf
- * \param connection
- * \param table
- * \return If there is no row for the given table, return version 0
+/**
+ * \brief Get the version of a table.
+ *
+ * Returns the version number of a given table from the version table.
+ * Instead of this function you should use db_check_table_version!
+ * \see db_check_table_version
+ * \param dbf database module callbacks
+ * \param con database connection handle
+ * \param table checked table
+ * \return the version number if present, 0 if no version data available, < 0 on error
  */
 int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* table)
 {
@@ -442,9 +445,15 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 	return ret;
 }
 
-/*! \brief
- * Check the table version
- * 0 means ok, -1 means an error occurred
+/**
+ * \brief Check the table version, including user error logging.
+ *
+ * Small helper function to check the table version, including user error logging.
+ * \param dbf database module callbacks
+ * \param dbh database connection handle
+ * \param table checked table
+ * \param version checked version
+ * \return 0 means ok, -1 means an error occurred
  */
 int db_check_table_version(db_func_t* dbf, db1_con_t* dbh, const str* table,
 		const unsigned int version)
