@@ -35,8 +35,6 @@ static db1_con_t *db_handle = 0; /* Database connection handle */
 /* Check module version */
 static int check_version(void)
 {
-	str table = str_init("secfilter");
-
 	/* Connect to DB */
 	db_handle = db_funcs.init(&secf_db_url);
 	if(db_handle == NULL) {
@@ -44,8 +42,8 @@ static int check_version(void)
 		return -1;
 	}
 
-	if (db_check_table_version(&db_funcs, db_handle, &table, mod_version) < 0) {
-		DB_TABLE_VERSION_ERROR(table);
+	if (db_check_table_version(&db_funcs, db_handle, &secf_table_name, mod_version) < 0) {
+		DB_TABLE_VERSION_ERROR(secf_table_name);
 		db_funcs.close(db_handle);
 		return -1;
 	}
