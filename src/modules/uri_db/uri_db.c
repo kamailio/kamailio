@@ -37,14 +37,6 @@
 
 MODULE_VERSION
 
-/*
- * Version of domain table required by the module,
- * increment this value if you change the table in
- * an backwards incompatible way. The subscriber
- * table version needs to be the same as auth_db use.
- */
-#define URI_TABLE_VERSION 1
-#define SUBSCRIBER_TABLE_VERSION 7	/* From auth_db */
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
@@ -144,8 +136,6 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
-	int ver;
-
 	if (db_url.len == 0) {
 		if (use_uri_table) {
 			LM_ERR("configuration error - no database URL, "
@@ -161,22 +151,9 @@ static int mod_init(void)
 	}
 
 	/* Check table version */
-	ver = uridb_db_ver(&db_url, &db_table);
-	if (ver < 0) {
-		LM_ERR("Error while querying table version\n");
+	if (uridb_db_ver(&db_url) < 0) {
+		LM_ERR("Error during database table version check");
 		return -1;
-	} else {
-		if (use_uri_table) {
-			if (ver != URI_TABLE_VERSION) {
-				LM_ERR("Invalid table version of the uri table. Expected %d, database is %d\n", URI_TABLE_VERSION, ver);
-				return -1;
-			}
-		} else {
-			if (ver != SUBSCRIBER_TABLE_VERSION) {
-				LM_ERR("Invalid table version of the subscriber table. Expected %d, database is %d\n", SUBSCRIBER_TABLE_VERSION, ver);
-				return -1;
-			}
-		}
 	}
 	return 0;
 }

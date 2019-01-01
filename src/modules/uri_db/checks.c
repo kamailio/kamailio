@@ -376,10 +376,16 @@ void uridb_db_close(void)
 }
 
 
-int uridb_db_ver(const str* db_url, str* name)
+int uridb_db_ver(const str* db_url)
 {
 	db1_con_t* dbh;
 	int ver;
+
+	if (use_uri_table) {
+		ver = URI_TABLE_VERSION;
+	} else {
+		ver = SUBSCRIBER_TABLE_VERSION;
+	}
 
 	if (uridb_dbf.init==0){
 		LM_BUG("unbound database\n");
@@ -391,7 +397,14 @@ int uridb_db_ver(const str* db_url, str* name)
 		LM_ERR("unable to open database connection\n");
 		return -1;
 	}
-	ver=db_table_version(&uridb_dbf, dbh, name);
+	if (db_check_table_version(&uridb_dbf, dbh, &db_table, ver) < 0) {
+		DB_TABLE_VERSION_ERROR(db_table);
+		uridb_dbf.close(dbh);
+		dbh=0;
+		return -1;
+	}
 	uridb_dbf.close(dbh);
-	return ver;
+	dbh=0;
+
+	return 0;
 }
