@@ -117,11 +117,11 @@ static const char *rpc_add_bl_doc[2] = {"Add new values to blacklist", NULL};
 static const char *rpc_add_wl_doc[2] = {"Add new values to whitelist", NULL};
 
 rpc_export_t secfilter_rpc[] = {
-		{"secfilter.reload", rpc_reload, rpc_reload_doc, 0},
-		{"secfilter.print", rpc_print, rpc_print_doc, 0},
-		{"secfilter.add_dst", rpc_add_dst, rpc_add_dst_doc, 0},
-		{"secfilter.add_bl", rpc_add_bl, rpc_add_bl_doc, 0},
-		{"secfilter.add_wl", rpc_add_wl, rpc_add_wl_doc, 0}, {0, 0, 0, 0}};
+		{"secfilter.reload", secf_rpc_reload, rpc_reload_doc, 0},
+		{"secfilter.print", secf_rpc_print, rpc_print_doc, 0},
+		{"secfilter.add_dst", secf_rpc_add_dst, rpc_add_dst_doc, 0},
+		{"secfilter.add_bl", secf_rpc_add_bl, rpc_add_bl_doc, 0},
+		{"secfilter.add_wl", secf_rpc_add_wl, rpc_add_wl_doc, 0}, {0, 0, 0, 0}};
 /* clang-format on */
 
 /***
@@ -600,7 +600,7 @@ INIT AND DESTROY FUNCTIONS
 ***/
 
 /* Initialize data */
-int init_data(void)
+int secf_init_data(void)
 {
 	secf_data = (secf_data_p)shm_malloc(sizeof(secf_data_t));
 	if(!secf_data) {
@@ -632,10 +632,10 @@ static int mod_init(void)
 		return -1;
 	}
 	/* Init database connection and check version */
-	if(init_db() == -1)
+	if(secf_init_db() == -1)
 		return -1;
 	/* Load data from database */
-	if(load_db() == -1) {
+	if(secf_load_db() == -1) {
 		LM_ERR("Error loading data from database\n");
 		return -1;
 	}
@@ -713,7 +713,7 @@ static void free_sec_info(secf_info_p info)
 }
 
 
-void free_data(void)
+void secf_free_data(void)
 {
 	lock_get(&secf_data->lock);
 

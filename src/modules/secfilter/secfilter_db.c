@@ -33,7 +33,7 @@ static db1_con_t *db_handle = 0; /* Database connection handle */
 
 
 /* Check module version */
-int check_version(void)
+static int check_version(void)
 {
 	str table = str_init("secfilter");
 
@@ -65,7 +65,7 @@ int check_version(void)
  * @param total length of total characters in list
  * @return extended list
 **/
-struct str_list *shm_append_str_list(
+static struct str_list *shm_append_str_list(
 		char *s, int len, struct str_list **last, int *total)
 {
 	struct str_list *new;
@@ -99,7 +99,7 @@ struct str_list *shm_append_str_list(
 				      3 = IP address
 				      4 = user
 **/
-int append_rule(int action, int type, str *value)
+int secf_append_rule(int action, int type, str *value)
 {
 	secf_info_p ini = NULL;
 	secf_info_p last = NULL;
@@ -182,7 +182,7 @@ int append_rule(int action, int type, str *value)
 
 
 /* Load data from database */
-int load_db(void)
+int secf_load_db(void)
 {
 	db_key_t db_cols[3];
 	db1_res_t *db_res = NULL;
@@ -232,7 +232,7 @@ int load_db(void)
 		LM_DBG("[%d] append_rule for action:%d type:%d data:%.*s\n", i, action,
 				type, str_data.len, str_data.s);
 
-		if(append_rule(action, type, &str_data) < 0) {
+		if(secf_append_rule(action, type, &str_data) < 0) {
 			LM_ERR("Can't append_rule with action:%d type:%d\n", action, type);
 			res = -1;
 			lock_release(&secf_data->lock);
@@ -253,7 +253,7 @@ clean:
 
 
 /* Init database connection */
-int init_db(void)
+int secf_init_db(void)
 {
 	if(secf_db_url.s == NULL) {
 		LM_ERR("Database not configured\n");

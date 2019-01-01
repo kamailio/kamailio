@@ -76,7 +76,7 @@ void rpc_add_dst(rpc_t *rpc, void *ctx)
 	}
 	memcpy(data.s, text, data.len);
 	lock_get(&secf_data->lock);
-	if(append_rule(2, 0, &data) == 0) {
+	if(secf_append_rule(2, 0, &data) == 0) {
 		rpc->rpl_printf(ctx,
 				"Values (%s) inserted into blacklist destinations", data);
 	} else {
@@ -105,7 +105,7 @@ void rpc_add_bl(rpc_t *rpc, void *ctx)
 	type = get_type(ctype);
 
 	lock_get(&secf_data->lock);
-	if(append_rule(0, type, &data) == 0) {
+	if(secf_append_rule(0, type, &data) == 0) {
 		rpc->rpl_printf(ctx, "Values (%s, %s) inserted into blacklist",
 				ctype, data);
 	} else {
@@ -133,7 +133,7 @@ void rpc_add_wl(rpc_t *rpc, void *ctx)
 	type = get_type(ctype);
 
 	lock_get(&secf_data->lock);
-	if(append_rule(1, type, &data) == 0) {
+	if(secf_append_rule(1, type, &data) == 0) {
 		rpc->rpl_printf(
 				ctx, "Values (%s, %s) inserted into whitelist", type, data);
 	} else {
@@ -144,9 +144,9 @@ void rpc_add_wl(rpc_t *rpc, void *ctx)
 
 
 /* Reload arrays */
-void rpc_reload(rpc_t *rpc, void *ctx)
+void secf_rpc_reload(rpc_t *rpc, void *ctx)
 {
-	free_data();
+	secf_free_data();
 
 	if(load_db() == -1) {
 		LM_ERR("Error loading data from database\n");

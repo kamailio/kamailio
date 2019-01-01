@@ -26,7 +26,7 @@ typedef struct _secf_data
 
 extern secf_data_p secf_data;
 
-int append_rule(int action, int type, str *value);
+int secf_append_rule(int action, int type, str *value);
 
 /* Get header values from message */
 int secf_get_ua(struct sip_msg *msg, str *ua);
@@ -35,10 +35,10 @@ int secf_get_to(struct sip_msg *msg, str *name, str *user, str *domain);
 int secf_get_contact(struct sip_msg *msg, str *user, str *domain);
 
 /* Database functions */
-int init_db(void);
-int init_data(void);
-void free_data(void);
-int load_db(void);
+int secf_init_db(void);
+int secf_init_data(void);
+void secf_free_data(void);
+int secf_load_db(void);
 
 /* Extern variables */
 extern str secf_db_url;
@@ -49,10 +49,10 @@ extern str secf_data_col;
 extern int secf_dst_exact_match;
 
 /* RPC commands */
-void rpc_reload(rpc_t *rpc, void *ctx);
-void rpc_print(rpc_t *rpc, void *ctx);
-void rpc_add_dst(rpc_t *rpc, void *ctx);
-void rpc_add_bl(rpc_t *rpc, void *ctx);
-void rpc_add_wl(rpc_t *rpc, void *ctx);
+void secf_rpc_reload(rpc_t *rpc, void *ctx);
+void secf_rpc_print(rpc_t *rpc, void *ctx);
+void secf_rpc_add_dst(rpc_t *rpc, void *ctx);
+void secf_rpc_add_bl(rpc_t *rpc, void *ctx);
+void secf_rpc_add_wl(rpc_t *rpc, void *ctx);
 
 #endif
