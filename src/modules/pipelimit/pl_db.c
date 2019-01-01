@@ -122,20 +122,12 @@ int pl_init_db(void)
 		LM_ERR("unable to connect to the database\n");
 		return -1;
 	}
-	
-	_rlp_table_version = db_table_version(&pl_dbf, pl_db_handle,
-			&rlp_table_name);
-	if (_rlp_table_version < 0) 
-	{
-		LM_ERR("failed to query pipes table version\n");
-		return -1;
-	} else if (_rlp_table_version != RLP_TABLE_VERSION) {
-		LM_ERR("invalid table version (found %d , required %d)\n"
-			"(use kamdbctl reinit)\n",
-			_rlp_table_version, RLP_TABLE_VERSION);
+
+	if (db_check_table_version(&pl_dbf, pl_db_handle, &rlp_table_name, _rlp_table_version) < 0) {
+		DB_TABLE_VERSION_ERROR(rlp_table_name);
+		pl_disconnect_db();
 		return -1;
 	}
-
 	ret = pl_load_db();
 
 	pl_disconnect_db();
