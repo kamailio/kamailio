@@ -74,7 +74,7 @@ int secf_get_from(struct sip_msg *msg, str *name, str *user, str *domain)
 	}
 
 	hdr = get_from(msg);
-	if(hdr->display.s != NULL) {
+	if(hdr->display.s != NULL && hdr->display.len > 0) {
 		name->s = hdr->display.s;
 		name->len = hdr->display.len;
 
@@ -128,7 +128,7 @@ int secf_get_to(struct sip_msg *msg, str *name, str *user, str *domain)
 	}
 
 	hdr = get_to(msg);
-	if(hdr->display.s != NULL) {
+	if(hdr->display.s != NULL && hdr->display.len > 0) {
 		name->s = hdr->display.s;
 		name->len = hdr->display.len;
 

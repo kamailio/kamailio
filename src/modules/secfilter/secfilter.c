@@ -131,10 +131,10 @@ PREVENT SQL INJECTION
 /* External function to search for illegal characters in several headers */
 static int w_check_sqli_all(struct sip_msg *msg)
 {
-	str ua;
-	str name;
-	str user;
-	str domain;
+	str ua = STR_NULL;
+	str name = STR_NULL;
+	str user = STR_NULL;
+	str domain = STR_NULL;
 	int res;
 	int retval = 1;
 
