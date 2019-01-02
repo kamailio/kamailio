@@ -61,7 +61,7 @@ static int w_check_sqli_hdr(struct sip_msg *msg, char *val);
 
 /* Exported module parameters - default values */
 int secf_dst_exact_match = 1;
-str secf_db_url = {NULL, 0};
+str secf_db_url = str_init(DEFAULT_RODB_URL);
 str secf_table_name = str_init("secfilter");
 str secf_action_col = str_init("action");
 str secf_type_col = str_init("type");
