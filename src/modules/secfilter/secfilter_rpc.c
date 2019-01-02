@@ -54,7 +54,7 @@ static int get_type(char *ctype)
 
 
 /* Add blacklist destination value */
-void rpc_add_dst(rpc_t *rpc, void *ctx)
+void secf_rpc_add_dst(rpc_t *rpc, void *ctx)
 {
 	int number;
 	str data = STR_NULL;
@@ -88,7 +88,7 @@ void rpc_add_dst(rpc_t *rpc, void *ctx)
 }
 
 /* Add blacklist value */
-void rpc_add_bl(rpc_t *rpc, void *ctx)
+void secf_rpc_add_bl(rpc_t *rpc, void *ctx)
 {
 	char *ctype = NULL;
 	str data = STR_NULL;
@@ -116,7 +116,7 @@ void rpc_add_bl(rpc_t *rpc, void *ctx)
 
 
 /* Add whitelist value */
-void rpc_add_wl(rpc_t *rpc, void *ctx)
+void secf_rpc_add_wl(rpc_t *rpc, void *ctx)
 {
 	char *ctype = NULL;
 	str data = STR_NULL;
@@ -148,7 +148,7 @@ void secf_rpc_reload(rpc_t *rpc, void *ctx)
 {
 	secf_free_data();
 
-	if(load_db() == -1) {
+	if(secf_load_db() == -1) {
 		LM_ERR("Error loading data from database\n");
 		rpc->rpl_printf(ctx, "Error loading data from database");
 	} else {
@@ -171,7 +171,7 @@ static void rpc_print_data(rpc_t *rpc, void *ctx, struct str_list *list)
 
 
 /* Print values */
-void rpc_print(rpc_t *rpc, void *ctx)
+void secf_rpc_print(rpc_t *rpc, void *ctx)
 {
 	char *param = NULL;
 	int showall = 0;

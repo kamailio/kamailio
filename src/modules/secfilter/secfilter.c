@@ -38,12 +38,12 @@ secf_data_p secf_data = NULL;
 
 /* Static and shared functions */
 static int mod_init(void);
-int init_data(void);
+int secf_init_data(void);
 static int child_init(int rank);
 static int rpc_init(void);
 static void free_str_list(struct str_list *l);
 static void free_sec_info(secf_info_p info);
-void free_data(void);
+void secf_free_data(void);
 static void mod_destroy(void);
 static int w_check_sqli(str val);
 static int check_user(struct sip_msg *msg, int type);
@@ -621,7 +621,7 @@ static int mod_init(void)
 {
 	LM_DBG("SECFILTER module init\n");
 	/* Init data to store database values */
-	if(init_data() == -1)
+	if(secf_init_data() == -1)
 		return -1;
 	/* Init RPC */
 	if(rpc_init() < 0)
@@ -661,7 +661,7 @@ static void mod_destroy(void)
 	if(!secf_data)
 		return;
 	/* Free shared data */
-	free_data();
+	secf_free_data();
 	/* Destroy lock */
 	lock_destroy(&secf_data->lock);
 	shm_free(secf_data);
