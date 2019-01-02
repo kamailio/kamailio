@@ -31,7 +31,7 @@
 #include "redisdb_dbase.h"
 #include "time.h"
 
-
+#define TABLE_NAME_SIZE 50
 
 /*!
  * \struct structure for redis result
@@ -305,7 +305,7 @@ int db_redis_delete(const db1_con_t* _h, const db_key_t* _k,
 			LM_ERR("no private memory left\n");
 			goto error;
 	}
-	return_code = snprintf(table_name, sizeof(table_name),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
+	return_code = snprintf(table_name, TABLE_NAME_SIZE, "%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
 	if(return_code<0)
 	{
 		LM_ERR("Error While Getting Table Name\n");
@@ -604,7 +604,6 @@ int db_redis_update(const db1_con_t* _h, const db_key_t* _k,
 		const db_val_t* _uv, const int _n, const int _un)
 {
 	int i;
-	int ret;
 	char *table_name;
 	//char redis_input [600]="";
 	km_redis_con_t* _context;
@@ -629,7 +628,7 @@ int db_redis_update(const db1_con_t* _h, const db_key_t* _k,
                         LM_ERR("no private memory left\n");
                         goto error;
         }
-        return_code = snprintf(table_name, sizeof(table_name),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
+        return_code = snprintf(table_name, TABLE_NAME_SIZE, "%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
         if(return_code<0)
         {
                 LM_ERR("Error While Getting Table Name\n");
@@ -786,7 +785,7 @@ int db_redis_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
                         LM_ERR("no private memory left\n");
                         goto error;
         }
-        return_code = snprintf(table_name, sizeof(table_name),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
+        return_code = snprintf(table_name, TABLE_NAME_SIZE, "%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
         if(return_code<0)
         {
                 LM_ERR("Error While Getting Table Name\n");
@@ -1044,7 +1043,7 @@ int db_redis_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
                         LM_ERR("no private memory left\n");
                         goto error;
         }
-        return_code = snprintf(table_name, sizeof(table_name),"%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
+        return_code = snprintf(table_name, TABLE_NAME_SIZE, "%s%.*s%s",CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
         if(return_code<0)
         {
                 LM_ERR("Error While Getting Table Name\n");
