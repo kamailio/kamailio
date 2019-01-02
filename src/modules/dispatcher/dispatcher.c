@@ -1639,6 +1639,33 @@ static void dispatcher_rpc_ping_active(rpc_t *rpc, void *ctx)
 	return;
 }
 
+static const char *dispatcher_rpc_add_doc[2] = {
+		"Add a destination address in memory", 0};
+
+
+/*
+ * RPC command to add a destination address to memory
+ */
+static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
+{
+	int group, flags;
+	str dest;
+
+	flags = 0;
+
+	if(rpc->scan(ctx, "dS*d", &group, &dest, &flags) < 2) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	if(ds_add_dst(group, &dest, flags) != 0) {
+		rpc->fault(ctx, 500, "Adding dispatcher dst failed");
+		return;
+	}
+
+	return;
+}
+
 /* clang-format off */
 rpc_export_t dispatcher_rpc_cmds[] = {
 	{"dispatcher.reload", dispatcher_rpc_reload,
@@ -1649,6 +1676,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_set_state_doc,   0},
 	{"dispatcher.ping_active",   dispatcher_rpc_ping_active,
 		dispatcher_rpc_ping_active_doc, 0},
+	{"dispatcher.add",   dispatcher_rpc_add,
+		dispatcher_rpc_add_doc, 0},
 	{0, 0, 0, 0}
 };
 /* clang-format on */
