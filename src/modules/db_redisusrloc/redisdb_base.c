@@ -616,6 +616,7 @@ int db_redis_update(const db1_con_t* _h, const db_key_t* _k,
 	const char* command_argv[_un*2+1];
 	char username[30];
 	int retry = 0;
+	int return_code = 0;
 	redisReply* reply_redis = NULL; /*used to get the redis reply */
 	//redisReply* reply_redis = NULL; /*used to get the redis reply */
 	struct timeval tv; /*setting the timeout for the context */
@@ -729,6 +730,13 @@ int db_redis_update(const db1_con_t* _h, const db_key_t* _k,
 	}
 
 	return 0;
+	error:
+        if(table_name)
+        {
+                pkg_free(table_name);
+        }
+        return -1;
+
 }
 
 /*
