@@ -34,7 +34,7 @@ if ! (check_kamailio && check_module "db_mysql" && check_module "presence" \
 		&& check_module "pua_usrloc" \
 		&& check_module "pua_xmpp" && check_module "xmpp" \
 		&& check_module "presence_dialoginfo" && check_module "pua_dialoginfo" \
-		&& check_mysql); then
+		&& check_module "pua_rpc" && check_mysql); then
 	exit 0
 fi ;
 
