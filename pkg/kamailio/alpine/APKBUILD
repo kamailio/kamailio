@@ -250,7 +250,6 @@ for _i in db postgres sqlite dbtext mysql \
 done
 
 source="${pkgname}-${pkgver}${_suffix}.tar.gz::https://github.com/kamailio/$pkgname/archive/$_gitcommit.tar.gz
-	0001-kamdbctl.base.patch
 	kamailio.initd
 	"
 
@@ -549,5 +548,4 @@ sipdump() {
 }
 
 sha512sums="51ea5fccd27a9d3d1783cfc5596eb28ab27e34faeec3268600363f43c48a3634c3c584c479ba874fdb53b85766a0ce8fe7df0e20954c9c6514b1d9d41d9237e6  kamailio-5.1.0.20171125-991fe9b.tar.gz
-6badfb611c02ffcb4c2e9937731162ea1a4b737f042ed52120e2f96ebb80b5b7d240b5612c9ca565e693eec9b8c52c1ee5db04dfc47d204501021f984b4b11db  0001-kamdbctl.base.patch
 321b1b160434150bcde3c0ad7f47ddf259791b68d4ce74ba4c35034026421a2bc6f5e86f26f393f5fcdb523d8cd75f944709473065553ce860b0ea06b3dc2a1b  kamailio.initd"
