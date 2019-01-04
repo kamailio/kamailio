@@ -123,11 +123,11 @@ modparam("cnxcc", "credit_check_period", 1)
 		<title>Functions</title>
 		<section id="cnxcc.f.set_max_credit">
 			<title>
-				<function moreinfo="none">cnxcc_set_max_credit(customer, maxcredit, cps, ipulse, fpulse)</function>
+				<function moreinfo="none">cnxcc_set_max_credit(customer, maxcredit, connect, cps, ipulse, fpulse)</function>
 			</title>
 			<para>
 				Associates the call with a customer id and sets the max credit,
-				cost per second, initial pulse and final pulse. The discount
+				connect cost, cost per second, initial pulse and final pulse. The discount
 				is calculated in pulses (30/6, 1/1, etc) and subtracted from the pool
 				of credit.
 			</para>
@@ -136,7 +136,7 @@ modparam("cnxcc", "credit_check_period", 1)
 				a string.
 			</para>
 			<para>
-				The maxcredit and cps can be double (float) or integer values, they
+				The maxcredit, connect and cps can be double (float) or integer values, they
 				have to be provided as static string values of variables holding string
 				values.
 			</para>
@@ -171,15 +171,16 @@ modparam("cnxcc", "credit_check_period", 1)
 				<title>cnxcc_set_max_credit()</title>
 				<programlisting format="linespecific">
 ...
-cnxcc_set_max_credit("john-doe", "100.5", "0.5", "20", "10");
+cnxcc_set_max_credit("john-doe", "100", "3.0", "0.5", 60, 1);
 ...
-$var(customer) = "john-doe-premium"; # customer id
-$var(credit) = "100";       # max credit
-$var(cps)   = "2.00";       # cost per second
-$var(initial_p)   = 30;     # initial pulse
-$var(final_p)     = 6;      # final pulse
-cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)",
-        "$var(initial_p)", "$var(final_p)");
+$var(customer)  = "john-doe-premium"; # customer id
+$var(credit)    = "100";  # max credit
+$var(connect)   = "3.0";  # connect const
+$var(cps)       = "0.5";  # cost per second
+$var(initial_p) = 60;     # initial pulse
+$var(final_p)   = 1;      # final pulse
+cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(connect)",
+        "$var(cps)", "$var(initial_p)", "$var(final_p)");
 ...
 </programlisting>
 			</example>

@@ -158,6 +158,7 @@ typedef struct sip_data
 
 typedef struct money_spec_data
 {
+	double connect_cost;
 	double cost_per_second;
 	int initial_pulse;
 	int final_pulse;
@@ -178,6 +179,7 @@ typedef struct call
 
 	unsigned int start_timestamp;
 	double consumed_amount;
+	double connect_amount;
 
 	unsigned int dlg_h_entry;
 	unsigned int dlg_h_id;

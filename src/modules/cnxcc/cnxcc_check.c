@@ -67,8 +67,9 @@ void check_calls_by_money(unsigned int ticks, void *param)
 
 					if(consumed_time > call->money_based.initial_pulse) {
 						call->consumed_amount =
-								(call->money_based.cost_per_second
-										* call->money_based.initial_pulse)
+								call->money_based.connect_cost
+								+ (call->money_based.cost_per_second
+										  * call->money_based.initial_pulse)
 								+ call->money_based.cost_per_second
 										  * ((consumed_time
 													 - call->money_based

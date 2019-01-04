@@ -115,13 +115,14 @@ void rpc_check_client_stats(rpc_t *rpc, void *ctx)
 					"id:%d,confirmed:%s,local_consumed_amount:%f,global_"
 					"consumed_amount:%f,local_max_amount:%f,global_max_amount:%"
 					"f,call_id:%.*s,start_timestamp:%d"
-					",inip:%d,finp:%d,cps:%f;",
+					",inip:%d,finp:%d,connect:%f,cps:%f;",
 					index, call->confirmed ? "yes" : "no",
 					call->consumed_amount, credit_data->consumed_amount,
 					call->max_amount, credit_data->max_amount,
 					call->sip_data.callid.len, call->sip_data.callid.s,
 					call->start_timestamp, call->money_based.initial_pulse,
 					call->money_based.final_pulse,
+					call->money_based.connect_cost,
 					call->money_based.cost_per_second);
 		else
 			snprintf(row_buffer, sizeof(row_buffer),
