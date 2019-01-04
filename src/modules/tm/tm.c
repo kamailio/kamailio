@@ -662,6 +662,9 @@ static int fixup_t_check_status(void** param, int param_no)
 {
 	int ret;
 
+	ret = fix_param(FPARAM_PVS, param);
+	if (ret <= 0) return ret;
+
 	ret = fix_param(FPARAM_AVP, param);
 	if (ret <= 0) return ret;
 
