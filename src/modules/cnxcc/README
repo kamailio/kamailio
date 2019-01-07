@@ -4,9 +4,18 @@ Carlos Ruiz Díaz
 
    ConexionGroup S.A.
 
+Edited by
+
+Jose Luis Verdeguer
+
+   Zoon Suite
+   <verdeguer@zoonsuite.com>
+
    Copyright © 2013 Carlos Ruiz Díaz, carlos.ruizdiaz@gmail.com
 
    Copyright © 2014 Carlos Ruiz Díaz, carlos@latamvoices.com
+
+   Copyright © 2018 Jose Luis Verdeguer
      __________________________________________________________________
 
    Table of Contents
@@ -26,8 +35,8 @@ Carlos Ruiz Díaz
 
         4. Functions
 
-              4.1. cnxcc_set_max_credit(customer, maxcredit, cps, ipulse,
-                      fpulse)
+              4.1. cnxcc_set_max_credit(customer, maxcredit, connect, cps,
+                      ipulse, fpulse)
 
               4.2. cnxcc_set_max_time(customer, maxtime)
               4.3. cnxcc_update_max_time(customer, maxtime)
@@ -73,8 +82,8 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. cnxcc_set_max_credit(customer, maxcredit, cps, ipulse,
-                fpulse)
+        4.1. cnxcc_set_max_credit(customer, maxcredit, connect, cps,
+                ipulse, fpulse)
 
         4.2. cnxcc_set_max_time(customer, maxtime)
         4.3. cnxcc_update_max_time(customer, maxtime)
@@ -167,24 +176,27 @@ modparam("cnxcc", "credit_check_period", 1)
 
 4. Functions
 
-   4.1. cnxcc_set_max_credit(customer, maxcredit, cps, ipulse, fpulse)
+   4.1. cnxcc_set_max_credit(customer, maxcredit, connect, cps, ipulse,
+          fpulse)
+
    4.2. cnxcc_set_max_time(customer, maxtime)
    4.3. cnxcc_update_max_time(customer, maxtime)
    4.4. cnxcc_set_max_channel(customer, maxchan)
    4.5. cnxcc_terminate_all(customer)
 
-4.1.  cnxcc_set_max_credit(customer, maxcredit, cps, ipulse, fpulse)
+4.1.  cnxcc_set_max_credit(customer, maxcredit, connect, cps, ipulse, fpulse)
 
-   Associates the call with a customer id and sets the max credit, cost
-   per second, initial pulse and final pulse. The discount is calculated
-   in pulses (30/6, 1/1, etc) and subtracted from the pool of credit.
+   Associates the call with a customer id and sets the max credit, connect
+   cost, cost per second, initial pulse and final pulse. The discount is
+   calculated in pulses (30/6, 1/1, etc) and subtracted from the pool of
+   credit.
 
    The customer value can be provided as a string or a variable holding a
    string.
 
-   The maxcredit and cps can be double (float) or integer values, they
-   have to be provided as static string values of variables holding string
-   values.
+   The maxcredit, connect and cps can be double (float) or integer values,
+   they have to be provided as static string values of variables holding
+   string values.
 
    The ipulse and fpulse values are integer values, they can be also given
    via variables holding integers.
@@ -196,15 +208,16 @@ modparam("cnxcc", "credit_check_period", 1)
 
    Example 1.3. cnxcc_set_max_credit()
 ...
-cnxcc_set_max_credit("john-doe", "100.5", "0.5", "20", "10");
+cnxcc_set_max_credit("john-doe", "100", "3.0", "0.5", 60, 1);
 ...
-$var(customer) = "john-doe-premium"; # customer id
-$var(credit) = "100";       # max credit
-$var(cps)   = "2.00";       # cost per second
-$var(initial_p)   = 30;     # initial pulse
-$var(final_p)     = 6;      # final pulse
-cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)",
-        "$var(initial_p)", "$var(final_p)");
+$var(customer)  = "john-doe-premium"; # customer id
+$var(credit)    = "100";  # max credit
+$var(connect)   = "3.0";  # connect const
+$var(cps)       = "0.5";  # cost per second
+$var(initial_p) = 60;     # initial pulse
+$var(final_p)   = 1;      # final pulse
+cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(connect)",
+        "$var(cps)", "$var(initial_p)", "$var(final_p)");
 ...
 
 4.2.  cnxcc_set_max_time(customer, maxtime)
