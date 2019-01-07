@@ -30,25 +30,27 @@
 /* RPC commands */
 
 
-static int get_type(char *ctype)
+static int get_type(str ctype)
 {
 	int type;
+	
+	if (ctype.len > 64) ctype.len = 64;
 
-	if(!strcmp(ctype, "ua")) {
+	if(!strncmp(ctype.s, "ua", ctype.len)) {
 		type = 0;
-	} else if(!strcmp(ctype, "country")) {
+	} else if(!strncmp(ctype.s, "country", ctype.len)) {
 		type = 1;
-	} else if(!strcmp(ctype, "domain")) {
+	} else if(!strncmp(ctype.s, "domain", ctype.len)) {
 		type = 2;
-	} else if(!strcmp(ctype, "ip")) {
+	} else if(!strncmp(ctype.s, "ip", ctype.len)) {
 		type = 3;
-	} else if(!strcmp(ctype, "user")) {
+	} else if(!strncmp(ctype.s, "user", ctype.len)) {
 		type = 4;
 	} else {
 		LM_ERR("Invalid type\n");
 		return -1;
 	}
-
+	
 	return type;
 }
 
@@ -90,11 +92,11 @@ void secf_rpc_add_dst(rpc_t *rpc, void *ctx)
 /* Add blacklist value */
 void secf_rpc_add_bl(rpc_t *rpc, void *ctx)
 {
-	char *ctype = NULL;
+	str ctype = STR_NULL;
 	str data = STR_NULL;
 	int type;
 
-	if(rpc->scan(ctx, "ss", ctype, &data.s) < 2) {
+	if(rpc->scan(ctx, "ss", &ctype, &data) < 2) {
 		rpc->fault(ctx, 0,
 				"Invalid Parameters. Usage: secfilter.add_bl type "
 				"value\n     Example: secfilter.add_bl user "
@@ -102,12 +104,13 @@ void secf_rpc_add_bl(rpc_t *rpc, void *ctx)
 		return;
 	}
 	data.len = strlen(data.s);
+	ctype.len = strlen(ctype.s);
 	type = get_type(ctype);
 
 	lock_get(&secf_data->lock);
 	if(secf_append_rule(0, type, &data) == 0) {
-		rpc->rpl_printf(ctx, "Values (%s, %s) inserted into blacklist",
-				ctype, data);
+		rpc->rpl_printf(ctx, "Values (%.*s, %.*s) inserted into blacklist",
+				ctype.len, ctype.s, data.len, data.s);
 	} else {
 		rpc->rpl_printf(ctx, "Error insert values in the blacklist");
 	}
@@ -118,11 +121,11 @@ void secf_rpc_add_bl(rpc_t *rpc, void *ctx)
 /* Add whitelist value */
 void secf_rpc_add_wl(rpc_t *rpc, void *ctx)
 {
-	char *ctype = NULL;
+	str ctype = STR_NULL;
 	str data = STR_NULL;
 	int type;
 
-	if(rpc->scan(ctx, "ss", ctype, &data.s) < 2) {
+	if(rpc->scan(ctx, "ss", &ctype, &data) < 2) {
 		rpc->fault(ctx, 0,
 				"Invalid Parameters. Usage: secfilter.add_wl type "
 				"value\n     Example: secfilter.add_wl user "
@@ -130,12 +133,13 @@ void secf_rpc_add_wl(rpc_t *rpc, void *ctx)
 		return;
 	}
 	data.len = strlen(data.s);
+	ctype.len = strlen(ctype.s);
 	type = get_type(ctype);
 
 	lock_get(&secf_data->lock);
 	if(secf_append_rule(1, type, &data) == 0) {
-		rpc->rpl_printf(
-				ctx, "Values (%s, %s) inserted into whitelist", type, data);
+		rpc->rpl_printf(ctx, "Values (%.*s, %.*s) inserted into whitelist",
+				ctype.len, ctype.s, data.len, data.s);
 	} else {
 		rpc->rpl_printf(ctx, "Error insert values in the whitelist");
 	}
@@ -173,13 +177,15 @@ static void rpc_print_data(rpc_t *rpc, void *ctx, struct str_list *list)
 /* Print values */
 void secf_rpc_print(rpc_t *rpc, void *ctx)
 {
-	char *param = NULL;
+	str param = STR_NULL;
 	int showall = 0;
 
-	if(rpc->scan(ctx, "s", (char *)(&param)) < 1)
+	if(rpc->scan(ctx, "s", &param) < 1)
 		showall = 1;
+		
+	param.len = strlen(param.s);
 
-	if(!strcmp(param, "dst")) {
+	if(!strncmp(param.s, "dst", param.len)) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "Destinations");
 		rpc->rpl_printf(ctx, "============");
@@ -188,7 +194,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 		rpc_print_data(rpc, ctx, secf_data->bl.dst);
 	}
 
-	if(showall == 1 || !strcmp(param, "ua")) {
+	if(showall == 1 || !strncmp(param.s, "ua", param.len)) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "User-agent");
 		rpc->rpl_printf(ctx, "==========");
@@ -201,7 +207,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 		rpc_print_data(rpc, ctx, secf_data->wl.ua);
 	}
 
-	if(showall == 1 || !strcmp(param, "country")) {
+	if(showall == 1 || !strncmp(param.s, "country", param.len)) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "Country");
 		rpc->rpl_printf(ctx, "=======");
@@ -214,7 +220,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 		rpc_print_data(rpc, ctx, secf_data->wl.country);
 	}
 
-	if(showall == 1 || !strcmp(param, "domain")) {
+	if(showall == 1 || !strncmp(param.s, "domain", param.len)) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "Domain");
 		rpc->rpl_printf(ctx, "======");
@@ -227,7 +233,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 		rpc_print_data(rpc, ctx, secf_data->wl.domain);
 	}
 
-	if(showall == 1 || !strcmp(param, "ip")) {
+	if(showall == 1 || !strncmp(param.s, "ip", param.len)) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "IP Address");
 		rpc->rpl_printf(ctx, "==========");
@@ -240,7 +246,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 		rpc_print_data(rpc, ctx, secf_data->wl.ip);
 	}
 
-	if(showall == 1 || !strcmp(param, "user")) {
+	if(showall == 1 || !strncmp(param.s, "user", param.len)) {
 		rpc->rpl_printf(ctx, "");
 		rpc->rpl_printf(ctx, "User");
 		rpc->rpl_printf(ctx, "====");
