@@ -115,7 +115,8 @@ static int mod_init(void)
 	if(output_mqueue_str && (load_mq_api(&mq_api) != 0)) {
 		LM_ERR("can't load mqueue module API, disabling json acc to mqueue\n");
 		output_mqueue_str = NULL;
-	} else {
+	}
+	if(output_mqueue_str) {
 		q_name.s = output_mqueue_str;
 		q_name.len = strlen(output_mqueue_str);
 	}
