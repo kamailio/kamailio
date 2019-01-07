@@ -693,7 +693,7 @@ int th_unmask_route(sip_msg_t *msg)
 						(strncasecmp(rr->nameaddr.uri.s,th_uri_prefix.s,
 									th_uri_prefix.len)!=0)))
 				{
-					LM_DBG("rr %d is not encoded: [%.*s]", i,
+					LM_DBG("rr %d is not encoded: [%.*s] - missing prefix\n", i,
 							rr->nameaddr.uri.len, rr->nameaddr.uri.s);
 					rr = rr->next;
 					continue;
@@ -702,6 +702,8 @@ int th_unmask_route(sip_msg_t *msg)
 				if(th_get_uri_param_value(&rr->nameaddr.uri, &th_uparam_name,
 							&eval)<0 || eval.len<=0)
 				{
+					LM_DBG("rr %d is not encoded: [%.*s] - missing param\n", i,
+							rr->nameaddr.uri.len, rr->nameaddr.uri.s);
 					rr = rr->next;
 					continue;
 				}
