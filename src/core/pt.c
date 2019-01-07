@@ -593,6 +593,7 @@ int mem_dump_shm_fixup(void *handle, str *gname, str *name, void **val)
 	}
 	return 0;
 }
+#endif
 
 /* cache if child processes were initialized */
 static int _sr_instance_ready = 0;
