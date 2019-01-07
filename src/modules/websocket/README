@@ -34,6 +34,8 @@ Peter Dunkley
               4.7. cors_mode (integer)
               4.8. verbose_list (int)
               4.9. event_callback (str)
+              4.10. timer_interval (integer)
+              4.11. rm_delay_interval (integer)
 
         5. Functions
 
@@ -70,10 +72,12 @@ Peter Dunkley
    1.9. Set cors_mode parameter
    1.10. Set verbose_list parameter
    1.11. Set event_callback parameter
-   1.12. ws_handle_handshake usage
-   1.13. ws_close usage
-   1.14. event_route[websocket:closed] usage
-   1.15. $ws_conid usage
+   1.12. Set timer_intervalparameter
+   1.13. Set rm_timer_intervalparameter
+   1.14. ws_handle_handshake usage
+   1.15. ws_close usage
+   1.16. event_route[websocket:closed] usage
+   1.17. $ws_conid usage
 
 Chapter 1. Admin Guide
 
@@ -102,6 +106,8 @@ Chapter 1. Admin Guide
         4.7. cors_mode (integer)
         4.8. verbose_list (int)
         4.9. event_callback (str)
+        4.10. timer_interval (integer)
+        4.11. rm_delay_interval (integer)
 
    5. Functions
 
@@ -203,7 +209,7 @@ event_route[xhttp:request] {
                 # Optional... perform HTTP authentication
 
                 # ws_handle_handshake() exits (no further configuration file
-                # processing of the request) when complete.
+                # processing of the request) when complete in case of failure.
                 if (ws_handle_handshake())
                 {
                         # Optional... cache some information about the
@@ -345,6 +351,8 @@ onreply_route[WS_REPLY] {
    4.7. cors_mode (integer)
    4.8. verbose_list (int)
    4.9. event_callback (str)
+   4.10. timer_interval (integer)
+   4.11. rm_delay_interval (integer)
 
 4.1. keepalive_mechanism (integer)
 
@@ -483,6 +491,29 @@ function ksr_websocket_event(evname)
 end
 ...
 
+4.10. timer_interval (integer)
+
+   The number of seconds between each timer process run
+
+   Default value is 1.
+
+   Example 1.12. Set timer_intervalparameter
+...
+modparam("websocket", "timer_interval", 5)
+...
+
+4.11. rm_delay_interval (integer)
+
+   The number of seconds to wait before destroying the websocket
+   connection once put in remove state.
+
+   Default value is 5.
+
+   Example 1.13. Set rm_timer_intervalparameter
+...
+modparam("websocket", "rm_delay_interval", 2)
+...
+
 5. Functions
 
    5.1. ws_handle_handshake()
@@ -500,9 +531,10 @@ end
 Note
 
    This function returns 0, stopping all further processing of the
-   request, when there is a problem.
+   request, when there is a problem. Otherwise, it returns 1 (or positive
+   number) in case of success.
 
-   Example 1.12. ws_handle_handshake usage
+   Example 1.14. ws_handle_handshake usage
 ...
 ws_handle_handshake();
 ...
@@ -527,7 +559,7 @@ Note
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. ws_close usage
+   Example 1.15. ws_close usage
 ...
 ws_close(4000, "Because I say so");
 ...
@@ -641,7 +673,7 @@ kamcmd ws.enable
    connection closes. The connection may be identified using the the $si
    and $sp pseudo-variables.
 
-   Example 1.14. event_route[websocket:closed] usage
+   Example 1.16. event_route[websocket:closed] usage
 ...
 event_route[websocket:closed] {
         xlog("L_INFO", "WebSocket connection from $si:$sp has closed\n");
@@ -657,7 +689,7 @@ event_route[websocket:closed] {
    Connection id of closed websocket connection. Can only be used in
    websocket:closed event route.
 
-   Example 1.15. $ws_conid usage
+   Example 1.17. $ws_conid usage
 ...
 event_route[websocket:closed] {
         xlog("L_INFO", "WebSocket connection with id $ws_conid has closed\n");
