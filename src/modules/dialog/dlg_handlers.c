@@ -761,8 +761,6 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 		}
 	}
 	if (dlg==NULL) {
-		if((req->flags&dlg_flag_mask)!=dlg_flag_mask)
-			return;
 		LM_DBG("dialog creation on config flag\n");
 		dlg_new_dialog(req, t, 1);
 		dlg = dlg_get_ctx_dialog();
