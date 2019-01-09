@@ -415,12 +415,14 @@ route[CNXCC]
 {
         $var(client)              = "test-client";
         $var(credit)              = "50";
+        $var(connect_cost)        = "3.0";
         $var(cost_per_sec)        = "0.5";
         $var(i_pulse)             = 30;
         $var(f_pulse)             = 6;
 
         if (!cnxcc_set_max_credit("$var(client)",
                         "$var(credit)",
+                        "$var(connect_cost)",
                         "$var(cost_per_sec)",
                         "$var(i_pulse)",
                         "$var(f_pulse)")) {
