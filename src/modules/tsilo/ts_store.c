@@ -71,6 +71,11 @@ int ts_store(struct sip_msg* msg, str *puri) {
 	else
 		aor = ruri.user;
 
+	if(aor.s==NULL) {
+		LM_ERR("malformed aor from uri[%.*s]\n", suri.len, suri.s);
+		return -1;
+	}
+
 	t = _tmb.t_gett();
 	if (!t || t==T_UNDEFINED) {
 		LM_ERR("no transaction defined for %.*s\n", aor.len, aor.s);
