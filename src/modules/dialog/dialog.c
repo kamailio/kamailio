@@ -494,8 +494,8 @@ static int mod_init(void)
 		return -1;
 
 	/* param checkings */
-	if (dlg_flag>MAX_FLAG) {
-		LM_ERR("invalid dlg flag %d!!\n",dlg_flag);
+	if (dlg_flag!=-1 && dlg_flag>MAX_FLAG) {
+		LM_ERR("invalid dlg flag %d!!\n", dlg_flag);
 		return -1;
 	}
 
