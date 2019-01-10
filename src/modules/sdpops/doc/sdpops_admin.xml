@@ -555,7 +555,7 @@ if(sdp_with_ice()) {
 			<function moreinfo="none">sdp_get_line_startswith(avpvar, string)</function>
 		</title>
 		<para>
-			Store the search part of SDP body message with line beginning with 'string' in an AVP. 
+			Store the search part of SDP body message with line beginning with 'string' in an AVP.
 			Return 1 if 'string' is found in SDP, -1 on error and -2 if there is no SDP part in the message body.
 			The second parameter can contain pseudo-variables.
 		</para>
@@ -573,6 +573,28 @@ if(sdp_get_line_startswith("$avp(mline)", "m=")) {
 </programlisting>
 		</example>
 	</section>
+	<section id="sdpops.f.get_sdp_address_family">
+			<title>
+		<function moreinfo="none">get_sdp_address_family()</function>
+			</title>
+			<para>
+			it helps to get IP address family at c line from sdp body.
+			it returns -1 on error , 4 for IP4 and 6 for IP6
+			</para>
+		<example>
+		<title><function>get_sdp_address_family</function>usage</title>
+		<programlisting format="linespecific">
+	...
+	if(is_method("INVITE") && has_body("application/sdp")){
+
+		$avp(af) = get_sdp_address_family();
+		xlog("L_INFO","ADDRESS FAMILY OF SDP C line $avp(af) ");
+	}
+	...
+	</programlisting>
+			</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -595,4 +617,3 @@ if(sdp_get_line_startswith("$avp(mline)", "m=")) {
 	</section>
 
 </chapter>
-
