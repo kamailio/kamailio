@@ -65,7 +65,7 @@ static int w_sdp_get_line_startswith(sip_msg_t* msg, char *foo, char *bar);
 
 static int sdp_get_sess_version(sip_msg_t* msg, str* sess_version, int* sess_version_num);
 static int sdp_set_sess_version(sip_msg_t* msg, str* sess_version, int* sess_version_num);
-static int w_get_sdp_address_family(sip_msg_t* msg);
+static int w_sdp_get_address_family(sip_msg_t* msg);
 
 static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
@@ -126,7 +126,7 @@ static cmd_export_t cmds[] = {
 		0, 0,  0, ANY_ROUTE},
 	{"sdp_get_line_startswith", (cmd_function)w_sdp_get_line_startswith,
 		2, fixup_none_spve,  0, ANY_ROUTE},
-	{"get_sdp_address_family", (cmd_function)w_get_sdp_address_family,
+	{"sdp_get_address_family", (cmd_function)w_sdp_get_address_family,
 			0, 0,  0, ANY_ROUTE},
 	{"bind_sdpops",                (cmd_function)bind_sdpops,
 		1, 0, 0, 0},
@@ -1004,7 +1004,7 @@ it helps to extract IP adress family at c line  from sdp
 			6 for  IP6
 
 */
-static int w_get_sdp_address_family(sip_msg_t *msg){
+static int w_sdp_get_address_family(sip_msg_t *msg){
 
 	sdp_session_cell_t* session;
 	int sdp_session_num;
