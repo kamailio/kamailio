@@ -530,28 +530,6 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix, str* media)
 	return found;
 }
 
-
-/*
-
-int sdp_remove_str_codec_id_attrs(sip_msg_t* msg, sdp_stream_cell_t* sdp_stream, str *rm_codec)
-
-	str aline = {0, 0};
-	sdp_payload_attr_t *payload;
-	struct lump *anchor;
-
-	payload = sdp_stream->payload_attr;
-	while (payload) {
-		LM_DBG("a= ... for codec %.*s/%.*s\n",
-				payload->rtp_payload.len, payload->rtp_payload.s,
-				payload->rtp_enc.len, payload->rtp_enc.s);
-		if(rm_codec->len==payload->rtp_payload.len
-				&& strncmp(payload->rtp_payload.s, rm_codec->s,
-					rm_codec->len)==0) {
-			if(payload->rtp_enc.s!=NULL) {
-				if(sdp_locate_line(msg, payload->rtp_enc.s, &aline)==0)
-*/
-
-
 /**
  * removes all SDP lines that begin with script provided prefix
  * @return -1 - error; 1 - found
