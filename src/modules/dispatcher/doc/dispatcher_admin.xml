@@ -1713,13 +1713,15 @@ DEST: {
 }
  ...
 </programlisting>
-<para>FLAGS consist out of 2 letters. First letter describe status of destination: A-active, 
-	I – inactive, T – trying, D – disabled. Second letter might be P or X. P is for probing, 
-	so AP means destination is active and it is tested by SIP options continuously. 
-	X means that there are no probing or sip pinging. So AX means that destination is assumed as active 
-	and it is not tested by SIP options. DX respectively is disabled destination what is not tested and etc.
-</para>
-		</section>
+		<para>FLAGS consist out of 2 letters. First letter describe status of
+		destination: A-active, I – inactive, T – trying, D – disabled. Second
+		letter might be P or X. P is for probing, so AP means destination
+		is active and it is tested by SIP options continuously. X means that
+		there are no probing or sip pinging. So AX means that destination is
+		assumed as active and it is not tested by SIP options. DX
+		respectively is disabled destination that is not tested, etc.
+		</para>
+	</section>
 	<section id="dispatcher.r.reload">
 		<title>
 		<function moreinfo="none">dispatcher.reload</function>
