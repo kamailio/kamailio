@@ -631,12 +631,16 @@ modparam("dispatcher", "force_dst", 1)
 		<itemizedlist>
 		<listitem>
 			<para>Value 0: If set to 0, only the gateways with state PROBING are tested.
-            After a gateway is probed, the PROBING state is cleared in this mode.</para>
+            After a gateway is probed, the PROBING state is cleared in this mode.
+				This means that no probing will be executed at all only if flag in config file is set to 8/PROBING
+				(please check "Destination List File" for more details), it will probe only one time at startup or 
+				after dispatcher reload.</para>
 		</listitem>
 		<listitem>
 			<para>Value 1: If set to 1, all gateways are tested.  If set to 1 and
 			there is a failure of keepalive to an active gateway, then it is
-			set to TRYING state.</para>
+			set to TRYING state. This means that probing will be executed all the time,
+				but you can skip some servers with flag 4 in config file.</para>
 		</listitem>
 		<listitem>
 			<para>Value 2: if set to 2, only gateways in inactive state with
