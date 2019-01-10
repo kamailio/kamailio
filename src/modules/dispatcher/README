@@ -1407,7 +1407,7 @@ DEST: {
    destination is active and it is tested by SIP options continuously. X
    means that there are no probing or sip pinging. So AX means that
    destination is assumed as active and it is not tested by SIP options.
-   DX respectively is disabled destination what is not tested and etc.
+   DX respectively is disabled destination that is not tested, etc.
 
 5.3.  dispatcher.reload
 
