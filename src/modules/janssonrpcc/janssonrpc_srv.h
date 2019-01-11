@@ -41,6 +41,7 @@ typedef struct srv_cb_params {
 extern jsonrpc_srv_t* global_srv_list;
 
 extern unsigned int jsonrpc_min_srv_ttl;
+extern unsigned int jsonrpc_keep_alive;
 
 jsonrpc_srv_t* create_srv(str srv, str conn, unsigned int ttl);
 void addto_srv_list(jsonrpc_srv_t* srv, jsonrpc_srv_t** list);
