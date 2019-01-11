@@ -124,7 +124,7 @@ if(phonenum_match("1-484-555-8888", "src")) {
 	</section>
 	<section id="phonenum.f.phonenum_match_cn">
 	    <title>
-		<function moreinfo="none">phonenum_match(num, cnc, pvc)</function>
+		<function moreinfo="none">phonenum_match_cn(num, cnc, pvc)</function>
 	    </title>
 	    <para>
 			Match num against the libphonenumber and set the attributes inside
