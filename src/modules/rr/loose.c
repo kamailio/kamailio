@@ -48,6 +48,7 @@
 #define RR_OB_DRIVEN 2		/*!< The next hop is determined from the route set based on flow-token */
 #define NOT_RR_DRIVEN -1	/*!< The next hop is not determined from the route set */
 #define FLOW_TOKEN_BROKEN -2	/*!< Outbound flow-token shows evidence of tampering */
+#define RR_PRELOADED -3		/*!< The next hop is determined from a preloaded route set */
 
 #define RR_ROUTE_PREFIX ROUTE_PREFIX "<"
 #define RR_ROUTE_PREFIX_LEN (sizeof(RR_ROUTE_PREFIX)-1)
@@ -840,7 +841,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			}
 			if (res > 0) { /* No next route found */
 				LM_DBG("No next URI found\n");
-				status = (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+				status = (preloaded ? RR_PRELOADED : RR_DRIVEN);
 				goto done;
 			}
 			rt = (rr_t*)hdr->parsed;
@@ -873,7 +874,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 					}
 				if (res > 0) { /* No next route found */
 					LM_DBG("no next URI found\n");
-					status = (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+					status = (preloaded ? RR_PRELOADED : RR_DRIVEN);
 					goto done;
 				}
 				rt = (rr_t*)hdr->parsed;
