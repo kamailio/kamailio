@@ -2127,7 +2127,7 @@ static sr_kemi_t sr_kemi_cnxcc_exports[] = {
 	{ str_init("cnxcc"), str_init("set_max_credit"),
 		SR_KEMIP_INT, ki_set_max_credit,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
-			SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE }
+			SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT }
 	},
 	{ str_init("cnxcc"), str_init("set_max_time"),
 		SR_KEMIP_INT, ki_set_max_time,
