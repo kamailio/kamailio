@@ -30,7 +30,7 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. phonenum_match(num, pvc)
-              4.2. phonenum_match(num, cnc, pvc)
+              4.2. phonenum_match_cn(num, cnc, pvc)
 
         5. Pseudo Variables
 
@@ -57,7 +57,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. phonenum_match(num, pvc)
-        4.2. phonenum_match(num, cnc, pvc)
+        4.2. phonenum_match_cn(num, cnc, pvc)
 
    5. Pseudo Variables
 
@@ -110,7 +110,7 @@ modparam("phonenum", "smode", 0)
 4. Functions
 
    4.1. phonenum_match(num, pvc)
-   4.2. phonenum_match(num, cnc, pvc)
+   4.2. phonenum_match_cn(num, cnc, pvc)
 
 4.1.  phonenum_match(num, pvc)
 
@@ -133,7 +133,7 @@ if(phonenum_match("1-484-555-8888", "src")) {
 }
 ...
 
-4.2.  phonenum_match(num, cnc, pvc)
+4.2.  phonenum_match_cn(num, cnc, pvc)
 
    Match num against the libphonenumber and set the attributes inside the
    pvc container, restricting the rules with a country name code (two
