@@ -123,6 +123,7 @@ Julien Chavanton
               5.2. dispatcher.list
               5.3. dispatcher.reload
               5.4. dispatcher.ping_active
+              5.5. dispatcher.add
 
         6. Installation and Running
 
@@ -264,6 +265,7 @@ Chapter 1. Admin Guide
         5.2. dispatcher.list
         5.3. dispatcher.reload
         5.4. dispatcher.ping_active
+        5.5. dispatcher.add
 
    6. Installation and Running
 
@@ -1356,6 +1358,7 @@ onreply_route {
    5.2. dispatcher.list
    5.3. dispatcher.reload
    5.4. dispatcher.ping_active
+   5.5. dispatcher.add
 
 5.1.  dispatcher.set_state
 
@@ -1441,6 +1444,26 @@ DEST: {
 ...
 # prototype: kamcmd dispatcher.ping_active _state_
 kamcmd dispatcher.ping_active 0
+...
+
+5.5.  dispatcher.add
+
+   Add a destination address to the in-memory dispatcher list. Reloading
+   the dispatcher will remove any destinations that are only added to the
+   in-memory dispatcher list.
+
+   Name: dispatcher.add
+
+   Parameters:
+     * _group_: destination group id
+     * _address_: address of the destination in the _group_
+     * _flags_ (optional): as described in the list file format, default 0
+
+   Example:
+...
+# prototype: kamcmd dispatcher.add _group_ _address_ _flags_
+kamcmd dispatcher.add 2 sip:127.0.0.1:5080
+kamcmd dispatcher.add 3 sip:127.0.0.1:5075 8
 ...
 
 6. Installation and Running

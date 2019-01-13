@@ -29,6 +29,7 @@ Matthew Williams
               3.2. result_pv (string)
               3.3. server (string)
               3.4. retry_codes (string)
+              3.5. keep_alive (integer)
 
         4. Functions
 
@@ -43,9 +44,10 @@ Matthew Williams
    1.2. Set result_pv parameter
    1.3. Set server parameter
    1.4. Set retry_codes parameter
-   1.5. janssonrpc_notification usage
-   1.6. janssonrpc_request usage
-   1.7. route example with internal_error handling
+   1.5. Set keep_alive parameter
+   1.6. janssonrpc_notification usage
+   1.7. janssonrpc_request usage
+   1.8. route example with internal_error handling
 
 Chapter 1. Admin Guide
 
@@ -63,6 +65,7 @@ Chapter 1. Admin Guide
         3.2. result_pv (string)
         3.3. server (string)
         3.4. retry_codes (string)
+        3.5. keep_alive (integer)
 
    4. Functions
 
@@ -111,6 +114,7 @@ Chapter 1. Admin Guide
    3.2. result_pv (string)
    3.3. server (string)
    3.4. retry_codes (string)
+   3.5. keep_alive (integer)
 
 3.1. min_srv_ttl (integer)
 
@@ -183,7 +187,18 @@ modparam("janssonrpcc", "server", "conn=user_db;addr=rpc.prod.exmaple.net;port=5
 
    Example 1.4. Set retry_codes parameter
 ...
-modparam("janssonrpc-s", "retry_codes", "-32603, -32000..-32099");
+modparam("janssonrpcc", "retry_codes", "-32603, -32000..-32099");
+...
+
+3.5. keep_alive (integer)
+
+   number of seconds to send a tcp keep-alive to the server connection
+
+   Default is 0 (disabled)
+
+   Example 1.5. Set keep_alive parameter
+...
+modparam("janssonrpcc", "keep_alive", 10)
 ...
 
 4. Functions
@@ -207,7 +222,7 @@ modparam("janssonrpc-s", "retry_codes", "-32603, -32000..-32099");
    The 'method' and 'params' can be a static string or dynamic string
    value with config variables.
 
-   Example 1.5. janssonrpc_notification usage
+   Example 1.6. janssonrpc_notification usage
 ...
 janssonrpc_notification("user_db", "update_user", '{"id": 1234, "name": "Daniel"
 }');
@@ -251,7 +266,7 @@ janssonrpc_notification("user_db", "update_user", '{"id": 1234, "name": "Daniel"
    parameter 'result_pv'. This pseudo-variable is set after the response
    is received.
 
-   Example 1.6. janssonrpc_request usage
+   Example 1.7. janssonrpc_request usage
 ...
 janssonrpc_request("user_db", "get_user", '{"id": 1234}', "route=RESPONSE;retry=
 1");
@@ -302,7 +317,7 @@ route[RESPONSE] {
      * -1000: "There is a bug". Please report these errors to the module
        maintainers.
 
-   Example 1.7. route example with internal_error handling
+   Example 1.8. route example with internal_error handling
 ...
 route {
         janssonrpc_request("user_db", "get_user", '{"id": 1234}', "route=RESPONS
