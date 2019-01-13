@@ -20,6 +20,7 @@
 *
 */
 
+#include "presence.h"
 #include "presence_dmq.h"
 
 static str pres_dmq_content_type = str_init("application/json");
@@ -112,9 +113,9 @@ static int pres_dmq_init_proc()
 		/* Do not pool the connections where possible when running notifier
 		* processes. */
 		if(pres_notifier_processes > 0 && pa_dbf.init2)
-			pa_db = pa_dbf.init2(&db_url, DB_POOLING_NONE);
+			pa_db = pa_dbf.init2(&pres_db_url, DB_POOLING_NONE);
 		else
-			pa_db = pa_dbf.init(&db_url);
+			pa_db = pa_dbf.init(&pres_db_url);
 
 		if(!pa_db) {
 			LM_ERR("dmq_worker_init: unsuccessful database connection\n");

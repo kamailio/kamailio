@@ -30,7 +30,6 @@
 #ifndef SUBSCRIBE_H
 #define SUBSCRIBE_H
 
-//#include "presence.h"
 #include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 
