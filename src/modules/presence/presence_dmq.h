@@ -22,7 +22,6 @@
 #ifndef _PRESENCE_DMQ_H_
 #define _PRESENCE_DMQ_H_
 
-#include "presence.h"
 #include "presentity.h"
 #include "../dmq/bind_dmq.h"
 #include "../../lib/srutils/srjson.h"

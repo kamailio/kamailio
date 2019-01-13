@@ -32,7 +32,6 @@
 #define PS_HASH_H
 
 #include "../../core/lock_ops.h"
-//#include "presentity.h"
 
 struct presentity;
 #define REMOTE_TYPE   1<<1

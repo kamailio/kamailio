@@ -62,7 +62,7 @@ extern db_func_t pa_dbf;
 extern db1_con_t* pa_db;
 
 /* PRESENCE database */
-extern str db_url;
+extern str pres_db_url;
 extern str presentity_table;
 extern str active_watchers_table;
 extern str watchers_table;

@@ -32,7 +32,6 @@
 #include "../../core/str.h"
 #include "../../core/parser/msg_parser.h" 
 #include "event_list.h"
-#include "presence.h"
 
 extern char prefix;
 
