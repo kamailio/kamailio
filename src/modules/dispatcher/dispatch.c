@@ -173,9 +173,9 @@ int ds_hash_load_destroy(void)
 }
 
 /**
- * Recursivly print ds_set
+ * Recursivly iterate over ds_set and execute callback
  */
-void ds_log_set(ds_set_t *node)
+void ds_iter_set(ds_set_t *node, void (*ds_action_cb)(ds_set_t *node, int i))
 {
 	if(!node)
 		return;
@@ -183,16 +183,31 @@ void ds_log_set(ds_set_t *node)
 	int i;
 
 	for(i = 0; i < 2; ++i)
-		ds_log_set(node->next[i]);
+		ds_iter_set(node->next[i], ds_action_cb);
 
 	for(i = 0; i < node->nr; i++) {
-		LM_DBG("dst>> %d %.*s %d %d (%.*s,%d,%d,%d)\n", node->id,
-				node->dlist[i].uri.len, node->dlist[i].uri.s,
-				node->dlist[i].flags, node->dlist[i].priority,
-				node->dlist[i].attrs.duid.len, node->dlist[i].attrs.duid.s,
-				node->dlist[i].attrs.maxload, node->dlist[i].attrs.weight,
-				node->dlist[i].attrs.rweight);
+		ds_action_cb(node, i);
 	}
+
+	return;
+}
+
+void ds_log_dst_cb(ds_set_t *node, int i)
+{
+	LM_DBG("dst>> %d %.*s %d %d (%.*s,%d,%d,%d)\n", node->id,
+		node->dlist[i].uri.len, node->dlist[i].uri.s,
+		node->dlist[i].flags, node->dlist[i].priority,
+		node->dlist[i].attrs.duid.len, node->dlist[i].attrs.duid.s,
+		node->dlist[i].attrs.maxload, node->dlist[i].attrs.weight,
+		node->dlist[i].attrs.rweight);
+}
+
+/**
+ * Recursivly print ds_set
+ */
+void ds_log_set(ds_set_t *node)
+{
+	ds_iter_set(node, &ds_log_dst_cb);
 
 	return;
 }
@@ -2346,6 +2361,54 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 	}
 
 	return 1;
+}
+
+/* callback for adding nodes based on index */
+void ds_add_dest_cb(ds_set_t *node, int i)
+{
+	int setn;
+	add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags, node->dlist[i].priority,
+		&node->dlist[i].attrs.body, *next_idx, &setn);
+	return;
+}
+
+/* add dispatcher entry to in-memory dispatcher list */
+int ds_add_dst(int group, str *address, int flags)
+{
+	int setn, priority;
+	str attrs;
+
+	setn = _ds_list_nr;
+	priority = 0;
+	attrs.s = 0;
+	attrs.len = 0;
+
+	*next_idx = (*crt_idx + 1) % 2;
+	ds_avl_destroy(&ds_lists[*next_idx]);
+
+	// add all existing destinations
+	ds_iter_set(_ds_list, &ds_add_dest_cb);
+
+	// add new destination
+	if(add_dest2list(group, *address, flags, priority, &attrs,
+		*next_idx, &setn) != 0)
+		LM_WARN("unable to add destination %.*s to set %d", address->len, address->s, group);
+
+	if(reindex_dests(ds_lists[*next_idx]) != 0) {
+		LM_ERR("error on reindex\n");
+		goto error;
+	}
+
+	_ds_list_nr = setn;
+	*crt_idx = *next_idx;
+	ds_ht_clear_slots(_dsht_load);
+	ds_log_sets();
+	return 0;
+
+error:
+	ds_avl_destroy(&ds_lists[*next_idx]);
+	*next_idx = *crt_idx;
+	return -1;
 }
 
 int ds_mark_dst(struct sip_msg *msg, int state)
