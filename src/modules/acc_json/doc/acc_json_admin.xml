@@ -216,16 +216,16 @@ route[RUN_ACC_PUBLISH] {
       $var(count) = $var(count) + 1;
       xinfo("[RUN_ACC_PUBLISH][$var(q_size)][$var(count)][$mqk(acc_events)][$mqv(acc_events)]\n");
       $var(res) = http_connect_raw("nsqd", "", "application/json", $mqv(acc_events), "$var(nsq_res)");
-      if ($var(res) < 0) {
+      if ($var(res) &lt; 0) {
          xerr("[RUN_ACC_PUBLISH][$var(res)] http_connect_raw: timeout or error !\n");
          mq_add("acc_events", "acc_key", "$mqv(acc_events)");
-      } else if ($var(res) < 200 || $var(res) > 299) {
+      } else if ($var(res) &lt; 200 || $var(res) &gt; 299) {
          xerr("[RUN_ACC_PUBLISH][$var(res)] http unexpected response code !\n");
          mq_add("acc_dead_letter_queue", "acc_key", "$mqv(acc_events)");
          return;
       }
    }
-   if ($var(count) > 0 ) {
+   if ($var(count) &gt; 0 ) {
       xinfo("[RUN_CDR_PUBLISH]done count[$var(count)]\n");
    }
 }
