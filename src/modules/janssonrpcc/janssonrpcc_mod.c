@@ -51,6 +51,7 @@ void mod_destroy(void);
 int parse_server_param(modparam_t type, void* val);
 int parse_retry_codes_param(modparam_t type, void* val);
 int parse_min_ttl_param(modparam_t type, void* val);
+int parse_keep_alive_param(modparam_t type, void* val);
 static int fixup_req(void** param, int param_no);
 static int fixup_req_free(void** param, int param_no);
 static int fixup_notify(void** param, int param_no);
@@ -100,6 +101,7 @@ static param_export_t mod_params[]={
 	{"retry_codes",  STR_PARAM|USE_FUNC_PARAM, (void*)parse_retry_codes_param},
 	{"min_srv_ttl", INT_PARAM|USE_FUNC_PARAM, (void*)parse_min_ttl_param},
 	{"result_pv",   STR_PARAM,                &result_pv_str.s},
+	{"keep_alive", INT_PARAM|USE_FUNC_PARAM, (void*)parse_keep_alive_param},
 	{ 0,0,0 }
 };
 
@@ -330,6 +332,20 @@ int parse_min_ttl_param(modparam_t type, void* val)
 
 	INFO("min_srv_ttl set to %d\n", jsonrpc_min_srv_ttl);
 
+	return 0;
+}
+
+int parse_keep_alive_param(modparam_t type, void* val)
+{
+	if (PARAM_TYPE_MASK(type) != INT_PARAM) {
+		ERR("keep_alive must be of type %d, not %d!\n", INT_PARAM, type);
+		return -1;
+	}
+	jsonrpc_keep_alive = (int)(long)val;
+	if (jsonrpc_keep_alive < 0) {
+		jsonrpc_keep_alive = 0;
+	}
+	INFO("jsonrpc_keep_alive set to %d\n", jsonrpc_keep_alive);
 	return 0;
 }
 

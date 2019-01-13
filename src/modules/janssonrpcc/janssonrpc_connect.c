@@ -27,6 +27,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <event.h>
+#include <netinet/tcp.h>
 
 #include "../../core/sr_module.h"
 #include "../../core/route.h"
@@ -43,6 +44,8 @@
 #include "janssonrpc_srv.h"
 #include "janssonrpc_server.h"
 #include "janssonrpc_connect.h"
+
+unsigned int jsonrpc_keep_alive;
 
 void wait_server_backoff(unsigned int timeout /* seconds */,
 		jsonrpc_server_t* server, bool delay);
@@ -79,6 +82,11 @@ void force_disconnect(jsonrpc_server_t* server)
 	server->buffer = NULL;
 
 	server->status = JSONRPC_SERVER_DISCONNECTED;
+	if (server->keep_alive_socket_fd >= 0) {
+		INFO("closing socket");
+		close(server->keep_alive_socket_fd);
+		server->keep_alive_socket_fd = -1;
+	}
 
 	// close bufferevent
 	bev_disconnect(server->bev);
@@ -245,6 +253,12 @@ void connect_failed(jsonrpc_server_t* server)
 	bev_disconnect(server->bev);
 
 	server->status = JSONRPC_SERVER_RECONNECTING;
+	// close socket
+	if (server->keep_alive_socket_fd >= 0) {
+		INFO("closing socket");
+		close(server->keep_alive_socket_fd);
+		server->keep_alive_socket_fd = -1;
+	}
 	wait_server_backoff(JSONRPC_RECONNECT_INTERVAL, server, true);
 }
 
@@ -283,21 +297,73 @@ failed:
 	connect_failed(server);
 }
 
+int fd_is_valid(int fd) {
+    return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
+}
+
+int set_linger(int fd, int onoff, int linger) {
+	struct linger l = { .l_linger = linger, .l_onoff = onoff};
+	int res = setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
+	assert(res == 0);
+	return res;
+}
+
+
+int set_keepalive(int fd, int keepalive, int cnt, int idle, int intvl) {
+	int res = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive));
+	assert(res == 0);
+
+	res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &idle, sizeof(idle));
+	assert(res == 0);
+
+	res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
+	assert(res == 0);
+
+	res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &intvl, sizeof(intvl));
+	assert(res == 0);
+
+	return res;
+}
+
 void bev_connect(jsonrpc_server_t* server)
 {
 	if(!server) {
 		ERR("Trying to connect null server\n");
 		return;
 	}
+	int fd = -1;
+	if (jsonrpc_keep_alive > 0) {
+		if (server->keep_alive_socket_fd > 0) {
+			fd = server->keep_alive_socket_fd;
+		} else {
+			INFO("setting up socket");
+			fd = socket(AF_INET, SOCK_STREAM, 0);
+			if (fd <= 0) {
+				server->keep_alive_socket_fd = -1;
+				ERR("could not setup socket");
+			} else {
+				server->keep_alive_socket_fd = fd; // track fd to close later
+			}
+		}
+		if (!fd_is_valid(fd)) { // make sure socket is valid
+			fd = -1;
+			server->keep_alive_socket_fd = -1;
+		}
+	}
 
 	INFO("Connecting to server %.*s:%d for conn %.*s.\n",
 			STR(server->addr), server->port, STR(server->conn));
 
+	if (fd > 0) {
+		set_linger(fd, 1, 0);
+		set_keepalive(fd, 1, 1, jsonrpc_keep_alive, jsonrpc_keep_alive);
+	}
+
 	server->bev = bufferevent_socket_new(
 			global_ev_base,
-			-1,
+			fd,
 			BEV_OPT_CLOSE_ON_FREE);
-	if(!(server->bev)) {
+	if (!(server->bev)) {
 		ERR("Could not create bufferevent for  %.*s:%d\n", STR(server->addr), server->port);
 		connect_failed(server);
 		return;

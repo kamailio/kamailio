@@ -169,7 +169,24 @@ modparam("janssonrpcc", "server", "conn=user_db;addr=rpc.prod.exmaple.net;port=5
 				<title>Set <varname>retry_codes</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("janssonrpc-s", "retry_codes", "-32603, -32000..-32099");
+modparam("janssonrpcc", "retry_codes", "-32603, -32000..-32099");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>keep_alive</varname> (integer)</title>
+			<para>
+				number of seconds to send a tcp keep-alive to the server connection
+			</para>
+			<para>
+				Default is 0 (disabled)
+			</para>
+			<example>
+				<title>Set <varname>keep_alive</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("janssonrpcc", "keep_alive", 10)
 ...
 				</programlisting>
 			</example>
