@@ -35,7 +35,6 @@
 #include "../../lib/srdb1/db.h"
 #include "../../modules/sl/sl.h"
 #include "../presence/event_list.h"
-#include "../presence/presence.h"
 #include "../presence/presentity.h"
 #include "../xcap_client/xcap_functions.h"
 
