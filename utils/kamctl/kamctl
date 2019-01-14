@@ -3010,6 +3010,11 @@ case $1 in
 		ctl_cmd_run core.psx
 		;;
 
+	psa)
+		require_ctlengine
+		ctl_cmd_run core.psa
+		;;
+
 	uptime)
 		require_ctlengine
 		ctl_cmd_run core.uptime
