@@ -697,10 +697,15 @@ Note
    Controls what gateways are tested to see if they are reachable.
      * Value 0: If set to 0, only the gateways with state PROBING are
        tested. After a gateway is probed, the PROBING state is cleared in
-       this mode.
+       this mode. This means that no probing will be executed at all only
+       if flag in config file is set to 8/PROBING (please check
+       destination list file syntaxis for more details), it will probe
+       only one time at startup or after dispatcher reload.
      * Value 1: If set to 1, all gateways are tested. If set to 1 and
        there is a failure of keepalive to an active gateway, then it is
-       set to TRYING state.
+       set to TRYING state. This means that probing will be executed all
+       the time, but you can skip some servers with flag 4 in destination
+       list file, for example.
      * Value 2: if set to 2, only gateways in inactive state with probing
        mode set are tested.
      * Value 3: If set to 3, any gateway with state PROBING is continually
@@ -1388,6 +1393,21 @@ kamcmd dispatcher.set_state ip 3 all
 
    Example:
                 kamcmd dispatcher.list
+ ...
+DEST: {
+        URI: sip:192.168.0.1:5060
+        FLAGS: AP
+        PRIORITY: 12
+}
+ ...
+
+   FLAGS consist out of 2 letters. First letter describe status of
+   destination: A-active, I â inactive, T â trying, D â disabled.
+   Second letter might be P or X. P is for probing, so AP means
+   destination is active and it is tested by SIP options continuously. X
+   means that there are no probing or sip pinging. So AX means that
+   destination is assumed as active and it is not tested by SIP options.
+   DX respectively is disabled destination that is not tested, etc.
 
 5.3.  dispatcher.reload
 

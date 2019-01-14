@@ -426,9 +426,10 @@ Chapter 1. Admin Guide
 
 2. How it works
 
-   To create the dialog associated with an initial request, the flag
-   “dlg_flag” (Section 6.4, “dlg_flag (integer)”) must be set before
-   creating the corresponding transaction.
+   To create the dialog associated with an initial INVITE request, execute
+   the function “dlg_manage()” or set the flag specified by parameter
+   “dlg_flag” (Section 6.4, “dlg_flag (integer)”) before creating the
+   corresponding transaction.
 
    The dialog is automatically destroyed when a “BYE” is received. In case
    of no “BYE”, the dialog lifetime is controlled via the default timeout
@@ -610,6 +611,10 @@ modparam("dialog", "rr_param", "xyz")
 
    Flag to be used for marking if a dialog should be constructed for the
    current request (this make sense only for initial requests).
+
+   Note: it is not needed to set this parameter and its corresponding flag
+   for initial request in case the “dlg_manage()” function is used. In
+   other words, using “dlg_manage()” alone is enough.
 
    Default value is “none”.
 
