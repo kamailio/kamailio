@@ -384,8 +384,8 @@ int isup_get_redirection_number(unsigned char *buf, int len, char* sb_buf)
                sbparamlen = (buf[offset+1] & 0xFF) - 2;
 
                while ((sbparamlen > 0) && (buf[offset] != 0)) {
-                   sb_buf[sb_i]=(buf[offset+4+sb_j] & 0x0F) + '\x30';
-                   sb_buf[sb_i+1]=(buf[offset+4+sb_j]>>4 & 0x0F) + '\x30';
+                   sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+4+sb_j] & 0x0F)];
+                   sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+4+sb_j] >>4 & 0x0F)];
                    sb_i=sb_i+2;
                    sbparamlen--;
                    sb_j++;
