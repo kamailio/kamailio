@@ -45,6 +45,7 @@ typedef struct _pl_pipe
 	int counter;
 	int last_counter;
 	int load;
+	int unused_intervals;
 
     struct _pl_pipe *prev;
     struct _pl_pipe *next;
