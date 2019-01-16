@@ -42,11 +42,12 @@
 #include "presentity.h"
 #include "../alias_db/alias_db.h"
 
-void msg_presentity_clean(unsigned int ticks,void *param);
+void msg_presentity_clean(unsigned int ticks, void *param);
 
-int w_handle_publish(struct sip_msg* msg, char* str1, char* str2);
-int ki_handle_publish(sip_msg_t* msg);
-int ki_handle_publish_uri(sip_msg_t* msg, str* suri);
-int update_hard_presentity(str *pres_uri, pres_ev_t *event, str *file_uri, str *filename);
+int w_handle_publish(struct sip_msg *msg, char *str1, char *str2);
+int ki_handle_publish(sip_msg_t *msg);
+int ki_handle_publish_uri(sip_msg_t *msg, str *suri);
+int update_hard_presentity(
+		str *pres_uri, pres_ev_t *event, str *file_uri, str *filename);
 
 #endif

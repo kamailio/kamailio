@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -40,37 +40,35 @@
 #include "publish.h"
 #include "subscribe.h"
 
-int bind_presence(presence_api_t* api)
+int bind_presence(presence_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
-	
+
 	api->add_event = add_event;
-	api->contains_event= contains_event;
-	api->search_event= search_event;
-	api->get_event_list= get_event_list;
-	api->update_watchers_status= update_watchers_status;
-	api->new_shtable= new_shtable;
-	api->destroy_shtable= destroy_shtable;
-	api->insert_shtable= insert_shtable;
-	api->search_shtable= search_shtable;
-	api->delete_shtable= delete_shtable;
-	api->update_shtable= update_shtable;
-	api->mem_copy_subs= mem_copy_subs;
-	api->update_db_subs_timer= update_db_subs_timer;
-	api->extract_sdialog_info= extract_sdialog_info;
-	api->get_sphere= get_sphere;
-	api->get_presentity= get_p_notify_body;
-	api->free_presentity= free_notify_body;
-	api->pres_auth_status= pres_auth_status;
-	api->handle_publish= w_handle_publish;
-	api->handle_subscribe0= handle_subscribe0;
-	api->handle_subscribe= handle_subscribe;
+	api->contains_event = contains_event;
+	api->search_event = search_event;
+	api->get_event_list = get_event_list;
+	api->update_watchers_status = update_watchers_status;
+	api->new_shtable = new_shtable;
+	api->destroy_shtable = destroy_shtable;
+	api->insert_shtable = insert_shtable;
+	api->search_shtable = search_shtable;
+	api->delete_shtable = delete_shtable;
+	api->update_shtable = update_shtable;
+	api->mem_copy_subs = mem_copy_subs;
+	api->update_db_subs_timer = update_db_subs_timer;
+	api->extract_sdialog_info = extract_sdialog_info;
+	api->get_sphere = get_sphere;
+	api->get_presentity = get_p_notify_body;
+	api->free_presentity = free_notify_body;
+	api->pres_auth_status = pres_auth_status;
+	api->handle_publish = w_handle_publish;
+	api->handle_subscribe0 = handle_subscribe0;
+	api->handle_subscribe = handle_subscribe;
 	api->update_presentity = _api_update_presentity;
 	api->pres_refresh_watchers = _api_pres_refresh_watchers;
 	return 0;
 }
-
-

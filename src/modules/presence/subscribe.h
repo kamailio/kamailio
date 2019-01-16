@@ -38,18 +38,18 @@ struct pres_ev;
 #include "event_list.h"
 #include "hash.h"
 
-#define ACTIVE_STATUS        1
-#define PENDING_STATUS       2
-#define TERMINATED_STATUS    3
-#define WAITING_STATUS       4
+#define ACTIVE_STATUS 1
+#define PENDING_STATUS 2
+#define TERMINATED_STATUS 3
+#define WAITING_STATUS 4
 /* Additional value returned from pres_auth_status when the status is ACTIVE
  * and reason is polite-block */
-#define POLITE_BLOCK_STATUS  5
+#define POLITE_BLOCK_STATUS 5
 
-#define PRES_SUBSCRIBE_RECV		1
+#define PRES_SUBSCRIBE_RECV 1
 
-#define INTERNAL_UPDATE_FALSE	0
-#define INTERNAL_UPDATE_TRUE	1
+#define INTERNAL_UPDATE_FALSE 0
+#define INTERNAL_UPDATE_TRUE 1
 
 struct subscription
 {
@@ -60,7 +60,7 @@ struct subscription
 	str from_domain;
 	str watcher_user;
 	str watcher_domain;
-	struct pres_ev* event;
+	struct pres_ev *event;
 	str event_id;
 	str to_tag;
 	str from_tag;
@@ -77,52 +77,53 @@ struct subscription
 	int version;
 	int send_on_cback;
 	int db_flag;
-	str* auth_rules_doc;
+	str *auth_rules_doc;
 	int recv_event;
 	int internal_update_flag;
 	int updated;
 	int updated_winfo;
 	flag_t flags;
 	str user_agent;
-	struct subscription* next;
-
+	struct subscription *next;
 };
 typedef struct subscription subs_t;
 
-void msg_active_watchers_clean(unsigned int ticks,void *param);
+void msg_active_watchers_clean(unsigned int ticks, void *param);
 
-void msg_watchers_clean(unsigned int ticks,void *param);
+void msg_watchers_clean(unsigned int ticks, void *param);
 
-int handle_subscribe0(struct sip_msg*);
-int w_handle_subscribe0(struct sip_msg*, char*, char*);
-int w_handle_subscribe(struct sip_msg*, char *watcher_uri, char *p2);
-int w_handle_subscribe1(struct sip_msg*, char *watcher_uri);
-int handle_subscribe_uri(struct sip_msg*, str*);
-int handle_subscribe(struct sip_msg*, str watcher_user, str watcher_domain);
+int handle_subscribe0(struct sip_msg *);
+int w_handle_subscribe0(struct sip_msg *, char *, char *);
+int w_handle_subscribe(struct sip_msg *, char *watcher_uri, char *p2);
+int w_handle_subscribe1(struct sip_msg *, char *watcher_uri);
+int handle_subscribe_uri(struct sip_msg *, str *);
+int handle_subscribe(struct sip_msg *, str watcher_user, str watcher_domain);
 
-void timer_db_update(unsigned int ticks,void *param);
+void timer_db_update(unsigned int ticks, void *param);
 
-int update_subs_db(subs_t* subs, int type);
+int update_subs_db(subs_t *subs, int type);
 
 int restore_db_subs(void);
 
-typedef int (*handle_expired_func_t)(subs_t* );
+typedef int (*handle_expired_func_t)(subs_t *);
 
-void update_db_subs_timer(db1_con_t *db,db_func_t *dbf, shtable_t hash_table,
-	int htable_size, int no_lock, handle_expired_func_t handle_expired_func);
+void update_db_subs_timer(db1_con_t *db, db_func_t *dbf, shtable_t hash_table,
+		int htable_size, int no_lock,
+		handle_expired_func_t handle_expired_func);
 
-typedef void (*update_db_subs_t)(db1_con_t* ,db_func_t* ,shtable_t ,int ,int ,
-		handle_expired_func_t);
+typedef void (*update_db_subs_t)(
+		db1_con_t *, db_func_t *, shtable_t, int, int, handle_expired_func_t);
 
-int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t min_expire,
-		uint32_t max_expire, int* to_tag_gen, str scontact, str watcher_user,
-		str watcher_domain, int* reply_code,str* reply_txt);
-int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int max_expire,
-		int* to_tag_gen, str scontact, str watcher_user, str watcher_domain);
-typedef int (*extract_sdialog_info_t)(subs_t* subs, struct sip_msg* msg,
-		int max_expire, int* to_tag_gen, str scontact, str watcher_user,
+int extract_sdialog_info_ex(subs_t *subs, struct sip_msg *msg,
+		uint32_t min_expire, uint32_t max_expire, int *to_tag_gen, str scontact,
+		str watcher_user, str watcher_domain, int *reply_code, str *reply_txt);
+int extract_sdialog_info(subs_t *subs, struct sip_msg *msg, int max_expire,
+		int *to_tag_gen, str scontact, str watcher_user, str watcher_domain);
+typedef int (*extract_sdialog_info_t)(subs_t *subs, struct sip_msg *msg,
+		int max_expire, int *to_tag_gen, str scontact, str watcher_user,
 		str watcher_domain);
-void delete_subs(str* pres_uri, str* ev_name, str* to_tag, str* from_tag, str* callid);
-int get_subscribers_count(struct sip_msg* msg, str pres_uri, str event);
+void delete_subs(
+		str *pres_uri, str *ev_name, str *to_tag, str *from_tag, str *callid);
+int get_subscribers_count(struct sip_msg *msg, str pres_uri, str event);
 
 #endif

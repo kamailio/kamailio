@@ -28,7 +28,6 @@
  */
 
 
-
 #ifndef UTILS_FUNC_H
 #define UTILS_FUNC_H
 #include <stdio.h>
@@ -45,32 +44,30 @@
 #define INTERVAL_TOO_BRIEF 423
 
 
-#define EVENT_DIALOG_SLA(ev) \
-	((ev)->type == EVENT_DIALOG \
-		&& ((ev)->params.hooks.event_dialog.sla \
-			|| (ev)->params.hooks.event_dialog.ma))
+#define EVENT_DIALOG_SLA(ev)                        \
+	((ev)->type == EVENT_DIALOG                     \
+			&& ((ev)->params.hooks.event_dialog.sla \
+					   || (ev)->params.hooks.event_dialog.ma))
 
 
-static inline int uandd_to_uri(str user,  str domain, str *out)
+static inline int uandd_to_uri(str user, str domain, str *out)
 {
 	int size;
 
-	if(out==0)
+	if(out == 0)
 		return -1;
 
-	size = user.len + domain.len+7;
-	out->s = (char*)pkg_malloc(size);
+	size = user.len + domain.len + 7;
+	out->s = (char *)pkg_malloc(size);
 
-	if(out->s == NULL)
-	{
+	if(out->s == NULL) {
 		LM_ERR("no more memory\n");
 		return -1;
 	}
-	strcpy(out->s,"sip:");
+	strcpy(out->s, "sip:");
 	out->len = 4;
-	if(user.s!=NULL && user.len>0)
-	{
-		memcpy(out->s+out->len, user.s, user.len);
+	if(user.s != NULL && user.len > 0) {
+		memcpy(out->s + out->len, user.s, user.len);
 		out->len += user.len;
 		out->s[out->len++] = '@';
 	}
@@ -81,69 +78,61 @@ static inline int uandd_to_uri(str user,  str domain, str *out)
 	return 0;
 }
 
-static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
+static inline int ps_fill_local_contact(struct sip_msg *msg, str *contact)
 {
 	str ip;
-	char* proto;
+	char *proto;
 	int port;
 	int len;
 	int plen;
 	char *p;
 
-	contact->s= (char*)pkg_malloc(LCONTACT_BUF_SIZE);
-	if(contact->s== NULL)
-	{
+	contact->s = (char *)pkg_malloc(LCONTACT_BUF_SIZE);
+	if(contact->s == NULL) {
 		LM_ERR("No more memory\n");
 		goto error;
 	}
 
 	memset(contact->s, 0, LCONTACT_BUF_SIZE);
-	contact->len= 0;
+	contact->len = 0;
 
 	plen = 3;
-	if(msg->rcv.proto== PROTO_NONE || msg->rcv.proto==PROTO_UDP)
-		proto= "udp";
-	else
-	if(msg->rcv.proto== PROTO_TLS )
-			proto= "tls";
-	else
-	if(msg->rcv.proto== PROTO_TCP)
-		proto= "tcp";
-	else
-	if(msg->rcv.proto== PROTO_SCTP) {
-		proto= "sctp";
+	if(msg->rcv.proto == PROTO_NONE || msg->rcv.proto == PROTO_UDP)
+		proto = "udp";
+	else if(msg->rcv.proto == PROTO_TLS)
+		proto = "tls";
+	else if(msg->rcv.proto == PROTO_TCP)
+		proto = "tcp";
+	else if(msg->rcv.proto == PROTO_SCTP) {
+		proto = "sctp";
 		plen = 4;
-	}
-	else
-	if(msg->rcv.proto== PROTO_WS || msg->rcv.proto== PROTO_WSS) {
-		proto= "ws";
+	} else if(msg->rcv.proto == PROTO_WS || msg->rcv.proto == PROTO_WSS) {
+		proto = "ws";
 		plen = 2;
-	}
-	else
-	{
+	} else {
 		LM_ERR("unsupported proto\n");
 		goto error;
 	}
 
-	if(msg->rcv.bind_address->useinfo.name.len>0) {
+	if(msg->rcv.bind_address->useinfo.name.len > 0) {
 		ip = msg->rcv.bind_address->useinfo.name;
 	} else {
 		ip = msg->rcv.bind_address->address_str;
 	}
 
-	if(msg->rcv.bind_address->useinfo.port_no>0) {
+	if(msg->rcv.bind_address->useinfo.port_no > 0) {
 		port = msg->rcv.bind_address->useinfo.port_no;
 	} else {
 		port = msg->rcv.bind_address->port_no;
 	}
 
 	p = contact->s;
-	if(strncmp(ip.s, "sip:", 4)!=0) {
+	if(strncmp(ip.s, "sip:", 4) != 0) {
 		memcpy(p, "sip:", 4);
 		contact->len += 4;
 		p += 4;
 	}
-	if(msg->rcv.bind_address->address.af==AF_INET6) {
+	if(msg->rcv.bind_address->address.af == AF_INET6) {
 		*p = '[';
 		contact->len += 1;
 		p += 1;
@@ -151,7 +140,7 @@ static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 	strncpy(p, ip.s, ip.len);
 	contact->len += ip.len;
 	p += ip.len;
-	if(msg->rcv.bind_address->address.af==AF_INET6) {
+	if(msg->rcv.bind_address->address.af == AF_INET6) {
 		*p = ']';
 		contact->len += 1;
 		p += 1;
@@ -159,10 +148,9 @@ static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 	if(contact->len > LCONTACT_BUF_SIZE - 21) {
 		LM_ERR("buffer overflow\n");
 		goto error;
-
 	}
-	len= sprintf(p, ":%d;transport=" , port);
-	if(len< 0) {
+	len = sprintf(p, ":%d;transport=", port);
+	if(len < 0) {
 		LM_ERR("unsuccessful sprintf\n");
 		goto error;
 	}
@@ -173,7 +161,7 @@ static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 
 	return 0;
 error:
-	if(contact->s!=NULL)
+	if(contact->s != NULL)
 		pkg_free(contact->s);
 	contact->s = 0;
 	contact->len = 0;
@@ -182,11 +170,10 @@ error:
 
 //str* int_to_str(long int n);
 
-int a_to_i (char *s,int len);
+int a_to_i(char *s, int len);
 
 void to64frombits(unsigned char *out, const unsigned char *in, int inlen);
 
-int send_error_reply(struct sip_msg* msg, int reply_code, str reply_str);
+int send_error_reply(struct sip_msg *msg, int reply_code, str reply_str);
 
 #endif
-

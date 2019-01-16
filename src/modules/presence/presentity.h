@@ -30,7 +30,7 @@
 #define PRESENTITY_H
 
 #include "../../core/str.h"
-#include "../../core/parser/msg_parser.h" 
+#include "../../core/parser/msg_parser.h"
 #include "event_list.h"
 
 extern char prefix;
@@ -40,21 +40,22 @@ typedef struct presentity
 	int presid;
 	str user;
 	str domain;
-	pres_ev_t* event;
+	pres_ev_t *event;
 	str etag;
-	str* sender;
+	str *sender;
 	time_t expires;
 	time_t received_time;
 	unsigned int priority;
 } presentity_t;
 
 /* create new presentity */
-presentity_t* new_presentity( str* domain,str* user,int expires, 
- 		pres_ev_t* event, str* etag, str* sender);
+presentity_t *new_presentity(str *domain, str *user, int expires,
+		pres_ev_t *event, str *etag, str *sender);
 
 /* update presentity in database */
-int update_presentity(struct sip_msg* msg,presentity_t* p,str* body,int t_new,
-		int* sent_reply, char* sphere, str* etag_override, str* ruid, int replace);
+int update_presentity(struct sip_msg *msg, presentity_t *p, str *body,
+		int t_new, int *sent_reply, char *sphere, str *etag_override, str *ruid,
+		int replace);
 
 /* update presentity in database using API */
 int _api_update_presentity(str *event, str *realm, str *user, str *etag,
@@ -63,18 +64,17 @@ int _api_update_presentity(str *event, str *realm, str *user, str *etag,
 /* free memory */
 void free_presentity(presentity_t *p);
 
-char* generate_ETag(int publ_count);
+char *generate_ETag(int publ_count);
 
 int pres_htable_restore(void);
 
-char* extract_sphere(str body);
+char *extract_sphere(str body);
 
-char* get_sphere(str* pres_uri);
-typedef char* (*pres_get_sphere_t)(str* pres_uri);
+char *get_sphere(str *pres_uri);
+typedef char *(*pres_get_sphere_t)(str *pres_uri);
 
 int mark_presentity_for_delete(presentity_t *pres, str *ruid);
 int delete_presentity(presentity_t *pres, str *ruid);
 int delete_offline_presentities(str *pres_uri, pres_ev_t *event);
 
 #endif
-

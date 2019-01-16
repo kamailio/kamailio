@@ -35,8 +35,8 @@
 #ifndef NOTIFY_H
 #define NOTIFY_H
 
-#define FULL_STATE_FLAG (1<<0)
-#define PARTIAL_STATE_FLAG (1<<1)
+#define FULL_STATE_FLAG (1 << 0)
+#define PARTIAL_STATE_FLAG (1 << 1)
 
 #define PRES_LEN 8
 #define PWINFO_LEN 14
@@ -52,17 +52,17 @@ typedef struct watcher
 	str display_name;
 	str expiration;
 	str duration_subscribed;
-	struct watcher* next;
-}watcher_t;
+	struct watcher *next;
+} watcher_t;
 
 typedef struct wid_cback
 {
 	str pres_uri;
 	str ev_name;
-	str to_tag;   /* to identify the exact record */
+	str to_tag; /* to identify the exact record */
 	str from_tag;
 	str callid;
-}c_back_param;
+} c_back_param;
 
 extern str str_to_user_col;
 extern str str_username_col;
@@ -103,26 +103,28 @@ extern str str_user_agent_col;
 
 extern int goto_on_notify_reply;
 int pv_parse_notify_reply_var_name(pv_spec_p sp, str *in);
-int pv_get_notify_reply(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
+int pv_get_notify_reply(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
-void PRINT_DLG(FILE* out, dlg_t* _d);
+void PRINT_DLG(FILE *out, dlg_t *_d);
 
-void printf_subs(subs_t* subs);
+void printf_subs(subs_t *subs);
 
-int query_db_notify(str* pres_uri,pres_ev_t* event, subs_t* watcher_subs );
+int query_db_notify(str *pres_uri, pres_ev_t *event, subs_t *watcher_subs);
 
-int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag,
-		str* rules_doc);
+int publ_notify(presentity_t *p, str pres_uri, str *body, str *offline_etag,
+		str *rules_doc);
 int publ_notify_notifier(str pres_uri, pres_ev_t *event);
 int set_updated(subs_t *sub);
 int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full);
 
-int notify(subs_t* subs, subs_t* watcher_subs, str* n_body,int force_null_body, aux_body_processing_t* aux_body_processing);
+int notify(subs_t *subs, subs_t *watcher_subs, str *n_body, int force_null_body,
+		aux_body_processing_t *aux_body_processing);
 
-int send_notify_request(subs_t* subs, subs_t * watcher_subs,
-		str* n_body,int force_null_body);
+int send_notify_request(
+		subs_t *subs, subs_t *watcher_subs, str *n_body, int force_null_body);
 
-char* get_status_str(int flag);
+char *get_status_str(int flag);
 
 str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact);
 void free_notify_body(str *body, pres_ev_t *ev);

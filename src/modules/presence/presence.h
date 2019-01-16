@@ -41,16 +41,16 @@
 /* DB modes */
 
 /** subscriptions are stored only in memory */
-#define NO_DB            0
+#define NO_DB 0
 /** subscriptions are written in memory and in DB synchronously and read only from memory */
-#define WRITE_THROUGH    1
+#define WRITE_THROUGH 1
 /** subscriptions are stored in memory and periodically updated in DB */
-#define WRITE_BACK       2
+#define WRITE_BACK 2
 /** subscriptions are stored only in database */
-#define DB_ONLY          3
+#define DB_ONLY 3
 
-#define NO_UPDATE_TYPE	-1
-#define UPDATED_TYPE	1
+#define NO_UPDATE_TYPE -1
+#define UPDATED_TYPE 1
 
 /** TM bind */
 extern struct tm_binds tmb;
@@ -59,7 +59,7 @@ extern sl_api_t slb;
 
 /* DB module bind */
 extern db_func_t pa_dbf;
-extern db1_con_t* pa_db;
+extern db1_con_t *pa_db;
 
 /* PRESENCE database */
 extern str pres_db_url;
@@ -98,20 +98,21 @@ extern str pres_retrieve_order_by;
 extern int pres_enable_dmq;
 
 extern int phtable_size;
-extern phtable_t* pres_htable;
+extern phtable_t *pres_htable;
 
 extern sruid_t pres_sruid;
 
 extern db_locking_t db_table_lock;
 
-int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
-int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri);
+int update_watchers_status(str pres_uri, pres_ev_t *ev, str *rules_doc);
+int pres_auth_status(struct sip_msg *msg, str watcher_uri, str presentity_uri);
 int _api_pres_refresh_watchers(str *pres, str *event, int type);
 
-typedef int (*sip_uri_match_f) (str* s1, str* s2);
+typedef int (*sip_uri_match_f)(str *s1, str *s2);
 extern sip_uri_match_f presence_sip_uri_match;
 
-int pv_get_subscription(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
+int pv_get_subscription(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 int pv_parse_subscription_name(pv_spec_p sp, str *in);
 
 #endif /* PA_MOD_H */
