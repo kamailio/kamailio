@@ -1,4 +1,851 @@
-===================== 2018-11-28 Version 5.2.0 Released ==================
+===================== 2019-01-16 Version 5.2.1 Released =====================
+
+===================== Changes Since Version 5.2.0 ===========================
+
+commit c0d7976703a74ca1e41ec4ab1bf90c59a6cbf5a0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 16 11:12:46 2019 +0100
+
+    Makefile.defs: version set to 5.2.1
+
+commit 85e5a8dcba7e45805f249e0d62bee8a3a5f52424
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 16 11:10:27 2019 +0100
+
+    pkg/debian: set version to 5.2.1 in deb spec files
+
+commit da84d4d3adaf9c719702a4355ef619fc4ef93156
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 16 09:25:27 2019 +0100
+
+    pkg: version set to 5.2.1 for alpine and rpm specs
+
+commit 82d9703e619f765efcda8f37e45bfcfe4b22607e
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Jan 14 12:46:35 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 1bebb9f8a4cb33f8ef9a4e95ad28e80d74b545b6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 13 11:34:25 2019 +0100
+
+    presence_xml: do not include ../presence/presence.h
+    
+    - it is not needed, that header file is related to modparams of presence
+    module
+    - renamed db_url to presxml_db_url just to avoid possible conflict in
+    the future like for GH #1809
+    
+    (cherry picked from commit f0e0a849f5dfe5dae0cd0e755b9739cbc7fa8200)
+
+commit 57017b10d9a50385368324beb7eef9044d0b124a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 13 11:31:22 2019 +0100
+
+    presence: do not include presence.h in other header files
+    
+    - it exports as extern the module parameter variables and other modules built on
+    top of presence can end up including this header file, overwriting
+    declaration of variables with same name
+    - renamed db_url to pres_db_url, this being a common variable name, to
+    avoid same situation with a mistaken include in the future
+    - GH #1809
+    
+    (cherry picked from commit eb1bf9a69abad3d237c136750fe8cacea4cd0a31)
+
+commit df1482789cdbcfb7d32e08ba908e185f53cc48ac
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 13 11:04:16 2019 +0100
+
+    presence_xml: Makefile - link agaist libicu on macos/darwin
+    
+    - libxml2 needs it but its pkg-config doesn't list it
+    
+    (cherry picked from commit 869f57aac4496e10480094c36373f485aef11a80)
+
+commit ff5d8bf7e0692d50a104e0ebcb7690ba236ff343
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 13 11:03:28 2019 +0100
+
+    presence: Makefile - link agaist libicu on macos/darwin
+    
+    - libxml2 needs it but its pkg-config doesn't list it
+    
+    (cherry picked from commit d3208e1859051eb09013f855126f7f5f5ec47ab8)
+
+commit e61ad10e62d427bd0a22e5621f798015630a1e3f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 10 23:07:57 2019 +0100
+
+    dispatcher: docs - typo and indentation for the rpc flags paragraph
+    
+    (cherry picked from commit 14b4d23a06fdc9b9f6b17781c50902beaff0cd94)
+
+commit 458abbe5b5d8fbcb814612af3cac90aa784db227
+Author: Jurijs I <jurijs.ivolga@gmail.com>
+Date:   Thu Jan 10 22:49:58 2019 +0200
+
+    dispatcher: update for module docs (#1804)
+    
+    - update for module docs (#1804)
+    - Some minor comments for dispatcher module were added
+    - Additionally a description were added, what the several states means when dispatcher list are executed
+    
+    (cherry picked from commit 14a87383fbae102b430ed6cfdba2559f1768cdd0)
+
+commit 23a5c07e924a2feb5f09b727f4ad0faf6c5af349
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jan 9 17:44:09 2019 +0100
+
+    tsilo: add check for empty aor
+    
+    Fix: #1775
+    (cherry picked from commit 5a5d742eb459249995114eb6a3642f99c6770496)
+
+commit 563f1d6af3123485ed25cc58bb3badd68e7793a4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 9 14:15:37 2019 +0100
+
+    dialog: do not require dlg_flag parameter to be set
+    
+    - using dlg_manage() should be enough for tracking dialogs
+    
+    (cherry picked from commit 404f403786478a917637186446bb285e8e32cc59)
+
+commit 3dd154faeead29f54145843d14367c5b28a4fb7b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 9 09:50:12 2019 +0100
+
+    dialog: docs - more info about using the flag and dlg_manage()
+    
+    (cherry picked from commit e4dfe3587943d69d556b15df3492cf38c3b21a5f)
+
+commit 1e56e4df35865f7138565213e35da8fd32096332
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Jan 11 16:16:32 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 0d25cb4e9d4f4cc6d3e4a864ef2fa3aaca746511
+Author: Rick <dunst0@users.noreply.github.com>
+Date:   Fri Jan 11 16:00:55 2019 +0100
+
+    phonenum: fixing documentation typo (#1807)
+    
+    (cherry picked from commit 77316f7567e0bbabcc7897969b68fdf64432d645)
+
+commit ead1feb83283dc9c4875f8d6afd57eea4359f64a
+Author: Hugh Waite <hughw273@gmail.com>
+Date:   Fri Jan 4 16:02:09 2019 +0000
+
+    tm: Add fixup for PVS in fixup_t_check_status
+    - Allows PVs including $avp(...) to be passed to t_check_status
+
+commit 7c551812960dd1cfc2901a7a46bbf3010df47cd7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 8 12:24:27 2019 +0100
+
+    topos_redis: check the branch value to avoid using uninitialized fields
+    
+    - GH #1784
+    
+    (cherry picked from commit cfc89db53c087382c29d809dc0bc56f7351af2d1)
+
+commit 06610073bb490355d87a774a74716195d3c01192
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 7 15:34:42 2019 +0100
+
+    acc_json: proper check if the mqueue name is set and the module can be loaded
+    
+    (cherry picked from commit 7ce278d8accaaaa2b9c4b8fa349672826b5511f7)
+
+commit c5216b56b396b79e4392770bd438e712caca1576
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Jan 7 12:46:31 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 669aaec3ca09f340be776882ffffe60498a11ad2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 7 12:44:31 2019 +0100
+
+    core: pt - added missing #endif due to backport conflict
+
+commit 83597d2fc2922921e66edeca184b3d59354407cf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Dec 29 17:43:18 2018 +0100
+
+    ims_isc: free variable in case of errors
+    
+    (cherry picked from commit e7d684ad22d17f3aca58dd66c555e43877d9320a)
+
+commit 018c4328c4b1f55be0920e4350066cbd951b16d9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 28 09:55:11 2018 +0100
+
+    rtpengine: use version number to track building rtpengine sockets on reload
+    
+    - check on list size fails if same list is reloaded with different
+      attributes
+    - reload command has a safe interval of 10 seconds between executions to
+      allow building internal list of sockets
+    
+    (cherry picked from commit 785ede5bacfe55e88381ae8f7d672b24ec4b8cf6)
+
+commit f0fd7b36e8a90067facaadc68a385935edaaeefb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 28 09:17:31 2018 +0100
+
+    rtpengine: reworked build of rtpengine sockets to avoid serial initialization
+    
+    - do not lock during startup, change of the list of rtpengines can be
+    done only upon reload, which is now disabled until all child processes
+    did the init
+    - do rtpengine testing (probing) only in one child, the status is stored
+    in shared memory, no need to do it from each process.
+    
+    (cherry picked from commit 3d4813001052497d21804586d643697f7a68aee8)
+
+commit 3d9396f0a463e659a94b309e1d2551af7f84f74d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 27 19:26:02 2018 +0100
+
+    core: added function to detect when processes were initialized
+    
+    - sr_instance_ready() return 1 if all processes finished child_init()
+    
+    (cherry picked from commit 97af78a5c4dd2b99da5d2f7048ac6fa73db94c1d)
+
+commit 260aa34a3d1c9df505f69e0a8c57e49649b5b123
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 27 15:06:20 2018 +0100
+
+    core: function to detect if all processes were forked
+    
+    (cherry picked from commit 4c57d02e53deda909cc93b41d613f62921c99a9c)
+
+commit f62c3cb67c9c2be10393bdeec684eb3dc9325dd6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 26 12:04:59 2018 +0100
+
+    auth_db: print db table name when version check fails
+    
+    (cherry picked from commit a8de371e90ddc8a6921b5bf7464961865804cc06)
+
+commit e5a25dd7d9c36ae5353cb2f10665930a1a978284
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 26 11:50:50 2018 +0100
+
+    rtpengine: lock only when db backend is enabled for build_rtpp_socks()
+    
+    (cherry picked from commit 99250f758e6deb90a5852599f831a53ab394b751)
+
+commit 5bb811d8d7c09c7792206831326c8f650eb30f66
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 26 09:44:21 2018 +0100
+
+    cdp: init pointer to avoid warning on uninitialized use
+    
+    (cherry picked from commit 7873a653a43070f891dc6cde5c188c81bf5de25d)
+
+commit dff5c0d68bbae1277f8842fd90b001f5074e7551
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 25 16:15:44 2018 +0100
+
+    db_redis: use safe clist iteration for db_redis_free_tables()
+    
+    (cherry picked from commit 3ca9765eea980283963a48a9767e93566063057f)
+
+commit 42821df5cf64d71b9b837e2e5c55b2d91392a250
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 20 13:13:32 2018 +0100
+
+    websocket: removed static from declaration of ws_rm_delay_interval
+    
+    - it is used as external in another source file
+    - GH #1771
+    
+    (cherry picked from commit d5e40d5f05795f3902e5ae51bf4c57345e945a9c)
+
+commit 5067fe22cc16af943126ea88a9ddd35281ca8636
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 20 08:09:36 2018 +0100
+
+    dialog: only write debug messages in case cseq or contact fields are empty
+    
+    (cherry picked from commit ae4087ef615c1de5b67c8406eab8316300282d8b)
+
+commit 92d7bec4b5dddad2d08b6434ab6b561b230ee466
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Dec 20 00:16:25 2018 +0100
+
+    cnxcc: fix compilation warnings
+    
+    > warning: field precision should have type 'int', but argument has type 'size_t' (aka 'unsigned long') [-Wformat]
+    
+    (cherry picked from commit 89e89e023d923d2dbec694509b9f958bbed6d3ad)
+
+commit 3871e87a51290cace879ba61c5e26a9393b9eed3
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Dec 20 00:09:39 2018 +0100
+
+    topos_redis: fix compilation warnings
+    
+    > warning: field precision should have type 'int', but argument has type 'size_t' (aka 'unsigned long') [-Wformat]
+    
+    (cherry picked from commit da18d99e509c86ac21f04cf36184cadfe16fce83)
+
+commit 6e8a496a5f0cbf29636ef4379c11ffd55218395d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Dec 20 00:04:54 2018 +0100
+
+    ndb_redis: fix compilation warnings
+    
+    > warning: field precision should have type 'int', but argument has type 'size_t' (aka 'unsigned long') [-Wformat]
+    
+    (cherry picked from commit 7d9d9fe21a121a38d4a3861ce252a1a485a35c71)
+
+commit bc602ee8662a440d0fec47a5ec6b66021a13d4fa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 19 14:11:51 2018 +0100
+
+    websocket: docs for timer_interval and rm_delay_interval params
+    
+    (cherry picked from commit 3a20bb1ad27b8a85ec932975e14bcec12237437b)
+
+commit 281d6fa15abc3b5f60c9dfc7cab272fca4e50d44
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 19 14:06:56 2018 +0100
+
+    websocket: destroy ws connections in dedicated timer process
+    
+    - avoid races/invalid access when sending data failed and the connection
+    was removed
+    - added parameter to control the timer process: interval or running and
+    delay interval for removing
+    
+    (cherry picked from commit af09e224dba0c57c23fd58a7f83a24d2ffbaa07c)
+
+commit 049473bce13cc6994cbde1080d75bb25565ad5bc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 19 13:15:36 2018 +0100
+
+    websocket: fetch ws connections based on keepalive process index
+    
+    - get the ones with id that matches the index when doing modulo over the
+    number of keepalive process in order to spread the load of doing the
+    ping-pong
+    
+    (cherry picked from commit 71517152e7de26d6c47fd037c25dc854aa37734f)
+
+commit e25b66962ba51e2749a093f96e0cdaac8df33a4f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 18 13:20:51 2018 +0100
+
+    websocket: use the list with ids for ws connections to do ping-pong
+    
+    - avoid using pointers to ws connections, they can get closed
+    
+    (cherry picked from commit b5253b62090feb70f08885fb530d894d0bd6ad90)
+
+commit 3a78d068a3678471efe0a7e7f4ea0e7c9bc18675
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 7 12:01:21 2019 +0100
+
+    topoh: aded debug message for knowing the reason of no decoding rr
+    
+    (cherry picked from commit cee4941daf56985d9734263c4b99c33f9ef3a149)
+
+commit 4fe56123b424638a5967832f4ac05d3e63a13577
+Author: Balajee <balajee@Balajees-MacBook-Air.local>
+Date:   Sun Dec 23 23:27:49 2018 +0530
+
+    topoh: fixed unmask route issue, if maksing fails for one of the routes
+    
+    (cherry picked from commit d57f70127c44fd74c459aefc8d2655978b9cb48b)
+
+commit 2dc84951b8f0e2503ee4c551b8693de36b36ef77
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 17 20:34:35 2018 +0100
+
+    cplc: init var to avoid compile warning
+    
+    (cherry picked from commit 0f1b970ae7f47478649b61a8dc43fe42714b2a95)
+
+commit fc6232f7f9d1c65f436e7ca0db505c6e1114145d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 17 20:31:59 2018 +0100
+
+    regex: init var to avoid compile warning
+    
+    (cherry picked from commit dfb872b311cd0acd4a40c810f612c8a23e7c9aca)
+
+commit 75aae8055a8acb2f6e3917fa834989440c10197e
+Author: Anthony Messina <amessina@messinet.com>
+Date:   Fri Dec 14 16:32:04 2018 -0600
+
+    app_python3: fix Python 3.7 deprecation warnings
+    - check for PY_VERSION_HEX >= 0x03070000
+    
+    (cherry picked from commit 8bb866895c9260fa91143e892a2a77bb1d3fff4b)
+
+commit 73eef8626c8f2babe55a6e63e00bfb5361589a51
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 17 09:51:33 2018 +0100
+
+    uac_redirect: docs - fixed missing space in sectionid
+    
+    (cherry picked from commit 4c44b1e53a135dc234d6c9cdfbddaefbd938f399)
+
+commit a13e067ea162975209f21215ccffd430ea4e6a1e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 16 09:04:07 2018 +0100
+
+    app_ruby: added missing app_ruby.api_list rpc command
+    
+    (cherry picked from commit 37f664c404c5391181fcb61e2ec2955105c47a4d)
+
+commit d83af7701e3f25f68f01cfd0b0602c72bc10afa4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Dec 15 08:57:35 2018 +0100
+
+    uac_redirect: docs - added section ids
+    
+    (cherry picked from commit b6e4ebc666877549796e09b721e1234e011b325e)
+
+commit d2418ad35ad28cbb8bf875b97886988719436a62
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 14 11:20:08 2018 +0100
+
+    app_ruby: print new script version in rpc reload info message
+    
+    (cherry picked from commit bbabc77a0ac34fbdc4618161360f27efc12ba1dc)
+
+commit ba1ccab26123e468f7ef4cdee2a74b1068762d9d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 14 10:05:40 2018 +0100
+
+    app_ruby: implemented rpc app_ruby.reload command
+    
+    (cherry picked from commit 28b54dc63c62ddef837a3f580ab97161b55f214e)
+
+commit 50a60b86d647d6d69f601fe7aa071f91c984e2b4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 13 10:41:29 2018 +0100
+
+    app_ruby: Makefile - updated how to detect ruby version
+    
+    - GH #1762
+    
+    (cherry picked from commit 1569f91121a1ec00a0d59becbba587c923a21c63)
+
+commit 9ccbcc089e70001dd94136eadb68d2711669142f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 13 10:22:35 2018 +0100
+
+    tm: error log message about new final reply made info
+    
+    - can happen due to races of packets on the network
+    
+    (cherry picked from commit 3d43f546ddff613c50068c9d47521a15b42f1c7b)
+
+commit 6fff557d5354baea8ad5c52d589f0da53497f876
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 13 10:10:19 2018 +0100
+
+    app_ruby: Makefile - fixed libs for darwin os with no pkg-config
+    
+    - removed -lobj from libs for linux without no pkg-config
+    
+    (cherry picked from commit fb57ccb9d56991ca10714ffaab307cd02c36542b)
+
+commit cb98198e595c776ccbf2cd8777e178eb81e85b58
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Dec 8 08:12:49 2018 +0100
+
+    pv: {param.count} accept static string "," as delimiter
+    
+    (cherry picked from commit 80b3c37557d446bfe9ca5a5f469a42af60648280)
+
+commit 959b221282cf22036482d650b55fc075649e93d7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 6 10:54:14 2018 +0100
+
+    misc/examples/kemi/kamailio-basic-kemi-sqlang.js: use functions to match methods and myself
+    
+    (cherry picked from commit d196ed8fa1483a1aa7ba24d22b452404ad83ecad)
+
+commit cad6b2f034b2eea519be14e04f4979543c80a762
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 6 10:53:22 2018 +0100
+
+    misc/examples/kemi/kamailio-basic-kemi-jsdt.js: match from uri myself with function
+    
+    (cherry picked from commit 856d2e03ea54cab6756dc61c3175df3638af9ce3)
+
+commit b5a46dbffd3b9b2f4a61d57fc6aec2c46187b61e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 6 10:34:54 2018 +0100
+
+    misc/examples/kemi/kamailio-basic-kemi-jsdt.js: removed extra parenthesis
+    
+    (cherry picked from commit d9c38917ad0fea678449c41a60d52c68b697f8a1)
+
+commit 97c0391a03313622776133f6696ccdabe7772839
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 6 10:22:12 2018 +0100
+
+    misc/examples/kemi/kamailio-basic-kemi-python.py: fix condition on user agent
+    
+    (cherry picked from commit 323e96dbe5f263d66134183de8b2e8cff268431f)
+
+commit 7c8d57dfcfbab6d81ed8cb118cab834e3ef2c016
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 6 10:21:53 2018 +0100
+
+    misc/examples/kemi/kamailio-basic-kemi-lua.lua: fix condition on user agent
+    
+    (cherry picked from commit c3f3f088cdcff566970c8af0e07e7ae5abb50504)
+
+commit 4b22810de302ef26a7c74cb868c33be183e8f114
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 6 10:21:05 2018 +0100
+
+    misc/examples/kemi/kamailio-basic-kemi-jsdt.js: use functions to match methods and myself
+    
+    (cherry picked from commit 3991bcf5541d22d3a7ccaa3f89a9e0d189fd41b8)
+
+commit 2405ed822068e796caf0ef0f8b04558cdb4a9bfa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 6 09:48:37 2018 +0100
+
+    app_jsdt: updated duktape js engine to v2.3.0
+    
+    (cherry picked from commit f24487568c76b7e4af70698e246ad67c2cee2f96)
+
+commit 306d1590ad00f7518a7b7284768e52d1a35131f7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 6 09:16:31 2018 +0100
+
+    misc/example/kemi: merge condition lines in kamailio-basic-kemi-python.py
+    
+    - fix syntax error
+    
+    (cherry picked from commit beb99b3e4911506246bdd4eaed9aae582232eb84)
+
+commit 2e81abf1262784e390eb31efa95c5f437bd7051e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 5 12:40:16 2018 +0100
+
+    dialog: store call-id, r-uri, f-uri and t-uri with 0-ending char
+    
+    - can simplify matching with standard string comparison and regexp
+    
+    (cherry picked from commit f1ab32ee4a0bf64017a0b05f2013b81d37d50208)
+
+commit 8e4a914f3530dc37caec0a70d4b06a2326efc60f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 4 14:35:53 2018 +0100
+
+    misc/examples: sample default config with websocket enabled
+    
+    (cherry picked from commit 45cecdef62b43ea19a8be607faddbe9918b67f06)
+
+commit f1a22ec8fb62277b627398daaa54be60b9c557b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 4 11:45:38 2018 +0100
+
+    misc/examples: kamailio-basic-kemi-python.py - use functions for method and myself checks
+    
+    (cherry picked from commit 52c236e6417581b1f0354cc52f2eb5f762bc3b31)
+
+commit 3a2d9921dc8a3c8133e7e3bacfba94468f9bbeb6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 4 11:16:57 2018 +0100
+
+    auth_xkeys: clone value before inserting the lump inside auth_xkeys_add()
+    
+    (cherry picked from commit 01f5ecbc45c236daea62d6638a02c168720c8479)
+
+commit c9eaace851e91aa75bf979f5092f31894564c6f1
+Author: Yasin CANER <caner_yaso@hotmail.com>
+Date:   Tue Dec 4 11:37:04 2018 +0300
+
+    rtpengine : crash is fixed and codec flags added to doc (#1742)
+    
+    * rtpengine : add information to doc about transcode
+    
+    rtpengine : add information to doc about transcode parameter
+    
+    * rtpengine : codec flag crash is fixed
+    codec-transcode , codec-strip , codec-mask , codec-offer gives crash without codec value.It is fixed and  some logs are added for help.
+    
+    * rtpengine : codec-transcode and other flags are added to doc
+    
+    codec-transcode , codec-strip , codec-mask , codec-strip are added to doc with example.
+    
+    * rtpengine : str_key_val_prefix is fixed for null values
+    str_key_val_prefix is fixed for null values
+    
+    * rtpengine : b parameter is changed with via-branch in document
+    b parameter is changed with via-branch in document
+    
+    (cherry picked from commit a9a3ec0214227d272338a827ceb4fd12cea94429)
+
+commit cc51d6c7170ad289c8f521a05470a2eacd05f565
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 30 16:05:30 2018 +0100
+
+    tm: reply_received() - simplify locking for processing sip response
+    
+    - leverage the recursive mutex and skip several zones of unlock/lock,
+    which can lead to races on delayed processing or fast reply
+    retransmissions
+    - related to GH #1613 #1744
+    
+    (cherry picked from commit 39b89a18a8c357151a173ab02dc95dff1f02715d)
+
+commit 1133f818461cf2ed6c8bd755543f93b366a02683
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 30 09:19:16 2018 +0100
+
+    lib/srdb1: memset db connection structure earlier in db_bind_mod()
+    
+    (cherry picked from commit 1b014d65e26a99f9f5d4aea1b27949776f083c2d)
+
+commit 6e79c6304823301a2dde8a2dd5e169525db6cd9b
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Sun Jan 6 14:46:34 2019 +0100
+
+    kamdbctl: Merged patch from alpine packaging (#1786)
+    
+    - kamdbctl: Merged patch from alpine packaging (#1786)
+    - add proper quoting for DB table and module definitions
+    - manual backport from c6e62f932495af
+
+commit 9bfac7d0fa750c6368d048a1b577009b3ea32481
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 19 11:56:06 2018 +0100
+
+    dialog: check for cseq value only when getting it for caller/request
+    
+    (cherry picked from commit 740bc8ce88da612ac30a73db0145908355cab192)
+
+commit ddc0073c64df5ea1817ce2f727ea7c5e0b46b5ed
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Sun Dec 30 00:15:46 2018 +0100
+
+    cdp: fix two errors from coverty scan (missing check, var initialization)
+    
+    - remove library call can fail, test for the error and log it
+    - initialize the msghdr variable with a memset
+    
+    (cherry picked from commit 7d52bf6ce7188eaa57690766c231e55b5509db4f)
+
+commit fb9894915bba17927ef6edd69a0b8606ac109a53
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Sun Dec 30 00:42:31 2018 +0100
+
+    cdp: fix three coverity errors (ressource leaks and error checks)
+    
+    - fix an ressource leak related to library call getaddrinfo
+    - add missing error checks for setsockopts and fcntl calls
+    
+    (cherry picked from commit 967a71687aa63a253d495ba49351ae916713a452)
+
+commit aeaf35ce1f19dc46436102a2763a8e9a4d1db1b7
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Sun Dec 30 00:52:18 2018 +0100
+
+    core: check for optarg before passing it to external library (coverity report)
+    
+    (cherry picked from commit 7eb1eae615a4c3ef710e9931b101ddc4db07aff2)
+
+commit eed2a7f86129950e5f20a4b4010a7e67ea04eac5
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Sun Dec 30 01:17:15 2018 +0100
+
+    core: fix an error in check_via_address, reported from  Mojtaba, mespio at gmail dot com
+    
+    - fix an error in check_via_address, reported from  Mojtaba, mespio at gmail dot com
+    - use the same logic for IPv4 string comparison as for IPv6
+    - the old comparison could return true for e.g. via="192.168.1.1", src="192.1.1.100"
+    - the new logic is also faster for the trivial case with different string length
+    
+    (cherry picked from commit 98ee014a88ca951d82a0389f0be119078ba525f7)
+
+commit 1a3a485ac13218b4b34366b452428a34d1e2191d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 24 08:44:06 2018 +0100
+
+    pkg/kamailio/deb: add kamailio-python3-modules
+    
+    (cherry picked from commit c78a53004777f498fcef63ae74a11723da950625)
+
+commit 45cdd6591177ccfa4a810b1f66eb00f024059b96
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Tue Dec 11 10:48:14 2018 +0000
+
+    pkg/kamailio/obs: Added ruby package #1761 [skip ci]
+    
+    (cherry picked from commit c249cfdf38ba98f4494557cf2b25b87ba6f63e21)
+
+commit 9edd93729d0162fd2ed37e9b335664ad2269c17e
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Wed Dec 12 21:07:45 2018 +0000
+
+    pkg/docker Updated submodule
+
+commit fcf973b53b2fe1c4f5dd3ffdee0e4d4a3e0c2b51
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Wed Dec 12 19:23:06 2018 +0000
+
+    pkg/kamailio/alpine: Added app-ruby package #1761 [skip ci]
+    
+    (cherry picked from commit 48624059ac70bb07cbc8d64a460e662ff3b62c5b)
+
+commit 83523c58e6ee4b82f16a69eacbd961bb119d1fd1
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Wed Dec 5 21:31:53 2018 +0000
+
+    pkg/kamailio/obs: Fixed warning about not existen kamailio group [skip ci]
+    
+    (cherry picked from commit 5c6e3570c68c6a0eb74a808865f26b0f895c722c)
+
+commit 693240860b293bbc3e6b35a594ca24378edc9014
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Dec 11 16:41:32 2018 +0100
+
+    pkg/kamailio/deb: remove ruby support for trusty [skip ci]
+    
+    (cherry picked from commit dae529cc39671b0b406fec5b088cdb4e0abcfcf7)
+
+commit 0d51eb3c3127cc3f290659fb4265397cfb83380f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Dec 11 16:37:16 2018 +0100
+
+    pkg/kamailio/deb: remove ruby support from wheezy and precise [skip ci]
+    
+    * no pkg-config provided
+    
+    (cherry picked from commit 127b32801f3f25baa5684b4acd540bb48423c8e5)
+
+commit 8bece540f0859bb33f88bc8aa8414e6a9676d783
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Dec 11 10:53:24 2018 +0100
+
+    pkg/kamailio/deb: add kamailio-ruby-modules [skip ci]
+    
+    (cherry picked from commit 4698e97cd3985d3a7f51c709decb546e62b036c5)
+
+commit 224162d728d50adee8226308d5971fec069e278a
+Author: Nacho Garcia Segovia <nacho.gs@zaleos.net>
+Date:   Fri Dec 7 11:19:52 2018 +0100
+
+    core: fixed segmentation fault when handling multipart bodies
+    
+    Function check_boundaries() in msg_translator.c not handling property the length of the buffers when it needs to repair the boundary, getting a negative lenght and causing a segmentation fault.
+    
+    (cherry picked from commit 18e485a3172055fa5c808c2423629d5bbd10b37e)
+
+commit 07d990366365499ac1296f16efa56c540ad1dd40
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Dec 4 09:16:46 2018 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 79946bbb6d1731f503fc378ae38311b630e55999
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 30 16:31:22 2018 +0100
+
+    dialog: safety checks for local cseq and contact vars
+    
+    - avoid crash on systems not printing null string of length 0
+    - GH #1717
+    
+    (cherry picked from commit 46401e465d88495d510d2cb36dc36ec86978c53e)
+
+commit 2375d07b774aa2d820bbeb155698305576e2ba74
+Author: Yasin CANER <12412027+ycaner06@users.noreply.github.com>
+Date:   Wed Nov 28 16:02:25 2018 +0300
+
+    ims_charging : doc is fixed
+    
+    ims_charging : doc is fixed
+    
+    (cherry picked from commit 37dae368667fc82bc2f60639d722354e6528ec7f)
+
+commit 81f328095f6c06b5ca7cb18b6cdcfad430fb7359
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 29 20:04:08 2018 +0100
+
+    core: parse body - debug instead of error log message when mime mismatch
+    
+    - GH #1746
+    
+    (cherry picked from commit 08820db104c7dbfce36af0f59dfcc28f97cffbd0)
+
+commit ae4b66c18997103419c48e0fb7b95f53dc200300
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 29 18:31:07 2018 +0100
+
+    dispatcher: docs for flags value 16
+    
+    (cherry picked from commit ba31f4ec4f98487e9f1282fe12a5819d5df0b733)
+
+commit f7540ffb88bbeb07956c43665874dae82c2ac969
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 29 18:20:24 2018 +0100
+
+    dispatcher: flag 16 (1<<4) for destinations with host not having A/AAAA record
+    
+    - use it for addresses that should not be resolved with an A/AAAA query
+    at startup (e.g., it is a NAPTR or SRV only record for that specific
+    hostname)
+    - such addresses will not match when using ds_is_from_list(...)
+    - GH #1743
+    
+    (cherry picked from commit 9eba5b673cc1a80434642b280e6f7d53e310338e)
+
+commit 6e1f8128ce5e6ad5946644920ab9ea41bbdd224c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 29 17:34:42 2018 +0100
+
+    dispatcher: rename internal functions to match the module pattern
+    
+    (cherry picked from commit 4e7e355db6946850bec061ef4d113bd8b9505cb7)
+
+commit 8a29423b708029b5d569890bc9681a21bf5ebf16
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 28 17:38:56 2018 +0100
+
+    dispatcher: docs - make a bullet list for the possible values for flags field
+    
+    (cherry picked from commit f073f72af6a507e8113e06dc07ad161e3f4632c3)
+
+commit 8b6665b5d27fa8c36764078b9ae615075486a4b3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 28 12:49:58 2018 +0100
+
+    presence: test if event is dialog when attempting to delete old records
+    
+    (cherry picked from commit 55c7f781be7cc40d0cd161640a47244aad60c0e7)
+
+commit a385942fdf19c76cbb61354e5cc31bb992898230
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 3 12:07:53 2018 +0100
+
+    utils/kamctl: [pgsql] add missing options for pgsql_ro_query()
+    
+    Thanks Andreas Maus <maus+debianbug@ypbind.de>
+    
+    fix #1750
+    
+    (cherry picked from commit 1894b378f975e7129024f6f10640c6c642e30a1b)
+
+
+===================== 2018-11-28 Version 5.2.0 Released =====================
 
 ===================== Changes Since Version 5.1.0 ===========================
 
