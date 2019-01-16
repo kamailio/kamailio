@@ -1520,7 +1520,10 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 		return -1;
 
 	new_dst = *nd->dst;
-	new_dst.send_sock = get_send_socket(0, &nd->dst->to, nd->dst->proto);
+
+	if(new_dst.send_sock == 0) {
+		new_dst.send_sock = get_send_socket(0, &nd->dst->to, nd->dst->proto);
+	}
 
 	memset(&sto, 0, sizeof(siptrace_data_t));
 
