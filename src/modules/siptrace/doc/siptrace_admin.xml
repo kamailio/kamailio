@@ -654,8 +654,20 @@ hlog("$hdr(P-MyID)", "Another one with a custom correlation ID");
 	<title>Known issues</title>
 	<para>
 	Stateless forwarded messages (forward()) are not logged if you set the
-	flag, use sip_trace().
+	flag, use sip_trace() inside <emphasis>onsend_route</emphasis> block.
 	</para>
+	<example>
+	<title>Send relayed ACK message</title>
+	<programlisting format="linespecific">
+...
+onsend_route {
+    if (is_method("ACK")) {
+        sip_trace();
+    }
+}
+...
+</programlisting>
+	</example>
 	</section>
 	
 </chapter>
