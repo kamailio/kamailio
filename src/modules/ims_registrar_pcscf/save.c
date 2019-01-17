@@ -387,7 +387,9 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags) {
 	str *service_routes=0;
 	int num_service_routes = 0;
 	pv_elem_t *presentity_uri_pv;
-	
+	int contact_has_sos=-1;
+	contact_t* chi; //contact header information
+	struct hdr_field* h;
 	//get request from reply
 	req = get_request_from_reply(_m);
 	if (!req) {
@@ -395,11 +397,34 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags) {
 		goto error;
 	}
 	expires_hdr = cscf_get_expires_hdr(_m, 0);
-	cb = cscf_parse_contacts(_m);
+	
+	if((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact) {
+		LM_ERR("cannot get the Contact header from the SIP message in saving action in PCSCF\n");
+		goto error;
+	}
+
+	if(!_m->contact->parsed && parse_contact(_m->contact) < 0) {
+		LM_ERR("Couldn t parse Contact Header \n");
+		goto error;
+	}
+	
+	cb = ((contact_body_t *)_m->contact->parsed);
 	if (!cb || (!cb->contacts && !cb->star)) {
 		LM_DBG("No contact headers and not *\n");
 		goto error;
 	}
+	
+	for (h = _m->contact; h; h = h->next) {
+	 if (h->type == HDR_CONTACT_T && h->parsed) {
+	    for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
+	      contact_has_sos = cscf_get_sos_uri_param(chi->uri);
+	      if(contact_has_sos!=-1){
+	        break;
+	      }
+	    }
+	  }
+	}
+	
 	cscf_get_p_associated_uri(_m, &public_ids, &num_public_ids, 1);
 	service_routes = cscf_get_service_route(_m, &num_service_routes, 1);
 
@@ -409,7 +434,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags) {
 		goto error;
 	}
 
-	if(subscribe_to_reginfo == 1){
+	if(subscribe_to_reginfo == 1 && contact_has_sos < 1){
 	    
 	    //use the first p_associated_uri - i.e. the default IMPU
 	    LM_DBG("Subscribe to reg event for primary p_associated_uri");
