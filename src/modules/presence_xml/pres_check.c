@@ -40,56 +40,49 @@ int presxml_check_basic(struct sip_msg *msg, str presentity_uri, str status)
 	xmlNodePtr tuple = NULL, basicNode = NULL;
 	char *basicVal = NULL;
 
-	if (parse_uri(presentity_uri.s, presentity_uri.len, &parsed_uri) < 0)
-	{
+	if(parse_uri(presentity_uri.s, presentity_uri.len, &parsed_uri) < 0) {
 		LM_ERR("bad uri: %.*s\n", presentity_uri.len, presentity_uri.s);
 		return -1;
 	}
 
 	ev = pres_contains_event(&event, NULL);
-	if (ev == NULL)
-	{
+	if(ev == NULL) {
 		LM_ERR("event presence is not registered\n");
 		return -1;
 	}
 
 	presentity = pres_get_presentity(presentity_uri, ev, NULL, NULL);
 
-	if (presentity == NULL || presentity->len <= 0 || presentity->s == NULL)
-	{
-		LM_DBG("cannot get presentity for %.*s\n", presentity_uri.len, presentity_uri.s);
+	if(presentity == NULL || presentity->len <= 0 || presentity->s == NULL) {
+		LM_DBG("cannot get presentity for %.*s\n", presentity_uri.len,
+				presentity_uri.s);
 		return -1;
 	}
 
-	if ((xmlDoc = xmlParseMemory(presentity->s, presentity->len)) == NULL)
-	{
+	if((xmlDoc = xmlParseMemory(presentity->s, presentity->len)) == NULL) {
 		LM_ERR("while parsing XML memory\n");
 		goto error;
 	}
 
-	if ((tuple = xmlDocGetNodeByName(xmlDoc, "tuple", NULL)) == NULL)
-	{
+	if((tuple = xmlDocGetNodeByName(xmlDoc, "tuple", NULL)) == NULL) {
 		LM_ERR("unable to extract 'tuple'\n");
 		goto error;
 	}
 
-	while (tuple != NULL)
-	{
-		if (xmlStrcasecmp(tuple->name, (unsigned char *) "tuple") == 0)
-		{
-			if ((basicNode = xmlNodeGetNodeByName(tuple, "basic", NULL)) == NULL)
-			{
+	while(tuple != NULL) {
+		if(xmlStrcasecmp(tuple->name, (unsigned char *)"tuple") == 0) {
+			if((basicNode = xmlNodeGetNodeByName(tuple, "basic", NULL))
+					== NULL) {
 				LM_ERR("while extracting 'basic' node\n");
 				goto error;
 			}
 
-			if ((basicVal = (char *) xmlNodeGetContent(basicNode)) == NULL)
-			{
+			if((basicVal = (char *)xmlNodeGetContent(basicNode)) == NULL) {
 				LM_ERR("while getting 'basic' content\n");
 				goto error;
 			}
 
-			if (strncasecmp(basicVal, status.s, status.len) == 0)
+			if(strncasecmp(basicVal, status.s, status.len) == 0)
 				retval = 1;
 
 			xmlFree(basicVal);
@@ -97,13 +90,14 @@ int presxml_check_basic(struct sip_msg *msg, str presentity_uri, str status)
 		tuple = tuple->next;
 	}
 error:
-	if (xmlDoc != NULL)
+	if(xmlDoc != NULL)
 		xmlFreeDoc(xmlDoc);
 	pres_free_presentity(presentity, ev);
 	return retval;
 }
 
-int presxml_check_activities(struct sip_msg *msg, str presentity_uri, str activity)
+int presxml_check_activities(
+		struct sip_msg *msg, str presentity_uri, str activity)
 {
 	str *presentity = NULL;
 	struct sip_uri parsed_uri;
@@ -114,83 +108,75 @@ int presxml_check_activities(struct sip_msg *msg, str presentity_uri, str activi
 	xmlDocPtr xmlDoc = NULL;
 	xmlNodePtr person = NULL, activitiesNode = NULL, activityNode = NULL;
 
-	if (parse_uri(presentity_uri.s, presentity_uri.len, &parsed_uri) < 0)
-	{
+	if(parse_uri(presentity_uri.s, presentity_uri.len, &parsed_uri) < 0) {
 		LM_ERR("bad uri: %.*s\n", presentity_uri.len, presentity_uri.s);
 		return -1;
 	}
 
 	ev = pres_contains_event(&event, NULL);
-	if (ev == NULL)
-	{
+	if(ev == NULL) {
 		LM_ERR("event presence is not registered\n");
 		return -1;
 	}
 
-	if ((nodeName = pkg_malloc(activity.len + 1)) == NULL)
-	{
+	if((nodeName = pkg_malloc(activity.len + 1)) == NULL) {
 		LM_ERR("cannot pkg_malloc for nodeName\n");
-		return -1;		
+		return -1;
 	}
 	memcpy(nodeName, activity.s, activity.len);
 	nodeName[activity.len] = '\0';
 
 	presentity = pres_get_presentity(presentity_uri, ev, NULL, NULL);
 
-	if (presentity == NULL || presentity->len <= 0 || presentity->s == NULL)
-	{
-		LM_DBG("cannot get presentity for %.*s\n", presentity_uri.len, presentity_uri.s);
+	if(presentity == NULL || presentity->len <= 0 || presentity->s == NULL) {
+		LM_DBG("cannot get presentity for %.*s\n", presentity_uri.len,
+				presentity_uri.s);
 		goto error;
 	}
 
-	if ((xmlDoc = xmlParseMemory(presentity->s, presentity->len)) == NULL)
-	{
+	if((xmlDoc = xmlParseMemory(presentity->s, presentity->len)) == NULL) {
 		LM_ERR("while parsing XML memory\n");
 		goto error;
 	}
 
-	if ((person = xmlDocGetNodeByName(xmlDoc, "person", NULL)) == NULL)
-	{
+	if((person = xmlDocGetNodeByName(xmlDoc, "person", NULL)) == NULL) {
 		LM_DBG("unable to extract 'person'\n");
 		retval = -2;
 		goto error;
 	}
 
-	while (person != NULL)
-	{
-		if (xmlStrcasecmp(person->name, (unsigned char *) "person") == 0)
-		{
-			if ((activitiesNode = xmlNodeGetNodeByName(person, "activities", NULL)) == NULL)
-			{
+	while(person != NULL) {
+		if(xmlStrcasecmp(person->name, (unsigned char *)"person") == 0) {
+			if((activitiesNode =
+							   xmlNodeGetNodeByName(person, "activities", NULL))
+					== NULL) {
 				LM_DBG("unable to extract 'activities' node\n");
-				if (retval <= 0)
-				{
+				if(retval <= 0) {
 					retval = -2;
 				}
 				break;
 			}
 
-			if (activitiesNode->children == NULL)
-			{
+			if(activitiesNode->children == NULL) {
 				LM_DBG("activities node has no children\n");
-				if (retval <= 0)
-				{
+				if(retval <= 0) {
 					retval = -2;
 				}
 				break;
 			}
 
-			if ((activityNode = xmlNodeGetNodeByName(activitiesNode, nodeName, NULL)) != NULL)
-			{
+			if((activityNode = xmlNodeGetNodeByName(
+						activitiesNode, nodeName, NULL))
+					!= NULL) {
 				retval = 1;
 			}
 		}
 		person = person->next;
 	}
 error:
-	if (nodeName != NULL)
+	if(nodeName != NULL)
 		pkg_free(nodeName);
-	if (xmlDoc != NULL)
+	if(xmlDoc != NULL)
 		xmlFreeDoc(xmlDoc);
 	if(presentity != NULL)
 		pres_free_presentity(presentity, ev);

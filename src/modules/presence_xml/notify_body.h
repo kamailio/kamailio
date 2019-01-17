@@ -31,9 +31,9 @@
 #ifndef _NBODY_H_
 #define _NBODY_H_
 
-str* pres_agg_nbody(str* pres_user, str* pres_domain, str** body_array,
-		int n, int off_index);
-int pres_apply_auth(str* notify_body, subs_t* subs, str** final_nbody);
-void free_xml_body(char* body);
+str *pres_agg_nbody(str *pres_user, str *pres_domain, str **body_array, int n,
+		int off_index);
+int pres_apply_auth(str *notify_body, subs_t *subs, str **final_nbody);
+void free_xml_body(char *body);
 
 #endif

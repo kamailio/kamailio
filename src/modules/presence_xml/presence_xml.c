@@ -64,14 +64,16 @@ MODULE_VERSION
 static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
-static int pxml_add_xcap_server( modparam_t type, void* val);
+static int pxml_add_xcap_server(modparam_t type, void *val);
 static int shm_copy_xcap_list(void);
-static void free_xs_list(xcap_serv_t* xs_list, int mem_type);
-static int xcap_doc_updated(int doc_type, str xid, char* doc);
+static void free_xs_list(xcap_serv_t *xs_list, int mem_type);
+static int xcap_doc_updated(int doc_type, str xid, char *doc);
 
 static int fixup_presxml_check(void **param, int param_no);
-static int w_presxml_check_basic(sip_msg_t *msg, char *presentity_uri, char *status);
-static int w_presxml_check_activities(sip_msg_t *msg, char *presentity_uri, char *activities);
+static int w_presxml_check_basic(
+		sip_msg_t *msg, char *presentity_uri, char *status);
+static int w_presxml_check_activities(
+		sip_msg_t *msg, char *presentity_uri, char *activities);
 
 /** module variables ***/
 add_event_t pres_add_event;
@@ -83,16 +85,16 @@ pres_get_presentity_t pres_get_presentity;
 pres_free_presentity_t pres_free_presentity;
 
 /* Module parameter variables */
-str xcap_table= str_init("xcap");
+str xcap_table = str_init("xcap");
 static str presxml_db_url = str_init(DEFAULT_DB_URL);
-int force_active= 0;
+int force_active = 0;
 int force_dummy_presence = 0;
-int integrated_xcap_server= 0;
-xcap_serv_t* xs_list= NULL;
+int integrated_xcap_server = 0;
+xcap_serv_t *xs_list = NULL;
 int disable_presence = 0;
-int disable_winfo    = 0;
-int disable_bla      = 1;
-int passive_mode     = 0;
+int disable_winfo = 0;
+int disable_bla = 1;
+int passive_mode = 0;
 int disable_xcapdiff = 0;
 str xcapauth_userdel_reason = str_init("probation");
 
@@ -107,6 +109,7 @@ db_func_t pxml_dbf;
 
 xcapGetNewDoc_t xcap_GetNewDoc;
 
+/* clang-format off */
 static cmd_export_t cmds[]={
 	{ "pres_check_basic",		(cmd_function)w_presxml_check_basic, 2,
 		fixup_presxml_check, 0, ANY_ROUTE},
@@ -116,7 +119,9 @@ static cmd_export_t cmds[]={
 		0, 0, 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
+/* clang-format on */
 
+/* clang-format off */
 static param_export_t params[]={
 	{ "db_url",		PARAM_STR, &presxml_db_url},
 	{ "xcap_table",		PARAM_STR, &xcap_table},
@@ -132,9 +137,10 @@ static param_export_t params[]={
 	{ "force_dummy_presence",       INT_PARAM, &force_dummy_presence },
 	{ 0, 0, 0}
 };
-
+/* clang-format on */
 
 /** module exports */
+/* clang-format off */
 struct module_exports exports= {
 	"presence_xml",		/* module name */
 	DEFAULT_DLFLAGS,	/* dlopen flags */
@@ -147,6 +153,7 @@ struct module_exports exports= {
 	child_init,			/* per-child init function */
 	destroy				/* module destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
@@ -156,108 +163,97 @@ static int mod_init(void)
 	bind_presence_t bind_presence;
 	presence_api_t pres;
 
-	if(passive_mode==1)
+	if(passive_mode == 1)
 		return 0;
 
 	LM_DBG("db_url=%s (len=%d addr=%p)\n", ZSW(presxml_db_url.s),
 			presxml_db_url.len, presxml_db_url.s);
 
 	/* bind the SL API */
-	if (sl_load_api(&slb)!=0) {
+	if(sl_load_api(&slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
-	bind_presence= (bind_presence_t)find_export("bind_presence", 1,0);
-	if (!bind_presence)
-	{
+	bind_presence = (bind_presence_t)find_export("bind_presence", 1, 0);
+	if(!bind_presence) {
 		LM_ERR("Can't bind presence\n");
 		return -1;
 	}
-	if (bind_presence(&pres) < 0)
-	{
+	if(bind_presence(&pres) < 0) {
 		LM_ERR("Can't bind to presence module\n");
 		return -1;
 	}
 
-	pres_get_sphere= pres.get_sphere;
-	pres_add_event= pres.add_event;
-	pres_update_watchers= pres.update_watchers_status;
-	pres_contains_event= pres.contains_event;
-	pres_get_presentity= pres.get_presentity;
-	pres_free_presentity= pres.free_presentity;
-	if (pres_add_event == NULL || pres_update_watchers== NULL)
-	{
+	pres_get_sphere = pres.get_sphere;
+	pres_add_event = pres.add_event;
+	pres_update_watchers = pres.update_watchers_status;
+	pres_contains_event = pres.contains_event;
+	pres_get_presentity = pres.get_presentity;
+	pres_free_presentity = pres.free_presentity;
+	if(pres_add_event == NULL || pres_update_watchers == NULL) {
 		LM_ERR("Can't import add_event\n");
 		return -1;
 	}
-	if(xml_add_events()< 0)
-	{
+	if(xml_add_events() < 0) {
 		LM_ERR("adding xml events\n");
 		return -1;
 	}
 
-	if(force_active== 0)
-	{
+	if(force_active == 0) {
 		/* binding to mysql module  */
-		if (db_bind_mod(&presxml_db_url, &pxml_dbf))
-		{
+		if(db_bind_mod(&presxml_db_url, &pxml_dbf)) {
 			LM_ERR("Database module not found\n");
 			return -1;
 		}
 
-		if (!DB_CAPABILITY(pxml_dbf, DB_CAP_ALL)) {
+		if(!DB_CAPABILITY(pxml_dbf, DB_CAP_ALL)) {
 			LM_ERR("Database module does not implement all functions"
-					" needed by the module\n");
+				   " needed by the module\n");
 			return -1;
 		}
 
 		pxml_db = pxml_dbf.init(&presxml_db_url);
-		if (!pxml_db)
-		{
+		if(!pxml_db) {
 			LM_ERR("while connecting to database\n");
 			return -1;
 		}
 
-		if(db_check_table_version(&pxml_dbf, pxml_db, &xcap_table, S_TABLE_VERSION) < 0) {
+		if(db_check_table_version(
+				   &pxml_dbf, pxml_db, &xcap_table, S_TABLE_VERSION)
+				< 0) {
 			DB_TABLE_VERSION_ERROR(xcap_table);
 			goto dberror;
 		}
-		if(!integrated_xcap_server )
-		{
+		if(!integrated_xcap_server) {
 			xcap_api_t xcap_api;
 			bind_xcap_t bind_xcap;
 
 			/* bind xcap */
-			bind_xcap= (bind_xcap_t)find_export("bind_xcap", 1, 0);
-			if (!bind_xcap)
-			{
+			bind_xcap = (bind_xcap_t)find_export("bind_xcap", 1, 0);
+			if(!bind_xcap) {
 				LM_ERR("Can't bind xcap_client\n");
 				goto dberror;
 			}
 
-			if (bind_xcap(&xcap_api) < 0)
-			{
+			if(bind_xcap(&xcap_api) < 0) {
 				LM_ERR("Can't bind xcap_api\n");
 				goto dberror;
 			}
-			xcap_GetNewDoc= xcap_api.getNewDoc;
-			if(xcap_GetNewDoc== NULL)
-			{
+			xcap_GetNewDoc = xcap_api.getNewDoc;
+			if(xcap_GetNewDoc == NULL) {
 				LM_ERR("can't import getNewDoc from xcap_client module\n");
 				goto dberror;
 			}
 
-			if(xcap_api.register_xcb(PRES_RULES, xcap_doc_updated)< 0)
-			{
+			if(xcap_api.register_xcb(PRES_RULES, xcap_doc_updated) < 0) {
 				LM_ERR("registering xcap callback function\n");
 				goto dberror;
 			}
 		}
 	}
 
-	if(shm_copy_xcap_list()< 0)
-	{
+	if(shm_copy_xcap_list() < 0) {
 		LM_ERR("copying xcap server list in share memory\n");
 		return -1;
 	}
@@ -278,30 +274,27 @@ static int child_init(int rank)
 {
 	LM_DBG("[%d]  pid [%d]\n", rank, getpid());
 
-	if(passive_mode==1)
+	if(passive_mode == 1)
 		return 0;
 
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if(force_active== 0)
-	{
+	if(force_active == 0) {
 		if(pxml_db)
 			return 0;
 		pxml_db = pxml_dbf.init(&presxml_db_url);
-		if (pxml_db== NULL)
-		{
+		if(pxml_db == NULL) {
 			LM_ERR("while connecting database\n");
 			return -1;
 		}
-		if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0)
-		{
+		if(pxml_dbf.use_table(pxml_db, &xcap_table) < 0) {
 			LM_ERR("in use_table SQL operation\n");
 			return -1;
 		}
 	}
 
-	LM_DBG("child %d: Database connection opened successfully\n",rank);
+	LM_DBG("child %d: Database connection opened successfully\n", rank);
 
 	return 0;
 }
@@ -314,65 +307,61 @@ static void destroy(void)
 
 	free_xs_list(xs_list, SHM_MEM_TYPE);
 
-	return ;
+	return;
 }
 
-static int pxml_add_xcap_server( modparam_t type, void* val)
+static int pxml_add_xcap_server(modparam_t type, void *val)
 {
-	xcap_serv_t* xs;
+	xcap_serv_t *xs;
 	int size;
-	char* serv_addr= (char*)val;
-	char* sep= NULL;
-	unsigned int port= 80;
+	char *serv_addr = (char *)val;
+	char *sep = NULL;
+	unsigned int port = 80;
 	str serv_addr_str;
 
-	serv_addr_str.s= serv_addr;
-	serv_addr_str.len= strlen(serv_addr);
+	serv_addr_str.s = serv_addr;
+	serv_addr_str.len = strlen(serv_addr);
 
-	sep= strchr(serv_addr, ':');
-	if(sep)
-	{
-		char* sep2= NULL;
+	sep = strchr(serv_addr, ':');
+	if(sep) {
+		char *sep2 = NULL;
 		str port_str;
 
-		sep2= strchr(sep+ 1, ':');
+		sep2 = strchr(sep + 1, ':');
 		if(sep2)
-			sep= sep2;
+			sep = sep2;
 
 
-		port_str.s= sep+ 1;
-		port_str.len= serv_addr_str.len- (port_str.s- serv_addr);
+		port_str.s = sep + 1;
+		port_str.len = serv_addr_str.len - (port_str.s - serv_addr);
 
-		if(str2int(&port_str, &port)< 0)
-		{
+		if(str2int(&port_str, &port) < 0) {
 			LM_ERR("while converting string to int\n");
 			goto error;
 		}
-		if(port< 1 || port> 65535)
-		{
+		if(port < 1 || port > 65535) {
 			LM_ERR("wrong port number\n");
 			goto error;
 		}
 		*sep = '\0';
-		serv_addr_str.len= sep- serv_addr;
+		serv_addr_str.len = sep - serv_addr;
 	}
 
-	size= sizeof(xcap_serv_t)+ (serv_addr_str.len+ 1)* sizeof(char);
-	xs= (xcap_serv_t*)pkg_malloc(size);
-	if(xs== NULL)
-	{
+	size = sizeof(xcap_serv_t) + (serv_addr_str.len + 1) * sizeof(char);
+	xs = (xcap_serv_t *)pkg_malloc(size);
+	if(xs == NULL) {
 		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(xs, 0, size);
-	size= sizeof(xcap_serv_t);
+	size = sizeof(xcap_serv_t);
 
-	xs->addr= (char*)xs+ size;
+	xs->addr = (char *)xs + size;
 	strcpy(xs->addr, serv_addr);
 
-	xs->port= port;
+	xs->port = port;
 	/* check for duplicates */
-	xs->next= xs_list;
-	xs_list= xs;
+	xs->next = xs_list;
+	xs_list = xs;
 	return 0;
 
 error:
@@ -382,41 +371,37 @@ error:
 
 static int shm_copy_xcap_list(void)
 {
-	xcap_serv_t* xs, *shm_xs, *prev_xs;
+	xcap_serv_t *xs, *shm_xs, *prev_xs;
 	int size;
 
-	xs= xs_list;
-	if(xs== NULL)
-	{
-		if(force_active== 0 && !integrated_xcap_server)
-		{
+	xs = xs_list;
+	if(xs == NULL) {
+		if(force_active == 0 && !integrated_xcap_server) {
 			LM_ERR("no xcap_server parameter set\n");
 			return -1;
 		}
 		return 0;
 	}
-	xs_list= NULL;
-	size= sizeof(xcap_serv_t);
+	xs_list = NULL;
+	size = sizeof(xcap_serv_t);
 
-	while(xs)
-	{
-		size+= (strlen(xs->addr)+ 1)* sizeof(char);
-		shm_xs= (xcap_serv_t*)shm_malloc(size);
-		if(shm_xs== NULL)
-		{
+	while(xs) {
+		size += (strlen(xs->addr) + 1) * sizeof(char);
+		shm_xs = (xcap_serv_t *)shm_malloc(size);
+		if(shm_xs == NULL) {
 			ERR_MEM(SHARE_MEM);
 		}
 		memset(shm_xs, 0, size);
-		size= sizeof(xcap_serv_t);
+		size = sizeof(xcap_serv_t);
 
-		shm_xs->addr= (char*)shm_xs+ size;
+		shm_xs->addr = (char *)shm_xs + size;
 		strcpy(shm_xs->addr, xs->addr);
-		shm_xs->port= xs->port;
-		shm_xs->next= xs_list;
-		xs_list= shm_xs;
+		shm_xs->port = xs->port;
+		shm_xs->next = xs_list;
+		xs_list = shm_xs;
 
-		prev_xs= xs;
-		xs= xs->next;
+		prev_xs = xs;
+		xs = xs->next;
 
 		pkg_free(prev_xs);
 	}
@@ -427,43 +412,40 @@ error:
 	return -1;
 }
 
-static void free_xs_list(xcap_serv_t* xsl, int mem_type)
+static void free_xs_list(xcap_serv_t *xsl, int mem_type)
 {
-	xcap_serv_t* xs, *prev_xs;
+	xcap_serv_t *xs, *prev_xs;
 
-	xs= xsl;
+	xs = xsl;
 
-	while(xs)
-	{
-		prev_xs= xs;
-		xs= xs->next;
+	while(xs) {
+		prev_xs = xs;
+		xs = xs->next;
 		if(mem_type & SHM_MEM_TYPE)
 			shm_free(prev_xs);
 		else
 			pkg_free(prev_xs);
 	}
-	xsl= NULL;
+	xsl = NULL;
 }
 
-static int xcap_doc_updated(int doc_type, str xid, char* doc)
+static int xcap_doc_updated(int doc_type, str xid, char *doc)
 {
 	pres_ev_t ev;
 	str rules_doc;
 
 	/* call updating watchers */
-	ev.name.s= "presence";
-	ev.name.len= PRES_LEN;
+	ev.name.s = "presence";
+	ev.name.len = PRES_LEN;
 
-	rules_doc.s= doc;
-	rules_doc.len= strlen(doc);
+	rules_doc.s = doc;
+	rules_doc.len = strlen(doc);
 
-	if(pres_update_watchers(xid, &ev, &rules_doc)< 0)
-	{
+	if(pres_update_watchers(xid, &ev, &rules_doc) < 0) {
 		LM_ERR("updating watchers in presence\n");
 		return -1;
 	}
 	return 0;
-
 }
 
 int bind_presence_xml(struct presence_xml_binds *pxb)
@@ -489,7 +471,8 @@ static int fixup_presxml_check(void **param, int param_no)
 	return 0;
 }
 
-static int w_presxml_check_basic(sip_msg_t *msg, char *presentity_uri, char *status)
+static int w_presxml_check_basic(
+		sip_msg_t *msg, char *presentity_uri, char *status)
 {
 	str uri, basic;
 
@@ -508,13 +491,14 @@ static int w_presxml_check_basic(sip_msg_t *msg, char *presentity_uri, char *sta
 
 static int ki_presxml_check_basic(sip_msg_t *msg, str *pres_uri, str *status)
 {
-	if(pres_uri==NULL || status==NULL) {
+	if(pres_uri == NULL || status == NULL) {
 		return -1;
 	}
 	return presxml_check_basic(msg, *pres_uri, *status);
 }
 
-static int w_presxml_check_activities(sip_msg_t *msg, char *presentity_uri, char *activity)
+static int w_presxml_check_activities(
+		sip_msg_t *msg, char *presentity_uri, char *activity)
 {
 	str uri, act;
 
@@ -531,9 +515,10 @@ static int w_presxml_check_activities(sip_msg_t *msg, char *presentity_uri, char
 	return presxml_check_activities(msg, uri, act);
 }
 
-static int ki_presxml_check_activities(sip_msg_t *msg, str *pres_uri, str *activity)
+static int ki_presxml_check_activities(
+		sip_msg_t *msg, str *pres_uri, str *activity)
 {
-	if(pres_uri==NULL || activity==NULL) {
+	if(pres_uri == NULL || activity == NULL) {
 		return -1;
 	}
 	return presxml_check_activities(msg, *pres_uri, *activity);

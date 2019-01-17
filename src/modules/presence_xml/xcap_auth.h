@@ -35,11 +35,12 @@
 #include "../presence/subscribe.h"
 #include "../xcap_client/xcap_callbacks.h"
 
-int pres_watcher_allowed(subs_t* subs);
+int pres_watcher_allowed(subs_t *subs);
 
-xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree );
-int get_rules_doc(str* user, str* domain, str *file_uri, int type, str** rules_doc);
-int pres_get_rules_doc(str* user, str* domain, str** rules_doc);
+xmlNodePtr get_rule_node(subs_t *subs, xmlDocPtr xcap_tree);
+int get_rules_doc(
+		str *user, str *domain, str *file_uri, int type, str **rules_doc);
+int pres_get_rules_doc(str *user, str *domain, str **rules_doc);
 int pres_get_pidf_doc(str *user, str *domain, str *file_uri, str **rules_doc);
 
 #endif

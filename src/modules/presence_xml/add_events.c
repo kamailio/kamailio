@@ -43,93 +43,89 @@ extern int disable_winfo;
 extern int disable_bla;
 extern int disable_xcapdiff;
 
-static str pu_415_rpl  = str_init("Unsupported media type");
+static str pu_415_rpl = str_init("Unsupported media type");
 
 int xml_add_events(void)
 {
 	pres_ev_t event;
-	
-	if (!disable_presence) {
+
+	if(!disable_presence) {
 		/* constructing presence event */
 		memset(&event, 0, sizeof(pres_ev_t));
-		event.name.s= "presence";
-		event.name.len= 8;
+		event.name.s = "presence";
+		event.name.len = 8;
 
-		event.content_type.s= "application/pidf+xml";
-		event.content_type.len= 20;
+		event.content_type.s = "application/pidf+xml";
+		event.content_type.len = 20;
 
-		event.type= PUBL_TYPE;
-		event.req_auth= 1;
-		event.apply_auth_nbody= pres_apply_auth;
-		event.get_auth_status= pres_watcher_allowed;
-		event.agg_nbody= pres_agg_nbody;
-		event.evs_publ_handl= xml_publ_handl;
-		event.free_body= free_xml_body;
-		event.default_expires= 3600;
-		event.get_rules_doc= pres_get_rules_doc;
-		event.get_pidf_doc= pres_get_pidf_doc;
-		if(pres_add_event(&event)< 0)
-		{
+		event.type = PUBL_TYPE;
+		event.req_auth = 1;
+		event.apply_auth_nbody = pres_apply_auth;
+		event.get_auth_status = pres_watcher_allowed;
+		event.agg_nbody = pres_agg_nbody;
+		event.evs_publ_handl = xml_publ_handl;
+		event.free_body = free_xml_body;
+		event.default_expires = 3600;
+		event.get_rules_doc = pres_get_rules_doc;
+		event.get_pidf_doc = pres_get_pidf_doc;
+		if(pres_add_event(&event) < 0) {
 			LM_ERR("while adding event presence\n");
 			return -1;
-		}		
+		}
 		LM_DBG("added 'presence' event to presence module\n");
 	}
 
-	if (!disable_winfo) {
+	if(!disable_winfo) {
 		/* constructing presence.winfo event */
 		memset(&event, 0, sizeof(pres_ev_t));
-		event.name.s= "presence.winfo";
-		event.name.len= 14;
+		event.name.s = "presence.winfo";
+		event.name.len = 14;
 
-		event.content_type.s= "application/watcherinfo+xml";
-		event.content_type.len= 27;
-		event.type= WINFO_TYPE;
-		event.free_body= free_xml_body;
-		event.default_expires= 3600;
+		event.content_type.s = "application/watcherinfo+xml";
+		event.content_type.len = 27;
+		event.type = WINFO_TYPE;
+		event.free_body = free_xml_body;
+		event.default_expires = 3600;
 
-		if(pres_add_event(&event)< 0)
-		{
+		if(pres_add_event(&event) < 0) {
 			LM_ERR("while adding event presence.winfo\n");
 			return -1;
 		}
 		LM_DBG("added 'presence.winfo' event to presence module\n");
 	}
-	
-	if (!disable_bla) {
+
+	if(!disable_bla) {
 		/* constructing bla event */
 		memset(&event, 0, sizeof(pres_ev_t));
-		event.name.s= "dialog;sla";
-		event.name.len= 10;
+		event.name.s = "dialog;sla";
+		event.name.len = 10;
 
-		event.etag_not_new= 1;
-		event.evs_publ_handl= xml_publ_handl;
-		event.content_type.s= "application/dialog-info+xml";
-		event.content_type.len= 27;
-		event.type= PUBL_TYPE;
-		event.free_body= free_xml_body;
-		event.default_expires= 3600;
-		if(pres_add_event(&event)< 0)
-		{
+		event.etag_not_new = 1;
+		event.evs_publ_handl = xml_publ_handl;
+		event.content_type.s = "application/dialog-info+xml";
+		event.content_type.len = 27;
+		event.type = PUBL_TYPE;
+		event.free_body = free_xml_body;
+		event.default_expires = 3600;
+		if(pres_add_event(&event) < 0) {
 			LM_ERR("while adding event dialog;sla\n");
 			return -1;
 		}
 		LM_DBG("added 'dialog;sla' event to presence module\n");
 	}
-	
-	if (!disable_xcapdiff) {
+
+	if(!disable_xcapdiff) {
 		/* constructing xcap-diff event */
 		memset(&event, 0, sizeof(pres_ev_t));
-		event.name.s= "xcap-diff";
-		event.name.len= 9;
+		event.name.s = "xcap-diff";
+		event.name.len = 9;
 
-		event.content_type.s= "application/xcap-diff+xml";
-		event.content_type.len= 25;
+		event.content_type.s = "application/xcap-diff+xml";
+		event.content_type.len = 25;
 
-		event.type= PUBL_TYPE;
-		event.default_expires= 3600;
-		if(pres_add_event(&event)< 0)
-		{
+		event.type = PUBL_TYPE;
+		event.default_expires = 3600;
+		if(pres_add_event(&event) < 0) {
 			LM_ERR("while adding event xcap-diff\n");
 			return -1;
 		}
@@ -141,29 +137,26 @@ int xml_add_events(void)
 /*
  * in event specific publish handling - only check is good body format
  */
-int	xml_publ_handl(struct sip_msg* msg)
-{	
-	str body= {0, 0};
-	xmlDocPtr doc= NULL;
+int xml_publ_handl(struct sip_msg *msg)
+{
+	str body = {0, 0};
+	xmlDocPtr doc = NULL;
 
-	if ( get_content_length(msg) == 0 )
+	if(get_content_length(msg) == 0)
 		return 1;
-	
-	body.s=get_body(msg);
-	if (body.s== NULL) 
-	{
+
+	body.s = get_body(msg);
+	if(body.s == NULL) {
 		LM_ERR("cannot extract body from msg\n");
 		goto error;
 	}
 	/* content-length (if present) must be already parsed */
 
-	body.len = get_content_length( msg );
-	doc= xmlParseMemory( body.s, body.len );
-	if(doc== NULL)
-	{
+	body.len = get_content_length(msg);
+	doc = xmlParseMemory(body.s, body.len);
+	if(doc == NULL) {
 		LM_ERR("bad body format\n");
-		if(slb.freply(msg, 415, &pu_415_rpl) < 0)
-		{
+		if(slb.freply(msg, 415, &pu_415_rpl) < 0) {
 			LM_ERR("while sending '415 Unsupported media type' reply\n");
 		}
 		goto error;
@@ -178,5 +171,4 @@ error:
 	xmlCleanupParser();
 	xmlMemoryDump();
 	return -1;
-
-}	
+}
