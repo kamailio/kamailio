@@ -1,6 +1,4 @@
 /*
- * $Id: notify_body.c 1337 2006-12-07 18:05:05Z bogdan_iancu $
- *
  * presence_xml module -  
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -21,9 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2007-04-11  initial version (anca)
  */
 /*! \file
  * \brief Kamailio Presence_XML :: Notify BODY handling

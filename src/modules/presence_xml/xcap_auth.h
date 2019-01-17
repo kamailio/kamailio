@@ -1,6 +1,4 @@
 /*
- * $Id: xcap_auth.h 1337 2006-12-07 18:05:05Z anca_vamanu $
- *
  * presence_xml module - 
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -21,9 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2007-04-12  initial version (anca)
  */
 
 /*! \file
