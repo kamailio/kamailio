@@ -20,6 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
+
 #ifndef PXML_API_H
 #define PXML_API_H
 #include "../../core/str.h"

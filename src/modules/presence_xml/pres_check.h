@@ -13,10 +13,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
+
+#ifndef _PRES_CHECK_H_
+#define _PRES_CHECK_H_
 
 
 #include <stdio.h>
@@ -26,6 +30,7 @@
 
 int presxml_check_basic(struct sip_msg* msg, str presentity_uri, str status);
 int presxml_check_activities(struct sip_msg* msg, str presentity_uri, str activity);
-contains_event_t pres_contains_event;
-pres_get_presentity_t pres_get_presentity;
-pres_free_presentity_t pres_free_presentity;
+extern contains_event_t pres_contains_event;
+extern pres_get_presentity_t pres_get_presentity;
+extern pres_free_presentity_t pres_free_presentity;
+#endif

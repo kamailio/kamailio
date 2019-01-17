@@ -78,6 +78,9 @@ add_event_t pres_add_event;
 update_watchers_t pres_update_watchers;
 pres_get_sphere_t pres_get_sphere;
 
+contains_event_t pres_contains_event;
+pres_get_presentity_t pres_get_presentity;
+pres_free_presentity_t pres_free_presentity;
 
 /* Module parameter variables */
 str xcap_table= str_init("xcap");
