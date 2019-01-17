@@ -100,6 +100,7 @@ Camille Oudot
    1.19. Set auth_key parameter
    1.20. sip_trace() usage
    1.21. hlog() usage
+   1.22. Send relayed ACK message
 
 Chapter 1. Admin Guide
 
@@ -549,4 +550,13 @@ kamcmd siptrace.status check
 7. Known issues
 
    Stateless forwarded messages (forward()) are not logged if you set the
-   flag, use sip_trace().
+   flag, use sip_trace() inside onsend_route block.
+
+   Example 1.22. Send relayed ACK message
+...
+onsend_route {
+    if (is_method("ACK")) {
+        sip_trace();
+    }
+}
+...
