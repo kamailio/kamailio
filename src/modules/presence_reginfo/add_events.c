@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -31,7 +31,7 @@
 int reginfo_add_events(void)
 {
 	pres_ev_t event;
-	
+
 	/* constructing message-summary event */
 	memset(&event, 0, sizeof(pres_ev_t));
 	event.name.s = "reg";
@@ -47,6 +47,6 @@ int reginfo_add_events(void)
 	if (pres_add_event(&event) < 0) {
 		LM_ERR("failed to add event \"reginfo\"\n");
 		return -1;
-	}		
+	}
 	return 0;
 }
