@@ -379,5 +379,8 @@ int pv_parse_ksr_attrs_name(pv_spec_p sp, str *in);
 int pv_get_ksr_attrs(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_parse_def_name(pv_spec_p sp, str *in);
+int pv_get_def(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+
 #endif
 
