@@ -3658,3 +3658,28 @@ int pv_get_env(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	return pv_get_null(msg, param, res);
 }
 
+int pv_parse_def_name(pv_spec_p sp, str *in)
+{
+	if (in == NULL || in->s == NULL || sp == NULL) {
+		LM_ERR("INVALID DEF NAME\n");
+		return -1;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
+	sp->pvp.pvn.u.isname.name.s = *in;
+	return 0;
+
+}
+
+extern str *pp_define_get(int len, const char * text);
+
+int pv_get_def(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	str *val = pp_define_get(param->pvn.u.isname.name.s.len, param->pvn.u.isname.name.s.s);
+
+	if (val) {
+		return pv_get_strval(msg, param, res, val);
+	}
+	return pv_get_null(msg, param, res);
+}
+
