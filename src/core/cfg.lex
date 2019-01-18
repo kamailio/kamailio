@@ -113,7 +113,7 @@
 		struct sr_yy_fname *next;
 	} *sr_yy_fname_list = 0;
 
-	static str  *pp_define_get(int len, const char * text);
+	str  *pp_define_get(int len, const char * text);
 	static int  pp_ifdef_type(int pos);
 	static void pp_ifdef_var(int len, const char * text);
 	static void pp_ifdef();
@@ -1828,7 +1828,7 @@ int pp_define_set(int len, char *text)
 	return 0;
 }
 
-static str *pp_define_get(int len, const char * text)
+str *pp_define_get(int len, const char * text)
 {
 	str var = {(char *)text, len};
 	int i;
