@@ -14,13 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2011-09-22  initial version (misi)
  */
 
 /*!
@@ -41,26 +38,26 @@
 
 int profile_add_events(void)
 {
-    pres_ev_t event;
-	
-    /* constructing profile event */
-    memset(&event, 0, sizeof(pres_ev_t));
-    event.name.s = "ua-profile";
-    event.name.len = 10;
+	pres_ev_t event;
+
+	/* constructing profile event */
+	memset(&event, 0, sizeof(pres_ev_t));
+	event.name.s = "ua-profile";
+	event.name.len = 10;
 
 
-    event.content_type.s = "text/xml";
-    event.content_type.len = 8;
+	event.content_type.s = "text/xml";
+	event.content_type.len = 8;
 
-    event.default_expires= 3600;
-    event.type = PUBL_TYPE;
-    event.req_auth = 0;
-    event.evs_publ_handl = 0;
-    
-    if (pres_add_event(&event) < 0) {
-	LM_ERR("failed to add event \"ua-profile\"\n");
-	return -1;
-    }		
-	
-    return 0;
+	event.default_expires= 3600;
+	event.type = PUBL_TYPE;
+	event.req_auth = 0;
+	event.evs_publ_handl = 0;
+
+	if (pres_add_event(&event) < 0) {
+		LM_ERR("failed to add event \"ua-profile\"\n");
+		return -1;
+	}
+
+	return 0;
 }
