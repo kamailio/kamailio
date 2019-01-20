@@ -19,7 +19,7 @@ else
 	HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags)
 	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs)
 
-ifeq (,$(findstring hiredis,$(HIREDISDEFS)))
+ifneq (,$(findstring hiredis,$(HIREDISDEFS)))
 	DEFS+=-DWITH_HIREDIS_PATH
 endif
 
