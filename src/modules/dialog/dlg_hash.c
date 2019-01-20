@@ -233,9 +233,9 @@ int dlg_clean_run(ticks_t ti)
 		while (dlg) {
 			tdlg = dlg;
 			dlg = dlg->next;
-			if(tdlg->state==DLG_STATE_UNCONFIRMED && tdlg->init_ts>0
+			if(tdlg->state<=DLG_STATE_EARLY && tdlg->init_ts>0
 					&& tdlg->init_ts<tm-dlg_early_timeout) {
-				/* dialog in early state older than 5min */
+				/* dialog in unconfirmed or early state older than expected */
 				LM_NOTICE("dialog in early state is too old (%p ref %d)\n",
 						tdlg, tdlg->ref);
 				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
