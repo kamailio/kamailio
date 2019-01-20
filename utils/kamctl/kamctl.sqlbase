@@ -38,9 +38,9 @@ prompt_pw() {
 	if [ -z "$DBRWPW" ] ; then
 		savetty=`stty -g`
 		if [ -z "$1" ] ; then
-			printf "Password: " > /dev/stderr
+			printf "Password: " >&2
 		else
-			printf "$1: " > /dev/stderr
+			printf "$1: " >&2
 		fi
 		stty -echo
     	read DBRWPW
