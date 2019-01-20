@@ -651,7 +651,7 @@ in SIP_DOMAIN"
 check_aor() {
 	echo "$1" | $EGREP "^$USERNAME_RE@.*\..*" >/dev/null
 	if [ $? -ne 0 ] ; then
-		echo "error: invalid AoR: $1" > /dev/stderr
+		echo "error: invalid AoR: $1" >&2
 		exit 1
 	fi
 }
@@ -670,7 +670,7 @@ is_aor() {
 check_sipaor() {
 	echo "$1" | $EGREP "^sip(s)?:$USERNAME_RE@.*\..*" >/dev/null
 	if [ $? -ne 0 ] ; then
-		echo "error: invalid SIP AoR: $1" > /dev/stderr
+		echo "error: invalid SIP AoR: $1" >&2
 		exit 1
 	fi
 }
@@ -681,7 +681,7 @@ check_sipaor() {
 check_uri() {
 	echo "$1" | $EGREP "^sip(s)?:($USERNAME_RE@)?.*\..*"  > /dev/null
 	if [ $? -ne 0 ] ; then
-		echo "error: invalid SIP URI: $1" > /dev/stderr
+		echo "error: invalid SIP URI: $1" >&2
 		exit 1
 	fi
 }

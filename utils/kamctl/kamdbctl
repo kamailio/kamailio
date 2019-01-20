@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # control tool for maintaining Kamailio databases
 #
