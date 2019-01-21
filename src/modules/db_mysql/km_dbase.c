@@ -96,10 +96,6 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 		CON_TIMESTAMP(_h) = t;
 	}
 
-	/* screws up the terminal when the query contains a BLOB :-( (by bogdan)
-	 * LM_DBG("submit_query(): %.*s\n", _s->len, _s->s);
-	 */
-
 	/* When a server connection is lost and a query is attempted, most of
 	 * the time the query will return a CR_SERVER_LOST, then at the second
 	 * attempt to execute it, the mysql lib will reconnect and succeed.
