@@ -323,8 +323,8 @@ modparam("dialog", "default_timeout", 21600)
 	<section id="dialog.p.early_timeout">
 		<title><varname>early_timeout</varname> (integer)</title>
 		<para>
-		The timeout (in seconds) after which the dialogs in early state (no
-		final response received) are destroyed.
+		The timeout (in seconds) after which the dialogs in unconfirmed or early
+		state (no final response received) are destroyed.
 		</para>
 		<para>
 		<emphasis>
