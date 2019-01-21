@@ -69,6 +69,7 @@ static int dupl_string(char** dst, const char* begin, const char* end)
 
 	*dst = pkg_malloc(end - begin + 1);
 	if ((*dst) == NULL) {
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -256,7 +257,7 @@ int my_uri(db_uri_t* uri)
 
 	res = (struct my_uri*)pkg_malloc(sizeof(struct my_uri));
 	if (res == NULL) {
-		ERR("mysql: No memory left\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(res, '\0', sizeof(struct my_uri));

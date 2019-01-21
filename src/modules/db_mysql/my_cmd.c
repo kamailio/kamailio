@@ -172,7 +172,7 @@ static int build_delete_cmd(str* sql_cmd, db_cmd_t* cmd)
 
 	sql_cmd->s = pkg_malloc(sql_cmd->len + 1);
 	if (sql_cmd->s == NULL) {
-		ERR("mysql: No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	p = sql_cmd->s;
@@ -256,7 +256,7 @@ static int build_select_cmd(str* sql_cmd, db_cmd_t* cmd)
 
 	sql_cmd->s = pkg_malloc(sql_cmd->len + 1);
 	if (sql_cmd->s == NULL) {
-		ERR("mysql: No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	p = sql_cmd->s;
@@ -323,7 +323,7 @@ static int build_replace_cmd(str* sql_cmd, db_cmd_t* cmd)
 
 	sql_cmd->s = pkg_malloc(sql_cmd->len + 1);
 	if (sql_cmd->s == NULL) {
-		ERR("mysql: No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	p = sql_cmd->s;
@@ -380,7 +380,7 @@ static inline int sb_add(struct string_buffer *sb, str *nstr)
 		new_size = sb->size + (asize / sb->increment  + (asize % sb->increment > 0)) * sb->increment;
 		newp = pkg_malloc(new_size);
 		if (!newp) {
-			ERR("mysql: No memory left\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		if (sb->s) {
@@ -846,7 +846,7 @@ static int bind_mysql_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* params
 
 	my_params = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * (count1 + count2));
 	if (my_params == NULL) {
-		ERR("mysql: No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(my_params, '\0', sizeof(MYSQL_BIND) * (count1 + count2));
@@ -914,7 +914,7 @@ static int check_result(db_cmd_t* cmd, struct my_cmd* payload)
 			fld = mysql_fetch_field_direct(meta, i);
 			f->name = pkg_malloc(strlen(fld->name)+1);
 			if (f->name == NULL) {
-				ERR("mysql: Out of private memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			strcpy(f->name, fld->name);
@@ -994,7 +994,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 
 	result = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * n);
 	if (result == NULL) {
-		ERR("mysql: No memory left\n");
+		PKG_MEM_ERROR;
 		return 1;
 	}
 	memset(result, '\0', sizeof(MYSQL_BIND) * n);
@@ -1032,7 +1032,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 				result[i].buffer_type = MYSQL_TYPE_VAR_STRING;
 				if (!f->buf.s) f->buf.s = pkg_malloc(STR_BUF_SIZE);
 				if (f->buf.s == NULL) {
-					ERR("mysql: No memory left\n");
+					PKG_MEM_ERROR;
 					err = 1;
 					goto error;
 				}
@@ -1045,7 +1045,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 				result[i].buffer_type = MYSQL_TYPE_VAR_STRING;
 				if (!f->buf.s) f->buf.s = pkg_malloc(STR_BUF_SIZE);
 				if (f->buf.s == NULL) {
-					ERR("mysql: No memory left\n");
+					PKG_MEM_ERROR;
 					err = 1;
 					goto error;
 				}
@@ -1058,7 +1058,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 				result[i].buffer_type = MYSQL_TYPE_BLOB;
 				if (!f->buf.s) f->buf.s = pkg_malloc(STR_BUF_SIZE);
 				if (f->buf.s == NULL) {
-					ERR("mysql: No memory left\n");
+					PKG_MEM_ERROR;
 					err = 1;
 					goto error;
 				}
@@ -1175,7 +1175,7 @@ int my_cmd(db_cmd_t* cmd)
 
 	res = (struct my_cmd*)pkg_malloc(sizeof(struct my_cmd));
 	if (res == NULL) {
-		ERR("mysql: No memory left\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(res, '\0', sizeof(struct my_cmd));
@@ -1208,7 +1208,7 @@ int my_cmd(db_cmd_t* cmd)
 		case DB_SQL:
 			res->sql_cmd.s = (char*)pkg_malloc(cmd->table.len);
 			if (res->sql_cmd.s == NULL) {
-				ERR("mysql: Out of private memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memcpy(res->sql_cmd.s,cmd->table.s, cmd->table.len);

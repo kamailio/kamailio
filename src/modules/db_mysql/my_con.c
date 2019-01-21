@@ -146,7 +146,7 @@ int my_con(db_con_t* con)
 
 	ptr = (struct my_con*)pkg_malloc(sizeof(struct my_con));
 	if (!ptr) {
-		LOG(L_ERR, "mysql: No memory left\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(ptr, '\0', sizeof(struct my_con));
@@ -154,7 +154,7 @@ int my_con(db_con_t* con)
 
 	ptr->con = (MYSQL*)pkg_malloc(sizeof(MYSQL));
 	if (!ptr->con) {
-		LOG(L_ERR, "mysql: No enough memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	mysql_init(ptr->con);

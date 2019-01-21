@@ -77,7 +77,7 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 	for(col = 0; col < RES_COL_N(_r); col++) {
 		RES_NAMES(_r)[col] = (str*)pkg_malloc(sizeof(str));
 		if (! RES_NAMES(_r)[col]) {
-			LM_ERR("no private memory left\n");
+			PKG_MEM_ERROR;
 			db_free_columns(_r);
 			return -4;
 		}
@@ -248,6 +248,7 @@ db1_res_t* db_mysql_new_result(void)
 		return NULL;
 	RES_PTR(obj) = pkg_malloc(sizeof(struct my_res));
 	if (!RES_PTR(obj)) {
+		PKG_MEM_ERROR;
 		db_free_result(obj);
 		return NULL;
 	}

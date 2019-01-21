@@ -64,7 +64,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 
 	ptr = (struct my_con*)pkg_malloc(sizeof(struct my_con));
 	if (!ptr) {
-		LM_ERR("no private memory left\n");
+	        PKG_MEM_ERROR;
 		return 0;
 	}
 
@@ -74,7 +74,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	
 	ptr->con = (MYSQL*)pkg_malloc(sizeof(MYSQL));
 	if (!ptr->con) {
-		LM_ERR("no private memory left\n");
+	        PKG_MEM_ERROR;
 		goto err;
 	}
 

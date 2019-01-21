@@ -57,7 +57,7 @@ int my_res(db_res_t* res)
 
 	mr = (struct my_res*)pkg_malloc(sizeof(struct my_res));
 	if (mr == NULL) {
-		ERR("mysql: No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	if (db_drv_init(&mr->gen, my_res_free) < 0) goto error;
