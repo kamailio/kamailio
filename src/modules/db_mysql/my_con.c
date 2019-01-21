@@ -90,7 +90,7 @@ int my_con_connect(db_con_t* con)
 
 	if (!mysql_real_connect(mcon->con, muri->host, muri->username,
 						muri->password, muri->database, muri->port, 0, 0)) {
-		LOG(L_ERR, "mysql: %s\n", mysql_error(mcon->con));
+		ERR("mysql: %s\n", mysql_error(mcon->con));
 		return -1;
 	}
 

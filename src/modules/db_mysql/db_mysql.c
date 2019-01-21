@@ -139,14 +139,14 @@ static int mysql_mod_init(void)
 			my_recv_to= DEFAULT_MY_RECV_TO;
 		}
 	} else if (my_recv_to || my_send_to) {
-		LOG(L_WARN, "WARNING: mysql send or received timeout set, but "
+		LM_WARN("WARNING: mysql send or received timeout set, but "
 			" not supported by the installed mysql client library"
 			" (needed at least 4.1.22 or 5.0.25, but installed %ld)\n",
 			my_client_ver);
 	}
 #else
 	if (my_recv_to || my_send_to) {
-		LOG(L_WARN, "WARNING: mysql send or received timeout set, but "
+		LM_WARN("WARNING: mysql send or received timeout set, but "
 			" not supported by the mysql client library used to compile"
 			" the mysql module (needed at least 4.1.1 but "
 			" compiled against %ld)\n", MYSQL_VERSION_ID);
