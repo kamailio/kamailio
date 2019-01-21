@@ -61,14 +61,14 @@ int my_con_connect(db_con_t* con)
 	/* Do not reconnect already connected connections */
 	if (mcon->flags & MY_CONNECTED) return 0;
 
-	DBG("mysql: Connecting to %.*s:%.*s\n",
+	DBG("Connecting to %.*s:%.*s\n",
 		con->uri->scheme.len, ZSW(con->uri->scheme.s),
 		con->uri->body.len, ZSW(con->uri->body.s));
 
 	if (my_connect_to) {
 		if (mysql_options(mcon->con, MYSQL_OPT_CONNECT_TIMEOUT,
 					(char*)&my_connect_to))
-			WARN("mysql: failed to set MYSQL_OPT_CONNECT_TIMEOUT\n");
+			WARN("failed to set MYSQL_OPT_CONNECT_TIMEOUT\n");
 	}
 
 #if MYSQL_VERSION_ID >= 40101
@@ -78,25 +78,25 @@ int my_con_connect(db_con_t* con)
 		if (my_send_to) {
 			if (mysql_options(mcon->con, MYSQL_OPT_WRITE_TIMEOUT ,
 						(char*)&my_send_to))
-				WARN("mysql: failed to set MYSQL_OPT_WRITE_TIMEOUT\n");
+				WARN("failed to set MYSQL_OPT_WRITE_TIMEOUT\n");
 		}
 		if (my_recv_to){
 			if (mysql_options(mcon->con, MYSQL_OPT_READ_TIMEOUT ,
 						(char*)&my_recv_to))
-				WARN("mysql: failed to set MYSQL_OPT_READ_TIMEOUT\n");
+				WARN("failed to set MYSQL_OPT_READ_TIMEOUT\n");
 		}
 	}
 #endif
 
 	if (!mysql_real_connect(mcon->con, muri->host, muri->username,
 						muri->password, muri->database, muri->port, 0, 0)) {
-		ERR("mysql: %s\n", mysql_error(mcon->con));
+		ERR("could not connect: %s\n", mysql_error(mcon->con));
 		return -1;
 	}
 
-	DBG("mysql: Connection type is %s\n", mysql_get_host_info(mcon->con));
-	DBG("mysql: Protocol version is %d\n", mysql_get_proto_info(mcon->con));
-	DBG("mysql: Server version is %s\n", mysql_get_server_info(mcon->con));
+	DBG("Connection type is %s\n", mysql_get_host_info(mcon->con));
+	DBG("Protocol version is %d\n", mysql_get_proto_info(mcon->con));
+	DBG("Server version is %s\n", mysql_get_server_info(mcon->con));
 
 	mcon->flags |= MY_CONNECTED;
 	return 0;
@@ -111,7 +111,7 @@ void my_con_disconnect(db_con_t* con)
 
 	if ((mcon->flags & MY_CONNECTED) == 0) return;
 
-	DBG("mysql: Disconnecting from %.*s:%.*s\n",
+	DBG("Disconnecting from %.*s:%.*s\n",
 		con->uri->scheme.len, ZSW(con->uri->scheme.s),
 		con->uri->body.len, ZSW(con->uri->body.s));
 
@@ -138,7 +138,7 @@ int my_con(db_con_t* con)
 	 */
 	ptr = (struct my_con*)db_pool_get(con->uri);
 	if (ptr) {
-		DBG("mysql: Connection to %.*s:%.*s found in connection pool\n",
+		DBG("Connection to %.*s:%.*s found in connection pool\n",
 			con->uri->scheme.len, ZSW(con->uri->scheme.s),
 			con->uri->body.len, ZSW(con->uri->body.s));
 		goto found;
@@ -159,13 +159,13 @@ int my_con(db_con_t* con)
 	}
 	mysql_init(ptr->con);
 
-	DBG("mysql: Creating new connection to: %.*s:%.*s\n",
+	DBG("Creating new connection to: %.*s:%.*s\n",
 		con->uri->scheme.len, ZSW(con->uri->scheme.s),
 		con->uri->body.len, ZSW(con->uri->body.s));
 
 	/* Put the newly created mysql connection into the pool */
 	db_pool_put((struct db_pool_entry*)ptr);
-	DBG("mysql: Connection stored in connection pool\n");
+	DBG("Connection stored in connection pool\n");
 
 found:
 	/* Attach driver payload to the db_con structure and set connect and
