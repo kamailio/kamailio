@@ -102,6 +102,7 @@ int pl_init_htable(unsigned int hsize)
 
 void pl_pipe_free(pl_pipe_t *it)
 {
+	shm_free(it);
 	return;
 }
 
