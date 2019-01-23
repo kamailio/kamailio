@@ -427,7 +427,7 @@ int delete_presentity_if_dialog_id_exists(
 				old_presentity.event = presentity->event;
 				old_presentity.etag = tmp_db_etag;
 
-				LM_WARN("Presentity already exists - deleting it\n");
+				LM_DBG("Presentity found - deleting it\n");
 
 				if(delete_presentity(&old_presentity, NULL) < 0) {
 					LM_ERR("failed to delete presentity\n");
