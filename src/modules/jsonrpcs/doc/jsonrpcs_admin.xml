@@ -422,12 +422,12 @@ children=2
 
 tcp_accept_no_cl=yes
 
-mpath="modules/"
-
 loadmodule "sl.so"
 loadmodule "pv.so"
 loadmodule "xhttp.so"
 loadmodule "jsonrpcs.so"
+
+modparam("jsonrpcs", "transport", 1)
 
 request_route {
 	send_reply("404", "not found");
