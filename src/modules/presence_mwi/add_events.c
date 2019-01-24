@@ -106,8 +106,8 @@ int mwi_publ_handl(struct sip_msg* msg)
 	return 1;
 
 err:
-	LM_ERR("check of body <%.*s> failed at character number %d\n",
-			body.len, body.s, (int)(at - body.s + 1));
+	LM_ERR("check of body <%.*s> failed at character index %d (hexa: 0x%x)\n",
+			body.len, body.s, (int)(at - body.s + 1), (int)(*at));
 	return -1;
 
 }
