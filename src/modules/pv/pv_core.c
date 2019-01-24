@@ -32,6 +32,7 @@
 #include "../../core/strutils.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/pvapi.h"
+#include "../../core/ppcfg.h"
 #include "../../core/trim.h"
 #include "../../core/msg_translator.h"
 
@@ -3670,8 +3671,6 @@ int pv_parse_def_name(pv_spec_p sp, str *in)
 	return 0;
 
 }
-
-extern str *pp_define_get(int len, const char * text);
 
 int pv_get_def(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
