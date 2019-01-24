@@ -111,6 +111,7 @@ static int *load_source = NULL;
 static int pl_timer_interval = PL_TIMER_INTERVAL_DEFAULT;
 static int pl_timer_mode = 0;
 int _pl_cfg_setpoint = 0;        /* desired load, used when reading modparams */
+int pl_clean_unused = 0;
 /* === */
 
 static int pl_load_fetch = 1;
@@ -152,6 +153,7 @@ static param_export_t params[]={
 	{"plp_algorithm_column", PARAM_STR,          &rlp_algorithm_col},
 	{"hash_size",            INT_PARAM,          &pl_hash_size},
 	{"load_fetch",           INT_PARAM,          &pl_load_fetch},
+	{"clean_unused",         INT_PARAM,          &pl_clean_unused},
 
 	{0,0,0}
 };

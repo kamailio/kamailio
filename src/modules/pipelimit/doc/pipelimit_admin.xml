@@ -380,6 +380,36 @@ modparam("pipelimit", "reply_reason", "Limiting")
 		</programlisting>
 		</example>
 	</section>
+	<section id="pipelimit.p.clean_unused">
+		<title><varname>clean_unused</varname> (int)</title>
+		<para>
+		Clean unused pipes afetr this number of timer intervals.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (cleanup disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>clean_unused</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "clean_unused", 10)
+...
+</programlisting>
+		</example>
+		<para>
+		This value can be modified at runtime using &sercmd;
+		</para>
+		<example>
+		<title> Set <varname>clean_unused</varname> parameter at runtime </title>
+		<programlisting format="linespecific">
+
+&sercmd; cfg.set_now_int pipelimit clean_unused 10
+
+		</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>

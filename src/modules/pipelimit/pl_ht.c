@@ -41,6 +41,7 @@
 #include "pl_ht.h"
 
 static rlp_htable_t *_pl_pipes_ht = NULL;
+extern int pl_clean_unused;
 
 str_map_t algo_names[] = {
 	{str_init("NOP"),	PIPE_ALGO_NOP},
@@ -102,6 +103,7 @@ int pl_init_htable(unsigned int hsize)
 
 void pl_pipe_free(pl_pipe_t *it)
 {
+	shm_free(it);
 	return;
 }
 
@@ -282,6 +284,7 @@ int pl_print_pipes(void)
 			LM_DBG("+++ ++++ counter: %d\n", it->counter);
 			LM_DBG("+++ ++++ last_counter: %d\n", it->last_counter);
 			LM_DBG("+++ ++++ load: %d\n", it->load);
+			LM_DBG("+++ ++++ unused intervals: %d\n", it->unused_intervals);
 			it = it->next;
 		}
 		lock_release(&_pl_pipes_ht->slots[i].lock);
@@ -330,7 +333,7 @@ int pl_pipe_check_feedback_setpoints(int *cfgsp)
 void pl_pipe_timer_update(int interval, int netload)
 {
 	int i;
-	pl_pipe_t *it;
+	pl_pipe_t *it, *it0;
 
 	if(_pl_pipes_ht==NULL)
 		return;
@@ -341,6 +344,31 @@ void pl_pipe_timer_update(int interval, int netload)
 		it = _pl_pipes_ht->slots[i].first;
 		while(it)
 		{
+			if (pl_clean_unused) {
+				if (it->counter > 0) {
+					// used, reset unused intervals counter
+					it->unused_intervals = 0;
+				} else {
+					if (it->unused_intervals >= pl_clean_unused) {
+						// unused for n intervals, delete
+						it0 = it;
+						it = it->next;
+						if(it0->prev==NULL) {
+							_pl_pipes_ht->slots[i].first = it;
+						} else {
+							it0->prev->next = it;
+						}
+						if(it) {
+							it->prev = it0->prev;
+						}
+						_pl_pipes_ht->slots[i].ssize--;
+						pl_pipe_free(it0);
+						continue;
+					} else {
+						it->unused_intervals++;
+					}
+				}
+			}
 			if (it->algo != PIPE_ALGO_NOP) {
 				if( it->algo == PIPE_ALGO_NETWORK ) {
 					it->load = ( netload > it->limit ) ? 1 : -1;
@@ -461,11 +489,13 @@ int rpc_pl_list_pipe(rpc_t *rpc, void *c, pl_pipe_t *it)
 		rpc->fault(c, 500, "Internal pipe structure");
 		return -1;
 	}
-	if(rpc->struct_add(th, "ssdd",
+	if(rpc->struct_add(th, "ssdddd",
 				"name",	it->name.s,
 				"algorithm", algo.s,
 				"limit", it->limit,
-				"counter",  it->counter)<0) {
+				"counter",  it->counter,
+				"last_counter", it->last_counter,
+				"unused_intervals", it->unused_intervals)<0) {
 		rpc->fault(c, 500, "Internal error address list structure");
 		return -1;
 	}
