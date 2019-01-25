@@ -159,7 +159,7 @@ static int mod_init(void)
 	if(apy_load_script()<0) {
 		pkg_free(dname_src);
 		pkg_free(bname_src);
-		LM_ERR("failed to load python script\n");
+		LM_ERR("failed to load python script: %s\n", _sr_python_load_file.s);
 		return -1;
 	}
 
