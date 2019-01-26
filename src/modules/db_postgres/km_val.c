@@ -69,7 +69,7 @@ int db_postgres_str2val(
 		}
 		VAL_BLOB(_v).s = pkg_malloc(VAL_BLOB(_v).len + 1);
 		if(VAL_BLOB(_v).s == NULL) {
-			LM_ERR("no private memory left\n");
+			PKG_MEM_ERROR;
 			PQfreemem(tmp_s);
 			return -8;
 		}

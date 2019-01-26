@@ -205,7 +205,7 @@ int pg_con(db_con_t *con)
 
 	pcon = (struct pg_con *)pkg_malloc(sizeof(struct pg_con));
 	if(!pcon) {
-		LOG(L_ERR, "postgres: No memory left\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(pcon, '\0', sizeof(struct pg_con));

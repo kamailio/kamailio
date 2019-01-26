@@ -70,7 +70,7 @@ int pg_fld(db_fld_t *fld, char *table)
 
 	res = (struct pg_fld *)pkg_malloc(sizeof(struct pg_fld));
 	if(res == NULL) {
-		ERR("postgres: No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(res, '\0', sizeof(struct pg_fld));

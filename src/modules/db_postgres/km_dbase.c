@@ -93,7 +93,7 @@ int pg_alloc_buffer(void)
 	LM_DBG("About to allocate postgres_sql_buf size = %d\n", sql_buffer_size);
 	postgres_sql_buf = pkg_malloc(sql_buffer_size);
 	if(postgres_sql_buf == NULL) {
-		LM_ERR("failed to allocate postgres_sql_buf\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	return 1;
@@ -186,8 +186,7 @@ static int db_postgres_submit_query(const db1_con_t *_con, const str *_s)
 
 	s = pkg_malloc((_s->len + 1) * sizeof(char));
 	if(s == NULL) {
-		LM_ERR("%p db_postgres_submit_query Out of Memory: Query: %.*s\n", _con,
-				_s->len, _s->s);
+		PKG_MEM_ERROR_FMT("connection: %p, query: %.*s\n", _con, _s->len, _s->s);
 		return -1;
 	}
 
@@ -690,26 +689,37 @@ static pg_constraint_t *db_postgres_constraint_new(
 
 	c = pkg_malloc(sizeof(pg_constraint_t));
 
-	if(!c)
+	if(!c) {
+		PKG_MEM_ERROR;
 		return NULL;
+	}
 	memset(c, 0, sizeof(pg_constraint_t));
 
 	c->database.len = strlen(db);
 	c->database.s = pkg_malloc(c->database.len + 1);
-	if(!c->database.s)
+
+	if(!c->database.s) {
+		PKG_MEM_ERROR;
 		goto error;
+	}
 	strcpy(c->database.s, db);
 
 	c->table.len = table->len;
 	c->table.s = pkg_malloc(c->table.len + 1);
-	if(!c->table.s)
+
+	if(!c->table.s) {
+		PKG_MEM_ERROR;
 		goto error;
+	}
 	strcpy(c->table.s, table->s);
 
 	c->unique.len = strlen(unique);
 	c->unique.s = pkg_malloc(c->unique.len + 1);
-	if(!c->unique.s)
+
+	if(!c->unique.s) {
+		PKG_MEM_ERROR;
 		goto error;
+	}
 	strcpy(c->unique.s, unique);
 
 	db_postgres_constraint_add(c);
@@ -975,7 +985,7 @@ int db_postgres_start_transaction(db1_con_t *_h, db_locking_t _l)
 												+ lock_end_str->len)
 										* sizeof(char)))
 					== NULL) {
-				LM_ERR("allocating pkg memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 

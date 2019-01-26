@@ -105,7 +105,7 @@ int db_postgres_get_columns(const db1_con_t *_h, db1_res_t *_r)
 
 		RES_NAMES(_r)[col] = (str *)pkg_malloc(sizeof(str));
 		if(!RES_NAMES(_r)[col]) {
-			LM_ERR("no private memory left\n");
+			PKG_MEM_ERROR;
 			db_free_columns(_r);
 			return -4;
 		}
@@ -205,7 +205,7 @@ int db_postgres_convert_rows(const db1_con_t *_h, db1_res_t *_r)
 	len = sizeof(char *) * RES_COL_N(_r);
 	row_buf = (char **)pkg_malloc(len);
 	if(!row_buf) {
-		LM_ERR("no private memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n",

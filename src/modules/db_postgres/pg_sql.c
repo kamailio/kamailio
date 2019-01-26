@@ -118,7 +118,7 @@ static inline int sb_add(struct string_buffer *sb, str *nstr)
 							 * sb->increment;
 		newp = pkg_malloc(new_size);
 		if(!newp) {
-			ERR("postgres: No memory left\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		if(sb->s) {

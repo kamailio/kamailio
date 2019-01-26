@@ -83,6 +83,7 @@ static int dupl_string(char **dst, const char *begin, const char *end)
 
 	*dst = pkg_malloc(end - begin + 1);
 	if((*dst) == NULL) {
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -304,7 +305,7 @@ int pg_uri(db_uri_t *uri)
 
 	puri = (struct pg_uri *)pkg_malloc(sizeof(struct pg_uri));
 	if(puri == NULL) {
-		ERR("postgres: No memory left\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(puri, '\0', sizeof(struct pg_uri));

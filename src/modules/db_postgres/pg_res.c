@@ -53,7 +53,7 @@ int pg_res(db_res_t *res)
 
 	pres = (struct pg_res *)pkg_malloc(sizeof(struct pg_res));
 	if(pres == NULL) {
-		ERR("postgres: No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	if(db_drv_init(&pres->gen, pg_res_free) < 0)

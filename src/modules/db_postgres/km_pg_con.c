@@ -65,9 +65,7 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 
 	ptr = (struct pg_con *)pkg_malloc(sizeof(struct pg_con));
 	if(!ptr) {
-		LM_ERR("failed trying to allocated %lu bytes for connection structure."
-			   "\n",
-				(unsigned long)sizeof(struct pg_con));
+		PKG_MEM_ERROR_FMT("%lu bytes for connection structure", (unsigned long)sizeof(struct pg_con));
 		return 0;
 	}
 	LM_DBG("%p=pkg_malloc(%lu)\n", ptr, (unsigned long)sizeof(struct pg_con));
