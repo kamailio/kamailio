@@ -277,7 +277,7 @@ static int ki_exec_cmd(sip_msg_t *msg, str *cmd)
 
 	LM_DBG("executing [%s]\n", cmd->s);
 
-	ret = exec_msg(msg, cmd->s);
+	ret = exec_cmd(msg, cmd->s);
 
 	LM_DBG("execution return code: %d\n", ret);
 

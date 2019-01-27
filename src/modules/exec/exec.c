@@ -305,3 +305,31 @@ error:
 	}
 	return ret;
 }
+
+int exec_cmd(sip_msg_t *msg, char *cmd)
+{
+	FILE *pipe;
+	int exit_status;
+	int ret;
+
+	pipe = popen(cmd, "r");
+	if(pipe == NULL) {
+		LM_ERR("cannot open pipe: %s\n", cmd);
+		ser_error = E_EXEC;
+		return -1;
+	}
+
+	ret = 1;
+	exit_status = pclose(pipe);
+	if(WIFEXITED(exit_status)) { /* exited properly .... */
+		/* return false if script exited with non-zero status */
+		if(WEXITSTATUS(exit_status) != 0)
+			ret = -1;
+	} else { /* exited erroneously */
+		LM_ERR("cmd %s failed. exit_status=%d, errno=%d: %s\n", cmd,
+				exit_status, errno, strerror(errno));
+		ret = -1;
+	}
+
+	return ret;
+}
