@@ -178,7 +178,7 @@ if (is_method("INVITE")) {
 		<programlisting format="linespecific">
 ...
 if (is_method("REGISTER")) {
-	ts_append("location", "$tU");
+	ts_append("location", "$tu");
 }
 ...
 </programlisting>
