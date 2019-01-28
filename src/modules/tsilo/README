@@ -196,7 +196,7 @@ if (is_method("INVITE")) {
    Example 1.4. ts_append usage
 ...
 if (is_method("REGISTER")) {
-        ts_append("location", "$tU");
+        ts_append("location", "$tu");
 }
 ...
 
