@@ -35,6 +35,7 @@ Jan Janak
               4.1. exec_dset(command)
               4.2. exec_msg(command)
               4.3. exec_avp(command [, avplist])
+              4.4. exec_cmd(command)
 
         5. Known Issues
 
@@ -45,6 +46,7 @@ Jan Janak
    1.3. exec_dset usage
    1.4. exec_msg usage
    1.5. exec_avp usage
+   1.6. exec_cmd usage
 
 Chapter 1. Admin Guide
 
@@ -66,6 +68,7 @@ Chapter 1. Admin Guide
         4.1. exec_dset(command)
         4.2. exec_msg(command)
         4.3. exec_avp(command [, avplist])
+        4.4. exec_cmd(command)
 
    5. Known Issues
 
@@ -144,6 +147,7 @@ modparam("exec", "time_to_kill", 20)
    4.1. exec_dset(command)
    4.2. exec_msg(command)
    4.3. exec_avp(command [, avplist])
+   4.4. exec_cmd(command)
 
 4.1.  exec_dset(command)
 
@@ -211,6 +215,27 @@ exec_msg("echo TEST > /tmp/$rU.txt");
 ...
 exec_avp("echo TEST");
 exec_avp("echo TEST", "$avp(s:test)");
+...
+
+4.4.  exec_cmd(command)
+
+   Executes an external command. It is a lightweight version, which does
+   not pass the SIP message as parameter, does not set the environment
+   variables and it does not use the output of the command.
+
+   Meaning of the parameters is as follows:
+     * command - Command to be executed. It can include pseudo-variables.
+
+   WARNING: if the var you are passing out has a bash special character in
+   it, the var needs to be placed inside quotes, for example:
+   exec_msg("print-contact.sh '$ct'");
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.6. exec_cmd usage
+...
+exec_cmd("echo TEST > /tmp/test.txt");
+exec_cmd("echo TEST > /tmp/$rU.txt");
 ...
 
 5. Known Issues
