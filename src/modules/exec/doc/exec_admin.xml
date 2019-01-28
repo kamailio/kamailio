@@ -270,12 +270,47 @@ exec_avp("echo TEST", "$avp(s:test)");
 </programlisting>
 		</example>
 	</section>
+	<section id="exec.f.exec_cmd">
+		<title>
+		<function moreinfo="none">exec_cmd(command)</function>
+		</title>
+		<para>
+			Executes an external command. It is a lightweight version, which
+			does not pass the SIP message as parameter, does not set the
+			environment variables and it does not use the output of the command.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>command</emphasis> - Command to be executed. It
+			can include pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		WARNING: if the var you are passing out has a bash special
+		character in it, the var needs to be placed inside quotes, for example:
+		exec_msg("print-contact.sh '$ct'");
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">exec_cmd</function> usage</title>
+		<programlisting format="linespecific">
+...
+exec_cmd("echo TEST > /tmp/test.txt");
+exec_cmd("echo TEST > /tmp/$rU.txt");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section id="exec.known_issues">
 	<title>Known Issues</title>
 	<para>
-		There is currently no guarantee that scripts ever return and stop 
-		blocking the &sip; server. (There is kill.c but it is not used along with 
+		There is currently no guarantee that scripts ever return and stop
+		blocking the &sip; server. (There is kill.c but it is not used along with
 		the current mechanisms based on popen. Besides that kill.c is ugly).
 	</para>
 	</section>
