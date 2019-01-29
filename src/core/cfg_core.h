@@ -67,6 +67,7 @@ struct cfg_group_core {
 	int dns_tls_pref;
 	int dns_sctp_pref;
 	int dns_retr_time;
+	int dns_slow_query_ms;
 	int dns_retr_no;
 	int dns_servers_no;
 	int dns_search_list;
