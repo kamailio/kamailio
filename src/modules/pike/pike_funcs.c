@@ -178,6 +178,7 @@ void clean_routine(unsigned int ticks , void *param)
 	 * be at least one element removed */
 	if (timer==0 || is_list_empty( timer )) return; /* quick exit */
 
+	memset(&head, 0, sizeof(struct list_link));
 	/* get the expired elements */
 	lock_get( timer_lock );
 	/* check again for empty list */
@@ -201,7 +202,7 @@ void clean_routine(unsigned int ticks , void *param)
 			continue;
 
 		lock_tree_branch( i );
-		for( ll=head.next ; ll!=&head ; ) {
+		for( ll=head.next; ll!=&head && ll!=NULL; ) {
 			node = ll2ipnode( ll );
 			ll = ll->next;
 			/* skip nodes from a different branch */
