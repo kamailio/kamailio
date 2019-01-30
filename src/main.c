@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <string.h>
+#include <getopt.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -169,6 +170,7 @@ Options:\n\
     -g gid       Change gid (group id)\n\
     -G file      Create a pgid file\n\
     -h           This help message\n\
+    --help       Same as `-h`\n\
     -I           Print more internal compile flags and options\n\
     -K           Turn on \"via:\" host checking when forwarding replies\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
@@ -208,6 +210,7 @@ Options:\n\
 #endif
 "    -u uid       Change uid (user id)\n\
     -v (-V)      Version number\n\
+    --version    Same as `-v`\n\
     -x name      Specify internal manager for shared memory (shm)\n\
                   - can be: fm, qm or tlsf\n\
     -X name      Specify internal manager for private memory (pkg)\n\
@@ -1873,6 +1876,14 @@ int main(int argc, char** argv)
 	char *p;
 	struct stat st = {0};
 
+	int option_index = 0;
+
+	static struct option long_options[] = {
+		{"help",  no_argument, 0, 'h'},
+		{"version",  no_argument, 0, 'v'},
+		{0, 0, 0, 0 }
+	};
+
 	/*init*/
 	time(&up_since);
 	creator_pid = getpid();
@@ -1901,7 +1912,8 @@ int main(int argc, char** argv)
 	 *    later
 	 */
 	opterr = 0;
-	while((c=getopt(argc,argv,options))!=-1) {
+	option_index = 0;
+	while((c=getopt_long(argc, argv, options, long_options, &option_index))!=-1) {
 		switch(c) {
 			case 'd':
 					debug_flag = 1;
@@ -1977,9 +1989,10 @@ int main(int argc, char** argv)
 	pp_define_core();
 
 	/* process command line (cfg. file path etc) */
-	optind = 1;  /* reset getopt */
+	optind = 1;  /* reset getopt index */
+	option_index = 0;
 	/* switches required before script processing */
-	while((c=getopt(argc,argv,options))!=-1) {
+	while((c=getopt_long(argc, argv, options, long_options, &option_index))!=-1) {
 		switch(c) {
 			case 'M':
 			case 'x':
@@ -2090,21 +2103,28 @@ int main(int argc, char** argv)
 					break;
 			case '?':
 					if (isprint(optopt)) {
-						fprintf(stderr, "Unknown option `-%c'."
+						fprintf(stderr, "Unknown option '-%c'."
 										" Use -h for help.\n", optopt);
 					} else {
-						fprintf(stderr, "Unknown option character `\\x%x'."
+						fprintf(stderr, "Unknown option code '0x%x' (%d)."
 										" Use -h for help.\n",
-							optopt);
+							optopt, option_index);
 					}
 					goto error;
 			case ':':
-					fprintf(stderr, "Option `-%c' requires an argument."
+					if (isprint(optopt)) {
+						fprintf(stderr, "Option '-%c' requires an argument."
 									" Use -h for help.\n",
-						optopt);
+							optopt);
+					} else {
+						fprintf(stderr, "Option code '0x%x' (%d) requires an argument."
+										" Use -h for help.\n",
+							optopt, option_index);
+					}
 					goto error;
 			default:
-					abort();
+					fprintf(stderr, "Invalid option code '0x%x'", c);
+					return -1;
 		}
 	}
 	if (shm_mem_size == 0) {
@@ -2186,8 +2206,9 @@ try_again:
 		goto error;
 	}
 	/* options with higher priority than cfg file */
-	optind = 1;  /* reset getopt */
-	while((c=getopt(argc,argv,options))!=-1) {
+	optind = 1;  /* reset getopt index */
+	option_index = 0;
+	while((c=getopt_long(argc, argv, options, long_options, &option_index))!=-1) {
 		switch(c) {
 			case 'f':
 			case 'c':
