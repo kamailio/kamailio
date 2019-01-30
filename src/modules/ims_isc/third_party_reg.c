@@ -173,7 +173,7 @@ int build_p_associated_uri(ims_subscription* s) {
                 if (cnt == 0 && cnttel == 0){
                     *p++ = '<';
                 } else if(cnttel != 0 && cnt == 0){
-                    memcpy(p, ", <", 2);
+                    memcpy(p, ", <", 3);
                     p += 3;
                 } else {
                     memcpy(p, ">, <", 4);
