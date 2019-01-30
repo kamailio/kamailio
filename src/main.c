@@ -155,6 +155,8 @@ Usage: " NAME " [options]\n\
 Options:\n\
     -a mode      Auto aliases mode: enable with yes or on,\n\
                   disable with no or off\n\
+    --alias=val  Add an alias, the value has to be '[proto:]hostname[:port]'\n\
+                  (like for 'alias' global parameter)\n\
     -A define    Add config pre-processor define (e.g., -A WITH_AUTH)\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
                   auto-probing procedure even if  OS allows\n\
@@ -170,7 +172,7 @@ Options:\n\
     -g gid       Change gid (group id)\n\
     -G file      Create a pgid file\n\
     -h           This help message\n\
-    --help       Same as `-h`\n\
+    --help       Long option for `-h`\n\
     -I           Print more internal compile flags and options\n\
     -K           Turn on \"via:\" host checking when forwarding replies\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
@@ -209,8 +211,9 @@ Options:\n\
 "    -T           Disable tcp\n"
 #endif
 "    -u uid       Change uid (user id)\n\
-    -v (-V)      Version number\n\
-    --version    Same as `-v`\n\
+    -v           Version number\n\
+    --version    Long option for `-v`\n\
+    -V           Alternative for `-v`\n\
     -x name      Specify internal manager for shared memory (shm)\n\
                   - can be: fm, qm or tlsf\n\
     -X name      Specify internal manager for private memory (pkg)\n\
@@ -1878,9 +1881,13 @@ int main(int argc, char** argv)
 
 	int option_index = 0;
 
+#define KARGOPTVAL	1024
 	static struct option long_options[] = {
+		/* long options with short variant */
 		{"help",  no_argument, 0, 'h'},
 		{"version",  no_argument, 0, 'v'},
+		/* long options without short variant */
+		{"alias",  required_argument, 0, KARGOPTVAL},
 		{0, 0, 0, 0 }
 	};
 
@@ -2101,6 +2108,21 @@ int main(int argc, char** argv)
 			case 's':
 			case 'Y':
 					break;
+
+			/* long options */
+			case KARGOPTVAL:
+					if(parse_phostport(optarg, &tmp, &tmp_len,
+											&port, &proto)!=0) {
+						fprintf(stderr, "Invalid alias value '%s'\n", optarg);
+						goto error;
+					}
+					if(add_alias(tmp, tmp_len, port, proto)<0) {
+						fprintf(stderr, "Failed to add alias value '%s'\n", optarg);
+						goto error;
+					}
+					break;
+
+			/* special cases */
 			case '?':
 					if (isprint(optopt)) {
 						fprintf(stderr, "Unknown option '-%c'."
@@ -2122,6 +2144,7 @@ int main(int argc, char** argv)
 							optopt, option_index);
 					}
 					goto error;
+
 			default:
 					fprintf(stderr, "Invalid option code '0x%x'", c);
 					return -1;
