@@ -403,9 +403,9 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
     }
 
     if (r->cv.len) {
-		STR_APPEND(h, p_charging_vector_s);
-		STR_APPEND(h, r->cv);
-		STR_APPEND(h, p_charging_vector_e);
+	STR_APPEND(h, p_charging_vector_s);
+	STR_APPEND(h, r->cv);
+	STR_APPEND(h, p_charging_vector_e);
     }
     
     if (p_associated_uri.data_len > 0) {
@@ -436,11 +436,15 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
     }
     if (h.s)
 	pkg_free(h.s);
+    if (b.s)
+	pkg_free(b.s);
     return 1;
 
 error:
     if (h.s)
 	pkg_free(h.s);
+    if (b.s)
+	pkg_free(b.s);
     return 0;
 }
 
