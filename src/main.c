@@ -152,9 +152,25 @@
 static char help_msg[]= "\
 Usage: " NAME " [options]\n\
 Options:\n\
+    -a mode      Auto aliases mode: enable with yes or on,\n\
+                  disable with no or off\n\
+    -A define    Add config pre-processor define (e.g., -A WITH_AUTH)\n\
+    -b nr        Maximum receive buffer size which will not be exceeded by\n\
+                  auto-probing procedure even if  OS allows\n\
+    -c           Check configuration file for syntax errors\n\
+    -d           Debugging mode (multiple -d increase the level)\n\
+    -D           Control how daemonize is done:\n\
+                  -D..do not fork (almost) anyway;\n\
+                  -DD..do not daemonize creator;\n\
+                  -DDD..daemonize (default)\n\
+    -e           Log messages printed in terminal colors (requires -E)\n\
+    -E           Log to stderr\n\
     -f file      Configuration file (default: " CFG_FILE ")\n\
-    -L path      Modules search path (default: " MODS_DIR ")\n\
-    -c           Check configuration file for errors\n\
+    -g gid       Change gid (group id)\n\
+    -G file      Create a pgid file\n\
+    -h           This help message\n\
+    -I           Print more internal compile flags and options\n\
+    -K           Turn on \"via:\" host checking when forwarding replies\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
                   mean listening on more addresses).  The address format is\n\
                   [proto:]addr_lst[:port], where proto=udp|tcp|tls|sctp, \n\
@@ -163,54 +179,44 @@ Options:\n\
                   E.g: -l localhost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
                   -l \"sctp:(eth0)\", -l \"(eth0, eth1, 127.0.0.1):5065\".\n\
                   The default behaviour is to listen on all the interfaces.\n\
-    -n processes Number of child processes to fork per interface\n\
-                  (default: 8)\n\
-    -r           Use dns to check if is necessary to add a \"received=\"\n\
-                  field to a via\n\
-    -R           Same as `-r` but use reverse dns;\n\
-                  (to use both use `-rR`)\n\
-    -K           Turn on \"via:\" host checking when forwarding replies\n\
-    -d           Debugging mode (multiple -d increase the level)\n\
-    -D           Control how daemonize is done:\n\
-                  -D..do not fork (almost) anyway;\n\
-                  -DD..do not daemonize creator;\n\
-                  -DDD..daemonize (default)\n\
-    -E           Log to stderr\n\
-    -e           Log messages printed in terminal colors (requires -E)\n"
-#ifdef USE_TCP
-"    -T           Disable tcp\n\
-    -N           Number of tcp child processes (default: equal to `-n')\n\
-    -W type      poll method (depending on support in OS, it can be: poll,\n\
-                  epoll_lt, epoll_et, sigio_rt, select, kqueue, /dev/poll)\n"
-#endif
-#ifdef USE_SCTP
-"    -S           disable sctp\n\
-    -Q            Number of sctp child processes (default: equal to `-n')\n"
-#endif /* USE_SCTP */
-"    -v (-V)      Version number\n\
-    -h           This help message\n\
-    -I           Print more internal compile flags and options\n\
-    -b nr        Maximum receive buffer size which will not be exceeded by\n\
-                  auto-probing procedure even if  OS allows\n\
+    -L path      Modules search path (default: " MODS_DIR ")\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
-    -w dir       Change the working directory to \"dir\" (default: \"/\")\n\
-    -t dir       Chroot to \"dir\"\n\
-    -u uid       Change uid (user id)\n\
-    -g gid       Change gid (group id)\n\
-    -P file      Create a pid file\n\
-    -G file      Create a pgid file\n\
-    -Y dir       Runtime dir path\n\
-    -O nr        Script optimization level (debugging option)\n\
-    -a mode      Auto aliases mode: enable with yes or on,\n\
-                  disable with no or off\n\
-    -A define    Add config pre-processor define (e.g., -A WITH_AUTH)\n\
+    -n processes Number of child processes to fork per interface\n\
+                  (default: 8)\n"
+#ifdef USE_TCP
+"    -N           Number of tcp child processes (default: equal to `-n')\n"
+#endif
+"    -O nr        Script optimization level (debugging option)\n\
+    -P file      Create a pid file\n"
+#ifdef USE_SCTP
+"    -Q           Number of sctp child processes (default: equal to `-n')\n"
+#endif /* USE_SCTP */
+"    -r           Use dns to check if is necessary to add a \"received=\"\n\
+                  field to a via\n\
+    -R           Same as `-r` but use reverse dns;\n\
+                  (to use both use `-rR`)\n"
+#ifdef STATS
+"    -s file     File where to write internal statistics on SIGUSR1\n"
+#endif
+#ifdef USE_SCTP
+"    -S           disable sctp\n"
+#endif
+"    -t dir       Chroot to \"dir\"\n"
+#ifdef USE_TCP
+"    -T           Disable tcp\n"
+#endif
+"    -u uid       Change uid (user id)\n\
+    -v (-V)      Version number\n\
     -x name      Specify internal manager for shared memory (shm)\n\
                   - can be: fm, qm or tlsf\n\
     -X name      Specify internal manager for private memory (pkg)\n\
-                  - if omitted, the one for shm is used\n"
-#ifdef STATS
-"    -s file     File where to write internal statistics on SIGUSR1\n"
+                  - if omitted, the one for shm is used\n\
+    -Y dir       Runtime dir path\n\
+    -w dir       Change the working directory to \"dir\" (default: \"/\")\n"
+#ifdef USE_TCP
+"    -W type      poll method (depending on support in OS, it can be: poll,\n\
+                  epoll_lt, epoll_et, sigio_rt, select, kqueue, /dev/poll)\n"
 #endif
 ;
 
