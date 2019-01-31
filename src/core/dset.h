@@ -158,7 +158,7 @@ void clear_branches(void);
  * Create a Contact header field from the
  * list of current branches
  */
-char* print_dset(struct sip_msg* msg, int* len);
+char* print_dset(struct sip_msg* msg, int* len, int options);
 
 
 /*! \brief

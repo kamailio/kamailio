@@ -640,7 +640,7 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 
 	/* if that is a redirection message, dump current message set to it */
 	if (code>=300 && code<400) {
-		dset=print_dset(p_msg, &dset_len);
+		dset=print_dset(p_msg, &dset_len, 0);
 		if (dset) {
 			add_lump_rpl(p_msg, dset, dset_len, LUMP_RPL_HDR);
 		}

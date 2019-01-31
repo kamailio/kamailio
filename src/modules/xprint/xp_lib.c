@@ -559,7 +559,7 @@ static int xl_get_dset(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
     if(msg==NULL || res==NULL)
 	return -1;
 
-    res->s = print_dset(msg, &res->len);
+    res->s = print_dset(msg, &res->len, 0);
 
     if ((res->s) == NULL) return xl_get_null(msg, res, hp, hi, hf);
 

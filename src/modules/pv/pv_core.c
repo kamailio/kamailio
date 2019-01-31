@@ -1335,7 +1335,7 @@ int pv_get_dset(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL)
 		return -1;
 
-	s.s = print_dset(msg, &s.len);
+	s.s = print_dset(msg, &s.len, 0);
 	if (s.s == NULL)
 		return pv_get_null(msg, param, res);
 	s.len -= CRLF_LEN;

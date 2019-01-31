@@ -472,7 +472,7 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
  * end = end of target buffer
  * Returns 0 on success or -1 on error (buffer is too short)
  */
-static int print_contact_str(char **dest, str *uri, qvalue_t q, char *end)
+static int print_contact_str(char **dest, str *uri, qvalue_t q, char *end, int options)
 {
 	char *p = *dest;
 	str buf;
@@ -507,7 +507,7 @@ static int print_contact_str(char **dest, str *uri, qvalue_t q, char *end)
  * Create a Contact header field from the dset
  * array
  */
-char* print_dset(struct sip_msg* msg, int* len)
+char* print_dset(struct sip_msg* msg, int* len, int options)
 {
 	int cnt = 0;
 	qvalue_t q;
@@ -529,7 +529,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 
 	/* current uri */
 	if (msg->new_uri.s) {
-		if (print_contact_str(&p, &msg->new_uri, ruri_q, end) < 0) {
+		if (print_contact_str(&p, &msg->new_uri, ruri_q, end, options) < 0) {
 			goto memfail;
 		}
 		cnt++;
@@ -546,7 +546,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 			p += CONTACT_DELIM_LEN;
 		}
 
-		if (print_contact_str(&p, &uri, q, end) < 0) {
+		if (print_contact_str(&p, &uri, q, end, options) < 0) {
 			goto memfail;
 		}
 
