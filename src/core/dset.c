@@ -53,6 +53,9 @@
 #define ROUTE_PARAM "?Route="
 #define ROUTE_PARAM_LEN (sizeof(ROUTE_PARAM) - 1)
 
+#define FLAGS_PARAM ";flags="
+#define FLAGS_PARAM_LEN (sizeof(FLAGS_PARAM) - 1)
+
 /* 
  * Where we store URIs of additional transaction branches
  * (sr_dst_max_branches - 1 : because of the default branch for r-uri, #0 in tm)
@@ -476,7 +479,7 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
  * end = end of target buffer
  * Returns 0 on success or -1 on error (buffer is too short)
  */
-static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path, char *end, int options)
+static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path, unsigned int flags, char *end, int options)
 {
 	char *p = *dest;
 	str buf;
@@ -521,6 +524,19 @@ static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path, char 
 		memcpy(p, buf.s, buf.len);
 		p += buf.len;
 	}
+
+	/* branch flags (not SIP standard conformant) */
+	if (options & DS_FLAGS) {
+		buf.s = int2str(flags, &buf.len);
+		if (p + FLAGS_PARAM_LEN + buf.len > end) {
+			return -1;
+		}
+		memcpy(p, FLAGS_PARAM, FLAGS_PARAM_LEN);
+		p += FLAGS_PARAM_LEN;
+		memcpy(p, buf.s, buf.len);
+		p += buf.len;
+	}
+
 	*dest = p;
 	return 0;
 }
@@ -535,6 +551,7 @@ char* print_dset(struct sip_msg* msg, int* len, int options)
 	int cnt = 0;
 	qvalue_t q;
 	str uri, path;
+	unsigned int flags;
 	char *p;
 	int crt_branch;
 	static char dset[MAX_REDIRECTION_LEN];
@@ -552,7 +569,7 @@ char* print_dset(struct sip_msg* msg, int* len, int options)
 
 	/* current uri */
 	if (msg->new_uri.s) {
-		if (print_contact_str(&p, &msg->new_uri, ruri_q, &msg->path_vec, end, options) < 0) {
+		if (print_contact_str(&p, &msg->new_uri, ruri_q, &msg->path_vec, ruri_bflags, end, options) < 0) {
 			goto memfail;
 		}
 		cnt++;
@@ -560,7 +577,7 @@ char* print_dset(struct sip_msg* msg, int* len, int options)
 
 	/* branches */
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, &path, 0, 0, 0, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, &path, &flags, 0, 0, 0, 0))) {
 		if (cnt > 0) {
 			if (p + CONTACT_DELIM_LEN > end) {
 				goto memfail;
@@ -569,7 +586,7 @@ char* print_dset(struct sip_msg* msg, int* len, int options)
 			p += CONTACT_DELIM_LEN;
 		}
 
-		if (print_contact_str(&p, &uri, q, &path, end, options) < 0) {
+		if (print_contact_str(&p, &uri, q, &path, flags, end, options) < 0) {
 			goto memfail;
 		}
 
