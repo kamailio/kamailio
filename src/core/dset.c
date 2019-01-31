@@ -46,7 +46,7 @@
 #define CONTACT_DELIM ", "
 #define CONTACT_DELIM_LEN (sizeof(CONTACT_DELIM) - 1)
 
-#define Q_PARAM ">;q="
+#define Q_PARAM ";q="
 #define Q_PARAM_LEN (sizeof(Q_PARAM) - 1)
 
 
@@ -465,109 +465,111 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 	return 1;
 }
 
+/*! \brief
+ * Combines the given elements into a Contact header field
+ * dest = target buffer, will be updated to new position after the printed contact
+ * uri, q = contact elements
+ * end = end of target buffer
+ * Returns 0 on success or -1 on error (buffer is too short)
+ */
+static int print_contact_str(char **dest, str *uri, qvalue_t q, char *end)
+{
+	char *p = *dest;
+	str buf;
+
+	/* uri */
+	if (p + uri->len + 2 > end) {
+		return -1;
+	}
+	*p++ = '<';
+	memcpy(p, uri->s, uri->len);
+	p += uri->len;
+	*p++ = '>';
+
+	/* header parameters */
+	/* q value */
+	if (q != Q_UNSPECIFIED) {
+		buf.s = q2str(q, (unsigned int*)&buf.len);
+		if (p + Q_PARAM_LEN + buf.len > end) {
+			return -1;
+		}
+		memcpy(p, Q_PARAM, Q_PARAM_LEN);
+		p += Q_PARAM_LEN;
+		memcpy(p, buf.s, buf.len);
+		p += buf.len;
+	}
+	*dest = p;
+	return 0;
+}
+
 
 /*
  * Create a Contact header field from the dset
  * array
  */
-char* print_dset(struct sip_msg* msg, int* len) 
+char* print_dset(struct sip_msg* msg, int* len)
 {
-	int cnt, i;
-	unsigned int qlen;
+	int cnt = 0;
 	qvalue_t q;
 	str uri;
-	char* p, *qbuf;
+	char *p;
 	int crt_branch;
 	static char dset[MAX_REDIRECTION_LEN];
-
-	if (msg->new_uri.s) {
-		cnt = 1;
-		*len = msg->new_uri.len + 1 /*'<'*/;
-		if (ruri_q != Q_UNSPECIFIED) {
-			*len += Q_PARAM_LEN + len_q(ruri_q);
-		} else {
-			*len += 1 /*'>'*/;
-		}
-	} else {
-		cnt = 0;
-		*len = 0;
-	}
+	char *end = dset + MAX_REDIRECTION_LEN;
 
 	/* backup current branch index to restore it later */
 	crt_branch = get_branch_iterator();
 
-	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0))) {
-		cnt++;
-		*len += uri.len + 1 /*'<'*/;
-		if (q != Q_UNSPECIFIED) {
-			*len += Q_PARAM_LEN + len_q(q);
-		} else {
-			*len += 1 /*'>'*/;
-		}
+	/* contact header name */
+	if (CONTACT_LEN + CRLF_LEN + 1 > MAX_REDIRECTION_LEN) {
+		goto memfail;
 	}
-
-	if (cnt == 0) return 0;	
-
-	*len += CONTACT_LEN + CRLF_LEN + (cnt - 1) * CONTACT_DELIM_LEN;
-
-	if (*len + 1 > MAX_REDIRECTION_LEN) {
-		LM_ERR("redirection buffer length exceed\n");
-		goto error;
-	}
-
 	memcpy(dset, CONTACT, CONTACT_LEN);
 	p = dset + CONTACT_LEN;
+
+	/* current uri */
 	if (msg->new_uri.s) {
-		*p++ = '<';
-
-		memcpy(p, msg->new_uri.s, msg->new_uri.len);
-		p += msg->new_uri.len;
-
-		if (ruri_q != Q_UNSPECIFIED) {
-			memcpy(p, Q_PARAM, Q_PARAM_LEN);
-			p += Q_PARAM_LEN;
-
-			qbuf = q2str(ruri_q, &qlen);
-			memcpy(p, qbuf, qlen);
-			p += qlen;
-		} else {
-			*p++ = '>';
+		if (print_contact_str(&p, &msg->new_uri, ruri_q, end) < 0) {
+			goto memfail;
 		}
-		i = 1;
-	} else {
-		i = 0;
+		cnt++;
 	}
 
+	/* branches */
 	init_branch_iterator();
 	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0))) {
-		if (i) {
+		if (cnt > 0) {
+			if (p + CONTACT_DELIM_LEN > end) {
+				goto memfail;
+			}
 			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN);
 			p += CONTACT_DELIM_LEN;
 		}
 
-		*p++ = '<';
-
-		memcpy(p, uri.s, uri.len);
-		p += uri.len;
-		if (q != Q_UNSPECIFIED) {
-			memcpy(p, Q_PARAM, Q_PARAM_LEN);
-			p += Q_PARAM_LEN;
-
-			qbuf = q2str(q, &qlen);
-			memcpy(p, qbuf, qlen);
-			p += qlen;
-		} else {
-			*p++ = '>';
+		if (print_contact_str(&p, &uri, q, end) < 0) {
+			goto memfail;
 		}
-		i++;
+
+		cnt++;
 	}
 
+	if (cnt == 0) {
+		LM_WARN("no r-uri or branches\n");
+		goto error;
+	}
+
+	if (p + CRLF_LEN + 1 > end) {
+		goto memfail;
+	}
 	memcpy(p, CRLF " ", CRLF_LEN + 1);
+	*len = p - dset + CRLF_LEN;
 	set_branch_iterator(crt_branch);
 	return dset;
 
+memfail:
+	LM_ERR("redirection buffer length exceed\n");
 error:
+	*len = 0;
 	set_branch_iterator(crt_branch);
 	return 0;
 }
