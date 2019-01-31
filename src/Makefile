@@ -1019,6 +1019,29 @@ install_initd_centos install-initd-centos:
                   -d /var/run/$(NAME) $(NAME)
 	chown $(NAME):$(NAME) /var/run/$(NAME)
 
+.PHONY: install_systemd_debian install-systemd-debian
+install_systemd_debian install-systemd-debian:
+	sed -e "s#ExecStart=/usr/sbin/kamailio#ExecStart=$(bin_prefix)/$(bin_dir)$(NAME)#g" \
+		-e "s#Description=Kamailio#Description=$(NAME)#g" \
+		-e "s#/var/run/kamailio/kamailio.pid#/var/run/$(NAME)/$(NAME).pid#g" \
+		-e "s#EnvironmentFile=-/etc/default/kamailio#EnvironmentFile=-/etc/default/$(NAME)#g" \
+		-e "s#CFGFILE=/etc/kamailio/kamailio.cfg#CFGFILE=$(cfg_prefix)/$(cfg_dir)$(NAME).cfg#g" \
+		< ../pkg/kamailio/deb/debian/kamailio.service \
+		> /etc/systemd/system/$(NAME).service
+	sed -e "s#RUN_KAMAILIO=no#RUN_KAMAILIO=yes#g" \
+		< ../pkg/kamailio/deb/debian/kamailio.default \
+		> /etc/default/$(NAME)
+	mkdir -p /var/run/$(NAME)
+	adduser --quiet --system --group --disabled-password \
+        --shell /bin/false --gecos "$(NAME)" \
+        --home /var/run/$(NAME) $(NAME)
+	chown $(NAME):$(NAME) /var/run/$(NAME)
+	echo "D /run/$(NAME) 0700 $(NAME) $(NAME) -" > /etc/tmpfiles.d/$(NAME).conf
+	@echo
+	@echo "* to enable kamailio service run:"
+	@echo "    systemctl enable kamailio"
+	@echo "    systemctl daemon-reload"
+
 .PHONY: dbschema
 dbschema:
 	-@echo "Build database schemas"
