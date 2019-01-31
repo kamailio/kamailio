@@ -166,7 +166,7 @@
 
 #define MAX_PRINT_TEXT 		256	/*!< max length of the text of fifo 'print' command */
 
-#define MAX_REDIRECTION_LEN	512	/*!< maximum length of Contact header field in redirection replies */
+#define MAX_REDIRECTION_LEN	4096	/*!< maximum length of Contact header field in redirection replies */
 
 /*! \brief used by FIFO statistics in module to terminate line;
    extra whitespaces are used to overwrite remainders of
