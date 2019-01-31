@@ -50,6 +50,7 @@ typedef struct contact {
 	param_t* received;      /* received parameter hook */
 	param_t* instance;      /* sip.instance parameter hook */
 	param_t* reg_id;        /* reg-id parameter hook */
+	param_t* flags;         /* flags parameter hook */
 	param_t* params;        /* List of all parameters */
 	int len;                /* Total length of the element */
         struct contact* next; /* Next contact in the list */
