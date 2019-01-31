@@ -1,5 +1,5 @@
 %define name    kamailio
-%define ver 5.1.6
+%define ver 5.1.7
 %define rel dev6%{dist}
 %bcond_with dnssec
 
