@@ -39,6 +39,7 @@
 #include "dset.h"
 #include "mem/mem.h"
 #include "ip_addr.h"
+#include "strutils.h"
 
 #define CONTACT "Contact: "
 #define CONTACT_LEN (sizeof(CONTACT) - 1)
@@ -49,6 +50,8 @@
 #define Q_PARAM ";q="
 #define Q_PARAM_LEN (sizeof(Q_PARAM) - 1)
 
+#define ROUTE_PARAM "?Route="
+#define ROUTE_PARAM_LEN (sizeof(ROUTE_PARAM) - 1)
 
 /* 
  * Where we store URIs of additional transaction branches
@@ -465,6 +468,7 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 	return 1;
 }
 
+
 /*! \brief
  * Combines the given elements into a Contact header field
  * dest = target buffer, will be updated to new position after the printed contact
@@ -472,7 +476,7 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
  * end = end of target buffer
  * Returns 0 on success or -1 on error (buffer is too short)
  */
-static int print_contact_str(char **dest, str *uri, qvalue_t q, char *end, int options)
+static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path, char *end, int options)
 {
 	char *p = *dest;
 	str buf;
@@ -484,6 +488,25 @@ static int print_contact_str(char **dest, str *uri, qvalue_t q, char *end, int o
 	*p++ = '<';
 	memcpy(p, uri->s, uri->len);
 	p += uri->len;
+
+	/* uri parameters */
+	/* path vector as route header parameter */
+	if ((options & DS_PATH) && path->len > 0) {
+		if (p + ROUTE_PARAM_LEN + path->len > end) {
+			return -1;
+		}
+		memcpy(p, ROUTE_PARAM, ROUTE_PARAM_LEN);
+		p += ROUTE_PARAM_LEN;
+		/* copy escaped path into dest */
+		buf.s = p;
+		buf.len = end - p;
+		if (escape_param(path, &buf) < 0) {
+			return -1;
+		}
+		p += buf.len;
+	}
+
+	/* end of uri parameters */
 	*p++ = '>';
 
 	/* header parameters */
@@ -511,7 +534,7 @@ char* print_dset(struct sip_msg* msg, int* len, int options)
 {
 	int cnt = 0;
 	qvalue_t q;
-	str uri;
+	str uri, path;
 	char *p;
 	int crt_branch;
 	static char dset[MAX_REDIRECTION_LEN];
@@ -529,7 +552,7 @@ char* print_dset(struct sip_msg* msg, int* len, int options)
 
 	/* current uri */
 	if (msg->new_uri.s) {
-		if (print_contact_str(&p, &msg->new_uri, ruri_q, end, options) < 0) {
+		if (print_contact_str(&p, &msg->new_uri, ruri_q, &msg->path_vec, end, options) < 0) {
 			goto memfail;
 		}
 		cnt++;
@@ -537,7 +560,7 @@ char* print_dset(struct sip_msg* msg, int* len, int options)
 
 	/* branches */
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, &path, 0, 0, 0, 0, 0))) {
 		if (cnt > 0) {
 			if (p + CONTACT_DELIM_LEN > end) {
 				goto memfail;
@@ -546,7 +569,7 @@ char* print_dset(struct sip_msg* msg, int* len, int options)
 			p += CONTACT_DELIM_LEN;
 		}
 
-		if (print_contact_str(&p, &uri, q, end, options) < 0) {
+		if (print_contact_str(&p, &uri, q, &path, end, options) < 0) {
 			goto memfail;
 		}
 
