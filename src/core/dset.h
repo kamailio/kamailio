@@ -37,6 +37,7 @@
 extern unsigned int nr_branches;
 extern int ruri_is_new;
 
+#define DS_FLAGS    1
 #define DS_PATH     2
 
 /*! \brief
