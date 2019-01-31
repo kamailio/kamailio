@@ -116,6 +116,7 @@ static param_export_t params[] = {
 	{"default_code",   PARAM_INT, &default_code},
 	{"default_reason", PARAM_STR, &default_reason},
 	{"bind_tm",        PARAM_INT, &sl_bind_tm},
+	{"rich_redirect",  PARAM_INT, &sl_rich_redirect},
 
 	{0, 0, 0}
 };

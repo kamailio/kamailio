@@ -30,6 +30,8 @@
 
 #define SL_TOTAG_SEPARATOR '.'
 
+extern int sl_rich_redirect;
+
 int sl_startup();
 int sl_shutdown();
 

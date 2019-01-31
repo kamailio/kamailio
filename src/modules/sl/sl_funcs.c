@@ -55,6 +55,9 @@ static int _sl_filtered_ack_route = -1; /* default disabled */
 
 static int _sl_evrt_local_response = -1; /* default disabled */
 
+/* send path and flags in 3xx class reply */
+int sl_rich_redirect = 0;
+
 /*!
  * lookup sl event routes
  */
@@ -150,7 +153,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 
 	/* if that is a redirection message, dump current message set to it */
 	if (code>=300 && code<400) {
-		dset.s=print_dset(msg, &dset.len, 0);
+		dset.s=print_dset(msg, &dset.len, sl_rich_redirect);
 		if (dset.s) {
 			add_lump_rpl(msg, dset.s, dset.len, LUMP_RPL_HDR);
 		}
