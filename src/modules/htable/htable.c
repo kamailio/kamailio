@@ -1123,6 +1123,10 @@ static const char* htable_stats_doc[2] = {
 	"Statistics about htables.",
 	0
 };
+static const char* htable_flush_doc[2] = {
+	"Flush hash table.",
+	0
+};
 static const char* htable_reload_doc[2] = {
 	"Reload hash table.",
 	0
@@ -1474,6 +1478,25 @@ error:
 	return;
 }
 
+/*! \brief RPC htable.flush command to empty a hash table */
+static void  htable_rpc_flush(rpc_t* rpc, void* c)
+{
+	str htname;
+	ht_t *ht;
+
+	if (rpc->scan(c, "S", &htname) < 1)
+	{
+		rpc->fault(c, 500, "No htable name given");
+		return;
+	}
+	ht = ht_get_table(&htname);
+	if(ht==NULL)
+	{
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+	ht_reset_content(ht);
+}
 
 /*! \brief RPC htable.reload command to reload content of a hash table */
 static void htable_rpc_reload(rpc_t* rpc, void* c)
@@ -1583,6 +1606,7 @@ rpc_export_t htable_rpc[] = {
 	{"htable.listTables", htable_rpc_list, htable_list_doc, RET_ARRAY},
 	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
 	{"htable.stats", htable_rpc_stats, htable_stats_doc, RET_ARRAY},
+	{"htable.flush", htable_rpc_flush, htable_flush_doc, 0},
 	{0, 0, 0, 0}
 };
 

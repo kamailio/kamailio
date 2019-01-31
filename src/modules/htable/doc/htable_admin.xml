@@ -1392,6 +1392,29 @@ kamcmd htable.reload ipban
 ...
 </programlisting>
 	</section>
+	<section id="htable.rpc.flush">
+          <title>
+                <function moreinfo="none">htable.flush htable</function>
+          </title>
+          <para>
+            Empty the hash table
+          </para>
+          <para>
+            Name: <emphasis>htable.flush</emphasis>
+          </para>
+          <para>Parameters:</para>
+          <itemizedlist>
+            <listitem><para>htable : Name of the hash table to flush</para></listitem>
+          </itemizedlist>
+          <para>
+          Example:
+          </para>
+<programlisting  format="linespecific">
+...
+kamcmd htable.flush ipban
+...
+</programlisting>
+	</section>
         <section id="htable.rpc.listTables">
                 <title>
                 <function moreinfo="none">htable.listTables</function>
