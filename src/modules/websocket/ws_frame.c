@@ -820,7 +820,7 @@ void ws_keepalive(unsigned int ticks, void *param)
 			}
 		}
 		if(wsc) {
-			wsconn_get(list_head[i].id);
+			wsconn_put_id(list_head[i].id);
 		}
 		i++;
 
