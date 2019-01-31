@@ -82,8 +82,9 @@ Ovidiu Sas
               6.4. htable.seti htable key value
               6.5. htable.dump htable
               6.6. htable.reload htable
-              6.7. htable.listTables
-              6.8. htable.stats
+              6.7. htable.flush htable
+              6.8. htable.listTables
+              6.9. htable.stats
 
         7. Event routes
 
@@ -182,8 +183,9 @@ Chapter 1. Admin Guide
         6.4. htable.seti htable key value
         6.5. htable.dump htable
         6.6. htable.reload htable
-        6.7. htable.listTables
-        6.8. htable.stats
+        6.7. htable.flush htable
+        6.8. htable.listTables
+        6.9. htable.stats
 
    7. Event routes
 
@@ -960,8 +962,9 @@ if(sht_has_str_value("ha", "eq", "alice")) {
    6.4. htable.seti htable key value
    6.5. htable.dump htable
    6.6. htable.reload htable
-   6.7. htable.listTables
-   6.8. htable.stats
+   6.7. htable.flush htable
+   6.8. htable.listTables
+   6.9. htable.stats
 
 6.1.  htable.get htable key
 
@@ -1069,7 +1072,21 @@ kamcmd htable.dump ipban
 kamcmd htable.reload ipban
 ...
 
-6.7.  htable.listTables
+6.7.  htable.flush htable
+
+   Empty the hash table
+
+   Name: htable.flush
+
+   Parameters:
+     * htable : Name of the hash table to flush
+
+   Example:
+...
+kamcmd htable.flush ipban
+...
+
+6.8.  htable.listTables
 
    Lists all defined tables
 
@@ -1083,7 +1100,7 @@ kamcmd htable.reload ipban
 kamcmd htable.listTables
 ...
 
-6.8.  htable.stats
+6.9.  htable.stats
 
    Get statistics for hash tables - name, number of slots, number of
    items, max number of items per slot, min number of items per slot.
