@@ -36,6 +36,8 @@ extern cmd_function   rd_acc_fct;
 
 extern char *acc_db_table;
 
+extern int flags_hdr_mode;
+
 int get_redirect( struct sip_msg *msg , int maxt, int maxb,
 		struct acc_param *reason, unsigned int bflags);
 

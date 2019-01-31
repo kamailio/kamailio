@@ -302,8 +302,46 @@ branch_route[1] {
 				</programlisting>
 			</example>
 		</section>
+		<section>
+			<title><varname>flags_hdr_mode</varname> (int)</title>
+			<para>
+			Specifies if and how a Contact&apos;s flags header parameter
+			must be used. If set, and a flags header parameter is set,
+			its value will be set as branch flags for that contact.
+			</para>
+			<para>
+			Its values may be:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>0</emphasis> - ignore flags header parameter,
+				just use bflags module parameter</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>1</emphasis> - use flags header parameter if
+				present, ignore bflags module parameter</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>2</emphasis> - use flags header parameter if
+				present and merge (binary or) it with the bflags module
+				parameter</para>
+				</listitem>
+			</itemizedlist>
+			<para>
+				<emphasis>
+					The default value is <quote>0</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>flags_hdr_mode</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac_redirect","flags_hdr_mode",2)
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
-
 	<section>
 		<title>Functions</title>
 		<section id="uac_redirect.f.set_deny_filter">
