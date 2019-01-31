@@ -475,6 +475,7 @@ static param_export_t params[]={
 	{"xavp_contact",        PARAM_STR, &ulattrs_xavp_name                    },
 	{"event_callback",      PARAM_STR, &tm_event_callback                    },
 	{"relay_100",           PARAM_INT, &default_tm_cfg.relay_100             },
+	{"rich_redirect" ,      PARAM_INT, &tm_rich_redirect                     },
 	{0,0,0}
 };
 
