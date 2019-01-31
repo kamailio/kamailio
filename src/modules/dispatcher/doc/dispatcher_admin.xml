@@ -1308,7 +1308,7 @@ if(ds_select("1", "$var(a)")) {
 			the address in destination URI; '1', 'r' or 'R' to push the address
 			in R-URI; '2', 'x' or 'X' to push the address only in the XAVP when
 			failure rerouting is enabled. Note that only first character of the
-			parameter matters, therefore once case use a more meaningful value
+			parameter matters, therefore one can use a more meaningful value
 			such as 'ruri' instead of 'r'. The parameter can contain pseudo
 			variables.
 			</para>
