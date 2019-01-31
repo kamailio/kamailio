@@ -61,4 +61,34 @@ modparam("sl", "bind_tm", 0)  # feature disabled
 		</example>
 	</section>
 
+	<section id="rich_redirect">
+		<title><varname>rich_redirect</varname> (int)</title>
+		<para>
+		When sending a 3xx class reply, include additional branch info
+		to the contacts such as path vector and branch flags.
+		</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>0</emphasis> - no extra info is added (default)
+			</para></listitem>
+			<listitem><para>
+			<emphasis>1</emphasis> - include branch flags as contact header parameter
+			</para></listitem>
+			<listitem><para>
+			<emphasis>2</emphasis> - include path as contact uri Route header
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Values may be combined (added).
+		</para>
+		<example>
+			<title>rich_redirect example</title>
+			<programlisting format="linespecific">
+...
+modparam("sl", "rich_redirect", 3)
+...
+			</programlisting>
+		</example>
+	</section>
+
 </section>
