@@ -150,7 +150,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 
 	/* if that is a redirection message, dump current message set to it */
 	if (code>=300 && code<400) {
-		dset.s=print_dset(msg, &dset.len);
+		dset.s=print_dset(msg, &dset.len, 0);
 		if (dset.s) {
 			add_lump_rpl(msg, dset.s, dset.len, LUMP_RPL_HDR);
 		}
