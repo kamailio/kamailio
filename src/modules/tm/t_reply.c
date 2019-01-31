@@ -102,6 +102,8 @@ int goto_on_sl_reply=0;
 
 /* remap 503 response code to 500 */
 extern int tm_remap_503_500;
+/* send path and flags in 3xx class reply */
+int tm_rich_redirect = 0;
 
 /* how to deal with winning branch reply selection in failure_route
  * can be overwritten per transaction with t_drop_replies(...)
@@ -640,7 +642,7 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 
 	/* if that is a redirection message, dump current message set to it */
 	if (code>=300 && code<400) {
-		dset=print_dset(p_msg, &dset_len, 0);
+		dset=print_dset(p_msg, &dset_len, tm_rich_redirect);
 		if (dset) {
 			add_lump_rpl(p_msg, dset, dset_len, LUMP_RPL_HDR);
 		}
