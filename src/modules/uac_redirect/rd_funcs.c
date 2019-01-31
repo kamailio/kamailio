@@ -199,6 +199,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	int added;
 	int dup;
 	int ret;
+	unsigned int flags;
 
 	/* dup can be:
 	 *    0 - sh reply but nothing duplicated 
@@ -294,8 +295,14 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 		LM_DBG("adding contact <%.*s>\n", scontacts[i]->uri.len,
 				scontacts[i]->uri.s);
 		if(sruid_next(&_redirect_sruid)==0) {
+			if (flags_hdr_mode && scontacts[i]->flags && str2int(&(scontacts[i]->flags->body), &flags) == 0) {
+				if (flags_hdr_mode == 2)
+					flags |= bflags;
+			} else {
+				flags = bflags;
+			}
 			if(append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i],
-						bflags, 0, &_redirect_sruid.uid, 0,
+						flags, 0, &_redirect_sruid.uid, 0,
 						&_redirect_sruid.uid, &_redirect_sruid.uid)<0) {
 				LM_ERR("failed to add contact to dset\n");
 			} else {

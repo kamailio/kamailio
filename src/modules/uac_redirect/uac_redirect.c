@@ -48,6 +48,7 @@ char *accept_filter_s = 0;
 char *def_filter_s = 0;
 
 unsigned int bflags = 0;
+int flags_hdr_mode = 0;
 
 #define ACCEPT_RULE_STR "accept"
 #define DENY_RULE_STR   "deny"
@@ -86,6 +87,7 @@ static param_export_t params[] = {
 	{"acc_function",    PARAM_STRING,  &acc_fct_s        },
 	{"acc_db_table",    PARAM_STRING,  &acc_db_table     },
 	{"bflags",    		INT_PARAM,  &bflags			  },
+	{"flags_hdr_mode",	INT_PARAM,  &flags_hdr_mode	  },
 	{0, 0, 0}
 };
 
