@@ -309,6 +309,7 @@ DNS_TCP_PREF	dns_tcp_pref|dns_tcp_preference
 DNS_TLS_PREF	dns_tls_pref|dns_tls_preference
 DNS_SCTP_PREF	dns_sctp_pref|dns_sctp_preference
 DNS_RETR_TIME	dns_retr_time
+DNS_SLOW_QUERY_MS	dns_slow_query_ms
 DNS_RETR_NO		dns_retr_no
 DNS_SERVERS_NO	dns_servers_no
 DNS_USE_SEARCH	dns_use_search_list
@@ -723,6 +724,8 @@ IMPORTFILE      "import_file"
 								return DNS_SCTP_PREF; }
 <INITIAL>{DNS_RETR_TIME}	{ count(); yylval.strval=yytext;
 								return DNS_RETR_TIME; }
+<INITIAL>{DNS_SLOW_QUERY_MS}	{ count(); yylval.strval=yytext;
+								return DNS_SLOW_QUERY_MS; }
 <INITIAL>{DNS_RETR_NO}	{ count(); yylval.strval=yytext;
 								return DNS_RETR_NO; }
 <INITIAL>{DNS_SERVERS_NO}	{ count(); yylval.strval=yytext;

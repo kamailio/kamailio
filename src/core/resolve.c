@@ -51,6 +51,8 @@ struct dns_counters_h dns_cnts_h;
 counter_def_t dns_cnt_defs[] =  {
 	{&dns_cnts_h.failed_dns_req, "failed_dns_request", 0, 0, 0,
 		"incremented each time a DNS request has failed."},
+	{&dns_cnts_h.slow_dns_req, "slow_dns_request", 0, 0, 0,
+		"incremented each time a DNS request took longer than dns_slow_query_ms."},
 	{0, 0, 0, 0, 0, 0 }
 };
 
@@ -714,6 +716,8 @@ struct rdata* get_record(char* name, int type, int flags)
 	int name_len;
 	struct rdata* fullname_rd;
 	char c;
+	struct timeval start, stop;
+	int slow_query_ms = cfg_get(core, core_cfg, dns_slow_query_ms);
 
 	name_len=strlen(name);
 
@@ -735,7 +739,20 @@ struct rdata* get_record(char* name, int type, int flags)
 	}
 	fullname_rd=0;
 
+	if (slow_query_ms > 0)
+		gettimeofday(&start, NULL);
+
 	size=dns_func.sr_res_search(name, C_IN, type, buff.buff, sizeof(buff));
+
+	if (slow_query_ms > 0) {
+		gettimeofday(&stop, NULL);
+		int latency_ms = (stop.tv_sec - start.tv_sec)*1000
+                + (stop.tv_usec - start.tv_usec)/1000;
+		if (slow_query_ms < latency_ms) {
+			LOG(cfg_get(core, core_cfg, latency_log), "res_search[%d][%s]elapsed[%dms]\n", type, name, latency_ms);
+			counter_inc(dns_cnts_h.slow_dns_req);
+		}
+	}
 
 	if (unlikely(size<0)) {
 		LM_DBG("lookup(%s, %d) failed\n", name, type);

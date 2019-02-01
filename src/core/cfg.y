@@ -337,6 +337,7 @@ extern char *default_routename;
 %token DNS_TLS_PREF
 %token DNS_SCTP_PREF
 %token DNS_RETR_TIME
+%token DNS_SLOW_QUERY_MS
 %token DNS_RETR_NO
 %token DNS_SERVERS_NO
 %token DNS_USE_SEARCH
@@ -827,6 +828,8 @@ assign_stm:
 	| DNS_SCTP_PREF error { yyerror("number expected"); }
 	| DNS_RETR_TIME EQUAL NUMBER   { default_core_cfg.dns_retr_time=$3; }
 	| DNS_RETR_TIME error { yyerror("number expected"); }
+	| DNS_SLOW_QUERY_MS EQUAL NUMBER   { default_core_cfg.dns_slow_query_ms=$3; }
+	| DNS_SLOW_QUERY_MS error { yyerror("number expected"); }
 	| DNS_RETR_NO EQUAL NUMBER   { default_core_cfg.dns_retr_no=$3; }
 	| DNS_RETR_NO error { yyerror("number expected"); }
 	| DNS_SERVERS_NO EQUAL NUMBER   { default_core_cfg.dns_servers_no=$3; }

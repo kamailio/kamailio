@@ -78,6 +78,7 @@ struct cfg_group_core default_core_cfg = {
 	10,  /*!< tls transport preference (for naptr) */
 	20,  /*!< sctp transport preference (for naptr) */
 	-1, /*!< dns_retr_time */
+	0,  /*!< dns_slow_query_ms */
 	-1, /*!< dns_retr_no */
 	-1, /*!< dns_servers_no */
 	1,  /*!< dns_search_list */
@@ -224,6 +225,8 @@ cfg_def_t core_cfg_def[] = {
 		"sctp protocol preference when doing NAPTR lookups"},
 	{"dns_retr_time",	CFG_VAR_INT,	0, 0, 0, resolv_reinit,
 		"time in s before retrying a dns request"},
+	{"dns_slow_query_ms",	CFG_VAR_INT,	0, 0, 0, resolv_reinit,
+		"max time in ms before a dns request is considered slow"},
 	{"dns_retr_no",		CFG_VAR_INT,	0, 0, 0, resolv_reinit,
 		"number of dns retransmissions before giving up"},
 	{"dns_servers_no",	CFG_VAR_INT,	0, 0, 0, resolv_reinit,
