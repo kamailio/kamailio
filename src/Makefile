@@ -1055,13 +1055,14 @@ install_systemd_centos install-systemd-centos:
 	mkdir -p /var/run/$(NAME)
 	chmod 0700 /var/run/$(NAME)
 	groupadd --system $(NAME)
-	useradd $(NAME) --shell /sbin/nologin --no-create-home -g "$(NAME)"
+	useradd $(NAME) --system --shell /sbin/nologin -g $(NAME) --home /var/run/$(NAME)
 	chown $(NAME):$(NAME) /var/run/$(NAME)
+	echo "D /run/$(NAME) 0700 $(NAME) $(NAME) -" > /etc/tmpfiles.d/$(NAME).conf
 	@echo
 	@echo "* to enable kamailio service run:"
 	@echo "    systemctl daemon-reload"
 	@echo "    systemctl enable kamailio"
-
+	@echo "    systemctl start kamailio"
 
 .PHONY: dbschema
 dbschema:
