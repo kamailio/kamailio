@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2010 Elena-Ramona Modroiu (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
