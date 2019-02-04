@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2013 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of kamailio, a free SIP server.
@@ -393,4 +391,3 @@ done:
 	free_sip_msg(&msg);
 	return 0;
 }
-
