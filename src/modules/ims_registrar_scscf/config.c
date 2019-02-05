@@ -36,8 +36,8 @@ struct cfg_group_registrar	default_registrar_cfg = {
 		60,	/* min_expires */
 		0,	/* max_expires */
 		3600,	/* emergency contact default expires */
-		60,	/* emergency contact min expires */
-		0,	/* emergency contact max expires */
+		60,	/* emergency contact max expires */
+		0,	/* emergency contact min expires */
 		0,	/* max_contacts */
 		0,	/* retry_after */
 		0,	/* case_sensitive */
