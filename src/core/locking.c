@@ -107,7 +107,6 @@ rec_lock_set_t* rec_lock_set_alloc(int n)
 		ls->size=n;
 	}
 	return ls;
-	return NULL;
 }
 
 /**
