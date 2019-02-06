@@ -50,6 +50,9 @@
 extern int num_workers;
 
 extern int http_timeout; /* query timeout in ms */
+extern int tcp_keepalive; 
+extern int tcp_ka_idle; 
+extern int tcp_ka_interval; 
 
 extern struct sip_msg *ah_reply;
 extern str ah_error;
@@ -98,6 +101,9 @@ struct query_params {
 	unsigned int authmethod;
 	char* username;
 	char* password;
+	unsigned int tcp_keepalive;
+	unsigned int tcp_ka_idle;
+	unsigned int tcp_ka_interval;
 };
 
 extern struct query_params ah_params;

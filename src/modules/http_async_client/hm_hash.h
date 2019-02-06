@@ -78,6 +78,9 @@ typedef struct hm_params {
 	unsigned int authmethod;
 	char* username;
 	char* password;
+	int tcp_keepalive;
+	int tcp_ka_idle;
+	int tcp_ka_interval;
 } http_m_params_t;
 
 typedef struct http_m_cell

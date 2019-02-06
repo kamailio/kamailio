@@ -66,6 +66,9 @@ extern unsigned int q_idx;
 extern char q_id[MAX_ID_LEN+1];
 
 int http_timeout = 500; /* query timeout in ms */
+int tcp_keepalive = 0; /* TCP keepalives (default disabled) */
+int tcp_ka_idle = 0; /* TCP keep-alive idle time wait */
+int tcp_ka_interval = 0; /* TCP keep-alive interval */
 int hash_size = 2048;
 int tls_version = 0; // Use default SSL version in HTTPS requests (see curl/curl.h)
 int tls_verify_host = 1; // By default verify host in HTTPS requests
@@ -121,7 +124,8 @@ enum http_req_name_t {
 	E_HRN_TLS_CA_PATH, E_HRN_TLS_CLIENT_KEY,
 	E_HRN_TLS_CLIENT_CERT, E_HRN_SUSPEND,
 	E_HRN_BODY, E_HRN_AUTHMETHOD, E_HRN_USERNAME,
-	E_HRN_PASSWORD
+	E_HRN_PASSWORD, E_HRN_TCP_KA, E_HRN_TCP_KA_IDLE,
+	E_HRN_TCP_KA_INTERVAL
 };
 
 static cmd_export_t cmds[]={
@@ -143,6 +147,9 @@ static param_export_t params[]={
 	{"tls_ca_path",			PARAM_STRING,	&tls_ca_path},
 	{"memory_manager",		PARAM_STRING,	&memory_manager},
 	{"authmethod",			PARAM_INT,		&default_authmethod },
+	{"tcp_keepalive",	    INT_PARAM,		&tcp_keepalive},
+	{"tcp_ka_idle",	        INT_PARAM,		&tcp_ka_idle},
+	{"tcp_ka_interval",	    INT_PARAM,		&tcp_ka_interval},
 	{0, 0, 0}
 };
 
@@ -249,6 +256,13 @@ static int mod_init(void)
 	tls_verify_host = tls_verify_host?1:0;
 	tls_verify_peer = tls_verify_peer?1:0;
 
+	if (tcp_keepalive) {
+		LM_INFO("TCP keepalives enabled\n");
+	}
+	/* check tcp keepalive parameters */
+	if ((tcp_ka_idle > 0 || tcp_ka_interval > 0) && !(tcp_keepalive > 0)) {
+		LM_WARN("either 'tcp_ka_idle' or 'tcp_ka_interval' are set but 'tcp_keepalive' is disabled: they will be ignored\n");
+	}
 	/* init http parameters list */
 	init_query_params(&ah_params);
 
@@ -556,6 +570,8 @@ static int ah_parse_req_name(pv_spec_p sp, str *in) {
 				sp->pvp.pvn.u.isname.name.n = E_HRN_TIMEOUT;
 			else if(strncmp(in->s, "suspend", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_SUSPEND;
+			else if(strncmp(in->s, "ka-idle", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_TCP_KA_IDLE;
 			else goto error;
 			break;
 		case 8:
@@ -563,6 +579,11 @@ static int ah_parse_req_name(pv_spec_p sp, str *in) {
 				sp->pvp.pvn.u.isname.name.n = E_HRN_USERNAME;
 			else if(strncmp(in->s, "password", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_PASSWORD;
+			else goto error;
+			break;
+		case 9:
+			if(strncmp(in->s, "keepalive", 9)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_TCP_KA;
 			else goto error;
 			break;
 		case 10:
@@ -573,6 +594,8 @@ static int ah_parse_req_name(pv_spec_p sp, str *in) {
 		case 11:
 			if(strncmp(in->s, "tls_ca_path", 11)==0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_TLS_CA_PATH;
+			else if(strncmp(in->s, "ka-interval", 11)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_TCP_KA_INTERVAL;
 			else goto error;
 			break;
 		case 14:
@@ -721,6 +744,41 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 				return -1;
 			}
 			set_query_cparam(&ah_params.password, tval->rs);
+		}
+		break;
+	case E_HRN_TCP_KA:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("invalid value type for $http_req(keepalive)\n");
+				return -1;
+			}
+			ah_params.tcp_keepalive = tval->ri;
+		} else {
+			ah_params.tcp_keepalive = tcp_keepalive;
+		}
+		break;
+
+	case E_HRN_TCP_KA_IDLE:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("invalid value type for $http_req(ka-idle)\n");
+				return -1;
+			}
+			ah_params.tcp_ka_idle = tval->ri;
+		} else {
+			ah_params.tcp_ka_idle = tcp_ka_idle;
+		}
+		break;
+
+	case E_HRN_TCP_KA_INTERVAL:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("invalid value type for $http_req(ka-interval)\n");
+				return -1;
+			}
+			ah_params.tcp_ka_interval = tval->ri;
+		} else {
+			ah_params.tcp_ka_interval = tcp_ka_interval;
 		}
 		break;
 	}
