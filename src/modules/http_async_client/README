@@ -45,6 +45,9 @@ Federico Cabiddu
               3.9. tls_client_cert (string)
               3.10. tls_client_key (string)
               3.11. tls_ca_path (string)
+              3.12. tcp_keepalive (integer)
+              3.13. tcp_ka_idle (integer)
+              3.14. tcp_ka_interval (integer)
 
         4. Functions
 
@@ -73,9 +76,12 @@ Federico Cabiddu
    1.9. Set tls_client_cert parameter
    1.10. Set tls_client_key parameter
    1.11. Set tls_ca_path parameter
-   1.12. http_async_query() usage
-   1.13. $http_req_id variable usage
-   1.14. $http_req(key) variable usage
+   1.12. Set tcp_keepalive parameter
+   1.13. Set tcp_ka_idle parameter
+   1.14. Set tcp_ka_interval parameter
+   1.15. http_async_query() usage
+   1.16. $http_req_id variable usage
+   1.17. $http_req(key) variable usage
 
 Chapter 1. Admin Guide
 
@@ -100,6 +106,9 @@ Chapter 1. Admin Guide
         3.9. tls_client_cert (string)
         3.10. tls_client_key (string)
         3.11. tls_ca_path (string)
+        3.12. tcp_keepalive (integer)
+        3.13. tcp_ka_idle (integer)
+        3.14. tcp_ka_interval (integer)
 
    4. Functions
 
@@ -149,6 +158,9 @@ Chapter 1. Admin Guide
    3.9. tls_client_cert (string)
    3.10. tls_client_key (string)
    3.11. tls_ca_path (string)
+   3.12. tcp_keepalive (integer)
+   3.13. tcp_ka_idle (integer)
+   3.14. tcp_ka_interval (integer)
 
 3.1. workers (integer)
 
@@ -296,6 +308,40 @@ y")
 modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 ...
 
+3.12. tcp_keepalive (integer)
+
+   If defined to a non-zero value, TCP keepalive will be enabled on cURL
+   connections.
+
+   Default value is 0 (disabled).
+
+   Example 1.12. Set tcp_keepalive parameter
+...
+modparam("http_async_client", "tcp_keepalive", 1)
+...
+
+3.13. tcp_ka_idle (integer)
+
+   TCP keep-alive idle time wait value (in seconds).
+
+   Default value is 0 (use cURL default value, 60s).
+
+   Example 1.13. Set tcp_ka_idle parameter
+...
+modparam("http_async_client", "tcp_ka_idle", 30)
+...
+
+3.14. tcp_ka_interval (integer)
+
+   TCP keep-alive interval (in seconds).
+
+   Default value is 0 (use cURL default value, 60s).
+
+   Example 1.14. Set tcp_ka_interval parameter
+...
+modparam("http_async_client", "tcp_ka_interval", 120)
+...
+
 4. Functions
 
    4.1. http_async_query(url, route_name)
@@ -323,7 +369,7 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
    error are returned in the module-specific $http_* PVs (see below). See
    example on how to retrieve return values.
 
-   Example 1.12. http_async_query() usage
+   Example 1.15. http_async_query() usage
 ...
 # create a transaction to be paused, and resumed in route[HTTP_REPLY]
 t_newtran();
@@ -352,7 +398,7 @@ route[HTTP_REPLY] {
    HTTP callback route to retrive the id of the query the reply belongs
    to. Useful mainly in non-transactional context.
 
-   Example 1.13. $http_req_id variable usage
+   Example 1.16. $http_req_id variable usage
 ...
 $http_req(suspend) = 0;
 
@@ -397,8 +443,11 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
      * password: sets the password to use for authenticated requests
      * suspend: if set to 0 it doesn't suspend the current transaction
        before performing the query
+     * tcp_keepalive: enable TCP keepalive
+     * tcp_ka_idle: set TCP keepalive idle time wait
+     * tcp_ka_interval: set TCP keepalive interval
 
-   Example 1.14. $http_req(key) variable usage
+   Example 1.17. $http_req(key) variable usage
 ...
 $http_req(all) = $null;                    # reset the parameters
 $http_req(timeout) = 100;                  # 100 ms
