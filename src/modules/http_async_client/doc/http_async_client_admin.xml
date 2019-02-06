@@ -294,6 +294,63 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>tcp_keepalive</varname> (integer)</title>
+        <para>
+		    If defined to a non-zero value, TCP keepalive will be enabled on cURL connections.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tcp_keepalive</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tcp_keepalive", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tcp_ka_idle</varname> (integer)</title>
+        <para>
+			TCP keep-alive idle time wait value (in seconds).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (use cURL default value, 60s).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tcp_ka_idle</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tcp_ka_idle", 30)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tcp_ka_interval</varname> (integer)</title>
+        <para>
+			TCP keep-alive interval (in seconds).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (use cURL default value, 60s).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tcp_ka_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tcp_ka_interval", 120)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -397,6 +454,9 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
 		<listitem><para><emphasis>username</emphasis>: sets the username to use for authenticated requests</para></listitem>
 		<listitem><para><emphasis>password</emphasis>: sets the password to use for authenticated requests</para></listitem>
 		<listitem><para><emphasis>suspend</emphasis>: if set to 0 it doesn't suspend the current transaction before performing the query</para></listitem>
+		<listitem><para><emphasis>tcp_keepalive</emphasis>: enable TCP keepalive</para></listitem>
+		<listitem><para><emphasis>tcp_ka_idle</emphasis>: set TCP keepalive idle time wait</para></listitem>
+		<listitem><para><emphasis>tcp_ka_interval</emphasis>: set TCP keepalive interval</para></listitem>
 	</itemizedlist>
 	<example>
 		<title><literal>$http_req(key)</literal> variable usage</title>
