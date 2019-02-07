@@ -1299,7 +1299,6 @@ send_reply:
 	if (!ctx->reply_sent && !(ctx->flags&JSONRPC_DELAYED_REPLY_F)) {
 		ret = jsonrpc_send(ctx);
 	}
-	srjson_DeleteDoc(ctx->jreq);
 	jsonrpc_clean_context(ctx);
 	if (ret < 0) return -1;
 	return 1;
