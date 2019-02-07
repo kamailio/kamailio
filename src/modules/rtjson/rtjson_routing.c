@@ -359,6 +359,8 @@ int rtjson_init_serial(sip_msg_t *msg, srjson_doc_t *jdoc, sr_xavp_t *iavp)
 			goto error;
 		}
 	}
+	/* mark for new branching */
+	ruri_mark_new();
 
 	rj = srjson_GetObjectItem(jdoc, nj, "path");
 	if(rj!=NULL && rj->type==srjson_String && rj->valuestring!=NULL) {
