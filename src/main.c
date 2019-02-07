@@ -935,10 +935,16 @@ int parse_proto(unsigned char* s, long len, int* proto)
 				break;
 #ifdef USE_TCP
 			case PROTO2UINT3('t', 'c', 'p'):
+				if (tcp_disable) {
+					return -1;
+				}
 				*proto=PROTO_TCP;
 				break;
 #ifdef USE_TLS
 			case PROTO2UINT3('t', 'l', 's'):
+				if (tcp_disable || tls_disable) {
+					return -1;
+				}
 				*proto=PROTO_TLS;
 				break;
 #endif
@@ -950,10 +956,14 @@ int parse_proto(unsigned char* s, long len, int* proto)
 #ifdef USE_SCTP
 	else if (likely(len==4)){
 		i=PROTO2UINT4(s[0], s[1], s[2], s[3]);
-		if (i==PROTO2UINT4('s', 'c', 't', 'p'))
+		if (i==PROTO2UINT4('s', 'c', 't', 'p')) {
+			if (sctp_disable) {
+				return -1;
+			}
 			*proto=PROTO_SCTP;
-		else
+		} else {
 			return -1;
+		}
 	}
 #endif /* USE_SCTP */
 	else
@@ -2188,10 +2198,25 @@ try_again:
 						goto error;
 					}
 					break;
+			case 'T':
+				#ifdef USE_TCP
+					tcp_disable=1;
+				#else
+					fprintf(stderr,"WARNING: tcp support not compiled in\n");
+				#endif
+					break;
+			case 'S':
+				#ifdef USE_SCTP
+					sctp_disable=1;
+				#else
+					fprintf(stderr,"WARNING: sctp support not compiled in\n");
+				#endif
+					break;
 			case 'l':
 					if ((n_lst=parse_phostport_mh(optarg, &tmp, &tmp_len,
 											&port, &proto))==0){
-						fprintf(stderr, "bad -l address specifier: %s\n",
+						fprintf(stderr, "bad -l address specifier: %s\n"
+											"Check disabled protocols\n",
 										optarg);
 						goto error;
 					}
@@ -2224,15 +2249,13 @@ try_again:
 			case 'D':
 					dont_fork_cnt++;
 					break;
-			case 'T':
-				#ifdef USE_TCP
-					tcp_disable=1;
-				#else
-					fprintf(stderr,"WARNING: tcp support not compiled in\n");
-				#endif
-					break;
 			case 'N':
 				#ifdef USE_TCP
+					if (tcp_disable) {
+						fprintf(stderr, "could not configure TCP children: -N %s\n"
+ 									"TCP support disabled\n", optarg);
+						goto error;
+					}
 					tcp_cfg_children_no=strtol(optarg, &tmp, 10);
 					if ((tmp==0) ||(*tmp)){
 						fprintf(stderr, "bad process number: -N %s\n",
@@ -2255,15 +2278,13 @@ try_again:
 					fprintf(stderr,"WARNING: tcp support not compiled in\n");
 				#endif
 					break;
-			case 'S':
-				#ifdef USE_SCTP
-					sctp_disable=1;
-				#else
-					fprintf(stderr,"WARNING: sctp support not compiled in\n");
-				#endif
-					break;
 			case 'Q':
 				#ifdef USE_SCTP
+					if (sctp_disable) {
+						fprintf(stderr, "could not configure SCTP children: -Q %s\n"
+									"SCTP support disabled\n", optarg);
+						goto error;
+					}
 					sctp_children_no=strtol(optarg, &tmp, 10);
 					if ((tmp==0) ||(*tmp)){
 						fprintf(stderr, "bad process number: -O %s\n",
