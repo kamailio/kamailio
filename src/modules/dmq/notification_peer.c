@@ -412,7 +412,9 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 			update_list->nodes = cur;
 			update_list->count++;
 			total_nodes++;
-		} else if(!ret->local && find->uri.params.s && ret->status != find->status) {
+		} else if(!ret->local && find->uri.params.s && 
+					ret->status != find->status && ret->status != DMQ_NODE_DISABLED) {
+			/* don't update the node if it is in ending state */
 			LM_DBG("updating status on %.*s from %d to %d\n", STR_FMT(&tmp_uri),
 					ret->status, find->status);
 			ret->status = find->status;
@@ -588,6 +590,8 @@ int notification_resp_callback_f(
 
 	LM_DBG("notification_callback_f triggered [%p %d %p]\n", msg, code, param);
 	if(code == 200) {
+		/* be sure that the node that answered is in active state */
+		update_dmq_node_status(node_list, node, DMQ_NODE_ACTIVE);
 		nodes_recv = extract_node_list(node_list, msg);
 		LM_DBG("received %d new or changed nodes\n", nodes_recv);
 		if(dmq_init_callback_done && !*dmq_init_callback_done) {
@@ -595,16 +599,21 @@ int notification_resp_callback_f(
 			run_init_callbacks();
 		}
 	} else if(code == 408) {
-		/* deleting node - the server did not respond */
-		LM_ERR("deleting server %.*s because of failed request\n",
-				STR_FMT(&node->orig_uri));
 		if(STR_EQ(node->orig_uri, dmq_notification_address)) {
 			LM_ERR("not deleting notification_peer\n");
-			update_dmq_node_status(node_list, node, DMQ_NODE_PENDING);
+			update_dmq_node_status(node_list, node, DMQ_NODE_PENDING);	
 			return 0;
 		}
-		ret = del_dmq_node(node_list, node);
-		LM_DBG("del_dmq_node returned %d\n", ret);
+		if (node->status == DMQ_NODE_DISABLED) {
+			/* deleting node - the server did not respond */
+			LM_ERR("deleting server %.*s because of failed request\n",
+				STR_FMT(&node->orig_uri));
+			ret = del_dmq_node(node_list, node);
+			LM_DBG("del_dmq_node returned %d\n", ret);
+		} else {
+			/* put the node in disabled state and wait for the next ping before deleting it */
+			update_dmq_node_status(node_list, node, DMQ_NODE_DISABLED);
+		}
 	}
 	return 0;
 }
