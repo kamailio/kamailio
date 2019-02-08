@@ -123,7 +123,21 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 	<section id="app_lua.p.register">
 	    <title><varname>register</varname> (string)</title>
 	    <para>
-			Use this function to register optional SIP Router submodules
+	    NOTE: Since &kamailio; v5.0, KEMI exports are available in Lua script
+		under KSR module. These exports cover most of the modules, a lot more
+		that those listed next. The KEMI exports are the recommended to
+		be used, the old 'sr' module might be obsoleted soon. To read more about
+		KEMI exports and available KSR submodules, see:
+    	<itemizedlist>
+		    <listitem>
+			<para>
+				<ulink url="http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/">http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/</ulink>
+			</para>
+		    </listitem>
+    	</itemizedlist>
+		</para>
+	    <para>
+			Use this parameter to register optional &kamailio; submodules
 			to Lua. Available submodules are:
 	    </para>
 	    	<itemizedlist>
