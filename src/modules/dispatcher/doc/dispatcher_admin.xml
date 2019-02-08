@@ -986,6 +986,28 @@ modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
 		</example>
 	</section>
 
+ 	<section id="dispatcher.p.ds_load_mode">
+ 		<title><varname>ds_load_mode</varname> (int)</title>
+ 		<para>
+		If set to 1, the module throws error when failing to add a destination
+		address (e.g., invalid URI). If set to 0, it skips the failing address
+		and continues with the next ones.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>0</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_load_mode</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_load_mode", 1)
+ ...
+ </programlisting>
+ 		</example>
+	</section>
+
 	</section>
 
 	<section>
