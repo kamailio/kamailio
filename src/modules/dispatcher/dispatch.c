@@ -91,6 +91,7 @@ extern int ds_ping_latency_stats;
 extern float ds_latency_estimator_alpha;
 extern int ds_attrs_none;
 extern param_t *ds_db_extra_attrs_list;
+extern int ds_load_mode;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -829,12 +830,16 @@ int ds_load_list(char *lfile)
 			p++;
 		attrs.len = p - attrs.s;
 
-	add_destination:
+add_destination:
 		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn)
-				!= 0)
+				!= 0) {
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
-	next_line:
+			if(ds_load_mode==1) {
+				goto error;
+			}
+		}
+next_line:
 		p = fgets(line, 1024, f);
 	}
 
@@ -1081,6 +1086,9 @@ int ds_load_db(void)
 			dest_errs++;
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
+			if(ds_load_mode==1) {
+				goto err2;
+			}
 		}
 	}
 	if(reindex_dests(ds_lists[*next_idx]) != 0) {
@@ -2345,8 +2353,13 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 void ds_add_dest_cb(ds_set_t *node, int i)
 {
 	int setn;
-	add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags, node->dlist[i].priority,
-		&node->dlist[i].attrs.body, *next_idx, &setn);
+
+	if(add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
+			node->dlist[i].priority, &node->dlist[i].attrs.body, *next_idx,
+			&setn) != 0) {
+		LM_WARN("failed to add destination in group %d - %.*s\n",
+				node->id, node->dlist[i].uri.len, node->dlist[i].uri.s);
+	}
 	return;
 }
 
@@ -2369,8 +2382,12 @@ int ds_add_dst(int group, str *address, int flags)
 
 	// add new destination
 	if(add_dest2list(group, *address, flags, priority, &attrs,
-		*next_idx, &setn) != 0)
+			*next_idx, &setn) != 0) {
 		LM_WARN("unable to add destination %.*s to set %d", address->len, address->s, group);
+		if(ds_load_mode==1) {
+			goto error;
+		}
+	}
 
 	if(reindex_dests(ds_lists[*next_idx]) != 0) {
 		LM_ERR("error on reindex\n");

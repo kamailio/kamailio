@@ -116,6 +116,7 @@ int ds_hash_initexpire = 7200;
 int ds_hash_check_interval = 30;
 int ds_timer_mode = 0;
 int ds_attrs_none = 0;
+int ds_load_mode = 0;
 
 str ds_outbound_proxy = STR_NULL;
 
@@ -269,6 +270,7 @@ static param_export_t params[]={
 	{"event_callback",     PARAM_STR, &ds_event_callback},
 	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
 	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
+	{"ds_load_mode",       PARAM_INT, &ds_load_mode},
 	{0,0,0}
 };
 
