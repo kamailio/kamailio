@@ -394,7 +394,15 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 
 		if(ptr->xavp!=NULL) {
 			xavp = xavp_clone_level_nodata(ptr->xavp);
-			if(xavp_insert(xavp, 0, NULL)<0) {
+			if(xavp != NULL) {
+				if(xavp_insert(xavp, 0, NULL)<0) {
+					LM_ERR("error inserting xavp after clone\n");
+					xavp_destroy_list(&xavp);
+					ret = -3;
+					goto done;
+				}
+			} else {
+				LM_ERR("error cloning xavp\n");
 				ret = -3;
 				goto done;
 			}
@@ -461,7 +469,15 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 			}
 			if(ptr->xavp!=NULL) {
 				xavp = xavp_clone_level_nodata(ptr->xavp);
-				if(xavp_insert(xavp, nr_branches, NULL)<0) {
+				if(xavp != NULL) {
+					if(xavp_insert(xavp, nr_branches, NULL)<0) {
+						LM_ERR("error inserting xavp after clone\n");
+						xavp_destroy_list(&xavp);
+						ret = -3;
+						goto done;
+					}
+				} else {
+					LM_ERR("error cloning xavp\n");
 					ret = -3;
 					goto done;
 				}
@@ -784,10 +800,15 @@ int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag,
 
 			if((ptr->xavp!=NULL) && (match_action_flag & 1)) {
 				sr_xavp_t *xavp = xavp_clone_level_nodata(ptr->xavp);
-				if(xavp_add(xavp, NULL)<0) {
-					LM_ERR("error adding xavp for %.*s after successful match\n",
+				if(xavp != NULL) {
+					if(xavp_add(xavp, NULL)<0) {
+						LM_ERR("error adding xavp for %.*s after successful match\n",
+								aor.len, ZSW(aor.s));
+						xavp_destroy_list(&xavp);
+					}
+				} else {
+					LM_ERR("error cloning xavp for %.*s after successful match\n",
 							aor.len, ZSW(aor.s));
-					xavp_destroy_list(&xavp);
 				}
 			}
 
