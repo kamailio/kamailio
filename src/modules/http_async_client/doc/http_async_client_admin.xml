@@ -299,6 +299,11 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
         <para>
 		    If defined to a non-zero value, TCP keepalive will be enabled on cURL connections.
 		</para>
+        <para>
+            <emphasis>
+            Requires libcurl >= 7.25.0
+            </emphasis>
+		</para>
 		<para>
 		<emphasis>
 			Default value is 0 (disabled).

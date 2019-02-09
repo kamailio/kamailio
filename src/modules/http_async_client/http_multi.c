@@ -529,6 +529,7 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb, 
     
     /* enable tcp keepalives for the handler */
 	if (cell->params.tcp_keepalive) {
+#ifdef CURLOPT_TCP_KEEPALIVE
 		LM_DBG("Enabling TCP keepalives\n");
 		curl_easy_setopt(cell->easy, CURLOPT_TCP_KEEPALIVE, 1L);
 		
@@ -541,6 +542,9 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb, 
 			curl_easy_setopt(cell->easy, CURLOPT_TCP_KEEPINTVL, cell->params.tcp_ka_interval);
 			LM_DBG("CURLOPT_TCP_KEEPINTERVAL set to %d\n", cell->params.tcp_ka_interval);
 		}
+#else
+		LM_DBG("tcp_keepalive configured, but installed cURL version doesn't include CURLOPT_TCP_KEEPINTERVAL.\n");
+#endif
 	}
 	
     LM_DBG("Adding easy %p to multi %p (%.*s)\n", cell->easy, g->multi, query->len, query->s);
