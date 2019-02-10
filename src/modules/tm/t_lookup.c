@@ -411,7 +411,12 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 				/* found an existing cancel for the searched transaction */
 				*cancel=1;
 			}
-			if (skip_method & t_msg->REQ_METHOD) continue;
+			if (skip_method & t_msg->REQ_METHOD) {
+				LM_DBG("matched skip method - s:0x%x t:0x%x m:0x%x -"
+						" continue searching\n",
+						skip_method, t_msg->REQ_METHOD, p_msg->REQ_METHOD);
+				continue;
+			}
 		}
 found:
 		prefetch_w(p_cell); /* great chance of modifiying it */
@@ -432,7 +437,8 @@ e2eack_found:
 		*trans=e2e_ack_trans;
 		return 2;
 	}
-	LM_DBG("RFC3261 transaction matching failed\n");
+	LM_DBG("RFC3261 transaction matching failed - via branch [%.*s]\n",
+			via1->branch->value.len, via1->branch->value.s);
 	return 0;
 }
 
