@@ -642,9 +642,10 @@ inline static int _wbufq_add(struct  tcp_connection* c, const char* data,
 	if (unlikely(q->last==0)){
 		wb_size=MAX_unsigned(cfg_get(tcp, tcp_cfg, wq_blk_size), size);
 		wb=shm_malloc(sizeof(*wb)+wb_size-1);
-		if (unlikely(wb==0))
-		        SHM_MEM_ERROR;
+		if (unlikely(wb==0)) {
+			SHM_MEM_ERROR;
 			goto error;
+		}
 		wb->b_size=wb_size;
 		wb->next=0;
 		q->last=wb;
@@ -664,9 +665,10 @@ inline static int _wbufq_add(struct  tcp_connection* c, const char* data,
 		if (last_free==0){
 			wb_size=MAX_unsigned(cfg_get(tcp, tcp_cfg, wq_blk_size), size);
 			wb=shm_malloc(sizeof(*wb)+wb_size-1);
-			if (unlikely(wb==0))
-			        SHM_MEM_ERROR;
+			if (unlikely(wb==0)) {
+				SHM_MEM_ERROR;
 				goto error;
+			}
 			wb->b_size=wb_size;
 			wb->next=0;
 			q->last->next=wb;
@@ -724,9 +726,10 @@ inline static int _wbufq_insert(struct  tcp_connection* c, const char* data,
 	}else{
 		/* create a size bytes block directly */
 		wb=shm_malloc(sizeof(*wb)+size-1);
-		if (unlikely(wb==0))
-		        SHM_MEM_ERROR;
+		if (unlikely(wb==0)) {
+			SHM_MEM_ERROR;
 			goto error;
+		}
 		wb->b_size=size;
 		/* insert it */
 		wb->next=q->first;
