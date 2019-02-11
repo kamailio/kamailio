@@ -160,7 +160,7 @@ char* as_asciiz(str* s)
 
     r = (char*)pkg_malloc(s->len + 1);
     if (!r) {
-			PKG_MEM_ERROR;
+		PKG_MEM_ERROR;
 		return 0;
     }
     memcpy(r, s->s, s->len);

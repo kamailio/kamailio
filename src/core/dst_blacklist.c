@@ -164,13 +164,12 @@ static int init_blst_callback_lst(struct blst_callbacks_lst*  cb_lst, int max)
 	cb_lst->max_hooks=MAX_BLST_HOOKS;
 	cb_lst->last_idx=0;
 	cb_lst->hooks=pkg_malloc(cb_lst->max_hooks*sizeof(struct blacklist_hook));
-	if (cb_lst->hooks==0)
-	        PKG_MEM_ERROR;
-		goto error;
+	if (cb_lst->hooks==0) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
 	memset(cb_lst->hooks, 0, cb_lst->max_hooks*sizeof(struct blacklist_hook));
 	return 0;
-error:
-	return -1;
 }
 
 
